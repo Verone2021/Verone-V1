@@ -4,8 +4,8 @@ import { useState } from 'react';
 
 import { Building2 } from 'lucide-react';
 
-import { colors } from '@/lib/design-system';
-import { createClient } from '@/lib/supabase/client';
+import { colors } from '@verone/ui/design-system';
+import { createClient } from '@verone/utils/supabase/client';
 import { cn } from '@verone/utils';
 
 interface OrganisationLogoProps {

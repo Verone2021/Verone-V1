@@ -9,7 +9,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { anonymizeIP, simplifyUserAgent } from '@/lib/analytics/privacy';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@verone/utils/supabase/server';
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';

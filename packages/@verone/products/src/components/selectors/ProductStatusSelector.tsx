@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
-import type { ProductStatus } from '@/lib/product-status-utils';
+import type { ProductStatus } from '@verone/products/utils';
 import {
   ManualStatus,
   AutomaticStatus,
@@ -25,7 +25,7 @@ import {
   getStatusExplanation,
   isManualStatus,
   isAutomaticStatus,
-} from '@/lib/product-status-utils';
+} from '@verone/products/utils';
 
 interface ProductStatusSelectorProps {
   currentStatus: ProductStatus;

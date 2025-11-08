@@ -18,7 +18,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { createServerClient } from '@/lib/supabase/server';
+import { createServerClient } from '@verone/utils/supabase/server';
 
 interface RemoveProductResponse {
   success: boolean;

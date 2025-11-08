@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers';
+import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 import type { Organisation } from '@/shared/modules/organisations/hooks';
 
 interface ConfirmDeleteOrganisationModalProps {

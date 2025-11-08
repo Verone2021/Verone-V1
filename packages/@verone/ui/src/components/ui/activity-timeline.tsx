@@ -2,7 +2,7 @@
 
 import type { LucideIcon } from 'lucide-react';
 
-import { colors } from '../../tokens/colors';
+import { colors } from '../../design-system/tokens/colors';
 
 export interface TimelineItem {
   id: string;

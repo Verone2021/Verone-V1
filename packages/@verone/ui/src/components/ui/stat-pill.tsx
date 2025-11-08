@@ -1,6 +1,6 @@
 'use client';
 
-import { colors } from '../../tokens/colors';
+import { colors } from '../../design-system/tokens/colors';
 
 export interface StatPillProps {
   label: string;

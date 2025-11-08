@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from '@verone/ui';
 import { Textarea } from '@verone/ui';
-import { spacing, colors, componentShadows } from '@/lib/design-system';
+import { spacing, colors, componentShadows } from '@verone/ui';
 import { AddressSelector } from '@verone/common/components/address/AddressSelector';
 import { LogoUploadButton } from '@verone/organisations/components/forms/logo-upload-button';
 import { OrganisationContactsManager } from '@verone/organisations/components/forms/organisation-contacts-manager';

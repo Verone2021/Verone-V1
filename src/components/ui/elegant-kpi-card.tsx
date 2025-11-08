@@ -5,7 +5,7 @@ import React from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { ArrowUp, ArrowDown } from 'lucide-react';
 
-import { colors, componentShadows } from '@/lib/design-system';
+import { colors, componentShadows } from '@verone/ui/design-system';
 import { cn } from '@verone/utils';
 
 export interface ElegantKpiCardProps {

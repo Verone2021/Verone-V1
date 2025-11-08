@@ -14,8 +14,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { ButtonV2 } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { spacing, colors } from '@/lib/design-system';
-import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers';
+import { spacing, colors } from '@verone/ui/design-system';
+import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 import { SupplierCategoryBadge } from '@/shared/modules/categories/components/badges/SupplierCategoryBadge';
 import { OrganisationLogo } from '@/shared/modules/organisations/components/display/OrganisationLogo';
 import type { SupplierSegmentType } from '@/shared/modules/suppliers/components/badges/SupplierSegmentBadge';

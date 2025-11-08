@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 
-import { createAdminClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@verone/utils/supabase/server';
 
 export type PurchaseOrderStatus =
   | 'draft'

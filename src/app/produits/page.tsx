@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 
 import { KPICardUnified } from '@/components/ui/kpi-card-unified';
-import { colors } from '@/lib/design-system';
+import { colors } from '@verone/ui/design-system';
 import { useProductMetrics } from '@/shared/modules/dashboard/hooks/metrics';
 
 export default function ProduitsPage() {

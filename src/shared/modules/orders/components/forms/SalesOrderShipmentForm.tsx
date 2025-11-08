@@ -39,7 +39,7 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 import { formatDate, formatCurrency } from '@verone/utils';
 import {
   useSalesShipments,

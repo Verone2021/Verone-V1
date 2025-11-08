@@ -13,7 +13,7 @@ import { usePathname } from 'next/navigation';
 
 import type { User } from '@supabase/supabase-js';
 
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 import { useUserActivityTracker } from '@/shared/modules/notifications/hooks';
 
 interface ActivityTrackerProviderProps {

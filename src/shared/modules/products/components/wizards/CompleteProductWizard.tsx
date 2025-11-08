@@ -29,7 +29,7 @@ import {
 } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@/shared/modules/common/hooks';
 import { useProducts } from '@/shared/modules/common/hooks';
 

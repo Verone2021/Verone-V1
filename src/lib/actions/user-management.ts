@@ -10,8 +10,8 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-import { createServerClient, createAdminClient } from '@/lib/supabase/server';
-// import { validateProfileForm, sanitizeProfileData } from '@/lib/validation/profile-validation'
+import { createServerClient, createAdminClient } from '@verone/utils/supabase/server';
+// import { validateProfileForm, sanitizeProfileData } from '@verone/utils/validation/profile-validation'
 
 export interface CreateUserData {
   email: string;

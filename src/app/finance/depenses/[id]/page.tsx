@@ -41,7 +41,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 import { useFinancialPayments } from '@/shared/modules/finance/hooks';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FinancialPaymentForm } from '@/shared/modules/finance/components/forms/FinancialPaymentForm';
@@ -49,7 +49,7 @@ import type {
   FinancialDocument,
   DocumentStatus,
 } from '@/shared/modules/finance/hooks';
-import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers';
+import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 
 // =====================================================================
 // TYPES

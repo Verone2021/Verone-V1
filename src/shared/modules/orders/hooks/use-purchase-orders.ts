@@ -6,7 +6,7 @@
 import { useState, useCallback } from 'react';
 
 import { updatePurchaseOrderStatus as updatePurchaseOrderStatusAction } from '@/app/actions/purchase-orders';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@/shared/modules/common/hooks';
 import { useStockMovements } from '@/shared/modules/stock/hooks/use-stock-movements';
 

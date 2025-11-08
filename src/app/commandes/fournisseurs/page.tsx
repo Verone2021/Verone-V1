@@ -49,7 +49,7 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency, formatDate } from '@verone/utils';
-import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers';
+import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 import { PurchaseOrderDetailModal } from '@/shared/modules/orders/components/modals/PurchaseOrderDetailModal';
 import { PurchaseOrderFormModal } from '@/shared/modules/orders/components/modals/PurchaseOrderFormModal';
 import { PurchaseOrderReceptionModal } from '@/shared/modules/orders/components/modals/PurchaseOrderReceptionModal';

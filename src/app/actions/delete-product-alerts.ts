@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@verone/utils/supabase/server';
 
 /**
  * Server Action: Suppression des alertes stock pour un produit

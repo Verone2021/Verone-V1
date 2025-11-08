@@ -8,13 +8,13 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { testGoogleMerchantAuth } from '@/lib/google-merchant/auth';
+import { testGoogleMerchantAuth } from '@verone/integrations/google-merchant/auth';
 import {
   getGoogleMerchantClient,
   testGoogleMerchantConnection,
-} from '@/lib/google-merchant/client';
-import { GOOGLE_MERCHANT_CONFIG } from '@/lib/google-merchant/config';
-import logger from '@/lib/logger';
+} from '@verone/integrations/google-merchant/client';
+import { GOOGLE_MERCHANT_CONFIG } from '@verone/integrations/google-merchant/config';
+import logger from '@verone/utils/logger';
 
 interface TestConnectionResponse {
   success: boolean;

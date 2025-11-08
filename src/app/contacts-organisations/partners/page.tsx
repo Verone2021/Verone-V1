@@ -53,8 +53,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { spacing, colors } from '@/lib/design-system';
-import { createClient } from '@/lib/supabase/client';
+import { spacing, colors } from '@verone/ui/design-system';
+import { createClient } from '@verone/utils/supabase/client';
 import { cn } from '@verone/utils';
 import { OrganisationLogo } from '@/shared/modules/organisations/components';
 import { ConfirmDeleteOrganisationModal } from '@/shared/modules/organisations/components';

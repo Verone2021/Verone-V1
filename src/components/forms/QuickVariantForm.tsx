@@ -36,7 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@/shared/modules/common/hooks';
 import { DynamicColorSelector } from '@/shared/modules/ui/components/selectors/DynamicColorSelector';
 

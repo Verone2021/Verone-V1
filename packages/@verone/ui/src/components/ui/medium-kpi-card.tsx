@@ -8,7 +8,7 @@ import {
   componentSpacing,
   componentTypography,
   componentShadows,
-} from '../../tokens';
+} from '../../design-system/tokens';
 
 export interface MediumKpiCardProps {
   label: string;

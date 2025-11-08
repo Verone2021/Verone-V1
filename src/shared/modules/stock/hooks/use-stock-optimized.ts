@@ -2,7 +2,7 @@
 
 import { useMemo, useCallback } from 'react';
 
-import type { createClient } from '@/lib/supabase/client';
+import type { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@/shared/modules/common/hooks';
 import {
   useSupabaseQuery,

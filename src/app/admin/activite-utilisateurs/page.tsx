@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 import { ButtonV2 } from '@/components/ui/button';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 
 interface UserActivityStats {
   user_id: string;

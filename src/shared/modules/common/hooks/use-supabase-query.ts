@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import type { PostgrestFilterBuilder } from '@supabase/postgrest-js';
 
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 
 interface QueryOptions {
   enabled?: boolean;

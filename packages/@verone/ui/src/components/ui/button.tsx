@@ -6,7 +6,7 @@ import { cn } from '@verone/utils';
 import type { LucideIcon } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 
-import { colors, spacing, componentShadows } from '../../tokens';
+import { colors, spacing, componentShadows } from '../../design-system/tokens';
 
 export interface ButtonV2Props
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {

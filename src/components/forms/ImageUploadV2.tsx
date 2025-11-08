@@ -24,7 +24,7 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ButtonV2 } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import type { BucketType } from '@/lib/upload/validation';
+import type { BucketType } from '@verone/utils/upload/validation';
 import {
   useImageUpload,
   type UseImageUploadProps,

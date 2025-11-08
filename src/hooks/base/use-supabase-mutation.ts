@@ -11,7 +11,7 @@ import { useState } from 'react';
 
 import { toast } from 'react-hot-toast';
 
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 
 export interface MutationOptions<T> {
   tableName: string;

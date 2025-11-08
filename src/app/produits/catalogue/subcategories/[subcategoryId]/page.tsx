@@ -32,7 +32,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { VéroneCard } from '@/components/ui/verone-card';
-import type { Database } from '@/lib/supabase/types';
+import type { Database } from '@verone/utils/supabase/types';
 import { useFamilies } from '@/shared/modules/categories/hooks';
 import { useCategories } from '@/shared/modules/categories/hooks';
 import { useSubcategories } from '@/shared/modules/categories/hooks';

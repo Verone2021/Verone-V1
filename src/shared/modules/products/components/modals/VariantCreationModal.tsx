@@ -6,7 +6,7 @@ import { X, Save, AlertCircle, Copy, Palette, Layers } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { ButtonV2 } from '@/components/ui/button';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 import { cn } from '@verone/utils';
 
 interface ProductData {

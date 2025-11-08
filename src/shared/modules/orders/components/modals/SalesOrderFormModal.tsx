@@ -35,7 +35,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 import { formatCurrency } from '@verone/utils';
 import { AddressInput } from '@/shared/modules/common/components/address/AddressInput';
 import { useProductPrice, formatPrice } from '@/shared/modules/finance/hooks';

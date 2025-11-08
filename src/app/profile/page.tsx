@@ -19,13 +19,13 @@ import { PasswordChangeDialog } from '@/components/profile/password-change-dialo
 import { ButtonV2 } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RoleBadge, type UserRole } from '@/components/ui/role-badge';
-import { createClient } from '@/lib/supabase/client';
-import { themeV2 } from '@/lib/theme-v2';
+import { createClient } from '@verone/utils/supabase/client';
+import { themeV2 } from '@verone/ui/theme-v2';
 import { cn } from '@verone/utils';
 import {
   validateProfileForm,
   sanitizeProfileData,
-} from '@/lib/validation/profile-validation';
+} from '@verone/utils/validation/profile-validation';
 
 interface UserProfile {
   user_id: string;

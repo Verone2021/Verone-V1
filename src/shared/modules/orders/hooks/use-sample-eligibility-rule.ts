@@ -16,8 +16,8 @@
 
 import { useState, useCallback } from 'react';
 
-import { hasProductBeenInStock } from '@/lib/stock-history';
-import { createClient } from '@/lib/supabase/client';
+import { hasProductBeenInStock } from '@verone/stock/utils/stock-history';
+import { createClient } from '@verone/utils/supabase/client';
 import type {
   SampleEligibilityResult,
   SampleRestrictionReason,

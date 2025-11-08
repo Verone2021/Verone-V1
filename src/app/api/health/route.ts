@@ -7,7 +7,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { logger } from '@/lib/logger';
+import { logger } from '@verone/utils/logger';
 import { withLogging } from '@/lib/middleware/logging';
 
 async function healthCheck(req: NextRequest) {

@@ -1,8 +1,8 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { createClient } from '@/lib/supabase/server';
-import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers';
+import { createClient } from '@verone/utils/supabase/server';
+import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 
 // SECURITY FIX 2025-10-20: Externalize API key to environment variable
 // DISABLED 2025-10-20: API Packlink désactivée pour éviter échec build

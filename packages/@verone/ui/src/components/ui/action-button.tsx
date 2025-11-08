@@ -4,7 +4,7 @@ import { cn } from '@verone/utils';
 import { cva, type VariantProps } from 'class-variance-authority';
 import type { LucideIcon } from 'lucide-react';
 
-import { colors, componentShadows } from '../../tokens';
+import { colors, componentShadows } from '../../design-system/tokens';
 
 /**
  * @deprecated Utilisez ButtonUnified à la place

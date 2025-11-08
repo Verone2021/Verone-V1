@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import useSWR from 'swr';
 
-import { calculateMinimumSellingPrice, formatPrice } from '@/lib/pricing-utils';
-import { createClient } from '@/lib/supabase/client';
+import { calculateMinimumSellingPrice, formatPrice } from '@verone/finance/utils/pricing-utils';
+import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@/shared/modules/common/hooks';
 
 // ✅ Interface pour product_images (BR-TECH-002)

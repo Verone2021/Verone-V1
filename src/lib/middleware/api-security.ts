@@ -13,7 +13,7 @@ import { NextResponse } from 'next/server';
 
 import { createServerClient } from '@supabase/ssr';
 
-import { logger } from '@/lib/logger';
+import { logger } from '@verone/utils/logger';
 
 // Configuration CORS sécurisée
 const ALLOWED_ORIGINS = [

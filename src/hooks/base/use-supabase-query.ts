@@ -9,7 +9,7 @@
 
 import { useState, useEffect } from 'react';
 
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 export interface QueryOptions<T> {
   tableName: string;
   select?: string;

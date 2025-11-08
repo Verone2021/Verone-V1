@@ -15,4 +15,4 @@ export {
   getOrganisationDisplayName,
   getOrganisationLegalName,
   getOrganisationTradeName,
-} from '@/lib/utils/organisation-helpers';
+} from '@verone/utils/utils/organisation-helpers';

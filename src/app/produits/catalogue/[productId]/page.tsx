@@ -29,7 +29,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 import { cn, checkSLOCompliance } from '@verone/utils';
 import { CategoryHierarchySelector } from '@/shared/modules/categories/components/selectors/CategoryHierarchySelector';
 import { SupplierVsPricingEditSection } from '@/shared/modules/common/components/pricing/SupplierVsPricingEditSection';

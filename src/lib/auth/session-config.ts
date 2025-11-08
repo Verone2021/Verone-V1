@@ -6,8 +6,8 @@
 
 import React from 'react';
 
-import logger from '@/lib/logger';
-import { createClient } from '@/lib/supabase/client';
+import logger from '@verone/utils/logger';
+import { createClient } from '@verone/utils/supabase/client';
 
 // Configuration des timeouts
 export const SESSION_CONFIG = {

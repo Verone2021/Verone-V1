@@ -26,7 +26,7 @@ import { fr } from 'date-fns/locale';
 import { Bell, Search, CheckCheck, Trash2, Filter, X } from 'lucide-react';
 
 import { ButtonV2 } from '@/components/ui/button';
-import { spacing, colors } from '@/lib/design-system';
+import { spacing, colors } from '@verone/ui/design-system';
 import { cn } from '@verone/utils';
 import {
   useDatabaseNotifications,

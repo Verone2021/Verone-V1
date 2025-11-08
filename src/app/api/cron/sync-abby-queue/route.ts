@@ -7,7 +7,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { processSyncQueue } from '@/lib/abby/sync-processor';
+import { processSyncQueue } from '@verone/integrations/abby/sync-processor';
 
 // =====================================================================
 // GET /api/cron/sync-abby-queue

@@ -9,7 +9,7 @@
 
 import { useState, useCallback } from 'react';
 
-import { logger } from '@/lib/logger';
+import { logger } from '@verone/utils/logger';
 
 /**
  * Résultat d'une synchronisation

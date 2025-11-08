@@ -53,7 +53,7 @@ import {
   TooltipProvider,
 } from '@/components/ui/tooltip';
 import { featureFlags, getModuleDeploymentStatus } from '@/lib/feature-flags';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 import { cn } from '@verone/utils';
 
 // Phase 1: use-stock-alerts-count hook désactivé (Phase 2+)

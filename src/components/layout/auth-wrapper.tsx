@@ -14,7 +14,7 @@ import type { User } from '@supabase/supabase-js';
 
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 
 import { AppHeader } from './app-header';
 import { AppSidebar } from './app-sidebar';

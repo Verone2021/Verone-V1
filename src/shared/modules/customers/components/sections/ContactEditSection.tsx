@@ -6,7 +6,7 @@ import { User, Save, X, Edit, Mail, Phone, Globe } from 'lucide-react';
 
 import { ButtonV2 } from '@/components/ui/button';
 import { cn } from '@verone/utils';
-import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers';
+import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 import {
   useInlineEdit,
   type EditableSection,

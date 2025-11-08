@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { Building2 } from 'lucide-react';
 
-import { colors } from '@/lib/design-system';
+import { colors } from '@verone/ui';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@verone/utils';
 

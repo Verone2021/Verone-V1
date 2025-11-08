@@ -35,7 +35,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@verone/utils/supabase/server';
 import { PaymentForm } from '@/shared/modules/finance/components/forms/PaymentForm';
 
 // =====================================================================

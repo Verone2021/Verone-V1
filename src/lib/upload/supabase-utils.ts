@@ -5,7 +5,7 @@
  * Gestion d'erreurs avancée et retry automatique
  */
 
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 
 import type { BucketType, UserProfile } from './validation';
 

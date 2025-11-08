@@ -34,7 +34,7 @@ import {
   exportAgingReportToPDF,
   exportAgingReportToExcel,
   exportAgingReportToCSV,
-} from '@/lib/reports/export-aging-report';
+} from '@verone/utils/reports/export-aging-report';
 import { useToast } from '@/shared/modules/common/hooks';
 import {
   useAgingReport,

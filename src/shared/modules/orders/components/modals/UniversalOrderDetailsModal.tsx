@@ -32,7 +32,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 import { formatCurrency } from '@verone/utils';
 import { useInlineEdit } from '@/shared/modules/common/hooks';
 import { AddProductToOrderModal } from '@/shared/modules/orders/components/modals/AddProductToOrderModal';

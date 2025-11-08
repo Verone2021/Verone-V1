@@ -47,7 +47,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { logger } from '@/lib/logger';
+import { logger } from '@verone/utils/logger';
 import { GoogleMerchantConfigModal } from '@/shared/modules/channels/components/google-merchant/GoogleMerchantConfigModal';
 import { GoogleMerchantProductCard } from '@/shared/modules/channels/components/google-merchant/GoogleMerchantProductCard';
 import { GoogleMerchantProductManager } from '@/shared/modules/channels/components/google-merchant/GoogleMerchantProductManager';

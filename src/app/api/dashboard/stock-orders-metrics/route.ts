@@ -11,7 +11,7 @@
 
 import { NextResponse } from 'next/server';
 
-import { createServerClient } from '@/lib/supabase/server';
+import { createServerClient } from '@verone/utils/supabase/server';
 
 // Node runtime requis pour cookies() async
 export const runtime = 'nodejs';

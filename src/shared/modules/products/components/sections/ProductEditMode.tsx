@@ -27,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 import { cn } from '@verone/utils';
 import { CategoryHierarchyModal } from '@/shared/modules/categories/components/modals/CategorizeModal';
 import { useSubcategories } from '@/shared/modules/categories/hooks';

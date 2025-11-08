@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { createServerClient, createAdminClient } from '@/lib/supabase/server';
+import { createServerClient, createAdminClient } from '@verone/utils/supabase/server';
 
 import { UserActivityTab } from './components/user-activity-tab';
 import { UserHeader } from './components/user-header';

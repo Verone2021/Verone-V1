@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 import { NotificationsDropdown } from '@/shared/modules/notifications/components/dropdowns/NotificationsDropdown';
 
 import { cn } from '../../lib/utils';

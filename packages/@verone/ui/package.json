@@ -6,20 +6,24 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "require": "./src/index.ts"
+    },
+    "./design-system": {
+      "types": "./src/design-system/index.ts",
+      "import": "./src/design-system/index.ts",
+      "require": "./src/design-system/index.ts"
+    },
+    "./theme-v2": {
+      "types": "./src/theme-v2.ts",
+      "import": "./src/theme-v2.ts",
+      "require": "./src/theme-v2.ts"
     },
     "./components/*": {
-      "types": "./dist/components/*.d.ts",
-      "default": "./dist/components/*.js"
-    },
-    "./tokens": {
-      "types": "./dist/tokens/index.d.ts",
-      "default": "./dist/tokens/index.js"
-    },
-    "./themes": {
-      "types": "./dist/themes/index.d.ts",
-      "default": "./dist/themes/index.js"
+      "types": "./src/components/*/index.ts",
+      "import": "./src/components/*/index.ts",
+      "require": "./src/components/*/index.ts"
     }
   },
   "scripts": {

@@ -26,7 +26,7 @@ import { Badge } from '@/components/ui/badge';
 import { ButtonV2 } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers';
+import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 import { useToast } from '@/shared/modules/common/hooks';
 import { CreateProductInGroupModal } from '@/shared/modules/products/components/modals/CreateProductInGroupModal';
 import { EditProductVariantModal } from '@/shared/modules/products/components/modals/EditProductVariantModal';

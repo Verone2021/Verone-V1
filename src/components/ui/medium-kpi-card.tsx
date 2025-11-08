@@ -9,7 +9,7 @@ import {
   componentSpacing,
   componentTypography,
   componentShadows,
-} from '@/lib/design-system';
+} from '@verone/ui/design-system';
 import { cn } from '@verone/utils';
 
 export interface MediumKpiCardProps {

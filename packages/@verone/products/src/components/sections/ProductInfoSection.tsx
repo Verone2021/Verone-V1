@@ -10,7 +10,7 @@ import { Label } from '@verone/ui';
 import {
   formatStatusForDisplay,
   type ProductStatus,
-} from '@/lib/product-status-utils';
+} from '@verone/products/utils';
 import { cn } from '@verone/utils';
 
 interface ProductInfoSectionProps {

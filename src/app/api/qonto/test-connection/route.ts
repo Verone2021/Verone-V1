@@ -6,7 +6,7 @@
 // =====================================================================
 
 import { NextResponse } from 'next/server';
-// import { getQontoClient } from '@/lib/qonto'; // Désactivé Phase 1
+// import { getQontoClient } from '@verone/integrations/qonto'; // Désactivé Phase 1
 
 export const dynamic = 'force-dynamic';
 

@@ -8,7 +8,7 @@ import { Upload, Trash2, Loader2, AlertCircle, ImagePlus } from 'lucide-react';
 
 import { OrganisationLogo } from '@/components/business/organisation-logo';
 import { ButtonV2 } from '@/components/ui/button';
-import { spacing, colors } from '@/lib/design-system';
+import { spacing, colors } from '@verone/ui/design-system';
 import { cn } from '@verone/utils';
 import { useLogoUpload } from '@/shared/modules/common/hooks';
 

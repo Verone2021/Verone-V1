@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 
 /**
  * Hook léger pour compter les alertes stock actives

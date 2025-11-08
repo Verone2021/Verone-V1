@@ -6,7 +6,7 @@ import type { LucideIcon } from 'lucide-react';
 import { ChevronRight } from 'lucide-react';
 
 import { Separator } from '@/components/ui/separator';
-import { colors } from '@/lib/design-system';
+import { colors } from '@verone/ui/design-system';
 import { cn } from '@verone/utils';
 
 export interface QuickAction {

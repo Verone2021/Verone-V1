@@ -26,7 +26,7 @@ import { NextResponse } from 'next/server';
 
 import { z } from 'zod';
 
-import { createServerClient } from '@/lib/supabase/server';
+import { createServerClient } from '@verone/utils/supabase/server';
 
 // Validation schema
 const UpdateMetadataSchema = z

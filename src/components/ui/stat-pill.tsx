@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { themeV2 } from '@/lib/theme-v2';
+import { themeV2 } from '@verone/ui/theme-v2';
 
 export interface StatPillProps {
   label: string;

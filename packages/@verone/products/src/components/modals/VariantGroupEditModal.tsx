@@ -25,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
-import { normalizeForSKU } from '@/lib/sku-generator';
+import { normalizeForSKU } from '@verone/products/utils';
 import { cn } from '@verone/utils';
 import { useSubcategories } from '@verone/categories/hooks';
 import { useOrganisations } from '@verone/organisations/hooks';

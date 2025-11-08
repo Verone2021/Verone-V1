@@ -13,8 +13,8 @@ import * as XLSX from 'xlsx';
 import {
   prepareExcelData,
   GOOGLE_MERCHANT_EXCEL_HEADERS,
-} from '@/lib/google-merchant/excel-transformer';
-import { createAdminClient } from '@/lib/supabase/server';
+} from '@verone/integrations/google-merchant/excel-transformer';
+import { createAdminClient } from '@verone/utils/supabase/server';
 
 interface ExportResponse {
   success: boolean;

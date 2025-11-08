@@ -5,7 +5,7 @@ import React from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 
-import { colors, spacing, componentShadows } from '@/lib/design-system';
+import { colors, spacing, componentShadows } from '@verone/ui/design-system';
 import { cn } from '@verone/utils';
 
 export interface ButtonV2Props

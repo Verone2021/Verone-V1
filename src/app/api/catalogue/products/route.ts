@@ -8,7 +8,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { logger, catalogueLogger } from '@/lib/logger';
+import { logger, catalogueLogger } from '@verone/utils/logger';
 import {
   withApiSecurity,
   validateInput,

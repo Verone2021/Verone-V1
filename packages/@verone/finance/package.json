@@ -34,6 +34,11 @@
       "types": "./src/components/*/index.ts",
       "import": "./src/components/*/index.ts",
       "require": "./src/components/*/index.ts"
+    },
+    "./utils": {
+      "types": "./src/utils/index.ts",
+      "import": "./src/utils/index.ts",
+      "require": "./src/utils/index.ts"
     }
   }
 }

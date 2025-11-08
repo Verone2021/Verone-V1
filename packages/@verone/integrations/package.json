@@ -1,0 +1,52 @@
+{
+  "name": "@verone/integrations",
+  "version": "1.0.0",
+  "description": "Intégrations externes pour Vérone CRM/ERP - Abby, Google Merchant, Qonto",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": [
+    "verone",
+    "integrations",
+    "abby",
+    "google-merchant",
+    "qonto"
+  ],
+  "author": "Romeo Dos Santos",
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "@verone/utils": "workspace:*",
+    "@verone/types": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "require": "./src/index.ts"
+    },
+    "./abby": {
+      "types": "./src/abby/index.ts",
+      "import": "./src/abby/index.ts",
+      "require": "./src/abby/index.ts"
+    },
+    "./google-merchant": {
+      "types": "./src/google-merchant/index.ts",
+      "import": "./src/google-merchant/index.ts",
+      "require": "./src/google-merchant/index.ts"
+    },
+    "./qonto": {
+      "types": "./src/qonto/index.ts",
+      "import": "./src/qonto/index.ts",
+      "require": "./src/qonto/index.ts"
+    }
+  }
+}

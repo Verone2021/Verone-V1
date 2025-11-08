@@ -13,7 +13,7 @@ import { Users, Plus, Shield } from 'lucide-react';
 
 import { CreateUserDialog } from '@/components/admin/create-user-dialog';
 import { UserManagementTable } from '@/components/admin/user-management-table';
-import { createServerClient, createAdminClient } from '@/lib/supabase/server';
+import { createServerClient, createAdminClient } from '@verone/utils/supabase/server';
 
 // Types pour les utilisateurs
 export interface UserWithProfile {

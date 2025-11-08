@@ -5,8 +5,8 @@
 
 import { useState, useCallback } from 'react';
 
-import logger from '@/lib/logger';
-import { createClient } from '@/lib/supabase/client';
+import logger from '@verone/utils/logger';
+import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@/shared/modules/common/hooks';
 
 // Types pour les contacts

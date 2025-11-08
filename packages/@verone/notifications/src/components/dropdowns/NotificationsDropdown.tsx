@@ -35,7 +35,7 @@ import {
   DropdownMenuTrigger,
 } from '@verone/ui';
 import { ScrollArea } from '@verone/ui';
-import { spacing, colors } from '@/lib/design-system';
+import { spacing, colors } from '@verone/ui';
 import { cn } from '@verone/utils';
 import {
   useDatabaseNotifications,

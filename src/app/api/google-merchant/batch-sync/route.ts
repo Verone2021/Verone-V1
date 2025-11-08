@@ -11,8 +11,8 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { getGoogleMerchantClient } from '@/lib/google-merchant/client';
-import { createServerClient } from '@/lib/supabase/server';
+import { getGoogleMerchantClient } from '@verone/integrations/google-merchant/client';
+import { createServerClient } from '@verone/utils/supabase/server';
 
 interface BatchSyncResponse {
   success: boolean;

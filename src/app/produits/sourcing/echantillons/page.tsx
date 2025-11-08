@@ -80,7 +80,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@/shared/modules/common/hooks';
 import { CustomerBadge } from '@/shared/modules/customers/components/badges/CustomerBadge';
 import {

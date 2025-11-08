@@ -23,7 +23,7 @@ import { useDropzone } from 'react-dropzone';
 
 import { ButtonV2 } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 
 // =====================================================================
 // TYPES

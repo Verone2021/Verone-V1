@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 import type { Database } from '@verone/types';
 
 import { useToast } from './use-toast';

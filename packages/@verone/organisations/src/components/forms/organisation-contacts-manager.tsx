@@ -7,7 +7,7 @@ import { Plus, Mail, Phone, User, Trash2, Edit2 } from 'lucide-react';
 import { ContactFormModalWrapper as ContactFormModal } from '@/components/business/contact-form-modal-wrapper';
 import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
-import { spacing, colors } from '@/lib/design-system';
+import { spacing, colors } from '@verone/ui';
 import { createClient } from '@/lib/supabase/client';
 
 interface Contact {

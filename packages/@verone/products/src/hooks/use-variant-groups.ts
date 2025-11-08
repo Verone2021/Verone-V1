@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 import logger from '@/lib/logger';
-import { generateProductSKU } from '@/lib/sku-generator';
+import { generateProductSKU } from '@verone/products/utils';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@verone/common/hooks';
 import type {
