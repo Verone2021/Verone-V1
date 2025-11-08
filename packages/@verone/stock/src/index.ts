@@ -15,3 +15,6 @@ export * from './components/reports';
 
 // Hooks
 export * from './hooks';
+
+// Utils
+export * from './utils/movement-mappers';

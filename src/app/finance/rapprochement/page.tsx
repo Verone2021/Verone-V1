@@ -16,7 +16,7 @@ import {
 } from '@verone/ui';
 import { AlertCircle, Lock } from 'lucide-react';
 
-import { featureFlags } from '@/lib/feature-flags';
+import { featureFlags } from '@verone/utils/feature-flags';
 
 // =====================================================================
 // PAGE COMPONENT

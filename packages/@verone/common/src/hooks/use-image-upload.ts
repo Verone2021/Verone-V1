@@ -9,7 +9,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 
 import type { User } from '@supabase/supabase-js';
 
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 import {
   uploadWithRetry,
   getCurrentUserProfile,
@@ -18,17 +18,17 @@ import {
   type UploadResult,
   type UploadError,
   type UploadProgress,
-} from '@/lib/upload/supabase-utils';
+} from '@verone/utils/upload/supabase-utils';
 import type {
   BucketType,
   UserProfile,
   ValidationResult,
-} from '@/lib/upload/validation';
+} from '@verone/utils/upload/validation';
 import {
   validateUpload,
   generateSecureFileName,
   getBucketConfig,
-} from '@/lib/upload/validation';
+} from '@verone/utils/upload/validation';
 
 // États possibles de l'upload
 export type UploadState =

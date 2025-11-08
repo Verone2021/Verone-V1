@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-import { featureFlags } from '@/lib/feature-flags';
+import { featureFlags } from '@verone/utils/feature-flags';
 import type { BankTransaction } from '@verone/integrations/qonto/types';
 import { createClient } from '@verone/utils/supabase/client';
 

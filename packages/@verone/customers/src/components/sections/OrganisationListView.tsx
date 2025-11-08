@@ -15,7 +15,7 @@ import {
 
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
-import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers';
+import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 import { OrganisationLogo } from '@verone/organisations/components/display/OrganisationLogo';
 import type { SupplierSegmentType } from '@verone/suppliers/components/badges/SupplierSegmentBadge';
 import { SupplierSegmentBadge } from '@verone/suppliers/components/badges/SupplierSegmentBadge';

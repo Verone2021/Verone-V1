@@ -17,7 +17,7 @@ import { User, LogOut, Settings, Users, Activity } from 'lucide-react';
 import { NotificationsDropdown } from '@verone/notifications';
 import { createClient } from '@verone/utils/supabase/client';
 
-import { cn } from '../../lib/utils';
+import { cn } from '@verone/utils';
 
 interface AppHeaderProps {
   className?: string;

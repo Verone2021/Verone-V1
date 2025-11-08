@@ -15,13 +15,13 @@ import type {
   TestResult,
   TestModule,
   TestStatus,
-} from '@/lib/testing/critical-tests-2025';
+} from '@verone/testing/critical-tests-2025';
 import {
   ALL_CRITICAL_TESTS,
   getTestsByModule,
   getCriticalTestsOnly,
   TESTING_METRICS,
-} from '@/lib/testing/critical-tests-2025';
+} from '@verone/testing/critical-tests-2025';
 
 // Types simplifiés (vs complex types précédents)
 export interface TestingState {

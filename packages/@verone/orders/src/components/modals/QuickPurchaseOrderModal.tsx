@@ -20,7 +20,7 @@ import {
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { Separator } from '@verone/ui';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 import { useDraftPurchaseOrder } from '@verone/orders/hooks';
 
 export interface QuickPurchaseOrderModalProps {

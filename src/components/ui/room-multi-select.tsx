@@ -6,7 +6,7 @@ import { Check, ChevronDown, X } from 'lucide-react';
 
 import { Badge } from './badge';
 import { Button } from './button';
-import { cn } from '../../lib/utils';
+import { cn } from '@verone/utils';
 import type { RoomType } from '../../types/room-types';
 import {
   ROOM_CONFIGS,

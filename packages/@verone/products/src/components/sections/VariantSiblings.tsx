@@ -8,8 +8,8 @@ import { Eye, Package, ArrowRight, AlertCircle } from 'lucide-react';
 
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
-import { sortVariantSiblings } from '@/lib/business-rules/naming-rules';
-import { createClient } from '@/lib/supabase/client';
+import { sortVariantSiblings } from '@verone/utils/business-rules/naming-rules';
+import { createClient } from '@verone/utils/supabase/client';
 import { cn } from '@verone/utils';
 
 interface VariantSibling {

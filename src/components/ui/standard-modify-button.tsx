@@ -3,7 +3,7 @@
 import { Edit } from 'lucide-react';
 
 import { Button } from './button';
-import { cn } from '../../lib/utils';
+import { cn } from '@verone/utils';
 
 /**
  * @deprecated Utilisez ButtonUnified à la place

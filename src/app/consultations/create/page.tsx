@@ -31,8 +31,8 @@ import {
   SelectValue,
 } from '../../../components/ui/select';
 import { Textarea } from '../../../components/ui/textarea';
-import { createClient } from '../../../lib/supabase/client';
-import { getOrganisationDisplayName } from '../../../lib/utils/organisation-helpers';
+import { createClient } from '@verone/utils/supabase/client';
+import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 import { createConsultation as createConsultationAction } from '../../actions/consultations';
 
 // Interface pour le formulaire (utilise organisation_id pour le sélecteur)

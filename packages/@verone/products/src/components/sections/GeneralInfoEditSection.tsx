@@ -6,7 +6,7 @@ import { Edit2, Save, X, FileText } from 'lucide-react';
 
 import { CategoryHierarchySelector } from '@/components/business/category-hierarchy-selector';
 import { ButtonV2 } from '@verone/ui';
-import { generateVariantName } from '@/lib/business-rules/naming-rules';
+import { generateVariantName } from '@verone/utils/business-rules/naming-rules';
 import { cn } from '@verone/utils';
 import {
   useInlineEdit,

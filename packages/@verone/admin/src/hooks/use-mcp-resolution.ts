@@ -3,7 +3,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 
 // Types pour Error Resolution
 export type ErrorSeverity = 'critical' | 'high' | 'medium' | 'low';

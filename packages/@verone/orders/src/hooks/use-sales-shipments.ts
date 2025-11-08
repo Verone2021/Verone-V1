@@ -22,8 +22,8 @@
 
 import { useState, useCallback } from 'react';
 
-import { createClient } from '@/lib/supabase/client';
-import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers';
+import { createClient } from '@verone/utils/supabase/client';
+import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 import type {
   ShipmentItem,
   ValidateShipmentPayload,

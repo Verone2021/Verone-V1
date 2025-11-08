@@ -10,8 +10,8 @@ import { useState, useCallback } from 'react';
 import { useToast } from '@verone/common/hooks';
 import type { Contact as BaseContact } from '@verone/types';
 
-import logger from '@/lib/logger';
-import { createClient } from '@/lib/supabase/client';
+import logger from '@verone/utils/logger';
+import { createClient } from '@verone/utils/supabase/client';
 
 // Contact étendu avec jointure organisation (retourné par les queries)
 export interface Contact extends BaseContact {

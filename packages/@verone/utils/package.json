@@ -83,6 +83,21 @@
       "types": "./src/monitoring/index.ts",
       "import": "./src/monitoring/index.ts",
       "require": "./src/monitoring/index.ts"
+    },
+    "./deployed-modules": {
+      "types": "./src/deployed-modules.ts",
+      "import": "./src/deployed-modules.ts",
+      "require": "./src/deployed-modules.ts"
+    },
+    "./feature-flags": {
+      "types": "./src/feature-flags.ts",
+      "import": "./src/feature-flags.ts",
+      "require": "./src/feature-flags.ts"
+    },
+    "./business-rules": {
+      "types": "./src/business-rules/naming-rules.ts",
+      "import": "./src/business-rules/naming-rules.ts",
+      "require": "./src/business-rules/naming-rules.ts"
     }
   }
 }

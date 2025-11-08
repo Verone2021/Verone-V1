@@ -8,8 +8,8 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import type { LogContext } from '../logger';
-import { logger } from '../logger';
+import type { LogContext } from '@verone/utils/logger';
+import { logger } from '@verone/utils/logger';
 
 export interface LoggingOptions {
   // Exclure certains endpoints du logging (ex: health checks)

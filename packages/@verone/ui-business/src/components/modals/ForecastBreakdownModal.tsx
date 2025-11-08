@@ -15,7 +15,7 @@ import {
   DialogTitle,
 } from '@verone/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 
 interface ForecastBreakdownModalProps {
   productId: string | null;

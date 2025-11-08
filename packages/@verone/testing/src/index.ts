@@ -5,3 +5,6 @@
 
 // Hooks
 export * from './hooks';
+
+// Critical Tests
+export * from './critical-tests-2025';

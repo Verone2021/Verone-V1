@@ -8,7 +8,7 @@ import { ContactFormModalWrapper as ContactFormModal } from '@/components/busine
 import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
 import { spacing, colors } from '@verone/ui';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 
 interface Contact {
   id: string;

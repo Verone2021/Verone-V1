@@ -21,7 +21,7 @@ import {
   Euro,
 } from 'lucide-react';
 
-import { isModuleDeployed, getModulePhase } from '@/lib/deployed-modules';
+import { isModuleDeployed, getModulePhase } from '@verone/utils/deployed-modules';
 import { AddressEditSection } from '@verone/common';
 import { ContactEditSection } from '@verone/customers';
 import { ContactsManagementSection } from '@verone/customers';

@@ -12,7 +12,7 @@ import { Upload, X, Image as ImageIcon, Loader2, FileText } from 'lucide-react';
 
 import { createClient } from '@verone/utils/supabase/client';
 
-import { cn } from '../../lib/utils';
+import { cn } from '@verone/utils';
 
 type DocumentCategory =
   | 'product_image'

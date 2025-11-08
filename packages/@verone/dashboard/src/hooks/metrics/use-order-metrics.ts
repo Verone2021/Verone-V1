@@ -5,7 +5,7 @@
 
 'use client';
 
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 
 export interface OrderMetrics {
   pending: number;

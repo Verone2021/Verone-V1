@@ -27,7 +27,7 @@ import {
 import { useImageUpload, type UseImageUploadProps } from '@verone/common';
 import type { BucketType } from '@verone/utils/upload/validation';
 
-import { cn } from '../../lib/utils';
+import { cn } from '@verone/utils';
 
 interface ImageUploadV2Props
   extends Omit<UseImageUploadProps, 'onUploadSuccess' | 'onUploadError'> {

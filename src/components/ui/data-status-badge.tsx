@@ -20,7 +20,7 @@ import React from 'react';
 
 import { CheckCircle2, AlertCircle } from 'lucide-react';
 
-import { cn } from '../../lib/utils';
+import { cn } from '@verone/utils';
 
 export type DataStatusType = 'real' | 'mock';
 

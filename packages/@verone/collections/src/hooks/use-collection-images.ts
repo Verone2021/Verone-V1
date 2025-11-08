@@ -8,8 +8,8 @@
 
 import { useState, useCallback, useEffect } from 'react';
 
-import logger from '@/lib/logger';
-import { createClient } from '@/lib/supabase/client';
+import logger from '@verone/utils/logger';
+import { createClient } from '@verone/utils/supabase/client';
 
 // Types simplifiés pour collection_images table
 export interface CollectionImage {

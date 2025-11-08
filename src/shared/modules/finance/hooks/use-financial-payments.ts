@@ -14,7 +14,7 @@ import { useState, useEffect } from 'react';
 
 import { toast } from 'react-hot-toast';
 
-import { featureFlags } from '@/lib/feature-flags';
+import { featureFlags } from '@verone/utils/feature-flags';
 import { createClient } from '@verone/utils/supabase/client';
 
 // =====================================================================

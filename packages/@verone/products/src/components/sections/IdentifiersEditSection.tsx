@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Tag, Save, X, RefreshCw } from 'lucide-react';
 
 import { ButtonV2 } from '@verone/ui';
-import { generateSKU } from '@/lib/business-rules/naming-rules';
+import { generateSKU } from '@verone/utils/business-rules/naming-rules';
 import { cn } from '@verone/utils';
 import {
   useInlineEdit,

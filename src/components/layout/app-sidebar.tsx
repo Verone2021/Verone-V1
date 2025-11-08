@@ -45,7 +45,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 
-import { featureFlags, getModuleDeploymentStatus } from '@/lib/feature-flags';
+import { featureFlags, getModuleDeploymentStatus } from '@verone/utils/feature-flags';
 import { createClient } from '@verone/utils/supabase/client';
 
 import { InactiveModuleWrapper, PhaseIndicator } from '../ui/phase-indicator';

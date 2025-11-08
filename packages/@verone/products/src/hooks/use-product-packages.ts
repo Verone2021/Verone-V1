@@ -2,8 +2,8 @@
 
 import { useState, useCallback, useEffect } from 'react';
 
-import { createClient } from '@/lib/supabase/client';
-import type { Database } from '@/lib/supabase/types';
+import { createClient } from '@verone/utils/supabase/client';
+import type { Database } from '@verone/utils/supabase/types';
 
 type ProductPackage = Database['public']['Tables']['product_packages']['Row'];
 type ProductPackageInsert =

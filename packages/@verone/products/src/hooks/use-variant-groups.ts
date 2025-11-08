@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-import logger from '@/lib/logger';
+import logger from '@verone/utils/logger';
 import { generateProductSKU } from '@verone/products/utils';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@verone/common/hooks';
 import type {
   VariantGroup,

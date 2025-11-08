@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 // FIXME: Module './use-manual-tests' does not exist - TS2307
 // import { TestSection, TestMetrics } from "./use-manual-tests"
 

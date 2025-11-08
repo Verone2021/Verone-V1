@@ -2,9 +2,9 @@
 
 import { useState, useCallback, useEffect } from 'react';
 
-import logger from '@/lib/logger';
-import { createClient } from '@/lib/supabase/client';
-import type { Database } from '@/lib/supabase/types';
+import logger from '@verone/utils/logger';
+import { createClient } from '@verone/utils/supabase/client';
+import type { Database } from '@verone/utils/supabase/types';
 
 type ProductImage = Database['public']['Tables']['product_images']['Row'];
 type ProductImageInsert =

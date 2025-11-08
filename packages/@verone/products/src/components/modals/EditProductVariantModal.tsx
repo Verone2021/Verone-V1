@@ -38,7 +38,7 @@ import {
   SelectValue,
 } from '@verone/ui';
 import { Textarea } from '@verone/ui';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@verone/common/hooks';
 import { useOrganisations } from '@verone/organisations/hooks';
 import { SupplierSelector } from '@verone/suppliers/components/selectors/SupplierSelector';

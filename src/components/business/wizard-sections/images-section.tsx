@@ -13,7 +13,7 @@ import {
 
 import { useToast } from '@/shared/modules/common/hooks';
 
-import { cn } from '../../../lib/utils';
+import { cn } from '@verone/utils';
 import { Alert, AlertDescription } from '../../ui/alert';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';

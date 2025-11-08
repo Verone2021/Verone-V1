@@ -35,7 +35,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
 import { Textarea } from '@verone/ui';
 import { type ReasonCode } from '../../hooks/core/use-stock-core';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@verone/common/hooks';
 import { useStockUI } from '../../hooks';
 import {
