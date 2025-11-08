@@ -12,27 +12,27 @@ import type { CreateConsultationData } from '@verone/consultations';
 import { useOrganisations } from '@verone/organisations';
 
 import { CreateOrganisationModal } from '../../../components/business/create-organisation-modal';
-import { Button } from '../../../components/ui/button';
+import { Button } from '@verone/ui';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '../../../components/ui/card';
-import { Combobox } from '../../../components/ui/combobox';
-import { Input } from '../../../components/ui/input';
-import { Label } from '../../../components/ui/label';
+} from '@verone/ui';
+import { Combobox } from '@verone/ui';
+import { Input } from '@verone/ui';
+import { Label } from '@verone/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../../../components/ui/select';
-import { Textarea } from '../../../components/ui/textarea';
-import { createClient } from '../../../lib/supabase/client';
-import { getOrganisationDisplayName } from '../../../lib/utils/organisation-helpers';
+} from '@verone/ui';
+import { Textarea } from '@verone/ui';
+import { createClient } from '@verone/utils/supabase/client';
+import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 import { createConsultation as createConsultationAction } from '../../actions/consultations';
 
 // Interface pour le formulaire (utilise organisation_id pour le sélecteur)

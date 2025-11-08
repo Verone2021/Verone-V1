@@ -77,3 +77,10 @@ export * from './supabase/client';
 
 export * from './export/csv';
 export * from './reports/export-aging-report';
+
+// ========================================
+// MIDDLEWARE
+// ========================================
+
+export * from './middleware/api-security';
+export * from './middleware/logging';

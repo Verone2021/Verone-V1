@@ -4,7 +4,7 @@
  * Intégration MCP pour monitoring et automation
  */
 
-import { gdprAnalytics } from '@/lib/analytics/gdpr-analytics';
+import { gdprAnalytics } from '@verone/utils/analytics/gdpr-analytics';
 
 export interface ImageOptimizationConfig {
   // Formats de sortie supportés

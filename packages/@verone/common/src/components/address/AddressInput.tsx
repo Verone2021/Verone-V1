@@ -8,7 +8,7 @@ import type { UnifiedCustomer } from '@/components/business/customer-selector';
 import { ButtonV2 } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { Textarea } from '@verone/ui';
-import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers';
+import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 import type { Organisation } from '@verone/organisations/hooks';
 
 interface AddressInputProps {

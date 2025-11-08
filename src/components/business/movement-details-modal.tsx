@@ -1,2 +1,2 @@
 // Re-export from shared modules for backward compatibility
-export { MovementDetailsModal } from '@/shared/modules/stock/components/modals/MovementDetailsModal';
+export { MovementDetailsModal } from '@verone/stock/components/modals/MovementDetailsModal';

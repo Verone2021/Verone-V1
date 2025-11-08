@@ -1,2 +1,2 @@
 // Re-export from shared modules for backward compatibility
-export { ContactPreferencesEditSection } from '@/shared/modules/customers/components/sections/ContactPreferencesEditSection';
+export { ContactPreferencesEditSection } from '@verone/customers/components/sections/ContactPreferencesEditSection';

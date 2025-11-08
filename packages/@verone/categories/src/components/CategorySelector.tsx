@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { ChevronDown, Folder, FolderOpen } from 'lucide-react';
 
 import { ButtonV2 } from '@verone/ui';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 import { cn } from '@verone/utils';
 
 // Types hiérarchie selon business rules

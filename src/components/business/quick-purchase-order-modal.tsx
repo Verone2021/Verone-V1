@@ -8,4 +8,4 @@
 export {
   QuickPurchaseOrderModal,
   type QuickPurchaseOrderModalProps,
-} from '@/shared/modules/orders/components/modals/QuickPurchaseOrderModal';
+} from '@verone/orders/components/modals/QuickPurchaseOrderModal';

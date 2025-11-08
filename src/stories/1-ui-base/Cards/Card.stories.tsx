@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/nextjs';
 import { Save, X } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
+import { Badge } from '@verone/ui'
+import { ButtonV2 } from '@verone/ui'
 import {
   Card,
   CardHeader,
@@ -10,7 +10,7 @@ import {
   CardDescription,
   CardContent,
   CardFooter,
-} from '@/components/ui/card';
+} from '@verone/ui'
 
 const meta = {
   title: '1-UI-Base/Cards/Card',

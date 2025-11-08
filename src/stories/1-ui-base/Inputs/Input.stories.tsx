@@ -13,7 +13,7 @@ import {
   DollarSign,
 } from 'lucide-react';
 
-import { Input } from '@/components/ui/input';
+import { Input } from '@verone/ui'
 
 const meta = {
   title: '1-UI-Base/Inputs/Input',

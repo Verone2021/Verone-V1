@@ -1,2 +1,2 @@
 // Re-export from shared modules for backward compatibility
-export { OrganisationPurchaseOrdersSection } from '@/shared/modules/orders/components/sections/OrganisationPurchaseOrdersSection';
+export { OrganisationPurchaseOrdersSection } from '@verone/orders/components/sections/OrganisationPurchaseOrdersSection';

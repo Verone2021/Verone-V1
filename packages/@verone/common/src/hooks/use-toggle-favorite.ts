@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 
 interface UseToggleFavoriteOptions {
   organisationId: string;

@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 import { useStockOrdersMetrics } from '@verone/dashboard/hooks/metrics/use-stock-orders-metrics';
 import { useOrganisations } from '@verone/organisations/hooks';
 

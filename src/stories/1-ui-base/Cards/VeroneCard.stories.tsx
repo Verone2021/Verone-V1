@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs';
 
-import { VéroneCard } from '@/components/ui/verone-card';
+import { VéroneCard } from '@verone/ui'
 
 const meta = {
   title: '1-UI-Base/Cards/VéroneCard',

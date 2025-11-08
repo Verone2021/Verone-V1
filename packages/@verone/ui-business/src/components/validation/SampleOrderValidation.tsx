@@ -50,7 +50,7 @@ import {
   SelectValue,
 } from '@verone/ui';
 import { Textarea } from '@verone/ui';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@verone/common/hooks';
 import { useSourcingProducts } from '@verone/products/hooks';
 

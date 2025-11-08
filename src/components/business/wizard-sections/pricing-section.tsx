@@ -4,17 +4,17 @@ import { useState, useEffect } from 'react';
 
 import { DollarSign, Calculator, Info } from 'lucide-react';
 
-import { Alert, AlertDescription } from '../../ui/alert';
-import { Badge } from '../../ui/badge';
+import { Alert, AlertDescription } from '@verone/ui';
+import { Badge } from '@verone/ui';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '../../ui/card';
-import { Input } from '../../ui/input';
-import { Label } from '../../ui/label';
+} from '@verone/ui';
+import { Input } from '@verone/ui';
+import { Label } from '@verone/ui';
 import type { WizardFormData } from '../complete-product-wizard';
 
 interface PricingSectionProps {

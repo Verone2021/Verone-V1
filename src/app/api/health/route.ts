@@ -8,7 +8,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { logger } from '@verone/utils/logger';
-import { withLogging } from '@/lib/middleware/logging';
+import { withLogging } from '@verone/utils/middleware/logging';
 
 async function healthCheck(req: NextRequest) {
   const startTime = Date.now();

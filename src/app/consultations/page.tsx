@@ -29,31 +29,31 @@ import { useConsultationImages } from '@verone/consultations';
 
 import { ConsultationImageViewerModal } from '../../components/business/consultation-image-viewer-modal';
 import { ConsultationOrderInterface } from '../../components/business/consultation-order-interface';
-import { Alert, AlertDescription } from '../../components/ui/alert';
-import { Badge } from '../../components/ui/badge';
-import { Button } from '../../components/ui/button';
+import { Alert, AlertDescription } from '@verone/ui';
+import { Badge } from '@verone/ui';
+import { Button } from '@verone/ui';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '../../components/ui/card';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
+} from '@verone/ui';
+import { Input } from '@verone/ui';
+import { Label } from '@verone/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../../components/ui/select';
+} from '@verone/ui';
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from '../../components/ui/tabs';
+} from '@verone/ui';
 
 // Composant pour afficher une ligne de consultation avec miniature photo
 interface ConsultationRowProps {

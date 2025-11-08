@@ -7,7 +7,7 @@ import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { Upload, Loader2, CheckCircle, XCircle } from 'lucide-react';
 
-import { createClient } from '../../lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 
 interface SimpleProductFormProps {
   onSuccess?: (product: any) => void;

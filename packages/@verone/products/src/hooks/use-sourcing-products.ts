@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@verone/common/hooks';
 
 export interface SourcingProduct {

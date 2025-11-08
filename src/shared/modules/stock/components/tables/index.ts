@@ -1,1 +1,0 @@
-export { MovementsTable } from './MovementsTable';

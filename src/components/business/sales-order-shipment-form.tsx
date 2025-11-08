@@ -5,4 +5,4 @@
  * Composant migré vers: src/shared/modules/orders/components/forms/SalesOrderShipmentForm.tsx
  */
 
-export { SalesOrderShipmentForm } from '@/shared/modules/orders/components/forms/SalesOrderShipmentForm';
+export { SalesOrderShipmentForm } from '@verone/orders/components/forms/SalesOrderShipmentForm';

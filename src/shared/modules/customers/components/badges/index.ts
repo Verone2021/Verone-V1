@@ -1,1 +1,0 @@
-export { CustomerBadge } from './CustomerBadge';

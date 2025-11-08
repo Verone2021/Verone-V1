@@ -4,7 +4,7 @@
  * Intégration Sentry + Upstash + Analytics GDPR
  */
 
-import { gdprAnalytics } from '@/lib/analytics/gdpr-analytics';
+import { gdprAnalytics } from '@verone/utils/analytics/gdpr-analytics';
 
 export interface UploadPerformanceMetrics {
   // Identifiants

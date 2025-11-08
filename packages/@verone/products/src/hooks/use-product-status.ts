@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 
 import { deleteProductAlerts } from '@/app/actions/delete-product-alerts';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 
 /**
  * Hook pour gérer le statut commercial manuel d'un produit

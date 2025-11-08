@@ -1,1 +1,0 @@
-export { SupplierCategoryBadge } from './SupplierCategoryBadge';

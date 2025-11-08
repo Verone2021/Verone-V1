@@ -1,2 +1,2 @@
 // Re-export from shared modules for backward compatibility
-export * from '@/shared/modules/organisations/components/forms/supplier-segment-select';
+export * from '@verone/organisations/components/forms/supplier-segment-select';

@@ -11,20 +11,20 @@ import {
   Plus,
 } from 'lucide-react';
 
-import { useToast } from '@/shared/modules/common/hooks';
+import { useToast } from '@verone/common/hooks';
 
-import { cn } from '../../../lib/utils';
-import { Alert, AlertDescription } from '../../ui/alert';
-import { Badge } from '../../ui/badge';
-import { Button } from '../../ui/button';
+import { cn } from '@verone/utils';
+import { Alert, AlertDescription } from '@verone/ui';
+import { Badge } from '@verone/ui';
+import { Button } from '@verone/ui';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '../../ui/card';
-import { Label } from '../../ui/label';
+} from '@verone/ui';
+import { Label } from '@verone/ui';
 import type { WizardFormData } from '../complete-product-wizard';
 
 interface ImagesSectionProps {

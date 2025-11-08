@@ -9,4 +9,4 @@ export {
   SupplierCategoryBadge,
   type SupplierCategoryCode,
   getCategoryLabel,
-} from '@/shared/modules/categories/components/badges/SupplierCategoryBadge';
+} from '@verone/categories/components/badges/SupplierCategoryBadge';

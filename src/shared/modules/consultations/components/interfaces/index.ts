@@ -1,1 +1,0 @@
-export { ConsultationOrderInterface } from './ConsultationOrderInterface';

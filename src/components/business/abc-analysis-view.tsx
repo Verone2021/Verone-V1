@@ -1,2 +1,2 @@
 // Re-export from shared/modules/stock
-export { ABCAnalysisView } from '@/shared/modules/stock/components/reports';
+export { ABCAnalysisView } from '@verone/stock/components/reports';

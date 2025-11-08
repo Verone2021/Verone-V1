@@ -8,16 +8,16 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '../../ui/card';
-import { Input } from '../../ui/input';
-import { Label } from '../../ui/label';
+} from '@verone/ui';
+import { Input } from '@verone/ui';
+import { Label } from '@verone/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../../ui/select';
+} from '@verone/ui';
 import { CategorySelector } from '../category-selector';
 import type { WizardFormData } from '../complete-product-wizard';
 

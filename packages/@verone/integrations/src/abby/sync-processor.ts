@@ -4,7 +4,7 @@
 // Description: Traite queue async avec retry logic
 // =====================================================================
 
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@verone/utils/supabase/server';
 
 import { getAbbyClient } from './client';
 import { AbbyError } from './errors';

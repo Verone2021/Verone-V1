@@ -36,7 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 import type { MovementHistoryFilters } from '../../hooks';
 import { useStockMovements } from '../../hooks';
 

@@ -1,3 +1,3 @@
 // Re-export from shared modules for backward compatibility
-export { EditSourcingProductModal } from '@/shared/modules/products/components/modals/EditSourcingProductModal';
-export { SourcingProductModal } from '@/shared/modules/products/components/sourcing/SourcingProductModal';
+export { EditSourcingProductModal } from '@verone/products/components/modals/EditSourcingProductModal';
+export { SourcingProductModal } from '@verone/products/components/sourcing/SourcingProductModal';

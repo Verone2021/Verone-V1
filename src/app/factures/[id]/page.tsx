@@ -97,11 +97,11 @@ export default async function InvoiceDetailPage({
   const { id } = await params;
 
   // FEATURE FLAG: Finance module disabled for Phase 1
-  const { featureFlags } = await import('@/lib/feature-flags');
+  const { featureFlags } = await import('@verone/utils/feature-flags');
 
   if (!featureFlags.financeEnabled) {
     const { Card, CardContent, CardDescription, CardHeader, CardTitle } =
-      await import('@/components/ui/card');
+      await import('@verone/ui');
     const { AlertCircle, Lock } = await import('lucide-react');
 
     return (

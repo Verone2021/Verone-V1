@@ -9,7 +9,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 
 export type NotificationType = 'stock' | 'order' | 'system' | 'activity';
 export type NotificationSeverity = 'info' | 'warning' | 'error' | 'critical';

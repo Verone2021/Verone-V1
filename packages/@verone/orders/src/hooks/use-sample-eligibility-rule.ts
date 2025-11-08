@@ -17,7 +17,7 @@
 import { useState, useCallback } from 'react';
 
 import { hasProductBeenInStock } from '@verone/stock/utils';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 import type {
   SampleEligibilityResult,
   SampleRestrictionReason,

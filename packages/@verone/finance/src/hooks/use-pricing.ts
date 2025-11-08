@@ -19,8 +19,8 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { logger } from '@/lib/logger';
-import { createClient } from '@/lib/supabase/client';
+import { logger } from '@verone/utils/logger';
+import { createClient } from '@verone/utils/supabase/client';
 
 // =====================================================================
 // TYPES - Version 2.0 (Price Lists System)

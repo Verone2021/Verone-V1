@@ -9,7 +9,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 
 // Type pour les produits top 5 du dashboard
 export interface TopProduct {

@@ -1,2 +1,2 @@
 // Re-export from shared modules for backward compatibility
-export { ProductFixedCharacteristics } from '@/shared/modules/products/components/images/ProductFixedCharacteristics';
+export { ProductFixedCharacteristics } from '@verone/products/components/images/ProductFixedCharacteristics';

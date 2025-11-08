@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef } from 'react';
 
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 
 // Types pour le système de reporting d'erreurs
 export type ErrorType =

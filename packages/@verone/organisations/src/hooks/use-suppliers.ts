@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 
 /**
  * @deprecated HOOK OBSOLÈTE - Utiliser useOrganisations({ type: 'supplier' }) à la place

@@ -1,1 +1,0 @@
-export { LogoUploadButton } from './LogoUploadButton';

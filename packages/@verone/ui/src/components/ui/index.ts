@@ -108,3 +108,4 @@ export * from './image-upload-zone';
 // CUSTOM COMPONENTS
 // ========================================
 export * from './room-multi-select';
+export * from './phase-indicator';

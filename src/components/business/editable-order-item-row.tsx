@@ -5,4 +5,4 @@
  * Composant migré vers: src/shared/modules/orders/components/tables/EditableOrderItemRow.tsx
  */
 
-export { EditableOrderItemRow } from '@/shared/modules/orders/components/tables/EditableOrderItemRow';
+export { EditableOrderItemRow } from '@verone/orders/components/tables/EditableOrderItemRow';

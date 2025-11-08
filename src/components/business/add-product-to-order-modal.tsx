@@ -5,4 +5,4 @@
  * Composant migré vers: src/shared/modules/orders/components/modals/AddProductToOrderModal.tsx
  */
 
-export { AddProductToOrderModal } from '@/shared/modules/orders/components/modals/AddProductToOrderModal';
+export { AddProductToOrderModal } from '@verone/orders/components/modals/AddProductToOrderModal';

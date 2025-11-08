@@ -48,7 +48,7 @@ import {
   type StockMovement,
   type StockItem,
 } from '../hooks/core/use-stock-core';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@verone/common/hooks';
 
 // ============================================================================

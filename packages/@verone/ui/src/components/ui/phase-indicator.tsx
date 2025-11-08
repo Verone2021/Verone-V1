@@ -18,7 +18,7 @@ import {
   getModuleDeploymentStatus,
   PHASE_LABELS,
   PHASE_COLORS,
-} from '@/lib/feature-flags';
+} from '@verone/utils/feature-flags';
 
 import { Badge } from './badge';
 

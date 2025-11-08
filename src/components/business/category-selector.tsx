@@ -1,2 +1,2 @@
 // Re-export from shared/modules/categories
-export { CategorySelector } from '@/shared/modules/categories/components';
+export { CategorySelector } from '@verone/categories/components';

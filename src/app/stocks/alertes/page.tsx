@@ -30,24 +30,24 @@ import { useStockAlerts } from '@verone/stock';
 
 import { QuickPurchaseOrderModal } from '../../../components/business/quick-purchase-order-modal';
 import { StockAlertCard } from '../../../components/business/stock-alert-card';
-import { Badge } from '../../../components/ui/badge';
-import { ButtonV2 } from '../../../components/ui/button';
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '../../../components/ui/card';
-import { Input } from '../../../components/ui/input';
-import { Label } from '../../../components/ui/label';
+} from '@verone/ui';
+import { Input } from '@verone/ui';
+import { Label } from '@verone/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../../../components/ui/select';
+} from '@verone/ui';
 
 type AlertSeverity = 'critical' | 'warning' | 'info';
 type AlertCategory = 'stock' | 'movement' | 'forecast' | 'system';
