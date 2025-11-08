@@ -1,0 +1,23 @@
+{
+  "name": "@verone/types",
+  "version": "1.0.0",
+  "description": "Types TypeScript partagés pour Vérone Back Office (Supabase + Business)",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "types",
+    "typescript",
+    "supabase",
+    "verone"
+  ],
+  "author": "Romeo Dos Santos",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}
