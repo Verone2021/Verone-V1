@@ -15,7 +15,7 @@
 
 import * as React from 'react';
 
-import { cn } from '@/lib/utils';
+import { cn } from '@verone/utils';
 
 import { CHANNEL_CONFIG, type ChannelCode, SIZES } from './types';
 

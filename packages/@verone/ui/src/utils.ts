@@ -5,7 +5,7 @@
  */
 
 // Import cn from shadcn utils
-import { cn } from '@/lib/utils';
+import { cn } from '@verone/utils';
 
 // Re-export cn
 export { cn };

@@ -24,8 +24,8 @@ import * as React from 'react';
 
 import { ArrowUp, ArrowDown } from 'lucide-react';
 
-import { Card } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
+import { Card } from '../card';
+import { cn } from '@verone/utils';
 
 import { KPI_VARIANT_CONFIG, type KPIVariant, type LucideIcon } from './types';
 

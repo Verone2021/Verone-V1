@@ -17,18 +17,19 @@
  * ```
  */
 
-// Components
+// Components (fonctionnels sans dépendances externes)
 export { ChannelBadge } from './ChannelBadge';
 export type { ChannelBadgeProps } from './ChannelBadge';
 
-export { ChannelFilter } from './ChannelFilter';
-export type { ChannelFilterProps } from './ChannelFilter';
-
-export { StockMovementCard } from './StockMovementCard';
-export type { StockMovementCardProps } from './StockMovementCard';
-
-export { StockKPICard } from './StockKPICard';
-export type { StockKPICardProps } from './StockKPICard';
+// Composants nécessitant shadcn/ui + Supabase (commentés temporairement)
+// export { ChannelFilter } from './ChannelFilter';
+// export type { ChannelFilterProps } from './ChannelFilter';
+//
+// export { StockMovementCard } from './StockMovementCard';
+// export type { StockMovementCardProps } from './StockMovementCard';
+//
+// export { StockKPICard } from './StockKPICard';
+// export type { StockKPICardProps } from './StockKPICard';
 
 // Types & Constants
 export type {
