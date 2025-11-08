@@ -19,7 +19,8 @@
   "private": true,
   "dependencies": {
     "@verone/utils": "workspace:*",
-    "@verone/types": "workspace:*"
+    "@verone/types": "workspace:*",
+    "google-auth-library": "^9.15.0"
   },
   "peerDependencies": {
     "react": "^18.2.0"

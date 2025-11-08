@@ -11,6 +11,7 @@
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
+    "@supabase/postgrest-js": "^1.17.3",
     "@verone/ui": "workspace:*",
     "@verone/utils": "workspace:*",
     "@verone/types": "workspace:*"
