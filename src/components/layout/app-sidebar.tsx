@@ -48,7 +48,7 @@ import {
 import { featureFlags, getModuleDeploymentStatus } from '@verone/utils/feature-flags';
 import { createClient } from '@verone/utils/supabase/client';
 
-import { InactiveModuleWrapper, PhaseIndicator } from '../ui/phase-indicator';
+import { InactiveModuleWrapper, PhaseIndicator } from '@verone/ui';
 
 // Phase 1: use-stock-alerts-count hook désactivé (Phase 2+)
 // import { useStockAlertsCount } from '@verone/stock'

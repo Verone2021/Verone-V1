@@ -1,2 +1,2 @@
 // Re-export from shared modules for backward compatibility
-export { HeartBadge } from '@/shared/modules/organisations/components/badges/HeartBadge';
+export { HeartBadge } from '@verone/organisations/components/badges/HeartBadge';

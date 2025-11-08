@@ -1,2 +1,2 @@
 // Re-export from shared modules for backward compatibility
-export { MovementsStatsCards } from '@/shared/modules/stock/components/stats/MovementsStats';
+export { MovementsStatsCards } from '@verone/stock/components/stats/MovementsStats';

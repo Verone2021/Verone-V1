@@ -1,2 +1,2 @@
 // Re-export from shared modules for backward compatibility
-export { CustomerFormModal } from '@/shared/modules/customers/components/modals/CustomerFormModal';
+export { CustomerFormModal } from '@verone/customers/components/modals/CustomerFormModal';

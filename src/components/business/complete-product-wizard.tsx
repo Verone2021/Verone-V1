@@ -2,4 +2,4 @@
 export {
   CompleteProductWizard,
   type WizardFormData,
-} from '@/shared/modules/products/components/wizards/CompleteProductWizard';
+} from '@verone/products/components/wizards/CompleteProductWizard';

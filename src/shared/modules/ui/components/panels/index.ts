@@ -1,1 +1,0 @@
-export { SmartSuggestionsPanel } from './SmartSuggestionsPanel';

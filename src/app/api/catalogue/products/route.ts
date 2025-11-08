@@ -13,8 +13,8 @@ import {
   withApiSecurity,
   validateInput,
   sanitizeString,
-} from '@/lib/middleware/api-security';
-import { withLogging } from '@/lib/middleware/logging';
+} from '@verone/utils/middleware/api-security';
+import { withLogging } from '@verone/utils/middleware/logging';
 
 // Mock data pour démonstration
 const MOCK_PRODUCTS = [

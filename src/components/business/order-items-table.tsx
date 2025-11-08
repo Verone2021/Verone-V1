@@ -1,2 +1,2 @@
 // Re-export from shared modules for backward compatibility
-export { OrderItemsTable } from '@/shared/modules/orders/components/tables/OrderItemsTable';
+export { OrderItemsTable } from '@verone/orders/components/tables/OrderItemsTable';

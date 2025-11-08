@@ -8,9 +8,9 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '../../ui/card';
-import { Input } from '../../ui/input';
-import { Label } from '../../ui/label';
+} from '@verone/ui';
+import { Input } from '@verone/ui';
+import { Label } from '@verone/ui';
 import type { WizardFormData } from '../complete-product-wizard';
 import { SupplierSelector } from '../supplier-selector';
 

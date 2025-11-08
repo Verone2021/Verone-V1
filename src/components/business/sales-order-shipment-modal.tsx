@@ -5,4 +5,4 @@
  * Composant migré vers: src/shared/modules/orders/components/modals/SalesOrderShipmentModal.tsx
  */
 
-export { SalesOrderShipmentModal } from '@/shared/modules/orders/components/modals/SalesOrderShipmentModal';
+export { SalesOrderShipmentModal } from '@verone/orders/components/modals/SalesOrderShipmentModal';

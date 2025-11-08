@@ -27,22 +27,22 @@ import { ConsultationOrderInterface } from '@verone/consultations';
 import { EditConsultationModal } from '@verone/consultations';
 import { useConsultations } from '@verone/consultations';
 
-import { Alert, AlertDescription } from '../../../components/ui/alert';
-import { Badge } from '../../../components/ui/badge';
-import { ButtonV2 } from '../../../components/ui/button';
+import { Alert, AlertDescription } from '@verone/ui';
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '../../../components/ui/card';
+} from '@verone/ui';
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from '../../../components/ui/tabs';
+} from '@verone/ui';
 
 export default function ConsultationDetailPage() {
   const router = useRouter();

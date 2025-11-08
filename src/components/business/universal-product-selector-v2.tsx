@@ -4,4 +4,4 @@ export {
   type SelectedProduct,
   type ProductData,
   type UniversalProductSelectorV2Props,
-} from '@/shared/modules/products/components/selectors/UniversalProductSelectorV2';
+} from '@verone/products/components/selectors/UniversalProductSelectorV2';

@@ -1,2 +1,2 @@
 // Re-export from shared modules for backward compatibility
-export { FilterCombobox } from '@/shared/modules/ui/components/selectors/FilterCombobox';
+export { FilterCombobox } from '@verone/ui-business/components/selectors/FilterCombobox';

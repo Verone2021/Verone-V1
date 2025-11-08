@@ -1,2 +1,2 @@
 // Re-export from shared modules for backward compatibility
-export { CommandPaletteSearch } from '@/shared/modules/ui/components/utils/CommandPaletteSearch';
+export { CommandPaletteSearch } from '@verone/ui-business/components/utils/CommandPaletteSearch';

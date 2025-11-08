@@ -101,7 +101,7 @@ export default async function InvoiceDetailPage({
 
   if (!featureFlags.financeEnabled) {
     const { Card, CardContent, CardDescription, CardHeader, CardTitle } =
-      await import('@/components/ui/card');
+      await import('@verone/ui');
     const { AlertCircle, Lock } = await import('lucide-react');
 
     return (

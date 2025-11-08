@@ -4,18 +4,18 @@ import { useState } from 'react';
 
 import { Plus, X, FileText, List, Sparkles } from 'lucide-react';
 
-import { Badge } from '../../ui/badge';
-import { Button } from '../../ui/button';
+import { Badge } from '@verone/ui';
+import { Button } from '@verone/ui';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '../../ui/card';
-import { Input } from '../../ui/input';
-import { Label } from '../../ui/label';
-import { Textarea } from '../../ui/textarea';
+} from '@verone/ui';
+import { Input } from '@verone/ui';
+import { Label } from '@verone/ui';
+import { Textarea } from '@verone/ui';
 import type { WizardFormData } from '../complete-product-wizard';
 
 interface DescriptionsSectionProps {

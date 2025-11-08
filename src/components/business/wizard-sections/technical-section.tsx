@@ -4,24 +4,24 @@ import { useState } from 'react';
 
 import { Settings, Plus, X, Ruler } from 'lucide-react';
 
-import { Badge } from '../../ui/badge';
-import { Button } from '../../ui/button';
+import { Badge } from '@verone/ui';
+import { Button } from '@verone/ui';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '../../ui/card';
-import { Input } from '../../ui/input';
-import { Label } from '../../ui/label';
+} from '@verone/ui';
+import { Input } from '@verone/ui';
+import { Label } from '@verone/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../../ui/select';
+} from '@verone/ui';
 import type { WizardFormData } from '../complete-product-wizard';
 
 interface TechnicalSectionProps {

@@ -3,4 +3,4 @@ export {
   CustomerSelector,
   type UnifiedCustomer,
   type CustomerType,
-} from '@/shared/modules/orders/components/modals/customer-selector';
+} from '@verone/orders/components/modals/customer-selector';

@@ -1,1 +1,0 @@
-export { ConfirmDeleteOrganisationModal } from './ConfirmDeleteOrganisationModal';

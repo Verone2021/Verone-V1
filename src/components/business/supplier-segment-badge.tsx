@@ -9,4 +9,4 @@ export {
   SupplierSegmentBadge,
   SupplierSegmentBadgeWithTooltip,
   type SupplierSegmentType,
-} from '@/shared/modules/suppliers/components/badges/SupplierSegmentBadge';
+} from '@verone/suppliers/components/badges/SupplierSegmentBadge';

@@ -1,2 +1,2 @@
 // Re-export from shared modules for backward compatibility
-export { OrganisationLogo } from '@/shared/modules/organisations/components/display/OrganisationLogo';
+export { OrganisationLogo } from '@verone/organisations/components/display/OrganisationLogo';

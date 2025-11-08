@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/nextjs';
 import { Check, AlertTriangle, X, Star, Clock } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@verone/ui'
 
 const meta = {
   title: '1-UI-Base/Badges/Badge',

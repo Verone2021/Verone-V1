@@ -2,4 +2,4 @@
 export {
   CollectionCreationWizard,
   type CreateCollectionInput,
-} from '@/shared/modules/common/components/collections/CollectionCreationWizard';
+} from '@verone/common/components/collections/CollectionCreationWizard';

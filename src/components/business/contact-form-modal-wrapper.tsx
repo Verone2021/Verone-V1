@@ -4,7 +4,7 @@
  * Wrapper pour ContactFormModal - Adapte l'interface customer/modal au format attendu par organisation-contacts-manager
  */
 
-import { ContactFormModal as CustomerContactFormModal } from '@/shared/modules/customers/components/modals/contact-form-modal';
+import { ContactFormModal as CustomerContactFormModal } from '@verone/customers/components/modals/contact-form-modal';
 
 interface Contact {
   id: string;

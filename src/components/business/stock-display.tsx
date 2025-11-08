@@ -2,4 +2,4 @@
 export {
   StockDisplay,
   StockSummaryCard,
-} from '@/shared/modules/stock/components/sections/StockDisplay';
+} from '@verone/stock/components/sections/StockDisplay';
