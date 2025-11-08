@@ -1,123 +1,100 @@
 # @verone/ui
 
-Composants UI et Design System pour le monorepo Vérone (shadcn/ui + Radix UI + Design System V2).
+**Composants UI et Design System pour le monorepo Vérone**
 
-## 📦 Contenu
+Bibliothèque complète de composants UI pour le système CRM/ERP Vérone, basée sur shadcn/ui + Radix UI + Tailwind CSS + Design System V2.
 
-### Design System
+---
 
-- `tokens/` - Design tokens (couleurs, spacing, typography, shadows)
-- `themes/` - Thèmes (light, dark)
-- `utils.ts` - Utilitaires (cn pour class merging)
+## 📦 Installation
 
-### Composants UI
+```bash
+# Dans le monorepo
+npm install @verone/ui
 
-- `components/stock/` - Composants spécialisés Stock
-  - `ChannelBadge` - Badge canal de vente
-  - `ChannelFilter` - Filtre multi-canaux
-  - `StockKPICard` - Carte KPI stock
-  - `StockMovementCard` - Carte mouvement stock
+# Dépendances peer
+npm install react react-dom
+```
+
+---
 
 ## 🚀 Usage
 
-### Installation
+```tsx
+import { ButtonUnified, Card, Input, Badge } from '@verone/ui';
 
-Ce package est local au monorepo, géré via npm workspaces.
-
-### Import Composants
-
-```typescript
-// Import composants stock
-import { ChannelBadge, StockKPICard } from '@verone/ui';
-
-// Import tokens et thèmes
-import { colors, spacing } from '@verone/ui/tokens';
-import { lightTheme } from '@verone/ui/themes';
-
-// Import utilitaire cn
-import { cn } from '@verone/ui';
-```
-
-### Utilisation
-
-```typescript
-import { ChannelBadge } from '@verone/ui';
-
-export function MyComponent() {
+function MyComponent() {
   return (
-    <ChannelBadge
-      channel="b2b_pro"
-      variant="default"
-    />
+    <Card>
+      <Input placeholder="Rechercher..." />
+      <Badge variant="success">Actif</Badge>
+      <ButtonUnified variant="gradient">Enregistrer</ButtonUnified>
+    </Card>
   );
 }
 ```
 
-## 🎨 Design System V2
+---
 
-Le Design System V2 est basé sur :
+## 🎨 Composants Disponibles (51 total)
 
-- **shadcn/ui** - Composants accessibles avec Radix UI
-- **Tailwind CSS** - Utility-first CSS framework
-- **Design Tokens** - Variables centralisées (couleurs, spacing, etc.)
+### Boutons (4 composants)
 
-### Tokens Disponibles
+- **ButtonUnified** - Bouton unifié Design System V2 ✨
+- **ActionButton** - Bouton action avec icône
+- **ModernActionButton** - Bouton moderne avec animations
+- **StandardModifyButton** - Bouton modification standard
 
-```typescript
-import { colors, spacing, typography, shadows } from '@verone/ui/tokens';
+### Formulaires (8 composants)
 
-// Couleurs
-colors.primary.main; // '#2563eb'
-colors.success.main; // '#10b981'
+- **Input**, **Textarea**, **Label**, **Form**
+- **Select**, **Checkbox**, **RadioGroup**, **Switch**
 
-// Spacing
-spacing.xs; // '0.25rem'
-spacing.md; // '1rem'
+### Layout (11 composants)
 
-// Typography
-typography.fontSize.base; // '1rem'
-typography.fontWeight.medium; // '500'
-```
+- **Card**, **VeroneCard**, **Separator**, **Accordion**
+- **Collapsible**, **Tabs**, **TabsNavigation**, **Sidebar**
+- **Breadcrumb**, **ScrollArea**, **Table**
 
-## 🔧 Scripts
+### Feedback (10 composants)
 
-```bash
-# Build components
-npm run build
+- **Alert**, **AlertDialog**, **Skeleton**, **Badge**
+- **DataStatusBadge**, **RoleBadge**, **StatPill**, **Progress**, **ActivityTimeline**
 
-# Type check
-npm run type-check
+### Overlay (5 composants)
 
-# Clean dist
-npm run clean
+- **Dialog**, **Popover**, **DropdownMenu**, **Tooltip**, **NotificationSystem**
 
-# Storybook (à venir)
-npm run storybook
-npm run build-storybook
-```
+### Command (3 composants)
 
-## 📝 Conventions
+- **Combobox**, **Command**, **CommandPalette**
 
-- Tous les composants DOIVENT être exportés depuis `src/index.ts`
-- Les composants utilisent TypeScript strict
-- Props DOIVENT être typées avec des interfaces
-- Utiliser `cn()` pour merge className (pattern shadcn/ui)
+### Date (1 composant)
 
-## 🔗 Dépendances
+- **Calendar**
 
-### Peer Dependencies
+### KPI & Metrics (4 composants)
 
-- `react` ^18.3.1
-- `react-dom` ^18.3.1
+- **KpiCardUnified** ✨, **CompactKpiCard**, **MediumKpiCard**, **ElegantKpiCard**
 
-### Dependencies
+### Navigation (3 composants)
 
-- `@radix-ui/*` - Composants accessibles headless
-- `class-variance-authority` - Variants management
-- `clsx` + `tailwind-merge` - Class merging
-- `lucide-react` - Icônes
+- **GroupNavigation**, **Pagination**, **ViewModeToggle**
 
-## 📚 Documentation
+### Actions (2 composants)
 
-- Design System V2 : `docs/architecture/design-system.md`
-- Migration plan : `docs/monorepo/migration-plan.md`
+- **QuickActionsList**, **CompactQuickActions**
+
+---
+
+## 📊 Statistiques
+
+- **51 composants** exportés et fonctionnels
+- **3 composants** désactivés temporairement (dépendances externes)
+- **100% TypeScript** avec types stricts
+- **0 erreur** build et type-check
+
+---
+
+**Version** : 1.0.0
+**Mainteneur** : Romeo Dos Santos

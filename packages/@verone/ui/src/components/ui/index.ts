@@ -1,14 +1,23 @@
 /**
- * @verone/ui - Composants UI shadcn/Radix
+ * @verone/ui - Composants UI shadcn/Radix + Custom Vérone
  *
- * Composants UI de base pour le monorepo Vérone
- * Basés sur shadcn/ui + Radix UI + Tailwind CSS
+ * Composants UI complets pour le monorepo Vérone
+ * Basés sur shadcn/ui + Radix UI + Tailwind CSS + Custom Design System V2
  */
 
-// Button Components
+// ========================================
+// BUTTON COMPONENTS
+// ========================================
 export * from './button-unified';
+// Note: button.tsx exports buttonVariants - conflit avec button-unified
+// export * from './button'; // ButtonV2 legacy - commenté pour éviter conflit buttonVariants
+export * from './action-button';
+export * from './modern-action-button';
+export * from './standard-modify-button';
 
-// Form Components
+// ========================================
+// FORM COMPONENTS
+// ========================================
 export * from './input';
 export * from './textarea';
 export * from './label';
@@ -18,23 +27,86 @@ export * from './checkbox';
 export * from './radio-group';
 export * from './switch';
 
-// Layout Components
+// ========================================
+// LAYOUT COMPONENTS
+// ========================================
 export * from './card';
+export * from './verone-card';
 export * from './separator';
+export * from './accordion';
+export * from './collapsible';
+export * from './tabs';
+export * from './tabs-navigation';
+export * from './sidebar';
+export * from './breadcrumb';
+export * from './scroll-area';
+export * from './table';
 
-// Feedback Components
+// ========================================
+// FEEDBACK COMPONENTS
+// ========================================
 export * from './alert';
+export * from './alert-dialog';
 export * from './skeleton';
 export * from './badge';
+export * from './data-status-badge';
+export * from './role-badge';
+export * from './stat-pill';
+// DISABLED: Dépend de @/lib/feature-flags non disponible dans @verone/ui
+// export * from './phase-indicator';
+export * from './progress';
+export * from './activity-timeline';
 
-// Overlay Components
+// ========================================
+// OVERLAY COMPONENTS
+// ========================================
 export * from './dialog';
 export * from './popover';
 export * from './dropdown-menu';
+export * from './tooltip';
+export * from './notification-system';
 
-// Command Components
+// ========================================
+// COMMAND COMPONENTS
+// ========================================
 export * from './combobox';
 export * from './command';
+export * from './command-palette';
 
-// Date Components
+// ========================================
+// DATE COMPONENTS
+// ========================================
 export * from './calendar';
+
+// ========================================
+// KPI & METRICS COMPONENTS
+// ========================================
+export * from './kpi-card-unified';
+export * from './compact-kpi-card';
+export * from './medium-kpi-card';
+export * from './elegant-kpi-card';
+
+// ========================================
+// NAVIGATION COMPONENTS
+// ========================================
+export * from './group-navigation';
+export * from './pagination';
+export * from './view-mode-toggle';
+
+// ========================================
+// ACTION COMPONENTS
+// ========================================
+export * from './quick-actions-list';
+export * from './compact-quick-actions';
+
+// ========================================
+// UPLOAD COMPONENTS
+// ========================================
+// DISABLED: Dépend de @verone/utils createClient non disponible
+// export * from './image-upload-zone';
+
+// ========================================
+// CUSTOM COMPONENTS
+// ========================================
+// DISABLED: Dépend de ../../types/room-types non disponible dans @verone/ui
+// export * from './room-multi-select';
