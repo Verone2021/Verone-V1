@@ -65,55 +65,65 @@ export interface BadgeProps
   onRemove?: () => void;
 }
 
-function Badge({
-  className,
-  variant,
-  size,
-  dot,
-  dotColor,
-  icon,
-  onRemove,
-  children,
-  ...props
-}: BadgeProps) {
-  return (
-    <div className={cn(badgeVariants({ variant, size }), className)} {...props}>
-      {dot && (
-        <span
-          className="h-1.5 w-1.5 rounded-full"
-          style={{
-            backgroundColor: dotColor || 'currentColor',
-          }}
-        />
-      )}
+const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
+  (
+    {
+      className,
+      variant,
+      size,
+      dot,
+      dotColor,
+      icon,
+      onRemove,
+      children,
+      ...props
+    },
+    ref
+  ) => {
+    return (
+      <div
+        ref={ref}
+        className={cn(badgeVariants({ variant, size }), className)}
+        {...props}
+      >
+        {dot && (
+          <span
+            className="h-1.5 w-1.5 rounded-full"
+            style={{
+              backgroundColor: dotColor || 'currentColor',
+            }}
+          />
+        )}
 
-      {icon && <span className="flex-shrink-0">{icon}</span>}
+        {icon && <span className="flex-shrink-0">{icon}</span>}
 
-      {children}
+        {children}
 
-      {onRemove && (
-        <button
-          onClick={onRemove}
-          className="ml-0.5 flex-shrink-0 rounded-full hover:bg-black/10 p-0.5 transition-colors"
-          aria-label="Retirer"
-        >
-          <svg
-            className="h-3 w-3"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+        {onRemove && (
+          <button
+            onClick={onRemove}
+            className="ml-0.5 flex-shrink-0 rounded-full hover:bg-black/10 p-0.5 transition-colors"
+            aria-label="Retirer"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-        </button>
-      )}
-    </div>
-  );
-}
+            <svg
+              className="h-3 w-3"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        )}
+      </div>
+    );
+  }
+);
+Badge.displayName = 'Badge';
 
 export { Badge, badgeVariants };
