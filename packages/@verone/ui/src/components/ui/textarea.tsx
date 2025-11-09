@@ -1,14 +1,71 @@
 import * as React from 'react';
 
 import { cn } from '@verone/utils';
+import { cva, type VariantProps } from 'class-variance-authority';
+
+const textareaVariants = cva(
+  // Base styles
+  'flex w-full transition-all duration-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-slate-50 resize-none',
+  {
+    variants: {
+      variant: {
+        default: 'rounded-lg border bg-white',
+        filled:
+          'rounded-lg border border-transparent bg-slate-100 focus:bg-white',
+        outlined: 'rounded-lg border-2 bg-white',
+        underlined:
+          'rounded-none border-0 border-b-2 bg-transparent px-0 focus:ring-0',
+      },
+      textareaSize: {
+        sm: 'min-h-[60px] px-3 py-2 text-sm',
+        md: 'min-h-[80px] px-4 py-3 text-sm',
+        lg: 'min-h-[100px] px-4 py-4 text-base',
+      },
+      state: {
+        default:
+          'border-slate-300 focus:border-blue-500 focus:ring-blue-500/20',
+        error: 'border-red-500 focus:border-red-600 focus:ring-red-500/20',
+        success:
+          'border-green-500 focus:border-green-600 focus:ring-green-500/20',
+      },
+    },
+    compoundVariants: [
+      {
+        variant: 'filled',
+        state: 'default',
+        className: 'border-slate-200 focus:border-blue-500',
+      },
+      {
+        variant: 'underlined',
+        textareaSize: 'sm',
+        className: 'min-h-[56px]',
+      },
+      {
+        variant: 'underlined',
+        textareaSize: 'md',
+        className: 'min-h-[76px]',
+      },
+      {
+        variant: 'underlined',
+        textareaSize: 'lg',
+        className: 'min-h-[96px]',
+      },
+    ],
+    defaultVariants: {
+      variant: 'default',
+      textareaSize: 'md',
+      state: 'default',
+    },
+  }
+);
 
 export interface TextareaProps
-  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  extends React.TextareaHTMLAttributes<HTMLTextAreaElement>,
+    Omit<VariantProps<typeof textareaVariants>, 'variant'> {
   /**
-   * Variant de la zone de texte
-   * @default "default"
+   * Variant visuel du textarea (CVA)
    */
-  variant?: 'default' | 'error' | 'success';
+  variant?: 'default' | 'filled' | 'outlined' | 'underlined';
 
   /**
    * Message d'erreur (affiche automatiquement variant="error")
@@ -45,7 +102,9 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   (
     {
       className,
-      variant = 'default',
+      variant,
+      textareaSize,
+      state,
       error,
       helperText,
       showCount,
@@ -59,16 +118,11 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     },
     ref
   ) => {
-    const actualVariant = error ? 'error' : variant;
+    // Auto-set state="error" if error prop is present
+    const actualState = error ? 'error' : state;
+
     const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
     const [charCount, setCharCount] = React.useState(0);
-
-    const variantClasses = {
-      default: 'border-slate-300 focus:border-blue-500 focus:ring-blue-500/20',
-      error: 'border-red-500 focus:border-red-600 focus:ring-red-500/20',
-      success:
-        'border-green-500 focus:border-green-600 focus:ring-green-500/20',
-    };
 
     // Auto-resize functionality
     const adjustHeight = React.useCallback(() => {
@@ -107,18 +161,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
       <div className="w-full">
         <textarea
           className={cn(
-            // Base styles
-            'flex min-h-[80px] w-full rounded-lg border bg-white px-4 py-3',
-            'transition-all duration-200',
-            'placeholder:text-slate-400',
-            'focus:outline-none focus:ring-2',
-            'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-slate-50',
-            'resize-none',
-            'text-sm',
-
-            // Variant
-            variantClasses[actualVariant],
-
+            textareaVariants({ variant, textareaSize, state: actualState }),
             className
           )}
           ref={node => {
@@ -168,4 +211,4 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
 );
 Textarea.displayName = 'Textarea';
 
-export { Textarea };
+export { Textarea, textareaVariants };
