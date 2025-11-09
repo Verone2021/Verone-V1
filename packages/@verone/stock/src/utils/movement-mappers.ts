@@ -7,7 +7,8 @@
  * @since Phase 3.3.1 - Migration Dashboard
  */
 
-import type { StockMovementCardProps } from '@/components/ui-v2/stock/stock-movement-card';
+// FIXME: StockMovementCardProps can't be imported from apps/back-office in package
+// import type { StockMovementCardProps } from '@/components/ui-v2/stock/stock-movement-card';
 
 /**
  * Interface RecentMovement depuis use-stock-dashboard
@@ -49,9 +50,7 @@ export interface RecentMovement {
  * <StockMovementCard {...props} />
  * ```
  */
-export function mapRecentMovementToCard(
-  movement: RecentMovement
-): StockMovementCardProps {
+export function mapRecentMovementToCard(movement: RecentMovement): any {
   return {
     movement: {
       id: movement.id,
@@ -87,8 +86,6 @@ export function mapRecentMovementToCard(
  * cardProps.map(props => <StockMovementCard key={props.movement.id} {...props} />)
  * ```
  */
-export function mapRecentMovementsToCards(
-  movements: RecentMovement[]
-): StockMovementCardProps[] {
+export function mapRecentMovementsToCards(movements: RecentMovement[]): any[] {
   return movements.map(mapRecentMovementToCard);
 }

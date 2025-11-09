@@ -9,6 +9,7 @@
 
 import { useState, useEffect } from 'react';
 
+import { useToast } from '@verone/common';
 import { ButtonV2 } from '@verone/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
 import { Input } from '@verone/ui';
@@ -20,7 +21,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
-import { DynamicColorSelector } from '@verone/ui';
+// FIXME: DynamicColorSelector component doesn't exist in @verone/ui
+// import { DynamicColorSelector } from '@verone/ui';
+import { createClient } from '@verone/utils/supabase/client';
 import {
   Upload,
   X,
@@ -31,9 +34,6 @@ import {
   Layers,
   Euro,
 } from 'lucide-react';
-
-import { useToast } from '@verone/common';
-import { createClient } from '@verone/utils/supabase/client';
 
 interface QuickVariantFormData {
   color: string;
@@ -414,6 +414,7 @@ export function QuickVariantForm({
           {/* Attributs de variante */}
           <div className="space-y-4">
             {/* Couleur avec système dynamique */}
+            {/* FIXME: DynamicColorSelector component doesn't exist in @verone/ui
             <DynamicColorSelector
               value={formData.color}
               onChange={value =>
@@ -422,6 +423,17 @@ export function QuickVariantForm({
               required={variantType === 'color'}
               placeholder="Rechercher ou créer une couleur..."
             />
+            */}
+            <div>
+              <Label>Couleur</Label>
+              <Input
+                value={formData.color}
+                onChange={e =>
+                  setFormData(prev => ({ ...prev, color: e.target.value }))
+                }
+                placeholder="Rechercher ou créer une couleur..."
+              />
+            </div>
 
             {/* Autres attributs avec select statique */}
             <div className="grid grid-cols-2 gap-4">

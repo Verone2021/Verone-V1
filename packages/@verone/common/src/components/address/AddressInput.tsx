@@ -2,14 +2,13 @@
 
 import { useState, useEffect } from 'react';
 
-import { MapPin, Copy } from 'lucide-react';
-
-import type { UnifiedCustomer } from '@/components/business/customer-selector';
+import type { UnifiedCustomer } from '@verone/orders/components/modals/customer-selector';
+import type { Organisation } from '@verone/organisations/hooks';
 import { ButtonV2 } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { Textarea } from '@verone/ui';
 import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
-import type { Organisation } from '@verone/organisations/hooks';
+import { MapPin, Copy } from 'lucide-react';
 
 interface AddressInputProps {
   label: string;

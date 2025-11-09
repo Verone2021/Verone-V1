@@ -4,13 +4,14 @@ import { useState } from 'react';
 
 import Image from 'next/image';
 
-import { Upload, Trash2, Loader2, AlertCircle, ImagePlus } from 'lucide-react';
-
-import { OrganisationLogo } from '@/components/business/organisation-logo';
+import { useLogoUpload } from '@verone/common/hooks/use-logo-upload';
 import { Button } from '@verone/ui';
+
+// FIXME: OrganisationLogo component doesn't exist in monorepo (unused import removed)
+// import { OrganisationLogo } from '@/components/business/organisation-logo';
 import { spacing, colors } from '@verone/ui';
 import { cn } from '@verone/utils';
-import { useLogoUpload } from '@verone/common/hooks/use-logo-upload';
+import { Upload, Trash2, Loader2, AlertCircle, ImagePlus } from 'lucide-react';
 
 interface LogoUploadButtonProps {
   organisationId: string;

@@ -2,10 +2,16 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 
-import { Plus } from 'lucide-react';
-
-import { EcoTaxVatInput } from '@/components/forms/eco-tax-vat-input';
+import { useToast } from '@verone/common/hooks';
+import type { Organisation } from '@verone/organisations/hooks';
+import { useOrganisations } from '@verone/organisations/hooks';
+import type { SelectedProduct } from '@verone/products/components/selectors/UniversalProductSelectorV2';
+import { UniversalProductSelectorV2 } from '@verone/products/components/selectors/UniversalProductSelectorV2';
+import type { Database } from '@verone/types';
 import { ButtonV2 } from '@verone/ui';
+
+// FIXME: EcoTaxVatInput can't be imported from apps/back-office in package
+// import { EcoTaxVatInput } from '@/components/forms/eco-tax-vat-input';
 import {
   Card,
   CardContent,
@@ -23,33 +29,22 @@ import {
 } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
-import {
-  Table,
-  TableBody,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@verone/ui';
+import { Table, TableBody, TableHead, TableHeader, TableRow } from '@verone/ui';
 import { Textarea } from '@verone/ui';
 import { formatCurrency } from '@verone/utils';
-import { useToast } from '@verone/common/hooks';
+import { Plus } from 'lucide-react';
+
 import type { CreateOrderItemData } from '@verone/orders/hooks';
 import { useOrderItems } from '@verone/orders/hooks';
 import {
   usePurchaseOrders,
   CreatePurchaseOrderData,
 } from '@verone/orders/hooks';
-import type { Organisation } from '@verone/organisations/hooks';
-import { useOrganisations } from '@verone/organisations/hooks';
-import type {
-  SelectedProduct} from '@verone/products/components/selectors/UniversalProductSelectorV2';
+
 import { AddProductToOrderModal } from './add-product-to-order-modal';
 import { CreateOrganisationModal } from './create-organisation-modal';
-import { SupplierSelector } from './supplier-selector';
 import { EditableOrderItemRow } from './editable-order-item-row';
-
-import { UniversalProductSelectorV2 } from '@verone/products/components/selectors/UniversalProductSelectorV2';
-import type { Database } from '@verone/types';
+import { SupplierSelector } from './supplier-selector';
 
 type PurchaseOrder = Database['public']['Tables']['purchase_orders']['Row'];
 
@@ -478,12 +473,14 @@ export function PurchaseOrderFormModal({
                 </div>
 
                 <div className="col-span-2">
+                  {/* FIXME: EcoTaxVatInput can't be imported from apps/back-office
                   <EcoTaxVatInput
                     value={ecoTaxVatRate}
                     onChange={setEcoTaxVatRate}
                     defaultTaxRate={20}
                     disabled={isBlocked}
                   />
+                  */}
                 </div>
 
                 {selectedSupplier && selectedSupplier.payment_terms && (

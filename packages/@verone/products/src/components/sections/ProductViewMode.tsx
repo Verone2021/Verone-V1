@@ -1,5 +1,11 @@
 'use client';
 
+// FIXME: ProductFixedCharacteristics component can't be imported from apps/back-office in package
+// import { ProductFixedCharacteristics } from '@/components/business/product-fixed-characteristics';
+// FIXME: ProductImageGallery component can't be imported from apps/back-office in package
+// import { ProductImageGallery } from '@/components/business/product-image-gallery';
+import { ButtonV2 } from '@verone/ui';
+import { cn } from '@verone/utils';
 import {
   Badge,
   TreePine,
@@ -20,11 +26,6 @@ import {
   Settings,
   ChevronRight,
 } from 'lucide-react';
-
-import { ProductFixedCharacteristics } from '@/components/business/product-fixed-characteristics';
-import { ProductImageGallery } from '@/components/business/product-image-gallery';
-import { ButtonV2 } from '@verone/ui';
-import { cn } from '@verone/utils';
 
 interface ProductViewProps {
   product: any;
@@ -97,12 +98,19 @@ export function ProductViewMode({
         <div className="space-y-4">
           {/* Galerie principale */}
           <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
+            {/* FIXME: ProductImageGallery component can't be imported from apps/back-office
             <ProductImageGallery
               productId={product.id}
               productName={product.name}
               productStatus={product.status}
               compact={false}
             />
+            */}
+            <div className="p-8 border rounded bg-gray-50">
+              <p className="text-center text-gray-600">
+                Galerie images (temporairement désactivée)
+              </p>
+            </div>
           </div>
         </div>
 
@@ -228,7 +236,12 @@ export function ProductViewMode({
               Caractéristiques
             </h2>
             <div className="bg-white border border-gray-200 rounded-lg p-4">
+              {/* FIXME: ProductFixedCharacteristics component can't be imported from apps/back-office
               <ProductFixedCharacteristics product={product} />
+              */}
+              <p className="text-gray-600">
+                Caractéristiques produit (temporairement désactivées)
+              </p>
             </div>
           </div>
 

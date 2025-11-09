@@ -4,17 +4,8 @@ import { useState, Suspense, lazy } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import {
-  ArrowLeft,
-  Package,
-  Zap,
-  Settings,
-  CheckCircle,
-  Circle,
-  ArrowRight,
-} from 'lucide-react';
-
-import { CompleteProductWizard } from '@/components/business/complete-product-wizard';
+// FIXME: CompleteProductWizard component can't be imported from apps/back-office in package
+// import { CompleteProductWizard } from '@/components/business/complete-product-wizard';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -25,6 +16,15 @@ import {
   CardTitle,
 } from '@verone/ui';
 import { cn } from '@verone/utils';
+import {
+  ArrowLeft,
+  Package,
+  Zap,
+  Settings,
+  CheckCircle,
+  Circle,
+  ArrowRight,
+} from 'lucide-react';
 
 // Le formulaire complet sera intégré directement plus tard
 // Pour l'instant, on redirige vers le composant SourcingQuickForm pour les deux types
@@ -253,10 +253,17 @@ export function ProductCreationWizard({
               </div>
             }
           >
+            {/* FIXME: CompleteProductWizard component can't be imported from apps/back-office
             <CompleteProductWizard
               onSuccess={handleSuccess}
               onCancel={handleBack}
             />
+            */}
+            <div className="p-8 border rounded bg-gray-50">
+              <p className="text-center text-gray-600">
+                Formulaire de création produit (temporairement désactivé)
+              </p>
+            </div>
           </Suspense>
         )}
       </div>

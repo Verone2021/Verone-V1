@@ -2,10 +2,17 @@
 
 import { useState, useEffect, useMemo } from 'react';
 
-import { Plus, X, Search, AlertTriangle, Trash2 } from 'lucide-react';
-
-import { EcoTaxVatInput } from '@/components/forms/eco-tax-vat-input';
+import { AddressInput } from '@verone/common/components/address/AddressInput';
+import { useToast } from '@verone/common/hooks';
+import { useProductPrice, formatPrice } from '@verone/finance/hooks';
+import type { SelectedProduct } from '@verone/products/components/selectors/UniversalProductSelectorV2';
+import { UniversalProductSelectorV2 } from '@verone/products/components/selectors/UniversalProductSelectorV2';
+import { useProducts } from '@verone/products/hooks';
+import { useStockMovements } from '@verone/stock/hooks';
 import { Alert, AlertDescription } from '@verone/ui';
+
+// FIXME: EcoTaxVatInput can't be imported from apps/back-office in package
+// import { EcoTaxVatInput } from '@/components/forms/eco-tax-vat-input';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
@@ -35,21 +42,15 @@ import {
   TableRow,
 } from '@verone/ui';
 import { Textarea } from '@verone/ui';
-import { createClient } from '@verone/utils/supabase/client';
 import { formatCurrency } from '@verone/utils';
-import { AddressInput } from '@verone/common/components/address/AddressInput';
-import { useProductPrice, formatPrice } from '@verone/finance/hooks';
+import { createClient } from '@verone/utils/supabase/client';
+import { Plus, X, Search, AlertTriangle, Trash2 } from 'lucide-react';
+
 import type { CreateSalesOrderData } from '@verone/orders/hooks';
 import { useSalesOrders } from '@verone/orders/hooks';
-import { useProducts } from '@verone/products/hooks';
 
-import { useStockMovements } from '@verone/stock/hooks';
 import type { UnifiedCustomer } from './customer-selector';
 import { CustomerSelector } from './customer-selector';
-
-import type { SelectedProduct } from '@verone/products/components/selectors/UniversalProductSelectorV2';
-import { UniversalProductSelectorV2 } from '@verone/products/components/selectors/UniversalProductSelectorV2';
-import { useToast } from '@verone/common/hooks';
 
 interface OrderItem {
   id: string;
@@ -819,12 +820,14 @@ export function SalesOrderFormModal({
               </div>
 
               <div>
+                {/* FIXME: EcoTaxVatInput can't be imported from apps/back-office
                 <EcoTaxVatInput
                   value={ecoTaxVatRate}
                   onChange={setEcoTaxVatRate}
                   defaultTaxRate={20}
                   disabled={loading}
                 />
+                */}
               </div>
             </CardContent>
           </Card>

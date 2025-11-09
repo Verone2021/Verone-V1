@@ -2,6 +2,25 @@
 
 import { useState, useEffect } from 'react';
 
+// FIXME: ProductImageGallery component can't be imported from apps/back-office in package
+// import { ProductImageGallery } from '@/components/business/product-image-gallery';
+// FIXME: SampleRequirementSection component can't be imported from apps/back-office in package
+// import { SampleRequirementSection } from '@/components/business/sample-requirement-section';
+import { CategoryHierarchyModal } from '@verone/categories/components/modals/CategorizeModal';
+import { useSubcategories } from '@verone/categories/hooks';
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import { Input } from '@verone/ui';
+import { Label } from '@verone/ui';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@verone/ui';
+import { cn } from '@verone/utils';
+import { createClient } from '@verone/utils/supabase/client';
 import {
   Settings,
   Eye,
@@ -14,23 +33,6 @@ import {
   BarChart3,
 } from 'lucide-react';
 
-import { ProductImageGallery } from '@/components/business/product-image-gallery';
-import { SampleRequirementSection } from '@/components/business/sample-requirement-section';
-import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
-import { Input } from '@verone/ui';
-import { Label } from '@verone/ui';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@verone/ui';
-import { createClient } from '@verone/utils/supabase/client';
-import { cn } from '@verone/utils';
-import { CategoryHierarchyModal } from '@verone/categories/components/modals/CategorizeModal';
-import { useSubcategories } from '@verone/categories/hooks';
 import { ProductCharacteristicsModal } from '@verone/products/components/modals/ProductCharacteristicsModal';
 import { ProductDescriptionsModal } from '@verone/products/components/modals/ProductDescriptionsModal';
 import { ProductImagesModal } from '@verone/products/components/modals/ProductImagesModal';
@@ -156,12 +158,19 @@ export function ProductEditMode({
         <div className="xl:col-span-3 space-y-2">
           {/* Galerie d'images compacte */}
           <div className="bg-white border border-black">
+            {/* FIXME: ProductImageGallery component can't be imported from apps/back-office
             <ProductImageGallery
               productId={product.id}
               productName={product.name}
               productStatus={product.status}
               compact
             />
+            */}
+            <div className="p-4 border rounded">
+              <p className="text-sm text-gray-600">
+                Galerie images (temporairement désactivée)
+              </p>
+            </div>
           </div>
 
           {/* Actions sous l'image */}
@@ -894,6 +903,7 @@ export function ProductEditMode({
             <h3 className="font-medium mb-2 text-[10px]">
               Gestion Échantillons
             </h3>
+            {/* FIXME: SampleRequirementSection component can't be imported from apps/back-office
             <SampleRequirementSection
               requiresSample={product.requires_sample || false}
               isProduct
@@ -902,6 +912,12 @@ export function ProductEditMode({
                 onUpdate({ requires_sample: requiresSample });
               }}
             />
+            */}
+            <div className="p-2 border rounded bg-gray-50">
+              <p className="text-sm text-gray-600">
+                Section échantillons (temporairement désactivée)
+              </p>
+            </div>
           </div>
         </div>
       </div>

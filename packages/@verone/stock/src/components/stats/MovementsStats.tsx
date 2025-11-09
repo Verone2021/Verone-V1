@@ -4,7 +4,8 @@ import React from 'react';
 
 import { TrendingUp, Activity, Clock, BarChart3 } from 'lucide-react';
 
-import { StockKPICard } from '@/components/ui-v2/stock/stock-kpi-card';
+// FIXME: StockKPICard component can't be imported from apps/back-office in package
+// import { StockKPICard } from '@/components/ui-v2/stock/stock-kpi-card';
 
 import type { MovementsStats } from '../../hooks';
 
@@ -37,37 +38,30 @@ export function MovementsStatsCards({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <StockKPICard
-        title="Total Mouvements"
-        value={formatNumber(stats.totalMovements)}
-        subtitle="mouvements effectués"
-        icon={Activity}
-        variant="default"
-      />
+      {/* FIXME: StockKPICard component can't be imported from apps/back-office */}
+      <div className="p-4 border rounded">
+        <p className="font-medium">Total Mouvements</p>
+        <p className="text-2xl">{formatNumber(stats.totalMovements)}</p>
+        <p className="text-sm text-gray-500">mouvements effectués</p>
+      </div>
 
-      <StockKPICard
-        title="Aujourd'hui"
-        value={formatNumber(stats.movementsToday)}
-        subtitle="mouvements ce jour"
-        icon={Clock}
-        variant="info"
-      />
+      <div className="p-4 border rounded">
+        <p className="font-medium">Aujourd'hui</p>
+        <p className="text-2xl">{formatNumber(stats.movementsToday)}</p>
+        <p className="text-sm text-gray-500">mouvements ce jour</p>
+      </div>
 
-      <StockKPICard
-        title="Cette Semaine"
-        value={formatNumber(stats.movementsThisWeek)}
-        subtitle="mouvements 7 derniers jours"
-        icon={TrendingUp}
-        variant="success"
-      />
+      <div className="p-4 border rounded">
+        <p className="font-medium">Cette Semaine</p>
+        <p className="text-2xl">{formatNumber(stats.movementsThisWeek)}</p>
+        <p className="text-sm text-gray-500">mouvements 7 derniers jours</p>
+      </div>
 
-      <StockKPICard
-        title="Ce Mois"
-        value={formatNumber(stats.movementsThisMonth)}
-        subtitle="mouvements 30 derniers jours"
-        icon={BarChart3}
-        variant="default"
-      />
+      <div className="p-4 border rounded">
+        <p className="font-medium">Ce Mois</p>
+        <p className="text-2xl">{formatNumber(stats.movementsThisMonth)}</p>
+        <p className="text-sm text-gray-500">mouvements 30 derniers jours</p>
+      </div>
     </div>
   );
 }

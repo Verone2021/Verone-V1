@@ -1,12 +1,12 @@
 'use client';
 
-import { Calendar, MapPin, FileText } from 'lucide-react';
-
-import { EcoTaxVatInput } from '@/components/forms/eco-tax-vat-input';
+// FIXME: EcoTaxVatInput can't be imported from apps/back-office in package
+// import { EcoTaxVatInput } from '@/components/forms/eco-tax-vat-input';
 import { Card, CardContent } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { Textarea } from '@verone/ui';
+import { Calendar, MapPin, FileText } from 'lucide-react';
 
 interface OrderHeaderEditSectionProps {
   orderType: 'sales' | 'purchase';
@@ -177,12 +177,14 @@ export function OrderHeaderEditSection({
 
         {/* TVA Éco-taxe */}
         <div>
+          {/* FIXME: EcoTaxVatInput can't be imported from apps/back-office
           <EcoTaxVatInput
             value={data.eco_tax_vat_rate ?? null}
             onChange={value => onChange('eco_tax_vat_rate', value)}
             defaultTaxRate={data.tax_rate ? data.tax_rate * 100 : 20}
             disabled={readonly}
           />
+          */}
         </div>
 
         {/* Conditions de paiement */}

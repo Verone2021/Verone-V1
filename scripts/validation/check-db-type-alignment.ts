@@ -29,7 +29,7 @@ import { fileURLToPath } from 'node:url';
 // CONFIGURATION
 // ============================================================================
 
-const SRC_DIR = path.join(process.cwd(), 'src');
+const SRC_DIR = path.join(process.cwd(), 'apps', 'back-office', 'src');
 const SUPABASE_TYPES_FILE = path.join(SRC_DIR, 'types', 'supabase.ts');
 const SCHEMA_REFERENCE = path.join(
   process.cwd(),
@@ -193,7 +193,7 @@ function checkSupabaseTypesExist(): boolean {
       `❌ ERREUR: Fichier types Supabase non trouvé: ${SUPABASE_TYPES_FILE}`
     );
     console.error(
-      '   Générer avec: supabase gen types typescript --local > src/types/supabase.ts'
+      '   Générer avec: supabase gen types typescript --local > apps/back-office/src/types/supabase.ts'
     );
     return false;
   }

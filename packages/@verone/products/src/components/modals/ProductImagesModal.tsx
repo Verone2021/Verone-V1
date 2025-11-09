@@ -2,14 +2,10 @@
 
 import { useState } from 'react';
 
-import { ProductPhotosModal } from '@/components/business/product-photos-modal';
+// FIXME: ProductPhotosModal component can't be imported from apps/back-office in package
+// import { ProductPhotosModal } from '@/components/business/product-photos-modal';
 import { ButtonV2 } from '@verone/ui';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@verone/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
 
 interface ProductImagesModalProps {
   isOpen: boolean;
@@ -25,6 +21,7 @@ export function ProductImagesModal({
   onUpdate,
 }: ProductImagesModalProps) {
   return (
+    /* FIXME: ProductPhotosModal component can't be imported from apps/back-office
     <ProductPhotosModal
       isOpen={isOpen}
       onClose={onClose}
@@ -32,5 +29,9 @@ export function ProductImagesModal({
       productName={product.name || 'Produit'}
       productType="product"
     />
+    */
+    <div className="p-4 border rounded">
+      <p>Modal photos produit (temporairement désactivée)</p>
+    </div>
   );
 }

@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { useToast } from '@verone/common';
+import type { SourcingProduct } from '@verone/products';
+import { useSourcingProducts } from '@verone/products';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -32,7 +35,6 @@ import {
   SelectValue,
 } from '@verone/ui';
 import { Textarea } from '@verone/ui';
-import { SampleValidationSimple } from '@verone/ui';
 import {
   CheckCircle,
   ArrowRight,
@@ -54,9 +56,7 @@ import {
   Settings,
 } from 'lucide-react';
 
-import { useToast } from '@verone/common';
-import type { SourcingProduct } from '@verone/products';
-import { useSourcingProducts } from '@verone/products';
+import { SampleValidationSimple } from '@/components/business/sample-validation-simple';
 
 export default function SourcingValidationPage() {
   const router = useRouter();

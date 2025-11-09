@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react';
 
-import { Plus, Mail, Phone, User, Trash2, Edit2 } from 'lucide-react';
-
-import { ContactFormModalWrapper as ContactFormModal } from '@/components/business/contact-form-modal-wrapper';
+// FIXME: ContactFormModal component doesn't exist in monorepo
+// Component can't be imported from apps/back-office in package
+// import { ContactFormModalWrapper as ContactFormModal } from '@/components/business/contact-form-modal-wrapper';
 import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
 import { spacing, colors } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
+import { Plus, Mail, Phone, User, Trash2, Edit2 } from 'lucide-react';
 
 interface Contact {
   id: string;
@@ -343,6 +344,7 @@ export function OrganisationContactsManager({
       )}
 
       {/* Contact Form Modal */}
+      {/* FIXME: ContactFormModal component can't be imported from apps/back-office
       {organisationId && (
         <ContactFormModal
           isOpen={isModalOpen}
@@ -352,6 +354,7 @@ export function OrganisationContactsManager({
           onSuccess={handleContactSuccess}
         />
       )}
+      */}
     </div>
   );
 }

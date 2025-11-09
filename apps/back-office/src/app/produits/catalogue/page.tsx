@@ -5,15 +5,26 @@ import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
-import type { FilterOption } from '@verone/ui';
-import type { SearchItem } from '@verone/ui';
-import { Badge } from '@verone/ui';
-import { Button } from '@verone/ui';
+// Types locaux
+type FilterOption = { value: string; label: string };
+
+import type { Product } from '@verone/categories';
+import { CategoryHierarchyFilterV2 } from '@verone/categories';
+import { useCatalogue, Category } from '@verone/categories';
+import { useFamilies } from '@verone/categories';
+import { useCategories } from '@verone/categories';
+import { useSubcategories } from '@verone/categories';
+import { ProductCardV2 as ProductCard } from '@verone/products';
+import { useProductImages } from '@verone/products';
 import { ViewModeToggle } from '@verone/ui';
-import { FilterCombobox } from '@verone/ui';
-import { CommandPaletteSearch as CommandPalette } from '@verone/ui';
-import { cn } from '@verone/utils';
+import { Button } from '@verone/ui';
+import { Badge } from '@verone/ui';
+import {
+  CommandPaletteSearch as CommandPalette,
+  type SearchItem,
+} from '@verone/ui-business/components/utils/CommandPaletteSearch';
 import { checkSLOCompliance, debounce } from '@verone/utils';
+import { cn } from '@verone/utils';
 import {
   Search,
   Filter,
@@ -25,14 +36,7 @@ import {
   Zap,
 } from 'lucide-react';
 
-import type { Product } from '@verone/categories';
-import { CategoryHierarchyFilterV2 } from '@verone/categories';
-import { useCatalogue, Category } from '@verone/categories';
-import { useFamilies } from '@verone/categories';
-import { useCategories } from '@verone/categories';
-import { useSubcategories } from '@verone/categories';
-import { ProductCardV2 as ProductCard } from '@verone/products';
-import { useProductImages } from '@verone/products';
+import { FilterCombobox } from '@/components/business/filter-combobox';
 
 // Nouveaux composants UX/UI 2025
 // Interface Produit selon business rules - utilise maintenant celle du hook useCatalogue

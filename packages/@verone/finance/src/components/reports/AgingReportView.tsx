@@ -2,16 +2,7 @@
 
 import { useEffect } from 'react';
 
-import {
-  AlertCircle,
-  Package,
-  TrendingUp,
-  Clock,
-  Euro,
-  FileText,
-  Download,
-} from 'lucide-react';
-
+import { useToast } from '@verone/common/hooks';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -31,16 +22,25 @@ import {
   TableRow,
 } from '@verone/ui';
 import {
-  exportAgingReportToPDF,
-  exportAgingReportToExcel,
-  exportAgingReportToCSV,
-} from '@verone/utils/reports/export-aging-report';
-import { useToast } from '@verone/common/hooks';
+  AlertCircle,
+  Package,
+  TrendingUp,
+  Clock,
+  Euro,
+  FileText,
+  Download,
+} from 'lucide-react';
+
 import {
   useAgingReport,
   AGING_BUCKETS,
   type AgingReportData,
 } from '@verone/finance/hooks';
+import {
+  exportAgingReportToPDF,
+  exportAgingReportToExcel,
+  exportAgingReportToCSV,
+} from '@verone/finance/utils';
 
 interface AgingReportViewProps {
   dateFrom?: string;
