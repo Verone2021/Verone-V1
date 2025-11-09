@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 const alertVariants = cva(
-  'relative w-full rounded-lg border p-4 [&>svg~*]:pl-8 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground',
+  'relative w-full rounded-lg border [&>svg]:absolute [&>svg]:text-foreground transition-all duration-200',
   {
     variants: {
       variant: {
@@ -25,9 +25,15 @@ const alertVariants = cva(
         destructive:
           'bg-red-50 border-red-200 text-red-900 [&>svg]:text-red-600',
       },
+      alertSize: {
+        sm: 'p-3 text-sm [&>svg]:left-3 [&>svg]:top-3',
+        md: 'p-4 text-base [&>svg]:left-4 [&>svg]:top-4',
+        lg: 'p-5 text-lg [&>svg]:left-5 [&>svg]:top-5',
+      },
     },
     defaultVariants: {
       variant: 'default',
+      alertSize: 'md',
     },
   }
 );
@@ -40,6 +46,20 @@ const variantIcons = {
   error: AlertCircle,
   destructive: AlertCircle,
 };
+
+// Icon size mapping based on alert size
+const iconSizeMap = {
+  sm: 'h-4 w-4',
+  md: 'h-5 w-5',
+  lg: 'h-6 w-6',
+} as const;
+
+// Padding-left for content based on alert size
+const contentPaddingMap = {
+  sm: 'pl-7',
+  md: 'pl-8',
+  lg: 'pl-9',
+} as const;
 
 export interface AlertProps
   extends React.HTMLAttributes<HTMLDivElement>,
@@ -75,6 +95,7 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
     {
       className,
       variant,
+      alertSize,
       dismissible,
       onDismiss,
       icon,
@@ -99,20 +120,24 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
       : variantIcons.default;
     const showIcon = !hideIcon;
 
+    // Get icon size and content padding based on alert size
+    const iconSize = alertSize ? iconSizeMap[alertSize] : iconSizeMap.md;
+    const contentPadding = alertSize
+      ? contentPaddingMap[alertSize]
+      : contentPaddingMap.md;
+
     return (
       <div
         ref={ref}
         role="alert"
-        className={cn(alertVariants({ variant }), className)}
+        className={cn(alertVariants({ variant, alertSize }), className)}
         {...props}
       >
         {showIcon && (
-          <div className="absolute left-4 top-4">
-            {icon || <IconComponent className="h-5 w-5" />}
-          </div>
+          <div>{icon || <IconComponent className={iconSize} />}</div>
         )}
 
-        <div className={cn(showIcon && 'pl-8')}>
+        <div className={cn(showIcon && contentPadding)}>
           {children}
 
           {actions && <div className="mt-3 flex gap-2">{actions}</div>}
