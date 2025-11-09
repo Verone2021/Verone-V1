@@ -58,6 +58,11 @@ export * from './progress';
 export * from './activity-timeline';
 
 // ========================================
+// USER COMPONENTS
+// ========================================
+export * from './avatar';
+
+// ========================================
 // OVERLAY COMPONENTS
 // ========================================
 export * from './dialog';
