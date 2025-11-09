@@ -13,7 +13,7 @@ import {
   DollarSign,
 } from 'lucide-react';
 
-import { Input } from '@verone/ui'
+import { Input } from '@verone/ui';
 
 const meta = {
   title: '1-UI-Base/Inputs/Input',
@@ -23,26 +23,33 @@ const meta = {
     docs: {
       description: {
         component: `
-📝 **Input** - Champ de saisie avec variants et icônes.
+📝 **Input** - Champ de saisie avec variants CVA et icônes.
 
-**Variantes** :
-- \`default\` : Bordure grise (slate-300)
+**Variants Visuels** (CVA) :
+- \`default\` : Border classique (rounded-lg) - **Default**
+- \`filled\` : Background gris, border subtle
+- \`outlined\` : Border prononcée (border-2)
+- \`underlined\` : Border-bottom seulement
+
+**États de Validation** :
+- \`default\` : État normal (slate-300)
 - \`error\` : Bordure rouge + message erreur
 - \`success\` : Bordure verte (validation)
 
 **Tailles** :
-- \`sm\` : 32px (8px padding, 13px text)
-- \`md\` : 40px (10px padding, 14px text) - **Default**
-- \`lg\` : 48px (12px padding, 16px text)
+- \`sm\` : 32px (h-8, px-3, text-sm)
+- \`md\` : 40px (h-10, px-4, text-sm) - **Default**
+- \`lg\` : 48px (h-12, px-4, text-base)
 
 **Fonctionnalités** :
 - Icône gauche/droite (Lucide icons)
-- Message d'erreur automatique
+- Message d'erreur automatique (error prop)
 - Helper text (aide contextuelle)
 - États disabled, focus, hover
 - Transitions smooth (200ms)
+- Padding automatique avec icônes (pl-10/pr-10)
 
-**Version** : V1 (shadcn/ui + enhancements)
+**Version** : V2 (CVA + shadcn/ui)
         `,
       },
     },
@@ -51,8 +58,13 @@ const meta = {
   argTypes: {
     variant: {
       control: 'select',
+      options: ['default', 'filled', 'outlined', 'underlined'],
+      description: 'Style visuel du champ (CVA variant)',
+    },
+    state: {
+      control: 'select',
       options: ['default', 'error', 'success'],
-      description: 'État visuel du champ',
+      description: 'État de validation',
     },
     inputSize: {
       control: 'select',
@@ -131,7 +143,7 @@ export const Success: Story = {
         type="email"
         value="john@example.com"
         onChange={() => {}} // Read-only for demo
-        variant="success"
+        state="success"
         helperText="Email is valid ✓"
       />
     </div>
@@ -196,26 +208,26 @@ function PasswordToggleComponent() {
       <label className="block text-sm font-medium text-slate-700 mb-1.5">
         Password
       </label>
-        <Input
-          type={showPassword ? 'text' : 'password'}
-          placeholder="Enter password"
-          iconLeft={<Lock className="w-4 h-4" />}
-          iconRight={
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="hover:text-slate-700"
-            >
-              {showPassword ? (
-                <EyeOff className="w-4 h-4" />
-              ) : (
-                <Eye className="w-4 h-4" />
-              )}
-            </button>
-          }
-        />
-      </div>
-    );
+      <Input
+        type={showPassword ? 'text' : 'password'}
+        placeholder="Enter password"
+        iconLeft={<Lock className="w-4 h-4" />}
+        iconRight={
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="hover:text-slate-700"
+          >
+            {showPassword ? (
+              <EyeOff className="w-4 h-4" />
+            ) : (
+              <Eye className="w-4 h-4" />
+            )}
+          </button>
+        }
+      />
+    </div>
+  );
 }
 
 export const PasswordToggle: Story = {
@@ -390,7 +402,7 @@ export const ValidationStates: Story = {
           type="email"
           value="john@example.com"
           onChange={() => {}} // Read-only for demo
-          variant="success"
+          state="success"
           iconRight={<Mail className="w-4 h-4" />}
           helperText="Email is valid ✓"
         />
@@ -419,6 +431,172 @@ export const ValidationStates: Story = {
           iconRight={<Mail className="w-4 h-4" />}
           helperText="We'll send you a confirmation email"
         />
+      </div>
+    </div>
+  ),
+};
+
+/**
+ * Tous les variants CVA visuels
+ */
+export const AllVariants: Story = {
+  render: () => (
+    <div className="space-y-6 w-[500px]">
+      <div>
+        <h4 className="text-sm font-medium text-slate-700 mb-3">
+          Default (Border classique)
+        </h4>
+        <Input
+          variant="default"
+          placeholder="Enter email..."
+          iconLeft={<Mail className="w-4 h-4" />}
+        />
+      </div>
+
+      <div>
+        <h4 className="text-sm font-medium text-slate-700 mb-3">
+          Filled (Background gris)
+        </h4>
+        <Input
+          variant="filled"
+          placeholder="Enter email..."
+          iconLeft={<Mail className="w-4 h-4" />}
+        />
+      </div>
+
+      <div>
+        <h4 className="text-sm font-medium text-slate-700 mb-3">
+          Outlined (Border prononcée)
+        </h4>
+        <Input
+          variant="outlined"
+          placeholder="Enter email..."
+          iconLeft={<Mail className="w-4 h-4" />}
+        />
+      </div>
+
+      <div>
+        <h4 className="text-sm font-medium text-slate-700 mb-3">
+          Underlined (Border-bottom seulement)
+        </h4>
+        <Input
+          variant="underlined"
+          placeholder="Enter email..."
+          iconLeft={<Mail className="w-4 h-4" />}
+        />
+      </div>
+    </div>
+  ),
+};
+
+/**
+ * Variants avec états (default, error, success)
+ */
+export const VariantsWithStates: Story = {
+  render: () => (
+    <div className="space-y-6 w-[500px]">
+      {/* Default variant with states */}
+      <div>
+        <h4 className="text-sm font-medium text-slate-900 mb-3">
+          Default Variant
+        </h4>
+        <div className="space-y-3">
+          <Input
+            variant="default"
+            state="default"
+            placeholder="Normal state"
+            helperText="This is the default state"
+          />
+          <Input
+            variant="default"
+            state="success"
+            placeholder="Success state"
+            helperText="Validation successful ✓"
+          />
+          <Input
+            variant="default"
+            error="This field is required"
+            placeholder="Error state"
+          />
+        </div>
+      </div>
+
+      {/* Filled variant with states */}
+      <div>
+        <h4 className="text-sm font-medium text-slate-900 mb-3">
+          Filled Variant
+        </h4>
+        <div className="space-y-3">
+          <Input
+            variant="filled"
+            state="default"
+            placeholder="Normal state"
+            helperText="Filled background style"
+          />
+          <Input
+            variant="filled"
+            state="success"
+            placeholder="Success state"
+            helperText="Validation successful ✓"
+          />
+          <Input
+            variant="filled"
+            error="This field is required"
+            placeholder="Error state"
+          />
+        </div>
+      </div>
+
+      {/* Outlined variant with states */}
+      <div>
+        <h4 className="text-sm font-medium text-slate-900 mb-3">
+          Outlined Variant
+        </h4>
+        <div className="space-y-3">
+          <Input
+            variant="outlined"
+            state="default"
+            placeholder="Normal state"
+            helperText="Thick border emphasis"
+          />
+          <Input
+            variant="outlined"
+            state="success"
+            placeholder="Success state"
+            helperText="Validation successful ✓"
+          />
+          <Input
+            variant="outlined"
+            error="This field is required"
+            placeholder="Error state"
+          />
+        </div>
+      </div>
+
+      {/* Underlined variant with states */}
+      <div>
+        <h4 className="text-sm font-medium text-slate-900 mb-3">
+          Underlined Variant
+        </h4>
+        <div className="space-y-3">
+          <Input
+            variant="underlined"
+            state="default"
+            placeholder="Normal state"
+            helperText="Bottom border only"
+          />
+          <Input
+            variant="underlined"
+            state="success"
+            placeholder="Success state"
+            helperText="Validation successful ✓"
+          />
+          <Input
+            variant="underlined"
+            error="This field is required"
+            placeholder="Error state"
+          />
+        </div>
       </div>
     </div>
   ),
@@ -478,7 +656,7 @@ export const RealWorld: Story = {
             iconLeft={<Mail className="w-4 h-4" />}
             value="john@example.com"
             onChange={() => {}} // Read-only for demo
-            variant="success"
+            state="success"
           />
           <Input
             type="tel"
