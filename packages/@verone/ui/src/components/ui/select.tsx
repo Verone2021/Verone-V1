@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import * as SelectPrimitive from '@radix-ui/react-select';
 import { cn } from '@verone/utils';
+import { cva, type VariantProps } from 'class-variance-authority';
 import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 
 const Select = SelectPrimitive.Root;
@@ -10,34 +11,99 @@ const SelectGroup = SelectPrimitive.Group;
 
 const SelectValue = SelectPrimitive.Value;
 
+const selectTriggerVariants = cva(
+  // Base styles
+  'flex w-full items-center justify-between transition-all duration-200 focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-slate-50 [&>span]:line-clamp-1',
+  {
+    variants: {
+      variant: {
+        default: 'rounded-lg border bg-white',
+        filled:
+          'rounded-lg border border-transparent bg-slate-100 focus:bg-white',
+        outlined: 'rounded-lg border-2 bg-white',
+        underlined:
+          'rounded-none border-0 border-b-2 bg-transparent px-0 focus:ring-0',
+      },
+      selectSize: {
+        sm: 'h-8 px-3 py-1.5 text-sm',
+        md: 'h-10 px-4 py-2 text-sm',
+        lg: 'h-12 px-4 py-2.5 text-base',
+      },
+      state: {
+        default:
+          'border-slate-300 focus:border-blue-500 focus:ring-blue-500/20',
+        error: 'border-red-500 focus:border-red-600 focus:ring-red-500/20',
+        success:
+          'border-green-500 focus:border-green-600 focus:ring-green-500/20',
+      },
+    },
+    compoundVariants: [
+      {
+        variant: 'filled',
+        state: 'default',
+        className: 'border-slate-200 focus:border-blue-500',
+      },
+      {
+        variant: 'underlined',
+        selectSize: 'sm',
+        className: 'h-7',
+      },
+      {
+        variant: 'underlined',
+        selectSize: 'md',
+        className: 'h-9',
+      },
+      {
+        variant: 'underlined',
+        selectSize: 'lg',
+        className: 'h-11',
+      },
+    ],
+    defaultVariants: {
+      variant: 'default',
+      selectSize: 'md',
+      state: 'default',
+    },
+  }
+);
+
+export interface SelectTriggerProps
+  extends React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>,
+    VariantProps<typeof selectTriggerVariants> {
+  /**
+   * @deprecated Use `state="error"` instead
+   */
+  error?: boolean;
+}
+
 const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger> & {
-    error?: boolean;
+  SelectTriggerProps
+>(
+  (
+    { className, children, variant, selectSize, state, error, ...props },
+    ref
+  ) => {
+    // Auto-set state="error" if error prop is present (backward compatibility)
+    const actualState = error ? 'error' : state;
+
+    return (
+      <SelectPrimitive.Trigger
+        ref={ref}
+        className={cn(
+          selectTriggerVariants({ variant, selectSize, state: actualState }),
+          className
+        )}
+        {...props}
+      >
+        {children}
+        <SelectPrimitive.Icon asChild>
+          <ChevronDown className="h-4 w-4 opacity-50" />
+        </SelectPrimitive.Icon>
+      </SelectPrimitive.Trigger>
+    );
   }
->(({ className, children, error, ...props }, ref) => (
-  <SelectPrimitive.Trigger
-    ref={ref}
-    className={cn(
-      'flex h-10 w-full items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm',
-      'placeholder:text-slate-400',
-      'transition-all duration-200',
-      'focus:outline-none focus:ring-2',
-      'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-slate-50',
-      '[&>span]:line-clamp-1',
-      error
-        ? 'border-red-500 focus:border-red-600 focus:ring-red-500/20'
-        : 'border-slate-300 focus:border-blue-500 focus:ring-blue-500/20',
-      className
-    )}
-    {...props}
-  >
-    {children}
-    <SelectPrimitive.Icon asChild>
-      <ChevronDown className="h-4 w-4 opacity-50" />
-    </SelectPrimitive.Icon>
-  </SelectPrimitive.Trigger>
-));
+);
 SelectTrigger.displayName = SelectPrimitive.Trigger.displayName;
 
 const SelectScrollUpButton = React.forwardRef<
@@ -168,4 +234,5 @@ export {
   SelectSeparator,
   SelectScrollUpButton,
   SelectScrollDownButton,
+  selectTriggerVariants,
 };
