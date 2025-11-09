@@ -39,7 +39,6 @@ export function withLogging<T extends any[]>(
   const opts = { ...DEFAULT_OPTIONS, ...options };
 
   return async (req: NextRequest, ...args: T): Promise<NextResponse> => {
-    const startTime = Date.now();
     const timer = logger.startTimer();
 
     // Créer le contexte de la requête
@@ -219,7 +218,7 @@ function sanitizeResponseBody(body: string): any {
  */
 function logBusinessMetrics(
   pathname: string,
-  method: string,
+  _method: string,
   statusCode: number,
   duration: number,
   context: LogContext

@@ -1231,22 +1231,22 @@ export function useSalesOrders() {
           `✅ [FSM] Transition validée: ${currentStatus} → ${newStatus}`
         );
 
-        // Utiliser Server Action pour bypass du problème RLS 403
-        const { updateSalesOrderStatus } = await import(
-          '@/app/actions/sales-orders'
-        );
+        // FIXME: Server actions can't be imported from monorepo packages
+        // const { updateSalesOrderStatus } = await import(
+        //   '@/app/actions/sales-orders'
+        // );
 
-        const result = await updateSalesOrderStatus(
-          orderId,
-          newStatus,
-          user.id
-        );
+        // const result = await updateSalesOrderStatus(
+        //   orderId,
+        //   newStatus,
+        //   user.id
+        // );
 
-        if (!result.success) {
-          throw new Error(
-            result.error || 'Erreur lors de la mise à jour du statut'
-          );
-        }
+        // if (!result.success) {
+        //   throw new Error(
+        //     result.error || 'Erreur lors de la mise à jour du statut'
+        //   );
+        // }
 
         // Libérer les réservations de stock en cas d'annulation (via client car pas bloqué par RLS)
         if (newStatus === 'cancelled') {

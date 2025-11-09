@@ -5,12 +5,12 @@
  */
 
 // Use Web Crypto API for edge runtime compatibility
-function createHash(algorithm: string): {
-  update: (data: string) => { digest: (encoding: string) => string };
+function createHash(_algorithm: string): {
+  update: (data: string) => { digest: (_encoding: string) => string };
 } {
   return {
     update: (data: string) => ({
-      digest: (encoding: string) => {
+      digest: (_encoding: string) => {
         // Simple hash for anonymization (not cryptographic)
         let hash = 0;
         for (let i = 0; i < data.length; i++) {

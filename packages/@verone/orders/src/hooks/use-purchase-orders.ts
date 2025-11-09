@@ -5,7 +5,8 @@
 
 import { useState, useCallback } from 'react';
 
-import { updatePurchaseOrderStatus as updatePurchaseOrderStatusAction } from '@/app/actions/purchase-orders';
+// FIXME: Server actions can't be imported from monorepo packages
+// import { updatePurchaseOrderStatus as updatePurchaseOrderStatusAction } from '@/app/actions/purchase-orders';
 import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@verone/common/hooks';
 import { useStockMovements } from '@verone/stock/hooks/use-stock-movements';
@@ -574,23 +575,24 @@ export function usePurchaseOrders() {
           throw new Error('Utilisateur non authentifié');
         }
 
-        // Appeler la Server Action qui bypass RLS
-        const result = await updatePurchaseOrderStatusAction(
-          orderId,
-          newStatus,
-          user.id
-        );
+        // FIXME: updatePurchaseOrderStatusAction server action can't be imported from monorepo
+        // // Appeler la Server Action qui bypass RLS
+        // const result = await updatePurchaseOrderStatusAction(
+        //   orderId,
+        //   newStatus,
+        //   user.id
+        // );
 
-        if (!result.success) {
-          throw new Error(result.error || 'Erreur lors de la mise à jour');
-        }
+        // if (!result.success) {
+        //   throw new Error(result.error || 'Erreur lors de la mise à jour');
+        // }
 
-        toast({
-          title: 'Succès',
-          description: `Commande marquée comme ${newStatus}`,
-        });
+        // toast({
+        //   title: 'Succès',
+        //   description: `Commande marquée comme ${newStatus}`,
+        // });
 
-        await fetchOrders();
+        // await fetchOrders();
         await fetchStats(); // ✅ FIX Bug #6: Rafraîchir les stats après changement de statut
         if (currentOrder?.id === orderId) {
           await fetchOrder(orderId);

@@ -73,7 +73,7 @@ export function exportAgingReportToPDF(report: AgingReportData) {
   autoTable(doc, {
     startY: yPos,
     head: [['Tranche', 'Produits', 'Quantité', 'Valeur', 'Part']],
-    body: report.buckets.map(bucket => [
+    body: report.buckets.map((bucket: AgingReportData['buckets'][number]) => [
       bucket.label,
       bucket.count.toString(),
       bucket.quantity.toString(),
@@ -114,7 +114,7 @@ export function exportAgingReportToPDF(report: AgingReportData) {
   autoTable(doc, {
     startY: yPos,
     head: [['Produit', 'SKU', 'Âge (j)', 'Stock', 'Valeur', 'Tranche']],
-    body: report.top_oldest.map(product => [
+    body: report.top_oldest.map((product: AgingReportData['top_oldest'][number]) => [
       product.name.length > 30
         ? product.name.substring(0, 27) + '...'
         : product.name,
@@ -197,7 +197,7 @@ export async function exportAgingReportToExcel(report: AgingReportData) {
     [],
     ['DISTRIBUTION PAR TRANCHES'],
     ['Tranche', 'Produits', 'Quantité', 'Valeur', 'Pourcentage'],
-    ...report.buckets.map(bucket => [
+    ...report.buckets.map((bucket: AgingReportData['buckets'][number]) => [
       bucket.label,
       bucket.count,
       bucket.quantity,
@@ -235,7 +235,7 @@ export async function exportAgingReportToExcel(report: AgingReportData) {
       'Tranche',
       'Dernier Mouvement',
     ],
-    ...report.top_oldest.map(product => [
+    ...report.top_oldest.map((product: AgingReportData['top_oldest'][number]) => [
       product.name,
       product.sku,
       product.age_days,
@@ -286,7 +286,7 @@ export function exportAgingReportToCSV(report: AgingReportData) {
     'Dernier Mouvement',
   ].join(',');
 
-  const rows = report.top_oldest.map(product =>
+  const rows = report.top_oldest.map((product: AgingReportData['top_oldest'][number]) =>
     [
       `"${product.name.replace(/"/g, '""')}"`,
       product.sku,

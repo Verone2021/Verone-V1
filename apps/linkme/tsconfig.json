@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    "lib": ["dom", "dom.iterable", "es6"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noImplicitAny": false,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@verone/orders": ["../../packages/@verone/orders/src"],
+      "@verone/orders/*": ["../../packages/@verone/orders/src/*"],
+      "@verone/finance": ["../../packages/@verone/finance/src"],
+      "@verone/finance/*": ["../../packages/@verone/finance/src/*"],
+      "@verone/customers": ["../../packages/@verone/customers/src"],
+      "@verone/customers/*": ["../../packages/@verone/customers/src/*"],
+      "@verone/products": ["../../packages/@verone/products/src"],
+      "@verone/products/*": ["../../packages/@verone/products/src/*"],
+      "@verone/utils": ["../../packages/@verone/utils/src"],
+      "@verone/utils/*": ["../../packages/@verone/utils/src/*"],
+      "@verone/types": ["../../packages/@verone/types/src"],
+      "@verone/types/*": ["../../packages/@verone/types/src/*"]
+    },
+    "target": "ES2017"
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}

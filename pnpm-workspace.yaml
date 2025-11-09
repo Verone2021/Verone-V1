@@ -2,10 +2,9 @@
 # Configuration workspace pour back-office + canaux de vente
 
 packages:
+  # Applications (3 apps: back-office, site-internet, linkme)
+  - 'apps/*'
+
   # Packages partagés (configs, UI, business logic)
   - 'packages/*'
   - 'packages/@verone/*'
-
-  # Applications (à créer)
-  # - 'apps/back-office'
-  # - 'apps/sales-channels'

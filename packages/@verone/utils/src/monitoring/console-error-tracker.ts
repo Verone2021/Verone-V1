@@ -58,7 +58,7 @@ class ConsoleErrorTracker {
     };
 
     // Global error handler (catches unhandled errors)
-    window.addEventListener('error', event => {
+    window.addEventListener('error', (event: ErrorEvent) => {
       this.trackError(
         'error',
         [event.error?.message || event.message],
@@ -67,7 +67,7 @@ class ConsoleErrorTracker {
     });
 
     // Unhandled promise rejections
-    window.addEventListener('unhandledrejection', event => {
+    window.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
       this.trackError('error', [`Unhandled Promise: ${event.reason}`]);
     });
 

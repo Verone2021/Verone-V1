@@ -376,7 +376,10 @@ export async function listFiles(
   bucket: BucketType,
   folder?: string,
   limit: number = 100
-) {
+): Promise<
+  | { success: true; files: unknown[] }
+  | { success: false; error: UploadError }
+> {
   const supabase = createClient();
 
   try {

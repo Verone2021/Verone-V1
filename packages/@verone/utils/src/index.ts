@@ -35,9 +35,6 @@ export * from './logger';
 // Excel utils
 export * from './excel-utils';
 
-// PDF utils
-export * from './pdf-utils';
-
 // Organisation helpers
 export * from './utils/organisation-helpers';
 
@@ -76,7 +73,6 @@ export * from './supabase/client';
 // ========================================
 
 export * from './export/csv';
-export * from './reports/export-aging-report';
 
 // ========================================
 // MIDDLEWARE

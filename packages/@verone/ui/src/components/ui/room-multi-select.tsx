@@ -11,7 +11,6 @@ import {
   ROOM_CONFIGS,
   ROOM_CATEGORIES,
   getRoomLabel,
-  getRoomsByCategory,
 } from '@verone/types';
 import { cn } from '@verone/utils';
 import { Check, ChevronDown, X } from 'lucide-react';
@@ -66,7 +65,7 @@ export function RoomMultiSelect({
 
   // Grouper les pièces filtrées par catégorie
   const groupedRooms = Object.entries(ROOM_CATEGORIES).reduce(
-    (acc, [categoryKey, categoryLabel]) => {
+    (acc, [categoryKey]) => {
       const categoryRooms = filteredRooms.filter(
         room => room.category === categoryKey
       );

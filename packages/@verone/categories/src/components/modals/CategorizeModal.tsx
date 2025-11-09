@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { CategoryHierarchySelector } from '@/components/business/category-hierarchy-selector';
+import { CategoryHierarchySelector } from '../selectors/CategoryHierarchySelector';
 import { ButtonV2 } from '@verone/ui';
 import {
   Dialog,

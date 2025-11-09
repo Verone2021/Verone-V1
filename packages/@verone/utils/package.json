@@ -17,6 +17,7 @@
     "verone"
   ],
   "dependencies": {
+    "@verone/types": "workspace:*",
     "clsx": "^2.1.0",
     "isomorphic-dompurify": "^2.28.0",
     "tailwind-merge": "^2.2.1",
@@ -40,11 +41,6 @@
       "types": "./src/excel-utils.ts",
       "import": "./src/excel-utils.ts",
       "require": "./src/excel-utils.ts"
-    },
-    "./pdf-utils": {
-      "types": "./src/pdf-utils.ts",
-      "import": "./src/pdf-utils.ts",
-      "require": "./src/pdf-utils.ts"
     },
     "./validation": {
       "types": "./src/validation/index.ts",

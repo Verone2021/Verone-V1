@@ -2,7 +2,8 @@
 
 import { useState, useCallback } from 'react';
 
-import { deleteProductAlerts } from '@/app/actions/delete-product-alerts';
+// FIXME: Server actions can't be imported from monorepo packages
+// import { deleteProductAlerts } from '@/app/actions/delete-product-alerts';
 import { createClient } from '@verone/utils/supabase/client';
 
 // Types des sections éditables
@@ -169,27 +170,28 @@ export function useInlineEdit(options: UseInlineEditOptions) {
               // Forcer min_stock à 0 (règle métier)
               sectionState.editedData.min_stock = 0;
 
-              // Supprimer les alertes stock en DB
-              try {
-                const result = await deleteProductAlerts(productId);
-                if (result.success) {
-                  console.log(
-                    `✅ ${result.deletedCount} alerte(s) supprimée(s) pour passage en ${newStatus}`
-                  );
-                } else {
-                  console.warn(
-                    '⚠️ Erreur suppression alertes (non-bloquant):',
-                    result.error
-                  );
-                  // Continue quand même (non-bloquant)
-                }
-              } catch (alertError) {
-                console.error(
-                  '⚠️ Erreur suppression alertes (non-bloquant):',
-                  alertError
-                );
-                // Continue quand même (non-bloquant)
-              }
+              // FIXME: deleteProductAlerts server action can't be imported from monorepo
+              // // Supprimer les alertes stock en DB
+              // try {
+              //   const result = await deleteProductAlerts(productId);
+              //   if (result.success) {
+              //     console.log(
+              //       `✅ ${result.deletedCount} alerte(s) supprimée(s) pour passage en ${newStatus}`
+              //     );
+              //   } else {
+              //     console.warn(
+              //       '⚠️ Erreur suppression alertes (non-bloquant):',
+              //       result.error
+              //     );
+              //     // Continue quand même (non-bloquant)
+              //   }
+              // } catch (alertError) {
+              //   console.error(
+              //     '⚠️ Erreur suppression alertes (non-bloquant):',
+              //     alertError
+              //   );
+              //   // Continue quand même (non-bloquant)
+              // }
             }
           }
 

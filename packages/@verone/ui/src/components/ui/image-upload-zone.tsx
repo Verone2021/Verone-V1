@@ -14,7 +14,6 @@ import { createClient } from '@verone/utils';
 import {
   Upload,
   X,
-  FileImage,
   Loader2,
   AlertCircle,
   CheckCircle2,
@@ -82,7 +81,6 @@ const DEFAULT_ACCEPTED_FORMATS = {
 };
 
 const DEFAULT_MAX_SIZE_MB = 10;
-const DEFAULT_MAX_SIZE_BYTES = DEFAULT_MAX_SIZE_MB * 1024 * 1024;
 
 // =====================================================================
 // COMPOSANT PRINCIPAL

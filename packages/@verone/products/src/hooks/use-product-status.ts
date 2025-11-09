@@ -2,7 +2,8 @@
 
 import { useState, useCallback } from 'react';
 
-import { deleteProductAlerts } from '@/app/actions/delete-product-alerts';
+// FIXME: Server actions can't be imported from monorepo packages
+// import { deleteProductAlerts } from '@/app/actions/delete-product-alerts';
 import { createClient } from '@verone/utils/supabase/client';
 
 /**
@@ -119,25 +120,26 @@ export function useProductStatus({
         if (newStatus === 'preorder' || newStatus === 'discontinued') {
           updates.min_stock = 0;
 
-          // Supprimer les alertes stock en DB
-          try {
-            const result = await deleteProductAlerts(productId);
-            if (result.success) {
-              console.log(
-                `✅ ${result.deletedCount} alerte(s) supprimée(s) pour passage en ${newStatus}`
-              );
-            } else {
-              console.warn(
-                '⚠️ Erreur suppression alertes (non-bloquant):',
-                result.error
-              );
-            }
-          } catch (alertError) {
-            console.error(
-              '⚠️ Erreur suppression alertes (non-bloquant):',
-              alertError
-            );
-          }
+          // FIXME: deleteProductAlerts server action can't be imported from monorepo
+          // // Supprimer les alertes stock en DB
+          // try {
+          //   const result = await deleteProductAlerts(productId);
+          //   if (result.success) {
+          //     console.log(
+          //       `✅ ${result.deletedCount} alerte(s) supprimée(s) pour passage en ${newStatus}`
+          //     );
+          //   } else {
+          //     console.warn(
+          //       '⚠️ Erreur suppression alertes (non-bloquant):',
+          //       result.error
+          //     );
+          //   }
+          // } catch (alertError) {
+          //   console.error(
+          //     '⚠️ Erreur suppression alertes (non-bloquant):',
+          //     alertError
+          //   );
+          // }
         }
 
         // Mise à jour produit

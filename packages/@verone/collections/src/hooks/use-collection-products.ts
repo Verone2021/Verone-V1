@@ -12,7 +12,7 @@
 
 import { useMemo } from 'react';
 
-import { useSupabaseQuery } from '@/hooks/base/use-supabase-query';
+import { useSupabaseQuery } from '@verone/common/hooks/use-supabase-query-builder';
 import type { CollectionProduct } from '@verone/types';
 import { formatCollectionProduct } from '@verone/types';
 

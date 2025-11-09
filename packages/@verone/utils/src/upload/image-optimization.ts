@@ -4,7 +4,7 @@
  * Intégration MCP pour monitoring et automation
  */
 
-import { gdprAnalytics } from '@verone/utils/analytics/gdpr-analytics';
+import { gdprAnalytics } from '../analytics/gdpr-analytics';
 
 export interface ImageOptimizationConfig {
   // Formats de sortie supportés
@@ -152,7 +152,7 @@ export class ImageOptimizer {
   private initializeCanvas(): void {
     if (typeof window !== 'undefined') {
       this.canvas = document.createElement('canvas');
-      this.ctx = this.canvas.getContext('2d');
+      this.ctx = this.canvas?.getContext('2d') ?? null;
     }
   }
 
@@ -251,7 +251,7 @@ export class ImageOptimizer {
                 : 'image/png';
 
           this.canvas!.toBlob(
-            blob => {
+            (blob: Blob | null) => {
               if (!blob) {
                 reject(new Error(`Impossible de convertir vers ${format}`));
                 return;
@@ -409,8 +409,6 @@ export class ImageOptimizer {
 
       return result;
     } catch (error) {
-      const processingTime = performance.now() - startTime;
-
       console.error('🚨 Erreur critique optimisation image:', error);
 
       throw new Error(

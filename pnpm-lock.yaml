@@ -276,6 +276,79 @@ importers:
       tsx:
         specifier: ^4.20.6
         version: 4.20.6
+      turbo:
+        specifier: ^2.6.0
+        version: 2.6.0
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+
+  apps/back-office: {}
+
+  apps/linkme:
+    dependencies:
+      '@supabase/supabase-js':
+        specifier: ^2.57.4
+        version: 2.80.0
+      next:
+        specifier: ^15.2.2
+        version: 15.5.6(@babel/core@7.28.5)(@playwright/test@1.56.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react:
+        specifier: 18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: 18.3.1
+        version: 18.3.1(react@18.3.1)
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.17
+        version: 20.19.24
+      '@types/react':
+        specifier: ^18.2.55
+        version: 18.3.26
+      autoprefixer:
+        specifier: ^10.4.17
+        version: 10.4.21(postcss@8.5.6)
+      postcss:
+        specifier: ^8.4.35
+        version: 8.5.6
+      tailwindcss:
+        specifier: ^3.4.1
+        version: 3.4.18(tsx@4.20.6)(yaml@2.8.1)
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+
+  apps/site-internet:
+    dependencies:
+      '@supabase/supabase-js':
+        specifier: ^2.57.4
+        version: 2.80.0
+      next:
+        specifier: ^15.2.2
+        version: 15.5.6(@babel/core@7.28.5)(@playwright/test@1.56.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react:
+        specifier: 18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: 18.3.1
+        version: 18.3.1(react@18.3.1)
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.17
+        version: 20.19.24
+      '@types/react':
+        specifier: ^18.2.55
+        version: 18.3.26
+      autoprefixer:
+        specifier: ^10.4.17
+        version: 10.4.21(postcss@8.5.6)
+      postcss:
+        specifier: ^8.4.35
+        version: 8.5.6
+      tailwindcss:
+        specifier: ^3.4.1
+        version: 3.4.18(tsx@4.20.6)(yaml@2.8.1)
       typescript:
         specifier: ^5.3.3
         version: 5.9.3
@@ -453,6 +526,12 @@ importers:
 
   packages/@verone/finance:
     dependencies:
+      '@verone/common':
+        specifier: workspace:*
+        version: link:../common
+      '@verone/integrations':
+        specifier: workspace:*
+        version: link:../integrations
       '@verone/types':
         specifier: workspace:*
         version: link:../types
@@ -689,6 +768,12 @@ importers:
       '@radix-ui/react-tabs':
         specifier: ^1.1.13
         version: 1.1.13(@types/react-dom@18.3.7(@types/react@18.3.26))(@types/react@18.3.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@verone/types':
+        specifier: workspace:*
+        version: link:../types
+      '@verone/utils':
+        specifier: workspace:*
+        version: link:../utils
       class-variance-authority:
         specifier: ^0.7.0
         version: 0.7.1
@@ -738,6 +823,9 @@ importers:
 
   packages/@verone/utils:
     dependencies:
+      '@verone/types':
+        specifier: workspace:*
+        version: link:../types
       clsx:
         specifier: ^2.1.0
         version: 2.1.1
@@ -7488,6 +7576,40 @@ packages:
 
   tty-browserify@0.0.1:
     resolution: {integrity: sha512-C3TaO7K81YvjCgQH9Q1S3R3P3BtN3RIM8n+OvX4il1K1zgE8ZhI0op7kClgkxtutIE8hQrcrHBXvIheqKUUCxw==}
+
+  turbo-darwin-64@2.6.0:
+    resolution: {integrity: sha512-6vHnLAubHj8Ib45Knu+oY0ZVCLO7WcibzAvt5b1E72YHqAs4y8meMAGMZM0jLqWPh/9maHDc16/qBCMxtW4pXg==}
+    cpu: [x64]
+    os: [darwin]
+
+  turbo-darwin-arm64@2.6.0:
+    resolution: {integrity: sha512-IU+gWMEXNBw8H0pxvE7nPEa5p6yahxbN8g/Q4Bf0AHymsAFqsScgV0peeNbWybdmY9jk1LPbALOsF2kY1I7ZiQ==}
+    cpu: [arm64]
+    os: [darwin]
+
+  turbo-linux-64@2.6.0:
+    resolution: {integrity: sha512-CKoiJ2ZFJLCDsWdRlZg+ew1BkGn8iCEGdePhISVpjsGwkJwSVhVu49z2zKdBeL1IhcSKS2YALwp9ellNZANJxw==}
+    cpu: [x64]
+    os: [linux]
+
+  turbo-linux-arm64@2.6.0:
+    resolution: {integrity: sha512-WroVCdCvJbrhNxNdw7XB7wHAfPPJPV+IXY+ZKNed+9VdfBu/2mQNfKnvqTuFTH7n+Pdpv8to9qwhXRTJe26upg==}
+    cpu: [arm64]
+    os: [linux]
+
+  turbo-windows-64@2.6.0:
+    resolution: {integrity: sha512-7pZo5aGQPR+A7RMtWCZHusarJ6y15LQ+o3jOmpMxTic/W6Bad+jSeqo07TWNIseIWjCVzrSv27+0odiYRYtQdA==}
+    cpu: [x64]
+    os: [win32]
+
+  turbo-windows-arm64@2.6.0:
+    resolution: {integrity: sha512-1Ty+NwIksQY7AtFUCPrTpcKQE7zmd/f7aRjdT+qkqGFQjIjFYctEtN7qo4vpQPBgCfS1U3ka83A2u/9CfJQ3wQ==}
+    cpu: [arm64]
+    os: [win32]
+
+  turbo@2.6.0:
+    resolution: {integrity: sha512-kC5VJqOXo50k0/0jnJDDjibLAXalqT9j7PQ56so0pN+81VR4Fwb2QgIE9dTzT3phqOTQuEXkPh3sCpnv5Isz2g==}
+    hasBin: true
 
   type-check@0.4.0:
     resolution: {integrity: sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==}
@@ -15469,6 +15591,33 @@ snapshots:
       fsevents: 2.3.3
 
   tty-browserify@0.0.1: {}
+
+  turbo-darwin-64@2.6.0:
+    optional: true
+
+  turbo-darwin-arm64@2.6.0:
+    optional: true
+
+  turbo-linux-64@2.6.0:
+    optional: true
+
+  turbo-linux-arm64@2.6.0:
+    optional: true
+
+  turbo-windows-64@2.6.0:
+    optional: true
+
+  turbo-windows-arm64@2.6.0:
+    optional: true
+
+  turbo@2.6.0:
+    optionalDependencies:
+      turbo-darwin-64: 2.6.0
+      turbo-darwin-arm64: 2.6.0
+      turbo-linux-64: 2.6.0
+      turbo-linux-arm64: 2.6.0
+      turbo-windows-64: 2.6.0
+      turbo-windows-arm64: 2.6.0
 
   type-check@0.4.0:
     dependencies:

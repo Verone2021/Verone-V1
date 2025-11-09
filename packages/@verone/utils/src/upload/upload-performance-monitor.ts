@@ -4,7 +4,7 @@
  * Intégration Sentry + Upstash + Analytics GDPR
  */
 
-import { gdprAnalytics } from '@verone/utils/analytics/gdpr-analytics';
+import { gdprAnalytics } from '../analytics/gdpr-analytics';
 
 export interface UploadPerformanceMetrics {
   // Identifiants
@@ -404,7 +404,7 @@ export class UploadPerformanceMonitor {
    * 🔍 Vérifier seuils optimisation
    */
   private checkOptimizationThresholds(
-    uploadId: string,
+    _uploadId: string,
     metrics: UploadPerformanceMetrics
   ): void {
     const alerts: PerformanceAlert[] = [];
@@ -443,7 +443,7 @@ export class UploadPerformanceMonitor {
    * 🌐 Vérifier seuils réseau
    */
   private checkNetworkThresholds(
-    uploadId: string,
+    _uploadId: string,
     metrics: UploadPerformanceMetrics
   ): void {
     // Vitesse upload
