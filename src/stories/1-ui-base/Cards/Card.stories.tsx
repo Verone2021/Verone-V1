@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/nextjs';
 import { Save, X } from 'lucide-react';
 
-import { Badge } from '@verone/ui'
-import { ButtonV2 } from '@verone/ui'
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
 import {
   Card,
   CardHeader,
@@ -10,7 +10,7 @@ import {
   CardDescription,
   CardContent,
   CardFooter,
-} from '@verone/ui'
+} from '@verone/ui';
 
 const meta = {
   title: '1-UI-Base/Cards/Card',
@@ -20,28 +20,62 @@ const meta = {
     docs: {
       description: {
         component: `
-📦 **Card** - Conteneur basique shadcn/ui.
+📦 **Card** - Conteneur avec variants CVA dynamiques.
 
 **Composants** :
-- \`Card\` : Conteneur principal
+- \`Card\` : Conteneur principal avec variants
 - \`CardHeader\` : En-tête avec padding
 - \`CardTitle\` : Titre (h3)
 - \`CardDescription\` : Description secondaire
 - \`CardContent\` : Contenu principal
 - \`CardFooter\` : Pied de page (actions)
 
-**Design** :
-- Border : \`border-slate-200\`
-- Background : \`bg-white\`
-- Shadow : \`shadow-sm\`
-- Radius : \`rounded-xl\`
+**Variants** :
+- \`elevated\` : Ombre prononcée (hover effet) - **Default**
+- \`flat\` : Sans ombre (minimal)
+- \`outline\` : Bordure visible uniquement
+- \`interactive\` : Hover effects + cursor pointer
+- \`glass\` : Glassmorphism (backdrop-blur)
+- \`gradient\` : Fond dégradé
 
-**Version** : V1 (shadcn/ui standard)
+**Padding** :
+- \`none\` : Pas de padding global - **Default**
+- \`sm\` : p-4 (16px)
+- \`md\` : p-6 (24px)
+- \`lg\` : p-8 (32px)
+
+**Props Dynamiques** :
+- \`clickable\` : Ajoute hover scale + cursor pointer
+
+**Version** : V2 (CVA + shadcn/ui)
         `,
       },
     },
   },
   tags: ['autodocs'],
+  argTypes: {
+    variant: {
+      control: 'select',
+      options: [
+        'elevated',
+        'flat',
+        'outline',
+        'interactive',
+        'glass',
+        'gradient',
+      ],
+      description: 'Style visuel de la card',
+    },
+    padding: {
+      control: 'select',
+      options: ['none', 'sm', 'md', 'lg'],
+      description: 'Padding global de la card',
+    },
+    clickable: {
+      control: 'boolean',
+      description: 'Rend la card cliquable avec hover scale',
+    },
+  },
 } satisfies Meta<typeof Card>;
 
 export default meta;
@@ -261,6 +295,161 @@ export const List: Story = {
         </Card>
       ))}
     </div>
+  ),
+};
+
+/**
+ * Tous les variants CVA disponibles
+ */
+export const AllVariants: Story = {
+  render: () => (
+    <div className="grid grid-cols-2 gap-6 p-4">
+      <Card variant="elevated" className="w-[280px]">
+        <CardHeader>
+          <CardTitle>Elevated (Default)</CardTitle>
+          <CardDescription>Shadow-lg with hover shadow-xl</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-slate-600">
+            Default variant with pronounced shadow and hover effect.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card variant="flat" className="w-[280px]">
+        <CardHeader>
+          <CardTitle>Flat</CardTitle>
+          <CardDescription>No shadow, minimal style</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-slate-600">
+            Clean and minimal with border only, no shadow.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card variant="outline" className="w-[280px]">
+        <CardHeader>
+          <CardTitle>Outline</CardTitle>
+          <CardDescription>Thick border, no shadow</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-slate-600">
+            Emphasized border-2 for clear visual separation.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card variant="interactive" className="w-[280px]">
+        <CardHeader>
+          <CardTitle>Interactive</CardTitle>
+          <CardDescription>Hover effects + cursor pointer</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-slate-600">
+            Hover to see shadow elevation and border color change.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card variant="glass" className="w-[280px]">
+        <CardHeader>
+          <CardTitle className="text-white">Glass</CardTitle>
+          <CardDescription className="text-white/80">
+            Glassmorphism with backdrop-blur
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-white/90">
+            Modern glass effect with blur and transparency.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card variant="gradient" className="w-[280px]">
+        <CardHeader>
+          <CardTitle>Gradient</CardTitle>
+          <CardDescription>Subtle gradient background</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-slate-600">
+            Soft gradient from slate-50 to white with shadow.
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  ),
+};
+
+/**
+ * Padding variants
+ */
+export const PaddingVariants: Story = {
+  render: () => (
+    <div className="space-y-4">
+      <Card padding="none" className="w-[350px]">
+        <CardHeader>
+          <CardTitle>Padding: None (Default)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-slate-600">
+            No global padding. Sub-components handle their own spacing.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card padding="sm" className="w-[350px]">
+        <CardHeader>
+          <CardTitle>Padding: Small (p-4)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-slate-600">16px padding on all sides.</p>
+        </CardContent>
+      </Card>
+
+      <Card padding="md" className="w-[350px]">
+        <CardHeader>
+          <CardTitle>Padding: Medium (p-6)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-slate-600">24px padding on all sides.</p>
+        </CardContent>
+      </Card>
+
+      <Card padding="lg" className="w-[350px]">
+        <CardHeader>
+          <CardTitle>Padding: Large (p-8)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-slate-600">32px padding on all sides.</p>
+        </CardContent>
+      </Card>
+    </div>
+  ),
+};
+
+/**
+ * Clickable card with scale effect
+ */
+export const ClickableCard: Story = {
+  render: () => (
+    <Card
+      variant="interactive"
+      clickable
+      className="w-[350px]"
+      onClick={() => console.log('Card clicked!')}
+    >
+      <CardHeader>
+        <CardTitle>Clickable Card</CardTitle>
+        <CardDescription>Click to trigger onClick handler</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-slate-600">
+          This card has clickable prop which adds hover:scale-[1.02] and
+          cursor-pointer. Interactive variant adds shadow effects.
+        </p>
+      </CardContent>
+    </Card>
   ),
 };
 

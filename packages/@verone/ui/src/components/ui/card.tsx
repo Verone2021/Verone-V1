@@ -1,20 +1,56 @@
 import * as React from 'react';
 
 import { cn } from '@verone/utils';
+import { cva, type VariantProps } from 'class-variance-authority';
 
-const Card = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      'rounded-xl border border-slate-200 bg-white shadow-sm',
-      className
-    )}
-    {...props}
-  />
-));
+const cardVariants = cva('rounded-xl transition-all duration-200', {
+  variants: {
+    variant: {
+      elevated: 'border border-slate-200 bg-white shadow-lg hover:shadow-xl',
+      flat: 'border border-slate-200 bg-white shadow-none',
+      outline: 'border-2 border-slate-300 bg-white shadow-none',
+      interactive:
+        'border border-slate-200 bg-white shadow-sm hover:shadow-md hover:border-slate-300 cursor-pointer',
+      glass: 'border border-white/20 bg-white/10 backdrop-blur-lg shadow-lg',
+      gradient:
+        'border border-transparent bg-gradient-to-br from-slate-50 to-white shadow-md',
+    },
+    padding: {
+      none: '',
+      sm: 'p-4',
+      md: 'p-6',
+      lg: 'p-8',
+    },
+  },
+  defaultVariants: {
+    variant: 'elevated',
+    padding: 'none',
+  },
+});
+
+export interface CardProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof cardVariants> {
+  /**
+   * Rend la card cliquable avec onClick
+   */
+  clickable?: boolean;
+}
+
+const Card = React.forwardRef<HTMLDivElement, CardProps>(
+  ({ className, variant, padding, clickable, onClick, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn(
+        cardVariants({ variant, padding }),
+        clickable && 'cursor-pointer hover:scale-[1.02]',
+        className
+      )}
+      onClick={onClick}
+      {...props}
+    />
+  )
+);
 Card.displayName = 'Card';
 
 const CardHeader = React.forwardRef<
@@ -79,4 +115,5 @@ export {
   CardTitle,
   CardDescription,
   CardContent,
+  cardVariants,
 };
