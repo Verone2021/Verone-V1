@@ -3784,6 +3784,7 @@ export type Database = {
           subcategory_id: string | null;
           suitable_rooms: Database['public']['Enums']['room_type'][] | null;
           supplier_id: string | null;
+          supplier_moq: number | null;
           supplier_page_url: string | null;
           supplier_reference: string | null;
           target_margin_percentage: number | null;
@@ -3835,6 +3836,7 @@ export type Database = {
           subcategory_id?: string | null;
           suitable_rooms?: Database['public']['Enums']['room_type'][] | null;
           supplier_id?: string | null;
+          supplier_moq?: number | null;
           supplier_page_url?: string | null;
           supplier_reference?: string | null;
           target_margin_percentage?: number | null;
@@ -3886,6 +3888,7 @@ export type Database = {
           subcategory_id?: string | null;
           suitable_rooms?: Database['public']['Enums']['room_type'][] | null;
           supplier_id?: string | null;
+          supplier_moq?: number | null;
           supplier_page_url?: string | null;
           supplier_reference?: string | null;
           target_margin_percentage?: number | null;
@@ -6372,6 +6375,13 @@ export type Database = {
       cleanup_old_status_history: { Args: never; Returns: number };
       cleanup_old_sync_operations: { Args: never; Returns: number };
       cleanup_resolved_errors: { Args: never; Returns: number };
+      cleanup_validated_alerts: {
+        Args: { p_days_threshold?: number };
+        Returns: {
+          deleted_count: number;
+          deleted_product_ids: string[];
+        }[];
+      };
       complete_mcp_task: {
         Args: {
           execution_details_param?: Json;
@@ -6761,6 +6771,16 @@ export type Database = {
           slug: string;
           subcategory_count: number;
           updated_at: string;
+        }[];
+      };
+      get_cleanup_candidates: {
+        Args: { p_days_threshold?: number };
+        Returns: {
+          alert_type: string;
+          days_since_validation: number;
+          product_id: string;
+          product_name: string;
+          validated_at: string;
         }[];
       };
       get_consultation_eligible_products: {

@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 
-import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@verone/common/hooks';
+import { createClient } from '@verone/utils/supabase/client';
 
 // Types d'alertes stock
 export type StockAlertType =
@@ -48,6 +48,9 @@ export function useStockAlerts() {
       setLoading(true);
       try {
         // Query stock_alert_tracking avec jointures
+        // ✅ FIX Phase 3: Filtrer alertes validées
+        // Workflow: ROUGE (non commandé) → VERT (draft) → DISPARAÎT (validated)
+        // Les alertes validated=true doivent disparaître de la liste
         let query = supabase
           .from('stock_alert_tracking')
           .select(
@@ -73,7 +76,7 @@ export function useStockAlerts() {
           )
         `
           )
-          .eq('validated', false) // Seulement alertes non validées
+          .eq('validated', false) // ← FIX BUG #1: Filtrer alertes validées
           .order('alert_priority', { ascending: false })
           .order('stock_real', { ascending: true });
 

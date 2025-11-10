@@ -16,15 +16,14 @@ setup('authenticate', async ({ page }) => {
   // Attendre que la page soit chargée
   await page.waitForLoadState('networkidle');
 
-  // Remplir le formulaire de login
-  await page.fill(
-    'input[type="email"]',
-    'romeo.dossantos.rds+verone@gmail.com'
-  );
-  await page.fill('input[type="password"]', 'Test1234!');
+  // Remplir le formulaire de login avec sélecteurs robustes
+  await page
+    .getByRole('textbox', { name: /email/i })
+    .fill('romeo.dossantos.rds+verone@gmail.com');
+  await page.getByRole('textbox', { name: /mot de passe/i }).fill('Test1234!');
 
   // Cliquer sur le bouton de connexion
-  await page.click('button[type="submit"]');
+  await page.getByRole('button', { name: /se connecter/i }).click();
 
   // Attendre redirection vers dashboard (succès login)
   await page.waitForURL('/dashboard');

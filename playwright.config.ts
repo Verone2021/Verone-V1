@@ -33,8 +33,8 @@ export default defineConfig({
 
   // Configuration base
   use: {
-    // URL de base (port dynamique si 3000 occupé)
-    baseURL: process.env.BASE_URL || 'http://localhost:3001',
+    // URL de base
+    baseURL: process.env.BASE_URL || 'http://localhost:3000',
 
     // Traces
     trace: 'retain-on-failure',
@@ -86,8 +86,8 @@ export default defineConfig({
   // Serveur de développement
   webServer: {
     command: 'npm run dev',
-    url: 'http://localhost:3001',
-    reuseExistingServer: !process.env.CI,
+    url: 'http://localhost:3000',
+    reuseExistingServer: true, // Toujours réutiliser serveur existant
     timeout: 120000, // 2 minutes pour démarrage
   },
 });
