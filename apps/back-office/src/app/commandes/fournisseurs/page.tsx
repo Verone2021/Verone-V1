@@ -23,7 +23,7 @@ import {
   AlertDialogTitle,
 } from '@verone/ui';
 import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
+import { ButtonUnified } from '@verone/ui';
 import {
   Card,
   CardContent,
@@ -649,143 +649,123 @@ export default function PurchaseOrdersPage() {
                       <TableCell>{formatCurrency(order.total_ttc)}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <ButtonV2
+                          <ButtonUnified
                             variant="outline"
                             size="sm"
                             onClick={() => openOrderDetail(order)}
                             title="Voir les détails"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </ButtonV2>
+                            icon={Eye}
+                          />
 
                           {/* DRAFT : Éditer + Annuler + Supprimer */}
                           {order.status === 'draft' && (
                             <>
-                              <ButtonV2
+                              <ButtonUnified
                                 variant="outline"
                                 size="sm"
                                 onClick={() => openEditModal(order)}
                                 title="Éditer la commande"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </ButtonV2>
-                              <ButtonV2
-                                variant="outline"
+                                icon={Edit}
+                              />
+                              <ButtonUnified
+                                variant="danger"
                                 size="sm"
                                 onClick={() => handleCancel(order.id)}
                                 title="Annuler la commande"
-                                className="text-red-600 hover:text-red-700"
-                              >
-                                <Ban className="h-4 w-4" />
-                              </ButtonV2>
-                              <ButtonV2
-                                variant="outline"
+                                icon={Ban}
+                              />
+                              <ButtonUnified
+                                variant="danger"
                                 size="sm"
                                 onClick={() => handleDelete(order.id)}
                                 title="Supprimer"
-                                className="text-red-600 hover:text-red-700"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </ButtonV2>
+                                icon={Trash2}
+                              />
                             </>
                           )}
 
                           {/* SENT : Confirmer + Annuler */}
                           {order.status === 'sent' && (
                             <>
-                              <ButtonV2
-                                variant="outline"
+                              <ButtonUnified
+                                variant="success"
                                 size="sm"
                                 onClick={() =>
                                   handleStatusChange(order.id, 'confirmed')
                                 }
                                 title="Confirmer la commande"
-                                className="text-green-600 hover:text-green-700"
-                              >
-                                <CheckCircle className="h-4 w-4" />
-                              </ButtonV2>
-                              <ButtonV2
-                                variant="outline"
+                                icon={CheckCircle}
+                              />
+                              <ButtonUnified
+                                variant="danger"
                                 size="sm"
                                 onClick={() => handleCancel(order.id)}
                                 title="Annuler la commande"
-                                className="text-red-600 hover:text-red-700"
-                              >
-                                <Ban className="h-4 w-4" />
-                              </ButtonV2>
+                                icon={Ban}
+                              />
                             </>
                           )}
 
                           {/* CONFIRMED : Réceptionner + Annuler */}
                           {order.status === 'confirmed' && (
                             <>
-                              <ButtonV2
+                              <ButtonUnified
                                 variant="outline"
                                 size="sm"
                                 onClick={() => openReceptionModal(order)}
                                 title="Réceptionner la commande"
-                              >
-                                <Truck className="h-4 w-4" />
-                              </ButtonV2>
-                              <ButtonV2
-                                variant="outline"
+                                icon={Truck}
+                              />
+                              <ButtonUnified
+                                variant="danger"
                                 size="sm"
                                 onClick={() => handleCancel(order.id)}
                                 title="Annuler la commande"
-                                className="text-red-600 hover:text-red-700"
-                              >
-                                <Ban className="h-4 w-4" />
-                              </ButtonV2>
+                                icon={Ban}
+                              />
                             </>
                           )}
 
                           {/* PARTIALLY_RECEIVED : Réceptionner + Annuler DISABLED */}
                           {order.status === 'partially_received' && (
                             <>
-                              <ButtonV2
+                              <ButtonUnified
                                 variant="outline"
                                 size="sm"
                                 onClick={() => openReceptionModal(order)}
                                 title="Réceptionner la commande"
-                              >
-                                <Truck className="h-4 w-4" />
-                              </ButtonV2>
-                              <ButtonV2
+                                icon={Truck}
+                              />
+                              <ButtonUnified
                                 variant="outline"
                                 size="sm"
                                 disabled
                                 title="Impossible d'annuler : réception en cours"
-                                className="opacity-50"
-                              >
-                                <Ban className="h-4 w-4" />
-                              </ButtonV2>
+                                icon={Ban}
+                              />
                             </>
                           )}
 
                           {/* RECEIVED : Annuler DISABLED */}
                           {order.status === 'received' && (
-                            <ButtonV2
+                            <ButtonUnified
                               variant="outline"
                               size="sm"
                               disabled
                               title="Impossible d'annuler : commande déjà reçue"
-                              className="opacity-50"
-                            >
-                              <Ban className="h-4 w-4" />
-                            </ButtonV2>
+                              icon={Ban}
+                            />
                           )}
 
                           {/* CANCELLED : Supprimer */}
                           {order.status === 'cancelled' && (
-                            <ButtonV2
-                              variant="outline"
+                            <ButtonUnified
+                              variant="danger"
                               size="sm"
                               onClick={() => handleDelete(order.id)}
                               title="Supprimer"
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </ButtonV2>
+                              icon={Trash2}
+                            />
                           )}
                         </div>
                       </TableCell>

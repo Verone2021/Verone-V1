@@ -21,7 +21,7 @@ import {
   AlertDialogTitle,
 } from '@verone/ui';
 import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
+import { ButtonUnified } from '@verone/ui';
 import {
   Card,
   CardContent,
@@ -587,14 +587,13 @@ export default function SalesOrdersPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <ButtonV2
+          <ButtonUnified
             onClick={handleExportExcel}
             variant="outline"
-            className="flex items-center gap-2"
+            icon={FileSpreadsheet}
           >
-            <FileSpreadsheet className="h-4 w-4" />
             Exporter Excel
-          </ButtonV2>
+          </ButtonUnified>
           <SalesOrderFormModal
             onSuccess={() => {
               fetchOrders();
@@ -853,96 +852,84 @@ export default function SalesOrdersPage() {
                         <TableCell>
                           <div className="flex items-center gap-2">
                             {/* Voir */}
-                            <ButtonV2
+                            <ButtonUnified
                               variant="outline"
                               size="sm"
                               onClick={() => openOrderDetail(order)}
                               title="Voir détails"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </ButtonV2>
+                              icon={Eye}
+                            />
 
                             {/* Modifier (draft ou confirmed non payée) */}
                             {(order.status === 'draft' ||
                               order.status === 'confirmed') && (
-                              <ButtonV2
+                              <ButtonUnified
                                 variant="outline"
                                 size="sm"
                                 onClick={() => openEditOrder(order.id)}
                                 title="Modifier"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </ButtonV2>
+                                icon={Edit}
+                              />
                             )}
 
                             {/* Valider (draft uniquement) */}
                             {order.status === 'draft' && (
-                              <ButtonV2
-                                variant="outline"
+                              <ButtonUnified
+                                variant="success"
                                 size="sm"
                                 onClick={() =>
                                   handleStatusChange(order.id, 'confirmed')
                                 }
                                 title="Valider"
-                                className="text-green-600 border-green-300 hover:bg-green-50"
-                              >
-                                <CheckCircle className="h-4 w-4" />
-                              </ButtonV2>
+                                icon={CheckCircle}
+                              />
                             )}
 
                             {/* Dévalider (confirmed uniquement) */}
                             {order.status === 'confirmed' && (
-                              <ButtonV2
+                              <ButtonUnified
                                 variant="outline"
                                 size="sm"
                                 onClick={() =>
                                   handleStatusChange(order.id, 'draft')
                                 }
                                 title="Dévalider (retour brouillon)"
-                                className="text-orange-600 border-orange-300 hover:bg-orange-50"
-                              >
-                                <RotateCcw className="h-4 w-4" />
-                              </ButtonV2>
+                                icon={RotateCcw}
+                              />
                             )}
 
                             {/* Expédier (confirmed ou partially_shipped) */}
                             {(order.status === 'confirmed' ||
                               order.status === 'partially_shipped') && (
-                              <ButtonV2
+                              <ButtonUnified
                                 variant="outline"
                                 size="sm"
                                 onClick={() => openShipmentModal(order)}
                                 title="Expédier la commande"
-                                className="text-blue-600 border-blue-300 hover:bg-blue-50"
-                              >
-                                <Truck className="h-4 w-4" />
-                              </ButtonV2>
+                                icon={Truck}
+                              />
                             )}
 
                             {/* Annuler (UNIQUEMENT brouillon - Workflow: dévalidation obligatoire) */}
                             {order.status === 'draft' && (
-                              <ButtonV2
-                                variant="outline"
+                              <ButtonUnified
+                                variant="danger"
                                 size="sm"
                                 onClick={() => handleCancel(order.id)}
                                 title="Annuler la commande (brouillon uniquement)"
-                                className="text-red-600 border-red-300 hover:bg-red-50"
-                              >
-                                <Ban className="h-4 w-4" />
-                              </ButtonV2>
+                                icon={Ban}
+                              />
                             )}
 
                             {/* Annuler disabled pour confirmed - Doit dévalider d'abord */}
                             {order.status === 'confirmed' && (
-                              <ButtonV2
+                              <ButtonUnified
                                 variant="outline"
                                 size="sm"
                                 disabled
                                 title="Impossible d'annuler directement une commande validée. Veuillez d'abord la dévalider (retour brouillon), puis l'annuler."
-                                className="text-gray-400 border-gray-200 cursor-not-allowed opacity-50"
-                              >
-                                <Ban className="h-4 w-4" />
-                              </ButtonV2>
+                                icon={Ban}
+                              />
                             )}
 
                             {/* Annuler disabled pour paid/delivered - Règle absolue */}
@@ -951,7 +938,7 @@ export default function SalesOrdersPage() {
                               order.status !== 'cancelled' &&
                               order.status !== 'draft' &&
                               order.status !== 'confirmed' && (
-                                <ButtonV2
+                                <ButtonUnified
                                   variant="outline"
                                   size="sm"
                                   disabled
@@ -960,34 +947,29 @@ export default function SalesOrdersPage() {
                                       ? "Impossible d'annuler : commande déjà payée. Contacter un administrateur pour remboursement."
                                       : "Impossible d'annuler : commande déjà livrée. Créer un avoir."
                                   }
-                                  className="text-gray-400 border-gray-200 cursor-not-allowed opacity-50"
-                                >
-                                  <Ban className="h-4 w-4" />
-                                </ButtonV2>
+                                  icon={Ban}
+                                />
                               )}
 
                             {/* Supprimer (cancelled uniquement) */}
                             {order.status === 'cancelled' && (
-                              <ButtonV2
-                                variant="outline"
+                              <ButtonUnified
+                                variant="danger"
                                 size="sm"
                                 onClick={() => handleDelete(order.id)}
                                 title="Supprimer"
-                                className="text-red-600 border-red-300 hover:bg-red-50"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </ButtonV2>
+                                icon={Trash2}
+                              />
                             )}
 
                             {/* Imprimer PDF */}
-                            <ButtonV2
+                            <ButtonUnified
                               variant="outline"
                               size="sm"
                               onClick={() => handlePrintPDF(order)}
                               title="Imprimer PDF"
-                            >
-                              <FileText className="h-4 w-4" />
-                            </ButtonV2>
+                              icon={FileText}
+                            />
                           </div>
                         </TableCell>
                       </TableRow>

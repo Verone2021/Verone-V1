@@ -15,7 +15,7 @@ import { Loader2 } from 'lucide-react';
  * Remplace : ActionButton, ModernActionButton, StandardModifyButton, ButtonV2
  *
  * Fonctionnalités unifiées :
- * - 8 variants : default, destructive, outline, secondary, ghost, link, gradient, glass
+ * - 10 variants : default, destructive, outline, secondary, ghost, link, gradient, glass, success, danger
  * - 5 sizes : xs, sm, md, lg, xl
  * - Support icônes : left/right position
  * - État loading avec spinner
@@ -49,6 +49,10 @@ import { Loader2 } from 'lucide-react';
  * <ButtonUnified variant="gradient">Nouveau produit</ButtonUnified>
  * <ButtonUnified variant="glass">Dashboard</ButtonUnified>
  *
+ * // Boutons sémantiques CRUD
+ * <ButtonUnified variant="success" icon={CheckCircle}>Confirmer</ButtonUnified>
+ * <ButtonUnified variant="danger" icon={Trash2}>Supprimer</ButtonUnified>
+ *
  * // Polymorphic : render as Link
  * <ButtonUnified asChild>
  *   <Link href="/products">Voir produits</Link>
@@ -81,6 +85,11 @@ const buttonVariants = cva(
           'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] focus-visible:ring-blue-500',
         glass:
           'backdrop-blur-lg bg-white/10 border border-white/20 text-white shadow-lg hover:bg-white/20 focus-visible:ring-white',
+        // Variants sémantiques pour actions CRUD
+        success:
+          'border border-green-600 text-green-600 bg-background hover:bg-green-50 hover:text-green-700 hover:border-green-700 focus-visible:ring-green-600 shadow-sm',
+        danger:
+          'border border-red-600 text-red-600 bg-background hover:bg-red-50 hover:text-red-700 hover:border-red-700 focus-visible:ring-red-600 shadow-sm',
       },
       size: {
         xs: 'h-7 px-2 text-xs',

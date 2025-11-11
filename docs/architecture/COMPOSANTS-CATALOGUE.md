@@ -46,23 +46,54 @@
 import { ButtonUnified } from '@verone/ui';
 
 interface ButtonUnifiedProps {
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
-  size?: 'default' | 'sm' | 'lg' | 'icon';
-  rounded?: 'default' | 'full' | 'none';
-  shadow?: boolean;
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link' | 'gradient' | 'glass' | 'success' | 'danger';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'icon';
+  icon?: LucideIcon;
+  iconPosition?: 'left' | 'right';
   loading?: boolean;
-  icon?: React.ReactNode;
+  disabled?: boolean;
+  asChild?: boolean;
   className?: string;
   children: React.ReactNode;
   onClick?: () => void;
-  disabled?: boolean;
 }
 
-// Exemple
+// Exemples
 <ButtonUnified variant="default" size="lg" loading={isLoading}>
   Enregistrer
 </ButtonUnified>
+
+// ✅ Boutons sémantiques CRUD (nouveaux variants 2025-11-11)
+<ButtonUnified variant="success" icon={CheckCircle} size="sm">
+  Confirmer
+</ButtonUnified>
+
+<ButtonUnified variant="danger" icon={Trash2} size="sm">
+  Supprimer
+</ButtonUnified>
+
+<ButtonUnified variant="danger" icon={Ban} size="sm">
+  Annuler
+</ButtonUnified>
 ```
+
+**Variants disponibles** :
+
+- `default` : Bouton primaire noir (#000000)
+- `destructive` : Bouton destructif rouge (bg-destructive)
+- `outline` : Bouton contour gris (border-input)
+- `secondary` : Bouton secondaire (bg-secondary)
+- `ghost` : Bouton transparent hover
+- `link` : Bouton style lien souligné
+- `gradient` : Bouton moderne gradient bleu-violet
+- `glass` : Bouton glassmorphism moderne
+- ✅ **`success`** : Bouton action positive (border vert, text vert) - **NOUVEAU 2025-11-11**
+- ✅ **`danger`** : Bouton action destructive (border rouge, text rouge) - **NOUVEAU 2025-11-11**
+
+**Cas d'usage variants sémantiques** :
+
+- `success` → Confirmer commande, Valider, Approuver, Accepter
+- `danger` → Annuler, Supprimer, Rejeter, Refuser
 
 #### Button / ButtonV2
 
