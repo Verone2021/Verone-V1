@@ -2,11 +2,10 @@
 
 import { useRouter } from 'next/navigation';
 
-import { ExternalLink, Truck } from 'lucide-react';
-
 import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
 import { cn } from '@verone/utils';
+import { ExternalLink, Truck } from 'lucide-react';
 
 interface Product {
   id: string;
@@ -18,7 +17,6 @@ interface Product {
     | 'preorder'
     | 'coming_soon'
     | 'discontinued';
-  condition: 'new' | 'refurbished' | 'used';
   stock_quantity?: number;
   min_stock?: number;
 }
@@ -44,12 +42,6 @@ const STATUS_OPTIONS = [
   },
 ] as const;
 
-const CONDITION_OPTIONS = [
-  { value: 'new', label: 'Neuf' },
-  { value: 'refurbished', label: 'Reconditionné' },
-  { value: 'used', label: 'Occasion' },
-] as const;
-
 export function StockViewSection({
   product,
   className,
@@ -70,9 +62,6 @@ export function StockViewSection({
   );
   const currentStatus = STATUS_OPTIONS.find(
     opt => opt.value === product.status
-  );
-  const currentCondition = CONDITION_OPTIONS.find(
-    opt => opt.value === product.condition
   );
 
   const handleNavigateToStock = () => {
@@ -130,11 +119,6 @@ export function StockViewSection({
         <div className="flex justify-between items-center">
           <span className="text-black opacity-70">Seuil minimum:</span>
           <span className="text-black">{product.min_stock || 5} unités</span>
-        </div>
-
-        <div className="flex justify-between items-center">
-          <span className="text-black opacity-70">Condition:</span>
-          <Badge variant="outline">{currentCondition?.label}</Badge>
         </div>
 
         <div className="flex justify-between items-center">

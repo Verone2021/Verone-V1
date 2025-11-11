@@ -2,19 +2,14 @@
 
 import React from 'react';
 
-import { Truck, Save, X } from 'lucide-react';
-
+import { useInlineEdit, type EditableSection } from '@verone/common/hooks';
 import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
 import { cn } from '@verone/utils';
-import {
-  useInlineEdit,
-  type EditableSection,
-} from '@verone/common/hooks';
+import { Truck, Save, X } from 'lucide-react';
 
 interface Product {
   id: string;
-  condition: 'new' | 'refurbished' | 'used';
   min_stock?: number;
 }
 
@@ -24,18 +19,11 @@ interface StockEditSectionProps {
   className?: string;
 }
 
-const CONDITION_OPTIONS = [
-  { value: 'new', label: 'Neuf' },
-  { value: 'refurbished', label: 'Reconditionné' },
-  { value: 'used', label: 'Occasion' },
-] as const;
-
 /**
  * Section édition paramètres stock produit (Simplifié)
  *
  * **Champs éditables** (par utilisateur):
  * - `min_stock`: Seuil alerte minimum
- * - `condition`: État produit (new/refurbished/used)
  *
  * **Note**: Les statuts (stock_status, product_status) sont gérés dans la sidebar
  * via les composants StockStatusCompact et ProductStatusCompact (Phase 3.4).
@@ -74,7 +62,6 @@ export const StockEditSection = React.memo(
 
     const handleStartEdit = () => {
       startEdit(section, {
-        condition: product.condition,
         min_stock: product.min_stock ?? 0,
       });
     };
@@ -144,38 +131,6 @@ export const StockEditSection = React.memo(
                 Alerte lorsque le stock descend en dessous de cette valeur
               </div>
             </div>
-
-            {/* Condition Produit */}
-            <div>
-              <label className="block text-sm font-medium text-black mb-2">
-                Condition Produit
-              </label>
-              <div className="grid grid-cols-1 gap-2">
-                {CONDITION_OPTIONS.map(option => (
-                  <label
-                    key={option.value}
-                    className={cn(
-                      'flex items-center p-2 border rounded-md cursor-pointer transition-colors',
-                      editData?.condition === option.value
-                        ? 'border-black bg-gray-50'
-                        : 'border-gray-300 hover:border-gray-400'
-                    )}
-                  >
-                    <input
-                      type="radio"
-                      name="condition"
-                      value={option.value}
-                      checked={editData?.condition === option.value}
-                      onChange={e =>
-                        handleFieldChange('condition', e.target.value)
-                      }
-                      className="sr-only"
-                    />
-                    <span className="text-sm text-black">{option.label}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
           </div>
 
           {/* Message d'erreur */}
@@ -189,10 +144,6 @@ export const StockEditSection = React.memo(
     }
 
     // Mode affichage
-    const currentCondition = CONDITION_OPTIONS.find(
-      opt => opt.value === product.condition
-    );
-
     return (
       <div className={cn('card-verone p-4', className)}>
         <div className="flex items-center justify-between mb-3">
@@ -211,10 +162,6 @@ export const StockEditSection = React.memo(
             <span className="text-black opacity-70">Seuil minimum:</span>
             <span className="text-black">{product.min_stock ?? 0} unités</span>
           </div>
-          <div className="flex justify-between items-center">
-            <span className="text-black opacity-70">Condition:</span>
-            <Badge variant="outline">{currentCondition?.label}</Badge>
-          </div>
         </div>
       </div>
     );
@@ -223,7 +170,6 @@ export const StockEditSection = React.memo(
     // Ne re-render QUE si les champs stock changent
     return (
       prevProps.product.id === nextProps.product.id &&
-      prevProps.product.condition === nextProps.product.condition &&
       prevProps.product.min_stock === nextProps.product.min_stock
     );
   }

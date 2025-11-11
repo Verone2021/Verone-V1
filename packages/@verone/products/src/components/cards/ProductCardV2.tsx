@@ -5,12 +5,11 @@ import { memo, useCallback, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
+import type { Product } from '@verone/categories/hooks';
+import { Badge, ButtonUnified, IconButton } from '@verone/ui';
+import { cn } from '@verone/utils';
 import { Package, Archive, Trash2, ArchiveRestore, Eye } from 'lucide-react';
 
-import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
-import { cn } from '@verone/utils';
-import type { Product } from '@verone/categories/hooks';
 import { useProductImages } from '@verone/products/hooks';
 
 interface ProductCardProps {
@@ -250,48 +249,39 @@ export const ProductCardV2 = memo(function ProductCardV2({
         {showActions && (
           <div className="flex gap-1.5 pt-0.5">
             {/* Bouton principal : Voir détail (OUTLINE blanc/noir) - Optimisé: size="xs" */}
-            <ButtonV2
+            <ButtonUnified
               variant="outline"
               size="xs"
               onClick={handleDetailsClick}
               className="flex-1 text-xs"
               icon={Eye}
+              iconPosition="left"
             >
               Voir détail
-            </ButtonV2>
+            </ButtonUnified>
 
-            {/* Bouton secondaire : Archive/Restaurer (OUTLINE orange) - Optimisé: size="xs" */}
+            {/* Bouton secondaire : Archive/Restaurer (success=vert ou outline) - Optimisé: size="sm" */}
             {onArchive && (
-              <ButtonV2
-                variant="outline"
-                size="xs"
+              <IconButton
+                variant={archived ? 'success' : 'outline'}
+                size="sm"
                 onClick={handleArchiveClick}
-                className="w-7 h-7 p-0 flex items-center justify-center border-orange-500 text-orange-600 hover:border-orange-600 hover:bg-orange-50"
-                style={{ padding: 0 }}
-                aria-label={
+                icon={archived ? ArchiveRestore : Archive}
+                label={
                   archived ? 'Restaurer le produit' : 'Archiver le produit'
                 }
-              >
-                {archived ? (
-                  <ArchiveRestore className="h-4 w-4" />
-                ) : (
-                  <Archive className="h-4 w-4" />
-                )}
-              </ButtonV2>
+              />
             )}
 
-            {/* Bouton tertiaire : Supprimer (OUTLINE rouge si archived) - Optimisé: size="xs" */}
+            {/* Bouton tertiaire : Supprimer (danger=rouge si archived) - Optimisé: size="sm" */}
             {archived && onDelete && (
-              <ButtonV2
-                variant="outline"
-                size="xs"
+              <IconButton
+                variant="danger"
+                size="sm"
                 onClick={handleDeleteClick}
-                className="w-7 h-7 p-0 flex items-center justify-center border-red-600 text-red-600 hover:border-red-700 hover:bg-red-50"
-                style={{ padding: 0 }}
-                aria-label="Supprimer le produit"
-              >
-                <Trash2 className="h-4 w-4" />
-              </ButtonV2>
+                icon={Trash2}
+                label="Supprimer le produit"
+              />
             )}
           </div>
         )}
