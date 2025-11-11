@@ -61,6 +61,589 @@
 
 ---
 
+## 🏗️ ARCHITECTURE MULTI-FRONTENDS - ISOLATION UI
+
+**RÈGLE ABSOLUE** : Chaque app possède ses propres composants UI, styles, et charte graphique. **Aucun mélange autorisé entre apps.**
+
+### 🎯 TROIS APPLICATIONS DISTINCTES
+
+**Configuration Architecture** :
+
+| Application       | Port | Domaine Futur         | Charte Graphique                                                 | Package UI Dédié        |
+| ----------------- | ---- | --------------------- | ---------------------------------------------------------------- | ----------------------- |
+| **back-office**   | 3000 | backoffice.verone.com | CRM/ERP haut de gamme (Fonts: Monarch, Balgin / Colors: #000000) | `@verone/ui-backoffice` |
+| **site-internet** | 3001 | verone.com            | E-commerce public (Fonts: Inter / Colors: #ef4444)               | `@verone/ui-site`       |
+| **linkme**        | 3002 | linkme.verone.com     | Dashboard vendeurs (Fonts: Inter / Colors: #3b82f6)              | `@verone/ui-linkme`     |
+
+**Base de Données Partagée** : Toutes les apps utilisent la même base Supabase via authentification/RLS, mais **code UI et design strictement séparés**.
+
+---
+
+### 📦 PACKAGES UI DÉDIÉS PAR APP (CRITIQUE - Priority P0)
+
+**Problème Actuel** : `@verone/ui` avec 54 composants est partagé par TOUTES les apps → Risque de mélange styles.
+
+**Solution Obligatoire** :
+
+```typescript
+// ARCHITECTURE PACKAGES UI
+packages/@verone/
+├── ui/                    // ✅ Composants BASE vraiment partagés uniquement
+│   ├── button.tsx         //    (Button, Input, Dialog, Select, Checkbox...)
+│   ├── input.tsx
+│   ├── dialog.tsx
+│   └── ...                //    MAX 15-20 composants génériques
+│
+├── ui-backoffice/         // 🏢 Composants back-office CRM/ERP
+│   ├── kpi-card-unified.tsx
+│   ├── dashboard-widget.tsx
+│   ├── admin-table.tsx
+│   └── ...
+│
+├── ui-site/               // 🛍️ Composants site-internet e-commerce
+│   ├── product-card-ecommerce.tsx
+│   ├── cart-button.tsx
+│   ├── checkout-form.tsx
+│   └── ...
+│
+└── ui-linkme/             // 💼 Composants linkme affiliation
+    ├── commission-card.tsx
+    ├── vendor-stats.tsx
+    └── ...
+```
+
+**Règles Import Strictes** :
+
+```typescript
+// ✅ CORRECT - back-office
+import { Button } from '@verone/ui'; // Composant shared OK
+import { KpiCardUnified } from '@verone/ui-backoffice'; // Composant back-office OK
+
+// ❌ INTERDIT - site-internet
+import { KpiCardUnified } from '@verone/ui-backoffice'; // ERREUR ESLint bloquante!
+
+// ✅ CORRECT - site-internet
+import { Button } from '@verone/ui'; // Composant shared OK
+import { ProductCardEcommerce } from '@verone/ui-site'; // Composant site OK
+```
+
+**Composants @verone/ui BASE (Shared Uniquement)** :
+
+```typescript
+// ✅ LISTE EXHAUSTIVE Composants Vraiment Partagés
+@verone/ui:
+- Button, Input, Textarea, Label
+- Select, Checkbox, Radio, Switch
+- Dialog, Popover, Dropdown, Tooltip, Alert
+- Card (basique sans branding), Separator, Table
+- Form components (FormField, FormMessage, FormLabel)
+
+// ❌ Tout le Reste → Créer dans @verone/ui-{app}
+// Exemples composants APP-SPECIFIC:
+- KpiCardUnified → @verone/ui-backoffice
+- ProductThumbnail → @verone/ui-backoffice (catalogue CRM)
+- ProductCardEcommerce → @verone/ui-site
+- CommissionCard → @verone/ui-linkme
+```
+
+---
+
+### 🎨 TAILWIND CONFIG ISOLATION (CRITIQUE - Priority P0)
+
+**Problème** : 3 apps utilisent classes Tailwind identiques → Conflits CSS garantis (`bg-primary` défini 3 fois différemment).
+
+**Solution Obligatoire : PREFIX PAR APP** :
+
+```javascript
+// apps/back-office/tailwind.config.js
+module.exports = {
+  prefix: 'bo-', // ✅ OBLIGATOIRE
+  presets: [require('@verone/tailwind-preset')],
+  theme: {
+    extend: {
+      colors: {
+        primary: '#000000', // Noir haut de gamme
+      },
+      fontFamily: {
+        logo: ['Balgin Light SM Expanded', 'serif'],
+        heading: ['Monarch Regular', 'serif'],
+        body: ['Fieldwork 10 Geo Regular', 'sans-serif'],
+      },
+    },
+  },
+};
+
+// apps/site-internet/tailwind.config.js
+module.exports = {
+  prefix: 'site-', // ✅ OBLIGATOIRE
+  presets: [require('@verone/tailwind-preset')],
+  theme: {
+    extend: {
+      colors: {
+        primary: { 500: '#ef4444' }, // Rouge e-commerce
+      },
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+      },
+    },
+  },
+};
+
+// apps/linkme/tailwind.config.js
+module.exports = {
+  prefix: 'lm-', // ✅ OBLIGATOIRE
+  presets: [require('@verone/tailwind-preset')],
+  theme: {
+    extend: {
+      colors: {
+        primary: { 500: '#3b82f6' }, // Bleu vendeurs
+      },
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+      },
+    },
+  },
+};
+```
+
+**Usage Classes Tailwind** :
+
+```tsx
+// ✅ CORRECT - back-office
+<div className="bo-bg-primary bo-text-white bo-font-heading">
+  Dashboard CRM
+</div>
+
+// ✅ CORRECT - site-internet
+<div className="site-bg-primary-500 site-text-white site-font-sans">
+  Boutique en ligne
+</div>
+
+// ❌ INTERDIT - Classes non-préfixées dans composants app-specific
+<div className="bg-primary text-white">  // ERREUR: Conflit entre apps!
+```
+
+**Shared Tailwind Preset** :
+
+```javascript
+// packages/@verone/tailwind-preset/index.js
+module.exports = {
+  theme: {
+    extend: {
+      spacing: {
+        // Spacing commun à toutes apps
+      },
+      boxShadow: {
+        // Shadows communs
+      },
+      borderRadius: {
+        // Borders communs
+      },
+    },
+  },
+};
+```
+
+---
+
+### 🛡️ ESLINT NO-RESTRICTED-IMPORTS (CRITIQUE - Priority P0)
+
+**Objectif** : Bloquer techniquement les imports cross-app avec ESLint.
+
+**Configuration par App** :
+
+```javascript
+// apps/back-office/.eslintrc.js
+module.exports = {
+  extends: '@verone/eslint-config',
+  rules: {
+    'no-restricted-imports': [
+      'error',
+      {
+        patterns: [
+          {
+            group: ['@verone/ui-site', '@verone/ui-site/*'],
+            message: '❌ INTERDIT: Composants site-internet dans back-office',
+          },
+          {
+            group: ['@verone/ui-linkme', '@verone/ui-linkme/*'],
+            message: '❌ INTERDIT: Composants linkme dans back-office',
+          },
+        ],
+      },
+    ],
+  },
+};
+
+// apps/site-internet/.eslintrc.js
+module.exports = {
+  extends: '@verone/eslint-config',
+  rules: {
+    'no-restricted-imports': [
+      'error',
+      {
+        patterns: [
+          {
+            group: ['@verone/ui-backoffice', '@verone/ui-backoffice/*'],
+            message: '❌ INTERDIT: Composants back-office dans site-internet',
+          },
+          {
+            group: ['@verone/ui-linkme', '@verone/ui-linkme/*'],
+            message: '❌ INTERDIT: Composants linkme dans site-internet',
+          },
+        ],
+      },
+    ],
+  },
+};
+
+// apps/linkme/.eslintrc.js
+module.exports = {
+  extends: '@verone/eslint-config',
+  rules: {
+    'no-restricted-imports': [
+      'error',
+      {
+        patterns: [
+          {
+            group: ['@verone/ui-backoffice', '@verone/ui-backoffice/*'],
+            message: '❌ INTERDIT: Composants back-office dans linkme',
+          },
+          {
+            group: ['@verone/ui-site', '@verone/ui-site/*'],
+            message: '❌ INTERDIT: Composants site-internet dans linkme',
+          },
+        ],
+      },
+    ],
+  },
+};
+```
+
+**Validation Build** : ESLint bloque le build si import interdit détecté.
+
+---
+
+### 🎨 DESIGN TOKENS ARCHITECTURE (Priority P1)
+
+**Objectif** : Centraliser couleurs/fonts/spacing dans fichiers JSON, générer CSS Custom Properties par app.
+
+**Structure** :
+
+```
+packages/@verone/design-tokens/
+├── tokens-backoffice.json     # Monarch, Balgin, #000000
+├── tokens-site.json           # Inter, #ef4444
+├── tokens-linkme.json         # Inter, #3b82f6
+└── tokens-shared.json         # Spacing, shadows communs
+```
+
+**Exemple tokens-backoffice.json** :
+
+```json
+{
+  "color": {
+    "primary": "#000000",
+    "secondary": "#ffffff",
+    "accent": "#d4af37"
+  },
+  "font": {
+    "logo": "Balgin Light SM Expanded",
+    "heading": "Monarch Regular",
+    "body": "Fieldwork 10 Geo Regular"
+  },
+  "spacing": {
+    "base": "8px",
+    "lg": "16px"
+  }
+}
+```
+
+**Génération CSS Custom Properties** :
+
+```css
+/* apps/back-office/src/styles/tokens.css (auto-généré) */
+:root {
+  --bo-primary: #000000;
+  --bo-secondary: #ffffff;
+  --bo-font-heading: 'Monarch Regular';
+  --bo-font-body: 'Fieldwork 10 Geo Regular';
+}
+
+/* apps/site-internet/src/styles/tokens.css */
+:root {
+  --site-primary: #ef4444;
+  --site-font-sans: 'Inter';
+}
+```
+
+**Usage** :
+
+```tsx
+<h1 style={{ fontFamily: 'var(--bo-font-heading)' }}>Back Office</h1>
+<h1 style={{ fontFamily: 'var(--site-font-sans)' }}>Site Internet</h1>
+```
+
+---
+
+### 📖 DOCUMENTATION COMPOSANTS [SHARED] vs [APP-ONLY] (Priority P1)
+
+**Objectif** : Taguer TOUS les composants dans `COMPOSANTS-CATALOGUE.md` pour éviter confusion.
+
+**Format Obligatoire** :
+
+````markdown
+## @verone/ui - Composants Shared
+
+#### ButtonUnified [SHARED]
+
+✅ **Utilisable dans** : back-office, site-internet, linkme
+📦 **Package** : `@verone/ui`
+
+```typescript
+import { ButtonUnified } from '@verone/ui';
+```
+````
+
+---
+
+## @verone/ui-backoffice - Composants Back-Office
+
+#### KpiCardUnified [BACKOFFICE-ONLY]
+
+✅ **Utilisable dans** : back-office
+❌ **INTERDIT dans** : site-internet, linkme
+⚠️ **ESLint Rule** : Blocked by no-restricted-imports
+📦 **Package** : `@verone/ui-backoffice`
+
+```typescript
+import { KpiCardUnified } from '@verone/ui-backoffice';
+```
+
+---
+
+## @verone/ui-site - Composants Site Internet
+
+#### ProductCardEcommerce [SITE-ONLY]
+
+✅ **Utilisable dans** : site-internet
+❌ **INTERDIT dans** : back-office, linkme
+📦 **Package** : `@verone/ui-site`
+
+````
+
+**Workflow Claude** :
+
+```typescript
+// 1. Lire catalogue
+Read('docs/architecture/COMPOSANTS-CATALOGUE.md');
+
+// 2. Identifier tag [SHARED] ou [APP-ONLY]
+// Exemple: KpiCardUnified [BACKOFFICE-ONLY]
+
+// 3. Vérifier app cible
+if (targetApp === 'site-internet' && component.tag === 'BACKOFFICE-ONLY') {
+  throw new Error('❌ INTERDIT: KpiCardUnified est back-office-only');
+}
+
+// 4. Utiliser composant si autorisé
+````
+
+---
+
+### 📚 STORYBOOK PAR APP (Priority P2)
+
+**Objectif** : Séparer documentation UI par app pour éviter confusion.
+
+**Option 1 : Storybook Dédié par App** :
+
+```
+apps/back-office/.storybook/
+apps/site-internet/.storybook/
+apps/linkme/.storybook/
+```
+
+**Option 2 : Storybook Unifié avec Filtres Tags** :
+
+```typescript
+// KpiCardUnified.stories.tsx
+export default {
+  title: 'Back-Office/KPI',
+  component: KpiCardUnified,
+  tags: ['backoffice-only'], // Filtre dans Storybook
+};
+
+// ButtonUnified.stories.tsx
+export default {
+  title: 'Shared/Button',
+  component: ButtonUnified,
+  tags: ['shared'], // Visible dans tous Storybooks
+};
+```
+
+**Configuration Storybook** :
+
+```javascript
+// .storybook/main.js
+module.exports = {
+  stories: [
+    '../packages/@verone/ui/**/*.stories.tsx', // Shared
+    '../packages/@verone/ui-backoffice/**/*.stories.tsx', // Back-office only
+  ],
+  // Filtrer par tags dans UI
+};
+```
+
+---
+
+### 📦 PACKAGE.JSON DEPENDENCY CONSTRAINTS (Priority P2)
+
+**Objectif** : Définir clairement quelles deps installer par app.
+
+**Configuration** :
+
+```json
+// apps/back-office/package.json
+{
+  "name": "@verone/back-office",
+  "dependencies": {
+    "@verone/ui": "workspace:*",              // ✅ Composants shared
+    "@verone/ui-backoffice": "workspace:*",   // ✅ Composants back-office
+    "@verone/products": "workspace:*",        // ✅ Logic métier produits
+    // ❌ NE JAMAIS installer @verone/ui-site ou @verone/ui-linkme
+  }
+}
+
+// apps/site-internet/package.json
+{
+  "name": "@verone/site-internet",
+  "dependencies": {
+    "@verone/ui": "workspace:*",              // ✅ Composants shared
+    "@verone/ui-site": "workspace:*",         // ✅ Composants site
+    "@verone/products": "workspace:*",        // ✅ Logic métier produits
+    // ❌ NE JAMAIS installer @verone/ui-backoffice ou @verone/ui-linkme
+  }
+}
+
+// apps/linkme/package.json
+{
+  "name": "@verone/linkme",
+  "dependencies": {
+    "@verone/ui": "workspace:*",              // ✅ Composants shared
+    "@verone/ui-linkme": "workspace:*",       // ✅ Composants linkme
+    // ❌ NE JAMAIS installer @verone/ui-backoffice ou @verone/ui-site
+  }
+}
+```
+
+**Validation** : Script `scripts/validate-dependencies.ts` vérifie aucune dep cross-app.
+
+---
+
+### 🧪 BUILD VALIDATION SCRIPTS (Priority P3)
+
+**Objectif** : Valider isolation UI AVANT chaque build.
+
+**Script** : `scripts/validate-ui-isolation.ts`
+
+```typescript
+import { glob } from 'glob';
+import fs from 'fs';
+
+// 1. Vérifier imports par app
+const backofficeFiles = await glob('apps/back-office/src/**/*.{ts,tsx}');
+for (const file of backofficeFiles) {
+  const content = fs.readFileSync(file, 'utf-8');
+
+  // ❌ Bloquer imports cross-app
+  if (
+    content.includes('@verone/ui-site') ||
+    content.includes('@verone/ui-linkme')
+  ) {
+    throw new Error(`❌ ERREUR: ${file} importe composants cross-app`);
+  }
+}
+
+// 2. Vérifier classes Tailwind non-préfixées dans composants app-specific
+const uiBackofficeFiles = await glob(
+  'packages/@verone/ui-backoffice/src/**/*.{ts,tsx}'
+);
+for (const file of uiBackofficeFiles) {
+  const content = fs.readFileSync(file, 'utf-8');
+
+  // ❌ Bloquer classes non-préfixées
+  if (content.match(/className="(?!bo-).*bg-primary/)) {
+    throw new Error(
+      `❌ ERREUR: ${file} utilise classes Tailwind non-préfixées`
+    );
+  }
+}
+
+// 3. Vérifier tokens design cross-app
+// 4. Vérifier aucun conflit CSS Custom Properties
+```
+
+**Integration Turborepo** :
+
+```json
+// turbo.json
+{
+  "tasks": {
+    "build": {
+      "dependsOn": ["validate:ui-isolation", "^build"],
+      "outputs": [".next/**", "dist/**"]
+    },
+    "validate:ui-isolation": {
+      "cache": false
+    }
+  }
+}
+```
+
+**Commande** :
+
+```bash
+# Avant build
+npm run validate:ui-isolation
+
+# Build avec validation automatique
+turbo build  # Exécute validate:ui-isolation d'abord
+```
+
+---
+
+## ✅ CHECKLIST AVANT CRÉER/MODIFIER COMPOSANT UI
+
+**Workflow Obligatoire** :
+
+- [ ] **1. Identifier app cible** : back-office / site-internet / linkme ?
+- [ ] **2. Consulter catalogue** : `Read('docs/architecture/COMPOSANTS-CATALOGUE.md')`
+- [ ] **3. Vérifier si composant existe** dans `@verone/ui` (shared)
+- [ ] **4. Si app-specific** : Créer dans `@verone/ui-{app}` correspondant
+- [ ] **5. Utiliser prefix Tailwind correct** : `bo-`, `site-`, ou `lm-`
+- [ ] **6. Taguer composant** : `[SHARED]` ou `[APP-ONLY]` dans documentation
+- [ ] **7. Configurer ESLint** : Ajouter rule `no-restricted-imports` si besoin
+- [ ] **8. Tester isolation** : Vérifier aucun import cross-app possible
+- [ ] **9. Documenter props** : Ajouter au `COMPOSANTS-CATALOGUE.md`
+- [ ] **10. Valider build** : `npm run validate:ui-isolation && turbo build`
+
+---
+
+## 🚨 RÈGLES D'OR ISOLATION MULTI-FRONTENDS
+
+1. **Packages UI Dédiés** : 1 package par app (`ui-backoffice`, `ui-site`, `ui-linkme`)
+2. **Tailwind Prefix** : Toujours préfixer classes (`bo-`, `site-`, `lm-`)
+3. **ESLint Protection** : `no-restricted-imports` configuré dans toutes apps
+4. **Documentation Taggée** : Tous composants `[SHARED]` ou `[APP-ONLY]`
+5. **Design Tokens** : Couleurs/fonts centralisés dans fichiers JSON
+6. **Build Validation** : Script `validate-ui-isolation` bloque build si erreur
+7. **Storybook Filtré** : Stories taggées par app ou Storybook dédié
+8. **Dependencies Strictes** : Aucune dep cross-app dans `package.json`
+9. **Catalogue First** : TOUJOURS consulter catalogue AVANT créer composant
+10. **Zero Tolerance** : 1 import cross-app = ÉCHEC COMPLET, retour correction
+
+---
+
 ## 🔧 STACK TECHNIQUE
 
 ```typescript
