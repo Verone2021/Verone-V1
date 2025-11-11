@@ -69,6 +69,7 @@ interface StockAlert {
   // Tracking commandes brouillon
   is_in_draft: boolean;
   quantity_in_draft: number | null;
+  draft_order_id: string | null;
   draft_order_number: string | null;
   action?: {
     label: string;
@@ -137,6 +138,7 @@ export default function StockAlertesPage() {
       // Champs tracking brouillon pour StockAlertCard
       is_in_draft: alert.is_in_draft,
       quantity_in_draft: alert.quantity_in_draft,
+      draft_order_id: alert.draft_order_id,
       draft_order_number: alert.draft_order_number,
       action: !alert.is_in_draft
         ? {
@@ -511,7 +513,7 @@ export default function StockAlertesPage() {
                       severity: alert.severity,
                       is_in_draft: alert.is_in_draft,
                       quantity_in_draft: alert.quantity_in_draft,
-                      draft_order_id: null,
+                      draft_order_id: alert.draft_order_id,
                       draft_order_number: alert.draft_order_number,
                       validated: false, // Legacy code - cette page utilise l'ancien format d'alertes
                       validated_at: null,

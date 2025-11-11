@@ -73,7 +73,7 @@ export function useStockAlerts() {
             sku,
             stock_forecasted_in
           ),
-          purchase_orders:draft_order_id (
+          purchase_orders!stock_alert_tracking_draft_order_id_fkey (
             po_number
           )
         `
