@@ -9,6 +9,7 @@
 // BUTTON COMPONENTS
 // ========================================
 export * from './button-unified';
+export * from './icon-button';
 // Export ButtonV2 (Design System V2 - BLEU #3b86d1) + alias Button
 export {
   Button,

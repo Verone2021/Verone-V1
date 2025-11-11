@@ -24,6 +24,7 @@ import {
 } from '@verone/ui';
 import { Badge } from '@verone/ui';
 import { ButtonUnified } from '@verone/ui';
+import { IconButton } from '@verone/ui';
 import {
   Card,
   CardContent,
@@ -650,46 +651,46 @@ export default function PurchaseOrdersPage() {
                       <TableCell>{formatCurrency(order.total_ttc)}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <ButtonUnified
+                          <IconButton
+                            icon={Eye}
                             variant="outline"
                             size="sm"
+                            label="Voir les détails"
                             onClick={() => openOrderDetail(order)}
-                            title="Voir les détails"
-                            icon={Eye}
                           />
 
                           {/* DRAFT : Éditer + Valider + Annuler + Supprimer */}
                           {order.status === 'draft' && (
                             <>
-                              <ButtonUnified
+                              <IconButton
+                                icon={Edit}
                                 variant="outline"
                                 size="sm"
+                                label="Éditer la commande"
                                 onClick={() => openEditModal(order)}
-                                title="Éditer la commande"
-                                icon={Edit}
                               />
-                              <ButtonUnified
+                              <IconButton
+                                icon={CheckCircle}
                                 variant="success"
                                 size="sm"
+                                label="Valider (envoyer au fournisseur)"
                                 onClick={() =>
                                   handleStatusChange(order.id, 'sent')
                                 }
-                                title="Valider (envoyer au fournisseur)"
-                                icon={CheckCircle}
                               />
-                              <ButtonUnified
-                                variant="danger"
-                                size="sm"
-                                onClick={() => handleCancel(order.id)}
-                                title="Annuler la commande"
+                              <IconButton
                                 icon={Ban}
-                              />
-                              <ButtonUnified
                                 variant="danger"
                                 size="sm"
-                                onClick={() => handleDelete(order.id)}
-                                title="Supprimer"
+                                label="Annuler la commande"
+                                onClick={() => handleCancel(order.id)}
+                              />
+                              <IconButton
                                 icon={Trash2}
+                                variant="danger"
+                                size="sm"
+                                label="Supprimer"
+                                onClick={() => handleDelete(order.id)}
                               />
                             </>
                           )}
@@ -697,30 +698,30 @@ export default function PurchaseOrdersPage() {
                           {/* SENT : Confirmer + Dévalider + Annuler */}
                           {order.status === 'sent' && (
                             <>
-                              <ButtonUnified
+                              <IconButton
+                                icon={CheckCircle}
                                 variant="success"
                                 size="sm"
+                                label="Confirmer la commande"
                                 onClick={() =>
                                   handleStatusChange(order.id, 'confirmed')
                                 }
-                                title="Confirmer la commande"
-                                icon={CheckCircle}
                               />
-                              <ButtonUnified
+                              <IconButton
+                                icon={RotateCcw}
                                 variant="outline"
                                 size="sm"
+                                label="Dévalider (retour brouillon)"
                                 onClick={() =>
                                   handleStatusChange(order.id, 'draft')
                                 }
-                                title="Dévalider (retour brouillon)"
-                                icon={RotateCcw}
                               />
-                              <ButtonUnified
+                              <IconButton
+                                icon={Ban}
                                 variant="danger"
                                 size="sm"
+                                label="Annuler la commande"
                                 onClick={() => handleCancel(order.id)}
-                                title="Annuler la commande"
-                                icon={Ban}
                               />
                             </>
                           )}
@@ -728,28 +729,28 @@ export default function PurchaseOrdersPage() {
                           {/* CONFIRMED : Réceptionner + Dévalider + Annuler */}
                           {order.status === 'confirmed' && (
                             <>
-                              <ButtonUnified
-                                variant="outline"
-                                size="sm"
-                                onClick={() => openReceptionModal(order)}
-                                title="Réceptionner la commande"
+                              <IconButton
                                 icon={Truck}
-                              />
-                              <ButtonUnified
                                 variant="outline"
                                 size="sm"
+                                label="Réceptionner la commande"
+                                onClick={() => openReceptionModal(order)}
+                              />
+                              <IconButton
+                                icon={RotateCcw}
+                                variant="outline"
+                                size="sm"
+                                label="Dévalider (retour brouillon)"
                                 onClick={() =>
                                   handleStatusChange(order.id, 'draft')
                                 }
-                                title="Dévalider (retour brouillon)"
-                                icon={RotateCcw}
                               />
-                              <ButtonUnified
+                              <IconButton
+                                icon={Ban}
                                 variant="danger"
                                 size="sm"
+                                label="Annuler la commande"
                                 onClick={() => handleCancel(order.id)}
-                                title="Annuler la commande"
-                                icon={Ban}
                               />
                             </>
                           )}
@@ -757,42 +758,42 @@ export default function PurchaseOrdersPage() {
                           {/* PARTIALLY_RECEIVED : Réceptionner + Annuler DISABLED */}
                           {order.status === 'partially_received' && (
                             <>
-                              <ButtonUnified
-                                variant="outline"
-                                size="sm"
-                                onClick={() => openReceptionModal(order)}
-                                title="Réceptionner la commande"
+                              <IconButton
                                 icon={Truck}
-                              />
-                              <ButtonUnified
                                 variant="outline"
                                 size="sm"
-                                disabled
-                                title="Impossible d'annuler : réception en cours"
+                                label="Réceptionner la commande"
+                                onClick={() => openReceptionModal(order)}
+                              />
+                              <IconButton
                                 icon={Ban}
+                                variant="outline"
+                                size="sm"
+                                label="Impossible d'annuler : réception en cours"
+                                disabled
                               />
                             </>
                           )}
 
                           {/* RECEIVED : Annuler DISABLED */}
                           {order.status === 'received' && (
-                            <ButtonUnified
+                            <IconButton
+                              icon={Ban}
                               variant="outline"
                               size="sm"
+                              label="Impossible d'annuler : commande déjà reçue"
                               disabled
-                              title="Impossible d'annuler : commande déjà reçue"
-                              icon={Ban}
                             />
                           )}
 
                           {/* CANCELLED : Supprimer */}
                           {order.status === 'cancelled' && (
-                            <ButtonUnified
+                            <IconButton
+                              icon={Trash2}
                               variant="danger"
                               size="sm"
+                              label="Supprimer"
                               onClick={() => handleDelete(order.id)}
-                              title="Supprimer"
-                              icon={Trash2}
                             />
                           )}
                         </div>

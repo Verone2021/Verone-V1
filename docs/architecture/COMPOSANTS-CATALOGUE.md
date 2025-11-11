@@ -38,7 +38,7 @@
 **Import** : `import { Button, Dialog, Card } from '@verone/ui'`
 **Exports** : `packages/@verone/ui/apps/back-office/src/components/ui/index.ts` (lignes 1-122)
 
-### 🔘 Famille Button (5 composants)
+### 🔘 Famille Button (6 composants)
 
 #### ButtonUnified
 
@@ -94,6 +94,85 @@ interface ButtonUnifiedProps {
 
 - `success` → Confirmer commande, Valider, Approuver, Accepter
 - `danger` → Annuler, Supprimer, Rejeter, Refuser
+
+#### IconButton
+
+```typescript
+import { IconButton } from '@verone/ui';
+import { Eye, Edit, Trash2, CheckCircle, Ban } from 'lucide-react';
+
+interface IconButtonProps {
+  icon: LucideIcon; // Obligatoire
+  label: string; // Tooltip + aria-label (obligatoire)
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link' | 'gradient' | 'glass' | 'success' | 'danger';
+  size?: 'sm' | 'md' | 'lg'; // 3 sizes (32px, 40px, 48px)
+  loading?: boolean;
+  disabled?: boolean;
+  tooltipSide?: 'top' | 'right' | 'bottom' | 'left';
+  className?: string;
+  onClick?: () => void;
+}
+
+// Exemples
+// Bouton icon-only table dense
+<IconButton
+  icon={Eye}
+  variant="outline"
+  size="sm"
+  label="Voir les détails"
+  onClick={handleView}
+/>
+
+// Boutons sémantiques CRUD
+<IconButton icon={CheckCircle} variant="success" size="sm" label="Confirmer" />
+<IconButton icon={Trash2} variant="danger" size="sm" label="Supprimer" />
+<IconButton icon={Edit} variant="outline" size="sm" label="Éditer" />
+
+// Disabled state (tooltip fonctionnel)
+<IconButton
+  icon={Ban}
+  variant="outline"
+  label="Impossible d'annuler : commande déjà reçue"
+  disabled
+/>
+
+// Button group compact (use case réel)
+<div className="flex items-center gap-2">
+  <IconButton icon={Eye} variant="outline" size="sm" label="Voir détails" />
+  <IconButton icon={Edit} variant="outline" size="sm" label="Éditer" />
+  <IconButton icon={CheckCircle} variant="success" size="sm" label="Valider" />
+  <IconButton icon={Ban} variant="danger" size="sm" label="Annuler" />
+  <IconButton icon={Trash2} variant="danger" size="sm" label="Supprimer" />
+</div>
+```
+
+**Features clés** :
+
+- ✅ **Tooltip Radix UI intégré automatiquement** (WCAG 2.2 AA)
+- ✅ **aria-label automatique** (prop `label`)
+- ✅ **10 variants** (tous variants ButtonUnified)
+- ✅ **3 sizes** : sm (32px), md (40px), lg (48px)
+- ✅ **Icon size mapping** : sm=14px, md=16px, lg=18px
+- ✅ **Loading state** avec Loader2 spinner
+- ✅ **Disabled state** avec tooltip fonctionnel
+- ✅ **Keyboard navigation** (Tab + Enter)
+
+**Cas d'usage** :
+
+- Tables denses avec multiples actions CRUD (page commandes fournisseurs : 15 buttons)
+- Toolbars avec boutons répétitifs
+- Interfaces mobiles space-constrained
+- Boutons où text est redondant (contexte clair)
+
+**Gain espace** :
+
+- ButtonUnified avec text : ~120px largeur
+- IconButton : ~32px largeur
+- **Économie : ~88px par bouton** (74% moins d'espace)
+
+**Use case réel** : `apps/back-office/src/app/commandes/fournisseurs/page.tsx` (15 boutons migrés)
+
+**Documentation** : `packages/@verone/ui/BUTTON-PATTERNS-2025.md` - Pattern 3
 
 #### Button / ButtonV2
 

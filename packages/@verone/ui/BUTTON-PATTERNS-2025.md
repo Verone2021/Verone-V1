@@ -1,7 +1,7 @@
 # 🎨 ButtonUnified Patterns 2025
 
 **Mise à jour:** 2025-11-11
-**Version:** ButtonUnified v2.1.0 (Pattern Hybride)
+**Version:** ButtonUnified v2.1.0 (Pattern Hybride) + IconButton v1.0.0
 
 ---
 
@@ -9,9 +9,10 @@
 
 1. [Pattern 1: Icon Prop (Recommandé)](#pattern-1-icon-prop-recommandé)
 2. [Pattern 2: JSX Children Icons (Nouveau 2025)](#pattern-2-jsx-children-icons-nouveau-2025)
-3. [Quand Utiliser Quel Pattern?](#quand-utiliser-quel-pattern)
-4. [Exemples Avancés](#exemples-avancés)
-5. [Migration Guide](#migration-guide)
+3. [Pattern 3: Icon-only (IconButton)](#pattern-3-icon-only-iconbutton)
+4. [Quand Utiliser Quel Pattern?](#quand-utiliser-quel-pattern)
+5. [Exemples Avancés](#exemples-avancés)
+6. [Migration Guide](#migration-guide)
 
 ---
 
@@ -202,6 +203,129 @@ const [isProcessing, setIsProcessing] = useState(false);
 
 ---
 
+## Pattern 3: Icon-only (IconButton)
+
+**Tables denses + Tooltip intégré + Accessibilité WCAG AA**
+
+### Usage Basique
+
+```tsx
+import { IconButton } from '@verone/ui';
+import { Eye, Edit, Trash2, CheckCircle, Ban } from 'lucide-react';
+
+// Bouton icon-only avec tooltip automatique
+<IconButton
+  icon={Eye}
+  variant="outline"
+  size="sm"
+  label="Voir les détails"
+  onClick={handleView}
+/>
+
+// Boutons sémantiques CRUD
+<IconButton icon={CheckCircle} variant="success" label="Confirmer" />
+<IconButton icon={Trash2} variant="danger" label="Supprimer" />
+<IconButton icon={Edit} variant="outline" label="Éditer" />
+```
+
+### Variants Disponibles (10)
+
+```tsx
+// Tous variants ButtonUnified supportés
+<IconButton icon={Eye} variant="default" label="Action" />
+<IconButton icon={Eye} variant="outline" label="Action" />      // ← Plus courant
+<IconButton icon={Eye} variant="ghost" label="Action" />
+<IconButton icon={Eye} variant="success" label="Confirmer" />   // ← CRUD
+<IconButton icon={Eye} variant="danger" label="Supprimer" />    // ← CRUD
+<IconButton icon={Eye} variant="gradient" label="Premium" />
+<IconButton icon={Eye} variant="glass" label="Modern" />
+```
+
+### Sizes Disponibles (3)
+
+```tsx
+// Small (32x32px, icon 14px) - Tables denses
+<IconButton icon={Edit} size="sm" label="Modifier" />
+
+// Medium (40x40px, icon 16px) - Défaut
+<IconButton icon={Edit} size="md" label="Modifier" />
+
+// Large (48x48px, icon 18px) - Headers, CTAs
+<IconButton icon={Edit} size="lg" label="Modifier" />
+```
+
+### Disabled State (Tooltip fonctionnel)
+
+```tsx
+const [canCancel, setCanCancel] = useState(false);
+
+<IconButton
+  icon={Ban}
+  variant="outline"
+  size="sm"
+  label="Impossible d'annuler : commande déjà reçue"
+  disabled={!canCancel}
+/>;
+// ✅ Tooltip s'affiche même si disabled (accessibilité)
+```
+
+### Loading State
+
+```tsx
+const [isDeleting, setIsDeleting] = useState(false);
+
+<IconButton
+  icon={Trash2}
+  variant="danger"
+  label="Supprimer"
+  loading={isDeleting}
+  onClick={handleDelete}
+/>;
+// Loading: Affiche Loader2 spinner automatiquement
+```
+
+### Button Group Compact (Tables)
+
+```tsx
+// Use case réel : Page commandes fournisseurs
+<div className="flex items-center gap-2">
+  <IconButton icon={Eye} variant="outline" size="sm" label="Voir détails" />
+  <IconButton icon={Edit} variant="outline" size="sm" label="Éditer" />
+  <IconButton icon={CheckCircle} variant="success" size="sm" label="Valider" />
+  <IconButton icon={Ban} variant="danger" size="sm" label="Annuler" />
+  <IconButton icon={Trash2} variant="danger" size="sm" label="Supprimer" />
+</div>
+// Gain espace : ~84px par bouton vs ButtonUnified avec text
+```
+
+### Tooltip Position Custom
+
+```tsx
+// Position tooltip si bouton près bord tableau
+<IconButton
+  icon={Eye}
+  variant="outline"
+  label="Voir détails"
+  tooltipSide="top" // top | right | bottom | left
+/>
+```
+
+### Accessibilité WCAG AA
+
+```tsx
+// ✅ Tooltip intégré automatiquement (Radix UI)
+// ✅ aria-label automatique (prop label)
+// ✅ Keyboard navigation (Tab + Enter)
+// ✅ Disabled state avec tooltip fonctionnel
+// ✅ Focus visible ring
+
+<IconButton icon={Save} label="Enregistrer" />
+// Génère automatiquement : aria-label="Enregistrer"
+// Tooltip au hover/focus : "Enregistrer"
+```
+
+---
+
 ## Quand Utiliser Quel Pattern?
 
 ### ✅ Pattern 1 (Icon Prop) - Cas d'Usage
@@ -254,22 +378,50 @@ const [isProcessing, setIsProcessing] = useState(false);
 
 ---
 
+### ✅ Pattern 3 (Icon-only IconButton) - Cas d'Usage
+
+**Recommandé pour:**
+
+- ✅ Tables denses avec multiples actions CRUD
+- ✅ Toolbars avec boutons répétitifs
+- ✅ Interfaces mobiles space-constrained
+- ✅ Boutons où text est redondant (contexte clair)
+- ✅ Accessibilité WCAG AA garantie (tooltip + aria-label intégrés)
+
+**Exemples:**
+
+```tsx
+// Table dense avec 5 actions par ligne
+<IconButton icon={Eye} variant="outline" size="sm" label="Voir" />
+<IconButton icon={Edit} variant="outline" size="sm" label="Éditer" />
+<IconButton icon={CheckCircle} variant="success" size="sm" label="Valider" />
+<IconButton icon={Ban} variant="danger" size="sm" label="Annuler" />
+<IconButton icon={Trash2} variant="danger" size="sm" label="Supprimer" />
+
+// Gain espace : 420px économisés (5 buttons × 84px)
+```
+
+---
+
 ## Exemples Avancés
 
 ### Responsive Icon-only ↔ Icon+Text
 
 ```tsx
 {
-  /* Mobile: Icon-only (space-constrained) */
+  /* Mobile: Icon-only (space-constrained) - IconButton */
 }
 <div className="flex md:hidden">
-  <ButtonUnified variant="success" size="icon" aria-label="Confirmer commande">
-    <CheckCircle size={16} />
-  </ButtonUnified>
+  <IconButton
+    icon={CheckCircle}
+    variant="success"
+    size="sm"
+    label="Confirmer commande"
+  />
 </div>;
 
 {
-  /* Desktop: Icon + Text */
+  /* Desktop: Icon + Text - ButtonUnified */
 }
 <div className="hidden md:flex">
   <ButtonUnified icon={CheckCircle} variant="success" size="sm">
