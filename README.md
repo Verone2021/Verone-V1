@@ -88,63 +88,95 @@ supabase gen types typescript --local > src/types/supabase.ts
 
 ## 🎯 Project Status
 
-### ✅ Phase 1 : Stabilisation (Production)
+### ✅ Phase 4 : Multi-Frontends Turborepo (Production)
 
-**Date** : 2025-10-23
-**État** : ✅ **Production-ready** avec données réelles
+**Date** : 2025-11-08
+**État** : ✅ **Production multi-apps** avec monorepo Turborepo
 
-**Modules Actifs** :
+**3 Applications Déployées** :
+
+#### 1. **back-office** (Port 3000) - CRM/ERP Complet
 
 - 🔐 **Authentification** (`/login`, `/profile`) - Auth Supabase + RLS policies
-- 📊 **Dashboard** (`/dashboard`) - KPIs, métriques, notifications
+- 📊 **Dashboard** (`/dashboard`) - KPIs temps réel, métriques, notifications
 - 🏢 **Organisations & Contacts** (`/contacts-organisations`)
   - Customers (B2B + B2C)
-  - Suppliers
-  - Partners
+  - Suppliers (fournisseurs)
+  - Partners (apporteurs d'affaires)
   - Contacts (liés organisations)
+- 📦 **Produits** (`/produits`)
+  - Catalogue produits (31 routes)
+  - Sourcing & fournisseurs
+  - Variantes & packages
+  - Images & caractéristiques
+- 📊 **Stocks** (`/stocks`)
+  - Mouvements (entrées, sorties, backorders)
+  - Alertes intelligentes (seuils dynamiques)
+  - Inventaire & réceptions
+  - Expéditions
+- 🛒 **Commandes** (`/commandes`)
+  - Clients (B2B, B2C)
+  - Fournisseurs (approvisionnement)
+  - Expéditions & tracking
+- 💰 **Finance** (`/finance`, `/factures`, `/tresorerie`)
+  - Rapprochement bancaire automatique
+  - Trésorerie & prévisions
+  - Factures clients/fournisseurs
+- 🌐 **Canaux Vente** (`/canaux-vente`)
+  - Google Merchant Center (feeds XML)
+  - Prix clients multi-canal
+  - Intégrations externes
 - ⚙️ **Administration** (`/admin`)
-  - Users management (roles, permissions)
+  - Users management (4 rôles)
   - Activity tracking (RGPD-compliant)
 
-**Chiffres Clés Phase 1** :
+#### 2. **site-internet** (Port 3001) - E-commerce Public
 
+- 🛍️ **Catalogue produits** avec filtres avancés
+- 📦 **Pages produits** détaillées (images, specs, prix)
+- 🛒 **Panier & Checkout** sécurisé
+- 👤 **Compte client** (commandes, favoris)
+
+#### 3. **linkme** (Port 3002) - Commissions Apporteurs
+
+- 💼 **Suivi ventes** apportées par vendeur
+- 💰 **Calcul commissions** automatique
+- 📊 **Statistiques performances** détaillées
+
+**Architecture Turborepo** :
+
+- 🏗️ **25 packages** @verone/\* partagés (monorepo)
+- 🎨 **86 composants** React documentés (54 UI + 32 Products)
+- 📦 **3 apps** déployées (back-office, site-internet, linkme)
 - 🗄️ **78 tables** database (schema stable)
 - 🔧 **158 triggers** automatiques
 - 🛡️ **239 RLS policies** sécurité
-- 🎨 **270 composants** React
-- 🪝 **87 hooks** custom
 - 📝 **157 migrations** SQL
 
-### 🚧 Phase 2 : Produits & Stocks (Q1 2026)
+**Packages @verone/\* Partagés** :
 
-**Modules en Développement** (code présent, middleware protégé) :
+- `@verone/ui` (54 composants Design System)
+- `@verone/products` (32 composants produits)
+- `@verone/orders`, `@verone/stock`, `@verone/customers`
+- `@verone/categories`, `@verone/collections`, `@verone/channels`
+- `@verone/dashboard`, `@verone/notifications`, `@verone/admin`
+- `@verone/types`, `@verone/utils`, `@verone/testing`
+- Plus 12 autres packages métiers
 
-- 📦 **Produits** - Catalogue, sourcing, variantes, packages, images
-- 📊 **Stocks** - Mouvements, inventaire, alertes, réceptions, expéditions
-- 🛒 **Commandes** - Clients, fournisseurs, expéditions
-- 🏷️ **Pricing** - Multi-canal (B2B, B2C, Wholesale, Export, Retail)
+---
 
-**Timeline** : Q1 2026 (feature flags + validation staging)
-
-### 📅 Phase 3 : Finance & Canaux Vente (Q2 2026)
+### 📅 Roadmap Future (Q1-Q2 2026)
 
 **Modules Planifiés** :
 
-- 💰 **Finance** - Rapprochement bancaire, trésorerie, paiements
-- 🧾 **Factures** - Clients, fournisseurs, accounting
-- 🌐 **Canaux Vente** - Google Merchant, prix clients, intégrations
-- 🔔 **Notifications** - Centre notifications temps réel
+- 📊 **Analytics Avancées** - Business Intelligence, prédictions stock IA
+- 🤖 **Automatisations** - Workflows automatiques, triggers complexes
+- 📱 **Apps Mobiles** - React Native (iOS/Android) pour vendeurs terrain
+- 🔌 **APIs Publiques** - REST API + GraphQL pour intégrations partenaires
+- 🌍 **Multi-langues** - i18n (FR/EN/ES) pour marchés internationaux
+- 🎨 **White-Label** - Customisation marque pour clients B2B
 
-### 🏗️ Phase 4 : Monorepo & Site E-commerce (Q2-Q3 2026)
-
-**Architecture Évolutive** :
-
-- Migration [Turborepo](https://turbo.build/) monorepo
-- Création `apps/web` (back-office) + `apps/ecommerce` (site client)
-- Shared packages (`@verone/ui`, `@verone/types`, `@verone/utils`)
-- API Backend dédié (NestJS optionnel)
-
-**Documentation** : [`.claude/contexts/monorepo.md`](./.claude/contexts/monorepo.md)
+**Documentation Turborepo** : [`CLAUDE.md`](./CLAUDE.md) § Architecture Turborepo
 
 ---
 

@@ -27,12 +27,19 @@ export default function VentesPage() {
       {/* Liste ventes */}
       <div className="grid grid-cols-1 gap-4">
         {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+          <div
+            key={i}
+            className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition"
+          >
             <div className="flex justify-between items-start mb-4">
               <div>
                 <div className="flex items-center gap-3">
-                  <h3 className="text-lg font-semibold">Commande #{2025000 + i}</h3>
-                  <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">En cours</span>
+                  <h3 className="text-lg font-semibold">
+                    Commande #{2025000 + i}
+                  </h3>
+                  <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                    En cours
+                  </span>
                 </div>
                 <div className="text-sm text-gray-600 mt-1">
                   Client {i + 1} • {new Date().toLocaleDateString()}

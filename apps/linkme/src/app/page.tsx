@@ -11,7 +11,9 @@ export default function DashboardPage() {
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="text-sm text-gray-600 mb-2">Commissions du mois</div>
           <div className="text-3xl font-bold">€X,XXX</div>
-          <div className="text-sm text-green-600 mt-2">+XX% vs mois dernier</div>
+          <div className="text-sm text-green-600 mt-2">
+            +XX% vs mois dernier
+          </div>
         </div>
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="text-sm text-gray-600 mb-2">Ventes du mois</div>
@@ -34,11 +36,16 @@ export default function DashboardPage() {
       <div className="bg-white rounded-lg shadow-md p-6">
         <h2 className="text-xl font-semibold mb-4">Dernières Ventes</h2>
         <div className="space-y-3">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="flex justify-between items-center py-3 border-b">
+          {[1, 2, 3, 4, 5].map(i => (
+            <div
+              key={i}
+              className="flex justify-between items-center py-3 border-b"
+            >
               <div>
                 <div className="font-medium">Commande #{2025000 + i}</div>
-                <div className="text-sm text-gray-600">Client • {new Date().toLocaleDateString()}</div>
+                <div className="text-sm text-gray-600">
+                  Client • {new Date().toLocaleDateString()}
+                </div>
               </div>
               <div className="text-right">
                 <div className="font-semibold">€XXX.XX</div>

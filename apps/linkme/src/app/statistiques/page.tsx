@@ -54,7 +54,10 @@ export default function StatistiquesPage() {
         <h2 className="text-xl font-semibold mb-4">Top 5 Produits Vendus</h2>
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="flex justify-between items-center py-3 border-b">
+            <div
+              key={i}
+              className="flex justify-between items-center py-3 border-b"
+            >
               <div>
                 <div className="font-medium">Produit {i + 1}</div>
                 <div className="text-sm text-gray-600">XX ventes</div>

@@ -36,11 +36,12 @@ function MyComponent() {
 
 ---
 
-## 🎨 Composants Disponibles (51 total)
+## 🎨 Composants Disponibles (54 total)
 
-### Boutons (4 composants)
+### Boutons (5 composants)
 
-- **ButtonUnified** - Bouton unifié Design System V2 ✨
+- **ButtonUnified** - Bouton unifié Design System V2 avec CVA ✨
+- **Button / ButtonV2** - Bouton standard avec loading states
 - **ActionButton** - Bouton action avec icône
 - **ModernActionButton** - Bouton moderne avec animations
 - **StandardModifyButton** - Bouton modification standard
@@ -50,16 +51,17 @@ function MyComponent() {
 - **Input**, **Textarea**, **Label**, **Form**
 - **Select**, **Checkbox**, **RadioGroup**, **Switch**
 
-### Layout (11 composants)
+### Layout (12 composants)
 
 - **Card**, **VeroneCard**, **Separator**, **Accordion**
 - **Collapsible**, **Tabs**, **TabsNavigation**, **Sidebar**
-- **Breadcrumb**, **ScrollArea**, **Table**
+- **Breadcrumb**, **ScrollArea**, **Table**, **Tabs**
 
-### Feedback (10 composants)
+### Feedback (11 composants)
 
 - **Alert**, **AlertDialog**, **Skeleton**, **Badge**
-- **DataStatusBadge**, **RoleBadge**, **StatPill**, **Progress**, **ActivityTimeline**
+- **DataStatusBadge**, **RoleBadge**, **StatPill**, **PhaseIndicator**
+- **Progress**, **ActivityTimeline**, **Avatar**
 
 ### Overlay (5 composants)
 
@@ -75,24 +77,67 @@ function MyComponent() {
 
 ### KPI & Metrics (4 composants)
 
-- **KpiCardUnified** ✨, **CompactKpiCard**, **MediumKpiCard**, **ElegantKpiCard**
+- **KpiCardUnified** ✨ - KPI card avec tendances
+- **CompactKpiCard** - Version compacte
+- **MediumKpiCard** - Taille moyenne
+- **ElegantKpiCard** - Design premium
 
 ### Navigation (3 composants)
 
 - **GroupNavigation**, **Pagination**, **ViewModeToggle**
 
-### Actions (2 composants)
+### Actions & Upload (3 composants)
 
 - **QuickActionsList**, **CompactQuickActions**
+- **ImageUploadZone** - Zone upload images drag & drop
+
+### Custom (2 composants)
+
+- **RoomMultiSelect** - Sélecteur multi-pièces
+- **PhaseIndicator** - Indicateur phase projet (1-4)
+
+---
+
+## 📖 Documentation Props TypeScript
+
+**Documentation exhaustive** : `docs/architecture/COMPOSANTS-CATALOGUE.md`
+
+Chaque composant est documenté avec :
+
+- Interface Props TypeScript complète
+- Exemples d'utilisation
+- Valeurs possibles pour chaque prop
+- Cas d'usage recommandés
+
+### Exemple : ButtonUnified
+
+```typescript
+interface ButtonUnifiedProps {
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  size?: 'default' | 'sm' | 'lg' | 'icon';
+  rounded?: 'default' | 'full' | 'none';
+  shadow?: boolean;
+  loading?: boolean;
+  icon?: React.ReactNode;
+  className?: string;
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+}
+
+<ButtonUnified variant="default" size="lg" loading={isSubmitting} icon={<Save />}>
+  Enregistrer
+</ButtonUnified>
+```
 
 ---
 
 ## 📊 Statistiques
 
-- **51 composants** exportés et fonctionnels
-- **3 composants** désactivés temporairement (dépendances externes)
+- **54 composants** exportés et fonctionnels
 - **100% TypeScript** avec types stricts
 - **0 erreur** build et type-check
+- **Exports** : `src/components/ui/index.ts` (122 lignes)
 
 ---
 

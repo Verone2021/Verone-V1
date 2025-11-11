@@ -17,7 +17,9 @@ export default function LoginPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Mot de passe</label>
+            <label className="block text-sm font-medium mb-2">
+              Mot de passe
+            </label>
             <input
               type="password"
               placeholder="••••••••"

@@ -5,22 +5,59 @@
 
 ---
 
-## 🎯 PHASE ACTUELLE : PHASE 1 - STABILISATION ✅
+## 🎯 PHASE ACTUELLE : PHASE 4 - MULTI-FRONTENDS TURBOREPO ✅
 
-**Date** : 2025-10-23
-**État** : Production-ready avec modules core validés
+**Date** : 2025-11-08
+**État** : Production multi-frontends avec 25 packages partagés @verone/\*
 
-### ✅ Modules ACTIFS
+### 🏗️ ARCHITECTURE TURBOREPO
 
-- Authentification (`/login`, `/profile`)
-- Dashboard (`/dashboard`)
-- Organisations & Contacts (`/contacts-organisations`)
-- Administration (`/admin`)
+**3 Applications Déployées** :
 
-### ❌ Modules DÉSACTIVÉS (Phase 2+)
+1. **back-office** (Port 3000) - CRM/ERP Complet
+   - ✅ Authentification + Dashboard
+   - ✅ Organisations & Contacts (customers, suppliers, partners)
+   - ✅ Produits (catalogue, sourcing, variantes, packages)
+   - ✅ Stocks (mouvements, alertes, inventaire, backorders)
+   - ✅ Commandes (clients, fournisseurs, expéditions)
+   - ✅ Finance (trésorerie, rapprochement bancaire)
+   - ✅ Factures (clients, fournisseurs)
+   - ✅ Canaux Vente (Google Merchant, prix clients)
+   - ✅ Administration (users, activité)
 
-- Produits, Stocks, Commandes, Finance, Canaux vente
-- Protection : `src/middleware.ts` + Feature flags
+2. **site-internet** (Port 3001) - E-commerce Public
+   - ✅ Catalogue produits avec filtres
+   - ✅ Pages produits détaillées
+   - ✅ Panier & Checkout
+   - ✅ Compte client
+
+3. **linkme** (Port 3002) - Commissions Apporteurs
+   - ✅ Suivi ventes apportées
+   - ✅ Calcul commissions
+   - ✅ Statistiques performances
+
+**25 Packages Partagés** (@verone/\*) :
+
+- `@verone/ui` : 54 composants Design System (Button, Dialog, Card, KPI...)
+- `@verone/products` : 32 composants produits (ProductThumbnail, ProductCard...)
+- `@verone/orders`, `@verone/stock`, `@verone/customers`, `@verone/suppliers`
+- `@verone/categories`, `@verone/collections`, `@verone/channels`
+- `@verone/dashboard`, `@verone/notifications`, `@verone/admin`
+- `@verone/types`, `@verone/utils`, `@verone/testing`
+- Plus 10 autres packages métiers
+
+**Chiffres Clés Phase 4** :
+
+- 🏗️ **25 packages** @verone/\* partagés (Turborepo monorepo)
+- 🎨 **86 composants** React documentés (54 UI + 32 Products)
+- 📦 **3 apps** déployées (back-office, site-internet, linkme)
+- 🗄️ **78 tables** database (schema stable)
+- 🔧 **158 triggers** automatiques
+- 🛡️ **239 RLS policies** sécurité
+
+### ✅ TOUS MODULES ACTIFS (Production)
+
+**AUCUN module désactivé** - Tous les modules sont en production et accessibles après authentification.
 
 ---
 
@@ -32,8 +69,272 @@ UI        : shadcn/ui + Radix UI + Tailwind CSS
 Database  : Supabase (PostgreSQL + Auth + RLS)
 Validation: Zod + React Hook Form
 Testing   : Vitest + Playwright + Storybook
-Deploy    : Vercel (auto-deploy main)
+Monorepo  : Turborepo v2.6.0 + pnpm workspaces
+Deploy    : Vercel (auto-deploy production-stable)
 ```
+
+---
+
+## 📦 PACKAGES @VERONE/\* - COMPOSANTS CATALOGUE
+
+**RÈGLE ABSOLUE** : **TOUJOURS consulter le catalogue composants AVANT créer/utiliser composant**
+
+### 🚨 WORKFLOW ANTI-HALLUCINATION OBLIGATOIRE
+
+```typescript
+// ÉTAPE 1 : Consulter catalogue AVANT tout
+Read('docs/architecture/COMPOSANTS-CATALOGUE.md');
+
+// ÉTAPE 2 : Chercher composant existant (Ctrl+F dans catalogue)
+// Exemple : "Je cherche un composant pour afficher miniature produit"
+// → Trouver "ProductThumbnail" dans catalogue
+
+// ÉTAPE 3 : Vérifier props TypeScript EXACTES dans catalogue
+interface ProductThumbnailProps {
+  src: string | null | undefined;
+  alt: string;
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  className?: string;
+  priority?: boolean;
+}
+
+// ÉTAPE 4 : Si besoin détails supplémentaires, consulter source
+mcp__serena__get_symbols_overview('packages/@verone/products/src/components/images/ProductThumbnail.tsx');
+
+// ÉTAPE 5 : Utiliser composant avec props exactes
+<ProductThumbnail
+  src={product.primary_image_url}
+  alt={product.name}
+  size="md"
+/>
+```
+
+### ⚠️ RÈGLES STRICTES
+
+**❌ INTERDIT :**
+
+- Créer composant SANS vérifier catalogue (ex: créer `ProductImage` alors que `ProductThumbnail` existe)
+- Inventer props inexistantes (ex: `<ProductThumbnail variant="rounded" />` alors que prop `variant` n'existe pas)
+- Dupliquer code UI déjà dans @verone/ui (ex: créer bouton custom alors que `ButtonUnified` existe)
+- Oublier imports depuis packages (ex: `import { Button } from '../components/ui/button'` au lieu de `import { Button } from '@verone/ui'`)
+
+**✅ OBLIGATOIRE :**
+
+- Lire `docs/architecture/COMPOSANTS-CATALOGUE.md` EN PREMIER
+- Utiliser composants existants @verone/\* (86 composants documentés)
+- Respecter props TypeScript exactes (pas d'invention)
+- Importer depuis packages : `import { X } from '@verone/[package]'`
+- Demander autorisation utilisateur si composant manquant
+
+### 📚 Composants Critiques (Usage Fréquent)
+
+#### ProductThumbnail ⭐ COMPOSANT LE PLUS OUBLIÉ
+
+```typescript
+import { ProductThumbnail } from '@verone/products';
+
+// Props EXACTES (ne PAS inventer d'autres props)
+<ProductThumbnail
+  src={product.primary_image_url}  // string | null | undefined
+  alt={product.name}                // string
+  size="md"                         // 'xs' | 'sm' | 'md' | 'lg' | 'xl'
+  className="custom-class"          // string (optionnel)
+  priority={true}                   // boolean (optionnel)
+/>
+
+// Tailles disponibles :
+// xs: 32x32px, sm: 48x48px, md: 64x64px, lg: 96x96px, xl: 128x128px
+```
+
+#### ButtonUnified
+
+```typescript
+import { ButtonUnified } from '@verone/ui';
+
+<ButtonUnified
+  variant="default"  // 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
+  size="lg"          // 'default' | 'sm' | 'lg' | 'icon'
+  loading={isSubmitting}
+  icon={<Save />}
+>
+  Enregistrer
+</ButtonUnified>
+```
+
+#### KpiCardUnified
+
+```typescript
+import { KpiCardUnified } from '@verone/ui';
+
+<KpiCardUnified
+  title="Produits actifs"
+  value={1245}
+  description="Total produits catalogue"
+  trend={{ value: 12, direction: 'up' }}
+  variant="success"
+  icon={<Package />}
+/>
+```
+
+#### QuickPurchaseOrderModal
+
+```typescript
+import { QuickPurchaseOrderModal } from '@verone/orders';
+
+<QuickPurchaseOrderModal
+  open={isOpen}
+  onClose={() => setIsOpen(false)}
+  productId={productId}
+  shortageQuantity={10}
+  onSuccess={() => {
+    toast.success('Commande créée');
+    refetchStock();
+  }}
+/>
+```
+
+#### StockAlertCard
+
+```typescript
+import { StockAlertCard } from '@verone/stock';
+
+<StockAlertCard
+  alert={alert}  // Interface StockAlert (12 props documentées)
+  onActionClick={(action) => {
+    if (action === 'create_order') {
+      // Ouvrir modal commande
+    }
+  }}
+/>
+```
+
+#### Dialog
+
+```typescript
+import { Dialog } from '@verone/ui';
+
+<Dialog
+  open={isOpen}
+  onOpenChange={setIsOpen}
+  title="Créer produit"
+  description="Remplir informations produit"
+  size="lg"  // 'sm' | 'md' | 'lg' | 'xl' | 'full'
+>
+  <ProductForm />
+</Dialog>
+```
+
+### 📖 Documentation Complète
+
+**Fichier référence** : `docs/architecture/COMPOSANTS-CATALOGUE.md` (1600 lignes)
+
+**Contenu** :
+
+- **54 composants** @verone/ui (Button, Form, Layout, Feedback, Overlay, KPI, Navigation...)
+- **32 composants** @verone/products (Images, Cards, Modals, Wizards, Selectors...)
+- **Composants** @verone/orders (QuickPurchaseOrderModal...)
+- **Composants** @verone/stock (StockAlertCard...)
+- **Composants** @verone/categories (CategorySelector, CategorizeModal...)
+- **Composants** @verone/notifications (NotificationsDropdown...)
+- **Hooks** @verone/dashboard (useCompleteDashboardMetrics...)
+
+**Format pour chaque composant** :
+
+- Interface Props TypeScript complète
+- Description props (type, valeurs possibles)
+- Exemples utilisation
+- Cas d'usage
+
+### 🔍 Cas d'Usage Communs → Composants
+
+| Besoin                      | Composant                       | Package            |
+| --------------------------- | ------------------------------- | ------------------ |
+| Miniature produit           | `ProductThumbnail`              | @verone/products   |
+| Card produit                | `ProductCard`                   | @verone/products   |
+| Bouton avec loading         | `ButtonUnified`                 | @verone/ui         |
+| Modal dialog                | `Dialog`                        | @verone/ui         |
+| KPI avec tendance           | `KpiCardUnified`                | @verone/ui         |
+| Alerte stock                | `StockAlertCard`                | @verone/stock      |
+| Commande fournisseur rapide | `QuickPurchaseOrderModal`       | @verone/orders     |
+| Sélecteur catégorie         | `CategorySelector`              | @verone/categories |
+| Badge statut                | `Badge` / `DataStatusBadge`     | @verone/ui         |
+| Form input                  | `Input` / `Textarea` / `Select` | @verone/ui         |
+| Accordion                   | `Accordion`                     | @verone/ui         |
+| Tabs                        | `Tabs`                          | @verone/ui         |
+| Tooltip                     | `Tooltip`                       | @verone/ui         |
+| Dropdown menu               | `DropdownMenu`                  | @verone/ui         |
+| Calendar                    | `Calendar`                      | @verone/ui         |
+| Avatar                      | `Avatar`                        | @verone/ui         |
+
+### 🎯 Impact Modifications Packages
+
+**RÈGLE CRITIQUE** : Modification dans `packages/@verone/*` = IMPACTE TOUS LES FRONTENDS
+
+```typescript
+// ❌ DANGER : Modifier props ProductThumbnail
+// Fichier : packages/@verone/products/src/components/images/ProductThumbnail.tsx
+interface ProductThumbnailProps {
+  src: string | null;
+  alt: string;
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  newProp?: string; // ❌ Ajout prop = CASSER tous usages existants
+}
+
+// Impact :
+// - apps/back-office/ : 45 fichiers utilisent ProductThumbnail
+// - apps/site-internet/ : 12 fichiers utilisent ProductThumbnail
+// - apps/linkme/ : 3 fichiers utilisent ProductThumbnail
+// → Total : 60 fichiers cassés si prop obligatoire
+
+// ✅ Solution sûre : Prop optionnelle + backward compatible
+interface ProductThumbnailProps {
+  src: string | null;
+  alt: string;
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  newProp?: string; // ✅ Optionnelle = pas de breaking change
+}
+```
+
+**Workflow modifications packages** :
+
+1. ✅ Modifier composant packages/@verone/[module]/
+2. ✅ Tests unitaires composant
+3. ✅ `turbo build` (valider 3 apps compilent)
+4. ✅ Grep tous usages : `Grep({ pattern: "ProductThumbnail", path: "apps/" })`
+5. ✅ Tests manuels 3 apps (back-office, site-internet, linkme)
+6. ✅ Demander autorisation commit
+
+### 📋 Checklist Avant Créer Composant
+
+**AVANT de créer un composant, vérifier OBLIGATOIREMENT :**
+
+```typescript
+// ✅ ÉTAPE 1 : Consulter catalogue
+Read('docs/architecture/COMPOSANTS-CATALOGUE.md');
+
+// ✅ ÉTAPE 2 : Rechercher dans packages
+Glob({ pattern: '**/*[NomComposant]*.tsx', path: 'packages/@verone' });
+
+// ✅ ÉTAPE 3 : Grep usages similaires
+Grep({
+  pattern: 'button|Button',
+  path: 'packages/@verone/ui',
+  output_mode: 'files_with_matches',
+});
+
+// ✅ ÉTAPE 4 : Consulter Serena si trouvé
+mcp__serena__get_symbols_overview(
+  'packages/@verone/ui/src/components/ui/button.tsx'
+);
+
+// ✅ ÉTAPE 5 : Si composant existe → RÉUTILISER
+// ❌ ÉTAPE 6 : Si n'existe pas → DEMANDER AUTORISATION utilisateur
+
+// ✅ ÉTAPE 7 : Après création → METTRE À JOUR CATALOGUE
+// Fichier : docs/architecture/COMPOSANTS-CATALOGUE.md
+```
+
+**Ressource anti-hallucination** : `docs/architecture/COMPOSANTS-CATALOGUE.md` (TOUJOURS lire EN PREMIER)
 
 ---
 
@@ -282,6 +583,36 @@ git push origin [branch]
 4. **Test Before Code** : TOUJOURS valider que existant fonctionne AVANT modifier
 5. **Build Always** : TOUJOURS vérifier build passe AVANT et APRÈS modifications
 6. **Authorization Always** : JAMAIS commit sans autorisation EXPLICITE utilisateur
+7. **ANTI-HALLUCINATION** : JAMAIS inventer, TOUJOURS vérifier les commits précédents pour voir comment c'était codé avant
+
+### 🛡️ RÈGLE ANTI-HALLUCINATION (CRITICAL)
+
+**AVANT toute modification de code existant** :
+
+```typescript
+// 1. Vérifier Git History
+git log --since="[date]" --oneline -- [file-path]
+
+// 2. Lire le CODE EXACT du dernier commit stable
+git show [commit-sha]:[file-path]
+
+// 3. Comparer avec l'état actuel
+git diff [commit-sha] HEAD -- [file-path]
+
+// 4. Faire UNIQUEMENT les modifications demandées
+// 5. Ne JAMAIS inventer de solution
+// 6. Ne JAMAIS supprimer des fonctionnalités existantes
+```
+
+**Si quelque chose fonctionnait avant** :
+
+- ✅ Chercher comment c'était codé dans Git
+- ✅ Restaurer le code fonctionnel
+- ✅ Appliquer SEULEMENT les corrections demandées
+- ❌ NE JAMAIS inventer une nouvelle implémentation
+- ❌ NE JAMAIS supprimer des fonctions utiles
+
+**Exemple** : Si un bouton existait et fonctionnait → `git show HEAD~5:path/file.tsx` → Voir comment il était codé → Restaurer exactement pareil
 
 ---
 
