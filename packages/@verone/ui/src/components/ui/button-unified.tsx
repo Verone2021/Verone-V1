@@ -27,10 +27,12 @@ import { Loader2 } from 'lucide-react';
  *
  * @example
  * ```tsx
+ * // ===== PATTERN 1: Icon Prop (Recommandé - Gestion automatique) =====
+ *
  * // Bouton primaire standard
  * <ButtonUnified>Enregistrer</ButtonUnified>
  *
- * // Bouton avec icône gauche
+ * // Bouton avec icône gauche (icon prop)
  * <ButtonUnified icon={Save} iconPosition="left">
  *   Enregistrer
  * </ButtonUnified>
@@ -40,24 +42,37 @@ import { Loader2 } from 'lucide-react';
  *   Supprimer
  * </ButtonUnified>
  *
- * // Bouton outline small
- * <ButtonUnified variant="outline" size="sm" icon={Edit}>
- *   Modifier
+ * // Boutons sémantiques CRUD (icon prop)
+ * <ButtonUnified variant="success" icon={CheckCircle}>Confirmer</ButtonUnified>
+ * <ButtonUnified variant="danger" icon={Trash2}>Supprimer</ButtonUnified>
+ *
+ * // ===== PATTERN 2: JSX Children Icons (Nouveau 2025 - shadcn/ui style) =====
+ *
+ * // Icon manuel dans children (placement custom)
+ * <ButtonUnified variant="outline" className="border-sky-600 text-sky-600">
+ *   <CopyIcon />
+ *   Duplicate
+ * </ButtonUnified>
+ *
+ * // Icon + Badge notification
+ * <ButtonUnified variant="outline">
+ *   <MessageSquareIcon />
+ *   Messages
+ *   <span className="ml-2 rounded-full bg-red-500 px-1.5 text-xs">3</span>
  * </ButtonUnified>
  *
  * // Bouton gradient glass (moderne)
  * <ButtonUnified variant="gradient">Nouveau produit</ButtonUnified>
  * <ButtonUnified variant="glass">Dashboard</ButtonUnified>
  *
- * // Boutons sémantiques CRUD
- * <ButtonUnified variant="success" icon={CheckCircle}>Confirmer</ButtonUnified>
- * <ButtonUnified variant="danger" icon={Trash2}>Supprimer</ButtonUnified>
- *
  * // Polymorphic : render as Link
  * <ButtonUnified asChild>
  *   <Link href="/products">Voir produits</Link>
  * </ButtonUnified>
  * ```
+ *
+ * @note Les deux patterns sont supportés. Pattern 1 (icon prop) recommandé pour simplicité.
+ * Pattern 2 (JSX children) offre flexibilité maximale pour layouts complexes.
  *
  * @see https://ui.shadcn.com/docs/components/button
  * @see /docs/audits/2025-11/ARCHITECTURE-COMPOSANTS-GENERIQUES-V2.md
@@ -170,14 +185,18 @@ const ButtonUnified = React.forwardRef<HTMLButtonElement, ButtonUnifiedProps>(
         disabled={isDisabled}
         {...props}
       >
+        {/* Loading state: affiche spinner et masque icon */}
         {loading && <Loader2 className="animate-spin" size={iconSize} />}
 
+        {/* Pattern 1: Icon prop à gauche (gestion automatique taille/spacing) */}
         {!loading && Icon && iconPosition === 'left' && (
           <Icon size={iconSize} strokeWidth={2} />
         )}
 
+        {/* Pattern 2: JSX children - supporte icons manuels + layouts complexes (badges, etc.) */}
         {children}
 
+        {/* Pattern 1: Icon prop à droite */}
         {!loading && Icon && iconPosition === 'right' && (
           <Icon size={iconSize} strokeWidth={2} />
         )}
