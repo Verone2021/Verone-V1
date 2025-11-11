@@ -186,36 +186,108 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
               </Link>
             </div>
 
-            {/* Stock info INLINE avec badge draft intégré */}
-            <div className="flex items-center gap-2 text-xs text-gray-600 flex-wrap">
-              <span>
-                Stock: <strong>{alert.stock_real}</strong>
-              </span>
-              {alert.stock_forecasted_out > 0 && (
-                <span>
-                  - Réservé:{' '}
-                  <strong className="text-red-600">
-                    {alert.stock_forecasted_out}
-                  </strong>
-                </span>
-              )}
-              <span>
-                - Seuil: <strong>{alert.min_stock}</strong>
-              </span>
-              {alert.is_in_draft && alert.quantity_in_draft && (
-                <>
-                  <span className="text-green-600 font-medium">
-                    - Commandé: <strong>{alert.quantity_in_draft}</strong>
-                  </span>
-                  <Badge
-                    variant="outline"
-                    className="border-green-300 text-green-600 text-xs h-5 px-1.5"
-                  >
-                    {alert.draft_order_number}
-                  </Badge>
-                </>
-              )}
+            {/* Indicateurs Stock Avancés - Grid 4 colonnes */}
+            <div className="grid grid-cols-4 gap-3 mt-2">
+              {/* Stock Actuel */}
+              <div className="text-center p-2 bg-white rounded-lg border border-gray-200">
+                <div className="text-[10px] text-gray-500 uppercase font-medium">
+                  Stock Actuel
+                </div>
+                <div className="text-lg font-bold text-gray-900">
+                  {alert.stock_real}
+                </div>
+              </div>
+
+              {/* Stock Prévisionnel */}
+              <div
+                className={`text-center p-2 rounded-lg border ${
+                  alert.stock_real +
+                    (alert.stock_forecasted_in || 0) -
+                    (alert.stock_forecasted_out || 0) >=
+                  alert.min_stock
+                    ? 'bg-green-50 border-green-300'
+                    : 'bg-red-50 border-red-300'
+                }`}
+              >
+                <div className="text-[10px] text-gray-500 uppercase font-medium">
+                  Stock Prévisionnel
+                </div>
+                <div
+                  className={`text-lg font-bold ${
+                    alert.stock_real +
+                      (alert.stock_forecasted_in || 0) -
+                      (alert.stock_forecasted_out || 0) >=
+                    alert.min_stock
+                      ? 'text-green-700'
+                      : 'text-red-700'
+                  }`}
+                >
+                  {alert.stock_real +
+                    (alert.stock_forecasted_in || 0) -
+                    (alert.stock_forecasted_out || 0)}
+                </div>
+                <div className="text-[9px] text-gray-500 mt-0.5">
+                  (+{alert.stock_forecasted_in || 0} -{' '}
+                  {alert.stock_forecasted_out || 0})
+                </div>
+              </div>
+
+              {/* Seuil Minimum */}
+              <div className="text-center p-2 bg-white rounded-lg border border-gray-200">
+                <div className="text-[10px] text-gray-500 uppercase font-medium">
+                  Seuil Minimum
+                </div>
+                <div className="text-lg font-bold text-gray-900">
+                  {alert.min_stock}
+                </div>
+              </div>
+
+              {/* Produits Manquants */}
+              <div
+                className={`text-center p-2 rounded-lg border ${
+                  alert.shortage_quantity > 0
+                    ? 'bg-red-50 border-red-300'
+                    : 'bg-green-50 border-green-300'
+                }`}
+              >
+                <div className="text-[10px] text-gray-500 uppercase font-medium">
+                  Manquants
+                </div>
+                <div
+                  className={`text-lg font-bold ${
+                    alert.shortage_quantity > 0
+                      ? 'text-red-700'
+                      : 'text-green-700'
+                  }`}
+                >
+                  {alert.shortage_quantity > 0 ? alert.shortage_quantity : '✓'}
+                </div>
+              </div>
             </div>
+
+            {/* Badge Statut Commande */}
+            {alert.is_in_draft && alert.quantity_in_draft && (
+              <div className="mt-2">
+                <Badge
+                  variant="outline"
+                  className="border-green-500 bg-green-50 text-green-700 text-xs font-medium"
+                >
+                  ✅ Commandé: {alert.quantity_in_draft} unités -{' '}
+                  {alert.draft_order_number}
+                </Badge>
+              </div>
+            )}
+
+            {alert.validated && (
+              <div className="mt-2">
+                <Badge
+                  variant="outline"
+                  className="border-green-600 bg-green-100 text-green-800 text-xs font-medium"
+                >
+                  ✅ Validé - Stock prévisionnel suffisant
+                </Badge>
+              </div>
+            )}
 
             {/* Commandes clients en attente (INLINE, TOUTES affichées) */}
             {alert.alert_type === 'no_stock_but_ordered' &&

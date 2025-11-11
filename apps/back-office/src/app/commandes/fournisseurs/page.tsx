@@ -66,6 +66,7 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  RotateCcw,
 } from 'lucide-react';
 
 type PurchaseOrderRow = Database['public']['Tables']['purchase_orders']['Row'];
@@ -657,7 +658,7 @@ export default function PurchaseOrdersPage() {
                             icon={Eye}
                           />
 
-                          {/* DRAFT : Éditer + Annuler + Supprimer */}
+                          {/* DRAFT : Éditer + Valider + Annuler + Supprimer */}
                           {order.status === 'draft' && (
                             <>
                               <ButtonUnified
@@ -666,6 +667,15 @@ export default function PurchaseOrdersPage() {
                                 onClick={() => openEditModal(order)}
                                 title="Éditer la commande"
                                 icon={Edit}
+                              />
+                              <ButtonUnified
+                                variant="success"
+                                size="sm"
+                                onClick={() =>
+                                  handleStatusChange(order.id, 'sent')
+                                }
+                                title="Valider (envoyer au fournisseur)"
+                                icon={CheckCircle}
                               />
                               <ButtonUnified
                                 variant="danger"
@@ -684,7 +694,7 @@ export default function PurchaseOrdersPage() {
                             </>
                           )}
 
-                          {/* SENT : Confirmer + Annuler */}
+                          {/* SENT : Confirmer + Dévalider + Annuler */}
                           {order.status === 'sent' && (
                             <>
                               <ButtonUnified
@@ -697,6 +707,15 @@ export default function PurchaseOrdersPage() {
                                 icon={CheckCircle}
                               />
                               <ButtonUnified
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handleStatusChange(order.id, 'draft')
+                                }
+                                title="Dévalider (retour brouillon)"
+                                icon={RotateCcw}
+                              />
+                              <ButtonUnified
                                 variant="danger"
                                 size="sm"
                                 onClick={() => handleCancel(order.id)}
@@ -706,7 +725,7 @@ export default function PurchaseOrdersPage() {
                             </>
                           )}
 
-                          {/* CONFIRMED : Réceptionner + Annuler */}
+                          {/* CONFIRMED : Réceptionner + Dévalider + Annuler */}
                           {order.status === 'confirmed' && (
                             <>
                               <ButtonUnified
@@ -715,6 +734,15 @@ export default function PurchaseOrdersPage() {
                                 onClick={() => openReceptionModal(order)}
                                 title="Réceptionner la commande"
                                 icon={Truck}
+                              />
+                              <ButtonUnified
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handleStatusChange(order.id, 'draft')
+                                }
+                                title="Dévalider (retour brouillon)"
+                                icon={RotateCcw}
                               />
                               <ButtonUnified
                                 variant="danger"

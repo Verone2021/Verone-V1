@@ -8,16 +8,6 @@ import { useOrganisations } from '@verone/organisations/hooks';
 import type { SelectedProduct } from '@verone/products/components/selectors/UniversalProductSelectorV2';
 import { UniversalProductSelectorV2 } from '@verone/products/components/selectors/UniversalProductSelectorV2';
 import type { Database } from '@verone/types';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 
 // FIXME: EcoTaxVatInput can't be imported from apps/back-office in package
@@ -126,9 +116,6 @@ export function PurchaseOrderFormModal({
 
   // Modal ajout produit
   const [showProductSelector, setShowProductSelector] = useState(false);
-
-  // Confirmation modal state
-  const [showConfirmation, setShowConfirmation] = useState(false);
 
   // Hooks
   const {
@@ -371,7 +358,6 @@ export function PurchaseOrderFormModal({
       }
 
       handleClose();
-      setShowConfirmation(false);
       onSuccess?.();
     } catch (error) {
       console.error('❌ Erreur submit:', error);
@@ -388,7 +374,7 @@ export function PurchaseOrderFormModal({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validation commune
@@ -401,8 +387,8 @@ export function PurchaseOrderFormModal({
       return;
     }
 
-    // Ouvrir modal de confirmation
-    setShowConfirmation(true);
+    // Soumission directe sans confirmation
+    await handleSubmitConfirmed();
   };
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -690,54 +676,6 @@ export function PurchaseOrderFormModal({
           showPricing
         />
       )}
-
-      {/* AlertDialog de confirmation */}
-      <AlertDialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {isEditMode
-                ? 'Confirmer la mise à jour'
-                : 'Confirmer la création de la commande'}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {isEditMode ? (
-                <>
-                  Vous êtes sur le point de mettre à jour la commande{' '}
-                  <span className="font-semibold">{order.po_number}</span> avec{' '}
-                  {items.length} article(s) pour un montant total de{' '}
-                  <span className="font-semibold">
-                    {formatCurrency(totalTTC)}
-                  </span>
-                  .
-                </>
-              ) : (
-                <>
-                  Vous êtes sur le point de créer une commande fournisseur pour{' '}
-                  <span className="font-semibold">
-                    {selectedSupplier?.trade_name ||
-                      selectedSupplier?.legal_name}
-                  </span>
-                  .
-                </>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={loading}>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleSubmitConfirmed}
-              disabled={loading}
-            >
-              {loading
-                ? 'Enregistrement...'
-                : isEditMode
-                  ? 'Mettre à jour'
-                  : 'Créer la commande'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }
