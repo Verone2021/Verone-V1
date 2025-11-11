@@ -9,7 +9,7 @@
 
 ## 🎯 OBJECTIF MISSION
 
-Migrer tous les composants de `src/components/business/` vers une architecture modulaire `src/shared/modules/{module}/components/` en préparation du monorepo.
+Migrer tous les composants de `apps/back-office/src/components/business/` vers une architecture modulaire `src/shared/modules/{module}/components/` en préparation du monorepo.
 
 ---
 
@@ -22,7 +22,7 @@ Migrer tous les composants de `src/components/business/` vers une architecture m
 - ✅ **Modules créés** : 14 modules
 - ✅ **Barrel exports créés** : 62 index.ts
 - ✅ **Commits refactor** : 30 commits
-- ✅ **src/components/business/** : VIDE (supprimé)
+- ✅ **apps/back-office/src/components/business/** : VIDE (supprimé)
 
 ### Métriques Globales
 
@@ -241,7 +241,7 @@ src/shared/modules/ui/components/
 
 **Migration** : #257-261
 
-**✅ src/components/business/ VIDE**
+**✅ apps/back-office/src/components/business/ VIDE**
 
 ---
 
@@ -428,7 +428,7 @@ src/shared/modules/
 - ✅ **Architecture modulaire** : 14 modules créés
 - ✅ **Barrel exports** : 62 index.ts générés
 - ✅ **Zero doublons** : 23 doublons supprimés
-- ✅ **src/components/business/ vide** : 100% migré
+- ✅ **apps/back-office/src/components/business/ vide** : 100% migré
 - ✅ **Commits structurés** : 30 commits avec convention
 - ✅ **Documentation** : 3 rapports créés
 
@@ -471,7 +471,7 @@ import { ProductCard } from '@/shared/modules/products/components/cards';
 
 **Status** : ⏳ **En attente**
 
-**Hooks restants** : ~75 hooks dans `src/hooks/`
+**Hooks restants** : ~75 hooks dans `apps/back-office/src/hooks/`
 
 **Destination** : `src/shared/modules/{module}/hooks/`
 
@@ -509,7 +509,7 @@ Migration complète en 1 journée au lieu de 2 → Repos mérité
 - [ ] Update ~250 imports batch processing
 - [ ] Tests exhaustifs (Type-check, Build, Lint, E2E)
 - [ ] Documentation README par module (14 fichiers)
-- [ ] Suppression définitive `src/components/business/`
+- [ ] Suppression définitive `apps/back-office/src/components/business/`
 - [ ] Tag `v3.0.0-modules-migration`
 
 ---

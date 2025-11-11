@@ -108,35 +108,35 @@ Phase 1 utilise **10 tables sur 77** présentes dans la database. Les 67 autres 
 
 ### Pages Publiques (1 page)
 
-| Route    | Fichier                  | Description                                                | État      |
-| -------- | ------------------------ | ---------------------------------------------------------- | --------- |
-| `/`      | `src/app/page.tsx`       | Root redirect (login si déconnecté, dashboard si connecté) | ✅ Active |
-| `/login` | `src/app/login/page.tsx` | Page d'authentification (email + password)                 | ✅ Active |
+| Route    | Fichier                                                    | Description                                                | État      |
+| -------- | ---------------------------------------------------------- | ---------------------------------------------------------- | --------- |
+| `/`      | `apps/back-office/apps/back-office/src/app/page.tsx`       | Root redirect (login si déconnecté, dashboard si connecté) | ✅ Active |
+| `/login` | `apps/back-office/apps/back-office/src/app/login/page.tsx` | Page d'authentification (email + password)                 | ✅ Active |
 
 ### Module Dashboard (1 page)
 
-| Route        | Fichier                      | Description                                | KPI affichés                                                 | État      |
-| ------------ | ---------------------------- | ------------------------------------------ | ------------------------------------------------------------ | --------- |
-| `/dashboard` | `src/app/dashboard/page.tsx` | Dashboard principal avec KPI organisations | Total Organisations, Fournisseurs, Clients B2B, Prestataires | ✅ Active |
+| Route        | Fichier                                                        | Description                                | KPI affichés                                                 | État      |
+| ------------ | -------------------------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------ | --------- |
+| `/dashboard` | `apps/back-office/apps/back-office/src/app/dashboard/page.tsx` | Dashboard principal avec KPI organisations | Total Organisations, Fournisseurs, Clients B2B, Prestataires | ✅ Active |
 
 **Note** : Dashboard affiche **uniquement KPI organisations** (Phase 1). KPI Catalogue, Stock, Commandes = 0 (Phase 2+).
 
 ### Module Organisations & Contacts (11 pages)
 
-| Route                                            | Fichier                                                          | Description                                    | État        |
-| ------------------------------------------------ | ---------------------------------------------------------------- | ---------------------------------------------- | ----------- |
-| `/contacts-organisations`                        | `src/app/contacts-organisations/page.tsx`                        | Index principal (redirect vers /contacts)      | ✅ Active   |
-| `/contacts-organisations/contacts`               | `src/app/contacts-organisations/contacts/page.tsx`               | Liste tous contacts (filtres : type org, tags) | ✅ Active   |
-| `/contacts-organisations/contacts/[contactId]`   | `src/app/contacts-organisations/contacts/[contactId]/page.tsx`   | Détail contact (édition inline)                | ✅ Active   |
-| `/contacts-organisations/suppliers`              | `src/app/contacts-organisations/suppliers/page.tsx`              | Liste fournisseurs (active/archived)           | ✅ Active   |
-| `/contacts-organisations/suppliers/[supplierId]` | `src/app/contacts-organisations/suppliers/[supplierId]/page.tsx` | Détail fournisseur (onglets : Contacts)        | ✅ Active\* |
-| `/contacts-organisations/customers`              | `src/app/contacts-organisations/customers/page.tsx`              | Liste clients B2B (professional)               | ✅ Active   |
-| `/contacts-organisations/customers/[customerId]` | `src/app/contacts-organisations/customers/[customerId]/page.tsx` | Détail client B2B (onglets : Contacts)         | ✅ Active\* |
-| `/contacts-organisations/partners`               | `src/app/contacts-organisations/partners/page.tsx`               | Liste prestataires                             | ✅ Active   |
-| `/contacts-organisations/partners/[partnerId]`   | `src/app/contacts-organisations/partners/[partnerId]/page.tsx`   | Détail prestataire (onglets : Contacts)        | ✅ Active\* |
-| `/organisation`                                  | `src/app/organisation/page.tsx`                                  | Legacy index (redirect)                        | ✅ Active   |
-| `/organisation/all`                              | `src/app/organisation/all/page.tsx`                              | Vue consolidée toutes organisations            | ✅ Active   |
-| `/organisation/contacts`                         | `src/app/organisation/contacts/page.tsx`                         | Legacy contacts (redirect)                     | ✅ Active   |
+| Route                                            | Fichier                                                                                            | Description                                    | État        |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------------- | ---------------------------------------------- | ----------- |
+| `/contacts-organisations`                        | `apps/back-office/apps/back-office/src/app/contacts-organisations/page.tsx`                        | Index principal (redirect vers /contacts)      | ✅ Active   |
+| `/contacts-organisations/contacts`               | `apps/back-office/apps/back-office/src/app/contacts-organisations/contacts/page.tsx`               | Liste tous contacts (filtres : type org, tags) | ✅ Active   |
+| `/contacts-organisations/contacts/[contactId]`   | `apps/back-office/apps/back-office/src/app/contacts-organisations/contacts/[contactId]/page.tsx`   | Détail contact (édition inline)                | ✅ Active   |
+| `/contacts-organisations/suppliers`              | `apps/back-office/apps/back-office/src/app/contacts-organisations/suppliers/page.tsx`              | Liste fournisseurs (active/archived)           | ✅ Active   |
+| `/contacts-organisations/suppliers/[supplierId]` | `apps/back-office/apps/back-office/src/app/contacts-organisations/suppliers/[supplierId]/page.tsx` | Détail fournisseur (onglets : Contacts)        | ✅ Active\* |
+| `/contacts-organisations/customers`              | `apps/back-office/apps/back-office/src/app/contacts-organisations/customers/page.tsx`              | Liste clients B2B (professional)               | ✅ Active   |
+| `/contacts-organisations/customers/[customerId]` | `apps/back-office/apps/back-office/src/app/contacts-organisations/customers/[customerId]/page.tsx` | Détail client B2B (onglets : Contacts)         | ✅ Active\* |
+| `/contacts-organisations/partners`               | `apps/back-office/apps/back-office/src/app/contacts-organisations/partners/page.tsx`               | Liste prestataires                             | ✅ Active   |
+| `/contacts-organisations/partners/[partnerId]`   | `apps/back-office/apps/back-office/src/app/contacts-organisations/partners/[partnerId]/page.tsx`   | Détail prestataire (onglets : Contacts)        | ✅ Active\* |
+| `/organisation`                                  | `apps/back-office/apps/back-office/src/app/organisation/page.tsx`                                  | Legacy index (redirect)                        | ✅ Active   |
+| `/organisation/all`                              | `apps/back-office/apps/back-office/src/app/organisation/all/page.tsx`                              | Vue consolidée toutes organisations            | ✅ Active   |
+| `/organisation/contacts`                         | `apps/back-office/apps/back-office/src/app/organisation/contacts/page.tsx`                         | Legacy contacts (redirect)                     | ✅ Active   |
 
 **Note\*** : Pages détail organisation ont 4 onglets :
 
@@ -147,26 +147,26 @@ Phase 1 utilise **10 tables sur 77** présentes dans la database. Les 67 autres 
 
 ### Module Admin (2 pages)
 
-| Route                          | Fichier                                        | Description                                  | Permissions        | État      |
-| ------------------------------ | ---------------------------------------------- | -------------------------------------------- | ------------------ | --------- |
-| `/admin/users`                 | `src/app/admin/users/page.tsx`                 | Gestion utilisateurs staff (CRUD)            | Owner + Admin only | ✅ Active |
-| `/admin/users/[id]`            | `src/app/admin/users/[id]/page.tsx`            | Détail utilisateur (édition profil + rôles)  | Owner + Admin only | ✅ Active |
-| `/admin/activite-utilisateurs` | `src/app/admin/activite-utilisateurs/page.tsx` | Logs d'activité (audit_logs + user_sessions) | Owner + Admin only | ✅ Active |
+| Route                          | Fichier                                                                          | Description                                  | Permissions        | État      |
+| ------------------------------ | -------------------------------------------------------------------------------- | -------------------------------------------- | ------------------ | --------- |
+| `/admin/users`                 | `apps/back-office/apps/back-office/src/app/admin/users/page.tsx`                 | Gestion utilisateurs staff (CRUD)            | Owner + Admin only | ✅ Active |
+| `/admin/users/[id]`            | `apps/back-office/apps/back-office/src/app/admin/users/[id]/page.tsx`            | Détail utilisateur (édition profil + rôles)  | Owner + Admin only | ✅ Active |
+| `/admin/activite-utilisateurs` | `apps/back-office/apps/back-office/src/app/admin/activite-utilisateurs/page.tsx` | Logs d'activité (audit_logs + user_sessions) | Owner + Admin only | ✅ Active |
 
 ### Module Profil & Paramètres (3 pages)
 
-| Route            | Fichier                          | Description                                                     | État      |
-| ---------------- | -------------------------------- | --------------------------------------------------------------- | --------- |
-| `/profile`       | `src/app/profile/page.tsx`       | Profil utilisateur connecté (statistiques sessions, engagement) | ✅ Active |
-| `/parametres`    | `src/app/parametres/page.tsx`    | Paramètres globaux application                                  | ✅ Active |
-| `/notifications` | `src/app/notifications/page.tsx` | Centre de notifications in-app                                  | ✅ Active |
+| Route            | Fichier                                                            | Description                                                     | État      |
+| ---------------- | ------------------------------------------------------------------ | --------------------------------------------------------------- | --------- |
+| `/profile`       | `apps/back-office/apps/back-office/src/app/profile/page.tsx`       | Profil utilisateur connecté (statistiques sessions, engagement) | ✅ Active |
+| `/parametres`    | `apps/back-office/apps/back-office/src/app/parametres/page.tsx`    | Paramètres globaux application                                  | ✅ Active |
+| `/notifications` | `apps/back-office/apps/back-office/src/app/notifications/page.tsx` | Centre de notifications in-app                                  | ✅ Active |
 
 ### Pages Système (2 pages)
 
-| Route              | Fichier                            | Description                                    | État      |
-| ------------------ | ---------------------------------- | ---------------------------------------------- | --------- |
-| `/module-inactive` | `src/app/module-inactive/page.tsx` | Page affichée pour modules Phase 2+ désactivés | ✅ Active |
-| `/_not-found`      | `src/app/_not-found/page.tsx`      | 404 personnalisée                              | ✅ Active |
+| Route              | Fichier                                                              | Description                                    | État      |
+| ------------------ | -------------------------------------------------------------------- | ---------------------------------------------- | --------- |
+| `/module-inactive` | `apps/back-office/apps/back-office/src/app/module-inactive/page.tsx` | Page affichée pour modules Phase 2+ désactivés | ✅ Active |
+| `/_not-found`      | `apps/back-office/apps/back-office/src/app/_not-found/page.tsx`      | 404 personnalisée                              | ✅ Active |
 
 **Total pages Phase 1** : **21 pages** (19 pages métier + 2 pages système)
 
@@ -209,29 +209,29 @@ Phase 1 utilise **10 tables sur 77** présentes dans la database. Les 67 autres 
 
 ### API Admin (2 routes)
 
-| Route                            | Fichier                                          | Méthode                | Description               | Permissions   |
-| -------------------------------- | ------------------------------------------------ | ---------------------- | ------------------------- | ------------- |
-| `/api/admin/users`               | `src/app/api/admin/users/route.ts`               | GET, POST, PUT, DELETE | CRUD utilisateurs staff   | Owner + Admin |
-| `/api/admin/users/[id]/activity` | `src/app/api/admin/users/[id]/activity/route.ts` | GET                    | Logs activité utilisateur | Owner + Admin |
+| Route                            | Fichier                                                                            | Méthode                | Description               | Permissions   |
+| -------------------------------- | ---------------------------------------------------------------------------------- | ---------------------- | ------------------------- | ------------- |
+| `/api/admin/users`               | `apps/back-office/apps/back-office/src/app/api/admin/users/route.ts`               | GET, POST, PUT, DELETE | CRUD utilisateurs staff   | Owner + Admin |
+| `/api/admin/users/[id]/activity` | `apps/back-office/apps/back-office/src/app/api/admin/users/[id]/activity/route.ts` | GET                    | Logs activité utilisateur | Owner + Admin |
 
 ### API Analytics (2 routes)
 
-| Route                   | Fichier                                 | Méthode | Description                     | Utilisée par   |
-| ----------------------- | --------------------------------------- | ------- | ------------------------------- | -------------- |
-| `/api/analytics/events` | `src/app/api/analytics/events/route.ts` | POST    | Tracking événements utilisateur | Module Profile |
-| `/api/analytics/batch`  | `src/app/api/analytics/batch/route.ts`  | POST    | Batch events (performance)      | Module Profile |
+| Route                   | Fichier                                                                   | Méthode | Description                     | Utilisée par   |
+| ----------------------- | ------------------------------------------------------------------------- | ------- | ------------------------------- | -------------- |
+| `/api/analytics/events` | `apps/back-office/apps/back-office/src/app/api/analytics/events/route.ts` | POST    | Tracking événements utilisateur | Module Profile |
+| `/api/analytics/batch`  | `apps/back-office/apps/back-office/src/app/api/analytics/batch/route.ts`  | POST    | Batch events (performance)      | Module Profile |
 
 ### API Logs (1 route)
 
-| Route       | Fichier                     | Méthode | Description             | Utilisée par            |
-| ----------- | --------------------------- | ------- | ----------------------- | ----------------------- |
-| `/api/logs` | `src/app/api/logs/route.ts` | GET     | Récupération audit_logs | Module Admin (Activité) |
+| Route       | Fichier                                                       | Méthode | Description             | Utilisée par            |
+| ----------- | ------------------------------------------------------------- | ------- | ----------------------- | ----------------------- |
+| `/api/logs` | `apps/back-office/apps/back-office/src/app/api/logs/route.ts` | GET     | Récupération audit_logs | Module Admin (Activité) |
 
 ### API Système (1 route)
 
-| Route         | Fichier                       | Méthode | Description               | Utilisée par   |
-| ------------- | ----------------------------- | ------- | ------------------------- | -------------- |
-| `/api/health` | `src/app/api/health/route.ts` | GET     | Health check (monitoring) | Vercel, Sentry |
+| Route         | Fichier                                                         | Méthode | Description               | Utilisée par   |
+| ------------- | --------------------------------------------------------------- | ------- | ------------------------- | -------------- |
+| `/api/health` | `apps/back-office/apps/back-office/src/app/api/health/route.ts` | GET     | Health check (monitoring) | Vercel, Sentry |
 
 **Total routes API Phase 1** : **6 routes actives**
 
@@ -304,7 +304,7 @@ Liste exhaustive :
 | **Total Clients B2B**   | Organisations type='customer' professionnels            | `organisations` WHERE `type='customer' AND customer_type='professional' AND archived_at IS NULL` | `COUNT(*)` | Card Dashboard |
 | **Total Prestataires**  | Organisations type='partner' actives                    | `organisations` WHERE `type='partner' AND archived_at IS NULL`                                   | `COUNT(*)` | Card Dashboard |
 
-**Hook associé** : `src/hooks/use-complete-dashboard-metrics.ts`
+**Hook associé** : `apps/back-office/apps/back-office/src/hooks/use-complete-dashboard-metrics.ts`
 
 **Fichier YAML** : `packages/kpi/organisations/total-organisations.yaml` (et variantes)
 
@@ -314,7 +314,7 @@ Liste exhaustive :
 | ----------------------------- | --------------------------------------- | ---------------------------------------- | ---------- | --------------------- |
 | **Contacts par Organisation** | Nombre contacts liés à une organisation | `contacts` WHERE `organisation_id = :id` | `COUNT(*)` | Badge onglet Contacts |
 
-**Hook associé** : `src/hooks/use-organisation-tabs.ts`
+**Hook associé** : `apps/back-office/apps/back-office/src/hooks/use-organisation-tabs.ts`
 
 **Note** : Compteurs Orders/Products retournent toujours **0** en Phase 1 (hooks Phase 2+ désactivés).
 
@@ -328,7 +328,7 @@ Liste exhaustive :
 | **Clients Actifs**        | Clients B2B non archivés     | `organisations` WHERE `type='customer' AND archived_at IS NULL`     | `COUNT(*)` | Sidebar /contacts-organisations/customers |
 | **Prestataires Actifs**   | Prestataires non archivés    | `organisations` WHERE `type='partner' AND archived_at IS NULL`      | `COUNT(*)` | Sidebar /contacts-organisations/partners  |
 
-**Hook associé** : `src/hooks/use-organisations.ts`
+**Hook associé** : `apps/back-office/apps/back-office/src/hooks/use-organisations.ts`
 
 ### Module Admin - Activité Utilisateurs (2 KPI)
 
@@ -337,7 +337,7 @@ Liste exhaustive :
 | **Total Sessions Utilisateur** | Sessions actives sur période                 | `user_sessions` WHERE `user_id = :id AND created_at >= :start_date` | `COUNT(*)`       | Table Admin Activité |
 | **Score Engagement**           | Score calculé (sessions × durée × fréquence) | `user_profiles.engagement_score` (trigger auto-update)              | Formule complexe | Card Profile         |
 
-**Hook associé** : `src/hooks/use-users.ts`
+**Hook associé** : `apps/back-office/apps/back-office/src/hooks/use-users.ts`
 
 ### Module Profile - Statistiques (3 KPI)
 
@@ -347,7 +347,7 @@ Liste exhaustive :
 | **Temps Total Passé**   | Durée cumulée toutes sessions        | `SUM(user_sessions.duration)`         | En heures  | Card Profile |
 | **Temps Moyen Session** | Durée moyenne par session            | `AVG(user_sessions.duration)`         | En minutes | Card Profile |
 
-**Hook associé** : `src/hooks/use-user-sessions.ts`
+**Hook associé** : `apps/back-office/apps/back-office/src/hooks/use-user-sessions.ts`
 
 **Total KPI Phase 1** : **15 KPI actifs** (uniquement Organisations + Utilisateurs)
 
@@ -377,36 +377,36 @@ Liste exhaustive :
 
 ### Hooks Organisations (5 hooks actifs)
 
-| Hook               | Fichier                          | Utilise table   | Description                                         | Retour                                       |
-| ------------------ | -------------------------------- | --------------- | --------------------------------------------------- | -------------------------------------------- |
-| `useOrganisations` | `src/hooks/use-organisations.ts` | `organisations` | Liste orgs avec filtres (type, archived, favorites) | `{ organisations, loading, error, refetch }` |
-| `useOrganisation`  | `src/hooks/use-organisations.ts` | `organisations` | Détail organisation par ID                          | `{ organisation, loading, error }`           |
-| `useSuppliers`     | `src/hooks/use-organisations.ts` | `organisations` | Liste fournisseurs (wrapper)                        | `{ suppliers, ... }`                         |
-| `useCustomers`     | `src/hooks/use-organisations.ts` | `organisations` | Liste clients B2B (wrapper)                         | `{ customers, ... }`                         |
-| `usePartners`      | `src/hooks/use-organisations.ts` | `organisations` | Liste prestataires (wrapper)                        | `{ partners, ... }`                          |
+| Hook               | Fichier                                                            | Utilise table   | Description                                         | Retour                                       |
+| ------------------ | ------------------------------------------------------------------ | --------------- | --------------------------------------------------- | -------------------------------------------- |
+| `useOrganisations` | `apps/back-office/apps/back-office/src/hooks/use-organisations.ts` | `organisations` | Liste orgs avec filtres (type, archived, favorites) | `{ organisations, loading, error, refetch }` |
+| `useOrganisation`  | `apps/back-office/apps/back-office/src/hooks/use-organisations.ts` | `organisations` | Détail organisation par ID                          | `{ organisation, loading, error }`           |
+| `useSuppliers`     | `apps/back-office/apps/back-office/src/hooks/use-organisations.ts` | `organisations` | Liste fournisseurs (wrapper)                        | `{ suppliers, ... }`                         |
+| `useCustomers`     | `apps/back-office/apps/back-office/src/hooks/use-organisations.ts` | `organisations` | Liste clients B2B (wrapper)                         | `{ customers, ... }`                         |
+| `usePartners`      | `apps/back-office/apps/back-office/src/hooks/use-organisations.ts` | `organisations` | Liste prestataires (wrapper)                        | `{ partners, ... }`                          |
 
 ### Hooks Contacts (2 hooks actifs)
 
-| Hook          | Fichier                     | Utilise table | Description                      | Retour                                                    |
-| ------------- | --------------------------- | ------------- | -------------------------------- | --------------------------------------------------------- |
-| `useContacts` | `src/hooks/use-contacts.ts` | `contacts`    | Liste tous contacts avec filtres | `{ contacts, loading, error, fetchOrganisationContacts }` |
-| `useContact`  | `src/hooks/use-contacts.ts` | `contacts`    | Détail contact par ID            | `{ contact, loading, error }`                             |
+| Hook          | Fichier                                                       | Utilise table | Description                      | Retour                                                    |
+| ------------- | ------------------------------------------------------------- | ------------- | -------------------------------- | --------------------------------------------------------- |
+| `useContacts` | `apps/back-office/apps/back-office/src/hooks/use-contacts.ts` | `contacts`    | Liste tous contacts avec filtres | `{ contacts, loading, error, fetchOrganisationContacts }` |
+| `useContact`  | `apps/back-office/apps/back-office/src/hooks/use-contacts.ts` | `contacts`    | Détail contact par ID            | `{ contact, loading, error }`                             |
 
 ### Hooks Utilisateurs & Auth (4 hooks actifs)
 
-| Hook              | Fichier                          | Utilise table            | Description                     | Retour                                                          |
-| ----------------- | -------------------------------- | ------------------------ | ------------------------------- | --------------------------------------------------------------- |
-| `useUsers`        | `src/hooks/use-users.ts`         | `users`, `user_profiles` | Liste utilisateurs staff (CRUD) | `{ users, loading, error, createUser, updateUser, deleteUser }` |
-| `useUser`         | `src/hooks/use-users.ts`         | `users`, `user_profiles` | Détail utilisateur par ID       | `{ user, loading, error }`                                      |
-| `useAuth`         | `src/hooks/use-auth.ts`          | `users`, `user_profiles` | Context authentification        | `{ user, login, logout, loading }`                              |
-| `useUserSessions` | `src/hooks/use-user-sessions.ts` | `user_sessions`          | Sessions utilisateur (stats)    | `{ sessions, totalSessions, avgDuration, loading }`             |
+| Hook              | Fichier                                                            | Utilise table            | Description                     | Retour                                                          |
+| ----------------- | ------------------------------------------------------------------ | ------------------------ | ------------------------------- | --------------------------------------------------------------- |
+| `useUsers`        | `apps/back-office/apps/back-office/src/hooks/use-users.ts`         | `users`, `user_profiles` | Liste utilisateurs staff (CRUD) | `{ users, loading, error, createUser, updateUser, deleteUser }` |
+| `useUser`         | `apps/back-office/apps/back-office/src/hooks/use-users.ts`         | `users`, `user_profiles` | Détail utilisateur par ID       | `{ user, loading, error }`                                      |
+| `useAuth`         | `apps/back-office/apps/back-office/src/hooks/use-auth.ts`          | `users`, `user_profiles` | Context authentification        | `{ user, login, logout, loading }`                              |
+| `useUserSessions` | `apps/back-office/apps/back-office/src/hooks/use-user-sessions.ts` | `user_sessions`          | Sessions utilisateur (stats)    | `{ sessions, totalSessions, avgDuration, loading }`             |
 
 ### Hooks Dashboard & KPI (2 hooks actifs)
 
-| Hook                          | Fichier                                       | Utilise table   | Description                                           | Retour                          |
-| ----------------------------- | --------------------------------------------- | --------------- | ----------------------------------------------------- | ------------------------------- |
-| `useCompleteDashboardMetrics` | `src/hooks/use-complete-dashboard-metrics.ts` | `organisations` | KPI dashboard (Phase 1: organisations uniquement)     | `{ metrics, isLoading, error }` |
-| `useOrganisationTabs`         | `src/hooks/use-organisation-tabs.ts`          | `contacts`      | Compteurs onglets orgs (Phase 1: contacts uniquement) | `{ counts, refreshCounts }`     |
+| Hook                          | Fichier                                                                         | Utilise table   | Description                                           | Retour                          |
+| ----------------------------- | ------------------------------------------------------------------------------- | --------------- | ----------------------------------------------------- | ------------------------------- |
+| `useCompleteDashboardMetrics` | `apps/back-office/apps/back-office/src/hooks/use-complete-dashboard-metrics.ts` | `organisations` | KPI dashboard (Phase 1: organisations uniquement)     | `{ metrics, isLoading, error }` |
+| `useOrganisationTabs`         | `apps/back-office/apps/back-office/src/hooks/use-organisation-tabs.ts`          | `contacts`      | Compteurs onglets orgs (Phase 1: contacts uniquement) | `{ counts, refreshCounts }`     |
 
 **Note** : Hooks Phase 2+ désactivés :
 
@@ -418,11 +418,11 @@ Liste exhaustive :
 
 ### Hooks Système (3 hooks actifs)
 
-| Hook               | Fichier                          | Description                      | Retour                                       |
-| ------------------ | -------------------------------- | -------------------------------- | -------------------------------------------- |
-| `useNotifications` | `src/hooks/use-notifications.ts` | Notifications in-app utilisateur | `{ notifications, unreadCount, markAsRead }` |
-| `useAuditLogs`     | `src/hooks/use-audit-logs.ts`    | Logs d'activité (Admin)          | `{ logs, loading, error }`                   |
-| `useSettings`      | `src/hooks/use-settings.ts`      | Paramètres globaux app           | `{ settings, updateSetting }`                |
+| Hook               | Fichier                                                            | Description                      | Retour                                       |
+| ------------------ | ------------------------------------------------------------------ | -------------------------------- | -------------------------------------------- |
+| `useNotifications` | `apps/back-office/apps/back-office/src/hooks/use-notifications.ts` | Notifications in-app utilisateur | `{ notifications, unreadCount, markAsRead }` |
+| `useAuditLogs`     | `apps/back-office/apps/back-office/src/hooks/use-audit-logs.ts`    | Logs d'activité (Admin)          | `{ logs, loading, error }`                   |
+| `useSettings`      | `apps/back-office/apps/back-office/src/hooks/use-settings.ts`      | Paramètres globaux app           | `{ settings, updateSetting }`                |
 
 **Total hooks Phase 1** : **16 hooks actifs**
 
@@ -432,18 +432,18 @@ Liste exhaustive :
 
 ### Composants Business (10 composants actifs)
 
-| Composant                   | Fichier                                                   | Utilise hook          | Description                                 | Pages utilisé                         |
-| --------------------------- | --------------------------------------------------------- | --------------------- | ------------------------------------------- | ------------------------------------- |
-| `LegalIdentityEditSection`  | `src/components/business/legal-identity-edit-section.tsx` | -                     | Édition identité légale org (inline)        | Organisation detail                   |
-| `ContactEditSection`        | `src/components/business/contact-edit-section.tsx`        | -                     | Édition infos contact org (inline)          | Organisation detail                   |
-| `AddressEditSection`        | `src/components/business/address-edit-section.tsx`        | -                     | Édition adresses org (inline)               | Organisation detail                   |
-| `CommercialEditSection`     | `src/components/business/commercial-edit-section.tsx`     | -                     | Édition conditions commerciales (inline)    | Organisation detail                   |
-| `PerformanceEditSection`    | `src/components/business/performance-edit-section.tsx`    | -                     | Édition scores performance/qualité (inline) | Organisation detail                   |
-| `ContactsManagementSection` | `src/components/business/contacts-management-section.tsx` | `useContacts`         | Gestion contacts org (CRUD)                 | Organisation detail (onglet Contacts) |
-| `OrganisationLogoCard`      | `src/components/business/organisation-logo-card.tsx`      | -                     | Upload/affichage logo org                   | Organisation detail (sidebar)         |
-| `OrganisationStatsCard`     | `src/components/business/organisation-stats-card.tsx`     | `useOrganisationTabs` | Card statistiques org (compteurs)           | Organisation detail (sidebar)         |
-| `UserRoleManager`           | `src/components/business/user-role-manager.tsx`           | `useUsers`            | Gestion rôles utilisateur (admin)           | Admin Users detail                    |
-| `AuditLogViewer`            | `src/components/business/audit-log-viewer.tsx`            | `useAuditLogs`        | Visualisation logs activité                 | Admin Activité                        |
+| Composant                   | Fichier                                                                                     | Utilise hook          | Description                                 | Pages utilisé                         |
+| --------------------------- | ------------------------------------------------------------------------------------------- | --------------------- | ------------------------------------------- | ------------------------------------- |
+| `LegalIdentityEditSection`  | `apps/back-office/apps/back-office/src/components/business/legal-identity-edit-section.tsx` | -                     | Édition identité légale org (inline)        | Organisation detail                   |
+| `ContactEditSection`        | `apps/back-office/apps/back-office/src/components/business/contact-edit-section.tsx`        | -                     | Édition infos contact org (inline)          | Organisation detail                   |
+| `AddressEditSection`        | `apps/back-office/apps/back-office/src/components/business/address-edit-section.tsx`        | -                     | Édition adresses org (inline)               | Organisation detail                   |
+| `CommercialEditSection`     | `apps/back-office/apps/back-office/src/components/business/commercial-edit-section.tsx`     | -                     | Édition conditions commerciales (inline)    | Organisation detail                   |
+| `PerformanceEditSection`    | `apps/back-office/apps/back-office/src/components/business/performance-edit-section.tsx`    | -                     | Édition scores performance/qualité (inline) | Organisation detail                   |
+| `ContactsManagementSection` | `apps/back-office/apps/back-office/src/components/business/contacts-management-section.tsx` | `useContacts`         | Gestion contacts org (CRUD)                 | Organisation detail (onglet Contacts) |
+| `OrganisationLogoCard`      | `apps/back-office/apps/back-office/src/components/business/organisation-logo-card.tsx`      | -                     | Upload/affichage logo org                   | Organisation detail (sidebar)         |
+| `OrganisationStatsCard`     | `apps/back-office/apps/back-office/src/components/business/organisation-stats-card.tsx`     | `useOrganisationTabs` | Card statistiques org (compteurs)           | Organisation detail (sidebar)         |
+| `UserRoleManager`           | `apps/back-office/apps/back-office/src/components/business/user-role-manager.tsx`           | `useUsers`            | Gestion rôles utilisateur (admin)           | Admin Users detail                    |
+| `AuditLogViewer`            | `apps/back-office/apps/back-office/src/components/business/audit-log-viewer.tsx`            | `useAuditLogs`        | Visualisation logs activité                 | Admin Activité                        |
 
 ### Composants UI Base (shadcn/ui - 30+ composants)
 
@@ -568,7 +568,7 @@ Liste exhaustive :
 
 **Feature Flags** :
 
-- Phase 2+ modules bloqués dans `src/lib/deployed-modules.ts`
+- Phase 2+ modules bloqués dans `apps/back-office/apps/back-office/src/lib/deployed-modules.ts`
 - Tentative accès → redirect `/module-inactive`
 
 ---

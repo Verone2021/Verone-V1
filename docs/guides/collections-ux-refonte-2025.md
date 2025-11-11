@@ -5,7 +5,7 @@
 Refonte complète de la page `/catalogue/collections` selon les meilleures pratiques UX 2025 avec animations modernes, layout fixe, et micro-interactions professionnelles.
 
 **Statut :** ✅ Implémenté et compilé sans erreurs
-**Fichier modifié :** `src/app/catalogue/collections/page.tsx`
+**Fichier modifié :** `apps/back-office/apps/back-office/src/app/catalogue/collections/page.tsx`
 **Date :** 27 septembre 2025
 
 ---
@@ -520,9 +520,9 @@ Toutes les couleurs respectent le Design System :
 
 ## 🔗 Liens
 
-- **Fichier source :** `src/app/catalogue/collections/page.tsx`
-- **Hook données :** `src/hooks/use-collections.ts`
-- **Composants :** `src/components/business/collection-form-modal.tsx`
+- **Fichier source :** `apps/back-office/apps/back-office/src/app/catalogue/collections/page.tsx`
+- **Hook données :** `apps/back-office/apps/back-office/src/hooks/use-collections.ts`
+- **Composants :** `apps/back-office/apps/back-office/src/components/business/collection-form-modal.tsx`
 - **Tests :** `TASKS/testing/TESTS-COLLECTIONS-2025-09-27.md`
 
 ---

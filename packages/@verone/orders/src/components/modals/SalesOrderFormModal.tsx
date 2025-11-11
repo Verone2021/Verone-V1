@@ -10,6 +10,16 @@ import { UniversalProductSelectorV2 } from '@verone/products/components/selector
 import { useProducts } from '@verone/products/hooks';
 import { useStockMovements } from '@verone/stock/hooks';
 import { Alert, AlertDescription } from '@verone/ui';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@verone/ui';
 
 // FIXME: EcoTaxVatInput can't be imported from apps/back-office in package
 // import { EcoTaxVatInput } from '@/components/forms/eco-tax-vat-input';
@@ -119,12 +129,16 @@ export function SalesOrderFormModal({
   const [billingAddress, setBillingAddress] = useState('');
   const [notes, setNotes] = useState('');
   const [ecoTaxVatRate, setEcoTaxVatRate] = useState<number | null>(null);
+  const [paymentTerms, setPaymentTerms] = useState('');
   // RFA supprimé - Migration 003
 
   // Items management
   const [items, setItems] = useState<OrderItem[]>([]);
   const [showProductSelector, setShowProductSelector] = useState(false);
   const [stockWarnings, setStockWarnings] = useState<string[]>([]);
+
+  // Confirmation modal state
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   // Hooks
   const { createOrder, updateOrderWithItems, fetchOrder } = useSalesOrders();
@@ -281,6 +295,21 @@ export function SalesOrderFormModal({
   const handleCustomerChange = (customer: UnifiedCustomer | null) => {
     setSelectedCustomer(customer);
 
+    // Pré-remplir automatiquement les conditions de paiement
+    if (customer) {
+      let autoPaymentTerms = '';
+      if (customer.prepayment_required) {
+        autoPaymentTerms = customer.payment_terms
+          ? `Prépaiement requis + ${customer.payment_terms} jours`
+          : 'Prépaiement requis';
+      } else if (customer.payment_terms) {
+        autoPaymentTerms = `${customer.payment_terms} jours`;
+      }
+      setPaymentTerms(autoPaymentTerms);
+    } else {
+      setPaymentTerms('');
+    }
+
     // Pré-remplir automatiquement les adresses quand un client est sélectionné
     if (customer) {
       // Formater l'adresse de livraison
@@ -385,6 +414,7 @@ export function SalesOrderFormModal({
     setBillingAddress('');
     setNotes('');
     setEcoTaxVatRate(null);
+    setPaymentTerms('');
     // RFA supprimé - Migration 003
     setItems([]);
     // setProductSearchTerm(''); // DEPRECATED - Migration 003
@@ -590,22 +620,11 @@ export function SalesOrderFormModal({
     checkAllStockAvailability(updatedItems);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmitConfirmed = async () => {
     if (!selectedCustomer || items.length === 0) return;
 
     setLoading(true);
     try {
-      // Construire les conditions de paiement automatiquement depuis le client
-      let autoPaymentTerms = '';
-      if (selectedCustomer.prepayment_required) {
-        autoPaymentTerms = selectedCustomer.payment_terms
-          ? `Prépaiement requis + ${selectedCustomer.payment_terms} jours`
-          : 'Prépaiement requis';
-      } else if (selectedCustomer.payment_terms) {
-        autoPaymentTerms = `${selectedCustomer.payment_terms} jours`;
-      }
-
       const itemsData = items.map(item => ({
         product_id: item.product_id,
         quantity: item.quantity,
@@ -627,7 +646,7 @@ export function SalesOrderFormModal({
           billing_address: billingAddress
             ? { address: billingAddress }
             : undefined,
-          payment_terms: autoPaymentTerms || undefined,
+          payment_terms: paymentTerms || undefined,
           notes: notes || undefined,
           eco_tax_vat_rate: ecoTaxVatRate,
         };
@@ -648,7 +667,7 @@ export function SalesOrderFormModal({
           billing_address: billingAddress
             ? { address: billingAddress }
             : undefined,
-          payment_terms: autoPaymentTerms || undefined,
+          payment_terms: paymentTerms || undefined,
           notes: notes || undefined,
           eco_tax_vat_rate: ecoTaxVatRate,
           items: itemsData,
@@ -659,6 +678,7 @@ export function SalesOrderFormModal({
 
       resetForm();
       setOpen(false);
+      setShowConfirmation(false);
       onSuccess?.();
     } catch (error) {
       console.error(
@@ -668,6 +688,14 @@ export function SalesOrderFormModal({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCustomer || items.length === 0) return;
+
+    // Ouvrir modal de confirmation
+    setShowConfirmation(true);
   };
 
   return (
@@ -745,43 +773,26 @@ export function SalesOrderFormModal({
                   />
                 </div>
 
-                {/* Affichage automatique des conditions de paiement */}
+                {/* Conditions de paiement éditables */}
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">
-                    Conditions de paiement
-                  </Label>
-                  {selectedCustomer ? (
-                    <div className="p-3 bg-gray-50 border rounded-lg">
-                      {selectedCustomer.prepayment_required ? (
-                        <div className="flex items-center gap-2">
-                          <Badge
-                            variant="secondary"
-                            className="bg-gray-100 text-gray-900"
-                          >
-                            Prépaiement requis
-                          </Badge>
-                          {selectedCustomer.payment_terms && (
-                            <span className="text-sm text-gray-700">
-                              + {selectedCustomer.payment_terms} jours
-                            </span>
-                          )}
-                        </div>
-                      ) : selectedCustomer.payment_terms ? (
-                        <p className="text-sm text-gray-700">
-                          {selectedCustomer.payment_terms} jours
-                        </p>
-                      ) : (
-                        <p className="text-sm text-gray-500 italic">
-                          Conditions à définir dans la fiche client
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="p-3 bg-gray-50 border rounded-lg">
-                      <p className="text-sm text-gray-500 italic">
-                        Sélectionnez un client
-                      </p>
-                    </div>
+                  <Label htmlFor="paymentTerms">Conditions de paiement</Label>
+                  <Input
+                    id="paymentTerms"
+                    type="text"
+                    value={paymentTerms}
+                    onChange={e => setPaymentTerms(e.target.value)}
+                    placeholder={
+                      selectedCustomer
+                        ? 'Conditions de paiement (auto-remplies depuis client)'
+                        : 'Sélectionnez un client pour auto-remplir'
+                    }
+                    disabled={loading || !selectedCustomer}
+                  />
+                  {selectedCustomer && (
+                    <p className="text-xs text-gray-500">
+                      Auto-rempli depuis la fiche client. Vous pouvez modifier
+                      si nécessaire.
+                    </p>
                   )}
                 </div>
               </div>
@@ -1145,6 +1156,69 @@ export function SalesOrderFormModal({
           />
         )}
       </DialogContent>
+
+      {/* AlertDialog de confirmation */}
+      <AlertDialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {mode === 'edit'
+                ? 'Confirmer la mise à jour'
+                : 'Confirmer la création de la commande'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {mode === 'edit' ? (
+                <>
+                  Vous êtes sur le point de mettre à jour la commande avec{' '}
+                  {items.length} article(s).
+                </>
+              ) : (
+                <>
+                  Vous êtes sur le point de créer une commande client pour{' '}
+                  <span className="font-semibold">
+                    {selectedCustomer?.name}
+                  </span>{' '}
+                  avec {items.length} article(s) pour un montant total de{' '}
+                  <span className="font-semibold">
+                    {formatCurrency(totalTTC)}
+                  </span>
+                  .
+                </>
+              )}
+              {stockWarnings.length > 0 && (
+                <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded">
+                  <p className="text-sm font-medium text-amber-800">
+                    ⚠️ Attention : Stock insuffisant
+                  </p>
+                  <ul className="mt-1 text-xs text-amber-700 space-y-1">
+                    {stockWarnings.slice(0, 3).map((warning, i) => (
+                      <li key={i}>• {warning}</li>
+                    ))}
+                    {stockWarnings.length > 3 && (
+                      <li>... et {stockWarnings.length - 3} autres</li>
+                    )}
+                  </ul>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loading}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleSubmitConfirmed}
+              disabled={loading}
+            >
+              {loading
+                ? mode === 'edit'
+                  ? 'Mise à jour...'
+                  : 'Création...'
+                : mode === 'edit'
+                  ? 'Mettre à jour'
+                  : 'Créer la commande'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

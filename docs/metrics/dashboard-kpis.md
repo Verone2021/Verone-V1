@@ -42,7 +42,7 @@ Dashboard Principal → 16 Hooks Métriques → Supabase (Tables + RPC + Trigger
 
 ### 1. use-product-metrics
 
-**Fichier** : `src/hooks/metrics/use-product-metrics.ts`
+**Fichier** : `apps/back-office/apps/back-office/src/hooks/metrics/use-product-metrics.ts`
 
 **Description** : Statistiques produits catalogue (total, actifs, inactifs, brouillons) avec tendance 7j.
 
@@ -77,7 +77,7 @@ Edge case: previous7d = 0 ET recent7d > 0 → trend = 100%
 
 ### 2. use-user-metrics
 
-**Fichier** : `src/hooks/metrics/use-user-metrics.ts`
+**Fichier** : `apps/back-office/apps/back-office/src/hooks/metrics/use-user-metrics.ts`
 
 **Description** : Stats utilisateurs (actifs 30j, nouveaux 7j, par rôle).
 
@@ -109,7 +109,7 @@ trend = (new / total) × 100
 
 ### 3. use-real-dashboard-metrics
 
-**Fichier** : `src/hooks/use-real-dashboard-metrics.ts`
+**Fichier** : `apps/back-office/apps/back-office/src/hooks/use-real-dashboard-metrics.ts`
 
 **Description** : Métriques Phase 1 Catalogue réelles (produits, collections, variant groups).
 
@@ -139,7 +139,7 @@ trend = (new / total) × 100
 
 ### 4. use-stock-metrics
 
-**Fichier** : `src/hooks/metrics/use-stock-metrics.ts`
+**Fichier** : `apps/back-office/apps/back-office/src/hooks/metrics/use-stock-metrics.ts`
 
 **Description** : Métriques inventaire (in/out/low/critical stock) + TOP 10 alertes.
 
@@ -177,7 +177,7 @@ FOR EACH product:
 
 ### 5. use-stock-dashboard
 
-**Fichier** : `src/hooks/use-stock-dashboard.ts`
+**Fichier** : `apps/back-office/apps/back-office/src/hooks/use-stock-dashboard.ts`
 
 **Description** : Dashboard ERP Stock professionnel (vue d'ensemble + mouvements + alertes + timeline).
 
@@ -231,7 +231,7 @@ adjustments: COUNT(stock_movements WHERE movement_type = 'ADJUST')
 
 ### 6. use-stock-alerts
 
-**Fichier** : `src/hooks/use-stock-alerts.ts`
+**Fichier** : `apps/back-office/apps/back-office/src/hooks/use-stock-alerts.ts`
 
 **Description** : Système alertes stock intelligent 3 niveaux (low/out/ordered without stock).
 
@@ -272,7 +272,7 @@ const { criticalAlerts, warningAlerts, getAlertsByType } = useStockAlerts();
 
 ### 7. use-revenue-metrics
 
-**Fichier** : `src/hooks/metrics/use-revenue-metrics.ts`
+**Fichier** : `apps/back-office/apps/back-office/src/hooks/metrics/use-revenue-metrics.ts`
 
 **Description** : CA (today/month/year), tendance mensuelle, Average Order Value.
 
@@ -309,7 +309,7 @@ Arrondi: 2 décimales (centimes)
 
 ### 8. use-order-metrics
 
-**Fichier** : `src/hooks/metrics/use-order-metrics.ts`
+**Fichier** : `apps/back-office/apps/back-office/src/hooks/metrics/use-order-metrics.ts`
 
 **Description** : Stats commandes par statut + tendance 30j + 5 commandes récentes.
 
@@ -362,7 +362,7 @@ ELSE: 'Client inconnu'
 
 ### 9. use-stock-orders-metrics
 
-**Fichier** : `src/hooks/use-stock-orders-metrics.ts`
+**Fichier** : `apps/back-office/apps/back-office/src/hooks/use-stock-orders-metrics.ts`
 
 **Description** : Hook Phase 2 Stock/Sourcing (stock_value, PO count, revenue, sourcing).
 
@@ -395,7 +395,7 @@ month_revenue = SUM(sales_orders.total_ht WHERE month & status validated)
 
 ### 10. use-activity-metrics
 
-**Fichier** : `src/hooks/metrics/use-activity-metrics.ts`
+**Fichier** : `apps/back-office/apps/back-office/src/hooks/metrics/use-activity-metrics.ts`
 
 **Description** : Activité système (produits/collections/users créés/modifiés) aujourd'hui vs hier + timeline.
 
@@ -432,7 +432,7 @@ Actions = products created/updated + collections created/updated + users registe
 
 ### 11. use-user-activity-tracker
 
-**Fichier** : `src/hooks/use-user-activity-tracker.ts`
+**Fichier** : `apps/back-office/apps/back-office/src/hooks/use-user-activity-tracker.ts`
 
 **Description** : Tracking comportemental avec batching (clics, navigation, recherches, erreurs JS).
 
@@ -479,7 +479,7 @@ page_url, user_agent, session_duration, element_target, click_position, etc.
 
 ### 12. use-recent-activity
 
-**Fichier** : `src/hooks/use-recent-activity.ts`
+**Fichier** : `apps/back-office/apps/back-office/src/hooks/use-recent-activity.ts`
 
 **Description** : Timeline activité récente utilisateur pour dashboard (RPC `get_user_recent_actions`).
 
@@ -519,7 +519,7 @@ ORDER BY created_at DESC LIMIT p_limit
 
 ### 13. use-complete-dashboard-metrics
 
-**Fichier** : `src/hooks/use-complete-dashboard-metrics.ts`
+**Fichier** : `apps/back-office/apps/back-office/src/hooks/use-complete-dashboard-metrics.ts`
 
 **Description** : Orchestrateur Phase 1 + Phase 2 (catalogue + stock/orders/sourcing).
 
@@ -564,7 +564,7 @@ customersB2B = COUNT WHERE type = 'customer' AND customer_type = 'professional'
 
 ### 14. use-dashboard-analytics
 
-**Fichier** : `src/hooks/use-dashboard-analytics.ts`
+**Fichier** : `apps/back-office/apps/back-office/src/hooks/use-dashboard-analytics.ts`
 
 **Description** : Données temporelles pour 4 graphiques Recharts (30 derniers jours).
 
@@ -633,7 +633,7 @@ purchaseByWeek = purchase_orders.reduce((acc, po) => {
 
 ### 15. use-stock-alerts-count
 
-**Fichier** : `src/hooks/use-stock-alerts-count.ts`
+**Fichier** : `apps/back-office/apps/back-office/src/hooks/use-stock-alerts-count.ts`
 
 **Description** : Compteur rapide alertes stock (badge navigation).
 
@@ -647,7 +647,7 @@ purchaseByWeek = purchase_orders.reduce((acc, po) => {
 
 ### 16. use-dashboard-notifications
 
-**Fichier** : `src/hooks/use-dashboard-notifications.ts`
+**Fichier** : `apps/back-office/apps/back-office/src/hooks/use-dashboard-notifications.ts`
 
 **Description** : Notifications temps réel dashboard (nouveaux messages, alertes critiques).
 

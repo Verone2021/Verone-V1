@@ -156,10 +156,10 @@ interface SectionProps {
 
 **Barrel exports mis à jour** : 10 fichiers `hooks/index.ts` modifiés
 
-#### État Final `src/hooks/`
+#### État Final `apps/back-office/src/hooks/`
 
 ```
-src/hooks/
+apps/back-office/src/hooks/
 ├── base/                  ✅ GARDÉ (Supabase utils transverses)
 │   ├── use-supabase-crud.ts
 │   ├── use-supabase-mutation.ts

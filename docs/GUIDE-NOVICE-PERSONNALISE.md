@@ -191,7 +191,7 @@ Je veux modifier le composant [NOM_COMPOSANT].
 ```
 Je veux modifier le composant ButtonUnified.
 
-**Fichier** : packages/@verone/ui/src/components/ui/button-unified.tsx
+**Fichier** : packages/@verone/ui/apps/back-office/src/components/ui/button-unified.tsx
 
 **Modifications souhaitées** :
 1. Ajouter variant "success" (vert)
@@ -339,7 +339,7 @@ J'ai une erreur TypeScript.
 
 J'ai une erreur TypeScript.
 
-**Fichier** : src/app/produits/catalogue/page.tsx:89
+**Fichier** : apps/back-office/src/app/produits/catalogue/page.tsx:89
 
 **Code erreur** : TS2322
 
@@ -404,12 +404,12 @@ Je vais commiter les modifications suivantes.
 
 **Fichiers modifiés** : 8 fichiers
 
-- packages/@verone/ui/src/components/ui/badge-unified.tsx (nouveau)
-- packages/@verone/ui/src/components/ui/badge-unified.stories.tsx (nouveau)
+- packages/@verone/ui/apps/back-office/src/components/ui/badge-unified.tsx (nouveau)
+- packages/@verone/ui/apps/back-office/src/components/ui/badge-unified.stories.tsx (nouveau)
 - packages/@verone/ui/src/index.ts (ajout export BadgeUnified)
-- src/app/produits/catalogue/page.tsx (utilise BadgeUnified)
-- src/app/commandes/fournisseurs/page.tsx (utilise BadgeUnified)
-- src/app/dashboard/page.tsx (utilise BadgeUnified)
+- apps/back-office/src/app/produits/catalogue/page.tsx (utilise BadgeUnified)
+- apps/back-office/src/app/commandes/fournisseurs/page.tsx (utilise BadgeUnified)
+- apps/back-office/src/app/dashboard/page.tsx (utilise BadgeUnified)
 
 **Résumé modifications** :
 Création composant BadgeUnified avec 10 variants (default, success, warning,
@@ -522,11 +522,11 @@ Je veux créer un composant InputUnified.
 
 - Pattern à suivre : ButtonUnified.tsx
 - Design tokens : colors.ts, spacing.ts
-- Composant actuel : src/components/ui/input.tsx
+- Composant actuel : apps/back-office/src/components/ui/input.tsx
 
 Merci de :
 
-1. Créer packages/@verone/ui/src/components/ui/input-unified.tsx
+1. Créer packages/@verone/ui/apps/back-office/src/components/ui/input-unified.tsx
 2. Créer Story Storybook
 3. Ajouter export dans packages/@verone/ui/src/index.ts
 4. Me donner exemple d'utilisation dans formulaire
@@ -609,7 +609,7 @@ Merci d'investiguer avec MCP Playwright Browser et me proposer solutions.
 
 Je veux remplacer les badges actuels par BadgeUnified dans la page Commandes Fournisseurs.
 
-**Fichier** : src/app/commandes/fournisseurs/page.tsx
+**Fichier** : apps/back-office/src/app/commandes/fournisseurs/page.tsx
 
 **Remplacements souhaités** :
 
@@ -1157,8 +1157,8 @@ export function ComponentB() {...}
 
 ### Code Référence (Vérone)
 
-- `packages/@verone/ui/src/components/ui/button-unified.tsx` : Pattern simple
-- `packages/@verone/ui/src/components/ui/kpi-card-unified.tsx` : Pattern complexe
+- `packages/@verone/ui/apps/back-office/src/components/ui/button-unified.tsx` : Pattern simple
+- `packages/@verone/ui/apps/back-office/src/components/ui/kpi-card-unified.tsx` : Pattern complexe
 - `packages/@verone/ui/src/design-system/tokens/` : Tous design tokens
 
 ### Documentation Externe

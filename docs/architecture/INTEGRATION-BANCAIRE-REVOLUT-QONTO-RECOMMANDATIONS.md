@@ -322,7 +322,7 @@ QONTO_WEBHOOK_SECRET=your-webhook-secret
 ### **Webhook Handler**
 
 ```typescript
-// src/app/api/webhooks/qonto/route.ts
+// apps/back-office/src/app/api/webhooks/qonto/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { validateQontoSignature } from '@/lib/qonto/webhook-validator';
@@ -419,7 +419,7 @@ REVOLUT_WEBHOOK_SECRET=your-webhook-secret
 ### **Webhook Handler**
 
 ```typescript
-// src/app/api/webhooks/revolut/route.ts
+// apps/back-office/src/app/api/webhooks/revolut/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { validateRevolutSignature } from '@/lib/revolut/webhook-validator';
@@ -509,7 +509,7 @@ export const dynamic = 'force-dynamic';
 ### **Page: /tresorerie**
 
 ```typescript
-// src/app/tresorerie/page.tsx
+// apps/back-office/src/app/tresorerie/page.tsx
 import { createClient } from '@/lib/supabase/server';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 

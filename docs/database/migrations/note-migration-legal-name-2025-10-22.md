@@ -63,13 +63,13 @@ $$ LANGUAGE plpgsql IMMUTABLE;
 
 ### Fichiers Corrigés (2025-10-22)
 
-| Fichier                                                     | Occurrences | Type Changement                      |
-| ----------------------------------------------------------- | ----------- | ------------------------------------ |
-| `src/hooks/use-purchase-orders.ts`                          | 2           | Query SELECT + fallback              |
-| `src/hooks/use-purchase-receptions.ts`                      | 2           | Query SELECT + search filter         |
-| `src/hooks/use-stock-dashboard.ts`                          | 4           | Query SELECT (suppliers + customers) |
-| `src/hooks/metrics/use-order-metrics.ts`                    | 2           | Query SELECT + fallback              |
-| `src/components/business/universal-order-details-modal.tsx` | 2           | Query SELECT + fallback              |
+| Fichier                                                                                       | Occurrences | Type Changement                      |
+| --------------------------------------------------------------------------------------------- | ----------- | ------------------------------------ |
+| `apps/back-office/apps/back-office/src/hooks/use-purchase-orders.ts`                          | 2           | Query SELECT + fallback              |
+| `apps/back-office/apps/back-office/src/hooks/use-purchase-receptions.ts`                      | 2           | Query SELECT + search filter         |
+| `apps/back-office/apps/back-office/src/hooks/use-stock-dashboard.ts`                          | 4           | Query SELECT (suppliers + customers) |
+| `apps/back-office/apps/back-office/src/hooks/metrics/use-order-metrics.ts`                    | 2           | Query SELECT + fallback              |
+| `apps/back-office/apps/back-office/src/components/business/universal-order-details-modal.tsx` | 2           | Query SELECT + fallback              |
 
 **Total**: 12 lignes corrigées
 
@@ -105,7 +105,7 @@ supplierName = supplier?.legal_name || 'Fournisseur inconnu';
 
 ### LegalIdentityEditSection
 
-**Fichier**: `src/components/business/legal-identity-edit-section.tsx`
+**Fichier**: `apps/back-office/apps/back-office/src/components/business/legal-identity-edit-section.tsx`
 
 **Features**:
 

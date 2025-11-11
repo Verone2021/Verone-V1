@@ -43,7 +43,7 @@ organisations.trade_name || organisations.legal_name;
 
 ### 🔧 HOOKS (2 fichiers - 2 occurrences)
 
-#### 1. `src/hooks/use-stock-optimized.ts` ✅
+#### 1. `apps/back-office/apps/back-office/src/hooks/use-stock-optimized.ts` ✅
 
 **Ligne 116**
 
@@ -60,7 +60,7 @@ supplier_name: product.organisations?.trade_name ||
 
 ---
 
-#### 2. `src/hooks/use-purchase-receptions.ts` ✅
+#### 2. `apps/back-office/apps/back-office/src/hooks/use-purchase-receptions.ts` ✅
 
 **Ligne 355**
 
@@ -82,7 +82,7 @@ query = query.or(
 
 ### 📄 PAGES (4 fichiers - 10 occurrences)
 
-#### 3. `src/app/commandes/clients/page.tsx` ✅
+#### 3. `apps/back-office/apps/back-office/src/app/commandes/clients/page.tsx` ✅
 
 **4 occurrences corrigées**
 
@@ -126,7 +126,7 @@ const matchesOrgName = normalizeString(
 
 ---
 
-#### 4. `src/app/commandes/fournisseurs/page.tsx` ✅
+#### 4. `apps/back-office/apps/back-office/src/app/commandes/fournisseurs/page.tsx` ✅
 
 **3 occurrences corrigées**
 
@@ -174,7 +174,7 @@ order.organisations?.name
 
 ---
 
-#### 5. `src/app/commandes/expeditions/page.tsx` ✅
+#### 5. `apps/back-office/apps/back-office/src/app/commandes/expeditions/page.tsx` ✅
 
 **2 occurrences corrigées**
 
@@ -202,7 +202,7 @@ return order.organisations.trade_name || order.organisations.legal_name;
 
 ---
 
-#### 6. `src/app/stocks/receptions/page.tsx` ✅
+#### 6. `apps/back-office/apps/back-office/src/app/stocks/receptions/page.tsx` ✅
 
 **1 occurrence corrigée**
 
@@ -228,7 +228,7 @@ return order.organisations.trade_name || order.organisations.legal_name;
 
 ### 🧩 COMPOSANTS BUSINESS (5 fichiers - 5 occurrences)
 
-#### 7. `src/components/business/sales-order-form-modal.tsx` ✅
+#### 7. `apps/back-office/apps/back-office/src/components/business/sales-order-form-modal.tsx` ✅
 
 **Ligne 111**
 
@@ -244,7 +244,7 @@ name: order.organisations?.trade_name || order.organisations?.legal_name || '',
 
 ---
 
-#### 8. `src/components/business/sales-order-shipment-form.tsx` ✅
+#### 8. `apps/back-office/apps/back-office/src/components/business/sales-order-shipment-form.tsx` ✅
 
 **Ligne 207**
 
@@ -260,7 +260,7 @@ Commande {salesOrder.so_number} • {salesOrder.organisations?.trade_name || sal
 
 ---
 
-#### 9. `src/components/business/sales-order-shipment-modal.tsx` ✅
+#### 9. `apps/back-office/apps/back-office/src/components/business/sales-order-shipment-modal.tsx` ✅
 
 **Ligne 55**
 
@@ -281,7 +281,7 @@ Commande {salesOrder.so_number} • {salesOrder.organisations?.trade_name || sal
 
 ---
 
-#### 10. `src/components/business/purchase-order-reception-form.tsx` ✅
+#### 10. `apps/back-office/apps/back-office/src/components/business/purchase-order-reception-form.tsx` ✅
 
 **Ligne 131**
 
@@ -297,7 +297,7 @@ Commande {purchaseOrder.po_number} • {purchaseOrder.organisations?.trade_name 
 
 ---
 
-#### 11. `src/components/business/order-detail-modal.tsx` ✅
+#### 11. `apps/back-office/apps/back-office/src/components/business/order-detail-modal.tsx` ✅
 
 **Ligne 80**
 

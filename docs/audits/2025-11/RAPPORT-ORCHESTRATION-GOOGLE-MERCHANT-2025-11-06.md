@@ -125,7 +125,7 @@ Fournir une interface complète permettant de gérer le canal Google Merchant de
 
 ### 2. API Routes (6 fichiers)
 
-#### ✅ `src/app/api/google-merchant/products/batch-add/route.ts`
+#### ✅ `apps/back-office/src/app/api/google-merchant/products/batch-add/route.ts`
 
 **Méthode**: `POST`
 **Body**: `{ productIds: string[], merchantId: string }`
@@ -133,7 +133,7 @@ Fournir une interface complète permettant de gérer le canal Google Merchant de
 **RPC**: `batch_add_google_merchant_products()`
 **Retour**: `{ success, data: { totalProcessed, successCount, errorCount, errors? } }`
 
-#### ✅ `src/app/api/google-merchant/products/[id]/price/route.ts`
+#### ✅ `apps/back-office/src/app/api/google-merchant/products/[id]/price/route.ts`
 
 **Méthode**: `PUT`
 **Body**: `{ priceHtCents: number, tvaRate?: number }`
@@ -141,7 +141,7 @@ Fournir une interface complète permettant de gérer le canal Google Merchant de
 **RPC**: `update_google_merchant_price()`
 **Retour**: `{ success, data: { productId, priceHtCents, priceTtcCents } }`
 
-#### ✅ `src/app/api/google-merchant/products/[id]/metadata/route.ts`
+#### ✅ `apps/back-office/src/app/api/google-merchant/products/[id]/metadata/route.ts`
 
 **Méthode**: `PATCH`
 **Body**: `{ customTitle?: string, customDescription?: string }`
@@ -149,21 +149,21 @@ Fournir une interface complète permettant de gérer le canal Google Merchant de
 **RPC**: `update_google_merchant_metadata()`
 **Retour**: `{ success, data: { productId, customTitle?, customDescription? } }`
 
-#### ✅ `src/app/api/google-merchant/products/[id]/visibility/route.ts`
+#### ✅ `apps/back-office/src/app/api/google-merchant/products/[id]/visibility/route.ts`
 
 **Méthode**: `PATCH`
 **Body**: `{ visible: boolean }`
 **RPC**: `toggle_google_merchant_visibility()`
 **Retour**: `{ success, data: { productId, visible } }`
 
-#### ✅ `src/app/api/google-merchant/products/[id]/route.ts`
+#### ✅ `apps/back-office/src/app/api/google-merchant/products/[id]/route.ts`
 
 **Méthode**: `DELETE`
 **RPC**: `remove_from_google_merchant()`
 **Retour**: `{ success, data: { productId, removed: true } }`
 **Note**: Soft delete, historique préservé
 
-#### ✅ `src/app/api/google-merchant/poll-statuses/route.ts`
+#### ✅ `apps/back-office/src/app/api/google-merchant/poll-statuses/route.ts`
 
 **Méthode**: `POST`
 **Body**: `{ statusesData: Array<{ productId, googleStatus, googleStatusDetail? }> }`
@@ -183,7 +183,7 @@ Fournir une interface complète permettant de gérer le canal Google Merchant de
 
 ### 3. Cron Job (1 fichier)
 
-#### ✅ `src/app/api/cron/google-merchant-poll/route.ts`
+#### ✅ `apps/back-office/src/app/api/cron/google-merchant-poll/route.ts`
 
 **Méthode**: `GET`
 **Déclenchement**: Vercel Cron toutes les 4h (`0 */4 * * *`)
@@ -217,7 +217,7 @@ Fournir une interface complète permettant de gérer le canal Google Merchant de
 
 ### 5. Hooks React Query (7 fichiers + 1 index)
 
-#### ✅ `src/hooks/google-merchant/use-google-merchant-eligible-products.ts`
+#### ✅ `apps/back-office/src/hooks/google-merchant/use-google-merchant-eligible-products.ts`
 
 **Type**: Query (fetch)
 **Query Key**: `['google-merchant-eligible-products']`
@@ -225,49 +225,49 @@ Fournir une interface complète permettant de gérer le canal Google Merchant de
 **Retour**: `GoogleMerchantEligibleProduct[]`
 **Config**: `staleTime: 30s, refetchOnWindowFocus: true`
 
-#### ✅ `src/hooks/google-merchant/use-add-products-to-google-merchant.ts`
+#### ✅ `apps/back-office/src/hooks/google-merchant/use-add-products-to-google-merchant.ts`
 
 **Type**: Mutation
 **API**: `POST /api/google-merchant/products/batch-add`
 **Invalidates**: `google-merchant-products`, `google-merchant-eligible-products`, `google-merchant-stats`
 **Toast**: Succès avec count `${successCount} produit(s) ajouté(s)`
 
-#### ✅ `src/hooks/google-merchant/use-update-google-merchant-price.ts`
+#### ✅ `apps/back-office/src/hooks/google-merchant/use-update-google-merchant-price.ts`
 
 **Type**: Mutation
 **API**: `PUT /api/google-merchant/products/[id]/price`
 **Invalidates**: `google-merchant-products`
 **Toast**: `Prix mis à jour: X.XX€ HT → Y.YY€ TTC`
 
-#### ✅ `src/hooks/google-merchant/use-update-google-merchant-metadata.ts`
+#### ✅ `apps/back-office/src/hooks/google-merchant/use-update-google-merchant-metadata.ts`
 
 **Type**: Mutation
 **API**: `PATCH /api/google-merchant/products/[id]/metadata`
 **Invalidates**: `google-merchant-products`
 **Toast**: `Métadonnées mises à jour avec succès`
 
-#### ✅ `src/hooks/google-merchant/use-remove-from-google-merchant.ts`
+#### ✅ `apps/back-office/src/hooks/google-merchant/use-remove-from-google-merchant.ts`
 
 **Type**: Mutation
 **API**: `DELETE /api/google-merchant/products/[id]`
 **Invalidates**: `google-merchant-products`, `google-merchant-eligible-products`, `google-merchant-stats`
 **Toast**: `Produit retiré de Google Merchant`
 
-#### ✅ `src/hooks/google-merchant/use-toggle-google-merchant-visibility.ts`
+#### ✅ `apps/back-office/src/hooks/google-merchant/use-toggle-google-merchant-visibility.ts`
 
 **Type**: Mutation
 **API**: `PATCH /api/google-merchant/products/[id]/visibility`
 **Invalidates**: `google-merchant-products`, `google-merchant-stats`
 **Toast**: `Produit affiché/masqué sur Google Merchant`
 
-#### ✅ `src/hooks/google-merchant/use-poll-google-merchant-statuses.ts`
+#### ✅ `apps/back-office/src/hooks/google-merchant/use-poll-google-merchant-statuses.ts`
 
 **Type**: Mutation
 **API**: `POST /api/google-merchant/poll-statuses`
 **Invalidates**: `google-merchant-products`, `google-merchant-stats`
 **Toast**: `${updatedCount} statut(s) mis à jour depuis Google`
 
-#### ✅ `src/hooks/google-merchant/index.ts`
+#### ✅ `apps/back-office/src/hooks/google-merchant/index.ts`
 
 **Rôle**: Barrel export pour imports simplifiés
 **Usage**:

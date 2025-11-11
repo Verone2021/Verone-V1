@@ -202,7 +202,7 @@ Source: http://localhost:3000/api/dashboard/stock-orders-metrics
 **Fix recommandé** :
 
 ```typescript
-// packages/@verone/stock/src/hooks/use-stock-orders-metrics.ts
+// packages/@verone/stock/apps/back-office/src/hooks/use-stock-orders-metrics.ts
 useEffect(() => {
   if (!user) {
     // Annuler fetch si pas d'utilisateur
@@ -269,7 +269,7 @@ if (!user || abortControllerRef.current?.signal.aborted) {
 ### 🔴 Priorité CRITIQUE (P0)
 
 1. **Corriger 5 erreurs console déconnexion**
-   - File : `packages/@verone/stock/src/hooks/use-stock-orders-metrics.ts`
+   - File : `packages/@verone/stock/apps/back-office/src/hooks/use-stock-orders-metrics.ts`
    - Action : Ajouter check `user` avant fetch/retry
    - Impact : Console Zero Tolerance VIOLÉE
 
@@ -344,7 +344,7 @@ if (!user || abortControllerRef.current?.signal.aborted) {
 
 ### À Corriger ❌
 
-- `packages/@verone/stock/src/hooks/use-stock-orders-metrics.ts` (401 + retry)
+- `packages/@verone/stock/apps/back-office/src/hooks/use-stock-orders-metrics.ts` (401 + retry)
 - Dashboard components (React rendering error)
 - Login page popover (credentials documentation)
 

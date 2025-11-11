@@ -171,7 +171,7 @@ if (console_errors.length > 0) {
 5. Retourne 404
 6. **Console error** générée
 
-**Code Problématique** : `src/components/layout/sidebar.tsx`
+**Code Problématique** : `apps/back-office/apps/back-office/src/components/layout/sidebar.tsx`
 
 ```typescript
 // Liens modules Phase 2+ visibles mais routes bloquées
@@ -191,7 +191,7 @@ if (console_errors.length > 0) {
 **Implementation** :
 
 ```typescript
-// src/components/layout/sidebar.tsx
+// apps/back-office/src/components/layout/sidebar.tsx
 import { useFeatureFlags } from '@/hooks/use-feature-flags'
 
 export function Sidebar() {
@@ -238,7 +238,7 @@ export function Sidebar() {
 **Implementation** :
 
 ```typescript
-// src/components/layout/sidebar.tsx
+// apps/back-office/src/components/layout/sidebar.tsx
 <Link href="/finance" prefetch={false}>
   Finance
 </Link>
@@ -263,7 +263,7 @@ export function Sidebar() {
 **Implementation** :
 
 ```typescript
-// src/app/finance/page.tsx
+// apps/back-office/src/app/finance/page.tsx
 export default function FinancePage() {
   return (
     <div>

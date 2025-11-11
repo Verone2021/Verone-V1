@@ -17,7 +17,7 @@
 
 ## 🎣 Main Hook: `use[Module]()`
 
-**File** : `src/hooks/use-[module].ts`
+**File** : `apps/back-office/apps/back-office/src/hooks/use-[module].ts`
 
 ### Purpose
 
@@ -100,7 +100,7 @@ function [Module]Page() {
 ### Implementation Details
 
 ```typescript
-// src/hooks/use-[module].ts
+// apps/back-office/src/hooks/use-[module].ts
 export function use[Module](options?: UseModuleOptions) {
   const supabase = createClient()
   const queryClient = useQueryClient()
@@ -204,7 +204,7 @@ export function use[Module](options?: UseModuleOptions) {
 
 ## 🔍 Filter Hook: `use[Module]Filters()`
 
-**File** : `src/hooks/use-[module]-filters.ts`
+**File** : `apps/back-office/apps/back-office/src/hooks/use-[module]-filters.ts`
 
 ### Purpose
 
@@ -266,7 +266,7 @@ function [Module]Page() {
 ### Implementation
 
 ```typescript
-// src/hooks/use-[module]-filters.ts
+// apps/back-office/src/hooks/use-[module]-filters.ts
 export function use[Module]Filters() {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -323,7 +323,7 @@ export function use[Module]Filters() {
 
 ## 📊 Metrics Hook: `use[Module]Metrics()` (if applicable)
 
-**File** : `src/hooks/metrics/use-[module]-metrics.ts`
+**File** : `apps/back-office/apps/back-office/src/hooks/metrics/use-[module]-metrics.ts`
 
 ### Purpose
 
@@ -376,7 +376,7 @@ function [Module]Dashboard() {
 
 ## ✅ Validation Hook: `use[Module]Validation()` (if applicable)
 
-**File** : `src/hooks/use-[module]-validation.ts`
+**File** : `apps/back-office/apps/back-office/src/hooks/use-[module]-validation.ts`
 
 ### Purpose
 
@@ -397,7 +397,7 @@ interface ValidationReturn {
 ### Zod Schema
 
 ```typescript
-// src/hooks/use-[module]-validation.ts
+// apps/back-office/src/hooks/use-[module]-validation.ts
 const [module]Schema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters'),
   status: z.enum(['active', 'inactive']),

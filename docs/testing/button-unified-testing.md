@@ -43,19 +43,19 @@ open http://localhost:3001/test-components/button-unified
 
 ### 11 Tests Critiques
 
-| # | Test | Description | Couvre |
-|---|------|-------------|--------|
-| 1 | **All variants** | 8 variants visibles et fonctionnels | default, destructive, outline, secondary, ghost, link, gradient, glass |
-| 2 | **All sizes** | 6 sizes avec tailles relatives correctes | xs, sm, md, lg, xl, icon |
-| 3 | **Icon positions** | Icônes positionnées correctement | left, right, none |
-| 4 | **Loading state** | Spinner visible + bouton disabled | loading={true} |
-| 5 | **Disabled state** | Bouton non-clickable | disabled={true} |
-| 6 | **Click handler** | onClick déclenché correctement | Compteur incrémenté |
-| 7 | **Keyboard navigation** | Tab + Enter/Space fonctionnent | Focus + activation clavier |
-| 8 | **Accessibility** | aria-label pour icon-only buttons | WCAG 2.2 AA |
-| 9 | **Focus states** | Focus ring visible, disabled non-focusable | Focus management |
-| 10 | **Console errors = 0** | RÈGLE SACRÉE : Aucune erreur console | Production-ready |
-| 11 | **Combinations** | Variants + sizes + icons combinés | Real-world usage |
+| #   | Test                    | Description                                | Couvre                                                                 |
+| --- | ----------------------- | ------------------------------------------ | ---------------------------------------------------------------------- |
+| 1   | **All variants**        | 8 variants visibles et fonctionnels        | default, destructive, outline, secondary, ghost, link, gradient, glass |
+| 2   | **All sizes**           | 6 sizes avec tailles relatives correctes   | xs, sm, md, lg, xl, icon                                               |
+| 3   | **Icon positions**      | Icônes positionnées correctement           | left, right, none                                                      |
+| 4   | **Loading state**       | Spinner visible + bouton disabled          | loading={true}                                                         |
+| 5   | **Disabled state**      | Bouton non-clickable                       | disabled={true}                                                        |
+| 6   | **Click handler**       | onClick déclenché correctement             | Compteur incrémenté                                                    |
+| 7   | **Keyboard navigation** | Tab + Enter/Space fonctionnent             | Focus + activation clavier                                             |
+| 8   | **Accessibility**       | aria-label pour icon-only buttons          | WCAG 2.2 AA                                                            |
+| 9   | **Focus states**        | Focus ring visible, disabled non-focusable | Focus management                                                       |
+| 10  | **Console errors = 0**  | RÈGLE SACRÉE : Aucune erreur console       | Production-ready                                                       |
+| 11  | **Combinations**        | Variants + sizes + icons combinés          | Real-world usage                                                       |
 
 ---
 
@@ -82,7 +82,7 @@ open http://localhost:3001/test-components/button-unified
 ## 📁 Fichiers Concernés
 
 ```
-src/app/test-components/button-unified/
+apps/back-office/src/app/test-components/button-unified/
 └── page.tsx                         # Page test Next.js (29 boutons)
 
 tests/components/
@@ -320,7 +320,7 @@ jobs:
 npm run dev
 
 # Vérifier fichier existe
-ls -la src/app/test-components/button-unified/page.tsx
+ls -la apps/back-office/src/app/test-components/button-unified/page.tsx
 ```
 
 ### Erreur : "Timeout waiting for locator"
@@ -365,8 +365,8 @@ await page.waitForTimeout(500); // Dernier recours
 
 ### Documentation Vérone
 
-- [ButtonUnified Component](/src/components/ui/button-unified.tsx)
-- [ButtonUnified Stories](/src/components/ui/button-unified.stories.tsx)
+- [ButtonUnified Component](/apps/back-office/src/components/ui/button-unified.tsx)
+- [ButtonUnified Stories](/apps/back-office/src/components/ui/button-unified.stories.tsx)
 - [Playwright Config](/playwright.config.ts)
 - [Testing Guide Global](/docs/guides/testing-guide.md)
 

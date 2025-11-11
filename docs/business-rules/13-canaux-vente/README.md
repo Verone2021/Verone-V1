@@ -252,24 +252,24 @@ Ristourne à reverser: 10€
 
 ### Pages
 
-| Route                           | Fichier                                         | Statut                    |
-| ------------------------------- | ----------------------------------------------- | ------------------------- |
-| `/canaux-vente`                 | `src/app/canaux-vente/page.tsx`                 | ✅ Implémenté (mock data) |
-| `/canaux-vente/google-merchant` | `src/app/canaux-vente/google-merchant/page.tsx` | ✅ Production-ready       |
-| `/canaux-vente/prix-clients`    | `src/app/canaux-vente/prix-clients/page.tsx`    | ✅ MVP (CRUD incomplet)   |
+| Route                           | Fichier                                                                           | Statut                    |
+| ------------------------------- | --------------------------------------------------------------------------------- | ------------------------- |
+| `/canaux-vente`                 | `apps/back-office/apps/back-office/src/app/canaux-vente/page.tsx`                 | ✅ Implémenté (mock data) |
+| `/canaux-vente/google-merchant` | `apps/back-office/apps/back-office/src/app/canaux-vente/google-merchant/page.tsx` | ✅ Production-ready       |
+| `/canaux-vente/prix-clients`    | `apps/back-office/apps/back-office/src/app/canaux-vente/prix-clients/page.tsx`    | ✅ MVP (CRUD incomplet)   |
 
 ### Hooks
 
-| Hook                          | Fichier                    | Fonctionnalités                                                                        |
-| ----------------------------- | -------------------------- | -------------------------------------------------------------------------------------- |
-| `use-pricing.ts`              | `src/hooks/use-pricing.ts` | `useProductPrice()`, `useBatchPricing()`, `useSalesChannels()`, `useCustomerPricing()` |
-| `use-google-merchant-sync.ts` | Hook spécifique GMC        | Synchronisation, progress, error handling                                              |
+| Hook                          | Fichier                                                      | Fonctionnalités                                                                        |
+| ----------------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| `use-pricing.ts`              | `apps/back-office/apps/back-office/src/hooks/use-pricing.ts` | `useProductPrice()`, `useBatchPricing()`, `useSalesChannels()`, `useCustomerPricing()` |
+| `use-google-merchant-sync.ts` | Hook spécifique GMC                                          | Synchronisation, progress, error handling                                              |
 
 ### Composants Business
 
-| Composant         | Fichier                                        | Usage                                   |
-| ----------------- | ---------------------------------------------- | --------------------------------------- |
-| `ChannelSelector` | `src/components/business/channel-selector.tsx` | Dropdown sélection canal (réutilisable) |
+| Composant         | Fichier                                                                          | Usage                                   |
+| ----------------- | -------------------------------------------------------------------------------- | --------------------------------------- |
+| `ChannelSelector` | `apps/back-office/apps/back-office/src/components/business/channel-selector.tsx` | Dropdown sélection canal (réutilisable) |
 
 ---
 

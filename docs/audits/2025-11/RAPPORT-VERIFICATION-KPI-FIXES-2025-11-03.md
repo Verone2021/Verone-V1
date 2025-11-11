@@ -272,7 +272,7 @@ Logs normaux uniquement :
 
 #### **Fix 1 : KPI "Produits en Stock" (Dashboard)**
 
-**Fichier** : `src/hooks/use-stock-dashboard.ts`
+**Fichier** : `apps/back-office/src/hooks/use-stock-dashboard.ts`
 **Ligne** : 177
 **Problème** : Comptait 17 produits obsolètes au lieu de 1 actif
 **Solution** : Utiliser `productsInMovements.size` (produits avec mouvements récents)
@@ -280,7 +280,7 @@ Logs normaux uniquement :
 
 #### **Fix 2 : KPI Mouvements (Page Mouvements)**
 
-**Fichier** : `src/hooks/use-movements-history.ts`
+**Fichier** : `apps/back-office/src/hooks/use-movements-history.ts`
 **Fonction** : `fetchStats()` lignes 255-331
 **Problème** : Comptait 10 mouvements (réels + prévisionnels) au lieu de 3 réels
 **Solution** : Ajouter `.eq('affects_forecast', false)` dans 7 queries

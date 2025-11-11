@@ -10,7 +10,7 @@
 
 ### `useCompleteDashboardMetrics()`
 
-**Fichier** : `src/hooks/use-complete-dashboard-metrics.ts`
+**Fichier** : `apps/back-office/apps/back-office/src/hooks/use-complete-dashboard-metrics.ts`
 
 **Description** : Hook orchestrateur qui agrège les métriques Dashboard depuis 4 sources de données (Phase 1 Catalogue + Phase 2 Stock/Orders).
 
@@ -106,7 +106,7 @@ export default function DashboardPage() {
 
 ### `useRealDashboardMetrics()`
 
-**Fichier** : `src/hooks/use-real-dashboard-metrics.ts`
+**Fichier** : `apps/back-office/apps/back-office/src/hooks/use-real-dashboard-metrics.ts`
 
 **Description** : Métriques Phase 1 Catalogue (produits, collections, variant groups).
 
@@ -148,7 +148,7 @@ function useRealDashboardMetrics(): {
 
 ### `useStockOrdersMetrics()`
 
-**Fichier** : `src/hooks/use-stock-orders-metrics.ts`
+**Fichier** : `apps/back-office/apps/back-office/src/hooks/use-stock-orders-metrics.ts`
 
 **Description** : Métriques Phase 2 Stock/Sourcing depuis API route.
 
@@ -179,7 +179,7 @@ function useStockOrdersMetrics(): {
 
 ### `useOrganisations()`
 
-**Fichier** : `src/hooks/use-organisations.ts`
+**Fichier** : `apps/back-office/apps/back-office/src/hooks/use-organisations.ts`
 
 **Description** : Liste complète organisations (fournisseurs, clients B2B, partenaires).
 

@@ -85,6 +85,7 @@ next-env.d.ts
 # Project-specific temporary files
 /tests/reports/
 /backups/
+docs-backup-*/
 git-status-*.txt
 *-temp.js
 *-temp.ts

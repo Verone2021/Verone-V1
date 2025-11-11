@@ -81,7 +81,7 @@ Onglet "Sorties" (mouvements réels OUT uniquement)
 **Code Hook Initialization** :
 
 ```typescript
-// src/hooks/use-movements-history.ts
+// apps/back-office/src/hooks/use-movements-history.ts
 const [filters, setFilters] = useState<MovementHistoryFilters>({
   affects_forecast: false, // ✅ TOUJOURS false par défaut
   forecast_type: undefined,
@@ -306,9 +306,9 @@ CREATE POLICY stock_movements_select_own_org ON stock_movements
 **Documentation Technique** :
 
 - Migrations : `supabase/migrations/20251102_*`
-- Code UI : `src/app/stocks/mouvements/page.tsx:467-503`
-- Hook : `src/hooks/use-movements-history.ts:91-100`
-- Dashboard : `src/app/stocks/page.tsx:254,438`
+- Code UI : `apps/back-office/apps/back-office/src/app/stocks/mouvements/page.tsx:467-503`
+- Hook : `apps/back-office/apps/back-office/src/hooks/use-movements-history.ts:91-100`
+- Dashboard : `apps/back-office/apps/back-office/src/app/stocks/page.tsx:254,438`
 
 ---
 

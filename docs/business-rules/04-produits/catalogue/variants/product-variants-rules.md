@@ -401,8 +401,8 @@ Parent: CHAIR-MOD-001 (position 1)
 **Dernière Révision:** 2025-09-26
 **Implémenté Dans:**
 
-- `src/components/business/variant-creation-modal.tsx`
-- `src/app/api/products/[productId]/variants/create/route.ts`
-- `src/components/business/product-variants-section.tsx`
+- `apps/back-office/apps/back-office/src/components/business/variant-creation-modal.tsx`
+- `apps/back-office/apps/back-office/src/app/api/products/[productId]/variants/create/route.ts`
+- `apps/back-office/apps/back-office/src/components/business/product-variants-section.tsx`
 
 **Documentation Technique:** `MEMORY-BANK/sessions/2025-09-26-phase3-variant-system-complete.md`

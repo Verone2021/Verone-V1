@@ -112,7 +112,7 @@ AND forecast_type IN ('in', 'out')
 
 ## 🚀 Phase 1 : UI/UX Simplification
 
-### 1.1 Page Mouvements (`src/app/stocks/mouvements/page.tsx`)
+### 1.1 Page Mouvements (`apps/back-office/src/app/stocks/mouvements/page.tsx`)
 
 **Changements** :
 
@@ -166,7 +166,7 @@ AND forecast_type IN ('in', 'out')
 
 ---
 
-### 1.2 Hook Mouvements (`src/hooks/use-movements-history.ts`)
+### 1.2 Hook Mouvements (`apps/back-office/src/hooks/use-movements-history.ts`)
 
 **Bug Corrigé** :
 
@@ -194,7 +194,7 @@ const [filters, setFilters] = useState<MovementHistoryFilters>({
 
 ---
 
-### 1.3 Filtres Mouvements (`src/components/business/movements-filters.tsx`)
+### 1.3 Filtres Mouvements (`apps/back-office/src/components/business/movements-filters.tsx`)
 
 **Dead Code Supprimé** :
 
@@ -235,7 +235,7 @@ const activeFiltersCount = [
 
 ---
 
-### 1.4 Dashboard Stock (`src/app/stocks/page.tsx`)
+### 1.4 Dashboard Stock (`apps/back-office/src/app/stocks/page.tsx`)
 
 **Séparation Visuelle Renforcée** :
 
@@ -1128,10 +1128,10 @@ PGPASSWORD="..." psql -h aws-1-eu-west-3.pooler.supabase.com \
 
 ```
 Modified:
-- src/app/stocks/mouvements/page.tsx (467-503 lignes supprimées, badge vert ajouté)
-- src/hooks/use-movements-history.ts (91-100 initialization corrigée)
-- src/components/business/movements-filters.tsx (252-275 dead code supprimé)
-- src/app/stocks/page.tsx (254, 438 séparation visuelle renforcée)
+- apps/back-office/src/app/stocks/mouvements/page.tsx (467-503 lignes supprimées, badge vert ajouté)
+- apps/back-office/src/hooks/use-movements-history.ts (91-100 initialization corrigée)
+- apps/back-office/src/components/business/movements-filters.tsx (252-275 dead code supprimé)
+- apps/back-office/src/app/stocks/page.tsx (254, 438 séparation visuelle renforcée)
 ```
 
 ### A2. Fichiers Créés

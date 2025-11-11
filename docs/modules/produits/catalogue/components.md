@@ -1,7 +1,7 @@
 # Composants Catalogue - Documentation Complète
 
 **Module** : Produits → Catalogue
-**Fichiers** : `src/components/business/product-*.tsx`
+**Fichiers** : `apps/back-office/apps/back-office/src/components/business/product-*.tsx`
 **Date** : 2025-10-27
 
 ---

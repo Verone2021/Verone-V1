@@ -27,20 +27,20 @@ Développer une **intégration professionnelle complète** avec Google Merchant 
 #### ✅ Déjà Implémenté
 
 ```typescript
-// 1. Authentification (src/lib/google-merchant/auth.ts)
+// 1. Authentification (apps/back-office/src/lib/google-merchant/auth.ts)
 ✅ Service Account authentication
 ✅ JWT token generation
 ✅ OAuth2 headers
 ✅ Singleton pattern
 
-// 2. Configuration (src/lib/google-merchant/config.ts)
+// 2. Configuration (apps/back-office/src/lib/google-merchant/config.ts)
 ✅ Account ID: 5495521926
 ✅ Data Source ID: 10571293810
 ✅ Content language: FR
 ✅ Feed label: FR
 ✅ Rate limiting config
 
-// 3. API Client (src/lib/google-merchant/client.ts)
+// 3. API Client (apps/back-office/src/lib/google-merchant/client.ts)
 ✅ insertProduct() - Merchant API v1beta
 ✅ updateProduct() - Via insert (upsert)
 ✅ deleteProduct()
@@ -49,7 +49,7 @@ Développer une **intégration professionnelle complète** avec Google Merchant 
 ✅ batchSyncProducts()
 ✅ testConnection()
 
-// 4. Data Transformer (src/lib/google-merchant/transformer.ts)
+// 4. Data Transformer (apps/back-office/src/lib/google-merchant/transformer.ts)
 ✅ Vérone Product → Google Merchant Product
 ✅ 31 champs Google mappés
 ✅ Validation produits
@@ -65,7 +65,7 @@ Développer une **intégration professionnelle complète** avec Google Merchant 
 #### ❌ Interface Mockée (À Développer)
 
 ```typescript
-// src/app/canaux-vente/google-merchant/page.tsx
+// apps/back-office/src/app/canaux-vente/google-merchant/page.tsx
 ❌ Configuration modal (bouton non fonctionnel)
 ❌ Synchronisation produits (données mockées)
 ❌ Métriques analytics (données statiques)
@@ -218,8 +218,8 @@ export function useGoogleMerchantConfig() {
 
 **Fichiers à créer**:
 
-- `src/components/business/google-merchant-config-modal.tsx`
-- `src/hooks/use-google-merchant-config.ts`
+- `apps/back-office/apps/back-office/src/components/business/google-merchant-config-modal.tsx`
+- `apps/back-office/apps/back-office/src/hooks/use-google-merchant-config.ts`
 
 ---
 
@@ -495,9 +495,9 @@ export async function POST(
 
 **Fichiers à créer/modifier**:
 
-- `src/hooks/use-google-merchant-sync.ts` (nouveau)
-- `src/app/api/google-merchant/sync-product/[id]/route.ts` (améliorer)
-- `src/app/canaux-vente/google-merchant/page.tsx` (refactorer onglet "Ajouter des Produits")
+- `apps/back-office/apps/back-office/src/hooks/use-google-merchant-sync.ts` (nouveau)
+- `apps/back-office/apps/back-office/src/app/api/google-merchant/sync-product/[id]/route.ts` (améliorer)
+- `apps/back-office/apps/back-office/src/app/canaux-vente/google-merchant/page.tsx` (refactorer onglet "Ajouter des Produits")
 
 ---
 
@@ -520,7 +520,7 @@ https://developers.google.com/shopping-content/guides/reports/query-language/ove
 **1. Nouveau Client : GoogleMerchantReportsClient**
 
 ```typescript
-// src/lib/google-merchant/reports-client.ts
+// apps/back-office/src/lib/google-merchant/reports-client.ts
 import { getGoogleMerchantAuth } from './auth';
 import { GOOGLE_MERCHANT_CONFIG } from './config';
 
@@ -706,7 +706,7 @@ export function getGoogleMerchantReportsClient(): GoogleMerchantReportsClient {
 **2. API Route : Métriques Dashboard**
 
 ```typescript
-// src/app/api/google-merchant/metrics/route.ts
+// apps/back-office/src/app/api/google-merchant/metrics/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getGoogleMerchantReportsClient } from '@/lib/google-merchant/reports-client';
 import logger from '@/lib/logger';
@@ -760,7 +760,7 @@ export async function GET(request: NextRequest) {
 **3. Hook : useMerchantMetrics**
 
 ```typescript
-// src/hooks/use-merchant-metrics.ts
+// apps/back-office/src/hooks/use-merchant-metrics.ts
 import { useState, useEffect } from 'react';
 
 interface DashboardMetrics {
@@ -915,10 +915,10 @@ export default function GoogleMerchantPage() {
 
 **Fichiers à créer**:
 
-- `src/lib/google-merchant/reports-client.ts` (nouveau)
-- `src/app/api/google-merchant/metrics/route.ts` (nouveau)
-- `src/hooks/use-merchant-metrics.ts` (nouveau)
-- `src/app/canaux-vente/google-merchant/page.tsx` (refactorer statistiques)
+- `apps/back-office/apps/back-office/src/lib/google-merchant/reports-client.ts` (nouveau)
+- `apps/back-office/apps/back-office/src/app/api/google-merchant/metrics/route.ts` (nouveau)
+- `apps/back-office/apps/back-office/src/hooks/use-merchant-metrics.ts` (nouveau)
+- `apps/back-office/apps/back-office/src/app/canaux-vente/google-merchant/page.tsx` (refactorer statistiques)
 
 ---
 

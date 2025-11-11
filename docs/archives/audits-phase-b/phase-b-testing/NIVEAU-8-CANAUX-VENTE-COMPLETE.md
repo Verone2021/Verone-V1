@@ -100,7 +100,7 @@ Valider le module Canaux Vente :
 **Warnings détectés** (non bloquants) :
 
 ```
-⚠️ ./src/hooks/use-sales-orders.ts
+⚠️ ./apps/back-office/src/hooks/use-sales-orders.ts
 Module not found: Can't resolve '@/app/actions/sales-order...
 ```
 
@@ -203,7 +203,7 @@ Module not found: Can't resolve '@/app/actions/sales-order...
 **Warning détecté** (non bloquant) :
 
 ```
-⚠️ ./src/hooks/use-sales-orders.ts
+⚠️ ./apps/back-office/src/hooks/use-sales-orders.ts
 Module not found: Can't resolve '@/app/actions/sales-order...
 ```
 
@@ -374,7 +374,7 @@ GOOGLE_MERCHANT_ACCOUNT_ID="5495521926"
 **État actuel** :
 
 ```
-src/app/canaux-vente/
+apps/back-office/src/app/canaux-vente/
 ├── page.tsx (✅ Dashboard hub complet)
 └── google-merchant/
     └── page.tsx (✅ Intégration API complète)
@@ -416,7 +416,7 @@ src/app/canaux-vente/
 **Warning détecté** (répété sur tous les NIVEAUX) :
 
 ```
-⚠️ ./src/hooks/use-sales-orders.ts
+⚠️ ./apps/back-office/src/hooks/use-sales-orders.ts
 Module not found: Can't resolve '@/app/actions/sales-order...
 ```
 

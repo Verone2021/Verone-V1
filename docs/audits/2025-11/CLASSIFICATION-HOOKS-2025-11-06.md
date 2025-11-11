@@ -1,7 +1,7 @@
 # CLASSIFICATION HOOKS - 87 HOOKS
 
 **Date** : 2025-11-06
-**Objectif** : Classifier les 87 hooks de `src/hooks/` par module cible
+**Objectif** : Classifier les 87 hooks de `apps/back-office/src/hooks/` par module cible
 
 ---
 

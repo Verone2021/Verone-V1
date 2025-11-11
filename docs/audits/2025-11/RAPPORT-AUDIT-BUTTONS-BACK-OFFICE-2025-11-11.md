@@ -44,7 +44,7 @@
 
 #### 1.1 SampleOrderButton.tsx
 
-**Fichier** : `packages/@verone/ui-business/src/components/buttons/SampleOrderButton.tsx`
+**Fichier** : `packages/@verone/ui-business/apps/back-office/src/components/buttons/SampleOrderButton.tsx`
 
 **Problèmes détectés** :
 
@@ -87,7 +87,7 @@ className={className}  // ✅ Pas de hardcoded styles
 
 #### 1.2 GenerateInvoiceButton.tsx
 
-**Fichier** : `packages/@verone/finance/src/components/buttons/GenerateInvoiceButton.tsx`
+**Fichier** : `packages/@verone/finance/apps/back-office/src/components/buttons/GenerateInvoiceButton.tsx`
 
 **Problèmes détectés** :
 
@@ -127,7 +127,7 @@ loading={isLoading}
 
 #### 2.1 FavoriteToggleButton.tsx
 
-**Fichier** : `packages/@verone/ui-business/src/components/buttons/FavoriteToggleButton.tsx`
+**Fichier** : `packages/@verone/ui-business/apps/back-office/src/components/buttons/FavoriteToggleButton.tsx`
 
 **Problèmes détectés** :
 
@@ -204,7 +204,7 @@ return (
 
 #### 3.1 LogoUploadButton.tsx
 
-**Fichier** : `packages/@verone/organisations/src/components/buttons/LogoUploadButton.tsx`
+**Fichier** : `packages/@verone/organisations/apps/back-office/src/components/buttons/LogoUploadButton.tsx`
 
 **Problèmes détectés** :
 
@@ -285,13 +285,13 @@ className={cn(
 
 **Problème détecté** : Duplicat obsolète non migré
 
-**Fichier supprimé** : `packages/@verone/organisations/src/components/forms/logo-upload-button.tsx`
+**Fichier supprimé** : `packages/@verone/organisations/apps/back-office/src/components/forms/logo-upload-button.tsx`
 
-**Fichier conservé** (version corrigée) : `packages/@verone/organisations/src/components/buttons/LogoUploadButton.tsx`
+**Fichier conservé** (version corrigée) : `packages/@verone/organisations/apps/back-office/src/components/buttons/LogoUploadButton.tsx`
 
 **Imports mis à jour** (3 fichiers) :
 
-1. `packages/@verone/organisations/src/components/cards/OrganisationLogoCard.tsx`
+1. `packages/@verone/organisations/apps/back-office/src/components/cards/OrganisationLogoCard.tsx`
 
    ```typescript
    // AVANT
@@ -300,7 +300,7 @@ className={cn(
    import { LogoUploadButton } from '../buttons/LogoUploadButton';
    ```
 
-2. `packages/@verone/ui-business/src/components/forms/UnifiedOrganisationForm.tsx`
+2. `packages/@verone/ui-business/apps/back-office/src/components/forms/UnifiedOrganisationForm.tsx`
 
    ```typescript
    // AVANT
@@ -309,7 +309,7 @@ className={cn(
    import { LogoUploadButton } from '@verone/organisations/components/buttons/LogoUploadButton';
    ```
 
-3. `packages/@verone/organisations/src/components/forms/unified-organisation-form.tsx`
+3. `packages/@verone/organisations/apps/back-office/src/components/forms/unified-organisation-form.tsx`
    ```typescript
    // AVANT
    import { LogoUploadButton } from './logo-upload-button';
@@ -430,12 +430,12 @@ turbo build --filter=@verone/back-office
 **Fichiers à supprimer** :
 
 ```bash
-packages/@verone/ui/src/components/ui/standard-modify-button.tsx
-packages/@verone/ui/src/components/ui/action-button.tsx
-packages/@verone/ui/src/components/ui/modern-action-button.tsx
+packages/@verone/ui/apps/back-office/src/components/ui/standard-modify-button.tsx
+packages/@verone/ui/apps/back-office/src/components/ui/action-button.tsx
+packages/@verone/ui/apps/back-office/src/components/ui/modern-action-button.tsx
 ```
 
-**Exports à retirer** : `packages/@verone/ui/src/components/ui/index.ts`
+**Exports à retirer** : `packages/@verone/ui/apps/back-office/src/components/ui/index.ts`
 
 **Vérifications préalables** :
 

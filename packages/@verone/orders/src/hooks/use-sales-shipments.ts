@@ -22,8 +22,6 @@
 
 import { useState, useCallback } from 'react';
 
-import { createClient } from '@verone/utils/supabase/client';
-import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 import type {
   ShipmentItem,
   ValidateShipmentPayload,
@@ -32,6 +30,8 @@ import type {
   ShipmentCarrierInfo,
   ShippingAddress,
 } from '@verone/types';
+import { createClient } from '@verone/utils/supabase/client';
+import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 
 export interface SalesOrderForShipment {
   id: string;
@@ -208,15 +208,7 @@ export function useSalesShipments() {
   );
 
   /**
-   * Valider expédition (workflow simplifié Phase 1 - client-side)
-   *
-   * Workflow:
-   * 1. Update quantity_shipped pour chaque item (calcul différentiel)
-   * 2. Calcul nouveau statut SO (partially_shipped / shipped)
-   * 3. Update sales_orders (status, shipped_at, shipped_by)
-   * 4. Le trigger handle_sales_order_stock() s'exécute automatiquement
-   *    → Crée mouvements stock OUT (différentiel)
-   *    → Décrémente stock_real
+   * Valider expédition (appel action server)
    */
   const validateShipment = useCallback(
     async (
@@ -226,120 +218,19 @@ export function useSalesShipments() {
         setValidating(true);
         setError(null);
 
-        // Validation payload (Phase 1: adresse et transporteur optionnels)
-        if (
-          !payload.sales_order_id ||
-          !payload.items ||
-          payload.items.length === 0
-        ) {
-          throw new Error('Données invalides: sales_order_id et items requis');
+        // Appeler action server
+        const response = await fetch('/api/sales-shipments/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Erreur validation expédition');
         }
 
-        // Vérifier que le SO existe et est confirmé
-        const { data: salesOrder, error: soError } = await supabase
-          .from('sales_orders')
-          .select('id, order_number, status')
-          .eq('id', payload.sales_order_id)
-          .single();
-
-        if (soError || !salesOrder) {
-          throw new Error('Commande client introuvable');
-        }
-
-        if (!['confirmed', 'partially_shipped'].includes(salesOrder.status)) {
-          throw new Error(
-            `Impossible d'expédier: commande au statut "${salesOrder.status}"`
-          );
-        }
-
-        // ÉTAPE 1: Update quantity_shipped pour chaque item (différentiel)
-        for (const item of payload.items) {
-          if (item.quantity_to_ship <= 0) {
-            continue; // Skip items avec quantité 0
-          }
-
-          // Récupérer quantité actuelle
-          const { data: currentItem, error: itemError } = await supabase
-            .from('sales_order_items')
-            .select('id, quantity, quantity_shipped')
-            .eq('id', item.sales_order_item_id)
-            .single();
-
-          if (itemError || !currentItem) {
-            console.error(`Item ${item.sales_order_item_id} introuvable`);
-            continue;
-          }
-
-          const currentShipped = currentItem.quantity_shipped || 0;
-          const newShipped = currentShipped + item.quantity_to_ship;
-
-          // Vérifier cohérence
-          if (newShipped > currentItem.quantity) {
-            throw new Error(
-              `Quantité expédiée incohérente pour item ${item.sales_order_item_id}: ` +
-                `${newShipped} > ${currentItem.quantity} commandée`
-            );
-          }
-
-          // Update quantity_shipped
-          const { error: updateError } = await supabase
-            .from('sales_order_items')
-            .update({ quantity_shipped: newShipped })
-            .eq('id', item.sales_order_item_id);
-
-          if (updateError) {
-            console.error('Erreur update item:', updateError);
-            throw new Error(`Erreur mise à jour item: ${updateError.message}`);
-          }
-        }
-
-        // ÉTAPE 2: Calculer nouveau statut SO
-        // Si tous les items sont totalement expédiés → 'shipped'
-        // Sinon → 'partially_shipped'
-        const { data: allItems, error: allItemsError } = await supabase
-          .from('sales_order_items')
-          .select('quantity, quantity_shipped')
-          .eq('sales_order_id', payload.sales_order_id);
-
-        if (allItemsError) {
-          console.error('Erreur récupération items:', allItemsError);
-          throw new Error('Erreur calcul statut');
-        }
-
-        const allFullyShipped = allItems?.every(
-          item => (item.quantity_shipped || 0) >= item.quantity
-        );
-
-        const newStatus = allFullyShipped ? 'shipped' : 'partially_shipped';
-
-        // ÉTAPE 3: Update sales_orders
-        const updateData: any = {
-          status: newStatus,
-        };
-
-        // Si c'était la première expédition, set shipped_at et shipped_by
-        if (salesOrder.status === 'confirmed') {
-          updateData.shipped_at =
-            payload.shipped_at || new Date().toISOString();
-          updateData.shipped_by = payload.shipped_by;
-        }
-
-        const { error: updateSOError } = await supabase
-          .from('sales_orders')
-          .update(updateData)
-          .eq('id', payload.sales_order_id);
-
-        if (updateSOError) {
-          console.error('Erreur update SO:', updateSOError);
-          throw new Error(
-            `Erreur mise à jour commande: ${updateSOError.message}`
-          );
-        }
-
-        // SUCCESS!
-        // Le trigger handle_sales_order_stock() s'est exécuté automatiquement
-        // lors de l'UPDATE status → Il a créé les mouvements stock OUT
-
+        const result = await response.json();
         return { success: true };
       } catch (err) {
         console.error('Erreur validation expédition:', err);
@@ -351,7 +242,7 @@ export function useSalesShipments() {
         setValidating(false);
       }
     },
-    [supabase]
+    []
   );
 
   /**

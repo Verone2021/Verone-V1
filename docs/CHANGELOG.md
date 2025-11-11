@@ -40,7 +40,7 @@ Validation complète application Vérone avec tests E2E, review code, et optimis
 
 ##### Détails Techniques
 
-- Fichier: `src/components/business/complete-product-wizard.tsx`
+- Fichier: `apps/back-office/apps/back-office/src/components/business/complete-product-wizard.tsx`
 - Error handling complet avec toast notifications
 - TypeScript types stricts (30+ champs interface WizardFormData)
 

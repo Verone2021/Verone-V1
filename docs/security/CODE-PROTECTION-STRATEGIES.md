@@ -19,15 +19,15 @@
 
 **Priorité CRITIQUE** :
 
-- `src/lib/supabase/server.ts` (configuration Supabase SSR)
+- `apps/back-office/apps/back-office/src/lib/supabase/server.ts` (configuration Supabase SSR)
 - `.env`, `.env.local`, `.env.production` (secrets)
 - `supabase/migrations/**` (schéma BDD)
 - `manifests/business-rules/**` (règles métier validées)
 
 **Priorité HAUTE** :
 
-- `src/lib/supabase/client.ts` (client Supabase)
-- `src/hooks/use-supabase-*.tsx` (hooks critiques)
+- `apps/back-office/apps/back-office/src/lib/supabase/client.ts` (client Supabase)
+- `apps/back-office/apps/back-office/src/hooks/use-supabase-*.tsx` (hooks critiques)
 - `MEMORY-BANK/sessions/**` (rapports validés)
 - `docs/architecture/**` (architecture validée)
 
@@ -64,10 +64,10 @@ Utiliser le système de permissions intégré de Claude Code pour **bloquer comp
       "Read(./.env)",
       "Read(./.env.*)",
       "Edit(./.env*)",
-      "Read(./src/lib/supabase/server.ts)",
-      "Edit(./src/lib/supabase/server.ts)",
-      "Read(./src/lib/supabase/client.ts)",
-      "Edit(./src/lib/supabase/client.ts)",
+      "Read(./apps/back-office/src/lib/supabase/server.ts)",
+      "Edit(./apps/back-office/src/lib/supabase/server.ts)",
+      "Read(./apps/back-office/src/lib/supabase/client.ts)",
+      "Edit(./apps/back-office/src/lib/supabase/client.ts)",
       "Edit(./supabase/migrations/**)",
       "Read(./supabase/migrations/**)",
       "Edit(./manifests/business-rules/**)",
@@ -111,15 +111,15 @@ Utiliser le système de permissions intégré de Claude Code pour **bloquer comp
     "deny": [
       "Read(./.env)",
       "Edit(./.env*)",
-      "Read(./src/lib/supabase/server.ts)",
-      "Edit(./src/lib/supabase/server.ts)",
+      "Read(./apps/back-office/src/lib/supabase/server.ts)",
+      "Edit(./apps/back-office/src/lib/supabase/server.ts)",
       "Edit(./supabase/migrations/**)",
       "Edit(./manifests/business-rules/**)",
       "Edit(./MEMORY-BANK/sessions/**)"
     ],
     "allow": [
       "Read(./src/**/*.tsx)",
-      "Edit(./src/components/**/*.tsx)",
+      "Edit(./apps/back-office/src/components/**/*.tsx)",
       "Read(./docs/**/*.md)"
     ]
   }
@@ -221,7 +221,7 @@ Documenter explicitement dans `CLAUDE.md` les fichiers **interdits de modificati
 
 **Fichiers critiques production** :
 
-- `src/lib/supabase/server.ts` : Configuration Supabase SSR validée (commit 005b68b)
+- `apps/back-office/apps/back-office/src/lib/supabase/server.ts` : Configuration Supabase SSR validée (commit 005b68b)
   - Raison : Modifications cassent auth Admin API
   - Si besoin modification : Demander approbation utilisateur AVANT
 
@@ -241,7 +241,7 @@ Documenter explicitement dans `CLAUDE.md` les fichiers **interdits de modificati
 
 **Fichiers stables nécessitant review** :
 
-- `src/lib/supabase/client.ts` : Demander avant modification
+- `apps/back-office/apps/back-office/src/lib/supabase/client.ts` : Demander avant modification
 - `MEMORY-BANK/sessions/**` : Rapports sessions validés (append-only)
 - `scripts/deploy-*.ts` : Scripts production sensibles
 
@@ -249,7 +249,7 @@ Documenter explicitement dans `CLAUDE.md` les fichiers **interdits de modificati
 
 **Fichiers non critiques** :
 
-- `src/components/**/*.tsx` : Components UI (sauf validés)
+- `apps/back-office/apps/back-office/src/components/**/*.tsx` : Components UI (sauf validés)
 - `docs/guides/**` : Documentation guides
 - `TASKS/**` : Task management files
 ```
@@ -481,7 +481,7 @@ Layer 3 (Backup) : .gitignore respect
 **Fichiers protégés** :
 
 - `.env*` (secrets)
-- `src/lib/supabase/server.ts` (config critique)
+- `apps/back-office/apps/back-office/src/lib/supabase/server.ts` (config critique)
 - `supabase/migrations/**` (schéma BDD)
 - `manifests/business-rules/**` (règles validées)
 
@@ -541,7 +541,7 @@ Voir fichier `.claude/settings.example.json` fourni dans ce repository.
 # Attendu : "Permission denied" ou équivalent
 
 # Exemple test :
-"Claude, modifie src/lib/supabase/server.ts pour ajouter un log"
+"Claude, modifie apps/back-office/src/lib/supabase/server.ts pour ajouter un log"
 # Résultat attendu : Refus avec message permission denied
 ```
 
@@ -651,12 +651,12 @@ git status
 git diff
 
 # 3a. Si modifications non commitées : Rollback Git
-git checkout -- src/lib/supabase/server.ts
+git checkout -- apps/back-office/src/lib/supabase/server.ts
 
 # 3b. Si commit déjà fait : Revert commit
 git revert HEAD
 # OU restaurer version spécifique
-git checkout 005b68b -- src/lib/supabase/server.ts
+git checkout 005b68b -- apps/back-office/src/lib/supabase/server.ts
 
 # 4. Renforcer protection
 # Ajouter fichier modifié à settings.json deny

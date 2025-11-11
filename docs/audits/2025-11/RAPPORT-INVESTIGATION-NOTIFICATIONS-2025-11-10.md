@@ -209,8 +209,8 @@ e8bdb01f  feat(ui): Migration complète @verone/ui - 51 composants
 
 **Changements** :
 
-- AVANT : `src/hooks/use-notifications.ts`
-- APRÈS : `packages/@verone/notifications/src/hooks/use-database-notifications.ts`
+- AVANT : `apps/back-office/src/hooks/use-notifications.ts`
+- APRÈS : `packages/@verone/notifications/apps/back-office/src/hooks/use-database-notifications.ts`
 
 ### 3.2 Code Différence (Avant/Après)
 
@@ -454,17 +454,17 @@ FROM notifications;
 
 **Hooks React** :
 
-- `packages/@verone/notifications/src/hooks/use-database-notifications.ts`
+- `packages/@verone/notifications/apps/back-office/src/hooks/use-database-notifications.ts`
 
 **Composants UI** :
 
-- `packages/@verone/notifications/src/components/dropdowns/NotificationsDropdown.tsx`
+- `packages/@verone/notifications/apps/back-office/src/components/dropdowns/NotificationsDropdown.tsx`
 
 **Pages** :
 
-- `src/app/commandes/clients/page.tsx`
-- `src/app/commandes/fournisseurs/page.tsx`
-- `src/app/stocks/alertes/page.tsx`
+- `apps/back-office/src/app/commandes/clients/page.tsx`
+- `apps/back-office/src/app/commandes/fournisseurs/page.tsx`
+- `apps/back-office/src/app/stocks/alertes/page.tsx`
 
 ---
 

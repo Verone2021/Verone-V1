@@ -288,7 +288,7 @@ test('Dashboard SLO <2s validation', async ({ page }) => {
 npm run dev
 
 # Run E2E tests Dashboard
-npx playwright test src/app/dashboard
+npx playwright test apps/back-office/src/app/dashboard
 
 # Run avec UI
 npx playwright test --ui

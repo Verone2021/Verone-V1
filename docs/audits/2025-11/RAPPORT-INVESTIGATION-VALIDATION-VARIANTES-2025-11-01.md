@@ -52,7 +52,7 @@ La règle d'unicité existe **uniquement dans le code**, pas dans la documentati
 
 #### ✅ Modal Édition : Validation PRÉSENTE
 
-**Fichier** : `src/components/business/edit-product-variant-modal.tsx`
+**Fichier** : `apps/back-office/src/components/business/edit-product-variant-modal.tsx`
 **Lignes 117-122** :
 
 ```typescript
@@ -70,7 +70,7 @@ setError(
 
 #### ❌ Modal Création : Validation ABSENTE
 
-**Fichier** : `src/components/business/variant-creation-modal.tsx`
+**Fichier** : `apps/back-office/src/components/business/variant-creation-modal.tsx`
 **Lignes 66-69** :
 
 ```typescript
@@ -108,7 +108,7 @@ const response = await fetch(
 
 ### 3. API Backend Analysis (5 min)
 
-**Fichier** : `src/app/api/products/[productId]/variants/create/route.ts`
+**Fichier** : `apps/back-office/src/app/api/products/[productId]/variants/create/route.ts`
 **Implémentation** : (Documentation indique ligne 387-390)
 
 **Question** : L'API backend valide-t-elle les doublons ?
@@ -145,8 +145,8 @@ AND (conname LIKE '%variant%' OR conname LIKE '%color%');
 
 ```bash
 git log --since="2024-10-14" --until="2024-10-20" --all --oneline -- \
-  src/components/business/*variant*.tsx \
-  src/hooks/*variant*.ts \
+  apps/back-office/src/components/business/*variant*.tsx \
+  apps/back-office/src/hooks/*variant*.ts \
   supabase/migrations/*.sql
 ```
 
@@ -160,7 +160,7 @@ git log --since="2024-10-14" --until="2024-10-20" --all --oneline -- \
 
 ### Problème #1 : Validation Client Manquante (CRITIQUE)
 
-**Fichier** : `src/components/business/variant-creation-modal.tsx`
+**Fichier** : `apps/back-office/src/components/business/variant-creation-modal.tsx`
 **Ligne** : 66-69
 **Impact** : ⚠️ **HIGH** - Permet création doublons variantes
 
@@ -212,7 +212,7 @@ if (checkResult.exists) {
 
 ### Problème #2 : API Backend Sans Validation (CRITIQUE)
 
-**Fichier** : `src/app/api/products/[productId]/variants/create/route.ts`
+**Fichier** : `apps/back-office/src/app/api/products/[productId]/variants/create/route.ts`
 **Impact** : ⚠️ **HIGH** - Accepte doublons même si client valide
 
 **Description** :
@@ -394,7 +394,7 @@ Si un produit a DEUX attributs (`color` + `material`), seule la **combinaison co
 
 ### Problème #5 : Feature Manquante - Création Couleur (UX)
 
-**Fichier** : `src/components/business/edit-product-variant-modal.tsx`
+**Fichier** : `apps/back-office/src/components/business/edit-product-variant-modal.tsx`
 **Impact** : ⚠️ **MEDIUM** - UX dégradée pour utilisateur
 
 **Description** :
@@ -620,9 +620,9 @@ Toute validation critique doit être **triple** :
 
 **Fichiers Modifiés** :
 
-- `src/components/business/variant-creation-modal.tsx` (ligne 66-90)
-- `src/components/business/edit-product-variant-modal.tsx` (ligne 117-122)
-- `src/app/api/products/[productId]/variants/create/route.ts` (à vérifier)
+- `apps/back-office/src/components/business/variant-creation-modal.tsx` (ligne 66-90)
+- `apps/back-office/src/components/business/edit-product-variant-modal.tsx` (ligne 117-122)
+- `apps/back-office/src/app/api/products/[productId]/variants/create/route.ts` (à vérifier)
 
 **Documentation Référence** :
 

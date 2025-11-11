@@ -3,7 +3,7 @@
 **Date création**: 2025-11-05
 **Designer**: Vérone Design Expert (Claude Code)
 **Statut**: Production-ready
-**Fichier**: `src/components/business/universal-product-selector-v2.tsx`
+**Fichier**: `apps/back-office/apps/back-office/src/components/business/universal-product-selector-v2.tsx`
 
 ---
 
@@ -608,7 +608,7 @@ function CollectionEditor() {
 ## 📞 Support
 
 **Questions Design/UX**: Romeo Dos Santos
-**Fichier Source**: `src/components/business/universal-product-selector-v2.tsx`
+**Fichier Source**: `apps/back-office/apps/back-office/src/components/business/universal-product-selector-v2.tsx`
 **Documentation Business Rules**: `docs/business-rules/98-ux-ui/`
 **Design System**: `CLAUDE.md` - Section "Vérone Design Expert"
 

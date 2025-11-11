@@ -58,8 +58,8 @@ export async function POST(request: NextRequest) {
 
 **Impact** :
 
-- src/app/api/purchase-receptions/validate/route.ts:19
-- src/app/api/purchase-receptions/validate/route.ts:26
+- apps/back-office/src/app/api/purchase-receptions/validate/route.ts:19
+- apps/back-office/src/app/api/purchase-receptions/validate/route.ts:26
 
 ---
 

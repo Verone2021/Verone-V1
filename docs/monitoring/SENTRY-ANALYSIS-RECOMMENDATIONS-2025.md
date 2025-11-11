@@ -112,7 +112,7 @@ Accès     :
 #### 2. console-error-tracker.ts ⭐ (Déjà implémenté)
 
 ```typescript
-Fichier   : src/lib/monitoring/console-error-tracker.ts
+Fichier   : apps/back-office/src/lib/monitoring/console-error-tracker.ts
 État      : ✅ Actif et fonctionnel
 
 Features  :
@@ -232,7 +232,7 @@ Idéal pour :
 ### 1. Suppression Dead Code
 
 ```bash
-✅ SUPPRIMÉ : src/hooks/use-sentry-status.ts
+✅ SUPPRIMÉ : apps/back-office/src/hooks/use-sentry-status.ts
    Raison    : Hook inutilisé appelant API inexistante
    Impact    : Aucun (0 références dans codebase)
 ```

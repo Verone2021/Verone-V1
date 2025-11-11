@@ -484,8 +484,8 @@ ROLLBACK;
 
 ### Code Source
 
-- `packages/@verone/notifications/src/hooks/use-database-notifications.ts` (Hooks React)
-- `packages/@verone/notifications/src/components/dropdowns/NotificationsDropdown.tsx` (UI)
+- `packages/@verone/notifications/apps/back-office/src/hooks/use-database-notifications.ts` (Hooks React)
+- `packages/@verone/notifications/apps/back-office/src/components/dropdowns/NotificationsDropdown.tsx` (UI)
 
 ### Business Rules Associées
 

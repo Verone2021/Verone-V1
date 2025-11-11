@@ -6,7 +6,7 @@
 
 ## 🎯 Philosophie d'Organisation
 
-Cette structure reflète l'architecture modulaire de Vérone Back Office avec **19 modules applicatifs** + **aspects transverses**. Chaque dossier correspond à une section de l'application (`src/app/`).
+Cette structure reflète l'architecture modulaire de Vérone Back Office avec **19 modules applicatifs** + **aspects transverses**. Chaque dossier correspond à une section de l'application (`apps/back-office/apps/back-office/src/app/`).
 
 ### Principes
 
@@ -335,7 +335,7 @@ Coverage : ~17% (16/93 sous-modules)
 
 ### Règle générale
 
-1. Identifier le **module applicatif** concerné (route dans `src/app/`)
+1. Identifier le **module applicatif** concerné (route dans `apps/back-office/apps/back-office/src/app/`)
 2. Placer dans le dossier numéroté correspondant (01-17)
 3. Si multi-module → `99-transverses/workflows/`
 4. Si UX/Design → `98-ux-ui/`

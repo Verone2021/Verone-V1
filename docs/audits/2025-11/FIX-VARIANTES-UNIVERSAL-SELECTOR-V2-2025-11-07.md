@@ -30,7 +30,7 @@ Remplacer `VariantAddProductModal` par `UniversalProductSelectorV2` dans la page
 
 ### 2. Page Variantes Détail Groupe
 
-**Fichier** : `src/app/produits/catalogue/variantes/[groupId]/page.tsx`
+**Fichier** : `apps/back-office/src/app/produits/catalogue/variantes/[groupId]/page.tsx`
 
 #### 2.1 Imports Modifiés
 
@@ -365,7 +365,7 @@ export function VariantProductSelectorWrapper({
 
 **Fichiers Modifiés** :
 
-- `src/app/produits/catalogue/variantes/[groupId]/page.tsx` (imports, handler, JSX)
+- `apps/back-office/src/app/produits/catalogue/variantes/[groupId]/page.tsx` (imports, handler, JSX)
 - État : Prêt mais bloqué par bug du composant générique
 
 **Performance Attendue (après fix du bug)** :
@@ -378,7 +378,7 @@ export function VariantProductSelectorWrapper({
 
 **Fichiers de Travail** :
 
-- Modifications : `src/app/produits/catalogue/variantes/[groupId]/page.tsx`
+- Modifications : `apps/back-office/src/app/produits/catalogue/variantes/[groupId]/page.tsx`
 - Hook : `src/shared/modules/products/hooks/use-variant-groups.ts` (aucune modification)
 - Composant problématique : `src/shared/modules/products/components/selectors/UniversalProductSelectorV2.tsx`
 

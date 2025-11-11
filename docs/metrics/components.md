@@ -31,8 +31,8 @@ Le dashboard Vérone utilise **4 graphiques Recharts** et **4 types de KPI Cards
 
 **Fichiers** :
 
-- Charts : `src/components/business/*-chart.tsx`
-- KPI Cards : `src/components/ui/*-kpi-card.tsx`
+- Charts : `apps/back-office/apps/back-office/src/components/business/*-chart.tsx`
+- KPI Cards : `apps/back-office/apps/back-office/src/components/ui/*-kpi-card.tsx`
 
 ---
 
@@ -40,7 +40,7 @@ Le dashboard Vérone utilise **4 graphiques Recharts** et **4 types de KPI Cards
 
 ### 1. Revenue Chart (CA Évolution)
 
-**Fichier** : `src/components/business/revenue-chart.tsx`
+**Fichier** : `apps/back-office/apps/back-office/src/components/business/revenue-chart.tsx`
 
 **Type** : `LineChart` avec gradients
 
@@ -94,7 +94,7 @@ formatter={(value) => [`${value}€`, 'Chiffre d\'affaires']}
 
 ### 2. Products Chart (Produits Ajoutés)
 
-**Fichier** : `src/components/business/products-chart.tsx`
+**Fichier** : `apps/back-office/apps/back-office/src/components/business/products-chart.tsx`
 
 **Type** : `BarChart` vertical
 
@@ -134,7 +134,7 @@ data = analytics.products; // [{week: "S2", count: 5}, ...]
 
 ### 3. Stock Movements Chart (Entrées/Sorties)
 
-**Fichier** : `src/components/business/stock-movements-chart.tsx`
+**Fichier** : `apps/back-office/apps/back-office/src/components/business/stock-movements-chart.tsx`
 
 **Type** : `AreaChart` multi-séries
 
@@ -189,7 +189,7 @@ data = analytics.stockMovements; // [{date: "12 Oct", entrees: 30, sorties: 5}, 
 
 ### 4. Purchase Orders Chart (Commandes Fournisseurs)
 
-**Fichier** : `src/components/business/purchase-orders-chart.tsx`
+**Fichier** : `apps/back-office/apps/back-office/src/components/business/purchase-orders-chart.tsx`
 
 **Type** : `BarChart` avec gradients
 
@@ -235,7 +235,7 @@ data = analytics.purchaseOrders; // [{week: "S2", amount: 3500}, ...]
 
 ### 1. Elegant KPI Card (Premium)
 
-**Fichier** : `src/components/ui/elegant-kpi-card.tsx`
+**Fichier** : `apps/back-office/apps/back-office/src/components/ui/elegant-kpi-card.tsx`
 
 **Description** : KPI Card moderne avec gradients, ombres élégantes, et micro-animations.
 
@@ -298,7 +298,7 @@ interface ElegantKPICardProps {
 
 ### 2. KPI Card (Standard)
 
-**Fichier** : `src/components/ui/kpi-card.tsx` ou `src/components/business/kpi-card.tsx`
+**Fichier** : `apps/back-office/apps/back-office/src/components/ui/kpi-card.tsx` ou `apps/back-office/apps/back-office/src/components/business/kpi-card.tsx`
 
 **Description** : KPI Card classique sans gradients (plus sobre).
 
@@ -352,7 +352,7 @@ interface KPICardProps {
 
 ### 3. Compact KPI Card
 
-**Fichier** : `src/components/ui/compact-kpi-card.tsx`
+**Fichier** : `apps/back-office/apps/back-office/src/components/ui/compact-kpi-card.tsx`
 
 **Description** : Version minimaliste pour dashboards denses.
 
@@ -389,7 +389,7 @@ interface CompactKPICardProps {
 
 ### 4. Medium KPI Card
 
-**Fichier** : `src/components/ui/medium-kpi-card.tsx`
+**Fichier** : `apps/back-office/apps/back-office/src/components/ui/medium-kpi-card.tsx`
 
 **Description** : Compromis entre Standard et Compact.
 
@@ -437,7 +437,7 @@ interface MediumKPICardProps {
 
 ### Palette Couleurs 2025
 
-**Variables CSS** (définies dans `src/lib/theme-v2.ts`) :
+**Variables CSS** (définies dans `apps/back-office/apps/back-office/src/lib/theme-v2.ts`) :
 
 ```css
 :root {

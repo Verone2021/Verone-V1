@@ -94,20 +94,20 @@ Si vous préférez extraire manuellement :
 
 ```bash
 # Version finale (252 lignes - 1er Nov 2025)
-git show 4e796e639a7903cb09c181c6663cb2f093d95f9a:src/components/forms/create-product-in-group-modal.tsx > create-product-in-group-modal.tsx
+git show 4e796e639a7903cb09c181c6663cb2f093d95f9a:apps/back-office/src/components/forms/create-product-in-group-modal.tsx > create-product-in-group-modal.tsx
 
 # Version avant améliorations (204 lignes - 30 Oct 2025)
-git show 4e796e639a7903cb09c181c6663cb2f093d95f9a^:src/components/forms/CreateProductInGroupModal.tsx > CreateProductInGroupModal-before.tsx
+git show 4e796e639a7903cb09c181c6663cb2f093d95f9a^:apps/back-office/src/components/forms/CreateProductInGroupModal.tsx > CreateProductInGroupModal-before.tsx
 ```
 
 ### Étape 2 : Extraire Dépendances
 
 ```bash
 # DynamicColorSelector (sélecteur couleurs dynamique)
-git show 4e796e639a7903cb09c181c6663cb2f093d95f9a:src/components/business/DynamicColorSelector.tsx > DynamicColorSelector.tsx
+git show 4e796e639a7903cb09c181c6663cb2f093d95f9a:apps/back-office/src/components/business/DynamicColorSelector.tsx > DynamicColorSelector.tsx
 
 # Hook use-product-colors
-git show 4e796e639a7903cb09c181c6663cb2f093d95f9a:src/hooks/use-product-colors.ts > use-product-colors.ts
+git show 4e796e639a7903cb09c181c6663cb2f093d95f9a:apps/back-office/src/hooks/use-product-colors.ts > use-product-colors.ts
 ```
 
 ### Étape 3 : Comparer Versions
@@ -128,11 +128,11 @@ cat changes.patch
 
 ```bash
 # Copier version finale dans votre projet
-cp create-product-in-group-modal.tsx src/components/forms/
+cp create-product-in-group-modal.tsx apps/back-office/src/components/forms/
 
 # Copier dépendances (si nécessaires)
-cp DynamicColorSelector.tsx src/components/business/
-cp use-product-colors.ts src/hooks/
+cp DynamicColorSelector.tsx apps/back-office/src/components/business/
+cp use-product-colors.ts apps/back-office/src/hooks/
 ```
 
 ### Étape 2 : Installer Dépendances
@@ -389,7 +389,7 @@ import { Plus, Sparkles, AlertCircle } from 'lucide-react';
 import { DynamicColorSelector } from '@/components/business/DynamicColorSelector';
 ```
 
-**Fichier** : `src/components/business/DynamicColorSelector.tsx` (~400 lignes)
+**Fichier** : `apps/back-office/src/components/business/DynamicColorSelector.tsx` (~400 lignes)
 
 ### Hooks Personnalisés
 
@@ -482,10 +482,10 @@ Si besoin, vérifier aussi :
 git show 4e796e639a7903cb09c181c6663cb2f093d95f9a
 
 # Voir uniquement le fichier
-git show 4e796e63:src/components/forms/create-product-in-group-modal.tsx
+git show 4e796e63:apps/back-office/src/components/forms/create-product-in-group-modal.tsx
 
 # Voir différences avec version précédente
-git diff 4e796e63^..4e796e63 -- "src/components/forms/create-product-in-group-modal.tsx"
+git diff 4e796e63^..4e796e63 -- "apps/back-office/src/components/forms/create-product-in-group-modal.tsx"
 
 # Voir historique complet du fichier
 git log --all --full-history --follow -- "*create-product-in-group*"
@@ -497,7 +497,7 @@ git log --all --full-history --follow -- "*create-product-in-group*"
 
 Avant de considérer l'intégration terminée :
 
-- [ ] Fichier modal copié dans `src/components/forms/`
+- [ ] Fichier modal copié dans `apps/back-office/src/components/forms/`
 - [ ] Dépendances copiées (DynamicColorSelector, use-product-colors)
 - [ ] shadcn/ui components installés (dialog, button, input, label, badge, toast)
 - [ ] Types vérifiés (`@/types/variant-groups` existe)

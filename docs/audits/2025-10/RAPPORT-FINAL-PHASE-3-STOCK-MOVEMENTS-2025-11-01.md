@@ -307,10 +307,10 @@ Uptime Tests     : 100% (aucun crash détecté)
 
 - `docs/audits/2025-10/RAPPORT-TESTS-PRODUIT-C-PHASE-3.5.5-2025-11-01.md` - Tests Produit C
 - `docs/audits/2025-10/RAPPORT-TESTS-PRODUIT-D-PHASE-3.5.6-2025-11-01.md` - Tests Produit D
-- `src/hooks/core/use-stock-core.ts` - Hook core business logic
-- `src/hooks/use-purchase-receptions.ts` - Hook réceptions achats
-- `src/hooks/use-stock-inventory.ts` - Hook inventaire
-- `src/hooks/use-aging-report.ts` - Hook analyse vieillissement
+- `apps/back-office/apps/back-office/src/hooks/core/use-stock-core.ts` - Hook core business logic
+- `apps/back-office/apps/back-office/src/hooks/use-purchase-receptions.ts` - Hook réceptions achats
+- `apps/back-office/apps/back-office/src/hooks/use-stock-inventory.ts` - Hook inventaire
+- `apps/back-office/apps/back-office/src/hooks/use-aging-report.ts` - Hook analyse vieillissement
 
 ---
 

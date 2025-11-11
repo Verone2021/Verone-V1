@@ -116,7 +116,7 @@ onSelect={async (products: SelectedProduct[]) => {
 
 **Fichiers à modifier** :
 
-- `src/app/produits/catalogue/collections/page.tsx` (handler ligne 749)
+- `apps/back-office/src/app/produits/catalogue/collections/page.tsx` (handler ligne 749)
 - `src/shared/modules/collections/hooks/use-collections.ts` (ajouter méthode `addProductsToCollection` si manquante)
 
 **Tests requis** :
@@ -206,7 +206,7 @@ onSelect={async (products: SelectedProduct[]) => {
 
 **Fichiers à modifier** :
 
-- `src/app/produits/catalogue/collections/[collectionId]/page.tsx` (handler ligne 1226)
+- `apps/back-office/src/app/produits/catalogue/collections/[collectionId]/page.tsx` (handler ligne 1226)
 
 **Tests requis** : Identiques Collections liste
 
@@ -324,7 +324,7 @@ import {
 
 **Fichiers à modifier** :
 
-- `src/app/produits/catalogue/variantes/page.tsx` (import + modal ligne 664-681)
+- `apps/back-office/src/app/produits/catalogue/variantes/page.tsx` (import + modal ligne 664-681)
 - `src/shared/modules/products/hooks/use-variant-groups.ts` (vérifier méthode `addProductToVariantGroup`)
 
 **Tests requis** :
@@ -349,7 +349,7 @@ import {
 
 **Fichier à créer** :
 
-- `src/app/produits/catalogue/variantes/[groupId]/page.tsx`
+- `apps/back-office/src/app/produits/catalogue/variantes/[groupId]/page.tsx`
 
 **Tests requis** : N/A (page non existante)
 
@@ -461,7 +461,7 @@ const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([]);
 **Fichiers à modifier** :
 
 - `src/shared/modules/orders/components/modals/SalesOrderFormModal.tsx` (intégrer modal)
-- `src/app/commandes/clients/page.tsx` (AUCUN CHANGEMENT - modal déjà utilisé)
+- `apps/back-office/src/app/commandes/clients/page.tsx` (AUCUN CHANGEMENT - modal déjà utilisé)
 
 **Tests requis** :
 
@@ -577,7 +577,7 @@ const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([]);
 **Fichiers à modifier** :
 
 - `src/shared/modules/orders/components/modals/PurchaseOrderFormModal.tsx` (intégrer modal)
-- `src/app/commandes/fournisseurs/page.tsx` (AUCUN CHANGEMENT - modal déjà utilisé)
+- `apps/back-office/src/app/commandes/fournisseurs/page.tsx` (AUCUN CHANGEMENT - modal déjà utilisé)
 
 **Tests requis** : Identiques Commandes Clients
 
@@ -625,7 +625,7 @@ src/shared/modules/products/components/selectors/UniversalProductSelectorV2.tsx
 -rw-r--r--@ 36K Nov  6 08:31
 
 # Wrapper backward compatibility
-src/components/business/universal-product-selector-v2.tsx
+apps/back-office/src/components/business/universal-product-selector-v2.tsx
 -rw-r--r--@ 257B Nov  6 09:08
 
 # Export barrel
@@ -677,8 +677,8 @@ src/shared/modules/products/components/images/ProductThumbnail.tsx
 **Fichiers** :
 
 - `src/shared/modules/collections/hooks/use-collections.ts` (méthode addProductsToCollection)
-- `src/app/produits/catalogue/collections/page.tsx` (handler ligne 749)
-- `src/app/produits/catalogue/collections/[collectionId]/page.tsx` (handler ligne 1226)
+- `apps/back-office/src/app/produits/catalogue/collections/page.tsx` (handler ligne 749)
+- `apps/back-office/src/app/produits/catalogue/collections/[collectionId]/page.tsx` (handler ligne 1226)
 
 **Tests** :
 
@@ -708,7 +708,7 @@ expect(errors.length).toBe(0);
 
 **Fichiers** :
 
-- `src/app/produits/catalogue/variantes/page.tsx` (import + modal ligne 664-681)
+- `apps/back-office/src/app/produits/catalogue/variantes/page.tsx` (import + modal ligne 664-681)
 - `src/shared/modules/products/hooks/use-variant-groups.ts` (méthode addProductToVariantGroup)
 
 **Tests** :

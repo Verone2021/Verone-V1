@@ -10,7 +10,7 @@
 
 ```
 ReferenceError: CreateProductInGroupModal is not defined (×3)
-- Fichier: src/app/produits/catalogue/variantes/[groupId]/page.tsx:1599
+- Fichier: apps/back-office/src/app/produits/catalogue/variantes/[groupId]/page.tsx:1599
 - Cause: Modal supprimé lors migration monorepo (commit 6599d9a)
 ```
 
@@ -42,7 +42,7 @@ Migration monorepo incomplète :
 
 ### 1. Création Hook `useGroupUsedColors`
 
-**Fichier** : `src/hooks/use-product-colors.ts`
+**Fichier** : `apps/back-office/src/hooks/use-product-colors.ts`
 
 ```typescript
 export function useGroupUsedColors(
@@ -107,7 +107,7 @@ import { useToast } from '@/shared/modules/common/hooks';
 
 ### 4. Correction Import Page Variantes
 
-**Fichier** : `src/app/produits/catalogue/variantes/[groupId]/page.tsx`
+**Fichier** : `apps/back-office/src/app/produits/catalogue/variantes/[groupId]/page.tsx`
 
 ```diff
 + import { CreateProductInGroupModal } from '@/shared/modules/products/components/modals/CreateProductInGroupModal';
@@ -160,7 +160,7 @@ npm run build
 
 ### Nouveaux Fichiers
 
-1. **`src/hooks/use-product-colors.ts`** (72 lignes)
+1. **`apps/back-office/src/hooks/use-product-colors.ts`** (72 lignes)
    - Hook `useGroupUsedColors`
 
 2. **`src/shared/modules/products/components/modals/CreateProductInGroupModal.tsx`** (252 lignes)
@@ -174,7 +174,7 @@ npm run build
 4. **`src/shared/modules/products/hooks/index.ts`**
    - Ajout exports `useColorSelection`, `useGroupUsedColors`
 
-5. **`src/app/produits/catalogue/variantes/[groupId]/page.tsx`**
+5. **`apps/back-office/src/app/produits/catalogue/variantes/[groupId]/page.tsx`**
    - Ajout import `CreateProductInGroupModal`
    - Correction nom `VariantAddProductModal`
 
@@ -227,7 +227,7 @@ Lors de futures migrations :
 1. **Vérifier dépendances modals** :
 
    ```bash
-   grep -r "import.*from.*Modal" src/app/**/*.tsx
+   grep -r "import.*from.*Modal" apps/back-office/src/app/**/*.tsx
    ```
 
 2. **Valider tous hooks exportés** :

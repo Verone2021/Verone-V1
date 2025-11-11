@@ -39,7 +39,7 @@ Valider le module Finance :
 
 **Résultat** :
 
-- Page **n'existe pas** (pas de `page.tsx` dans `/src/app/finance/`)
+- Page **n'existe pas** (pas de `page.tsx` dans `/apps/back-office/src/app/finance/`)
 - Affichage page 404 Next.js standard
 - Message : "Page introuvable - La page que vous recherchez n'existe pas ou a été déplacée"
 
@@ -65,7 +65,7 @@ Valider le module Finance :
 **Analyse du code** :
 
 ```typescript
-// src/app/finance/rapprochement/page.tsx (lignes 19-57)
+// apps/back-office/src/app/finance/rapprochement/page.tsx (lignes 19-57)
 export default function RapprochementPage() {
   // FEATURE FLAG: Finance module disabled for Phase 1
   if (!featureFlags.financeEnabled) {
@@ -89,14 +89,14 @@ export default function RapprochementPage() {
 **Incohérence feature flags** :
 
 ```typescript
-// src/lib/feature-flags.ts (ligne 105)
+// apps/back-office/src/lib/feature-flags.ts (ligne 105)
 financeEnabled: true,  // ✅ Module Finance global ACTIVÉ
 ```
 
 **vs**
 
 ```typescript
-// src/app/finance/rapprochement/page.tsx (ligne 5)
+// apps/back-office/src/app/finance/rapprochement/page.tsx (ligne 5)
 // STATUS: DÉSACTIVÉ Phase 1 - Placeholder uniquement
 ```
 
@@ -111,7 +111,7 @@ financeEnabled: true,  // ✅ Module Finance global ACTIVÉ
 **Warning détecté** (non bloquant) :
 
 ```
-⚠️ ./src/hooks/use-sales-orders.ts
+⚠️ ./apps/back-office/src/hooks/use-sales-orders.ts
 Module not found: Can't resolve '@/app/actions/sales-order...
 ```
 
@@ -157,7 +157,7 @@ Module not found: Can't resolve '@/app/actions/sales-order...
 
 - **Type** : Erreurs API Supabase (PGRST116 = no rows returned)
 - **Origine** : Query `.single()` sur un UUID inexistant
-- **Code source** : ligne 98 de `src/app/finance/depenses/[id]/page.tsx`
+- **Code source** : ligne 98 de `apps/back-office/apps/back-office/src/app/finance/depenses/[id]/page.tsx`
   ```typescript
   } catch (error) {
     console.error('Fetch document error:', error); // ← Log volontaire
@@ -175,7 +175,7 @@ Module not found: Can't resolve '@/app/actions/sales-order...
 **Warning détecté** (non bloquant) :
 
 ```
-⚠️ ./src/hooks/use-sales-orders.ts
+⚠️ ./apps/back-office/src/hooks/use-sales-orders.ts
 Module not found: Can't resolve '@/app/actions/sales-order...
 ```
 
@@ -330,7 +330,7 @@ if (process.env.NODE_ENV === 'development') {
 **État actuel** :
 
 ```
-src/app/finance/
+apps/back-office/src/app/finance/
 ├── ❌ page.tsx (N'existe pas → 404)
 ├── rapprochement/
 │   └── page.tsx (⚠️ return null → page blanche)
@@ -376,14 +376,14 @@ src/app/finance/
 **Option A** : Désactiver flag (recommandé si module non prêt)
 
 ```typescript
-// src/lib/feature-flags.ts
+// apps/back-office/src/lib/feature-flags.ts
 financeEnabled: false, // ✅ Cohérent avec commentaires
 ```
 
 **Option B** : Implémenter page ou afficher placeholder
 
 ```typescript
-// src/app/finance/rapprochement/page.tsx
+// apps/back-office/src/app/finance/rapprochement/page.tsx
 if (featureFlags.financeEnabled && !isFullyImplemented) {
   return <PlaceholderPhase2Message />; // Au lieu de null
 }
@@ -400,7 +400,7 @@ if (featureFlags.financeEnabled && !isFullyImplemented) {
 **Solution** : Logger conditionnel en dev uniquement
 
 ```typescript
-// src/app/finance/depenses/[id]/page.tsx (ligne 98)
+// apps/back-office/src/app/finance/depenses/[id]/page.tsx (ligne 98)
 if (process.env.NODE_ENV === 'development') {
   console.error('Fetch document error:', error);
 }

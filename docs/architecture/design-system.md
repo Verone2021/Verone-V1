@@ -36,9 +36,9 @@ Design System V2 2025 : palette moderne, gradients, micro-interactions, inspiré
 
 **Fichiers** :
 
-- `/Users/romeodossantos/verone-back-office-V1/src/lib/theme-v2.ts`
-- `/Users/romeodossantos/verone-back-office-V1/src/lib/design-system/`
-- `/Users/romeodossantos/verone-back-office-V1/src/components/ui-v2/`
+- `/Users/romeodossantos/verone-back-office-V1/apps/back-office/src/lib/theme-v2.ts`
+- `/Users/romeodossantos/verone-back-office-V1/apps/back-office/src/lib/design-system/`
+- `/Users/romeodossantos/verone-back-office-V1/apps/back-office/src/components/ui-v2/`
 
 **Référence** : CLAUDE.md section "Design System Vérone V2"
 

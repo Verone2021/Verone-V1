@@ -140,7 +140,7 @@ ALTER TABLE invoice_sync_queue ADD COLUMN provider TEXT DEFAULT 'pennylane';
 #### 2. Créer Client Pennylane (2h)
 
 ```typescript
-// src/lib/invoicing/pennylane-client.ts
+// apps/back-office/src/lib/invoicing/pennylane-client.ts
 export class PennylaneClient {
   async createInvoice(orderData: SalesOrder): Promise<Invoice> {
     const payload = this.mapOrderToInvoice(orderData);
@@ -174,7 +174,7 @@ export class PennylaneClient {
 #### 3. Adapter Routes API (1h)
 
 ```typescript
-// src/app/api/invoices/create-from-order/route.ts
+// apps/back-office/src/app/api/invoices/create-from-order/route.ts
 import { PennylaneClient } from '@/lib/invoicing/pennylane-client';
 
 export async function POST(req: Request) {
@@ -202,7 +202,7 @@ export async function POST(req: Request) {
 #### 4. Configurer Webhooks (30 min)
 
 ```typescript
-// src/app/api/webhooks/pennylane/invoice-status/route.ts
+// apps/back-office/src/app/api/webhooks/pennylane/invoice-status/route.ts
 import crypto from 'crypto';
 
 export async function POST(req: Request) {

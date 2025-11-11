@@ -142,8 +142,8 @@ git push origin nom-de-ta-branche
 **Alternative** : Ajouter fichiers spécifiques uniquement
 
 ```bash
-git add src/app/dashboard/page.tsx
-git add src/hooks/use-dashboard.ts
+git add apps/back-office/src/app/dashboard/page.tsx
+git add apps/back-office/src/hooks/use-dashboard.ts
 git commit -m "✨ Amélioration dashboard: ajout KPIs"
 git push origin main
 ```
@@ -207,10 +207,10 @@ git checkout -b feature/phase2-stocks
 # 3. Développer... (modifications fichiers)
 
 # 4. Commits réguliers
-git add src/app/stocks/
+git add apps/back-office/src/app/stocks/
 git commit -m "✨ Interface gestion stocks: Liste produits"
 
-git add src/hooks/use-stocks.ts
+git add apps/back-office/src/hooks/use-stocks.ts
 git commit -m "✨ Hook useStocks: Intégration Supabase"
 
 # 5. Pousser branche vers GitHub
@@ -357,7 +357,7 @@ git log --oneline -10         # 10 derniers commits
 # 💾 Sauvegarder Travail (Add & Commit)
 # ──────────────────────────────────────
 git add .                     # Ajouter TOUS changements
-git add src/app/dashboard/    # Ajouter dossier spécifique
+git add apps/back-office/src/app/dashboard/    # Ajouter dossier spécifique
 git add *.tsx                 # Ajouter tous fichiers .tsx
 
 git commit -m "Message"       # Commit avec message court
@@ -407,12 +407,12 @@ git diff main feature/nom     # Comparer deux branches
 git show abc1234              # Voir détails commit spécifique
 
 git log --graph --oneline --all  # Historique visuel branches
-git blame src/app/page.tsx    # Qui a modifié chaque ligne
+git blame apps/back-office/src/app/page.tsx    # Qui a modifié chaque ligne
 
 # ──────────────────────────────────────
 # ⏪ Annuler Modifications
 # ──────────────────────────────────────
-git restore src/app/page.tsx  # Annuler modifs fichier (avant add)
+git restore apps/back-office/src/app/page.tsx  # Annuler modifs fichier (avant add)
 git restore --staged file.tsx # Retirer fichier de staging (après add)
 git reset HEAD~1              # Annuler dernier commit (garder modifs)
 git reset --hard HEAD~1       # Annuler dernier commit (⚠️ perte modifs)
@@ -489,7 +489,7 @@ git pull origin main
 
 ```bash
 $ git merge feature/test
-CONFLICT (content): Merge conflict in src/app/page.tsx
+CONFLICT (content): Merge conflict in apps/back-office/src/app/page.tsx
 Automatic merge failed; fix conflicts and then commit the result.
 ```
 
@@ -519,7 +519,7 @@ Automatic merge failed; fix conflicts and then commit the result.
 
 4. **Marquer comme résolu** :
    ```bash
-   git add src/app/page.tsx
+   git add apps/back-office/src/app/page.tsx
    git commit -m "🔀 Merge feature/test: résolution conflits"
    git push origin main
    ```
@@ -616,7 +616,7 @@ Module not found: Can't resolve '@/hooks/use-products'
 
 1. Vérifier chemin import en local
 2. Vérifier fichier existe dans Git : `git ls-files | grep use-products`
-3. Si manquant : `git add src/hooks/use-products.ts` puis commit
+3. Si manquant : `git add apps/back-office/src/hooks/use-products.ts` puis commit
 
 ---
 

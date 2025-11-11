@@ -265,7 +265,7 @@ WHERE udt_name = 'availability_status_type'
 -- DROP TYPE IF EXISTS availability_status_type CASCADE;
 
 -- ÉTAPE 4: Régénérer types TypeScript
--- supabase gen types typescript --local > src/types/supabase.ts
+-- supabase gen types typescript --local > apps/back-office/src/types/supabase.ts
 ```
 
 **Impact**: 🟡 MOYEN - Suppression ENUM casse vues utilisant `status_deprecated AS status`. Mise à jour vues requise d'abord.
@@ -421,7 +421,7 @@ ALTER TABLE products DROP COLUMN IF EXISTS status_deprecated CASCADE;
 DROP TYPE IF EXISTS availability_status_type CASCADE;
 
 -- ÉTAPE 6: Régénérer types TypeScript
--- supabase gen types typescript --local > src/types/supabase.ts
+-- supabase gen types typescript --local > apps/back-office/src/types/supabase.ts
 ```
 
 **Impact**: 🟢 AUCUN (immédiat) - Colonne backup, suppression planifiée 2026-05-04.
@@ -430,7 +430,7 @@ DROP TYPE IF EXISTS availability_status_type CASCADE;
 
 ### 2.3. CODE FRONTEND OBSOLÈTE (3 fichiers)
 
-#### `src/app/api/catalogue/products/route.ts`
+#### `apps/back-office/src/app/api/catalogue/products/route.ts`
 
 **Problème**: Utilise `availability_status` au lieu de `stock_status` + `product_status`
 
@@ -450,7 +450,7 @@ product_status: 'active',      // ✅ Nouveau système
 
 **Impact**: 🟡 MOYEN - API route potentiellement utilisée pour création produits.
 
-#### `src/hooks/use-products.ts`
+#### `apps/back-office/src/hooks/use-products.ts`
 
 **Problème**: Commentaire obsolète référençant ancien enum
 
@@ -469,7 +469,7 @@ product_status?: ProductStatus; // Statut commercial manuel (product_status_type
 
 **Impact**: 🟢 FAIBLE - Commentaire uniquement, pas de code exécuté.
 
-#### `src/lib/google-merchant/product-mapper.ts`
+#### `apps/back-office/src/lib/google-merchant/product-mapper.ts`
 
 **Problème**: Mapping Google Merchant utilise ancien statut
 
@@ -728,8 +728,8 @@ UPDATE products SET stock_real = stock_real;
 grep -r "availability_status" src/
 
 -- 4. Mettre à jour code frontend obsolète
--- src/app/api/catalogue/products/route.ts
--- src/lib/google-merchant/product-mapper.ts
+-- apps/back-office/src/app/api/catalogue/products/route.ts
+-- apps/back-office/src/lib/google-merchant/product-mapper.ts
 ```
 
 **Validation**:
@@ -787,7 +787,7 @@ ALTER TABLE products DROP COLUMN status_deprecated CASCADE;
 DROP TYPE availability_status_type CASCADE;
 
 -- 5. Régénérer types TypeScript
-supabase gen types typescript --local > src/types/supabase.ts
+supabase gen types typescript --local > apps/back-office/src/types/supabase.ts
 ```
 
 **Validation**:
@@ -835,9 +835,9 @@ DROP TABLE IF EXISTS abby_sync_queue CASCADE;
 
 ### Code Frontend
 
-- **Hooks Nouveaux**: `src/hooks/use-stock-status.ts`, `use-product-status.ts`, `use-completion-status.ts`
-- **Composants Nouveaux**: `src/components/business/*-status-compact.tsx` (3 composants)
-- **Code Obsolète**: `src/app/api/catalogue/products/route.ts`, `src/lib/google-merchant/product-mapper.ts`
+- **Hooks Nouveaux**: `apps/back-office/src/hooks/use-stock-status.ts`, `use-product-status.ts`, `use-completion-status.ts`
+- **Composants Nouveaux**: `apps/back-office/src/components/business/*-status-compact.tsx` (3 composants)
+- **Code Obsolète**: `apps/back-office/src/app/api/catalogue/products/route.ts`, `apps/back-office/src/lib/google-merchant/product-mapper.ts`
 
 ---
 

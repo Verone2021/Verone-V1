@@ -590,9 +590,9 @@ ORDER BY validated_at DESC LIMIT 1;
 
 ### Code Source
 
-- `src/app/stocks/alertes/page.tsx` (Page alertes stock)
-- `packages/@verone/stock/src/hooks/use-stock-alerts.ts` (Hooks React)
-- `packages/@verone/notifications/src/hooks/use-database-notifications.ts` (Notifications)
+- `apps/back-office/apps/back-office/src/app/stocks/alertes/page.tsx` (Page alertes stock)
+- `packages/@verone/stock/apps/back-office/src/hooks/use-stock-alerts.ts` (Hooks React)
+- `packages/@verone/notifications/apps/back-office/src/hooks/use-database-notifications.ts` (Notifications)
 
 ### Documentation Associée
 

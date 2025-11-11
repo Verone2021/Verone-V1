@@ -18,7 +18,7 @@
 
 **Contenu** :
 
-- 8 fichiers types copiés depuis `src/types/`
+- 8 fichiers types copiés depuis `apps/back-office/apps/back-office/src/types/`
 - `supabase.ts` - Types database Supabase (source primaire)
 - `collections.ts` - Types collections
 - `variant-groups.ts` - Types groupes variantes
@@ -168,7 +168,7 @@ import { KPIConfig, kpiRegistry } from '@verone/kpi';
 - ✅ `tsconfig.json`
 - ✅ `README.md`
 - ✅ `src/index.ts`
-- ✅ `src/components/stock/*` (4 composants)
+- ✅ `apps/back-office/apps/back-office/src/components/stock/*` (4 composants)
 - ✅ `src/tokens/*` (colors, spacing, typography, shadows)
 - ✅ `src/themes/*` (light, dark)
 - ⚠️ `dist/` - Non créé (build failed)
@@ -294,8 +294,8 @@ npm warn Found: eslint@undefined packages/@verone/eslint-config/node_modules/esl
    - [ ] Parser YAML → TypeScript
 
 6. **Tester imports dans app**
-   - [ ] Remplacer imports `src/types/*` → `@verone/types`
-   - [ ] Remplacer imports `src/lib/utils` → `@verone/utils`
+   - [ ] Remplacer imports `apps/back-office/apps/back-office/src/types/*` → `@verone/types`
+   - [ ] Remplacer imports `apps/back-office/apps/back-office/src/lib/utils` → `@verone/utils`
    - [ ] Vérifier build app avec packages monorepo
 
 ### Phase Moyen Terme (1-2 semaines)

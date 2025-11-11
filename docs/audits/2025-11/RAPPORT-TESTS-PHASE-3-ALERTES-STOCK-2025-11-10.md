@@ -201,7 +201,7 @@ L'alerte reste affichée même après `UPDATE stock_alert_tracking SET validated
 
 **Fichiers concernés** :
 
-- `packages/@verone/stock/src/hooks/use-stock-alerts.ts` - Query frontend
+- `packages/@verone/stock/apps/back-office/src/hooks/use-stock-alerts.ts` - Query frontend
 - `supabase/migrations/20251110_001_fix_stock_alerts_count_validated.sql` - RPC function backend
 
 **Solution implémentée** :
@@ -264,7 +264,7 @@ Le bouton "Créer commande" du modal est positionné en dehors du viewport visib
 
 **Fichier concerné** :
 
-- Probablement `packages/@verone/stock/src/components/quick-purchase-modal.tsx`
+- Probablement `packages/@verone/stock/apps/back-office/src/components/quick-purchase-modal.tsx`
 - Problème CSS de hauteur/overflow du modal
 
 **Solution proposée** :

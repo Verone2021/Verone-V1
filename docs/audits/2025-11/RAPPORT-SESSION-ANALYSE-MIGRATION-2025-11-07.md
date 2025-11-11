@@ -109,8 +109,8 @@ import { ProductCard } from '@/shared/modules/products/components/cards/ProductC
 
 | Catégorie                       | Nombre | Décision                                          |
 | ------------------------------- | ------ | ------------------------------------------------- |
-| **Hooks Base** (Supabase utils) | 3      | ✅ Garder dans `src/hooks/base/`                  |
-| **Hooks Core** (Business core)  | 1      | ✅ Garder dans `src/hooks/core/`                  |
+| **Hooks Base** (Supabase utils) | 3      | ✅ Garder dans `apps/back-office/src/hooks/base/` |
+| **Hooks Core** (Business core)  | 1      | ✅ Garder dans `apps/back-office/src/hooks/core/` |
 | **Hooks Google Merchant**       | 8      | 🔄 Migrer vers `modules/channels/hooks/`          |
 | **Hooks Metrics**               | 7      | 🔄 Migrer vers `modules/dashboard/hooks/metrics/` |
 | **Hooks Standalone**            | 10     | 🔄 Migrer vers modules respectifs                 |
@@ -302,8 +302,8 @@ verone-monorepo/                    # ROOT
    - [ ] Configurer Tailwind (design tokens)
 
 2. **Migrer composants**
-   - [ ] Copier `src/components/ui/` (shadcn/ui)
-   - [ ] Copier `src/components/ui-v2/` (Design V2)
+   - [ ] Copier `apps/back-office/src/components/ui/` (shadcn/ui)
+   - [ ] Copier `apps/back-office/src/components/ui-v2/` (Design V2)
    - [ ] Copier `src/shared/modules/*/components/`
    - [ ] Organiser par module
 
@@ -477,8 +477,8 @@ packages/design-system/
 │   └── lib/
 
 Migre tous les composants de :
-- src/components/ui/
-- src/components/ui-v2/
+- apps/back-office/src/components/ui/
+- apps/back-office/src/components/ui-v2/
 - src/shared/modules/*/components/
 
 Configure Tailwind et mets à jour les imports dans back-office.
@@ -492,7 +492,7 @@ Crée apps/website/ avec Next.js 15 qui réutilise les packages monorepo.
 Structure :
 apps/website/
 ├── package.json (dépendances: @verone/design-system, @verone/products, etc.)
-├── src/app/
+├── apps/back-office/src/app/
 │   ├── (marketing)/ → home, about
 │   ├── (shop)/ → catalog, product/[id], cart, checkout
 │   └── api/
@@ -544,8 +544,8 @@ packages/   → Code partagé (UI, database, config, utils)
   "version": "0.0.0",
   "private": true,
   "exports": {
-    "./components/*": "./src/components/*.tsx",
-    "./hooks/*": "./src/hooks/*.ts"
+    "./components/*": "./apps/back-office/src/components/*.tsx",
+    "./hooks/*": "./apps/back-office/src/hooks/*.ts"
   },
   "peerDependencies": {
     "react": "^18.3.1"

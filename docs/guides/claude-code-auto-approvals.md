@@ -133,25 +133,25 @@ Quand Claude Code a besoin de votre validation :
 
 ### Bash Patterns
 
-| Pattern                        | Description                 | Exemple                                  |
-| ------------------------------ | --------------------------- | ---------------------------------------- |
-| `Bash(PGPASSWORD:*)`           | Toutes commandes PostgreSQL | `PGPASSWORD="xxx" psql -c "SELECT..."`   |
-| `Bash(git log:*)`              | Git logs                    | `git log --oneline -10`                  |
-| `Bash(git add:*)`              | Git staging                 | `git add src/components/*.tsx`           |
-| `Bash(git commit:*)`           | Git commits                 | `git commit -m "feat: nouvelle feature"` |
-| `Bash(find:*)`                 | Recherche fichiers          | `find . -name "*.ts"`                    |
-| `Bash(node:*)`                 | Commandes Node.js           | `node --version`                         |
-| `Bash(curl:*)`                 | Requêtes HTTP               | `curl https://api.example.com`           |
-| `Bash(npm run dev)`            | Serveur dev Next.js         | `npm run dev`                            |
-| `Bash(npx supabase db push:*)` | Push migrations Supabase    | `npx supabase db push`                   |
-| `Bash(npx playwright test:*)`  | Tests Playwright            | `npx playwright test e2e/`               |
-| `Bash(psql:*)`                 | PostgreSQL direct           | `psql -h localhost -d mydb`              |
-| `Bash(kill:*)`                 | Arrêt processus             | `kill -9 1234`                           |
-| `Bash(pkill:*)`                | Arrêt processus par nom     | `pkill -f "node"`                        |
-| `Bash(cat:*)`                  | Lecture fichiers            | `cat package.json`                       |
-| `Bash(awk:*)`                  | Traitement texte            | `awk '{print $1}' file.txt`              |
-| `Bash(tree:*)`                 | Arborescence                | `tree -L 2 src/`                         |
-| `Bash(npm run build:*)`        | Build production            | `npm run build`                          |
+| Pattern                        | Description                 | Exemple                                         |
+| ------------------------------ | --------------------------- | ----------------------------------------------- |
+| `Bash(PGPASSWORD:*)`           | Toutes commandes PostgreSQL | `PGPASSWORD="xxx" psql -c "SELECT..."`          |
+| `Bash(git log:*)`              | Git logs                    | `git log --oneline -10`                         |
+| `Bash(git add:*)`              | Git staging                 | `git add apps/back-office/src/components/*.tsx` |
+| `Bash(git commit:*)`           | Git commits                 | `git commit -m "feat: nouvelle feature"`        |
+| `Bash(find:*)`                 | Recherche fichiers          | `find . -name "*.ts"`                           |
+| `Bash(node:*)`                 | Commandes Node.js           | `node --version`                                |
+| `Bash(curl:*)`                 | Requêtes HTTP               | `curl https://api.example.com`                  |
+| `Bash(npm run dev)`            | Serveur dev Next.js         | `npm run dev`                                   |
+| `Bash(npx supabase db push:*)` | Push migrations Supabase    | `npx supabase db push`                          |
+| `Bash(npx playwright test:*)`  | Tests Playwright            | `npx playwright test e2e/`                      |
+| `Bash(psql:*)`                 | PostgreSQL direct           | `psql -h localhost -d mydb`                     |
+| `Bash(kill:*)`                 | Arrêt processus             | `kill -9 1234`                                  |
+| `Bash(pkill:*)`                | Arrêt processus par nom     | `pkill -f "node"`                               |
+| `Bash(cat:*)`                  | Lecture fichiers            | `cat package.json`                              |
+| `Bash(awk:*)`                  | Traitement texte            | `awk '{print $1}' file.txt`                     |
+| `Bash(tree:*)`                 | Arborescence                | `tree -L 2 src/`                                |
+| `Bash(npm run build:*)`        | Build production            | `npm run build`                                 |
 
 ### MCP Agents Patterns
 
@@ -207,9 +207,9 @@ Quand Claude Code a besoin de votre validation :
 
 ```typescript
 // 1. Lecture/Analyse (Auto-approuvé)
-Read('src/components/MyComponent.tsx');
+Read('apps/back-office/src/components/MyComponent.tsx');
 mcp__serena__get_symbols_overview({
-  relative_path: 'src/components/MyComponent.tsx',
+  relative_path: 'apps/back-office/src/components/MyComponent.tsx',
 });
 
 // 2. Recherche/Context (Auto-approuvé)
@@ -223,13 +223,13 @@ mcp__playwright__browser_console_messages();
 
 // 4. Modification (REQUIERT VALIDATION 🔔)
 Edit({
-  file_path: 'src/components/MyComponent.tsx',
+  file_path: 'apps/back-office/src/components/MyComponent.tsx',
   old_string: '...',
   new_string: '...',
 });
 
 // 5. Commit (Auto-approuvé)
-Bash('git add src/components/MyComponent.tsx');
+Bash('git add apps/back-office/src/components/MyComponent.tsx');
 Bash("git commit -m 'feat: amélioration MyComponent'");
 ```
 

@@ -397,13 +397,13 @@ Facture :
 **Fichier** : Régénération automatique
 
 ```bash
-supabase gen types typescript --local > src/types/supabase.ts
+supabase gen types typescript --local > apps/back-office/src/types/supabase.ts
 ```
 
 **Vérification** :
 
 ```typescript
-// src/types/supabase.ts
+// apps/back-office/src/types/supabase.ts
 export interface Database {
   public: {
     Tables: {
@@ -424,11 +424,11 @@ export interface Database {
 
 **Fichiers impactés** (estimation) :
 
-1. **Commandes Clients** : `src/app/commandes/clients/page.tsx`
+1. **Commandes Clients** : `apps/back-office/src/app/commandes/clients/page.tsx`
    - Afficher `eco_tax_total` séparé dans détails commande
    - Adapter calculs totaux (total_ht + eco_tax_total)
 
-2. **Commandes Fournisseurs** : `src/app/commandes/fournisseurs/page.tsx`
+2. **Commandes Fournisseurs** : `apps/back-office/src/app/commandes/fournisseurs/page.tsx`
    - Idem
 
 3. **Formulaires édition commandes** :

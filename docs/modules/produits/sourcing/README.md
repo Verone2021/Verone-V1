@@ -62,7 +62,7 @@ Le **Sourcing** est le module de recherche et validation de nouveaux produits. I
 
 ### `/produits/sourcing/produits` - Liste Sourcing
 
-**Fichier** : `src/app/produits/sourcing/produits/page.tsx`
+**Fichier** : `apps/back-office/apps/back-office/src/app/produits/sourcing/produits/page.tsx`
 
 **Features** :
 
@@ -93,7 +93,7 @@ Le **Sourcing** est le module de recherche et validation de nouveaux produits. I
 
 ### `/produits/sourcing/produits/[id]` - Détail Sourcing
 
-**Fichier** : `src/app/produits/sourcing/produits/[id]/page.tsx`
+**Fichier** : `apps/back-office/apps/back-office/src/app/produits/sourcing/produits/[id]/page.tsx`
 
 **Sections** :
 
@@ -134,7 +134,7 @@ Le **Sourcing** est le module de recherche et validation de nouveaux produits. I
 
 ### `/produits/sourcing/produits/create` - Création Sourcing
 
-**Fichier** : `src/app/produits/sourcing/produits/create/page.tsx`
+**Fichier** : `apps/back-office/apps/back-office/src/app/produits/sourcing/produits/create/page.tsx`
 
 **Formulaire Complet** (vs modal simplifiée) :
 

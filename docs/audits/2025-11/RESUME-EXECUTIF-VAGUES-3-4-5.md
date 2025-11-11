@@ -22,21 +22,21 @@ Imports      : 840-869 à migrer
 
 ### ✅ DÉJÀ MIGRÉ (VAGUES 1-2)
 
-| Vague | Contenu | Fichiers | Statut |
-|-------|---------|----------|--------|
-| VAGUE 1 | @verone/ui (composants shadcn/ui) | 51 | ✅ 100% |
-| VAGUE 2 | 18 packages business | 411 | ✅ 100% |
+| Vague   | Contenu                           | Fichiers | Statut  |
+| ------- | --------------------------------- | -------- | ------- |
+| VAGUE 1 | @verone/ui (composants shadcn/ui) | 51       | ✅ 100% |
+| VAGUE 2 | 18 packages business              | 411      | ✅ 100% |
 
 **Total migré** : 462 fichiers, 0 erreurs TypeScript
 
 ### 🎯 À MIGRER (VAGUES 3-4-5)
 
-| Vague | Objectif | Fichiers | Imports | Durée |
-|-------|----------|----------|---------|-------|
-| **VAGUE 3** | Migration src/lib/ | 65 | 77-106 | 4h |
-| **VAGUE 4** | Update imports massif | 326 | 763 | 3h30 |
-| **VAGUE 5** | Cleanup + Validation | 474-501 | - | 3h15 |
-| **TOTAL** | **Finalisation 100%** | **865-892** | **840-869** | **10h45** |
+| Vague       | Objectif                            | Fichiers    | Imports     | Durée     |
+| ----------- | ----------------------------------- | ----------- | ----------- | --------- |
+| **VAGUE 3** | Migration apps/back-office/src/lib/ | 65          | 77-106      | 4h        |
+| **VAGUE 4** | Update imports massif               | 326         | 763         | 3h30      |
+| **VAGUE 5** | Cleanup + Validation                | 474-501     | -           | 3h15      |
+| **TOTAL**   | **Finalisation 100%**               | **865-892** | **840-869** | **10h45** |
 
 ---
 
@@ -44,23 +44,24 @@ Imports      : 840-869 à migrer
 
 ### Fichiers à Migrer
 
-**Total** : 65 fichiers TypeScript dans `src/lib/`
+**Total** : 65 fichiers TypeScript dans `apps/back-office/src/lib/`
 
 **Répartition par catégorie** :
 
-| Catégorie | Fichiers | Destination | Impact |
-|-----------|----------|-------------|--------|
-| **Supabase & DB** | 8 | @verone/utils/supabase + packages business | 40-50 imports |
-| **Design System** | 12 | @verone/ui/tokens | 24 imports |
-| **Utils Métier** | 18 | Packages business + @verone/integrations | 10-15 imports |
-| **Core Utils** | 9 | @verone/utils | 0-5 imports |
-| **Infrastructure** | 11 | @verone/utils + src/lib (partiel) | 0-5 imports |
-| **Validation** | 3 | @verone/utils/validation | 2-5 imports |
-| **Actions** | 1 | @verone/admin | 1-2 imports |
+| Catégorie          | Fichiers | Destination                                | Impact        |
+| ------------------ | -------- | ------------------------------------------ | ------------- |
+| **Supabase & DB**  | 8        | @verone/utils/supabase + packages business | 40-50 imports |
+| **Design System**  | 12       | @verone/ui/tokens                          | 24 imports    |
+| **Utils Métier**   | 18       | Packages business + @verone/integrations   | 10-15 imports |
+| **Core Utils**     | 9        | @verone/utils                              | 0-5 imports   |
+| **Infrastructure** | 11       | @verone/utils + src/lib (partiel)          | 0-5 imports   |
+| **Validation**     | 3        | @verone/utils/validation                   | 2-5 imports   |
+| **Actions**        | 1        | @verone/admin                              | 1-2 imports   |
 
 ### Nouveau Package
 
 **@verone/integrations** (17 fichiers)
+
 ```
 packages/@verone/integrations/
 ├── abby/ (6 fichiers)
@@ -72,9 +73,9 @@ packages/@verone/integrations/
 
 ```typescript
 // AVANT
-src/lib/supabase/client.ts
-src/lib/design-system/tokens/colors.ts
-src/lib/abby/client.ts
+apps/back-office/src/lib/supabase/client.ts
+apps/back-office/src/lib/design-system/tokens/colors.ts
+apps/back-office/src/lib/abby/client.ts
 
 // APRÈS
 packages/@verone/utils/src/supabase/client.ts
@@ -107,19 +108,19 @@ packages/@verone/integrations/src/abby/client.ts
 
 **Répartition** :
 
-| Source | Fichiers | Imports | Pattern |
-|--------|----------|---------|---------|
-| `src/app/` | 117 | 604 | @/components/ui, @/shared, @/lib |
-| `src/components/` | 205 | 155 | @/lib, @/shared |
-| `src/hooks/` | 4 | 4 | @/hooks |
+| Source                             | Fichiers | Imports | Pattern                          |
+| ---------------------------------- | -------- | ------- | -------------------------------- |
+| `apps/back-office/src/app/`        | 117      | 604     | @/components/ui, @/shared, @/lib |
+| `apps/back-office/src/components/` | 205      | 155     | @/lib, @/shared                  |
+| `apps/back-office/src/hooks/`      | 4        | 4       | @/hooks                          |
 
 **Détail par type** :
 
-| Pattern Import | Occurrences | Destination |
-|----------------|-------------|-------------|
-| `@/components/ui/*` | 267 | `@verone/ui` |
-| `@/shared/modules/*` | 382 | `@verone/*` (18 packages) |
-| `@/lib/*` | 110 | `@verone/utils` ou packages |
+| Pattern Import       | Occurrences | Destination                 |
+| -------------------- | ----------- | --------------------------- |
+| `@/components/ui/*`  | 267         | `@verone/ui`                |
+| `@/shared/modules/*` | 382         | `@verone/*` (18 packages)   |
+| `@/lib/*`            | 110         | `@verone/utils` ou packages |
 
 ### Stratégie
 
@@ -134,6 +135,7 @@ node scripts/migrate-imports-monorepo.js
 ```
 
 **Avantages** :
+
 - Traite 763 imports en 30min
 - 0 erreurs manuelles
 - Consolidation automatique
@@ -142,14 +144,14 @@ node scripts/migrate-imports-monorepo.js
 
 ```typescript
 // AVANT
-import { Button } from '@/components/ui/button'
-import { useProducts } from '@/shared/modules/products/hooks'
-import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button';
+import { useProducts } from '@/shared/modules/products/hooks';
+import { cn } from '@/lib/utils';
 
 // APRÈS
-import { Button } from '@verone/ui'
-import { useProducts } from '@verone/products'
-import { cn } from '@verone/utils'
+import { Button } from '@verone/ui';
+import { useProducts } from '@verone/products';
+import { cn } from '@verone/utils';
 ```
 
 ### Plan Étape par Étape
@@ -171,24 +173,26 @@ import { cn } from '@verone/utils'
 
 **Total** : 474-501 fichiers obsolètes
 
-| Dossier | Fichiers | Gain Espace |
-|---------|----------|-------------|
-| `src/shared/modules/` | 411 | ~4.3 MB |
-| `src/lib/` (partiel) | 50-65 | ~0.5-1 MB |
-| `src/types/` (obsolètes) | 3-5 | ~200 KB |
+| Dossier                                   | Fichiers | Gain Espace |
+| ----------------------------------------- | -------- | ----------- |
+| `src/shared/modules/`                     | 411      | ~4.3 MB     |
+| `apps/back-office/src/lib/` (partiel)     | 50-65    | ~0.5-1 MB   |
+| `apps/back-office/src/types/` (obsolètes) | 3-5      | ~200 KB     |
 
 ### Vérifications Finales
 
 **Checklist Build & Types** :
+
 - [ ] `npm run type-check` → 0 erreurs
 - [ ] `npm run build` → Success
 - [ ] `npm run lint` → 0 erreurs critiques
-- [ ] Imports @verone/* → 750-800+
+- [ ] Imports @verone/\* → 750-800+
 - [ ] Imports @/shared/modules → 0
 - [ ] Imports @/components/ui → 0
 - [ ] Imports @/lib → 0-5 (seulement middleware/auth)
 
 **Checklist Documentation** :
+
 - [ ] Guide migration imports créé
 - [ ] READMEs packages à jour
 - [ ] Architecture monorepo documentée
@@ -211,6 +215,7 @@ import { cn } from '@verone/utils'
 ## 📅 PLANNING RECOMMANDÉ
 
 ### Jour 1 (4h) - VAGUE 3
+
 ```
 09:00-09:20  Créer @verone/integrations
 09:20-10:00  Migrer Supabase (8 fichiers)
@@ -227,6 +232,7 @@ import { cn } from '@verone/utils'
 ```
 
 ### Jour 2 (4h) - VAGUE 4
+
 ```
 09:00-10:00  Développer script jscodeshift
 10:00-10:30  Tests dry-run
@@ -241,6 +247,7 @@ import { cn } from '@verone/utils'
 ```
 
 ### Jour 3 (3h15) - VAGUE 5
+
 ```
 09:00-09:35  Cleanup fichiers obsolètes
 09:35-10:35  Documentation (3 fichiers)
@@ -258,36 +265,36 @@ import { cn } from '@verone/utils'
 
 ### Avant VAGUES 3-4-5
 
-| Métrique | Valeur |
-|----------|--------|
-| Migration monorepo | 95% |
-| Packages @verone | 20 |
-| Imports @verone/* | 88 |
-| Fichiers src/shared | 411 |
-| Fichiers src/lib | 65 |
-| Erreurs TypeScript | 0 |
+| Métrique            | Valeur |
+| ------------------- | ------ |
+| Migration monorepo  | 95%    |
+| Packages @verone    | 20     |
+| Imports @verone/\*  | 88     |
+| Fichiers src/shared | 411    |
+| Fichiers src/lib    | 65     |
+| Erreurs TypeScript  | 0      |
 
 ### Après VAGUES 3-4-5
 
-| Métrique | Valeur | ✅ |
-|----------|--------|-----|
-| Migration monorepo | **100%** | ✅ |
-| Packages @verone | **21** | ✅ |
-| Imports @verone/* | **750-800+** | ✅ |
-| Fichiers src/shared | **0** | ✅ |
-| Fichiers src/lib | **0-11** | ✅ |
-| Erreurs TypeScript | **0** | ✅ |
+| Métrique            | Valeur       | ✅  |
+| ------------------- | ------------ | --- |
+| Migration monorepo  | **100%**     | ✅  |
+| Packages @verone    | **21**       | ✅  |
+| Imports @verone/\*  | **750-800+** | ✅  |
+| Fichiers src/shared | **0**        | ✅  |
+| Fichiers src/lib    | **0-11**     | ✅  |
+| Erreurs TypeScript  | **0**        | ✅  |
 
 ---
 
 ## 🚨 RISQUES & MITIGATIONS
 
-| Risque | Impact | Probabilité | Mitigation |
-|--------|--------|-------------|------------|
-| Erreurs TS post-VAGUE 3 | 🔴 Élevé | 🟡 Moyenne | Type-check incrémental + Rollback Git |
-| Imports cassés post-VAGUE 4 | 🔴 Élevé | 🟡 Moyenne | Dry-run MANDATORY + Tests manuels |
-| Régression fonctionnelle | 🔴 Critique | 🟢 Faible | Tests MCP Browser + Console errors = 0 |
-| Overhead maintenance | 🟡 Moyen | 🟢 Faible | Documentation exhaustive |
+| Risque                      | Impact      | Probabilité | Mitigation                             |
+| --------------------------- | ----------- | ----------- | -------------------------------------- |
+| Erreurs TS post-VAGUE 3     | 🔴 Élevé    | 🟡 Moyenne  | Type-check incrémental + Rollback Git  |
+| Imports cassés post-VAGUE 4 | 🔴 Élevé    | 🟡 Moyenne  | Dry-run MANDATORY + Tests manuels      |
+| Régression fonctionnelle    | 🔴 Critique | 🟢 Faible   | Tests MCP Browser + Console errors = 0 |
+| Overhead maintenance        | 🟡 Moyen    | 🟢 Faible   | Documentation exhaustive               |
 
 ---
 
@@ -296,7 +303,7 @@ import { cn } from '@verone/utils'
 ### Documentation
 
 - [x] **PLAN-MIGRATION-VAGUES-3-4-5-COMPLET.md** (34 pages)
-  - Inventaire exhaustif 65 fichiers src/lib/
+  - Inventaire exhaustif 65 fichiers apps/back-office/src/lib/
   - Classification 7 catégories
   - Plan détaillé 3 vagues
   - Estimation durée précise
@@ -316,7 +323,7 @@ import { cn } from '@verone/utils'
 ### Code
 
 - [ ] Package @verone/integrations (VAGUE 3)
-- [ ] 65 fichiers migrés src/lib/ (VAGUE 3)
+- [ ] 65 fichiers migrés apps/back-office/src/lib/ (VAGUE 3)
 - [ ] 763 imports transformés (VAGUE 4)
 - [ ] 474-501 fichiers supprimés (VAGUE 5)
 
@@ -327,6 +334,7 @@ import { cn } from '@verone/utils'
 **Validation plan avec utilisateur**
 
 **Questions à confirmer** :
+
 1. Approuver planning 3 jours (11h) ?
 2. VAGUE 3 Infrastructure : Option A (migration complète) ou Option B (garder middleware/auth) ?
 3. Autorisation création nouveau package @verone/integrations ?
@@ -340,6 +348,6 @@ import { cn } from '@verone/utils'
 **Auteur** : Claude Code (Analyse exhaustive)  
 **Fichiers générés** : 3 (Plan complet + Guide + Script)  
 **Lignes de code analysées** : ~50 000  
-**Temps analyse** : 45min  
+**Temps analyse** : 45min
 
 **Statut** : ⏳ Prêt pour validation utilisateur

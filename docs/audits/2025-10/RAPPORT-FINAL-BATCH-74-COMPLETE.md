@@ -477,7 +477,7 @@ Le compromis `as any` permet de débloquer le build **sans régression fonctionn
 1. **Supabase Types Regeneration** :
 
    ```bash
-   supabase gen types typescript --local > src/types/database.ts
+   supabase gen types typescript --local > apps/back-office/src/types/database.ts
    ```
 
    - Vérifier compatibilité

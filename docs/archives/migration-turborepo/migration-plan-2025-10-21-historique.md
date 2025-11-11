@@ -153,9 +153,9 @@ verone-monorepo/
 **Actions** :
 
 1. Créer packages/ui/ avec package.json
-2. Migrer src/components/ui-v2/ → packages/ui/src/components/
-3. Migrer src/lib/design-system/ → packages/ui/src/tokens/
-4. Migrer src/lib/theme-v2.ts → packages/ui/src/themes/
+2. Migrer apps/back-office/src/components/ui-v2/ → packages/ui/apps/back-office/src/components/
+3. Migrer apps/back-office/src/lib/design-system/ → packages/ui/src/tokens/
+4. Migrer apps/back-office/src/lib/theme-v2.ts → packages/ui/src/themes/
 5. Migrer .storybook/ → packages/ui/.storybook/
 6. Migrer stories/ → packages/ui/stories/
 7. Configurer build (tsup ou Vite)
@@ -178,7 +178,7 @@ verone-monorepo/
 **Actions** :
 
 1. Créer packages/types/ avec package.json
-2. Migrer src/types/ → packages/types/src/
+2. Migrer apps/back-office/src/types/ → packages/types/src/
 3. Séparer en modules (catalogue/, orders/, stock/, auth/, common/)
 4. Configurer build TypeScript
 5. Publier package local (@verone/types)
@@ -199,10 +199,10 @@ verone-monorepo/
 **Actions** :
 
 1. Créer apps/web/ avec Next.js setup
-2. Migrer src/app/ → apps/web/app/
-3. Migrer src/components/ → apps/web/components/ (sauf ui-v2)
-4. Migrer src/hooks/ → apps/web/hooks/ (sauf KPI)
-5. Migrer src/lib/ → apps/web/lib/
+2. Migrer apps/back-office/src/app/ → apps/web/app/
+3. Migrer apps/back-office/src/components/ → apps/web/components/ (sauf ui-v2)
+4. Migrer apps/back-office/src/hooks/ → apps/web/hooks/ (sauf KPI)
+5. Migrer apps/back-office/src/lib/ → apps/web/lib/
 6. Remplacer imports locaux par packages monorepo
    - `@/components/ui-v2` → `@verone/ui`
    - `@/types` → `@verone/types`

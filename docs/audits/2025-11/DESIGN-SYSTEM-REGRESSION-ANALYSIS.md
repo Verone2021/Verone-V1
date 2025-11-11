@@ -368,7 +368,7 @@ const buttonVariants = cva(
 
 ### PHASE 1: RESTAURATION BRAND VÉRONE (CRITIQUE)
 
-**Fichier**: `packages/@verone/ui/src/components/ui/button.tsx`
+**Fichier**: `packages/@verone/ui/apps/back-office/src/components/ui/button.tsx`
 
 **Actions**:
 
@@ -400,7 +400,7 @@ size: {
 
 ### PHASE 2: CORRECTION DIMENSIONS NotificationsDropdown
 
-**Fichier**: `packages/@verone/notifications/src/components/dropdowns/NotificationsDropdown.tsx`
+**Fichier**: `packages/@verone/notifications/apps/back-office/src/components/dropdowns/NotificationsDropdown.tsx`
 
 **Actions (AU PIXEL PRÈS)**:
 
@@ -448,7 +448,7 @@ size: {
 
 ### PHASE 3: CORRECTION HOVER dropdown-menu.tsx
 
-**Fichier**: `packages/@verone/ui/src/components/ui/dropdown-menu.tsx`
+**Fichier**: `packages/@verone/ui/apps/back-office/src/components/ui/dropdown-menu.tsx`
 
 **Actions**:
 
@@ -594,11 +594,11 @@ packages/ui/
 
 ### CRITIQUES (Blocants utilisateur)
 
-1. ✅ `packages/@verone/ui/src/components/ui/button.tsx`
+1. ✅ `packages/@verone/ui/apps/back-office/src/components/ui/button.tsx`
    - Supprimer ButtonV2, restaurer button.tsx original CVA
    - BRAND VÉRONE: bg-black, uppercase, tracking-wide, border-2
 
-2. ✅ `packages/@verone/notifications/src/components/dropdowns/NotificationsDropdown.tsx`
+2. ✅ `packages/@verone/notifications/apps/back-office/src/components/dropdowns/NotificationsDropdown.tsx`
    - h-[500px] → h-[400px]
    - p-12 → p-8
    - h-8 w-8 → h-6 w-6
@@ -608,13 +608,13 @@ packages/ui/
 
 ### IMPORTANTS (Cohérence brand)
 
-3. ✅ `packages/@verone/ui/src/components/ui/dropdown-menu.tsx`
+3. ✅ `packages/@verone/ui/apps/back-office/src/components/ui/dropdown-menu.tsx`
    - hover:bg-gray-900 → hover:bg-gray-50
    - Supprime hover:text-white
 
 ### OPTIONNELS (Optimisations)
 
-4. ⚠️ `packages/@verone/ui/src/components/ui/badge.tsx`
+4. ⚠️ `packages/@verone/ui/apps/back-office/src/components/ui/badge.tsx`
    - Considérer retour CVA si possible
    - Sinon garder actuel (impact faible)
 

@@ -210,19 +210,19 @@ git checkout -b feature/filtres-recherche-catalogue
 
 # 3. Développement (plusieurs sessions)
 # Session 1: Composant UI
-git add src/components/business/catalogue-filters.tsx
+git add apps/back-office/src/components/business/catalogue-filters.tsx
 git commit -m "✨ FEAT: Composant filtres catalogue (UI)"
 
 # Session 2: Logique filtrage
-git add src/hooks/use-catalogue-filters.ts
+git add apps/back-office/src/hooks/use-catalogue-filters.ts
 git commit -m "✨ FEAT: Hook filtrage produits (logique)"
 
 # Session 3: Intégration
-git add src/app/catalogue/page.tsx
+git add apps/back-office/src/app/catalogue/page.tsx
 git commit -m "✨ FEAT: Intégration filtres dans page catalogue"
 
 # Session 4: Bug fix
-git add src/hooks/use-catalogue-filters.ts
+git add apps/back-office/src/hooks/use-catalogue-filters.ts
 git commit -m "🐛 FIX: Correction reset filtres"
 
 # 4. Push vers GitHub
@@ -268,7 +268,7 @@ git pull origin main
 git checkout -b hotfix/bug-critique-paiements
 
 # Fix rapide
-git add src/lib/payments.ts
+git add apps/back-office/src/lib/payments.ts
 git commit -m "🚨 HOTFIX: Bug calcul TVA paiements"
 
 # Push + PR accélérée

@@ -72,7 +72,7 @@
 # Pour chaque composant migré :
 
 1. ✅ Créer nouveau composant unifié
-   - src/components/ui/button.tsx (nouveau)
+   - apps/back-office/src/components/ui/button.tsx (nouveau)
    - Tests unitaires (button.test.tsx)
    - Story Storybook (button.stories.tsx)
 
@@ -117,17 +117,17 @@
 
 ### Timeline Détaillée (10 jours ouvrés)
 
-| Jour | Tâche | Deliverable | Validation |
-|------|-------|-------------|------------|
-| **J1** | Créer Button unifié | `button.tsx` + tests + story | Build success, Storybook render |
-| **J2** | Scripts codemods Button | `migrate-button.ts` | Dry-run 62 fichiers OK |
-| **J3-4** | Migration Button (62 fichiers) | Commits par batch 15 fichiers | Type-check 0 errors, console 0 errors |
-| **J5** | Créer KPICard unifié | `kpi-card.tsx` + tests + story | Build success |
-| **J6** | Scripts codemods KPI | `migrate-kpi-card.ts` | Dry-run 11 fichiers OK |
-| **J7** | Migration KPI Cards (11 fichiers) | Commit batch | Validation complète |
-| **J8** | Consolider design tokens | `design-system/tokens/index.ts` | Exports unifiés, docs |
-| **J9** | Storybook P0 (15 stories) | Select, Combobox, Dialog, Form, etc. | 15 stories published |
-| **J10** | Tests final + cleanup | Supprimer ActionButton, ModernActionButton, etc. | Console 0 errors, build success |
+| Jour     | Tâche                             | Deliverable                                      | Validation                            |
+| -------- | --------------------------------- | ------------------------------------------------ | ------------------------------------- |
+| **J1**   | Créer Button unifié               | `button.tsx` + tests + story                     | Build success, Storybook render       |
+| **J2**   | Scripts codemods Button           | `migrate-button.ts`                              | Dry-run 62 fichiers OK                |
+| **J3-4** | Migration Button (62 fichiers)    | Commits par batch 15 fichiers                    | Type-check 0 errors, console 0 errors |
+| **J5**   | Créer KPICard unifié              | `kpi-card.tsx` + tests + story                   | Build success                         |
+| **J6**   | Scripts codemods KPI              | `migrate-kpi-card.ts`                            | Dry-run 11 fichiers OK                |
+| **J7**   | Migration KPI Cards (11 fichiers) | Commit batch                                     | Validation complète                   |
+| **J8**   | Consolider design tokens          | `design-system/tokens/index.ts`                  | Exports unifiés, docs                 |
+| **J9**   | Storybook P0 (15 stories)         | Select, Combobox, Dialog, Form, etc.             | 15 stories published                  |
+| **J10**  | Tests final + cleanup             | Supprimer ActionButton, ModernActionButton, etc. | Console 0 errors, build success       |
 
 ---
 
@@ -137,21 +137,21 @@
 
 **Répartition par type** :
 
-| Type Button | Fichiers | Transformation |
-|-------------|----------|----------------|
-| **ActionButton** | 30 | → Button variant="default" + icon |
-| **ModernActionButton** | 20 | → Button variant="gradient" ou "glass" |
-| **StandardModifyButton** | 12 | → Button variant="outline" size="sm" |
-| **Button** (déjà OK) | Reste | Aucune migration nécessaire |
+| Type Button              | Fichiers | Transformation                         |
+| ------------------------ | -------- | -------------------------------------- |
+| **ActionButton**         | 30       | → Button variant="default" + icon      |
+| **ModernActionButton**   | 20       | → Button variant="gradient" ou "glass" |
+| **StandardModifyButton** | 12       | → Button variant="outline" size="sm"   |
+| **Button** (déjà OK)     | Reste    | Aucune migration nécessaire            |
 
 **Liste exhaustive** (exemples) :
 
 ```
-src/app/dashboard/page.tsx
-src/app/produits/catalogue/page.tsx
-src/app/contacts-organisations/customers/page.tsx
-src/components/business/product-card-v2.tsx
-src/components/business/organisation-list-view.tsx
+apps/back-office/src/app/dashboard/page.tsx
+apps/back-office/src/app/produits/catalogue/page.tsx
+apps/back-office/src/app/contacts-organisations/customers/page.tsx
+apps/back-office/src/components/business/product-card-v2.tsx
+apps/back-office/src/components/business/organisation-list-view.tsx
 src/shared/modules/dashboard/components/...
 [... 57 autres fichiers - voir audit complet]
 ```
@@ -172,111 +172,113 @@ src/shared/modules/dashboard/components/...
  * Usage :
  *   npm run codemod:button -- --dry           # Dry-run (preview)
  *   npm run codemod:button                     # Apply changes
- *   npm run codemod:button -- src/app/dashboard  # Specific dir
+ *   npm run codemod:button -- apps/back-office/src/app/dashboard  # Specific dir
  */
 
-import { API, FileInfo, Options } from 'jscodeshift'
+import { API, FileInfo, Options } from 'jscodeshift';
 
-export default function transformer(file: FileInfo, api: API, options: Options) {
-  const j = api.jscodeshift
-  const root = j(file.source)
-  let hasChanges = false
+export default function transformer(
+  file: FileInfo,
+  api: API,
+  options: Options
+) {
+  const j = api.jscodeshift;
+  const root = j(file.source);
+  let hasChanges = false;
 
   // 1. Transform ActionButton → Button
   root
     .find(j.JSXElement, {
-      openingElement: { name: { name: 'ActionButton' } }
+      openingElement: { name: { name: 'ActionButton' } },
     })
     .forEach(path => {
-      const { attributes } = path.value.openingElement
+      const { attributes } = path.value.openingElement;
 
       // Extract props
-      const labelProp = attributes?.find(attr => attr.name?.name === 'label')
-      const iconProp = attributes?.find(attr => attr.name?.name === 'icon')
-      const variantProp = attributes?.find(attr => attr.name?.name === 'variant')
+      const labelProp = attributes?.find(attr => attr.name?.name === 'label');
+      const iconProp = attributes?.find(attr => attr.name?.name === 'icon');
+      const variantProp = attributes?.find(
+        attr => attr.name?.name === 'variant'
+      );
       const otherProps = attributes?.filter(
         attr => !['label', 'icon', 'variant'].includes(attr.name?.name)
-      )
+      );
 
       // Map variant : primary → default, danger → destructive
       const variantMap = {
-        'primary': 'default',
-        'secondary': 'secondary',
-        'danger': 'destructive'
-      }
-      const variantValue = variantProp?.value?.value || 'primary'
-      const newVariant = variantMap[variantValue] || 'default'
+        primary: 'default',
+        secondary: 'secondary',
+        danger: 'destructive',
+      };
+      const variantValue = variantProp?.value?.value || 'primary';
+      const newVariant = variantMap[variantValue] || 'default';
 
       // Create new Button element
-      path.value.openingElement.name.name = 'Button'
-      path.value.closingElement.name.name = 'Button'
+      path.value.openingElement.name.name = 'Button';
+      path.value.closingElement.name.name = 'Button';
 
       // Update props
       path.value.openingElement.attributes = [
-        j.jsxAttribute(
-          j.jsxIdentifier('variant'),
-          j.stringLiteral(newVariant)
-        ),
-        ...(iconProp ? [
-          j.jsxAttribute(
-            j.jsxIdentifier('icon'),
-            iconProp.value
-          )
-        ] : []),
-        ...otherProps
-      ]
+        j.jsxAttribute(j.jsxIdentifier('variant'), j.stringLiteral(newVariant)),
+        ...(iconProp
+          ? [j.jsxAttribute(j.jsxIdentifier('icon'), iconProp.value)]
+          : []),
+        ...otherProps,
+      ];
 
       // Set children from label prop
       if (labelProp) {
-        path.value.children = [j.jsxText(labelProp.value.value)]
+        path.value.children = [j.jsxText(labelProp.value.value)];
       }
 
-      hasChanges = true
-    })
+      hasChanges = true;
+    });
 
   // 2. Transform ModernActionButton → Button
   root
     .find(j.JSXElement, {
-      openingElement: { name: { name: 'ModernActionButton' } }
+      openingElement: { name: { name: 'ModernActionButton' } },
     })
     .forEach(path => {
-      const { attributes } = path.value.openingElement
+      const { attributes } = path.value.openingElement;
 
-      const variantProp = attributes?.find(attr => attr.name?.name === 'variant')
-      const variantValue = variantProp?.value?.value || 'gradient'
+      const variantProp = attributes?.find(
+        attr => attr.name?.name === 'variant'
+      );
+      const variantValue = variantProp?.value?.value || 'gradient';
 
       // Modern variants déjà supportés dans Button unifié
-      path.value.openingElement.name.name = 'Button'
-      path.value.closingElement.name.name = 'Button'
+      path.value.openingElement.name.name = 'Button';
+      path.value.closingElement.name.name = 'Button';
 
       // Keep variant as-is (gradient, glass déjà dans Button)
 
-      hasChanges = true
-    })
+      hasChanges = true;
+    });
 
   // 3. Transform StandardModifyButton → Button
   root
     .find(j.JSXElement, {
-      openingElement: { name: { name: 'StandardModifyButton' } }
+      openingElement: { name: { name: 'StandardModifyButton' } },
     })
     .forEach(path => {
-      path.value.openingElement.name.name = 'Button'
-      path.value.closingElement.name.name = 'Button'
+      path.value.openingElement.name.name = 'Button';
+      path.value.closingElement.name.name = 'Button';
 
       // Add default props
       path.value.openingElement.attributes = [
         j.jsxAttribute(j.jsxIdentifier('variant'), j.stringLiteral('outline')),
         j.jsxAttribute(j.jsxIdentifier('size'), j.stringLiteral('sm')),
-        ...(path.value.openingElement.attributes || [])
-      ]
+        ...(path.value.openingElement.attributes || []),
+      ];
 
       // Set default children if empty
       if (!path.value.children || path.value.children.length === 0) {
-        path.value.children = [j.jsxText('Modifier')]
+        path.value.children = [j.jsxText('Modifier')];
       }
 
-      hasChanges = true
-    })
+      hasChanges = true;
+    });
 
   // 4. Update imports
   if (hasChanges) {
@@ -284,36 +286,37 @@ export default function transformer(file: FileInfo, api: API, options: Options) 
     root
       .find(j.ImportDeclaration)
       .filter(path => {
-        const specifiers = path.value.specifiers || []
+        const specifiers = path.value.specifiers || [];
         return specifiers.some(spec =>
-          ['ActionButton', 'ModernActionButton', 'StandardModifyButton'].includes(
-            spec.local?.name
-          )
-        )
+          [
+            'ActionButton',
+            'ModernActionButton',
+            'StandardModifyButton',
+          ].includes(spec.local?.name)
+        );
       })
-      .remove()
+      .remove();
 
     // Add Button import if not exists
-    const hasButtonImport = root
-      .find(j.ImportDeclaration, {
-        source: { value: '@/components/ui/button' }
-      })
-      .length > 0
+    const hasButtonImport =
+      root.find(j.ImportDeclaration, {
+        source: { value: '@/components/ui/button' },
+      }).length > 0;
 
     if (!hasButtonImport) {
-      const firstImport = root.find(j.ImportDeclaration).at(0)
+      const firstImport = root.find(j.ImportDeclaration).at(0);
       if (firstImport.length) {
         firstImport.insertBefore(
           j.importDeclaration(
             [j.importSpecifier(j.identifier('Button'))],
             j.stringLiteral('@/components/ui/button')
           )
-        )
+        );
       }
     }
   }
 
-  return hasChanges ? root.toSource({ quote: 'single' }) : null
+  return hasChanges ? root.toSource({ quote: 'single' }) : null;
 }
 ```
 
@@ -327,7 +330,7 @@ npm run codemod:button -- --dry
 npm run codemod:button
 
 # Apply to specific directory
-npm run codemod:button -- src/app/dashboard
+npm run codemod:button -- apps/back-office/src/app/dashboard
 
 # package.json script
 {
@@ -344,9 +347,9 @@ npm run codemod:button -- src/app/dashboard
 #### Fichiers Impactés (11 fichiers)
 
 ```
-src/app/dashboard/page.tsx           # CompactKpiCard (×4), ElegantKpiCard (×2)
-src/app/stocks/page.tsx              # CompactKpiCard (×3)
-src/app/finance/page.tsx             # MediumKpiCard (×2)
+apps/back-office/src/app/dashboard/page.tsx           # CompactKpiCard (×4), ElegantKpiCard (×2)
+apps/back-office/src/app/stocks/page.tsx              # CompactKpiCard (×3)
+apps/back-office/src/app/finance/page.tsx             # MediumKpiCard (×2)
 src/shared/modules/dashboard/...     # KPICard (modules)
 [... 7 autres fichiers]
 ```
@@ -357,108 +360,109 @@ src/shared/modules/dashboard/...     # KPICard (modules)
 
 ```typescript
 export default function transformer(file: FileInfo, api: API) {
-  const j = api.jscodeshift
-  const root = j(file.source)
-  let hasChanges = false
+  const j = api.jscodeshift;
+  const root = j(file.source);
+  let hasChanges = false;
 
   // Transform CompactKpiCard → KPICard variant="compact"
   root
     .find(j.JSXElement, {
-      openingElement: { name: { name: 'CompactKpiCard' } }
+      openingElement: { name: { name: 'CompactKpiCard' } },
     })
     .forEach(path => {
-      path.value.openingElement.name.name = 'KPICard'
-      path.value.closingElement.name.name = 'KPICard'
+      path.value.openingElement.name.name = 'KPICard';
+      path.value.closingElement.name.name = 'KPICard';
 
       // Add variant prop
       path.value.openingElement.attributes.unshift(
         j.jsxAttribute(j.jsxIdentifier('variant'), j.stringLiteral('compact'))
-      )
+      );
 
-      hasChanges = true
-    })
+      hasChanges = true;
+    });
 
   // Transform ElegantKpiCard → KPICard variant="elegant"
   root
     .find(j.JSXElement, {
-      openingElement: { name: { name: 'ElegantKpiCard' } }
+      openingElement: { name: { name: 'ElegantKpiCard' } },
     })
     .forEach(path => {
-      const { attributes } = path.value.openingElement
+      const { attributes } = path.value.openingElement;
 
-      path.value.openingElement.name.name = 'KPICard'
-      path.value.closingElement.name.name = 'KPICard'
+      path.value.openingElement.name.name = 'KPICard';
+      path.value.closingElement.name.name = 'KPICard';
 
       // Map subtitle → description
-      const subtitleProp = attributes?.find(attr => attr.name?.name === 'subtitle')
+      const subtitleProp = attributes?.find(
+        attr => attr.name?.name === 'subtitle'
+      );
       if (subtitleProp) {
-        subtitleProp.name.name = 'description'
+        subtitleProp.name.name = 'description';
       }
 
       // Remove gradient prop (intégré dans variant="elegant")
       path.value.openingElement.attributes = attributes?.filter(
         attr => attr.name?.name !== 'gradient'
-      )
+      );
 
       // Add variant
       path.value.openingElement.attributes.unshift(
         j.jsxAttribute(j.jsxIdentifier('variant'), j.stringLiteral('elegant'))
-      )
+      );
 
-      hasChanges = true
-    })
+      hasChanges = true;
+    });
 
   // Transform MediumKpiCard → KPICard variant="detailed"
   root
     .find(j.JSXElement, {
-      openingElement: { name: { name: 'MediumKpiCard' } }
+      openingElement: { name: { name: 'MediumKpiCard' } },
     })
     .forEach(path => {
-      path.value.openingElement.name.name = 'KPICard'
-      path.value.closingElement.name.name = 'KPICard'
+      path.value.openingElement.name.name = 'KPICard';
+      path.value.closingElement.name.name = 'KPICard';
 
       path.value.openingElement.attributes.unshift(
         j.jsxAttribute(j.jsxIdentifier('variant'), j.stringLiteral('detailed'))
-      )
+      );
 
-      hasChanges = true
-    })
+      hasChanges = true;
+    });
 
   // Update imports
   if (hasChanges) {
     root
       .find(j.ImportDeclaration)
       .filter(path => {
-        const specifiers = path.value.specifiers || []
+        const specifiers = path.value.specifiers || [];
         return specifiers.some(spec =>
           ['CompactKpiCard', 'ElegantKpiCard', 'MediumKpiCard'].includes(
             spec.local?.name
           )
-        )
+        );
       })
-      .remove()
+      .remove();
 
     // Add KPICard import
-    const hasKPICardImport = root
-      .find(j.ImportDeclaration, {
-        source: { value: '@/components/ui/kpi-card' }
-      })
-      .length > 0
+    const hasKPICardImport =
+      root.find(j.ImportDeclaration, {
+        source: { value: '@/components/ui/kpi-card' },
+      }).length > 0;
 
     if (!hasKPICardImport) {
-      const firstImport = root.find(j.ImportDeclaration).at(0)
+      const firstImport = root.find(j.ImportDeclaration).at(0);
       if (firstImport.length) {
         firstImport.insertBefore(
           j.importDeclaration(
             [j.importSpecifier(j.identifier('KPICard'))],
             j.stringLiteral('@/components/ui/kpi-card')
           )
-        )
+        );
       }
     }
   }
 
-  return hasChanges ? root.toSource({ quote: 'single' }) : null
+  return hasChanges ? root.toSource({ quote: 'single' }) : null;
 }
 ```
 
@@ -469,14 +473,14 @@ export default function transformer(file: FileInfo, api: API) {
 **Avant** (2 sources fragmentées) :
 
 ```
-src/lib/theme-v2.ts                   # Source primaire
-src/lib/design-system/tokens/         # Source secondaire (incomplet)
+apps/back-office/src/lib/theme-v2.ts                   # Source primaire
+apps/back-office/src/lib/design-system/tokens/         # Source secondaire (incomplet)
 ```
 
 **Après** (1 source unique) :
 
 ```
-src/lib/design-system/tokens/
+apps/back-office/src/lib/design-system/tokens/
 ├── index.ts          # ✅ Export centralisé
 ├── colors.ts         # ✅ Semantic colors HSL
 ├── spacing.ts        # ✅ Scale 4-64px
@@ -502,28 +506,28 @@ src/lib/design-system/tokens/
 
 **Composants critiques à documenter** :
 
-| # | Composant | Variants | Priority |
-|---|-----------|----------|----------|
-| 1 | **Button** (déjà fait) | 7 variants × 4 sizes | P0 ✅ |
-| 2 | **Select** | Standard, with search, multi-select | P0 |
-| 3 | **Combobox** | Standard, with categories | P0 |
-| 4 | **Dialog** (déjà fait) | Standard, alert | P0 ✅ |
-| 5 | **Popover** | Standard, with arrow | P0 |
-| 6 | **DropdownMenu** | Standard, with icons, nested | P0 |
-| 7 | **Checkbox** | Checked, unchecked, indeterminate | P0 |
-| 8 | **Radio** | Single, group | P0 |
-| 9 | **Switch** | On, off, disabled | P0 |
-| 10 | **FormField** | With label, error, help text | P0 |
-| 11 | **Tabs** | Horizontal, vertical | P0 |
-| 12 | **Accordion** | Single, multiple | P0 |
-| 13 | **Alert** | Default, destructive, success | P0 |
-| 14 | **Tooltip** | Top, right, bottom, left | P0 |
-| 15 | **Skeleton** | Text, card, button | P0 |
+| #   | Composant              | Variants                            | Priority |
+| --- | ---------------------- | ----------------------------------- | -------- |
+| 1   | **Button** (déjà fait) | 7 variants × 4 sizes                | P0 ✅    |
+| 2   | **Select**             | Standard, with search, multi-select | P0       |
+| 3   | **Combobox**           | Standard, with categories           | P0       |
+| 4   | **Dialog** (déjà fait) | Standard, alert                     | P0 ✅    |
+| 5   | **Popover**            | Standard, with arrow                | P0       |
+| 6   | **DropdownMenu**       | Standard, with icons, nested        | P0       |
+| 7   | **Checkbox**           | Checked, unchecked, indeterminate   | P0       |
+| 8   | **Radio**              | Single, group                       | P0       |
+| 9   | **Switch**             | On, off, disabled                   | P0       |
+| 10  | **FormField**          | With label, error, help text        | P0       |
+| 11  | **Tabs**               | Horizontal, vertical                | P0       |
+| 12  | **Accordion**          | Single, multiple                    | P0       |
+| 13  | **Alert**              | Default, destructive, success       | P0       |
+| 14  | **Tooltip**            | Top, right, bottom, left            | P0       |
+| 15  | **Skeleton**           | Text, card, button                  | P0       |
 
 **Template story standard** (exemple Select) :
 
 ```typescript
-// src/components/ui/select.stories.tsx
+// apps/back-office/src/components/ui/select.stories.tsx
 
 import type { Meta, StoryObj } from '@storybook/react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select'
@@ -612,15 +616,15 @@ npm run chromatic
 
 ### Métriques Succès Vague 1
 
-| Métrique | Baseline | Target Vague 1 | Actual |
-|----------|----------|----------------|--------|
-| **Duplications critiques** | 7-8 | 2-3 | _[À mesurer]_ |
-| **Fichiers migrés** | 0 | 73 | _[À mesurer]_ |
-| **Bundle size UI** | 45kb | 38kb (-15%) | _[À mesurer]_ |
-| **Storybook coverage** | 9.8% | 30% (15/51) | _[À mesurer]_ |
-| **Design tokens sources** | 2 | 1 | _[À mesurer]_ |
-| **Type errors** | _[Current]_ | 0 | _[À mesurer]_ |
-| **Console errors** | _[Current]_ | 0 | _[À mesurer]_ |
+| Métrique                   | Baseline    | Target Vague 1 | Actual        |
+| -------------------------- | ----------- | -------------- | ------------- |
+| **Duplications critiques** | 7-8         | 2-3            | _[À mesurer]_ |
+| **Fichiers migrés**        | 0           | 73             | _[À mesurer]_ |
+| **Bundle size UI**         | 45kb        | 38kb (-15%)    | _[À mesurer]_ |
+| **Storybook coverage**     | 9.8%        | 30% (15/51)    | _[À mesurer]_ |
+| **Design tokens sources**  | 2           | 1              | _[À mesurer]_ |
+| **Type errors**            | _[Current]_ | 0              | _[À mesurer]_ |
+| **Console errors**         | _[Current]_ | 0              | _[À mesurer]_ |
 
 ---
 
@@ -635,11 +639,11 @@ npm run chromatic
 
 ### Timeline (3 semaines = 15 jours ouvrés)
 
-| Semaine | Tâches | Deliverables |
-|---------|--------|--------------|
-| **S3** | Restructure Atomic Design + Badge unifié | Folders atoms/molecules/organisms + badge.tsx |
-| **S4** | Combobox composition + Storybook 20 stories | Combobox patterns + 20 stories |
-| **S5** | Migration business components + validation | Patterns composition standardisés |
+| Semaine | Tâches                                      | Deliverables                                  |
+| ------- | ------------------------------------------- | --------------------------------------------- |
+| **S3**  | Restructure Atomic Design + Badge unifié    | Folders atoms/molecules/organisms + badge.tsx |
+| **S4**  | Combobox composition + Storybook 20 stories | Combobox patterns + 20 stories                |
+| **S5**  | Migration business components + validation  | Patterns composition standardisés             |
 
 ---
 
@@ -651,7 +655,7 @@ npm run chromatic
 
 ```bash
 # AVANT
-src/components/ui/
+apps/back-office/src/components/ui/
 ├── button.tsx
 ├── badge.tsx
 ├── card.tsx
@@ -659,7 +663,7 @@ src/components/ui/
 ├── [... 47 autres composants flat]
 
 # APRÈS
-src/components/ui/
+apps/back-office/src/components/ui/
 ├── atoms/
 │   ├── Button.tsx
 │   ├── Badge.tsx
@@ -689,26 +693,26 @@ src/components/ui/
 #!/bin/bash
 
 # Create folders
-mkdir -p src/components/ui/atoms
-mkdir -p src/components/ui/molecules
-mkdir -p src/components/ui/organisms
+mkdir -p apps/back-office/src/components/ui/atoms
+mkdir -p apps/back-office/src/components/ui/molecules
+mkdir -p apps/back-office/src/components/ui/organisms
 
 # Move atoms (25 composants)
-mv src/components/ui/button.tsx src/components/ui/atoms/Button.tsx
-mv src/components/ui/badge.tsx src/components/ui/atoms/Badge.tsx
+mv apps/back-office/src/components/ui/button.tsx apps/back-office/src/components/ui/atoms/Button.tsx
+mv apps/back-office/src/components/ui/badge.tsx apps/back-office/src/components/ui/atoms/Badge.tsx
 # [... autres atoms]
 
 # Move molecules (22 composants)
-mv src/components/ui/card.tsx src/components/ui/molecules/Card.tsx
-mv src/components/ui/kpi-card.tsx src/components/ui/molecules/KPICard.tsx
+mv apps/back-office/src/components/ui/card.tsx apps/back-office/src/components/ui/molecules/Card.tsx
+mv apps/back-office/src/components/ui/kpi-card.tsx apps/back-office/src/components/ui/molecules/KPICard.tsx
 # [... autres molecules]
 
 # Move organisms (18 composants)
-mv src/components/ui/table.tsx src/components/ui/organisms/Table.tsx
+mv apps/back-office/src/components/ui/table.tsx apps/back-office/src/components/ui/organisms/Table.tsx
 # [... autres organisms]
 
 # Update barrel exports
-cat > src/components/ui/atoms/index.ts <<EOF
+cat > apps/back-office/src/components/ui/atoms/index.ts <<EOF
 export * from './Button'
 export * from './Badge'
 // [... autres exports]
@@ -826,12 +830,12 @@ function CategoryFilterCombobox({ categories, value, onChange }: Props) {
 
 ### Métriques Succès Vague 2
 
-| Métrique | Après Vague 1 | Target Vague 2 | Actual |
-|----------|---------------|----------------|--------|
-| **Duplications** | 2-3 | 0-1 | _[À mesurer]_ |
-| **Storybook coverage** | 30% | 60% (31/51) | _[À mesurer]_ |
-| **Atomic Design** | 0% | 100% structuré | _[À mesurer]_ |
-| **Badge variants** | 7 composants | 1 composant | _[À mesurer]_ |
+| Métrique               | Après Vague 1 | Target Vague 2 | Actual        |
+| ---------------------- | ------------- | -------------- | ------------- |
+| **Duplications**       | 2-3           | 0-1            | _[À mesurer]_ |
+| **Storybook coverage** | 30%           | 60% (31/51)    | _[À mesurer]_ |
+| **Atomic Design**      | 0%            | 100% structuré | _[À mesurer]_ |
+| **Badge variants**     | 7 composants  | 1 composant    | _[À mesurer]_ |
 
 ---
 
@@ -847,12 +851,12 @@ function CategoryFilterCombobox({ categories, value, onChange }: Props) {
 
 ### Timeline (3-4 semaines = 15-20 jours ouvrés)
 
-| Semaine | Tâches | Deliverables |
-|---------|--------|--------------|
-| **S6** | Business components patterns + Chromatic | EditSection, FormModal patterns standardisés |
-| **S7** | Performance optimizations + bundle analysis | -30% bundle size, React.memo selective |
-| **S8** | Storybook 100% + visual tests | 51/51 stories + Chromatic CI |
-| **S9** | Documentation finale + guides | Guide Design System V2 complet |
+| Semaine | Tâches                                      | Deliverables                                 |
+| ------- | ------------------------------------------- | -------------------------------------------- |
+| **S6**  | Business components patterns + Chromatic    | EditSection, FormModal patterns standardisés |
+| **S7**  | Performance optimizations + bundle analysis | -30% bundle size, React.memo selective       |
+| **S8**  | Storybook 100% + visual tests               | 51/51 stories + Chromatic CI                 |
+| **S9**  | Documentation finale + guides               | Guide Design System V2 complet               |
 
 ---
 
@@ -862,11 +866,11 @@ function CategoryFilterCombobox({ categories, value, onChange }: Props) {
 
 **Identifier patterns répétés** :
 
-| Pattern | Occurrences | Solution |
-|---------|-------------|----------|
+| Pattern         | Occurrences    | Solution                        |
+| --------------- | -------------- | ------------------------------- |
 | **EditSection** | 15+ composants | Composant générique EditSection |
-| **FormModal** | 10+ composants | Hook useFormModal + pattern |
-| **Selector** | 8+ composants | Composant Selector polymorphic |
+| **FormModal**   | 10+ composants | Hook useFormModal + pattern     |
+| **Selector**    | 8+ composants  | Composant Selector polymorphic  |
 
 **Exemple : EditSection Pattern**
 
@@ -944,7 +948,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Full history for Chromatic
+          fetch-depth: 0 # Full history for Chromatic
 
       - uses: actions/setup-node@v3
         with:
@@ -958,10 +962,11 @@ jobs:
         with:
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
           exitZeroOnChanges: true
-          autoAcceptChanges: main  # Auto-accept sur main branch
+          autoAcceptChanges: main # Auto-accept sur main branch
 ```
 
 **Bénéfices** :
+
 - ✅ Détection automatique regressions visuelles
 - ✅ Review UI changes dans PR
 - ✅ Historique snapshots visuels
@@ -972,11 +977,11 @@ jobs:
 
 **Actions** :
 
-| Optimization | Before | Target | Method |
-|--------------|--------|--------|--------|
-| **Bundle size UI** | 45kb | 32kb (-30%) | Tree-shaking, code splitting |
-| **React.memo** | 0 composants | 10-15 composants | Selective memoization |
-| **Lazy loading** | Eager | Lazy routes | React.lazy() |
+| Optimization       | Before       | Target           | Method                       |
+| ------------------ | ------------ | ---------------- | ---------------------------- |
+| **Bundle size UI** | 45kb         | 32kb (-30%)      | Tree-shaking, code splitting |
+| **React.memo**     | 0 composants | 10-15 composants | Selective memoization        |
+| **Lazy loading**   | Eager        | Lazy routes      | React.lazy()                 |
 
 **Exemple : React.memo selective**
 
@@ -1037,14 +1042,14 @@ docs/design-system/
 
 ### Métriques Succès Vague 3
 
-| Métrique | Après Vague 2 | Target Final | Actual |
-|----------|---------------|--------------|--------|
-| **Duplications** | 0-1 | 0 | _[À mesurer]_ |
-| **Storybook coverage** | 60% | 100% (51/51) | _[À mesurer]_ |
-| **Bundle size** | 38kb | 32kb (-30% total) | _[À mesurer]_ |
-| **Performance** | - | <100ms render/composant | _[À mesurer]_ |
-| **A11y WCAG AA** | ~75% | 100% | _[À mesurer]_ |
-| **Documentation** | Partielle | Complète | _[À mesurer]_ |
+| Métrique               | Après Vague 2 | Target Final            | Actual        |
+| ---------------------- | ------------- | ----------------------- | ------------- |
+| **Duplications**       | 0-1           | 0                       | _[À mesurer]_ |
+| **Storybook coverage** | 60%           | 100% (51/51)            | _[À mesurer]_ |
+| **Bundle size**        | 38kb          | 32kb (-30% total)       | _[À mesurer]_ |
+| **Performance**        | -             | <100ms render/composant | _[À mesurer]_ |
+| **A11y WCAG AA**       | ~75%          | 100%                    | _[À mesurer]_ |
+| **Documentation**      | Partielle     | Complète                | _[À mesurer]_ |
 
 ---
 
@@ -1052,18 +1057,18 @@ docs/design-system/
 
 ### KPIs Projet
 
-| Métrique | Baseline (J0) | Vague 1 (S2) | Vague 2 (S5) | Final (S9) |
-|----------|---------------|--------------|--------------|------------|
-| **Duplications critiques** | 7-8 | 2-3 (-60%) | 0-1 (-90%) | 0 (-100%) |
-| **Fichiers migrés** | 0 | 73 | 100+ | 150+ |
-| **Composants maintenus** | 305+ | 280 (-8%) | 250 (-18%) | 220 (-28%) |
-| **Storybook coverage** | 9.8% (5/51) | 30% (15/51) | 60% (31/51) | 100% (51/51) |
-| **Bundle size UI** | 45kb | 38kb (-15%) | 34kb (-25%) | 32kb (-30%) |
-| **Design tokens sources** | 2 | 1 | 1 | 1 |
-| **Conformité WCAG AA** | ~75% | 85% | 95% | 100% |
-| **Type errors** | _[Current]_ | 0 | 0 | 0 |
-| **Console errors** | _[Current]_ | 0 | 0 | 0 |
-| **Performance (LCP dashboard)** | _[Current]_ | <2s | <2s | <1.5s |
+| Métrique                        | Baseline (J0) | Vague 1 (S2) | Vague 2 (S5) | Final (S9)   |
+| ------------------------------- | ------------- | ------------ | ------------ | ------------ |
+| **Duplications critiques**      | 7-8           | 2-3 (-60%)   | 0-1 (-90%)   | 0 (-100%)    |
+| **Fichiers migrés**             | 0             | 73           | 100+         | 150+         |
+| **Composants maintenus**        | 305+          | 280 (-8%)    | 250 (-18%)   | 220 (-28%)   |
+| **Storybook coverage**          | 9.8% (5/51)   | 30% (15/51)  | 60% (31/51)  | 100% (51/51) |
+| **Bundle size UI**              | 45kb          | 38kb (-15%)  | 34kb (-25%)  | 32kb (-30%)  |
+| **Design tokens sources**       | 2             | 1            | 1            | 1            |
+| **Conformité WCAG AA**          | ~75%          | 85%          | 95%          | 100%         |
+| **Type errors**                 | _[Current]_   | 0            | 0            | 0            |
+| **Console errors**              | _[Current]_   | 0            | 0            | 0            |
+| **Performance (LCP dashboard)** | _[Current]_   | <2s          | <2s          | <1.5s        |
 
 ---
 

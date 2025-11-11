@@ -92,7 +92,7 @@ USING (get_user_role() IN ('owner', 'admin'));
 **Erreur HTTP 406** : "Cannot coerce the result to a single JSON object"
 
 - **Page concernée** : `/produits/catalogue/variantes/[groupId]`
-- **Fichier** : `src/hooks/use-variant-groups.ts` (fonction `useVariantGroup`)
+- **Fichier** : `apps/back-office/apps/back-office/src/hooks/use-variant-groups.ts` (fonction `useVariantGroup`)
 
 ### Diagnostic
 
@@ -114,7 +114,7 @@ La page fonctionnait mi-octobre mais a cessé de fonctionner suite aux correctio
 
 ### Corrections Appliquées
 
-**Fichier** : `src/hooks/use-variant-groups.ts`
+**Fichier** : `apps/back-office/apps/back-office/src/hooks/use-variant-groups.ts`
 
 **Correction 1** - Ligne 1292 : Ajout foreign key explicite
 

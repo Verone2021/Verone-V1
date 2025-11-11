@@ -48,7 +48,7 @@ Ouvrir [http://localhost:3000](http://localhost:3000) dans votre navigateur.
 supabase db push
 
 # Générer les types TypeScript
-supabase gen types typescript --local > src/types/supabase.ts
+supabase gen types typescript --local > apps/back-office/src/types/supabase.ts
 ```
 
 ---
@@ -205,7 +205,7 @@ Le projet dispose d'une documentation complète dans le dossier [`/docs`](./docs
 
 ### 🎨 Design System
 
-**Design System V2** : [`src/components/ui-v2/`](./src/components/ui-v2/)
+**Design System V2** : [`apps/back-office/src/components/ui-v2/`](./apps/back-office/src/components/ui-v2/)
 
 - 270 composants React modulaires
 - shadcn/ui + Radix UI foundation
@@ -249,7 +249,7 @@ npm run audit:spelling   # Spell checking (cspell)
 
 ```bash
 supabase db push         # Appliquer migrations
-supabase gen types typescript --local > src/types/supabase.ts
+supabase gen types typescript --local > apps/back-office/src/types/supabase.ts
 supabase db reset        # Reset database (dev only)
 ```
 
@@ -299,14 +299,28 @@ Le projet maintient des standards de qualité stricts :
 
 ```
 verone-back-office-V1/
-├── src/
-│   ├── app/                 # Next.js App Router pages (71 routes)
-│   ├── components/          # React components
-│   │   ├── ui/              # shadcn/ui base
-│   │   └── ui-v2/           # Design System V2 (270 composants)
-│   ├── hooks/               # Custom hooks (87 hooks)
-│   ├── lib/                 # Utils, Supabase client
-│   └── types/               # TypeScript types
+├── apps/                    # Applications Turborepo (3 apps)
+│   ├── back-office/         # CRM/ERP complet (port 3000)
+│   │   ├── src/app/         # Next.js App Router (71 routes)
+│   │   ├── src/components/  # React components
+│   │   │   ├── ui/          # shadcn/ui base
+│   │   │   └── ui-v2/       # Design System V2
+│   │   ├── src/hooks/       # Custom hooks
+│   │   ├── src/lib/         # Utils, Supabase client
+│   │   └── src/types/       # TypeScript types
+│   ├── site-internet/       # E-commerce public (port 3001)
+│   └── linkme/              # Commissions vendeurs (port 3002)
+├── packages/                # 25 packages @verone/* partagés
+│   └── @verone/
+│       ├── ui/              # 54 composants Design System
+│       ├── products/        # 32 composants produits
+│       ├── orders/          # Composants commandes
+│       ├── stock/           # Composants stock
+│       ├── customers/       # Composants clients
+│       ├── categories/      # Composants catégories
+│       ├── types/           # Types partagés
+│       ├── utils/           # Utils partagés
+│       └── ... (17 autres packages)
 ├── docs/                    # Documentation exhaustive
 │   ├── auth/
 │   ├── database/            # 78 tables, 158 triggers, 239 RLS policies
@@ -315,12 +329,11 @@ verone-back-office-V1/
 │   ├── ci-cd/
 │   └── business-rules/      # 93 dossiers (19 modules)
 ├── .claude/
-│   ├── contexts/            # Contextes spécialisés (database, deployment, etc.)
+│   ├── contexts/            # Contextes spécialisés
 │   └── commands/            # Custom slash commands
 ├── supabase/migrations/     # Database migrations (157 fichiers)
-├── scripts/                 # Automation scripts (1,321 lignes)
-├── .github/workflows/       # CI/CD GitHub Actions
-└── packages/                # KPI docs YAML, future monorepo
+├── scripts/                 # Automation scripts
+└── .github/workflows/       # CI/CD GitHub Actions
 ```
 
 ### Database Schema

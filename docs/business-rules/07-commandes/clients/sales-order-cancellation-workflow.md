@@ -249,7 +249,7 @@ confirmed → cancelled ❌ BLOCKED
 **Protection Server Action** :
 
 ```typescript
-// src/app/actions/sales-orders.ts:77-84
+// apps/back-office/src/app/actions/sales-orders.ts:77-84
 if (order.status === 'confirmed') {
   return {
     success: false,
@@ -337,7 +337,7 @@ ALTER TABLE sales_orders ADD CONSTRAINT valid_sales_workflow_timestamps CHECK (
 
 ### **2. Server Action Validation** ✅ IMPLÉMENTÉ
 
-**Fichier** : `/src/app/actions/sales-orders.ts:51-94`
+**Fichier** : `/apps/back-office/src/app/actions/sales-orders.ts:51-94`
 
 ```typescript
 // ✨ NOUVEAU (2025-10-14): Validation RÈGLE ABSOLUE pour annulation
@@ -388,7 +388,7 @@ if (newStatus === 'cancelled') {
 
 ### **3. UI Frontend (UX)** ✅ IMPLÉMENTÉ
 
-**Fichier** : `/src/app/commandes/clients/page.tsx:654-694`
+**Fichier** : `/apps/back-office/src/app/commandes/clients/page.tsx:654-694`
 
 ```typescript
 {/* Annuler (UNIQUEMENT brouillon - Workflow: dévalidation obligatoire) */}
@@ -721,7 +721,7 @@ AND reason_code = 'cancelled';
 
 ```typescript
 // Vérifier Server Action contient validation
-const code = await readFile('src/app/actions/sales-orders.ts');
+const code = await readFile('apps/back-office/src/app/actions/sales-orders.ts');
 // Chercher: if (order.payment_status === 'paid')
 ```
 
@@ -737,13 +737,13 @@ const code = await readFile('src/app/actions/sales-orders.ts');
 
 ### **Fichiers Modifiés**
 
-| Fichier                                                               | Changement                       | Lignes  |
-| --------------------------------------------------------------------- | -------------------------------- | ------- |
-| `supabase/migrations/20251014_010_add_cancelled_by_column.sql`        | Ajout colonne + constraint       | 1-180   |
-| `supabase/migrations/20251014_011_add_cancellation_logic_trigger.sql` | Logique annulation trigger CAS 3 | 1-280   |
-| `src/app/actions/sales-orders.ts`                                     | Validation payment_status        | 51-85   |
-| `src/app/commandes/clients/page.tsx`                                  | UI bouton désactivé si payé      | 654-682 |
-| `manifests/business-rules/sales-order-cancellation-workflow.md`       | Documentation (ce fichier)       | -       |
+| Fichier                                                                | Changement                       | Lignes  |
+| ---------------------------------------------------------------------- | -------------------------------- | ------- |
+| `supabase/migrations/20251014_010_add_cancelled_by_column.sql`         | Ajout colonne + constraint       | 1-180   |
+| `supabase/migrations/20251014_011_add_cancellation_logic_trigger.sql`  | Logique annulation trigger CAS 3 | 1-280   |
+| `apps/back-office/apps/back-office/src/app/actions/sales-orders.ts`    | Validation payment_status        | 51-85   |
+| `apps/back-office/apps/back-office/src/app/commandes/clients/page.tsx` | UI bouton désactivé si payé      | 654-682 |
+| `manifests/business-rules/sales-order-cancellation-workflow.md`        | Documentation (ce fichier)       | -       |
 
 ### **Migrations Liées**
 
@@ -791,8 +791,8 @@ const code = await readFile('src/app/actions/sales-orders.ts');
 
 **Modifié** :
 
-- `src/app/actions/sales-orders.ts` : Validation server-side (lignes 51-94)
-- `src/app/commandes/clients/page.tsx` : Conditional rendering UI (lignes 654-694)
+- `apps/back-office/apps/back-office/src/app/actions/sales-orders.ts` : Validation server-side (lignes 51-94)
+- `apps/back-office/apps/back-office/src/app/commandes/clients/page.tsx` : Conditional rendering UI (lignes 654-694)
 - Documentation workflow complète
 
 **Tests Validés** :

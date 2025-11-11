@@ -12,7 +12,7 @@
 | --------------- | ------------------------------------------------------------------------------ |
 | **Commit hash** | `4e796e639a7903cb09c181c6663cb2f093d95f9a`                                     |
 | **Date**        | **1er novembre 2025, 22h06**                                                   |
-| **Fichier**     | `src/components/forms/create-product-in-group-modal.tsx`                       |
+| **Fichier**     | `apps/back-office/src/components/forms/create-product-in-group-modal.tsx`      |
 | **Taille**      | **252 lignes**                                                                 |
 | **Message**     | "fix(variantes): Corrections anti-doublon + input libre couleur (Phase 3.5.5)" |
 | **Statut**      | Production-ready (supprimé lors migration monorepo 6 nov 2025)                 |
@@ -149,13 +149,13 @@ Résultat : "Canapé Oslo - Bleu Canard"
 
 ```bash
 # Extraire version finale (1er Nov 2025)
-git show 4e796e639a7903cb09c181c6663cb2f093d95f9a:src/components/forms/create-product-in-group-modal.tsx > create-product-in-group-modal.tsx
+git show 4e796e639a7903cb09c181c6663cb2f093d95f9a:apps/back-office/src/components/forms/create-product-in-group-modal.tsx > create-product-in-group-modal.tsx
 
 # Voir commit complet
 git show 4e796e63
 
 # Voir différences avec version précédente
-git diff 4e796e63^..4e796e63 -- "src/components/forms/create-product-in-group-modal.tsx"
+git diff 4e796e63^..4e796e63 -- "apps/back-office/src/components/forms/create-product-in-group-modal.tsx"
 ```
 
 ---

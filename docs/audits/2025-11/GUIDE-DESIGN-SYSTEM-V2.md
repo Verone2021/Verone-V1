@@ -44,10 +44,10 @@ Les composants sont **déjà installés** dans le projet. Pas besoin d'installer
 ### Importer un Composant
 
 ```typescript
-// Import depuis src/components/ui/
-import { Button } from '@/components/ui/button'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+// Import depuis apps/back-office/src/components/ui/
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 ```
 
 ### Utiliser avec Variants
@@ -87,20 +87,20 @@ export function MyComponent() {
 **Import** :
 
 ```typescript
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/button';
 ```
 
 **Props disponibles** :
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `variant` | `'default' \| 'destructive' \| 'outline' \| 'secondary' \| 'ghost' \| 'link' \| 'gradient' \| 'glass'` | `'default'` | Style du bouton |
-| `size` | `'default' \| 'sm' \| 'lg' \| 'icon'` | `'default'` | Taille du bouton |
-| `loading` | `boolean` | `false` | État chargement (affiche spinner) |
-| `icon` | `ReactNode` | - | Icône left/right |
-| `iconPosition` | `'left' \| 'right'` | `'left'` | Position icône |
-| `asChild` | `boolean` | `false` | Render as child (polymorphic) |
-| `disabled` | `boolean` | `false` | Bouton désactivé |
+| Prop           | Type                                                                                                   | Default     | Description                       |
+| -------------- | ------------------------------------------------------------------------------------------------------ | ----------- | --------------------------------- |
+| `variant`      | `'default' \| 'destructive' \| 'outline' \| 'secondary' \| 'ghost' \| 'link' \| 'gradient' \| 'glass'` | `'default'` | Style du bouton                   |
+| `size`         | `'default' \| 'sm' \| 'lg' \| 'icon'`                                                                  | `'default'` | Taille du bouton                  |
+| `loading`      | `boolean`                                                                                              | `false`     | État chargement (affiche spinner) |
+| `icon`         | `ReactNode`                                                                                            | -           | Icône left/right                  |
+| `iconPosition` | `'left' \| 'right'`                                                                                    | `'left'`    | Position icône                    |
+| `asChild`      | `boolean`                                                                                              | `false`     | Render as child (polymorphic)     |
+| `disabled`     | `boolean`                                                                                              | `false`     | Bouton désactivé                  |
 
 **Exemples par use-case** :
 
@@ -177,6 +177,7 @@ import Link from 'next/link'
 **Do's & Don'ts** :
 
 ✅ **DO**
+
 - Utiliser `variant="destructive"` pour actions de suppression
 - Ajouter `loading={true}` pour actions async
 - Préférer `iconPosition="left"` pour boutons CTA principaux
@@ -184,6 +185,7 @@ import Link from 'next/link'
 - Utiliser `asChild` avec Link pour navigation
 
 ❌ **DON'T**
+
 - Créer custom bouton sans vérifier variants disponibles
 - Utiliser inline styles (toujours passer par CVA variants)
 - Omettre loading state pour actions serveur
@@ -197,22 +199,22 @@ import Link from 'next/link'
 **Import** :
 
 ```typescript
-import { KPICard } from '@/components/ui/kpi-card'
+import { KPICard } from '@/components/ui/kpi-card';
 ```
 
 **Props disponibles** :
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `variant` | `'compact' \| 'elegant' \| 'detailed'` | `'compact'` | Layout du card |
-| `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Hauteur minimum |
-| `title` | `string` | - | Titre du KPI (requis) |
-| `value` | `string \| number` | - | Valeur principale (requis) |
-| `change` | `number \| { value: number; label: string }` | - | Évolution (%) |
-| `description` | `string` | - | Description/subtitle |
-| `icon` | `ReactNode` | - | Icône (variant compact/detailed) |
-| `actions` | `ReactNode` | - | Actions (variant detailed) |
-| `trend` | `'up' \| 'down' \| 'neutral'` | auto | Direction trend (couleur) |
+| Prop          | Type                                         | Default     | Description                      |
+| ------------- | -------------------------------------------- | ----------- | -------------------------------- |
+| `variant`     | `'compact' \| 'elegant' \| 'detailed'`       | `'compact'` | Layout du card                   |
+| `size`        | `'sm' \| 'md' \| 'lg'`                       | `'md'`      | Hauteur minimum                  |
+| `title`       | `string`                                     | -           | Titre du KPI (requis)            |
+| `value`       | `string \| number`                           | -           | Valeur principale (requis)       |
+| `change`      | `number \| { value: number; label: string }` | -           | Évolution (%)                    |
+| `description` | `string`                                     | -           | Description/subtitle             |
+| `icon`        | `ReactNode`                                  | -           | Icône (variant compact/detailed) |
+| `actions`     | `ReactNode`                                  | -           | Actions (variant detailed)       |
+| `trend`       | `'up' \| 'down' \| 'neutral'`                | auto        | Direction trend (couleur)        |
 
 **Exemples** :
 
@@ -282,6 +284,7 @@ import { Euro, Users, ShoppingCart, TrendingUp } from 'lucide-react'
 **Do's & Don'ts** :
 
 ✅ **DO**
+
 - Utiliser `variant="compact"` pour dashboards (4-6 KPIs)
 - Utiliser `variant="elegant"` pour highlights/hero sections
 - Utiliser `variant="detailed"` pour pages dédiées KPI
@@ -289,6 +292,7 @@ import { Euro, Users, ShoppingCart, TrendingUp } from 'lucide-react'
 - Utiliser `trend` explicit si logique métier complexe
 
 ❌ **DON'T**
+
 - Mélanger plusieurs variants dans même grid
 - Omettre `description` si valeur nécessite contexte
 - Utiliser `variant="detailed"` dans grids compacts
@@ -302,13 +306,13 @@ import { Euro, Users, ShoppingCart, TrendingUp } from 'lucide-react'
 **Import** :
 
 ```typescript
-import { Badge } from '@/components/ui/badge'
+import { Badge } from '@/components/ui/badge';
 ```
 
 **Props disponibles** :
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
+| Prop      | Type                                                                                                                                  | Default     | Description    |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------- | -------------- |
 | `variant` | `'default' \| 'secondary' \| 'destructive' \| 'outline' \| 'success' \| 'warning' \| 'info' \| 'customer' \| 'supplier' \| 'partner'` | `'default'` | Style du badge |
 
 **Exemples** :
@@ -355,11 +359,13 @@ function getStatusBadge(status: OrderStatus) {
 **Do's & Don'ts** :
 
 ✅ **DO**
+
 - Utiliser variants sémantiques (`success` pour actif, `destructive` pour erreur)
 - Créer mapping functions pour status métier
 - Garder texte badge court (<20 caractères)
 
 ❌ **DON'T**
+
 - Créer custom badge pour chaque status (utiliser mapping)
 - Utiliser badge pour actions (utiliser Button)
 - Texte trop long (utiliser Tooltip si nécessaire)
@@ -371,7 +377,14 @@ function getStatusBadge(status: OrderStatus) {
 **Import** :
 
 ```typescript
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from '@/components/ui/card';
 ```
 
 **Exemples** :
@@ -447,8 +460,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogTrigger
-} from '@/components/ui/dialog'
+  DialogTrigger,
+} from '@/components/ui/dialog';
 ```
 
 **Exemples** :
@@ -597,22 +610,19 @@ import { Label } from '@/components/ui/label'
 **Exemple : Ajouter variant Button**
 
 ```typescript
-// src/components/ui/button.tsx
+// apps/back-office/src/components/ui/button.tsx
 
-const buttonVariants = cva(
-  "inline-flex items-center...",
-  {
-    variants: {
-      variant: {
-        default: "bg-primary text-primary-foreground",
-        // ... existing variants
+const buttonVariants = cva('inline-flex items-center...', {
+  variants: {
+    variant: {
+      default: 'bg-primary text-primary-foreground',
+      // ... existing variants
 
-        // ✨ NOUVEAU : Variant success
-        success: "bg-success text-success-foreground hover:bg-success/90"
-      }
-    }
-  }
-)
+      // ✨ NOUVEAU : Variant success
+      success: 'bg-success text-success-foreground hover:bg-success/90',
+    },
+  },
+});
 ```
 
 ```typescript
@@ -623,7 +633,7 @@ export const Success: Story = {
     variant: 'success',
     children: 'Valider',
   },
-}
+};
 ```
 
 ---
@@ -691,7 +701,7 @@ export const WithCustomIconSize: Story = {
 **Template nouveau composant** :
 
 ```typescript
-// src/components/ui/my-component.tsx
+// apps/back-office/src/components/ui/my-component.tsx
 
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
@@ -748,38 +758,38 @@ export function MyComponent({
 **Pattern standard** :
 
 ```typescript
-import { cva } from 'class-variance-authority'
+import { cva } from 'class-variance-authority';
 
 const componentVariants = cva(
   // Base classes (toujours appliquées)
-  "rounded-md font-medium transition-colors",
+  'rounded-md font-medium transition-colors',
   {
     variants: {
       // Variant groups
       variant: {
-        default: "bg-primary text-white",
-        outline: "border border-input"
+        default: 'bg-primary text-white',
+        outline: 'border border-input',
       },
       size: {
-        sm: "px-2 py-1 text-xs",
-        md: "px-4 py-2 text-sm",
-        lg: "px-6 py-3 text-base"
-      }
+        sm: 'px-2 py-1 text-xs',
+        md: 'px-4 py-2 text-sm',
+        lg: 'px-6 py-3 text-base',
+      },
     },
     // Compound variants (combinaisons spécifiques)
     compoundVariants: [
       {
-        variant: "outline",
-        size: "sm",
-        className: "border-2"  // Outline small → border plus épais
-      }
+        variant: 'outline',
+        size: 'sm',
+        className: 'border-2', // Outline small → border plus épais
+      },
     ],
     defaultVariants: {
-      variant: "default",
-      size: "md"
-    }
+      variant: 'default',
+      size: 'md',
+    },
   }
-)
+);
 ```
 
 **❌ Éviter** :
@@ -800,13 +810,13 @@ style={{ backgroundColor: variant === 'primary' ? '#4F46E5' : '#E5E7EB' }}
 
 ```typescript
 // ✅ DO : Semantic tokens
-className="bg-primary text-primary-foreground"
-className="border-border text-muted-foreground"
-className="bg-success text-success-foreground"
+className = 'bg-primary text-primary-foreground';
+className = 'border-border text-muted-foreground';
+className = 'bg-success text-success-foreground';
 
 // ❌ DON'T : Hardcoded colors
-className="bg-blue-500 text-white"
-className="border-gray-200 text-gray-600"
+className = 'bg-blue-500 text-white';
+className = 'border-gray-200 text-gray-600';
 ```
 
 **Tokens disponibles** :
@@ -977,14 +987,14 @@ xl: '1280px'  // Large desktop
 
 **Patterns obligatoires** :
 
-| Composant | Keys | Comportement |
-|-----------|------|--------------|
-| **Button** | `Enter`, `Space` | Activer bouton |
-| **Dialog** | `Escape` | Fermer modal |
-| **Dropdown** | `Arrow Up/Down` | Naviguer items |
-| **Tabs** | `Arrow Left/Right` | Changer tab |
+| Composant    | Keys                     | Comportement        |
+| ------------ | ------------------------ | ------------------- |
+| **Button**   | `Enter`, `Space`         | Activer bouton      |
+| **Dialog**   | `Escape`                 | Fermer modal        |
+| **Dropdown** | `Arrow Up/Down`          | Naviguer items      |
+| **Tabs**     | `Arrow Left/Right`       | Changer tab         |
 | **Combobox** | `Arrow Up/Down`, `Enter` | Sélectionner option |
-| **Checkbox** | `Space` | Toggle checked |
+| **Checkbox** | `Space`                  | Toggle checked      |
 
 **Tous composants** :
 
@@ -998,11 +1008,11 @@ xl: '1280px'  // Large desktop
 
 **Ratios minimum WCAG AA** :
 
-| Type | Ratio | Exemple |
-|------|-------|---------|
-| **Normal text** (<18px) | 4.5:1 | Body text, labels |
-| **Large text** (>18px ou bold >14px) | 3:1 | Headings, buttons |
-| **UI components** | 3:1 | Borders, icons |
+| Type                                 | Ratio | Exemple           |
+| ------------------------------------ | ----- | ----------------- |
+| **Normal text** (<18px)              | 4.5:1 | Body text, labels |
+| **Large text** (>18px ou bold >14px) | 3:1   | Headings, buttons |
+| **UI components**                    | 3:1   | Borders, icons    |
 
 **Validation automatique** :
 
@@ -1018,12 +1028,12 @@ npm run lighthouse
 
 ```typescript
 // ✅ Conformes WCAG AA
-text-foreground / bg-background       // 13:1 (excellent)
-text-muted-foreground / bg-background // 4.6:1 (AA)
-border-border / bg-background         // 3.2:1 (UI components OK)
+text - foreground / bg - background; // 13:1 (excellent)
+text - muted - foreground / bg - background; // 4.6:1 (AA)
+border - border / bg - background; // 3.2:1 (UI components OK)
 
 // ❌ Non-conformes (à éviter)
-text-gray-400 / bg-white              // 2.8:1 (fail AA)
+text - gray - 400 / bg - white; // 2.8:1 (fail AA)
 ```
 
 ---
@@ -1035,12 +1045,12 @@ text-gray-400 / bg-white              // 2.8:1 (fail AA)
 **Targets par composant** :
 
 | Composant | Max Size | Actuel | Status |
-|-----------|----------|--------|--------|
-| Button | 2kb | 1.5kb | ✅ |
-| Card | 3kb | 2.8kb | ✅ |
-| Dialog | 5kb | 4.2kb | ✅ |
-| Select | 6kb | 5.8kb | ✅ |
-| Table | 8kb | 7.5kb | ✅ |
+| --------- | -------- | ------ | ------ |
+| Button    | 2kb      | 1.5kb  | ✅     |
+| Card      | 3kb      | 2.8kb  | ✅     |
+| Dialog    | 5kb      | 4.2kb  | ✅     |
+| Select    | 6kb      | 5.8kb  | ✅     |
+| Table     | 8kb      | 7.5kb  | ✅     |
 
 **Validation** :
 
@@ -1049,7 +1059,7 @@ text-gray-400 / bg-white              // 2.8:1 (fail AA)
 npm run analyze
 
 # Check specific component size
-npm run size -- src/components/ui/button.tsx
+npm run size -- apps/back-office/src/components/ui/button.tsx
 ```
 
 ---
@@ -1099,24 +1109,24 @@ export function Badge({ children }: Props) {
 
 ```typescript
 // ✅ DO : Named imports
-import { Button, Badge } from '@/components/ui'
+import { Button, Badge } from '@/components/ui';
 
 // ❌ DON'T : Default import all
-import * as UI from '@/components/ui'
+import * as UI from '@/components/ui';
 ```
 
 **Barrel exports optimized** :
 
 ```typescript
-// src/components/ui/index.ts
+// apps/back-office/src/components/ui/index.ts
 
 // ✅ Named re-exports (tree-shakable)
-export { Button } from './button'
-export { Badge } from './badge'
-export { Card, CardHeader, CardContent } from './card'
+export { Button } from './button';
+export { Badge } from './badge';
+export { Card, CardHeader, CardContent } from './card';
 
 // ❌ Export * (bundler peut avoir difficultés)
-export * from './button'
+export * from './button';
 ```
 
 ---
@@ -1130,40 +1140,40 @@ export * from './button'
 ```typescript
 // ComponentName.stories.tsx
 
-import type { Meta, StoryObj } from '@storybook/react'
-import { ComponentName } from './component-name'
+import type { Meta, StoryObj } from '@storybook/react';
+import { ComponentName } from './component-name';
 
 const meta: Meta<typeof ComponentName> = {
-  title: 'UI/ComponentName',  // Catégorie/Nom
+  title: 'UI/ComponentName', // Catégorie/Nom
   component: ComponentName,
   parameters: {
-    layout: 'centered',  // ou 'fullscreen', 'padded'
+    layout: 'centered', // ou 'fullscreen', 'padded'
   },
-  tags: ['autodocs'],  // Auto-generate docs
+  tags: ['autodocs'], // Auto-generate docs
   argTypes: {
     variant: {
       control: 'select',
-      options: ['default', 'secondary', 'destructive']
+      options: ['default', 'secondary', 'destructive'],
     },
     size: {
       control: 'select',
-      options: ['sm', 'md', 'lg']
+      options: ['sm', 'md', 'lg'],
     },
     disabled: {
-      control: 'boolean'
-    }
-  }
-}
+      control: 'boolean',
+    },
+  },
+};
 
-export default meta
-type Story = StoryObj<typeof ComponentName>
+export default meta;
+type Story = StoryObj<typeof ComponentName>;
 
 // Story principale (default)
 export const Default: Story = {
   args: {
     children: 'Component',
   },
-}
+};
 
 // Stories variants
 export const Secondary: Story = {
@@ -1171,22 +1181,22 @@ export const Secondary: Story = {
     variant: 'secondary',
     children: 'Secondary',
   },
-}
+};
 
 export const Disabled: Story = {
   args: {
     disabled: true,
     children: 'Disabled',
   },
-}
+};
 
 // Story interactive
 export const WithIcon: Story = {
   args: {
     children: 'With Icon',
-    icon: '🚀'
+    icon: '🚀',
   },
-}
+};
 ```
 
 ---
@@ -1196,8 +1206,8 @@ export const WithIcon: Story = {
 ```mdx
 <!-- ComponentName.mdx -->
 
-import { Canvas, Meta, Controls } from '@storybook/blocks'
-import * as ComponentStories from './ComponentName.stories'
+import { Canvas, Meta, Controls } from '@storybook/blocks';
+import * as ComponentStories from './ComponentName.stories';
 
 <Meta of={ComponentStories} />
 
@@ -1216,9 +1226,11 @@ Description du composant, use cases, best practices.
 ## Variants
 
 ### Secondary
+
 <Canvas of={ComponentStories.Secondary} />
 
 ### Disabled
+
 <Canvas of={ComponentStories.Disabled} />
 
 ## Best Practices
@@ -1264,13 +1276,13 @@ jobs:
 
 ### Documentation Externe
 
-| Resource | URL | Description |
-|----------|-----|-------------|
-| **shadcn/ui** | [ui.shadcn.com](https://ui.shadcn.com) | Composants base + docs |
-| **Radix UI** | [radix-ui.com](https://radix-ui.com) | Primitives headless |
-| **CVA** | [cva.style](https://cva.style) | Variant system |
-| **Tailwind CSS** | [tailwindcss.com](https://tailwindcss.com) | Utility classes |
-| **WCAG 2.2** | [w3.org/WAI/WCAG22](https://www.w3.org/WAI/WCAG22/quickref/) | Accessibilité |
+| Resource         | URL                                                          | Description            |
+| ---------------- | ------------------------------------------------------------ | ---------------------- |
+| **shadcn/ui**    | [ui.shadcn.com](https://ui.shadcn.com)                       | Composants base + docs |
+| **Radix UI**     | [radix-ui.com](https://radix-ui.com)                         | Primitives headless    |
+| **CVA**          | [cva.style](https://cva.style)                               | Variant system         |
+| **Tailwind CSS** | [tailwindcss.com](https://tailwindcss.com)                   | Utility classes        |
+| **WCAG 2.2**     | [w3.org/WAI/WCAG22](https://www.w3.org/WAI/WCAG22/quickref/) | Accessibilité          |
 
 ### Contact
 

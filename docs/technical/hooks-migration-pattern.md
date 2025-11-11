@@ -279,12 +279,12 @@ Pour chaque hook candidat :
 
 ## 📚 Ressources
 
-- **Base Hooks** : `src/hooks/base/`
+- **Base Hooks** : `apps/back-office/apps/back-office/src/hooks/base/`
   - `use-supabase-query.ts` (92 lignes)
   - `use-supabase-mutation.ts` (147 lignes)
   - `use-supabase-crud.ts` (54 lignes)
 
-- **Hook Migré** : `src/hooks/use-collection-products.ts` ✅
+- **Hook Migré** : `apps/back-office/apps/back-office/src/hooks/use-collection-products.ts` ✅
 
 - **Rapport Duplications** : `docs/audits/2025-10/RAPPORT-DUPLICATIONS-HOOKS-2025-10-29.md`
 

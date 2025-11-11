@@ -93,7 +93,7 @@ const colors = {
 
 ## 🔧 MODIFICATIONS TECHNIQUES DÉTAILLÉES
 
-### 1. packages/@verone/ui/src/components/ui/button.tsx
+### 1. packages/@verone/ui/apps/back-office/src/components/ui/button.tsx
 
 **Avant (Incorrect - CVA noir)** :
 
@@ -180,7 +180,7 @@ export type ButtonProps = ButtonV2Props;
 - ✅ Props : `variant`, `size`, `icon`, `iconPosition`, `loading`
 - ✅ Tailles réduites : `sm=32px` (était 36px), `icon=32px` (était 40px)
 
-### 2. packages/@verone/ui/src/components/ui/index.ts
+### 2. packages/@verone/ui/apps/back-office/src/components/ui/index.ts
 
 **Avant** :
 
@@ -199,7 +199,7 @@ export {
 } from './button';
 ```
 
-### 3. packages/@verone/notifications/src/components/dropdowns/NotificationsDropdown.tsx
+### 3. packages/@verone/notifications/apps/back-office/src/components/dropdowns/NotificationsDropdown.tsx
 
 **Corrections** :
 
@@ -291,7 +291,7 @@ $ npm run build
 ### Core Components (2 fichiers)
 
 ```
-packages/@verone/ui/src/components/ui/
+packages/@verone/ui/apps/back-office/src/components/ui/
 ├── button.tsx                 (274 lignes - COMPLET REWRITE)
 └── index.ts                   (Export ButtonV2 ajouté)
 ```
@@ -299,7 +299,7 @@ packages/@verone/ui/src/components/ui/
 ### Notifications (1 fichier)
 
 ```
-packages/@verone/notifications/src/components/dropdowns/
+packages/@verone/notifications/apps/back-office/src/components/dropdowns/
 └── NotificationsDropdown.tsx  (Suppression overrides h-6 w-6)
 ```
 
@@ -399,13 +399,13 @@ export { Button };
 
 - **Design System V2 Commit** : `53930cce` (17 Oct 2025)
 - **Rapport Investigation** : `DESIGN-SYSTEM-REGRESSION-ANALYSIS.md`
-- **Palette Couleurs** : `packages/@verone/ui/src/components/ui/button.tsx:11-63`
+- **Palette Couleurs** : `packages/@verone/ui/apps/back-office/src/components/ui/button.tsx:11-63`
 
 ### Références Code
 
-- **ButtonV2 Final** : `/packages/@verone/ui/src/components/ui/button.tsx`
-- **NotificationsDropdown** : `/packages/@verone/notifications/src/components/dropdowns/NotificationsDropdown.tsx`
-- **Index Exports** : `/packages/@verone/ui/src/components/ui/index.ts`
+- **ButtonV2 Final** : `/packages/@verone/ui/apps/back-office/src/components/ui/button.tsx`
+- **NotificationsDropdown** : `/packages/@verone/notifications/apps/back-office/src/components/dropdowns/NotificationsDropdown.tsx`
+- **Index Exports** : `/packages/@verone/ui/apps/back-office/src/components/ui/index.ts`
 
 ### Tests Screenshots
 

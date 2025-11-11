@@ -436,7 +436,7 @@ Marge nette Vérone: 900 - 500 - 90 = 310€/unité (34% marge)
 
 ### Hook React `use-pricing.ts`
 
-**Fichier:** `src/hooks/use-pricing.ts`
+**Fichier:** `apps/back-office/apps/back-office/src/hooks/use-pricing.ts`
 
 #### `useCustomerPricing()` - Liste Prix Clients
 
@@ -548,7 +548,7 @@ SELECT base_price_ht FROM products WHERE id = p_product_id;
 
 ### Page `/canaux-vente/prix-clients`
 
-**Fichier:** `src/app/canaux-vente/prix-clients/page.tsx`
+**Fichier:** `apps/back-office/apps/back-office/src/app/canaux-vente/prix-clients/page.tsx`
 
 **Fonctionnalités actuelles (MVP):**
 
@@ -736,8 +736,8 @@ USING (
 
 ### Code
 
-- `src/hooks/use-pricing.ts` - Hook React pricing
-- `src/app/canaux-vente/prix-clients/page.tsx` - Page UI
+- `apps/back-office/apps/back-office/src/hooks/use-pricing.ts` - Hook React pricing
+- `apps/back-office/apps/back-office/src/app/canaux-vente/prix-clients/page.tsx` - Page UI
 
 ---
 

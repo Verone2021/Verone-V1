@@ -439,17 +439,17 @@ SUM(total_ttc WHERE
 
 **Pages:**
 
-- [/src/app/commandes/clients/page.tsx](../../src/app/commandes/clients/page.tsx)
-- [/src/app/commandes/expeditions/page.tsx](../../src/app/commandes/expeditions/page.tsx)
+- [/apps/back-office/src/app/commandes/clients/page.tsx](../../apps/back-office/src/app/commandes/clients/page.tsx)
+- [/apps/back-office/src/app/commandes/expeditions/page.tsx](../../apps/back-office/src/app/commandes/expeditions/page.tsx)
 
 **Composants:**
 
-- [/src/components/business/order-detail-modal.tsx](../../src/components/business/order-detail-modal.tsx)
-- [/src/components/business/sales-order-form-modal.tsx](../../src/components/business/sales-order-form-modal.tsx)
+- [/apps/back-office/src/components/business/order-detail-modal.tsx](../../apps/back-office/src/components/business/order-detail-modal.tsx)
+- [/apps/back-office/src/components/business/sales-order-form-modal.tsx](../../apps/back-office/src/components/business/sales-order-form-modal.tsx)
 
 **Hooks:**
 
-- [/src/hooks/use-sales-orders.ts](../../src/hooks/use-sales-orders.ts)
+- [/apps/back-office/src/hooks/use-sales-orders.ts](../../apps/back-office/src/hooks/use-sales-orders.ts)
 
 ---
 

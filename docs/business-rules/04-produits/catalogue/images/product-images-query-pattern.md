@@ -115,13 +115,13 @@ const { data: products } = await supabase
 
 ### **1. Product Selector Modal**
 
-- **Fichier** : `src/components/business/product-selector-modal.tsx`
+- **Fichier** : `apps/back-office/apps/back-office/src/components/business/product-selector-modal.tsx`
 - **Pattern** : Jointure `product_images!left` avec transformation data
 - **Statut** : ✅ Corrigé (28/09/2025)
 
 ### **2. Collections Hook**
 
-- **Fichier** : `src/hooks/use-collections.ts`
+- **Fichier** : `apps/back-office/apps/back-office/src/hooks/use-collections.ts`
 - **Pattern** : Nested select avec `product_images!left`
 - **Statut** : ✅ Corrigé (28/09/2025)
 
@@ -243,8 +243,8 @@ const { data } = await supabase
 
 ### **Corrigés**
 
-- `/src/components/business/product-selector-modal.tsx`
-- `/src/hooks/use-collections.ts`
+- `/apps/back-office/src/components/business/product-selector-modal.tsx`
+- `/apps/back-office/src/hooks/use-collections.ts`
 
 ### **À Surveiller (Futurs)**
 

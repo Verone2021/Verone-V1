@@ -129,11 +129,11 @@ from '../../../../hooks/use-*'
 **Exemples de fichiers** :
 
 ```
-src/app/dashboard/page.tsx
-src/app/stocks/page.tsx
-src/app/commandes/clients/page.tsx
-src/app/canaux-vente/google-merchant/page.tsx
-src/app/produits/catalogue/page.tsx
+apps/back-office/src/app/dashboard/page.tsx
+apps/back-office/src/app/stocks/page.tsx
+apps/back-office/src/app/commandes/clients/page.tsx
+apps/back-office/src/app/canaux-vente/google-merchant/page.tsx
+apps/back-office/src/app/produits/catalogue/page.tsx
 ... (159 autres)
 ```
 
@@ -173,11 +173,11 @@ src/shared/modules/common/components/collections/CollectionCreationWizard.tsx
 **Exemples** :
 
 ```
-src/app/consultations/[consultationId]/page.tsx
-src/app/consultations/create/page.tsx
-src/app/consultations/page.tsx
-src/app/stocks/alertes/page.tsx
-src/components/business/wizard-sections/images-section.tsx
+apps/back-office/src/app/consultations/[consultationId]/page.tsx
+apps/back-office/src/app/consultations/create/page.tsx
+apps/back-office/src/app/consultations/page.tsx
+apps/back-office/src/app/stocks/alertes/page.tsx
+apps/back-office/src/components/business/wizard-sections/images-section.tsx
 ```
 
 ---
@@ -296,7 +296,7 @@ Module not found: Can't resolve '../../../components/business/edit-consultation-
 **Problème** : Contenu corrompu (erreur git)
 
 ```
-fatal: path 'src/components/business/add-product-to-order-modal.tsx' does not exist in 'aa709a6^'
+fatal: path 'apps/back-office/src/components/business/add-product-to-order-modal.tsx' does not exist in 'aa709a6^'
 ```
 
 **Action** : Suppression (fichier non utilisé, marqué legacy)
@@ -310,7 +310,7 @@ fatal: path 'src/components/business/add-product-to-order-modal.tsx' does not ex
 **Pattern** :
 
 ```typescript
-// src/components/business/product-card.tsx (re-export)
+// apps/back-office/src/components/business/product-card.tsx (re-export)
 export { ProductCard } from '@/shared/modules/products/components/cards/ProductCard';
 ```
 
@@ -449,7 +449,7 @@ import { useX } from '@/shared/modules/{module}/hooks';
 **Actions** :
 
 - [ ] Supprimer re-exports `components/business/`
-- [ ] Supprimer ancien `src/hooks/` vide
+- [ ] Supprimer ancien `apps/back-office/src/hooks/` vide
 - [ ] Cleanup imports inutilisés
 - [ ] Tag release `v3.0.0-modules-migration`
 

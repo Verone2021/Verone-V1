@@ -129,7 +129,7 @@ Analyse approfondie de l'architecture du module Catalogue suite à la détection
 
 ### 2.3 Composants Business Catalogue
 
-**130+ composants** dans `src/components/business/` en lien avec catalogue :
+**130+ composants** dans `apps/back-office/apps/back-office/src/components/business/` en lien avec catalogue :
 
 - `product-card.tsx`, `product-creation-wizard.tsx`, `product-creation-modal.tsx`
 - `category-hierarchy-selector.tsx`, `category-hierarchy-filter-v2.tsx`
@@ -563,7 +563,7 @@ tax_rate DECIMAL(5,4) DEFAULT 0.2000,
 **Solution Rapide (Court Terme) :**
 
 ```typescript
-// src/app/catalogue/dashboard/page.tsx (ligne 52)
+// apps/back-office/src/app/catalogue/dashboard/page.tsx (ligne 52)
 // ❌ AVANT:
 const { products, loading: productsLoading } = useProducts();
 
@@ -644,7 +644,7 @@ if (filters?.channel) {
 **Architecture Cible:**
 
 ```typescript
-// src/hooks/use-products-unified.ts
+// apps/back-office/src/hooks/use-products-unified.ts
 
 import useSWR from 'swr';
 import { createClient } from '@/lib/supabase/client';
@@ -844,7 +844,7 @@ Deno.serve(async (req) => {
 ### 6.1 Structure Hooks Optimisée
 
 ```
-src/hooks/catalogue/
+apps/back-office/src/hooks/catalogue/
 ├── use-products.ts              # ✅ Unifié (SWR + modes list/detail)
 ├── use-categories.ts            # ✅ Inchangé
 ├── use-subcategories.ts         # ✅ Inchangé
@@ -867,7 +867,7 @@ src/hooks/catalogue/
 ### 6.2 Structure Pages Optimisée
 
 ```
-src/app/catalogue/
+apps/back-office/src/app/catalogue/
 ├── page.tsx                     # ✅ Hub principal
 ├── dashboard/page.tsx           # ✅ Fix 0 produits (use-products mode=detail)
 ├── create/page.tsx              # ✅ Création complète (garde)
@@ -1058,13 +1058,13 @@ supabase/functions/
 
 ```bash
 # Lister usages hook
-grep -r "useCatalogue\|useProducts" src/app/catalogue/
+grep -r "useCatalogue\|useProducts" apps/back-office/src/app/catalogue/
 
 # Vérifier imports redondants
 grep -r "use-product-variants" src/
 
 # Compter pages catalogue
-find src/app/catalogue -name "page.tsx" -type f | wc -l
+find apps/back-office/src/app/catalogue -name "page.tsx" -type f | wc -l
 ```
 
 #### Tests Performance
@@ -1103,8 +1103,8 @@ supabase db diff
 **Architecture:**
 
 - `/supabase/migrations/20250917_002_products_system_consolidated.sql` - Schéma products
-- `/src/hooks/use-products.ts` - Hook produits actuel (433 lignes)
-- `/src/hooks/use-catalogue.ts` - Hook catalogue actuel (441 lignes)
+- `/apps/back-office/src/hooks/use-products.ts` - Hook produits actuel (433 lignes)
+- `/apps/back-office/src/hooks/use-catalogue.ts` - Hook catalogue actuel (441 lignes)
 
 **Tests:**
 

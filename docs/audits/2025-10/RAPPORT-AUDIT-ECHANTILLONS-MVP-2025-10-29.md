@@ -49,7 +49,7 @@
 **Composant rendu** :
 
 ```typescript
-// src/components/business/sample-requirement-section.tsx
+// apps/back-office/src/components/business/sample-requirement-section.tsx
 <Card>
   <Switch checked={product.requires_sample} />
   <Badge variant={hasNoSample ? "outline" : "default"}>
@@ -106,7 +106,7 @@
 **Fichiers avec mentions "customer sample"** :
 
 1. `supabase/migrations/20251029_add_sample_type_to_purchase_order_items.sql` (schema)
-2. `src/hooks/use-sample-order.ts` (backend logic)
+2. `apps/back-office/apps/back-office/src/hooks/use-sample-order.ts` (backend logic)
 3. `docs/business-rules/04-produits/sourcing/echantillons-internes-vs-clients.md` (doc)
 4. ❌ **Aucun composant React ou page Next.js**
 
@@ -135,7 +135,7 @@
 **⚠️ PROBLÈME CRITIQUE** : Ligne 38 du code source
 
 ```typescript
-// src/app/produits/sourcing/echantillons/page.tsx
+// apps/back-office/src/app/produits/sourcing/echantillons/page.tsx
 // Données mock pour les commandes d'échantillons
 const sampleOrders = [
   {
@@ -207,7 +207,7 @@ WHERE (notes ILIKE '%échantillon%' OR notes ILIKE '%sample%')
 
 #### Hook : use-sample-order.ts ✅
 
-**Fichier** : `src/hooks/use-sample-order.ts` (216 lignes)
+**Fichier** : `apps/back-office/apps/back-office/src/hooks/use-sample-order.ts` (216 lignes)
 
 **Fonction critique** :
 
@@ -263,7 +263,7 @@ async function requestSample(
 
 #### Hook : use-sample-eligibility-rule.ts ⚠️
 
-**Fichier** : `src/hooks/use-sample-eligibility-rule.ts` (203 lignes)
+**Fichier** : `apps/back-office/apps/back-office/src/hooks/use-sample-eligibility-rule.ts` (203 lignes)
 
 **Fonction critique** :
 
@@ -298,7 +298,7 @@ const checkSampleEligibility = async (productId: string) => {
 
 #### Composant : sample-requirement-section.tsx ✅
 
-**Fichier** : `src/components/business/sample-requirement-section.tsx` (240 lignes)
+**Fichier** : `apps/back-office/apps/back-office/src/components/business/sample-requirement-section.tsx` (240 lignes)
 
 **Rendu** :
 
@@ -340,7 +340,7 @@ const checkSampleEligibility = async (productId: string) => {
 
 #### Composant : sample-order-button.tsx ✅
 
-**Fichier** : `src/components/business/sample-order-button.tsx` (160 lignes)
+**Fichier** : `apps/back-office/apps/back-office/src/components/business/sample-order-button.tsx` (160 lignes)
 
 **Implémentation** :
 
@@ -386,7 +386,7 @@ return (
 
 ### 4. Page Échantillons (Mock) ⚠️
 
-**Fichier** : `src/app/produits/sourcing/echantillons/page.tsx` (400 lignes)
+**Fichier** : `apps/back-office/apps/back-office/src/app/produits/sourcing/echantillons/page.tsx` (400 lignes)
 
 **Architecture** :
 
@@ -655,7 +655,7 @@ const config =
 
 **Implémentation** :
 
-1. Créer `src/hooks/use-unified-sample-eligibility.ts`
+1. Créer `apps/back-office/apps/back-office/src/hooks/use-unified-sample-eligibility.ts`
 2. Remplacer `use-sample-eligibility-rule.ts` (deprecated)
 3. Mettre à jour `use-sample-order.ts` pour utiliser hook unifié
 4. Ajouter tests unitaires (4 scénarios tableau ci-dessus)
@@ -703,7 +703,7 @@ CREATE TABLE customer_sample_requests (
 
 ### 2. Page Échantillons - Connexion Backend (⚠️ Mock data)
 
-**Fichier** : `src/app/produits/sourcing/echantillons/page.tsx`
+**Fichier** : `apps/back-office/apps/back-office/src/app/produits/sourcing/echantillons/page.tsx`
 
 **Modifications requises** :
 
@@ -762,7 +762,7 @@ const transformedOrders = useMemo(() => {
 
 **Action** :
 
-1. Créer `src/hooks/use-unified-sample-eligibility.ts` (voir Option 1 ci-dessus)
+1. Créer `apps/back-office/apps/back-office/src/hooks/use-unified-sample-eligibility.ts` (voir Option 1 ci-dessus)
 2. Deprecated `use-sample-eligibility-rule.ts`
 3. Mettre à jour `use-sample-order.ts`
 4. Tests unitaires (4 scénarios)

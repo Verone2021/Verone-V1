@@ -450,8 +450,8 @@ name: Test [Module]
 on:
   pull_request:
     paths:
-      - 'src/app/[module]/**'
-      - 'src/hooks/use-[module]*'
+      - 'apps/back-office/src/app/[module]/**'
+      - 'apps/back-office/src/hooks/use-[module]*'
 
 jobs:
   test:

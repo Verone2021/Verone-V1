@@ -10,7 +10,7 @@
 
 ### Objectif
 
-Migration complète de tous les hooks React de `src/hooks/` vers `src/shared/modules/{module}/hooks/` pour préparer l'architecture monorepo modulaire.
+Migration complète de tous les hooks React de `apps/back-office/src/hooks/` vers `src/shared/modules/{module}/hooks/` pour préparer l'architecture monorepo modulaire.
 
 ### Résultat
 
@@ -244,30 +244,30 @@ src/shared/modules/
 mkdir -p src/shared/modules/{module}/hooks
 
 # 2. Copier hooks
-cp src/hooks/use-*.ts src/shared/modules/{module}/hooks/
+cp apps/back-office/src/hooks/use-*.ts src/shared/modules/{module}/hooks/
 
 # 3. Créer barrel export (index.ts)
 # export { useHookName } from './use-hook-name';
 
 # 4. Supprimer anciens fichiers
-rm src/hooks/use-*.ts
+rm apps/back-office/src/hooks/use-*.ts
 
 # 5. Commit structuré
 git add src/shared/modules/{module}/hooks/
-git add -u src/hooks/
+git add -u apps/back-office/src/hooks/
 git commit --no-verify -m "refactor(module): Migration hooks"
 ```
 
 ---
 
-## 🔍 ÉTAT FINAL src/hooks/
+## 🔍 ÉTAT FINAL apps/back-office/src/hooks/
 
 ### Fichiers NON migrés (intentionnels)
 
-Le répertoire `src/hooks/` contient encore :
+Le répertoire `apps/back-office/src/hooks/` contient encore :
 
 ```
-src/hooks/
+apps/back-office/src/hooks/
 ├── base/                   # Hooks de base (non migrés)
 ├── core/                   # Hooks core (non migrés)
 ├── google-merchant/        # Hooks Google Merchant (non migrés)
@@ -324,7 +324,7 @@ import { useStock } from '@/shared/modules/stock/hooks';
 1. ✅ Tests complets : type-check, build, lint
 2. ✅ Tests E2E si applicable
 3. ✅ Création README.md par module (15 fichiers)
-4. ✅ Cleanup : supprimer `src/hooks/` vide (si applicable)
+4. ✅ Cleanup : supprimer `apps/back-office/src/hooks/` vide (si applicable)
 5. ✅ Tag release : `v3.0.0-modules-migration`
 
 ---

@@ -19,7 +19,7 @@
 
 - **Analyse historique Git** systématique de tous les composants manquants
 - **Restauration intelligente** : 11 composants extraits depuis commits identifiés
-- **Backward compatibility** : 14 re-exports créés dans `src/components/business/`
+- **Backward compatibility** : 14 re-exports créés dans `apps/back-office/src/components/business/`
 - **Stubs temporaires** : 2 composants jamais existants créés comme placeholders
 
 ### Résultat Final
@@ -28,7 +28,7 @@
 - ✅ **Serveur démarre sans erreurs** (port 3001)
 - ✅ **Pages déblouées** : 100% des pages fonctionnelles
 - ✅ **106 composants** dans `src/shared/modules/` (95 initiaux + 11 restaurés)
-- ✅ **113 re-exports** dans `src/components/business/` (98 précédents + 15 nouveaux)
+- ✅ **113 re-exports** dans `apps/back-office/src/components/business/` (98 précédents + 15 nouveaux)
 
 ---
 
@@ -53,18 +53,18 @@
 
 ```bash
 # Extraction depuis Git
-git show fecefd7~1:src/components/business/identifiers-complete-edit-section.tsx > IdentifiersCompleteEditSection.tsx
-git show fecefd7~1:src/components/business/product-descriptions-edit-section.tsx > ProductDescriptionsEditSection.tsx
-git show fecefd7~1:src/components/business/commercial-edit-section.tsx > CommercialEditSection.tsx
-git show fecefd7~1:src/components/business/characteristics-edit-section.tsx > CharacteristicsEditSection.tsx
-git show fecefd7~1:src/components/business/general-info-edit-section.tsx > GeneralInfoEditSection.tsx
-git show fecefd7~1:src/components/business/identifiers-edit-section.tsx > IdentifiersEditSection.tsx
+git show fecefd7~1:apps/back-office/src/components/business/identifiers-complete-edit-section.tsx > IdentifiersCompleteEditSection.tsx
+git show fecefd7~1:apps/back-office/src/components/business/product-descriptions-edit-section.tsx > ProductDescriptionsEditSection.tsx
+git show fecefd7~1:apps/back-office/src/components/business/commercial-edit-section.tsx > CommercialEditSection.tsx
+git show fecefd7~1:apps/back-office/src/components/business/characteristics-edit-section.tsx > CharacteristicsEditSection.tsx
+git show fecefd7~1:apps/back-office/src/components/business/general-info-edit-section.tsx > GeneralInfoEditSection.tsx
+git show fecefd7~1:apps/back-office/src/components/business/identifiers-edit-section.tsx > IdentifiersEditSection.tsx
 
 # Copie dans monorepo (kebab-case → PascalCase)
 cp *.tsx src/shared/modules/products/components/sections/
 
 # Création re-exports backward compatibility
-cat > src/components/business/identifiers-complete-edit-section.tsx << 'EOF'
+cat > apps/back-office/src/components/business/identifiers-complete-edit-section.tsx << 'EOF'
 // Re-export from shared modules for backward compatibility
 export { IdentifiersCompleteEditSection } from '@/shared/modules/products/components/sections/IdentifiersCompleteEditSection'
 EOF
@@ -95,11 +95,11 @@ EOF
 
 ```bash
 # Extraction depuis Git
-git show 3d2c755~1:src/components/business/customer-form-modal.tsx > CustomerFormModal.tsx
-git show 3d2c755~1:src/components/business/organisation-logo.tsx > OrganisationLogo.tsx
-git show 3d2c755~1:src/components/business/organisation-card.tsx > OrganisationCard.tsx
-git show 3d2c755~1:src/components/business/organisation-logo-card.tsx > OrganisationLogoCard.tsx
-git show 3d2c755~1:src/components/business/confirm-delete-organisation-modal.tsx > ConfirmDeleteOrganisationModal.tsx
+git show 3d2c755~1:apps/back-office/src/components/business/customer-form-modal.tsx > CustomerFormModal.tsx
+git show 3d2c755~1:apps/back-office/src/components/business/organisation-logo.tsx > OrganisationLogo.tsx
+git show 3d2c755~1:apps/back-office/src/components/business/organisation-card.tsx > OrganisationCard.tsx
+git show 3d2c755~1:apps/back-office/src/components/business/organisation-logo-card.tsx > OrganisationLogoCard.tsx
+git show 3d2c755~1:apps/back-office/src/components/business/confirm-delete-organisation-modal.tsx > ConfirmDeleteOrganisationModal.tsx
 
 # Création dossiers manquants
 mkdir -p src/shared/modules/customers/components/modals
@@ -141,9 +141,9 @@ cp ConfirmDeleteOrganisationModal.tsx src/shared/modules/organisations/component
 **Action**:
 
 ```bash
-git show 2777582~1:src/components/business/heart-badge.tsx > HeartBadge.tsx
+git show 2777582~1:apps/back-office/src/components/business/heart-badge.tsx > HeartBadge.tsx
 cp HeartBadge.tsx src/shared/modules/ui/components/badges/
-# Re-export créé dans src/components/business/heart-badge.tsx
+# Re-export créé dans apps/back-office/src/components/business/heart-badge.tsx
 ```
 
 **Pages déboulées**:
@@ -162,7 +162,7 @@ cp HeartBadge.tsx src/shared/modules/ui/components/badges/
 **Action**:
 
 ```bash
-cat > src/components/business/stock-alert-card.tsx << 'EOF'
+cat > apps/back-office/src/components/business/stock-alert-card.tsx << 'EOF'
 // Re-export from shared modules for backward compatibility
 export { StockAlertCard } from '@/shared/modules/stock/components/cards/StockAlertCard'
 EOF
@@ -182,7 +182,7 @@ EOF
 **Action**:
 
 ```bash
-cat > src/components/business/consultation-image-viewer-modal.tsx << 'EOF'
+cat > apps/back-office/src/components/business/consultation-image-viewer-modal.tsx << 'EOF'
 // Re-export from shared modules for backward compatibility
 export { ConsultationImageViewerModal } from '@/shared/modules/consultations/components/images/ConsultationImageViewerModal'
 EOF
@@ -214,7 +214,7 @@ EOF
  * Il a été créé comme stub minimal pour débloquer le build.
  *
  * TODO: Implémenter la logique complète du modal de commande fournisseur rapide
- * Utilisé dans: src/app/stocks/alertes/page.tsx (ligne 502)
+ * Utilisé dans: apps/back-office/src/app/stocks/alertes/page.tsx (ligne 502)
  */
 
 interface QuickPurchaseOrderModalProps {
@@ -231,7 +231,7 @@ export function QuickPurchaseOrderModal(props: QuickPurchaseOrderModalProps) {
 }
 ```
 
-**Fichier**: `src/components/business/quick-purchase-order-modal.tsx`
+**Fichier**: `apps/back-office/src/components/business/quick-purchase-order-modal.tsx`
 
 ---
 
@@ -253,7 +253,7 @@ export function QuickPurchaseOrderModal(props: QuickPurchaseOrderModalProps) {
  * Il a été créé comme stub minimal pour débloquer le build.
  *
  * TODO: Implémenter l'interface de commande pour les consultations
- * Utilisé dans: src/app/consultations/page.tsx (ligne 31)
+ * Utilisé dans: apps/back-office/src/app/consultations/page.tsx (ligne 31)
  */
 
 interface ConsultationOrderInterfaceProps {
@@ -270,7 +270,7 @@ export function ConsultationOrderInterface(
 }
 ```
 
-**Fichier**: `src/components/business/consultation-order-interface.tsx`
+**Fichier**: `apps/back-office/src/components/business/consultation-order-interface.tsx`
 
 ---
 
@@ -304,10 +304,10 @@ src/shared/modules/
 
 ---
 
-### Re-exports créés dans `src/components/business/`
+### Re-exports créés dans `apps/back-office/src/components/business/`
 
 ```
-src/components/business/
+apps/back-office/src/components/business/
 ├── identifiers-complete-edit-section.tsx          (re-export → products/sections/)
 ├── product-descriptions-edit-section.tsx          (re-export → products/sections/)
 ├── commercial-edit-section.tsx                    (re-export → products/sections/)
@@ -332,15 +332,15 @@ src/components/business/
 
 ## 📊 STATISTIQUES FINALES
 
-| Métrique                                    | Avant      | Après       | Delta         |
-| ------------------------------------------- | ---------- | ----------- | ------------- |
-| **Erreurs TypeScript "Cannot find module"** | 17         | 0           | **-17 ✅**    |
-| **Composants shared/modules/**              | 95         | 106         | **+11 ✅**    |
-| **Re-exports src/components/business/**     | 98         | 114         | **+16 ✅**    |
-| **Pages fonctionnelles**                    | 83%        | 100%        | **+17% ✅**   |
-| **Lignes code restaurées**                  | 0          | 2 923       | **+2 923 ✅** |
-| **Build status**                            | ❌ FAIL    | ✅ SUCCESS  | **✅**        |
-| **Serveur démarrage**                       | ❌ Erreurs | ✅ 0 errors | **✅**        |
+| Métrique                                                 | Avant      | Après       | Delta         |
+| -------------------------------------------------------- | ---------- | ----------- | ------------- |
+| **Erreurs TypeScript "Cannot find module"**              | 17         | 0           | **-17 ✅**    |
+| **Composants shared/modules/**                           | 95         | 106         | **+11 ✅**    |
+| **Re-exports apps/back-office/src/components/business/** | 98         | 114         | **+16 ✅**    |
+| **Pages fonctionnelles**                                 | 83%        | 100%        | **+17% ✅**   |
+| **Lignes code restaurées**                               | 0          | 2 923       | **+2 923 ✅** |
+| **Build status**                                         | ❌ FAIL    | ✅ SUCCESS  | **✅**        |
+| **Serveur démarrage**                                    | ❌ Erreurs | ✅ 0 errors | **✅**        |
 
 ---
 
@@ -363,7 +363,7 @@ npm run build
 ### 3. Vérifier structure re-exports
 
 ```bash
-ls src/components/business/*.tsx | wc -l
+ls apps/back-office/src/components/business/*.tsx | wc -l
 # Résultat: 114 fichiers (98 précédents + 16 nouveaux)
 ```
 
@@ -391,8 +391,8 @@ npm run dev
 **Priorité**: MOYENNE
 **Fichiers**:
 
-- `src/components/business/quick-purchase-order-modal.tsx`
-- `src/components/business/consultation-order-interface.tsx`
+- `apps/back-office/src/components/business/quick-purchase-order-modal.tsx`
+- `apps/back-office/src/components/business/consultation-order-interface.tsx`
 
 **Actions**:
 

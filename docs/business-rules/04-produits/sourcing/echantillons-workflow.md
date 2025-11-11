@@ -453,9 +453,9 @@ Création → [Commande] → [Réception] → Archive → [Suppression si néces
 
 ### Code source
 
-- **Hook**: `/src/hooks/use-customer-samples.ts`
-- **Page**: `/src/app/produits/sourcing/echantillons/page.tsx`
-- **Composant Badge**: `/src/components/business/customer-badge.tsx`
+- **Hook**: `/apps/back-office/src/hooks/use-customer-samples.ts`
+- **Page**: `/apps/back-office/src/app/produits/sourcing/echantillons/page.tsx`
+- **Composant Badge**: `/apps/back-office/src/components/business/customer-badge.tsx`
 - **View SQL**: `supabase/migrations/XXX_create_customer_samples_view.sql`
 - **Trigger**: `supabase/migrations/XXX_prevent_archiving_non_draft_samples.sql`
 

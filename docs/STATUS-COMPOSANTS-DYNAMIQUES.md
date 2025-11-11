@@ -22,12 +22,12 @@ Créer un **système de composants UI réutilisables** avec props dynamiques pou
 
 ### 1. Composants Unifiés Production-Ready
 
-| Composant          | Fichier                                                      | Variants                                                                   | Props Dynamiques                                                                        | Status  |
-| ------------------ | ------------------------------------------------------------ | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ------- |
-| **ButtonUnified**  | `packages/@verone/ui/src/components/ui/button-unified.tsx`   | 8 (default, destructive, outline, secondary, ghost, link, gradient, glass) | `variant`, `size`, `icon`, `iconPosition`, `loading`, `asChild`                         | ✅ PROD |
-| **KPICardUnified** | `packages/@verone/ui/src/components/ui/kpi-card-unified.tsx` | 3 (compact, elegant, detailed)                                             | `variant`, `title`, `value`, `icon`, `trend`, `description`, `sparklineData`, `actions` | ✅ PROD |
-| **ButtonV2**       | `packages/@verone/ui/src/components/ui/button.tsx`           | 7                                                                          | `variant`, `size`, `icon`, `iconPosition`, `loading`                                    | ✅ PROD |
-| **CompactKpiCard** | `packages/@verone/ui/src/components/ui/compact-kpi-card.tsx` | 5 colors                                                                   | `label`, `value`, `icon`, `trend`, `color`, `sparklineData`                             | ✅ PROD |
+| Composant          | Fichier                                                                       | Variants                                                                   | Props Dynamiques                                                                        | Status  |
+| ------------------ | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ------- |
+| **ButtonUnified**  | `packages/@verone/ui/apps/back-office/src/components/ui/button-unified.tsx`   | 8 (default, destructive, outline, secondary, ghost, link, gradient, glass) | `variant`, `size`, `icon`, `iconPosition`, `loading`, `asChild`                         | ✅ PROD |
+| **KPICardUnified** | `packages/@verone/ui/apps/back-office/src/components/ui/kpi-card-unified.tsx` | 3 (compact, elegant, detailed)                                             | `variant`, `title`, `value`, `icon`, `trend`, `description`, `sparklineData`, `actions` | ✅ PROD |
+| **ButtonV2**       | `packages/@verone/ui/apps/back-office/src/components/ui/button.tsx`           | 7                                                                          | `variant`, `size`, `icon`, `iconPosition`, `loading`                                    | ✅ PROD |
+| **CompactKpiCard** | `packages/@verone/ui/apps/back-office/src/components/ui/compact-kpi-card.tsx` | 5 colors                                                                   | `label`, `value`, `icon`, `trend`, `color`, `sparklineData`                             | ✅ PROD |
 
 **Exemples d'utilisation** :
 
@@ -111,11 +111,11 @@ import { Save } from 'lucide-react';
 
 **État final (2025-11-08)** :
 
-| VAGUE       | Objectif                                                       | Fichiers | Statut     |
-| ----------- | -------------------------------------------------------------- | -------- | ---------- |
-| **VAGUE 3** | Migration `src/lib/` → `@verone/utils`, `@verone/integrations` | 65       | ✅ TERMINÉ |
-| **VAGUE 4** | Update 763 imports dans 326 fichiers                           | 326      | ✅ TERMINÉ |
-| **VAGUE 5** | Cleanup `src/shared/modules/` (411 fichiers) + validation      | 411      | ✅ TERMINÉ |
+| VAGUE       | Objectif                                                                                         | Fichiers | Statut     |
+| ----------- | ------------------------------------------------------------------------------------------------ | -------- | ---------- |
+| **VAGUE 3** | Migration `apps/back-office/apps/back-office/src/lib/` → `@verone/utils`, `@verone/integrations` | 65       | ✅ TERMINÉ |
+| **VAGUE 4** | Update 763 imports dans 326 fichiers                                                             | 326      | ✅ TERMINÉ |
+| **VAGUE 5** | Cleanup `src/shared/modules/` (411 fichiers) + validation                                        | 411      | ✅ TERMINÉ |
 
 **Timeline réelle** : 3 jours (complété 2025-11-08)
 
@@ -228,7 +228,7 @@ Storybook Stories     : 9.8%  🟡 (5/51 composants)
 ```
 VAGUE 1 : 100% ✅ (UI Components)
 VAGUE 2 : 100% ✅ (Business Packages)
-VAGUE 3 : 100% ✅ (src/lib/ migration)
+VAGUE 3 : 100% ✅ (apps/back-office/src/lib/ migration)
 VAGUE 4 : 100% ✅ (Import updates)
 VAGUE 5 : 100% ✅ (Cleanup final)
 ```
@@ -296,8 +296,8 @@ VAGUE 5 : 100% ✅ (Cleanup final)
 
 ### Code Référence
 
-1. **ButtonUnified** : `packages/@verone/ui/src/components/ui/button-unified.tsx`
-2. **KPICardUnified** : `packages/@verone/ui/src/components/ui/kpi-card-unified.tsx`
+1. **ButtonUnified** : `packages/@verone/ui/apps/back-office/src/components/ui/button-unified.tsx`
+2. **KPICardUnified** : `packages/@verone/ui/apps/back-office/src/components/ui/kpi-card-unified.tsx`
 3. **Design Tokens** : `packages/@verone/ui/src/design-system/tokens/`
 
 ### Documentation

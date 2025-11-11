@@ -48,7 +48,7 @@
 - export { StockDisplay } from './StockDisplay';
 + export { StockDisplay, StockSummaryCard } from './StockDisplay';
 
-// src/components/business/stock-display.tsx
+// apps/back-office/src/components/business/stock-display.tsx
 - export { StockDisplay } from '@/shared/modules/stock/components/sections/StockDisplay'
 + export { StockDisplay, StockSummaryCard } from '@/shared/modules/stock/components/sections/StockDisplay'
 ```
@@ -66,7 +66,7 @@
 - export { MovementsStats } from './MovementsStats';
 + export { MovementsStatsCards } from './MovementsStats';
 
-// src/components/business/movements-stats.tsx
+// apps/back-office/src/components/business/movements-stats.tsx
 - export { MovementsStats } from '@/shared/modules/stock/components/stats/MovementsStats'
 + export { MovementsStatsCards } from '@/shared/modules/stock/components/stats/MovementsStats'
 ```
@@ -84,7 +84,7 @@
 - export { AbcAnalysisView } from './AbcAnalysisView'
 + export { ABCAnalysisView } from './AbcAnalysisView'
 
-// src/components/business/abc-analysis-view.tsx
+// apps/back-office/src/components/business/abc-analysis-view.tsx
 - export { AbcAnalysisView } from '@/shared/modules/stock/components/reports'
 + export { ABCAnalysisView } from '@/shared/modules/stock/components/reports'
 ```
@@ -98,7 +98,7 @@
 **Fichier Modifié** :
 
 ```typescript
-// src/components/business/edit-sourcing-product-modal.tsx
+// apps/back-office/src/components/business/edit-sourcing-product-modal.tsx
 export { EditSourcingProductModal } from '@/shared/modules/products/components/modals/EditSourcingProductModal'
 + export { SourcingProductModal } from '@/shared/modules/products/components/sourcing/SourcingProductModal'
 ```
@@ -190,10 +190,10 @@ npm run type-check
 ## Git Diff Summary
 
 ```diff
-M src/components/business/abc-analysis-view.tsx
-M src/components/business/edit-sourcing-product-modal.tsx
-M src/components/business/movements-stats.tsx
-M src/components/business/stock-display.tsx
+M apps/back-office/src/components/business/abc-analysis-view.tsx
+M apps/back-office/src/components/business/edit-sourcing-product-modal.tsx
+M apps/back-office/src/components/business/movements-stats.tsx
+M apps/back-office/src/components/business/stock-display.tsx
 M src/shared/modules/products/components/sourcing/SourcingProductModal.tsx
 M src/shared/modules/stock/components/reports/index.ts
 M src/shared/modules/stock/components/sections/index.ts

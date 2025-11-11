@@ -90,7 +90,7 @@ Database['public']['Tables']['purchase_order_items']['Row'] = {
 
 ### Code Hook
 
-**Fichier** : `src/hooks/use-sample-order.ts`
+**Fichier** : `apps/back-office/apps/back-office/src/hooks/use-sample-order.ts`
 
 ```typescript
 async function requestSample(
@@ -369,8 +369,8 @@ if (sampleType && !['internal', 'customer'].includes(sampleType)) {
 ### Fichiers Modifiés
 
 - `supabase/migrations/20251029_add_sample_type_to_purchase_order_items.sql`
-- `src/types/supabase.ts` (lignes 3661-3705)
-- `src/hooks/use-sample-order.ts` (lignes 26-29, 54-59, 101-109, 163-171)
+- `apps/back-office/apps/back-office/src/types/supabase.ts` (lignes 3661-3705)
+- `apps/back-office/apps/back-office/src/hooks/use-sample-order.ts` (lignes 26-29, 54-59, 101-109, 163-171)
 
 ### Documentation Connexe
 

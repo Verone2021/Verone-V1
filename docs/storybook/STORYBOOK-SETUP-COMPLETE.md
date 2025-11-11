@@ -73,7 +73,7 @@
 
 **Fonctionnalités** :
 
-- ✅ Scan automatique de tous les `.tsx` dans `src/components/`
+- ✅ Scan automatique de tous les `.tsx` dans `apps/back-office/apps/back-office/src/components/`
 - ✅ Classification intelligente (ui, business, forms, layout, admin)
 - ✅ Sélection template approprié
 - ✅ Génération stories avec placeholders remplacés
@@ -281,7 +281,7 @@ export const WithRealData: Story = {
 
 ### Ajouter Nouveau Composant
 
-1. Créer fichier `src/components/[category]/new-component.tsx`
+1. Créer fichier `apps/back-office/apps/back-office/src/components/[category]/new-component.tsx`
 2. Lancer `npm run generate:stories:dry`
 3. Vérifier story générée
 4. Lancer `npm run generate:stories`

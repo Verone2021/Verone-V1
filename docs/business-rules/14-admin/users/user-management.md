@@ -99,8 +99,8 @@ phone ~ '^\+33\s?[1-9](\s?[0-9]{2}){4}$'
 
 **Code** :
 
-- Composant : `src/components/admin/edit-user-dialog.tsx`
-- Action : `src/lib/actions/user-management.ts::updateUserProfile()`
+- Composant : `apps/back-office/apps/back-office/src/components/admin/edit-user-dialog.tsx`
+- Action : `apps/back-office/apps/back-office/src/lib/actions/user-management.ts::updateUserProfile()`
 
 ---
 
@@ -264,10 +264,10 @@ Toutes modifications profil sont tracées :
 
 **Code source** :
 
-- Page liste : `src/app/admin/users/page.tsx`
-- Composant modal : `src/components/admin/edit-user-dialog.tsx`
-- Actions : `src/lib/actions/user-management.ts`
-- Types : `src/types/supabase.ts` (user_profiles)
+- Page liste : `apps/back-office/apps/back-office/src/app/admin/users/page.tsx`
+- Composant modal : `apps/back-office/apps/back-office/src/components/admin/edit-user-dialog.tsx`
+- Actions : `apps/back-office/apps/back-office/src/lib/actions/user-management.ts`
+- Types : `apps/back-office/apps/back-office/src/types/supabase.ts` (user_profiles)
 
 ---
 

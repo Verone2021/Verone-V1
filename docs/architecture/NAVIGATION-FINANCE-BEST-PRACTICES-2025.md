@@ -148,7 +148,7 @@ Finance
 **Adopter Option 1 avec structure évolutive** :
 
 ```typescript
-// src/components/business/sidebar.tsx
+// apps/back-office/src/components/business/sidebar.tsx
 
 const financeMenuItems = [
   {

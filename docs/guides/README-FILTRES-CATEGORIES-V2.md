@@ -14,7 +14,7 @@
 Le composant est déjà créé dans :
 
 ```
-/src/components/business/category-hierarchy-filter-v2.tsx
+/apps/back-office/src/components/business/category-hierarchy-filter-v2.tsx
 ```
 
 ### 2. Importer dans votre page
@@ -199,7 +199,7 @@ Clic : Instantané (<16ms pour 60fps)
 
 ## 💻 EXEMPLE DE CODE COMPLET
 
-### Dans `/src/app/catalogue/page.tsx`
+### Dans `/apps/back-office/src/app/catalogue/page.tsx`
 
 ```typescript
 "use client"

@@ -19,7 +19,7 @@ Gain espace disque       : ~5 MB (cleanup)
 
 ## 📁 VAGUE 3 - MIGRATION LIB
 
-### Inventaire src/lib/
+### Inventaire apps/back-office/src/lib/
 
 ```
 Total fichiers TypeScript : 65
@@ -83,18 +83,18 @@ Total : 4h
 Total imports à migrer : 763
 Total fichiers impactés: 326
 
-Source src/app/ (117 fichiers) :
+Source apps/back-office/src/app/ (117 fichiers) :
   @/components/ui      : 267 imports → @verone/ui
   @/shared/modules     : 259 imports → @verone/*
   @/lib                : 78 imports  → @verone/utils
   @verone/ (déjà OK)   : 35 imports  ✅
 
-Source src/components/ (205 fichiers) :
+Source apps/back-office/src/components/ (205 fichiers) :
   @/lib                : 32 imports  → @verone/utils
   @/shared/modules     : 123 imports → @verone/*
   @verone/ (déjà OK)   : 53 imports  ✅
 
-Source src/hooks/ (4 fichiers) :
+Source apps/back-office/src/hooks/ (4 fichiers) :
   @/hooks              : 4 imports   → @verone/common
 ```
 
@@ -133,8 +133,8 @@ Gain espace disque       : ~5 MB
 
 Dossiers :
   src/shared/modules/   : 411 fichiers (~4.3 MB)
-  src/lib/ (partiel)    : 50-65 fichiers (~0.5-1 MB)
-  src/types/ (obsolètes): 3-5 fichiers (~200 KB)
+  apps/back-office/src/lib/ (partiel)    : 50-65 fichiers (~0.5-1 MB)
+  apps/back-office/src/types/ (obsolètes): 3-5 fichiers (~200 KB)
 ```
 
 ### Documentation à Créer
@@ -226,7 +226,7 @@ APRÈS : 0 errors (tolérance zéro) ✅
 ## 📅 PLANNING 3 JOURS
 
 ```
-Jour 1 (4h)   : VAGUE 3 - Migration src/lib/ (65 fichiers)
+Jour 1 (4h)   : VAGUE 3 - Migration apps/back-office/src/lib/ (65 fichiers)
 Jour 2 (4h)   : VAGUE 4 - Update imports (763 imports, 326 fichiers)
 Jour 3 (3h15) : VAGUE 5 - Cleanup + Validation finale
 
@@ -242,7 +242,7 @@ Total : 11h15 (avec buffer 30min)
 ```
 1. docs/audits/2025-11/PLAN-MIGRATION-VAGUES-3-4-5-COMPLET.md
    - 34 pages
-   - Inventaire exhaustif 65 fichiers src/lib/
+   - Inventaire exhaustif 65 fichiers apps/back-office/src/lib/
    - Classification 7 catégories
    - Plan détaillé étape par étape
 

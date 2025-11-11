@@ -109,7 +109,7 @@ stock_forecasted_out INTEGER  -- Peut être < 0
 ### **Frontend (React Hooks)**
 
 ```typescript
-// src/hooks/use-sales-orders.ts (ligne 817-820)
+// apps/back-office/src/hooks/use-sales-orders.ts (ligne 817-820)
 // ✅ FIX 2025-10-14: Warning au lieu de throw Error
 if (unavailableItems.length > 0) {
   // BACKORDERS AUTORISÉS: Warning au lieu de throw (Politique 2025-10-14)
@@ -292,7 +292,7 @@ graph TD
 
 ### **Code Frontend**
 
-- `src/hooks/use-sales-orders.ts` (ligne 817-820)
+- `apps/back-office/apps/back-office/src/hooks/use-sales-orders.ts` (ligne 817-820)
 
 ### **Documentation**
 

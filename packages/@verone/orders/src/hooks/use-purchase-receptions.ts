@@ -19,13 +19,13 @@
 
 import { useState, useCallback } from 'react';
 
-import { createClient } from '@verone/utils/supabase/client';
 import type {
   ReceptionItem,
   ValidateReceptionPayload,
   ReceptionHistory,
   ReceptionShipmentStats,
 } from '@verone/types';
+import { createClient } from '@verone/utils/supabase/client';
 
 export interface PurchaseOrderForReception {
   id: string;
@@ -394,7 +394,15 @@ export function usePurchaseReceptions() {
           return [];
         }
 
-        return data || [];
+        // Mapper les données pour ajouter supplier_name
+        const mappedData = (data || []).map((po: any) => ({
+          ...po,
+          supplier_name: po.organisations
+            ? po.organisations.trade_name || po.organisations.legal_name
+            : 'Fournisseur inconnu',
+        }));
+
+        return mappedData;
       } catch (err) {
         console.error('Exception chargement POs:', err);
         setError(err instanceof Error ? err.message : 'Erreur inconnue');

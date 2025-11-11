@@ -313,7 +313,7 @@ Qonto Dashboard → **"API & Webhooks"** → **"Logs"**
 ### **D. Gestion erreurs**
 
 ```typescript
-// src/lib/qonto/error-handler.ts
+// apps/back-office/src/lib/qonto/error-handler.ts
 export function handleQontoError(error: any) {
   switch (error.response?.status) {
     case 401:

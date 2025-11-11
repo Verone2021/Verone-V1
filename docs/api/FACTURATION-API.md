@@ -653,7 +653,7 @@ curl -X POST https://localhost:3000/api/webhooks/abby \
 - **Abby API Docs** : https://docs.abby.fr/
 - **Repository** : github.com/your-org/verone-back-office
 - **Supabase RPC Functions** : `supabase/migrations/20251011_006_*.sql`
-- **Client Abby** : `src/lib/abby/client.ts`
+- **Client Abby** : `apps/back-office/apps/back-office/src/lib/abby/client.ts`
 - **Tests E2E** : `tests/e2e/api-facturation.spec.ts`
 
 ---

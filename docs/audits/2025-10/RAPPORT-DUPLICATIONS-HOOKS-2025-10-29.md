@@ -117,8 +117,8 @@ use-stock-optimized.ts → .from('products').select('*, stock_movements!inner(..
 
 **Fichiers concernés** :
 
-- `src/hooks/use-categories.ts` (lignes 188-197)
-- `src/hooks/use-subcategories.ts` (lignes 273-282)
+- `apps/back-office/apps/back-office/src/hooks/use-categories.ts` (lignes 188-197)
+- `apps/back-office/apps/back-office/src/hooks/use-subcategories.ts` (lignes 273-282)
 
 **Code dupliqué** (identique à 100%) :
 
@@ -138,7 +138,7 @@ const generateSlug = (name: string): string => {
 **Recommandation** :
 
 ```typescript
-// Créer: src/lib/utils/slug.ts
+// Créer: apps/back-office/src/lib/utils/slug.ts
 export function generateSlug(name: string): string {
   return name
     .toLowerCase()
@@ -167,10 +167,10 @@ import { generateSlug } from '@/lib/utils/slug';
 
 **Fichiers concernés** :
 
-- `src/hooks/use-categories.ts` (lignes 128-134)
-- `src/hooks/use-subcategories.ts` (lignes 110-119)
-- `src/hooks/use-products.ts` (estimation, non vérifié)
-- `src/hooks/use-contacts.ts` (estimation, non vérifié)
+- `apps/back-office/apps/back-office/src/hooks/use-categories.ts` (lignes 128-134)
+- `apps/back-office/apps/back-office/src/hooks/use-subcategories.ts` (lignes 110-119)
+- `apps/back-office/apps/back-office/src/hooks/use-products.ts` (estimation, non vérifié)
+- `apps/back-office/apps/back-office/src/hooks/use-contacts.ts` (estimation, non vérifié)
 
 **Pattern dupliqué** :
 
@@ -187,7 +187,7 @@ if (error.code === '23505') {
 **Recommandation** :
 
 ```typescript
-// Créer: src/lib/utils/supabase-errors.ts
+// Créer: apps/back-office/src/lib/utils/supabase-errors.ts
 export function handleDuplicateConstraintError(entityName: string): never {
   const error: any = new Error(
     `Une ${entityName} avec ce nom existe déjà. Veuillez choisir un nom différent.`
@@ -242,7 +242,7 @@ const fetch = async () => {
 **Recommandation** :
 
 ```typescript
-// Créer: src/hooks/base/use-supabase-crud.ts
+// Créer: apps/back-office/src/hooks/base/use-supabase-crud.ts
 export function useSupabaseCRUD<T>(tableName: string) {
   const [data, setData] = useState<T[]>([])
   const [loading, setLoading] = useState(true)
@@ -277,7 +277,7 @@ export function useProducts() {
 
 ### 4️⃣ Suggestion : Renommage `use-organisation-tabs` (P3 - Impact esthétique)
 
-**Fichier** : `src/hooks/use-organisation-tabs.ts`
+**Fichier** : `apps/back-office/apps/back-office/src/hooks/use-organisation-tabs.ts`
 
 **Problème** : Nom similaire à `use-organisations` (81% similarité Levenshtein)
 
@@ -328,7 +328,7 @@ export function useProducts() {
 
 1. Vérifier manuellement chaque hook avec `git log` pour historique
 2. Vérifier si utilisé dans pages non analysées (app/, components/)
-3. Archiver (déplacer vers `src/hooks/_archived/`) plutôt que supprimer
+3. Archiver (déplacer vers `apps/back-office/apps/back-office/src/hooks/_archived/`) plutôt que supprimer
 4. Créer issue GitHub "Audit deadcode hooks" pour Phase 3
 
 **Priorité** : P3 (Cleanup, non-urgent)
@@ -343,11 +343,11 @@ export function useProducts() {
 
 ### Priorité P2 : AMÉLIORATION CODE QUALITY (Optionnel - 35 min)
 
-1. **Extraire `generateSlug()`** → `src/lib/utils/slug.ts`
+1. **Extraire `generateSlug()`** → `apps/back-office/apps/back-office/src/lib/utils/slug.ts`
    - Effort : 15 min
    - Impact : 2 hooks, ~20 lignes économisées
 
-2. **Extraire gestion erreur 23505** → `src/lib/utils/supabase-errors.ts`
+2. **Extraire gestion erreur 23505** → `apps/back-office/apps/back-office/src/lib/utils/supabase-errors.ts`
    - Effort : 20 min
    - Impact : ~5 hooks, ~30 lignes économisées
 
@@ -428,7 +428,7 @@ if (similarity > 0.9) { // 90% similarité (réduit faux positifs)
 ### Fichiers Analysés
 
 - `scripts/validation/check-duplicate-hooks.ts` (détecteur)
-- 82 hooks dans `src/hooks/*.ts`
+- 82 hooks dans `apps/back-office/apps/back-office/src/hooks/*.ts`
 - 5 erreurs critiques analysées manuellement
 - 20 warnings principaux analysés
 

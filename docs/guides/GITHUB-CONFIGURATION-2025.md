@@ -169,7 +169,7 @@ mcp__github__list_commits(owner="Verone2021", repo="verone-back-office", perPage
 ✅ Succès - 3 commits récupérés :
 - 89f612d : "🧹 CLEAN: Suppression dossier .playwright-mcp"
 - b61d3bc : "🚀 TRIGGER: Force Vercel deployment"
-- 29bea48 : "🔧 FIX CRITIQUE: Force sync src/lib/"
+- 29bea48 : "🔧 FIX CRITIQUE: Force sync apps/back-office/src/lib/"
 ```
 
 ### **Test 3 : Search Repositories**

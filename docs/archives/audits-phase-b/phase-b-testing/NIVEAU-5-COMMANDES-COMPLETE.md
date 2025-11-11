@@ -336,7 +336,7 @@ Aucune suppression nécessaire. Les 2 pages servent des workflows métier distin
 - REÇUE (marchandise réceptionnée)
 - ANNULÉE / REFUSÉE
 
-**Leçon** : Les workflows sont cohérents avec la documentation `src/app/commandes/README.md`
+**Leçon** : Les workflows sont cohérents avec la documentation `apps/back-office/apps/back-office/src/app/commandes/README.md`
 
 ---
 
@@ -415,7 +415,7 @@ Consultation → Commande Client (brouillon → validée)
 Module not found: Can't resolve '@/app/actions/sales-order...'
 ```
 
-**Origine** : `src/hooks/use-sales-orders.ts`
+**Origine** : `apps/back-office/apps/back-office/src/hooks/use-sales-orders.ts`
 
 **Analyse** :
 

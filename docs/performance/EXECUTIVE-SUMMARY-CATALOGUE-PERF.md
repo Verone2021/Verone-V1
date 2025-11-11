@@ -103,7 +103,7 @@ $$;
 
 ```bash
 1. Modifier dashboard (15 min)
-   Fichier : src/app/catalogue/dashboard/page.tsx
+   Fichier : apps/back-office/src/app/catalogue/dashboard/page.tsx
 
 2. Tests locaux (15 min)
    - Vérifier 241 produits affichés

@@ -8,6 +8,16 @@ import { useOrganisations } from '@verone/organisations/hooks';
 import type { SelectedProduct } from '@verone/products/components/selectors/UniversalProductSelectorV2';
 import { UniversalProductSelectorV2 } from '@verone/products/components/selectors/UniversalProductSelectorV2';
 import type { Database } from '@verone/types';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 
 // FIXME: EcoTaxVatInput can't be imported from apps/back-office in package
@@ -112,9 +122,13 @@ export function PurchaseOrderFormModal({
     // @ts-ignore - eco_tax_vat_rate exists in DB, types might be stale
     order?.eco_tax_vat_rate ?? null
   );
+  const [paymentTerms, setPaymentTerms] = useState(order?.payment_terms || '');
 
   // Modal ajout produit
   const [showProductSelector, setShowProductSelector] = useState(false);
+
+  // Confirmation modal state
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   // Hooks
   const {
@@ -203,6 +217,18 @@ export function PurchaseOrderFormModal({
   // Gérer changement fournisseur
   const handleSupplierChange = async (supplierId: string | null) => {
     setSelectedSupplierId(supplierId || '');
+
+    // Pré-remplir automatiquement les conditions de paiement
+    if (supplierId) {
+      const supplier = await getOrganisationById(supplierId);
+      if (supplier && supplier.payment_terms) {
+        setPaymentTerms(supplier.payment_terms);
+      } else {
+        setPaymentTerms('');
+      }
+    } else {
+      setPaymentTerms('');
+    }
   };
 
   // Handler création nouveau fournisseur
@@ -302,6 +328,7 @@ export function PurchaseOrderFormModal({
     );
     setNotes('');
     setEcoTaxVatRate(null);
+    setPaymentTerms('');
   };
 
   const handleClose = () => {
@@ -311,18 +338,8 @@ export function PurchaseOrderFormModal({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Validation commune
-    if (!selectedSupplierId) {
-      toast({
-        variant: 'destructive',
-        title: 'Fournisseur requis',
-        description: 'Veuillez sélectionner un fournisseur',
-      });
-      return;
-    }
+  const handleSubmitConfirmed = async () => {
+    if (!selectedSupplierId) return;
 
     setLoading(true);
     try {
@@ -332,7 +349,7 @@ export function PurchaseOrderFormModal({
         await updateOrder(order.id, {
           supplier_id: selectedSupplierId,
           expected_delivery_date: expectedDeliveryDate || undefined,
-          payment_terms: selectedSupplier?.payment_terms || undefined,
+          payment_terms: paymentTerms || undefined,
           delivery_address: deliveryAddress || undefined,
           notes: notes || undefined,
           eco_tax_vat_rate: ecoTaxVatRate,
@@ -354,6 +371,7 @@ export function PurchaseOrderFormModal({
       }
 
       handleClose();
+      setShowConfirmation(false);
       onSuccess?.();
     } catch (error) {
       console.error('❌ Erreur submit:', error);
@@ -368,6 +386,23 @@ export function PurchaseOrderFormModal({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validation commune
+    if (!selectedSupplierId) {
+      toast({
+        variant: 'destructive',
+        title: 'Fournisseur requis',
+        description: 'Veuillez sélectionner un fournisseur',
+      });
+      return;
+    }
+
+    // Ouvrir modal de confirmation
+    setShowConfirmation(true);
   };
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -483,16 +518,28 @@ export function PurchaseOrderFormModal({
                   */}
                 </div>
 
-                {selectedSupplier && selectedSupplier.payment_terms && (
-                  <div className="space-y-2 col-span-2 p-3 bg-gray-50 border rounded-lg">
-                    <Label className="text-sm font-medium">
-                      Conditions de paiement du fournisseur
-                    </Label>
-                    <p className="text-sm text-gray-700">
-                      {selectedSupplier.payment_terms}
+                {/* Conditions de paiement éditables */}
+                <div className="space-y-2 col-span-2">
+                  <Label htmlFor="paymentTerms">Conditions de paiement</Label>
+                  <Input
+                    id="paymentTerms"
+                    type="text"
+                    value={paymentTerms}
+                    onChange={e => setPaymentTerms(e.target.value)}
+                    placeholder={
+                      selectedSupplier
+                        ? 'Conditions de paiement (auto-remplies depuis fournisseur)'
+                        : 'Sélectionnez un fournisseur pour auto-remplir'
+                    }
+                    disabled={isBlocked || !selectedSupplier}
+                  />
+                  {selectedSupplier && (
+                    <p className="text-xs text-gray-500">
+                      Auto-rempli depuis la fiche fournisseur. Vous pouvez
+                      modifier si nécessaire.
                     </p>
-                  </div>
-                )}
+                  )}
+                </div>
 
                 <div className="space-y-2 col-span-2">
                   <Label htmlFor="notes">Notes</Label>
@@ -643,6 +690,54 @@ export function PurchaseOrderFormModal({
           showPricing
         />
       )}
+
+      {/* AlertDialog de confirmation */}
+      <AlertDialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {isEditMode
+                ? 'Confirmer la mise à jour'
+                : 'Confirmer la création de la commande'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {isEditMode ? (
+                <>
+                  Vous êtes sur le point de mettre à jour la commande{' '}
+                  <span className="font-semibold">{order.po_number}</span> avec{' '}
+                  {items.length} article(s) pour un montant total de{' '}
+                  <span className="font-semibold">
+                    {formatCurrency(totalTTC)}
+                  </span>
+                  .
+                </>
+              ) : (
+                <>
+                  Vous êtes sur le point de créer une commande fournisseur pour{' '}
+                  <span className="font-semibold">
+                    {selectedSupplier?.trade_name ||
+                      selectedSupplier?.legal_name}
+                  </span>
+                  .
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loading}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleSubmitConfirmed}
+              disabled={loading}
+            >
+              {loading
+                ? 'Enregistrement...'
+                : isEditMode
+                  ? 'Mettre à jour'
+                  : 'Créer la commande'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

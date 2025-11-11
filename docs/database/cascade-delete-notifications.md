@@ -538,8 +538,8 @@ DROP CONSTRAINT IF EXISTS check_single_related_entity;
 
 ### Code Source
 
-- `packages/@verone/notifications/src/hooks/use-database-notifications.ts`
-- `packages/@verone/notifications/src/components/dropdowns/NotificationsDropdown.tsx`
+- `packages/@verone/notifications/apps/back-office/src/hooks/use-database-notifications.ts`
+- `packages/@verone/notifications/apps/back-office/src/components/dropdowns/NotificationsDropdown.tsx`
 
 ---
 

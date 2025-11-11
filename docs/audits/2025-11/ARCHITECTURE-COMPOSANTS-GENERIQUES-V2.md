@@ -49,7 +49,7 @@
 │  │  • Shadows (5 elevation levels)                        │  │
 │  │  • Border Radius (sm-full)                             │  │
 │  │                                                         │  │
-│  │  📁 src/lib/design-system/tokens/                     │  │
+│  │  📁 apps/back-office/src/lib/design-system/tokens/                     │  │
 │  └──────────────────────────────────────────────────────────┘  │
 │                            ▼                                    │
 │  ┌──────────────────────────────────────────────────────────┐  │
@@ -67,10 +67,10 @@
 │  │  ───────────────────────────────────────────────────────│  │
 │  │  • Primitives + Styling (Tailwind CSS)                 │  │
 │  │  • CVA (Class Variance Authority) pour variants        │  │
-│  │  • Copy-paste dans src/components/ui/                  │  │
+│  │  • Copy-paste dans apps/back-office/src/components/ui/                  │  │
 │  │  • Ownership total du code                             │  │
 │  │                                                         │  │
-│  │  📁 src/components/ui/ (51 composants base)           │  │
+│  │  📁 apps/back-office/src/components/ui/ (51 composants base)           │  │
 │  └──────────────────────────────────────────────────────────┘  │
 │                            ▼                                    │
 │  ┌──────────────────────────────────────────────────────────┐  │
@@ -80,7 +80,7 @@
 │  │  • Molecules (Card, KPICard, Alert) → 22 composants    │  │
 │  │  • Organisms (Table, Tabs, Modal) → 18 composants      │  │
 │  │                                                         │  │
-│  │  📁 src/components/ui/{atoms,molecules,organisms}/    │  │
+│  │  📁 apps/back-office/src/components/ui/{atoms,molecules,organisms}/    │  │
 │  └──────────────────────────────────────────────────────────┘  │
 │                            ▼                                    │
 │  ┌──────────────────────────────────────────────────────────┐  │
@@ -90,7 +90,7 @@
 │  │  • Utilisent composants génériques (layers 3-4)        │  │
 │  │  • Logique métier Vérone                               │  │
 │  │                                                         │  │
-│  │  📁 src/components/business/                           │  │
+│  │  📁 apps/back-office/src/components/business/                           │  │
 │  │  📁 src/shared/modules/**/components/                  │  │
 │  └──────────────────────────────────────────────────────────┘  │
 │                                                                 │
@@ -104,6 +104,7 @@
 **Philosophie** : "The design of your components should be separate from their implementation"
 
 ✅ **Avantages** :
+
 - Ownership total du code composants
 - Pas de dépendances cachées (pas de `node_modules` black box)
 - Customisation complète sans fork library
@@ -112,22 +113,24 @@
 
 ```typescript
 // ✅ Code copié dans projet, modifiable librement
-src/components/ui/button.tsx  // Notre implémentation
-src/components/ui/dialog.tsx  // Notre implémentation
+apps / back - office / src / components / ui / button.tsx; // Notre implémentation
+apps / back - office / src / components / ui / dialog.tsx; // Notre implémentation
 
 // vs ❌ Package external (vendor lock-in)
-import { Button } from '@some-ui-lib'  // Code inaccessible
+import { Button } from '@some-ui-lib'; // Code inaccessible
 ```
 
 #### 2. Two-Layer Design
 
 **Layer 1 : Structure & Behavior** (Radix UI)
+
 - Composants headless (pas de styles)
 - Accessibilité WAI-ARIA complète
 - Keyboard navigation automatique
 - Focus management
 
 **Layer 2 : Styling** (Tailwind CSS + CVA)
+
 - Design tokens → CSS variables
 - Variants system avec CVA
 - Responsive avec breakpoints Tailwind
@@ -174,13 +177,13 @@ Pages (Templates avec données réelles)
 
 **Application Vérone** :
 
-| Niveau | Composants Vérone | Exemples |
-|--------|-------------------|----------|
-| **Atoms** | 25 | Button, Badge, Input, Label, Checkbox |
-| **Molecules** | 22 | Card, KPICard, Alert, FormField |
-| **Organisms** | 18 | Table, DataTable, CommandPalette, Sidebar |
-| **Templates** | - | DashboardLayout, CatalogueLayout |
-| **Pages** | - | `/dashboard`, `/produits/catalogue` |
+| Niveau        | Composants Vérone | Exemples                                  |
+| ------------- | ----------------- | ----------------------------------------- |
+| **Atoms**     | 25                | Button, Badge, Input, Label, Checkbox     |
+| **Molecules** | 22                | Card, KPICard, Alert, FormField           |
+| **Organisms** | 18                | Table, DataTable, CommandPalette, Sidebar |
+| **Templates** | -                 | DashboardLayout, CatalogueLayout          |
+| **Pages**     | -                 | `/dashboard`, `/produits/catalogue`       |
 
 #### 4. Accessibilité WCAG 2.2 AA
 
@@ -210,6 +213,7 @@ Pages (Templates avec données réelles)
 ```
 
 **Tous composants** :
+
 - ✅ Props interfaces complètes
 - ✅ Pas de `any` (0 tolerance)
 - ✅ Generic types pour réutilisabilité
@@ -219,10 +223,10 @@ Pages (Templates avec données réelles)
 
 ## Design Tokens Consolidés
 
-### Source Unique : `src/lib/design-system/tokens/`
+### Source Unique : `apps/back-office/src/lib/design-system/tokens/`
 
 ```
-src/lib/design-system/tokens/
+apps/back-office/src/lib/design-system/tokens/
 ├── index.ts          # Export centralisé
 ├── colors.ts         # Semantic colors
 ├── spacing.ts        # Scale espacement
@@ -235,7 +239,7 @@ src/lib/design-system/tokens/
 
 ### 1. Colors (Semantic)
 
-**Fichier** : `src/lib/design-system/tokens/colors.ts`
+**Fichier** : `apps/back-office/src/lib/design-system/tokens/colors.ts`
 
 ```typescript
 /**
@@ -251,7 +255,7 @@ export const colors = {
     200: 'hsl(251, 95%, 92%)',
     300: 'hsl(252, 95%, 85%)',
     400: 'hsl(255, 92%, 76%)',
-    500: 'hsl(258, 90%, 66%)',   // Primary base
+    500: 'hsl(258, 90%, 66%)', // Primary base
     600: 'hsl(262, 83%, 58%)',
     700: 'hsl(263, 70%, 50%)',
     800: 'hsl(263, 69%, 42%)',
@@ -263,27 +267,27 @@ export const colors = {
   secondary: {
     50: 'hsl(210, 40%, 98%)',
     // ... scale complète
-    500: 'hsl(217, 19%, 38%)',  // Secondary base
+    500: 'hsl(217, 19%, 38%)', // Secondary base
   },
 
   // Success
   success: {
-    500: 'hsl(142, 71%, 45%)',  // Green
+    500: 'hsl(142, 71%, 45%)', // Green
   },
 
   // Danger (Destructive)
   danger: {
-    500: 'hsl(0, 84%, 60%)',    // Red
+    500: 'hsl(0, 84%, 60%)', // Red
   },
 
   // Warning
   warning: {
-    500: 'hsl(45, 93%, 47%)',   // Amber
+    500: 'hsl(45, 93%, 47%)', // Amber
   },
 
   // Info
   info: {
-    500: 'hsl(199, 89%, 48%)',  // Blue
+    500: 'hsl(199, 89%, 48%)', // Blue
   },
 
   // Neutrals (Grayscale)
@@ -299,8 +303,8 @@ export const colors = {
     800: 'hsl(217, 33%, 17%)',
     900: 'hsl(222, 47%, 11%)',
     950: 'hsl(229, 84%, 5%)',
-  }
-}
+  },
+};
 
 // CSS Variables export (Tailwind config)
 export const cssVariables = {
@@ -319,25 +323,25 @@ export const cssVariables = {
   '--border': colors.neutral[200],
   '--input': colors.neutral[200],
   '--ring': colors.primary[500],
-}
+};
 ```
 
 **Usage** :
 
 ```typescript
 // ✅ Utiliser semantic colors
-className="bg-primary text-primary-foreground"
-className="border-border text-muted-foreground"
+className = 'bg-primary text-primary-foreground';
+className = 'border-border text-muted-foreground';
 
 // ❌ Éviter hardcoded colors
-className="bg-blue-500 text-white"  // Non-semantic
+className = 'bg-blue-500 text-white'; // Non-semantic
 ```
 
 ---
 
 ### 2. Spacing (Scale)
 
-**Fichier** : `src/lib/design-system/tokens/spacing.ts`
+**Fichier** : `apps/back-office/src/lib/design-system/tokens/spacing.ts`
 
 ```typescript
 /**
@@ -348,42 +352,42 @@ className="bg-blue-500 text-white"  // Non-semantic
 export const spacing = {
   0: '0px',
   px: '1px',
-  0.5: '0.125rem',   // 2px
-  1: '0.25rem',      // 4px   ← Base scale
-  1.5: '0.375rem',   // 6px
-  2: '0.5rem',       // 8px
-  2.5: '0.625rem',   // 10px
-  3: '0.75rem',      // 12px
-  3.5: '0.875rem',   // 14px
-  4: '1rem',         // 16px  ← Standard
-  5: '1.25rem',      // 20px
-  6: '1.5rem',       // 24px
-  7: '1.75rem',      // 28px
-  8: '2rem',         // 32px
-  9: '2.25rem',      // 36px
-  10: '2.5rem',      // 40px
-  12: '3rem',        // 48px
-  14: '3.5rem',      // 56px
-  16: '4rem',        // 64px
-  20: '5rem',        // 80px
-  24: '6rem',        // 96px
-  32: '8rem',        // 128px
-  40: '10rem',       // 160px
-  48: '12rem',       // 192px
-  56: '14rem',       // 224px
-  64: '16rem',       // 256px
-}
+  0.5: '0.125rem', // 2px
+  1: '0.25rem', // 4px   ← Base scale
+  1.5: '0.375rem', // 6px
+  2: '0.5rem', // 8px
+  2.5: '0.625rem', // 10px
+  3: '0.75rem', // 12px
+  3.5: '0.875rem', // 14px
+  4: '1rem', // 16px  ← Standard
+  5: '1.25rem', // 20px
+  6: '1.5rem', // 24px
+  7: '1.75rem', // 28px
+  8: '2rem', // 32px
+  9: '2.25rem', // 36px
+  10: '2.5rem', // 40px
+  12: '3rem', // 48px
+  14: '3.5rem', // 56px
+  16: '4rem', // 64px
+  20: '5rem', // 80px
+  24: '6rem', // 96px
+  32: '8rem', // 128px
+  40: '10rem', // 160px
+  48: '12rem', // 192px
+  56: '14rem', // 224px
+  64: '16rem', // 256px
+};
 
 // Aliases sémantiques
 export const semanticSpacing = {
-  'spacing-xs': spacing[1],      // 4px
-  'spacing-sm': spacing[2],      // 8px
-  'spacing-md': spacing[4],      // 16px
-  'spacing-lg': spacing[6],      // 24px
-  'spacing-xl': spacing[8],      // 32px
-  'spacing-2xl': spacing[12],    // 48px
-  'spacing-3xl': spacing[16],    // 64px
-}
+  'spacing-xs': spacing[1], // 4px
+  'spacing-sm': spacing[2], // 8px
+  'spacing-md': spacing[4], // 16px
+  'spacing-lg': spacing[6], // 24px
+  'spacing-xl': spacing[8], // 32px
+  'spacing-2xl': spacing[12], // 48px
+  'spacing-3xl': spacing[16], // 64px
+};
 ```
 
 **Usage patterns** :
@@ -405,7 +409,7 @@ className="gap-2"      // 8px gap dans flex/grid
 
 ### 3. Typography (Scale)
 
-**Fichier** : `src/lib/design-system/tokens/typography.ts`
+**Fichier** : `apps/back-office/src/lib/design-system/tokens/typography.ts`
 
 ```typescript
 /**
@@ -415,15 +419,15 @@ className="gap-2"      // 8px gap dans flex/grid
 
 export const typography = {
   fontSizes: {
-    xs: '0.75rem',      // 12px
-    sm: '0.875rem',     // 14px
-    base: '1rem',       // 16px   ← Base
-    lg: '1.125rem',     // 18px
-    xl: '1.25rem',      // 20px
-    '2xl': '1.5rem',    // 24px
-    '3xl': '1.875rem',  // 30px
-    '4xl': '2.25rem',   // 36px
-    '5xl': '3rem',      // 48px
+    xs: '0.75rem', // 12px
+    sm: '0.875rem', // 14px
+    base: '1rem', // 16px   ← Base
+    lg: '1.125rem', // 18px
+    xl: '1.25rem', // 20px
+    '2xl': '1.5rem', // 24px
+    '3xl': '1.875rem', // 30px
+    '4xl': '2.25rem', // 36px
+    '5xl': '3rem', // 48px
   },
 
   fontWeights: {
@@ -456,27 +460,67 @@ export const typography = {
   fontFamilies: {
     sans: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     mono: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-  }
-}
+  },
+};
 
 // Semantic typography (composants UI)
 export const semanticTypography = {
   // Headings
-  h1: { size: typography.fontSizes['4xl'], weight: typography.fontWeights.bold, lineHeight: typography.lineHeights.tight },
-  h2: { size: typography.fontSizes['3xl'], weight: typography.fontWeights.bold, lineHeight: typography.lineHeights.tight },
-  h3: { size: typography.fontSizes['2xl'], weight: typography.fontWeights.semibold, lineHeight: typography.lineHeights.snug },
-  h4: { size: typography.fontSizes.xl, weight: typography.fontWeights.semibold, lineHeight: typography.lineHeights.snug },
+  h1: {
+    size: typography.fontSizes['4xl'],
+    weight: typography.fontWeights.bold,
+    lineHeight: typography.lineHeights.tight,
+  },
+  h2: {
+    size: typography.fontSizes['3xl'],
+    weight: typography.fontWeights.bold,
+    lineHeight: typography.lineHeights.tight,
+  },
+  h3: {
+    size: typography.fontSizes['2xl'],
+    weight: typography.fontWeights.semibold,
+    lineHeight: typography.lineHeights.snug,
+  },
+  h4: {
+    size: typography.fontSizes.xl,
+    weight: typography.fontWeights.semibold,
+    lineHeight: typography.lineHeights.snug,
+  },
 
   // Body
-  bodyLarge: { size: typography.fontSizes.lg, weight: typography.fontWeights.normal, lineHeight: typography.lineHeights.relaxed },
-  bodyBase: { size: typography.fontSizes.base, weight: typography.fontWeights.normal, lineHeight: typography.lineHeights.normal },
-  bodySmall: { size: typography.fontSizes.sm, weight: typography.fontWeights.normal, lineHeight: typography.lineHeights.normal },
+  bodyLarge: {
+    size: typography.fontSizes.lg,
+    weight: typography.fontWeights.normal,
+    lineHeight: typography.lineHeights.relaxed,
+  },
+  bodyBase: {
+    size: typography.fontSizes.base,
+    weight: typography.fontWeights.normal,
+    lineHeight: typography.lineHeights.normal,
+  },
+  bodySmall: {
+    size: typography.fontSizes.sm,
+    weight: typography.fontWeights.normal,
+    lineHeight: typography.lineHeights.normal,
+  },
 
   // UI
-  caption: { size: typography.fontSizes.xs, weight: typography.fontWeights.normal, lineHeight: typography.lineHeights.normal },
-  button: { size: typography.fontSizes.sm, weight: typography.fontWeights.medium, lineHeight: typography.lineHeights.none },
-  label: { size: typography.fontSizes.sm, weight: typography.fontWeights.medium, lineHeight: typography.lineHeights.normal },
-}
+  caption: {
+    size: typography.fontSizes.xs,
+    weight: typography.fontWeights.normal,
+    lineHeight: typography.lineHeights.normal,
+  },
+  button: {
+    size: typography.fontSizes.sm,
+    weight: typography.fontWeights.medium,
+    lineHeight: typography.lineHeights.none,
+  },
+  label: {
+    size: typography.fontSizes.sm,
+    weight: typography.fontWeights.medium,
+    lineHeight: typography.lineHeights.normal,
+  },
+};
 ```
 
 **Usage** :
@@ -496,7 +540,7 @@ className="text-2xl font-bold"    // 24px bold
 
 ### 4. Shadows (Elevation)
 
-**Fichier** : `src/lib/design-system/tokens/shadows.ts`
+**Fichier** : `apps/back-office/src/lib/design-system/tokens/shadows.ts`
 
 ```typescript
 /**
@@ -522,7 +566,7 @@ export const shadows = {
 
   // Elevation 5 : Maximum prominence
   '2xl': '0 25px 50px -12px rgb(0 0 0 / 0.25)',
-}
+};
 
 // Semantic shadows
 export const semanticShadows = {
@@ -530,24 +574,24 @@ export const semanticShadows = {
   dropdown: shadows.md,
   modal: shadows.lg,
   commandPalette: shadows.xl,
-}
+};
 ```
 
 **Usage** :
 
 ```typescript
 // ✅ Shadow classes
-className="shadow-sm"    // Cards
-className="shadow-md"    // Dropdowns
-className="shadow-lg"    // Modals
-className="shadow-xl"    // Command palette
+className = 'shadow-sm'; // Cards
+className = 'shadow-md'; // Dropdowns
+className = 'shadow-lg'; // Modals
+className = 'shadow-xl'; // Command palette
 ```
 
 ---
 
 ### 5. Border Radius
 
-**Fichier** : `src/lib/design-system/tokens/radius.ts`
+**Fichier** : `apps/back-office/src/lib/design-system/tokens/radius.ts`
 
 ```typescript
 /**
@@ -557,33 +601,33 @@ className="shadow-xl"    // Command palette
 
 export const radius = {
   none: '0px',
-  sm: '0.125rem',   // 2px
-  base: '0.25rem',  // 4px   ← Standard
-  md: '0.375rem',   // 6px
-  lg: '0.5rem',     // 8px
-  xl: '0.75rem',    // 12px
-  '2xl': '1rem',    // 16px
-  '3xl': '1.5rem',  // 24px
-  full: '9999px',   // Capsule
-}
+  sm: '0.125rem', // 2px
+  base: '0.25rem', // 4px   ← Standard
+  md: '0.375rem', // 6px
+  lg: '0.5rem', // 8px
+  xl: '0.75rem', // 12px
+  '2xl': '1rem', // 16px
+  '3xl': '1.5rem', // 24px
+  full: '9999px', // Capsule
+};
 
 // Semantic radius
 export const semanticRadius = {
-  button: radius.md,      // 6px
-  input: radius.md,       // 6px
-  card: radius.lg,        // 8px
-  modal: radius.xl,       // 12px
-  badge: radius.full,     // Capsule
-}
+  button: radius.md, // 6px
+  input: radius.md, // 6px
+  card: radius.lg, // 8px
+  modal: radius.xl, // 12px
+  badge: radius.full, // Capsule
+};
 ```
 
 **Usage** :
 
 ```typescript
 // ✅ Rounded classes
-className="rounded-md"    // Standard (6px)
-className="rounded-lg"    // Cards (8px)
-className="rounded-full"  // Badges, avatars (capsule)
+className = 'rounded-md'; // Standard (6px)
+className = 'rounded-lg'; // Cards (8px)
+className = 'rounded-full'; // Badges, avatars (capsule)
 ```
 
 ---
@@ -592,7 +636,7 @@ className="rounded-full"  // Badges, avatars (capsule)
 
 ### 1. Button Unifié
 
-**Fichier** : `src/components/ui/button.tsx`
+**Fichier** : `apps/back-office/src/components/ui/button.tsx`
 
 #### Props TypeScript
 
@@ -800,7 +844,7 @@ import { Save, Plus, Trash2 } from 'lucide-react'
 
 ### 2. KPICard Unifié
 
-**Fichier** : `src/components/ui/kpi-card.tsx`
+**Fichier** : `apps/back-office/src/components/ui/kpi-card.tsx`
 
 #### Props TypeScript
 
@@ -1071,7 +1115,7 @@ import { Euro, Users, ShoppingCart } from 'lucide-react'
 
 ### 3. Badge Unifié (avec Variants Métier)
 
-**Fichier** : `src/components/ui/badge.tsx`
+**Fichier** : `apps/back-office/src/components/ui/badge.tsx`
 
 #### Props TypeScript
 
@@ -1155,7 +1199,7 @@ function CustomerBadge({ customer }: { customer: Customer }) {
 
 ### 4. Card Unifié (Compound Components)
 
-**Fichier** : `src/components/ui/card.tsx`
+**Fichier** : `apps/back-office/src/components/ui/card.tsx`
 
 #### Pattern Compound Components
 
@@ -1282,6 +1326,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 **Pattern** : Composants groupés avec API déclarative
 
 **Avantages** :
+
 - Flexibilité maximale
 - API intuitive
 - Composition naturelle
@@ -1311,6 +1356,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 **Pattern** : Composant render comme autre element
 
 **Avantages** :
+
 - Réutilisabilité
 - Flexibilité routing
 - Accessibilité préservée
@@ -1359,36 +1405,36 @@ return <Comp {...props}>{children}</Comp>
 
 ### Architecture & Tools
 
-| Resource | Description | URL |
-|----------|-------------|-----|
-| **shadcn/ui** | Copy-paste component collection | [ui.shadcn.com](https://ui.shadcn.com) |
-| **Radix UI** | Headless accessible primitives | [radix-ui.com](https://radix-ui.com) |
-| **CVA** | Class Variance Authority | [cva.style](https://cva.style) |
-| **Tailwind CSS** | Utility-first CSS framework | [tailwindcss.com](https://tailwindcss.com) |
+| Resource         | Description                     | URL                                        |
+| ---------------- | ------------------------------- | ------------------------------------------ |
+| **shadcn/ui**    | Copy-paste component collection | [ui.shadcn.com](https://ui.shadcn.com)     |
+| **Radix UI**     | Headless accessible primitives  | [radix-ui.com](https://radix-ui.com)       |
+| **CVA**          | Class Variance Authority        | [cva.style](https://cva.style)             |
+| **Tailwind CSS** | Utility-first CSS framework     | [tailwindcss.com](https://tailwindcss.com) |
 
 ### Community Discussions
 
-| Platform | Topic | Key Insights |
-|----------|-------|--------------|
-| **Reddit r/reactjs** | shadcn/ui architecture | Copy-paste > npm packages (ownership) |
-| **GitHub Discussions** | Component library patterns | Compound components + TypeScript generics |
-| **Twitter/X** | UI trends 2025 | Glass morphism, gradients, microinteractions |
+| Platform               | Topic                      | Key Insights                                 |
+| ---------------------- | -------------------------- | -------------------------------------------- |
+| **Reddit r/reactjs**   | shadcn/ui architecture     | Copy-paste > npm packages (ownership)        |
+| **GitHub Discussions** | Component library patterns | Compound components + TypeScript generics    |
+| **Twitter/X**          | UI trends 2025             | Glass morphism, gradients, microinteractions |
 
 ### Design Inspiration
 
-| Source | Search Query | Use Case |
-|--------|--------------|----------|
-| **Dribbble** | "CRM dashboard 2025" | KPI cards, tables, layouts |
-| **Dribbble** | "B2B SaaS UI" | Forms, modals, navigation |
-| **Figma Community** | "Design system" | Tokens, component specs |
+| Source              | Search Query         | Use Case                   |
+| ------------------- | -------------------- | -------------------------- |
+| **Dribbble**        | "CRM dashboard 2025" | KPI cards, tables, layouts |
+| **Dribbble**        | "B2B SaaS UI"        | Forms, modals, navigation  |
+| **Figma Community** | "Design system"      | Tokens, component specs    |
 
 ### Accessibility
 
-| Resource | Description | Compliance |
-|----------|-------------|------------|
-| **WCAG 2.2** | W3C Guidelines (stable 2025) | AA minimum |
-| **WAI-ARIA Authoring Practices** | Component patterns | Dialog, Tabs, Combobox, etc. |
-| **Radix UI Accessibility** | ARIA best practices | Built-in compliance |
+| Resource                         | Description                  | Compliance                   |
+| -------------------------------- | ---------------------------- | ---------------------------- |
+| **WCAG 2.2**                     | W3C Guidelines (stable 2025) | AA minimum                   |
+| **WAI-ARIA Authoring Practices** | Component patterns           | Dialog, Tabs, Combobox, etc. |
+| **Radix UI Accessibility**       | ARIA best practices          | Built-in compliance          |
 
 ---
 

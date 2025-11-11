@@ -1,7 +1,7 @@
 # RAPPORT D'AUDIT - DOUBLONS BUSINESS/
 
 **Date** : 2025-11-06
-**Objectif** : Identifier fichiers `src/components/business/` déjà migrés vers `src/shared/modules/`
+**Objectif** : Identifier fichiers `apps/back-office/src/components/business/` déjà migrés vers `src/shared/modules/`
 
 ---
 
@@ -301,19 +301,19 @@ Après suppression des 13 doublons confirmés, il reste **98 composants** à cla
 
 ```bash
 # Supprimer les 13 doublons confirmés
-rm src/components/business/client-assignment-selector.tsx
-rm src/components/business/customer-selector.tsx
-rm src/components/business/customer-type-selector.tsx
-rm src/components/business/contact-form-modal.tsx
-rm src/components/business/customer-form-modal.tsx
-rm src/components/business/create-individual-customer-modal.tsx
-rm src/components/business/create-organisation-modal.tsx
-rm src/components/business/confirm-delete-organisation-modal.tsx
-rm src/components/business/organisation-card.tsx
-rm src/components/business/organisation-logo-card.tsx
-rm src/components/business/organisation-logo.tsx
-rm src/components/business/address-input.tsx
-rm src/components/business/notifications-dropdown.tsx
+rm apps/back-office/src/components/business/client-assignment-selector.tsx
+rm apps/back-office/src/components/business/customer-selector.tsx
+rm apps/back-office/src/components/business/customer-type-selector.tsx
+rm apps/back-office/src/components/business/contact-form-modal.tsx
+rm apps/back-office/src/components/business/customer-form-modal.tsx
+rm apps/back-office/src/components/business/create-individual-customer-modal.tsx
+rm apps/back-office/src/components/business/create-organisation-modal.tsx
+rm apps/back-office/src/components/business/confirm-delete-organisation-modal.tsx
+rm apps/back-office/src/components/business/organisation-card.tsx
+rm apps/back-office/src/components/business/organisation-logo-card.tsx
+rm apps/back-office/src/components/business/organisation-logo.tsx
+rm apps/back-office/src/components/business/address-input.tsx
+rm apps/back-office/src/components/business/notifications-dropdown.tsx
 
 git add -A && git commit -m "refactor(audit): Suppression 13 doublons confirmés"
 ```

@@ -243,7 +243,7 @@ className={cn(
 ### **Architecture des Composants**
 
 ```
-src/app/catalogue/
+apps/back-office/src/app/catalogue/
 ├── collections/page.tsx    # ✅ Refonte complète
 ├── variantes/page.tsx      # ✅ Refonte complète
 └── [autres pages]          # 🔄 À moderniser
@@ -459,8 +459,8 @@ flex-col sm:flex-row gap-3
 
 ```
 Pages refaites :
-├── src/app/catalogue/collections/page.tsx    # 570 lignes
-└── src/app/catalogue/variantes/page.tsx      # 434 lignes
+├── apps/back-office/src/app/catalogue/collections/page.tsx    # 570 lignes
+└── apps/back-office/src/app/catalogue/variantes/page.tsx      # 434 lignes
 
 Documentation créée :
 ├── docs/guides/collections-ux-refonte-2025.md
@@ -586,10 +586,10 @@ const ItemCard = ({ item, index }: { item: T; index: number }) => (
 
 ### **Code Source**
 
-- [Collections Page](../src/app/catalogue/collections/page.tsx)
-- [Variantes Page](../src/app/catalogue/variantes/page.tsx)
-- [Hooks Collections](../src/hooks/use-collections.ts)
-- [Hooks Variantes](../src/hooks/use-variant-groups.ts)
+- [Collections Page](../apps/back-office/src/app/catalogue/collections/page.tsx)
+- [Variantes Page](../apps/back-office/src/app/catalogue/variantes/page.tsx)
+- [Hooks Collections](../apps/back-office/src/hooks/use-collections.ts)
+- [Hooks Variantes](../apps/back-office/src/hooks/use-variant-groups.ts)
 
 ---
 

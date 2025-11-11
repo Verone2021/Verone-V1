@@ -633,7 +633,7 @@ export async function GET(
 ### **DocumentTypeSelector**
 
 ```typescript
-// src/components/business/document-type-selector.tsx
+// apps/back-office/src/components/business/document-type-selector.tsx
 'use client';
 
 export function DocumentTypeSelector({ onSelect }: { onSelect: (type: string) => void }) {
@@ -678,7 +678,7 @@ export function DocumentTypeSelector({ onSelect }: { onSelect: (type: string) =>
 ### **SendDocumentButton**
 
 ```typescript
-// src/components/business/send-document-button.tsx
+// apps/back-office/src/components/business/send-document-button.tsx
 'use client';
 
 export function SendDocumentButton({ documentId, documentNumber, recipientEmail }: Props) {

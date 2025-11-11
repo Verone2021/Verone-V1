@@ -57,7 +57,7 @@ Valider la propriété du domaine **veronecollections.fr** pour Google Merchant 
 
 ### Implémentation Next.js 15
 
-#### Étape 1 : Meta Tag déjà ajouté dans `src/app/layout.tsx`
+#### Étape 1 : Meta Tag déjà ajouté dans `apps/back-office/apps/back-office/src/app/layout.tsx`
 
 ```typescript
 export const metadata = {
@@ -315,7 +315,7 @@ curl -s https://veronecollections.fr | head -20
 # Chercher <meta name="google-site-verification"
 
 # 3. Si absent → Re-déployer
-git add src/app/layout.tsx
+git add apps/back-office/src/app/layout.tsx
 git commit -m "fix: Google Site Verification meta tag"
 git push origin main
 ```
@@ -397,7 +397,7 @@ curl -s https://veronecollections.fr | grep -c "google-site-verification"
 
 ### Configuration Complète ✅
 
-- [x] Meta tag ajouté dans `src/app/layout.tsx`
+- [x] Meta tag ajouté dans `apps/back-office/apps/back-office/src/app/layout.tsx`
 - [ ] Site déployé sur https://veronecollections.fr
 - [ ] Meta tag visible dans source HTML
 - [ ] Validation Google réussie

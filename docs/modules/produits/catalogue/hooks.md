@@ -1,7 +1,7 @@
 # Hooks Catalogue - Documentation Complète
 
 **Module** : Produits → Catalogue
-**Fichiers** : `src/hooks/use-products.ts`, `use-product-*.ts`
+**Fichiers** : `apps/back-office/apps/back-office/src/hooks/use-products.ts`, `use-product-*.ts`
 **Date** : 2025-10-27
 
 ---

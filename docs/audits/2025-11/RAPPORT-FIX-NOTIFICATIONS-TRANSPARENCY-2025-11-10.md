@@ -24,7 +24,7 @@ Après migration monorepo, le modal notifications présentait :
 
 ### Audit Exhaustif
 
-**Composants analysés** : 53 composants UI dans `packages/@verone/ui/src/components/ui/`
+**Composants analysés** : 53 composants UI dans `packages/@verone/ui/apps/back-office/src/components/ui/`
 
 **Résultat** :
 
@@ -73,7 +73,7 @@ Remplacer **toutes** les classes custom `verone-*` par classes Tailwind standard
 
 ## 📝 Corrections Appliquées
 
-**Fichier modifié** : `packages/@verone/ui/src/components/ui/dropdown-menu.tsx`
+**Fichier modifié** : `packages/@verone/ui/apps/back-office/src/components/ui/dropdown-menu.tsx`
 
 ### Détail des 8 corrections
 
@@ -224,7 +224,7 @@ Ajouter check automatique :
 ```bash
 # .husky/pre-commit
 echo "Vérification classes Tailwind monorepo..."
-if grep -r "verone-" packages/@verone/ui/src/components/ui/*.tsx | grep -v "localStorage"; then
+if grep -r "verone-" packages/@verone/ui/apps/back-office/src/components/ui/*.tsx | grep -v "localStorage"; then
   echo "❌ ERREUR: Classes 'verone-*' détectées dans packages/@verone/ui"
   echo "Utiliser classes Tailwind standard (bg-white, text-gray-900, etc.)"
   exit 1
@@ -237,7 +237,7 @@ fi
 
 ### Code
 
-- `packages/@verone/ui/src/components/ui/dropdown-menu.tsx` (8 lignes corrigées)
+- `packages/@verone/ui/apps/back-office/src/components/ui/dropdown-menu.tsx` (8 lignes corrigées)
 
 ### Documentation
 

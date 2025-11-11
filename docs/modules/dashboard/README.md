@@ -12,7 +12,7 @@
 Le Dashboard principal affiche les **4 KPIs essentiels** en temps réel :
 
 ```typescript
-// Page : src/app/dashboard/page.tsx
+// Page : apps/back-office/src/app/dashboard/page.tsx
 import { useCompleteDashboardMetrics } from '@/hooks/use-complete-dashboard-metrics';
 
 const { metrics, loading, error } = useCompleteDashboardMetrics();
@@ -52,19 +52,19 @@ metrics.stocks.totalValue; // Valeur Stock
 ## 📁 Structure Fichiers
 
 ```
-src/app/dashboard/
+apps/back-office/src/app/dashboard/
 └── page.tsx                    # Page principale
 
-src/hooks/
+apps/back-office/src/hooks/
 ├── use-complete-dashboard-metrics.ts  # Hook orchestrateur
 ├── use-real-dashboard-metrics.ts     # Catalogue Phase 1
 ├── use-stock-orders-metrics.ts       # Stock/Orders Phase 2
 └── use-organisations.ts              # Organisations
 
-src/app/api/dashboard/
+apps/back-office/src/app/api/dashboard/
 └── stock-orders-metrics/route.ts     # API métriques stock
 
-src/components/ui/
+apps/back-office/src/components/ui/
 ├── elegant-kpi-card.tsx              # KPI Card component
 └── activity-timeline.tsx             # Timeline activity
 ```

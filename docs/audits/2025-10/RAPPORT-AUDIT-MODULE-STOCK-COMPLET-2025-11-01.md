@@ -64,7 +64,7 @@
 
 #### 5. Backup Code Obsolète (1 fichier)
 
-- ❌ `src/app/stocks/page.tsx.backup-phase3.3` (31 octobre)
+- ❌ `apps/back-office/apps/back-office/src/app/stocks/page.tsx.backup-phase3.3` (31 octobre)
 
 **Raison** : Version actuelle page.tsx intègre toutes améliorations
 
@@ -240,7 +240,7 @@
 #### Composants UI-V2 Créés (Design System V2)
 
 ```typescript
-✅ src/components/ui-v2/stock/
+✅ apps/back-office/src/components/ui-v2/stock/
    ├── StockKPICard.tsx           // KPI cards avec icônes
    ├── StockMovementCard.tsx      // Cards mouvements (mobile-first)
    ├── ChannelFilter.tsx          // Multi-select dropdown canaux
@@ -257,7 +257,7 @@
 #### Hooks Organisés
 
 ```typescript
-✅ src/hooks/
+✅ apps/back-office/src/hooks/
    ├── core/
    │   └── use-stock-core.ts         // Logic métier stock (DI pattern)
    ├── ui/

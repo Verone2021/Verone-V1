@@ -71,7 +71,7 @@ docs/audits/2025-11/RESUME-CREATE-PRODUCT-MODAL-2025-11-07.md
 ### Cas d'usage 1 : "Je veux le code MAINTENANT"
 
 1. **Fichier** : `create-product-in-group-modal-LATEST.tsx`
-2. **Action** : Copier dans `src/components/forms/`
+2. **Action** : Copier dans `apps/back-office/src/components/forms/`
 3. **Ensuite** : Lire `README-RECUPERATION-MODAL.md` section "Intégration"
 
 ### Cas d'usage 2 : "Je veux comprendre ce que fait le modal"

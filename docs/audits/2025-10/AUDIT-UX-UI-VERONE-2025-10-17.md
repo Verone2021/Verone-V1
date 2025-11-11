@@ -36,7 +36,7 @@
 
 ### 📊 État Actuel
 
-**Fichier** : `/Users/romeodossantos/verone-back-office-V1/src/components/business/product-card.tsx`
+**Fichier** : `/Users/romeodossantos/verone-back-office-V1/apps/back-office/src/components/business/product-card.tsx`
 
 #### Points Forts
 
@@ -1079,7 +1079,7 @@ import {
 
 ### 📊 État Actuel
 
-**Fichier** : `/Users/romeodossantos/verone-back-office-V1/src/components/ui/standard-modify-button.tsx`
+**Fichier** : `/Users/romeodossantos/verone-back-office-V1/apps/back-office/src/components/ui/standard-modify-button.tsx`
 
 #### Problèmes Critiques
 
@@ -1239,7 +1239,7 @@ interface ModernActionButtonProps
  * />
  * ```
  *
- * @see /src/components/ui/button pour ButtonV2
+ * @see /apps/back-office/src/components/ui/button pour ButtonV2
  */
 export function ModernActionButton({
   action,
@@ -1435,10 +1435,10 @@ import { ModernActionButton } from '@/components/ui/modern-action-button';
 grep -r "StandardModifyButton" src/
 
 # Fichiers principaux à migrer (estimé) :
-# - src/app/produits/catalogue/page.tsx
-# - src/app/commandes/*/page.tsx
-# - src/app/clients/*/page.tsx
-# - src/components/business/*.tsx (45+ modals)
+# - apps/back-office/src/app/produits/catalogue/page.tsx
+# - apps/back-office/src/app/commandes/*/page.tsx
+# - apps/back-office/src/app/clients/*/page.tsx
+# - apps/back-office/src/components/business/*.tsx (45+ modals)
 ```
 
 **Performance Impact** :
@@ -1453,7 +1453,7 @@ grep -r "StandardModifyButton" src/
 
 ### 📊 État Actuel
 
-**Fichier** : `/Users/romeodossantos/verone-back-office-V1/src/app/produits/catalogue/page.tsx`
+**Fichier** : `/Users/romeodossantos/verone-back-office-V1/apps/back-office/src/app/produits/catalogue/page.tsx`
 
 #### Problèmes Critiques
 
@@ -1882,7 +1882,7 @@ import { CommandPaletteSearch } from '@/components/business/command-palette-sear
 
 ```bash
 # Créer fichier
-touch /Users/romeodossantos/verone-back-office-V1/src/components/business/command-palette-search.tsx
+touch /Users/romeodossantos/verone-back-office-V1/apps/back-office/src/components/business/command-palette-search.tsx
 
 # Copier code complet ci-dessus
 ```
@@ -1908,7 +1908,7 @@ touch /Users/romeodossantos/verone-back-office-V1/src/components/business/comman
 
 ### 📊 État Actuel
 
-**Fichier** : `/Users/romeodossantos/verone-back-office-V1/src/app/produits/catalogue/page.tsx` (lignes 266-283)
+**Fichier** : `/Users/romeodossantos/verone-back-office-V1/apps/back-office/src/app/produits/catalogue/page.tsx` (lignes 266-283)
 
 #### Problèmes
 
@@ -2239,7 +2239,7 @@ import { cn } from '@/lib/utils';
 **Étape 1 : Créer composant** (2 minutes)
 
 ```bash
-touch /Users/romeodossantos/verone-back-office-V1/src/components/ui/view-mode-toggle.tsx
+touch /Users/romeodossantos/verone-back-office-V1/apps/back-office/src/components/ui/view-mode-toggle.tsx
 # Copier code complet
 ```
 
@@ -2284,7 +2284,7 @@ import { ViewModeToggle } from "@/components/ui/view-mode-toggle"
 
 ### 📊 État Actuel
 
-**Fichier** : `/Users/romeodossantos/verone-back-office-V1/src/app/produits/page.tsx`
+**Fichier** : `/Users/romeodossantos/verone-back-office-V1/apps/back-office/src/app/produits/page.tsx`
 
 #### Points Forts
 
@@ -2335,7 +2335,7 @@ import { ViewModeToggle } from "@/components/ui/view-mode-toggle"
 
 ### 📊 État Actuel
 
-**Fichier** : `/Users/romeodossantos/verone-back-office-V1/src/app/produits/catalogue/page.tsx` (lignes 311-342)
+**Fichier** : `/Users/romeodossantos/verone-back-office-V1/apps/back-office/src/app/produits/catalogue/page.tsx` (lignes 311-342)
 
 #### Problèmes
 
@@ -2594,14 +2594,14 @@ npx shadcn-ui@latest add data-table # Administration (optionnel)
 ```
 /Users/romeodossantos/verone-back-office-V1/
 
-src/components/business/
+apps/back-office/src/components/business/
 ├── product-card-material-elevation.tsx      # Variante A ProductCard
 ├── product-card-glassmorphism.tsx           # Variante B ProductCard
 ├── product-card-minimal-stripe.tsx          # Variante C ProductCard
 ├── command-palette-search.tsx               # Command Palette
 └── filter-combobox.tsx                      # Filtres Combobox
 
-src/components/ui/
+apps/back-office/src/components/ui/
 ├── modern-action-button.tsx                 # Remplacement StandardModifyButton
 └── view-mode-toggle.tsx                     # Toggle Grid/List moderne
 

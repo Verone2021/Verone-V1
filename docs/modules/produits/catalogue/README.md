@@ -62,7 +62,7 @@ ionnel (in/out)
 
 ### `/produits/catalogue` - Liste Catalogue
 
-**Fichier** : `src/app/produits/catalogue/page.tsx`
+**Fichier** : `apps/back-office/apps/back-office/src/app/produits/catalogue/page.tsx`
 
 **Features** :
 
@@ -81,7 +81,7 @@ ionnel (in/out)
 
 ### `/produits/catalogue/[productId]` - Détail Produit
 
-**Fichier** : `src/app/produits/catalogue/[productId]/page.tsx`
+**Fichier** : `apps/back-office/apps/back-office/src/app/produits/catalogue/[productId]/page.tsx`
 
 **Sections** :
 
@@ -104,7 +104,7 @@ ionnel (in/out)
 
 ### `/produits/catalogue/nouveau` - Wizard Création
 
-**Fichier** : `src/app/produits/catalogue/nouveau/page.tsx`
+**Fichier** : `apps/back-office/apps/back-office/src/app/produits/catalogue/nouveau/page.tsx`
 
 **Wizard 4 Étapes** :
 
@@ -154,7 +154,7 @@ ionnel (in/out)
 
 ### `/produits/catalogue/archived` - Produits Archivés
 
-**Fichier** : `src/app/produits/catalogue/archived/page.tsx`
+**Fichier** : `apps/back-office/apps/back-office/src/app/produits/catalogue/archived/page.tsx`
 
 **Features** :
 
@@ -166,7 +166,7 @@ ionnel (in/out)
 
 ### `/produits/catalogue/stocks` - Vue Stocks
 
-**Fichier** : `src/app/produits/catalogue/stocks/page.tsx`
+**Fichier** : `apps/back-office/apps/back-office/src/app/produits/catalogue/stocks/page.tsx`
 
 **Features** :
 
@@ -179,7 +179,7 @@ ionnel (in/out)
 
 ### `/produits/catalogue/dashboard` - Dashboard Catalogue
 
-**Fichier** : `src/app/produits/catalogue/dashboard/page.tsx`
+**Fichier** : `apps/back-office/apps/back-office/src/app/produits/catalogue/dashboard/page.tsx`
 
 **KPIs** :
 

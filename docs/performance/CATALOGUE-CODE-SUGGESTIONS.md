@@ -7,7 +7,7 @@
 
 ## P0-1 : Remplacer Hook Dashboard (CRITIQUE)
 
-### Fichier : `src/app/catalogue/dashboard/page.tsx`
+### Fichier : `apps/back-office/apps/back-office/src/app/catalogue/dashboard/page.tsx`
 
 #### AVANT (Code Actuel - PROBLÉMATIQUE)
 
@@ -475,7 +475,7 @@ SELECT get_products_status_metrics();
 
 ## P1-2 : Optimiser Hook `use-product-metrics`
 
-### Fichier : `src/hooks/metrics/use-product-metrics.ts`
+### Fichier : `apps/back-office/apps/back-office/src/hooks/metrics/use-product-metrics.ts`
 
 ```typescript
 /**
@@ -632,7 +632,7 @@ export function useProductMetrics() {
 
 ## P1-3 : Optimiser Hook `use-real-dashboard-metrics`
 
-### Fichier : `src/hooks/use-real-dashboard-metrics.ts`
+### Fichier : `apps/back-office/apps/back-office/src/hooks/use-real-dashboard-metrics.ts`
 
 ```typescript
 /**
@@ -893,7 +893,7 @@ export function useRealDashboardMetrics() {
 
 ```bash
 # 1. Appliquer changement P0-1
-# Modifier src/app/catalogue/dashboard/page.tsx
+# Modifier apps/back-office/src/app/catalogue/dashboard/page.tsx
 
 # 2. Démarrer serveur
 npm run dev

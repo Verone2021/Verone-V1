@@ -131,7 +131,7 @@ WHERE user_id = 'user-id';
 - CA du Mois (actuellement = 0)
 - À Sourcer (actuellement = 0)
 
-**Fichier à modifier:** `src/hooks/use-complete-dashboard-metrics.ts` (lignes 87-104)
+**Fichier à modifier:** `apps/back-office/apps/back-office/src/hooks/use-complete-dashboard-metrics.ts` (lignes 87-104)
 
 ---
 
@@ -181,10 +181,10 @@ WHERE user_id = 'user-id';
 ### **Code Créé**
 
 - `supabase/migrations/20251007_003_user_activity_tracking_system.sql`
-- `src/app/api/analytics/events/route.ts`
-- `src/app/api/analytics/batch/route.ts`
-- `src/app/api/admin/users/[id]/activity/route.ts`
-- `src/components/providers/activity-tracker-provider.tsx`
+- `apps/back-office/apps/back-office/src/app/api/analytics/events/route.ts`
+- `apps/back-office/apps/back-office/src/app/api/analytics/batch/route.ts`
+- `apps/back-office/apps/back-office/src/app/api/admin/users/[id]/activity/route.ts`
+- `apps/back-office/apps/back-office/src/components/providers/activity-tracker-provider.tsx`
 
 ---
 

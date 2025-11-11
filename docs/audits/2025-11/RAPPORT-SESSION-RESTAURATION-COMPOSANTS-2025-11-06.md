@@ -28,45 +28,45 @@ Restaurer intelligemment depuis l'historique Git tous les composants manquants p
 
 - **Lignes**: 370
 - **Source commit**: `c2352fe` (CHECKPOINT Tests catalogue complet)
-- **Source path**: `src/components/business/commercial-edit-section.tsx`
+- **Source path**: `apps/back-office/src/components/business/commercial-edit-section.tsx`
 - **Destination**: `src/shared/modules/organisations/components/sections/CommercialEditSection.tsx`
-- **Re-export**: ✅ `src/components/business/commercial-edit-section.tsx`
+- **Re-export**: ✅ `apps/back-office/src/components/business/commercial-edit-section.tsx`
 - **Usage**: Édition informations commerciales organisations (customers, suppliers, partners)
 
 ### 2. HeartBadge
 
 - **Lignes**: 48
 - **Source commit**: `9e8043b` (fix(ui): Migration globale Button → ButtonV2)
-- **Source path**: `src/components/business/heart-badge.tsx`
+- **Source path**: `apps/back-office/src/components/business/heart-badge.tsx`
 - **Destination**: `src/shared/modules/organisations/components/badges/HeartBadge.tsx`
-- **Re-export**: ✅ `src/components/business/heart-badge.tsx`
+- **Re-export**: ✅ `apps/back-office/src/components/business/heart-badge.tsx`
 - **Usage**: Badge favori pour organisations
 
 ### 3. CustomerFormModal
 
 - **Lignes**: 531
 - **Source commit**: `c2352fe` (CHECKPOINT Tests catalogue complet)
-- **Source path**: `src/components/business/customer-form-modal.tsx`
+- **Source path**: `apps/back-office/src/components/business/customer-form-modal.tsx`
 - **Destination**: `src/shared/modules/customers/components/modals/CustomerFormModal.tsx`
-- **Re-export**: ✅ `src/components/business/customer-form-modal.tsx`
+- **Re-export**: ✅ `apps/back-office/src/components/business/customer-form-modal.tsx`
 - **Usage**: Modal de création/édition clients
 
 ### 4. IdentifiersCompleteEditSection
 
 - **Lignes**: 338
 - **Source commit**: `c2352fe` (CHECKPOINT Tests catalogue complet)
-- **Source path**: `src/components/business/identifiers-complete-edit-section.tsx`
+- **Source path**: `apps/back-office/src/components/business/identifiers-complete-edit-section.tsx`
 - **Destination**: `src/shared/modules/common/components/sections/IdentifiersCompleteEditSection.tsx`
-- **Re-export**: ✅ `src/components/business/identifiers-complete-edit-section.tsx`
+- **Re-export**: ✅ `apps/back-office/src/components/business/identifiers-complete-edit-section.tsx`
 - **Usage**: Section édition identifiants complets produits
 
 ### 5. OrganisationLogo
 
 - **Lignes**: 146
 - **Source commit**: `78e53e1` (commit historique)
-- **Source path**: `src/components/business/organisation-logo.tsx`
+- **Source path**: `apps/back-office/src/components/business/organisation-logo.tsx`
 - **Destination**: `src/shared/modules/organisations/components/display/OrganisationLogo.tsx`
-- **Re-export**: ✅ `src/components/business/organisation-logo.tsx`
+- **Re-export**: ✅ `apps/back-office/src/components/business/organisation-logo.tsx`
 - **Usage**: Affichage logo organisations (customers, suppliers, partners)
 
 ---
@@ -225,14 +225,14 @@ git log --all --diff-filter=A --format="%H" -- "**/commercial-edit-section.tsx"
 # Output: c2352fe3bc5285a2768e27ae85347c3f760ed4da
 
 # 2. Extraire fichier
-git show c2352fe:src/components/business/commercial-edit-section.tsx > /tmp/file.tsx
+git show c2352fe:apps/back-office/src/components/business/commercial-edit-section.tsx > /tmp/file.tsx
 
 # 3. Copier destination
 mkdir -p src/shared/modules/organisations/components/sections
 cp /tmp/file.tsx src/shared/modules/organisations/components/sections/CommercialEditSection.tsx
 
 # 4. Créer re-export
-cat > src/components/business/commercial-edit-section.tsx << 'EOF'
+cat > apps/back-office/src/components/business/commercial-edit-section.tsx << 'EOF'
 // Re-export from shared modules for backward compatibility
 export { CommercialEditSection } from '@/shared/modules/organisations/components/sections/CommercialEditSection'
 EOF

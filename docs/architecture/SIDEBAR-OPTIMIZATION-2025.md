@@ -224,11 +224,11 @@ useEffect(() => {
 
 ## 🔧 Fichiers Modifiés
 
-1. **[src/components/layout/app-sidebar.tsx](../../src/components/layout/app-sidebar.tsx)** - Nouvelle sidebar optimisée
-2. **[src/components/ui/sidebar.tsx](../../src/components/ui/sidebar.tsx)** - Composants shadcn adaptés
-3. **[src/hooks/use-mobile.tsx](../../src/hooks/use-mobile.tsx)** - Hook responsive
+1. **[apps/back-office/src/components/layout/app-sidebar.tsx](../../apps/back-office/src/components/layout/app-sidebar.tsx)** - Nouvelle sidebar optimisée
+2. **[apps/back-office/src/components/ui/sidebar.tsx](../../apps/back-office/src/components/ui/sidebar.tsx)** - Composants shadcn adaptés
+3. **[apps/back-office/src/hooks/use-mobile.tsx](../../apps/back-office/src/hooks/use-mobile.tsx)** - Hook responsive
 4. **[tailwind.config.js](../../tailwind.config.js)** - Keyframes animations
-5. **[src/app/globals.css](../../src/app/globals.css)** - Variables CSS Vérone
+5. **[apps/back-office/src/app/globals.css](../../apps/back-office/src/app/globals.css)** - Variables CSS Vérone
 
 ### Backup
 

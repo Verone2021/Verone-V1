@@ -1,7 +1,7 @@
 # Rapport Session 4 - Correction TypeScript Errors (Monorepo Migration)
 
 **Date** : 2025-11-06
-**Contexte** : Migration monorepo `src/components/business/` → `src/shared/modules/{module}/`
+**Contexte** : Migration monorepo `apps/back-office/src/components/business/` → `src/shared/modules/{module}/`
 **Erreurs initiales** : 76 TypeScript errors
 **Erreurs finales** : 344 TypeScript errors (après cascade)
 **Erreurs résolues** : ~35 exports manquants majeurs
@@ -251,7 +251,7 @@ Paramètres sans types explicites dans callbacks :
 - **Common hooks incomplets** : Re-exports manquants pour hooks legacy
 - **Database columns manquantes** : eco*tax*\* non alignés
 - **Type safety partielle** : ~50 callbacks avec implicit any
-- **Migration incomplète** : Fichiers dans `src/components/business/` et `src/shared/modules/` coexistent
+- **Migration incomplète** : Fichiers dans `apps/back-office/src/components/business/` et `src/shared/modules/` coexistent
 
 ---
 
@@ -287,7 +287,7 @@ Paramètres sans types explicites dans callbacks :
    - Activer `strict: true` dans tsconfig.json progressivement
 
 6. **Finaliser migration monorepo** :
-   - Supprimer complètement `src/components/business/` legacy
+   - Supprimer complètement `apps/back-office/src/components/business/` legacy
    - Centraliser TOUS composants dans `src/shared/modules/`
 
 ---

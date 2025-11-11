@@ -36,7 +36,7 @@
 
 ### Bug Critique Découvert
 
-**Localisation** : `src/hooks/use-movements-history.ts:139`
+**Localisation** : `apps/back-office/src/hooks/use-movements-history.ts:139`
 
 ```typescript
 // ❌ BUG : .eq('affects_forecast', false) EXCLUT les valeurs NULL
@@ -77,7 +77,7 @@ if (appliedFilters.affects_forecast !== undefined) {
 
 ### 1. Fix Queries TypeScript (8 locations)
 
-**Fichier** : `src/hooks/use-movements-history.ts`
+**Fichier** : `apps/back-office/src/hooks/use-movements-history.ts`
 
 **Pattern de correction appliqué** :
 
@@ -111,7 +111,7 @@ if (appliedFilters.affects_forecast === false) {
 
 ### 2. Fix Formulaire Ajustement Stock
 
-**Fichier** : `src/components/forms/stock-adjustment-form.tsx`
+**Fichier** : `apps/back-office/src/components/forms/stock-adjustment-form.tsx`
 
 **Problème** : Ajustements manuels ne définissaient pas explicitement `affects_forecast`
 
@@ -306,11 +306,11 @@ GROUP BY affects_forecast;
 
 ### Code Source
 
-1. **src/hooks/use-movements-history.ts**
+1. **apps/back-office/src/hooks/use-movements-history.ts**
    - 9 corrections queries (`.eq()` → `.or()`)
    - Lignes : 139, 255, 261, 268, 275, 282, 307, 331, 432
 
-2. **src/components/forms/stock-adjustment-form.tsx**
+2. **apps/back-office/src/components/forms/stock-adjustment-form.tsx**
    - Ajout `affects_forecast: false` explicite
    - Ajout `forecast_type: null` explicite
    - Lignes : 230-231

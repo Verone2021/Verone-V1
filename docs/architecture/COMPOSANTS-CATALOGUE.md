@@ -36,7 +36,7 @@
 
 **Package** : `packages/@verone/ui/`
 **Import** : `import { Button, Dialog, Card } from '@verone/ui'`
-**Exports** : `packages/@verone/ui/src/components/ui/index.ts` (lignes 1-122)
+**Exports** : `packages/@verone/ui/apps/back-office/src/components/ui/index.ts` (lignes 1-122)
 
 ### 🔘 Famille Button (5 composants)
 
@@ -133,7 +133,7 @@ interface StandardModifyButtonProps {
 #### SampleOrderButton
 
 **Package** : `@verone/ui-business`
-**Fichier** : `packages/@verone/ui-business/src/components/buttons/SampleOrderButton.tsx`
+**Fichier** : `packages/@verone/ui-business/apps/back-office/src/components/buttons/SampleOrderButton.tsx`
 **Status** : ✅ Conforme Design System V2
 
 ```typescript
@@ -172,7 +172,7 @@ interface SampleOrderButtonProps {
 #### GenerateInvoiceButton
 
 **Package** : `@verone/finance`
-**Fichier** : `packages/@verone/finance/src/components/buttons/GenerateInvoiceButton.tsx`
+**Fichier** : `packages/@verone/finance/apps/back-office/src/components/buttons/GenerateInvoiceButton.tsx`
 **Status** : ✅ Conforme Design System V2
 
 ```typescript
@@ -209,7 +209,7 @@ interface GenerateInvoiceButtonProps {
 #### FavoriteToggleButton
 
 **Package** : `@verone/ui-business`
-**Fichier** : `packages/@verone/ui-business/src/components/buttons/FavoriteToggleButton.tsx`
+**Fichier** : `packages/@verone/ui-business/apps/back-office/src/components/buttons/FavoriteToggleButton.tsx`
 **Status** : ✅ Conforme Design System V2
 **Usage** : 3 pages back-office (customers, suppliers, partners)
 
@@ -247,7 +247,7 @@ interface FavoriteToggleButtonProps {
 #### LogoUploadButton
 
 **Package** : `@verone/organisations`
-**Fichier** : `packages/@verone/organisations/src/components/buttons/LogoUploadButton.tsx`
+**Fichier** : `packages/@verone/organisations/apps/back-office/src/components/buttons/LogoUploadButton.tsx`
 **Status** : ✅ Conforme Design System V2 + Multi-Frontend Isolation
 
 ```typescript

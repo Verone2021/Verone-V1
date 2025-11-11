@@ -141,10 +141,10 @@ Lundi-Vendredi : FormUnified (6-8h)
 
 **Planning détaillé** :
 
-#### Jour 1 : VAGUE 3 - Migration src/lib/ (4h)
+#### Jour 1 : VAGUE 3 - Migration apps/back-office/src/lib/ (4h)
 
 ```
-1. Analyser fichiers src/lib/ restants (65 fichiers)
+1. Analyser fichiers apps/back-office/src/lib/ restants (65 fichiers)
 2. Identifier destination packages :
    - utils → @verone/utils
    - integrations → @verone/integrations
@@ -169,7 +169,7 @@ Lundi-Vendredi : FormUnified (6-8h)
 #### Jour 3 : VAGUE 5 - Cleanup (3h15)
 
 ```
-1. Supprimer dossiers vides src/lib/
+1. Supprimer dossiers vides apps/back-office/src/lib/
 2. Update tsconfig.json paths
 3. Validation finale :
    - 411 fichiers src/shared/modules/ clean
@@ -209,7 +209,7 @@ Lundi-Mercredi : BadgeUnified (2-3h)
 Jeudi-Vendredi : Storybook docs (2h)
 ```
 
-#### Semaine 2 : VAGUE 3 (migration src/lib/)
+#### Semaine 2 : VAGUE 3 (migration apps/back-office/src/lib/)
 
 ```
 Lundi-Vendredi : Migration complète (4h)
@@ -557,8 +557,8 @@ pnpm build:back-office
 
 ### Code Référence
 
-- `packages/@verone/ui/src/components/ui/button-unified.tsx` : Pattern composant simple
-- `packages/@verone/ui/src/components/ui/kpi-card-unified.tsx` : Pattern composant complexe
+- `packages/@verone/ui/apps/back-office/src/components/ui/button-unified.tsx` : Pattern composant simple
+- `packages/@verone/ui/apps/back-office/src/components/ui/kpi-card-unified.tsx` : Pattern composant complexe
 - `packages/@verone/ui/src/design-system/tokens/` : Design tokens complets
 
 ### Outils Externes

@@ -67,7 +67,7 @@ const { data } = await supabase.rpc('get_user_activity_stats', {
 });
 ```
 
-**Fichier modifié** : `src/hooks/use-user-activity-tracker.ts` (lignes 114-177)
+**Fichier modifié** : `apps/back-office/apps/back-office/src/hooks/use-user-activity-tracker.ts` (lignes 114-177)
 
 **Résultat** :
 
@@ -84,11 +84,11 @@ const { data } = await supabase.rpc('get_user_activity_stats', {
 
 **Fichiers corrigés** :
 
-1. `src/app/contacts-organisations/customers/page.tsx`
+1. `apps/back-office/apps/back-office/src/app/contacts-organisations/customers/page.tsx`
    - Supprimé interface Customer (lignes 55-78)
    - Remplacé tous `Customer` → `Organisation` (25 occurrences)
 
-2. `src/app/organisation/components/customers-tab.tsx`
+2. `apps/back-office/apps/back-office/src/app/organisation/components/customers-tab.tsx`
    - Supprimé interface Customer (lignes 30-43)
    - Remplacé `Customer` → `Organisation` (15 occurrences)
    - Fix : `customer.name` → `getOrganisationDisplayName(customer)`
@@ -118,7 +118,7 @@ interface Customer {
 
 **Problème** : Interface `Partner` locale dupliquait type `Organisation`
 
-**Fichier corrigé** : `src/app/contacts-organisations/partners/page.tsx`
+**Fichier corrigé** : `apps/back-office/apps/back-office/src/app/contacts-organisations/partners/page.tsx`
 
 - Supprimé interface Partner (lignes 57-76)
 - Remplacé tous `Partner` → `Organisation` (23 occurrences)
@@ -131,7 +131,7 @@ interface Customer {
 
 **Problème** : Hook utilisait propriété `name` inexistante
 
-**Fichier corrigé** : `src/hooks/use-customers.ts` (lignes 94-112)
+**Fichier corrigé** : `apps/back-office/apps/back-office/src/hooks/use-customers.ts` (lignes 94-112)
 
 **Avant** :
 

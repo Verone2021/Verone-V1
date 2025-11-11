@@ -80,7 +80,7 @@ return {
 
 ### 2. Collections Liste - Handler complet
 
-**Fichier** : `src/app/produits/catalogue/collections/page.tsx`
+**Fichier** : `apps/back-office/src/app/produits/catalogue/collections/page.tsx`
 
 **Destructuration hook mise à jour** (ligne 104-117) :
 
@@ -175,7 +175,7 @@ onSelect={async (products: SelectedProduct[]) => {
 
 ### 3. Collections Détail - Handler identique
 
-**Fichier** : `src/app/produits/catalogue/collections/[collectionId]/page.tsx`
+**Fichier** : `apps/back-office/src/app/produits/catalogue/collections/[collectionId]/page.tsx`
 
 **Destructuration hook mise à jour** (ligne 137) :
 
@@ -423,20 +423,20 @@ console.error('[VÉRONE:ERROR]', {
 
 ### Batch 2/4 - Variantes (30 min estimé)
 
-**Fichier** : `src/app/produits/catalogue/variantes/[groupId]/page.tsx`
+**Fichier** : `apps/back-office/src/app/produits/catalogue/variantes/[groupId]/page.tsx`
 **Pattern** : Identique Collections (handler onSelect + addProductsToVariantGroup)
 
 ### Batch 3/4 - Consultations (30 min estimé)
 
-**Fichier** : `src/app/consultations/[consultationId]/page.tsx`
+**Fichier** : `apps/back-office/src/app/consultations/[consultationId]/page.tsx`
 **Pattern** : Identique Collections (handler onSelect + addProductsToConsultation)
 
 ### Batch 4/4 - Commandes (45 min estimé)
 
 **Fichiers** :
 
-- `src/app/commandes/clients/[orderId]/page.tsx`
-- `src/app/commandes/fournisseurs/[orderId]/page.tsx`
+- `apps/back-office/src/app/commandes/clients/[orderId]/page.tsx`
+- `apps/back-office/src/app/commandes/fournisseurs/[orderId]/page.tsx`
 
 **Complexité** : Gestion quantités + variantes + prix
 

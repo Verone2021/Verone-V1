@@ -163,7 +163,7 @@ Le module Catalogue gère **7 workflows métier principaux** pour le cycle de vi
 ### Code Exemple
 
 ```typescript
-// Page : src/app/produits/catalogue/nouveau/page.tsx
+// Page : apps/back-office/src/app/produits/catalogue/nouveau/page.tsx
 
 import { ProductCreationWizard } from '@/components/business/product-creation-wizard'
 
@@ -288,7 +288,7 @@ export default function NewProductPage() {
 ### Code Exemple
 
 ```typescript
-// Page : src/app/produits/catalogue/[productId]/page.tsx
+// Page : apps/back-office/src/app/produits/catalogue/[productId]/page.tsx
 
 import { ProductDualMode } from '@/components/business/product-dual-mode'
 import { useProduct } from '@/hooks/use-products'
@@ -896,7 +896,7 @@ const handleStockAdjustment = async (
 ### Code Exemple
 
 ```typescript
-// Hook : src/hooks/use-sourcing-products.ts
+// Hook : apps/back-office/src/hooks/use-sourcing-products.ts
 
 const validateSourcing = async (productId: string) => {
   try {

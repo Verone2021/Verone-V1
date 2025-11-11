@@ -44,7 +44,7 @@ SLO <2000ms : LARGEMENT RESPECTÉ ✅
 
 #### ❌ Hook Actuel (PROBLÉMATIQUE)
 
-**Fichier** : `src/app/catalogue/dashboard/page.tsx` (ligne 52)
+**Fichier** : `apps/back-office/apps/back-office/src/app/catalogue/dashboard/page.tsx` (ligne 52)
 
 ```typescript
 // CODE ACTUEL - PROBLÉMATIQUE
@@ -68,7 +68,7 @@ const { products, loading: productsLoading } = useProducts();
 **1. Hook `use-real-dashboard-metrics.ts`**
 
 ```typescript
-// Fichier : src/hooks/use-real-dashboard-metrics.ts
+// Fichier : apps/back-office/src/hooks/use-real-dashboard-metrics.ts
 // Status : ✅ Existe mais non utilisé dans dashboard
 
 export interface RealDashboardMetrics {
@@ -91,7 +91,7 @@ export interface RealDashboardMetrics {
 **2. Hook `use-product-metrics.ts`**
 
 ```typescript
-// Fichier : src/hooks/metrics/use-product-metrics.ts
+// Fichier : apps/back-office/src/hooks/metrics/use-product-metrics.ts
 // Status : ✅ Plus optimisé mais non utilisé
 
 // Méthode 1 (idéale) : RPC SQL agrégée
@@ -180,7 +180,7 @@ $$ LANGUAGE plpgsql STABLE;
 
 #### Code Dashboard Actuel
 
-**Fichier** : `src/app/catalogue/dashboard/page.tsx`
+**Fichier** : `apps/back-office/apps/back-office/src/app/catalogue/dashboard/page.tsx`
 
 ```typescript
 export default function CatalogueDashboardPage() {
@@ -261,7 +261,7 @@ import { Badge } from '@/components/ui/badge'; // ~1KB
 
 **Impact** : -83% temps chargement (4948ms → ~800ms)
 
-**Fichier** : `src/app/catalogue/dashboard/page.tsx`
+**Fichier** : `apps/back-office/apps/back-office/src/app/catalogue/dashboard/page.tsx`
 
 ```typescript
 // AVANT (ligne 52)
@@ -337,7 +337,7 @@ COMMENT ON FUNCTION get_products_status_metrics() IS
 
 #### P1-2 : Optimiser Hook `use-product-metrics`
 
-**Fichier** : `src/hooks/metrics/use-product-metrics.ts`
+**Fichier** : `apps/back-office/apps/back-office/src/hooks/metrics/use-product-metrics.ts`
 
 ```typescript
 // APRÈS P1-1 (RPC créée)
@@ -377,7 +377,7 @@ export function useProductMetrics() {
 
 #### P1-3 : Optimiser Hook `use-real-dashboard-metrics`
 
-**Fichier** : `src/hooks/use-real-dashboard-metrics.ts`
+**Fichier** : `apps/back-office/apps/back-office/src/hooks/use-real-dashboard-metrics.ts`
 
 ```typescript
 // OPTIMISATION : Utiliser COUNT au lieu de charger tous les produits
@@ -419,7 +419,7 @@ const metricsFetcher = async () => {
 
 #### P2-1 : Ajouter React Memoization
 
-**Fichier** : `src/app/catalogue/dashboard/page.tsx`
+**Fichier** : `apps/back-office/apps/back-office/src/app/catalogue/dashboard/page.tsx`
 
 ```typescript
 import { useMemo } from 'react';
@@ -450,7 +450,7 @@ export default function CatalogueDashboardPage() {
 
 #### P2-2 : Ajouter Cache Layer Additionnel
 
-**Fichier** : `src/hooks/use-real-dashboard-metrics.ts`
+**Fichier** : `apps/back-office/apps/back-office/src/hooks/use-real-dashboard-metrics.ts`
 
 ```typescript
 export function useRealDashboardMetrics() {
@@ -484,7 +484,7 @@ export function useRealDashboardMetrics() {
 # Objectif : Atteindre SLO <2s immédiatement
 
 1. Modifier dashboard pour utiliser useRealDashboardMetrics
-   Fichier : src/app/catalogue/dashboard/page.tsx
+   Fichier : apps/back-office/src/app/catalogue/dashboard/page.tsx
    Temps : 15 minutes
 
 2. Adapter calculs KPIs (supprimer .filter())
@@ -511,11 +511,11 @@ SLO <2000ms : RESPECTÉ ✅
    Temps : 30 minutes
 
 2. Optimiser use-product-metrics pour utiliser RPC
-   Fichier : src/hooks/metrics/use-product-metrics.ts
+   Fichier : apps/back-office/src/hooks/metrics/use-product-metrics.ts
    Temps : 15 minutes
 
 3. Optimiser use-real-dashboard-metrics avec RPC
-   Fichier : src/hooks/use-real-dashboard-metrics.ts
+   Fichier : apps/back-office/src/hooks/use-real-dashboard-metrics.ts
    Temps : 15 minutes
 
 RÉSULTAT ATTENDU : Dashboard 800ms → ~300ms (-62%) ✅

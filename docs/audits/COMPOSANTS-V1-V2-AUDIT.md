@@ -27,8 +27,8 @@ Ces composants **ne sont jamais importés** dans le codebase. Suppression sécur
 
 ```bash
 # ❌ DELETE
-src/components/ui/action-button.tsx              # 4.8 KB - Oct 20
-src/components/ui/standard-modify-button.tsx     # 705 B - Oct 15 (V1)
+apps/back-office/src/components/ui/action-button.tsx              # 4.8 KB - Oct 20
+apps/back-office/src/components/ui/standard-modify-button.tsx     # 705 B - Oct 15 (V1)
 ```
 
 **Raison**:
@@ -44,8 +44,8 @@ src/components/ui/standard-modify-button.tsx     # 705 B - Oct 15 (V1)
 
 ```bash
 # ❌ DELETE
-src/components/ui/compact-kpi-card.tsx            # 3.3 KB - Oct 20
-src/components/ui/medium-kpi-card.tsx             # 4.8 KB - Oct 20
+apps/back-office/src/components/ui/compact-kpi-card.tsx            # 3.3 KB - Oct 20
+apps/back-office/src/components/ui/medium-kpi-card.tsx             # 4.8 KB - Oct 20
 ```
 
 **Raison**: Doublons fonctionnels. **Remplacé par** `elegant-kpi-card.tsx` (Design System V2)
@@ -58,8 +58,8 @@ src/components/ui/medium-kpi-card.tsx             # 4.8 KB - Oct 20
 
 ```bash
 # ❌ DELETE
-src/components/ui/quick-actions-list.tsx          # Oct 20
-src/components/ui/compact-quick-actions.tsx       # Oct 20
+apps/back-office/src/components/ui/quick-actions-list.tsx          # Oct 20
+apps/back-office/src/components/ui/compact-quick-actions.tsx       # Oct 20
 ```
 
 **Raison**: **Jamais utilisés**. Fonctionnalité probablement intégrée ailleurs.
@@ -70,12 +70,12 @@ src/components/ui/compact-quick-actions.tsx       # Oct 20
 
 ```bash
 # ❌ DELETE
-src/components/ui/activity-timeline.tsx           # Oct 20
-src/components/ui/breadcrumb.tsx                  # Oct 20
-src/components/ui/command-palette.tsx             # Oct 20
-src/components/ui/group-navigation.tsx            # Oct 20
-src/components/ui/notification-system.tsx         # Oct 20
-src/components/ui/stat-pill.tsx                   # Oct 20
+apps/back-office/src/components/ui/activity-timeline.tsx           # Oct 20
+apps/back-office/src/components/ui/breadcrumb.tsx                  # Oct 20
+apps/back-office/src/components/ui/command-palette.tsx             # Oct 20
+apps/back-office/src/components/ui/group-navigation.tsx            # Oct 20
+apps/back-office/src/components/ui/notification-system.tsx         # Oct 20
+apps/back-office/src/components/ui/stat-pill.tsx                   # Oct 20
 ```
 
 **Raison**:
@@ -95,13 +95,13 @@ Ces composants utilisent le **Design System V2** avec:
 - Palette moderne (#3b86d1 bleu, #38ce3c vert, #844fc1 violet)
 - Rounded corners (10px)
 - Micro-interactions (hover scale, transitions 200ms)
-- Tokens depuis `/src/lib/design-system`
+- Tokens depuis `/apps/back-office/src/lib/design-system`
 
 #### 1. Buttons (1)
 
 ```bash
 # ✅ KEEP
-src/components/ui/button.tsx                      # 6.5 KB - Oct 20
+apps/back-office/src/components/ui/button.tsx                      # 6.5 KB - Oct 20
   → Exports: ButtonV2 ✅ | Button ⚠️ (V1, à supprimer)
 ```
 
@@ -118,7 +118,7 @@ src/components/ui/button.tsx                      # 6.5 KB - Oct 20
 
 ```bash
 # ✅ KEEP
-src/components/ui/modern-action-button.tsx        # 4.3 KB - Oct 20
+apps/back-office/src/components/ui/modern-action-button.tsx        # 4.3 KB - Oct 20
   → Exports: ModernActionButton (9 ActionType prédéfinis)
 ```
 
@@ -136,7 +136,7 @@ src/components/ui/modern-action-button.tsx        # 4.3 KB - Oct 20
 
 ```bash
 # ✅ KEEP
-src/components/ui/card.tsx                        # 1.9 KB - Oct 20
+apps/back-office/src/components/ui/card.tsx                        # 1.9 KB - Oct 20
   → Exports: Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter
 ```
 
@@ -146,7 +146,7 @@ src/components/ui/card.tsx                        # 1.9 KB - Oct 20
 
 ```bash
 # ✅ KEEP
-src/components/ui/verone-card.tsx                 # 6.0 KB - Oct 20
+apps/back-office/src/components/ui/verone-card.tsx                 # 6.0 KB - Oct 20
   → Exports: VéroneCard (pour entities: family, category, product)
 ```
 
@@ -164,7 +164,7 @@ src/components/ui/verone-card.tsx                 # 6.0 KB - Oct 20
 
 ```bash
 # ✅ KEEP
-src/components/ui/elegant-kpi-card.tsx            # 3.2 KB - Oct 20
+apps/back-office/src/components/ui/elegant-kpi-card.tsx            # 3.2 KB - Oct 20
   → KPI Card moderne Design System V2
 ```
 
@@ -178,9 +178,9 @@ src/components/ui/elegant-kpi-card.tsx            # 3.2 KB - Oct 20
 
 ```bash
 # ✅ KEEP
-src/components/ui/badge.tsx                       # Oct 20
-src/components/ui/role-badge.tsx                  # Oct 20
-src/components/ui/data-status-badge.tsx           # Oct 20
+apps/back-office/src/components/ui/badge.tsx                       # Oct 20
+apps/back-office/src/components/ui/role-badge.tsx                  # Oct 20
+apps/back-office/src/components/ui/data-status-badge.tsx           # Oct 20
 ```
 
 **Note**: `stat-pill.tsx` ❌ inutilisé (supprimer)
@@ -196,15 +196,15 @@ src/components/ui/data-status-badge.tsx           # Oct 20
 
 ```bash
 # ✅ KEEP
-src/components/ui/input.tsx                       # Oct 20
-src/components/ui/textarea.tsx                    # Oct 20
-src/components/ui/select.tsx                      # Oct 20
-src/components/ui/combobox.tsx                    # Oct 20
-src/components/ui/checkbox.tsx                    # Oct 20
-src/components/ui/radio-group.tsx                 # Oct 20
-src/components/ui/switch.tsx                      # Oct 20
-src/components/ui/label.tsx                       # Oct 20
-src/components/ui/form.tsx                        # Oct 20
+apps/back-office/src/components/ui/input.tsx                       # Oct 20
+apps/back-office/src/components/ui/textarea.tsx                    # Oct 20
+apps/back-office/src/components/ui/select.tsx                      # Oct 20
+apps/back-office/src/components/ui/combobox.tsx                    # Oct 20
+apps/back-office/src/components/ui/checkbox.tsx                    # Oct 20
+apps/back-office/src/components/ui/radio-group.tsx                 # Oct 20
+apps/back-office/src/components/ui/switch.tsx                      # Oct 20
+apps/back-office/src/components/ui/label.tsx                       # Oct 20
+apps/back-office/src/components/ui/form.tsx                        # Oct 20
 ```
 
 **Story**:
@@ -218,10 +218,10 @@ src/components/ui/form.tsx                        # Oct 20
 
 ```bash
 # ✅ KEEP
-src/components/ui/table.tsx                       # Oct 20
-src/components/ui/data-table.tsx                  # Oct 20
-src/components/ui/sortable-table.tsx              # Oct 20
-src/components/ui/avatar.tsx                      # Oct 20
+apps/back-office/src/components/ui/table.tsx                       # Oct 20
+apps/back-office/src/components/ui/data-table.tsx                  # Oct 20
+apps/back-office/src/components/ui/sortable-table.tsx              # Oct 20
+apps/back-office/src/components/ui/avatar.tsx                      # Oct 20
 ```
 
 ---
@@ -230,12 +230,12 @@ src/components/ui/avatar.tsx                      # Oct 20
 
 ```bash
 # ✅ KEEP
-src/components/ui/dialog.tsx                      # Oct 20
-src/components/ui/popover.tsx                     # Oct 20
-src/components/ui/dropdown-menu.tsx               # Oct 20
-src/components/ui/command.tsx                     # Oct 20
-src/components/ui/sheet.tsx                       # Oct 20
-src/components/ui/tooltip.tsx                     # Oct 20
+apps/back-office/src/components/ui/dialog.tsx                      # Oct 20
+apps/back-office/src/components/ui/popover.tsx                     # Oct 20
+apps/back-office/src/components/ui/dropdown-menu.tsx               # Oct 20
+apps/back-office/src/components/ui/command.tsx                     # Oct 20
+apps/back-office/src/components/ui/sheet.tsx                       # Oct 20
+apps/back-office/src/components/ui/tooltip.tsx                     # Oct 20
 ```
 
 ---
@@ -244,10 +244,10 @@ src/components/ui/tooltip.tsx                     # Oct 20
 
 ```bash
 # ✅ KEEP
-src/components/ui/sidebar.tsx                     # Oct 20
-src/components/ui/tabs.tsx                        # Oct 20
-src/components/ui/separator.tsx                   # Oct 20
-src/components/ui/scroll-area.tsx                 # Oct 20
+apps/back-office/src/components/ui/sidebar.tsx                     # Oct 20
+apps/back-office/src/components/ui/tabs.tsx                        # Oct 20
+apps/back-office/src/components/ui/separator.tsx                   # Oct 20
+apps/back-office/src/components/ui/scroll-area.tsx                 # Oct 20
 ```
 
 ---
@@ -256,11 +256,11 @@ src/components/ui/scroll-area.tsx                 # Oct 20
 
 ```bash
 # ✅ KEEP
-src/components/ui/alert.tsx                       # Oct 20
-src/components/ui/toast.tsx                       # Oct 20
-src/components/ui/progress.tsx                    # Oct 20
-src/components/ui/skeleton.tsx                    # Oct 20
-src/components/ui/spinner.tsx                     # Oct 20
+apps/back-office/src/components/ui/alert.tsx                       # Oct 20
+apps/back-office/src/components/ui/toast.tsx                       # Oct 20
+apps/back-office/src/components/ui/progress.tsx                    # Oct 20
+apps/back-office/src/components/ui/skeleton.tsx                    # Oct 20
+apps/back-office/src/components/ui/spinner.tsx                     # Oct 20
 ```
 
 ---
@@ -269,8 +269,8 @@ src/components/ui/spinner.tsx                     # Oct 20
 
 ```bash
 # ✅ KEEP
-src/components/ui/calendar.tsx                    # Oct 20
-src/components/ui/view-mode-toggle.tsx            # Oct 20
+apps/back-office/src/components/ui/calendar.tsx                    # Oct 20
+apps/back-office/src/components/ui/view-mode-toggle.tsx            # Oct 20
 ```
 
 ---
@@ -312,18 +312,18 @@ export { ButtonV2 as Button }
 git tag backup-before-v1-cleanup-$(date +%Y%m%d)
 
 # Supprimer 12 composants inutilisés
-rm src/components/ui/action-button.tsx
-rm src/components/ui/standard-modify-button.tsx
-rm src/components/ui/compact-kpi-card.tsx
-rm src/components/ui/medium-kpi-card.tsx
-rm src/components/ui/quick-actions-list.tsx
-rm src/components/ui/compact-quick-actions.tsx
-rm src/components/ui/activity-timeline.tsx
-rm src/components/ui/breadcrumb.tsx
-rm src/components/ui/command-palette.tsx
-rm src/components/ui/group-navigation.tsx
-rm src/components/ui/notification-system.tsx
-rm src/components/ui/stat-pill.tsx
+rm apps/back-office/src/components/ui/action-button.tsx
+rm apps/back-office/src/components/ui/standard-modify-button.tsx
+rm apps/back-office/src/components/ui/compact-kpi-card.tsx
+rm apps/back-office/src/components/ui/medium-kpi-card.tsx
+rm apps/back-office/src/components/ui/quick-actions-list.tsx
+rm apps/back-office/src/components/ui/compact-quick-actions.tsx
+rm apps/back-office/src/components/ui/activity-timeline.tsx
+rm apps/back-office/src/components/ui/breadcrumb.tsx
+rm apps/back-office/src/components/ui/command-palette.tsx
+rm apps/back-office/src/components/ui/group-navigation.tsx
+rm apps/back-office/src/components/ui/notification-system.tsx
+rm apps/back-office/src/components/ui/stat-pill.tsx
 
 # Vérifier compilation
 npm run build
@@ -382,7 +382,7 @@ npm run build
 ## 🔗 Références
 
 - **Storybook**: http://localhost:6006
-- **Design System V2**: `src/lib/design-system/`
+- **Design System V2**: `apps/back-office/apps/back-office/src/lib/design-system/`
 - **Audit Dead Code**: `npm run audit:deadcode`
 - **Stories Templates**: `src/stories/_templates/`
 - **Auto-Generator**: `tools/scripts/generate-stories.js`

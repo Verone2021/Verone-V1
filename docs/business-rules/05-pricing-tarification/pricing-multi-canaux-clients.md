@@ -553,8 +553,8 @@ SELECT * FROM calculate_product_price(...);
 ### **Fichiers Clés**
 
 - Migration : `supabase/migrations/20251010_001_sales_channels_pricing_system.sql`
-- Hook React : `src/hooks/use-pricing.ts`
-- API Route : `src/app/api/pricing/calculate/route.ts`
+- Hook React : `apps/back-office/apps/back-office/src/hooks/use-pricing.ts`
+- API Route : `apps/back-office/apps/back-office/src/app/api/pricing/calculate/route.ts`
 - Documentation : `manifests/business-rules/pricing-multi-canaux-clients.md`
 
 ### **Business Rules Connexes**

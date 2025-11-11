@@ -51,17 +51,17 @@ Module central pour gérer **tous les partenaires** de l'écosystème Vérone :
 ## 📁 Structure Fichiers
 
 ```
-src/app/contacts-organisations/
+apps/back-office/src/app/contacts-organisations/
 └── page.tsx                    # Page principale
 
-src/hooks/
+apps/back-office/src/hooks/
 ├── use-organisations.ts        # CRUD organisations (principal)
 ├── use-contacts.ts             # CRUD contacts
 ├── use-customers.ts            # Clients B2B/B2C spécifique
 ├── use-suppliers.ts            # Fournisseurs spécifique
 └── use-toggle-favorite.ts      # Toggle favoris
 
-src/components/business/
+apps/back-office/src/components/business/
 ├── organisation-card.tsx       # Card grille
 ├── organisation-list-view.tsx  # Vue liste
 ├── organisation-form-modal.tsx # CRUD modal

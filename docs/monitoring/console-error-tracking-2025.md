@@ -67,7 +67,7 @@ Remplace Sentry par une solution légère, gratuite, et totalement intégrée av
 
 ### 1. Console Error Tracker (Client)
 
-**Fichier** : `src/lib/monitoring/console-error-tracker.ts`
+**Fichier** : `apps/back-office/apps/back-office/src/lib/monitoring/console-error-tracker.ts`
 
 **Features** :
 
@@ -115,9 +115,9 @@ consoleErrorTracker.clearErrors();
 
 ### 2. Provider React
 
-**Fichier** : `src/components/providers/console-error-tracker-provider.tsx`
+**Fichier** : `apps/back-office/apps/back-office/src/components/providers/console-error-tracker-provider.tsx`
 
-**Intégration** : `src/app/layout.tsx`
+**Intégration** : `apps/back-office/apps/back-office/src/app/layout.tsx`
 
 ```tsx
 <ConsoleErrorTrackerProvider>
@@ -129,7 +129,7 @@ consoleErrorTracker.clearErrors();
 
 ### 3. API Route Logs
 
-**Fichier** : `src/app/api/logs/route.ts`
+**Fichier** : `apps/back-office/apps/back-office/src/app/api/logs/route.ts`
 
 **Endpoints** :
 
@@ -185,7 +185,7 @@ Récupère logs du jour
 
 ### 4. MCP Error Checker
 
-**Fichier** : `src/lib/monitoring/mcp-error-checker.ts`
+**Fichier** : `apps/back-office/apps/back-office/src/lib/monitoring/mcp-error-checker.ts`
 
 **Utilitaires** :
 
@@ -220,14 +220,14 @@ Le système est complètement installé et fonctionnel :
 
 ```bash
 # 1. Vérifier fichiers existants
-ls src/lib/monitoring/
+ls apps/back-office/src/lib/monitoring/
 # console-error-tracker.ts
 # mcp-error-checker.ts
 
-ls src/components/providers/
+ls apps/back-office/src/components/providers/
 # console-error-tracker-provider.tsx
 
-ls src/app/api/logs/
+ls apps/back-office/src/app/api/logs/
 # route.ts
 
 # 2. Tester API
@@ -271,7 +271,7 @@ En production, le système :
 3. ✅ Enrichit avec `sessionId` et `userId` (localStorage)
 4. ✅ Limite à 100 erreurs en mémoire (performance)
 
-**Configuration** : `src/lib/monitoring/console-error-tracker.ts`
+**Configuration** : `apps/back-office/apps/back-office/src/lib/monitoring/console-error-tracker.ts`
 
 ```typescript
 export const consoleErrorTracker = new ConsoleErrorTracker({
@@ -579,7 +579,7 @@ localStorage.setItem('verone_session_id', generateSessionId());
 
 **Solutions** :
 
-1. Vérifier `src/app/layout.tsx` contient `<ConsoleErrorTrackerProvider>`
+1. Vérifier `apps/back-office/apps/back-office/src/app/layout.tsx` contient `<ConsoleErrorTrackerProvider>`
 2. Vérifier console browser (F12) pour erreurs setup
 3. Vérifier `'use client'` présent dans provider
 4. Hard refresh (Cmd+Shift+R)
@@ -660,10 +660,10 @@ localStorage.setItem('verone_session_id', generateSessionId());
 
 **Code** :
 
-- `src/lib/monitoring/console-error-tracker.ts`
-- `src/lib/monitoring/mcp-error-checker.ts`
-- `src/components/providers/console-error-tracker-provider.tsx`
-- `src/app/api/logs/route.ts`
+- `apps/back-office/apps/back-office/src/lib/monitoring/console-error-tracker.ts`
+- `apps/back-office/apps/back-office/src/lib/monitoring/mcp-error-checker.ts`
+- `apps/back-office/apps/back-office/src/components/providers/console-error-tracker-provider.tsx`
+- `apps/back-office/apps/back-office/src/app/api/logs/route.ts`
 - `.claude/commands/check-errors.md`
 
 **Documentation** :

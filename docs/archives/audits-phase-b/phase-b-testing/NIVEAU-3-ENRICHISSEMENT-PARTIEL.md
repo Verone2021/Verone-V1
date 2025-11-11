@@ -158,7 +158,7 @@ L'erreur "Cannot coerce the result to a single JSON object" indique que :
 
 #### Hook concerné
 
-Fichier probable : `src/hooks/use-variant-groups.ts`
+Fichier probable : `apps/back-office/apps/back-office/src/hooks/use-variant-groups.ts`
 
 Query suspectée :
 

@@ -261,7 +261,7 @@ src/shared/modules/orders/components/
 
 - [ ] Update imports (~250 fichiers)
 - [ ] Tests exhaustifs (Type-check, Build, MCP Browser)
-- [ ] Suppression src/components/business/
+- [ ] Suppression apps/back-office/src/components/business/
 - [ ] Documentation README par module
 - [ ] Rapport final migration
 
@@ -307,7 +307,7 @@ src/shared/modules/orders/components/
 
 ### Hooks non migrés
 
-- **Status** : ~75 hooks dans `src/hooks/` à migrer
+- **Status** : ~75 hooks dans `apps/back-office/src/hooks/` à migrer
 - **Destination** : `src/shared/modules/{module}/hooks/`
 - **Plan** : Migration JOUR 3
 

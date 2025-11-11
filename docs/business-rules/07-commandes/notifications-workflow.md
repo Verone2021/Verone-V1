@@ -660,10 +660,10 @@ WHERE created_at > now() - interval '30 days';
 
 ### Code Source
 
-- `packages/@verone/notifications/src/hooks/use-database-notifications.ts` (Hooks React)
-- `packages/@verone/notifications/src/components/dropdowns/NotificationsDropdown.tsx` (UI)
-- `src/app/commandes/clients/page.tsx` (Page redirections)
-- `src/app/commandes/fournisseurs/page.tsx` (Page redirections)
+- `packages/@verone/notifications/apps/back-office/src/hooks/use-database-notifications.ts` (Hooks React)
+- `packages/@verone/notifications/apps/back-office/src/components/dropdowns/NotificationsDropdown.tsx` (UI)
+- `apps/back-office/apps/back-office/src/app/commandes/clients/page.tsx` (Page redirections)
+- `apps/back-office/apps/back-office/src/app/commandes/fournisseurs/page.tsx` (Page redirections)
 
 ### Documentation Associée
 

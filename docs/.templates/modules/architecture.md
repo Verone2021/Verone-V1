@@ -10,7 +10,7 @@
 ### Complete File Tree
 
 ```
-src/app/[module]/
+apps/back-office/src/app/[module]/
 ├── page.tsx                    # Main list view
 ├── [id]/
 │   └── page.tsx               # Detail view
@@ -18,19 +18,19 @@ src/app/[module]/
 │   └── page.tsx               # Creation form
 └── layout.tsx (if applicable)
 
-src/hooks/
+apps/back-office/src/hooks/
 ├── use-[module].ts            # Main CRUD hook
 ├── use-[module]-filters.ts    # Filtering logic
 └── metrics/
     └── use-[module]-metrics.ts # Analytics hook
 
-src/components/business/
+apps/back-office/src/components/business/
 ├── [module]-card.tsx          # List item component
 ├── [module]-modal.tsx         # Modal dialogs
 ├── [module]-form.tsx          # Form component
 └── [module]-filters.tsx       # Filters UI
 
-src/app/api/[module]/
+apps/back-office/src/app/api/[module]/
 ├── route.ts                   # List & Create endpoints
 └── [id]/
     └── route.ts              # Get, Update, Delete
@@ -42,7 +42,7 @@ src/app/api/[module]/
 
 ### Main Page Component
 
-**File** : `src/app/[module]/page.tsx`
+**File** : `apps/back-office/apps/back-office/src/app/[module]/page.tsx`
 
 ```typescript
 // Structure type
@@ -158,7 +158,7 @@ Toast Notification
 ### Pattern 1: Custom Hook for CRUD
 
 ```typescript
-// src/hooks/use-[module].ts
+// apps/back-office/src/hooks/use-[module].ts
 export function use[Module]() {
   const supabase = createClient()
 
@@ -217,7 +217,7 @@ export function use[Module]() {
 ### Pattern 3: Error Boundaries
 
 ```typescript
-// src/app/[module]/page.tsx
+// apps/back-office/src/app/[module]/page.tsx
 <ErrorBoundary fallback={<ErrorState />}>
   <Suspense fallback={<LoadingState />}>
     <[Module]Content />

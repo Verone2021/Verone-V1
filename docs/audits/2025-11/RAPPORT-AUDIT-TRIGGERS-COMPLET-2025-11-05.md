@@ -283,7 +283,7 @@ END $$;
 #### Fichiers à Modifier
 
 ```typescript
-// src/hooks/use-stock-alerts.ts
+// apps/back-office/src/hooks/use-stock-alerts.ts
 // AVANT : Utilisait table stock_alert_tracking
 export function useStockAlerts() {
   const { data } = supabase.from('stock_alert_tracking').select('*');
@@ -303,8 +303,8 @@ export function useStockAlerts() {
 
 #### Composants à Supprimer/Modifier
 
-- `src/components/business/stock-alert-card.tsx` → Logique manuelle
-- `src/app/stocks/alertes/page.tsx` → Query directe products
+- `apps/back-office/src/components/business/stock-alert-card.tsx` → Logique manuelle
+- `apps/back-office/src/app/stocks/alertes/page.tsx` → Query directe products
 - Boutons "Commander" conditionnels → Nouvelle logique (pas stock_alert_tracking)
 
 ### 2. Backend (Server Actions)
@@ -312,7 +312,7 @@ export function useStockAlerts() {
 #### Créer Actions Manuelles
 
 ```typescript
-// src/app/actions/stock-status-actions.ts (nouveau fichier)
+// apps/back-office/src/app/actions/stock-status-actions.ts (nouveau fichier)
 'use server';
 
 export async function updateStockStatus(
@@ -361,7 +361,7 @@ DROP TABLE IF EXISTS stock_alert_tracking CASCADE;
 
 ```bash
 # OBLIGATOIRE après migration
-supabase gen types typescript --local > src/types/supabase.ts
+supabase gen types typescript --local > apps/back-office/src/types/supabase.ts
 ```
 
 ### 4. Documentation

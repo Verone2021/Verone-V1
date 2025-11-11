@@ -32,13 +32,13 @@
 
 #### Fichiers Concernés
 
-| Fichier                                | Ligne | Description                                 |
-| -------------------------------------- | ----- | ------------------------------------------- |
-| `src/hooks/use-financial-documents.ts` | 365   | `useEffect` conditionnel après early return |
-| `src/hooks/use-financial-payments.ts`  | 180   | `useEffect` conditionnel après early return |
-| `src/hooks/use-treasury-stats.ts`      | 287   | `useEffect` conditionnel après early return |
-| `src/hooks/use-treasury-stats.ts`      | 295   | `useState` conditionnel après early return  |
-| `src/hooks/use-treasury-stats.ts`      | 310   | `useEffect` conditionnel après early return |
+| Fichier                                                                  | Ligne | Description                                 |
+| ------------------------------------------------------------------------ | ----- | ------------------------------------------- |
+| `apps/back-office/apps/back-office/src/hooks/use-financial-documents.ts` | 365   | `useEffect` conditionnel après early return |
+| `apps/back-office/apps/back-office/src/hooks/use-financial-payments.ts`  | 180   | `useEffect` conditionnel après early return |
+| `apps/back-office/apps/back-office/src/hooks/use-treasury-stats.ts`      | 287   | `useEffect` conditionnel après early return |
+| `apps/back-office/apps/back-office/src/hooks/use-treasury-stats.ts`      | 295   | `useState` conditionnel après early return  |
+| `apps/back-office/apps/back-office/src/hooks/use-treasury-stats.ts`      | 310   | `useEffect` conditionnel après early return |
 
 **Stratégie de Correction** :
 
@@ -144,16 +144,16 @@ useEffect(() => {
 
 **Fichiers les Plus Touchés** :
 
-1. `src/hooks/use-supabase-query.ts` (2 occurrences) - **CRITIQUE** (hook partagé)
-2. `src/hooks/use-organisations.ts` (2 occurrences)
-3. `src/hooks/use-movements-history.ts` (3 occurrences)
+1. `apps/back-office/apps/back-office/src/hooks/use-supabase-query.ts` (2 occurrences) - **CRITIQUE** (hook partagé)
+2. `apps/back-office/apps/back-office/src/hooks/use-organisations.ts` (2 occurrences)
+3. `apps/back-office/apps/back-office/src/hooks/use-movements-history.ts` (3 occurrences)
 
 ---
 
 #### 🔹 Catégorie 2 : Multiple deps missing (22 occurrences)
 
 ```typescript
-// src/hooks/use-organisation-tabs.ts:46
+// apps/back-office/src/hooks/use-organisation-tabs.ts:46
 useEffect(() => {
   if (tabValue === 'contacts' && contacts.length === 0) {
     fetchOrganisationContacts();
@@ -173,7 +173,7 @@ useEffect(() => {
 #### 🔹 Catégorie 3 : Complex expressions in deps (5 occurrences)
 
 ```typescript
-// src/hooks/use-product-primary-image.ts:115
+// apps/back-office/src/hooks/use-product-primary-image.ts:115
 useEffect(() => {
   fetchImages();
 }, [productIds.join(',')]); // ⚠️ Complex expression
@@ -215,13 +215,13 @@ useEffect(() => {
 
 ### Fichiers les Plus Impactés
 
-| Fichier                                                 | Occurrences | Priorité  |
-| ------------------------------------------------------- | ----------- | --------- |
-| `src/app/produits/catalogue/categories/page.tsx`        | 3           | 🔴 HIGH   |
-| `src/components/business/sales-order-form-modal.tsx`    | 2           | 🔴 HIGH   |
-| `src/components/business/purchase-order-form-modal.tsx` | 2           | 🔴 HIGH   |
-| `src/components/business/collection-products-modal.tsx` | 2           | 🟡 MEDIUM |
-| `src/components/business/product-variants-section.tsx`  | 2           | 🟡 MEDIUM |
+| Fichier                                                                                   | Occurrences | Priorité  |
+| ----------------------------------------------------------------------------------------- | ----------- | --------- |
+| `apps/back-office/apps/back-office/src/app/produits/catalogue/categories/page.tsx`        | 3           | 🔴 HIGH   |
+| `apps/back-office/apps/back-office/src/components/business/sales-order-form-modal.tsx`    | 2           | 🔴 HIGH   |
+| `apps/back-office/apps/back-office/src/components/business/purchase-order-form-modal.tsx` | 2           | 🔴 HIGH   |
+| `apps/back-office/apps/back-office/src/components/business/collection-products-modal.tsx` | 2           | 🟡 MEDIUM |
+| `apps/back-office/apps/back-office/src/components/business/product-variants-section.tsx`  | 2           | 🟡 MEDIUM |
 
 ### Stratégie de Correction
 
@@ -256,13 +256,13 @@ import Image from 'next/image'
 
 Variables jamais réassignées déclarées avec `let`
 
-| Fichier                                           | Ligne | Variable           |
-| ------------------------------------------------- | ----- | ------------------ |
-| `src/components/business/add-product-modal.tsx`   | 111   | `body`             |
-| `src/components/business/stock-reports-modal.tsx` | 192   | `dateFrom`         |
-| `src/hooks/use-sales-shipments.ts`                | 534   | `organisationsMap` |
-| `src/hooks/use-sales-shipments.ts`                | 547   | `individualsMap`   |
-| `src/hooks/use-variant-groups.ts`                 | 486   | `finalUpdates`     |
+| Fichier                                                                             | Ligne | Variable           |
+| ----------------------------------------------------------------------------------- | ----- | ------------------ |
+| `apps/back-office/apps/back-office/src/components/business/add-product-modal.tsx`   | 111   | `body`             |
+| `apps/back-office/apps/back-office/src/components/business/stock-reports-modal.tsx` | 192   | `dateFrom`         |
+| `apps/back-office/apps/back-office/src/hooks/use-sales-shipments.ts`                | 534   | `organisationsMap` |
+| `apps/back-office/apps/back-office/src/hooks/use-sales-shipments.ts`                | 547   | `individualsMap`   |
+| `apps/back-office/apps/back-office/src/hooks/use-variant-groups.ts`                 | 486   | `finalUpdates`     |
 
 **Correction** : Remplacer `let` par `const` (30 secondes par fichier)
 
@@ -271,7 +271,7 @@ Variables jamais réassignées déclarées avec `let`
 ### 2. @next/next/no-assign-module-variable (1 error)
 
 ```typescript
-// src/hooks/metrics/use-user-module-metrics.ts:122
+// apps/back-office/src/hooks/metrics/use-user-module-metrics.ts:122
 module = cleanedModule; // ⚠️ Assign to reserved 'module' variable
 ```
 
@@ -282,7 +282,7 @@ module = cleanedModule; // ⚠️ Assign to reserved 'module' variable
 ### 3. jsx-a11y/alt-text (1 warning)
 
 ```typescript
-// src/components/business/error-report-modal.tsx:507
+// apps/back-office/src/components/business/error-report-modal.tsx:507
 <img src={screenshot} /> // ⚠️ Missing alt attribute
 ```
 

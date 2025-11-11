@@ -26,7 +26,7 @@
 
 **Hook** : `[useNomHook]` (ex: `useTotalOrders`)
 **Composant** : `[NomComposant]` (ex: `OrdersKPICard`)
-**Fichier** : `/Users/romeodossantos/verone-back-office-V1/src/hooks/metrics/[nom-hook].ts`
+**Fichier** : `/Users/romeodossantos/verone-back-office-V1/apps/back-office/src/hooks/metrics/[nom-hook].ts`
 
 ### Description Business
 
@@ -295,9 +295,9 @@ const chartConfig = {
 
 ### Documentation Technique
 
-- [Hook Implementation](/Users/romeodossantos/verone-back-office-V1/src/hooks/metrics/[nom-hook].ts)
+- [Hook Implementation](/Users/romeodossantos/verone-back-office-V1/apps/back-office/src/hooks/metrics/[nom-hook].ts)
 - [Trigger SQL](/Users/romeodossantos/verone-back-office-V1/supabase/migrations/[timestamp]_trigger.sql)
-- [Composant Visualisation](/Users/romeodossantos/verone-back-office-V1/src/components/dashboard/[component-name].tsx)
+- [Composant Visualisation](/Users/romeodossantos/verone-back-office-V1/apps/back-office/src/components/dashboard/[component-name].tsx)
 
 ### Documentation Business
 

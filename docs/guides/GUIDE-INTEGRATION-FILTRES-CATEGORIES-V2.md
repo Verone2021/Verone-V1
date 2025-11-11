@@ -162,9 +162,9 @@ Le composant utilise les dépendances shadcn/ui déjà installées :
 
 ```bash
 # Vérifier que ces composants existent
-ls src/components/ui/badge.tsx
-ls src/components/ui/button.tsx
-ls src/components/ui/collapsible.tsx
+ls apps/back-office/src/components/ui/badge.tsx
+ls apps/back-office/src/components/ui/button.tsx
+ls apps/back-office/src/components/ui/collapsible.tsx
 
 # Si manquants, installer via shadcn/ui
 npx shadcn-ui@latest add badge
@@ -174,7 +174,7 @@ npx shadcn-ui@latest add collapsible
 
 ### Étape 2 : Importer le nouveau composant
 
-Dans `/src/app/catalogue/page.tsx` :
+Dans `/apps/back-office/src/app/catalogue/page.tsx` :
 
 ```typescript
 // REMPLACER l'ancien import

@@ -60,7 +60,7 @@ Valider que la simplification UI/UX du module stock fonctionne correctement :
 - ❌ Aucun onglet "Sorties Prévisionnelles" trouvé
 - ✅ Uniquement 3 onglets principaux : "Tous", "Entrées", "Sorties"
 
-**Code Vérifié** : `src/app/stocks/mouvements/page.tsx:467-503` (lignes supprimées)
+**Code Vérifié** : `apps/back-office/src/app/stocks/mouvements/page.tsx:467-503` (lignes supprimées)
 
 ---
 
@@ -111,7 +111,7 @@ SELECT COUNT(*) FROM stock_movements;  -- 45 rows total
 - Compteur "Filtres actifs" s'incrémente
 - Réinitialisation fonctionne
 
-**Code Hook** : `src/hooks/use-movements-history.ts:91-100`
+**Code Hook** : `apps/back-office/src/hooks/use-movements-history.ts:91-100`
 
 ```typescript
 // ✅ Initialization correcte
@@ -141,7 +141,7 @@ const [filters, setFilters] = useState<MovementHistoryFilters>({
 - Onglet "Entrées" : ~25 mouvements IN uniquement
 - Onglet "Sorties" : ~13 mouvements OUT uniquement
 
-**Code Tab Handler** : `src/app/stocks/mouvements/page.tsx`
+**Code Tab Handler** : `apps/back-office/src/app/stocks/mouvements/page.tsx`
 
 ```typescript
 onValueChange={(value) => {
@@ -195,7 +195,7 @@ onValueChange={(value) => {
 - Icône `CheckCircle` (h-3 w-3) visible
 - Titre : "✓ STOCK RÉEL" avec emoji check
 
-**Code** : `src/app/stocks/page.tsx:254`
+**Code** : `apps/back-office/src/app/stocks/page.tsx:254`
 
 ```typescript
 <Badge className="bg-green-100 text-green-700 border-green-300">
@@ -243,7 +243,7 @@ onValueChange={(value) => {
 - Icône `Clock` (h-3 w-3) visible
 - Titre : "⏱ STOCK PRÉVISIONNEL" avec emoji horloge
 
-**Code** : `src/app/stocks/page.tsx:438`
+**Code** : `apps/back-office/src/app/stocks/page.tsx:438`
 
 ```typescript
 <Badge className="bg-blue-100 text-blue-700 border-blue-300">
@@ -270,7 +270,7 @@ onValueChange={(value) => {
 - Classe `text-gray-700 font-medium`
 - Séparateur `•` visible
 
-**Code** : `src/app/stocks/page.tsx:445`
+**Code** : `apps/back-office/src/app/stocks/page.tsx:445`
 
 ```typescript
 <CardDescription className="text-gray-700 font-medium">
@@ -296,7 +296,7 @@ onValueChange={(value) => {
 - Séparation visuelle forte entre les 2 Cards
 - UX claire : 2 sections distinctes
 
-**Code** : `src/app/stocks/page.tsx:438`
+**Code** : `apps/back-office/src/app/stocks/page.tsx:438`
 
 ```typescript
 <Card className="border-l-4 border-blue-500 bg-blue-50 rounded-[10px] shadow-md mt-8">
@@ -376,10 +376,10 @@ npm run type-check
 
 **Fichiers Modifiés Validés** :
 
-- ✅ `src/app/stocks/mouvements/page.tsx`
-- ✅ `src/hooks/use-movements-history.ts`
-- ✅ `src/components/business/movements-filters.tsx`
-- ✅ `src/app/stocks/page.tsx`
+- ✅ `apps/back-office/src/app/stocks/mouvements/page.tsx`
+- ✅ `apps/back-office/src/hooks/use-movements-history.ts`
+- ✅ `apps/back-office/src/components/business/movements-filters.tsx`
+- ✅ `apps/back-office/src/app/stocks/page.tsx`
 
 ---
 
@@ -501,7 +501,7 @@ const [filters, setFilters] = useState<MovementHistoryFilters>({
 });
 ```
 
-**Fix** : `src/hooks/use-movements-history.ts:91-100`
+**Fix** : `apps/back-office/src/hooks/use-movements-history.ts:91-100`
 
 **Validation** : 38 mouvements affichés ✅
 

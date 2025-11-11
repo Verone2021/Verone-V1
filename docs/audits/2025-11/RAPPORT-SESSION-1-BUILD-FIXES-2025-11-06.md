@@ -13,23 +13,23 @@
 
 **QW1 : create-organisation-modal**
 
-- **Fichier créé** : `src/components/business/create-organisation-modal.tsx`
+- **Fichier créé** : `apps/back-office/src/components/business/create-organisation-modal.tsx`
 - **Type** : Re-export vers `@/shared/modules/orders/components/modals/create-organisation-modal`
 - **Impact** : Débloque imports dans pages organisations
 
 **QW2 : GoogleMerchantPriceEditor**
 
-- **Source** : Commit `7ccc3b9:src/components/business/google-merchant-price-editor.tsx`
+- **Source** : Commit `7ccc3b9:apps/back-office/src/components/business/google-merchant-price-editor.tsx`
 - **Restauré** : `src/shared/modules/channels/components/google-merchant/GoogleMerchantPriceEditor.tsx` (291 lignes)
-- **Re-export** : `src/components/business/google-merchant-price-editor.tsx`
+- **Re-export** : `apps/back-office/src/components/business/google-merchant-price-editor.tsx`
 - **Features** : Modal édition prix HT custom avec validation, preview TTC, différence ±
 - **Utilisé par** : `GoogleMerchantProductCard.tsx` ligne 30
 
 **QW3 : GoogleMerchantMetadataEditor**
 
-- **Source** : Commit `7ccc3b9:src/components/business/google-merchant-metadata-editor.tsx`
+- **Source** : Commit `7ccc3b9:apps/back-office/src/components/business/google-merchant-metadata-editor.tsx`
 - **Restauré** : `src/shared/modules/channels/components/google-merchant/GoogleMerchantMetadataEditor.tsx` (377 lignes)
-- **Re-export** : `src/components/business/google-merchant-metadata-editor.tsx`
+- **Re-export** : `apps/back-office/src/components/business/google-merchant-metadata-editor.tsx`
 - **Features** : Modal édition titre (max 150) + description (max 5000), preview Google Shopping
 - **Utilisé par** : `GoogleMerchantProductCard.tsx` ligne 31
 
@@ -39,13 +39,13 @@
 
 **P0.1 : logo-upload-button.tsx**
 
-- **Source** : Commit `78e53e1c:src/components/business/logo-upload-button.tsx`
+- **Source** : Commit `78e53e1c:apps/back-office/src/components/business/logo-upload-button.tsx`
 - **Restauré** : `src/shared/modules/organisations/components/forms/logo-upload-button.tsx` (287 lignes)
 - **Utilisé par** : `unified-organisation-form.tsx` ligne 14
 
 **P0.2 : organisation-contacts-manager.tsx**
 
-- **Source** : Commit `78e53e1c:src/components/business/organisation-contacts-manager.tsx`
+- **Source** : Commit `78e53e1c:apps/back-office/src/components/business/organisation-contacts-manager.tsx`
 - **Restauré** : `src/shared/modules/organisations/components/forms/organisation-contacts-manager.tsx` (268 lignes)
 - **Utilisé par** : `unified-organisation-form.tsx` ligne 15
 
@@ -67,7 +67,7 @@
 
 **Fix 1 : CollectionImageUpload stub**
 
-- **Fichier créé** : `src/components/business/collection-image-upload.tsx` (stub temporaire)
+- **Fichier créé** : `apps/back-office/src/components/business/collection-image-upload.tsx` (stub temporaire)
 - **Raison** : Composant n'existait pas dans Git history
 - **TODO** : Implémenter upload images collections
 
@@ -103,7 +103,7 @@
 
 **Fix 2 : consultation-photos-modal stub**
 
-- **Fichier créé** : `src/components/business/consultation-photos-modal.tsx` (stub temporaire)
+- **Fichier créé** : `apps/back-office/src/components/business/consultation-photos-modal.tsx` (stub temporaire)
 - **Raison** : Composant n'existait pas dans Git history
 - **TODO** : Implémenter modal photos consultations
 
@@ -159,7 +159,7 @@ Module not found: Can't resolve './contact-form-modal'
 
 - **Fichier** : `ContactsManagementSection.tsx`
 - **Import relatif** : `./contact-form-modal`
-- **Re-export existe** : `src/components/business/contact-form-modal.tsx`
+- **Re-export existe** : `apps/back-office/src/components/business/contact-form-modal.tsx`
 - **Solution** : Changer import vers `@/components/business/contact-form-modal`
 
 ### Erreur 3 : OrganisationListView - organisation-logo
@@ -173,7 +173,7 @@ Module not found: Can't resolve './organisation-logo'
 
 - **Fichier** : `OrganisationListView.tsx`
 - **Import relatif** : `./organisation-logo`
-- **Re-export existe** : `src/components/business/organisation-logo.tsx`
+- **Re-export existe** : `apps/back-office/src/components/business/organisation-logo.tsx`
 - **Note utilisateur** : User a modifié path vers `display/OrganisationLogo` (intentionnel)
 - **Solution** : Changer import vers `@/components/business/organisation-logo`
 
@@ -235,7 +235,7 @@ Module not found: Can't resolve './organisation-logo'
 
 **Symptôme** : `Module not found: Can't resolve '@/components/business/X'`
 **Cause** : Fichier migré vers `shared/modules/` mais pas de re-export backward compatibility
-**Solution** : Créer re-export dans `src/components/business/X.tsx`
+**Solution** : Créer re-export dans `apps/back-office/src/components/business/X.tsx`
 
 ### Pattern 3 : Composants Supprimés par Erreur
 
@@ -248,7 +248,7 @@ Module not found: Can't resolve './organisation-logo'
 ## 📝 LESSONS LEARNED
 
 1. **Git History = Source of Truth** : Tous les composants restaurés trouvés dans commits `7ccc3b9` et `78e53e1c`
-2. **Backward Compatibility Critical** : Re-exports dans `src/components/business/` essentiels pour éviter casser 100+ fichiers
+2. **Backward Compatibility Critical** : Re-exports dans `apps/back-office/src/components/business/` essentiels pour éviter casser 100+ fichiers
 3. **Imports Absolus > Relatifs** : Imports absolus `@/` survivent mieux aux refactorings monorepo
 4. **Stubs Temporaires OK** : Mieux vaut stub fonctionnel que build bloqué
 5. **Batch Corrections Efficient** : Corriger par famille d'erreurs (consultations, organisations) plus rapide que one-by-one
@@ -259,11 +259,11 @@ Module not found: Can't resolve './organisation-logo'
 
 ### Re-exports Créés
 
-- `src/components/business/create-organisation-modal.tsx`
-- `src/components/business/google-merchant-price-editor.tsx`
-- `src/components/business/google-merchant-metadata-editor.tsx`
-- `src/components/business/collection-image-upload.tsx` (stub)
-- `src/components/business/consultation-photos-modal.tsx` (stub)
+- `apps/back-office/src/components/business/create-organisation-modal.tsx`
+- `apps/back-office/src/components/business/google-merchant-price-editor.tsx`
+- `apps/back-office/src/components/business/google-merchant-metadata-editor.tsx`
+- `apps/back-office/src/components/business/collection-image-upload.tsx` (stub)
+- `apps/back-office/src/components/business/consultation-photos-modal.tsx` (stub)
 
 ### Composants Restaurés
 

@@ -41,7 +41,7 @@ error TS2307: Cannot find module './component-name' or its corresponding type de
 
 **Fichiers impactés** :
 
-- `src/app/stocks/mouvements/page.tsx` : MovementsStatsCards
+- `apps/back-office/src/app/stocks/mouvements/page.tsx` : MovementsStatsCards
 - `src/shared/modules/categories/components/modals/CategorizeModal.tsx` : category-hierarchy-selector
 - `src/shared/modules/common/components/address/AddressInput.tsx` : customer-selector
 - `src/shared/modules/common/components/collections/CollectionCreationWizard.tsx` : room-types
@@ -86,7 +86,7 @@ error TS2724: '"@/shared/modules/xxx/hooks"' has no exported member named 'TypeN
 
 **Fichiers impactés** :
 
-- `src/components/business/wizard-sections/*.tsx` (7 fichiers) : WizardFormData
+- `apps/back-office/src/components/business/wizard-sections/*.tsx` (7 fichiers) : WizardFormData
 - `src/shared/modules/consultations/components/interfaces/ConsultationOrderInterface.tsx` : ConsultationItem (suggestion: useConsultationItems)
 - `src/shared/modules/consultations/components/interfaces/ConsultationOrderInterface.tsx` : SourcingProductModal (suggestion: EditSourcingProductModal)
 - `src/shared/modules/orders/components/forms/SalesOrderShipmentForm.tsx` : SalesOrderForShipment
@@ -131,10 +131,10 @@ Propriétés manquantes : `severity`, `created_at`, `read`, `action_url`, `actio
 
 Fichiers :
 
-- `src/app/notifications/page.tsx`
+- `apps/back-office/src/app/notifications/page.tsx`
 - `src/shared/modules/notifications/components/dropdowns/NotificationsDropdown.tsx`
 
-**Stratégie** : Vérifier type `Notification` dans `src/types/supabase.ts` et hooks notifications
+**Stratégie** : Vérifier type `Notification` dans `apps/back-office/src/types/supabase.ts` et hooks notifications
 
 #### 3.2 - Auth User Type (6 erreurs)
 
@@ -142,7 +142,7 @@ Propriétés manquantes : `id`, `email`, `email_confirmed_at`, `created_at`, `us
 
 Fichiers :
 
-- `src/app/admin/users/page.tsx`
+- `apps/back-office/src/app/admin/users/page.tsx`
 
 **Stratégie** : Typer correctement objet user Supabase Auth
 
@@ -187,9 +187,9 @@ Type `'never'` dans arrays
 
 Fichiers :
 
-- `src/app/contacts-organisations/contacts/[contactId]/page.tsx`
-- `src/app/contacts-organisations/contacts/page.tsx`
-- `src/app/organisation/components/contacts-tab.tsx`
+- `apps/back-office/src/app/contacts-organisations/contacts/[contactId]/page.tsx`
+- `apps/back-office/src/app/contacts-organisations/contacts/page.tsx`
+- `apps/back-office/src/app/organisation/components/contacts-tab.tsx`
 - `src/shared/modules/customers/components/sections/*.tsx`
 
 **Stratégie** : Typer explicitement arrays `as const` ou définir type array
@@ -200,7 +200,7 @@ Strings assignés à type `never`
 
 Fichiers :
 
-- `src/components/forms/QuickVariantForm.tsx`
+- `apps/back-office/src/components/forms/QuickVariantForm.tsx`
 - `src/shared/modules/categories/components/selectors/SubcategorySearchSelector.tsx`
 
 **Stratégie** : Corriger types génériques ou type assertions

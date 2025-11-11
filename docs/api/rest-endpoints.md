@@ -28,7 +28,7 @@ Documentation complète des endpoints REST Next.js API Routes du système Véron
 - Headers authentification (JWT)
 - Codes erreur (400, 401, 403, 404, 500)
 
-**Fichiers** : `/Users/romeodossantos/verone-back-office-V1/src/app/api/**/*.ts`
+**Fichiers** : `/Users/romeodossantos/verone-back-office-V1/apps/back-office/src/app/api/**/*.ts`
 
 ---
 

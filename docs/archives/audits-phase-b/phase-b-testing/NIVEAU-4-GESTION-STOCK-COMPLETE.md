@@ -279,7 +279,7 @@ Valider les 4 pages du module Gestion Stock :
     expeditions;
 ```
 
-**Pattern Next.js** : Le fichier `src/app/stocks/page.tsx` crée automatiquement la route `/stocks`
+**Pattern Next.js** : Le fichier `apps/back-office/apps/back-office/src/app/stocks/page.tsx` crée automatiquement la route `/stocks`
 
 ---
 

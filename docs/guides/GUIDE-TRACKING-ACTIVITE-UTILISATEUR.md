@@ -28,15 +28,15 @@ Système de tracking activité utilisateur professionnel, simple et respectueux 
 
 #### 2. **API Endpoints**
 
-- 📄 `src/app/api/analytics/events/route.ts` - Enregistrement événement unique
-- 📄 `src/app/api/analytics/batch/route.ts` - Enregistrement batch (optimisé)
-- 📄 `src/app/api/admin/users/[id]/activity/route.ts` - Récupération activité user (owners only)
+- 📄 `apps/back-office/apps/back-office/src/app/api/analytics/events/route.ts` - Enregistrement événement unique
+- 📄 `apps/back-office/apps/back-office/src/app/api/analytics/batch/route.ts` - Enregistrement batch (optimisé)
+- 📄 `apps/back-office/apps/back-office/src/app/api/admin/users/[id]/activity/route.ts` - Récupération activité user (owners only)
 
 #### 3. **Providers & Hooks**
 
-- 📄 `src/components/providers/activity-tracker-provider.tsx` - Provider React tracking auto
-- 📄 `src/hooks/use-user-activity-tracker.ts` - Hook existant (déjà présent, maintenant connecté)
-- 📄 `src/app/layout.tsx` - Layout modifié avec ActivityTrackerProvider
+- 📄 `apps/back-office/apps/back-office/src/components/providers/activity-tracker-provider.tsx` - Provider React tracking auto
+- 📄 `apps/back-office/apps/back-office/src/hooks/use-user-activity-tracker.ts` - Hook existant (déjà présent, maintenant connecté)
+- 📄 `apps/back-office/apps/back-office/src/app/layout.tsx` - Layout modifié avec ActivityTrackerProvider
 
 ---
 
@@ -340,10 +340,10 @@ const {
 
 ## 📚 DOCUMENTATION COMPLÉMENTAIRE
 
-- **Code Hook:** `src/hooks/use-user-activity-tracker.ts`
+- **Code Hook:** `apps/back-office/apps/back-office/src/hooks/use-user-activity-tracker.ts`
 - **Migration SQL:** `supabase/migrations/20251007_003_user_activity_tracking_system.sql`
-- **API Events:** `src/app/api/analytics/events/route.ts`
-- **Provider:** `src/components/providers/activity-tracker-provider.tsx`
+- **API Events:** `apps/back-office/apps/back-office/src/app/api/analytics/events/route.ts`
+- **Provider:** `apps/back-office/apps/back-office/src/components/providers/activity-tracker-provider.tsx`
 
 ---
 

@@ -25,9 +25,9 @@
 
 ### Key Components
 
-- **Main Page** : `src/app/[module]/page.tsx`
-- **Main Hook** : `src/hooks/use-[module].ts`
-- **Primary Component** : `src/components/business/[module]-card.tsx`
+- **Main Page** : `apps/back-office/apps/back-office/src/app/[module]/page.tsx`
+- **Main Hook** : `apps/back-office/apps/back-office/src/hooks/use-[module].ts`
+- **Primary Component** : `apps/back-office/apps/back-office/src/components/business/[module]-card.tsx`
 
 ---
 
@@ -36,7 +36,7 @@
 ### Module Structure
 
 ```
-src/app/[module]/
+apps/back-office/src/app/[module]/
 ├── page.tsx              # Main list view
 ├── [id]/
 │   └── page.tsx         # Detail view

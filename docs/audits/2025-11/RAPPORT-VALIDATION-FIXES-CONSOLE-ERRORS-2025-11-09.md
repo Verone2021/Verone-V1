@@ -67,7 +67,7 @@ URL: http://localhost:3000/api/dashboard/stock-orders-metrics
 
 ### FIX 1 : Vérification Auth AVANT Fetch (use-stock-orders-metrics.ts)
 
-**Fichier** : `packages/@verone/stock/src/hooks/use-stock-orders-metrics.ts`
+**Fichier** : `packages/@verone/stock/apps/back-office/src/hooks/use-stock-orders-metrics.ts`
 **Lignes modifiées** : 21, 182-214
 
 **Changements** :
@@ -142,7 +142,7 @@ checkAuthAndFetch();
 
 ### FIX 3 : Cohérence Auth Check (use-complete-dashboard-metrics.ts)
 
-**Fichier** : `packages/@verone/dashboard/src/hooks/use-complete-dashboard-metrics.ts`
+**Fichier** : `packages/@verone/dashboard/apps/back-office/src/hooks/use-complete-dashboard-metrics.ts`
 **Lignes modifiées** : 90-100
 
 **Changements** :
@@ -320,9 +320,9 @@ const checkAuthAndFetch = async () => {
 
 **Fichiers modifiés** :
 
-- `packages/@verone/stock/src/hooks/use-stock-orders-metrics.ts`
+- `packages/@verone/stock/apps/back-office/src/hooks/use-stock-orders-metrics.ts`
 - `apps/back-office/src/app/dashboard/page.tsx`
-- `packages/@verone/dashboard/src/hooks/use-complete-dashboard-metrics.ts`
+- `packages/@verone/dashboard/apps/back-office/src/hooks/use-complete-dashboard-metrics.ts`
 
 **Commit message proposé** :
 
@@ -424,7 +424,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ```bash
 # Recherche pattern existant dans codebase
 grep -r "supabase.auth.getUser()" packages/
-grep -r "createClient()" packages/@verone/*/src/hooks/
+grep -r "createClient()" packages/@verone/*/apps/back-office/src/hooks/
 ```
 
 **Résultat** : Pattern déjà utilisé dans plusieurs hooks, cohérence maintenue

@@ -12,7 +12,7 @@
 
 - **Commit hash** : `4e796e639a7903cb09c181c6663cb2f093d95f9a`
 - **Date** : **1er novembre 2025, 22h06**
-- **Fichier** : `src/components/forms/create-product-in-group-modal.tsx`
+- **Fichier** : `apps/back-office/src/components/forms/create-product-in-group-modal.tsx`
 - **Taille** : **252 lignes de code**
 - **Statut** : **Supprimé lors migration monorepo (6 novembre 2025)**
 
@@ -62,7 +62,7 @@ Changements : 204 lignes → 252 lignes (+48 lignes, +23.5%)
 
 ## 💾 CODE COMPLET - VERSION FINALE (252 lignes)
 
-### Fichier : `src/components/forms/create-product-in-group-modal.tsx`
+### Fichier : `apps/back-office/src/components/forms/create-product-in-group-modal.tsx`
 
 ```typescript
 'use client';
@@ -350,7 +350,7 @@ import { Plus, Sparkles, AlertCircle } from 'lucide-react';
 import { DynamicColorSelector } from '@/components/business/DynamicColorSelector';
 ```
 
-**Fichier** : `src/components/business/DynamicColorSelector.tsx`  
+**Fichier** : `apps/back-office/src/components/business/DynamicColorSelector.tsx`  
 **Taille** : ~400 lignes  
 **Features** :
 
@@ -372,14 +372,14 @@ import { useToast } from '@/hooks/use-toast';
 
 **Hook `useGroupUsedColors`** :
 
-- **Fichier** : `src/hooks/use-product-colors.ts`
+- **Fichier** : `apps/back-office/src/hooks/use-product-colors.ts`
 - **Signature** : `useGroupUsedColors(groupId: string, variantType: VariantType)`
 - **Retour** : `{ usedColors: string[], loading: boolean }`
 - **Utilisation** : Éviter doublons couleurs/matériaux dans groupe
 
 **Hook `useToast`** :
 
-- **Fichier** : `src/hooks/use-toast.ts` (shadcn/ui)
+- **Fichier** : `apps/back-office/src/hooks/use-toast.ts` (shadcn/ui)
 - **Retour** : `{ toast: (options) => void }`
 - **Options** : `{ title, description, variant: 'default' | 'destructive' }`
 
@@ -719,7 +719,7 @@ onProductCreated() + onClose()
 ### Intégration dans Page
 
 ```typescript
-// src/app/produits/catalogue/variantes/[groupId]/page.tsx
+// apps/back-office/src/app/produits/catalogue/variantes/[groupId]/page.tsx
 
 import { CreateProductInGroupModal } from '@/components/forms/create-product-in-group-modal';
 
@@ -830,10 +830,10 @@ export default function VariantGroupPage() {
 
 ```bash
 # Extraire version finale (1er Nov 2025)
-git show 4e796e639a7903cb09c181c6663cb2f093d95f9a:src/components/forms/create-product-in-group-modal.tsx > create-product-in-group-modal.tsx
+git show 4e796e639a7903cb09c181c6663cb2f093d95f9a:apps/back-office/src/components/forms/create-product-in-group-modal.tsx > create-product-in-group-modal.tsx
 
 # Extraire version avant améliorations (30 Oct 2025)
-git show 4e796e639a7903cb09c181c6663cb2f093d95f9a^:src/components/forms/CreateProductInGroupModal.tsx > CreateProductInGroupModal-v1.1.tsx
+git show 4e796e639a7903cb09c181c6663cb2f093d95f9a^:apps/back-office/src/components/forms/CreateProductInGroupModal.tsx > CreateProductInGroupModal-v1.1.tsx
 
 # Comparer les deux versions
 diff -u CreateProductInGroupModal-v1.1.tsx create-product-in-group-modal.tsx
@@ -887,7 +887,7 @@ npx shadcn-ui@latest add toast
 
 **VERSION LA PLUS RÉCENTE CONFIRMÉE** :
 
-- **Fichier** : `src/components/forms/create-product-in-group-modal.tsx`
+- **Fichier** : `apps/back-office/src/components/forms/create-product-in-group-modal.tsx`
 - **Commit** : `4e796e63` (1er novembre 2025, 22h06)
 - **Taille** : 252 lignes
 - **Features** : Validation anti-doublon + Toast + Error handling + DynamicColorSelector

@@ -8,7 +8,7 @@
 
 ## `<ElegantKpiCard />`
 
-**Fichier** : `src/components/ui/elegant-kpi-card.tsx`
+**Fichier** : `apps/back-office/apps/back-office/src/components/ui/elegant-kpi-card.tsx`
 
 **Description** : KPI Card élégante inspirée shadcn/ui pour affichage métriques clés avec trend indicator et navigation.
 
@@ -152,7 +152,7 @@ trend negative: 'danger-700' sur fond 'danger-50'
 
 ## `<ActivityTimeline />`
 
-**Fichier** : `src/components/ui/activity-timeline.tsx`
+**Fichier** : `apps/back-office/apps/back-office/src/components/ui/activity-timeline.tsx`
 
 **Description** : Timeline d'activité récente (vide dans Dashboard actuel).
 

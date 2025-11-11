@@ -5,9 +5,9 @@
 
 import { useState, useCallback } from 'react';
 
-import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@verone/common/hooks';
 import { useStockMovements } from '@verone/stock/hooks/use-stock-movements';
+import { createClient } from '@verone/utils/supabase/client';
 
 // Types pour les commandes clients
 export type SalesOrderStatus =
@@ -457,8 +457,8 @@ export function useSalesOrders() {
           ...customerData,
         };
 
-        setCurrentOrder(orderWithCustomer as any);
-        return orderWithCustomer as any;
+        setCurrentOrder(orderWithCustomer);
+        return orderWithCustomer;
       } catch (error) {
         console.error('Erreur lors de la récupération de la commande:', error);
         toast({
@@ -1232,6 +1232,7 @@ export function useSalesOrders() {
         );
 
         // FIXME: Server actions can't be imported from monorepo packages
+        // Solution: Call Server Action directly from page.tsx, not from this hook
         // const { updateSalesOrderStatus } = await import(
         //   '@/app/actions/sales-orders'
         // );

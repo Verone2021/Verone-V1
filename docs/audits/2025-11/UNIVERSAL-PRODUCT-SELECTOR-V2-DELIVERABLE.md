@@ -10,7 +10,7 @@
 
 ### 1. Composant Principal
 
-**Fichier**: `src/components/business/universal-product-selector-v2.tsx`
+**Fichier**: `apps/back-office/src/components/business/universal-product-selector-v2.tsx`
 **Lignes**: ~1000
 **Features**:
 
@@ -41,7 +41,7 @@
 
 ### 3. Exemples d'Intégration
 
-**Fichier**: `src/components/business/universal-product-selector-v2-example.tsx`
+**Fichier**: `apps/back-office/src/components/business/universal-product-selector-v2-example.tsx`
 **Exemples**:
 
 1. Collections - Sélection simple multi-produits
@@ -459,9 +459,9 @@ import { UniversalProductSelectorV2 } from '@/components/business/universal-prod
 
 ### Fichiers à Consulter
 
-1. **Code Source**: `src/components/business/universal-product-selector-v2.tsx`
+1. **Code Source**: `apps/back-office/src/components/business/universal-product-selector-v2.tsx`
 2. **Documentation UX**: `docs/business-rules/98-ux-ui/universal-product-selector-v2.md`
-3. **Exemples**: `src/components/business/universal-product-selector-v2-example.tsx`
+3. **Exemples**: `apps/back-office/src/components/business/universal-product-selector-v2-example.tsx`
 4. **Design System**: `CLAUDE.md` - Section "Vérone Design Expert"
 
 ### Ressources Externes

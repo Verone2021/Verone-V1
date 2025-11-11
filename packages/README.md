@@ -1,177 +1,448 @@
-# 📦 Packages - Monorepo npm workspaces
+# 📦 Packages Turborepo - Phase 4
 
-Ce dossier contient la structure **monorepo activée** pour Vérone Back Office.
+**Architecture Monorepo** : 25 packages @verone/\* partagés entre 3 applications.
 
-✅ **IMPORTANT** : Cette architecture est **ACTIVE depuis 2025-11-07**.
-
----
-
-## 📂 Structure packages/
-
-```
-packages/
-└── @verone/
-    ├── types/        ✅ Types TypeScript partagés (Supabase + Business)
-    ├── utils/        ✅ Utilitaires et helpers (cn, formatters, validators)
-    ├── kpi/          ✅ Configuration KPI et métriques business
-    ├── ui/           ⚠️ Design System + composants (en cours)
-    ├── eslint-config/✅ Configuration ESLint partagée
-    └── prettier-config/ ✅ Configuration Prettier partagée
-```
+✅ **Phase 4 Active** depuis 2025-11-08 : Migration monorepo terminée, production stable.
 
 ---
 
-## 🚀 Packages Disponibles
+## 🏗️ Architecture Turborepo
 
-### ✅ @verone/types (v1.0.0)
+### 3 Applications
 
-Types TypeScript partagés pour database et business.
-
-**Usage** :
-
-```typescript
-import { Database, Tables } from '@verone/types';
-import { Collection, VariantGroup } from '@verone/types';
+```
+apps/
+├── back-office/      # CRM/ERP complet (port 3000)
+├── site-internet/    # E-commerce public (port 3001)
+└── linkme/           # Commissions vendeurs (port 3002)
 ```
 
-**Contenu** : 8 fichiers types (supabase, collections, variants, etc.)
+### 25 Packages Partagés
+
+```
+packages/@verone/
+├── UI & Design (3 packages)
+│   ├── ui/              # 54 composants Design System
+│   ├── ui-business/     # Composants business réutilisables
+│   └── eslint-config/   # Configuration ESLint partagée
+│
+├── Modules Business (12 packages)
+│   ├── products/        # 32 composants produits
+│   ├── orders/          # Composants commandes
+│   ├── stock/           # Composants stock
+│   ├── customers/       # Composants clients
+│   ├── suppliers/       # Composants fournisseurs
+│   ├── organisations/   # Composants organisations
+│   ├── categories/      # Composants catégories
+│   ├── collections/     # Composants collections
+│   ├── channels/        # Composants canaux vente
+│   ├── finance/         # Composants finance
+│   ├── consultations/   # Composants consultations
+│   └── logistics/       # Composants logistique
+│
+├── Dashboard & Admin (3 packages)
+│   ├── dashboard/       # Composants dashboard & KPI
+│   ├── notifications/   # Composants notifications
+│   └── admin/           # Composants administration
+│
+├── Utils & Config (5 packages)
+│   ├── types/           # Types TypeScript partagés
+│   ├── utils/           # Utilitaires communs
+│   ├── common/          # Hooks et composants communs
+│   ├── kpi/             # Configuration KPI YAML
+│   └── prettier-config/ # Configuration Prettier partagée
+│
+└── Testing & Integrations (2 packages)
+    ├── testing/         # Utilities tests
+    └── integrations/    # Intégrations externes (Abby, Google Merchant, Qonto)
+```
+
+**Total** : 25 packages @verone/\*
 
 ---
 
-### ✅ @verone/utils (v1.0.0)
+## 📚 Packages Détaillés
 
-Utilitaires et helpers communs.
+### 🎨 UI & Design
 
-**Usage** :
+#### @verone/ui
 
-```typescript
-import { cn, formatPrice, generateSKU } from '@verone/utils';
-```
+- **54 composants** Design System shadcn/ui + Radix
+- **Tokens** : Colors, spacing, typography, shadows
+- **Thèmes** : Light/Dark mode support
+- **Usage** : `import { Button, Card, Dialog } from '@verone/ui'`
 
-**Contenu** : 18+ fonctions (formatage, génération, validation, performance)
+#### @verone/ui-business
 
----
+- Composants business réutilisables cross-modules
+- Ex: DataTable, EntityCard, StatusBadge
+- **Usage** : `import { DataTable } from '@verone/ui-business'`
 
-### ✅ @verone/kpi (v1.0.0)
+#### @verone/eslint-config
 
-Configuration KPI et métriques business.
-
-**Usage** :
-
-```typescript
-import { KPIConfig, kpiRegistry } from '@verone/kpi';
-```
-
-**Contenu** : Types KPI, registry, 6 catégories (users, orgs, catalogue, stocks, orders, finance)
+- Configuration ESLint stricte TypeScript
+- Rules: no-explicit-any, naming-convention, etc.
+- **Usage** : `{ "extends": "@verone/eslint-config" }`
 
 ---
 
-### ⚠️ @verone/ui (v1.0.0)
+### 📦 Modules Business
 
-Design System V2 + composants UI (shadcn/ui + Radix).
+#### @verone/products
 
-**Statut** : Structure créée, build en cours (erreurs imports à fixer)
+- **32 composants** : ProductCard, ProductThumbnail, ProductModal
+- Hooks : useProducts, useVariants, usePackages
+- **Usage** : `import { ProductCard, useProducts } from '@verone/products'`
 
-**Usage prévu** :
+#### @verone/orders
 
-```typescript
-import { ChannelBadge, StockKPICard } from '@verone/ui';
-import { colors, spacing } from '@verone/ui/tokens';
-```
+- Composants : OrderCard, OrderForm, QuickPurchaseOrderModal
+- Hooks : useSalesOrders, usePurchaseOrders, useShipments
+- **Usage** : `import { QuickPurchaseOrderModal } from '@verone/orders'`
 
-**Contenu** : Tokens, thèmes, composants Stock
+#### @verone/stock
+
+- Composants : StockAlertCard, MovementHistory
+- Hooks : useStockMovements, useStockAlerts
+- **Usage** : `import { StockAlertCard } from '@verone/stock'`
+
+#### @verone/customers
+
+- Composants : CustomerCard, CustomerSelector
+- Hooks : useCustomers, useContacts
+- **Usage** : `import { useCustomers } from '@verone/customers'`
+
+#### @verone/suppliers
+
+- Composants : SupplierCard, SupplierSelector
+- Hooks : useSuppliers
+- **Usage** : `import { SupplierSelector } from '@verone/suppliers'`
+
+#### @verone/organisations
+
+- Composants : OrganisationCard, OrganisationLogo
+- Hooks : useOrganisations
+- **Usage** : `import { useOrganisations } from '@verone/organisations'`
+
+#### @verone/categories
+
+- Composants : CategorySelector, CategorizeModal
+- Hooks : useCategories, useFamilies
+- **Usage** : `import { CategorySelector } from '@verone/categories'`
+
+#### @verone/collections
+
+- Composants : CollectionCard, CollectionSelector
+- Hooks : useCollections
+- **Usage** : `import { useCollections } from '@verone/collections'`
+
+#### @verone/channels
+
+- Composants : ChannelBadge, GoogleMerchantSync
+- Hooks : useGoogleMerchant
+- **Usage** : `import { useGoogleMerchant } from '@verone/channels'`
+
+#### @verone/finance
+
+- Composants : InvoiceCard, PaymentForm
+- Hooks : useInvoices, useTreasury
+- **Usage** : `import { useInvoices } from '@verone/finance'`
+
+#### @verone/consultations
+
+- Composants : ConsultationCard, ConsultationForm
+- Hooks : useConsultations
+- **Usage** : `import { useConsultations } from '@verone/consultations'`
+
+#### @verone/logistics
+
+- Composants : ShipmentCard, DeliveryTracking
+- Hooks : useShipments, useReceptions
+- **Usage** : `import { useShipments } from '@verone/logistics'`
 
 ---
 
-### ✅ @verone/eslint-config (v1.0.0)
+### 📊 Dashboard & Admin
 
-Configuration ESLint stricte partagée.
+#### @verone/dashboard
 
-**Usage** :
+- Composants : KpiCardUnified, DashboardWidget
+- Hooks : useCompleteDashboardMetrics, useMetrics
+- **Usage** : `import { KpiCardUnified, useCompleteDashboardMetrics } from '@verone/dashboard'`
+
+#### @verone/notifications
+
+- Composants : NotificationsDropdown, NotificationItem
+- Hooks : useNotifications
+- **Usage** : `import { NotificationsDropdown } from '@verone/notifications'`
+
+#### @verone/admin
+
+- Composants : UserManagement, ActivityLog
+- Hooks : useUsers, useActivity
+- **Usage** : `import { UserManagement } from '@verone/admin'`
+
+---
+
+### 🔧 Utils & Config
+
+#### @verone/types
+
+- Types Database (Supabase generated)
+- Types Business (Product, Order, Stock, etc.)
+- **Usage** : `import type { Database, Tables } from '@verone/types'`
+
+#### @verone/utils
+
+- Utilitaires : cn, formatPrice, generateSKU
+- Helpers : Supabase client, validators
+- **Usage** : `import { cn, formatPrice } from '@verone/utils'`
+
+#### @verone/common
+
+- Hooks communs : useToast, useMobile, useDebounce
+- Composants UI communs cross-modules
+- **Usage** : `import { useToast } from '@verone/common'`
+
+#### @verone/kpi
+
+- Configuration KPI YAML (6 catégories)
+- Types KPI, registry, formules calcul
+- **Usage** : `import { kpiRegistry } from '@verone/kpi'`
+
+#### @verone/prettier-config
+
+- Configuration Prettier partagée
+- **Usage** : `"@verone/prettier-config"`
+
+---
+
+### 🧪 Testing & Integrations
+
+#### @verone/testing
+
+- Utilities tests Vitest + Playwright
+- Mocks, fixtures, test helpers
+- **Usage** : `import { mockProduct } from '@verone/testing'`
+
+#### @verone/integrations
+
+- **Abby** : Client synchronisation stock
+- **Google Merchant** : Feeds XML, sync produits
+- **Qonto** : Rapprochement bancaire
+- **Usage** : `import { GoogleMerchantClient } from '@verone/integrations/google-merchant'`
+
+---
+
+## 🔧 Configuration Turborepo
+
+### turbo.json
 
 ```json
 {
-  "extends": "@verone/eslint-config"
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "dist/**"]
+    },
+    "dev": {
+      "cache": false
+    },
+    "lint": {
+      "outputs": []
+    },
+    "type-check": {
+      "outputs": []
+    }
+  }
+}
+```
+
+### package.json (root)
+
+```json
+{
+  "workspaces": ["apps/*", "packages/@verone/*"],
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "type-check": "turbo run type-check"
+  }
 }
 ```
 
 ---
 
-### ✅ @verone/prettier-config (v1.0.0)
+## ⚡ Scripts Disponibles
 
-Configuration Prettier partagée.
+### Build
 
-**Usage** :
+```bash
+# Build tous les packages + apps
+turbo build
 
-```json
-"@verone/prettier-config"
+# Build package spécifique
+turbo build --filter=@verone/products
+```
+
+### Dev
+
+```bash
+# Dev tous les apps en parallèle
+turbo dev
+
+# Dev app spécifique
+turbo dev --filter=back-office
+```
+
+### Type Check
+
+```bash
+# Type check tous les packages + apps
+turbo type-check
+
+# Type check package spécifique
+turbo type-check --filter=@verone/ui
+```
+
+### Lint
+
+```bash
+# Lint tous les packages + apps
+turbo lint
+
+# Lint avec auto-fix
+turbo lint -- --fix
 ```
 
 ---
 
-## 🔧 npm Workspaces
+## 📊 Métriques Phase 4
 
-**Configuration activée** dans `package.json` racine :
-
-```json
-{
-  "workspaces": ["packages/@verone/*"]
-}
-```
-
-**Symlinks automatiques** :
-
-- `node_modules/@verone/types` → `packages/@verone/types`
-- `node_modules/@verone/utils` → `packages/@verone/utils`
-- `node_modules/@verone/kpi` → `packages/@verone/kpi`
-- `node_modules/@verone/ui` → `packages/@verone/ui`
-
----
-
-## 📋 Scripts Disponibles
-
-### Build tous les packages
-
-```bash
-npm run build:packages
-```
-
-### Type check tous les packages
-
-```bash
-npm run type-check:packages
-```
-
-### Clean tous les packages
-
-```bash
-npm run clean:packages
-```
-
-### Build package spécifique
-
-```bash
-cd packages/@verone/types && npm run build
-```
+| Métrique                | Valeur                                 |
+| ----------------------- | -------------------------------------- |
+| **Packages @verone/**   | 25                                     |
+| **Applications**        | 3 (back-office, site-internet, linkme) |
+| **Composants UI**       | 54 (Design System)                     |
+| **Composants Products** | 32                                     |
+| **Composants Total**    | 86+                                    |
+| **Hooks Custom**        | 87+                                    |
+| **Types TypeScript**    | Database + Business (strict mode)      |
+| **Configuration**       | ESLint + Prettier partagés             |
+| **Erreurs TypeScript**  | 0                                      |
 
 ---
 
 ## 📖 Documentation
 
-**Récapitulatif création** : [docs/monorepo/PACKAGES-CREATED-2025-11-07.md](../docs/monorepo/PACKAGES-CREATED-2025-11-07.md)
-**Plan migration** : [docs/monorepo/migration-plan.md](../docs/monorepo/migration-plan.md)
-**Design System V2** : [docs/architecture/design-system.md](../docs/architecture/design-system.md)
+### Architecture
+
+- [`CLAUDE.md`](../CLAUDE.md) § Architecture Turborepo Phase 4
+- [`docs/architecture/MONOREPO-STRUCTURE.md`](../docs/architecture/MONOREPO-STRUCTURE.md) (si créé)
+
+### Archives Migration
+
+- [`docs/archives/migration-turborepo/`](../docs/archives/migration-turborepo/) - Documentation historique migration Phase 4
+
+### Composants Catalogue
+
+- [`docs/architecture/COMPOSANTS-CATALOGUE.md`](../docs/architecture/COMPOSANTS-CATALOGUE.md) - Catalogue exhaustif 86 composants
 
 ---
 
-## 🚧 Statut Actuel
+## 🚀 Ajout Nouveau Package
 
-✅ **3/4 packages buildés** (types, utils, kpi)
-⚠️ **1/4 package en cours** (ui - imports à fixer)
-✅ **npm workspaces activé**
-⚠️ **npm install bloqué** (workaround : symlinks manuels)
+### Template Création
+
+```bash
+# 1. Créer structure
+mkdir -p packages/@verone/nouveau-package/src
+cd packages/@verone/nouveau-package
+
+# 2. Créer package.json
+cat > package.json <<EOF
+{
+  "name": "@verone/nouveau-package",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@verone/types": "workspace:*",
+    "@verone/utils": "workspace:*"
+  }
+}
+EOF
+
+# 3. Créer tsconfig.json
+cat > tsconfig.json <<EOF
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "dist"
+  },
+  "include": ["src"]
+}
+EOF
+
+# 4. Créer index.ts
+echo "export { default as Component } from './Component';" > src/index.ts
+
+# 5. Installer dépendances
+npm install
+```
+
+### Checklist Nouveau Package
+
+- [ ] Structure créée (`packages/@verone/nom/`)
+- [ ] `package.json` configuré avec exports
+- [ ] `tsconfig.json` extends root
+- [ ] `src/index.ts` avec exports
+- [ ] Documentation README.md
+- [ ] Tests si applicable
+- [ ] Build valide : `turbo build --filter=@verone/nom`
+- [ ] Type-check valide : `turbo type-check --filter=@verone/nom`
+- [ ] Mettre à jour ce README.md (liste packages)
+- [ ] Mettre à jour `COMPOSANTS-CATALOGUE.md` si composants UI
 
 ---
 
-**Activé le** : 2025-11-07
+## ✅ Validation
+
+### Commandes Vérification
+
+```bash
+# Vérifier tous les packages buildent
+turbo build
+# Résultat attendu : 25 packages + 3 apps = SUCCESS
+
+# Vérifier type-check
+turbo type-check
+# Résultat attendu : 0 erreurs TypeScript
+
+# Vérifier symlinks npm workspaces
+ls -la node_modules/@verone/
+# Résultat attendu : 25 symlinks vers packages/@verone/*
+
+# Vérifier structure
+tree -L 2 packages/@verone/
+# Résultat attendu : 25 dossiers
+```
+
+---
+
+## 🎯 Statut Actuel
+
+✅ **25/25 packages** créés et fonctionnels
+✅ **3/3 apps** déployées en production
+✅ **Turborepo** configuré et actif
+✅ **npm workspaces** symlinks opérationnels
+✅ **0 erreurs** TypeScript
+✅ **Build** successful (<20s)
+
+**Dernière mise à jour** : 2025-11-11 (Phase 4 cleanup finalisée)
 **Mainteneur** : Romeo Dos Santos

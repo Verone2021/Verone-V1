@@ -100,7 +100,7 @@ Valider le module Ventes :
 **Warning détecté** (non bloquant) :
 
 ```
-⚠️ ./src/hooks/use-sales-orders.ts
+⚠️ ./apps/back-office/src/hooks/use-sales-orders.ts
 Module not found: Can't resolve '@/app/actions/sales-order...
 ```
 
@@ -230,7 +230,7 @@ Module not found: Can't resolve '@/app/actions/sales-order...
 **Architecture observée** :
 
 ```
-src/app/ventes/
+apps/back-office/src/app/ventes/
 └── page.tsx (Dashboard unique)
 ```
 
@@ -258,7 +258,7 @@ src/app/ventes/
 **Warning détecté** (répété sur tous les NIVEAUX) :
 
 ```
-⚠️ ./src/hooks/use-sales-orders.ts
+⚠️ ./apps/back-office/src/hooks/use-sales-orders.ts
 Module not found: Can't resolve '@/app/actions/sales-order...
 ```
 

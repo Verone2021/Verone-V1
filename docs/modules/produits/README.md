@@ -70,7 +70,7 @@ Module central pour gérer **l'intégralité du catalogue produits** de Vérone 
 ## 📁 Structure Fichiers
 
 ```
-src/app/produits/
+apps/back-office/src/app/produits/
 ├── catalogue/
 │   ├── page.tsx                      # Liste produits catalogue
 │   ├── [productId]/page.tsx          # Détail produit
@@ -100,7 +100,7 @@ src/app/produits/
     ├── echantillons/page.tsx         # Gestion échantillons
     └── validation/page.tsx           # Validation sourcing
 
-src/hooks/
+apps/back-office/src/hooks/
 ├── use-products.ts                   # CRUD produits principal
 ├── use-sourcing-products.ts          # CRUD sourcing
 ├── use-collections.ts                # CRUD collections
@@ -117,7 +117,7 @@ src/hooks/
 └── metrics/
     └── use-product-metrics.ts        # Métriques produits
 
-src/components/business/
+apps/back-office/src/components/business/
 ├── product-creation-wizard.tsx       # Wizard 4 étapes
 ├── complete-product-wizard.tsx       # Wizard complet
 ├── quick-sourcing-modal.tsx          # Modal sourcing rapide (nouveau)

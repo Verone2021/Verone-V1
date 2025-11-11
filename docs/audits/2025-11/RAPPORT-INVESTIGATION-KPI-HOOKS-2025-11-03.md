@@ -38,7 +38,7 @@ Ce Mois: 10          | Réels: 3           | +7 ❌
 
 #### **Cause Root**
 
-**Fichier** : `src/hooks/use-movements-history.ts`
+**Fichier** : `apps/back-office/src/hooks/use-movements-history.ts`
 **Fonction** : `fetchStats()` (lignes 244-372)
 **Problème** : Queries comptent TOUS les mouvements sans filtrer `affects_forecast = false`
 
@@ -97,7 +97,7 @@ KPI Affiché          | Valeur Attendue    | Écart
 
 #### **Cause Root**
 
-**Fichier** : `src/hooks/use-stock-dashboard.ts`
+**Fichier** : `apps/back-office/src/hooks/use-stock-dashboard.ts`
 **Fonction** : Calcul `overview.products_in_stock` (lignes 170-182)
 **Problème** : Logique incorrecte compte TOUS produits avec `stock_real > 0` (données test obsolètes)
 
@@ -156,8 +156,8 @@ products_in_stock: productsInMovements.size,  // Uniquement produits avec mouvem
 
 **Détails Corrections** :
 
-1. `src/hooks/core/use-stock-core.ts` : Ajout `cost_price` ligne 226 + interface ligne 116
-2. `src/hooks/use-stock-dashboard.ts` : Fix mapping ligne 124 (`p.cost_price || 0`)
+1. `apps/back-office/src/hooks/core/use-stock-core.ts` : Ajout `cost_price` ligne 226 + interface ligne 116
+2. `apps/back-office/src/hooks/use-stock-dashboard.ts` : Fix mapping ligne 124 (`p.cost_price || 0`)
 
 **Validation** :
 
@@ -177,12 +177,12 @@ WHERE archived_at IS NULL AND cost_price IS NOT NULL;
 
 #### **Fichiers Identifiés**
 
-1. **`src/hooks/use-supabase-query.ts`**
+1. **`apps/back-office/src/hooks/use-supabase-query.ts`**
    - Taille : 251 lignes
    - Utilisé par : `bug-reporter.tsx`, `use-user-activity-tracker.ts`, `use-stock-optimized.ts`
    - Fonctionnalités : Queries + Mutations + Cache
 
-2. **`src/hooks/base/use-supabase-query.ts`**
+2. **`apps/back-office/src/hooks/base/use-supabase-query.ts`**
    - Taille : 92 lignes
    - Utilisé par : `use-collection-products.ts`, `use-supabase-crud.ts`
    - Fonctionnalités : Version simplifiée
@@ -207,7 +207,7 @@ WHERE archived_at IS NULL AND cost_price IS NOT NULL;
 #### **Constat**
 
 ```bash
-$ grep -l "from('products')" src/hooks/*.ts | wc -l
+$ grep -l "from('products')" apps/back-office/src/hooks/*.ts | wc -l
 27
 ```
 
@@ -285,7 +285,7 @@ Selon rapport pre-commit : **11 hooks** accèdent à `stock_movements`
 
 #### **1. Fix KPI Mouvements** (~15min)
 
-**Fichier** : `src/hooks/use-movements-history.ts`
+**Fichier** : `apps/back-office/src/hooks/use-movements-history.ts`
 **Fonction** : `fetchStats()` lignes 244-372
 
 **Actions** :
@@ -305,7 +305,7 @@ Selon rapport pre-commit : **11 hooks** accèdent à `stock_movements`
 
 #### **2. Fix KPI Produits en Stock** (~5min)
 
-**Fichier** : `src/hooks/use-stock-dashboard.ts`
+**Fichier** : `apps/back-office/src/hooks/use-stock-dashboard.ts`
 **Ligne** : 182
 
 **Actions** :

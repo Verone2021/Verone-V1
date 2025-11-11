@@ -388,9 +388,9 @@ Aucun bug high priority détecté.
 
 **Fichiers impactés** :
 
-- `apps/site-internet/src/app/layout.tsx:23` - Do not use `<a>` element
-- `apps/site-internet/src/app/page.tsx:22` - Empty component should be self-closing
-- `apps/linkme/src/app/layout.tsx:25` - Do not use `<a>` element
+- `apps/site-internet/apps/back-office/src/app/layout.tsx:23` - Do not use `<a>` element
+- `apps/site-internet/apps/back-office/src/app/page.tsx:22` - Empty component should be self-closing
+- `apps/linkme/apps/back-office/src/app/layout.tsx:25` - Do not use `<a>` element
 
 **Recommandation** : Ignorer jusqu'à développement effectif des apps
 
@@ -494,9 +494,9 @@ cat turbo.json         # Config validation
 
 **Fichiers modifiés antérieurs** (déjà committés) :
 
-- `packages/@verone/stock/src/hooks/use-stock-orders-metrics.ts`
+- `packages/@verone/stock/apps/back-office/src/hooks/use-stock-orders-metrics.ts`
 - `apps/back-office/src/app/dashboard/page.tsx`
-- `packages/@verone/dashboard/src/hooks/use-complete-dashboard-metrics.ts`
+- `packages/@verone/dashboard/apps/back-office/src/hooks/use-complete-dashboard-metrics.ts`
 
 **Commit message suggéré si nouvelles modifications** :
 
@@ -675,9 +675,9 @@ Read(
 
 ### Annexe B : Fichiers Modifiés (Session 2025-11-09)
 
-1. `packages/@verone/stock/src/hooks/use-stock-orders-metrics.ts:182-214` - FIX 1 Auth check
+1. `packages/@verone/stock/apps/back-office/src/hooks/use-stock-orders-metrics.ts:182-214` - FIX 1 Auth check
 2. `apps/back-office/src/app/dashboard/page.tsx:42-44` - FIX 2 Type guard
-3. `packages/@verone/dashboard/src/hooks/use-complete-dashboard-metrics.ts:90-100` - FIX 3 Cohérence
+3. `packages/@verone/dashboard/apps/back-office/src/hooks/use-complete-dashboard-metrics.ts:90-100` - FIX 3 Cohérence
 
 ### Annexe C : Commandes Validation Rapide
 

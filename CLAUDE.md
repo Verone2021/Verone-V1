@@ -658,6 +658,137 @@ Deploy    : Vercel (auto-deploy production-stable)
 
 ---
 
+## 📂 RÈGLES CHEMINS TURBOREPO PHASE 4
+
+**RÈGLE ABSOLUE** : Depuis Phase 4 (2025-11-08), la structure repository est **TURBOREPO** avec 3 apps + 25 packages.
+
+### ✅ Chemins CORRECTS (Phase 4 Turborepo)
+
+**Applications (3)** :
+
+```typescript
+apps/back-office/src/app/          // ✅ CORRECT - Pages Next.js back-office
+apps/back-office/src/components/   // ✅ CORRECT - Composants back-office
+apps/back-office/src/hooks/        // ✅ CORRECT - Hooks back-office
+apps/back-office/src/lib/           // ✅ CORRECT - Utils back-office
+apps/back-office/src/types/         // ✅ CORRECT - Types back-office
+
+apps/site-internet/src/            // ✅ CORRECT - E-commerce public
+apps/linkme/src/                   // ✅ CORRECT - Commissions vendeurs
+```
+
+**Packages (25)** :
+
+```typescript
+packages/@verone/ui/src/             // ✅ CORRECT - Design System
+packages/@verone/products/src/       // ✅ CORRECT - Composants produits
+packages/@verone/orders/src/         // ✅ CORRECT - Composants commandes
+packages/@verone/stock/src/          // ✅ CORRECT - Composants stock
+// ... 21 autres packages
+```
+
+### ❌ Chemins OBSOLÈTES (Pré-Turborepo - N'EXISTENT PLUS)
+
+```typescript
+src/app/                  // ❌ OBSOLÈTE - N'existe plus depuis Phase 4
+src/components/           // ❌ OBSOLÈTE - Utiliser apps/back-office/src/components/
+src/hooks/                // ❌ OBSOLÈTE - Utiliser apps/back-office/src/hooks/
+src/lib/                  // ❌ OBSOLÈTE - Utiliser apps/back-office/src/lib/
+src/types/                // ❌ OBSOLÈTE - Utiliser apps/back-office/src/types/
+src/shared/modules/       // ❌ OBSOLÈTE - Migré vers packages/@verone/*
+```
+
+**ATTENTION** : Ces chemins apparaissent dans certains rapports d'audit **HISTORIQUES** (docs/audits/) qui documentent l'ancien état PRÉ-migration. C'est intentionnel et ne doit PAS être modifié.
+
+### 🔍 Exemples Concrets
+
+#### ❌ ERREUR FRÉQUENTE - Hallucination Structure Obsolète
+
+```typescript
+// ❌ MAUVAIS (structure obsolète, n'existe plus)
+Read('src/app/produits/page.tsx');
+Read('src/components/ui/button.tsx');
+import { useProducts } from '@/shared/modules/products/hooks';
+
+// ✅ CORRECT (structure Phase 4 Turborepo)
+Read('apps/back-office/src/app/produits/page.tsx');
+Read('packages/@verone/ui/src/components/ui/button.tsx');
+import { useProducts } from '@verone/products';
+```
+
+#### ✅ Imports Corrects Post-Phase 4
+
+```typescript
+// Composants UI
+import { Button, Card } from '@verone/ui';
+
+// Composants business
+import { ProductCard, useProducts } from '@verone/products';
+import { StockAlertCard } from '@verone/stock';
+import { QuickPurchaseOrderModal } from '@verone/orders';
+
+// Types & Utils
+import type { Database, Tables } from '@verone/types';
+import { cn, formatPrice } from '@verone/utils';
+
+// Hooks communs
+import { useToast } from '@verone/common';
+```
+
+### 📝 Commandes Supabase
+
+**TypeScript Types Generation** :
+
+```bash
+# ✅ CORRECT (Phase 4)
+supabase gen types typescript --local > apps/back-office/src/types/supabase.ts
+
+# ❌ OBSOLÈTE (structure pré-Turborepo)
+supabase gen types typescript --local > src/types/supabase.ts
+```
+
+### 🛡️ Validation Automatique
+
+**Script validation chemins** :
+
+```bash
+# Vérifier aucune référence obsolète src/ dans code
+grep -r "from '@/app" apps/back-office/src/ --include="*.ts" --include="*.tsx"
+# Résultat attendu : 0 occurrences
+
+# Vérifier aucune référence src/shared/modules
+grep -r "from '@/shared/modules" apps/back-office/src/ --include="*.ts" --include="*.tsx"
+# Résultat attendu : 0 occurrences
+
+# Vérifier imports @verone/* corrects
+grep -r "from '@verone/" apps/back-office/src/ --include="*.ts" --include="*.tsx" | wc -l
+# Résultat attendu : 750-800+ imports
+```
+
+**Workflow CI/CD** : Un workflow GitHub Actions `.github/workflows/validate-docs-paths.yml` valide automatiquement qu'aucune nouvelle référence obsolète n'est introduite (Phase 8 du plan cleanup).
+
+### 📚 Documentation Migration
+
+**Archives migration Phase 4** : `docs/archives/migration-turborepo/`
+
+- `migration-plan-2025-10-21-historique.md` - Plan migration détaillé
+- `PACKAGES-CREATED-2025-11-07.md` - Création 25 packages @verone/\*
+- Scripts archivés : `scripts/archived/migration-turborepo/`
+
+**RAPPEL** : Ces documents archives contiennent des références à l'ANCIENNE structure (src/) de manière **INTENTIONNELLE** pour documenter l'historique. Ne PAS les modifier.
+
+### 🎯 Checklist Anti-Hallucination Chemins
+
+Avant toute opération fichier, **TOUJOURS vérifier** :
+
+- [ ] ✅ Le chemin commence par `apps/` ou `packages/` (pas `src/` seul)
+- [ ] ✅ App cible correcte : `back-office` / `site-internet` / `linkme`
+- [ ] ✅ Imports utilisent `@verone/*` (pas `@/shared/modules/*`)
+- [ ] ✅ Types Supabase dans `apps/back-office/src/types/supabase.ts`
+- [ ] ✅ Consulter catalogue composants AVANT créer composant
+
+---
+
 ## 📦 PACKAGES @VERONE/\* - COMPOSANTS CATALOGUE
 
 **RÈGLE ABSOLUE** : **TOUJOURS consulter le catalogue composants AVANT créer/utiliser composant**

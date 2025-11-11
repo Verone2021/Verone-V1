@@ -193,7 +193,7 @@ Après avoir détecté 5 erreurs sur le dashboard logout, l'hypothèse était qu
 ### Root Cause - Page `/stocks`
 
 **Hook problématique** : `useStockUI`
-**Localisation probable** : `src/shared/modules/stock/hooks/use-stock-ui.ts` ou `packages/@verone/stock/src/hooks/use-stock-ui.ts`
+**Localisation probable** : `src/shared/modules/stock/hooks/use-stock-ui.ts` ou `packages/@verone/stock/apps/back-office/src/hooks/use-stock-ui.ts`
 
 **Erreur typique** :
 
@@ -248,7 +248,7 @@ grep -r "AuthSessionMissingError" packages/@verone/stock/
 
 ### Action 2 : Appliquer Fix Auth Check (10 min)
 
-**Fichier** : `packages/@verone/stock/src/hooks/use-stock-ui.ts` (probable)
+**Fichier** : `packages/@verone/stock/apps/back-office/src/hooks/use-stock-ui.ts` (probable)
 
 **Changements à appliquer** :
 
@@ -296,10 +296,10 @@ mcp__playwright__browser_console_messages();
 
 ```bash
 # Liste tous les hooks stock
-ls -la packages/@verone/stock/src/hooks/
+ls -la packages/@verone/stock/apps/back-office/src/hooks/
 
 # Rechercher pattern problématique
-grep -r "supabase\." packages/@verone/stock/src/hooks/ | grep -v "auth.getUser()"
+grep -r "supabase\." packages/@verone/stock/apps/back-office/src/hooks/ | grep -v "auth.getUser()"
 ```
 
 **Hooks potentiellement concernés** :
@@ -343,10 +343,10 @@ grep -r "supabase\." packages/@verone/stock/src/hooks/ | grep -v "auth.getUser()
 
 **Fichiers à commiter** :
 
-- `packages/@verone/stock/src/hooks/use-stock-orders-metrics.ts` (FIX 1 - déjà fait)
+- `packages/@verone/stock/apps/back-office/src/hooks/use-stock-orders-metrics.ts` (FIX 1 - déjà fait)
 - `apps/back-office/src/app/dashboard/page.tsx` (FIX 2 - déjà fait)
-- `packages/@verone/dashboard/src/hooks/use-complete-dashboard-metrics.ts` (FIX 3 - déjà fait)
-- `packages/@verone/stock/src/hooks/use-stock-ui.ts` (FIX 4 - à faire)
+- `packages/@verone/dashboard/apps/back-office/src/hooks/use-complete-dashboard-metrics.ts` (FIX 3 - déjà fait)
+- `packages/@verone/stock/apps/back-office/src/hooks/use-stock-ui.ts` (FIX 4 - à faire)
 - `[autres hooks stock si nécessaire]` (FIX 5+ - selon audit)
 
 **Commit message** :

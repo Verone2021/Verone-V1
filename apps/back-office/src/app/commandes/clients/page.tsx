@@ -4,6 +4,22 @@ import { useState, useEffect, useMemo } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
+import { useToast } from '@verone/common';
+import type { SalesOrder, SalesOrderStatus } from '@verone/orders';
+import { SalesOrderFormModal } from '@verone/orders';
+import { OrderDetailModal } from '@verone/orders';
+import { SalesOrderShipmentModal } from '@verone/orders';
+import { useSalesOrders } from '@verone/orders';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@verone/ui';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -31,6 +47,7 @@ import {
 } from '@verone/ui';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@verone/ui';
 import { formatCurrency, formatDate } from '@verone/utils';
+import { createClient } from '@verone/utils/supabase/client';
 import {
   Plus,
   Search,
@@ -46,13 +63,10 @@ import {
   ArrowDown,
   FileText,
   FileSpreadsheet,
+  Truck,
 } from 'lucide-react';
 
-import { useToast } from '@verone/common';
-import type { SalesOrder, SalesOrderStatus } from '@verone/orders';
-import { SalesOrderFormModal } from '@verone/orders';
-import { OrderDetailModal } from '@verone/orders';
-import { useSalesOrders } from '@verone/orders';
+import { updateSalesOrderStatus } from '@/app/actions/sales-orders';
 
 const statusLabels: Record<SalesOrderStatus, string> = {
   draft: 'Brouillon',
@@ -108,6 +122,10 @@ export default function SalesOrdersPage() {
   const [showOrderDetail, setShowOrderDetail] = useState(false);
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showShipmentModal, setShowShipmentModal] = useState(false);
+  const [showValidateConfirmation, setShowValidateConfirmation] =
+    useState(false);
+  const [orderToValidate, setOrderToValidate] = useState<string | null>(null);
 
   useEffect(() => {
     fetchOrders();
@@ -355,6 +373,14 @@ export default function SalesOrdersPage() {
     orderId: string,
     newStatus: SalesOrderStatus
   ) => {
+    // Si validation (draft → confirmed), afficher modal de confirmation
+    if (newStatus === 'confirmed') {
+      setOrderToValidate(orderId);
+      setShowValidateConfirmation(true);
+      return;
+    }
+
+    // Sinon, exécuter directement (dévalidation, annulation, etc.)
     try {
       await updateStatus(orderId, newStatus);
       toast({
@@ -363,6 +389,53 @@ export default function SalesOrdersPage() {
       });
     } catch (error) {
       console.error('Erreur lors du changement de statut:', error);
+    }
+  };
+
+  const handleValidateConfirmed = async () => {
+    if (!orderToValidate) return;
+
+    try {
+      // ✅ FIX: Appeler DIRECTEMENT la Server Action (pas via le hook car import impossible depuis monorepo)
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user?.id) {
+        throw new Error('Utilisateur non authentifié');
+      }
+
+      const result = await updateSalesOrderStatus(
+        orderToValidate,
+        'confirmed',
+        user.id
+      );
+
+      if (!result.success) {
+        throw new Error(result.error || 'Erreur lors de la validation');
+      }
+
+      toast({
+        title: 'Succès',
+        description: 'Commande validée avec succès',
+      });
+
+      setShowValidateConfirmation(false);
+      setOrderToValidate(null);
+
+      // Rafraîchir la liste des commandes
+      await fetchOrders();
+    } catch (error) {
+      console.error('Erreur lors de la validation:', error);
+      toast({
+        title: 'Erreur',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Impossible de valider la commande',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -487,6 +560,18 @@ export default function SalesOrdersPage() {
   const openEditOrder = (orderId: string) => {
     setEditingOrderId(orderId);
     setShowEditModal(true);
+  };
+
+  const openShipmentModal = (order: SalesOrder) => {
+    setSelectedOrder(order);
+    setShowShipmentModal(true);
+  };
+
+  const handleShipmentSuccess = () => {
+    fetchOrders();
+    fetchStats();
+    setShowShipmentModal(false);
+    setSelectedOrder(null);
   };
 
   return (
@@ -820,6 +905,20 @@ export default function SalesOrdersPage() {
                               </ButtonV2>
                             )}
 
+                            {/* Expédier (confirmed ou partially_shipped) */}
+                            {(order.status === 'confirmed' ||
+                              order.status === 'partially_shipped') && (
+                              <ButtonV2
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openShipmentModal(order)}
+                                title="Expédier la commande"
+                                className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                              >
+                                <Truck className="h-4 w-4" />
+                              </ButtonV2>
+                            )}
+
                             {/* Annuler (UNIQUEMENT brouillon - Workflow: dévalidation obligatoire) */}
                             {order.status === 'draft' && (
                               <ButtonV2
@@ -932,6 +1031,45 @@ export default function SalesOrdersPage() {
           }}
         />
       )}
+
+      {/* Modal Expédition */}
+      {selectedOrder && (
+        <SalesOrderShipmentModal
+          order={selectedOrder}
+          open={showShipmentModal}
+          onClose={() => {
+            setShowShipmentModal(false);
+            setSelectedOrder(null);
+          }}
+          onSuccess={handleShipmentSuccess}
+        />
+      )}
+
+      {/* AlertDialog Confirmation Validation */}
+      <AlertDialog
+        open={showValidateConfirmation}
+        onOpenChange={setShowValidateConfirmation}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer la validation</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vous êtes sur le point de valider cette commande client. Une fois
+              validée, la commande pourra être expédiée et les alertes de stock
+              seront générées automatiquement si nécessaire.
+              <br />
+              <br />
+              Voulez-vous continuer ?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleValidateConfirmed}>
+              Valider la commande
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

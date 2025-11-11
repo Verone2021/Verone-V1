@@ -36,7 +36,7 @@ Migration DB 20251022_001 : `organisations.name` → `legal_name` + `trade_name`
 
 #### Hooks (9 occurrences)
 
-**1. `src/hooks/use-products.ts:403`**
+**1. `apps/back-office/apps/back-office/src/hooks/use-products.ts:403`**
 
 ```typescript
 // AVANT
@@ -59,7 +59,7 @@ supplier:organisations!supplier_id (
 
 ---
 
-**2-3. `src/hooks/use-variant-groups.ts:1300 & 1329`**
+**2-3. `apps/back-office/apps/back-office/src/hooks/use-variant-groups.ts:1300 & 1329`**
 
 ```typescript
 // AVANT (ligne 1300)
@@ -73,7 +73,7 @@ supplier: organisations(id, legal_name, trade_name);
 
 ---
 
-**4-5. `src/hooks/use-sourcing-products.ts:85 & 92`**
+**4-5. `apps/back-office/apps/back-office/src/hooks/use-sourcing-products.ts:85 & 92`**
 
 ```typescript
 // AVANT (ligne 85)
@@ -113,7 +113,7 @@ assigned_client:organisations!products_assigned_client_id_fkey(
 
 ---
 
-**6-7. `src/hooks/use-purchase-orders.ts:166 & 278`**
+**6-7. `apps/back-office/apps/back-office/src/hooks/use-purchase-orders.ts:166 & 278`**
 
 ```typescript
 // AVANT
@@ -127,7 +127,7 @@ organisations(id, legal_name, trade_name, email, phone, payment_terms);
 
 ---
 
-**8-9. `src/hooks/use-purchase-receptions.ts:80 & 338`**
+**8-9. `apps/back-office/apps/back-office/src/hooks/use-purchase-receptions.ts:80 & 338`**
 
 ```typescript
 // AVANT
@@ -143,7 +143,7 @@ organisations(id, legal_name, trade_name);
 
 #### Pages (1 occurrence)
 
-**10. `src/app/produits/catalogue/[productId]/page.tsx:169`**
+**10. `apps/back-office/apps/back-office/src/app/produits/catalogue/[productId]/page.tsx:169`**
 
 ```typescript
 // AVANT

@@ -12,6 +12,7 @@
 🔍 **Audit de 305+ composants** UI répartis dans 4 zones (ui/, ui-v2/, business/, modules/)
 
 🔴 **7-8 duplications critiques identifiées** impactant 73+ fichiers :
+
 - **Boutons** : 4 variantes (Button, ActionButton, ModernActionButton, StandardModifyButton) → 62 fichiers
 - **KPI Cards** : 3-4 variantes (CompactKpiCard, ElegantKpiCard, MediumKpiCard) → 11 fichiers
 - **Badges** : 5+ variantes spécialisées sans système unifié
@@ -39,178 +40,181 @@
 
 ## Métriques Clés
 
-| Métrique | Valeur | Status | Impact |
-|----------|--------|--------|--------|
-| **Composants UI base** (shadcn/ui) | 51 | ✅ | Architecture solide |
-| **Composants UI-V2** (Design System V2) | 4 | 🟡 | En développement Phase 2+ |
-| **Composants Business** | 100+ | 🟡 | À standardiser |
-| **Composants Modules** | 150+ | 🟡 | À standardiser |
-| **Total composants analysés** | **305+** | - | - |
-| **Coverage Storybook** | **9.8%** (5/51) | 🔴 | Critique |
-| **Duplications critiques** | **7-8** | 🔴 | P0 |
-| **Fichiers impactés duplications** | **73+** | 🟡 | P0-P1 |
-| **Sources design tokens** | 2 (fragmenté) | 🟡 | À consolider |
-| **Conformité WCAG 2.2 AA** | ~75% | 🟡 | ARIA manquants |
-| **Bundle size UI components** | ~45kb | ✅ | Acceptable |
+| Métrique                                | Valeur          | Status | Impact                    |
+| --------------------------------------- | --------------- | ------ | ------------------------- |
+| **Composants UI base** (shadcn/ui)      | 51              | ✅     | Architecture solide       |
+| **Composants UI-V2** (Design System V2) | 4               | 🟡     | En développement Phase 2+ |
+| **Composants Business**                 | 100+            | 🟡     | À standardiser            |
+| **Composants Modules**                  | 150+            | 🟡     | À standardiser            |
+| **Total composants analysés**           | **305+**        | -      | -                         |
+| **Coverage Storybook**                  | **9.8%** (5/51) | 🔴     | Critique                  |
+| **Duplications critiques**              | **7-8**         | 🔴     | P0                        |
+| **Fichiers impactés duplications**      | **73+**         | 🟡     | P0-P1                     |
+| **Sources design tokens**               | 2 (fragmenté)   | 🟡     | À consolider              |
+| **Conformité WCAG 2.2 AA**              | ~75%            | 🟡     | ARIA manquants            |
+| **Bundle size UI components**           | ~45kb           | ✅     | Acceptable                |
 
 ---
 
 ## Inventaire Exhaustif
 
-### 1.1 Composants UI Base (src/components/ui/) - 51 composants
+### 1.1 Composants UI Base (apps/back-office/src/components/ui/) - 51 composants
 
 **Catégorisation Atomic Design actuelle** :
 
 #### Atoms (Composants de base) - 20 composants
 
-| # | Composant | Fichier | Props Clés | Storybook | Notes |
-|---|-----------|---------|------------|-----------|-------|
-| 1 | **Button** | button.tsx | variant, size, asChild | ✅ | **DUPLICATION CRITIQUE** (4 variantes) |
-| 2 | **Badge** | badge.tsx | variant | ✅ | **DUPLICATION** (5+ spécialisations) |
-| 3 | Input | input.tsx | type, disabled, error | ✅ | Base solide |
-| 4 | Textarea | textarea.tsx | rows, maxLength | ❌ | À documenter |
-| 5 | Label | label.tsx | htmlFor | ❌ | Basique |
-| 6 | Checkbox | checkbox.tsx | checked, onCheckedChange | ❌ | Radix UI wrapper |
-| 7 | Radio | radio-group.tsx | value, onValueChange | ❌ | Radix UI wrapper |
-| 8 | Switch | switch.tsx | checked, onCheckedChange | ❌ | Radix UI wrapper |
-| 9 | Separator | separator.tsx | orientation | ❌ | Diviseur |
-| 10 | Progress | progress.tsx | value, max | ❌ | Barre progression |
-| 11 | Skeleton | skeleton.tsx | - | ❌ | Loading state |
-| 12 | Tooltip | tooltip.tsx | - | ❌ | Radix UI wrapper |
-| 13 | ActionButton | action-button.tsx | label, icon, variant | ❌ | **À SUPPRIMER** → Button |
-| 14 | ModernActionButton | modern-action-button.tsx | variant (gradient, glass) | ❌ | **À SUPPRIMER** → Button |
-| 15 | StandardModifyButton | standard-modify-button.tsx | onClick | ❌ | **À SUPPRIMER** → Button |
-| 16 | DataStatusBadge | data-status-badge.tsx | status | ❌ | **À REFACTORER** → Badge variant |
-| 17 | RoleBadge | role-badge.tsx | role | ❌ | **À REFACTORER** → Badge variant |
-| 18 | StatPill | stat-pill.tsx | - | ❌ | Similaire Badge |
-| 19 | PhaseIndicator | phase-indicator.tsx | phase | ❌ | Spécialisé |
-| 20 | CompactKpiCard | compact-kpi-card.tsx | title, value, change | ❌ | **DUPLICATION CRITIQUE** |
+| #   | Composant            | Fichier                    | Props Clés                | Storybook | Notes                                  |
+| --- | -------------------- | -------------------------- | ------------------------- | --------- | -------------------------------------- |
+| 1   | **Button**           | button.tsx                 | variant, size, asChild    | ✅        | **DUPLICATION CRITIQUE** (4 variantes) |
+| 2   | **Badge**            | badge.tsx                  | variant                   | ✅        | **DUPLICATION** (5+ spécialisations)   |
+| 3   | Input                | input.tsx                  | type, disabled, error     | ✅        | Base solide                            |
+| 4   | Textarea             | textarea.tsx               | rows, maxLength           | ❌        | À documenter                           |
+| 5   | Label                | label.tsx                  | htmlFor                   | ❌        | Basique                                |
+| 6   | Checkbox             | checkbox.tsx               | checked, onCheckedChange  | ❌        | Radix UI wrapper                       |
+| 7   | Radio                | radio-group.tsx            | value, onValueChange      | ❌        | Radix UI wrapper                       |
+| 8   | Switch               | switch.tsx                 | checked, onCheckedChange  | ❌        | Radix UI wrapper                       |
+| 9   | Separator            | separator.tsx              | orientation               | ❌        | Diviseur                               |
+| 10  | Progress             | progress.tsx               | value, max                | ❌        | Barre progression                      |
+| 11  | Skeleton             | skeleton.tsx               | -                         | ❌        | Loading state                          |
+| 12  | Tooltip              | tooltip.tsx                | -                         | ❌        | Radix UI wrapper                       |
+| 13  | ActionButton         | action-button.tsx          | label, icon, variant      | ❌        | **À SUPPRIMER** → Button               |
+| 14  | ModernActionButton   | modern-action-button.tsx   | variant (gradient, glass) | ❌        | **À SUPPRIMER** → Button               |
+| 15  | StandardModifyButton | standard-modify-button.tsx | onClick                   | ❌        | **À SUPPRIMER** → Button               |
+| 16  | DataStatusBadge      | data-status-badge.tsx      | status                    | ❌        | **À REFACTORER** → Badge variant       |
+| 17  | RoleBadge            | role-badge.tsx             | role                      | ❌        | **À REFACTORER** → Badge variant       |
+| 18  | StatPill             | stat-pill.tsx              | -                         | ❌        | Similaire Badge                        |
+| 19  | PhaseIndicator       | phase-indicator.tsx        | phase                     | ❌        | Spécialisé                             |
+| 20  | CompactKpiCard       | compact-kpi-card.tsx       | title, value, change      | ❌        | **DUPLICATION CRITIQUE**               |
 
 #### Molecules (Compositions simples) - 18 composants
 
-| # | Composant | Fichier | Composition | Storybook | Notes |
-|---|-----------|---------|-------------|-----------|-------|
-| 21 | Alert | alert.tsx | Icon + Message | ❌ | Messages système |
-| 22 | **Card** | card.tsx | Header + Body + Footer | ✅ | Compound components |
-| 23 | **Dialog** | dialog.tsx | Overlay + Content | ✅ | Radix UI modal |
-| 24 | AlertDialog | alert-dialog.tsx | Dialog + Actions | ❌ | Confirmations |
-| 25 | Popover | popover.tsx | Trigger + Content | ❌ | Radix UI |
-| 26 | DropdownMenu | dropdown-menu.tsx | Trigger + Items | ❌ | Radix UI |
-| 27 | Select | select.tsx | Trigger + Options | ❌ | Radix UI |
-| 28 | Combobox | combobox.tsx | Input + Popover + List | ❌ | **DUPLICATION** (2+ variantes) |
-| 29 | Form (Field) | form.tsx | Label + Input + Error | ❌ | react-hook-form wrapper |
-| 30 | Breadcrumb | breadcrumb.tsx | Links chain | ❌ | Navigation |
-| 31 | Pagination | pagination.tsx | Numbers + Arrows | ❌ | Tables |
-| 32 | ScrollArea | scroll-area.tsx | Radix wrapper | ❌ | Custom scrollbar |
-| 33 | ImageUploadZone | image-upload-zone.tsx | Dropzone + Preview | ❌ | Upload |
-| 34 | ElegantKpiCard | elegant-kpi-card.tsx | Title + Value + Gradient | ❌ | **À SUPPRIMER** → KPICard |
-| 35 | MediumKpiCard | medium-kpi-card.tsx | Title + Value + Actions | ❌ | **À SUPPRIMER** → KPICard |
-| 36 | QuickActionsList | quick-actions-list.tsx | Actions grid | ❌ | Dashboard |
-| 37 | CompactQuickActions | compact-quick-actions.tsx | Actions inline | ❌ | Similaire précédent |
-| 38 | ViewModeToggle | view-mode-toggle.tsx | Grid/List toggle | ❌ | Layout switcher |
+| #   | Composant           | Fichier                   | Composition              | Storybook | Notes                          |
+| --- | ------------------- | ------------------------- | ------------------------ | --------- | ------------------------------ |
+| 21  | Alert               | alert.tsx                 | Icon + Message           | ❌        | Messages système               |
+| 22  | **Card**            | card.tsx                  | Header + Body + Footer   | ✅        | Compound components            |
+| 23  | **Dialog**          | dialog.tsx                | Overlay + Content        | ✅        | Radix UI modal                 |
+| 24  | AlertDialog         | alert-dialog.tsx          | Dialog + Actions         | ❌        | Confirmations                  |
+| 25  | Popover             | popover.tsx               | Trigger + Content        | ❌        | Radix UI                       |
+| 26  | DropdownMenu        | dropdown-menu.tsx         | Trigger + Items          | ❌        | Radix UI                       |
+| 27  | Select              | select.tsx                | Trigger + Options        | ❌        | Radix UI                       |
+| 28  | Combobox            | combobox.tsx              | Input + Popover + List   | ❌        | **DUPLICATION** (2+ variantes) |
+| 29  | Form (Field)        | form.tsx                  | Label + Input + Error    | ❌        | react-hook-form wrapper        |
+| 30  | Breadcrumb          | breadcrumb.tsx            | Links chain              | ❌        | Navigation                     |
+| 31  | Pagination          | pagination.tsx            | Numbers + Arrows         | ❌        | Tables                         |
+| 32  | ScrollArea          | scroll-area.tsx           | Radix wrapper            | ❌        | Custom scrollbar               |
+| 33  | ImageUploadZone     | image-upload-zone.tsx     | Dropzone + Preview       | ❌        | Upload                         |
+| 34  | ElegantKpiCard      | elegant-kpi-card.tsx      | Title + Value + Gradient | ❌        | **À SUPPRIMER** → KPICard      |
+| 35  | MediumKpiCard       | medium-kpi-card.tsx       | Title + Value + Actions  | ❌        | **À SUPPRIMER** → KPICard      |
+| 36  | QuickActionsList    | quick-actions-list.tsx    | Actions grid             | ❌        | Dashboard                      |
+| 37  | CompactQuickActions | compact-quick-actions.tsx | Actions inline           | ❌        | Similaire précédent            |
+| 38  | ViewModeToggle      | view-mode-toggle.tsx      | Grid/List toggle         | ❌        | Layout switcher                |
 
 #### Organisms (Compositions complexes) - 13 composants
 
-| # | Composant | Fichier | Composition | Storybook | Notes |
-|---|-----------|---------|-------------|-----------|-------|
-| 39 | Table | table.tsx | Header + Body + Footer | ❌ | Tables données |
-| 40 | Tabs | tabs.tsx | Navigation + Panels | ❌ | Radix UI |
-| 41 | Accordion | accordion.tsx | Multiple items | ❌ | Radix UI |
-| 42 | Calendar | calendar.tsx | Date picker | ❌ | react-day-picker |
-| 43 | Command | command.tsx | Command palette | ❌ | cmdk wrapper |
-| 44 | CommandPalette | command-palette.tsx | Search + Actions | ❌ | App-wide search |
-| 45 | Sidebar | sidebar.tsx | Navigation + Content | ❌ | Layout |
-| 46 | AppSidebar | app-sidebar.tsx | Vérone navigation | ❌ | App-specific |
-| 47 | GroupNavigation | group-navigation.tsx | Tabs grouped | ❌ | Navigation |
-| 48 | TabsNavigation | tabs-navigation.tsx | Navigation tabs | ❌ | Similaire Tabs |
-| 49 | NotificationSystem | notification-system.tsx | Toast + Queue | ❌ | Notifications |
-| 50 | ActivityTimeline | activity-timeline.tsx | Timeline + Events | ❌ | Dashboard |
-| 51 | VeroneCard | verone-card.tsx | Card + Stats | ❌ | Business card |
+| #   | Composant          | Fichier                 | Composition            | Storybook | Notes            |
+| --- | ------------------ | ----------------------- | ---------------------- | --------- | ---------------- |
+| 39  | Table              | table.tsx               | Header + Body + Footer | ❌        | Tables données   |
+| 40  | Tabs               | tabs.tsx                | Navigation + Panels    | ❌        | Radix UI         |
+| 41  | Accordion          | accordion.tsx           | Multiple items         | ❌        | Radix UI         |
+| 42  | Calendar           | calendar.tsx            | Date picker            | ❌        | react-day-picker |
+| 43  | Command            | command.tsx             | Command palette        | ❌        | cmdk wrapper     |
+| 44  | CommandPalette     | command-palette.tsx     | Search + Actions       | ❌        | App-wide search  |
+| 45  | Sidebar            | sidebar.tsx             | Navigation + Content   | ❌        | Layout           |
+| 46  | AppSidebar         | app-sidebar.tsx         | Vérone navigation      | ❌        | App-specific     |
+| 47  | GroupNavigation    | group-navigation.tsx    | Tabs grouped           | ❌        | Navigation       |
+| 48  | TabsNavigation     | tabs-navigation.tsx     | Navigation tabs        | ❌        | Similaire Tabs   |
+| 49  | NotificationSystem | notification-system.tsx | Toast + Queue          | ❌        | Notifications    |
+| 50  | ActivityTimeline   | activity-timeline.tsx   | Timeline + Events      | ❌        | Dashboard        |
+| 51  | VeroneCard         | verone-card.tsx         | Card + Stats           | ❌        | Business card    |
 
 **Résumé catégorisation** :
+
 - **Atoms** : 20 (39%) - Base solide, 5-6 duplications
 - **Molecules** : 18 (35%) - Bonnes compositions, 2-3 duplications
 - **Organisms** : 13 (25%) - Complexité maîtrisée
 
 ---
 
-### 1.2 Composants UI-V2 (src/components/ui-v2/stock/) - 4 composants
+### 1.2 Composants UI-V2 (apps/back-office/src/components/ui-v2/stock/) - 4 composants
 
 **Design System V2 en développement** (Phase 2+ Stocks)
 
-| Composant | Fichier | Description | Props | Status |
-|-----------|---------|-------------|-------|--------|
-| **ChannelBadge** | ChannelBadge.tsx | Badge canal vente (Google, Cdiscount, etc.) | channel: 'google' \| 'cdiscount' \| ... | ✅ Actif |
-| **ChannelFilter** | ChannelFilter.tsx | Multi-select canaux | selectedChannels, onChannelsChange | ✅ Actif |
-| **StockKPICard** | StockKPICard.tsx | KPI card spécifique stocks | title, value, stockLevel | 🟡 En test |
-| **StockMovementCard** | StockMovementCard.tsx | Card mouvement stock | movement, type, quantity | 🟡 En test |
+| Composant             | Fichier               | Description                                 | Props                                   | Status     |
+| --------------------- | --------------------- | ------------------------------------------- | --------------------------------------- | ---------- |
+| **ChannelBadge**      | ChannelBadge.tsx      | Badge canal vente (Google, Cdiscount, etc.) | channel: 'google' \| 'cdiscount' \| ... | ✅ Actif   |
+| **ChannelFilter**     | ChannelFilter.tsx     | Multi-select canaux                         | selectedChannels, onChannelsChange      | ✅ Actif   |
+| **StockKPICard**      | StockKPICard.tsx      | KPI card spécifique stocks                  | title, value, stockLevel                | 🟡 En test |
+| **StockMovementCard** | StockMovementCard.tsx | Card mouvement stock                        | movement, type, quantity                | 🟡 En test |
 
 **Notes** :
+
 - Architecture alignée Design System V2 (CVA + design tokens)
 - Composants modules Phase 2+ (désactivés middleware)
 - Pattern référence pour futures migrations
 
 ---
 
-### 1.3 Composants Business (src/components/business/) - 100+ composants
+### 1.3 Composants Business (apps/back-office/src/components/business/) - 100+ composants
 
 **Répartition par domaine métier** :
 
-| Domaine | Nombre | Exemples Clés | Notes Duplications |
-|---------|--------|---------------|-------------------|
-| **Produits** | ~25 | `product-card-v2`, `product-image-gallery`, `product-variants-grid` | Status badges dupliqués |
-| **Organisations** | ~20 | `organisation-list-view`, `contact-edit-section`, `customer-badge` | Badges clients/fournisseurs dupliqués |
-| **Stocks** | ~30 | `movements-table`, `stock-movement-modal`, `stock-status-compact` | KPI cards + badges statuts |
-| **Commandes** | ~15 | `order-items-table`, `universal-order-details-modal` | Modals similaires |
-| **Finance** | ~10 | `payment-form`, `financial-payment-form` | Forms paiement dupliqués |
+| Domaine           | Nombre | Exemples Clés                                                       | Notes Duplications                    |
+| ----------------- | ------ | ------------------------------------------------------------------- | ------------------------------------- |
+| **Produits**      | ~25    | `product-card-v2`, `product-image-gallery`, `product-variants-grid` | Status badges dupliqués               |
+| **Organisations** | ~20    | `organisation-list-view`, `contact-edit-section`, `customer-badge`  | Badges clients/fournisseurs dupliqués |
+| **Stocks**        | ~30    | `movements-table`, `stock-movement-modal`, `stock-status-compact`   | KPI cards + badges statuts            |
+| **Commandes**     | ~15    | `order-items-table`, `universal-order-details-modal`                | Modals similaires                     |
+| **Finance**       | ~10    | `payment-form`, `financial-payment-form`                            | Forms paiement dupliqués              |
 
 **Composants avec duplications identifiées** :
 
 ```typescript
 // ❌ Badges spécialisés (à unifier)
-customer-badge.tsx         // Badge clients
-supplier-badge.tsx         // Badge fournisseurs
-supplier-category-badge.tsx // Badge catégories fournisseurs
-supplier-segment-badge.tsx  // Badge segments
-stock-status-compact.tsx    // Badge statut stock
-product-status-compact.tsx  // Badge statut produit
-completion-status-compact.tsx // Badge completion
+customer - badge.tsx; // Badge clients
+supplier - badge.tsx; // Badge fournisseurs
+supplier - category - badge.tsx; // Badge catégories fournisseurs
+supplier - segment - badge.tsx; // Badge segments
+stock - status - compact.tsx; // Badge statut stock
+product - status - compact.tsx; // Badge statut produit
+completion - status - compact.tsx; // Badge completion
 
 // ❌ Filtres/Combobox (à unifier)
-category-filter-combobox.tsx
-filter-combobox.tsx
-category-hierarchy-filter-v2.tsx
+category - filter - combobox.tsx;
+filter - combobox.tsx;
+category - hierarchy - filter - v2.tsx;
 
 // ❌ Modals similaires (à standardiser)
-edit-sourcing-product-modal.tsx
-product-characteristics-modal.tsx
-product-descriptions-modal.tsx
-product-photos-modal.tsx
-movement-details-modal.tsx
-universal-order-details-modal.tsx
+edit - sourcing - product - modal.tsx;
+product - characteristics - modal.tsx;
+product - descriptions - modal.tsx;
+product - photos - modal.tsx;
+movement - details - modal.tsx;
+universal - order - details - modal.tsx;
 ```
 
 ---
 
-### 1.4 Composants Modules (src/shared/modules/**/components/) - 150+ composants
+### 1.4 Composants Modules (src/shared/modules/\*\*/components/) - 150+ composants
 
 **Répartition par module** :
 
-| Module | Nombre Composants | Catégories | Duplications Identifiées |
-|--------|-------------------|------------|-------------------------|
-| **categories** | ~20 | Filters, Badges, Selectors | CategoryFilterCombobox, SupplierCategoryBadge |
-| **channels** | ~10 | Google Merchant UI | GoogleMerchantProductCard |
-| **collections** | ~8 | Wizards, Grids | CollectionCreationWizard |
-| **consultations** | ~12 | Images, Associations | ConsultationImageGallery |
-| **customers** | ~15 | Badges, Edit Sections | CustomerBadge, ContactEditSection |
-| **dashboard** | ~5 | KPIs, Notifications | **KPICard** (critique) |
-| **finance** | ~20 | Forms, Reports | PaymentForm, ABCAnalysisView |
-| **logistics** | ~8 | Shipment Forms | Multi-transporteurs (Packlink, Chronotruck, etc.) |
-| **notifications** | ~5 | Dropdowns, Widgets | NotificationsDropdown |
-| **orders** | ~15 | Forms, Workflows | PurchaseOrderReceptionForm |
-| **common** | ~30 | Shared UI | AddressEditSection, CarrierSelector, PriceListFormModal |
+| Module            | Nombre Composants | Catégories                 | Duplications Identifiées                                |
+| ----------------- | ----------------- | -------------------------- | ------------------------------------------------------- |
+| **categories**    | ~20               | Filters, Badges, Selectors | CategoryFilterCombobox, SupplierCategoryBadge           |
+| **channels**      | ~10               | Google Merchant UI         | GoogleMerchantProductCard                               |
+| **collections**   | ~8                | Wizards, Grids             | CollectionCreationWizard                                |
+| **consultations** | ~12               | Images, Associations       | ConsultationImageGallery                                |
+| **customers**     | ~15               | Badges, Edit Sections      | CustomerBadge, ContactEditSection                       |
+| **dashboard**     | ~5                | KPIs, Notifications        | **KPICard** (critique)                                  |
+| **finance**       | ~20               | Forms, Reports             | PaymentForm, ABCAnalysisView                            |
+| **logistics**     | ~8                | Shipment Forms             | Multi-transporteurs (Packlink, Chronotruck, etc.)       |
+| **notifications** | ~5                | Dropdowns, Widgets         | NotificationsDropdown                                   |
+| **orders**        | ~15               | Forms, Workflows           | PurchaseOrderReceptionForm                              |
+| **common**        | ~30               | Shared UI                  | AddressEditSection, CarrierSelector, PriceListFormModal |
 
 **Patterns identifiés** :
+
 - **Edit Sections** : Pattern répété pour édition formulaires (ContactEditSection, AddressEditSection, etc.)
 - **Form Modals** : Pattern modal + form répété (PriceListFormModal, PartnerFormModal, etc.)
 - **Selection Components** : Selectors répétés (CategorySelector, CarrierSelector, etc.)
@@ -223,12 +227,12 @@ universal-order-details-modal.tsx
 
 #### Composants dupliqués
 
-| Composant | Fichier | Props | Usages | Problème |
-|-----------|---------|-------|--------|----------|
-| **Button** | ui/button.tsx | variant (7 types), size (4 types) | ~200+ | Base shadcn/ui solide |
-| **ActionButton** | ui/action-button.tsx | label, icon, variant (primary/secondary/danger) | ~30 | Réimplémente styles au lieu de composer |
-| **ModernActionButton** | ui/modern-action-button.tsx | variant (gradient/glass) | ~20 | Variants modernes non intégrés |
-| **StandardModifyButton** | ui/standard-modify-button.tsx | onClick, label="Modifier" | ~12 | Bouton "Modifier" hardcodé |
+| Composant                | Fichier                       | Props                                           | Usages | Problème                                |
+| ------------------------ | ----------------------------- | ----------------------------------------------- | ------ | --------------------------------------- |
+| **Button**               | ui/button.tsx                 | variant (7 types), size (4 types)               | ~200+  | Base shadcn/ui solide                   |
+| **ActionButton**         | ui/action-button.tsx          | label, icon, variant (primary/secondary/danger) | ~30    | Réimplémente styles au lieu de composer |
+| **ModernActionButton**   | ui/modern-action-button.tsx   | variant (gradient/glass)                        | ~20    | Variants modernes non intégrés          |
+| **StandardModifyButton** | ui/standard-modify-button.tsx | onClick, label="Modifier"                       | ~12    | Bouton "Modifier" hardcodé              |
 
 #### Code comparison
 
@@ -237,40 +241,45 @@ universal-order-details-modal.tsx
 
 // 1. Button (base shadcn/ui) - CORRECT
 const buttonVariants = cva(
-  "inline-flex items-center justify-center rounded-md...",
+  'inline-flex items-center justify-center rounded-md...',
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        destructive: "bg-destructive text-destructive-foreground",
-        outline: "border border-input bg-background",
-        secondary: "bg-secondary text-secondary-foreground",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline"
+        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+        destructive: 'bg-destructive text-destructive-foreground',
+        outline: 'border border-input bg-background',
+        secondary: 'bg-secondary text-secondary-foreground',
+        ghost: 'hover:bg-accent hover:text-accent-foreground',
+        link: 'text-primary underline-offset-4 hover:underline',
       },
-      size: { default: "h-10 px-4", sm: "h-9 px-3", lg: "h-11 px-8", icon: "h-10 w-10" }
-    }
+      size: {
+        default: 'h-10 px-4',
+        sm: 'h-9 px-3',
+        lg: 'h-11 px-8',
+        icon: 'h-10 w-10',
+      },
+    },
   }
-)
+);
 
 // 2. ActionButton - DUPLICATION
 // Réimplémente styles similaires + gestion icon
 const variantClasses = {
-  primary: "bg-blue-600 text-white hover:bg-blue-700",   // = Button variant="default"
-  secondary: "bg-gray-200 text-gray-900",                 // = Button variant="secondary"
-  danger: "bg-red-600 text-white"                         // = Button variant="destructive"
-}
+  primary: 'bg-blue-600 text-white hover:bg-blue-700', // = Button variant="default"
+  secondary: 'bg-gray-200 text-gray-900', // = Button variant="secondary"
+  danger: 'bg-red-600 text-white', // = Button variant="destructive"
+};
 
 // 3. ModernActionButton - DUPLICATION
 // Ajoute variants modernes mais ne compose pas Button
 const modernVariants = {
-  gradient: "bg-gradient-to-r from-blue-500 to-purple-600",
-  glass: "backdrop-blur-lg bg-white/10 border border-white/20"
-}
+  gradient: 'bg-gradient-to-r from-blue-500 to-purple-600',
+  glass: 'backdrop-blur-lg bg-white/10 border border-white/20',
+};
 
 // 4. StandardModifyButton - DUPLICATION
 // Bouton "Modifier" hardcodé sans flexibilité
-className="px-3 py-1.5 text-sm bg-primary text-primary-foreground"
+className = 'px-3 py-1.5 text-sm bg-primary text-primary-foreground';
 ```
 
 #### Problèmes identifiés
@@ -390,12 +399,12 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
 #### Composants dupliqués
 
-| Composant | Fichier | Props | Usages | Différence |
-|-----------|---------|-------|--------|-----------|
-| **CompactKpiCard** | ui/compact-kpi-card.tsx | title, value, change, icon | ~5 | Layout compact |
-| **ElegantKpiCard** | ui/elegant-kpi-card.tsx | title, value, subtitle, gradient | ~3 | Design premium gradients |
-| **MediumKpiCard** | ui/medium-kpi-card.tsx | title, value, description, actions | ~2 | Taille moyenne + actions |
-| **KPICard (modules)** | shared/modules/common/components/kpi/KPICard.tsx | Variadic props | ~1 | Version modules |
+| Composant             | Fichier                                          | Props                              | Usages | Différence               |
+| --------------------- | ------------------------------------------------ | ---------------------------------- | ------ | ------------------------ |
+| **CompactKpiCard**    | ui/compact-kpi-card.tsx                          | title, value, change, icon         | ~5     | Layout compact           |
+| **ElegantKpiCard**    | ui/elegant-kpi-card.tsx                          | title, value, subtitle, gradient   | ~3     | Design premium gradients |
+| **MediumKpiCard**     | ui/medium-kpi-card.tsx                           | title, value, description, actions | ~2     | Taille moyenne + actions |
+| **KPICard (modules)** | shared/modules/common/components/kpi/KPICard.tsx | Variadic props                     | ~1     | Version modules          |
 
 #### Code comparison
 
@@ -516,6 +525,7 @@ export function KPICard({ title, value, change, description, icon, actions, tren
 #### Duplication #3 : Badges Spécialisés (5+ variantes)
 
 **Composants** :
+
 - `Badge` (base) ✅
 - `CustomerBadge`, `SupplierBadge`, `SupplierCategoryBadge`, `SupplierSegmentBadge`
 - `DataStatusBadge`, `StockStatusBadge`, `RoleBadge`
@@ -536,6 +546,7 @@ export function KPICard({ title, value, change, description, icon, actions, tren
 #### Duplication #4 : Combobox/Select Filtres (3 variantes)
 
 **Composants** :
+
 - `Combobox` (ui/) ✅
 - `CategoryFilterCombobox` (business/)
 - `FilterCombobox` (business/)
@@ -560,6 +571,7 @@ export function KPICard({ title, value, change, description, icon, actions, tren
 #### Duplication #5 : Forms Paiement (2 variantes)
 
 **Composants** :
+
 - `PaymentForm` (business/)
 - `FinancialPaymentForm` (business/)
 
@@ -576,7 +588,7 @@ export function KPICard({ title, value, change, description, icon, actions, tren
 #### Atoms (Composants de base) - 25 composants
 
 ```
-src/components/ui/atoms/
+apps/back-office/src/components/ui/atoms/
 ├── Button.tsx          # ✅ Unifié (supprime ActionButton, ModernActionButton, StandardModifyButton)
 ├── Badge.tsx           # ✅ Unifié avec variants métier
 ├── Input.tsx
@@ -595,7 +607,7 @@ src/components/ui/atoms/
 #### Molecules (Compositions simples) - 22 composants
 
 ```
-src/components/ui/molecules/
+apps/back-office/src/components/ui/molecules/
 ├── KPICard.tsx         # ✅ Unifié (supprime CompactKpiCard, ElegantKpiCard, MediumKpiCard)
 ├── Alert.tsx
 ├── Card.tsx
@@ -612,7 +624,7 @@ src/components/ui/molecules/
 #### Organisms (Compositions complexes) - 18 composants
 
 ```
-src/components/ui/organisms/
+apps/back-office/src/components/ui/organisms/
 ├── Table.tsx
 ├── DataTable.tsx
 ├── Tabs.tsx
@@ -634,6 +646,7 @@ src/components/ui/organisms/
 #### CVA vs Inline Styles
 
 **État actuel** :
+
 - ✅ **75% composants** utilisent CVA correctement (Button, Card, Badge, Dialog)
 - 🟡 **15% composants** mélangent CVA + inline styles (incohérent)
 - 🔴 **10% composants** utilisent uniquement inline styles (ActionButton, ModernActionButton)
@@ -644,7 +657,8 @@ src/components/ui/organisms/
 
 **Sources actuelles** :
 
-1. **src/lib/theme-v2.ts** (primaire)
+1. **apps/back-office/src/lib/theme-v2.ts** (primaire)
+
 ```typescript
 export const themeV2 = {
   colors: { primary: '#4F46E5', secondary: '#10B981', ... },
@@ -653,7 +667,8 @@ export const themeV2 = {
 }
 ```
 
-2. **src/lib/design-system/tokens/** (secondaire)
+2. **apps/back-office/src/lib/design-system/tokens/** (secondaire)
+
 ```typescript
 export const colors = { ... }
 export const spacing = { ... }
@@ -671,21 +686,23 @@ export const typography = { ... }
 #### Audit ARIA Attributes
 
 **Composants conformes** (✅ ARIA complets) :
+
 - Dialog, AlertDialog, Popover, DropdownMenu, Select, Combobox
 - Checkbox, Radio, Switch
 - Table, Tabs, Accordion
 
 **Composants non-conformes** (🔴 ARIA manquants) :
 
-| Composant | ARIA Manquants | Impact |
-|-----------|----------------|--------|
-| ActionButton | `aria-label` (icon seul), `aria-busy` (loading) | Moyen |
-| ModernActionButton | `aria-label`, `aria-pressed` (toggle) | Moyen |
-| CompactKpiCard | `aria-label` (contexte valeur) | Faible |
-| NotificationSystem | `aria-live`, `aria-atomic` | Élevé |
-| CommandPalette | `aria-expanded`, `aria-controls` | Moyen |
+| Composant          | ARIA Manquants                                  | Impact |
+| ------------------ | ----------------------------------------------- | ------ |
+| ActionButton       | `aria-label` (icon seul), `aria-busy` (loading) | Moyen  |
+| ModernActionButton | `aria-label`, `aria-pressed` (toggle)           | Moyen  |
+| CompactKpiCard     | `aria-label` (contexte valeur)                  | Faible |
+| NotificationSystem | `aria-live`, `aria-atomic`                      | Élevé  |
+| CommandPalette     | `aria-expanded`, `aria-controls`                | Moyen  |
 
 **Actions P1** :
+
 1. Ajouter `aria-busy` à tous boutons avec loading
 2. Ajouter `aria-live="polite"` notifications
 3. Ajouter `aria-label` composants visuels (graphs, stats)
@@ -693,11 +710,13 @@ export const typography = { ... }
 #### Keyboard Navigation
 
 **Gaps identifiés** :
+
 - 🔴 `Escape` ne ferme pas tous modals (CommandPalette, certains Dialog)
 - 🔴 Focus trap manquant sur modals overlay
 - 🟡 `Tab` navigation incohérente dans forms complexes
 
 **Actions P1** :
+
 - Implémenter focus trap tous Dialog/Modal (Radix UI le fait déjà, vérifier usage)
 - Standardiser `Escape` → close partout
 - Tester keyboard navigation avec screen reader
@@ -707,11 +726,13 @@ export const typography = { ... }
 **Conformité actuelle** : **~85%**
 
 **Problèmes identifiés** :
+
 - 🔴 `text-muted-foreground` sur `bg-background` : **3.2:1** (< 4.5:1 requis)
 - 🔴 Bouton `variant="ghost"` hover : **3.8:1**
 - 🟡 Badges variants secondaires : **4.2:1** (limite)
 
 **Actions P1** :
+
 - Ajuster `muted-foreground` : `hsl(215 16% 42%)` → `hsl(215 16% 38%)` (+0.5 ratio)
 - Ajuster hover states boutons outline/ghost
 
@@ -723,29 +744,32 @@ export const typography = { ... }
 
 #### Composants documentés ✅
 
-| Composant | Story | Variants | Status |
-|-----------|-------|----------|--------|
-| Button | ✅ | 7 variants × 4 sizes = 28 stories | Complet |
-| Card | ✅ | 3 variants (simple, with header, with footer) | Partiel |
-| Badge | ✅ | 4 variants | Basique |
-| Dialog | ✅ | 2 variants (standard, alert) | Complet |
-| Input | ✅ | 3 variants (text, password, error state) | Basique |
+| Composant | Story | Variants                                      | Status  |
+| --------- | ----- | --------------------------------------------- | ------- |
+| Button    | ✅    | 7 variants × 4 sizes = 28 stories             | Complet |
+| Card      | ✅    | 3 variants (simple, with header, with footer) | Partiel |
+| Badge     | ✅    | 4 variants                                    | Basique |
+| Dialog    | ✅    | 2 variants (standard, alert)                  | Complet |
+| Input     | ✅    | 3 variants (text, password, error state)      | Basique |
 
 #### Composants non-documentés ❌ (46/51)
 
 **P0 - À documenter immédiatement** (composants très utilisés) :
+
 - Select, Combobox, Dropdown Menu, Popover
 - Checkbox, Radio, Switch
 - Tabs, Accordion
 - Table, Pagination
 
 **P1 - À documenter rapidement** :
+
 - Alert, AlertDialog
 - Form, Label
 - Calendar, Command
 - Tooltip, Separator, Progress, Skeleton
 
 **P2 - À documenter progressivement** :
+
 - Breadcrumb, ScrollArea
 - Sidebar, NotificationSystem
 - GroupNavigation, TabsNavigation
@@ -753,6 +777,7 @@ export const typography = { ... }
 ### Gap Analysis
 
 **Problèmes** :
+
 1. **Documentation manquante** empêche adoption composants
 2. **Pas d'exemples** → développeurs créent duplications
 3. **Pas de tests visuels** → régressions UI non détectées
@@ -761,6 +786,7 @@ export const typography = { ... }
 **Target P1** : **100% coverage** (51/51 composants)
 
 **Timeline** :
+
 - Vague 1 (P0) : 15 composants → 2 semaines
 - Vague 2 (P1) : 20 composants → 3 semaines
 - Vague 3 (P2) : 16 composants → 2 semaines
@@ -774,29 +800,32 @@ export const typography = { ... }
 #### 🔴 Vague 1 - P0 Critiques (Semaines 1-2)
 
 **Objectifs** :
+
 1. ✅ Unifier Button (4→1) → **62 fichiers** migrés
 2. ✅ Unifier KPI Cards (3-4→1) → **11 fichiers** migrés
 3. ✅ Consolider design tokens (2→1 source)
 4. ✅ Storybook P0 : 15 composants critiques documentés
 
 **Livrables** :
-- `src/components/ui/button.tsx` : Button unifié avec variants gradient/glass
-- `src/components/ui/kpi-card.tsx` : KPICard unifié 3 variants
-- `src/lib/design-system/tokens/index.ts` : Tokens consolidés
+
+- `apps/back-office/src/components/ui/button.tsx` : Button unifié avec variants gradient/glass
+- `apps/back-office/src/components/ui/kpi-card.tsx` : KPICard unifié 3 variants
+- `apps/back-office/src/lib/design-system/tokens/index.ts` : Tokens consolidés
 - Scripts codemods : `scripts/codemods/unify-buttons.ts`, `unify-kpi-cards.ts`
 - 15 Storybook stories : Button, Select, Combobox, Dialog, Form components
 
 **Timeline détaillée** :
 
-| Jour | Tâche | Deliverable |
-|------|-------|-------------|
-| J1-2 | Créer Button unifié + tests | Button.tsx + Button.stories.tsx |
-| J3-4 | Codemod migration 62 fichiers | Scripts + validation type-check |
-| J5-6 | Créer KPICard unifié + tests | KPICard.tsx + stories |
-| J7-8 | Migration KPI Cards + validation | Console = 0 errors |
-| J9-10 | Consolider design tokens | design-system/tokens/ + docs |
+| Jour  | Tâche                            | Deliverable                     |
+| ----- | -------------------------------- | ------------------------------- |
+| J1-2  | Créer Button unifié + tests      | Button.tsx + Button.stories.tsx |
+| J3-4  | Codemod migration 62 fichiers    | Scripts + validation type-check |
+| J5-6  | Créer KPICard unifié + tests     | KPICard.tsx + stories           |
+| J7-8  | Migration KPI Cards + validation | Console = 0 errors              |
+| J9-10 | Consolider design tokens         | design-system/tokens/ + docs    |
 
 **Tests validation** :
+
 - ✅ Type check = 0 erreurs
 - ✅ Build successful
 - ✅ Console = 0 errors (MCP Playwright localhost)
@@ -804,6 +833,7 @@ export const typography = { ... }
 - ✅ No visual regressions (screenshots before/after)
 
 **Métriques succès** :
+
 - Duplications : 7-8 → **2-3**
 - Fichiers refactorés : **73**
 - Bundle size : **-7-8kb**
@@ -814,20 +844,23 @@ export const typography = { ... }
 #### 🟡 Vague 2 - P1 Haute Priorité (Semaines 3-5)
 
 **Objectifs** :
+
 1. ✅ Structure Atomic Design complète (atoms/, molecules/, organisms/)
 2. ✅ Unifier Badges (5+→1 avec variants métier)
 3. ✅ Unifier Combobox/Filtres (3→1)
 4. ✅ Storybook 60% coverage (31/51 composants)
 
 **Livrables** :
+
 - Réorganisation folders Atomic Design
-- Badge unifié : `src/components/ui/badge.tsx` avec mapping métier
+- Badge unifié : `apps/back-office/src/components/ui/badge.tsx` avec mapping métier
 - Combobox composition pattern
 - 26 Storybook stories supplémentaires
 
 **Timeline** : 3 semaines
 
 **Métriques succès** :
+
 - Duplications : 2-3 → **0-1**
 - Storybook coverage : 30% → **60%**
 - Atomic Design : **100% composants catégorisés**
@@ -837,6 +870,7 @@ export const typography = { ... }
 #### 🟢 Vague 3 - P2 Moyenne Priorité (Semaines 6-9)
 
 **Objectifs** :
+
 1. ✅ Refactorisation business components (patterns composition)
 2. ✅ Tests visuels Chromatic (regression testing)
 3. ✅ Performance optimizations (bundle size, React.memo)
@@ -844,6 +878,7 @@ export const typography = { ... }
 5. ✅ Documentation complète Design System V2
 
 **Livrables** :
+
 - Business components refactorés (EditSection pattern, FormModal pattern)
 - Chromatic intégré CI/CD
 - Performance budget : <50kb UI components
@@ -852,6 +887,7 @@ export const typography = { ... }
 **Timeline** : 3-4 semaines
 
 **Métriques succès** :
+
 - Duplications : 0-1 → **0**
 - Storybook coverage : 60% → **100%**
 - Bundle size : **-30% total**
@@ -862,26 +898,26 @@ export const typography = { ... }
 
 ### Métriques Globales de Succès
 
-| Métrique | Baseline | Target Vague 1 | Target Vague 2 | Target Final |
-|----------|----------|----------------|----------------|--------------|
-| **Duplications critiques** | 7-8 | 2-3 | 0-1 | 0 |
-| **Storybook coverage** | 9.8% | 30% | 60% | 100% |
-| **Bundle size UI** | 45kb | 38kb (-15%) | 34kb (-25%) | 32kb (-30%) |
-| **Conformité WCAG AA** | 75% | 85% | 95% | 100% |
-| **Design tokens sources** | 2 | 1 | 1 | 1 |
-| **Composants maintenus** | 305+ | 280 | 250 | 220 |
+| Métrique                   | Baseline | Target Vague 1 | Target Vague 2 | Target Final |
+| -------------------------- | -------- | -------------- | -------------- | ------------ |
+| **Duplications critiques** | 7-8      | 2-3            | 0-1            | 0            |
+| **Storybook coverage**     | 9.8%     | 30%            | 60%            | 100%         |
+| **Bundle size UI**         | 45kb     | 38kb (-15%)    | 34kb (-25%)    | 32kb (-30%)  |
+| **Conformité WCAG AA**     | 75%      | 85%            | 95%            | 100%         |
+| **Design tokens sources**  | 2        | 1              | 1              | 1            |
+| **Composants maintenus**   | 305+     | 280            | 250            | 220          |
 
 ---
 
 ### Risques & Mitigations
 
-| Risque | Probabilité | Impact | Mitigation |
-|--------|-------------|--------|------------|
-| **Breaking changes** migration | Élevée | Critique | Tests E2E avant/après, codemods validés |
-| **Props incompatibles** composants | Moyenne | Élevé | Mapping layers transitoires, deprecation warnings |
-| **Performance dégradée** | Faible | Moyen | Profiling React DevTools, bundle analysis |
-| **Adoption faible** nouveaux composants | Moyenne | Moyen | Documentation Storybook exhaustive, workshops équipe |
-| **Regression bugs** UI | Moyenne | Élevé | Chromatic visual testing, screenshots comparaison |
+| Risque                                  | Probabilité | Impact   | Mitigation                                           |
+| --------------------------------------- | ----------- | -------- | ---------------------------------------------------- |
+| **Breaking changes** migration          | Élevée      | Critique | Tests E2E avant/après, codemods validés              |
+| **Props incompatibles** composants      | Moyenne     | Élevé    | Mapping layers transitoires, deprecation warnings    |
+| **Performance dégradée**                | Faible      | Moyen    | Profiling React DevTools, bundle analysis            |
+| **Adoption faible** nouveaux composants | Moyenne     | Moyen    | Documentation Storybook exhaustive, workshops équipe |
+| **Regression bugs** UI                  | Moyenne     | Élevé    | Chromatic visual testing, screenshots comparaison    |
 
 ---
 
@@ -932,6 +968,7 @@ export const typography = { ... }
 5. **Performance** : Bundle analysis (next build), React DevTools Profiler
 
 **Processus** :
+
 1. Phase Think : Sequential Thinking + recherches best practices
 2. Phase Explore : Inventaire exhaustif composants (Glob/Grep)
 3. Phase Analyze : Comparaison code, identification duplications

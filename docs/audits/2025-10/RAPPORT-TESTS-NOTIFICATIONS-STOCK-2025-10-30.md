@@ -44,11 +44,11 @@
 **Fix Appliqué**:
 
 ```typescript
-// src/hooks/use-stock-inventory.ts:68
+// apps/back-office/src/hooks/use-stock-inventory.ts:68
 .eq('affects_forecast', false)  // ✅ FILTRE RESTAURÉ - Mouvements RÉELS uniquement
 ```
 
-**Fichiers modifiés**: `src/hooks/use-stock-inventory.ts`
+**Fichiers modifiés**: `apps/back-office/apps/back-office/src/hooks/use-stock-inventory.ts`
 
 ---
 
@@ -76,7 +76,7 @@ updateData.received_by = payload.received_by;
 
 **Impact**: Le trigger database nécessite ces champs pour créer les mouvements stock réels.
 
-**Fichiers modifiés**: `src/app/api/purchase-receptions/validate/route.ts`
+**Fichiers modifiés**: `apps/back-office/apps/back-office/src/app/api/purchase-receptions/validate/route.ts`
 
 ---
 
@@ -328,7 +328,7 @@ npx next build 2>&1 | grep -v "Using edge runtime on a page"
 **Fix 4 - DialogDescription**:
 
 ```typescript
-// src/app/stocks/inventaire/page.tsx
+// apps/back-office/src/app/stocks/inventaire/page.tsx
 import { DialogDescription } from '@/components/ui/dialog'
 
 <DialogDescription>
@@ -409,10 +409,10 @@ import { DialogDescription } from '@/components/ui/dialog'
 
 ### Fichiers Modifiés
 
-1. **`src/hooks/use-stock-inventory.ts`** (ligne 68)
+1. **`apps/back-office/apps/back-office/src/hooks/use-stock-inventory.ts`** (ligne 68)
    - Restauré filtre `affects_forecast=false`
 
-2. **`src/app/api/purchase-receptions/validate/route.ts`** (lignes 132-135)
+2. **`apps/back-office/apps/back-office/src/app/api/purchase-receptions/validate/route.ts`** (lignes 132-135)
    - Toujours mettre à jour `received_at`/`received_by`
 
 3. **`next.config.js`** (lignes 99-106)
@@ -426,7 +426,7 @@ import { DialogDescription } from '@/components/ui/dialog'
 5. **`package.json`** (ligne 7)
    - Build command utilise `build-clean.sh`
 
-6. **`src/app/stocks/inventaire/page.tsx`** (lignes 35, 139-141)
+6. **`apps/back-office/apps/back-office/src/app/stocks/inventaire/page.tsx`** (lignes 35, 139-141)
    - Import `DialogDescription`
    - Ajout description accessibilité modal
 

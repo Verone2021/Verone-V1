@@ -21,9 +21,9 @@
 ### 2. Code TypeScript - PHASE 1 ✅
 
 ```typescript
-✅ src/hooks/use-drafts.ts (cost_price commenté)
-✅ src/components/business/complete-product-wizard.tsx (cost_price commenté)
-❌ src/components/business/wizard-sections/pricing-section.tsx (SUPPRIMÉ)
+✅ apps/back-office/src/hooks/use-drafts.ts (cost_price commenté)
+✅ apps/back-office/src/components/business/complete-product-wizard.tsx (cost_price commenté)
+❌ apps/back-office/src/components/business/wizard-sections/pricing-section.tsx (SUPPRIMÉ)
 ```
 
 ### 3. Code TypeScript - PHASE 2 (NOUVEAU) ✅
@@ -31,20 +31,20 @@
 **12 fichiers hooks module Produits nettoyés - 68+ occurrences**
 
 ```typescript
-✅ src/hooks/use-catalogue.ts (6 occurrences)
-✅ src/hooks/use-products.ts (10+ occurrences)
-✅ src/hooks/use-sourcing-products.ts (13 occurrences)
-✅ src/hooks/use-product-variants.ts (5 occurrences)
-✅ src/hooks/use-variant-products.ts (7 occurrences)
-✅ src/hooks/use-stock-inventory.ts (2 occurrences)
-✅ src/hooks/use-sample-order.ts (7 occurrences)
-✅ src/hooks/use-variant-groups.ts (5 occurrences)
-✅ src/hooks/use-stock-dashboard.ts (5 occurrences)
-✅ src/hooks/use-stock.ts (4 occurrences)
-✅ src/hooks/use-aging-report.ts (4 occurrences)
-✅ src/hooks/use-consultations.ts (3 occurrences)
-✅ src/hooks/use-collections.ts (2 occurrences)
-✅ src/hooks/use-collection-products.ts (1 occurrence)
+✅ apps/back-office/src/hooks/use-catalogue.ts (6 occurrences)
+✅ apps/back-office/src/hooks/use-products.ts (10+ occurrences)
+✅ apps/back-office/src/hooks/use-sourcing-products.ts (13 occurrences)
+✅ apps/back-office/src/hooks/use-product-variants.ts (5 occurrences)
+✅ apps/back-office/src/hooks/use-variant-products.ts (7 occurrences)
+✅ apps/back-office/src/hooks/use-stock-inventory.ts (2 occurrences)
+✅ apps/back-office/src/hooks/use-sample-order.ts (7 occurrences)
+✅ apps/back-office/src/hooks/use-variant-groups.ts (5 occurrences)
+✅ apps/back-office/src/hooks/use-stock-dashboard.ts (5 occurrences)
+✅ apps/back-office/src/hooks/use-stock.ts (4 occurrences)
+✅ apps/back-office/src/hooks/use-aging-report.ts (4 occurrences)
+✅ apps/back-office/src/hooks/use-consultations.ts (3 occurrences)
+✅ apps/back-office/src/hooks/use-collections.ts (2 occurrences)
+✅ apps/back-office/src/hooks/use-collection-products.ts (1 occurrence)
 ```
 
 **Pattern appliqué** : `cost_price` → `price_ht` partout (SELECT, interfaces, calculs, validations)
@@ -54,7 +54,7 @@
 ```bash
 ✅ npm run build → SUCCESS (0 erreur cost_price)
 ✅ npm run dev → Toutes pages compilent
-✅ grep -r "cost_price" src/hooks/*.ts → 0 occurrences fonctionnelles
+✅ grep -r "cost_price" apps/back-office/src/hooks/*.ts → 0 occurrences fonctionnelles
 ✅ Tests pages: /produits/catalogue, /produits/sourcing → OK
 ```
 
@@ -95,29 +95,29 @@ Database:
   ✅ supabase/migrations/20251017_003_remove_cost_price_column.sql
 
 Code Critique:
-  ✅ src/hooks/use-drafts.ts
-  ✅ src/components/business/complete-product-wizard.tsx
-  ❌ src/components/business/wizard-sections/pricing-section.tsx (deleted)
+  ✅ apps/back-office/src/hooks/use-drafts.ts
+  ✅ apps/back-office/src/components/business/complete-product-wizard.tsx
+  ❌ apps/back-office/src/components/business/wizard-sections/pricing-section.tsx (deleted)
 ```
 
 ### Phase 2 (Module Produits - 12 Hooks)
 
 ```
 Hooks Modifiés:
-  ✅ src/hooks/use-catalogue.ts
-  ✅ src/hooks/use-products.ts
-  ✅ src/hooks/use-sourcing-products.ts
-  ✅ src/hooks/use-product-variants.ts
-  ✅ src/hooks/use-variant-products.ts
-  ✅ src/hooks/use-stock-inventory.ts
-  ✅ src/hooks/use-sample-order.ts
-  ✅ src/hooks/use-variant-groups.ts
-  ✅ src/hooks/use-stock-dashboard.ts
-  ✅ src/hooks/use-stock.ts
-  ✅ src/hooks/use-aging-report.ts
-  ✅ src/hooks/use-consultations.ts
-  ✅ src/hooks/use-collections.ts
-  ✅ src/hooks/use-collection-products.ts
+  ✅ apps/back-office/src/hooks/use-catalogue.ts
+  ✅ apps/back-office/src/hooks/use-products.ts
+  ✅ apps/back-office/src/hooks/use-sourcing-products.ts
+  ✅ apps/back-office/src/hooks/use-product-variants.ts
+  ✅ apps/back-office/src/hooks/use-variant-products.ts
+  ✅ apps/back-office/src/hooks/use-stock-inventory.ts
+  ✅ apps/back-office/src/hooks/use-sample-order.ts
+  ✅ apps/back-office/src/hooks/use-variant-groups.ts
+  ✅ apps/back-office/src/hooks/use-stock-dashboard.ts
+  ✅ apps/back-office/src/hooks/use-stock.ts
+  ✅ apps/back-office/src/hooks/use-aging-report.ts
+  ✅ apps/back-office/src/hooks/use-consultations.ts
+  ✅ apps/back-office/src/hooks/use-collections.ts
+  ✅ apps/back-office/src/hooks/use-collection-products.ts
 ```
 
 ### Documentation

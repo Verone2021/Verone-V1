@@ -46,7 +46,7 @@ PostgreSQL error code: 42703
 **Pattern** : `Expected corresponding JSX closing tag for 'Button'`
 **Cause** : Import `Button` depuis `ui/` mais props de `ButtonV2` (`ui-v2/`)
 
-**Fichiers affectés** : Tous composants `src/components/business/*.tsx`
+**Fichiers affectés** : Tous composants `apps/back-office/apps/back-office/src/components/business/*.tsx`
 
 **Solution requise** : Uniformiser imports → `ButtonV2` depuis `ui-v2/button`
 
@@ -147,15 +147,15 @@ PostgreSQL error code: 42703
 **Exemples** :
 
 ```
-src/components/business/bug-reporter.tsx(264,7): Expected corresponding JSX closing tag for 'Button'
-src/components/business/catalogue-error-integration.tsx(247,13): Expected corresponding JSX closing tag for 'Button'
-src/components/business/characteristics-edit-section.tsx(167,15): Expected corresponding JSX closing tag for 'Button'
+apps/back-office/src/components/business/bug-reporter.tsx(264,7): Expected corresponding JSX closing tag for 'Button'
+apps/back-office/src/components/business/catalogue-error-integration.tsx(247,13): Expected corresponding JSX closing tag for 'Button'
+apps/back-office/src/components/business/characteristics-edit-section.tsx(167,15): Expected corresponding JSX closing tag for 'Button'
 ```
 
 **Modules affectés** :
 
-- Tous `src/components/business/*.tsx`
-- Certains composants `src/components/forms/*.tsx`
+- Tous `apps/back-office/apps/back-office/src/components/business/*.tsx`
+- Certains composants `apps/back-office/apps/back-office/src/components/forms/*.tsx`
 
 ---
 
@@ -173,7 +173,7 @@ src/components/business/characteristics-edit-section.tsx(167,15): Expected corre
 
 ```
 Query Supabase sans type. Ajouter: .from<Database["public"]["Tables"]["..."]["Row"]>(...)
-Fichiers: src/app/admin/users/page.tsx, src/hooks/*.ts
+Fichiers: apps/back-office/src/app/admin/users/page.tsx, apps/back-office/src/hooks/*.ts
 ```
 
 **Impact** : Non bloquant, mais best practice à améliorer
