@@ -11,16 +11,10 @@ import { useCallback, useState } from 'react';
 import Image from 'next/image';
 
 import { createClient } from '@verone/utils';
-import {
-  Upload,
-  X,
-  Loader2,
-  AlertCircle,
-  CheckCircle2,
-} from 'lucide-react';
+import { Upload, X, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 
-import { ButtonV2 } from './button';
+import { Button } from './button';
 import { Card, CardContent } from './card';
 
 // =====================================================================
@@ -288,7 +282,7 @@ export function ImageUploadZone({
                 )}
 
               {/* Bouton supprimer */}
-              <ButtonV2
+              <Button
                 type="button"
                 variant="ghost"
                 size="sm"
@@ -296,7 +290,7 @@ export function ImageUploadZone({
                 className="h-8 w-8"
               >
                 <X className="h-4 w-4" />
-              </ButtonV2>
+              </Button>
             </div>
           </CardContent>
         </Card>

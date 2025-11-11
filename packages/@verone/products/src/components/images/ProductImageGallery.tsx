@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 
 import Image from 'next/image';
 
-import { Edit, Upload, Trash2, RotateCw, Eye } from 'lucide-react';
-
 import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
 import { cn } from '@verone/utils';
+import { Edit, Upload, Trash2, RotateCw, Eye } from 'lucide-react';
+
 import { useProductImages } from '@verone/products/hooks';
 
 import { ProductImageViewerModal } from './ProductImageViewerModal';
@@ -25,6 +25,7 @@ interface ProductImageGalleryProps {
   fallbackImage?: string;
   className?: string;
   compact?: boolean;
+  onManagePhotos?: () => void;
 }
 
 const statusConfig = {
@@ -42,9 +43,9 @@ export function ProductImageGallery({
   fallbackImage = 'https://placehold.co/400x400/f5f5f5/666?text=Produit+Sans+Image',
   className,
   compact = true,
+  onManagePhotos,
 }: ProductImageGalleryProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showImageViewer, setShowImageViewer] = useState(false);
 
   // ✨ Hook optimisé - interface simplifiée
@@ -129,14 +130,14 @@ export function ProductImageGallery({
     <div className={cn('space-y-2', className)}>
       {/* Container image + badges */}
       <div className="flex gap-2 items-start">
-        {/* Image principale compacte 200x200 */}
-        <div className="relative w-[200px] h-[200px] flex items-center justify-center p-4 overflow-hidden rounded-lg border border-gray-200 bg-white flex-shrink-0">
+        {/* Image principale 400x400 */}
+        <div className="relative w-[400px] h-[400px] flex items-center justify-center p-4 overflow-hidden rounded-lg border border-gray-200 bg-white flex-shrink-0">
           <Image
             src={mainImageSrc}
             alt={productName}
             fill
             className="object-contain transition-all duration-300 hover:scale-105"
-            sizes="200px"
+            sizes="400px"
             priority
             onError={() => {
               console.warn(
@@ -224,11 +225,11 @@ export function ProductImageGallery({
       <div className="card-verone p-3">
         <h3 className="text-xs font-semibold mb-2">Actions</h3>
         <Button
-          onClick={() => setShowUploadDialog(true)}
+          onClick={onManagePhotos}
           variant="outline"
           size="sm"
           className="w-full text-xs h-7"
-          disabled={uploading}
+          disabled={uploading || !onManagePhotos}
         >
           <Upload className="h-3 w-3 mr-1" />
           Gérer photos ({galleryImages.length})

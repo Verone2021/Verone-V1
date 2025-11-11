@@ -1,16 +1,25 @@
 /**
- * 📊 Hook - Métriques Stock & Commandes Dashboard
+ * 📊 Hook - Métriques Stock & Commandes Dashboard (Best Practices 2025)
  *
- * Récupère les métriques calculées par Supabase :
+ * Récupère les métriques calculées par Supabase avec :
+ * ✅ Timeout 10s (AbortController)
+ * ✅ Retry automatique 3x (exponential backoff)
+ * ✅ Messages d'erreur UX-friendly
+ * ✅ Logging structuré pour debugging
+ * ✅ Cleanup proper (éviter memory leaks)
+ *
+ * Métriques :
  * - Valeur Stock (€)
  * - Commandes Achat (nombre)
  * - CA du Mois (€)
  * - Produits à Sourcer (nombre)
  *
- * Utilisé par le dashboard principal pour remplacer les données mockées.
+ * Pattern inspiré de : TanStack Query, SWR, Next.js docs 2025
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+
+import { createClient } from '@verone/utils/supabase/client';
 
 export interface StockOrdersMetrics {
   stock_value: number;
@@ -26,36 +35,188 @@ interface UseStockOrdersMetricsReturn {
   refetch: () => void;
 }
 
+// ============================================================================
+// CONFIGURATION
+// ============================================================================
+
+const FETCH_CONFIG = {
+  TIMEOUT_MS: 10000, // 10s timeout (Next.js 15 recommendation)
+  MAX_RETRIES: 3, // 3 tentatives maximum (Vercel pattern)
+  BASE_DELAY_MS: 1000, // 1s délai initial pour retry
+} as const;
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+/**
+ * Calcule le délai d'attente pour retry avec exponential backoff
+ * Pattern: AWS SDK, Vercel, Stripe
+ */
+function getRetryDelay(retryCount: number): number {
+  return FETCH_CONFIG.BASE_DELAY_MS * Math.pow(2, retryCount);
+}
+
+/**
+ * Messages d'erreur user-friendly selon le type d'erreur
+ * Pattern: Nielsen UX guidelines 2025
+ */
+function getUserFriendlyErrorMessage(error: unknown): string {
+  if (error instanceof TypeError) {
+    if (
+      error.message.includes('fetch') ||
+      error.message.includes('Failed to fetch')
+    ) {
+      return 'Impossible de contacter le serveur. Vérifiez votre connexion internet.';
+    }
+  }
+
+  if (error instanceof Error) {
+    if (error.name === 'AbortError') {
+      return 'La requête a pris trop de temps. Le serveur ne répond pas.';
+    }
+    // Si erreur contient déjà un message technique, le garder
+    return error.message;
+  }
+
+  return 'Une erreur inattendue est survenue. Veuillez réessayer.';
+}
+
+// ============================================================================
+// HOOK
+// ============================================================================
+
 export function useStockOrdersMetrics(): UseStockOrdersMetricsReturn {
   const [metrics, setMetrics] = useState<StockOrdersMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchMetrics = async () => {
+  // Ref pour cleanup (éviter setState sur composant démonté)
+  const isMountedRef = useRef(true);
+  // Ref pour AbortController cleanup
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  /**
+   * Fetch avec retry automatique et timeout
+   * Pattern: Vercel Edge Runtime, AWS Amplify
+   */
+  const fetchMetrics = async (retryCount = 0) => {
+    // Cleanup previous request si elle existe
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Créer nouveau AbortController pour cette requête
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    // Timeout avec AbortController (Web API standard)
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, FETCH_CONFIG.TIMEOUT_MS);
+
     try {
-      setIsLoading(true);
-      setError(null);
+      if (isMountedRef.current) {
+        setIsLoading(true);
+        setError(null);
+      }
 
-      const response = await fetch('/api/dashboard/stock-orders-metrics');
-      const data = await response.json();
+      const response = await fetch('/api/dashboard/stock-orders-metrics', {
+        signal: controller.signal,
+      });
 
+      clearTimeout(timeoutId);
+
+      // Vérifier status AVANT json() (éviter erreur parsing)
       if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
         throw new Error(
-          data.error || 'Erreur lors du chargement des métriques'
+          data.error ||
+            `Erreur serveur (${response.status}): ${response.statusText}`
         );
       }
 
-      setMetrics(data.metrics);
+      const data = await response.json();
+
+      if (isMountedRef.current) {
+        setMetrics(data.metrics);
+        setIsLoading(false);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur inconnue');
-      console.error('Erreur useStockOrdersMetrics:', err);
-    } finally {
-      setIsLoading(false);
+      clearTimeout(timeoutId);
+
+      // ✅ RETRY LOGIC - Exponential backoff (pattern AWS/Vercel)
+      const isNetworkError =
+        err instanceof TypeError ||
+        (err instanceof Error && err.name === 'AbortError');
+
+      const shouldRetry =
+        isNetworkError && retryCount < FETCH_CONFIG.MAX_RETRIES;
+
+      if (shouldRetry) {
+        const delay = getRetryDelay(retryCount);
+        console.warn(
+          `[useStockOrdersMetrics] Retry ${retryCount + 1}/${FETCH_CONFIG.MAX_RETRIES} dans ${delay}ms`,
+          err
+        );
+
+        // Attendre avant retry
+        await new Promise(resolve => setTimeout(resolve, delay));
+
+        // Retry récursif
+        return fetchMetrics(retryCount + 1);
+      }
+
+      // ✅ ERROR HANDLING - Messages UX-friendly
+      const userMessage = getUserFriendlyErrorMessage(err);
+
+      if (isMountedRef.current) {
+        setError(userMessage);
+        setIsLoading(false);
+      }
+
+      // ✅ LOGGING - Format structuré pour debugging
+      console.error('[useStockOrdersMetrics] Erreur après tentatives:', {
+        error: err,
+        retryCount,
+        maxRetries: FETCH_CONFIG.MAX_RETRIES,
+        userMessage,
+      });
     }
   };
 
   useEffect(() => {
-    fetchMetrics();
+    isMountedRef.current = true;
+
+    // ✅ FIX: Vérifier authentification AVANT fetch (Console Zero Tolerance)
+    const checkAuthAndFetch = async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      // Si pas d'utilisateur, ne pas fetcher et retourner état neutre
+      if (!user) {
+        if (isMountedRef.current) {
+          setIsLoading(false);
+          setError(null); // Pas d'erreur si simplement déconnecté
+        }
+        return;
+      }
+
+      // Utilisateur authentifié → fetcher les métriques
+      fetchMetrics();
+    };
+
+    checkAuthAndFetch();
+
+    // ✅ CLEANUP - Éviter memory leaks (pattern React 18+)
+    return () => {
+      isMountedRef.current = false;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, []);
 
   return {

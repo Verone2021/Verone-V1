@@ -8,7 +8,7 @@
 import { Edit, Trash2, FolderOpen, Package, Tag } from 'lucide-react';
 
 import { Badge } from './badge';
-import { ButtonV2 } from './button';
+import { Button } from './button';
 import {
   Card,
   CardContent,
@@ -156,7 +156,7 @@ export function VéroneCard({
             {(onEdit || onDelete) && (
               <div className="flex items-center space-x-1">
                 {onEdit && (
-                  <ButtonV2
+                  <Button
                     variant="secondary"
                     size="sm"
                     className="w-8 h-8 p-0"
@@ -166,10 +166,10 @@ export function VéroneCard({
                     }}
                   >
                     <Edit className="w-4 h-4" />
-                  </ButtonV2>
+                  </Button>
                 )}
                 {onDelete && (
-                  <ButtonV2
+                  <Button
                     variant="destructive"
                     size="sm"
                     className="w-8 h-8 p-0"
@@ -179,7 +179,7 @@ export function VéroneCard({
                     }}
                   >
                     <Trash2 className="w-4 h-4" />
-                  </ButtonV2>
+                  </Button>
                 )}
               </div>
             )}

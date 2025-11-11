@@ -2,11 +2,10 @@
 
 import { useState } from 'react';
 
-import { Tag, Save, X, Edit, Barcode, Award } from 'lucide-react';
-
 import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
 import { cn } from '@verone/utils';
+import { Tag, Save, X, Edit, Barcode, Award } from 'lucide-react';
 
 import {
   useInlineEdit,
@@ -59,17 +58,6 @@ export function IdentifiersCompleteEditSection({
 
   const currentBrand = product.brand || '-';
   const currentGtin = product.gtin || '-';
-  const currentCondition = product.condition || 'new';
-
-  const conditionOptions = [
-    { value: 'new', label: 'Neuf', color: 'bg-green-100 text-green-800' },
-    {
-      value: 'refurbished',
-      label: 'Reconditionné',
-      color: 'bg-blue-100 text-blue-800',
-    },
-    { value: 'used', label: 'Occasion', color: 'bg-gray-100 text-gray-900' },
-  ];
 
   const handleStartEdit = () => {
     startEdit(section, {
@@ -209,48 +197,6 @@ export function IdentifiersCompleteEditSection({
               </div>
             </div>
           </div>
-
-          {/* CONDITION/ÉTAT */}
-          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-            <h4 className="text-sm font-medium text-green-800 mb-3">
-              ✨ CONDITION/ÉTAT
-            </h4>
-            <div>
-              <label className="block text-sm font-medium text-green-700 mb-2">
-                État du produit
-              </label>
-              <div className="space-y-2">
-                {conditionOptions.map(option => (
-                  <label
-                    key={option.value}
-                    className="flex items-center space-x-3 p-3 border border-green-200 rounded-lg cursor-pointer hover:bg-green-100 transition-colors"
-                  >
-                    <input
-                      type="radio"
-                      name="condition"
-                      value={option.value}
-                      checked={editData?.condition === option.value}
-                      onChange={e =>
-                        handleFieldChange('condition', e.target.value)
-                      }
-                      className="w-4 h-4 text-green-600"
-                    />
-                    <div className="flex-1">
-                      <div className="font-medium text-green-900">
-                        {option.label}
-                      </div>
-                      <Badge className={cn('text-xs mt-1', option.color)}>
-                        {option.value}
-                      </Badge>
-                    </div>
-                  </label>
-                ))}
-              </div>
-              <div className="text-xs text-green-600 mt-2">
-                Sélectionner l'état physique du produit
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Message d'erreur */}
@@ -333,31 +279,6 @@ export function IdentifiersCompleteEditSection({
             </div>
           </div>
         )}
-
-        {/* Condition */}
-        <div className="bg-green-50 p-3 rounded-lg">
-          <div className="text-xs text-green-600 font-medium mb-1">
-            ✨ CONDITION
-          </div>
-          <div className="flex justify-between items-center">
-            <Badge
-              className={cn(
-                'text-sm',
-                currentCondition === 'new'
-                  ? 'bg-green-100 text-green-800'
-                  : currentCondition === 'refurbished'
-                    ? 'bg-blue-100 text-blue-800'
-                    : 'bg-gray-100 text-gray-900'
-              )}
-            >
-              {currentCondition === 'new'
-                ? 'Neuf'
-                : currentCondition === 'refurbished'
-                  ? 'Reconditionné'
-                  : 'Occasion'}
-            </Badge>
-          </div>
-        </div>
 
         {/* Message si données manquantes */}
         {!product.brand && !product.gtin && (

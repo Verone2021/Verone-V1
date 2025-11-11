@@ -33,7 +33,7 @@ import {
 import { createPortal } from 'react-dom';
 
 import { Badge } from './badge';
-import { ButtonV2 } from './button';
+import { Button } from './button';
 import { Card, CardContent } from './card';
 import {
   DropdownMenu,
@@ -320,18 +320,14 @@ export function NotificationBell({ className }: { className?: string }) {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <ButtonV2
-          variant="ghost"
-          size="sm"
-          className={cn('relative', className)}
-        >
+        <Button variant="ghost" size="sm" className={cn('relative', className)}>
           <Bell className="w-4 h-4" />
           {unreadCount > 0 && (
             <Badge className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center text-xs bg-red-500 text-white">
               {unreadCount > 99 ? '99+' : unreadCount}
             </Badge>
           )}
-        </ButtonV2>
+        </Button>
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
@@ -341,7 +337,7 @@ export function NotificationBell({ className }: { className?: string }) {
         <DropdownMenuLabel className="flex items-center justify-between">
           <span>Notifications</span>
           <div className="flex items-center gap-2">
-            <ButtonV2
+            <Button
               variant="ghost"
               size="sm"
               onClick={() =>
@@ -360,12 +356,12 @@ export function NotificationBell({ className }: { className?: string }) {
                 : filter === 'unread'
                   ? 'Non lues'
                   : 'Critiques'}
-            </ButtonV2>
+            </Button>
             {unreadCount > 0 && (
-              <ButtonV2 variant="ghost" size="sm" onClick={markAllAsRead}>
+              <Button variant="ghost" size="sm" onClick={markAllAsRead}>
                 <Eye className="w-3 h-3 mr-1" />
                 Marquer lues
-              </ButtonV2>
+              </Button>
             )}
           </div>
         </DropdownMenuLabel>
@@ -528,7 +524,7 @@ function NotificationItem({
           </div>
           <div className="flex items-center gap-1">
             {getPriorityBadge(notification.priority)}
-            <ButtonV2
+            <Button
               variant="ghost"
               size="sm"
               className="w-6 h-6 p-0"
@@ -538,7 +534,7 @@ function NotificationItem({
               }
             >
               <X className="w-3 h-3" />
-            </ButtonV2>
+            </Button>
           </div>
         </div>
 
@@ -549,16 +545,16 @@ function NotificationItem({
         {notification.actions && notification.actions.length > 0 && (
           <div className="flex gap-2 flex-wrap">
             {notification.actions.map(action => (
-              <ButtonV2
+              <Button
                 key={action.id}
                 size="sm"
-                variant={action.variant || 'outline'}
+                variant={
+                  action.variant === 'primary'
+                    ? 'default'
+                    : action.variant || 'outline'
+                }
                 onClick={() => handleActionClick(action)}
                 disabled={isExecuting}
-                className={cn(
-                  action.variant === 'primary' &&
-                    'bg-black hover:bg-gray-800 text-white'
-                )}
               >
                 {isExecuting ? (
                   <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
@@ -566,7 +562,7 @@ function NotificationItem({
                   action.icon && <span className="mr-1">{action.icon}</span>
                 )}
                 {action.label}
-              </ButtonV2>
+              </Button>
             ))}
           </div>
         )}

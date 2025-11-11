@@ -43,6 +43,8 @@
     "validate:hooks": "node scripts/validation/check-duplicate-hooks.ts",
     "validate:naming": "node scripts/validation/check-naming-consistency.ts",
     "validate:all": "npm run type-check && npm run validate:types && npm run validate:hooks && npm run validate:naming",
+    "check:console": "tsx scripts/monitoring/check-console-errors.ts",
+    "check:console:ci": "tsx scripts/monitoring/check-console-errors.ts --ci",
     "prepare": "husky"
   },
   "dependencies": {

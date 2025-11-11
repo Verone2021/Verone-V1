@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from 'react';
 
-import { Search, ChevronDown } from 'lucide-react';
-
-import { ButtonV2 } from '@verone/ui';
+import { Button } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { cn } from '@verone/utils';
+import { Search, ChevronDown } from 'lucide-react';
 
 interface Subcategory {
   id: string;
@@ -155,7 +154,7 @@ export function SubcategorySearchSelector({
 
       {/* Bouton pour changer la sélection */}
       {selectedSubcategory && !isOpen && (
-        <ButtonV2
+        <Button
           type="button"
           variant="outline"
           size="sm"
@@ -164,7 +163,7 @@ export function SubcategorySearchSelector({
           className="w-full"
         >
           Changer de sous-catégorie
-        </ButtonV2>
+        </Button>
       )}
     </div>
   );

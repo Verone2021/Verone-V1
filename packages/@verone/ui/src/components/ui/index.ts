@@ -9,8 +9,13 @@
 // BUTTON COMPONENTS
 // ========================================
 export * from './button-unified';
-// Export sélectif de Button sans buttonVariants (conflit)
-export { Button, ButtonV2, type ButtonV2Props } from './button';
+// Export ButtonV2 (Design System V2 - BLEU #3b86d1) + alias Button
+export {
+  Button,
+  ButtonV2,
+  type ButtonProps,
+  type ButtonV2Props,
+} from './button';
 export * from './action-button';
 export * from './modern-action-button';
 export * from './standard-modify-button';

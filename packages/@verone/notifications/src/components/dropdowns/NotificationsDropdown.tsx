@@ -3,7 +3,7 @@
  * Design System 2025 - Minimaliste, élégant, professionnel
  *
  * Refonte complète :
- * - ButtonV2 avec micro-interactions
+ * - Button (Brand Vérone) avec micro-interactions
  * - Badges minimalistes sans emojis
  * - Typography hiérarchisée
  * - Spacing Design System tokens
@@ -12,6 +12,18 @@
 
 'use client';
 
+import { Badge } from '@verone/ui';
+import { Button } from '@verone/ui';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@verone/ui';
+import { ScrollArea } from '@verone/ui';
+import { spacing, colors } from '@verone/ui';
+import { cn } from '@verone/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
@@ -25,18 +37,6 @@ import {
   ExternalLink,
 } from 'lucide-react';
 
-import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@verone/ui';
-import { ScrollArea } from '@verone/ui';
-import { spacing, colors } from '@verone/ui';
-import { cn } from '@verone/utils';
 import {
   useDatabaseNotifications,
   type DatabaseNotification,
@@ -145,11 +145,9 @@ const NotificationItem = ({
         'group relative transition-all duration-200',
         'border-b last:border-b-0',
         'hover:bg-neutral-50',
+        'p-3',
         !notification.read && 'bg-blue-50/30'
       )}
-      style={{
-        padding: spacing[4], // Design System: 16px
-      }}
     >
       {/* Badge "non lu" */}
       {!notification.read && (
@@ -197,40 +195,40 @@ const NotificationItem = ({
           <div className="flex items-center gap-2">
             {/* Bouton action principale */}
             {notification.action_url && notification.action_label && (
-              <ButtonV2
-                variant="primary"
+              <Button
+                variant="default"
                 size="sm"
-                icon={ExternalLink}
-                iconPosition="right"
                 onClick={() => {
                   window.location.href = notification.action_url!;
                 }}
               >
                 {notification.action_label}
-              </ButtonV2>
+                <ExternalLink className="ml-1 h-3 w-3" />
+              </Button>
             )}
 
             {/* Actions secondaires (hover) */}
             <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               {!notification.read && (
-                <ButtonV2
+                <Button
                   variant="ghost"
-                  size="sm"
-                  icon={Check}
-                  className="h-8 w-8 p-0"
+                  size="icon"
                   title="Marquer comme lu"
                   onClick={() => onMarkAsRead(notification.id)}
-                />
+                >
+                  <Check className="h-4 w-4" />
+                </Button>
               )}
 
-              <ButtonV2
+              <Button
                 variant="ghost"
-                size="sm"
-                icon={Trash2}
-                className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                size="icon"
+                className="text-red-500 hover:text-red-700 hover:bg-red-50"
                 title="Supprimer"
                 onClick={() => onDelete(notification.id)}
-              />
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>
@@ -270,7 +268,7 @@ export const NotificationsDropdown = () => {
           <Bell className="h-5 w-5" style={{ color: colors.text.DEFAULT }} />
           {!loading && unreadCount > 0 && (
             <span
-              className="absolute -top-1 -right-1 h-5 w-auto min-w-[20px] px-1.5 rounded-full text-xs text-white flex items-center justify-center font-semibold"
+              className="absolute -top-2 -right-2 h-4 w-auto min-w-[16px] px-1 rounded-full text-xs text-white flex items-center justify-center font-medium"
               style={{ backgroundColor: colors.danger[500] }}
             >
               {unreadCount > 99 ? '99+' : unreadCount}
@@ -282,19 +280,19 @@ export const NotificationsDropdown = () => {
 
       <DropdownMenuContent
         align="end"
-        className="w-[420px] p-0"
-        style={{ borderRadius: '10px' }}
+        className="w-[400px] p-0"
+        style={{
+          borderRadius: '10px',
+          maxHeight: '85vh',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
       >
         {/* En-tête avec actions globales */}
-        <div
-          className="flex items-center justify-between border-b"
-          style={{
-            padding: `${spacing[4]} ${spacing[4]}`,
-          }}
-        >
+        <div className="flex items-center justify-between border-b px-4 py-3">
           <div>
             <DropdownMenuLabel
-              className="p-0 font-semibold text-base"
+              className="p-0 font-semibold"
               style={{ color: colors.text.DEFAULT }}
             >
               Notifications
@@ -310,20 +308,16 @@ export const NotificationsDropdown = () => {
           </div>
 
           {unreadCount > 0 && (
-            <ButtonV2
-              variant="ghost"
-              size="sm"
-              icon={CheckCheck}
-              onClick={() => markAllAsRead()}
-            >
+            <Button variant="ghost" size="sm" onClick={() => markAllAsRead()}>
+              <CheckCheck className="mr-1 h-4 w-4" />
               Tout marquer lu
-            </ButtonV2>
+            </Button>
           )}
         </div>
 
         {/* Liste des notifications avec scroll */}
         {loading ? (
-          <div className="p-12 text-center">
+          <div className="p-8 text-center">
             <div
               className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-3"
               style={{ borderColor: colors.primary[500] }}
@@ -333,7 +327,7 @@ export const NotificationsDropdown = () => {
             </p>
           </div>
         ) : notifications.length === 0 ? (
-          <div className="p-12 text-center">
+          <div className="p-8 text-center">
             <div
               className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
               style={{ backgroundColor: colors.neutral[100] }}
@@ -351,7 +345,7 @@ export const NotificationsDropdown = () => {
             </p>
           </div>
         ) : (
-          <ScrollArea className="h-[500px]">
+          <ScrollArea className="max-h-[380px]">
             {notifications.map(notification => (
               <NotificationItem
                 key={notification.id}
@@ -367,19 +361,18 @@ export const NotificationsDropdown = () => {
         {notifications.length > 0 && (
           <>
             <DropdownMenuSeparator />
-            <div style={{ padding: spacing[2] }}>
-              <ButtonV2
+            <div className="p-2">
+              <Button
                 variant="ghost"
                 size="sm"
                 className="w-full"
-                icon={ExternalLink}
-                iconPosition="right"
                 onClick={() => {
                   window.location.href = '/notifications';
                 }}
               >
                 Voir toutes les notifications
-              </ButtonV2>
+                <ExternalLink className="ml-auto h-4 w-4" />
+              </Button>
             </div>
           </>
         )}

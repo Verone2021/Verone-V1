@@ -2,6 +2,10 @@
 
 import { useState, useEffect } from 'react';
 
+import { Badge } from '@verone/ui';
+import { Button } from '@verone/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
+import { cn } from '@verone/utils';
 import {
   X,
   Bell,
@@ -10,11 +14,6 @@ import {
   Info,
   XCircle,
 } from 'lucide-react';
-
-import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
-import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
-import { cn } from '@verone/utils';
 
 export type NotificationType = 'success' | 'warning' | 'error' | 'info';
 
@@ -146,14 +145,14 @@ export function NotificationWidget({
                       {notification.type}
                     </Badge>
                   </div>
-                  <ButtonV2
+                  <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => onDismiss(notification.id)}
                     className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
                   >
                     <X className="h-3 w-3" />
-                  </ButtonV2>
+                  </Button>
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
@@ -169,14 +168,14 @@ export function NotificationWidget({
                   </span>
 
                   {notification.action && (
-                    <ButtonV2
+                    <Button
                       variant="outline"
                       size="sm"
                       onClick={notification.action.handler}
                       className="h-6 text-xs border-black text-black hover:bg-black hover:text-white"
                     >
                       {notification.action.label}
-                    </ButtonV2>
+                    </Button>
                   )}
                 </div>
               </CardContent>
@@ -305,14 +304,14 @@ export function NotificationToast({
         <h4 className="text-sm font-medium text-black mb-1">{title}</h4>
         <p className="text-sm text-gray-700">{message}</p>
       </div>
-      <ButtonV2
+      <Button
         variant="ghost"
         size="sm"
         onClick={onClose}
         className="ml-2 h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
       >
         <X className="h-4 w-4" />
-      </ButtonV2>
+      </Button>
     </div>
   );
 }

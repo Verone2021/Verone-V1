@@ -40,6 +40,9 @@
 
 import { useEffect, useState } from 'react';
 
+import { useToast } from '@verone/common/hooks';
+import { createClient } from '@verone/utils/supabase/client';
+
 import {
   useStockCore,
   type UseStockCoreReturn,
@@ -48,8 +51,6 @@ import {
   type StockMovement,
   type StockItem,
 } from '../hooks/core/use-stock-core';
-import { createClient } from '@verone/utils/supabase/client';
-import { useToast } from '@verone/common/hooks';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -119,7 +120,10 @@ export function useStockUI(config: UseStockUIConfig = {}): UseStockUIReturn {
         } = await supabase.auth.getUser();
 
         if (error) {
-          console.error('❌ [useStockUI] Erreur auth:', error);
+          // ✅ FIX 4-bis: Ne pas logger AuthSessionMissingError (normal pendant logout)
+          if (error.message !== 'Auth session missing!') {
+            console.error('❌ [useStockUI] Erreur auth:', error);
+          }
           setIsAuthenticated(false);
           setUserId(null);
           return;
@@ -134,7 +138,12 @@ export function useStockUI(config: UseStockUIConfig = {}): UseStockUIReturn {
           setUserId(null);
         }
       } catch (err) {
-        console.error('❌ [useStockUI] Exception auth:', err);
+        // ✅ FIX 4-bis: Ne pas logger AuthSessionMissingError (normal pendant logout)
+        const isAuthSessionMissing =
+          err instanceof Error && err.message === 'Auth session missing!';
+        if (!isAuthSessionMissing) {
+          console.error('❌ [useStockUI] Exception auth:', err);
+        }
         setIsAuthenticated(false);
         setUserId(null);
       }
@@ -154,6 +163,18 @@ export function useStockUI(config: UseStockUIConfig = {}): UseStockUIReturn {
 
     const fetchChannel = async () => {
       try {
+        // ✅ FIX: Vérifier authentification AVANT fetch (Console Zero Tolerance)
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        // Si pas d'utilisateur, retourner état neutre sans fetch
+        if (!user) {
+          setCurrentChannel(null);
+          return;
+        }
+
+        // Utilisateur authentifié → fetch autorisé
         const { data, error } = await supabase
           .from('sales_channels')
           .select('id, name, code')
@@ -192,7 +213,7 @@ export function useStockUI(config: UseStockUIConfig = {}): UseStockUIReturn {
   // =========================================================================
 
   useEffect(() => {
-    if (autoLoad && isAuthenticated) {
+    if (autoLoad && isAuthenticated && userId) {
       console.log('🔄 [useStockUI] Auto-load stocks au montage');
 
       // Charger stocks + mouvements initiaux
@@ -200,15 +221,24 @@ export function useStockUI(config: UseStockUIConfig = {}): UseStockUIReturn {
         stockCore.getStockItems({ archived: false }),
         stockCore.getMovements(initialFilters || { limit: 100 }),
       ]).catch(err => {
-        console.error('❌ [useStockUI] Erreur auto-load:', err);
-        toast({
-          variant: 'destructive',
-          title: 'Erreur chargement',
-          description: 'Impossible de charger les données stock',
-        });
+        // ✅ FIX 4-ter: Ne pas afficher toast si AuthSessionMissingError (logout en cours)
+        const isAuthSessionMissing =
+          err instanceof Error && err.message.includes('Auth session missing');
+        const isNetworkError =
+          err instanceof Error && err.message.includes('Failed to fetch');
+
+        if (!isAuthSessionMissing && !isNetworkError) {
+          console.error('❌ [useStockUI] Erreur auto-load:', err);
+          toast({
+            variant: 'destructive',
+            title: 'Erreur chargement',
+            description: 'Impossible de charger les données stock',
+          });
+        }
+        // Sinon on ignore silencieusement (logout en cours)
       });
     }
-  }, [autoLoad, isAuthenticated, initialFilters]);
+  }, [autoLoad, isAuthenticated, userId, initialFilters]);
 
   // =========================================================================
   // MÉTHODES UI avec TOAST NOTIFICATIONS

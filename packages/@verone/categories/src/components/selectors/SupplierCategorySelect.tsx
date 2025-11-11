@@ -13,8 +13,10 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 
-import type { LucideIcon } from 'lucide-react';
-import { Check, ChevronDown, X } from 'lucide-react';
+import { Badge } from '@verone/ui';
+import { Button } from '@verone/ui';
+import { Label } from '@verone/ui';
+import { cn } from '@verone/utils';
 import {
   Sofa,
   TreeDeciduous,
@@ -30,11 +32,9 @@ import {
   Package,
   Package2,
 } from 'lucide-react';
+import { Check, ChevronDown, X } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
-import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
-import { Label } from '@verone/ui';
-import { cn } from '@verone/utils';
 import type { SupplierCategoryCode } from '@verone/categories/components/badges/SupplierCategoryBadge';
 import { getCategoryLabel } from '@verone/categories/components/badges/SupplierCategoryBadge';
 
@@ -217,7 +217,7 @@ export function SupplierCategorySelect({
 
       <div ref={dropdownRef}>
         {/* Trigger button avec badges */}
-        <ButtonV2
+        <Button
           type="button"
           variant="outline"
           onClick={() => !disabled && setIsOpen(!isOpen)}
@@ -272,7 +272,7 @@ export function SupplierCategorySelect({
               isOpen && 'rotate-180'
             )}
           />
-        </ButtonV2>
+        </Button>
 
         {/* Dropdown menu */}
         {isOpen && (
@@ -288,7 +288,7 @@ export function SupplierCategorySelect({
                 className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
               {selectedCategories.length > 0 && (
-                <ButtonV2
+                <Button
                   type="button"
                   variant="ghost"
                   size="sm"
@@ -296,7 +296,7 @@ export function SupplierCategorySelect({
                   className="w-full mt-2 text-xs"
                 >
                   Tout désélectionner ({selectedCategories.length})
-                </ButtonV2>
+                </Button>
               )}
             </div>
 

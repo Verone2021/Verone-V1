@@ -38,7 +38,7 @@ import {
 } from 'lucide-react';
 
 import { Badge } from './badge';
-import { ButtonV2 } from './button';
+import { Button } from './button';
 import {
   CommandDialog,
   CommandEmpty,
@@ -510,7 +510,7 @@ export function CommandPalette({
   return (
     <>
       {/* Trigger Button */}
-      <ButtonV2
+      <Button
         variant="outline"
         className={cn(
           'relative w-full justify-start text-sm text-muted-foreground',
@@ -524,7 +524,7 @@ export function CommandPalette({
         <kbd className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 select-none items-center gap-1 rounded border bg-muted px-1.5 py-0.5 font-mono text-xs font-medium opacity-100 sm:flex">
           <span className="text-xs">⌘</span>K
         </kbd>
-      </ButtonV2>
+      </Button>
 
       {/* Command Dialog */}
       <CommandDialog open={open} onOpenChange={setOpen}>
@@ -612,7 +612,7 @@ export function CommandPalette({
                             </CommandShortcut>
                           )}
 
-                          <ButtonV2
+                          <Button
                             variant="ghost"
                             size="sm"
                             className="w-6 h-6 p-0 opacity-50 hover:opacity-100"
@@ -626,7 +626,7 @@ export function CommandPalette({
                             ) : (
                               <Bookmark className="w-3 h-3" />
                             )}
-                          </ButtonV2>
+                          </Button>
                         </div>
                       </CommandItem>
                     );

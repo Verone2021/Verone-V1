@@ -12,6 +12,45 @@ Guide complet pour gérer les migrations de base de données Supabase dans le sy
 
 ---
 
+## Migrations Récentes (Novembre 2025)
+
+### 2025-11-10 : CASCADE DELETE Notifications (001)
+
+**Fichier** : `20251110_001_notifications_cascade_delete_system.sql`
+
+**Objectif** : Suppression automatique notifications orphelines lorsque l'entité liée est supprimée
+
+**Modifications** :
+
+- `notifications` : +3 colonnes FK optionnelles (`related_product_id`, `related_sales_order_id`, `related_purchase_order_id`)
+- **Contrainte** : `check_single_related_entity` - Une notification = max UNE entité
+- **Indexes** : 3 indexes partiels (WHERE column IS NOT NULL)
+- **Fonction** : `create_notification_for_owners()` - Mise à jour avec paramètres FK
+- **Fonction** : `cleanup_old_notifications()` - Nettoyage notifications lues >30j + orphelines legacy >7j
+- **ON DELETE CASCADE** : Suppression automatique PostgreSQL
+
+**Impact** :
+
+- +3 colonnes database
+- +3 indexes partiels
+- +1 contrainte CHECK
+- 2 fonctions mises à jour
+
+**Application** :
+
+⚠️ **Application manuelle requise** (sync issues avec migrations remote)
+
+- Via Supabase Dashboard SQL Editor (recommandé)
+- Guide complet : [`20251110_001_README_CASCADE_DELETE.md`](../../../supabase/migrations/20251110_001_README_CASCADE_DELETE.md)
+
+**Documentation** :
+
+- [cascade-delete-notifications.md](../cascade-delete-notifications.md) - Architecture technique
+- [Business Rules: CASCADE DELETE](../../business-rules/15-notifications/cascade-delete-system.md) - Règles métier
+- [Triggers Commandes](../../business-rules/07-commandes/notifications-workflow.md) - Workflow notifications commandes
+
+---
+
 ## Migrations Récentes (Octobre 2025)
 
 ### 2025-10-25 : Système Ristourne B2B (002)

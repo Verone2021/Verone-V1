@@ -4,32 +4,6 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import { useParams, useRouter } from 'next/navigation';
 
-import { ButtonV2 } from '@verone/ui';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@verone/ui';
-import { cn, checkSLOCompliance } from '@verone/utils';
-import {
-  ArrowLeft,
-  Share2,
-  ImageIcon,
-  Package,
-  Tag,
-  Truck,
-  Boxes,
-  DollarSign,
-  Settings,
-  Hash,
-  Beaker,
-  Clock,
-  Info,
-} from 'lucide-react';
-
 import { CategoryHierarchySelector } from '@verone/categories';
 import { SupplierVsPricingEditSection } from '@verone/common';
 import { CompletionStatusCompact } from '@verone/products';
@@ -49,7 +23,32 @@ import { SupplierEditSection } from '@verone/products';
 import { WeightEditSection } from '@verone/products';
 import { StockEditSection } from '@verone/stock';
 import { StockStatusCompact } from '@verone/stock';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import { cn, checkSLOCompliance } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
+import {
+  ArrowLeft,
+  Share2,
+  ImageIcon,
+  Package,
+  Tag,
+  Truck,
+  Boxes,
+  DollarSign,
+  Settings,
+  Hash,
+  Beaker,
+  Clock,
+  Info,
+} from 'lucide-react';
 
 // Champs obligatoires pour un produit complet
 const REQUIRED_PRODUCT_FIELDS = [
@@ -431,6 +430,7 @@ export default function ProductDetailPage() {
               productName={product.name}
               productStatus={product.product_status as any}
               compact={false}
+              onManagePhotos={() => setShowPhotosModal(true)}
             />
           </div>
 

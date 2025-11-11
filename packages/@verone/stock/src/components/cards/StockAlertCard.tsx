@@ -1,12 +1,11 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { AlertTriangle, XCircle, Package, ExternalLink } from 'lucide-react';
-
+import { useProductImages } from '@verone/products/hooks';
 import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
-import { useProductImages } from '@verone/products/hooks';
+import { AlertTriangle, XCircle, Package, ExternalLink } from 'lucide-react';
 
 // Type définition pour StockAlert
 export interface StockAlert {
@@ -24,6 +23,7 @@ export interface StockAlert {
   is_in_draft: boolean;
   quantity_in_draft: number | null;
   draft_order_number: string | null;
+  validated: boolean; // ✅ Commande validée (passe de ROUGE → VERT)
 
   related_orders?: Array<{
     order_number: string;
@@ -55,12 +55,16 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
   };
 
   const getSeverityColor = () => {
-    // ✅ FIX: Brouillon reste ROUGE (alerte active, pas validée)
-    // Workflow: Brouillon ROUGE → Validation VERTE → Réception DISPARAÎT
-    // Note: Le badge VERT "Commandé" + bouton disabled indiquent l'action en cours
-    // Note: !bg-red-50 force override du bg-white du composant Card
+    // ✅ WORKFLOW COMPLET : ROUGE (brouillon) → VERT (validé) → DISPARAÎT (réceptionné)
+
+    // ✅ VERT si commande validée (en attente de réception)
+    if (alert.validated) {
+      return 'border-green-600 !bg-green-50';
+    }
+
+    // 🔴 ROUGE si commande en brouillon (non validée)
     if (alert.is_in_draft) {
-      return 'border-red-600 !bg-red-50'; // ✅ Rouge car alerte reste active
+      return 'border-red-600 !bg-red-50';
     }
 
     // Couleurs selon sévérité (pour alertes sans commande)

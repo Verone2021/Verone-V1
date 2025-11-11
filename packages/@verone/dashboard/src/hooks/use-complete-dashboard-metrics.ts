@@ -5,9 +5,10 @@
 
 import { useEffect, useState } from 'react';
 
-import { createClient } from '@verone/utils/supabase/client';
-import { useStockOrdersMetrics } from '@verone/dashboard/hooks/metrics/use-stock-orders-metrics';
 import { useOrganisations } from '@verone/organisations/hooks';
+import { createClient } from '@verone/utils/supabase/client';
+
+import { useStockOrdersMetrics } from '@verone/dashboard/hooks/metrics/use-stock-orders-metrics';
 
 import { useRealDashboardMetrics } from './use-real-dashboard-metrics';
 
@@ -86,6 +87,18 @@ export function useCompleteDashboardMetrics() {
       try {
         setSalesOrdersLoading(true);
         const supabase = createClient();
+
+        // ✅ FIX: Vérifier authentification AVANT fetch (Console Zero Tolerance)
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+          // Si pas d'utilisateur, retourner état neutre sans erreur
+          setSalesOrdersCount(0);
+          setSalesOrdersLoading(false);
+          return;
+        }
 
         const { count, error } = await supabase
           .from('sales_orders')

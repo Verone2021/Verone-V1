@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { ButtonV2 } from '@verone/ui';
+import { NotificationsDropdown } from '@verone/notifications';
+import { Button } from '@verone/ui';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,12 +13,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@verone/ui';
-import { User, LogOut, Settings, Users, Activity } from 'lucide-react';
-
-import { NotificationsDropdown } from '@verone/notifications';
-import { createClient } from '@verone/utils/supabase/client';
-
 import { cn } from '@verone/utils';
+import { createClient } from '@verone/utils/supabase/client';
+import { User, LogOut, Settings, Users, Activity } from 'lucide-react';
 
 interface AppHeaderProps {
   className?: string;
@@ -79,10 +77,10 @@ export function AppHeader({ className }: AppHeaderProps) {
         {/* Menu Profil utilisateur */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <ButtonV2 variant="ghost" size="sm">
+            <Button variant="ghost" size="sm">
               <User className="h-5 w-5" />
               <span className="sr-only">Menu profil</span>
-            </ButtonV2>
+            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuItem

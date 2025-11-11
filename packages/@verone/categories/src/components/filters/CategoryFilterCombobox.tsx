@@ -11,10 +11,7 @@
 
 import * as React from 'react';
 
-import { Check, ChevronsUpDown, X } from 'lucide-react';
-import { toast } from 'react-hot-toast';
-
-import { ButtonV2 } from '@verone/ui';
+import { Button } from '@verone/ui';
 import {
   Command,
   CommandEmpty,
@@ -23,13 +20,11 @@ import {
   CommandItem,
   CommandList,
 } from '@verone/ui';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@verone/ui';
-import { createClient } from '@verone/utils/supabase/client';
+import { Popover, PopoverContent, PopoverTrigger } from '@verone/ui';
 import { cn } from '@verone/utils';
+import { createClient } from '@verone/utils/supabase/client';
+import { Check, ChevronsUpDown, X } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 // =====================================================================
 // TYPES
@@ -194,7 +189,7 @@ export function CategoryFilterCombobox({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <ButtonV2
+        <Button
           variant="outline"
           role="combobox"
           aria-expanded={open}
@@ -206,7 +201,7 @@ export function CategoryFilterCombobox({
         >
           <span className="truncate">{displayLabel}</span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </ButtonV2>
+        </Button>
       </PopoverTrigger>
 
       <PopoverContent className="w-[400px] p-0" align="start">

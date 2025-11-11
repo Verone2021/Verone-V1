@@ -4,6 +4,7 @@ import React from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { useCompleteDashboardMetrics } from '@verone/dashboard';
 import { ActivityTimeline, type TimelineItem } from '@verone/ui';
 import { KPICardUnified } from '@verone/ui';
 import {
@@ -14,8 +15,6 @@ import {
   TrendingUp,
   ArrowLeftRight,
 } from 'lucide-react';
-
-import { useCompleteDashboardMetrics } from '@verone/dashboard';
 
 export default function DashboardV2Page() {
   const router = useRouter();
@@ -39,7 +38,9 @@ export default function DashboardV2Page() {
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <p className="text-slate-900 font-medium">Erreur de chargement</p>
           <p className="text-slate-600 text-sm">
-            {error || 'Données indisponibles'}
+            {typeof error === 'string'
+              ? error
+              : error?.message || 'Données indisponibles'}
           </p>
         </div>
       </div>

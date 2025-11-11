@@ -2,14 +2,10 @@
 
 import { useState } from 'react';
 
+import { Button } from '@verone/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
+
 import { CategoryHierarchySelector } from '../selectors/CategoryHierarchySelector';
-import { ButtonV2 } from '@verone/ui';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@verone/ui';
 
 interface CategoryHierarchyModalProps {
   isOpen: boolean;
@@ -51,10 +47,10 @@ export function CategoryHierarchyModal({
           />
 
           <div className="flex justify-end space-x-2">
-            <ButtonV2 variant="outline" onClick={onClose}>
+            <Button variant="outline" onClick={onClose}>
               Annuler
-            </ButtonV2>
-            <ButtonV2 onClick={handleSave}>Sauvegarder</ButtonV2>
+            </Button>
+            <Button onClick={handleSave}>Sauvegarder</Button>
           </div>
         </div>
       </DialogContent>

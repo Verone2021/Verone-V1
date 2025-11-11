@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from 'react';
 
-import { ChevronDown, Folder, FolderOpen } from 'lucide-react';
-
-import { ButtonV2 } from '@verone/ui';
-import { createClient } from '@verone/utils/supabase/client';
+import { Button } from '@verone/ui';
 import { cn } from '@verone/utils';
+import { createClient } from '@verone/utils/supabase/client';
+import { ChevronDown, Folder, FolderOpen } from 'lucide-react';
 
 // Types hiérarchie selon business rules
 interface Family {
@@ -245,7 +244,7 @@ export function CategorySelector({
   return (
     <div className={cn('relative', className)}>
       {/* Bouton sélecteur */}
-      <ButtonV2
+      <Button
         type="button"
         variant="outline"
         role="combobox"
@@ -264,7 +263,7 @@ export function CategorySelector({
             isOpen && 'rotate-180'
           )}
         />
-      </ButtonV2>
+      </Button>
 
       {/* Menu déroulant */}
       {isOpen && (

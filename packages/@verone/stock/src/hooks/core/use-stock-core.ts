@@ -221,6 +221,18 @@ export function useStockCore({
       setLoading(true);
       setError(null);
 
+      // ✅ FIX 5: Vérifier authentification AVANT fetch (Console Zero Tolerance)
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        // Si pas d'utilisateur, retourner état neutre sans fetch
+        setLoading(false);
+        setError(null);
+        return [];
+      }
+
       try {
         let query = supabase.from('products').select(`
           id,
@@ -273,6 +285,16 @@ export function useStockCore({
    */
   const getStockItem = useCallback(
     async (productId: string): Promise<StockItem | null> => {
+      // ✅ FIX 6: Vérifier authentification AVANT fetch (Console Zero Tolerance)
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        // Si pas d'utilisateur, retourner null sans fetch
+        return null;
+      }
+
       try {
         const { data, error: fetchError } = await supabase
           .from('products')
@@ -314,6 +336,18 @@ export function useStockCore({
     async (filters?: MovementFilters): Promise<StockMovement[]> => {
       setLoading(true);
       setError(null);
+
+      // ✅ FIX 7: Vérifier authentification AVANT fetch (Console Zero Tolerance)
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        // Si pas d'utilisateur, retourner tableau vide sans fetch
+        setLoading(false);
+        setError(null);
+        return [];
+      }
 
       try {
         let query = supabase.from('stock_movements').select(`

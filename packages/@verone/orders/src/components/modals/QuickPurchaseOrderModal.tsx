@@ -4,8 +4,6 @@ import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
 
-import { Loader2, Info, Package } from 'lucide-react';
-
 import { Alert, AlertDescription } from '@verone/ui';
 import { Button } from '@verone/ui';
 import { Card, CardContent } from '@verone/ui';
@@ -21,6 +19,8 @@ import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { Separator } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
+import { Loader2, Info, Package } from 'lucide-react';
+
 import { useDraftPurchaseOrder } from '@verone/orders/hooks';
 
 export interface QuickPurchaseOrderModalProps {
@@ -37,6 +37,7 @@ interface ProductData {
   sku: string;
   supplier_id: string;
   cost_price: number;
+  supplier_moq: number; // ✅ Phase 2.5: Minimum Order Quantity fournisseur
   primary_image_url?: string;
   supplier?: {
     id: string;
@@ -89,6 +90,7 @@ export function QuickPurchaseOrderModal({
             sku,
             supplier_id,
             cost_price,
+            supplier_moq,
             product_images!left(public_url)
           `
           )
@@ -123,6 +125,7 @@ export function QuickPurchaseOrderModal({
           sku: productData.sku,
           supplier_id: productData.supplier_id || '',
           cost_price: productData.cost_price || 0,
+          supplier_moq: productData.supplier_moq || 1,
           primary_image_url: primaryImageUrl,
           supplier: supplierInfo,
         };
@@ -160,12 +163,18 @@ export function QuickPurchaseOrderModal({
     loadData();
   }, [open, productId, supabase]);
 
-  // Pré-remplir quantité avec shortage_quantity
+  // ✅ Phase 2.5: Pré-remplir quantité avec MAX(shortage_quantity, MOQ)
+  // Garantit que la quantité suggérée respecte le MOQ fournisseur
   useEffect(() => {
-    if (shortageQuantity && shortageQuantity > 0) {
-      setQuantity(shortageQuantity);
+    if (product && shortageQuantity && shortageQuantity > 0) {
+      const moq = product.supplier_moq || 1;
+      const suggestedQty = Math.max(shortageQuantity, moq);
+      setQuantity(suggestedQty);
+    } else if (product) {
+      // Si pas de shortage, utiliser MOQ comme défaut
+      setQuantity(product.supplier_moq || 1);
     }
-  }, [shortageQuantity]);
+  }, [shortageQuantity, product]);
 
   // Validation + soumission
   async function handleSubmit() {

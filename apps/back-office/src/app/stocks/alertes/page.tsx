@@ -3,8 +3,28 @@
 import { useState, useEffect, useMemo } from 'react';
 
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
+import { useToast } from '@verone/common';
+import { useStockAlerts } from '@verone/stock';
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@verone/ui';
+import { Input } from '@verone/ui';
+import { Label } from '@verone/ui';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@verone/ui';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -25,29 +45,8 @@ import {
   BarChart3,
 } from 'lucide-react';
 
-import { useToast } from '@verone/common';
-import { useStockAlerts } from '@verone/stock';
-
 import { QuickPurchaseOrderModal } from '../../../components/business/quick-purchase-order-modal';
 import { StockAlertCard } from '../../../components/business/stock-alert-card';
-import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@verone/ui';
-import { Input } from '@verone/ui';
-import { Label } from '@verone/ui';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@verone/ui';
 
 type AlertSeverity = 'critical' | 'warning' | 'info';
 type AlertCategory = 'stock' | 'movement' | 'forecast' | 'system';
@@ -79,6 +78,7 @@ interface StockAlert {
 
 export default function StockAlertesPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
 
   const [filters, setFilters] = useState({
@@ -165,6 +165,29 @@ export default function StockAlertesPage() {
       inDraft: alertsInDraft.length,
     };
   }, [mappedAlerts, criticalAlerts, warningAlerts, alertsInDraft]);
+
+  // ✅ AUTO-OPEN MODAL depuis notification (Phase 2.2)
+  // Détecte ?product_id= dans URL et ouvre automatiquement le modal de commande
+  useEffect(() => {
+    const productId = searchParams.get('product_id');
+
+    if (productId && alerts.length > 0) {
+      // Chercher l'alerte correspondante dans les alertes du hook (pas mappedAlerts)
+      const alert = alerts.find(a => a.product_id === productId);
+
+      if (alert && !alert.is_in_draft) {
+        // Auto-ouvrir le modal seulement si pas déjà en brouillon
+        setSelectedProductForOrder({
+          productId: alert.product_id,
+          shortageQuantity: alert.shortage_quantity,
+        });
+        setShowQuickPurchaseModal(true);
+
+        // Optionnel : Supprimer le paramètre de l'URL après ouverture
+        // router.replace('/stocks/alertes', { scroll: false });
+      }
+    }
+  }, [searchParams, alerts]);
 
   // Filtres appliqués
   const filteredAlerts = mappedAlerts.filter(alert => {
@@ -487,6 +510,7 @@ export default function StockAlertesPage() {
                       is_in_draft: alert.is_in_draft,
                       quantity_in_draft: alert.quantity_in_draft,
                       draft_order_number: alert.draft_order_number,
+                      validated: false, // Legacy code - cette page utilise l'ancien format d'alertes
                     }}
                     onActionClick={() => {
                       if (alert.action) {

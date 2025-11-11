@@ -14,11 +14,10 @@ import {
   Copy,
   Check,
   X,
-  Loader2,
 } from 'lucide-react';
 
-import type { ButtonV2Props } from './button';
-import { ButtonV2 } from './button';
+import type { ButtonProps } from './button';
+import { Button } from './button';
 
 /**
  * Type d'action prédéfinie pour ModernActionButton
@@ -38,7 +37,7 @@ export type ActionType =
  * Configuration d'une action (variant + icon + label)
  */
 interface ActionConfig {
-  variant: ButtonV2Props['variant'];
+  variant: ButtonProps['variant'];
   icon: LucideIcon;
   defaultLabel: string;
 }
@@ -53,7 +52,7 @@ const ACTION_CONFIGS: Record<ActionType, ActionConfig> = {
     defaultLabel: 'Modifier',
   },
   archive: {
-    variant: 'warning',
+    variant: 'destructive',
     icon: Archive,
     defaultLabel: 'Archiver',
   },
@@ -73,7 +72,7 @@ const ACTION_CONFIGS: Record<ActionType, ActionConfig> = {
     defaultLabel: 'Télécharger',
   },
   upload: {
-    variant: 'primary',
+    variant: 'default',
     icon: Upload,
     defaultLabel: 'Importer',
   },
@@ -83,7 +82,7 @@ const ACTION_CONFIGS: Record<ActionType, ActionConfig> = {
     defaultLabel: 'Copier',
   },
   approve: {
-    variant: 'success',
+    variant: 'default',
     icon: Check,
     defaultLabel: 'Approuver',
   },
@@ -176,16 +175,17 @@ export function ModernActionButton({
   // Label final : children override, sinon defaultLabel
   const label = children || config.defaultLabel;
 
+  // Mapper size 'md' vers 'default' pour Button restauré
+  const mappedSize = size === 'md' ? 'default' : size;
+
   return (
-    <ButtonV2
+    <Button
       variant={config.variant}
-      size={size}
-      icon={loading ? Loader2 : config.icon}
-      iconPosition="left"
+      size={mappedSize}
       onClick={onClick}
       disabled={disabled || loading}
       className={cn(
-        // Microinteraction hover scale 1.05 (override ButtonV2 qui fait 1.02)
+        // Microinteraction hover scale 1.05
         'hover:scale-[1.05] active:scale-[0.95]',
         // Transition ultra-rapide pour action button
         'transition-all duration-150',
@@ -194,7 +194,7 @@ export function ModernActionButton({
       aria-label={typeof label === 'string' ? label : config.defaultLabel}
     >
       {label}
-    </ButtonV2>
+    </Button>
   );
 }
 

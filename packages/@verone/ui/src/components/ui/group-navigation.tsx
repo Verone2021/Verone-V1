@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-import { ButtonV2 } from './button';
+import { Button } from './button';
 
 interface GroupNavigationProps {
   currentGroupId: string;
@@ -32,17 +32,17 @@ export function GroupNavigation({
       <div className="flex items-center space-x-2">
         {prevGroup ? (
           <Link href={`/catalogue/product-groups/${prevGroup.id}`}>
-            <ButtonV2
+            <Button
               variant="outline"
               size="sm"
               className="flex items-center space-x-1"
             >
               <ChevronLeft className="h-4 w-4" />
               <span className="truncate max-w-[120px]">{prevGroup.name}</span>
-            </ButtonV2>
+            </Button>
           </Link>
         ) : (
-          <ButtonV2
+          <Button
             variant="outline"
             size="sm"
             disabled
@@ -50,7 +50,7 @@ export function GroupNavigation({
           >
             <ChevronLeft className="h-4 w-4" />
             <span>Précédent</span>
-          </ButtonV2>
+          </Button>
         )}
       </div>
 
@@ -61,17 +61,17 @@ export function GroupNavigation({
       <div className="flex items-center space-x-2">
         {nextGroup ? (
           <Link href={`/catalogue/product-groups/${nextGroup.id}`}>
-            <ButtonV2
+            <Button
               variant="outline"
               size="sm"
               className="flex items-center space-x-1"
             >
               <span className="truncate max-w-[120px]">{nextGroup.name}</span>
               <ChevronRight className="h-4 w-4" />
-            </ButtonV2>
+            </Button>
           </Link>
         ) : (
-          <ButtonV2
+          <Button
             variant="outline"
             size="sm"
             disabled
@@ -79,7 +79,7 @@ export function GroupNavigation({
           >
             <span>Suivant</span>
             <ChevronRight className="h-4 w-4" />
-          </ButtonV2>
+          </Button>
         )}
       </div>
     </div>
