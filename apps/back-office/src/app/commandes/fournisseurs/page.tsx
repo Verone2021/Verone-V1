@@ -4,7 +4,24 @@ import { useState, useEffect, useMemo } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
+import { useToast } from '@verone/common';
+import type { PurchaseOrder, PurchaseOrderStatus } from '@verone/orders';
+import { PurchaseOrderFormModal } from '@verone/orders';
+import { PurchaseOrderReceptionModal } from '@verone/orders';
+import { PurchaseOrderDetailModal } from '@verone/orders';
+import { usePurchaseOrders } from '@verone/orders';
+import { useOrganisations } from '@verone/organisations';
 import type { Database } from '@verone/types';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@verone/ui';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -33,6 +50,7 @@ import {
 } from '@verone/ui';
 import { Tabs, TabsList, TabsTrigger } from '@verone/ui';
 import { formatCurrency, formatDate } from '@verone/utils';
+import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 import {
   Plus,
   Filter,
@@ -49,14 +67,6 @@ import {
   ArrowUp,
   ArrowDown,
 } from 'lucide-react';
-
-import type { PurchaseOrder, PurchaseOrderStatus } from '@verone/orders';
-import { PurchaseOrderFormModal } from '@verone/orders';
-import { PurchaseOrderReceptionModal } from '@verone/orders';
-import { PurchaseOrderDetailModal } from '@verone/orders';
-import { usePurchaseOrders } from '@verone/orders';
-import { useOrganisations } from '@verone/organisations';
-import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 
 type PurchaseOrderRow = Database['public']['Tables']['purchase_orders']['Row'];
 
@@ -101,6 +111,7 @@ export default function PurchaseOrdersPage() {
   } = usePurchaseOrders();
 
   const { organisations: suppliers } = useOrganisations({ type: 'supplier' });
+  const { toast } = useToast();
   const searchParams = useSearchParams();
 
   // États filtres
@@ -125,6 +136,9 @@ export default function PurchaseOrdersPage() {
   const [showReceptionModal, setShowReceptionModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [orderToEdit, setOrderToEdit] = useState<PurchaseOrderRow | null>(null);
+  const [showValidateConfirmation, setShowValidateConfirmation] =
+    useState(false);
+  const [orderToValidate, setOrderToValidate] = useState<string | null>(null);
 
   useEffect(() => {
     fetchOrders();
@@ -324,10 +338,39 @@ export default function PurchaseOrdersPage() {
     orderId: string,
     newStatus: PurchaseOrderStatus
   ) => {
+    // Si validation (draft → confirmed), afficher modal de confirmation
+    if (newStatus === 'confirmed') {
+      setOrderToValidate(orderId);
+      setShowValidateConfirmation(true);
+      return;
+    }
+
+    // Sinon, exécuter directement
     try {
       await updateStatus(orderId, newStatus);
     } catch (error) {
       console.error('Erreur lors du changement de statut:', error);
+    }
+  };
+
+  const handleValidateConfirmed = async () => {
+    if (!orderToValidate) return;
+
+    try {
+      await updateStatus(orderToValidate, 'confirmed');
+      toast({
+        title: 'Succès',
+        description: 'Commande fournisseur confirmée avec succès',
+      });
+      setShowValidateConfirmation(false);
+      setOrderToValidate(null);
+    } catch (error) {
+      console.error('Erreur lors de la confirmation:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de confirmer la commande',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -801,6 +844,32 @@ export default function PurchaseOrdersPage() {
           }}
         />
       )}
+
+      {/* AlertDialog Confirmation Validation */}
+      <AlertDialog
+        open={showValidateConfirmation}
+        onOpenChange={setShowValidateConfirmation}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer la validation</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vous êtes sur le point de confirmer cette commande fournisseur.
+              Une fois confirmée, la commande sera envoyée au fournisseur et
+              pourra être réceptionnée.
+              <br />
+              <br />
+              Voulez-vous continuer ?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleValidateConfirmed}>
+              Confirmer la commande
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
