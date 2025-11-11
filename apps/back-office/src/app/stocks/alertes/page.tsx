@@ -498,8 +498,10 @@ export default function StockAlertesPage() {
                       product_name: alert.productName || '',
                       sku: alert.productSku || '',
                       stock_real: alert.currentStock || 0,
+                      stock_forecasted_in: 0,
                       stock_forecasted_out: 0,
                       min_stock: alert.minStock || 0,
+                      shortage_quantity: 0,
                       alert_type:
                         alert.title === 'Rupture de stock'
                           ? 'out_of_stock'
@@ -509,8 +511,10 @@ export default function StockAlertesPage() {
                       severity: alert.severity,
                       is_in_draft: alert.is_in_draft,
                       quantity_in_draft: alert.quantity_in_draft,
+                      draft_order_id: null,
                       draft_order_number: alert.draft_order_number,
                       validated: false, // Legacy code - cette page utilise l'ancien format d'alertes
+                      validated_at: null,
                     }}
                     onActionClick={() => {
                       if (alert.action) {

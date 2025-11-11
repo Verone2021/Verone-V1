@@ -14,16 +14,20 @@ export interface StockAlert {
   product_name: string;
   sku: string;
   stock_real: number;
+  stock_forecasted_in: number;
   stock_forecasted_out: number;
   min_stock: number;
+  shortage_quantity: number;
   alert_type: 'low_stock' | 'out_of_stock' | 'no_stock_but_ordered';
   severity: 'info' | 'warning' | 'critical';
 
   // Tracking commandes brouillon
   is_in_draft: boolean;
   quantity_in_draft: number | null;
+  draft_order_id: string | null;
   draft_order_number: string | null;
   validated: boolean; // ✅ Commande validée (passe de ROUGE → VERT)
+  validated_at: string | null;
 
   related_orders?: Array<{
     order_number: string;
@@ -55,19 +59,26 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
   };
 
   const getSeverityColor = () => {
-    // ✅ WORKFLOW COMPLET : ROUGE (brouillon) → VERT (validé) → DISPARAÎT (réceptionné)
+    // ✅ CALCUL STOCK PRÉVISIONNEL
+    // Formule : stock_real + stock_forecasted_in - stock_forecasted_out
+    const stock_previsionnel =
+      alert.stock_real +
+      (alert.stock_forecasted_in || 0) -
+      (alert.stock_forecasted_out || 0);
 
-    // ✅ VERT si commande validée (en attente de réception)
-    if (alert.validated) {
+    // ✅ WORKFLOW COMPLET : ROUGE (brouillon ou insuffisant) → VERT (validé et suffisant) → DISPARAÎT (réceptionné)
+
+    // 🟢 VERT si commande validée ET stock prévisionnel >= min_stock
+    if (alert.validated && stock_previsionnel >= alert.min_stock) {
       return 'border-green-600 !bg-green-50';
     }
 
-    // 🔴 ROUGE si commande en brouillon (non validée)
-    if (alert.is_in_draft) {
+    // 🔴 ROUGE si commande brouillon OU stock prévisionnel < min_stock
+    if (alert.is_in_draft || stock_previsionnel < alert.min_stock) {
       return 'border-red-600 !bg-red-50';
     }
 
-    // Couleurs selon sévérité (pour alertes sans commande)
+    // Couleurs selon sévérité (cas par défaut - normalement pas atteint)
     switch (alert.severity) {
       case 'critical':
         return 'border-red-600 !bg-red-50';
@@ -146,11 +157,21 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
                       ? 'Voir Commandes'
                       : 'Commander Fournisseur'}
                 </Button>
-                <Link href={`/catalogue/${alert.product_id}`}>
-                  <Button size="sm" variant="ghost" className="text-xs">
-                    Voir Produit
-                  </Button>
-                </Link>
+                {alert.draft_order_id ? (
+                  <Link
+                    href={`/commandes/fournisseurs?id=${alert.draft_order_id}`}
+                  >
+                    <Button size="sm" variant="outline" className="text-xs">
+                      Voir Commande
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link href={`/catalogue/${alert.product_id}`}>
+                    <Button size="sm" variant="ghost" className="text-xs">
+                      Voir Produit
+                    </Button>
+                  </Link>
+                )}
               </div>
             </div>
 

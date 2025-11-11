@@ -17,6 +17,7 @@ export interface StockAlert {
   alert_type: StockAlertType;
   severity: 'critical' | 'warning' | 'info';
   stock_real: number;
+  stock_forecasted_in: number;
   stock_forecasted_out: number;
   min_stock: number;
   shortage_quantity: number;
@@ -69,7 +70,8 @@ export function useStockAlerts() {
           validated_at,
           products (
             name,
-            sku
+            sku,
+            stock_forecasted_in
           ),
           purchase_orders:draft_order_id (
             po_number
@@ -108,6 +110,7 @@ export function useStockAlerts() {
                   ? 'warning'
                   : 'info',
             stock_real: alert.stock_real,
+            stock_forecasted_in: alert.products?.stock_forecasted_in || 0,
             stock_forecasted_out: alert.stock_forecasted_out,
             min_stock: alert.min_stock,
             shortage_quantity: alert.shortage_quantity,
