@@ -5,9 +5,18 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 
-import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
+import { ContactDetailsEditSection } from '@verone/customers';
+import { ContactPersonalEditSection } from '@verone/customers';
+import { ContactPreferencesEditSection } from '@verone/customers';
+import { ContactRolesEditSection } from '@verone/customers';
+import { useContacts, type Contact } from '@verone/organisations';
+import {
+  getOrganisationDisplayName,
+  type Organisation,
+} from '@verone/organisations';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import { Badge } from '@verone/ui';
 import {
   ArrowLeft,
   User,
@@ -23,16 +32,6 @@ import {
   Calculator,
   Wrench,
 } from 'lucide-react';
-
-import { ContactDetailsEditSection } from '@verone/customers';
-import { ContactPersonalEditSection } from '@verone/customers';
-import { ContactPreferencesEditSection } from '@verone/customers';
-import { ContactRolesEditSection } from '@verone/customers';
-import { useContacts, type Contact } from '@verone/organisations';
-import {
-  getOrganisationDisplayName,
-  type Organisation,
-} from '@verone/organisations';
 
 export default function ContactDetailPage() {
   const { contactId } = useParams();
@@ -252,13 +251,8 @@ export default function ContactDetailPage() {
         {/* Actions */}
         <div className="flex gap-2">
           <ButtonV2
-            variant="outline"
+            variant={currentContact.is_active ? 'danger' : 'success'}
             onClick={handleToggleActive}
-            className={
-              currentContact.is_active
-                ? 'text-black border-gray-200 hover:bg-gray-50'
-                : 'text-blue-600 border-blue-200 hover:bg-blue-50'
-            }
           >
             {currentContact.is_active ? (
               <>

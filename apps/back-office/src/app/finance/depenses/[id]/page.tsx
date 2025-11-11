@@ -11,8 +11,10 @@ import { use } from 'react';
 
 import Link from 'next/link';
 
-import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
+import { useFinancialPayments } from '@verone/finance';
+import { FinancialPaymentForm } from '@verone/finance';
+import type { FinancialDocument, DocumentStatus } from '@verone/finance';
+import { Badge, ButtonUnified, IconButton } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import { Separator } from '@verone/ui';
 import {
@@ -24,6 +26,8 @@ import {
   TableRow,
 } from '@verone/ui';
 import { Skeleton } from '@verone/ui';
+import { createClient } from '@verone/utils/supabase/client';
+import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
@@ -42,11 +46,6 @@ import {
 } from 'lucide-react';
 
 import { ExpenseForm } from '@/components/forms/expense-form';
-import { useFinancialPayments } from '@verone/finance';
-import { FinancialPaymentForm } from '@verone/finance';
-import type { FinancialDocument, DocumentStatus } from '@verone/finance';
-import { createClient } from '@verone/utils/supabase/client';
-import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 
 // =====================================================================
 // TYPES
@@ -166,11 +165,14 @@ export default function ExpenseDetailPage(props: PageProps) {
     return (
       <div className="flex flex-col gap-6 p-6">
         <div className="flex items-center gap-4">
-          <ButtonV2 variant="ghost" size="sm" asChild className="h-9 w-9 p-0">
-            <Link href="/finance/depenses">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </ButtonV2>
+          <Link href="/finance/depenses">
+            <IconButton
+              icon={ArrowLeft}
+              variant="outline"
+              size="sm"
+              label="Retour à la liste des dépenses"
+            />
+          </Link>
 
           <div>
             <h1 className="text-3xl font-bold">Nouvelle Dépense</h1>
@@ -192,12 +194,11 @@ export default function ExpenseDetailPage(props: PageProps) {
         <h3 className="text-lg font-medium text-gray-900 mb-2">
           Dépense introuvable
         </h3>
-        <ButtonV2 asChild>
-          <Link href="/finance/depenses">
-            <ArrowLeft className="h-4 w-4 mr-2" />
+        <Link href="/finance/depenses">
+          <ButtonUnified variant="outline" icon={ArrowLeft} iconPosition="left">
             Retour à la liste
-          </Link>
-        </ButtonV2>
+          </ButtonUnified>
+        </Link>
       </div>
     );
   }
@@ -210,11 +211,14 @@ export default function ExpenseDetailPage(props: PageProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <ButtonV2 variant="ghost" size="sm" asChild className="h-9 w-9 p-0">
-            <Link href="/finance/depenses">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </ButtonV2>
+          <Link href="/finance/depenses">
+            <IconButton
+              icon={ArrowLeft}
+              variant="outline"
+              size="sm"
+              label="Retour à la liste des dépenses"
+            />
+          </Link>
 
           <div>
             <h1 className="text-3xl font-bold">{document.document_number}</h1>
@@ -226,16 +230,19 @@ export default function ExpenseDetailPage(props: PageProps) {
           {getStatusBadge(document.status)}
 
           {document.uploaded_file_url && (
-            <ButtonV2 variant="outline" asChild>
-              <a
-                href={document.uploaded_file_url}
-                target="_blank"
-                rel="noopener noreferrer"
+            <a
+              href={document.uploaded_file_url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <ButtonUnified
+                variant="outline"
+                icon={Download}
+                iconPosition="left"
               >
-                <Download className="h-4 w-4 mr-2" />
                 Télécharger justificatif
-              </a>
-            </ButtonV2>
+              </ButtonUnified>
+            </a>
           )}
         </div>
       </div>
@@ -388,10 +395,14 @@ export default function ExpenseDetailPage(props: PageProps) {
             <CardTitle>Historique des paiements ({payments.length})</CardTitle>
 
             {!isPaid && remaining > 0 && !showPaymentForm && (
-              <ButtonV2 onClick={() => setShowPaymentForm(true)}>
-                <CreditCard className="h-4 w-4 mr-2" />
+              <ButtonUnified
+                variant="success"
+                icon={CreditCard}
+                iconPosition="left"
+                onClick={() => setShowPaymentForm(true)}
+              >
                 Enregistrer un paiement
-              </ButtonV2>
+              </ButtonUnified>
             )}
           </div>
         </CardHeader>
@@ -490,16 +501,19 @@ export default function ExpenseDetailPage(props: PageProps) {
                   Facture ou reçu de la dépense
                 </p>
               </div>
-              <ButtonV2 variant="outline" asChild>
-                <a
-                  href={document.uploaded_file_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+              <a
+                href={document.uploaded_file_url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <ButtonUnified
+                  variant="outline"
+                  icon={Download}
+                  iconPosition="left"
                 >
-                  <Download className="h-4 w-4 mr-2" />
                   Télécharger
-                </a>
-              </ButtonV2>
+                </ButtonUnified>
+              </a>
             </div>
           </CardContent>
         </Card>

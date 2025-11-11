@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 
 import Link from 'next/link';
 
+import { useSalesOrders } from '@verone/orders';
+import { usePurchaseOrders } from '@verone/orders';
 import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
+import { ButtonUnified } from '@verone/ui';
 import {
   Card,
   CardContent,
@@ -27,9 +29,6 @@ import {
   BarChart3,
   ShoppingBag,
 } from 'lucide-react';
-
-import { useSalesOrders } from '@verone/orders';
-import { usePurchaseOrders } from '@verone/orders';
 
 export default function CommandesOverviewPage() {
   const {
@@ -84,19 +83,14 @@ export default function CommandesOverviewPage() {
           </div>
           <div className="flex space-x-3">
             <Link href="/commandes/clients">
-              <ButtonV2
-                variant="outline"
-                className="flex items-center space-x-2"
-              >
-                <ShoppingBag className="h-4 w-4" />
-                <span>Commandes Clients</span>
-              </ButtonV2>
+              <ButtonUnified variant="outline" icon={ShoppingBag}>
+                Commandes Clients
+              </ButtonUnified>
             </Link>
             <Link href="/commandes/fournisseurs">
-              <ButtonV2 className="flex items-center space-x-2">
-                <Package className="h-4 w-4" />
-                <span>Commandes Fournisseurs</span>
-              </ButtonV2>
+              <ButtonUnified variant="outline" icon={Package}>
+                Commandes Fournisseurs
+              </ButtonUnified>
             </Link>
           </div>
         </div>
@@ -190,14 +184,14 @@ export default function CommandesOverviewPage() {
                     <CardTitle className="text-lg">Commandes Clients</CardTitle>
                   </div>
                   <Link href="/commandes/clients">
-                    <ButtonV2
+                    <ButtonUnified
                       variant="ghost"
                       size="sm"
-                      className="flex items-center space-x-1"
+                      icon={ArrowRight}
+                      iconPosition="right"
                     >
-                      <span>Voir tout</span>
-                      <ArrowRight className="h-4 w-4" />
-                    </ButtonV2>
+                      Voir tout
+                    </ButtonUnified>
                   </Link>
                 </div>
                 <CardDescription>Ventes et expéditions clients</CardDescription>
@@ -253,14 +247,14 @@ export default function CommandesOverviewPage() {
                     </CardTitle>
                   </div>
                   <Link href="/commandes/fournisseurs">
-                    <ButtonV2
+                    <ButtonUnified
                       variant="ghost"
                       size="sm"
-                      className="flex items-center space-x-1"
+                      icon={ArrowRight}
+                      iconPosition="right"
                     >
-                      <span>Voir tout</span>
-                      <ArrowRight className="h-4 w-4" />
-                    </ButtonV2>
+                      Voir tout
+                    </ButtonUnified>
                   </Link>
                 </div>
                 <CardDescription>Achats et approvisionnements</CardDescription>
@@ -311,40 +305,40 @@ export default function CommandesOverviewPage() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Link href="/commandes/clients">
-                  <ButtonV2
+                  <ButtonUnified
                     variant="outline"
-                    className="w-full flex items-center space-x-2 justify-start"
+                    icon={ShoppingBag}
+                    className="w-full justify-start"
                   >
-                    <ShoppingBag className="h-4 w-4" />
-                    <span>Nouvelle Vente</span>
-                  </ButtonV2>
+                    Nouvelle Vente
+                  </ButtonUnified>
                 </Link>
                 <Link href="/commandes/fournisseurs">
-                  <ButtonV2
+                  <ButtonUnified
                     variant="outline"
-                    className="w-full flex items-center space-x-2 justify-start"
+                    icon={Package}
+                    className="w-full justify-start"
                   >
-                    <Package className="h-4 w-4" />
-                    <span>Nouvel Achat</span>
-                  </ButtonV2>
+                    Nouvel Achat
+                  </ButtonUnified>
                 </Link>
                 <Link href="/produits/catalogue/stocks">
-                  <ButtonV2
+                  <ButtonUnified
                     variant="outline"
-                    className="w-full flex items-center space-x-2 justify-start"
+                    icon={BarChart3}
+                    className="w-full justify-start"
                   >
-                    <BarChart3 className="h-4 w-4" />
-                    <span>État Stocks</span>
-                  </ButtonV2>
+                    État Stocks
+                  </ButtonUnified>
                 </Link>
                 <Link href="/contacts-organisations">
-                  <ButtonV2
+                  <ButtonUnified
                     variant="outline"
-                    className="w-full flex items-center space-x-2 justify-start"
+                    icon={Users}
+                    className="w-full justify-start"
                   >
-                    <Users className="h-4 w-4" />
-                    <span>Organisations</span>
-                  </ButtonV2>
+                    Organisations
+                  </ButtonUnified>
                 </Link>
               </div>
             </CardContent>

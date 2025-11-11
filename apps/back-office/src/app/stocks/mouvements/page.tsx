@@ -4,15 +4,14 @@ import React, { useState, useEffect } from 'react';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
-import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@verone/ui';
+import { UniversalOrderDetailsModal } from '@verone/orders';
+import type { MovementWithDetails } from '@verone/stock';
+import { MovementsFilters } from '@verone/stock';
+import { CancelMovementModal } from '@verone/stock';
+import { MovementDetailsModal } from '@verone/stock';
+import { MovementsStatsCards } from '@verone/stock';
+import { MovementsTable } from '@verone/stock';
+import { useMovementsHistory } from '@verone/stock';
 import {
   Select,
   SelectContent,
@@ -20,6 +19,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import { Badge } from '@verone/ui';
 import { cn } from '@verone/utils';
 import {
   ArrowLeft,
@@ -33,15 +41,6 @@ import {
   LayoutGrid,
   Table,
 } from 'lucide-react';
-
-import { UniversalOrderDetailsModal } from '@verone/orders';
-import type { MovementWithDetails } from '@verone/stock';
-import { MovementsFilters } from '@verone/stock';
-import { CancelMovementModal } from '@verone/stock';
-import { MovementDetailsModal } from '@verone/stock';
-import { MovementsStatsCards } from '@verone/stock';
-import { MovementsTable } from '@verone/stock';
-import { useMovementsHistory } from '@verone/stock';
 
 import { MovementsListView } from './components/MovementsListView';
 
@@ -201,7 +200,7 @@ export default function StockMovementsPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <ButtonV2
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={() => router.push('/stocks')}
                 className="flex items-center text-gray-600 hover:text-black h-8 px-2"

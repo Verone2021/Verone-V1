@@ -4,6 +4,11 @@ import { useState, useEffect } from 'react';
 
 import Link from 'next/link';
 
+import { useContacts } from '@verone/organisations';
+import {
+  getOrganisationDisplayName,
+  type Organisation,
+} from '@verone/organisations';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -33,12 +38,6 @@ import {
   ArchiveRestore,
   ArrowLeft,
 } from 'lucide-react';
-
-import { useContacts } from '@verone/organisations';
-import {
-  getOrganisationDisplayName,
-  type Organisation,
-} from '@verone/organisations';
 
 interface ContactStats {
   totalContacts: number;
@@ -481,10 +480,11 @@ export default function ContactsPage() {
                           <div className="flex items-center space-x-2">
                             {/* Archiver/Restaurer */}
                             <ButtonV2
-                              variant="outline"
+                              variant={
+                                !contact.is_active ? 'success' : 'danger'
+                              }
                               size="sm"
                               onClick={() => handleArchive(contact)}
-                              className={`${!contact.is_active ? 'text-blue-600 border-blue-200 hover:bg-blue-50' : 'text-black border-gray-200 hover:bg-gray-50'}`}
                             >
                               {!contact.is_active ? (
                                 <ArchiveRestore className="h-4 w-4" />
@@ -495,16 +495,15 @@ export default function ContactsPage() {
 
                             {/* Supprimer */}
                             <ButtonV2
-                              variant="outline"
+                              variant="danger"
                               size="sm"
                               onClick={() => handleDelete(contact)}
-                              className="text-red-600 border-red-200 hover:bg-red-50"
                             >
                               <Trash2 className="h-4 w-4" />
                             </ButtonV2>
 
                             {/* Voir détails */}
-                            <ButtonV2 variant="ghost" size="sm">
+                            <ButtonV2 variant="outline" size="sm">
                               <Eye className="h-4 w-4" />
                             </ButtonV2>
                           </div>

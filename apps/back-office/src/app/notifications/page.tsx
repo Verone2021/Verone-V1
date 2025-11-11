@@ -15,7 +15,12 @@
 
 import { useState, useMemo } from 'react';
 
-import { ButtonV2 } from '@verone/ui';
+import {
+  useDatabaseNotifications,
+  type DatabaseNotification,
+} from '@verone/notifications';
+import { ButtonUnified, IconButton } from '@verone/ui';
+import { spacing, colors } from '@verone/ui/design-system';
 import { cn } from '@verone/utils';
 import {
   formatDistanceToNow,
@@ -26,12 +31,6 @@ import {
 } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Bell, Search, CheckCheck, Trash2, Filter, X } from 'lucide-react';
-
-import {
-  useDatabaseNotifications,
-  type DatabaseNotification,
-} from '@verone/notifications';
-import { spacing, colors } from '@verone/ui/design-system';
 
 // Types pour les filtres
 type FilterTab = 'all' | 'unread' | 'urgent' | 'by-type';
@@ -224,36 +223,35 @@ const NotificationCard = ({
           <div className="flex items-center gap-2">
             {/* Action principale */}
             {notification.action_url && notification.action_label && (
-              <ButtonV2
-                variant="primary"
+              <ButtonUnified
+                variant="default"
                 size="sm"
                 onClick={() => {
                   window.location.href = notification.action_url!;
                 }}
               >
                 {notification.action_label}
-              </ButtonV2>
+              </ButtonUnified>
             )}
 
             {/* Actions secondaires */}
             <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               {!notification.read && (
-                <ButtonV2
+                <IconButton
                   variant="ghost"
-                  size="sm"
                   icon={CheckCheck}
-                  className="h-8 w-8 p-0"
-                  title="Marquer comme lu"
+                  size="sm"
+                  label="Marquer comme lu"
                   onClick={() => onMarkAsRead(notification.id)}
                 />
               )}
 
-              <ButtonV2
+              <IconButton
                 variant="ghost"
-                size="sm"
                 icon={Trash2}
-                className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                title="Supprimer"
+                size="sm"
+                className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                label="Supprimer"
                 onClick={() => onDelete(notification.id)}
               />
             </div>
@@ -391,14 +389,14 @@ export default function NotificationsPage() {
           {notifications.length > 0 && (
             <div className="flex items-center gap-2">
               {unreadCount > 0 && (
-                <ButtonV2
+                <ButtonUnified
                   variant="secondary"
                   size="sm"
-                  icon={CheckCheck}
                   onClick={() => markAllAsRead()}
                 >
+                  <CheckCheck className="h-4 w-4 mr-1" />
                   Tout marquer lu
-                </ButtonV2>
+                </ButtonUnified>
               )}
             </div>
           )}

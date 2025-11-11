@@ -4,8 +4,14 @@ import { useState, useMemo } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { useFamilies } from '@verone/categories';
+import { useCategories } from '@verone/categories';
+import { useSubcategories } from '@verone/categories';
+import type { FamilyWithStats } from '@verone/categories';
+import type { CategoryWithChildren } from '@verone/categories';
+import type { SubcategoryWithDetails } from '@verone/categories';
 import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
+import { ButtonUnified, IconButton } from '@verone/ui';
 import { cn } from '@verone/utils';
 import { checkSLOCompliance } from '@verone/utils';
 import {
@@ -28,14 +34,8 @@ import { FamilyForm } from '@/components/forms/family-form';
 import { SubcategoryForm } from '@/components/forms/subcategory-form';
 
 // 🔗 HOOKS SUPABASE - Connexion aux vraies données
-import { useFamilies } from '@verone/categories';
-import { useCategories } from '@verone/categories';
-import { useSubcategories } from '@verone/categories';
 
 // 📋 TYPES - Importés depuis les hooks
-import type { FamilyWithStats } from '@verone/categories';
-import type { CategoryWithChildren } from '@verone/categories';
-import type { SubcategoryWithDetails } from '@verone/categories';
 
 // Interface filtres pour la hiérarchie complète
 interface HierarchyFilters {
@@ -330,18 +330,14 @@ export default function CategoriesPage() {
             className="w-4 h-4 mr-3 rounded border-gray-300"
           />
 
-          <ButtonV2
+          <IconButton
             variant="ghost"
             size="sm"
             onClick={() => toggleFamilyExpansion(family.id)}
             className="p-1 mr-2"
-          >
-            {isExpanded ? (
-              <ChevronDown className="h-4 w-4 text-black" />
-            ) : (
-              <ChevronRight className="h-4 w-4 text-gray-600" />
-            )}
-          </ButtonV2>
+            icon={isExpanded ? ChevronDown : ChevronRight}
+            label={isExpanded ? 'Réduire' : 'Développer'}
+          />
 
           {/* Image thumbnail */}
           <div className="w-16 h-16 mr-3 flex-shrink-0">
@@ -386,32 +382,31 @@ export default function CategoriesPage() {
           </div>
 
           <div className="flex space-x-1">
-            <ButtonV2
-              variant="primary"
+            <ButtonUnified
+              variant="outline"
               size="sm"
               onClick={() => openCreateForm('category', family.id)}
               title="Ajouter une catégorie"
+              icon={Plus}
+              iconPosition="left"
               className="text-xs"
             >
-              <Plus className="h-4 w-4 mr-1" />
               Catégorie
-            </ButtonV2>
-            <ButtonV2
-              variant="ghost"
+            </ButtonUnified>
+            <IconButton
+              variant="outline"
               size="sm"
               onClick={() => openEditForm('family', family)}
-              title="Modifier"
-            >
-              <Edit3 className="h-4 w-4" />
-            </ButtonV2>
-            <ButtonV2
-              variant="ghost"
+              label="Modifier"
+              icon={Edit3}
+            />
+            <IconButton
+              variant="danger"
               size="sm"
               onClick={() => handleDelete('family', family.id)}
-              title="Supprimer"
-            >
-              <Trash2 className="h-4 w-4" />
-            </ButtonV2>
+              label="Supprimer"
+              icon={Trash2}
+            />
           </div>
         </div>
 
@@ -445,18 +440,14 @@ export default function CategoriesPage() {
             className="w-4 h-4 mr-3 rounded border-gray-300"
           />
 
-          <ButtonV2
+          <IconButton
             variant="ghost"
             size="sm"
             onClick={() => toggleCategoryExpansion(category.id)}
             className="p-1 mr-2"
-          >
-            {isExpanded ? (
-              <ChevronDown className="h-4 w-4 text-black" />
-            ) : (
-              <ChevronRight className="h-4 w-4 text-gray-600" />
-            )}
-          </ButtonV2>
+            icon={isExpanded ? ChevronDown : ChevronRight}
+            label={isExpanded ? 'Réduire' : 'Développer'}
+          />
 
           {/* Image thumbnail */}
           <div className="w-12 h-12 mr-3 flex-shrink-0">
@@ -501,32 +492,31 @@ export default function CategoriesPage() {
           </div>
 
           <div className="flex space-x-1">
-            <ButtonV2
-              variant="primary"
+            <ButtonUnified
+              variant="outline"
               size="sm"
               onClick={() => openCreateForm('subcategory', category.id)}
               title="Ajouter une sous-catégorie"
+              icon={Plus}
+              iconPosition="left"
               className="text-xs"
             >
-              <Plus className="h-4 w-4 mr-1" />
               Sous-catégorie
-            </ButtonV2>
-            <ButtonV2
-              variant="ghost"
+            </ButtonUnified>
+            <IconButton
+              variant="outline"
               size="sm"
               onClick={() => openEditForm('category', category)}
-              title="Modifier"
-            >
-              <Edit3 className="h-4 w-4" />
-            </ButtonV2>
-            <ButtonV2
-              variant="ghost"
+              label="Modifier"
+              icon={Edit3}
+            />
+            <IconButton
+              variant="danger"
               size="sm"
               onClick={() => handleDelete('category', category.id)}
-              title="Supprimer"
-            >
-              <Trash2 className="h-4 w-4" />
-            </ButtonV2>
+              label="Supprimer"
+              icon={Trash2}
+            />
           </div>
         </div>
 
@@ -591,22 +581,20 @@ export default function CategoriesPage() {
                 </div>
 
                 <div className="flex space-x-1">
-                  <ButtonV2
-                    variant="ghost"
+                  <IconButton
+                    variant="outline"
                     size="sm"
                     onClick={() => openEditForm('subcategory', subcategory)}
-                    title="Modifier"
-                  >
-                    <Edit3 className="h-4 w-4" />
-                  </ButtonV2>
-                  <ButtonV2
-                    variant="ghost"
+                    label="Modifier"
+                    icon={Edit3}
+                  />
+                  <IconButton
+                    variant="danger"
                     size="sm"
                     onClick={() => handleDelete('subcategory', subcategory.id)}
-                    title="Supprimer"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </ButtonV2>
+                    label="Supprimer"
+                    icon={Trash2}
+                  />
                 </div>
               </div>
             </div>
@@ -677,13 +665,14 @@ export default function CategoriesPage() {
             )}
           </p>
         </div>
-        <ButtonV2
+        <ButtonUnified
           onClick={() => openCreateForm('family')}
-          className="bg-black text-white hover:bg-gray-800"
+          variant="default"
+          icon={Plus}
+          iconPosition="left"
         >
-          <Plus className="h-4 w-4 mr-2" />
           Nouvelle famille
-        </ButtonV2>
+        </ButtonUnified>
       </div>
 
       {/* Validation SLO */}
@@ -704,18 +693,24 @@ export default function CategoriesPage() {
           <span className="text-black text-sm font-medium">
             {selectedItems.length} élément(s) sélectionné(s)
           </span>
-          <ButtonV2
+          <ButtonUnified
             variant="outline"
             size="sm"
             onClick={handleBulkStatusToggle}
+            icon={Eye}
+            iconPosition="left"
           >
-            <Eye className="h-4 w-4 mr-1" />
             Changer statut
-          </ButtonV2>
-          <ButtonV2 variant="outline" size="sm" onClick={handleDeleteItems}>
-            <Trash2 className="h-4 w-4 mr-1" />
+          </ButtonUnified>
+          <ButtonUnified
+            variant="danger"
+            size="sm"
+            onClick={handleDeleteItems}
+            icon={Trash2}
+            iconPosition="left"
+          >
             Supprimer
-          </ButtonV2>
+          </ButtonUnified>
         </div>
       )}
 
@@ -758,13 +753,13 @@ export default function CategoriesPage() {
             <div className="text-center py-8">
               <FolderPlus className="h-12 w-12 text-gray-400 mx-auto mb-3" />
               <p className="text-gray-600">Aucune famille trouvée</p>
-              <ButtonV2
+              <ButtonUnified
                 onClick={() => openCreateForm('family')}
                 variant="outline"
                 className="mt-3"
               >
                 Créer la première famille
-              </ButtonV2>
+              </ButtonUnified>
             </div>
           ) : (
             filteredFamilies.map(family => (

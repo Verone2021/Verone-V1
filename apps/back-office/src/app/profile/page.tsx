@@ -3,10 +3,16 @@
 import React, { useEffect, useState } from 'react';
 
 import type { User as SupabaseUser } from '@supabase/supabase-js';
-import { ButtonV2 } from '@verone/ui';
+import { ButtonUnified } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { RoleBadge, type UserRole } from '@verone/ui';
+import { themeV2 } from '@verone/ui/theme-v2';
 import { cn } from '@verone/utils';
+import { createClient } from '@verone/utils/supabase/client';
+import {
+  validateProfileForm,
+  sanitizeProfileData,
+} from '@verone/utils/validation/profile-validation';
 import {
   User,
   Mail,
@@ -20,12 +26,6 @@ import {
 } from 'lucide-react';
 
 import { PasswordChangeDialog } from '@/components/profile/password-change-dialog';
-import { themeV2 } from '@verone/ui/theme-v2';
-import { createClient } from '@verone/utils/supabase/client';
-import {
-  validateProfileForm,
-  sanitizeProfileData,
-} from '@verone/utils/validation/profile-validation';
 
 interface UserProfile {
   user_id: string;
@@ -268,37 +268,34 @@ export default function ProfilePage() {
           <div className="flex space-x-2">
             {isEditing ? (
               <>
-                <ButtonV2
+                <ButtonUnified
                   onClick={handleSaveProfile}
                   disabled={saveLoading}
                   loading={saveLoading}
                   variant="success"
                   size="sm"
-                  icon={Save}
-                  iconPosition="left"
                 >
+                  <Save className="h-4 w-4 mr-1" />
                   {saveLoading ? 'Sauvegarde...' : 'Enregistrer'}
-                </ButtonV2>
-                <ButtonV2
+                </ButtonUnified>
+                <ButtonUnified
                   onClick={() => setIsEditing(false)}
                   variant="ghost"
                   size="sm"
-                  icon={X}
-                  iconPosition="left"
                 >
+                  <X className="h-4 w-4 mr-1" />
                   Annuler
-                </ButtonV2>
+                </ButtonUnified>
               </>
             ) : (
-              <ButtonV2
+              <ButtonUnified
                 onClick={() => setIsEditing(true)}
                 variant="secondary"
                 size="sm"
-                icon={Edit}
-                iconPosition="left"
               >
+                <Edit className="h-4 w-4 mr-1" />
                 Modifier
-              </ButtonV2>
+              </ButtonUnified>
             )}
           </div>
         </div>
@@ -541,17 +538,17 @@ export default function ProfilePage() {
           {/* Additional Actions */}
           <div className="pt-4 border-t border-neutral-300">
             <div className="flex space-x-2">
-              <ButtonV2
+              <ButtonUnified
                 variant="secondary"
                 size="sm"
                 onClick={() => setShowPasswordDialog(true)}
               >
                 Changer le mot de passe
-              </ButtonV2>
+              </ButtonUnified>
               {profile?.role === 'owner' && (
-                <ButtonV2 variant="secondary" size="sm">
+                <ButtonUnified variant="secondary" size="sm">
                   Paramètres système
-                </ButtonV2>
+                </ButtonUnified>
               )}
             </div>
           </div>

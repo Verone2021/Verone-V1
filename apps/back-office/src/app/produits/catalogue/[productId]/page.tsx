@@ -31,7 +31,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
+import { ButtonUnified, IconButton } from '@verone/ui';
 import { cn, checkSLOCompliance } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import {
@@ -374,12 +374,13 @@ export default function ProductDetailPage() {
           <p className="text-red-700 font-medium">
             {error || 'Produit non trouvé'}
           </p>
-          <ButtonV2
+          <ButtonUnified
             onClick={() => router.push('/produits/catalogue')}
+            variant="outline"
             className="mt-4"
           >
             Retour au catalogue
-          </ButtonV2>
+          </ButtonUnified>
         </div>
       </div>
     );
@@ -392,29 +393,29 @@ export default function ProductDetailPage() {
         <div className="max-w-[1800px] mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <ButtonV2
-                variant="ghost"
+              <ButtonUnified
+                variant="outline"
                 size="sm"
                 onClick={() => router.push('/produits/catalogue')}
-                className="inline-flex items-center gap-2"
+                icon={ArrowLeft}
+                iconPosition="left"
               >
-                <ArrowLeft className="h-4 w-4" />
                 Retour
-              </ButtonV2>
+              </ButtonUnified>
               <div className="h-6 w-px bg-neutral-200" />
               <nav className="text-sm text-neutral-600">
                 {breadcrumbParts.join(' › ')}
               </nav>
             </div>
-            <ButtonV2
+            <ButtonUnified
               variant="outline"
               size="sm"
               onClick={handleShare}
-              className="inline-flex items-center gap-2"
+              icon={Share2}
+              iconPosition="left"
             >
-              <Share2 className="h-4 w-4" />
               Partager
-            </ButtonV2>
+            </ButtonUnified>
           </div>
         </div>
       </div>
@@ -436,24 +437,26 @@ export default function ProductDetailPage() {
 
           {/* Actions sous galerie */}
           <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-3 space-y-2">
-            <ButtonV2
+            <ButtonUnified
               variant="outline"
               size="sm"
-              className="w-full justify-start gap-2"
+              className="w-full justify-start"
               onClick={() => setShowPhotosModal(true)}
+              icon={ImageIcon}
+              iconPosition="left"
             >
-              <ImageIcon className="h-4 w-4" />
               Gérer photos ({product.images?.length || 0})
-            </ButtonV2>
-            <ButtonV2
+            </ButtonUnified>
+            <ButtonUnified
               variant="outline"
               size="sm"
-              className="w-full justify-start gap-2"
+              className="w-full justify-start"
               onClick={handleShare}
+              icon={Share2}
+              iconPosition="left"
             >
-              <Share2 className="h-4 w-4" />
               Partager
-            </ButtonV2>
+            </ButtonUnified>
           </div>
 
           {/* Sections statuts compactes */}
@@ -573,14 +576,14 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
-              <ButtonV2
+              <ButtonUnified
                 variant="outline"
                 size="sm"
                 onClick={() => setIsCategorizeModalOpen(true)}
                 disabled={!!product.variant_group_id}
               >
                 Modifier la catégorisation
-              </ButtonV2>
+              </ButtonUnified>
             </div>
           </ProductDetailAccordion>
 
@@ -678,13 +681,13 @@ export default function ProductDetailPage() {
             <ProductFixedCharacteristics product={product as any} />
 
             <div className="mt-4">
-              <ButtonV2
+              <ButtonUnified
                 variant="outline"
                 size="sm"
                 onClick={() => setShowCharacteristicsModal(true)}
               >
                 Éditer caractéristiques
-              </ButtonV2>
+              </ButtonUnified>
             </div>
           </ProductDetailAccordion>
 
@@ -850,12 +853,12 @@ export default function ProductDetailPage() {
           </div>
 
           <DialogFooter>
-            <ButtonV2
+            <ButtonUnified
               variant="outline"
               onClick={() => setIsCategorizeModalOpen(false)}
             >
               Annuler
-            </ButtonV2>
+            </ButtonUnified>
           </DialogFooter>
         </DialogContent>
       </Dialog>

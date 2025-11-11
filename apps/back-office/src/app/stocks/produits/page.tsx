@@ -5,6 +5,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
+import { useToast } from '@verone/common';
+import { useStock } from '@verone/stock';
+import { useStockMovements } from '@verone/stock';
+import { useStockReservations } from '@verone/stock';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -44,11 +48,6 @@ import {
   X,
   ArrowLeft,
 } from 'lucide-react';
-
-import { useToast } from '@verone/common';
-import { useStock } from '@verone/stock';
-import { useStockMovements } from '@verone/stock';
-import { useStockReservations } from '@verone/stock';
 
 interface StockFilters {
   search: string;
@@ -196,7 +195,12 @@ function StockMovementModal({
             >
               Annuler
             </ButtonV2>
-            <ButtonV2 type="submit" disabled={loading} className="flex-1">
+            <ButtonV2
+              type="submit"
+              variant="success"
+              disabled={loading}
+              className="flex-1"
+            >
               {loading ? (
                 <RefreshCw className="h-4 w-4 animate-spin" />
               ) : (
@@ -490,7 +494,7 @@ export default function StockInventairePage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <ButtonV2
-                variant="ghost"
+                variant="outline"
                 onClick={() => router.push('/stocks')}
                 className="flex items-center text-gray-600 hover:text-black"
               >
@@ -798,7 +802,7 @@ export default function StockInventairePage() {
                         <td className="py-3 px-4">
                           <div className="flex items-center space-x-1">
                             <ButtonV2
-                              variant="ghost"
+                              variant="outline"
                               size="sm"
                               onClick={() => openHistoryModal(product)}
                               title="Voir l'historique"
@@ -806,7 +810,7 @@ export default function StockInventairePage() {
                               <History className="h-4 w-4" />
                             </ButtonV2>
                             <ButtonV2
-                              variant="ghost"
+                              variant="success"
                               size="sm"
                               onClick={() => openMovementModal(product)}
                               title="Nouveau mouvement"
@@ -814,7 +818,7 @@ export default function StockInventairePage() {
                               <Plus className="h-4 w-4" />
                             </ButtonV2>
                             <ButtonV2
-                              variant="ghost"
+                              variant="outline"
                               size="sm"
                               title="Modifier"
                             >

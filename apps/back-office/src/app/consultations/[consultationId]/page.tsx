@@ -5,6 +5,23 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
 
+import { useToast } from '@verone/common';
+import type { ClientConsultation } from '@verone/consultations';
+import { ConsultationImageGallery } from '@verone/consultations';
+import { ConsultationOrderInterface } from '@verone/consultations';
+import { EditConsultationModal } from '@verone/consultations';
+import { useConsultations } from '@verone/consultations';
+import { Alert, AlertDescription } from '@verone/ui';
+import { Badge } from '@verone/ui';
+import { ButtonUnified } from '@verone/ui';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@verone/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
 import {
   ArrowLeft,
   Calendar,
@@ -19,30 +36,6 @@ import {
   Edit,
   Package,
 } from 'lucide-react';
-
-import { useToast } from '@verone/common';
-import type { ClientConsultation } from '@verone/consultations';
-import { ConsultationImageGallery } from '@verone/consultations';
-import { ConsultationOrderInterface } from '@verone/consultations';
-import { EditConsultationModal } from '@verone/consultations';
-import { useConsultations } from '@verone/consultations';
-
-import { Alert, AlertDescription } from '@verone/ui';
-import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@verone/ui';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@verone/ui';
 
 export default function ConsultationDetailPage() {
   const router = useRouter();
@@ -216,10 +209,13 @@ export default function ConsultationDetailPage() {
             <p className="text-gray-600 mb-1">
               Cette consultation n'existe pas ou a été supprimée.
             </p>
-            <ButtonV2 onClick={() => router.push('/consultations')}>
+            <ButtonUnified
+              onClick={() => router.push('/consultations')}
+              variant="outline"
+            >
               <ArrowLeft className="h-3 w-3 mr-2" />
               Retour aux consultations
-            </ButtonV2>
+            </ButtonUnified>
           </CardContent>
         </Card>
       </div>
@@ -233,14 +229,14 @@ export default function ConsultationDetailPage() {
         <div className="container mx-auto px-2 py-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <ButtonV2
+              <ButtonUnified
                 variant="ghost"
                 onClick={() => router.push('/consultations')}
                 className="flex items-center text-gray-600 hover:text-black"
               >
                 <ArrowLeft className="h-3 w-3 mr-2" />
                 Retour aux consultations
-              </ButtonV2>
+              </ButtonUnified>
               <div>
                 <h1 className="text-xs font-bold text-black">
                   Détail Consultation
@@ -305,14 +301,14 @@ export default function ConsultationDetailPage() {
                     <Building className="h-3 w-3 mr-2" />
                     Informations de la consultation
                   </CardTitle>
-                  <ButtonV2
+                  <ButtonUnified
                     variant="outline"
                     size="sm"
                     onClick={() => setShowEditModal(true)}
                   >
                     <Edit className="h-3 w-3 mr-2" />
                     Modifier
-                  </ButtonV2>
+                  </ButtonUnified>
                 </div>
               </CardHeader>
               <CardContent>
@@ -426,48 +422,46 @@ export default function ConsultationDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center space-x-2">
-              <ButtonV2
+              <ButtonUnified
                 variant={
-                  consultation.status === 'en_attente' ? 'primary' : 'outline'
+                  consultation.status === 'en_attente' ? 'default' : 'outline'
                 }
                 onClick={() => handleStatusChange('en_attente')}
                 disabled={consultation.status === 'en_attente'}
               >
                 <Clock className="h-3 w-3 mr-2" />
                 En attente
-              </ButtonV2>
-              <ButtonV2
+              </ButtonUnified>
+              <ButtonUnified
                 variant={
-                  consultation.status === 'en_cours' ? 'primary' : 'outline'
+                  consultation.status === 'en_cours' ? 'default' : 'outline'
                 }
                 onClick={() => handleStatusChange('en_cours')}
                 disabled={consultation.status === 'en_cours'}
               >
                 <AlertCircle className="h-3 w-3 mr-2" />
                 En cours
-              </ButtonV2>
-              <ButtonV2
+              </ButtonUnified>
+              <ButtonUnified
                 variant={
-                  consultation.status === 'terminee' ? 'primary' : 'outline'
+                  consultation.status === 'terminee' ? 'success' : 'outline'
                 }
                 onClick={() => handleStatusChange('terminee')}
                 disabled={consultation.status === 'terminee'}
-                className="bg-green-600 hover:bg-green-700 text-white"
               >
                 <CheckCircle className="h-3 w-3 mr-2" />
                 Terminée
-              </ButtonV2>
-              <ButtonV2
+              </ButtonUnified>
+              <ButtonUnified
                 variant={
-                  consultation.status === 'annulee' ? 'primary' : 'outline'
+                  consultation.status === 'annulee' ? 'danger' : 'outline'
                 }
                 onClick={() => handleStatusChange('annulee')}
                 disabled={consultation.status === 'annulee'}
-                className="bg-red-600 hover:bg-red-700 text-white"
               >
                 <XCircle className="h-3 w-3 mr-2" />
                 Annulée
-              </ButtonV2>
+              </ButtonUnified>
             </div>
           </CardContent>
         </Card>
@@ -494,13 +488,13 @@ export default function ConsultationDetailPage() {
 
               {/* Bouton Valider (si pas encore validée) */}
               {!consultation.validated_at && !consultation.archived_at && (
-                <ButtonV2
+                <ButtonUnified
                   variant="success"
                   onClick={handleValidateConsultation}
                 >
                   <CheckCircle className="h-3 w-3 mr-2" />
                   Valider la consultation
-                </ButtonV2>
+                </ButtonUnified>
               )}
 
               {/* Badge Archivée si applicable */}
@@ -518,35 +512,35 @@ export default function ConsultationDetailPage() {
 
               {/* Bouton Archiver (si pas archivée) */}
               {!consultation.archived_at && (
-                <ButtonV2
+                <ButtonUnified
                   variant="outline"
                   onClick={handleArchiveConsultation}
                   className="border-gray-400 hover:bg-gray-100"
                 >
                   📦 Archiver
-                </ButtonV2>
+                </ButtonUnified>
               )}
 
               {/* Bouton Désarchiver (si archivée) */}
               {consultation.archived_at && (
-                <ButtonV2
+                <ButtonUnified
                   variant="outline"
                   onClick={handleUnarchiveConsultation}
                   className="border-blue-400 text-blue-600 hover:bg-blue-50"
                 >
                   ↩️ Désarchiver
-                </ButtonV2>
+                </ButtonUnified>
               )}
 
               {/* Bouton Supprimer (seulement si archivée) */}
               {consultation.archived_at && (
-                <ButtonV2
-                  variant="destructive"
+                <ButtonUnified
+                  variant="danger"
                   onClick={handleDeleteConsultation}
                 >
                   <XCircle className="h-3 w-3 mr-2" />
                   Supprimer définitivement
-                </ButtonV2>
+                </ButtonUnified>
               )}
             </div>
           </CardContent>

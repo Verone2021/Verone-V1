@@ -5,22 +5,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
-import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
-import { Card, CardContent } from '@verone/ui';
-import { TabsNavigation, TabContent } from '@verone/ui';
-import {
-  ArrowLeft,
-  Building2,
-  Archive,
-  ArchiveRestore,
-  Package,
-  Phone,
-  ShoppingCart,
-  FileText,
-} from 'lucide-react';
-
-import { isModuleDeployed, getModulePhase } from '@verone/utils/deployed-modules';
 import { AddressEditSection } from '@verone/common';
 import { ContactEditSection } from '@verone/customers';
 import { ContactsManagementSection } from '@verone/customers';
@@ -38,6 +22,24 @@ import {
 import { useOrganisationTabCounts } from '@verone/organisations';
 import { OrganisationProductsSection } from '@verone/organisations';
 import type { Organisation } from '@verone/organisations';
+import { TabsNavigation, TabContent } from '@verone/ui';
+import { Card, CardContent } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import { Badge } from '@verone/ui';
+import {
+  isModuleDeployed,
+  getModulePhase,
+} from '@verone/utils/deployed-modules';
+import {
+  ArrowLeft,
+  Building2,
+  Archive,
+  ArchiveRestore,
+  Package,
+  Phone,
+  ShoppingCart,
+  FileText,
+} from 'lucide-react';
 
 export default function SupplierDetailPage() {
   const { supplierId } = useParams();
@@ -205,13 +207,8 @@ export default function SupplierDetailPage() {
         {/* Actions */}
         <div className="flex gap-2">
           <ButtonV2
-            variant="outline"
+            variant={supplier.archived_at ? 'success' : 'danger'}
             onClick={handleArchive}
-            className={
-              supplier.archived_at
-                ? 'text-blue-600 border-blue-200 hover:bg-blue-50'
-                : 'text-black border-gray-200 hover:bg-gray-50'
-            }
           >
             {supplier.archived_at ? (
               <>

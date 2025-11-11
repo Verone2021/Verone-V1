@@ -6,6 +6,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
+import { ProductHistoryModal } from '@verone/products';
+import { InventoryAdjustmentModal } from '@verone/stock';
+import { StockReportsModal } from '@verone/stock';
+import { useStockMovements } from '@verone/stock';
+import { useStockInventory } from '@verone/stock';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent } from '@verone/ui';
@@ -37,11 +42,6 @@ import {
 } from 'lucide-react';
 
 import { StockKPICard } from '@/components/ui-v2/stock';
-import { ProductHistoryModal } from '@verone/products';
-import { InventoryAdjustmentModal } from '@verone/stock';
-import { StockReportsModal } from '@verone/stock';
-import { useStockMovements } from '@verone/stock';
-import { useStockInventory } from '@verone/stock';
 
 export default function InventairePage() {
   const router = useRouter();
@@ -109,7 +109,7 @@ export default function InventairePage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <ButtonV2
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={() => router.push('/stocks')}
                 className="flex items-center text-gray-600 hover:text-black h-8 px-2"
@@ -388,7 +388,7 @@ export default function InventairePage() {
                         <td className="py-2 px-3 text-center">
                           <div className="flex items-center justify-center gap-1">
                             <ButtonV2
-                              variant="ghost"
+                              variant="outline"
                               size="sm"
                               onClick={e => {
                                 e.stopPropagation();
@@ -400,7 +400,7 @@ export default function InventairePage() {
                               <Settings className="h-3 w-3" />
                             </ButtonV2>
                             <ButtonV2
-                              variant="ghost"
+                              variant="outline"
                               size="sm"
                               onClick={e => {
                                 e.stopPropagation();

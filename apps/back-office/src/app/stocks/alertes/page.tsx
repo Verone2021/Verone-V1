@@ -247,7 +247,7 @@ export default function StockAlertesPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <ButtonV2
-                variant="ghost"
+                variant="outline"
                 onClick={() => router.back()}
                 className="flex items-center text-gray-600 hover:text-black"
               >

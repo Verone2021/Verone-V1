@@ -5,8 +5,11 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+import { useSuppliers, useCustomers } from '@verone/organisations';
+import { QuickSourcingModal } from '@verone/products';
+import { useSourcingProducts } from '@verone/products';
 import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
+import { ButtonUnified, IconButton } from '@verone/ui';
 import {
   Card,
   CardContent,
@@ -51,10 +54,6 @@ import {
   AlertCircle,
   Globe,
 } from 'lucide-react';
-
-import { useSuppliers, useCustomers } from '@verone/organisations';
-import { QuickSourcingModal } from '@verone/products';
-import { useSourcingProducts } from '@verone/products';
 
 export default function SourcingProduitsPage() {
   const router = useRouter();
@@ -215,32 +214,32 @@ export default function SourcingProduitsPage() {
               </p>
             </div>
             <div className="flex items-center space-x-3">
-              <ButtonV2
+              <ButtonUnified
                 variant="outline"
                 onClick={() => router.push('/produits/sourcing')}
-                className="border-black text-black hover:bg-black hover:text-white"
               >
                 Retour Dashboard
-              </ButtonV2>
-              <ButtonV2
+              </ButtonUnified>
+              <ButtonUnified
                 variant="outline"
+                icon={Users}
+                iconPosition="left"
                 onClick={() =>
                   router.push(
                     '/contacts-organisations/customers?type=professional'
                   )
                 }
-                className="border-black text-black hover:bg-black hover:text-white"
               >
-                <Users className="h-4 w-4 mr-2" />
                 Client Professionnel
-              </ButtonV2>
-              <ButtonV2
+              </ButtonUnified>
+              <ButtonUnified
+                variant="default"
+                icon={Plus}
+                iconPosition="left"
                 onClick={() => setIsQuickSourcingModalOpen(true)}
-                className="bg-black hover:bg-gray-800 text-white"
               >
-                <Plus className="h-4 w-4 mr-2" />
                 Nouveau Sourcing
-              </ButtonV2>
+              </ButtonUnified>
             </div>
           </div>
         </div>
@@ -300,13 +299,14 @@ export default function SourcingProduitsPage() {
                 </SelectContent>
               </Select>
 
-              <ButtonV2
+              <ButtonUnified
                 variant="outline"
+                icon={Filter}
+                iconPosition="left"
                 className="border-black text-black hover:bg-black hover:text-white"
               >
-                <Filter className="h-4 w-4 mr-2" />
                 Plus de filtres
-              </ButtonV2>
+              </ButtonUnified>
             </div>
           </CardContent>
         </Card>
@@ -519,37 +519,34 @@ export default function SourcingProduitsPage() {
                       </div>
 
                       <div className="flex items-center space-x-2 ml-4">
-                        <ButtonV2
+                        <IconButton
                           variant="outline"
                           size="sm"
-                          className="border-gray-300"
+                          icon={Eye}
+                          label="Voir les détails"
                           onClick={() =>
                             router.push(
                               `/produits/sourcing/produits/${product.id}`
                             )
                           }
-                        >
-                          <Eye className="h-4 w-4" />
-                        </ButtonV2>
-                        <ButtonV2
+                        />
+                        <IconButton
                           variant="outline"
                           size="sm"
-                          className="border-gray-300"
+                          icon={Edit}
+                          label="Modifier"
                           onClick={() =>
                             router.push(`/catalogue/${product.id}/edit`)
                           }
-                        >
-                          <Edit className="h-4 w-4" />
-                        </ButtonV2>
+                        />
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <ButtonV2
+                            <IconButton
                               variant="outline"
                               size="sm"
-                              className="border-gray-300"
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </ButtonV2>
+                              icon={MoreHorizontal}
+                              label="Plus d'actions"
+                            />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>

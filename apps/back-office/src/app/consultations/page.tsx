@@ -5,6 +5,29 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
+import { useToast } from '@verone/common';
+import { useConsultations } from '@verone/consultations';
+import { useConsultationImages } from '@verone/consultations';
+import { Alert, AlertDescription } from '@verone/ui';
+import { Badge } from '@verone/ui';
+import { ButtonUnified } from '@verone/ui';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@verone/ui';
+import { Input } from '@verone/ui';
+import { Label } from '@verone/ui';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@verone/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
 import {
   Users,
   Package,
@@ -23,37 +46,8 @@ import {
   Camera,
 } from 'lucide-react';
 
-import { useToast } from '@verone/common';
-import { useConsultations } from '@verone/consultations';
-import { useConsultationImages } from '@verone/consultations';
-
 import { ConsultationImageViewerModal } from '../../components/business/consultation-image-viewer-modal';
 import { ConsultationOrderInterface } from '../../components/business/consultation-order-interface';
-import { Alert, AlertDescription } from '@verone/ui';
-import { Badge } from '@verone/ui';
-import { Button } from '@verone/ui';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@verone/ui';
-import { Input } from '@verone/ui';
-import { Label } from '@verone/ui';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@verone/ui';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@verone/ui';
 
 // Composant pour afficher une ligne de consultation avec miniature photo
 interface ConsultationRowProps {
@@ -177,10 +171,10 @@ function ConsultationRow({
 
         {/* Bouton voir détails */}
         <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" onClick={onViewDetails}>
+          <ButtonUnified variant="outline" size="sm" onClick={onViewDetails}>
             <Eye className="h-4 w-4 mr-1" />
             Voir détails
-          </Button>
+          </ButtonUnified>
         </div>
       </div>
     </div>
@@ -297,14 +291,14 @@ export default function ConsultationsPage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button
+              <ButtonUnified
                 variant="ghost"
                 onClick={() => router.back()}
                 className="flex items-center text-gray-600 hover:text-black"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Retour
-              </Button>
+              </ButtonUnified>
               <div>
                 <h1 className="text-2xl font-bold text-black">
                   Consultations Clients
@@ -315,13 +309,13 @@ export default function ConsultationsPage() {
               </div>
             </div>
 
-            <Button
+            <ButtonUnified
               onClick={() => router.push('/consultations/create')}
-              className="bg-black hover:bg-gray-800 text-white"
+              variant="default"
             >
               <Plus className="h-4 w-4 mr-2" />
               Nouvelle consultation
-            </Button>
+            </ButtonUnified>
           </div>
         </div>
       </div>
@@ -449,7 +443,7 @@ export default function ConsultationsPage() {
               </div>
 
               <div className="flex items-end">
-                <Button
+                <ButtonUnified
                   variant="outline"
                   onClick={() => {
                     setSearchTerm('');
@@ -459,7 +453,7 @@ export default function ConsultationsPage() {
                   className="w-full"
                 >
                   Réinitialiser
-                </Button>
+                </ButtonUnified>
               </div>
             </div>
           </CardContent>

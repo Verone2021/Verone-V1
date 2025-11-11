@@ -595,7 +595,7 @@ export default function CustomersPage() {
                                   href={`/contacts-organisations/customers/${customer.id}`}
                                 >
                                   <ButtonV2
-                                    variant="ghost"
+                                    variant="outline"
                                     size="sm"
                                     className="text-xs h-7 px-3"
                                     icon={Eye}
@@ -604,7 +604,7 @@ export default function CustomersPage() {
                                   </ButtonV2>
                                 </Link>
                                 <ButtonV2
-                                  variant="ghost"
+                                  variant="danger"
                                   size="sm"
                                   onClick={() => handleArchive(customer)}
                                   icon={Archive}
@@ -628,7 +628,7 @@ export default function CustomersPage() {
                                   className="h-7 px-2"
                                 />
                                 <ButtonV2
-                                  variant="secondary"
+                                  variant="success"
                                   size="sm"
                                   onClick={() => handleArchive(customer)}
                                   icon={ArchiveRestore}
@@ -636,7 +636,7 @@ export default function CustomersPage() {
                                   aria-label="Restaurer"
                                 />
                                 <ButtonV2
-                                  variant="destructive"
+                                  variant="danger"
                                   size="sm"
                                   onClick={() => handleDelete(customer)}
                                   icon={Trash2}
@@ -647,7 +647,7 @@ export default function CustomersPage() {
                                   href={`/contacts-organisations/customers/${customer.id}`}
                                 >
                                   <ButtonV2
-                                    variant="ghost"
+                                    variant="outline"
                                     size="sm"
                                     className="text-xs h-7 px-3"
                                     icon={Eye}
@@ -804,7 +804,7 @@ export default function CustomersPage() {
                                 href={`/contacts-organisations/customers/${customer.id}`}
                               >
                                 <ButtonV2
-                                  variant="ghost"
+                                  variant="outline"
                                   size="sm"
                                   icon={Eye}
                                   className="h-7 px-2"
@@ -812,7 +812,7 @@ export default function CustomersPage() {
                                 />
                               </Link>
                               <ButtonV2
-                                variant="ghost"
+                                variant="danger"
                                 size="sm"
                                 onClick={() => handleArchive(customer)}
                                 icon={Archive}
@@ -836,7 +836,7 @@ export default function CustomersPage() {
                                 className="h-7 px-2"
                               />
                               <ButtonV2
-                                variant="secondary"
+                                variant="success"
                                 size="sm"
                                 onClick={() => handleArchive(customer)}
                                 icon={ArchiveRestore}
@@ -844,7 +844,7 @@ export default function CustomersPage() {
                                 aria-label="Restaurer"
                               />
                               <ButtonV2
-                                variant="destructive"
+                                variant="danger"
                                 size="sm"
                                 onClick={() => handleDelete(customer)}
                                 icon={Trash2}
@@ -855,7 +855,7 @@ export default function CustomersPage() {
                                 href={`/contacts-organisations/customers/${customer.id}`}
                               >
                                 <ButtonV2
-                                  variant="ghost"
+                                  variant="outline"
                                   size="sm"
                                   icon={Eye}
                                   className="h-7 px-2"

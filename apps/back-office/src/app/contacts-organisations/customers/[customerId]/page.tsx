@@ -5,23 +5,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
-import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
-import { Card, CardContent } from '@verone/ui';
-import { TabsNavigation, TabContent } from '@verone/ui';
-import {
-  ArrowLeft,
-  Building2,
-  Archive,
-  ArchiveRestore,
-  Package,
-  Phone,
-  ShoppingCart,
-  FileText,
-  Euro,
-} from 'lucide-react';
-
-import { isModuleDeployed, getModulePhase } from '@verone/utils/deployed-modules';
 import { AddressEditSection } from '@verone/common';
 import { ContactEditSection } from '@verone/customers';
 import { ContactsManagementSection } from '@verone/customers';
@@ -39,6 +22,25 @@ import { useOrganisationTabCounts } from '@verone/organisations';
 // Phase 1: organisation-products-section désactivé (Phase 2+)
 // import { OrganisationProductsSection } from '@verone/organisations'
 import type { Organisation } from '@verone/organisations';
+import { TabsNavigation, TabContent } from '@verone/ui';
+import { Card, CardContent } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import { Badge } from '@verone/ui';
+import {
+  isModuleDeployed,
+  getModulePhase,
+} from '@verone/utils/deployed-modules';
+import {
+  ArrowLeft,
+  Building2,
+  Archive,
+  ArchiveRestore,
+  Package,
+  Phone,
+  ShoppingCart,
+  FileText,
+  Euro,
+} from 'lucide-react';
 
 export default function CustomerDetailPage() {
   const { customerId } = useParams();
@@ -214,13 +216,8 @@ export default function CustomerDetailPage() {
         {/* Actions */}
         <div className="flex gap-2">
           <ButtonV2
-            variant="outline"
+            variant={customer.archived_at ? 'success' : 'danger'}
             onClick={handleArchive}
-            className={
-              customer.archived_at
-                ? 'text-blue-600 border-blue-200 hover:bg-blue-50'
-                : 'text-black border-gray-200 hover:bg-gray-50'
-            }
           >
             {customer.archived_at ? (
               <>

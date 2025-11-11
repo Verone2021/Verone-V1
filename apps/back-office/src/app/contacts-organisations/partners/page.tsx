@@ -554,7 +554,7 @@ export default function PartnersPage() {
                                   href={`/contacts-organisations/partners/${partner.id}`}
                                 >
                                   <ButtonV2
-                                    variant="ghost"
+                                    variant="outline"
                                     size="sm"
                                     icon={Eye}
                                     className="h-7 px-2"
@@ -562,7 +562,7 @@ export default function PartnersPage() {
                                   />
                                 </Link>
                                 <ButtonV2
-                                  variant="ghost"
+                                  variant="danger"
                                   size="sm"
                                   onClick={() => handleArchive(partner)}
                                   icon={Archive}
@@ -586,7 +586,7 @@ export default function PartnersPage() {
                                   className="h-7 px-2"
                                 />
                                 <ButtonV2
-                                  variant="secondary"
+                                  variant="success"
                                   size="sm"
                                   onClick={() => handleArchive(partner)}
                                   icon={ArchiveRestore}
@@ -594,7 +594,7 @@ export default function PartnersPage() {
                                   aria-label="Restaurer"
                                 />
                                 <ButtonV2
-                                  variant="destructive"
+                                  variant="danger"
                                   size="sm"
                                   onClick={() => handleDelete(partner)}
                                   icon={Trash2}
@@ -605,7 +605,7 @@ export default function PartnersPage() {
                                   href={`/contacts-organisations/partners/${partner.id}`}
                                 >
                                   <ButtonV2
-                                    variant="ghost"
+                                    variant="outline"
                                     size="sm"
                                     icon={Eye}
                                     className="h-7 px-2"
@@ -759,7 +759,7 @@ export default function PartnersPage() {
                                 href={`/contacts-organisations/partners/${partner.id}`}
                               >
                                 <ButtonV2
-                                  variant="ghost"
+                                  variant="outline"
                                   size="sm"
                                   icon={Eye}
                                   className="h-7 px-2"
@@ -767,7 +767,7 @@ export default function PartnersPage() {
                                 />
                               </Link>
                               <ButtonV2
-                                variant="ghost"
+                                variant="danger"
                                 size="sm"
                                 onClick={() => handleArchive(partner)}
                                 icon={Archive}
@@ -789,7 +789,7 @@ export default function PartnersPage() {
                                 className="h-7 px-2"
                               />
                               <ButtonV2
-                                variant="secondary"
+                                variant="success"
                                 size="sm"
                                 onClick={() => handleArchive(partner)}
                                 icon={ArchiveRestore}
@@ -797,7 +797,7 @@ export default function PartnersPage() {
                                 aria-label="Restaurer"
                               />
                               <ButtonV2
-                                variant="destructive"
+                                variant="danger"
                                 size="sm"
                                 onClick={() => handleDelete(partner)}
                                 icon={Trash2}
@@ -808,7 +808,7 @@ export default function PartnersPage() {
                                 href={`/contacts-organisations/partners/${partner.id}`}
                               >
                                 <ButtonV2
-                                  variant="ghost"
+                                  variant="outline"
                                   size="sm"
                                   icon={Eye}
                                   className="h-7 px-2"

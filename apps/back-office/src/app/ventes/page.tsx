@@ -2,8 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 
+import { useSalesDashboard } from '@verone/orders';
 import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
+import { ButtonUnified } from '@verone/ui';
 import {
   Card,
   CardContent,
@@ -24,8 +25,6 @@ import {
   Package,
   Loader2,
 } from 'lucide-react';
-
-import { useSalesDashboard } from '@verone/orders';
 
 export default function VentesDashboardPage() {
   const router = useRouter();
@@ -159,7 +158,7 @@ export default function VentesDashboardPage() {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Consultations */}
-                  <ButtonV2
+                  <ButtonUnified
                     variant="outline"
                     className="h-24 border-black text-black hover:bg-black hover:text-white justify-start"
                     onClick={() => router.push('/consultations')}
@@ -182,10 +181,10 @@ export default function VentesDashboardPage() {
                         </Badge>
                       )}
                     </div>
-                  </ButtonV2>
+                  </ButtonUnified>
 
                   {/* Commandes Clients */}
-                  <ButtonV2
+                  <ButtonUnified
                     variant="outline"
                     className="h-24 border-black text-black hover:bg-black hover:text-white justify-start"
                     onClick={() => router.push('/commandes/clients')}
@@ -208,7 +207,7 @@ export default function VentesDashboardPage() {
                         </Badge>
                       )}
                     </div>
-                  </ButtonV2>
+                  </ButtonUnified>
                 </div>
               </CardContent>
             </Card>
@@ -272,13 +271,13 @@ export default function VentesDashboardPage() {
                       ))
                     )}
                   </div>
-                  <ButtonV2
+                  <ButtonUnified
                     variant="outline"
                     className="w-full mt-4 border-black text-black hover:bg-black hover:text-white"
                     onClick={() => router.push('/consultations')}
                   >
                     Voir toutes les consultations
-                  </ButtonV2>
+                  </ButtonUnified>
                 </CardContent>
               </Card>
 
@@ -333,13 +332,13 @@ export default function VentesDashboardPage() {
                       ))
                     )}
                   </div>
-                  <ButtonV2
+                  <ButtonUnified
                     variant="outline"
                     className="w-full mt-4 border-black text-black hover:bg-black hover:text-white"
                     onClick={() => router.push('/commandes/clients')}
                   >
                     Voir toutes les commandes
-                  </ButtonV2>
+                  </ButtonUnified>
                 </CardContent>
               </Card>
             </div>
@@ -352,7 +351,7 @@ export default function VentesDashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <ButtonV2
+                  <ButtonUnified
                     variant="outline"
                     className="h-16 border-black text-black hover:bg-black hover:text-white"
                     onClick={() => router.push('/consultations/create')}
@@ -361,9 +360,9 @@ export default function VentesDashboardPage() {
                       <MessageCircle className="h-5 w-5" />
                       <span className="text-sm">Nouvelle Consultation</span>
                     </div>
-                  </ButtonV2>
+                  </ButtonUnified>
 
-                  <ButtonV2
+                  <ButtonUnified
                     variant="outline"
                     className="h-16 border-black text-black hover:bg-black hover:text-white"
                     onClick={() => router.push('/commandes/clients')}
@@ -372,9 +371,9 @@ export default function VentesDashboardPage() {
                       <Calendar className="h-5 w-5" />
                       <span className="text-sm">Calendrier Livraisons</span>
                     </div>
-                  </ButtonV2>
+                  </ButtonUnified>
 
-                  <ButtonV2
+                  <ButtonUnified
                     variant="outline"
                     className="h-16 border-black text-black hover:bg-black hover:text-white"
                     onClick={() => router.push('/consultations')}
@@ -383,7 +382,7 @@ export default function VentesDashboardPage() {
                       <AlertCircle className="h-5 w-5" />
                       <span className="text-sm">Relances à Faire</span>
                     </div>
-                  </ButtonV2>
+                  </ButtonUnified>
                 </div>
               </CardContent>
             </Card>

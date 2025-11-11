@@ -17,7 +17,7 @@ import { useSubcategories } from '@verone/categories';
 import { ProductCardV2 as ProductCard } from '@verone/products';
 import { useProductImages } from '@verone/products';
 import { ViewModeToggle } from '@verone/ui';
-import { Button } from '@verone/ui';
+import { ButtonUnified } from '@verone/ui';
 import { Badge } from '@verone/ui';
 import {
   CommandPaletteSearch as CommandPalette,
@@ -314,24 +314,27 @@ export default function CataloguePage() {
         <div className="flex items-center space-x-4">
           {/* Boutons de création */}
           <div className="flex items-center space-x-2">
-            <Button
+            <ButtonUnified
               onClick={() => router.push('/produits/sourcing/validation')}
               variant="outline"
               size="sm"
-              className="flex items-center space-x-1.5 border-black text-black hover:bg-black hover:text-white h-8 text-xs"
+              icon={Zap}
+              iconPosition="left"
+              className="h-8 text-xs"
             >
-              <Zap className="h-3.5 w-3.5" />
-              <span>Sourcing Rapide</span>
-            </Button>
+              Sourcing Rapide
+            </ButtonUnified>
 
-            <Button
+            <ButtonUnified
               onClick={() => router.push('/produits/catalogue/nouveau')}
+              variant="default"
               size="sm"
-              className="flex items-center space-x-1.5 bg-black hover:bg-gray-800 text-white h-8 text-xs"
+              icon={Plus}
+              iconPosition="left"
+              className="h-8 text-xs"
             >
-              <Plus className="h-3.5 w-3.5" />
-              <span>Nouveau Produit</span>
-            </Button>
+              Nouveau Produit
+            </ButtonUnified>
           </div>
 
           <div className="flex items-center space-x-2">

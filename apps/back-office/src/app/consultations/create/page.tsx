@@ -4,15 +4,11 @@ import { useState, useEffect } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { ArrowLeft, Send, Upload, Calendar, AlertCircle } from 'lucide-react';
-
 import { useToast } from '@verone/common';
 import { useConsultations } from '@verone/consultations';
 import type { CreateConsultationData } from '@verone/consultations';
 import { useOrganisations } from '@verone/organisations';
-
-import { CreateOrganisationModal } from '../../../components/business/create-organisation-modal';
-import { Button } from '@verone/ui';
+import { ButtonUnified } from '@verone/ui';
 import {
   Card,
   CardContent,
@@ -33,6 +29,9 @@ import {
 import { Textarea } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
 import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
+import { ArrowLeft, Send, Upload, Calendar, AlertCircle } from 'lucide-react';
+
+import { CreateOrganisationModal } from '../../../components/business/create-organisation-modal';
 import { createConsultation as createConsultationAction } from '../../actions/consultations';
 
 // Interface pour le formulaire (utilise organisation_id pour le sélecteur)
@@ -228,14 +227,14 @@ export default function CreateConsultationPage() {
       <div className="bg-white border-b border-gray-200">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center space-x-4">
-            <Button
+            <ButtonUnified
               variant="ghost"
               onClick={() => router.back()}
               className="flex items-center text-gray-600 hover:text-black"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Retour
-            </Button>
+            </ButtonUnified>
             <div>
               <h1 className="text-3xl font-bold text-black">
                 Nouvelle Consultation
@@ -497,26 +496,23 @@ export default function CreateConsultationPage() {
 
                 {/* Actions */}
                 <div className="flex justify-end space-x-3 pt-6 border-t">
-                  <Button
+                  <ButtonUnified
                     type="button"
                     variant="outline"
                     onClick={() => router.back()}
                     disabled={loading}
-                    className="border-black text-black hover:bg-black hover:text-white"
                   >
                     Annuler
-                  </Button>
-                  <Button
+                  </ButtonUnified>
+                  <ButtonUnified
                     type="submit"
                     disabled={loading}
-                    className="bg-black hover:bg-gray-800 text-white"
+                    variant="success"
+                    loading={loading}
                   >
-                    {loading && (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                    )}
                     <Send className="h-4 w-4 mr-2" />
                     Créer la consultation
-                  </Button>
+                  </ButtonUnified>
                 </div>
               </form>
             </CardContent>

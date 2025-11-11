@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { ButtonV2 } from '@verone/ui';
+import { ButtonUnified } from '@verone/ui';
 import { Input } from '@verone/ui';
 import {
   Settings,
@@ -281,10 +281,13 @@ export default function ParametresPage() {
 
       {/* Save button */}
       <div className="flex justify-end">
-        <ButtonV2 className="flex items-center space-x-2">
+        <ButtonUnified
+          variant="success"
+          className="flex items-center space-x-2"
+        >
           <Save className="h-4 w-4" />
           <span>Enregistrer les modifications</span>
-        </ButtonV2>
+        </ButtonUnified>
       </div>
     </div>
   );

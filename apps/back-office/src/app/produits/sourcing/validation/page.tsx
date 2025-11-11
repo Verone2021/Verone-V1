@@ -8,7 +8,7 @@ import { useToast } from '@verone/common';
 import type { SourcingProduct } from '@verone/products';
 import { useSourcingProducts } from '@verone/products';
 import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
+import { ButtonUnified, IconButton } from '@verone/ui';
 import {
   Card,
   CardContent,
@@ -184,20 +184,20 @@ export default function SourcingValidationPage() {
               </p>
             </div>
             <div className="flex items-center space-x-3">
-              <ButtonV2
+              <ButtonUnified
                 variant="outline"
                 onClick={() => router.push('/produits/sourcing')}
-                className="border-black text-black hover:bg-black hover:text-white"
               >
                 Retour Dashboard
-              </ButtonV2>
-              <ButtonV2
+              </ButtonUnified>
+              <ButtonUnified
                 onClick={() => router.push('/catalogue')}
-                className="bg-black hover:bg-gray-800 text-white"
+                variant="default"
+                icon={ArrowRight}
+                iconPosition="right"
               >
-                <ArrowRight className="h-4 w-4 mr-2" />
                 Voir Catalogue
-              </ButtonV2>
+              </ButtonUnified>
             </div>
           </div>
         </div>
@@ -206,22 +206,22 @@ export default function SourcingValidationPage() {
       <div className="container mx-auto px-4 py-8">
         {/* Onglets de navigation */}
         <div className="flex space-x-1 mb-6">
-          <ButtonV2
-            variant={activeTab === 'validation' ? 'secondary' : 'outline'}
+          <ButtonUnified
+            variant={activeTab === 'validation' ? 'default' : 'outline'}
             onClick={() => setActiveTab('validation')}
-            className={activeTab === 'validation' ? 'bg-black text-white' : ''}
+            icon={Settings}
+            iconPosition="left"
           >
-            <Settings className="h-4 w-4 mr-2" />
             Validation Sourcing ({productsToValidate.length})
-          </ButtonV2>
-          <ButtonV2
-            variant={activeTab === 'samples' ? 'secondary' : 'outline'}
+          </ButtonUnified>
+          <ButtonUnified
+            variant={activeTab === 'samples' ? 'default' : 'outline'}
             onClick={() => setActiveTab('samples')}
-            className={activeTab === 'samples' ? 'bg-black text-white' : ''}
+            icon={Package}
+            iconPosition="left"
           >
-            <Package className="h-4 w-4 mr-2" />
             Échantillons Groupés ({productsRequiringSamples.length})
-          </ButtonV2>
+          </ButtonUnified>
         </div>
 
         {/* Statistiques workflow */}
@@ -335,16 +335,15 @@ export default function SourcingValidationPage() {
                           </p>
                         </div>
                         <div className="flex items-center space-x-2 ml-4">
-                          <ButtonV2
+                          <IconButton
                             variant="outline"
                             size="sm"
-                            className="border-gray-300"
+                            icon={Eye}
+                            label="Voir les détails"
                             onClick={() =>
                               router.push(`/catalogue/${product.id}`)
                             }
-                          >
-                            <Eye className="h-4 w-4" />
-                          </ButtonV2>
+                          />
                         </div>
                       </div>
 
@@ -393,14 +392,15 @@ export default function SourcingValidationPage() {
                         <div className="flex space-x-2">
                           <Dialog>
                             <DialogTrigger asChild>
-                              <ButtonV2
+                              <ButtonUnified
                                 size="sm"
-                                className="bg-black hover:bg-gray-800 text-white"
+                                variant="success"
+                                icon={Settings}
+                                iconPosition="left"
                                 onClick={() => setSelectedProduct(product)}
                               >
-                                <Settings className="h-4 w-4 mr-2" />
                                 Valider Sourcing
-                              </ButtonV2>
+                              </ButtonUnified>
                             </DialogTrigger>
                           </Dialog>
                         </div>
@@ -442,14 +442,15 @@ export default function SourcingValidationPage() {
                           : "Pas d'échantillons requis"}
                       </p>
                     </div>
-                    <ButtonV2
+                    <ButtonUnified
                       size="sm"
+                      variant="success"
+                      icon={ArrowRight}
+                      iconPosition="right"
                       onClick={() => handleValidateProduct(product)}
-                      className="bg-green-600 hover:bg-green-700 text-white"
                     >
-                      <ArrowRight className="h-4 w-4 mr-2" />
                       Transférer
-                    </ButtonV2>
+                    </ButtonUnified>
                   </div>
                 ))}
               </div>
@@ -548,7 +549,7 @@ export default function SourcingValidationPage() {
                 />
               </div>
               <DialogFooter>
-                <ButtonV2
+                <ButtonUnified
                   variant="outline"
                   onClick={() => {
                     setSelectedProduct(null);
@@ -562,14 +563,14 @@ export default function SourcingValidationPage() {
                   }}
                 >
                   Annuler
-                </ButtonV2>
-                <ButtonV2
+                </ButtonUnified>
+                <ButtonUnified
                   onClick={() => handleValidateProduct(selectedProduct)}
-                  className="bg-black hover:bg-gray-800 text-white"
+                  variant="success"
                   disabled={!selectedProduct.supplier_id}
                 >
                   Valider Sourcing
-                </ButtonV2>
+                </ButtonUnified>
               </DialogFooter>
             </DialogContent>
           </Dialog>

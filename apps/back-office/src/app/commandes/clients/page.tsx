@@ -22,6 +22,7 @@ import {
 } from '@verone/ui';
 import { Badge } from '@verone/ui';
 import { ButtonUnified } from '@verone/ui';
+import { IconButton } from '@verone/ui';
 import {
   Card,
   CardContent,
@@ -852,83 +853,83 @@ export default function SalesOrdersPage() {
                         <TableCell>
                           <div className="flex items-center gap-2">
                             {/* Voir */}
-                            <ButtonUnified
+                            <IconButton
+                              icon={Eye}
                               variant="outline"
                               size="sm"
+                              label="Voir détails"
                               onClick={() => openOrderDetail(order)}
-                              title="Voir détails"
-                              icon={Eye}
                             />
 
                             {/* Modifier (draft ou confirmed non payée) */}
                             {(order.status === 'draft' ||
                               order.status === 'confirmed') && (
-                              <ButtonUnified
+                              <IconButton
+                                icon={Edit}
                                 variant="outline"
                                 size="sm"
+                                label="Modifier"
                                 onClick={() => openEditOrder(order.id)}
-                                title="Modifier"
-                                icon={Edit}
                               />
                             )}
 
                             {/* Valider (draft uniquement) */}
                             {order.status === 'draft' && (
-                              <ButtonUnified
+                              <IconButton
+                                icon={CheckCircle}
                                 variant="success"
                                 size="sm"
+                                label="Valider"
                                 onClick={() =>
                                   handleStatusChange(order.id, 'confirmed')
                                 }
-                                title="Valider"
-                                icon={CheckCircle}
                               />
                             )}
 
                             {/* Dévalider (confirmed uniquement) */}
                             {order.status === 'confirmed' && (
-                              <ButtonUnified
+                              <IconButton
+                                icon={RotateCcw}
                                 variant="outline"
                                 size="sm"
+                                label="Dévalider (retour brouillon)"
                                 onClick={() =>
                                   handleStatusChange(order.id, 'draft')
                                 }
-                                title="Dévalider (retour brouillon)"
-                                icon={RotateCcw}
                               />
                             )}
 
                             {/* Expédier (confirmed ou partially_shipped) */}
                             {(order.status === 'confirmed' ||
                               order.status === 'partially_shipped') && (
-                              <ButtonUnified
+                              <IconButton
+                                icon={Truck}
                                 variant="outline"
                                 size="sm"
+                                label="Expédier la commande"
                                 onClick={() => openShipmentModal(order)}
-                                title="Expédier la commande"
-                                icon={Truck}
                               />
                             )}
 
                             {/* Annuler (UNIQUEMENT brouillon - Workflow: dévalidation obligatoire) */}
                             {order.status === 'draft' && (
-                              <ButtonUnified
+                              <IconButton
+                                icon={Ban}
                                 variant="danger"
                                 size="sm"
+                                label="Annuler la commande (brouillon uniquement)"
                                 onClick={() => handleCancel(order.id)}
-                                title="Annuler la commande (brouillon uniquement)"
-                                icon={Ban}
                               />
                             )}
 
                             {/* Annuler disabled pour confirmed - Doit dévalider d'abord */}
                             {order.status === 'confirmed' && (
-                              <ButtonUnified
+                              <IconButton
+                                icon={Ban}
                                 variant="outline"
                                 size="sm"
+                                label="Impossible d'annuler directement une commande validée. Veuillez d'abord la dévalider (retour brouillon), puis l'annuler."
                                 disabled
-                                title="Impossible d'annuler directement une commande validée. Veuillez d'abord la dévalider (retour brouillon), puis l'annuler."
-                                icon={Ban}
                               />
                             )}
 
@@ -938,37 +939,37 @@ export default function SalesOrdersPage() {
                               order.status !== 'cancelled' &&
                               order.status !== 'draft' &&
                               order.status !== 'confirmed' && (
-                                <ButtonUnified
+                                <IconButton
+                                  icon={Ban}
                                   variant="outline"
                                   size="sm"
-                                  disabled
-                                  title={
+                                  label={
                                     order.payment_status === 'paid'
                                       ? "Impossible d'annuler : commande déjà payée. Contacter un administrateur pour remboursement."
                                       : "Impossible d'annuler : commande déjà livrée. Créer un avoir."
                                   }
-                                  icon={Ban}
+                                  disabled
                                 />
                               )}
 
                             {/* Supprimer (cancelled uniquement) */}
                             {order.status === 'cancelled' && (
-                              <ButtonUnified
+                              <IconButton
+                                icon={Trash2}
                                 variant="danger"
                                 size="sm"
+                                label="Supprimer"
                                 onClick={() => handleDelete(order.id)}
-                                title="Supprimer"
-                                icon={Trash2}
                               />
                             )}
 
                             {/* Imprimer PDF */}
-                            <ButtonUnified
+                            <IconButton
+                              icon={FileText}
                               variant="outline"
                               size="sm"
+                              label="Imprimer PDF"
                               onClick={() => handlePrintPDF(order)}
-                              title="Imprimer PDF"
-                              icon={FileText}
                             />
                           </div>
                         </TableCell>

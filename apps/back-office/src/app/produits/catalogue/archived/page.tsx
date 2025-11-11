@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
+import { ButtonUnified, IconButton } from '@verone/ui';
 import { ArrowLeft, Package, RotateCcw, Trash2 } from 'lucide-react';
 
 export default function ArchivedProductsPage() {
@@ -126,19 +126,25 @@ export default function ArchivedProductsPage() {
                 </div>
 
                 <div className="flex gap-2 ml-4">
-                  <ButtonV2 variant="outline" size="sm" className="text-xs">
-                    <RotateCcw className="h-4 w-4 mr-1" />
-                    Restaurer
-                  </ButtonV2>
-
-                  <ButtonV2
-                    variant="outline"
+                  <ButtonUnified
+                    variant="success"
                     size="sm"
-                    className="text-xs text-red-600 border-red-300 hover:bg-red-50"
+                    icon={RotateCcw}
+                    iconPosition="left"
+                    className="text-xs"
                   >
-                    <Trash2 className="h-4 w-4 mr-1" />
+                    Restaurer
+                  </ButtonUnified>
+
+                  <ButtonUnified
+                    variant="danger"
+                    size="sm"
+                    icon={Trash2}
+                    iconPosition="left"
+                    className="text-xs"
+                  >
                     Supprimer
-                  </ButtonV2>
+                  </ButtonUnified>
                 </div>
               </div>
             </div>

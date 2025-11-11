@@ -11,8 +11,14 @@ import { useEffect, useState } from 'react';
 
 import { useParams, useRouter } from 'next/navigation';
 
+import { useFamilies } from '@verone/categories';
+import { useCategories } from '@verone/categories';
+import {
+  useSubcategories,
+  type SubcategoryWithDetails,
+} from '@verone/categories';
 import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
+import { ButtonUnified } from '@verone/ui';
 import {
   Card,
   CardContent,
@@ -21,6 +27,7 @@ import {
   CardTitle,
 } from '@verone/ui';
 import { VéroneCard } from '@verone/ui';
+import type { Database } from '@verone/utils/supabase/types';
 import {
   ArrowLeft,
   Plus,
@@ -33,13 +40,6 @@ import {
 
 import { FamilyCrudForm } from '@/components/forms/family-crud-form';
 import { SubcategoryForm } from '@/components/forms/subcategory-form';
-import { useFamilies } from '@verone/categories';
-import { useCategories } from '@verone/categories';
-import {
-  useSubcategories,
-  type SubcategoryWithDetails,
-} from '@verone/categories';
-import type { Database } from '@verone/utils/supabase/types';
 
 type Family = Database['public']['Tables']['families']['Row'];
 type Category = Database['public']['Tables']['categories']['Row'];
@@ -127,14 +127,14 @@ export default function CategoryDetailPage() {
           <h1 className="text-2xl font-bold text-black mb-4">
             Catégorie non trouvée
           </h1>
-          <ButtonV2
+          <ButtonUnified
             onClick={() => router.push('/produits/catalogue/categories')}
             variant="outline"
-            className="border-black text-black hover:bg-black hover:text-white"
+            icon={ArrowLeft}
+            iconPosition="left"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
             Retour au catalogue
-          </ButtonV2>
+          </ButtonUnified>
         </div>
       </div>
     );
@@ -245,15 +245,15 @@ export default function CategoryDetailPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
-            <ButtonV2
+            <ButtonUnified
               onClick={handleBackToFamily}
               variant="outline"
               size="sm"
-              className="border-black text-black hover:bg-black hover:text-white"
+              icon={ArrowLeft}
+              iconPosition="left"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
               Retour
-            </ButtonV2>
+            </ButtonUnified>
             <div>
               {/* Breadcrumb */}
               <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
@@ -288,24 +288,24 @@ export default function CategoryDetailPage() {
           </div>
 
           <div className="flex items-center space-x-3">
-            <ButtonV2
+            <ButtonUnified
               variant="outline"
               size="sm"
-              className="border-black text-black hover:bg-black hover:text-white"
               onClick={handleEditCategory}
+              icon={Edit}
+              iconPosition="left"
             >
-              <Edit className="w-4 h-4 mr-2" />
               Modifier
-            </ButtonV2>
-            <ButtonV2
+            </ButtonUnified>
+            <ButtonUnified
               variant="outline"
               size="sm"
-              className="border-black text-black hover:bg-black hover:text-white"
               onClick={handleNewSubcategory}
+              icon={Plus}
+              iconPosition="left"
             >
-              <Plus className="w-4 h-4 mr-2" />
               Nouvelle sous-catégorie
-            </ButtonV2>
+            </ButtonUnified>
           </div>
         </div>
 
@@ -389,14 +389,14 @@ export default function CategoryDetailPage() {
                 <p className="text-gray-500 mb-4">
                   Aucune sous-catégorie dans cette catégorie
                 </p>
-                <ButtonV2
+                <ButtonUnified
                   variant="outline"
-                  className="border-black text-black hover:bg-black hover:text-white"
                   onClick={handleNewSubcategory}
+                  icon={Plus}
+                  iconPosition="left"
                 >
-                  <Plus className="w-4 h-4 mr-2" />
                   Créer la première sous-catégorie
-                </ButtonV2>
+                </ButtonUnified>
               </CardContent>
             </Card>
           ) : (

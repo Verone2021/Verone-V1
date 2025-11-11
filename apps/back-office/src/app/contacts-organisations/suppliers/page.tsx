@@ -591,7 +591,7 @@ export default function SuppliersPage() {
                                   href={`/contacts-organisations/suppliers/${supplier.id}`}
                                 >
                                   <ButtonV2
-                                    variant="ghost"
+                                    variant="outline"
                                     size="sm"
                                     className="text-xs h-7 px-3"
                                     icon={Eye}
@@ -600,7 +600,7 @@ export default function SuppliersPage() {
                                   </ButtonV2>
                                 </Link>
                                 <ButtonV2
-                                  variant="ghost"
+                                  variant="danger"
                                   size="sm"
                                   onClick={() => handleArchive(supplier)}
                                   icon={Archive}
@@ -624,7 +624,7 @@ export default function SuppliersPage() {
                                   className="h-7 px-2"
                                 />
                                 <ButtonV2
-                                  variant="secondary"
+                                  variant="success"
                                   size="sm"
                                   onClick={() => handleArchive(supplier)}
                                   icon={ArchiveRestore}
@@ -632,7 +632,7 @@ export default function SuppliersPage() {
                                   aria-label="Restaurer"
                                 />
                                 <ButtonV2
-                                  variant="destructive"
+                                  variant="danger"
                                   size="sm"
                                   onClick={() => handleDelete(supplier)}
                                   icon={Trash2}
@@ -643,7 +643,7 @@ export default function SuppliersPage() {
                                   href={`/contacts-organisations/suppliers/${supplier.id}`}
                                 >
                                   <ButtonV2
-                                    variant="ghost"
+                                    variant="outline"
                                     size="sm"
                                     className="text-xs h-7 px-3"
                                     icon={Eye}
@@ -822,7 +822,7 @@ export default function SuppliersPage() {
                                 href={`/contacts-organisations/suppliers/${supplier.id}`}
                               >
                                 <ButtonV2
-                                  variant="ghost"
+                                  variant="outline"
                                   size="sm"
                                   icon={Eye}
                                   className="h-7 px-2"
@@ -830,7 +830,7 @@ export default function SuppliersPage() {
                                 />
                               </Link>
                               <ButtonV2
-                                variant="ghost"
+                                variant="danger"
                                 size="sm"
                                 onClick={() => handleArchive(supplier)}
                                 icon={Archive}
@@ -854,7 +854,7 @@ export default function SuppliersPage() {
                                 className="h-7 px-2"
                               />
                               <ButtonV2
-                                variant="secondary"
+                                variant="success"
                                 size="sm"
                                 onClick={() => handleArchive(supplier)}
                                 icon={ArchiveRestore}
@@ -862,7 +862,7 @@ export default function SuppliersPage() {
                                 aria-label="Restaurer"
                               />
                               <ButtonV2
-                                variant="destructive"
+                                variant="danger"
                                 size="sm"
                                 onClick={() => handleDelete(supplier)}
                                 icon={Trash2}
@@ -873,7 +873,7 @@ export default function SuppliersPage() {
                                 href={`/contacts-organisations/suppliers/${supplier.id}`}
                               >
                                 <ButtonV2
-                                  variant="ghost"
+                                  variant="outline"
                                   size="sm"
                                   icon={Eye}
                                   className="h-7 px-2"

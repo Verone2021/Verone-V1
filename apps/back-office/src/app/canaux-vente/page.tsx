@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
+import { ButtonUnified } from '@verone/ui';
 import {
   Card,
   CardContent,
@@ -170,17 +170,17 @@ export default function CanauxVentePage() {
               </p>
             </div>
             <div className="flex items-center space-x-3">
-              <ButtonV2
+              <ButtonUnified
                 variant="outline"
                 className="border-black text-black hover:bg-black hover:text-white"
               >
                 <Settings className="h-4 w-4 mr-2" />
                 Paramètres
-              </ButtonV2>
-              <ButtonV2 className="bg-black hover:bg-gray-800 text-white">
+              </ButtonUnified>
+              <ButtonUnified variant="default">
                 <ShoppingBag className="h-4 w-4 mr-2" />
                 Nouveau Canal
-              </ButtonV2>
+              </ButtonUnified>
             </div>
           </div>
         </div>

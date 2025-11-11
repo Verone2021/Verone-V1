@@ -4,8 +4,9 @@ import { useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { CompleteProductWizard } from '@verone/products';
 import { Badge } from '@verone/ui';
-import { Button } from '@verone/ui';
+import { ButtonUnified } from '@verone/ui';
 import {
   Card,
   CardContent,
@@ -20,8 +21,6 @@ import {
   Circle,
   ArrowRight,
 } from 'lucide-react';
-
-import { CompleteProductWizard } from '@verone/products';
 
 export default function NouveauProduitPage() {
   const router = useRouter();
@@ -46,14 +45,15 @@ export default function NouveauProduitPage() {
       <div className="bg-white border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
+            <ButtonUnified
+              variant="outline"
               onClick={handleBack}
-              className="flex items-center text-gray-600 hover:text-black"
+              icon={ArrowLeft}
+              iconPosition="left"
+              className="text-gray-600 hover:text-black"
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
               {showForm ? 'Retour à la présentation' : 'Retour au catalogue'}
-            </Button>
+            </ButtonUnified>
 
             {/* Indicateur d'étape */}
             <div className="flex items-center space-x-2 text-sm text-gray-500">
@@ -174,12 +174,13 @@ export default function NouveauProduitPage() {
                   </div>
 
                   <div className="pt-4 text-center">
-                    <Button
-                      className="bg-green-500 hover:bg-green-600 text-white border-0 shadow-sm hover:shadow-md transition-all px-6 py-2 text-sm"
+                    <ButtonUnified
+                      variant="success"
+                      className="shadow-sm hover:shadow-md transition-all px-6 py-2 text-sm"
                       onClick={() => setShowForm(true)}
                     >
                       Commencer la création complète
-                    </Button>
+                    </ButtonUnified>
                   </div>
                 </CardContent>
               </Card>
