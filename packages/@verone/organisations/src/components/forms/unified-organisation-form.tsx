@@ -3,18 +3,10 @@
 import { useState, useEffect } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Building2, MapPin, FileText, CreditCard, Users } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
-
+import { AddressSelector } from '@verone/common/components/address/AddressSelector';
 import { ButtonV2 } from '@verone/ui';
 import { Checkbox } from '@verone/ui';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@verone/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import {
@@ -26,11 +18,14 @@ import {
 } from '@verone/ui';
 import { Textarea } from '@verone/ui';
 import { spacing, colors, componentShadows } from '@verone/ui';
-import { AddressSelector } from '@verone/common/components/address/AddressSelector';
+import { Building2, MapPin, FileText, CreditCard, Users } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+
 import type { Organisation } from '@verone/organisations/hooks';
 
-import { LogoUploadButton } from './logo-upload-button';
 import { OrganisationContactsManager } from './organisation-contacts-manager';
+import { LogoUploadButton } from '../buttons/LogoUploadButton';
 
 // ========================
 // TYPES & SCHEMAS

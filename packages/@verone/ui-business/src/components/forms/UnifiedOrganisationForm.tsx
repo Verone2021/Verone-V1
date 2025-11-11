@@ -3,18 +3,12 @@
 import { useState, useEffect } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Building2, MapPin, FileText, CreditCard, Users } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
-
+import { AddressSelector } from '@verone/common/components/address/AddressSelector';
+import { LogoUploadButton } from '@verone/organisations/components/buttons/LogoUploadButton';
+import { OrganisationContactsManager } from '@verone/organisations/components/forms/organisation-contacts-manager';
 import { ButtonV2 } from '@verone/ui';
 import { Checkbox } from '@verone/ui';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@verone/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import {
@@ -26,9 +20,9 @@ import {
 } from '@verone/ui';
 import { Textarea } from '@verone/ui';
 import { spacing, colors, componentShadows } from '@verone/ui';
-import { AddressSelector } from '@verone/common/components/address/AddressSelector';
-import { LogoUploadButton } from '@verone/organisations/components/forms/logo-upload-button';
-import { OrganisationContactsManager } from '@verone/organisations/components/forms/organisation-contacts-manager';
+import { Building2, MapPin, FileText, CreditCard, Users } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
 
 // ========================
 // TYPES & SCHEMAS

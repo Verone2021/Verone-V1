@@ -8,10 +8,9 @@
 
 import { useState } from 'react';
 
-import { FileText, Loader2 } from 'lucide-react';
-
-import { ButtonV2 } from '@verone/ui';
 import { useToast } from '@verone/common/hooks';
+import { ButtonV2 } from '@verone/ui';
+import { FileText, Loader2 } from 'lucide-react';
 
 // =====================================================================
 // TYPE PROPS
@@ -23,7 +22,7 @@ interface GenerateInvoiceButtonProps {
   onSuccess?: (invoiceId: string) => void;
   disabled?: boolean;
   variant?: 'secondary' | 'outline' | 'ghost';
-  size?: 'secondary' | 'sm' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 }
 
 // =====================================================================
@@ -53,7 +52,7 @@ export function GenerateInvoiceButton({
   onSuccess,
   disabled = false,
   variant = 'secondary',
-  size = 'secondary',
+  size = 'md',
 }: GenerateInvoiceButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -132,19 +131,12 @@ export function GenerateInvoiceButton({
       onClick={handleGenerateInvoice}
       disabled={disabled || isLoading}
       variant={variant}
-      size={size as any}
+      size={size}
+      icon={isLoading ? Loader2 : FileText}
+      iconPosition="left"
+      loading={isLoading}
     >
-      {isLoading ? (
-        <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Génération...
-        </>
-      ) : (
-        <>
-          <FileText className="mr-2 h-4 w-4" />
-          Générer facture
-        </>
-      )}
+      {isLoading ? 'Génération...' : 'Générer facture'}
     </ButtonV2>
   );
 }

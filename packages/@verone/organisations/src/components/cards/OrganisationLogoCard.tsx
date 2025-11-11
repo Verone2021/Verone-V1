@@ -7,8 +7,6 @@
 
 import { useState } from 'react';
 
-import { Building2, Edit } from 'lucide-react';
-
 import { ButtonV2 } from '@verone/ui';
 import {
   Card,
@@ -24,9 +22,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@verone/ui';
+import { Building2, Edit } from 'lucide-react';
 
+import { LogoUploadButton } from '../buttons/LogoUploadButton';
 import { OrganisationLogo } from '../display/OrganisationLogo';
-import { LogoUploadButton } from '../forms/logo-upload-button';
 
 interface OrganisationLogoCardProps {
   organisationId: string;

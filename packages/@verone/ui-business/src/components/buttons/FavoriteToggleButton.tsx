@@ -9,10 +9,10 @@
 
 import { useState } from 'react';
 
-import { cn } from '@verone/utils';
-import { Heart, Loader2 } from 'lucide-react';
-
 import { useToggleFavorite } from '@verone/common';
+import { ButtonUnified } from '@verone/ui';
+import { cn } from '@verone/utils';
+import { Heart } from 'lucide-react';
 
 interface FavoriteToggleButtonProps {
   organisationId: string;
@@ -61,15 +61,15 @@ export function FavoriteToggleButton({
   const isDisabled = disabled || isLoading;
 
   return (
-    <button
+    <ButtonUnified
+      variant="ghost"
+      size="icon"
       onClick={handleClick}
       disabled={isDisabled}
+      loading={isLoading}
       className={cn(
-        'inline-flex items-center justify-center',
         'transition-all duration-200',
-        'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
-        !isDisabled && 'hover:scale-110 cursor-pointer',
-        isDisabled && 'opacity-50 cursor-not-allowed',
+        !isDisabled && 'hover:scale-110',
         isAnimating && 'animate-pulse',
         className
       )}
@@ -81,21 +81,15 @@ export function FavoriteToggleButton({
             : 'Ajouter aux favoris'
       }
       aria-label={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
-      aria-disabled={isDisabled}
-      role="button"
     >
-      {isLoading ? (
-        <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
-      ) : (
-        <Heart
-          className={cn(
-            'h-4 w-4 transition-colors duration-200',
-            isFavorite && !isDisabled && 'fill-red-500 text-red-500',
-            !isFavorite && !isDisabled && 'text-gray-400',
-            isDisabled && 'text-gray-300'
-          )}
-        />
-      )}
-    </button>
+      <Heart
+        className={cn(
+          'h-4 w-4 transition-colors duration-200',
+          isFavorite && !isDisabled && 'fill-red-500 text-red-500',
+          !isFavorite && !isDisabled && 'text-gray-400',
+          isDisabled && 'text-gray-300'
+        )}
+      />
+    </ButtonUnified>
   );
 }

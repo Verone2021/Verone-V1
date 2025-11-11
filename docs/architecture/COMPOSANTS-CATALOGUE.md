@@ -111,6 +111,8 @@ interface ModernActionButtonProps {
 
 #### StandardModifyButton
 
+⚠️ **DEPRECATED** - Suppression prévue 2025-11-21
+
 ```typescript
 interface StandardModifyButtonProps {
   onClick: () => void;
@@ -118,6 +120,233 @@ interface StandardModifyButtonProps {
   disabled?: boolean;
 }
 ```
+
+---
+
+### ✅ Boutons Métiers Back-Office (4 composants - Design System V2 Compliant)
+
+**Date audit** : 2025-11-11
+**Rapport complet** : `docs/audits/2025-11/RAPPORT-AUDIT-BUTTONS-BACK-OFFICE-2025-11-11.md`
+
+**Pattern commun** : Tous utilisent **ButtonV2** comme base avec props natives (icon, loading, variant, size).
+
+#### SampleOrderButton
+
+**Package** : `@verone/ui-business`
+**Fichier** : `packages/@verone/ui-business/src/components/buttons/SampleOrderButton.tsx`
+**Status** : ✅ Conforme Design System V2
+
+```typescript
+import { SampleOrderButton } from '@verone/ui-business';
+
+interface SampleOrderButtonProps {
+  productId: string;
+  productName: string;
+  supplierName?: string;
+  costPrice?: number;
+  className?: string;
+  variant?: 'secondary' | 'outline' | 'ghost';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';  // ✅ Types ButtonV2 corrects
+}
+
+// Exemple
+<SampleOrderButton
+  productId="prod-123"
+  productName="Chaise Design"
+  supplierName="Supplier XYZ"
+  costPrice={149.99}
+  variant="outline"
+  size="md"
+/>
+```
+
+**Notes** :
+
+- ✅ Utilise ButtonV2 avec icon={Package}
+- ✅ Prop `loading` native (pas de render manuel Loader2)
+- ✅ Dialog confirmation intégré
+- ✅ Hook `useSampleOrder` pour logique business
+
+---
+
+#### GenerateInvoiceButton
+
+**Package** : `@verone/finance`
+**Fichier** : `packages/@verone/finance/src/components/buttons/GenerateInvoiceButton.tsx`
+**Status** : ✅ Conforme Design System V2
+
+```typescript
+import { GenerateInvoiceButton } from '@verone/finance';
+
+interface GenerateInvoiceButtonProps {
+  salesOrderId: string;
+  orderNumber: string;
+  onSuccess?: (invoiceId: string) => void;
+  disabled?: boolean;
+  variant?: 'secondary' | 'outline' | 'ghost';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';  // ✅ Types ButtonV2 corrects
+}
+
+// Exemple
+<GenerateInvoiceButton
+  salesOrderId="order-456"
+  orderNumber="ORD-2025-001"
+  onSuccess={(invoiceId) => console.log(`Facture ${invoiceId} créée`)}
+  variant="secondary"
+  size="md"
+/>
+```
+
+**Notes** :
+
+- ✅ Utilise ButtonV2 avec icon={FileText}
+- ✅ Prop `loading` native
+- ✅ Gestion erreurs spécifiques (404, 409)
+- ✅ Toast feedback intégré
+
+---
+
+#### FavoriteToggleButton
+
+**Package** : `@verone/ui-business`
+**Fichier** : `packages/@verone/ui-business/src/components/buttons/FavoriteToggleButton.tsx`
+**Status** : ✅ Conforme Design System V2
+**Usage** : 3 pages back-office (customers, suppliers, partners)
+
+```typescript
+import { FavoriteToggleButton } from '@verone/ui-business';
+
+interface FavoriteToggleButtonProps {
+  organisationId: string;
+  isFavorite: boolean;
+  organisationType: 'customer' | 'supplier' | 'partner';
+  disabled?: boolean;
+  onToggleComplete?: () => void;
+  className?: string;
+}
+
+// Exemple
+<FavoriteToggleButton
+  organisationId="org-789"
+  isFavorite={true}
+  organisationType="customer"
+  onToggleComplete={() => refetch()}
+/>
+```
+
+**Notes** :
+
+- ✅ Utilise **ButtonUnified** (variant="ghost" size="icon")
+- ✅ Prop `loading` native (plus de render manuel Loader2)
+- ✅ Icon Heart dynamique (filled si favorite)
+- ✅ Animation pulse sur toggle
+- ✅ Hook `useToggleFavorite` pour logique business
+
+---
+
+#### LogoUploadButton
+
+**Package** : `@verone/organisations`
+**Fichier** : `packages/@verone/organisations/src/components/buttons/LogoUploadButton.tsx`
+**Status** : ✅ Conforme Design System V2 + Multi-Frontend Isolation
+
+```typescript
+import { LogoUploadButton } from '@verone/organisations';
+
+interface LogoUploadButtonProps {
+  organisationId: string;
+  organisationName: string;
+  currentLogoUrl?: string | null;
+  onUploadSuccess?: () => void;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  className?: string;
+}
+
+// Exemple
+<LogoUploadButton
+  organisationId="org-456"
+  organisationName="Acme Corp"
+  currentLogoUrl="/logos/acme.png"
+  onUploadSuccess={() => refetch()}
+  size="lg"
+/>
+```
+
+**Notes** :
+
+- ✅ Utilise ButtonV2 avec icons (Upload, Trash2)
+- ✅ Props `loading` natives (upload + delete)
+- ✅ **80+ classes préfixées `bo-`** (isolation multi-frontend)
+- ✅ Drag & drop intégré
+- ✅ Preview local avant upload
+- ✅ Hook `useLogoUpload` pour logique business
+
+---
+
+### ✅ Pattern Recommandé : Créer Nouveau Bouton Métier
+
+```typescript
+// ✅ BON PATTERN
+import { ButtonV2 } from '@verone/ui';
+import { MyIcon } from 'lucide-react';
+
+interface MyCustomButtonProps {
+  // Props métier
+  entityId: string;
+  entityName: string;
+  onSuccess?: () => void;
+  // Props ButtonV2 standard
+  variant?: 'secondary' | 'outline' | 'ghost';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';  // ✅ Types exacts ButtonV2
+  disabled?: boolean;
+  className?: string;
+}
+
+export function MyCustomButton({
+  entityId,
+  entityName,
+  onSuccess,
+  variant = 'secondary',
+  size = 'md',
+  disabled = false,
+  className,
+}: MyCustomButtonProps) {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleClick = async () => {
+    setIsLoading(true);
+    try {
+      // Logique métier
+      await myBusinessLogic(entityId);
+      onSuccess?.();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <ButtonV2
+      variant={variant}
+      size={size}  // ✅ Pas de cast 'as any'
+      onClick={handleClick}
+      disabled={disabled}
+      icon={MyIcon}  // ✅ Prop native
+      iconPosition="left"  // ✅ Prop native
+      loading={isLoading}  // ✅ Prop native (pas de render manuel Loader2)
+      className={className}  // ✅ Pas de classes hardcodées
+    >
+      {isLoading ? 'Traitement...' : 'Mon Action'}
+    </ButtonV2>
+  );
+}
+```
+
+**❌ Anti-patterns à éviter** :
+
+- ❌ Cast `as any` pour contourner types
+- ❌ Render manuel icon/loading (utiliser props natives)
+- ❌ Classes Tailwind hardcodées sans prefix (si back-office : prefix `bo-`)
+- ❌ Type size incorrect (ex: `'secondary' | 'sm' | 'lg'` au lieu de `'xs' | 'sm' | 'md' | 'lg' | 'xl'`)
 
 ---
 

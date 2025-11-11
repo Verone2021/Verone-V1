@@ -4,8 +4,7 @@ import { useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { Package, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
-
+import { useSampleOrder } from '@verone/orders/hooks';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -17,7 +16,7 @@ import {
   DialogTitle,
 } from '@verone/ui';
 import { cn } from '@verone/utils';
-import { useSampleOrder } from '@verone/orders/hooks';
+import { Package, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
 interface SampleOrderButtonProps {
   productId: string;
@@ -26,7 +25,7 @@ interface SampleOrderButtonProps {
   costPrice?: number;
   className?: string;
   variant?: 'secondary' | 'outline' | 'ghost';
-  size?: 'secondary' | 'sm' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 }
 
 export function SampleOrderButton({
@@ -36,7 +35,7 @@ export function SampleOrderButton({
   costPrice,
   className,
   variant = 'outline',
-  size = 'secondary',
+  size = 'md',
 }: SampleOrderButtonProps) {
   const router = useRouter();
   const { requestSample, isLoading } = useSampleOrder();
@@ -63,25 +62,15 @@ export function SampleOrderButton({
     <>
       <ButtonV2
         variant={variant}
-        size={size as any}
+        size={size}
         onClick={() => setShowConfirmDialog(true)}
         disabled={isLoading}
-        className={cn(
-          'border-blue-300 text-blue-700 hover:bg-blue-50',
-          className
-        )}
+        icon={Package}
+        iconPosition="left"
+        loading={isLoading}
+        className={className}
       >
-        {isLoading ? (
-          <>
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            Traitement...
-          </>
-        ) : (
-          <>
-            <Package className="h-4 w-4 mr-2" />
-            Commander échantillon
-          </>
-        )}
+        {isLoading ? 'Traitement...' : 'Commander échantillon'}
       </ButtonV2>
 
       {/* Dialog de confirmation */}
