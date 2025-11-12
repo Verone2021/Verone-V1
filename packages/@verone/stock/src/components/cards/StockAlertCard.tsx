@@ -186,83 +186,55 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
               </Link>
             </div>
 
-            {/* Indicateurs Stock Avancés - Grid 4 colonnes */}
-            <div className="grid grid-cols-4 gap-3 mt-2">
-              {/* Stock Actuel */}
-              <div className="text-center p-2 bg-white rounded-lg border border-gray-200">
-                <div className="text-[10px] text-gray-500 uppercase font-medium">
-                  Stock Actuel
-                </div>
-                <div className="text-lg font-bold text-gray-900">
-                  {alert.stock_real}
-                </div>
-              </div>
-
-              {/* Stock Prévisionnel */}
-              <div
-                className={`text-center p-2 rounded-lg border ${
+            {/* Indicateurs Stock Compacts - Format ligne */}
+            <div className="flex items-center gap-2 mt-1 text-xs text-gray-600 flex-wrap">
+              <span>
+                Stock Réel:{' '}
+                <strong className="text-gray-900">{alert.stock_real}</strong>
+              </span>
+              <span
+                className={`${
                   alert.stock_real +
                     (alert.stock_forecasted_in || 0) -
                     (alert.stock_forecasted_out || 0) >=
                   alert.min_stock
-                    ? 'bg-green-50 border-green-300'
-                    : 'bg-red-50 border-red-300'
+                    ? 'text-green-600'
+                    : 'text-red-600'
                 }`}
               >
-                <div className="text-[10px] text-gray-500 uppercase font-medium">
-                  Stock Prévisionnel
-                </div>
-                <div
-                  className={`text-lg font-bold ${
-                    alert.stock_real +
-                      (alert.stock_forecasted_in || 0) -
-                      (alert.stock_forecasted_out || 0) >=
-                    alert.min_stock
-                      ? 'text-green-700'
-                      : 'text-red-700'
-                  }`}
-                >
+                · Prévisionnel:{' '}
+                <strong>
                   {alert.stock_real +
                     (alert.stock_forecasted_in || 0) -
                     (alert.stock_forecasted_out || 0)}
-                </div>
-                <div className="text-[9px] text-gray-500 mt-0.5">
-                  (+{alert.stock_forecasted_in || 0} -{' '}
-                  {alert.stock_forecasted_out || 0})
-                </div>
-              </div>
-
-              {/* Seuil Minimum */}
-              <div className="text-center p-2 bg-white rounded-lg border border-gray-200">
-                <div className="text-[10px] text-gray-500 uppercase font-medium">
-                  Seuil Minimum
-                </div>
-                <div className="text-lg font-bold text-gray-900">
-                  {alert.min_stock}
-                </div>
-              </div>
-
-              {/* Produits Manquants */}
-              <div
-                className={`text-center p-2 rounded-lg border ${
+                </strong>
+              </span>
+              <span>
+                · Seuil:{' '}
+                <strong className="text-gray-900">{alert.min_stock}</strong>
+              </span>
+              <span
+                className={
                   alert.shortage_quantity > 0
-                    ? 'bg-red-50 border-red-300'
-                    : 'bg-green-50 border-green-300'
-                }`}
+                    ? 'text-red-600 font-medium'
+                    : 'text-green-600'
+                }
               >
-                <div className="text-[10px] text-gray-500 uppercase font-medium">
-                  Manquants
-                </div>
-                <div
-                  className={`text-lg font-bold ${
-                    alert.shortage_quantity > 0
-                      ? 'text-red-700'
-                      : 'text-green-700'
-                  }`}
-                >
+                · Manquants:{' '}
+                <strong>
                   {alert.shortage_quantity > 0 ? alert.shortage_quantity : '✓'}
-                </div>
-              </div>
+                </strong>
+              </span>
+              {alert.stock_forecasted_out > 0 && (
+                <span className="text-red-600">
+                  · Réservé: <strong>{alert.stock_forecasted_out}</strong>
+                </span>
+              )}
+              {alert.stock_forecasted_in > 0 && (
+                <span className="text-green-600 font-medium">
+                  · Commandé: <strong>{alert.stock_forecasted_in}</strong>
+                </span>
+              )}
             </div>
 
             {/* Badge Statut Commande */}
