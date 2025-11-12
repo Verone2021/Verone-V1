@@ -1,7 +1,9 @@
+'use client';
+
 import { useState } from 'react';
 
-import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@verone/common/hooks';
+import { createClient } from '@verone/utils/supabase/client';
 
 interface DraftPurchaseOrderParams {
   productId: string;

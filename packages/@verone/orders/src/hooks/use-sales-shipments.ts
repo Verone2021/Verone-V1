@@ -41,6 +41,7 @@ export interface SalesOrderForShipment {
   expected_delivery_date: string | null;
   shipped_at: string | null;
   shipped_by: string | null;
+  total_ttc?: number; // Total TTC pour assurance
 
   // Customer (polymorphic)
   customer_id: string;

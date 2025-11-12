@@ -2,8 +2,8 @@
 
 import { useState, useCallback } from 'react';
 
-import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@verone/common/hooks';
+import { createClient } from '@verone/utils/supabase/client';
 
 export type ShippingMethod = 'packlink' | 'chrono_track' | 'manual';
 
@@ -30,6 +30,17 @@ export interface CreateShipmentRequest {
   metadata?: any;
 }
 
+export interface ShipmentTrackingEvent {
+  id: string;
+  shipment_id: string;
+  event_name: string;
+  event_timestamp: string;
+  city: string | null;
+  description: string | null;
+  raw_payload: Record<string, unknown>;
+  created_at: string;
+}
+
 export interface Shipment {
   id: string;
   sales_order_id: string;
@@ -43,8 +54,11 @@ export interface Shipment {
   created_at: string;
   shipped_at?: string;
   delivered_at?: string;
+  estimated_delivery_at?: string; // ✅ Ajouté
   packlink_label_url?: string;
   notes?: string;
+  status?: string; // ✅ Ajouté
+  tracking_events?: ShipmentTrackingEvent[]; // ✅ Ajouté
 }
 
 export function useShipments() {
@@ -61,7 +75,7 @@ export function useShipments() {
       setLoading(true);
       try {
         // 1. Appeler API route Packlink pour créer shipment + label
-        const response = await fetch('/api/packlink/create-shipment', {
+        const response = await fetch('/api/sales-shipments/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -425,6 +439,92 @@ export function useShipments() {
     [supabase, toast]
   );
 
+  /**
+   * Fetch shipments avec summary via API route
+   */
+  const fetchShipments = useCallback(
+    async (orderId: string) => {
+      setLoading(true);
+      try {
+        const response = await fetch(`/api/sales-orders/${orderId}/shipments`);
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch shipments: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        return result; // { summary, shipments }
+      } catch (error) {
+        console.error('[useShipments] Error fetching shipments:', error);
+        toast({
+          title: 'Erreur',
+          description: 'Impossible de récupérer les expéditions',
+          variant: 'destructive',
+        });
+        throw error;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [toast]
+  );
+
+  /**
+   * Close order partiellement
+   */
+  const closeOrder = useCallback(async (orderId: string) => {
+    try {
+      const response = await fetch(`/api/sales-orders/${orderId}/close`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to close order');
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error('[useShipments] Error closing order:', error);
+      throw error;
+    }
+  }, []);
+
+  /**
+   * Create shipment via nouvelle API route
+   */
+  const createShipment = useCallback(
+    async (payload: {
+      sales_order_id: string;
+      items: Array<{ sales_order_item_id: string; quantity: number }>;
+      service_id: number;
+      shipping_address?: Record<string, unknown>;
+      notes?: string;
+    }) => {
+      try {
+        const response = await fetch('/api/sales-shipments/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to create shipment');
+        }
+
+        const result = await response.json();
+        return result;
+      } catch (error) {
+        console.error('[useShipments] Error creating shipment:', error);
+        throw error;
+      }
+    },
+    []
+  );
+
   return {
     loading,
     shipments,
@@ -432,5 +532,8 @@ export function useShipments() {
     createChronoTrackShipment,
     createManualShipment,
     fetchShipmentsForOrder,
+    fetchShipments, // ✅ Nouvelle méthode
+    closeOrder, // ✅ Nouvelle méthode
+    createShipment, // ✅ Nouvelle méthode
   };
 }

@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * ⚠️ DEPRECATED : Use useUnifiedSampleEligibility instead
  *
@@ -17,13 +19,13 @@
 import { useState, useCallback } from 'react';
 
 import { hasProductBeenInStock } from '@verone/stock/utils';
-import { createClient } from '@verone/utils/supabase/client';
 import type {
   SampleEligibilityResult,
   SampleRestrictionReason,
   SampleValidationContext,
   BusinessRuleValidation,
 } from '@verone/types';
+import { createClient } from '@verone/utils/supabase/client';
 
 export function useSampleEligibilityRule() {
   const [loading, setLoading] = useState(false);

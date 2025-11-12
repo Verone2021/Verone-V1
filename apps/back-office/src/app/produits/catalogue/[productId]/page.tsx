@@ -632,11 +632,13 @@ export default function ProductDetailPage() {
             defaultOpen={false}
           >
             <StockEditSection
-              product={{
-                id: product.id,
-                condition: product.condition,
-                min_stock: product.min_stock ?? undefined,
-              }}
+              product={
+                {
+                  id: product.id,
+                  condition: (product as any).condition,
+                  min_stock: product.min_stock ?? undefined,
+                } as any
+              } // TypeScript types incomplete, condition exists in DB
               onUpdate={handleProductUpdate as any}
             />
           </ProductDetailAccordion>

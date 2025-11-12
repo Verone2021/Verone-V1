@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Hook pour la gestion des commandes fournisseurs
  * Gère le workflow complet : création → envoi → confirmation → réception
@@ -7,9 +9,9 @@ import { useState, useCallback } from 'react';
 
 // FIXME: Server actions can't be imported from monorepo packages
 // import { updatePurchaseOrderStatus as updatePurchaseOrderStatusAction } from '@/app/actions/purchase-orders';
-import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@verone/common/hooks';
 import { useStockMovements } from '@verone/stock/hooks/use-stock-movements';
+import { createClient } from '@verone/utils/supabase/client';
 
 // Types pour les commandes fournisseurs
 export type PurchaseOrderStatus =

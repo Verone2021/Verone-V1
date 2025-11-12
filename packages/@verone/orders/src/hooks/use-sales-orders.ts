@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Hook pour la gestion des commandes clients
  * Gère le workflow : devis → commande → préparation → expédition → livraison
