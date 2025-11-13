@@ -294,7 +294,10 @@ export type Database = {
           id: string;
           image_url: string | null;
           is_active: boolean | null;
+          is_visible_menu: boolean | null;
           level: number | null;
+          meta_description: string | null;
+          meta_title: string | null;
           name: string;
           slug: string;
           updated_at: string | null;
@@ -309,7 +312,10 @@ export type Database = {
           id?: string;
           image_url?: string | null;
           is_active?: boolean | null;
+          is_visible_menu?: boolean | null;
           level?: number | null;
+          meta_description?: string | null;
+          meta_title?: string | null;
           name: string;
           slug: string;
           updated_at?: string | null;
@@ -324,7 +330,10 @@ export type Database = {
           id?: string;
           image_url?: string | null;
           is_active?: boolean | null;
+          is_visible_menu?: boolean | null;
           level?: number | null;
+          meta_description?: string | null;
+          meta_title?: string | null;
           name?: string;
           slug?: string;
           updated_at?: string | null;
@@ -1054,6 +1063,7 @@ export type Database = {
           theme_tags: string[] | null;
           updated_at: string | null;
           visibility: string;
+          visible_channels: string[] | null;
         };
         Insert: {
           archived_at?: string | null;
@@ -1078,6 +1088,7 @@ export type Database = {
           theme_tags?: string[] | null;
           updated_at?: string | null;
           visibility?: string;
+          visible_channels?: string[] | null;
         };
         Update: {
           archived_at?: string | null;
@@ -1102,6 +1113,7 @@ export type Database = {
           theme_tags?: string[] | null;
           updated_at?: string | null;
           visibility?: string;
+          visible_channels?: string[] | null;
         };
         Relationships: [];
       };
@@ -3762,12 +3774,16 @@ export type Database = {
           eco_tax_default: number | null;
           gtin: string | null;
           id: string;
+          is_published_online: boolean | null;
           item_group_id: string | null;
           margin_percentage: number | null;
+          meta_description: string | null;
+          meta_title: string | null;
           min_stock: number | null;
           name: string;
           product_status: Database['public']['Enums']['product_status_type'];
           product_type: string | null;
+          publication_date: string | null;
           rejection_reason: string | null;
           reorder_point: number | null;
           requires_sample: boolean | null;
@@ -3789,6 +3805,7 @@ export type Database = {
           supplier_reference: string | null;
           target_margin_percentage: number | null;
           technical_description: string | null;
+          unpublication_date: string | null;
           updated_at: string | null;
           variant_attributes: Json | null;
           variant_group_id: string | null;
@@ -3814,12 +3831,16 @@ export type Database = {
           eco_tax_default?: number | null;
           gtin?: string | null;
           id?: string;
+          is_published_online?: boolean | null;
           item_group_id?: string | null;
           margin_percentage?: number | null;
+          meta_description?: string | null;
+          meta_title?: string | null;
           min_stock?: number | null;
           name: string;
           product_status?: Database['public']['Enums']['product_status_type'];
           product_type?: string | null;
+          publication_date?: string | null;
           rejection_reason?: string | null;
           reorder_point?: number | null;
           requires_sample?: boolean | null;
@@ -3841,6 +3862,7 @@ export type Database = {
           supplier_reference?: string | null;
           target_margin_percentage?: number | null;
           technical_description?: string | null;
+          unpublication_date?: string | null;
           updated_at?: string | null;
           variant_attributes?: Json | null;
           variant_group_id?: string | null;
@@ -3866,12 +3888,16 @@ export type Database = {
           eco_tax_default?: number | null;
           gtin?: string | null;
           id?: string;
+          is_published_online?: boolean | null;
           item_group_id?: string | null;
           margin_percentage?: number | null;
+          meta_description?: string | null;
+          meta_title?: string | null;
           min_stock?: number | null;
           name?: string;
           product_status?: Database['public']['Enums']['product_status_type'];
           product_type?: string | null;
+          publication_date?: string | null;
           rejection_reason?: string | null;
           reorder_point?: number | null;
           requires_sample?: boolean | null;
@@ -3893,6 +3919,7 @@ export type Database = {
           supplier_reference?: string | null;
           target_margin_percentage?: number | null;
           technical_description?: string | null;
+          unpublication_date?: string | null;
           updated_at?: string | null;
           variant_attributes?: Json | null;
           variant_group_id?: string | null;
@@ -4278,47 +4305,74 @@ export type Database = {
       sales_channels: {
         Row: {
           code: string;
+          config: Json | null;
+          contact_email: string | null;
+          contact_phone: string | null;
           created_at: string | null;
           created_by: string | null;
           default_discount_rate: number | null;
+          default_meta_description: string | null;
+          default_meta_title: string | null;
           description: string | null;
           display_order: number | null;
+          domain_url: string | null;
           icon_name: string | null;
           id: string;
           is_active: boolean | null;
+          meta_keywords: string[] | null;
           min_order_value: number | null;
           name: string;
           requires_approval: boolean | null;
+          site_logo_url: string | null;
+          site_name: string | null;
           updated_at: string | null;
         };
         Insert: {
           code: string;
+          config?: Json | null;
+          contact_email?: string | null;
+          contact_phone?: string | null;
           created_at?: string | null;
           created_by?: string | null;
           default_discount_rate?: number | null;
+          default_meta_description?: string | null;
+          default_meta_title?: string | null;
           description?: string | null;
           display_order?: number | null;
+          domain_url?: string | null;
           icon_name?: string | null;
           id?: string;
           is_active?: boolean | null;
+          meta_keywords?: string[] | null;
           min_order_value?: number | null;
           name: string;
           requires_approval?: boolean | null;
+          site_logo_url?: string | null;
+          site_name?: string | null;
           updated_at?: string | null;
         };
         Update: {
           code?: string;
+          config?: Json | null;
+          contact_email?: string | null;
+          contact_phone?: string | null;
           created_at?: string | null;
           created_by?: string | null;
           default_discount_rate?: number | null;
+          default_meta_description?: string | null;
+          default_meta_title?: string | null;
           description?: string | null;
           display_order?: number | null;
+          domain_url?: string | null;
           icon_name?: string | null;
           id?: string;
           is_active?: boolean | null;
+          meta_keywords?: string[] | null;
           min_order_value?: number | null;
           name?: string;
           requires_approval?: boolean | null;
+          site_logo_url?: string | null;
+          site_name?: string | null;
           updated_at?: string | null;
         };
         Relationships: [];
@@ -7160,6 +7214,35 @@ export type Database = {
           total_events: number;
         }[];
       };
+      get_site_internet_config: { Args: never; Returns: Json };
+      get_site_internet_product_detail: {
+        Args: { p_product_id: string };
+        Returns: Json;
+      };
+      get_site_internet_products: {
+        Args: never;
+        Returns: {
+          has_variants: boolean;
+          image_urls: string[];
+          ineligibility_reasons: string[];
+          is_eligible: boolean;
+          is_published: boolean;
+          metadata: Json;
+          name: string;
+          price_ht: number;
+          price_source: string;
+          price_ttc: number;
+          primary_image_url: string;
+          product_id: string;
+          publication_date: string;
+          seo_meta_description: string;
+          seo_title: string;
+          sku: string;
+          slug: string;
+          status: string;
+          variants_count: number;
+        }[];
+      };
       get_smart_stock_status: {
         Args: { p_product_id: string };
         Returns: {
@@ -7466,6 +7549,10 @@ export type Database = {
         };
       };
       refresh_google_merchant_stats: { Args: never; Returns: undefined };
+      regenerate_product_slug: {
+        Args: { product_id_param: string };
+        Returns: string;
+      };
       remove_collection_tag: {
         Args: { collection_id: string; tag: string };
         Returns: undefined;
@@ -7533,6 +7620,7 @@ export type Database = {
           theme_tags: string[] | null;
           updated_at: string | null;
           visibility: string;
+          visible_channels: string[] | null;
         }[];
         SetofOptions: {
           from: '*';
@@ -7553,6 +7641,7 @@ export type Database = {
       set_current_user_id: { Args: { user_id: string }; Returns: undefined };
       show_limit: { Args: never; Returns: number };
       show_trgm: { Args: { '': string }; Returns: string[] };
+      slugify: { Args: { text_input: string }; Returns: string };
       suggest_matches: {
         Args: { p_limit?: number; p_transaction_id: string };
         Returns: {
