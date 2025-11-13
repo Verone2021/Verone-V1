@@ -37,6 +37,15 @@ import {
   type SalesOrderForShipment,
 } from '@verone/orders/hooks';
 
+import {
+  PickupPointSelector,
+  type PacklinkDropoffPoint,
+} from '../shipments/PickupPointSelector';
+import {
+  ServiceSelector,
+  type PacklinkService,
+} from '../shipments/ServiceSelector';
+
 interface SalesOrderShipmentFormProps {
   salesOrder: SalesOrderForShipment;
   onSuccess: () => void;
@@ -51,23 +60,7 @@ interface PackageData {
   weight: number; // kg
 }
 
-interface PackLinkService {
-  id: string;
-  carrier_name: string;
-  service_name: string;
-  price: {
-    amount: number;
-    currency: string;
-  };
-  delivery_time: {
-    min_days: number;
-    max_days: number;
-  };
-  description?: string | null;
-  logo_url?: string | null;
-}
-
-type Step = 1 | 2 | 3 | 4 | 5;
+type Step = 1 | 2 | 3 | 4 | 5 | 6;
 
 export function SalesOrderShipmentForm({
   salesOrder,
@@ -90,23 +83,59 @@ export function SalesOrderShipmentForm({
   const [insuranceValue, setInsuranceValue] = useState('');
 
   // Step 3: Services PackLink
-  const [services, setServices] = useState<PackLinkService[]>([]);
+  const [services, setServices] = useState<PacklinkService[]>([]);
   const [selectedService, setSelectedService] =
-    useState<PackLinkService | null>(null);
+    useState<PacklinkService | null>(null);
   const [loadingServices, setLoadingServices] = useState(false);
   const [servicesError, setServicesError] = useState<string | null>(null);
+
+  // Points relais/lockers (dropoffs)
+  const [originDropoffPoint, setOriginDropoffPoint] =
+    useState<PacklinkDropoffPoint | null>(null);
+  const [destinationDropoffPoint, setDestinationDropoffPoint] =
+    useState<PacklinkDropoffPoint | null>(null);
 
   // Step 4: Validation
   const [submitting, setSubmitting] = useState(false);
 
   // Infos destinataire (client) - EDITABLES
+  // ✅ FIX: Initialiser depuis shipping_address (adresse de livraison client)
   const [recipientName, setRecipientName] = useState('');
   const [recipientSurname, setRecipientSurname] = useState('');
   const [company, setCompany] = useState('');
   const [addressLine1, setAddressLine1] = useState('');
   const [addressLine2, setAddressLine2] = useState('');
-  const [postalCode, setPostalCode] = useState('');
-  const [city, setCity] = useState('');
+  const [postalCode, setPostalCode] = useState(() => {
+    const shippingAddr = salesOrder.shipping_address;
+    if (typeof shippingAddr === 'string') {
+      // Extraire code postal depuis texte (5 chiffres)
+      const zipMatch = shippingAddr.match(/\b(\d{5})\b/);
+      return zipMatch ? zipMatch[1] : '';
+    } else if (shippingAddr) {
+      // Extraire depuis objet structuré
+      return (
+        shippingAddr.postal_code ||
+        shippingAddr.zip_code ||
+        shippingAddr.zipcode ||
+        ''
+      );
+    }
+    return '';
+  });
+  const [city, setCity] = useState(() => {
+    const shippingAddr = salesOrder.shipping_address;
+    if (typeof shippingAddr === 'string') {
+      // Extraire ville depuis texte (après code postal)
+      const cityMatch = shippingAddr.match(
+        /\d{5}\s*([A-ZÀ-Üa-zà-ü\s-]+?)(?:France|$)/i
+      );
+      return cityMatch ? cityMatch[1].trim() : '';
+    } else if (shippingAddr) {
+      // Extraire depuis objet structuré
+      return shippingAddr.city || '';
+    }
+    return '';
+  });
   const [country, setCountry] = useState('France');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -121,6 +150,13 @@ export function SalesOrderShipmentForm({
   const [senderCountry, setSenderCountry] = useState('France');
   const [senderPhone, setSenderPhone] = useState('0656720702');
   const [senderEmail, setSenderEmail] = useState('romeo@veronecollections.fr');
+
+  // 🆕 Informations colis (Step 5) - OBLIGATOIRES PackLink
+  const [content, setContent] = useState('Mobilier et décoration'); // Description contenu (max 50 chars)
+  const [contentValue, setContentValue] = useState(
+    salesOrder.total_ttc?.toString() || '100'
+  ); // Valeur déclarée (EUR) - Pré-remplie depuis commande
+  const [isUsed, setIsUsed] = useState(false); // Produit d'occasion (optionnel)
 
   // Pré-remplir infos client au montage avec fallbacks intelligents
   useEffect(() => {
@@ -231,8 +267,10 @@ export function SalesOrderShipmentForm({
         setAddressLine2(
           shippingAddr.address_line2 || shippingAddr.street2 || ''
         );
-        setPostalCode(zip || '');
-        setCity(cityValue || '');
+        // 🔧 FIX: Ne pas reset à "" si shipping_address ne contient pas ces données
+        // Laisser organisations les remplir plus tard dans le useEffect
+        if (zip) setPostalCode(zip);
+        if (cityValue) setCity(cityValue);
         setCountry(shippingAddr.country || 'France');
         setPhone(shippingAddr.phone || '');
         setEmail(shippingAddr.email || '');
@@ -243,6 +281,17 @@ export function SalesOrderShipmentForm({
     if (salesOrder.organisations) {
       const org = salesOrder.organisations;
       const legalName = org.legal_name || org.trade_name || '';
+
+      console.log('🔍 [DEBUG] Organisation data:', {
+        postal_code: org.postal_code,
+        city: org.city,
+        address_line1: org.address_line1,
+      });
+      console.log('🔍 [DEBUG] Current state before org prefill:', {
+        postalCode,
+        city,
+        addressLine1,
+      });
 
       // Division du nom légal pour Packlink
       // Ex: "SARL Dupont Mobilier" → surname="SARL", name="Dupont Mobilier"
@@ -259,6 +308,34 @@ export function SalesOrderShipmentForm({
       setCompany(legalName);
       if (!email) setEmail(org.email || '');
       if (!phone) setPhone(org.phone || '');
+
+      // 🆕 Pré-remplir code postal et ville depuis organisations
+      // 🔧 FIX: Gérer empty strings (pas seulement undefined)
+      if ((!postalCode || postalCode.trim() === '') && org.postal_code) {
+        console.log(
+          '✅ [DEBUG] Setting postal_code from org:',
+          org.postal_code
+        );
+        setPostalCode(org.postal_code);
+      } else {
+        console.log('❌ [DEBUG] NOT setting postal_code. Reason:', {
+          postalCodeEmpty: !postalCode || postalCode.trim() === '',
+          orgHasPostalCode: !!org.postal_code,
+        });
+      }
+      if ((!city || city.trim() === '') && org.city) {
+        console.log('✅ [DEBUG] Setting city from org:', org.city);
+        setCity(org.city);
+      } else {
+        console.log('❌ [DEBUG] NOT setting city. Reason:', {
+          cityEmpty: !city || city.trim() === '',
+          orgHasCity: !!org.city,
+        });
+      }
+      // Bonus : pré-remplir address_line1 si manquante
+      if (!addressLine1 && org.address_line1) {
+        setAddressLine1(org.address_line1);
+      }
     }
   }, [salesOrder]);
 
@@ -296,8 +373,19 @@ export function SalesOrderShipmentForm({
     );
   };
 
-  // Validation Step 1
-  const canProceedStep1 = packages.every(
+  // Validation Step 1 (Origine + Destination)
+  const canProceedStep1 =
+    // Origine
+    senderCity.trim() !== '' &&
+    senderPostalCode.trim() !== '' &&
+    /^\d{5}$/.test(senderPostalCode) &&
+    // Destination
+    city.trim() !== '' &&
+    postalCode.trim() !== '' &&
+    /^\d{5}$/.test(postalCode); // Code postal français valide
+
+  // Validation Step 2 (Dimensions & Poids)
+  const canProceedStep2 = packages.every(
     p => p.length > 0 && p.width > 0 && p.height > 0 && p.weight > 0
   );
 
@@ -331,6 +419,30 @@ export function SalesOrderShipmentForm({
     return countryMap[normalized] || 'FR';
   };
 
+  // Validation Step 5 (Coordonnées complètes)
+  // Note: ville/code postal déjà validés au Step 1, pas besoin de revérifier
+  const canProceedStep5 =
+    // Expéditeur - tous les champs requis
+    senderName.trim() !== '' &&
+    senderSurname.trim() !== '' &&
+    senderAddress.trim() !== '' &&
+    senderPostalCode.trim() !== '' &&
+    senderCity.trim() !== '' &&
+    senderPhone.trim() !== '' &&
+    senderEmail.trim() !== '' &&
+    // Destinataire - champs requis (ville/CP déjà validés Step 1)
+    recipientName.trim() !== '' &&
+    recipientSurname.trim() !== '' && // ✅ FIX: Required by PackLink API
+    addressLine1.trim() !== '' &&
+    phone.trim() !== '' &&
+    // ✅ FIX: Email OPTIONNEL (PackLink API) mais si fourni, doit être valide
+    (email.trim() === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) &&
+    // Validation format email expéditeur (requis)
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(senderEmail) &&
+    // 🆕 Informations colis (obligatoires PackLink)
+    content.trim() !== '' &&
+    parseFloat(contentValue) > 0;
+
   // Rechercher services PackLink
   const searchServices = async () => {
     setLoadingServices(true);
@@ -343,16 +455,16 @@ export function SalesOrderShipmentForm({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           from: {
-            street1: '4 rue du Pérou',
-            city: 'Massy',
-            zip_code: '91300',
-            country: 'FR',
+            street1: senderAddress,
+            city: senderCity, // ✅ Depuis Step 1 (validé)
+            zip_code: senderPostalCode, // ✅ Depuis Step 1 (validé)
+            country: normalizeCountryCode(senderCountry),
           },
           to: {
-            street1: addressLine1 || '1 Rue du Client',
-            city: city || 'Paris',
-            zip_code: postalCode || '75001',
-            country: normalizeCountryCode(country), // ✅ Normaliser ici
+            street1: addressLine1 || 'Adresse client',
+            city: city, // ✅ Toujours défini (validé au Step 1)
+            zip_code: postalCode, // ✅ Toujours défini (validé au Step 1)
+            country: normalizeCountryCode(country),
           },
           packages: packages.map(p => ({
             length: p.length,
@@ -365,7 +477,28 @@ export function SalesOrderShipmentForm({
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Erreur API PackLink');
+
+        // ✅ FIX #1: Détecter erreur validation ville/code postal
+        const errorMsg = error.error || '';
+        const isAddressError =
+          errorMsg.toLowerCase().includes('zip') ||
+          errorMsg.toLowerCase().includes('postal') ||
+          errorMsg.toLowerCase().includes('city') ||
+          errorMsg.toLowerCase().includes('address') ||
+          errorMsg.toLowerCase().includes('location');
+
+        if (isAddressError) {
+          // Retour automatique Step 1 avec message clair
+          setServicesError(
+            `⚠️ Erreur validation adresse : La ville "${city}" ne correspond pas au code postal "${postalCode}". ` +
+              `Veuillez retourner à l'étape 1 pour corriger.`
+          );
+          setCurrentStep(1);
+          setLoadingServices(false);
+          return;
+        }
+
+        throw new Error(errorMsg || 'Erreur API PackLink');
       }
 
       const data = await response.json();
@@ -384,10 +517,10 @@ export function SalesOrderShipmentForm({
     }
   };
 
-  // Handler passage à étape 3 (recherche auto services)
-  const proceedToStep3 = () => {
-    setCurrentStep(3);
-    searchServices();
+  // Handler passage à étape 4 (recherche auto services)
+  const proceedToStep4 = () => {
+    setCurrentStep(4);
+    searchServices(); // Utilise city/postalCode du Step 1
   };
 
   // Valider et créer shipment
@@ -400,26 +533,46 @@ export function SalesOrderShipmentForm({
     setSubmitting(true);
 
     try {
+      // 🔧 Générer items depuis salesOrder en utilisant prepareShipmentItems()
+      const shipmentItems = prepareShipmentItems(salesOrder);
+      const items = shipmentItems.map(item => ({
+        sales_order_item_id: item.sales_order_item_id,
+        quantity: item.quantity_to_ship,
+      }));
+
       // 1. Créer shipment PackLink
       const createResponse = await fetch('/api/sales-shipments/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sales_order_id: salesOrder.id,
+          items: items, // ✅ FIX: Ajouter items requis par backend
           service_id: selectedService.id,
           packages: packages,
           insurance: insuranceEnabled ? parseFloat(insuranceValue) : null,
           shipping_address: {
-            recipient_name: recipientName || company || 'Client', // ✅ Fallback si vide
+            name: recipientName, // ✅ FIX: Separate name and surname for PackLink API
+            surname: recipientSurname,
             company: company || undefined,
-            address_line1: addressLine1,
-            address_line2: addressLine2 || undefined,
-            postal_code: postalCode,
+            street1: addressLine1, // ✅ FIX: Renommé address_line1 → street1
+            street2: addressLine2 || undefined, // ✅ FIX: Renommé address_line2 → street2
+            zip_code: postalCode, // ✅ FIX: Renommé postal_code → zip_code
             city: city,
             country: country,
             phone: phone || undefined,
             email: email || undefined,
           },
+          // Points relais/lockers (dropoffs) - Spread conditionnel pour éviter null
+          ...(originDropoffPoint?.id && {
+            origin_dropoff_point_id: originDropoffPoint.id,
+          }),
+          ...(destinationDropoffPoint?.id && {
+            destination_dropoff_point_id: destinationDropoffPoint.id,
+          }),
+          // 🆕 Informations colis (obligatoires PackLink)
+          content: content,
+          content_value: parseFloat(contentValue),
+          is_used: isUsed,
         }),
       });
 
@@ -482,62 +635,142 @@ export function SalesOrderShipmentForm({
       </div>
 
       {/* Step Labels */}
-      <div className="grid grid-cols-5 gap-2 text-xs text-center">
+      <div className="grid grid-cols-6 gap-2 text-xs text-center">
         <div
           className={
             currentStep === 1 ? 'font-semibold' : 'text-muted-foreground'
           }
         >
-          Dimensions & Poids
+          Destination
         </div>
         <div
           className={
             currentStep === 2 ? 'font-semibold' : 'text-muted-foreground'
           }
         >
-          Assurance
+          Dimensions & Poids
         </div>
         <div
           className={
             currentStep === 3 ? 'font-semibold' : 'text-muted-foreground'
           }
         >
-          Choix Transporteur
+          Assurance
         </div>
         <div
           className={
             currentStep === 4 ? 'font-semibold' : 'text-muted-foreground'
           }
         >
-          Coordonnées
+          Choix Transporteur
         </div>
         <div
           className={
             currentStep === 5 ? 'font-semibold' : 'text-muted-foreground'
           }
         >
+          Coordonnées
+        </div>
+        <div
+          className={
+            currentStep === 6 ? 'font-semibold' : 'text-muted-foreground'
+          }
+        >
           Validation
         </div>
       </div>
 
-      {/* STEP 1: Dimensions & Poids */}
+      {/* STEP 1: Origine & Destination (READONLY - Auto-filled) */}
       {currentStep === 1 && (
+        <Card className="p-6 space-y-6">
+          {/* Section ORIGINE (Vérone - Non éditable) */}
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <Package className="w-6 h-6 text-verone-primary" />
+              <div>
+                <Label className="text-base font-semibold">
+                  Adresse d'expédition (origine)
+                </Label>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {senderAddress}, {senderPostalCode} {senderCity}
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 bg-gray-50 border border-gray-200 rounded">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="font-medium text-gray-700">
+                    Code postal :
+                  </span>
+                  <p className="text-gray-900 mt-1">{senderPostalCode}</p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">Ville :</span>
+                  <p className="text-gray-900 mt-1">{senderCity}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Séparateur */}
+          <div className="border-t pt-6" />
+
+          {/* Section DESTINATION (Client - Non éditable) */}
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <Package className="w-6 h-6 text-blue-600" />
+              <div>
+                <Label className="text-base font-semibold">
+                  Adresse de livraison (destination)
+                </Label>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {addressLine1}, {postalCode} {city}
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="font-medium text-blue-700">
+                    Code postal :
+                  </span>
+                  <p className="text-blue-900 mt-1">{postalCode}</p>
+                </div>
+                <div>
+                  <span className="font-medium text-blue-700">Ville :</span>
+                  <p className="text-blue-900 mt-1">{city}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded">
+            <Info className="w-4 h-4 text-yellow-700 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-yellow-800">
+              <strong>
+                Ces adresses proviennent automatiquement de vos données.
+              </strong>{' '}
+              Origine = Votre organisation. Destination = Adresse client de la
+              commande. Pour modifier, mettez à jour les données
+              organisation/client puis recréez l'expédition.
+            </p>
+          </div>
+        </Card>
+      )}
+
+      {/* STEP 2: Dimensions & Poids */}
+      {currentStep === 2 && (
         <Card className="p-6 space-y-6">
           <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded">
             <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
             <div className="text-sm text-blue-800">
-              <p className="font-medium mb-1">
-                Informations client pré-remplies automatiquement
-              </p>
-              <p className="text-blue-700">
-                Destinataire :{' '}
-                <span className="font-semibold">
-                  {recipientName || company || 'Non renseigné'}
-                </span>
-                {' • '}Adresse :{' '}
-                <span className="font-semibold">
-                  {addressLine1 || 'Non renseignée'}, {postalCode} {city}
-                </span>
+              <p className="font-medium">
+                <strong>Expédition :</strong> {senderPostalCode} {senderCity}
+                {' → '}
+                <strong>Destination :</strong> {postalCode} {city} (saisis à
+                l'étape 1)
               </p>
             </div>
           </div>
@@ -652,8 +885,8 @@ export function SalesOrderShipmentForm({
         </Card>
       )}
 
-      {/* STEP 2: Assurance */}
-      {currentStep === 2 && (
+      {/* STEP 3: Assurance */}
+      {currentStep === 3 && (
         <Card className="p-6 space-y-6">
           <div className="flex items-center gap-3">
             <Shield className="w-6 h-6 text-verone-primary" />
@@ -702,8 +935,8 @@ export function SalesOrderShipmentForm({
         </Card>
       )}
 
-      {/* STEP 3: Choix Transporteur */}
-      {currentStep === 3 && (
+      {/* STEP 4: Choix Transporteur */}
+      {currentStep === 4 && (
         <Card className="p-6 space-y-6">
           <div className="flex items-center gap-3">
             <Truck className="w-6 h-6 text-verone-primary" />
@@ -733,56 +966,64 @@ export function SalesOrderShipmentForm({
             </div>
           )}
 
-          {!loadingServices && services.length > 0 && (
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {services.map(service => (
-                <div
-                  key={service.id}
-                  className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                    selectedService?.id === service.id
-                      ? 'border-verone-primary bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                  onClick={() => setSelectedService(service)}
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="font-semibold text-base">
-                        {service.carrier_name}
-                      </div>
-                      <div className="text-sm text-muted-foreground mt-1">
-                        {service.service_name}
-                      </div>
-                      {service.delivery_time && (
-                        <div className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" />
-                          Livraison estimée : {
-                            service.delivery_time.min_days
-                          } à {service.delivery_time.max_days} jours
-                        </div>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-verone-primary">
-                        {service.price.amount.toFixed(2)} €
-                      </div>
-                      <div className="text-xs text-muted-foreground">TTC</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+          <ServiceSelector
+            services={services}
+            selectedServiceId={selectedService?.id}
+            onSelect={serviceId => {
+              const service = services.find(s => s.id === serviceId);
+              if (service) setSelectedService(service);
+            }}
+            loading={loadingServices}
+          />
+
+          {/* Points Relais/Lockers - Dépôt (si service type dropoff) */}
+          {selectedService?.collection_type === 'dropoff' && (
+            <div className="mt-6">
+              <PickupPointSelector
+                serviceId={selectedService.id}
+                country="FR"
+                zipCode={senderPostalCode}
+                label="Point de dépôt (collecte)"
+                selectedPointId={originDropoffPoint?.id}
+                onSelect={setOriginDropoffPoint}
+              />
+            </div>
+          )}
+
+          {/* Points Relais/Lockers - Retrait (si service type dropoff) */}
+          {selectedService?.delivery_type === 'dropoff' && (
+            <div className="mt-6">
+              <PickupPointSelector
+                serviceId={selectedService.id}
+                country="FR"
+                zipCode={postalCode}
+                label="Point de retrait (livraison)"
+                selectedPointId={destinationDropoffPoint?.id}
+                onSelect={setDestinationDropoffPoint}
+              />
             </div>
           )}
         </Card>
       )}
 
-      {/* STEP 4: Coordonnées et adresse */}
-      {currentStep === 4 && (
+      {/* STEP 5: Coordonnées et adresse */}
+      {currentStep === 5 && (
         <Card className="p-6 space-y-8">
           <div>
-            <Label className="text-lg font-semibold mb-4 block">
+            <Label className="text-lg font-semibold mb-2 block">
               Expéditeur
             </Label>
+
+            {/* Message informatif CP/Ville disabled */}
+            <div className="flex items-start gap-2 p-3 mb-4 bg-blue-50 border border-blue-200 rounded">
+              <Info className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-blue-800">
+                Le code postal et la ville d'expédition proviennent de l'étape 1
+                et ne peuvent pas être modifiés ici. Pour les changer, retournez
+                à l'étape 1.
+              </p>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Prénom *</Label>
@@ -824,18 +1065,16 @@ export function SalesOrderShipmentForm({
                 <Label>Code postal *</Label>
                 <Input
                   value={senderPostalCode}
-                  onChange={e => setSenderPostalCode(e.target.value)}
-                  placeholder="91300"
-                  className="mt-1"
+                  disabled
+                  className="mt-1 bg-muted cursor-not-allowed"
                 />
               </div>
               <div>
                 <Label>Ville *</Label>
                 <Input
                   value={senderCity}
-                  onChange={e => setSenderCity(e.target.value)}
-                  placeholder="Massy"
-                  className="mt-1"
+                  disabled
+                  className="mt-1 bg-muted cursor-not-allowed"
                 />
               </div>
               <div>
@@ -861,25 +1100,37 @@ export function SalesOrderShipmentForm({
           </div>
 
           <div className="border-t pt-6">
-            <Label className="text-lg font-semibold mb-4 block">
+            <Label className="text-lg font-semibold mb-2 block">
               Destinataire
             </Label>
+
+            {/* Message informatif CP/Ville disabled + Infos pré-remplies */}
+            <div className="flex items-start gap-2 p-3 mb-4 bg-blue-50 border border-blue-200 rounded">
+              <Info className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-blue-800">
+                Le code postal et la ville de destination proviennent de l'étape
+                1. Les autres informations (nom, adresse) ont été pré-remplies
+                depuis la commande client et peuvent être modifiées si
+                nécessaire.
+              </p>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Prénom / Nom *</Label>
+                <Label>Prénom *</Label>
                 <Input
                   value={recipientName}
                   onChange={e => setRecipientName(e.target.value)}
-                  placeholder="Nom du destinataire"
+                  placeholder="Jean"
                   className="mt-1"
                 />
               </div>
               <div>
-                <Label>Prénom (optionnel)</Label>
+                <Label>Nom de famille *</Label>
                 <Input
                   value={recipientSurname}
                   onChange={e => setRecipientSurname(e.target.value)}
-                  placeholder="Prénom"
+                  placeholder="Dupont"
                   className="mt-1"
                 />
               </div>
@@ -914,18 +1165,16 @@ export function SalesOrderShipmentForm({
                 <Label>Code postal *</Label>
                 <Input
                   value={postalCode}
-                  onChange={e => setPostalCode(e.target.value)}
-                  placeholder="75001"
-                  className="mt-1"
+                  disabled
+                  className="mt-1 bg-muted cursor-not-allowed"
                 />
               </div>
               <div>
                 <Label>Ville *</Label>
                 <Input
                   value={city}
-                  onChange={e => setCity(e.target.value)}
-                  placeholder="Paris"
-                  className="mt-1"
+                  disabled
+                  className="mt-1 bg-muted cursor-not-allowed"
                 />
               </div>
               <div>
@@ -938,7 +1187,7 @@ export function SalesOrderShipmentForm({
                 />
               </div>
               <div>
-                <Label>Email *</Label>
+                <Label>Email (optionnel)</Label>
                 <Input
                   type="email"
                   value={email}
@@ -949,11 +1198,71 @@ export function SalesOrderShipmentForm({
               </div>
             </div>
           </div>
+
+          {/* 🆕 Informations du colis (obligatoires PackLink) */}
+          <div className="border-t pt-6">
+            <Label className="text-lg font-semibold mb-2 block">
+              Informations du colis
+            </Label>
+
+            <div className="flex items-start gap-2 p-3 mb-4 bg-amber-50 border border-amber-200 rounded">
+              <Info className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-amber-800">
+                Ces informations sont obligatoires pour créer l'expédition
+                PackLink. La valeur est pré-remplie depuis le montant total de
+                la commande.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <Label>Contenu du colis *</Label>
+                <Input
+                  value={content}
+                  onChange={e => setContent(e.target.value)}
+                  placeholder="Ex: Mobilier et décoration"
+                  maxLength={50}
+                  className="mt-1"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Description du contenu (maximum 50 caractères)
+                </p>
+              </div>
+
+              <div>
+                <Label>Valeur déclarée (€) *</Label>
+                <Input
+                  type="number"
+                  value={contentValue}
+                  onChange={e => setContentValue(e.target.value)}
+                  placeholder="100"
+                  min="1"
+                  step="0.01"
+                  className="mt-1"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Valeur totale du contenu pour l'assurance (pré-remplie depuis
+                  commande)
+                </p>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="used-item"
+                  checked={isUsed}
+                  onCheckedChange={checked => setIsUsed(checked as boolean)}
+                />
+                <Label htmlFor="used-item" className="cursor-pointer">
+                  Produit d'occasion
+                </Label>
+              </div>
+            </div>
+          </div>
         </Card>
       )}
 
-      {/* STEP 5: Validation */}
-      {currentStep === 5 && (
+      {/* STEP 6: Validation */}
+      {currentStep === 6 && (
         <Card className="p-6 space-y-6">
           <div className="flex items-center gap-3">
             <CheckCircle2 className="w-6 h-6 text-green-600" />
@@ -1067,24 +1376,28 @@ export function SalesOrderShipmentForm({
           onClick={() => {
             if (currentStep === 1 && canProceedStep1) {
               setCurrentStep(2);
-            } else if (currentStep === 2) {
-              proceedToStep3();
-            } else if (currentStep === 3 && selectedService) {
-              setCurrentStep(4);
-            } else if (currentStep === 4) {
+            } else if (currentStep === 2 && canProceedStep2) {
+              setCurrentStep(3);
+            } else if (currentStep === 3) {
+              proceedToStep4(); // Recherche services avec ville/CP du Step 1
+            } else if (currentStep === 4 && selectedService) {
               setCurrentStep(5);
-            } else if (currentStep === 5) {
+            } else if (currentStep === 5 && canProceedStep5) {
+              setCurrentStep(6);
+            } else if (currentStep === 6) {
               handleSubmit();
             }
           }}
           disabled={
             (currentStep === 1 && !canProceedStep1) ||
-            (currentStep === 3 && !selectedService) ||
+            (currentStep === 2 && !canProceedStep2) ||
+            (currentStep === 4 && !selectedService) ||
+            (currentStep === 5 && !canProceedStep5) ||
             submitting
           }
           className="bg-verone-primary hover:bg-verone-primary/90"
         >
-          {currentStep === 5 ? (
+          {currentStep === 6 ? (
             submitting ? (
               'Traitement...'
             ) : (
