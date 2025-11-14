@@ -9,7 +9,8 @@ import { createClient } from '@verone/utils/supabase/client';
 export function useStockAlertsCount() {
   const [count, setCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const supabase = useMemo(() => createClient(), []);
+  // ✅ Singleton déjà mémorisé - pas besoin de useMemo
+  const supabase = createClient();
 
   useEffect(() => {
     const fetchCount = async () => {

@@ -2,7 +2,7 @@
  * Utilitaires pour vérifier l'historique du stock
  */
 
-import { createClient } from '@verone/utils/supabase';
+import { createClient } from '@verone/utils/supabase/client';
 
 /**
  * Vérifie si un produit a déjà été en stock (a eu des mouvements d'entrée)

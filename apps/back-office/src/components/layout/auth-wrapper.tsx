@@ -14,7 +14,7 @@ import type { User } from '@supabase/supabase-js';
 import { SidebarProvider } from '@verone/ui';
 import { TooltipProvider } from '@verone/ui';
 
-import { createClient } from '@verone/utils/supabase/client';
+import { useSupabase } from '../providers/supabase-provider';
 
 import { AppHeader } from './app-header';
 import { AppSidebar } from './app-sidebar';
@@ -32,9 +32,11 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // ✅ Utiliser l'instance Supabase depuis le Context (singleton)
+  const supabase = useSupabase();
+
   // Vérification authentification avec Supabase
   useEffect(() => {
-    const supabase = createClient();
 
     // Obtenir la session courante
     const getSession = async () => {

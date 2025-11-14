@@ -8,6 +8,7 @@ import { Toaster } from 'sonner';
 import { AuthWrapper } from '../components/layout/auth-wrapper';
 import { ClientOnlyActivityTracker } from '../components/providers/client-only-activity-tracker';
 import { ReactQueryProvider } from '../components/providers/react-query-provider';
+import { SupabaseProvider } from '../components/providers/supabase-provider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -45,15 +46,12 @@ export default function RootLayout({
       <body
         className={`${inter.className} h-full bg-white text-black antialiased`}
       >
-        {/* Google Maps JavaScript API - Points Relais/Lockers */}
-        <Script
-          src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`}
-          strategy="beforeInteractive"
-        />
         <ReactQueryProvider>
-          <AuthWrapper>
-            <ClientOnlyActivityTracker>{children}</ClientOnlyActivityTracker>
-          </AuthWrapper>
+          <SupabaseProvider>
+            <AuthWrapper>
+              <ClientOnlyActivityTracker>{children}</ClientOnlyActivityTracker>
+            </AuthWrapper>
+          </SupabaseProvider>
         </ReactQueryProvider>
         {/* Toast notifications */}
         <Toaster position="top-right" richColors />

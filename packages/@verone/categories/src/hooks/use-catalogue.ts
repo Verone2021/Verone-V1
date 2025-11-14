@@ -115,7 +115,8 @@ export const useCatalogue = () => {
     total: 0,
   });
 
-  const supabase = useMemo(() => createClient(), []);
+  // ✅ Singleton déjà mémorisé - pas besoin de useMemo
+  const supabase = createClient();
 
   // ✅ FIX P0-2: loadCatalogueData dépend maintenant de filters séparé (pas de circular dependency)
   const loadCatalogueData = useCallback(async () => {

@@ -104,7 +104,8 @@ export function useMovementsHistory() {
   const { toast } = useToast();
   const { getReasonDescription } = useStockMovements();
 
-  const supabase = useMemo(() => createClient(), []);
+  // ✅ Singleton déjà mémorisé - pas besoin de useMemo
+  const supabase = createClient();
 
   // Récupérer les mouvements avec filtres
   const fetchMovements = useCallback(

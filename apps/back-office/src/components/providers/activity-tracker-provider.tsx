@@ -14,7 +14,8 @@ import { usePathname } from 'next/navigation';
 import type { User } from '@supabase/supabase-js';
 
 import { useUserActivityTracker } from '@verone/notifications';
-import { createClient } from '@verone/utils/supabase/client';
+
+import { useSupabase } from './supabase-provider';
 
 interface ActivityTrackerProviderProps {
   children: React.ReactNode;
@@ -26,9 +27,11 @@ export function ActivityTrackerProvider({
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
 
+  // ✅ Utiliser l'instance Supabase depuis le Context (singleton)
+  const supabase = useSupabase();
+
   // Suivre l'authentification utilisateur
   useEffect(() => {
-    const supabase = createClient();
 
     // Obtenir session initiale
     const getSession = async () => {

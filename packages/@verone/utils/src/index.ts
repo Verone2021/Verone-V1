@@ -59,9 +59,9 @@ export * from './upload/image-optimization';
 // SUPABASE
 // ========================================
 
-export { createClient } from './supabase';
+// ✅ Export singleton createClient depuis supabase/client.ts
+export { createClient } from './supabase/client';
 export * from './supabase/types';
-export * from './supabase/client';
 
 // ⚠️ NE PAS exporter './supabase/server' depuis l'index principal
 // car il utilise 'next/headers' qui ne fonctionne que côté serveur.

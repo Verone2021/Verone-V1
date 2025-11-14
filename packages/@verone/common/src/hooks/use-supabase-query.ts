@@ -56,7 +56,8 @@ export function useSupabaseQuery<T = any>(
     error: null,
   });
 
-  const supabase = useMemo(() => createClient(), []);
+  // ✅ Singleton déjà mémorisé - pas besoin de useMemo
+  const supabase = createClient();
 
   const fetchData = useCallback(async () => {
     if (!enabled) return;
@@ -152,7 +153,8 @@ export function useSupabaseMutation<T = any>(
     error: null,
   });
 
-  const supabase = useMemo(() => createClient(), []);
+  // ✅ Singleton déjà mémorisé - pas besoin de useMemo
+  const supabase = createClient();
 
   const mutate = useCallback(
     async (variables: any): Promise<T | null> => {

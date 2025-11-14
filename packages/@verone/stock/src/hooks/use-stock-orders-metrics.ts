@@ -155,10 +155,13 @@ export function useStockOrdersMetrics(): UseStockOrdersMetricsReturn {
 
       if (shouldRetry) {
         const delay = getRetryDelay(retryCount);
-        console.warn(
-          `[useStockOrdersMetrics] Retry ${retryCount + 1}/${FETCH_CONFIG.MAX_RETRIES} dans ${delay}ms`,
-          err
-        );
+        // Silencer le log pour AbortError (cleanup intentionnel)
+        if (!(err instanceof Error && err.name === 'AbortError')) {
+          console.warn(
+            `[useStockOrdersMetrics] Retry ${retryCount + 1}/${FETCH_CONFIG.MAX_RETRIES} dans ${delay}ms`,
+            err
+          );
+        }
 
         // Attendre avant retry
         await new Promise(resolve => setTimeout(resolve, delay));

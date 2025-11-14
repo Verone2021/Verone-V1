@@ -51,7 +51,8 @@ export function useStock() {
   const [stockData, setStockData] = useState<StockData[]>([]);
   const [summary, setSummary] = useState<StockSummary | null>(null);
   const { toast } = useToast();
-  const supabase = useMemo(() => createClient(), []);
+  // ✅ Singleton déjà mémorisé - pas besoin de useMemo
+  const supabase = createClient();
 
   // Récupérer le stock de tous les produits
   const fetchAllStock = useCallback(async () => {
