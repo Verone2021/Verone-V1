@@ -9,10 +9,16 @@ import { z } from 'zod';
 export const addressSchema = z.object({
   name: z.string().min(1, 'Le prénom est obligatoire'),
   surname: z.string().min(1, 'Le nom de famille est obligatoire'),
-  email: z.string().email('Email invalide'),
-  phone: z
+  // ✅ Email optionnel : si fourni, doit être valide, sinon peut être chaîne vide
+  email: z
     .string()
-    .min(10, 'Le téléphone doit contenir au moins 10 caractères'),
+    .refine(val => val === '' || z.string().email().safeParse(val).success, {
+      message: 'Email invalide',
+    }),
+  // ✅ Phone optionnel : si fourni, doit être min 10 caractères
+  phone: z.string().refine(val => val === '' || val.length >= 10, {
+    message: 'Le téléphone doit contenir au moins 10 caractères',
+  }),
   street1: z.string().min(1, "L'adresse est obligatoire"),
   city: z.string().min(1, 'La ville est obligatoire'),
   zip_code: z.string().min(1, 'Le code postal est obligatoire'),

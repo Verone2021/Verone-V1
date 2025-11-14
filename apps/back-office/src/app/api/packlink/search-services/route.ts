@@ -27,6 +27,13 @@ export async function POST(request: NextRequest) {
     const validation = validateData(searchServicesSchema, body);
 
     if (!validation.success) {
+      // 🔍 DEBUG: Log validation errors
+      console.error(
+        '[API] Validation Zod errors:',
+        JSON.stringify(validation.errors, null, 2)
+      );
+      console.error('[API] Request body:', JSON.stringify(body, null, 2));
+
       return NextResponse.json(
         {
           error: true,

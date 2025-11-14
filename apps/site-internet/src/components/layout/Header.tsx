@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 
+import Image from 'next/image';
 import Link from 'next/link';
 
 import { ShoppingCart, Menu, Search, User } from 'lucide-react';
@@ -20,9 +21,14 @@ export function Header() {
             {/* Logo */}
             <div className="flex items-center gap-12">
               <Link href="/" className="flex items-center">
-                <span className="font-playfair text-2xl font-bold text-verone-black tracking-tight">
-                  Vérone
-                </span>
+                <Image
+                  src="/logo-verone.png"
+                  alt="Vérone"
+                  width={120}
+                  height={40}
+                  priority
+                  className="h-10 w-auto"
+                />
               </Link>
 
               {/* Desktop Navigation */}

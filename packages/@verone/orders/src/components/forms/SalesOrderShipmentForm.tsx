@@ -328,15 +328,23 @@ export function SalesOrderShipmentForm({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           from: {
+            name: senderName,
+            surname: senderSurname,
+            email: senderEmail,
+            phone: senderPhone,
             street1: senderAddress,
-            city: senderCity, // ✅ Depuis Step 1 (validé)
-            zip_code: senderPostalCode, // ✅ Depuis Step 1 (validé)
+            city: senderCity,
+            zip_code: senderPostalCode,
             country: normalizeCountryCode(senderCountry),
           },
           to: {
+            name: recipientName,
+            surname: recipientSurname,
+            email: email,
+            phone: phone,
             street1: addressLine1 || 'Adresse client',
-            city: city, // ✅ Toujours défini (validé au Step 1)
-            zip_code: postalCode, // ✅ Toujours défini (validé au Step 1)
+            city: city,
+            zip_code: postalCode,
             country: normalizeCountryCode(country),
           },
           packages: packages.map(p => ({
