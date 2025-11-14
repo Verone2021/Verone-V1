@@ -24,14 +24,20 @@ export default function CataloguePage() {
       {/* Grille produits */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {Array.from({ length: 12 }).map((_, i) => (
-          <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
-            <div className="bg-gray-200 h-48"></div>
+          <div
+            key={i}
+            className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition"
+          >
+            <div className="bg-gray-200 h-48" />
             <div className="p-4">
               <h3 className="font-semibold mb-2">Produit {i + 1}</h3>
               <p className="text-gray-600 text-sm mb-3">Catégorie</p>
               <div className="flex justify-between items-center">
                 <span className="text-lg font-bold">€XX.XX</span>
-                <a href={`/produit/${i + 1}`} className="text-sm text-blue-600 hover:underline">
+                <a
+                  href={`/produit/${i + 1}`}
+                  className="text-sm text-blue-600 hover:underline"
+                >
                   Voir détails
                 </a>
               </div>

@@ -211,7 +211,7 @@ export class PacklinkClient {
 
   /**
    * 6. GET DROPOFF POINTS
-   * GET /dropoffs
+   * GET /dropoffs/:service_id/:country/:zip
    * Trouver points de dépôt proches
    */
   async getDropoffs(params: {
@@ -219,15 +219,10 @@ export class PacklinkClient {
     country: string;
     zip: string;
   }): Promise<PacklinkDropoff[]> {
-    const queryParams = new URLSearchParams({
-      service_id: params.service_id.toString(),
-      country: params.country,
-      zip: params.zip,
-    });
-
+    // ✅ FIX: Utiliser path parameters au lieu de query parameters
     const response = await this.request<PacklinkDropoff[]>(
       'GET',
-      `/dropoffs?${queryParams.toString()}`
+      `/dropoffs/${params.service_id}/${params.country}/${params.zip}`
     );
     return response;
   }
@@ -267,6 +262,19 @@ export class PacklinkClient {
       'POST',
       '/drafts',
       params
+    );
+    return response;
+  }
+
+  /**
+   * 8b. GET DRAFT SHIPMENT
+   * GET /drafts/{ref}
+   * Récupérer un brouillon existant
+   */
+  async getDraft(draftReference: string): Promise<PacklinkShipmentDetails> {
+    const response = await this.request<PacklinkShipmentDetails>(
+      'GET',
+      `/drafts/${encodeURIComponent(draftReference)}`
     );
     return response;
   }

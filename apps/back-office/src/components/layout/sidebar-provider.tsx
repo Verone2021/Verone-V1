@@ -1,6 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext } from 'react';
+
+import { useBoolean } from '@verone/hooks';
 
 interface SidebarContextType {
   isOpen: boolean;
@@ -24,16 +26,16 @@ interface SidebarProviderProps {
 }
 
 export function SidebarProvider({ children }: SidebarProviderProps) {
-  const [isOpen, setIsOpen] = useState(true);
+  const sidebar = useBoolean(true);
 
-  const toggle = () => setIsOpen(!isOpen);
-  const close = () => setIsOpen(false);
-  const open = () => setIsOpen(true);
+  const toggle = sidebar.toggle;
+  const close = sidebar.setFalse;
+  const open = sidebar.setTrue;
 
   return (
     <SidebarContext.Provider
       value={{
-        isOpen,
+        isOpen: sidebar.value,
         toggle,
         close,
         open,

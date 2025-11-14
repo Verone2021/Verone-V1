@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
 import { CustomerFormModal } from '@verone/customers';
+import { useLocalStorage } from '@verone/hooks';
 import { OrganisationLogo } from '@verone/organisations';
 import { ConfirmDeleteOrganisationModal } from '@verone/organisations';
 import {
@@ -82,23 +83,17 @@ export default function CustomersPage() {
     null
   );
   const [currentPage, setCurrentPage] = useState(1);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useLocalStorage<'grid' | 'list'>(
+    'customers-view-mode',
+    'grid'
+  );
   const [deleteModalCustomer, setDeleteModalCustomer] =
     useState<Organisation | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const itemsPerPage = 12; // 3 lignes × 4 colonnes
 
-  // localStorage persistence pour viewMode
-  useEffect(() => {
-    const saved = localStorage.getItem('customers-view-mode');
-    if (saved === 'list' || saved === 'grid') {
-      setViewMode(saved);
-    }
-  }, []);
-
   const handleViewModeChange = (mode: 'grid' | 'list') => {
     setViewMode(mode);
-    localStorage.setItem('customers-view-mode', mode);
   };
 
   const typeInfo = useMemo(() => {

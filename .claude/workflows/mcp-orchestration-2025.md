@@ -1,6 +1,6 @@
 # 🤖 MCP Orchestration Matrix 2025 - Vérone Back Office
 
-**Configuration Ultra-Professionnelle** : 11 MCPs orchestrés intelligemment
+**Configuration Ultra-Professionnelle** : 10 MCPs orchestrés intelligemment
 
 ## Agent Matrix Configuration
 
@@ -16,7 +16,6 @@
 | **🎯 Orchestrator** | Task Central             | Multi-agent coordination      | Workflow        |
 | **🛡️ Security**     | Code Scanning            | Validation sécurité           | Protection      |
 | **🗂️ Filesystem**   | Protection Données       | Mode YOLO sécurisé            | Safety          |
-| **🐳 Docker**       | Isolation                | Environnement protégé         | Containers      |
 
 ## Workflow Révolutionnaire par Tâche
 
@@ -172,7 +171,6 @@ const escalationRules = {
     trigger: 'security_scanner_warning',
     action: [
       'mcp__filesystem-guardian__isolate',
-      'mcp__docker-agent__containerize',
       'mcp__github__create_security_issue',
     ],
   },
@@ -184,12 +182,6 @@ const escalationRules = {
 ```typescript
 // Configuration sécurité renforcée
 {
-  "docker-agent": {
-    "env": {
-      "DOCKER_MODE": "isolation",
-      "NETWORK_ISOLATION": "true"
-    }
-  },
   "filesystem-guardian": {
     "env": {
       "PROTECTION_LEVEL": "yolo-safe",

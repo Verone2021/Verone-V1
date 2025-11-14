@@ -60,6 +60,8 @@ export interface PacklinkService {
   national?: boolean; // Service national ou international
   category?: string; // Catégorie (express, economy...)
   dropoff?: boolean; // Dépôt en point relais ?
+  collection_type?: 'home' | 'dropoff'; // ✅ FIX: Type collecte (domicile ou point relais)
+  delivery_type?: 'home' | 'dropoff'; // ✅ FIX: Type livraison (domicile ou point relais)
 }
 
 // ============================================
@@ -250,4 +252,86 @@ export interface PacklinkErrorResponse {
   message: string; // Message erreur
   code?: string; // Code erreur
   errors?: Record<string, string[]>; // Erreurs validation par champ
+}
+
+// ============================================
+// API ERROR (Structure standardisée)
+// ============================================
+
+export interface ErrorDetail {
+  field: string; // Champ en erreur
+  type: string; // Type erreur (required, invalid_format, mismatch...)
+  message: string; // Message explicite
+}
+
+export interface ApiError {
+  error: boolean; // true
+  code: number; // Code HTTP (400, 422, 500...)
+  message: string; // Message principal
+  details?: ErrorDetail[]; // Détails par champ
+  hint?: string; // Conseil pour corriger
+}
+
+// ============================================
+// DRAFT (Brouillon expédition)
+// ============================================
+
+export interface PacklinkDraftResponse {
+  draft_id: string; // ID draft Packlink
+  shipment_custom_reference?: string; // Référence custom
+  from: PacklinkAddress; // Expéditeur
+  to: PacklinkAddress; // Destinataire
+  packages: PacklinkPackage[]; // Colis
+  service_id: number; // Service choisi
+  content: string; // Description
+  contentvalue: number; // Valeur déclarée
+  estimated_price?: number; // Prix estimé
+  created_at: string; // Date création ISO 8601
+}
+
+// ============================================
+// SEARCH SERVICES REQUEST
+// ============================================
+
+export interface SearchServicesRequest {
+  from: {
+    zip: string; // Code postal expéditeur
+    country: string; // Pays ISO 2 lettres
+  };
+  to: {
+    zip: string; // Code postal destinataire
+    country: string; // Pays ISO 2 lettres
+  };
+  packages: PacklinkPackage[]; // Colis à expédier
+}
+
+// ============================================
+// FORM DATA (Interfaces formulaire front)
+// ============================================
+
+export interface ShipmentFormData {
+  // Expéditeur
+  from: PacklinkAddress;
+
+  // Destinataire
+  to: PacklinkAddress;
+
+  // Colis (1 ou plusieurs)
+  packages: PacklinkPackage[];
+
+  // Contenu
+  content: string; // Description
+  contentvalue: number; // Valeur déclarée EUR
+
+  // Service (sélectionné après recherche)
+  service_id?: number;
+
+  // Référence interne
+  shipment_custom_reference?: string;
+
+  // Douanes (si nécessaire)
+  customs?: PacklinkCustoms;
+
+  // Point relais (si applicable)
+  dropoff_point_id?: string;
 }

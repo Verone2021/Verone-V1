@@ -140,16 +140,33 @@ export function SalesOrderShipmentForm({
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
 
-  // Infos expéditeur (Vérone) - EDITABLES (pré-remplies)
-  const [senderName, setSenderName] = useState('Service client');
-  const [senderSurname, setSenderSurname] = useState('Entreprise');
-  const [senderCompany, setSenderCompany] = useState('Vérone');
-  const [senderAddress, setSenderAddress] = useState('4 rue du Pérou');
-  const [senderCity, setSenderCity] = useState('Massy');
-  const [senderPostalCode, setSenderPostalCode] = useState('91300');
-  const [senderCountry, setSenderCountry] = useState('France');
-  const [senderPhone, setSenderPhone] = useState('0656720702');
-  const [senderEmail, setSenderEmail] = useState('romeo@veronecollections.fr');
+  // Infos expéditeur (Vérone) - EDITABLES (pré-remplies depuis .env)
+  const [senderName, setSenderName] = useState(
+    process.env.NEXT_PUBLIC_VERONE_SENDER_NAME || 'Vérone'
+  );
+  const [senderSurname, setSenderSurname] = useState(
+    process.env.NEXT_PUBLIC_VERONE_SENDER_SURNAME || 'Collections'
+  );
+  const [senderCompany, setSenderCompany] = useState('Vérone Collections');
+  const [senderAddress, setSenderAddress] = useState(
+    process.env.NEXT_PUBLIC_VERONE_SENDER_STREET1 || '4 rue du Pérou'
+  );
+  const [senderCity, setSenderCity] = useState(
+    process.env.NEXT_PUBLIC_VERONE_SENDER_CITY || 'Massy'
+  );
+  const [senderPostalCode, setSenderPostalCode] = useState(
+    process.env.NEXT_PUBLIC_VERONE_SENDER_ZIP || '91300'
+  );
+  const [senderCountry, setSenderCountry] = useState(
+    process.env.NEXT_PUBLIC_VERONE_SENDER_COUNTRY || 'FR'
+  );
+  const [senderPhone, setSenderPhone] = useState(
+    process.env.NEXT_PUBLIC_VERONE_SENDER_PHONE || '+33656720702'
+  );
+  const [senderEmail, setSenderEmail] = useState(
+    process.env.NEXT_PUBLIC_VERONE_SENDER_EMAIL ||
+      'contact@veronecollections.fr'
+  );
 
   // 🆕 Informations colis (Step 5) - OBLIGATOIRES PackLink
   const [content, setContent] = useState('Mobilier et décoration'); // Description contenu (max 50 chars)
@@ -158,186 +175,42 @@ export function SalesOrderShipmentForm({
   ); // Valeur déclarée (EUR) - Pré-remplie depuis commande
   const [isUsed, setIsUsed] = useState(false); // Produit d'occasion (optionnel)
 
-  // Pré-remplir infos client au montage avec fallbacks intelligents
+  // ✅ Pré-remplir infos client via API
   useEffect(() => {
-    const shippingAddr = salesOrder.shipping_address;
+    const loadCustomerAddress = async () => {
+      if (!salesOrder.id) return;
 
-    // Parser adresse avec fallbacks multiples
-    if (shippingAddr) {
-      if (typeof shippingAddr === 'string') {
-        // Adresse en format texte brut - extraction intelligente
-        const text = shippingAddr;
-
-        // 1. Extraire code postal (5 chiffres)
-        const zipMatch = text.match(/\b(\d{5})\b/);
-        if (zipMatch) {
-          setPostalCode(zipMatch[1]);
-
-          // 2. Extraire ville (après code postal, avant "France" ou fin de chaîne)
-          const cityMatch = text.match(
-            /\d{5}\s*([A-ZÀ-Üa-zà-ü\s-]+?)(?:France|$)/i
-          );
-          if (cityMatch) {
-            setCity(cityMatch[1].trim());
-          }
-
-          // 3. 🔧 CORRECTION ROBUSTE : Extraire SEULEMENT la partie adresse (commence par chiffre)
-          // Ex: "Pokawa Amiens47 Pl. René Goblet80000" → "47 Pl. René Goblet"
-          const streetWithNumber = text.match(/(\d+[^\d]*?)(?=\d{5})/);
-          if (streetWithNumber) {
-            let street = streetWithNumber[1].trim();
-
-            // Nettoyer les espaces manquants (ex: "47Pl" → "47 Pl")
-            street = street.replace(/(\d)([a-zA-Zà-ÿ])/g, '$1 $2');
-
-            setAddressLine1(street);
-          } else {
-            // Fallback : extraire tout avant le code postal
-            const beforeZipMatch = text.match(/^(.*?)(?=\d{5})/);
-            if (beforeZipMatch) {
-              setAddressLine1(beforeZipMatch[1].trim());
-            }
-          }
-        } else {
-          // Pas de code postal trouvé, mettre tout dans addressLine1
-          setAddressLine1(text);
-        }
-
-        // 4. Détecter pays
-        if (text.toLowerCase().includes('france')) {
-          setCountry('France');
-        }
-      } else {
-        // Adresse structurée JSONB
-        setRecipientName(
-          shippingAddr.recipient_name || shippingAddr.name || ''
+      try {
+        const response = await fetch(
+          `/api/sales-orders/${salesOrder.id}/customer-address`
         );
-        setCompany(shippingAddr.company || '');
 
-        let addr =
-          shippingAddr.address_line1 ||
-          shippingAddr.street1 ||
-          shippingAddr.address ||
-          '';
-        const zip =
-          shippingAddr.postal_code ||
-          shippingAddr.zip_code ||
-          shippingAddr.zipcode ||
-          '';
-        const cityValue = shippingAddr.city || '';
+        if (response.ok) {
+          const { address } = await response.json();
 
-        // 🔧 CORRECTION CRITIQUE : TOUJOURS nettoyer l'adresse pour extraire SEULEMENT la rue
-        // Ex: "Pokawa Amiens47 Pl. René Goblet80000 AmiensFrance" → "47 Pl. René Goblet"
-        if (addr) {
-          const zipMatch = addr.match(/\b(\d{5})\b/);
-          if (zipMatch) {
-            // Parser zip et city si manquants
-            if (!zip) setPostalCode(zipMatch[1]);
-
-            // Extraire ville (après code postal, avant "France")
-            const cityMatch = addr.match(
-              /\d{5}\s*([A-ZÀ-Üa-zà-ü\s-]+?)(?:France|$)/i
-            );
-            if (cityMatch && !cityValue) {
-              setCity(cityMatch[1].trim());
-            }
-
-            // 🔧 CORRECTION ROBUSTE : Extraire SEULEMENT la partie adresse (commence par chiffre)
-            // Ex: "Pokawa Amiens47 Pl. René Goblet80000" → "47 Pl. René Goblet"
-            // Stratégie : chercher le premier chiffre, c'est le début du numéro de rue
-            const streetWithNumber = addr.match(/(\d+[^\d]*?)(?=\d{5})/);
-            if (streetWithNumber) {
-              let street = streetWithNumber[1].trim();
-
-              // Nettoyer les espaces manquants (ex: "47Pl" → "47 Pl")
-              street = street.replace(/(\d)([a-zA-Zà-ÿ])/g, '$1 $2');
-
-              addr = street; // ✅ Utiliser la rue nettoyée
-            } else {
-              // Fallback : extraire tout avant le code postal
-              const beforeZipMatch = addr.match(/^(.*?)(?=\d{5})/);
-              if (beforeZipMatch) {
-                addr = beforeZipMatch[1].trim();
-              }
-            }
+          // Pré-remplir coordonnées client depuis API
+          setRecipientName(address.name || '');
+          setRecipientSurname(address.surname || '');
+          setEmail(address.email || '');
+          setPhone(address.phone || '');
+          setAddressLine1(address.street1 || '');
+          setCity(address.city || '');
+          setPostalCode(address.zip_code || '');
+          setCountry(address.country || 'FR');
+          if (address.company) {
+            setCompany(address.company);
           }
         }
-
-        setAddressLine1(addr);
-        setAddressLine2(
-          shippingAddr.address_line2 || shippingAddr.street2 || ''
+      } catch (error) {
+        console.error(
+          '[SalesOrderShipmentForm] Error loading customer address:',
+          error
         );
-        // 🔧 FIX: Ne pas reset à "" si shipping_address ne contient pas ces données
-        // Laisser organisations les remplir plus tard dans le useEffect
-        if (zip) setPostalCode(zip);
-        if (cityValue) setCity(cityValue);
-        setCountry(shippingAddr.country || 'France');
-        setPhone(shippingAddr.phone || '');
-        setEmail(shippingAddr.email || '');
       }
-    }
+    };
 
-    // Récupérer infos client (organisations ou individuals)
-    if (salesOrder.organisations) {
-      const org = salesOrder.organisations;
-      const legalName = org.legal_name || org.trade_name || '';
-
-      console.log('🔍 [DEBUG] Organisation data:', {
-        postal_code: org.postal_code,
-        city: org.city,
-        address_line1: org.address_line1,
-      });
-      console.log('🔍 [DEBUG] Current state before org prefill:', {
-        postalCode,
-        city,
-        addressLine1,
-      });
-
-      // Division du nom légal pour Packlink
-      // Ex: "SARL Dupont Mobilier" → surname="SARL", name="Dupont Mobilier"
-      if (legalName && !recipientName) {
-        const parts = legalName.split(' ', 2);
-        if (parts.length > 1) {
-          setRecipientSurname(parts[0]); // "SARL", "SAS", etc.
-          setRecipientName(parts.slice(1).join(' ')); // "Dupont Mobilier"
-        } else {
-          setRecipientName(legalName);
-        }
-      }
-
-      setCompany(legalName);
-      if (!email) setEmail(org.email || '');
-      if (!phone) setPhone(org.phone || '');
-
-      // 🆕 Pré-remplir code postal et ville depuis organisations
-      // 🔧 FIX: Gérer empty strings (pas seulement undefined)
-      if ((!postalCode || postalCode.trim() === '') && org.postal_code) {
-        console.log(
-          '✅ [DEBUG] Setting postal_code from org:',
-          org.postal_code
-        );
-        setPostalCode(org.postal_code);
-      } else {
-        console.log('❌ [DEBUG] NOT setting postal_code. Reason:', {
-          postalCodeEmpty: !postalCode || postalCode.trim() === '',
-          orgHasPostalCode: !!org.postal_code,
-        });
-      }
-      if ((!city || city.trim() === '') && org.city) {
-        console.log('✅ [DEBUG] Setting city from org:', org.city);
-        setCity(org.city);
-      } else {
-        console.log('❌ [DEBUG] NOT setting city. Reason:', {
-          cityEmpty: !city || city.trim() === '',
-          orgHasCity: !!org.city,
-        });
-      }
-      // Bonus : pré-remplir address_line1 si manquante
-      if (!addressLine1 && org.address_line1) {
-        setAddressLine1(org.address_line1);
-      }
-    }
-  }, [salesOrder]);
+    loadCustomerAddress();
+  }, [salesOrder.id]);
 
   // Auto-calculer valeur assurance depuis salesOrder
   useEffect(() => {

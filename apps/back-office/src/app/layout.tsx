@@ -1,5 +1,6 @@
 import './globals.css';
 import { Inter } from 'next/font/google';
+import Script from 'next/script';
 
 import { Analytics } from '@vercel/analytics/react';
 import { Toaster } from 'sonner';
@@ -44,6 +45,11 @@ export default function RootLayout({
       <body
         className={`${inter.className} h-full bg-white text-black antialiased`}
       >
+        {/* Google Maps JavaScript API - Points Relais/Lockers */}
+        <Script
+          src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`}
+          strategy="beforeInteractive"
+        />
         <ReactQueryProvider>
           <AuthWrapper>
             <ClientOnlyActivityTracker>{children}</ClientOnlyActivityTracker>

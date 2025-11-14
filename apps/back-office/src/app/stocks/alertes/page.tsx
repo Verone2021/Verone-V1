@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useToast } from '@verone/common';
+import { useToggle } from '@verone/hooks';
 import { useStockAlerts } from '@verone/stock';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
@@ -90,8 +91,12 @@ export default function StockAlertesPage() {
   });
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
-  const [showQuickPurchaseModal, setShowQuickPurchaseModal] = useState(false);
+  const [showFilters, toggleShowFilters] = useToggle(false);
+  const [
+    showQuickPurchaseModal,
+    toggleQuickPurchaseModal,
+    setShowQuickPurchaseModal,
+  ] = useToggle(false);
   const [selectedProductForOrder, setSelectedProductForOrder] = useState<{
     productId: string;
     shortageQuantity: number;
@@ -355,7 +360,7 @@ export default function StockAlertesPage() {
               <ButtonV2
                 variant="outline"
                 size="sm"
-                onClick={() => setShowFilters(!showFilters)}
+                onClick={toggleShowFilters}
                 className="border-black text-black hover:bg-black hover:text-white"
               >
                 {showFilters ? 'Masquer' : 'Afficher'} filtres

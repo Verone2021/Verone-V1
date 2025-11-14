@@ -53,6 +53,8 @@ export * from './table';
 // ========================================
 export * from './alert';
 export * from './alert-dialog';
+export * from './confirm-dialog';
+export * from './error-state-card';
 export * from './skeleton';
 export * from './badge';
 export * from './data-status-badge';

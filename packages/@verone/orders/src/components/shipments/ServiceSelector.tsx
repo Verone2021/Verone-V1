@@ -28,7 +28,9 @@ export interface PacklinkService {
   };
   description?: string;
   collection_type?: 'home' | 'dropoff';
+  collection_date?: string; // ✅ FIX: Date collecte
   delivery_type?: 'home' | 'locker' | 'dropoff';
+  delivery_date?: string; // ✅ FIX: Date livraison
   dropoff?: boolean;
 }
 
@@ -45,6 +47,23 @@ export function ServiceSelector({
   onSelect,
   loading = false,
 }: ServiceSelectorProps) {
+  // Helper: Formater date en français (jeu., novembre 13)
+  const formatDate = (dateStr: string | undefined) => {
+    if (!dateStr) return null;
+
+    try {
+      const date = new Date(dateStr);
+      const options: Intl.DateTimeFormatOptions = {
+        weekday: 'short',
+        month: 'long',
+        day: 'numeric',
+      };
+      return new Intl.DateTimeFormat('fr-FR', options).format(date);
+    } catch {
+      return null;
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-3">
@@ -126,43 +145,67 @@ export function ServiceSelector({
                 </div>
               </div>
 
-              {/* Badges Type Collecte/Livraison */}
-              <div className="flex flex-wrap gap-2 mb-3">
+              {/* Badges Type Collecte/Livraison avec dates */}
+              <div className="flex flex-col gap-2 mb-3">
                 {/* Badge Collecte */}
                 {service.collection_type && (
-                  <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-xs">
-                    {service.collection_type === 'home' ? (
-                      <>
-                        <Home className="h-3 w-3" />
-                        <span>Collecte domicile</span>
-                      </>
-                    ) : (
-                      <>
-                        <PackageIcon className="h-3 w-3" />
-                        <span>Dépôt relais</span>
-                      </>
+                  <div className="flex flex-col gap-0.5 p-2 rounded-md bg-blue-50 border border-blue-200">
+                    <div className="flex items-center gap-1.5 text-blue-700">
+                      {service.collection_type === 'home' ? (
+                        <>
+                          <Home className="h-3.5 w-3.5" />
+                          <span className="font-medium text-xs">
+                            Collecte à domicile
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <PackageIcon className="h-3.5 w-3.5" />
+                          <span className="font-medium text-xs">
+                            Dépôt en relais
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    {service.collection_date && (
+                      <span className="text-xs text-blue-600 ml-5">
+                        {formatDate(service.collection_date)}
+                      </span>
                     )}
                   </div>
                 )}
 
                 {/* Badge Livraison */}
                 {service.delivery_type && (
-                  <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs">
-                    {service.delivery_type === 'home' ? (
-                      <>
-                        <Home className="h-3 w-3" />
-                        <span>Livraison domicile</span>
-                      </>
-                    ) : service.delivery_type === 'locker' ? (
-                      <>
-                        <Lock className="h-3 w-3" />
-                        <span>Livraison locker</span>
-                      </>
-                    ) : (
-                      <>
-                        <PackageIcon className="h-3 w-3" />
-                        <span>Retrait relais</span>
-                      </>
+                  <div className="flex flex-col gap-0.5 p-2 rounded-md bg-green-50 border border-green-200">
+                    <div className="flex items-center gap-1.5 text-green-700">
+                      {service.delivery_type === 'home' ? (
+                        <>
+                          <Home className="h-3.5 w-3.5" />
+                          <span className="font-medium text-xs">
+                            Livraison à domicile
+                          </span>
+                        </>
+                      ) : service.delivery_type === 'locker' ? (
+                        <>
+                          <Lock className="h-3.5 w-3.5" />
+                          <span className="font-medium text-xs">
+                            Livraison en locker
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <PackageIcon className="h-3.5 w-3.5" />
+                          <span className="font-medium text-xs">
+                            Retrait en relais
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    {service.delivery_date && (
+                      <span className="text-xs text-green-600 ml-5">
+                        {formatDate(service.delivery_date)}
+                      </span>
                     )}
                   </div>
                 )}

@@ -1,9 +1,31 @@
+import { Playfair_Display, Inter } from 'next/font/google';
+
 import type { Metadata } from 'next';
+
 import './globals.css';
+import { Footer } from '@/components/layout/Footer';
+import { Header } from '@/components/layout/Header';
+
+import { Providers } from './providers';
+
+// Fonts Vérone Luxury
+const playfairDisplay = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-playfair',
+  display: 'swap',
+});
+
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-inter',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'Vérone - Mobilier Haut de Gamme',
-  description: 'E-commerce mobilier et décoration d\'intérieur haut de gamme',
+  description: "E-commerce mobilier et décoration d'intérieur haut de gamme",
 };
 
 export default function RootLayout({
@@ -12,34 +34,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr">
-      <body className="min-h-screen bg-gray-50">
-        {/* Header e-commerce */}
-        <header className="bg-white shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex justify-between items-center">
-              <h1 className="text-2xl font-bold text-gray-900">Vérone</h1>
-              <nav className="flex space-x-6">
-                <a href="/" className="text-gray-700 hover:text-gray-900">Accueil</a>
-                <a href="/catalogue" className="text-gray-700 hover:text-gray-900">Catalogue</a>
-                <a href="/panier" className="text-gray-700 hover:text-gray-900">Panier</a>
-                <a href="/compte" className="text-gray-700 hover:text-gray-900">Compte</a>
-              </nav>
-            </div>
+    <html lang="fr" className={`${playfairDisplay.variable} ${inter.variable}`}>
+      <body className="min-h-screen bg-verone-white font-inter antialiased">
+        <Providers>
+          <div className="flex flex-col min-h-screen">
+            <Header />
+            <main className="flex-1">{children}</main>
+            <Footer />
           </div>
-        </header>
-
-        {/* Main content */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {children}
-        </main>
-
-        {/* Footer */}
-        <footer className="bg-gray-800 text-white mt-12">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center">
-            <p>&copy; 2025 Vérone. Tous droits réservés.</p>
-          </div>
-        </footer>
+        </Providers>
       </body>
     </html>
   );

@@ -5,17 +5,17 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
+import { useToggle } from '@verone/hooks';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader } from '@verone/ui';
 import { Popover, PopoverTrigger, PopoverContent } from '@verone/ui';
-import { Eye, EyeOff, LogIn, Mail, Lock, Info } from 'lucide-react';
-
 import { createClient } from '@verone/utils/supabase/client';
+import { Eye, EyeOff, LogIn, Mail, Lock, Info } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, toggleShowPassword] = useToggle(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -159,7 +159,7 @@ export default function LoginPage() {
                   />
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
+                    onClick={toggleShowPassword}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600
                              transition-colors duration-200"
                   >

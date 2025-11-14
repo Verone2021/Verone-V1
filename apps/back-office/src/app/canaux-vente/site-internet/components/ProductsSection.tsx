@@ -5,9 +5,10 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 
 import { useToast } from '@verone/common/hooks';
+import { useDebounce } from '@verone/hooks';
 import { ProductThumbnail } from '@verone/products';
 import {
   Card,
@@ -18,6 +19,8 @@ import {
 } from '@verone/ui';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
+import { ConfirmDialog } from '@verone/ui';
+import { ErrorStateCard } from '@verone/ui';
 import { Input } from '@verone/ui';
 import {
   Select,
@@ -60,61 +63,78 @@ import {
 export function ProductsSection() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebounce(searchTerm, 300);
   const [statusFilter, setStatusFilter] = useState<
     'all' | 'published' | 'draft'
   >('all');
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [productToRemove, setProductToRemove] = useState<string | null>(null);
 
   // Hooks
-  const { data: products = [], isLoading, refetch } = useSiteInternetProducts();
+  const {
+    data: products = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useSiteInternetProducts();
   const togglePublication = useToggleProductPublication();
   const removeProduct = useRemoveProductFromSiteInternet();
 
-  // Filtrage produits
-  const filteredProducts = products.filter(product => {
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.sku.toLowerCase().includes(searchTerm.toLowerCase());
+  // Filtrage produits (memoized avec debounce)
+  const filteredProducts = useMemo(
+    () =>
+      products.filter(product => {
+        const matchesSearch =
+          product.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+          product.sku.toLowerCase().includes(debouncedSearch.toLowerCase());
 
-    const matchesStatus =
-      statusFilter === 'all' ||
-      (statusFilter === 'published' && product.is_published) ||
-      (statusFilter === 'draft' && !product.is_published);
+        const matchesStatus =
+          statusFilter === 'all' ||
+          (statusFilter === 'published' && product.is_published) ||
+          (statusFilter === 'draft' && !product.is_published);
 
-    return matchesSearch && matchesStatus;
-  });
+        return matchesSearch && matchesStatus;
+      }),
+    [products, debouncedSearch, statusFilter]
+  );
 
-  // Handlers
-  const handleTogglePublish = async (
-    productId: string,
-    isPublished: boolean
-  ) => {
+  // Handlers (memoized)
+  const handleTogglePublish = useCallback(
+    async (productId: string, isPublished: boolean) => {
+      try {
+        await togglePublication.mutateAsync({
+          productId,
+          isPublished: !isPublished,
+        });
+        toast({
+          title: isPublished ? 'Produit dépublié' : 'Produit publié',
+          description: `Le produit a été ${isPublished ? 'retiré du' : 'ajouté au'} site internet.`,
+        });
+      } catch (error) {
+        toast({
+          title: 'Erreur',
+          description: 'Impossible de modifier le statut du produit.',
+          variant: 'destructive',
+        });
+      }
+    },
+    [togglePublication, toast]
+  );
+
+  const handleRemove = useCallback(
+    (productId: string) => {
+      setProductToRemove(productId);
+      setConfirmDialogOpen(true);
+    },
+    [setProductToRemove, setConfirmDialogOpen]
+  );
+
+  const confirmRemove = useCallback(async () => {
+    if (!productToRemove) return;
+
     try {
-      await togglePublication.mutateAsync({
-        productId,
-        isPublished: !isPublished,
-      });
-      toast({
-        title: isPublished ? 'Produit dépublié' : 'Produit publié',
-        description: `Le produit a été ${isPublished ? 'retiré du' : 'ajouté au'} site internet.`,
-      });
-    } catch (error) {
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de modifier le statut du produit.',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleRemove = async (productId: string) => {
-    if (
-      !confirm('Êtes-vous sûr de vouloir retirer ce produit du site internet ?')
-    ) {
-      return;
-    }
-
-    try {
-      await removeProduct.mutateAsync(productId);
+      await removeProduct.mutateAsync(productToRemove);
       toast({
         title: 'Produit retiré',
         description: 'Le produit a été retiré du site internet.',
@@ -126,7 +146,7 @@ export function ProductsSection() {
         variant: 'destructive',
       });
     }
-  };
+  }, [productToRemove, removeProduct, toast]);
 
   if (isLoading) {
     return (
@@ -137,6 +157,21 @@ export function ProductsSection() {
           </div>
         </CardContent>
       </Card>
+    );
+  }
+
+  if (isError) {
+    return (
+      <ErrorStateCard
+        title="Erreur de chargement"
+        message={
+          error instanceof Error
+            ? error.message
+            : 'Impossible de charger les produits. Veuillez réessayer.'
+        }
+        variant="destructive"
+        onRetry={() => refetch()}
+      />
     );
   }
 
@@ -356,6 +391,18 @@ export function ProductsSection() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmDialogOpen}
+        onOpenChange={setConfirmDialogOpen}
+        title="Retirer ce produit ?"
+        description="Êtes-vous sûr de vouloir retirer ce produit du site internet ? Cette action ne supprimera pas le produit de votre catalogue, elle le retirera seulement du site."
+        variant="destructive"
+        confirmText="Retirer"
+        cancelText="Annuler"
+        onConfirm={confirmRemove}
+      />
     </div>
   );
 }

@@ -58,6 +58,11 @@ export interface SalesOrderForShipment {
     trade_name: string | null;
     email?: string;
     phone?: string;
+    address_line1?: string;
+    address_line2?: string;
+    postal_code?: string;
+    city?: string;
+    region?: string;
   };
 
   // Items enrichis pour expédition
@@ -144,7 +149,9 @@ export function useSalesShipments() {
         if (data.customer_type === 'organization') {
           const { data: org } = await supabase
             .from('organisations')
-            .select('id, legal_name, trade_name, email, phone')
+            .select(
+              'id, legal_name, trade_name, email, phone, address_line1, address_line2, postal_code, city, region'
+            )
             .eq('id', data.customer_id)
             .single();
 

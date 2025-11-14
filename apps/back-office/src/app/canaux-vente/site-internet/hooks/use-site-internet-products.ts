@@ -39,7 +39,7 @@ export function useSiteInternetProducts() {
 }
 
 /**
- * Toggle publication produit
+ * Toggle publication produit (avec optimistic update)
  */
 export function useToggleProductPublication() {
   const queryClient = useQueryClient();
@@ -63,7 +63,44 @@ export function useToggleProductPublication() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onMutate: async ({ productId, isPublished }) => {
+      // 1. Cancel ongoing queries
+      await queryClient.cancelQueries({
+        queryKey: ['site-internet-products'],
+      });
+
+      // 2. Snapshot previous value
+      const previousData = queryClient.getQueryData<SiteInternetProduct[]>([
+        'site-internet-products',
+      ]);
+
+      // 3. Optimistically update cache
+      if (previousData) {
+        queryClient.setQueryData<SiteInternetProduct[]>(
+          ['site-internet-products'],
+          old =>
+            old?.map(product =>
+              product.product_id === productId
+                ? { ...product, is_published: isPublished }
+                : product
+            ) ?? []
+        );
+      }
+
+      // 4. Return context for rollback
+      return { previousData };
+    },
+    onError: (err, variables, context) => {
+      // 5. Rollback on error
+      if (context?.previousData) {
+        queryClient.setQueryData(
+          ['site-internet-products'],
+          context.previousData
+        );
+      }
+    },
+    onSettled: () => {
+      // 6. Refetch to sync with server
       queryClient.invalidateQueries({ queryKey: ['site-internet-products'] });
     },
   });

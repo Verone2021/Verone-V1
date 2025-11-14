@@ -6,11 +6,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
 
-const supabase = createClient();
+import type { Category } from '../types';
 
-// Note: Using 'any' type because is_visible_menu was added via migration
-// and TypeScript types may not be fully up-to-date yet
-type Category = any;
+const supabase = createClient();
 
 /**
  * Fetch toutes catégories
@@ -26,8 +24,7 @@ async function fetchCategories() {
     throw error;
   }
 
-  // Cast to any[] since is_visible_menu was added via migration
-  return (data || []) as any[];
+  return (data || []) as Category[];
 }
 
 /**
@@ -42,7 +39,7 @@ export function useSiteInternetCategories() {
 }
 
 /**
- * Toggle visibilité catégorie dans menu navigation
+ * Toggle visibilité catégorie dans menu navigation (avec optimistic update)
  */
 export function useToggleCategoryVisibility() {
   const queryClient = useQueryClient();
@@ -65,7 +62,44 @@ export function useToggleCategoryVisibility() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onMutate: async ({ categoryId, isVisible }) => {
+      // 1. Cancel ongoing queries
+      await queryClient.cancelQueries({
+        queryKey: ['site-internet-categories'],
+      });
+
+      // 2. Snapshot previous value
+      const previousData = queryClient.getQueryData<Category[]>([
+        'site-internet-categories',
+      ]);
+
+      // 3. Optimistically update cache
+      if (previousData) {
+        queryClient.setQueryData<Category[]>(
+          ['site-internet-categories'],
+          old =>
+            old?.map(category =>
+              category.id === categoryId
+                ? { ...category, is_visible_menu: isVisible }
+                : category
+            ) ?? []
+        );
+      }
+
+      // 4. Return context for rollback
+      return { previousData };
+    },
+    onError: (err, variables, context) => {
+      // 5. Rollback on error
+      if (context?.previousData) {
+        queryClient.setQueryData(
+          ['site-internet-categories'],
+          context.previousData
+        );
+      }
+    },
+    onSettled: () => {
+      // 6. Refetch to sync with server
       queryClient.invalidateQueries({
         queryKey: ['site-internet-categories'],
       });
@@ -118,16 +152,15 @@ export function useSiteInternetCategoriesStats() {
 
       if (!categories) return null;
 
-      // Cast to any[] to access is_visible_menu
-      const categoriesData = categories as any[];
+      const categoriesData = categories as Category[];
 
       const total = categoriesData.length;
-      const active = categoriesData.filter((c: any) => c.is_active).length;
+      const active = categoriesData.filter(c => c.is_active).length;
       const visibleMenu = categoriesData.filter(
-        (c: any) => c.is_active && c.is_visible_menu
+        c => c.is_active && (c as any).is_visible_menu
       ).length;
       const rootCategories = categoriesData.filter(
-        (c: any) => c.family_id === null
+        c => c.family_id === null
       ).length;
 
       return {

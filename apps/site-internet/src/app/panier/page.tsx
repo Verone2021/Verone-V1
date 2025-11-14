@@ -6,15 +6,25 @@ export default function PanierPage() {
         <h1 className="text-3xl font-bold mb-8">Mon Panier</h1>
 
         <div className="space-y-4">
-          {[1, 2].map((i) => (
-            <div key={i} className="bg-white rounded-lg shadow-md p-6 flex gap-4">
-              <div className="bg-gray-200 w-24 h-24 rounded-lg flex-shrink-0"></div>
+          {[1, 2].map(i => (
+            <div
+              key={i}
+              className="bg-white rounded-lg shadow-md p-6 flex gap-4"
+            >
+              <div className="bg-gray-200 w-24 h-24 rounded-lg flex-shrink-0" />
               <div className="flex-1">
                 <h3 className="font-semibold mb-2">Produit {i}</h3>
                 <p className="text-gray-600 text-sm mb-2">Référence: REF-{i}</p>
                 <div className="flex items-center gap-4">
-                  <input type="number" defaultValue="1" min="1" className="border rounded px-3 py-1 w-16" />
-                  <button className="text-red-600 hover:underline text-sm">Supprimer</button>
+                  <input
+                    type="number"
+                    defaultValue="1"
+                    min="1"
+                    className="border rounded px-3 py-1 w-16"
+                  />
+                  <button className="text-red-600 hover:underline text-sm">
+                    Supprimer
+                  </button>
                 </div>
               </div>
               <div className="text-right">
@@ -43,7 +53,10 @@ export default function PanierPage() {
               <span>€XX.XX</span>
             </div>
           </div>
-          <a href="/checkout" className="block w-full bg-gray-900 text-white text-center py-3 rounded-lg font-semibold hover:bg-gray-800">
+          <a
+            href="/checkout"
+            className="block w-full bg-gray-900 text-white text-center py-3 rounded-lg font-semibold hover:bg-gray-800"
+          >
             Passer commande
           </a>
         </div>

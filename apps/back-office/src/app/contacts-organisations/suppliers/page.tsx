@@ -8,6 +8,7 @@ import {
   SupplierCategoryBadge,
   SupplierCategoryCode,
 } from '@verone/categories';
+import { useLocalStorage } from '@verone/hooks';
 import { OrganisationLogo } from '@verone/organisations';
 import { ConfirmDeleteOrganisationModal } from '@verone/organisations';
 import { SupplierFormModal } from '@verone/organisations';
@@ -80,20 +81,14 @@ export default function SuppliersPage() {
     useState<Organisation | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useLocalStorage<'grid' | 'list'>(
+    'suppliers-view-mode',
+    'grid'
+  );
   const itemsPerPage = 12; // 3 lignes × 4 colonnes
-
-  // localStorage persistence pour viewMode
-  useEffect(() => {
-    const saved = localStorage.getItem('suppliers-view-mode');
-    if (saved === 'list' || saved === 'grid') {
-      setViewMode(saved);
-    }
-  }, []);
 
   const handleViewModeChange = (mode: 'grid' | 'list') => {
     setViewMode(mode);
-    localStorage.setItem('suppliers-view-mode', mode);
   };
 
   const filters = useMemo(

@@ -60,7 +60,11 @@ const shipmentSchema = z.object({
   // Destinataire
   recipient_name: z.string().min(1, 'Nom requis'),
   recipient_surname: z.string().optional(),
-  recipient_email: z.string().email('Email invalide').min(1, 'Email requis'),
+  recipient_email: z
+    .string()
+    .email('Email invalide')
+    .optional()
+    .or(z.literal('')), // ✅ FIX: Email OPTIONNEL (PackLink API)
   recipient_phone: z.string().min(1, 'Téléphone requis'),
 
   // Adresse livraison

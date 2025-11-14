@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 import { useToast } from '@verone/common/hooks';
 import {
@@ -17,6 +17,7 @@ import {
 } from '@verone/ui';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
+import { ErrorStateCard } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Textarea } from '@verone/ui';
 import { Label } from '@verone/ui';
@@ -71,13 +72,19 @@ export function ConfigurationSection() {
   });
 
   // Hooks
-  const { data: config, isLoading } = useSiteInternetConfig();
+  const {
+    data: config,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useSiteInternetConfig();
   const updateConfig = useUpdateSiteInternetConfig();
   const uploadLogo = useUploadSiteLogo();
   const updateConfigJSON = useUpdateSiteInternetConfigJSON();
 
   // Initialiser les formulaires avec les données existantes
-  useState(() => {
+  useEffect(() => {
     if (config) {
       setIdentityForm({
         domain_url: config.domain_url || '',
@@ -99,10 +106,10 @@ export function ConfigurationSection() {
         gtm_id: config.config?.analytics?.google_tag_manager_id || '',
       });
     }
-  });
+  }, [config]);
 
-  // Handler: Sauvegarder identité site
-  const handleSaveIdentity = async () => {
+  // Handler: Sauvegarder identité site (memoized)
+  const handleSaveIdentity = useCallback(async () => {
     try {
       await updateConfig.mutateAsync({
         domain_url: identityForm.domain_url,
@@ -119,10 +126,10 @@ export function ConfigurationSection() {
         variant: 'destructive',
       });
     }
-  };
+  }, [identityForm, updateConfig, toast]);
 
-  // Handler: Sauvegarder SEO
-  const handleSaveSEO = async () => {
+  // Handler: Sauvegarder SEO (memoized)
+  const handleSaveSEO = useCallback(async () => {
     try {
       await updateConfig.mutateAsync({
         default_meta_title: seoForm.default_meta_title,
@@ -143,10 +150,10 @@ export function ConfigurationSection() {
         variant: 'destructive',
       });
     }
-  };
+  }, [seoForm, updateConfig, toast]);
 
-  // Handler: Sauvegarder contact
-  const handleSaveContact = async () => {
+  // Handler: Sauvegarder contact (memoized)
+  const handleSaveContact = useCallback(async () => {
     try {
       await updateConfig.mutateAsync({
         contact_email: contactForm.contact_email,
@@ -163,10 +170,10 @@ export function ConfigurationSection() {
         variant: 'destructive',
       });
     }
-  };
+  }, [contactForm, updateConfig, toast]);
 
-  // Handler: Sauvegarder analytics
-  const handleSaveAnalytics = async () => {
+  // Handler: Sauvegarder analytics (memoized)
+  const handleSaveAnalytics = useCallback(async () => {
     try {
       await updateConfigJSON.mutateAsync({
         google_analytics_id: analyticsForm.google_analytics_id,
@@ -184,46 +191,49 @@ export function ConfigurationSection() {
         variant: 'destructive',
       });
     }
-  };
+  }, [analyticsForm, updateConfigJSON, toast]);
 
-  // Handler: Upload logo
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Handler: Upload logo (memoized)
+  const handleLogoUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
 
-    // Validation
-    if (!file.type.startsWith('image/')) {
-      toast({
-        title: 'Fichier invalide',
-        description: 'Veuillez sélectionner une image (PNG, JPG, SVG)',
-        variant: 'destructive',
-      });
-      return;
-    }
+      // Validation
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: 'Fichier invalide',
+          description: 'Veuillez sélectionner une image (PNG, JPG, SVG)',
+          variant: 'destructive',
+        });
+        return;
+      }
 
-    if (file.size > 2 * 1024 * 1024) {
-      toast({
-        title: 'Fichier trop volumineux',
-        description: 'La taille maximale est de 2 MB.',
-        variant: 'destructive',
-      });
-      return;
-    }
+      if (file.size > 2 * 1024 * 1024) {
+        toast({
+          title: 'Fichier trop volumineux',
+          description: 'La taille maximale est de 2 MB.',
+          variant: 'destructive',
+        });
+        return;
+      }
 
-    try {
-      await uploadLogo.mutateAsync(file);
-      toast({
-        title: 'Logo uploadé',
-        description: 'Le logo du site a été mis à jour.',
-      });
-    } catch (error) {
-      toast({
-        title: 'Erreur',
-        description: "Impossible d'uploader le logo.",
-        variant: 'destructive',
-      });
-    }
-  };
+      try {
+        await uploadLogo.mutateAsync(file);
+        toast({
+          title: 'Logo uploadé',
+          description: 'Le logo du site a été mis à jour.',
+        });
+      } catch (error) {
+        toast({
+          title: 'Erreur',
+          description: "Impossible d'uploader le logo.",
+          variant: 'destructive',
+        });
+      }
+    },
+    [uploadLogo, toast]
+  );
 
   if (isLoading) {
     return (
@@ -234,6 +244,21 @@ export function ConfigurationSection() {
           </div>
         </CardContent>
       </Card>
+    );
+  }
+
+  if (isError) {
+    return (
+      <ErrorStateCard
+        title="Erreur de chargement"
+        message={
+          error instanceof Error
+            ? error.message
+            : 'Impossible de charger la configuration. Veuillez réessayer.'
+        }
+        variant="destructive"
+        onRetry={() => refetch()}
+      />
     );
   }
 

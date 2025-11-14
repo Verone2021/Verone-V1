@@ -5,9 +5,10 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 
 import { useToast } from '@verone/common/hooks';
+import { useDebounce } from '@verone/hooks';
 import {
   Card,
   CardContent,
@@ -17,7 +18,9 @@ import {
 } from '@verone/ui';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
+import { ErrorStateCard } from '@verone/ui';
 import { Input } from '@verone/ui';
+import { KPICardUnified } from '@verone/ui';
 import {
   Table,
   TableBody,
@@ -53,40 +56,51 @@ import { useSiteInternetConfig } from '../hooks/use-site-internet-config';
 export function CollectionsSection() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebounce(searchTerm, 300);
 
   // Hooks
-  const { data: collections = [], isLoading } = useSiteInternetCollections();
+  const {
+    data: collections = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useSiteInternetCollections();
   const { data: config } = useSiteInternetConfig();
   const { data: stats } = useSiteInternetCollectionsStats();
   const toggleVisibility = useToggleCollectionVisibility();
 
-  // Filtrage collections
-  const filteredCollections = collections.filter(collection =>
-    collection.name.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filtrage collections (memoized avec debounce)
+  const filteredCollections = useMemo(
+    () =>
+      collections.filter(collection =>
+        collection.name.toLowerCase().includes(debouncedSearch.toLowerCase())
+      ),
+    [collections, debouncedSearch]
   );
 
-  // Handler toggle visibilité
-  const handleToggleVisibility = async (
-    collectionId: string,
-    currentlyVisible: boolean
-  ) => {
-    try {
-      await toggleVisibility.mutateAsync({
-        collectionId,
-        isVisible: !currentlyVisible,
-      });
-      toast({
-        title: currentlyVisible ? 'Collection masquée' : 'Collection visible',
-        description: `La collection a été ${currentlyVisible ? 'masquée du' : 'rendue visible sur le'} site internet.`,
-      });
-    } catch (error) {
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de modifier la visibilité de la collection.',
-        variant: 'destructive',
-      });
-    }
-  };
+  // Handler toggle visibilité (memoized)
+  const handleToggleVisibility = useCallback(
+    async (collectionId: string, currentlyVisible: boolean) => {
+      try {
+        await toggleVisibility.mutateAsync({
+          collectionId,
+          isVisible: !currentlyVisible,
+        });
+        toast({
+          title: currentlyVisible ? 'Collection masquée' : 'Collection visible',
+          description: `La collection a été ${currentlyVisible ? 'masquée du' : 'rendue visible sur le'} site internet.`,
+        });
+      } catch (error) {
+        toast({
+          title: 'Erreur',
+          description: 'Impossible de modifier la visibilité de la collection.',
+          variant: 'destructive',
+        });
+      }
+    },
+    [toggleVisibility, toast]
+  );
 
   if (isLoading) {
     return (
@@ -100,63 +114,52 @@ export function CollectionsSection() {
     );
   }
 
+  if (isError) {
+    return (
+      <ErrorStateCard
+        title="Erreur de chargement"
+        message={
+          error instanceof Error
+            ? error.message
+            : 'Impossible de charger les collections. Veuillez réessayer.'
+        }
+        variant="destructive"
+        onRetry={() => refetch()}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  Collections Total
-                </p>
-                <p className="text-2xl font-bold mt-1">{stats?.total || 0}</p>
-              </div>
-              <Palette className="h-8 w-8 text-blue-600 opacity-50" />
-            </div>
-          </CardContent>
-        </Card>
+        <KPICardUnified
+          variant="elegant"
+          title="Collections Total"
+          value={stats?.total || 0}
+          icon={Palette}
+        />
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Actives</p>
-                <p className="text-2xl font-bold mt-1">{stats?.active || 0}</p>
-              </div>
-              <Eye className="h-8 w-8 text-green-600 opacity-50" />
-            </div>
-          </CardContent>
-        </Card>
+        <KPICardUnified
+          variant="elegant"
+          title="Actives"
+          value={stats?.active || 0}
+          icon={Eye}
+        />
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  Visibles Site Internet
-                </p>
-                <p className="text-2xl font-bold mt-1">{stats?.visible || 0}</p>
-              </div>
-              <Package className="h-8 w-8 text-purple-600 opacity-50" />
-            </div>
-          </CardContent>
-        </Card>
+        <KPICardUnified
+          variant="elegant"
+          title="Visibles Site Internet"
+          value={stats?.visible || 0}
+          icon={Package}
+        />
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">À la Une</p>
-                <p className="text-2xl font-bold mt-1">
-                  {stats?.featured || 0}
-                </p>
-              </div>
-              <Star className="h-8 w-8 text-orange-600 opacity-50" />
-            </div>
-          </CardContent>
-        </Card>
+        <KPICardUnified
+          variant="elegant"
+          title="À la Une"
+          value={stats?.featured || 0}
+          icon={Star}
+        />
       </div>
 
       {/* Header Actions */}

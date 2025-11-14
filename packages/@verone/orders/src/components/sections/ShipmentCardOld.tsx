@@ -36,7 +36,7 @@ const STATUS_CONFIG: Record<
   RETURNED_TO_SENDER: { label: 'Retourné', variant: 'destructive' },
 };
 
-export function ShipmentCard({ shipment }: ShipmentCardProps) {
+export function ShipmentCardOld({ shipment }: ShipmentCardProps) {
   const statusConfig = shipment.status
     ? STATUS_CONFIG[shipment.status] || {
         label: shipment.status,

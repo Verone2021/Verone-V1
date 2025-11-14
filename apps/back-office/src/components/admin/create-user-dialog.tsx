@@ -10,6 +10,8 @@
 import type { ReactNode } from 'react';
 import React, { useState } from 'react';
 
+import { createUserWithRole } from '@verone/admin/actions/user-management';
+import { useToggle } from '@verone/hooks';
 import { ButtonV2 } from '@verone/ui';
 import {
   Dialog,
@@ -40,7 +42,6 @@ import {
   EyeOff,
 } from 'lucide-react';
 
-import { createUserWithRole } from '@verone/admin/actions/user-management';
 // import { validateProfileForm } from '@verone/utils/validation/profile-validation'
 
 interface CreateUserDialogProps {
@@ -70,7 +71,7 @@ const INITIAL_FORM_DATA: CreateUserFormData = {
 export function CreateUserDialog({ children }: CreateUserDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, toggleShowPassword, setShowPassword] = useToggle(false);
   const [formData, setFormData] =
     useState<CreateUserFormData>(INITIAL_FORM_DATA);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -255,7 +256,7 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
+                  onClick={toggleShowPassword}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-black opacity-50 hover:opacity-70"
                 >
                   {showPassword ? (

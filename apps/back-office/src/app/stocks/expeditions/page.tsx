@@ -19,6 +19,8 @@
 
 import { useState, useEffect } from 'react';
 
+import { SalesOrderShipmentModal } from '@verone/orders';
+import { useSalesShipments } from '@verone/orders';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -57,9 +59,6 @@ import {
   CheckCircle,
   Eye,
 } from 'lucide-react';
-
-import { SalesOrderShipmentModal } from '@verone/orders';
-import { useSalesShipments } from '@verone/orders';
 
 export default function ExpeditionsPage() {
   const {

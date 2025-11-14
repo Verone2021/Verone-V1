@@ -5,9 +5,10 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useCallback, memo } from 'react';
 
 import { useToast } from '@verone/common/hooks';
+import { useDebounce } from '@verone/hooks';
 import {
   Card,
   CardContent,
@@ -16,7 +17,9 @@ import {
   CardTitle,
 } from '@verone/ui';
 import { Badge } from '@verone/ui';
+import { ErrorStateCard } from '@verone/ui';
 import { Input } from '@verone/ui';
+import { KPICardUnified } from '@verone/ui';
 import {
   Table,
   TableBody,
@@ -47,9 +50,9 @@ import {
 } from '../hooks/use-site-internet-categories';
 
 /**
- * Composant Ligne Catégorie (récursif pour enfants)
+ * Composant Ligne Catégorie (récursif pour enfants) - Memoized
  */
-function CategoryRow({
+const CategoryRow = memo(function CategoryRow({
   category,
   level = 0,
   onToggleVisibility,
@@ -158,7 +161,7 @@ function CategoryRow({
         ))}
     </>
   );
-}
+});
 
 /**
  * Section Catégories Principale
@@ -166,50 +169,62 @@ function CategoryRow({
 export function CategoriesSection() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebounce(searchTerm, 300);
   const [togglingId, setTogglingId] = useState<string | undefined>();
 
   // Hooks
-  const { data: categories = [], isLoading } = useSiteInternetCategories();
+  const {
+    data: categories = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useSiteInternetCategories();
   const { data: stats } = useSiteInternetCategoriesStats();
   const toggleVisibility = useToggleCategoryVisibility();
 
-  // Filtrage catégories
-  const filteredCategories = categories.filter(category =>
-    category.name.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filtrage catégories (memoized avec debounce)
+  const filteredCategories = useMemo(
+    () =>
+      categories.filter(category =>
+        category.name.toLowerCase().includes(debouncedSearch.toLowerCase())
+      ),
+    [categories, debouncedSearch]
   );
 
-  // Construire arborescence
-  const categoryTree = buildCategoryTree(
-    searchTerm ? filteredCategories : categories
+  // Construire arborescence (memoized avec debounce)
+  const categoryTree = useMemo(
+    () => buildCategoryTree(debouncedSearch ? filteredCategories : categories),
+    [debouncedSearch, filteredCategories, categories]
   );
 
-  // Handler toggle visibilité
-  const handleToggleVisibility = async (
-    categoryId: string,
-    newVisibility: boolean
-  ) => {
-    setTogglingId(categoryId);
-    try {
-      await toggleVisibility.mutateAsync({
-        categoryId,
-        isVisible: newVisibility,
-      });
-      toast({
-        title: newVisibility
-          ? 'Catégorie visible dans le menu'
-          : 'Catégorie masquée du menu',
-        description: `La catégorie a été ${newVisibility ? 'rendue visible' : 'masquée'} dans la navigation du site.`,
-      });
-    } catch (error) {
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de modifier la visibilité de la catégorie.',
-        variant: 'destructive',
-      });
-    } finally {
-      setTogglingId(undefined);
-    }
-  };
+  // Handler toggle visibilité (memoized)
+  const handleToggleVisibility = useCallback(
+    async (categoryId: string, newVisibility: boolean) => {
+      setTogglingId(categoryId);
+      try {
+        await toggleVisibility.mutateAsync({
+          categoryId,
+          isVisible: newVisibility,
+        });
+        toast({
+          title: newVisibility
+            ? 'Catégorie visible dans le menu'
+            : 'Catégorie masquée du menu',
+          description: `La catégorie a été ${newVisibility ? 'rendue visible' : 'masquée'} dans la navigation du site.`,
+        });
+      } catch (error) {
+        toast({
+          title: 'Erreur',
+          description: 'Impossible de modifier la visibilité de la catégorie.',
+          variant: 'destructive',
+        });
+      } finally {
+        setTogglingId(undefined);
+      }
+    },
+    [toggleVisibility, toast, setTogglingId]
+  );
 
   if (isLoading) {
     return (
@@ -223,63 +238,52 @@ export function CategoriesSection() {
     );
   }
 
+  if (isError) {
+    return (
+      <ErrorStateCard
+        title="Erreur de chargement"
+        message={
+          error instanceof Error
+            ? error.message
+            : 'Impossible de charger les catégories. Veuillez réessayer.'
+        }
+        variant="destructive"
+        onRetry={() => refetch()}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  Catégories Total
-                </p>
-                <p className="text-2xl font-bold mt-1">{stats?.total || 0}</p>
-              </div>
-              <FolderTree className="h-8 w-8 text-blue-600 opacity-50" />
-            </div>
-          </CardContent>
-        </Card>
+        <KPICardUnified
+          variant="elegant"
+          title="Catégories Total"
+          value={stats?.total || 0}
+          icon={FolderTree}
+        />
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Actives</p>
-                <p className="text-2xl font-bold mt-1">{stats?.active || 0}</p>
-              </div>
-              <Eye className="h-8 w-8 text-green-600 opacity-50" />
-            </div>
-          </CardContent>
-        </Card>
+        <KPICardUnified
+          variant="elegant"
+          title="Actives"
+          value={stats?.active || 0}
+          icon={Eye}
+        />
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Visibles Menu</p>
-                <p className="text-2xl font-bold mt-1">
-                  {stats?.visibleMenu || 0}
-                </p>
-              </div>
-              <Folder className="h-8 w-8 text-purple-600 opacity-50" />
-            </div>
-          </CardContent>
-        </Card>
+        <KPICardUnified
+          variant="elegant"
+          title="Visibles Menu"
+          value={stats?.visibleMenu || 0}
+          icon={Folder}
+        />
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Racines</p>
-                <p className="text-2xl font-bold mt-1">
-                  {stats?.rootCategories || 0}
-                </p>
-              </div>
-              <FolderTree className="h-8 w-8 text-orange-600 opacity-50" />
-            </div>
-          </CardContent>
-        </Card>
+        <KPICardUnified
+          variant="elegant"
+          title="Racines"
+          value={stats?.rootCategories || 0}
+          icon={FolderTree}
+        />
       </div>
 
       {/* Header Actions */}

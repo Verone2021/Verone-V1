@@ -648,9 +648,6 @@ curl -X GET https://verone-backoffice.vercel.app/api/cron/google-merchant-poll \
 ⚠️ **Migration Initiale Incomplète**: Migration 117 manquait tables `channel_product_metadata` + `channel_product_pricing`
 **Solution**: Créé migration 118 complémentaire avec tables + RPCs additionnels
 
-⚠️ **Docker Local Non Lancé**: Impossible générer types Supabase localement
-**Solution**: Types seront régénérés lors déploiement Vercel (non-bloquant)
-
 ### Process Learnings pour Futures Sessions
 
 📝 **Checklist Pre-Implementation**:

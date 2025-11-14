@@ -294,10 +294,7 @@ export type Database = {
           id: string;
           image_url: string | null;
           is_active: boolean | null;
-          is_visible_menu: boolean | null;
           level: number | null;
-          meta_description: string | null;
-          meta_title: string | null;
           name: string;
           slug: string;
           updated_at: string | null;
@@ -312,10 +309,7 @@ export type Database = {
           id?: string;
           image_url?: string | null;
           is_active?: boolean | null;
-          is_visible_menu?: boolean | null;
           level?: number | null;
-          meta_description?: string | null;
-          meta_title?: string | null;
           name: string;
           slug: string;
           updated_at?: string | null;
@@ -330,10 +324,7 @@ export type Database = {
           id?: string;
           image_url?: string | null;
           is_active?: boolean | null;
-          is_visible_menu?: boolean | null;
           level?: number | null;
-          meta_description?: string | null;
-          meta_title?: string | null;
           name?: string;
           slug?: string;
           updated_at?: string | null;
@@ -1063,7 +1054,6 @@ export type Database = {
           theme_tags: string[] | null;
           updated_at: string | null;
           visibility: string;
-          visible_channels: string[] | null;
         };
         Insert: {
           archived_at?: string | null;
@@ -1088,7 +1078,6 @@ export type Database = {
           theme_tags?: string[] | null;
           updated_at?: string | null;
           visibility?: string;
-          visible_channels?: string[] | null;
         };
         Update: {
           archived_at?: string | null;
@@ -1113,7 +1102,6 @@ export type Database = {
           theme_tags?: string[] | null;
           updated_at?: string | null;
           visibility?: string;
-          visible_channels?: string[] | null;
         };
         Relationships: [];
       };
@@ -3774,16 +3762,12 @@ export type Database = {
           eco_tax_default: number | null;
           gtin: string | null;
           id: string;
-          is_published_online: boolean | null;
           item_group_id: string | null;
           margin_percentage: number | null;
-          meta_description: string | null;
-          meta_title: string | null;
           min_stock: number | null;
           name: string;
           product_status: Database['public']['Enums']['product_status_type'];
           product_type: string | null;
-          publication_date: string | null;
           rejection_reason: string | null;
           reorder_point: number | null;
           requires_sample: boolean | null;
@@ -3805,7 +3789,6 @@ export type Database = {
           supplier_reference: string | null;
           target_margin_percentage: number | null;
           technical_description: string | null;
-          unpublication_date: string | null;
           updated_at: string | null;
           variant_attributes: Json | null;
           variant_group_id: string | null;
@@ -3831,16 +3814,12 @@ export type Database = {
           eco_tax_default?: number | null;
           gtin?: string | null;
           id?: string;
-          is_published_online?: boolean | null;
           item_group_id?: string | null;
           margin_percentage?: number | null;
-          meta_description?: string | null;
-          meta_title?: string | null;
           min_stock?: number | null;
           name: string;
           product_status?: Database['public']['Enums']['product_status_type'];
           product_type?: string | null;
-          publication_date?: string | null;
           rejection_reason?: string | null;
           reorder_point?: number | null;
           requires_sample?: boolean | null;
@@ -3862,7 +3841,6 @@ export type Database = {
           supplier_reference?: string | null;
           target_margin_percentage?: number | null;
           technical_description?: string | null;
-          unpublication_date?: string | null;
           updated_at?: string | null;
           variant_attributes?: Json | null;
           variant_group_id?: string | null;
@@ -3888,16 +3866,12 @@ export type Database = {
           eco_tax_default?: number | null;
           gtin?: string | null;
           id?: string;
-          is_published_online?: boolean | null;
           item_group_id?: string | null;
           margin_percentage?: number | null;
-          meta_description?: string | null;
-          meta_title?: string | null;
           min_stock?: number | null;
           name?: string;
           product_status?: Database['public']['Enums']['product_status_type'];
           product_type?: string | null;
-          publication_date?: string | null;
           rejection_reason?: string | null;
           reorder_point?: number | null;
           requires_sample?: boolean | null;
@@ -3919,7 +3893,6 @@ export type Database = {
           supplier_reference?: string | null;
           target_margin_percentage?: number | null;
           technical_description?: string | null;
-          unpublication_date?: string | null;
           updated_at?: string | null;
           variant_attributes?: Json | null;
           variant_group_id?: string | null;
@@ -4305,74 +4278,47 @@ export type Database = {
       sales_channels: {
         Row: {
           code: string;
-          config: Json | null;
-          contact_email: string | null;
-          contact_phone: string | null;
           created_at: string | null;
           created_by: string | null;
           default_discount_rate: number | null;
-          default_meta_description: string | null;
-          default_meta_title: string | null;
           description: string | null;
           display_order: number | null;
-          domain_url: string | null;
           icon_name: string | null;
           id: string;
           is_active: boolean | null;
-          meta_keywords: string[] | null;
           min_order_value: number | null;
           name: string;
           requires_approval: boolean | null;
-          site_logo_url: string | null;
-          site_name: string | null;
           updated_at: string | null;
         };
         Insert: {
           code: string;
-          config?: Json | null;
-          contact_email?: string | null;
-          contact_phone?: string | null;
           created_at?: string | null;
           created_by?: string | null;
           default_discount_rate?: number | null;
-          default_meta_description?: string | null;
-          default_meta_title?: string | null;
           description?: string | null;
           display_order?: number | null;
-          domain_url?: string | null;
           icon_name?: string | null;
           id?: string;
           is_active?: boolean | null;
-          meta_keywords?: string[] | null;
           min_order_value?: number | null;
           name: string;
           requires_approval?: boolean | null;
-          site_logo_url?: string | null;
-          site_name?: string | null;
           updated_at?: string | null;
         };
         Update: {
           code?: string;
-          config?: Json | null;
-          contact_email?: string | null;
-          contact_phone?: string | null;
           created_at?: string | null;
           created_by?: string | null;
           default_discount_rate?: number | null;
-          default_meta_description?: string | null;
-          default_meta_title?: string | null;
           description?: string | null;
           display_order?: number | null;
-          domain_url?: string | null;
           icon_name?: string | null;
           id?: string;
           is_active?: boolean | null;
-          meta_keywords?: string[] | null;
           min_order_value?: number | null;
           name?: string;
           requires_approval?: boolean | null;
-          site_logo_url?: string | null;
-          site_name?: string | null;
           updated_at?: string | null;
         };
         Relationships: [];
@@ -4492,8 +4438,6 @@ export type Database = {
           cancelled_at: string | null;
           cancelled_by: string | null;
           channel_id: string | null;
-          closed_at: string | null;
-          closed_by: string | null;
           confirmed_at: string | null;
           confirmed_by: string | null;
           created_at: string;
@@ -4533,8 +4477,6 @@ export type Database = {
           cancelled_at?: string | null;
           cancelled_by?: string | null;
           channel_id?: string | null;
-          closed_at?: string | null;
-          closed_by?: string | null;
           confirmed_at?: string | null;
           confirmed_by?: string | null;
           created_at?: string;
@@ -4574,8 +4516,6 @@ export type Database = {
           cancelled_at?: string | null;
           cancelled_by?: string | null;
           channel_id?: string | null;
-          closed_at?: string | null;
-          closed_by?: string | null;
           confirmed_at?: string | null;
           confirmed_by?: string | null;
           created_at?: string;
@@ -4746,47 +4686,6 @@ export type Database = {
           },
         ];
       };
-      shipment_tracking_events: {
-        Row: {
-          city: string | null;
-          created_at: string;
-          description: string | null;
-          event_name: string;
-          event_timestamp: string;
-          id: string;
-          raw_payload: Json;
-          shipment_id: string;
-        };
-        Insert: {
-          city?: string | null;
-          created_at?: string;
-          description?: string | null;
-          event_name: string;
-          event_timestamp: string;
-          id?: string;
-          raw_payload?: Json;
-          shipment_id: string;
-        };
-        Update: {
-          city?: string | null;
-          created_at?: string;
-          description?: string | null;
-          event_name?: string;
-          event_timestamp?: string;
-          id?: string;
-          raw_payload?: Json;
-          shipment_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'shipment_tracking_events_shipment_id_fkey';
-            columns: ['shipment_id'];
-            isOneToOne: false;
-            referencedRelation: 'shipments';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
       shipments: {
         Row: {
           carrier_name: string | null;
@@ -4809,7 +4708,6 @@ export type Database = {
           mondial_relay_response: Json | null;
           notes: string | null;
           packlink_label_url: string | null;
-          packlink_order_ref: string | null;
           packlink_response: Json | null;
           packlink_service_id: number | null;
           packlink_shipment_id: string | null;
@@ -4819,7 +4717,6 @@ export type Database = {
           shipped_at: string | null;
           shipping_address: Json | null;
           shipping_method: Database['public']['Enums']['shipping_method'];
-          status: Database['public']['Enums']['shipment_status_type'] | null;
           tracking_number: string | null;
           tracking_url: string | null;
           updated_at: string | null;
@@ -4845,7 +4742,6 @@ export type Database = {
           mondial_relay_response?: Json | null;
           notes?: string | null;
           packlink_label_url?: string | null;
-          packlink_order_ref?: string | null;
           packlink_response?: Json | null;
           packlink_service_id?: number | null;
           packlink_shipment_id?: string | null;
@@ -4855,7 +4751,6 @@ export type Database = {
           shipped_at?: string | null;
           shipping_address?: Json | null;
           shipping_method: Database['public']['Enums']['shipping_method'];
-          status?: Database['public']['Enums']['shipment_status_type'] | null;
           tracking_number?: string | null;
           tracking_url?: string | null;
           updated_at?: string | null;
@@ -4881,7 +4776,6 @@ export type Database = {
           mondial_relay_response?: Json | null;
           notes?: string | null;
           packlink_label_url?: string | null;
-          packlink_order_ref?: string | null;
           packlink_response?: Json | null;
           packlink_service_id?: number | null;
           packlink_shipment_id?: string | null;
@@ -4891,7 +4785,6 @@ export type Database = {
           shipped_at?: string | null;
           shipping_address?: Json | null;
           shipping_method?: Database['public']['Enums']['shipping_method'];
-          status?: Database['public']['Enums']['shipment_status_type'] | null;
           tracking_number?: string | null;
           tracking_url?: string | null;
           updated_at?: string | null;
@@ -4962,11 +4855,9 @@ export type Database = {
           draft_order_id: string | null;
           id: string;
           min_stock: number;
-          notes: string | null;
           product_id: string;
           quantity_in_draft: number | null;
           shortage_quantity: number;
-          stock_forecasted_in: number;
           stock_forecasted_out: number;
           stock_real: number;
           supplier_id: string;
@@ -4983,11 +4874,9 @@ export type Database = {
           draft_order_id?: string | null;
           id?: string;
           min_stock?: number;
-          notes?: string | null;
           product_id: string;
           quantity_in_draft?: number | null;
           shortage_quantity?: number;
-          stock_forecasted_in?: number;
           stock_forecasted_out?: number;
           stock_real?: number;
           supplier_id: string;
@@ -5004,11 +4893,9 @@ export type Database = {
           draft_order_id?: string | null;
           id?: string;
           min_stock?: number;
-          notes?: string | null;
           product_id?: string;
           quantity_in_draft?: number | null;
           shortage_quantity?: number;
-          stock_forecasted_in?: number;
           stock_forecasted_out?: number;
           stock_real?: number;
           supplier_id?: string;
@@ -6438,10 +6325,6 @@ export type Database = {
           price_source: string;
         }[];
       };
-      calculate_stock_forecasted: {
-        Args: { p_product_id: string };
-        Returns: number;
-      };
       calculate_stock_status: {
         Args: { p_stock_real: number };
         Returns: Database['public']['Enums']['stock_status_type'];
@@ -7192,57 +7075,6 @@ export type Database = {
         Args: { limit_param?: number; section_name_param: string };
         Returns: Json;
       };
-      get_shipment_summary: {
-        Args: { p_sales_order_id: string };
-        Returns: {
-          completion_percentage: number;
-          last_shipment_date: string;
-          total_shipments: number;
-          total_units_ordered: number;
-          total_units_remaining: number;
-          total_units_shipped: number;
-        }[];
-      };
-      get_shipment_tracking_summary: {
-        Args: { p_shipment_id: string };
-        Returns: {
-          events: Json;
-          latest_city: string;
-          latest_description: string;
-          latest_status: string;
-          latest_timestamp: string;
-          total_events: number;
-        }[];
-      };
-      get_site_internet_config: { Args: never; Returns: Json };
-      get_site_internet_product_detail: {
-        Args: { p_product_id: string };
-        Returns: Json;
-      };
-      get_site_internet_products: {
-        Args: never;
-        Returns: {
-          has_variants: boolean;
-          image_urls: string[];
-          ineligibility_reasons: string[];
-          is_eligible: boolean;
-          is_published: boolean;
-          metadata: Json;
-          name: string;
-          price_ht: number;
-          price_source: string;
-          price_ttc: number;
-          primary_image_url: string;
-          product_id: string;
-          publication_date: string;
-          seo_meta_description: string;
-          seo_title: string;
-          sku: string;
-          slug: string;
-          status: string;
-          variants_count: number;
-        }[];
-      };
       get_smart_stock_status: {
         Args: { p_product_id: string };
         Returns: {
@@ -7418,10 +7250,6 @@ export type Database = {
       };
       has_been_ordered: { Args: { p_product_id: string }; Returns: boolean };
       has_scope: { Args: { required_scope: string }; Returns: boolean };
-      increment_quantity_shipped: {
-        Args: { p_item_id: string; p_quantity: number };
-        Returns: undefined;
-      };
       initialize_dashboard_tests: { Args: never; Returns: undefined };
       is_admin: { Args: never; Returns: boolean };
       is_owner: { Args: never; Returns: boolean };
@@ -7549,10 +7377,6 @@ export type Database = {
         };
       };
       refresh_google_merchant_stats: { Args: never; Returns: undefined };
-      regenerate_product_slug: {
-        Args: { product_id_param: string };
-        Returns: string;
-      };
       remove_collection_tag: {
         Args: { collection_id: string; tag: string };
         Returns: undefined;
@@ -7620,7 +7444,6 @@ export type Database = {
           theme_tags: string[] | null;
           updated_at: string | null;
           visibility: string;
-          visible_channels: string[] | null;
         }[];
         SetofOptions: {
           from: '*';
@@ -7641,7 +7464,6 @@ export type Database = {
       set_current_user_id: { Args: { user_id: string }; Returns: undefined };
       show_limit: { Args: never; Returns: number };
       show_trgm: { Args: { '': string }; Returns: string[] };
-      slugify: { Args: { text_input: string }; Returns: string };
       suggest_matches: {
         Args: { p_limit?: number; p_transaction_id: string };
         Returns: {
@@ -7698,10 +7520,6 @@ export type Database = {
           error: string;
           success: boolean;
         }[];
-      };
-      update_stock_on_shipment: {
-        Args: { p_product_id: string; p_quantity: number };
-        Returns: undefined;
       };
       update_test_status: {
         Args: {
@@ -7873,8 +7691,7 @@ export type Database = {
         | 'partially_shipped'
         | 'shipped'
         | 'delivered'
-        | 'cancelled'
-        | 'closed';
+        | 'cancelled';
       sample_request_status_type: 'pending_approval' | 'approved' | 'rejected';
       sample_status_type:
         | 'not_required'
@@ -7885,19 +7702,6 @@ export type Database = {
         | 'approved'
         | 'rejected';
       schedule_frequency_type: 'manual' | 'daily' | 'weekly' | 'monthly';
-      shipment_status_type:
-        | 'PENDING'
-        | 'READY_TO_PURCHASE'
-        | 'PROCESSING'
-        | 'READY_FOR_SHIPPING'
-        | 'TRACKING'
-        | 'IN_TRANSIT'
-        | 'OUT_FOR_DELIVERY'
-        | 'DELIVERED'
-        | 'INCIDENT'
-        | 'RETURNED_TO_SENDER'
-        | 'DRAFT'
-        | 'ARCHIVED';
       shipment_type: 'parcel' | 'pallet';
       shipping_method: 'packlink' | 'mondial_relay' | 'chronotruck' | 'manual';
       sourcing_status_type:
@@ -8189,7 +7993,6 @@ export const Constants = {
         'shipped',
         'delivered',
         'cancelled',
-        'closed',
       ],
       sample_request_status_type: ['pending_approval', 'approved', 'rejected'],
       sample_status_type: [
@@ -8202,20 +8005,6 @@ export const Constants = {
         'rejected',
       ],
       schedule_frequency_type: ['manual', 'daily', 'weekly', 'monthly'],
-      shipment_status_type: [
-        'PENDING',
-        'READY_TO_PURCHASE',
-        'PROCESSING',
-        'READY_FOR_SHIPPING',
-        'TRACKING',
-        'IN_TRANSIT',
-        'OUT_FOR_DELIVERY',
-        'DELIVERED',
-        'INCIDENT',
-        'RETURNED_TO_SENDER',
-        'DRAFT',
-        'ARCHIVED',
-      ],
       shipment_type: ['parcel', 'pallet'],
       shipping_method: ['packlink', 'mondial_relay', 'chronotruck', 'manual'],
       sourcing_status_type: [

@@ -16,7 +16,7 @@ import { CloseOrderModal } from '@verone/orders/components/modals/CloseOrderModa
 import { CreateShipmentModal } from '@verone/orders/components/modals/CreateShipmentModal';
 import { useShipments } from '@verone/orders/hooks';
 
-import { ShipmentCard } from './ShipmentCard';
+import { ShipmentCardOld } from './ShipmentCardOld';
 
 interface OrderItem {
   id: string;
@@ -204,7 +204,7 @@ export function ShipmentsSection({
           {!loading && !error && shipments.length > 0 && (
             <div className="space-y-4">
               {shipments.map(shipment => (
-                <ShipmentCard key={shipment.id} shipment={shipment} />
+                <ShipmentCardOld key={shipment.id} shipment={shipment} />
               ))}
             </div>
           )}

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
+import { useToggle } from '@verone/hooks';
 import { UniversalOrderDetailsModal } from '@verone/orders';
 import type { MovementWithDetails } from '@verone/stock';
 import { MovementsFilters } from '@verone/stock';
@@ -78,10 +79,11 @@ export default function StockMovementsPage() {
   const [showMovementDetails, setShowMovementDetails] = useState(false);
   const [movementToCancel, setMovementToCancel] =
     useState<MovementWithDetails | null>(null);
-  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showCancelModal, toggleShowCancelModal, setShowCancelModal] =
+    useToggle(false);
 
   // États pour filtres sidebar collapsible
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filtersOpen, toggleFiltersOpen] = useToggle(false);
   const [activeFiltersCount, setActiveFiltersCount] = useState(0);
 
   // Compter filtres actifs
@@ -249,7 +251,7 @@ export default function StockMovementsPage() {
           <ButtonV2
             variant="outline"
             size="sm"
-            onClick={() => setFiltersOpen(!filtersOpen)}
+            onClick={toggleFiltersOpen}
             className="border-black text-black hover:bg-black hover:text-white transition-all"
           >
             <Filter className="h-4 w-4 mr-2" />

@@ -1,13 +1,18 @@
 /**
- * Create Shipment with Packlink
+ * Create Shipment with Packlink (HIGH-LEVEL API)
  * POST /api/sales-shipments/create
- * Creates shipment record and registers with Packlink API
+ *
+ * Workflow automatique complet : Shipment + Items + Parcels + Packlink Order
+ * Pour workflow manuel Draft → Validation → Payment, utiliser /api/packlink/draft/create
+ *
+ * IMPORTANT : Appel direct createOrder() sans draft préalable
+ * Use case : Expédition automatique depuis Sales Order confirmée
  */
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { createClient } from '@verone/utils/supabase/server';
+import { createServerClient } from '@verone/utils/supabase/server';
 
 import { getPacklinkClient } from '@/lib/packlink';
 import type {
@@ -46,7 +51,7 @@ interface CreateShipmentRequest {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = await createServerClient();
     const body: CreateShipmentRequest = await request.json();
 
     // Get authenticated user
@@ -291,7 +296,7 @@ export async function POST(request: NextRequest) {
       .insert({
         sales_order_id: body.sales_order_id,
         shipping_method: 'packlink',
-        shipment_type: 'outbound',
+        // shipment_type: DEFAULT 'parcel' en DB, pas besoin de spécifier
         carrier_name: 'Packlink', // TODO: Get from service details
         service_name: `Service ${body.service_id}`, // TODO: Get from service details
         tracking_number: null, // Will be updated via webhook
@@ -299,7 +304,7 @@ export async function POST(request: NextRequest) {
         packlink_shipment_id: packlinkShipment.shipment_reference,
         packlink_order_ref: packlinkResponse.order_reference,
         packlink_label_url: packlinkShipment.receipt_url || null,
-        packlink_service_id: body.service_id.toString(),
+        packlink_service_id: body.service_id, // ✅ INT pas string
         status: 'PROCESSING',
         shipping_address: shippingAddr,
         notes: body.notes || null,
@@ -319,72 +324,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 7. Update sales_order_items.quantity_shipped and product stock
-    for (const reqItem of body.items) {
-      const orderItem = orderItems.find(
-        oi => oi.id === reqItem.sales_order_item_id
-      );
-      if (!orderItem) continue;
+    // 7. Set warehouse_exit_at to trigger automatic stock management
+    // ✅ CORRECT: Trigger handle_sales_order_stock() gère automatiquement :
+    //    - stock_movements (INSERT)
+    //    - products.stock_quantity (UPDATE)
+    //    - products.stock_forecasted_out (UPDATE - libération)
+    //    - sales_order_items.quantity_shipped (UPDATE)
+    //    - sales_orders.status transition (partially_shipped → shipped)
+    await supabase
+      .from('sales_orders')
+      .update({ warehouse_exit_at: new Date().toISOString() })
+      .eq('id', body.sales_order_id);
 
-      // Update quantity_shipped in sales_order_items
-      const { data: currentItem } = await supabase
-        .from('sales_order_items')
-        .select('quantity_shipped')
-        .eq('id', reqItem.sales_order_item_id)
-        .single();
-
-      if (currentItem) {
-        await supabase
-          .from('sales_order_items')
-          .update({
-            quantity_shipped:
-              (currentItem.quantity_shipped || 0) + reqItem.quantity,
-          })
-          .eq('id', reqItem.sales_order_item_id);
-      }
-
-      // Get current stock before movement
-      const { data: productData } = await supabase
-        .from('products')
-        .select('stock_quantity, stock_forecasted_out')
-        .eq('id', orderItem.product_id)
-        .single();
-
-      if (!productData) continue;
-
-      const quantityBefore = productData.stock_quantity || 0;
-      const quantityChange = -reqItem.quantity;
-      const quantityAfter = Math.max(0, quantityBefore + quantityChange);
-
-      // Insert stock movement
-      await supabase.from('stock_movements').insert({
-        product_id: orderItem.product_id,
-        movement_type: 'OUT',
-        quantity_change: quantityChange,
-        quantity_before: quantityBefore,
-        quantity_after: quantityAfter,
-        reason_code: 'sale', // ✅ CORRECT: 'sale' exists in stock_reason_code enum
-        reference_type: 'shipment',
-        reference_id: shipment.id,
-        performed_by: user.id,
-        notes: `Shipment ${shipmentReference}`,
-      } as any); // TypeScript types incomplete, product_id exists in DB
-
-      // Update product stock
-      await supabase
-        .from('products')
-        .update({
-          stock_quantity: Math.max(
-            0,
-            (productData.stock_quantity || 0) - reqItem.quantity
-          ),
-          stock_forecasted_out: Math.max(
-            0,
-            (productData.stock_forecasted_out || 0) - reqItem.quantity
-          ),
-        })
-        .eq('id', orderItem.product_id);
-    }
+    console.log(
+      '[Create Shipment] Trigger handle_sales_order_stock() déclenché via warehouse_exit_at'
+    );
 
     console.log(`[Create Shipment] Shipment created successfully:`, {
       shipment_id: shipment.id,

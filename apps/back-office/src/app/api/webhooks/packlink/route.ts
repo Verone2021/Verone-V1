@@ -1,219 +1,128 @@
 /**
- * Packlink Webhooks Handler
+ * PackLink Webhook Handler
  * POST /api/webhooks/packlink
- * Receives Packlink webhook events and updates shipments
+ *
+ * Receives PackLink webhook events for tracking updates, delivery, etc.
+ * Documentation: https://github.com/wout/packlink.cr
  */
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { createClient } from '@supabase/supabase-js';
-
-import type { PacklinkWebhookEvent } from '@/lib/packlink/types';
-
-// Service role client (bypasses RLS for webhooks)
-const supabaseServiceRole = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  }
-);
+import { createClient } from '@verone/utils/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
-    // Parse webhook payload
-    const payload: PacklinkWebhookEvent = await request.json();
+    const supabase = await createClient();
+    const body = await request.json();
 
-    console.log(`[Packlink Webhook] Received event: ${payload.name}`, {
-      shipment_ref: payload.data.shipment_reference,
-      timestamp: payload.created_at,
+    console.log('[PackLink Webhook] 📥 Event received:', {
+      event: body.event || body.name,
+      shipment_ref: body.shipment_reference || body.data?.shipment_reference,
     });
 
-    // Find shipment by packlink_shipment_id
-    const { data: shipment, error: findError } = await supabaseServiceRole
-      .from('shipments')
-      .select('id, sales_order_id')
-      .eq('packlink_shipment_id', payload.data.shipment_reference)
-      .single();
+    // Extract event name (format peut varier)
+    const eventName = body.event || body.name || '';
+    const eventData = body.data || body;
 
-    if (findError || !shipment) {
-      console.warn(
-        `[Packlink Webhook] Shipment not found: ${payload.data.shipment_reference}`
+    // Extract shipment reference
+    const shipmentRef = eventData.shipment_reference || body.shipment_reference;
+
+    if (!shipmentRef) {
+      console.error('[PackLink Webhook] ⚠️ No shipment_reference in payload');
+      return NextResponse.json(
+        { error: 'Missing shipment_reference' },
+        { status: 400 }
       );
-      // Return 200 to avoid webhook retry
-      return NextResponse.json({
-        received: true,
-        warning: 'Shipment not found',
-      });
     }
 
-    // Insert tracking event
-    await supabaseServiceRole.from('shipment_tracking_events').insert({
-      shipment_id: shipment.id,
-      event_name: payload.name,
-      event_timestamp: new Date(payload.created_at),
-      city: payload.data.city || null,
-      description: payload.data.status || payload.name,
-      raw_payload: payload as unknown as Record<string, unknown>,
-    });
+    // Événement : Tracking disponible ou paiement confirmé
+    if (
+      eventName.includes('tracking') ||
+      eventName.includes('paid') ||
+      eventName.includes('ready')
+    ) {
+      const trackingCode = eventData.tracking_code || eventData.tracking_number;
+      const carrier = eventData.carrier?.name || eventData.carrier;
 
-    // Handle specific events
-    switch (payload.name) {
-      case 'shipment.label.ready':
-        await handleLabelReady(shipment.id, payload);
-        break;
+      if (trackingCode) {
+        await supabase
+          .from('shipments')
+          .update({
+            tracking_number: trackingCode,
+            tracking_url: `https://track.packlink.com/${trackingCode}`,
+            carrier_name: carrier || 'Packlink',
+            status: 'READY',
+          })
+          .eq('packlink_shipment_id', shipmentRef);
 
-      case 'shipment.tracking.update':
-        await handleTrackingUpdate(shipment.id, payload);
-        break;
-
-      case 'shipment.delivered':
-        await handleDelivered(shipment.id, payload);
-        break;
-
-      case 'shipment.carrier.success':
-        await handleCarrierSuccess(shipment.id, payload);
-        break;
-
-      case 'shipment.carrier.fail':
-      case 'shipment.label.fail':
-        await handleFailure(shipment.id, payload);
-        break;
-
-      default:
-        console.log(`[Packlink Webhook] Unhandled event: ${payload.name}`);
+        console.log(
+          `[PackLink Webhook] ✅ Tracking ${trackingCode} mis à jour (${carrier})`
+        );
+      } else {
+        console.warn('[PackLink Webhook] ⚠️ No tracking_code in payload');
+      }
     }
 
-    return NextResponse.json({ received: true });
+    // Événement : En transit
+    if (eventName.includes('transit') || eventName.includes('collected')) {
+      await supabase
+        .from('shipments')
+        .update({ status: 'IN_TRANSIT' } as any)
+        .eq('packlink_shipment_id', shipmentRef);
+
+      console.log('[PackLink Webhook] ✅ Shipment en transit');
+    }
+
+    // Événement : En livraison
+    if (eventName.includes('delivery') && !eventName.includes('delivered')) {
+      await supabase
+        .from('shipments')
+        .update({ status: 'OUT_FOR_DELIVERY' } as any)
+        .eq('packlink_shipment_id', shipmentRef);
+
+      console.log('[PackLink Webhook] ✅ Shipment en livraison');
+    }
+
+    // Événement : Livraison confirmée
+    if (eventName.includes('delivered')) {
+      await supabase
+        .from('shipments')
+        .update({
+          delivered_at: new Date().toISOString(),
+          metadata: {
+            ...eventData,
+            status: 'DELIVERED',
+            webhook_event: eventName,
+          },
+        } as any)
+        .eq('packlink_shipment_id', shipmentRef);
+
+      console.log('[PackLink Webhook] ✅ Shipment livré');
+    }
+
+    // Événement : Incident
+    if (eventName.includes('incident') || eventName.includes('exception')) {
+      await supabase
+        .from('shipments')
+        .update({
+          metadata: {
+            ...eventData,
+            status: 'INCIDENT',
+            webhook_event: eventName,
+          },
+        } as any)
+        .eq('packlink_shipment_id', shipmentRef);
+
+      console.log('[PackLink Webhook] ⚠️ Incident signalé');
+    }
+
+    return NextResponse.json({ success: true, event: eventName });
   } catch (error) {
-    console.error('[Packlink Webhook] Error processing webhook:', error);
-
-    // Always return 200 to prevent Packlink retry loop
+    console.error('[PackLink Webhook] ❌ Error:', error);
     return NextResponse.json(
-      { received: true, error: 'Processing failed' },
-      { status: 200 }
+      { error: 'Webhook processing failed' },
+      { status: 500 }
     );
   }
-}
-
-/**
- * Handler: Label ready
- */
-async function handleLabelReady(
-  shipmentId: string,
-  payload: PacklinkWebhookEvent
-) {
-  const labelUrl = payload.data.label_url || payload.data.packlink_label_url;
-
-  await supabaseServiceRole
-    .from('shipments')
-    .update({
-      status: 'READY_FOR_SHIPPING',
-      packlink_label_url: labelUrl,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', shipmentId);
-
-  console.log(`[Packlink Webhook] Label ready for shipment ${shipmentId}`);
-}
-
-/**
- * Handler: Tracking update
- */
-async function handleTrackingUpdate(
-  shipmentId: string,
-  payload: PacklinkWebhookEvent
-) {
-  const statusMapping: Record<string, string> = {
-    TRACKING: 'TRACKING',
-    IN_TRANSIT: 'IN_TRANSIT',
-    OUT_FOR_DELIVERY: 'OUT_FOR_DELIVERY',
-    DELIVERED: 'DELIVERED',
-    INCIDENT: 'INCIDENT',
-    RETURNED_TO_SENDER: 'RETURNED_TO_SENDER',
-  };
-
-  const newStatus = payload.data.status
-    ? statusMapping[payload.data.status] || 'TRACKING'
-    : 'TRACKING';
-
-  await supabaseServiceRole
-    .from('shipments')
-    .update({
-      status: newStatus,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', shipmentId);
-
-  console.log(
-    `[Packlink Webhook] Tracking update for shipment ${shipmentId}: ${newStatus}`
-  );
-}
-
-/**
- * Handler: Delivered
- */
-async function handleDelivered(
-  shipmentId: string,
-  payload: PacklinkWebhookEvent
-) {
-  await supabaseServiceRole
-    .from('shipments')
-    .update({
-      status: 'DELIVERED',
-      delivered_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', shipmentId);
-
-  console.log(`[Packlink Webhook] Shipment delivered: ${shipmentId}`);
-
-  // TODO: Send email notification to customer
-  // await sendDeliveryNotification(shipmentId);
-}
-
-/**
- * Handler: Carrier success
- */
-async function handleCarrierSuccess(
-  shipmentId: string,
-  payload: PacklinkWebhookEvent
-) {
-  await supabaseServiceRole
-    .from('shipments')
-    .update({
-      status: 'PROCESSING',
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', shipmentId);
-
-  console.log(`[Packlink Webhook] Carrier registered shipment ${shipmentId}`);
-}
-
-/**
- * Handler: Failure events
- */
-async function handleFailure(
-  shipmentId: string,
-  payload: PacklinkWebhookEvent
-) {
-  await supabaseServiceRole
-    .from('shipments')
-    .update({
-      status: 'INCIDENT',
-      updated_at: new Date().toISOString(),
-      notes: `Packlink error: ${payload.data.error_message || 'Unknown error'}`,
-    })
-    .eq('id', shipmentId);
-
-  console.error(
-    `[Packlink Webhook] Failure for shipment ${shipmentId}:`,
-    payload.data
-  );
-
-  // TODO: Send alert notification to admin
 }

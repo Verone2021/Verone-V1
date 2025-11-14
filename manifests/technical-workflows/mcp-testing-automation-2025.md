@@ -199,7 +199,6 @@ claude mcp:status sentry
 - **Performance** : Minimal configuration pour latence optimale
 - **Testing** : Schema validation + regression coverage
 - **Documentation** : Semantic versioning + changelog
-- **Containerization** : Docker isolation dependencies
 
 ---
 

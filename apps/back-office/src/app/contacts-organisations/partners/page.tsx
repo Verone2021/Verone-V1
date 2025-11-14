@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 
 import Link from 'next/link';
 
+import { useLocalStorage } from '@verone/hooks';
 import { OrganisationLogo } from '@verone/organisations';
 import { ConfirmDeleteOrganisationModal } from '@verone/organisations';
 import { PartnerFormModal } from '@verone/organisations';
@@ -82,23 +83,17 @@ export default function PartnersPage() {
     Organisation | null | undefined
   >(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useLocalStorage<'grid' | 'list'>(
+    'partners-view-mode',
+    'grid'
+  );
   const [deleteModalPartner, setDeleteModalPartner] =
     useState<Organisation | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const itemsPerPage = 12; // 3 lignes × 4 colonnes
 
-  // localStorage persistence pour viewMode
-  useEffect(() => {
-    const saved = localStorage.getItem('partners-view-mode');
-    if (saved === 'list' || saved === 'grid') {
-      setViewMode(saved);
-    }
-  }, []);
-
   const handleViewModeChange = (mode: 'grid' | 'list') => {
     setViewMode(mode);
-    localStorage.setItem('partners-view-mode', mode);
   };
 
   // Utiliser useMemo pour stabiliser l'objet filters et éviter la boucle infinie

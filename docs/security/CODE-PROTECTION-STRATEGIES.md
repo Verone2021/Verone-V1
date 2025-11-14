@@ -339,117 +339,7 @@ git branch -D feature/refactor-dangerous
 
 ---
 
-## ⭐⭐⭐⭐⭐ STRATÉGIE #5 : Container Read-Only (Paranoid Mode)
-
-**Niveau Protection** : **ABSOLU** 🔒
-**Fiabilité** : **INVIOLABLE** ✅
-**Effort Setup** : **ÉLEVÉ** (2-4 heures setup initial)
-
-### 🎯 Principe
-
-Exécuter Claude Code dans **Docker container** avec filesystem **read-only** monté pour code production. Agent ne peut physiquement pas modifier fichiers.
-
-### 📋 Configuration
-
-**Fichier** : `docker-compose.claude-readonly.yml`
-
-```yaml
-version: '3.8'
-
-services:
-  claude-code-readonly:
-    image: node:20-alpine
-    container_name: claude-verone-readonly
-
-    # Filesystem read-only pour code production
-    volumes:
-      - ./src:/workspace/src:ro # READ-ONLY
-      - ./manifests:/workspace/manifests:ro # READ-ONLY
-      - ./supabase:/workspace/supabase:ro # READ-ONLY
-
-      # Workspace temporaire pour outputs agent
-      - ./tmp-agent-outputs:/workspace/outputs:rw # READ-WRITE
-
-    # Désactiver réseau (no internet = no data exfiltration)
-    network_mode: none
-
-    # User non-root
-    user: node
-
-    # Commande
-    command: /bin/sh
-
-    # Environnement sécurisé
-    environment:
-      - NODE_ENV=development
-      - READONLY_MODE=true
-
-    # Limitations ressources
-    mem_limit: 2g
-    cpus: 2
-```
-
-### 🚀 Utilisation
-
-```bash
-# 1. Lancer container read-only
-docker-compose -f docker-compose.claude-readonly.yml up -d
-
-# 2. Entrer dans container
-docker exec -it claude-verone-readonly /bin/sh
-
-# 3. Lancer Claude Code dans container
-cd /workspace
-claude-code --dangerously-skip-permissions
-
-# 4. Agent peut lire code (/workspace/src:ro)
-#    Mais IMPOSSIBLE écrire (filesystem read-only)
-
-# 5. Outputs agent vont dans /workspace/outputs (seul dossier writable)
-
-# 6. Review outputs
-exit
-cat ./tmp-agent-outputs/suggestions.md
-
-# 7. Appliquer manuellement si valide
-# (copier-coller depuis outputs vers vrai code)
-```
-
-### ✅ Avantages
-
-- ✅ **Protection absolue** : Impossible modifier code même avec exploits
-- ✅ **Isolation réseau** : No internet = no data exfiltration secrets
-- ✅ **Reproductible** : Container identique partout (local, CI/CD)
-- ✅ **Audit trail** : Tous outputs agent dans `/workspace/outputs` versionnés
-- ✅ **Defense in depth** : Multiple layers (readonly + no network + user limits)
-
-### ⚠️ Limitations
-
-- ⚠️ **Complexité setup** : Docker, volumes, networking, permissions
-- ⚠️ **Developer experience** : Moins fluide que mode normal
-- ⚠️ **Performance** : Overhead container (minimal mais existe)
-- ⚠️ **Workflow manuel** : Outputs agent → review humain → application manuelle
-
-### 🎯 Cas d'Usage Idéal
-
-**Quand utiliser Paranoid Mode :**
-
-- Code production ultra-critique (finance, santé, sécurité)
-- Compliance stricte (RGPD, SOC2, ISO27001)
-- Audit externe (démontrer impossibilité modification)
-- Formation agents IA (environnement sandbox safe)
-
-**Vérone** : Pas nécessaire actuellement (Stratégie #1 suffisante), MAIS prévoir si :
-
-- Passage production client critique
-- Intégration paiements sensibles (Stripe, Qonto)
-- Données personnelles volume élevé (RGPD strict)
-
-**Verdict** : ⭐⭐⭐⭐⭐ **GOLD STANDARD pour production critique**, overkill pour développement normal
-
----
-
-## 📊 TABLEAU COMPARATIF DES 5 STRATÉGIES
+## 📊 TABLEAU COMPARATIF DES 4 STRATÉGIES
 
 | Stratégie             | Protection | Fiabilité  | Effort      | UX Dev    | Recommandation         |
 | --------------------- | ---------- | ---------- | ----------- | --------- | ---------------------- |
@@ -457,7 +347,6 @@ cat ./tmp-agent-outputs/suggestions.md
 | #2 .gitignore         | ⭐⭐⭐☆☆   | Partielle  | Très faible | Excellent | ⚠️ Backup uniquement   |
 | #3 CLAUDE.md          | ⭐⭐⭐☆☆   | Variable   | Très faible | Excellent | ✅ Complément #1       |
 | #4 Git Worktrees      | ⭐⭐⭐⭐☆  | Maximale   | Moyen       | Bon       | ✅ Tests expérimentaux |
-| #5 Container RO       | ⭐⭐⭐⭐⭐ | Absolue    | Élevé       | Moyen     | 🔒 Production critique |
 
 ---
 
@@ -506,13 +395,9 @@ cd ../verone-refactor/
 
 Si Vérone devient critique (client Fortune 500, données santé, finance) :
 
-```bash
-# Production read-only container
-docker-compose -f docker-compose.claude-readonly.yml up
-
-# Agent ne peut QUE lire + suggérer
-# Modifications appliquées manuellement après review
-```
+- Agent ne peut QUE lire + suggérer code
+- Modifications appliquées manuellement après review
+- Environnement isolé avec permissions restrictives
 
 ---
 
@@ -612,7 +497,7 @@ Voir fichier `.claude/settings.example.json` fourni dans ce repository.
 
 ### Niveau 3 : Protection Paranoid (PRODUCTION CRITIQUE)
 
-- [ ] Docker read-only container configuré
+- [ ] Environnement isolé avec permissions restrictives
 - [ ] Network isolation validée (no internet)
 - [ ] User permissions restrictives (non-root)
 - [ ] Audit trail outputs agent versionnés

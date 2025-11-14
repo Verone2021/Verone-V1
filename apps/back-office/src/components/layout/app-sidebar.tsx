@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+import { useLocalStorage } from '@verone/hooks';
 import { Badge } from '@verone/ui';
 import {
   Collapsible,
@@ -18,7 +19,13 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from '@verone/ui';
+import { InactiveModuleWrapper, PhaseIndicator } from '@verone/ui';
 import { cn } from '@verone/utils';
+import {
+  featureFlags,
+  getModuleDeploymentStatus,
+} from '@verone/utils/feature-flags';
+import { createClient } from '@verone/utils/supabase/client';
 import {
   Home,
   Users,
@@ -44,11 +51,6 @@ import {
   Banknote,
   RefreshCw,
 } from 'lucide-react';
-
-import { featureFlags, getModuleDeploymentStatus } from '@verone/utils/feature-flags';
-import { createClient } from '@verone/utils/supabase/client';
-
-import { InactiveModuleWrapper, PhaseIndicator } from '@verone/ui';
 
 // Phase 1: use-stock-alerts-count hook désactivé (Phase 2+)
 // import { useStockAlertsCount } from '@verone/stock'
@@ -222,24 +224,13 @@ function SidebarContent() {
   // Phase 1 : Alertes stock désactivées (Phase 2+)
   const stockAlertsCount = 0; // Anciennement : useStockAlertsCount()
 
-  // State persistence avec localStorage
-  const [expandedItems, setExpandedItems] = useState<string[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('verone-sidebar-expanded');
-      return saved ? JSON.parse(saved) : ['Administration']; // Administration section expanded by default
-    }
-    return ['Administration']; // Administration section expanded by default
-  });
+  // State persistence avec useLocalStorage (cross-tab sync automatique)
+  const [expandedItems, setExpandedItems] = useLocalStorage<string[]>(
+    'verone-sidebar-expanded',
+    ['Administration'] // Administration section expanded by default
+  );
 
   // Theme toggle supprimé (Phase 1 - pas nécessaire)
-
-  // Sauvegarder l'état dans localStorage
-  useEffect(() => {
-    localStorage.setItem(
-      'verone-sidebar-expanded',
-      JSON.stringify(expandedItems)
-    );
-  }, [expandedItems]);
 
   const toggleExpanded = (title: string) => {
     setExpandedItems(prev =>

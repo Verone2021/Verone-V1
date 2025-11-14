@@ -6,11 +6,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
 
-const supabase = createClient();
+import type { Collection } from '../types';
 
-// Note: Using 'any' type because visible_channels was added via migration
-// and TypeScript types may not be fully up-to-date yet
-type Collection = any;
+const supabase = createClient();
 
 /**
  * Fetch toutes collections
@@ -26,8 +24,7 @@ async function fetchCollections() {
     throw error;
   }
 
-  // Cast to Collection type (includes visible_channels which was added via migration)
-  return (data || []) as any[];
+  return (data || []) as Collection[];
 }
 
 /**
@@ -45,12 +42,12 @@ export function useSiteInternetCollections() {
  * Check si collection visible sur canal site internet
  */
 export function isCollectionVisibleOnChannel(
-  collection: Collection,
+  collection: Collection & { visible_channels?: string[] | null },
   channelId: string
 ): boolean {
   // Si visible_channels est NULL → visible partout
   if (!collection.visible_channels) {
-    return collection.is_active;
+    return collection.is_active === true;
   }
 
   // Si array vide → visible nulle part
@@ -60,12 +57,13 @@ export function isCollectionVisibleOnChannel(
 
   // Sinon check si channel_id dans array
   return (
-    collection.is_active && collection.visible_channels.includes(channelId)
+    collection.is_active === true &&
+    collection.visible_channels.includes(channelId)
   );
 }
 
 /**
- * Toggle visibilité collection sur canal site internet
+ * Toggle visibilité collection sur canal site internet (avec optimistic update)
  */
 export function useToggleCollectionVisibility() {
   const queryClient = useQueryClient();
@@ -96,8 +94,9 @@ export function useToggleCollectionVisibility() {
 
       if (!collection) throw new Error('Collection non trouvée');
 
-      // Cast to any to access visible_channels (added via migration)
-      const collectionData = collection as any;
+      const collectionData = collection as unknown as Collection & {
+        visible_channels: string[] | null;
+      };
 
       // 3. Calculer nouveau array visible_channels
       let newVisibleChannels: string[] | null;
@@ -115,7 +114,7 @@ export function useToggleCollectionVisibility() {
       } else {
         // Retirer canal
         newVisibleChannels = collectionData.visible_channels.filter(
-          (id: string) => id !== channel.id
+          id => id !== channel.id
         );
       }
 
@@ -123,14 +122,85 @@ export function useToggleCollectionVisibility() {
       const { error: updateError } = await supabase
         .from('collections')
         .update({
-          visible_channels: newVisibleChannels as any,
+          visible_channels: newVisibleChannels,
           updated_at: new Date().toISOString(),
         })
         .eq('id', collectionId);
 
       if (updateError) throw updateError;
+
+      return { channelId: channel.id };
     },
-    onSuccess: () => {
+    onMutate: async ({ collectionId, isVisible }) => {
+      // 1. Cancel ongoing queries
+      await queryClient.cancelQueries({
+        queryKey: ['site-internet-collections'],
+      });
+
+      // 2. Snapshot previous value
+      const previousData = queryClient.getQueryData<Collection[]>([
+        'site-internet-collections',
+      ]);
+
+      // 3. Get channel id (from cache or fallback)
+      const channelData = await supabase
+        .from('sales_channels')
+        .select('id')
+        .eq('code', 'site_internet')
+        .single();
+      const channelId = channelData.data?.id;
+
+      if (!channelId) return { previousData };
+
+      // 4. Optimistically update cache
+      if (previousData) {
+        queryClient.setQueryData<Collection[]>(
+          ['site-internet-collections'],
+          old =>
+            old?.map(collection => {
+              if (collection.id !== collectionId) return collection;
+
+              const collectionWithChannels = collection as Collection & {
+                visible_channels?: string[] | null;
+              };
+              const currentChannels = collectionWithChannels.visible_channels;
+
+              let newVisibleChannels: string[] | null;
+
+              if (currentChannels === null || currentChannels === undefined) {
+                newVisibleChannels = isVisible ? null : [];
+              } else if (isVisible) {
+                newVisibleChannels = currentChannels.includes(channelId)
+                  ? currentChannels
+                  : [...currentChannels, channelId];
+              } else {
+                newVisibleChannels = currentChannels.filter(
+                  id => id !== channelId
+                );
+              }
+
+              return {
+                ...collection,
+                visible_channels: newVisibleChannels,
+              } as Collection;
+            }) ?? []
+        );
+      }
+
+      // 5. Return context for rollback
+      return { previousData };
+    },
+    onError: (err, variables, context) => {
+      // 6. Rollback on error
+      if (context?.previousData) {
+        queryClient.setQueryData(
+          ['site-internet-collections'],
+          context.previousData
+        );
+      }
+    },
+    onSettled: () => {
+      // 7. Refetch to sync with server
       queryClient.invalidateQueries({
         queryKey: ['site-internet-collections'],
       });
@@ -193,18 +263,19 @@ export function useSiteInternetCollectionsStats() {
 
       if (!collections) return null;
 
-      // Cast to any to access visible_channels
-      const collectionsData = collections as any[];
+      const collectionsData = collections as (Collection & {
+        visible_channels: string[] | null;
+      })[];
 
       const total = collectionsData.length;
-      const active = collectionsData.filter((c: any) => c.is_active).length;
+      const active = collectionsData.filter(c => c.is_active).length;
       const visible = collectionsData.filter(
-        (c: any) =>
+        c =>
           c.is_active &&
           (c.visible_channels === null ||
             c.visible_channels.includes(channel.id))
       ).length;
-      const featured = collectionsData.filter((c: any) => c.is_featured).length;
+      const featured = collectionsData.filter(c => c.is_featured).length;
 
       return {
         total,

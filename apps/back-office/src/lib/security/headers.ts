@@ -17,6 +17,7 @@ const securityHeaders = {
         'https://localhost:*', // Development localhost HTTPS
         'https://aorroydfjsrygmosnzrl.supabase.co',
         'https://va.vercel-scripts.com', // Vercel Analytics
+        'https://maps.googleapis.com', // Google Maps JavaScript API
       ],
       styleSrc: [
         "'self'",
@@ -31,6 +32,8 @@ const securityHeaders = {
         'blob:',
         'https://aorroydfjsrygmosnzrl.supabase.co',
         'https://*.supabase.co',
+        'https://*.googleapis.com', // Google Maps tiles
+        'https://*.gstatic.com', // Google static resources
       ],
       fontSrc: ["'self'", 'https://fonts.gstatic.com'],
       connectSrc: [
@@ -42,6 +45,7 @@ const securityHeaders = {
         'https://aorroydfjsrygmosnzrl.supabase.co',
         'wss://aorroydfjsrygmosnzrl.supabase.co',
         'https://vitals.vercel-insights.com', // Vercel Analytics
+        'https://maps.googleapis.com', // Google Maps API calls
       ],
       mediaSrc: ["'self'", 'https://aorroydfjsrygmosnzrl.supabase.co'],
       objectSrc: ["'none'"],

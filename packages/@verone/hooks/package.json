@@ -1,0 +1,20 @@
+{
+  "name": "@verone/hooks",
+  "version": "1.0.0",
+  "description": "Collection de hooks React réutilisables pour le monorepo Vérone (shadcn/ui compatible)",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.1",
+    "typescript": "^5.6.3"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1"
+  }
+}

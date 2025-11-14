@@ -27,6 +27,8 @@
       "@verone/utils/*": ["./packages/@verone/utils/src/*"],
       "@verone/types": ["./packages/@verone/types/src"],
       "@verone/types/*": ["./packages/@verone/types/src/*"],
+      "@verone/hooks": ["./packages/@verone/hooks/src"],
+      "@verone/hooks/*": ["./packages/@verone/hooks/src/*"],
       "@verone/kpi": ["./packages/@verone/kpi/src"],
       "@verone/config": ["./packages/@verone/config/src"],
       "@verone/integrations": ["./packages/@verone/integrations/src"],
