@@ -7,11 +7,13 @@ import Link from 'next/link';
 
 import { ShoppingCart, Menu, Search, User } from 'lucide-react';
 
+import { useCartStore } from '@/store/cart-store';
+
 import { MobileNav } from './MobileNav';
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const cartItemsCount = 0; // TODO: Connect to cart state
+  const cartItemsCount = useCartStore(state => state.itemsCount);
 
   return (
     <>

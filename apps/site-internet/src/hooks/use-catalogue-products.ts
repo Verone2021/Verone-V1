@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { createClient } from '@/lib/supabase/client';
+import type { SiteInternetProduct } from '@/types/cms';
 
 /**
  * Hook useCatalogueProducts
@@ -14,40 +15,8 @@ import { createClient } from '@/lib/supabase/client';
  * - Catégories/collections
  */
 
-export interface CatalogueProduct {
-  // Identifiant
-  product_id: string;
-  sku: string | null;
-  name: string;
-  slug: string;
-  status: string;
-
-  // SEO
-  seo_title: string | null;
-  seo_meta_description: string | null;
-  metadata: any;
-
-  // Prix
-  price_ht: number | null;
-  price_ttc: number | null;
-  price_source: string | null;
-
-  // Images
-  primary_image_url: string | null;
-  image_urls: string[] | null;
-
-  // Publication
-  is_published: boolean;
-  publication_date: string | null;
-
-  // Variantes
-  has_variants: boolean;
-  variants_count: number;
-
-  // Éligibilité
-  is_eligible: boolean;
-  ineligibility_reasons: string[] | null;
-}
+// Export type alias pour compatibilité
+export type CatalogueProduct = SiteInternetProduct;
 
 interface UseCatalogueProductsOptions {
   categorySlug?: string;

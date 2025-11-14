@@ -58,16 +58,16 @@ export default function CataloguePage() {
 
       {/* Grille produits */}
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}
               className="border border-verone-gray-200 animate-pulse"
             >
-              <div className="bg-verone-gray-200 h-80" />
-              <div className="p-6 space-y-3">
-                <div className="h-6 bg-verone-gray-200 rounded" />
-                <div className="h-4 bg-verone-gray-100 rounded w-2/3" />
+              <div className="bg-verone-gray-200 aspect-[3/4]" />
+              <div className="p-3 space-y-2">
+                <div className="h-4 bg-verone-gray-200 rounded" />
+                <div className="h-4 bg-verone-gray-100 rounded w-1/2" />
               </div>
             </div>
           ))}
@@ -78,13 +78,12 @@ export default function CataloguePage() {
             {products.length} produit{products.length > 1 ? 's' : ''} trouvé
             {products.length > 1 ? 's' : ''}
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {products.map((product, index) => (
               <CardProductLuxury
                 key={product.product_id}
                 id={product.product_id}
                 name={product.name}
-                description={product.seo_meta_description ?? undefined}
                 price={product.price_ttc}
                 imageUrl={product.primary_image_url}
                 href={`/produit/${product.slug}`}
