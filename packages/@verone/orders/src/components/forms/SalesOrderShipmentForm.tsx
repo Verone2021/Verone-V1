@@ -352,7 +352,7 @@ export function SalesOrderShipmentForm({
         const error = await response.json();
 
         // ✅ FIX #1: Détecter erreur validation ville/code postal
-        const errorMsg = error.error || '';
+        const errorMsg = error.message || '';
         const isAddressError =
           errorMsg.toLowerCase().includes('zip') ||
           errorMsg.toLowerCase().includes('postal') ||

@@ -31,13 +31,15 @@ const socialLinks = [
 
 export function Footer() {
   return (
-    <footer className="bg-gray-900 text-gray-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+    <footer className="bg-verone-black text-verone-white">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-20">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 lg:gap-16">
           {/* Brand */}
           <div>
-            <h3 className="text-white text-lg font-bold mb-4">Vérone</h3>
-            <p className="text-sm text-gray-400">
+            <h3 className="font-playfair text-2xl font-bold text-verone-white mb-4 tracking-tight">
+              Vérone
+            </h3>
+            <p className="text-sm text-verone-gray-400 leading-relaxed">
               Mobilier et décoration d&apos;intérieur haut de gamme pour
               sublimer votre espace de vie.
             </p>
@@ -45,15 +47,15 @@ export function Footer() {
 
           {/* Navigation */}
           <div>
-            <h4 className="text-white text-sm font-semibold mb-4 uppercase tracking-wider">
+            <h4 className="text-verone-white text-xs font-semibold mb-6 uppercase tracking-widest">
               Navigation
             </h4>
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {footerLinks.navigation.map(link => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-gray-400 hover:text-white transition-colors"
+                    className="text-sm text-verone-gray-400 hover:text-verone-white transition-colors duration-300"
                   >
                     {link.label}
                   </Link>
@@ -64,15 +66,15 @@ export function Footer() {
 
           {/* Help */}
           <div>
-            <h4 className="text-white text-sm font-semibold mb-4 uppercase tracking-wider">
+            <h4 className="text-verone-white text-xs font-semibold mb-6 uppercase tracking-widest">
               Aide
             </h4>
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {footerLinks.help.map(link => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-gray-400 hover:text-white transition-colors"
+                    className="text-sm text-verone-gray-400 hover:text-verone-white transition-colors duration-300"
                   >
                     {link.label}
                   </Link>
@@ -83,15 +85,15 @@ export function Footer() {
 
           {/* Legal */}
           <div>
-            <h4 className="text-white text-sm font-semibold mb-4 uppercase tracking-wider">
+            <h4 className="text-verone-white text-xs font-semibold mb-6 uppercase tracking-widest">
               Légal
             </h4>
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {footerLinks.legal.map(link => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-gray-400 hover:text-white transition-colors"
+                    className="text-sm text-verone-gray-400 hover:text-verone-white transition-colors duration-300"
                   >
                     {link.label}
                   </Link>
@@ -102,15 +104,15 @@ export function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-12 pt-8 border-t border-gray-800">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="mt-16 pt-8 border-t border-verone-gray-800">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             {/* Copyright */}
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-verone-gray-500">
               &copy; {new Date().getFullYear()} Vérone. Tous droits réservés.
             </p>
 
             {/* Social Links */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-6">
               {socialLinks.map(social => {
                 const Icon = social.icon;
                 return (
@@ -119,7 +121,7 @@ export function Footer() {
                     href={social.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-gray-400 hover:text-white transition-colors"
+                    className="text-verone-gray-500 hover:text-verone-white transition-colors duration-300"
                     aria-label={social.label}
                   >
                     <Icon className="h-5 w-5" />
