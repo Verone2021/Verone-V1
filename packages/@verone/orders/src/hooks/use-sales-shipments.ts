@@ -445,17 +445,27 @@ export function useSalesShipments() {
             quantity_shipped
           )
         `
-          )
-          .in('status', ['confirmed', 'partially_shipped'])
-          .order('expected_delivery_date', {
-            ascending: true,
-            nullsFirst: false,
-          });
+          );
 
-        // Filtres
+        // Filtres status
         if (filters?.status) {
-          query = query.eq('status', filters.status as any);
+          // Si status contient une virgule, c'est une liste de statuts (ex: "shipped,delivered")
+          if (filters.status.includes(',')) {
+            const statuses = filters.status.split(',').map((s: string) => s.trim()) as Array<'draft' | 'confirmed' | 'partially_shipped' | 'shipped' | 'delivered' | 'cancelled'>;
+            query = query.in('status', statuses);
+          } else {
+            query = query.eq('status', filters.status as any);
+          }
+        } else {
+          // Si pas de filtre spécifique, on filtre les statuts prêts à expédition
+          query = query.in('status', ['confirmed', 'partially_shipped']);
         }
+
+        // Ordre
+        query = query.order('expected_delivery_date', {
+          ascending: true,
+          nullsFirst: false,
+        });
 
         if (filters?.search) {
           // TODO: Recherche client après implémentation RPC get_customer_name()
