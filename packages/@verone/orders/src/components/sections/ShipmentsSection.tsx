@@ -13,7 +13,7 @@ import { ButtonV2, Badge } from '@verone/ui';
 import { Package, Truck, Plus, XCircle, TrendingUp } from 'lucide-react';
 
 import { CloseOrderModal } from '@verone/orders/components/modals/CloseOrderModal';
-import { CreateShipmentModal } from '@verone/orders/components/modals/CreateShipmentModal';
+import { CreateManualShipmentModal } from '@verone/orders/components/modals/CreateManualShipmentModal';
 import { useShipments } from '@verone/orders/hooks';
 
 import { ShipmentCardOld } from './ShipmentCardOld';
@@ -212,9 +212,9 @@ export function ShipmentsSection({
       </Card>
 
       {/* Modals */}
-      <CreateShipmentModal
+      <CreateManualShipmentModal
         open={createModalOpen}
-        onClose={() => setCreateModalOpen(false)}
+        onOpenChange={setCreateModalOpen}
         salesOrderId={orderId}
         onSuccess={handleSuccess}
       />

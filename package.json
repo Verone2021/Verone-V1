@@ -45,9 +45,6 @@
     "validate:all": "npm run type-check && npm run validate:types && npm run validate:hooks && npm run validate:naming",
     "check:console": "tsx scripts/monitoring/check-console-errors.ts",
     "check:console:ci": "tsx scripts/monitoring/check-console-errors.ts --ci",
-    "webhook:register": "tsx scripts/setup-packlink-webhook.ts",
-    "webhook:register:sandbox": "tsx scripts/setup-packlink-webhook.ts sandbox",
-    "webhook:register:prod": "tsx scripts/setup-packlink-webhook.ts production",
     "prepare": "husky"
   },
   "dependencies": {

@@ -18,7 +18,7 @@ import { ButtonV2 } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
 import { Package, Truck, Plus } from 'lucide-react';
 
-import { CreateShipmentModal } from '../modals/CreateShipmentModal';
+import { CreateManualShipmentModal } from '../modals/CreateManualShipmentModal';
 
 interface ShipmentsSectionSimpleProps {
   salesOrderId: string;
@@ -244,9 +244,9 @@ export function ShipmentsSectionSimple({
 
       {/* Modal création expédition */}
       {orderData && (
-        <CreateShipmentModal
+        <CreateManualShipmentModal
           open={createModalOpen}
-          onClose={() => setCreateModalOpen(false)}
+          onOpenChange={setCreateModalOpen}
           salesOrderId={salesOrderId}
           onSuccess={handleSuccess}
         />

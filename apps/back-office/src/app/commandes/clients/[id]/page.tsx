@@ -312,7 +312,7 @@ export default async function OrderDetailPage({
         </div>
 
         {/* Section Expéditions */}
-        <div className="mt-6">
+        <div className="mt-6 space-y-6">
           <ShipmentsSection
             orderId={id}
             orderNumber={order.order_number}
