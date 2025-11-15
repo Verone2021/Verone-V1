@@ -30,7 +30,17 @@ import {
   startOfWeek,
 } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Bell, Search, CheckCheck, Trash2, Filter, X } from 'lucide-react';
+import {
+  Bell,
+  Search,
+  CheckCheck,
+  Trash2,
+  Filter,
+  X,
+  Link as LinkIcon,
+} from 'lucide-react';
+
+import { affiliateCustomerAccount } from '../actions/affiliate-customer';
 
 // Types pour les filtres
 type FilterTab = 'all' | 'unread' | 'urgent' | 'by-type';
@@ -137,6 +147,8 @@ const NotificationCard = ({
   onMarkAsRead,
   onDelete,
 }: NotificationCardProps) => {
+  const [affiliating, setAffiliating] = useState(false);
+
   const timeAgo = formatDistanceToNow(
     new Date(notification.created_at || new Date()),
     {
@@ -144,6 +156,11 @@ const NotificationCard = ({
       locale: fr,
     }
   );
+
+  // Détecter si c'est une notification d'affiliation
+  const isAffiliationNotification =
+    (notification as any).source_table === 'auth.users' &&
+    notification.title.includes('Affiliation requise');
 
   // Badge de sévérité
   const severityConfig = {
@@ -159,10 +176,43 @@ const NotificationCard = ({
       className: 'bg-blue-500/10 text-blue-700 border border-blue-200',
       label: 'Info',
     },
+    warning: {
+      className: 'bg-yellow-500/10 text-yellow-700 border border-yellow-200',
+      label: 'Attention',
+    },
   }[notification.severity] || {
     className: 'bg-blue-500/10 text-blue-700 border border-blue-200',
     label: 'Info',
   }; // Fallback vers 'info' si severity inconnue
+
+  // Handler affiliation
+  const handleAffiliate = async () => {
+    if (!(notification as any).source_id || !notification.action_url) return;
+
+    // Extraire partner_id depuis action_url: /contacts-organisations/customers/{partner_id}
+    const partnerIdMatch = notification.action_url.match(
+      /\/customers\/([a-f0-9-]+)/
+    );
+    if (!partnerIdMatch) {
+      alert('URL invalide pour affiliation');
+      return;
+    }
+
+    const partnerId = partnerIdMatch[1];
+    const userId = (notification as any).source_id;
+
+    setAffiliating(true);
+    const result = await affiliateCustomerAccount({ userId, partnerId });
+    setAffiliating(false);
+
+    if (result.success) {
+      alert('Compte affilié avec succès !');
+      // La notification sera automatiquement marquée comme lue
+      window.location.reload(); // Recharger pour voir changements
+    } else {
+      alert(`Erreur: ${result.error}`);
+    }
+  };
 
   return (
     <div
@@ -221,18 +271,44 @@ const NotificationCard = ({
 
           {/* Actions */}
           <div className="flex items-center gap-2">
-            {/* Action principale */}
-            {notification.action_url && notification.action_label && (
-              <ButtonUnified
-                variant="default"
-                size="sm"
-                onClick={() => {
-                  window.location.href = notification.action_url!;
-                }}
-              >
-                {notification.action_label}
-              </ButtonUnified>
+            {/* Action affiliation spéciale */}
+            {isAffiliationNotification && (
+              <>
+                <ButtonUnified
+                  variant="default"
+                  size="sm"
+                  onClick={handleAffiliate}
+                  disabled={affiliating}
+                >
+                  <LinkIcon className="h-4 w-4 mr-1" />
+                  {affiliating ? 'Affiliation...' : 'Affilier ce compte'}
+                </ButtonUnified>
+                <ButtonUnified
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    window.location.href = notification.action_url!;
+                  }}
+                >
+                  Voir la fiche
+                </ButtonUnified>
+              </>
             )}
+
+            {/* Action principale standard */}
+            {!isAffiliationNotification &&
+              notification.action_url &&
+              notification.action_label && (
+                <ButtonUnified
+                  variant="default"
+                  size="sm"
+                  onClick={() => {
+                    window.location.href = notification.action_url!;
+                  }}
+                >
+                  {notification.action_label}
+                </ButtonUnified>
+              )}
 
             {/* Actions secondaires */}
             <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

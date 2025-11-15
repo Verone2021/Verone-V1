@@ -137,6 +137,7 @@ export function ProductImageGallery({
             alt={productName}
             fill
             className="object-contain transition-all duration-300 hover:scale-105"
+            style={{ objectPosition: 'center' }}
             sizes="400px"
             priority
             onError={() => {

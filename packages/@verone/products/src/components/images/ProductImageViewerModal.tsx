@@ -15,16 +15,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
-import {
-  ChevronLeft,
-  ChevronRight,
-  Download,
-  X,
-  Star,
-  ZoomIn,
-  ZoomOut,
-} from 'lucide-react';
-
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -34,6 +24,15 @@ import {
   DialogDescription,
 } from '@verone/ui';
 import { cn } from '@verone/utils';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  X,
+  Star,
+  ZoomIn,
+  ZoomOut,
+} from 'lucide-react';
 
 interface ProductImage {
   id: string;
@@ -225,8 +224,8 @@ export function ProductImageViewerModal({
               <div
                 className="relative w-full rounded-lg overflow-hidden"
                 style={{
-                  height: 'calc(90vh - 200px)',
-                  maxHeight: 'calc(90vh - 200px)',
+                  height: 'calc(90vh - 300px)',
+                  maxHeight: '600px',
                   maxWidth: '100%',
                 }}
               >
