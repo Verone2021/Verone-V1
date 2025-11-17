@@ -1,0 +1,167 @@
+{
+  "$schema": "https://docs.claude.com/schemas/settings.json",
+  "version": "1.0",
+  "description": "Configuration Claude Code pour Vérone Back Office - Protection fichiers critiques production",
+
+  "permissions": {
+    "deny": [
+      // ═══════════════════════════════════════════════════════════════
+      // 🔴 PRIORITÉ CRITIQUE - Secrets & Configuration Supabase
+      // ═══════════════════════════════════════════════════════════════
+
+      "Read(./.env)",
+      "Read(./.env.local)",
+      "Read(./.env.production)",
+      "Edit(./.env*)",
+
+      // Configuration Supabase SSR (CRITIQUE - commit 005b68b validé)
+      "Read(./src/lib/supabase/server.ts)",
+      "Edit(./src/lib/supabase/server.ts)",
+      "Read(./src/lib/supabase/client.ts)",
+      "Edit(./src/lib/supabase/client.ts)",
+
+      // Credentials & Secrets
+      "Read(./config/credentials.json)",
+      "Edit(./config/credentials.json)",
+      "Read(./secrets/**)",
+      "Edit(./secrets/**)",
+
+      // ═══════════════════════════════════════════════════════════════
+      // 🟠 PRIORITÉ HAUTE - Base de Données & Migrations
+      // ═══════════════════════════════════════════════════════════════
+
+      // Migrations Supabase (irréversibles en production)
+      "Read(./supabase/migrations/**)",
+      "Edit(./supabase/migrations/**)",
+
+      // Seed data production
+      "Edit(./supabase/seed.sql)",
+
+      // ═══════════════════════════════════════════════════════════════
+      // 🟡 PRIORITÉ MOYENNE - Documentation Validée & Scripts Production
+      // ═══════════════════════════════════════════════════════════════
+
+      // Règles métier validées (reference documentation)
+      "Edit(./manifests/business-rules/**)",
+
+      // Rapports sessions validés (append-only, pas de modification)
+      "Edit(./MEMORY-BANK/sessions/**)",
+
+      // Architecture validée
+      "Edit(./docs/architecture/**)",
+
+      // Scripts de déploiement production
+      "Edit(./scripts/deploy-*.ts)",
+      "Edit(./scripts/production-*.ts)",
+
+      // CI/CD workflows
+      "Edit(./.github/workflows/**)",
+
+      // ═══════════════════════════════════════════════════════════════
+      // 🟢 PRIORITÉ FAIBLE - Build Artifacts & Cache
+      // ═══════════════════════════════════════════════════════════════
+
+      // Next.js build (pas utile de lire/modifier)
+      "Read(./.next/**)",
+      "Edit(./.next/**)",
+
+      // Node modules (performance + sécurité)
+      "Read(./node_modules/**)",
+      "Edit(./node_modules/**)",
+
+      // Vercel deployment
+      "Read(./.vercel/**)",
+      "Edit(./.vercel/**)",
+
+      // Turbo cache
+      "Read(./.turbo/**)",
+      "Edit(./.turbo/**)"
+    ],
+
+    "allow": [
+      // ═══════════════════════════════════════════════════════════════
+      // ✅ AUTORISÉ - Development & Components UI
+      // ═══════════════════════════════════════════════════════════════
+
+      // Components React/Next.js (sauf critiques)
+      "Read(./src/components/**/*.tsx)",
+      "Edit(./src/components/**/*.tsx)",
+      "Read(./src/app/**/*.tsx)",
+      "Edit(./src/app/**/*.tsx)",
+
+      // Hooks Supabase non-critiques
+      "Read(./src/hooks/use-*.tsx)",
+      "Edit(./src/hooks/use-*.tsx)",
+
+      // Utilities
+      "Read(./src/lib/utils.ts)",
+      "Edit(./src/lib/utils.ts)",
+
+      // Documentation guides & templates
+      "Read(./docs/guides/**)",
+      "Edit(./docs/guides/**)",
+
+      // Task management
+      "Read(./TASKS/**)",
+      "Edit(./TASKS/**)",
+
+      // Scripts de développement (non-production)
+      "Read(./scripts/*.ts)",
+      "Edit(./scripts/setup-*.ts)",
+      "Edit(./scripts/test-*.ts)"
+    ],
+
+    "ask": [
+      // ═══════════════════════════════════════════════════════════════
+      // ⚠️ DEMANDER CONFIRMATION - Modifications Sensibles
+      // ═══════════════════════════════════════════════════════════════
+
+      // Hooks Supabase critiques (demander avant modifier)
+      "Edit(./src/hooks/use-supabase-*.tsx)",
+
+      // Configuration TypeScript/ESLint (impacte tout projet)
+      "Edit(./tsconfig.json)",
+      "Edit(./.eslintrc.json)",
+      "Edit(./next.config.js)",
+
+      // Package dependencies (risque breaking changes)
+      "Edit(./package.json)",
+      "Edit(./package-lock.json)",
+
+      // Git configuration
+      "Edit(./.gitignore)",
+      "Edit(./.gitattributes)",
+
+      // Claude Code configuration (meta!)
+      "Edit(./.claude/settings.json)",
+      "Edit(./CLAUDE.md)"
+    ]
+  },
+
+  "comments": {
+    "usage": [
+      "Copier ce fichier vers .claude/settings.json pour activer la protection",
+      "Commande: cp .claude/settings.example.json .claude/settings.json",
+      "Vérifier activation: Claude affichera 'Permission denied' si tente modifier fichier deny"
+    ],
+
+    "customization": [
+      "Adapter selon vos besoins spécifiques",
+      "Ajouter fichiers critiques dans 'deny' si nécessaire",
+      "Déplacer fichiers de 'ask' vers 'allow' si confiance élevée",
+      "Tester protection: essayer modifier fichier deny volontairement"
+    ],
+
+    "maintenance": [
+      "Réviser configuration tous les 3 mois",
+      "Après chaque ajout fonctionnalité critique: vérifier si nouveaux fichiers à protéger",
+      "Documenter raisons protection dans CLAUDE.md (section CODE PROTECTION RULES)"
+    ],
+
+    "references": [
+      "Guide complet: docs/security/CODE-PROTECTION-STRATEGIES.md",
+      "Documentation Claude Code: https://docs.claude.com/en/docs/claude-code/settings",
+      "Best Practices Anthropic: https://www.anthropic.com/engineering/claude-code-best-practices"
+    ]
+  }
+}

@@ -203,7 +203,7 @@ export default function SourcingProduitsPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
-        <div className="w-full px-4 py-6">
+        <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-black">
@@ -245,7 +245,7 @@ export default function SourcingProduitsPage() {
         </div>
       </div>
 
-      <div className="w-full px-4 py-8">
+      <div className="container mx-auto px-4 py-8">
         {/* Filtres et recherche */}
         <Card className="border-black mb-6">
           <CardHeader>

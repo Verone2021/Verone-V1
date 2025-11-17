@@ -50,6 +50,7 @@ import {
   FileText,
   Banknote,
   RefreshCw,
+  Globe,
 } from 'lucide-react';
 
 // Phase 1: use-stock-alerts-count hook désactivé (Phase 2+)
@@ -184,6 +185,11 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
         title: 'Google Merchant',
         href: '/canaux-vente/google-merchant',
         icon: ShoppingBag,
+      },
+      {
+        title: 'Site Internet',
+        href: '/canaux-vente/site-internet',
+        icon: Globe,
       },
     ],
   },

@@ -3,6 +3,12 @@
 import { useState } from 'react';
 
 import {
+  useInlineEdit,
+  type EditableSection,
+} from '@verone/common/hooks/use-inline-edit';
+import { Button } from '@verone/ui';
+import { cn, formatPrice } from '@verone/utils';
+import {
   CreditCard,
   Save,
   X,
@@ -11,13 +17,6 @@ import {
   DollarSign,
   Package,
 } from 'lucide-react';
-
-import { Button } from '@verone/ui';
-import { cn, formatPrice } from '@verone/utils';
-import {
-  useInlineEdit,
-  type EditableSection,
-} from '@verone/common/hooks/use-inline-edit';
 
 interface Organisation {
   id: string;
@@ -32,12 +31,14 @@ interface CommercialEditSectionProps {
   organisation: Organisation;
   onUpdate: (updatedOrganisation: Partial<Organisation>) => void;
   className?: string;
+  organisationType: 'supplier' | 'service_provider' | 'customer';
 }
 
 export function CommercialEditSection({
   organisation,
   onUpdate,
   className,
+  organisationType,
 }: CommercialEditSectionProps) {
   const {
     isEditing,
@@ -255,7 +256,9 @@ export function CommercialEditSection({
           {/* Montant minimum de commande */}
           <div>
             <label className="block text-sm font-medium text-black mb-1">
-              Montant minimum de commande
+              {organisationType === 'customer'
+                ? 'Montant minimum pour expédition offerte'
+                : 'Montant minimum de commande'}
             </label>
             <div className="relative">
               <input
@@ -280,7 +283,11 @@ export function CommercialEditSection({
               </div>
             </div>
             <div className="text-xs text-gray-500 mt-1">
-              Montant minimum requis pour passer commande chez ce fournisseur
+              {organisationType === 'customer'
+                ? 'Montant minimum requis pour bénéficier de la livraison gratuite'
+                : organisationType === 'service_provider'
+                  ? 'Montant minimum requis pour passer commande chez ce prestataire'
+                  : 'Montant minimum requis pour passer commande chez ce fournisseur'}
             </div>
           </div>
 
@@ -400,7 +407,9 @@ export function CommercialEditSection({
                 <div className="bg-gray-50 p-3 rounded-lg">
                   <div className="text-xs text-black font-medium mb-1 flex items-center">
                     <DollarSign className="h-3 w-3 mr-1" />
-                    COMMANDE MINIMUM
+                    {organisationType === 'customer'
+                      ? 'LIVRAISON OFFERTE DÈS'
+                      : 'COMMANDE MINIMUM'}
                   </div>
                   <div className="text-sm font-semibold text-gray-900">
                     {organisation.minimum_order_amount.toFixed(2)}{' '}

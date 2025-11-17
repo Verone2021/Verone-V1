@@ -50,6 +50,8 @@ import {
   Loader2,
 } from 'lucide-react';
 
+import { EditSiteInternetProductModal } from './EditSiteInternetProductModal';
+
 // Hooks
 import {
   useSiteInternetProducts,
@@ -69,6 +71,8 @@ export function ProductsSection() {
   >('all');
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [productToRemove, setProductToRemove] = useState<string | null>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
   // Hooks
   const {
@@ -351,10 +355,8 @@ export function ProductsSection() {
                           variant="ghost"
                           size="sm"
                           onClick={() => {
-                            toast({
-                              title: 'Fonctionnalité à venir',
-                              description: 'Édition produit (à implémenter)',
-                            });
+                            setSelectedProduct(product);
+                            setEditModalOpen(true);
                           }}
                         >
                           <Edit className="h-4 w-4" />
@@ -403,6 +405,25 @@ export function ProductsSection() {
         cancelText="Annuler"
         onConfirm={confirmRemove}
       />
+
+      {/* Modal édition produit */}
+      {selectedProduct && (
+        <EditSiteInternetProductModal
+          isOpen={editModalOpen}
+          onClose={() => {
+            setEditModalOpen(false);
+            setSelectedProduct(null);
+          }}
+          product={selectedProduct}
+          onSuccess={() => {
+            refetch();
+            toast({
+              title: 'Produit mis à jour',
+              description: 'Les modifications ont été enregistrées avec succès',
+            });
+          }}
+        />
+      )}
     </div>
   );
 }

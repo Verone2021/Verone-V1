@@ -82,7 +82,7 @@ export default function StockAnalyticsPage() {
 
   if (error) {
     return (
-      <div className="w-full p-6">
+      <div className="container mx-auto p-6">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-800 font-medium">
             Erreur lors du chargement des analytics
@@ -103,7 +103,7 @@ export default function StockAnalyticsPage() {
 
   if (loading || !report) {
     return (
-      <div className="w-full p-6">
+      <div className="container mx-auto p-6">
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <RefreshCw className="w-8 h-8 animate-spin text-gray-400 mx-auto mb-2" />
@@ -124,7 +124,7 @@ export default function StockAnalyticsPage() {
   } = report;
 
   return (
-    <div className="w-full p-6 space-y-6">
+    <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

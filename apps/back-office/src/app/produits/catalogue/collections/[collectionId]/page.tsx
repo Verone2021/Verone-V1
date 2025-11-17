@@ -456,7 +456,7 @@ export default function CollectionDetailPage({
 
   if (loading) {
     return (
-      <div className="w-full px-4 py-6">
+      <div className="container mx-auto px-4 py-6">
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-1/4 mb-6" />
           <div className="space-y-4">
@@ -474,7 +474,7 @@ export default function CollectionDetailPage({
 
   if (error || !collection) {
     return (
-      <div className="w-full px-4 py-6">
+      <div className="container mx-auto px-4 py-6">
         <ButtonV2
           variant="ghost"
           onClick={() => router.back()}
@@ -497,7 +497,7 @@ export default function CollectionDetailPage({
   }
 
   return (
-    <div className="w-full px-4 py-6">
+    <div className="container mx-auto px-4 py-6">
       {/* Header avec navigation */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">
