@@ -5,6 +5,10 @@ import { use, useState, useCallback } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
+import { useCollection, useCollections } from '@verone/collections';
+import { useToast } from '@verone/common';
+import type { SelectedProduct } from '@verone/products';
+import { UniversalProductSelectorV2 } from '@verone/products';
 import { COLLECTION_STYLE_OPTIONS, type CollectionStyle } from '@verone/types';
 import type { RoomType } from '@verone/types';
 import { Badge } from '@verone/ui';
@@ -30,11 +34,6 @@ import {
   Edit3,
   Tag,
 } from 'lucide-react';
-
-import { useCollection, useCollections } from '@verone/collections';
-import { useToast } from '@verone/common';
-import type { SelectedProduct } from '@verone/products';
-import { UniversalProductSelectorV2 } from '@verone/products';
 
 interface CollectionDetailPageProps {
   params: Promise<{
@@ -457,7 +456,7 @@ export default function CollectionDetailPage({
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-6">
+      <div className="w-full px-4 py-6">
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-1/4 mb-6" />
           <div className="space-y-4">
@@ -475,7 +474,7 @@ export default function CollectionDetailPage({
 
   if (error || !collection) {
     return (
-      <div className="container mx-auto px-4 py-6">
+      <div className="w-full px-4 py-6">
         <ButtonV2
           variant="ghost"
           onClick={() => router.back()}
@@ -498,7 +497,7 @@ export default function CollectionDetailPage({
   }
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="w-full px-4 py-6">
       {/* Header avec navigation */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">

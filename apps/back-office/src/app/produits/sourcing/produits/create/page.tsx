@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { SourcingQuickForm } from '@verone/products';
 import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
 import {
@@ -14,8 +15,6 @@ import {
   CardTitle,
 } from '@verone/ui';
 import { ArrowLeft, Zap, CheckCircle, Circle, ArrowRight } from 'lucide-react';
-
-import { SourcingQuickForm } from '@verone/products';
 
 export default function NewSourcingPage() {
   const router = useRouter();
@@ -38,7 +37,7 @@ export default function NewSourcingPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header avec navigation */}
       <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4">
+        <div className="w-full px-4 py-4">
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
@@ -75,7 +74,7 @@ export default function NewSourcingPage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="w-full px-4 py-8 max-w-6xl">
         {!showForm ? (
           // ÉTAPE 1 - Présentation du Sourcing Rapide
           <div className="space-y-8">

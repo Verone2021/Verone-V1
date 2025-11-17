@@ -105,7 +105,7 @@ export default function InventairePage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header - Compact */}
       <div className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 py-4">
+        <div className="w-full px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <ButtonV2
@@ -164,7 +164,7 @@ export default function InventairePage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-4 space-y-4">
+      <div className="w-full px-4 py-4 space-y-4">
         {/* Statistiques KPIs - Design System V2 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StockKPICard

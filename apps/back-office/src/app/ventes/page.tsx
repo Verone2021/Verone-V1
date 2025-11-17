@@ -45,7 +45,7 @@ export default function VentesDashboardPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 py-6">
+        <div className="w-full px-4 py-6">
           <div>
             <h1 className="text-3xl font-bold text-black flex items-center gap-3">
               <ShoppingBag className="h-8 w-8" />
@@ -58,7 +58,7 @@ export default function VentesDashboardPage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8 space-y-8">
+      <div className="w-full px-4 py-8 space-y-8">
         {/* Loading State */}
         {loading && (
           <div className="flex items-center justify-center py-12">

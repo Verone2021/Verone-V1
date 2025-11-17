@@ -26,6 +26,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@verone/ui';
+import { featureFlags } from '@verone/utils/feature-flags';
 import { AlertCircle, Lock } from 'lucide-react';
 import {
   Banknote,
@@ -37,8 +38,6 @@ import {
   Calendar,
   ArrowRight,
 } from 'lucide-react';
-
-import { featureFlags } from '@verone/utils/feature-flags';
 
 // =====================================================================
 // TYPES
@@ -199,7 +198,7 @@ export default function TresoreriePage() {
   // FEATURE FLAG: Finance module disabled for Phase 1
   if (!featureFlags.financeEnabled) {
     return (
-      <div className="container mx-auto py-8">
+      <div className="w-full py-8">
         <Card className="border-orange-200 bg-orange-50">
           <CardHeader>
             <div className="flex items-center gap-3">

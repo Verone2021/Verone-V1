@@ -355,7 +355,7 @@ export default function ProductDetailPage() {
   // État de chargement
   if (loading) {
     return (
-      <div className="container mx-auto py-6">
+      <div className="w-full py-6">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto mb-4" />
@@ -369,7 +369,7 @@ export default function ProductDetailPage() {
   // État d'erreur
   if (error || !product) {
     return (
-      <div className="container mx-auto py-6">
+      <div className="w-full py-6">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
           <p className="text-red-700 font-medium">
             {error || 'Produit non trouvé'}

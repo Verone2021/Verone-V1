@@ -4,6 +4,15 @@ import { useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { GoogleMerchantConfigModal } from '@verone/channels';
+import { GoogleMerchantProductCard } from '@verone/channels';
+import { GoogleMerchantProductManager } from '@verone/channels';
+import { useGoogleMerchantSync } from '@verone/channels';
+import {
+  useGoogleMerchantProducts,
+  useGoogleMerchantStats,
+} from '@verone/channels';
+import { useProducts } from '@verone/products';
 import { Alert, AlertDescription, AlertTitle } from '@verone/ui';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
@@ -32,6 +41,7 @@ import {
   TableRow,
 } from '@verone/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
+import { logger } from '@verone/utils/logger';
 import {
   Globe,
   ArrowLeft,
@@ -46,17 +56,6 @@ import {
   Search,
   Info,
 } from 'lucide-react';
-
-import { GoogleMerchantConfigModal } from '@verone/channels';
-import { GoogleMerchantProductCard } from '@verone/channels';
-import { GoogleMerchantProductManager } from '@verone/channels';
-import { useGoogleMerchantSync } from '@verone/channels';
-import {
-  useGoogleMerchantProducts,
-  useGoogleMerchantStats,
-} from '@verone/channels';
-import { useProducts } from '@verone/products';
-import { logger } from '@verone/utils/logger';
 
 export default function GoogleMerchantPage() {
   const router = useRouter();
@@ -290,7 +289,7 @@ export default function GoogleMerchantPage() {
 
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 py-6">
+        <div className="w-full px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <ButtonV2
@@ -337,7 +336,7 @@ export default function GoogleMerchantPage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full px-4 py-8">
         {/* 🚀 NOUVEAU: Feedback de synchronisation enrichi */}
 
         {/* Synchronisation en cours */}

@@ -6,16 +6,26 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { COLLECTION_STYLE_OPTIONS } from '@verone/types';
+import { useToast } from '@verone/common';
+import type { SelectedProduct } from '@verone/products';
+import { CreateProductInGroupModal } from '@verone/products';
+import { EditProductVariantModal } from '@verone/products';
+import { VariantCreationModal } from '@verone/products';
+import { VariantGroupEditModal } from '@verone/products';
+import { UniversalProductSelectorV2 } from '@verone/products';
+import { useVariantGroups } from '@verone/products';
+import { useVariantGroup, useProductVariantEditing } from '@verone/products';
+import type { VariantProduct } from '@verone/types';
 import {
   formatAttributesForDisplay,
   type VariantAttributes,
 } from '@verone/types';
-import type { VariantProduct } from '@verone/types';
-import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
-import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
+import { COLLECTION_STYLE_OPTIONS } from '@verone/types';
 import { Input } from '@verone/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import { Badge } from '@verone/ui';
+import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 import {
   ChevronLeft,
   Package,
@@ -31,17 +41,6 @@ import {
   Home,
   ExternalLink,
 } from 'lucide-react';
-
-import { useToast } from '@verone/common';
-import type { SelectedProduct } from '@verone/products';
-import { CreateProductInGroupModal } from '@verone/products';
-import { EditProductVariantModal } from '@verone/products';
-import { VariantCreationModal } from '@verone/products';
-import { VariantGroupEditModal } from '@verone/products';
-import { UniversalProductSelectorV2 } from '@verone/products';
-import { useVariantGroups } from '@verone/products';
-import { useVariantGroup, useProductVariantEditing } from '@verone/products';
-import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 
 interface VariantGroupDetailPageProps {
   params: Promise<{
@@ -466,7 +465,7 @@ export default function VariantGroupDetailPage({
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-6">
+      <div className="w-full px-4 py-6">
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-1/4 mb-6" />
           <div className="space-y-4">
@@ -484,7 +483,7 @@ export default function VariantGroupDetailPage({
 
   if (error || !variantGroup) {
     return (
-      <div className="container mx-auto px-4 py-6">
+      <div className="w-full px-4 py-6">
         <ButtonV2
           variant="ghost"
           onClick={() => router.back()}
@@ -507,7 +506,7 @@ export default function VariantGroupDetailPage({
   }
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="w-full px-4 py-6">
       {/* Header avec navigation */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">

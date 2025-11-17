@@ -67,7 +67,7 @@ export default function SiteInternetPage() {
     <div className="flex min-h-screen flex-col">
       {/* Header */}
       <div className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
+        <div className="w-full flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-4">
             <ButtonV2
               variant="ghost"
@@ -108,7 +108,7 @@ export default function SiteInternetPage() {
       </div>
 
       {/* Content */}
-      <div className="container mx-auto flex-1 px-4 py-6">
+      <div className="w-full flex-1 px-4 py-6">
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}

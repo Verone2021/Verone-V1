@@ -226,7 +226,7 @@ export default function ConsultationDetailPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b">
-        <div className="container mx-auto px-2 py-1">
+        <div className="w-full px-2 py-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <ButtonUnified
@@ -268,7 +268,7 @@ export default function ConsultationDetailPage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-2 py-1 space-y-1">
+      <div className="w-full px-2 py-1 space-y-1">
         {/* Section avec informations et galerie photos */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-1">
           {/* Galerie photos consultation */}

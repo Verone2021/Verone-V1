@@ -18,7 +18,7 @@ export default function ArchivedProductsPage() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="w-full p-6 space-y-6">
       {/* En-tête */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">

@@ -43,7 +43,7 @@ export default function NouveauProduitPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header avec navigation */}
       <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4">
+        <div className="w-full px-4 py-4">
           <div className="flex items-center justify-between">
             <ButtonUnified
               variant="outline"
@@ -79,7 +79,7 @@ export default function NouveauProduitPage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="w-full px-4 py-8 max-w-6xl">
         {!showForm ? (
           // ÉTAPE 1 - Présentation du Produit Complet
           <div className="space-y-8">

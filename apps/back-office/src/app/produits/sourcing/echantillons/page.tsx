@@ -16,6 +16,13 @@ import { useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { useToast } from '@verone/common';
+import { CustomerBadge } from '@verone/customers';
+import { useCustomerSamples, CustomerSample } from '@verone/customers';
+import type { UnifiedCustomer } from '@verone/orders';
+import { CustomerSelector } from '@verone/orders';
+import type { SelectedProduct } from '@verone/products';
+import { UniversalProductSelectorV2 } from '@verone/products';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,6 +66,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@verone/ui';
+import { createClient } from '@verone/utils/supabase/client';
 import {
   Archive,
   ArchiveRestore,
@@ -79,15 +87,6 @@ import {
   Eye,
   Info,
 } from 'lucide-react';
-
-import { useToast } from '@verone/common';
-import { CustomerBadge } from '@verone/customers';
-import { useCustomerSamples, CustomerSample } from '@verone/customers';
-import type { UnifiedCustomer } from '@verone/orders';
-import { CustomerSelector } from '@verone/orders';
-import type { SelectedProduct } from '@verone/products';
-import { UniversalProductSelectorV2 } from '@verone/products';
-import { createClient } from '@verone/utils/supabase/client';
 
 export default function SourcingEchantillonsPage() {
   const router = useRouter();
@@ -473,7 +472,7 @@ export default function SourcingEchantillonsPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 py-6">
+        <div className="w-full px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-black">Échantillons</h1>
@@ -501,7 +500,7 @@ export default function SourcingEchantillonsPage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full px-4 py-8">
         {/* Statistiques */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
           <Card className="border-black">

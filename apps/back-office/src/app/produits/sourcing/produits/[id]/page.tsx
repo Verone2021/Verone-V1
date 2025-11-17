@@ -5,6 +5,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
 
+import { useToast } from '@verone/common';
+import { EditSourcingProductModal } from '@verone/products';
+import { useSourcingProducts } from '@verone/products';
+import { SupplierSelector } from '@verone/suppliers';
 import { Alert, AlertDescription } from '@verone/ui';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
@@ -28,11 +32,6 @@ import {
   Euro,
   Globe,
 } from 'lucide-react';
-
-import { useToast } from '@verone/common';
-import { EditSourcingProductModal } from '@verone/products';
-import { useSourcingProducts } from '@verone/products';
-import { SupplierSelector } from '@verone/suppliers';
 
 export default function SourcingProductDetailPage() {
   const router = useRouter();
@@ -143,7 +142,7 @@ export default function SourcingProductDetailPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 py-6">
+        <div className="w-full px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <ButtonV2
@@ -178,7 +177,7 @@ export default function SourcingProductDetailPage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8 space-y-6">
+      <div className="w-full px-4 py-8 space-y-6">
         {/* Product Info Card */}
         <Card className="border-black">
           <CardHeader>

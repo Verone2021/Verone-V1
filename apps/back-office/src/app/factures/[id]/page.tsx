@@ -9,6 +9,7 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
+import { PaymentForm } from '@verone/finance';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -27,6 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from '@verone/ui';
+import { createClient } from '@verone/utils/supabase/server';
 import {
   ArrowLeft,
   Calendar,
@@ -34,9 +36,6 @@ import {
   FileText,
   Loader2,
 } from 'lucide-react';
-
-import { PaymentForm } from '@verone/finance';
-import { createClient } from '@verone/utils/supabase/server';
 
 // =====================================================================
 // TYPES
@@ -105,7 +104,7 @@ export default async function InvoiceDetailPage({
     const { AlertCircle, Lock } = await import('lucide-react');
 
     return (
-      <div className="container mx-auto py-8">
+      <div className="w-full py-8">
         <Card className="border-orange-200 bg-orange-50">
           <CardHeader>
             <div className="flex items-center gap-3">

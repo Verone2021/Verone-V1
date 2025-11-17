@@ -6,6 +6,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+import { useStockDashboard } from '@verone/stock';
+import { useStockAlerts } from '@verone/stock';
+import { useMovementsHistory } from '@verone/stock';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -33,9 +36,6 @@ import {
 } from 'lucide-react';
 
 import { StockKPICard } from '@/components/ui-v2/stock/stock-kpi-card';
-import { useStockDashboard } from '@verone/stock';
-import { useStockAlerts } from '@verone/stock';
-import { useMovementsHistory } from '@verone/stock';
 
 export default function StocksDashboardPage() {
   const router = useRouter();
@@ -99,7 +99,7 @@ export default function StocksDashboardPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header Ultra-Compact */}
       <div className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 py-4">
+        <div className="w-full px-4 py-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-black">Stocks</h2>
             <ButtonV2
@@ -118,7 +118,7 @@ export default function StocksDashboardPage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-6 space-y-6">
+      <div className="w-full px-4 py-6 space-y-6">
         {/* Navigation - TOUJOURS VISIBLE EN HAUT */}
         <Card className="border-gray-300 rounded-[10px] shadow-sm">
           <CardContent className="pt-5 pb-4 space-y-4">

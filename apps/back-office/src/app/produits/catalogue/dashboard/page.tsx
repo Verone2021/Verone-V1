@@ -13,6 +13,7 @@ import { useState, useEffect, useMemo } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { useProducts } from '@verone/products';
 import { Badge } from '@verone/ui';
 import { KPICardUnified } from '@verone/ui';
 import {
@@ -28,8 +29,6 @@ import {
   AlertTriangle,
   Plus,
 } from 'lucide-react';
-
-import { useProducts } from '@verone/products';
 
 // Champs obligatoires pour calculer le taux de complétion
 const REQUIRED_PRODUCT_FIELDS = [
@@ -206,7 +205,7 @@ export default function DashboardProduitsPage() {
     <div className="min-h-screen bg-neutral-50">
       {/* Header */}
       <div className="bg-white border-b border-neutral-200">
-        <div className="container mx-auto px-6 py-6">
+        <div className="w-full px-6 py-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-neutral-900 mb-1">
@@ -230,7 +229,7 @@ export default function DashboardProduitsPage() {
       </div>
 
       {/* Contenu principal */}
-      <div className="container mx-auto px-6 py-6 space-y-8">
+      <div className="w-full px-6 py-6 space-y-8">
         {/* Section KPIs */}
         <div>
           <h2 className="text-lg font-semibold text-neutral-900 mb-4">

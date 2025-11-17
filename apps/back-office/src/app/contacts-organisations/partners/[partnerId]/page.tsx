@@ -82,7 +82,7 @@ export default function PartnerDetailPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-4 space-y-4">
+      <div className="w-full p-4 space-y-4">
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-1/3 mb-4" />
           <div className="h-6 bg-gray-200 rounded w-1/2 mb-8" />
@@ -98,7 +98,7 @@ export default function PartnerDetailPage() {
 
   if (error || !partner) {
     return (
-      <div className="container mx-auto p-4">
+      <div className="w-full p-4">
         <Card>
           <CardContent className="p-8 text-center">
             <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -140,7 +140,7 @@ export default function PartnerDetailPage() {
   };
 
   return (
-    <div className="container mx-auto p-4 space-y-4">
+    <div className="w-full p-4 space-y-4">
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>

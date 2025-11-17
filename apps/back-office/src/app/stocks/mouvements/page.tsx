@@ -198,7 +198,7 @@ export default function StockMovementsPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header compact avec badge info */}
       <div className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 py-3">
+        <div className="w-full px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <ButtonV2
@@ -241,7 +241,7 @@ export default function StockMovementsPage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-4 space-y-6">
+      <div className="w-full px-4 py-4 space-y-6">
         {/* Statistiques KPI */}
         <MovementsStatsCards stats={stats} loading={loading} />
 
