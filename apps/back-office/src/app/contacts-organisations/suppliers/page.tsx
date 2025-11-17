@@ -60,6 +60,7 @@ import {
 
 import { FavoriteToggleButton } from '@/components/business/favorite-toggle-button';
 import { HeartBadge } from '@/components/business/heart-badge';
+import type { Database } from '@/types/supabase';
 
 // ✅ FIX TypeScript: Utiliser type Organisation (pas de Supplier local)
 // Interface Organisation définie dans use-organisations.ts

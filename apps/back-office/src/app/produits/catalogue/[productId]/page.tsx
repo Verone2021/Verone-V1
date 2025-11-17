@@ -50,6 +50,8 @@ import {
   Info,
 } from 'lucide-react';
 
+import type { Database } from '@/types/supabase';
+
 // Champs obligatoires pour un produit complet
 const REQUIRED_PRODUCT_FIELDS = [
   'name',

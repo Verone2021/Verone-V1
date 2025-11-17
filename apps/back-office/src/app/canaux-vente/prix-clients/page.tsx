@@ -37,6 +37,8 @@ import {
   Tag,
 } from 'lucide-react';
 
+import type { Database } from '@/types/supabase';
+
 // Stats interface
 interface Stats {
   total_pricing_rules: number;

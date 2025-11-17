@@ -88,6 +88,8 @@ import {
   Info,
 } from 'lucide-react';
 
+import type { Database } from '@/types/supabase';
+
 export default function SourcingEchantillonsPage() {
   const router = useRouter();
   const { toast } = useToast();
