@@ -1,14 +1,35 @@
+/**
+ * Page Produit Site Internet - Layout 2 Colonnes 60/40
+ * Inspiré Maisons du Monde + Westwing
+ * Features:
+ * - Layout responsive 60/40 (galerie/sidebar)
+ * - Sticky sidebar avec prix + variantes + CTA
+ * - Marque conditionnelle (SI renseignée)
+ * - Éco-participation ligne séparée
+ * - Accordions sections détaillées
+ * - Cross-sell carrousel (mock)
+ */
+
 'use client';
 
 import { useEffect, useState } from 'react';
 
-import Image from 'next/image';
+import { useQuery } from '@tanstack/react-query';
 
-import { formatPrice } from '@verone/utils';
+import type { CatalogueProduct } from '@/hooks/use-catalogue-products';
+import { createClient } from '@/lib/supabase/client';
 
-import { useProductDetail } from '@/hooks/use-product-detail';
+import { ProductAccordions } from './components/ProductAccordions';
+import { ProductCrossSell } from './components/ProductCrossSell';
+import { ProductGallery } from './components/ProductGallery';
+import { ProductSidebar } from './components/ProductSidebar';
 
-import { VariantsSection } from './components/VariantsSection';
+interface VariantCard {
+  product_id: string;
+  slug: string;
+  name: string;
+  primary_image_url: string | null;
+}
 
 export default function ProductPage({
   params,
@@ -16,37 +37,116 @@ export default function ProductPage({
   params: Promise<{ id: string }>;
 }) {
   const [slug, setSlug] = useState<string | null>(null);
+  const supabase = createClient();
 
-  // ✅ FIX P0: Next.js 15 async params requirement
+  // ✅ Next.js 15 async params
   useEffect(() => {
     params.then(({ id }) => setSlug(id));
   }, [params]);
 
-  const { data: product, isLoading, error } = useProductDetail(slug);
+  // Récupérer produit par slug
+  const {
+    data: product,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ['product-detail', slug],
+    queryFn: async (): Promise<CatalogueProduct | null> => {
+      if (!slug) return null;
 
+      const { data, error } = await supabase.rpc('get_site_internet_products');
+
+      if (error) {
+        console.error('❌ Erreur fetch product detail:', error);
+        throw error;
+      }
+
+      const product = ((data as CatalogueProduct[]) || []).find(
+        (p: CatalogueProduct) => p.slug === slug
+      );
+
+      if (!product) {
+        throw new Error(`Produit non trouvé: ${slug}`);
+      }
+
+      return product;
+    },
+    enabled: !!slug,
+    staleTime: 60000,
+    retry: 1,
+  });
+
+  // Récupérer variantes éligibles (si product has variant_group)
+  const { data: variants = [] } = useQuery({
+    queryKey: [
+      'eligible-variants',
+      product?.variant_group_id,
+      product?.product_id,
+    ],
+    queryFn: async (): Promise<VariantCard[]> => {
+      if (!product?.variant_group_id) return [];
+
+      const { data, error } = await supabase.rpc('get_site_internet_products');
+
+      if (error) {
+        console.error('❌ Erreur fetch variants:', error);
+        return [];
+      }
+
+      // Filtrer par variant_group_id et exclure produit actuel
+      const variantsData = ((data as any[]) || [])
+        .filter(
+          (p: any) =>
+            p.variant_group_id === product.variant_group_id &&
+            p.product_id !== product.product_id
+        )
+        .map((p: any) => ({
+          product_id: p.product_id,
+          slug: p.slug,
+          name: p.name,
+          primary_image_url: p.primary_image_url,
+        }));
+
+      return variantsData;
+    },
+    enabled:
+      !!product?.variant_group_id &&
+      (product?.eligible_variants_count || 0) > 1,
+    staleTime: 60000,
+  });
+
+  // ===== LOADING STATE =====
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-pulse">
-        <div>
-          <div className="bg-gray-200 h-96 rounded-lg mb-4" />
-          <div className="grid grid-cols-4 gap-2">
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="bg-gray-200 h-20 rounded-lg" />
-            ))}
+      <div className="container max-w-7xl mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-12 animate-pulse">
+          {/* Skeleton galerie */}
+          <div className="space-y-4">
+            <div className="h-[500px] max-h-[60vh] bg-gray-200 rounded-lg" />
+            <div className="grid grid-cols-6 gap-1.5">
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <div key={i} className="h-16 w-full bg-gray-200 rounded-lg" />
+              ))}
+            </div>
+            <div className="h-64 bg-gray-200 rounded-lg" />
           </div>
-        </div>
-        <div className="space-y-4">
-          <div className="h-12 bg-gray-200 rounded" />
-          <div className="h-8 bg-gray-200 rounded w-1/3" />
-          <div className="h-32 bg-gray-200 rounded" />
+
+          {/* Skeleton sidebar */}
+          <div className="space-y-4">
+            <div className="h-12 bg-gray-200 rounded" />
+            <div className="h-8 bg-gray-200 rounded w-1/2" />
+            <div className="h-24 bg-gray-200 rounded" />
+            <div className="h-12 bg-gray-200 rounded" />
+          </div>
         </div>
       </div>
     );
   }
 
+  // ===== ERROR STATE =====
   if (error || !product) {
     return (
-      <div className="text-center py-24">
+      <div className="container max-w-7xl mx-auto px-4 py-24 text-center">
         <h1 className="text-3xl font-bold mb-4">Produit non trouvé</h1>
         <p className="text-gray-600">
           Le produit que vous recherchez n'existe pas ou n'est plus disponible.
@@ -55,176 +155,75 @@ export default function ProductPage({
     );
   }
 
-  const hasDiscount =
-    product.price_source === 'channel_pricing' && product.price_ht;
-  const priceDisplay = product.price_ttc
-    ? formatPrice(product.price_ttc)
-    : '€XX.XX';
-
+  // ===== PRODUCT PAGE LAYOUT =====
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      {/* Images produit */}
-      <div>
-        {/* Image principale */}
-        {product.primary_image_url ? (
-          <div className="relative h-96 rounded-lg overflow-hidden mb-4 bg-gray-100">
-            <Image
-              src={product.primary_image_url}
-              alt={product.name}
-              fill
-              className="object-contain"
-              priority
-            />
-          </div>
-        ) : (
-          <div className="bg-gray-200 h-96 rounded-lg mb-4 flex items-center justify-center">
-            <span className="text-gray-400">Aucune image</span>
-          </div>
-        )}
+    <div className="container max-w-7xl mx-auto px-4 py-8">
+      {/* Breadcrumb (optionnel, à implémenter plus tard)
+      <nav className="mb-6 text-sm text-muted-foreground">
+        <ol className="flex items-center gap-2">
+          <li><Link href="/">Accueil</Link></li>
+          <li>/</li>
+          <li><Link href="/catalogue">Catalogue</Link></li>
+          <li>/</li>
+          <li className="text-foreground">{product.name}</li>
+        </ol>
+      </nav>
+      */}
 
-        {/* Miniatures */}
-        <div className="grid grid-cols-4 gap-2">
-          {product.image_urls && product.image_urls.length > 0 ? (
-            product.image_urls.slice(0, 4).map((url, index) => (
-              <div
-                key={index}
-                className="relative h-20 rounded-lg overflow-hidden bg-gray-100"
-              >
-                <Image
-                  src={url}
-                  alt={`${product.name} - image ${index + 1}`}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-            ))
-          ) : (
-            <>
-              {[1, 2, 3, 4].map(i => (
-                <div key={i} className="bg-gray-200 h-20 rounded-lg" />
-              ))}
-            </>
-          )}
-        </div>
-      </div>
+      {/* Layout 2 colonnes 60/40 */}
+      <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-8 lg:gap-12">
+        {/* ===== COLONNE GAUCHE (60%) ===== */}
+        <div className="space-y-8">
+          {/* Galerie photos avec lightbox */}
+          <ProductGallery
+            images={product.image_urls || []}
+            productName={product.name}
+          />
 
-      {/* Détails produit */}
-      <div>
-        {/* Titre */}
-        <h1 className="text-3xl font-bold mb-4">{product.name}</h1>
-
-        {/* Prix */}
-        <div className="mb-6">
-          {hasDiscount ? (
-            <div className="flex items-center gap-3">
-              <div className="text-2xl font-bold text-red-600">
-                {priceDisplay}
-              </div>
-              <div className="text-lg text-gray-400 line-through">
-                {product.price_ht
-                  ? formatPrice(product.price_ht * 1.2)
-                  : '€XX.XX'}
-              </div>
-            </div>
-          ) : (
-            <div className="text-2xl font-bold text-gray-900">
-              {priceDisplay}
+          {/* Description courte (optionnel) */}
+          {product.description && (
+            <div className="prose prose-sm max-w-none">
+              <p className="text-gray-700 leading-relaxed line-clamp-3">
+                {product.description}
+              </p>
             </div>
           )}
+
+          {/* Accordions sections détaillées */}
+          <ProductAccordions
+            product={{
+              description: product.description,
+              technical_description: product.technical_description,
+              dimensions: product.dimensions,
+              weight: product.weight,
+              requires_assembly: product.requires_assembly,
+            }}
+          />
         </div>
 
-        {/* Description */}
-        {product.description && (
-          <div className="mb-6">
-            <h3 className="font-semibold mb-2">Description</h3>
-            <p className="text-gray-600 whitespace-pre-wrap">
-              {product.description}
-            </p>
-          </div>
-        )}
-
-        {/* Points de vente (selling points) */}
-        {product.selling_points && product.selling_points.length > 0 && (
-          <div className="mb-6">
-            <h3 className="font-semibold mb-2">Points forts</h3>
-            <ul className="list-disc list-inside text-gray-600 space-y-1">
-              {product.selling_points.map((point, index) => (
-                <li key={index}>{point}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Caractéristiques techniques */}
-        {product.technical_description && (
-          <div className="mb-6">
-            <h3 className="font-semibold mb-2">Caractéristiques techniques</h3>
-            <p className="text-gray-600 text-sm whitespace-pre-wrap">
-              {product.technical_description}
-            </p>
-          </div>
-        )}
-
-        {/* Dimensions */}
-        {product.dimensions && (
-          <div className="mb-6">
-            <h3 className="font-semibold mb-2">Dimensions</h3>
-            <div className="text-gray-600 text-sm">
-              {typeof product.dimensions === 'object' &&
-                Object.entries(product.dimensions).map(([key, value]) => {
-                  // Traduction des clés en français
-                  const translations: Record<string, string> = {
-                    width: 'Largeur',
-                    height: 'Hauteur',
-                    depth: 'Profondeur',
-                    length: 'Longueur',
-                    diameter: 'Diamètre',
-                    weight: 'Poids',
-                  };
-                  const label = translations[key.toLowerCase()] || key;
-
-                  return (
-                    <div key={key}>
-                      <span className="font-medium">{label}:</span>{' '}
-                      {String(value)}
-                    </div>
-                  );
-                })}
-            </div>
-          </div>
-        )}
-
-        {/* Marque */}
-        {product.brand && (
-          <div className="mb-6">
-            <span className="text-sm text-gray-500">Marque: </span>
-            <span className="font-medium">{product.brand}</span>
-          </div>
-        )}
-
-        {/* Variantes éligibles */}
-        <VariantsSection
+        {/* ===== SIDEBAR DROITE (40%) - STICKY ===== */}
+        <ProductSidebar
+          product={{
+            product_id: product.product_id,
+            name: product.name,
+            brand: product.brand, // Affichage conditionnel dans composant
+            price_ttc: product.price_ttc,
+            discount_rate: product.discount_rate,
+            eco_participation_amount: product.eco_participation_amount,
+            requires_assembly: product.requires_assembly,
+            assembly_price: product.assembly_price,
+            delivery_delay_weeks_min: product.delivery_delay_weeks_min,
+            delivery_delay_weeks_max: product.delivery_delay_weeks_max,
+            variant_group_id: product.variant_group_id,
+            eligible_variants_count: product.eligible_variants_count,
+          }}
+          variants={variants}
           currentProductId={product.product_id}
-          variantGroupId={product.variant_group_id}
-          eligible_variants_count={product.eligible_variants_count}
         />
-
-        {/* Actions */}
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-2">Quantité</label>
-            <input
-              type="number"
-              defaultValue="1"
-              min="1"
-              className="border rounded-lg px-4 py-2 w-24"
-            />
-          </div>
-          <button className="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors">
-            Ajouter au panier
-          </button>
-        </div>
       </div>
+
+      {/* ===== CROSS-SELL (Mock) ===== */}
+      <ProductCrossSell />
     </div>
   );
 }

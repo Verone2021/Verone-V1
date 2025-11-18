@@ -64,6 +64,13 @@ export interface CatalogueProduct {
   video_url: string | null;
   supplier_moq: number | null;
   discount_rate: number | null; // ✨ Ajouté 2025-11-18
+
+  // Champs e-commerce (ajoutés 2025-11-18)
+  eco_participation_amount: number | null; // Éco-participation (ligne séparée sous prix)
+  requires_assembly: boolean | null; // Produit nécessite montage
+  assembly_price: number | null; // Prix service montage optionnel
+  delivery_delay_weeks_min: number | null; // Délai livraison min (semaines)
+  delivery_delay_weeks_max: number | null; // Délai livraison max (semaines)
 }
 
 interface UseCatalogueProductsOptions {
