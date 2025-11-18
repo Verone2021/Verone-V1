@@ -6,7 +6,7 @@
 
 'use client';
 
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import { ButtonV2 } from '@verone/ui';
 import { ArrowLeft } from 'lucide-react';
@@ -14,14 +14,18 @@ import { ArrowLeft } from 'lucide-react';
 import { StockAdjustmentForm } from '@/components/forms/stock-adjustment-form';
 
 export default function CreateStockAdjustmentPage() {
+  const router = useRouter();
+
   return (
     <div className="flex flex-col gap-6 p-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <ButtonV2 variant="ghost" size="sm" asChild>
-          <Link href="/stocks/ajustements">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
+        <ButtonV2
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push('/stocks/ajustements')}
+        >
+          <ArrowLeft className="h-4 w-4" />
         </ButtonV2>
 
         <div>

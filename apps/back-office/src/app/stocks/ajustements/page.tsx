@@ -1,8 +1,14 @@
+/**
+ * Page: Liste Ajustements Stock
+ * Route: /stocks/ajustements
+ * Description: Page de listing des ajustements d'inventaire (augmentation/diminution/correction)
+ */
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 import { useToggle } from '@verone/hooks';
 import { UniversalOrderDetailsModal } from '@verone/orders';
@@ -32,26 +38,18 @@ import { Badge } from '@verone/ui';
 import { cn } from '@verone/utils';
 import {
   ArrowLeft,
-  ArrowUpDown,
   RefreshCw,
   ChevronLeft,
   ChevronRight,
   Eye,
   Filter,
   ChevronDown,
-  LayoutGrid,
-  Table,
+  Plus,
+  ArrowUpDown,
 } from 'lucide-react';
 
-import { MovementsListView } from './components/MovementsListView';
-
-export default function StockMovementsPage() {
+export default function StockAdjustmentsPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const initialDirection = (searchParams?.get('tab') || 'all') as
-    | 'in'
-    | 'out'
-    | 'all';
 
   const {
     loading,
@@ -65,14 +63,6 @@ export default function StockMovementsPage() {
     hasFilters,
     pagination,
   } = useMovementsHistory();
-
-  // État direction (remplace Tabs)
-  const [directionFilter, setDirectionFilter] = useState<'in' | 'out' | 'all'>(
-    initialDirection
-  );
-
-  // Phase 3.4.5: État vue Table vs Cards
-  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
 
   const [selectedMovement, setSelectedMovement] =
     useState<MovementWithDetails | null>(null);
@@ -107,25 +97,13 @@ export default function StockMovementsPage() {
   >(null);
   const [showOrderModal, setShowOrderModal] = useState(false);
 
-  // Changement de direction (remplace onValueChange des Tabs)
-  const handleDirectionChange = (direction: 'in' | 'out' | 'all') => {
-    setDirectionFilter(direction);
-
-    // Mise à jour URL
-    const url = new URL(window.location.href);
-    url.searchParams.set('tab', direction);
-    window.history.pushState({}, '', url);
-
-    // Application filtres
+  // Filtrer automatiquement sur ADJUST au montage
+  useEffect(() => {
     applyFilters({
-      ...filters,
-      movementTypes:
-        direction === 'in' ? ['IN'] : direction === 'out' ? ['OUT'] : undefined,
+      movementTypes: ['ADJUST'],
       affects_forecast: false,
-      forecast_type: undefined,
-      offset: 0,
     });
-  };
+  }, []);
 
   // Pagination
   const handlePageChange = (newPage: number) => {
@@ -171,29 +149,6 @@ export default function StockMovementsPage() {
     setShowOrderModal(true);
   };
 
-  // Titre selon direction
-  const getTitle = () => {
-    switch (directionFilter) {
-      case 'in':
-        return 'Entrées de Stock Réelles';
-      case 'out':
-        return 'Sorties de Stock Réelles';
-      default:
-        return 'Tous les Mouvements de Stock Réels';
-    }
-  };
-
-  const getEmptyMessage = () => {
-    switch (directionFilter) {
-      case 'in':
-        return 'Aucune entrée de stock réelle';
-      case 'out':
-        return 'Aucune sortie de stock réelle';
-      default:
-        return 'Aucun mouvement de stock réel';
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header compact avec badge info */}
@@ -211,7 +166,7 @@ export default function StockMovementsPage() {
                 Retour
               </ButtonV2>
               <h1 className="text-xl font-semibold text-black">
-                Mouvements de Stock
+                Audit des Ajustements de Stock
               </h1>
             </div>
 
@@ -219,10 +174,20 @@ export default function StockMovementsPage() {
               {/* Badge info compact */}
               <Badge
                 variant="outline"
-                className="text-xs text-green-700 border-green-600 px-2 py-1"
+                className="text-xs text-purple-700 border-purple-600 px-2 py-1"
               >
-                ✓ Stock Réel
+                🔍 Audit & Traçabilité
               </Badge>
+
+              <ButtonV2
+                variant="outline"
+                size="sm"
+                onClick={() => router.push('/stocks/ajustements/create')}
+                className="border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Nouvel ajustement
+              </ButtonV2>
 
               <ButtonV2
                 variant="outline"
@@ -245,83 +210,33 @@ export default function StockMovementsPage() {
         {/* Statistiques KPI */}
         <MovementsStatsCards stats={stats} loading={loading} />
 
-        {/* Ligne filtres compacte : Bouton Filtres + Toggle Direction */}
+        {/* Ligne filtres compacte : Bouton Filtres */}
         <div className="flex items-center justify-between">
           {/* Bouton Filtres (gauche) */}
-          <div className="flex items-center gap-3">
-            <ButtonV2
-              variant="outline"
-              size="sm"
-              onClick={toggleFiltersOpen}
-              className="border-black text-black hover:bg-black hover:text-white transition-all"
-            >
-              <Filter className="h-4 w-4 mr-2" />
-              Filtres
-              {activeFiltersCount > 0 && (
-                <Badge className="ml-2 bg-blue-600 text-white">
-                  {activeFiltersCount}
-                </Badge>
+          <ButtonV2
+            variant="outline"
+            size="sm"
+            onClick={toggleFiltersOpen}
+            className="border-black text-black hover:bg-black hover:text-white transition-all"
+          >
+            <Filter className="h-4 w-4 mr-2" />
+            Filtres
+            {activeFiltersCount > 0 && (
+              <Badge className="ml-2 bg-blue-600 text-white">
+                {activeFiltersCount}
+              </Badge>
+            )}
+            <ChevronDown
+              className={cn(
+                'h-4 w-4 ml-2 transition-transform duration-300',
+                filtersOpen && 'rotate-180'
               )}
-              <ChevronDown
-                className={cn(
-                  'h-4 w-4 ml-2 transition-transform duration-300',
-                  filtersOpen && 'rotate-180'
-                )}
-              />
-            </ButtonV2>
+            />
+          </ButtonV2>
 
-            {/* Lien vers Ajustements */}
-            <ButtonV2
-              variant="outline"
-              size="sm"
-              onClick={() => router.push('/stocks/ajustements')}
-              className="border-purple-600 text-purple-600 hover:bg-purple-50"
-            >
-              🔍 Ajustements uniquement
-            </ButtonV2>
-          </div>
-
-          {/* Toggle Direction (droite) */}
-          <div className="flex items-center border border-black rounded-md p-1 gap-1">
-            <ButtonV2
-              variant={directionFilter === 'in' ? 'primary' : 'ghost'}
-              size="sm"
-              onClick={() => handleDirectionChange('in')}
-              className={cn(
-                'px-4',
-                directionFilter === 'in'
-                  ? 'bg-black text-white hover:bg-black/90'
-                  : 'text-black hover:bg-gray-100'
-              )}
-            >
-              Entrées
-            </ButtonV2>
-            <ButtonV2
-              variant={directionFilter === 'out' ? 'primary' : 'ghost'}
-              size="sm"
-              onClick={() => handleDirectionChange('out')}
-              className={cn(
-                'px-4',
-                directionFilter === 'out'
-                  ? 'bg-black text-white hover:bg-black/90'
-                  : 'text-black hover:bg-gray-100'
-              )}
-            >
-              Sorties
-            </ButtonV2>
-            <ButtonV2
-              variant={directionFilter === 'all' ? 'primary' : 'ghost'}
-              size="sm"
-              onClick={() => handleDirectionChange('all')}
-              className={cn(
-                'px-4',
-                directionFilter === 'all'
-                  ? 'bg-black text-white hover:bg-black/90'
-                  : 'text-black hover:bg-gray-100'
-              )}
-            >
-              Tous
-            </ButtonV2>
+          {/* Info filtrage automatique */}
+          <div className="text-sm text-gray-500">
+            Historique comptable : ajustements uniquement (ADJUST)
           </div>
         </div>
 
@@ -356,7 +271,7 @@ export default function StockMovementsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <CardTitle className="flex items-center gap-2 text-black">
-                        {getTitle()}
+                        Historique des Ajustements
                         {hasFilters && (
                           <Badge
                             variant="outline"
@@ -372,7 +287,7 @@ export default function StockMovementsPage() {
                         ) : (
                           <>
                             {total === 0 ? (
-                              'Aucun mouvement trouvé'
+                              'Aucun ajustement trouvé'
                             ) : (
                               <>
                                 {(pagination.currentPage - 1) *
@@ -383,7 +298,7 @@ export default function StockMovementsPage() {
                                   pagination.currentPage * pagination.pageSize,
                                   total
                                 )}{' '}
-                                sur {total} mouvements
+                                sur {total} ajustements
                               </>
                             )}
                           </>
@@ -393,36 +308,6 @@ export default function StockMovementsPage() {
 
                     {/* Pagination et taille de page */}
                     <div className="flex items-center gap-4">
-                      {/* Phase 3.4.5: Toggle Table/Cards */}
-                      <div className="flex items-center border border-black rounded-md">
-                        <ButtonV2
-                          variant={viewMode === 'table' ? 'primary' : 'ghost'}
-                          size="sm"
-                          onClick={() => setViewMode('table')}
-                          className={cn(
-                            'rounded-r-none',
-                            viewMode === 'table'
-                              ? 'bg-black text-white hover:bg-black/90'
-                              : 'text-black hover:bg-gray-100'
-                          )}
-                        >
-                          <Table className="h-4 w-4" />
-                        </ButtonV2>
-                        <ButtonV2
-                          variant={viewMode === 'cards' ? 'primary' : 'ghost'}
-                          size="sm"
-                          onClick={() => setViewMode('cards')}
-                          className={cn(
-                            'rounded-l-none',
-                            viewMode === 'cards'
-                              ? 'bg-black text-white hover:bg-black/90'
-                              : 'text-black hover:bg-gray-100'
-                          )}
-                        >
-                          <LayoutGrid className="h-4 w-4" />
-                        </ButtonV2>
-                      </div>
-
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-gray-600">Afficher:</span>
                         <Select
@@ -479,22 +364,15 @@ export default function StockMovementsPage() {
                   </div>
                 </CardHeader>
 
-                {/* Phase 3.4.5: Rendering conditionnel Table vs Cards */}
+                {/* Table des ajustements */}
                 <CardContent className="p-0">
-                  {viewMode === 'table' ? (
-                    <MovementsTable
-                      movements={movements}
-                      loading={loading}
-                      onMovementClick={handleMovementClick}
-                      onCancelClick={handleCancelClick}
-                      onOrderClick={handleOrderClick}
-                    />
-                  ) : (
-                    <MovementsListView
-                      movements={movements}
-                      loading={loading}
-                    />
-                  )}
+                  <MovementsTable
+                    movements={movements}
+                    loading={loading}
+                    onMovementClick={handleMovementClick}
+                    onCancelClick={handleCancelClick}
+                    onOrderClick={handleOrderClick}
+                  />
                 </CardContent>
               </Card>
 
@@ -504,10 +382,10 @@ export default function StockMovementsPage() {
                   <div className="text-center">
                     <Eye className="h-12 w-12 text-gray-300 mx-auto mb-3" />
                     <h3 className="text-lg font-medium text-black mb-2">
-                      Aucun mouvement trouvé
+                      Aucun ajustement trouvé
                     </h3>
                     <p className="text-gray-500 mb-4">
-                      Aucun mouvement ne correspond aux critères de recherche
+                      Aucun ajustement ne correspond aux critères de recherche
                       sélectionnés.
                     </p>
                     <ButtonV2
@@ -528,11 +406,20 @@ export default function StockMovementsPage() {
                   <div className="text-center">
                     <ArrowUpDown className="h-12 w-12 text-gray-300 mx-auto mb-3" />
                     <h3 className="text-lg font-medium text-black mb-2">
-                      {getEmptyMessage()}
+                      Aucun ajustement
                     </h3>
-                    <p className="text-gray-500">
-                      Les mouvements apparaîtront ici dès qu'ils seront créés.
+                    <p className="text-gray-500 mb-4">
+                      Les ajustements d'inventaire apparaîtront ici dès qu'ils
+                      seront créés.
                     </p>
+                    <ButtonV2
+                      variant="outline"
+                      onClick={() => router.push('/stocks/ajustements/create')}
+                      className="border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Créer un ajustement
+                    </ButtonV2>
                   </div>
                 </Card>
               )}
