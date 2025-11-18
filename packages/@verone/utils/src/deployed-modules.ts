@@ -31,7 +31,7 @@ export const DEPLOYED_MODULES = {
   invoices: true, // ✅ ACTIVÉ - Facturation
 
   // 🚧 Phase 2 - En développement
-  sales_orders: false, // Commandes clients
+  sales_orders: true, // ✅ ACTIVÉ - Commandes clients
   stock: false, // Gestion stocks
 
   // 🚧 Phase 3 - Planifié
@@ -58,7 +58,7 @@ export function getModulePhase(module: DeployedModule): string {
     purchase_orders: 'Déployé',
 
     // Phase 2
-    sales_orders: 'Phase 2',
+    sales_orders: 'Déployé',
     products: 'Phase 2',
     stock: 'Phase 2',
 

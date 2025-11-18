@@ -121,12 +121,12 @@ export function CommercialEditSection({
     { code: 'CHF', name: 'Franc Suisse (CHF)', symbol: 'CHF' },
   ];
 
-  // Options de conditions de paiement - Standard CRM/ERP
+  // Options de conditions de paiement - Enum strict (filtrable pour business logic)
   const paymentTermsOptions = [
-    { value: '0', label: 'Paiement immédiat (0 jours)', days: 0 },
-    { value: '30', label: '30 jours net', days: 30 },
-    { value: '60', label: '60 jours net', days: 60 },
-    { value: '90', label: '90 jours net', days: 90 },
+    { value: 'PREPAID', label: 'Prépaiement obligatoire', days: 0 },
+    { value: 'NET_30', label: '30 jours net', days: 30 },
+    { value: 'NET_60', label: '60 jours net', days: 60 },
+    { value: 'NET_90', label: '90 jours net', days: 90 },
   ];
 
   if (isEditing(section)) {
@@ -181,59 +181,42 @@ export function CommercialEditSection({
             </div>
           </div>
 
-          {/* Système de prépaiement */}
-          {editData?.payment_terms === '0' && (
-            <div className="bg-gray-50 border border-gray-300 rounded-lg p-4">
-              <div className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  id="prepayment_required"
-                  checked={editData?.prepayment_required || false}
-                  onChange={e =>
-                    handleFieldChange('prepayment_required', e.target.checked)
-                  }
-                  className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded"
-                />
-                <label htmlFor="prepayment_required" className="flex-1">
-                  <div className="text-sm font-medium text-gray-900">
-                    Prépaiement obligatoire
-                  </div>
-                  <div className="text-xs text-gray-900">
-                    {editData?.prepayment_required
-                      ? "Commande bloquée jusqu'au règlement préalable"
-                      : 'Envoi et facturation simultanés'}
-                  </div>
-                </label>
-              </div>
-            </div>
-          )}
-
           {/* Délai de livraison et Devise sur la même ligne */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-black mb-1">
-                Délai de livraison (jours)
-              </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  value={editData?.delivery_time_days || ''}
-                  onChange={e =>
-                    handleFieldChange('delivery_time_days', e.target.value)
-                  }
-                  className="w-full px-3 py-2 pr-12 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-                  placeholder="0"
-                  min="0"
-                  max="365"
-                />
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                  <Clock className="h-4 w-4 text-gray-400" />
+          <div
+            className={cn(
+              'grid gap-4',
+              organisationType === 'customer'
+                ? 'grid-cols-1'
+                : 'grid-cols-1 md:grid-cols-2'
+            )}
+          >
+            {/* Délai de livraison - Fournisseurs seulement */}
+            {organisationType !== 'customer' && (
+              <div>
+                <label className="block text-sm font-medium text-black mb-1">
+                  Délai de livraison (jours)
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={editData?.delivery_time_days || ''}
+                    onChange={e =>
+                      handleFieldChange('delivery_time_days', e.target.value)
+                    }
+                    className="w-full px-3 py-2 pr-12 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
+                    placeholder="0"
+                    min="0"
+                    max="365"
+                  />
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                    <Clock className="h-4 w-4 text-gray-400" />
+                  </div>
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  Délai habituel entre commande et livraison
                 </div>
               </div>
-              <div className="text-xs text-gray-500 mt-1">
-                Délai habituel entre commande et livraison
-              </div>
-            </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-black mb-1">
@@ -253,43 +236,41 @@ export function CommercialEditSection({
             </div>
           </div>
 
-          {/* Montant minimum de commande */}
-          <div>
-            <label className="block text-sm font-medium text-black mb-1">
-              {organisationType === 'customer'
-                ? 'Montant minimum pour expédition offerte'
-                : 'Montant minimum de commande'}
-            </label>
-            <div className="relative">
-              <input
-                type="number"
-                value={editData?.minimum_order_amount || ''}
-                onChange={e =>
-                  handleFieldChange('minimum_order_amount', e.target.value)
-                }
-                className="w-full px-3 py-2 pr-16 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-                placeholder="0.00"
-                min="0"
-                step="0.01"
-              />
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                <span className="text-sm text-gray-500">
-                  {
-                    currencies.find(
-                      c => c.code === (editData?.currency || 'EUR')
-                    )?.symbol
+          {/* Montant minimum de commande - Fournisseurs et prestataires uniquement */}
+          {organisationType !== 'customer' && (
+            <div>
+              <label className="block text-sm font-medium text-black mb-1">
+                Montant minimum de commande
+              </label>
+              <div className="relative">
+                <input
+                  type="number"
+                  value={editData?.minimum_order_amount || ''}
+                  onChange={e =>
+                    handleFieldChange('minimum_order_amount', e.target.value)
                   }
-                </span>
+                  className="w-full px-3 py-2 pr-16 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
+                  placeholder="0.00"
+                  min="0"
+                  step="0.01"
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                  <span className="text-sm text-gray-500">
+                    {
+                      currencies.find(
+                        c => c.code === (editData?.currency || 'EUR')
+                      )?.symbol
+                    }
+                  </span>
+                </div>
               </div>
-            </div>
-            <div className="text-xs text-gray-500 mt-1">
-              {organisationType === 'customer'
-                ? 'Montant minimum requis pour bénéficier de la livraison gratuite'
-                : organisationType === 'service_provider'
+              <div className="text-xs text-gray-500 mt-1">
+                {organisationType === 'service_provider'
                   ? 'Montant minimum requis pour passer commande chez ce prestataire'
                   : 'Montant minimum requis pour passer commande chez ce fournisseur'}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Résumé des conditions en temps réel */}
           {editData &&
@@ -378,17 +359,11 @@ export function CommercialEditSection({
                     opt => opt.value === organisation.payment_terms
                   )?.label || organisation.payment_terms}
                 </div>
-                {organisation.payment_terms === '0' &&
-                  organisation.prepayment_required && (
-                    <div className="text-xs text-gray-900 bg-gray-100 px-2 py-1 rounded mt-2">
-                      ⚠️ Prépaiement obligatoire - Commande bloquée jusqu'au
-                      règlement
-                    </div>
-                  )}
               </div>
             )}
 
-            {organisation.delivery_time_days &&
+            {organisationType !== 'customer' &&
+              organisation.delivery_time_days &&
               organisation.delivery_time_days > 0 && (
                 <div className="bg-blue-50 p-3 rounded-lg">
                   <div className="text-xs text-blue-600 font-medium mb-1 flex items-center">
@@ -402,14 +377,13 @@ export function CommercialEditSection({
                 </div>
               )}
 
-            {organisation.minimum_order_amount &&
+            {organisationType !== 'customer' &&
+              organisation.minimum_order_amount &&
               organisation.minimum_order_amount > 0 && (
                 <div className="bg-gray-50 p-3 rounded-lg">
                   <div className="text-xs text-black font-medium mb-1 flex items-center">
                     <DollarSign className="h-3 w-3 mr-1" />
-                    {organisationType === 'customer'
-                      ? 'LIVRAISON OFFERTE DÈS'
-                      : 'COMMANDE MINIMUM'}
+                    COMMANDE MINIMUM
                   </div>
                   <div className="text-sm font-semibold text-gray-900">
                     {organisation.minimum_order_amount.toFixed(2)}{' '}
