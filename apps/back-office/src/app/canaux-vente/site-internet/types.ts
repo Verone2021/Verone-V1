@@ -37,7 +37,7 @@ export interface SiteInternetProduct {
   product_id: string;
   sku: string;
   name: string;
-  slug: string;
+  slug: string | null;
   status: string;
 
   // SEO
@@ -49,6 +49,7 @@ export interface SiteInternetProduct {
   price_ht: number;
   price_ttc: number;
   price_source: 'channel_pricing' | 'base_price';
+  discount_rate: number | null; // Taux de réduction (0.30 = 30%)
 
   // Images
   primary_image_url: string | null;
@@ -60,11 +61,31 @@ export interface SiteInternetProduct {
 
   // Variantes
   has_variants: boolean;
-  variants_count: number;
+  variants_count: number; // Total variantes (toutes)
+  variant_group_id: string | null; // ✨ Ajouté 2025-11-19
+  eligible_variants_count: number; // ✨ Ajouté 2025-11-19 - Uniquement variantes éligibles
 
   // Éligibilité
   is_eligible: boolean;
   ineligibility_reasons: string[];
+
+  // ===== NOUVEAUX CHAMPS (11) - Ajoutés 2025-11-17 =====
+
+  // Descriptions et marketing (editable avec waterfall canal → produit)
+  description: string | null;
+  technical_description: string | null;
+  brand: string | null;
+  selling_points: string[];
+
+  // Informations produit (READ-ONLY - catalogue uniquement)
+  dimensions: Record<string, any> | null;
+  weight: number | null;
+  suitable_rooms: string[];
+  subcategory_id: string | null;
+  subcategory_name: string | null;
+  product_type: string | null;
+  video_url: string | null;
+  supplier_moq: number | null; // Quantité minimale de commande fournisseur
 }
 
 /**

@@ -42,11 +42,28 @@ export interface CatalogueProduct {
 
   // Variantes
   has_variants: boolean;
-  variants_count: number;
+  variants_count: number; // Total variantes (toutes)
+  variant_group_id: string | null; // ✨ Ajouté 2025-11-19
+  eligible_variants_count: number; // ✨ Ajouté 2025-11-19 - Uniquement variantes éligibles
 
   // Éligibilité
   is_eligible: boolean;
   ineligibility_reasons: string[] | null;
+
+  // Champs produit supplémentaires (ajoutés 2025-11-17)
+  description: string | null;
+  technical_description: string | null;
+  brand: string | null;
+  selling_points: string[] | null;
+  dimensions: any;
+  weight: number | null;
+  suitable_rooms: string[] | null;
+  subcategory_id: string | null;
+  subcategory_name: string | null;
+  product_type: string | null;
+  video_url: string | null;
+  supplier_moq: number | null;
+  discount_rate: number | null; // ✨ Ajouté 2025-11-18
 }
 
 interface UseCatalogueProductsOptions {

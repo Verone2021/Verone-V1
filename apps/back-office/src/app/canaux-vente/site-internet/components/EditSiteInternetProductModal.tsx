@@ -46,6 +46,39 @@ import {
 import { z } from 'zod';
 
 // =============================================================================
+// Helper Functions
+// =============================================================================
+
+/**
+ * Formate les dimensions d'un produit de manière lisible
+ * @param dimensions - Object JSONB avec length, width, height, unit
+ * @returns String formatée "L120 × l80 × H75 cm" ou "Non défini"
+ */
+function formatDimensions(dimensions: Record<string, any> | null): string {
+  if (!dimensions) return 'Non défini';
+
+  const { length, width, height, unit = 'cm' } = dimensions;
+
+  const parts: string[] = [];
+  if (length) parts.push(`L${length}`);
+  if (width) parts.push(`l${width}`);
+  if (height) parts.push(`H${height}`);
+
+  return parts.length > 0 ? `${parts.join(' × ')} ${unit}` : 'Non défini';
+}
+
+/**
+ * Labels français pour les types de produits
+ */
+const PRODUCT_TYPE_LABELS: Record<
+  string,
+  { label: string; variant: 'default' | 'secondary' }
+> = {
+  standard: { label: 'Catalogue', variant: 'default' },
+  custom: { label: 'Sur-mesure', variant: 'secondary' },
+};
+
+// =============================================================================
 // Types & Schema
 // =============================================================================
 
@@ -69,6 +102,20 @@ interface SiteInternetProduct {
   variants_count: number;
   is_eligible: boolean;
   ineligibility_reasons: string[];
+
+  // Nouveaux champs (12) - Ajoutés 2025-11-17
+  description: string | null;
+  technical_description: string | null;
+  brand: string | null;
+  selling_points: string[];
+  dimensions: Record<string, any> | null;
+  weight: number | null;
+  suitable_rooms: string[];
+  subcategory_id: string | null;
+  subcategory_name: string | null;
+  product_type: string | null;
+  video_url: string | null;
+  supplier_moq: number | null; // Quantité minimale de commande fournisseur
 }
 
 interface EditSiteInternetProductModalProps {
@@ -81,7 +128,10 @@ interface EditSiteInternetProductModalProps {
 // Schema Zod validation
 const productSchema = z.object({
   // Général
-  slug: z.string().min(1, 'Le slug est obligatoire').max(200),
+  slug: z
+    .union([z.string().max(200, 'Maximum 200 caractères'), z.literal('')])
+    .optional()
+    .nullable(),
   is_published_online: z.boolean(),
 
   // SEO
@@ -96,6 +146,18 @@ const productSchema = z.object({
   min_quantity: z.number().int().positive().default(1),
   notes: z.string().max(500).optional(),
   is_active: z.boolean().default(true),
+
+  // Informations produit (nouveaux champs éditables avec waterfall)
+  custom_description_long: z
+    .string()
+    .max(5000, 'Maximum 5000 caractères')
+    .optional(),
+  custom_technical_description: z
+    .string()
+    .max(2000, 'Maximum 2000 caractères')
+    .optional(),
+  custom_brand: z.string().max(100, 'Maximum 100 caractères').optional(),
+  custom_selling_points: z.array(z.string()).optional(),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -152,23 +214,39 @@ export function EditSiteInternetProductModal({
     custom_description: '',
     meta_title: '',
     meta_description: '',
-    custom_price_ht: product.price_ht ?? 0,
-    discount_rate: 0,
+    custom_price_ht: product.price_ht ?? undefined,
+    discount_rate: undefined,
     min_quantity: 1,
     notes: '',
     is_active: true,
+    // Nouveaux champs informations produit
+    custom_description_long: product.description || '',
+    custom_technical_description: product.technical_description || '',
+    custom_brand: product.brand || '',
+    custom_selling_points: product.selling_points || [],
   });
 
   // Mutation update
   const updateProduct = useMutation({
     mutationFn: async (data: Partial<ProductFormData>) => {
+      console.log('🔍 Mutation START', {
+        productId: product.product_id,
+        data: {
+          slug: data.slug,
+          is_published_online: data.is_published_online,
+          custom_title: data.custom_title,
+          custom_price_ht: data.custom_price_ht,
+        },
+      });
+
       const channelId = await getChannelId();
+      console.log('✅ Channel ID récupéré:', channelId);
 
       // 1. Update products table (slug, meta_title, meta_description, is_published_online)
       const { error: productsError } = await supabase
         .from('products')
         .update({
-          slug: data.slug,
+          slug: data.slug || null, // Convertir chaîne vide en null
           meta_title: data.meta_title,
           meta_description: data.meta_description,
           is_published_online: data.is_published_online,
@@ -176,42 +254,80 @@ export function EditSiteInternetProductModal({
             ? new Date().toISOString()
             : null,
         })
-        .eq('id', product.product_id);
+        .eq('id', product.product_id)
+        .select()
+        .single();
 
-      if (productsError) throw productsError;
+      if (productsError) {
+        console.error('❌ Erreur products update:', productsError);
+        throw productsError;
+      }
+      console.log('✅ Products table updated');
 
-      // 2. Upsert channel_product_metadata
-      if (data.custom_title || data.custom_description) {
+      // 2. Upsert channel_product_metadata (incluant nouveaux champs)
+      if (
+        data.custom_title ||
+        data.custom_description ||
+        data.custom_description_long ||
+        data.custom_technical_description ||
+        data.custom_brand ||
+        data.custom_selling_points
+      ) {
         const { error: metadataError } = await supabase
           .from('channel_product_metadata')
-          .upsert({
-            product_id: product.product_id,
-            channel_id: channelId,
-            custom_title: data.custom_title,
-            custom_description: data.custom_description,
-          });
+          .upsert(
+            {
+              product_id: product.product_id,
+              channel_id: channelId,
+              custom_title: data.custom_title,
+              custom_description: data.custom_description,
+              // Nouveaux champs informations produit
+              custom_description_long: data.custom_description_long,
+              custom_technical_description: data.custom_technical_description,
+              custom_brand: data.custom_brand,
+              custom_selling_points: data.custom_selling_points || [],
+            },
+            { onConflict: 'product_id,channel_id' }
+          )
+          .select();
 
-        if (metadataError) throw metadataError;
+        if (metadataError) {
+          console.error('❌ Erreur metadata upsert:', metadataError);
+          throw metadataError;
+        }
+        console.log('✅ Metadata upserted');
       }
 
-      // 3. Upsert channel_pricing
-      if (data.custom_price_ht) {
+      // 3. Upsert channel_pricing (si prix OU réduction modifiés)
+      if (data.custom_price_ht != null || data.discount_rate != null) {
         const { error: pricingError } = await supabase
           .from('channel_pricing')
-          .upsert({
-            product_id: product.product_id,
-            channel_id: channelId,
-            custom_price_ht: data.custom_price_ht,
-            discount_rate: data.discount_rate,
-            min_quantity: data.min_quantity,
-            notes: data.notes,
-            is_active: data.is_active,
-          });
+          .upsert(
+            {
+              product_id: product.product_id,
+              channel_id: channelId,
+              custom_price_ht: data.custom_price_ht,
+              discount_rate: data.discount_rate || null,
+              markup_rate: null, // Toujours null (mode custom_price uniquement)
+              min_quantity: data.min_quantity || 1,
+              notes: data.notes || null,
+              is_active: data.is_active ?? true,
+            },
+            { onConflict: 'product_id,channel_id,min_quantity' }
+          )
+          .select();
 
-        if (pricingError) throw pricingError;
+        if (pricingError) {
+          console.error('❌ Erreur pricing upsert:', pricingError);
+          throw pricingError;
+        }
+        console.log('✅ Pricing upserted');
       }
+
+      console.log('🎉 Mutation COMPLETE');
     },
     onSuccess: () => {
+      console.log('🎉 onSuccess callback');
       queryClient.invalidateQueries({ queryKey: ['site-internet-products'] });
       toast({
         title: 'Produit mis à jour',
@@ -221,9 +337,12 @@ export function EditSiteInternetProductModal({
       onClose();
     },
     onError: (error: Error) => {
+      console.error('❌ Mutation ERROR:', error);
       toast({
-        title: 'Erreur',
-        description: error.message,
+        title: 'Erreur lors de la sauvegarde',
+        description:
+          error.message ||
+          'Une erreur est survenue lors de la sauvegarde du produit',
         variant: 'destructive',
       });
     },
@@ -231,12 +350,18 @@ export function EditSiteInternetProductModal({
 
   // Helper get channel ID
   const getChannelId = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('sales_channels')
       .select('id')
       .eq('code', 'site_internet')
       .single();
-    return data?.id || '';
+
+    if (error || !data?.id) {
+      console.error('❌ Canal Site Internet introuvable:', error);
+      throw new Error('Canal Site Internet introuvable');
+    }
+
+    return data.id;
   };
 
   // Handler submit
@@ -294,7 +419,7 @@ export function EditSiteInternetProductModal({
               onValueChange={setActiveTab}
               className="flex-1 flex flex-col overflow-hidden"
             >
-              <TabsList className="grid w-full grid-cols-5">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger
                   value="general"
                   className="flex items-center gap-2"
@@ -328,6 +453,13 @@ export function EditSiteInternetProductModal({
                       {product.variants_count}
                     </Badge>
                   )}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="informations"
+                  className="flex items-center gap-2"
+                >
+                  <Info className="h-4 w-4" />
+                  Informations
                 </TabsTrigger>
               </TabsList>
 
@@ -380,7 +512,7 @@ export function EditSiteInternetProductModal({
                   <div>
                     <Label>Slug URL</Label>
                     <Input
-                      value={formData.slug}
+                      value={formData.slug ?? ''}
                       onChange={e =>
                         setFormData({ ...formData, slug: e.target.value })
                       }
@@ -552,14 +684,24 @@ export function EditSiteInternetProductModal({
                         type="number"
                         step="1"
                         min="0"
-                        max="50"
-                        value={(formData.discount_rate ?? 0) * 100}
-                        onChange={e =>
-                          setFormData({
-                            ...formData,
-                            discount_rate: parseFloat(e.target.value) / 100,
-                          })
+                        max="100"
+                        value={
+                          formData.discount_rate != null
+                            ? formData.discount_rate * 100
+                            : ''
                         }
+                        onChange={e => {
+                          const val =
+                            e.target.value === ''
+                              ? undefined
+                              : parseFloat(e.target.value) / 100;
+                          if (val === undefined || !isNaN(val)) {
+                            setFormData({
+                              ...formData,
+                              discount_rate: val,
+                            });
+                          }
+                        }}
                         placeholder="0"
                       />
                       {getError('discount_rate') && (
@@ -568,7 +710,7 @@ export function EditSiteInternetProductModal({
                         </p>
                       )}
                       <p className="text-sm text-gray-500 mt-1">
-                        Maximum 50% de réduction
+                        Taux de réduction applicable (0-100%)
                       </p>
                     </div>
 
@@ -646,35 +788,6 @@ export function EditSiteInternetProductModal({
                         );
                       })()}
                     </div>
-                  </div>
-
-                  {/* Min Quantity */}
-                  <div>
-                    <Label>Quantité minimale</Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={formData.min_quantity ?? ''}
-                      onChange={e =>
-                        setFormData({
-                          ...formData,
-                          min_quantity: parseInt(e.target.value),
-                        })
-                      }
-                    />
-                  </div>
-
-                  {/* Notes */}
-                  <div>
-                    <Label>Notes internes</Label>
-                    <Textarea
-                      value={formData.notes ?? ''}
-                      onChange={e =>
-                        setFormData({ ...formData, notes: e.target.value })
-                      }
-                      placeholder="Notes sur la tarification..."
-                      rows={3}
-                    />
                   </div>
 
                   {/* Active */}
@@ -904,6 +1017,320 @@ export function EditSiteInternetProductModal({
                     productId={product.product_id}
                     currentProductId={product.product_id}
                   />
+                </TabsContent>
+
+                {/* TAB 6: INFORMATIONS PRODUIT */}
+                <TabsContent value="informations" className="space-y-6">
+                  {/* Section 1: Champs éditables avec waterfall */}
+                  <div className="space-y-6">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="font-medium text-blue-900 mb-2">
+                        📝 Champs éditables (priorité canal)
+                      </div>
+                      <p className="text-sm text-blue-700">
+                        Ces champs peuvent être personnalisés pour le site
+                        internet. Si non remplis, les valeurs du catalogue
+                        produit seront utilisées.
+                      </p>
+                    </div>
+
+                    {/* Description complète */}
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <Label>Description complète</Label>
+                        <span className="text-sm text-gray-500">
+                          {formData.custom_description_long?.length || 0} / 5000
+                        </span>
+                      </div>
+                      <Textarea
+                        value={formData.custom_description_long ?? ''}
+                        onChange={e =>
+                          setFormData({
+                            ...formData,
+                            custom_description_long: e.target.value,
+                          })
+                        }
+                        placeholder="Description complète du produit pour le site internet..."
+                        maxLength={5000}
+                        rows={6}
+                        className="font-sans"
+                      />
+                      {getError('custom_description_long') && (
+                        <p className="text-sm text-red-600 mt-1">
+                          {getError('custom_description_long')?.message}
+                        </p>
+                      )}
+                      <p className="text-sm text-gray-500 mt-1">
+                        Waterfall: Custom canal →{' '}
+                        {product.description ? 'Description catalogue' : 'Vide'}
+                      </p>
+                    </div>
+
+                    {/* Description technique */}
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <Label>Description technique</Label>
+                        <span className="text-sm text-gray-500">
+                          {formData.custom_technical_description?.length || 0} /
+                          2000
+                        </span>
+                      </div>
+                      <Textarea
+                        value={formData.custom_technical_description ?? ''}
+                        onChange={e =>
+                          setFormData({
+                            ...formData,
+                            custom_technical_description: e.target.value,
+                          })
+                        }
+                        placeholder="Caractéristiques techniques du produit..."
+                        maxLength={2000}
+                        rows={4}
+                        className="font-sans"
+                      />
+                      {getError('custom_technical_description') && (
+                        <p className="text-sm text-red-600 mt-1">
+                          {getError('custom_technical_description')?.message}
+                        </p>
+                      )}
+                      <p className="text-sm text-gray-500 mt-1">
+                        Waterfall: Custom canal →{' '}
+                        {product.technical_description
+                          ? 'Description technique catalogue'
+                          : 'Vide'}
+                      </p>
+                    </div>
+
+                    {/* Marque */}
+                    <div>
+                      <Label>Marque</Label>
+                      <Input
+                        value={formData.custom_brand ?? ''}
+                        onChange={e =>
+                          setFormData({
+                            ...formData,
+                            custom_brand: e.target.value,
+                          })
+                        }
+                        placeholder="Nom de la marque"
+                        maxLength={100}
+                      />
+                      {getError('custom_brand') && (
+                        <p className="text-sm text-red-600 mt-1">
+                          {getError('custom_brand')?.message}
+                        </p>
+                      )}
+                      <p className="text-sm text-gray-500 mt-1">
+                        Waterfall: Custom canal → {product.brand || 'Vide'}
+                      </p>
+                    </div>
+
+                    {/* Selling Points */}
+                    <div>
+                      <Label>Points de vente (Selling Points)</Label>
+                      <div className="space-y-2 mt-2">
+                        {(formData.custom_selling_points || []).map(
+                          (point, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center gap-2"
+                            >
+                              <Input
+                                value={point}
+                                onChange={e => {
+                                  const newPoints = [
+                                    ...(formData.custom_selling_points || []),
+                                  ];
+                                  newPoints[index] = e.target.value;
+                                  setFormData({
+                                    ...formData,
+                                    custom_selling_points: newPoints,
+                                  });
+                                }}
+                                placeholder={`Point ${index + 1}`}
+                              />
+                              <ButtonV2
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  const newPoints = (
+                                    formData.custom_selling_points || []
+                                  ).filter((_, i) => i !== index);
+                                  setFormData({
+                                    ...formData,
+                                    custom_selling_points: newPoints,
+                                  });
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </ButtonV2>
+                            </div>
+                          )
+                        )}
+                        <ButtonV2
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setFormData({
+                              ...formData,
+                              custom_selling_points: [
+                                ...(formData.custom_selling_points || []),
+                                '',
+                              ],
+                            });
+                          }}
+                        >
+                          + Ajouter un point
+                        </ButtonV2>
+                      </div>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Waterfall: Custom canal →{' '}
+                        {product.selling_points?.length > 0
+                          ? `${product.selling_points.length} points catalogue`
+                          : 'Vide'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Section 2: Champs READ-ONLY */}
+                  <div className="border-t pt-6 space-y-6">
+                    <div className="bg-gray-50 border border-gray-300 rounded-lg p-4">
+                      <div className="font-medium text-gray-900 mb-2">
+                        👁️ Informations catalogue (lecture seule)
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        Ces informations proviennent du catalogue produit et ne
+                        peuvent pas être modifiées depuis ce canal.
+                      </p>
+                    </div>
+
+                    {/* Grille 2 colonnes pour READ-ONLY */}
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Dimensions */}
+                      <div className="bg-white border rounded-lg p-4">
+                        <Label className="text-gray-700">Dimensions</Label>
+                        <div className="text-sm text-gray-900 mt-2">
+                          {formatDimensions(product.dimensions)}
+                        </div>
+                      </div>
+
+                      {/* Poids */}
+                      <div className="bg-white border rounded-lg p-4">
+                        <Label className="text-gray-700">Poids</Label>
+                        <div className="text-sm text-gray-900 mt-2">
+                          {product.weight ? (
+                            <span>{product.weight} kg</span>
+                          ) : (
+                            <span className="text-gray-400 italic">
+                              Non défini
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Quantité minimale fournisseur */}
+                      <div className="bg-white border rounded-lg p-4">
+                        <Label className="text-gray-700">
+                          Quantité minimale fournisseur
+                        </Label>
+                        <div className="text-sm text-gray-900 mt-2">
+                          {product.supplier_moq ? (
+                            <Badge variant="secondary">
+                              {product.supplier_moq}{' '}
+                              {product.supplier_moq > 1 ? 'unités' : 'unité'}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline">1 unité (défaut)</Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">
+                          Quantité minimum de commande imposée par le
+                          fournisseur
+                        </p>
+                      </div>
+
+                      {/* Pièces compatibles */}
+                      <div className="bg-white border rounded-lg p-4">
+                        <Label className="text-gray-700">
+                          Pièces compatibles
+                        </Label>
+                        <div className="text-sm text-gray-900 mt-2">
+                          {product.suitable_rooms?.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {product.suitable_rooms.map((room, i) => (
+                                <Badge key={i} variant="outline">
+                                  {room}
+                                </Badge>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 italic">Aucune</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Sous-catégorie */}
+                      <div className="bg-white border rounded-lg p-4">
+                        <Label className="text-gray-700">Sous-catégorie</Label>
+                        <div className="text-sm text-gray-900 mt-2">
+                          {product.subcategory_name ? (
+                            <Badge variant="secondary">
+                              {product.subcategory_name}
+                            </Badge>
+                          ) : (
+                            <span className="text-gray-400 italic">
+                              Non définie
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Type produit */}
+                      <div className="bg-white border rounded-lg p-4">
+                        <Label className="text-gray-700">Type de produit</Label>
+                        <div className="text-sm text-gray-900 mt-2">
+                          {product.product_type &&
+                          PRODUCT_TYPE_LABELS[product.product_type] ? (
+                            <Badge
+                              variant={
+                                PRODUCT_TYPE_LABELS[product.product_type]
+                                  .variant
+                              }
+                            >
+                              {PRODUCT_TYPE_LABELS[product.product_type].label}
+                            </Badge>
+                          ) : (
+                            <span className="text-gray-400 italic">
+                              Non défini
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Vidéo URL */}
+                      <div className="bg-white border rounded-lg p-4">
+                        <Label className="text-gray-700">Vidéo URL</Label>
+                        <div className="text-sm text-gray-900 mt-2">
+                          {product.video_url ? (
+                            <a
+                              href={product.video_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline"
+                            >
+                              Voir la vidéo
+                            </a>
+                          ) : (
+                            <span className="text-gray-400 italic">
+                              Aucune vidéo
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </TabsContent>
               </div>
             </Tabs>
