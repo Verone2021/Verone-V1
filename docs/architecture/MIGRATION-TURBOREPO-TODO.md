@@ -1,26 +1,26 @@
 # 📝 TODO - Réactivation Fonctionnalités Post-Migration Turborepo
 
 **Date création** : 2025-11-19
-**Statut global** : 45/47 terminés (96%)
-**Temps restant estimé** : 30 minutes (Problem 12 FK + documentation)
+**Statut global** : 46/47 terminés (98%)
+**Temps restant estimé** : 15 minutes (Problem 47 documentation uniquement)
 
 ---
 
 ## 🎯 PROGRESSION GLOBALE
 
 ```
-[███████████████████████████████████░░] 96% (45/47)
+[█████████████████████████████████████░] 98% (46/47)
 ```
 
-| Phase               | Statut       | Temps | Progrès     |
-| ------------------- | ------------ | ----- | ----------- |
-| Phase 1 : Critiques | ✅ TERMINÉE  | 2.5h  | 8/8 (100%)  |
-| Phase 2 : Stock     | ⚠️ PARTIELLE | 45min | 3/4 (75%)   |
-| Phase 3 : Business  | ✅ TERMINÉE  | 0.5h  | 22/23 (96%) |
-| Phase 4 : Qualité   | ✅ TERMINÉE  | 1h    | 11/12 (92%) |
+| Phase               | Statut      | Temps | Progrès     |
+| ------------------- | ----------- | ----- | ----------- |
+| Phase 1 : Critiques | ✅ TERMINÉE | 2.5h  | 8/8 (100%)  |
+| Phase 2 : Stock     | ✅ TERMINÉE | 1h30  | 4/4 (100%)  |
+| Phase 3 : Business  | ✅ TERMINÉE | 0.5h  | 22/23 (96%) |
+| Phase 4 : Qualité   | ✅ TERMINÉE | 1h    | 11/12 (92%) |
 
-**Date dernière mise à jour** : 2025-11-19 09:47
-**Temps total** : 4h45min réelles (vs 7h estimées initialement)
+**Date dernière mise à jour** : 2025-11-19 10:18
+**Temps total** : 5h30min réelles (vs 7h estimées initialement)
 
 ---
 
@@ -209,29 +209,43 @@
 
 ---
 
-### ❌ 12. Réservations Stock - **BLOQUÉ (Erreur FK)**
+### ✅ 12. Réservations Stock - **RÉSOLU**
 
 **Fichier** : `apps/back-office/src/app/stocks/produits/page.tsx:347`
 
-**Statut** : ❌ ROLLBACK effectué après détection erreur console
+**Statut** : ✅ RÉSOLU - RLS policies + FK constraint + Query simplifiée
 
 **Erreur identifiée** :
 
 ```
 PGRST200: Could not find a relationship between 'stock_reservations' and 'products'
-Hint: Perhaps you meant 'stock_overview' instead of 'stock_reservations'.
 ```
 
-**Actions restantes** :
+**Causes root identifiées** :
 
-- [ ] Vérifier structure table `stock_reservations` en DB
-- [ ] Créer migration SQL pour ajouter FK `product_id` → `products.id` si manquante
-- [ ] OU utiliser `stock_overview` au lieu de `stock_reservations` (selon hint PostgreSQL)
-- [ ] Réactiver ligne 347 : `fetchReservations()`
-- [ ] Tester chargement réservations sans erreur console
+1. PostgREST refuse les joins sur tables sans RLS policies
+2. FK constraint `stock_reservations_product_id_fkey` manquant dans database (présent dans migration mais jamais créé)
+3. Query demandait `products.primary_image_url` qui n'existe pas (colonne inexistante)
 
-**Temps estimé** : 30 minutes
-**Dépendances** : Migration SQL + validation schema
+**Actions effectuées** :
+
+- [x] Créer migration RLS : `supabase/migrations/20251119090317_add_stock_reservations_rls_policies.sql`
+- [x] Appliquer migration via psql direct : 4 policies créées (SELECT, INSERT, UPDATE, DELETE)
+- [x] Ajouter FK constraint manquant : `ALTER TABLE stock_reservations ADD CONSTRAINT stock_reservations_product_id_fkey FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE`
+- [x] Simplifier query : Retirer `primary_image_url` (colonne inexistante) de `packages/@verone/stock/src/hooks/use-stock-reservations.ts:92`
+- [x] Réactiver ligne 347-352 : `fetchReservations()`
+- [x] Tester console = **0 erreurs** ✅
+- [x] Vérifier build = **SUCCÈS** (exit code 0) ✅
+
+**Fichiers modifiés (prêts pour commit)** :
+
+- `supabase/migrations/20251119090317_add_stock_reservations_rls_policies.sql` ✅ Créée et appliquée
+- `packages/@verone/stock/src/hooks/use-stock-reservations.ts` ✅ Query simplifiée (ligne 92)
+- `apps/back-office/src/app/stocks/produits/page.tsx` ✅ fetchReservations() décommenté (ligne 347-352)
+- `docs/architecture/MIGRATION-TURBOREPO-TODO.md` ✅ Documentation mise à jour
+
+**Résolution finale** : 2025-11-19 10:18 UTC
+**Temps total** : 45 minutes (troubleshooting + 3 corrections)
 
 ---
 

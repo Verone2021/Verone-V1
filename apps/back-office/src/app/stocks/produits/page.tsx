@@ -344,10 +344,10 @@ export default function StockInventairePage() {
       const [inventoryProducts] = await Promise.all([
         fetchInventoryProducts(),
         fetchStats(),
-        // ❌ PROBLÈME NON RÉSOLU: Erreur FK stock_reservations -> products manquante
-        // Erreur: "Could not find a relationship between 'stock_reservations' and 'products'"
-        // TODO: Créer migration SQL pour ajouter FK product_id vers products.id
-        // fetchReservations(),
+        // ✅ Problem 12 - RÉSOLU: Migration RLS appliquée + query simplifiée
+        // Migration: supabase/migrations/20251119090317_add_stock_reservations_rls_policies.sql
+        // RLS policies activées sur stock_reservations (pattern products: authenticated users)
+        fetchReservations(),
       ]);
       setProducts(inventoryProducts);
     } finally {
