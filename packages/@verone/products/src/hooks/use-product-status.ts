@@ -2,8 +2,7 @@
 
 import { useState, useCallback } from 'react';
 
-// FIXME: Server actions can't be imported from monorepo packages
-// import { deleteProductAlerts } from '@/app/actions/delete-product-alerts';
+// import { deleteProductAlerts } from '@/app/actions/delete-product-alerts'; // ❌ Cannot import Server Actions from packages
 import { createClient } from '@verone/utils/supabase/client';
 
 /**
@@ -120,8 +119,9 @@ export function useProductStatus({
         if (newStatus === 'preorder' || newStatus === 'discontinued') {
           updates.min_stock = 0;
 
-          // FIXME: deleteProductAlerts server action can't be imported from monorepo
-          // // Supprimer les alertes stock en DB
+          // ❌ TODO: Supprimer alertes stock (must be handled in app layer, not package)
+          // Cannot call Server Actions from packages - app must handle alert deletion separately
+          // Supprimer les alertes stock en DB
           // try {
           //   const result = await deleteProductAlerts(productId);
           //   if (result.success) {

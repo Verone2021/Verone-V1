@@ -344,7 +344,10 @@ export default function StockInventairePage() {
       const [inventoryProducts] = await Promise.all([
         fetchInventoryProducts(),
         fetchStats(),
-        // fetchReservations désactivé temporairement - erreur clé étrangère
+        // ❌ PROBLÈME NON RÉSOLU: Erreur FK stock_reservations -> products manquante
+        // Erreur: "Could not find a relationship between 'stock_reservations' and 'products'"
+        // TODO: Créer migration SQL pour ajouter FK product_id vers products.id
+        // fetchReservations(),
       ]);
       setProducts(inventoryProducts);
     } finally {

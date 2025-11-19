@@ -20,14 +20,11 @@
  * ```
  */
 
-import * as React from 'react';
-
+import { cn } from '@verone/utils';
 import { ArrowUp, ArrowDown } from 'lucide-react';
 
-import { Card } from '../card';
-import { cn } from '@verone/utils';
-
 import { KPI_VARIANT_CONFIG, type KPIVariant, type LucideIcon } from './types';
+import { Card } from '../ui/card';
 
 export interface StockKPICardProps {
   /**

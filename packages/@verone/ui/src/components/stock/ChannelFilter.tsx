@@ -18,22 +18,20 @@
  * ```
  */
 
-import * as React from 'react';
 import { useState, useEffect } from 'react';
 
+import { createClient } from '@verone/utils/supabase/client';
 import { Loader2 } from 'lucide-react';
 
+import { ChannelBadge } from './ChannelBadge';
+import { type ChannelCode } from './types';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { createClient } from '@verone/utils/supabase/client';
-
-import { ChannelBadge } from './ChannelBadge';
-import { type ChannelCode } from './types';
+} from '../ui/select';
 
 export interface ChannelFilterProps {
   /**

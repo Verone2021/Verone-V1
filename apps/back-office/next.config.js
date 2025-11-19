@@ -17,12 +17,11 @@ const nextConfig = {
     ignoreDuringBuilds: true, // TEMPORARY - Re-enable after fixing warnings
   },
 
-  // TypeScript: Validation stricte TEMPORAIREMENT désactivée (2025-11-07)
-  // TODO: Retirer ignoreBuildErrors après correction 249 erreurs TS
-  // Voir: docs/audits/2025-11/TS_ERRORS_PLAN.md
+  // TypeScript: Validation stricte RÉACTIVÉE (2025-11-19)
+  // ✅ FIXED: Toutes les erreurs TypeScript corrigées (Phase 4 Migration Turborepo)
   // Note: Utiliser npm run type-check pour validation locale avant commit
   typescript: {
-    ignoreBuildErrors: true, // TEMPORARY - Remove after TS errors fixed
+    ignoreBuildErrors: false, // ✅ Validation stricte réactivée
   },
 
   // Security headers

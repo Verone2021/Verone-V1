@@ -24,19 +24,16 @@
  * ```
  */
 
-import * as React from 'react';
-
 import Image from 'next/image';
 
+import { cn } from '@verone/utils';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Package } from 'lucide-react';
 
-import { Card } from '../card';
-import { cn } from '@verone/utils';
-
 import { ChannelBadge } from './ChannelBadge';
 import { MOVEMENT_CONFIG, type MovementType, type ChannelCode } from './types';
+import { Card } from '../ui/card';
 
 export interface StockMovementCardProps {
   /**

@@ -2,8 +2,7 @@
 
 import { useState, useCallback } from 'react';
 
-// FIXME: Server actions can't be imported from monorepo packages
-// import { deleteProductAlerts } from '@/app/actions/delete-product-alerts';
+// import { deleteProductAlerts } from '@/app/actions/delete-product-alerts'; // ❌ Cannot import Server Actions from packages
 import { createClient } from '@verone/utils/supabase/client';
 
 // Types des sections éditables
@@ -170,8 +169,9 @@ export function useInlineEdit(options: UseInlineEditOptions) {
               // Forcer min_stock à 0 (règle métier)
               sectionState.editedData.min_stock = 0;
 
-              // FIXME: deleteProductAlerts server action can't be imported from monorepo
-              // // Supprimer les alertes stock en DB
+              // ❌ TODO: Supprimer alertes stock (géré dans l'app via use-product-status.ts)
+              // Cannot call Server Actions from packages - must be called from app layer
+              // Supprimer les alertes stock en DB
               // try {
               //   const result = await deleteProductAlerts(productId);
               //   if (result.success) {

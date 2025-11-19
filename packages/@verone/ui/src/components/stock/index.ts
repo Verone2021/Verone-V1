@@ -21,15 +21,15 @@
 export { ChannelBadge } from './ChannelBadge';
 export type { ChannelBadgeProps } from './ChannelBadge';
 
-// Composants nécessitant shadcn/ui + Supabase (commentés temporairement)
-// export { ChannelFilter } from './ChannelFilter';
-// export type { ChannelFilterProps } from './ChannelFilter';
-//
-// export { StockMovementCard } from './StockMovementCard';
-// export type { StockMovementCardProps } from './StockMovementCard';
-//
-// export { StockKPICard } from './StockKPICard';
-// export type { StockKPICardProps } from './StockKPICard';
+// Composants Stock - Phase 2 Activés
+export { StockKPICard } from './StockKPICard';
+export type { StockKPICardProps } from './StockKPICard';
+
+export { StockMovementCard } from './StockMovementCard';
+export type { StockMovementCardProps } from './StockMovementCard';
+
+export { ChannelFilter } from './ChannelFilter';
+export type { ChannelFilterProps } from './ChannelFilter';
 
 // Types & Constants
 export type {
