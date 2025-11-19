@@ -22,6 +22,8 @@ import {
 import type { PurchaseOrder } from '@verone/orders/hooks';
 import { usePurchaseOrders } from '@verone/orders/hooks';
 
+import { PurchaseOrderReceptionModal } from './PurchaseOrderReceptionModal';
+
 // ✅ Type Safety: Interface ProductImage stricte (IDENTIQUE à OrderDetailModal)
 interface ProductImage {
   id?: string;
@@ -92,6 +94,10 @@ export function PurchaseOrderDetailModal({
 
   // ✅ Workflow Achats: Permettre réception pour confirmed + partially_received
   const canReceive = ['confirmed', 'partially_received'].includes(order.status);
+
+  // ✅ Récupérer payment_terms depuis organisation si non défini sur commande
+  const paymentTerms =
+    order.payment_terms || order.organisations?.payment_terms || null;
 
   return (
     <>
@@ -396,17 +402,18 @@ export function PurchaseOrderDetailModal({
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {order.payment_terms ? (
+                  {paymentTerms ? (
                     <div className="bg-green-50 p-3 rounded-lg border border-green-200">
                       <div className="text-xs text-green-600 font-medium mb-1">
                         💳 CONDITIONS NÉGOCIÉES
                       </div>
                       <div className="text-sm font-semibold text-green-800">
-                        {paymentTermsLabels[order.payment_terms] ||
-                          order.payment_terms}
+                        {paymentTermsLabels[paymentTerms] || paymentTerms}
                       </div>
                       <p className="text-xs text-green-600 mt-1">
-                        Héritées de la fiche fournisseur
+                        {order.payment_terms
+                          ? 'Définies sur la commande'
+                          : 'Héritées de la fiche fournisseur'}
                       </p>
                     </div>
                   ) : (
@@ -513,10 +520,16 @@ export function PurchaseOrderDetailModal({
         </DialogContent>
       </Dialog>
 
-      {/* TODO Phase 2: Modal Gestion Réception (équivalent à SalesOrderShipmentModal) */}
-      {showReceivingModal && (
-        <div className="hidden">Modal réception à implémenter en Phase 2</div>
-      )}
+      {/* ✅ Modal Gestion Réception */}
+      <PurchaseOrderReceptionModal
+        order={order}
+        open={showReceivingModal}
+        onClose={() => setShowReceivingModal(false)}
+        onSuccess={() => {
+          setShowReceivingModal(false);
+          onUpdate?.();
+        }}
+      />
     </>
   );
 }

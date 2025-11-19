@@ -60,7 +60,7 @@ export interface PurchaseOrder {
     trade_name: string | null;
     email?: string;
     phone?: string;
-    payment_terms?: string;
+    payment_terms?: string | null;
   };
   purchase_order_items?: PurchaseOrderItem[];
 }
