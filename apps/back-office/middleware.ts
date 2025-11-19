@@ -1,14 +1,14 @@
 /**
- * 🔒 Middleware Site-Internet - Vérone
+ * 🔒 Middleware Back-Office - Vérone
  *
  * Middleware composé :
- * 1. App-Isolation : Vérifie que user.app_source = 'site-internet'
+ * 1. App-Isolation : Vérifie que user.app_source = 'back-office'
  * 2. Auth Session : Met à jour la session Supabase (cookies)
  *
  * Règles :
- * - User avec app_source='back-office' → Redirigé vers https://admin.verone.fr
+ * - User avec app_source='site-internet' → Redirigé vers https://shop.verone.fr
  * - User avec app_source='linkme' → Redirigé vers https://linkme.verone.fr
- * - User avec app_source='site-internet' → Accès autorisé
+ * - User avec app_source='back-office' → Accès autorisé
  *
  * @module middleware
  * @since 2025-11-19 (Phase 2 Multi-Canal)
@@ -17,8 +17,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { checkAppIsolation } from '@verone/utils';
-
-import { updateSession } from '@/lib/supabase/middleware';
+// import { updateSession } from '@/lib/supabase/middleware'; // ⚠️ À activer si lib existe
 
 export async function middleware(request: NextRequest) {
   // ========================================
@@ -26,19 +25,16 @@ export async function middleware(request: NextRequest) {
   // ========================================
 
   const isolationResult = await checkAppIsolation(request, {
-    appName: 'site-internet',
+    appName: 'back-office',
     redirects: {
-      'back-office':
-        process.env.NEXT_PUBLIC_BACK_OFFICE_URL || 'http://localhost:3000',
+      'site-internet':
+        process.env.NEXT_PUBLIC_SITE_INTERNET_URL || 'http://localhost:3001',
       linkme: process.env.NEXT_PUBLIC_LINKME_URL || 'http://localhost:3002',
     },
-    defaultRedirect: '/',
+    defaultRedirect: '/login',
     excludePaths: [
       /^\/api\/public/, // API publiques
-      /^\/auth/, // Pages auth
-      /^\/produits/, // Pages produits (publiques)
-      /^\/collections/, // Pages collections (publiques)
-      /^\/$/, // Homepage (publique)
+      /^\/auth/, // Pages auth (login, signup, etc.)
       /^\/_next/, // Next.js internals
       /^\/favicon\.ico/,
       /\.(?:svg|png|jpg|jpeg|gif|webp)$/, // Images statiques
@@ -48,7 +44,7 @@ export async function middleware(request: NextRequest) {
 
   if (!isolationResult.allowed && isolationResult.redirectUrl) {
     console.warn(
-      `[Middleware Site-Internet] User app_source=${isolationResult.userAppSource} bloqué, redirection vers ${isolationResult.redirectUrl}`
+      `[Middleware Back-Office] User app_source=${isolationResult.userAppSource} bloqué, redirection vers ${isolationResult.redirectUrl}`
     );
     return NextResponse.redirect(new URL(isolationResult.redirectUrl));
   }
@@ -57,7 +53,11 @@ export async function middleware(request: NextRequest) {
   // ÉTAPE 2 : Update Session Supabase
   // ========================================
 
-  return await updateSession(request);
+  // ⚠️ IMPORTANT : Décommenter une fois que lib/supabase/middleware.ts existe
+  // return await updateSession(request);
+
+  // Temporaire : Passer sans update session (créer lib/supabase/middleware.ts)
+  return NextResponse.next();
 }
 
 export const config = {

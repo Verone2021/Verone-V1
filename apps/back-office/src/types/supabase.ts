@@ -5552,7 +5552,9 @@ export type Database = {
       user_profiles: {
         Row: {
           app: Database['public']['Enums']['app_type'];
+          app_source: Database['public']['Enums']['app_type'] | null;
           avatar_url: string | null;
+          client_type: Database['public']['Enums']['client_type'] | null;
           created_at: string | null;
           first_name: string | null;
           individual_customer_id: string | null;
@@ -5560,17 +5562,20 @@ export type Database = {
           last_name: string | null;
           last_sign_in_at: string | null;
           organisation_id: string | null;
+          parent_user_id: string | null;
           partner_id: string | null;
           phone: string | null;
           role: Database['public']['Enums']['user_role_type'];
           scopes: string[] | null;
           updated_at: string | null;
           user_id: string;
-          user_type: string;
+          user_type: Database['public']['Enums']['user_type'] | null;
         };
         Insert: {
           app?: Database['public']['Enums']['app_type'];
+          app_source?: Database['public']['Enums']['app_type'] | null;
           avatar_url?: string | null;
+          client_type?: Database['public']['Enums']['client_type'] | null;
           created_at?: string | null;
           first_name?: string | null;
           individual_customer_id?: string | null;
@@ -5578,17 +5583,20 @@ export type Database = {
           last_name?: string | null;
           last_sign_in_at?: string | null;
           organisation_id?: string | null;
+          parent_user_id?: string | null;
           partner_id?: string | null;
           phone?: string | null;
           role: Database['public']['Enums']['user_role_type'];
           scopes?: string[] | null;
           updated_at?: string | null;
           user_id: string;
-          user_type?: string;
+          user_type?: Database['public']['Enums']['user_type'] | null;
         };
         Update: {
           app?: Database['public']['Enums']['app_type'];
+          app_source?: Database['public']['Enums']['app_type'] | null;
           avatar_url?: string | null;
+          client_type?: Database['public']['Enums']['client_type'] | null;
           created_at?: string | null;
           first_name?: string | null;
           individual_customer_id?: string | null;
@@ -5596,13 +5604,14 @@ export type Database = {
           last_name?: string | null;
           last_sign_in_at?: string | null;
           organisation_id?: string | null;
+          parent_user_id?: string | null;
           partner_id?: string | null;
           phone?: string | null;
           role?: Database['public']['Enums']['user_role_type'];
           scopes?: string[] | null;
           updated_at?: string | null;
           user_id?: string;
-          user_type?: string;
+          user_type?: Database['public']['Enums']['user_type'] | null;
         };
         Relationships: [
           {
@@ -5639,6 +5648,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'organisations';
             referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'user_profiles_parent_user_id_fkey';
+            columns: ['parent_user_id'];
+            isOneToOne: false;
+            referencedRelation: 'user_profiles';
+            referencedColumns: ['user_id'];
           },
         ];
       };
@@ -8025,6 +8041,13 @@ export type Database = {
         Args: { org_id: string };
         Returns: boolean;
       };
+      user_has_role_in_org: {
+        Args: {
+          required_roles: Database['public']['Enums']['user_role_type'][];
+          target_org_id: string;
+        };
+        Returns: boolean;
+      };
       validate_feed_filters: { Args: { filters_json: Json }; Returns: boolean };
       validate_partner_id_migration: {
         Args: never;
@@ -8095,6 +8118,7 @@ export type Database = {
         | 'coming_soon'
         | 'discontinued';
       bank_provider: 'qonto' | 'revolut';
+      client_type: 'particulier' | 'professionnel';
       document_direction: 'inbound' | 'outbound';
       document_status:
         | 'draft'
@@ -8391,6 +8415,7 @@ export const Constants = {
         'discontinued',
       ],
       bank_provider: ['qonto', 'revolut'],
+      client_type: ['particulier', 'professionnel'],
       document_direction: ['inbound', 'outbound'],
       document_status: [
         'draft',
