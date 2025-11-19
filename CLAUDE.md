@@ -375,6 +375,170 @@ Read('.claude/contexts/monorepo.md');
 
 ---
 
+## 📁 CLASSIFICATION DOCUMENTATION (WORKFLOW OBLIGATOIRE)
+
+**RÈGLE ABSOLUE** : **TOUJOURS consulter ce guide AVANT créer rapport/audit/documentation**
+
+### 🎯 Principe
+
+**Aucun fichier .md ne doit rester à la racine du projet** (sauf README.md, CHANGELOG.md, CLAUDE.md).
+**Tous rapports, audits, guides doivent être classés dans `/docs` avec structure appropriée.**
+
+### 📂 Structure /docs (Best Practices 2025)
+
+```
+docs/
+├── architecture/           # Architecture système, composants, ADR
+│   ├── decisions/         # ADR (Architecture Decision Records)
+│   └── design-system/     # Design System, composants UI
+├── audits/                # Audits par mois (2025-10/, 2025-11/, etc.)
+│   └── 2025-11/          # Rapports novembre 2025
+├── business-rules/        # Règles métier (93 dossiers modulaires)
+├── database/              # Schema, migrations, RLS, triggers
+├── guides/                # Guides développement (8 catégories)
+│   ├── 01-onboarding/    # Nouveaux développeurs
+│   ├── 02-development/   # Développement quotidien
+│   ├── 03-integrations/  # Intégrations externes
+│   ├── 04-deployment/    # CI/CD, Vercel
+│   ├── 05-database/      # Database guides
+│   ├── 06-ui-ux/         # Design, mockups
+│   ├── 07-troubleshooting/ # Debugging
+│   └── 08-best-practices/ # Bonnes pratiques
+├── project-management/    # Roadmap, sprints, retrospectives
+├── workflows/             # Workflows métier
+└── ... (voir structure complète dans docs/README.md)
+```
+
+### 🚨 WORKFLOW CLASSIFICATION
+
+**AVANT de créer tout fichier .md, suivre ce processus** :
+
+#### Étape 1 : Identifier Type Document
+
+```typescript
+// Types de documents courants
+const documentTypes = {
+  AUDIT: 'Rapport audit technique/qualité/sécurité',
+  RAPPORT: 'Analyse, investigation, tests',
+  GUIDE: 'Documentation développement/intégration',
+  ADR: 'Architecture Decision Record',
+  ROADMAP: 'Planification projet',
+  STATUS: 'État composants/features',
+};
+```
+
+#### Étape 2 : Déterminer Destination
+
+```typescript
+// Matrice de classification
+if (type === 'AUDIT' || type === 'RAPPORT') {
+  // → docs/audits/YYYY-MM/
+  destination = `docs/audits/${currentMonth}/`;
+  example = 'docs/audits/2025-11/RAPPORT-TESTS-AUTHENTIFICATION.md';
+} else if (type === 'GUIDE' && topic === 'intégration') {
+  // → docs/guides/03-integrations/[service]/
+  destination = `docs/guides/03-integrations/${serviceName}/`;
+  example = 'docs/guides/03-integrations/google-merchant/configuration.md';
+} else if (type === 'ADR') {
+  // → docs/architecture/decisions/
+  destination = 'docs/architecture/decisions/';
+  example = 'docs/architecture/decisions/0006-pricing-multi-canaux.md';
+} else if (type === 'ROADMAP' || type === 'SPRINT') {
+  // → docs/project-management/
+  destination = 'docs/project-management/';
+  example = 'docs/project-management/roadmap-2025-q4.md';
+} else if (type === 'STATUS') {
+  // → docs/architecture/design-system/
+  destination = 'docs/architecture/design-system/';
+  example = 'docs/architecture/design-system/status-composants.md';
+}
+```
+
+#### Étape 3 : Vérifier Sous-dossier Existe
+
+```typescript
+// Si sous-dossier n'existe pas, LE CRÉER
+if (!exists(destination)) {
+  mkdir(destination);
+  createREADME(destination); // Toujours créer README.md dans nouveau dossier
+}
+```
+
+#### Étape 4 : Nommer Fichier (Convention)
+
+```typescript
+// Convention naming
+const filename = `${TYPE}-${sujet}-${date}.md`;
+
+// Exemples corrects
+('RAPPORT-TESTS-AUTHENTIFICATION-2025-11-19.md');
+('AUDIT-BOUTONS-CRUD-COMPLET-2025-11-11.md');
+('GUIDE-INTEGRATION-STRIPE-2025-11-20.md');
+('ADR-0007-websockets-temps-reel.md');
+```
+
+### ✅ Exemples Concrets
+
+#### Exemple 1 : Audit Boutons CRUD
+
+```typescript
+// ❌ INCORRECT (racine projet)
+path = '/AUDIT-BOUTONS-CRUD-COMPLET.md';
+
+// ✅ CORRECT
+path = '/docs/audits/2025-11/AUDIT-BOUTONS-CRUD-COMPLET-2025-11-11.md';
+```
+
+#### Exemple 2 : Guide Intégration Stripe
+
+```typescript
+// ❌ INCORRECT (racine /docs ou guides plat)
+path = '/docs/GUIDE-INTEGRATION-STRIPE.md';
+path = '/docs/guides/GUIDE-INTEGRATION-STRIPE.md';
+
+// ✅ CORRECT
+path = '/docs/guides/03-integrations/stripe/configuration-complete.md';
+
+// + Créer README.md si dossier stripe/ n'existe pas
+path = '/docs/guides/03-integrations/stripe/README.md';
+```
+
+#### Exemple 3 : Décision Architecture Pricing
+
+```typescript
+// ❌ INCORRECT (mémoire Serena ou guides/)
+path = '/.serena/memories/pricing-multi-canaux.md';
+path = '/docs/guides/pricing-system.md';
+
+// ✅ CORRECT (ADR formel)
+path = '/docs/architecture/decisions/0004-pricing-multi-canaux.md';
+
+// Format ADR standard (voir template docs/architecture/decisions/adr-template.md)
+```
+
+### 📋 Checklist Avant Création Fichier
+
+- [ ] **Type document identifié** (Audit, Guide, ADR, Rapport, etc.)
+- [ ] **Destination déterminée** selon matrice classification
+- [ ] **Sous-dossier vérifié** (créer si inexistant + README.md)
+- [ ] **Nom fichier conforme** (TYPE-sujet-date.md)
+- [ ] **Aucun fichier à la racine** (sauf README, CHANGELOG, CLAUDE)
+- [ ] **README.md mis à jour** dans dossier parent si nécessaire
+
+### 🔗 Référence Complète
+
+**Documentation détaillée** :
+
+- Structure complète : `docs/README.md`
+- Template ADR : `docs/architecture/decisions/adr-template.md`
+- Audit réorganisation : `docs/architecture/TURBOREPO-FINAL-CHECKLIST.md` (Section "PHASE 2")
+
+**Memory Serena** :
+
+- `reorganisation-documentation-2025-11-19.md` (créée après Phase 2 réorganisation)
+
+---
+
 ## 🤖 MCP AGENTS & TOOLS
 
 ### Agents Spécialisés (9 disponibles)

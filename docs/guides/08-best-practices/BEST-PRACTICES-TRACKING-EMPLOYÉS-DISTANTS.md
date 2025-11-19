@@ -219,7 +219,7 @@ Je soussigné(e) [NOM PRÉNOM], comprends et accepte que:
    - Rétention: 30 jours détail, 1 an agrégé
 
 Fait à [VILLE], le [DATE]
-Signature: ******\_\_\_******
+Signature: **\*\***\_\_\_**\*\***
 ```
 
 ### **2. Politique Rétention Données**

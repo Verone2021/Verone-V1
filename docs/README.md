@@ -1,8 +1,8 @@
 # Documentation Vérone Back Office
 
-**Dernière mise à jour** : 2025-10-16
-**Version** : 2.0
-**Mainteneur** : Vérone Documentation Team
+**Dernière mise à jour** : 2025-11-19
+**Version** : 3.0 - Réorganisation complète selon best practices 2025
+**Mainteneur** : Romeo Dos Santos
 
 ---
 
@@ -10,7 +10,15 @@
 
 Documentation complète du système **Vérone Back Office**, CRM/ERP modulaire pour la décoration et le mobilier d'intérieur haut de gamme.
 
-**Stack Technique** : Next.js 15 + Supabase + shadcn/ui + React + Tailwind CSS
+**Stack Technique** : Next.js 15 + Supabase + shadcn/ui + React + Tailwind CSS + Turborepo
+
+**Nouveautés v3.0** :
+
+- ✅ Guides réorganisés en 8 catégories thématiques
+- ✅ Structure ADR (Architecture Decision Records)
+- ✅ Documentation gestion projet (sprints, roadmap)
+- ✅ Audits organisés par mois
+- ✅ Workflow classification documentation
 
 ---
 
@@ -71,26 +79,70 @@ Endpoints REST, fonctions RPC Supabase, webhooks, intégrations externes.
 
 ### 📚 [Guides Pratiques](./guides/README.md)
 
-Quickstart, setup développement, tests, déploiement, workflows quotidiens.
+**32 guides organisés en 8 catégories thématiques** (restructuration 2025-11-19).
 
-**Fichiers clés** :
+**Catégories** :
 
-- [Quickstart](./guides/quickstart.md)
-- [Development Setup](./guides/development-setup.md)
-- [Testing Guide](./guides/testing-guide.md)
-- [Deployment](./guides/deployment.md)
+- **01-Onboarding** - Nouveaux développeurs
+- **02-Development** - Setup, tests, workflows quotidiens
+- **03-Integrations** - Google Merchant, Qonto, services externes
+- **04-Deployment** - CI/CD, Vercel, GitHub
+- **05-Database** - Migrations, RLS, fixes
+- **06-UI-UX** - Design, mockups, refontes
+- **07-Troubleshooting** - Debugging, fixes urgents
+- **08-Best-Practices** - Bonnes pratiques, maintenance
+
+**Guide démarrage rapide** : [guides/README.md](./guides/README.md)
 
 ---
 
 ### 🏗️ [Architecture Système](./architecture/README.md)
 
-Tech stack, design system V2 2025, patterns architecture, sécurité.
+Tech stack, design system V2 2025, patterns architecture, sécurité, **ADR (Architecture Decision Records)**.
 
 **Fichiers clés** :
 
 - [Tech Stack](./architecture/tech-stack.md)
 - [Design System V2](./architecture/design-system.md)
 - [Security Architecture](./architecture/security.md)
+- **[ADR (Architecture Decision Records)](./architecture/decisions/README.md)** ⭐ NOUVEAU
+  - [ADR-0001: Turborepo Monorepo](./architecture/decisions/0001-turborepo-monorepo.md)
+  - [Template ADR](./architecture/decisions/adr-template.md)
+
+---
+
+### 📋 [Gestion Projet](./project-management/README.md) ⭐ NOUVEAU
+
+Roadmap, sprints planning, retrospectives, métriques vélocité.
+
+**Fichiers clés** :
+
+- [Roadmap Développement](./project-management/roadmap-developpement.md)
+- [Workflow Sprint](./project-management/README.md#-workflow-sprint)
+- [Métriques Clés](./project-management/README.md#-métriques-clés)
+
+**Sous-dossiers** :
+
+- `sprint-planning/` - Plans de sprints
+- `retrospectives/` - Rétrospectives équipe
+- `metrics/` - Vélocité, burndown, KPI
+
+---
+
+### 🔍 [Audits](./audits/) ⭐ NOUVEAU
+
+Rapports audits, tests, conformité organisés par mois.
+
+**Organisation** :
+
+- `2025-11/` - Novembre 2025 (68 fichiers)
+- `2025-10/` - Octobre 2025
+- ...
+
+**Derniers audits** :
+
+- [Audit Boutons CRUD Complet](./audits/2025-11/AUDIT-BOUTONS-CRUD-COMPLET.md)
+- [Rapport Formulaires Packlink](./audits/2025-11/RAPPORT-COMPARAISON-FORMULAIRES-PACKLINK-2025-11-12.md)
 
 ---
 
@@ -162,10 +214,11 @@ Erreurs courantes, debugging console, résolution problèmes.
 ## Conventions
 
 - **Naming** : kebab-case pour fichiers et dossiers
-- **Profondeur** : Maximum 2 niveaux (docs/section/fichier.md)
-- **README** : Obligatoire pour chaque section
+- **Profondeur** : Maximum 3 niveaux (docs/section/category/fichier.md)
+- **README** : Obligatoire pour chaque section et catégorie
 - **Headers** : Standard avec date MAJ, version, mainteneur
-- **Liens** : Chemins absolus pour navigation inter-sections
+- **Liens** : Chemins relatifs pour navigation intra-section, absolus pour inter-sections
+- **Classification** : ⭐ **OBLIGATOIRE** - Consulter workflow dans [CLAUDE.md](/CLAUDE.md#-classification-documentation-workflow-obligatoire)
 
 Voir [CONVENTIONS.md](./CONVENTIONS.md) pour détails complets.
 
@@ -173,21 +226,60 @@ Voir [CONVENTIONS.md](./CONVENTIONS.md) pour détails complets.
 
 ## Contribuer
 
-1. Consulter [Conventions](./CONVENTIONS.md)
-2. Utiliser templates dans `.templates/`
-3. Respecter structure à 2 niveaux max
-4. Mettre à jour README section si ajout fichier
-5. Mettre à jour ce README si ajout section
+### Workflow Classification Documentation
+
+**RÈGLE ABSOLUE** : Avant créer rapport/audit/documentation, **TOUJOURS consulter** :
+
+```
+CLAUDE.md → Section "📁 CLASSIFICATION DOCUMENTATION (WORKFLOW OBLIGATOIRE)"
+```
+
+**Matrice de classification** :
+
+1. Identifier type document (Audit, Guide, ADR, Rapport)
+2. Déterminer destination selon matrice TypeScript
+3. Vérifier sous-dossier existe (créer + README.md si besoin)
+4. Nommer fichier : `TYPE-sujet-date.md`
+
+**Exemples** :
+
+- Audit → `docs/audits/2025-11/AUDIT-FEATURE.md`
+- Guide intégration → `docs/guides/03-integrations/service/guide.md`
+- ADR → `docs/architecture/decisions/XXXX-titre.md`
+
+Voir [CLAUDE.md](/CLAUDE.md) pour workflow complet avec 6-point checklist.
+
+---
+
+## Contribuer (Général)
+
+1. ✅ **Consulter workflow classification** dans [CLAUDE.md](/CLAUDE.md)
+2. ✅ Consulter [Conventions](./CONVENTIONS.md)
+3. ✅ Utiliser templates dans `.templates/`
+4. ✅ Respecter structure à 3 niveaux max
+5. ✅ Mettre à jour README catégorie si ajout fichier
+6. ✅ Mettre à jour ce README si ajout section
 
 ---
 
 ## Historique des Versions
 
-| Date       | Version | Changements Majeurs                                 |
-| ---------- | ------- | --------------------------------------------------- |
-| 2025-10-16 | 2.0     | Refonte complète structure - 8 sections principales |
-| 2024-09-26 | 1.0     | Création initiale documentation                     |
+| Date       | Version | Changements Majeurs                                                |
+| ---------- | ------- | ------------------------------------------------------------------ |
+| 2025-11-19 | 3.0     | ⭐ Réorganisation complète : 8 catégories guides, ADR, projet mgmt |
+| 2025-10-16 | 2.0     | Refonte complète structure - 8 sections principales                |
+| 2024-09-26 | 1.0     | Création initiale documentation                                    |
+
+**Changelog 3.0** :
+
+- ✅ Guides réorganisés : 32 fichiers → 8 catégories thématiques
+- ✅ Structure ADR créée : README, template, ADR-0001 (Turborepo)
+- ✅ Nouveau dossier `project-management/` (roadmap, sprints)
+- ✅ Audits organisés par mois : `audits/YYYY-MM/`
+- ✅ Workflow classification documentation dans CLAUDE.md
+- ✅ 11 README.md créés (guides categories + ADR + project mgmt)
 
 ---
 
 **Vérone Back Office 2025** - Professional AI-Assisted CRM/ERP Development
+**Phase 4 Turborepo** - Multi-frontends Architecture (3 apps + 25 packages)
