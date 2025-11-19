@@ -6,6 +6,7 @@ import { createAdminClient } from '@verone/utils/supabase/server';
 
 export type PurchaseOrderStatus =
   | 'draft'
+  | 'validated' // ✅ Statut validation (rouge → vert)
   | 'sent'
   | 'confirmed'
   | 'partially_received'
@@ -76,7 +77,16 @@ export async function updatePurchaseOrderStatus(
     const updateFields: any = { status: newStatus };
 
     // Gérer les timestamps selon les contraintes PostgreSQL
-    if (newStatus === 'sent') {
+    if (newStatus === 'validated') {
+      // ✅ VALIDATION : rouge → vert (alerte stock)
+      updateFields.validated_at = new Date().toISOString();
+      updateFields.validated_by = userId;
+    } else if (newStatus === 'sent') {
+      // Envoi fournisseur (nécessite validation préalable)
+      if (!existingOrder.validated_at) {
+        updateFields.validated_at = new Date().toISOString();
+        updateFields.validated_by = userId;
+      }
       updateFields.sent_at = new Date().toISOString();
       updateFields.sent_by = userId;
     } else if (newStatus === 'confirmed') {

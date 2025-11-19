@@ -254,91 +254,75 @@ export function useSalesShipments() {
   );
 
   /**
-   * Charger historique expéditions (table shipments)
+   * Charger historique expéditions (mouvements stock liés)
    */
   const loadShipmentHistory = useCallback(
     async (soId: string): Promise<ShipmentHistory[]> => {
       try {
-        // Récupérer shipments pour ce SO avec structure correcte
-        const { data: shipments, error: shipmentsError } = await supabase
-          .from('shipments')
+        // Récupérer mouvements stock OUT (affects_forecast=false) pour ce SO
+        const { data: movements, error: movementsError } = await supabase
+          .from('stock_movements')
           .select(
             `
           id,
-          shipped_at,
-          delivered_at,
-          shipping_method,
+          quantity_change,
+          performed_at,
+          notes,
+          performed_by,
+          product_id,
           carrier_name,
-          service_name,
           tracking_number,
-          tracking_url,
-          cost_paid_eur,
-          cost_charged_eur,
-          shipping_parcels (
-            id,
-            parcel_number,
-            parcel_items (
-              quantity_shipped,
-              sales_order_items (
-                product_id,
-                products (
-                  name,
-                  sku
-                )
-              )
-            )
+          shipped_by_name,
+          products (
+            name,
+            sku
           )
         `
           )
-          .eq('sales_order_id', soId)
-          .order('shipped_at', { ascending: false });
+          .eq('reference_type', 'sales_order')
+          .eq('reference_id', soId)
+          .or('affects_forecast.is.null,affects_forecast.is.false')
+          .eq('movement_type', 'OUT')
+          .order('performed_at', { ascending: false });
 
-        if (shipmentsError) {
-          console.error('Erreur chargement historique:', shipmentsError);
+        if (movementsError) {
+          console.error('Erreur chargement historique:', movementsError);
           return [];
         }
 
-        // Helper pour mapper shipping_method vers label lisible
-        const getCarrierLabel = (method: string): string => {
-          const labels: Record<string, string> = {
-            packlink: 'Packlink',
-            mondial_relay: 'Mondial Relay',
-            chronotruck: 'Chronotruck',
-            manual: 'Manuel',
-          };
-          return labels[method] || method;
-        };
+        // Grouper par performed_at (même expédition)
+        const grouped = new Map<string, ShipmentHistory>();
 
-        return (shipments || []).map((shipment: any) => ({
-          shipment_id: shipment.id,
-          shipped_at: shipment.shipped_at,
-          delivered_at: shipment.delivered_at || undefined,
-          carrier_name:
-            shipment.carrier_name || getCarrierLabel(shipment.shipping_method),
-          service_name: shipment.service_name || undefined,
-          tracking_number: shipment.tracking_number || undefined,
-          tracking_url: shipment.tracking_url || undefined,
-          items: (shipment.shipping_parcels || []).flatMap((parcel: any) =>
-            (parcel.parcel_items || []).map((item: any) => ({
-              product_name:
-                item.sales_order_items?.products?.name || 'Produit inconnu',
-              product_sku: item.sales_order_items?.products?.sku || '',
-              quantity_shipped: item.quantity_shipped,
-            }))
-          ),
-          total_quantity: (shipment.shipping_parcels || []).reduce(
-            (sum: number, parcel: any) =>
-              sum +
-              (parcel.parcel_items || []).reduce(
-                (s: number, item: any) => s + (item.quantity_shipped || 0),
-                0
-              ),
-            0
-          ),
-          cost_paid_eur: shipment.cost_paid_eur || undefined,
-          cost_charged_eur: shipment.cost_charged_eur || undefined,
-          delivery_status: 'in_transit', // Default car colonne n'existe pas en DB
-        }));
+        movements?.forEach(movement => {
+          const key = movement.performed_at;
+
+          if (!grouped.has(key)) {
+            grouped.set(key, {
+              shipment_id: movement.id,
+              shipped_at: movement.performed_at,
+              delivered_at: undefined,
+              carrier_name: movement.carrier_name || 'Manuel',
+              service_name: undefined,
+              tracking_number: movement.tracking_number || undefined,
+              tracking_url: undefined,
+              items: [],
+              total_quantity: 0,
+              cost_paid_eur: undefined,
+              cost_charged_eur: undefined,
+              delivery_status: 'in_transit',
+            });
+          }
+
+          const history = grouped.get(key)!;
+          history.items.push({
+            product_name: (movement.products as any).name,
+            product_sku: (movement.products as any).sku,
+            quantity_shipped: Math.abs(movement.quantity_change), // OUT = négatif
+          });
+          history.total_quantity += Math.abs(movement.quantity_change);
+        });
+
+        return Array.from(grouped.values());
       } catch (err) {
         console.error('Exception historique expéditions:', err);
         return [];

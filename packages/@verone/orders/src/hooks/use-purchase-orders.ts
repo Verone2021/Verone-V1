@@ -16,6 +16,7 @@ import { createClient } from '@verone/utils/supabase/client';
 // Types pour les commandes fournisseurs
 export type PurchaseOrderStatus =
   | 'draft'
+  | 'validated' // ✅ Statut validation (rouge → vert)
   | 'sent'
   | 'confirmed'
   | 'partially_received'
@@ -72,6 +73,7 @@ export interface PurchaseOrderItem {
   unit_price_ht: number;
   discount_percentage: number;
   total_ht: number;
+  eco_tax: number;
   quantity_received: number;
   expected_delivery_date?: string;
   notes?: string;
@@ -195,6 +197,7 @@ export function usePurchaseOrders() {
             unit_price_ht,
             discount_percentage,
             total_ht,
+            eco_tax,
             quantity_received,
             expected_delivery_date,
             notes,
@@ -318,6 +321,7 @@ export function usePurchaseOrders() {
             unit_price_ht,
             discount_percentage,
             total_ht,
+            eco_tax,
             quantity_received,
             expected_delivery_date,
             notes,

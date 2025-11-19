@@ -51,6 +51,7 @@ import {
 } from '@verone/ui';
 import { Tabs, TabsList, TabsTrigger } from '@verone/ui';
 import { formatCurrency, formatDate } from '@verone/utils';
+import { createClient } from '@verone/utils/supabase/client';
 import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 import {
   Plus,
@@ -70,6 +71,8 @@ import {
   RotateCcw,
 } from 'lucide-react';
 
+import { updatePurchaseOrderStatus } from '@/app/actions/purchase-orders';
+
 type PurchaseOrderRow = Database['public']['Tables']['purchase_orders']['Row'];
 
 // ✅ Type Safety: Interface ProductImage stricte
@@ -82,6 +85,7 @@ interface ProductImage {
 
 const statusLabels: Record<PurchaseOrderStatus, string> = {
   draft: 'Brouillon',
+  validated: 'Validée',
   sent: 'Envoyée',
   confirmed: 'Confirmée',
   partially_received: 'Partiellement reçue',
@@ -91,6 +95,7 @@ const statusLabels: Record<PurchaseOrderStatus, string> = {
 
 const statusColors: Record<PurchaseOrderStatus, string> = {
   draft: 'bg-gray-100 text-gray-800',
+  validated: 'bg-green-100 text-green-800', // 🟢 Alerte verte
   sent: 'bg-blue-100 text-blue-800',
   confirmed: 'bg-gray-100 text-gray-900',
   partially_received: 'bg-gray-100 text-gray-900',
@@ -164,6 +169,7 @@ export default function PurchaseOrdersPage() {
     return {
       all: orders.length,
       draft: orders.filter(o => o.status === 'draft').length,
+      validated: orders.filter(o => o.status === 'validated').length,
       sent: orders.filter(o => o.status === 'sent').length,
       confirmed: orders.filter(o => o.status === 'confirmed').length,
       partially_received: orders.filter(o => o.status === 'partially_received')
@@ -349,9 +355,49 @@ export default function PurchaseOrdersPage() {
 
     // Sinon, exécuter directement
     try {
-      await updateStatus(orderId, newStatus);
+      // Récupérer l'utilisateur courant
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user?.id) {
+        toast({
+          title: 'Erreur',
+          description: 'Utilisateur non authentifié',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Appeler la Server Action pour mettre à jour le statut
+      const result = await updatePurchaseOrderStatus(
+        orderId,
+        newStatus,
+        user.id
+      );
+
+      if (!result.success) {
+        throw new Error(result.error || 'Erreur lors de la mise à jour');
+      }
+
+      toast({
+        title: 'Succès',
+        description: `Commande marquée comme ${newStatus}`,
+      });
+
+      // Rafraîchir les données
+      await fetchOrders();
     } catch (error) {
       console.error('Erreur lors du changement de statut:', error);
+      toast({
+        title: 'Erreur',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Impossible de changer le statut',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -359,18 +405,50 @@ export default function PurchaseOrdersPage() {
     if (!orderToValidate) return;
 
     try {
-      await updateStatus(orderToValidate, 'confirmed');
+      // Récupérer l'utilisateur courant
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user?.id) {
+        toast({
+          title: 'Erreur',
+          description: 'Utilisateur non authentifié',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Appeler la Server Action pour confirmer
+      const result = await updatePurchaseOrderStatus(
+        orderToValidate,
+        'confirmed',
+        user.id
+      );
+
+      if (!result.success) {
+        throw new Error(result.error || 'Erreur lors de la confirmation');
+      }
+
       toast({
         title: 'Succès',
         description: 'Commande fournisseur confirmée avec succès',
       });
+
       setShowValidateConfirmation(false);
       setOrderToValidate(null);
+
+      // Rafraîchir les données
+      await fetchOrders();
     } catch (error) {
       console.error('Erreur lors de la confirmation:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible de confirmer la commande',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Impossible de confirmer la commande',
         variant: 'destructive',
       });
     }
@@ -389,9 +467,49 @@ export default function PurchaseOrdersPage() {
   const handleCancel = async (orderId: string) => {
     if (confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) {
       try {
-        await handleStatusChange(orderId, 'cancelled');
+        // Récupérer l'utilisateur courant
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user?.id) {
+          toast({
+            title: 'Erreur',
+            description: 'Utilisateur non authentifié',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        // Appeler la Server Action pour annuler
+        const result = await updatePurchaseOrderStatus(
+          orderId,
+          'cancelled',
+          user.id
+        );
+
+        if (!result.success) {
+          throw new Error(result.error || "Erreur lors de l'annulation");
+        }
+
+        toast({
+          title: 'Succès',
+          description: 'Commande annulée avec succès',
+        });
+
+        // Rafraîchir les données
+        await fetchOrders();
       } catch (error) {
         console.error("Erreur lors de l'annulation:", error);
+        toast({
+          title: 'Erreur',
+          description:
+            error instanceof Error
+              ? error.message
+              : "Impossible d'annuler la commande",
+          variant: 'destructive',
+        });
       }
     }
   };
@@ -512,10 +630,13 @@ export default function PurchaseOrdersPage() {
               setActiveTab(value as PurchaseOrderStatus | 'all')
             }
           >
-            <TabsList className="grid w-full grid-cols-7">
+            <TabsList className="grid w-full grid-cols-8">
               <TabsTrigger value="all">Toutes ({tabCounts.all})</TabsTrigger>
               <TabsTrigger value="draft">
                 Brouillon ({tabCounts.draft})
+              </TabsTrigger>
+              <TabsTrigger value="validated">
+                Validée ({tabCounts.validated})
               </TabsTrigger>
               <TabsTrigger value="sent">Envoyée ({tabCounts.sent})</TabsTrigger>
               <TabsTrigger value="confirmed">
@@ -673,9 +794,9 @@ export default function PurchaseOrdersPage() {
                                 icon={CheckCircle}
                                 variant="success"
                                 size="sm"
-                                label="Valider (envoyer au fournisseur)"
+                                label="Valider la commande"
                                 onClick={() =>
-                                  handleStatusChange(order.id, 'sent')
+                                  handleStatusChange(order.id, 'validated')
                                 }
                               />
                               <IconButton
@@ -691,6 +812,35 @@ export default function PurchaseOrdersPage() {
                                 size="sm"
                                 label="Supprimer"
                                 onClick={() => handleDelete(order.id)}
+                              />
+                            </>
+                          )}
+
+                          {/* VALIDATED : Réceptionner + Dévalider + Annuler */}
+                          {order.status === 'validated' && (
+                            <>
+                              <IconButton
+                                icon={Truck}
+                                variant="success"
+                                size="sm"
+                                label="Réceptionner la commande"
+                                onClick={() => openReceptionModal(order)}
+                              />
+                              <IconButton
+                                icon={RotateCcw}
+                                variant="outline"
+                                size="sm"
+                                label="Dévalider (retour brouillon)"
+                                onClick={() =>
+                                  handleStatusChange(order.id, 'draft')
+                                }
+                              />
+                              <IconButton
+                                icon={Ban}
+                                variant="danger"
+                                size="sm"
+                                label="Annuler la commande"
+                                onClick={() => handleCancel(order.id)}
                               />
                             </>
                           )}

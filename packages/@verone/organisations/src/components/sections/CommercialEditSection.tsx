@@ -133,8 +133,8 @@ export function CommercialEditSection({
     return (
       <div className={cn('card-verone p-4', className)}>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-medium text-black flex items-center">
-            <CreditCard className="h-5 w-5 mr-2" />
+          <h3 className="text-sm font-medium text-black flex items-center">
+            <CreditCard className="h-4 w-4 mr-2" />
             Conditions Commerciales
           </h3>
           <div className="flex space-x-2">
@@ -158,74 +158,37 @@ export function CommercialEditSection({
           </div>
         </div>
 
-        <div className="space-y-5">
-          {/* Conditions de paiement */}
-          <div>
-            <label className="block text-sm font-medium text-black mb-1">
-              Conditions de paiement
-            </label>
-            <select
-              value={editData?.payment_terms || ''}
-              onChange={e => handleFieldChange('payment_terms', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-            >
-              <option value="">Sélectionner...</option>
-              {paymentTermsOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <div className="text-xs text-gray-500 mt-1">
-              Modalités et délais de paiement négociés avec le fournisseur
+        <div className="space-y-3 max-h-[600px] overflow-y-auto">
+          {/* Conditions de paiement + Devise sur la même ligne */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-black mb-1">
+                Conditions de paiement
+              </label>
+              <select
+                value={editData?.payment_terms || ''}
+                onChange={e =>
+                  handleFieldChange('payment_terms', e.target.value)
+                }
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
+              >
+                <option value="">Sélectionner...</option>
+                {paymentTermsOptions.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
-          </div>
-
-          {/* Délai de livraison et Devise sur la même ligne */}
-          <div
-            className={cn(
-              'grid gap-4',
-              organisationType === 'customer'
-                ? 'grid-cols-1'
-                : 'grid-cols-1 md:grid-cols-2'
-            )}
-          >
-            {/* Délai de livraison - Fournisseurs seulement */}
-            {organisationType !== 'customer' && (
-              <div>
-                <label className="block text-sm font-medium text-black mb-1">
-                  Délai de livraison (jours)
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={editData?.delivery_time_days || ''}
-                    onChange={e =>
-                      handleFieldChange('delivery_time_days', e.target.value)
-                    }
-                    className="w-full px-3 py-2 pr-12 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-                    placeholder="0"
-                    min="0"
-                    max="365"
-                  />
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                    <Clock className="h-4 w-4 text-gray-400" />
-                  </div>
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  Délai habituel entre commande et livraison
-                </div>
-              </div>
-            )}
 
             <div>
-              <label className="block text-sm font-medium text-black mb-1">
+              <label className="block text-xs font-medium text-black mb-1">
                 Devise
               </label>
               <select
                 value={editData?.currency || 'EUR'}
                 onChange={e => handleFieldChange('currency', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
               >
                 {currencies.map(currency => (
                   <option key={currency.code} value={currency.code}>
@@ -236,10 +199,35 @@ export function CommercialEditSection({
             </div>
           </div>
 
+          {/* Délai de livraison - Fournisseurs seulement */}
+          {organisationType !== 'customer' && (
+            <div>
+              <label className="block text-xs font-medium text-black mb-1">
+                Délai de livraison (jours)
+              </label>
+              <div className="relative">
+                <input
+                  type="number"
+                  value={editData?.delivery_time_days || ''}
+                  onChange={e =>
+                    handleFieldChange('delivery_time_days', e.target.value)
+                  }
+                  className="w-full px-2 py-1.5 pr-10 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
+                  placeholder="0"
+                  min="0"
+                  max="365"
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-2">
+                  <Clock className="h-3.5 w-3.5 text-gray-400" />
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Montant minimum de commande - Fournisseurs et prestataires uniquement */}
           {organisationType !== 'customer' && (
             <div>
-              <label className="block text-sm font-medium text-black mb-1">
+              <label className="block text-xs font-medium text-black mb-1">
                 Montant minimum de commande
               </label>
               <div className="relative">
@@ -249,13 +237,13 @@ export function CommercialEditSection({
                   onChange={e =>
                     handleFieldChange('minimum_order_amount', e.target.value)
                   }
-                  className="w-full px-3 py-2 pr-16 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
+                  className="w-full px-2 py-1.5 pr-12 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                   placeholder="0.00"
                   min="0"
                   step="0.01"
                 />
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                  <span className="text-sm text-gray-500">
+                <div className="absolute inset-y-0 right-0 flex items-center pr-2">
+                  <span className="text-xs text-gray-500">
                     {
                       currencies.find(
                         c => c.code === (editData?.currency || 'EUR')
@@ -263,11 +251,6 @@ export function CommercialEditSection({
                     }
                   </span>
                 </div>
-              </div>
-              <div className="text-xs text-gray-500 mt-1">
-                {organisationType === 'service_provider'
-                  ? 'Montant minimum requis pour passer commande chez ce prestataire'
-                  : 'Montant minimum requis pour passer commande chez ce fournisseur'}
               </div>
             </div>
           )}
@@ -277,18 +260,22 @@ export function CommercialEditSection({
             (editData.payment_terms ||
               editData.delivery_time_days > 0 ||
               editData.minimum_order_amount > 0) && (
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <h4 className="text-sm font-medium text-blue-800 mb-3 flex items-center">
-                  <Package className="h-4 w-4 mr-1" />
-                  Résumé des Conditions
+              <div className="bg-blue-50 p-2 rounded-lg border border-blue-200">
+                <h4 className="text-xs font-medium text-blue-800 mb-1.5 flex items-center">
+                  <Package className="h-3 w-3 mr-1" />
+                  Résumé
                 </h4>
 
-                <div className="space-y-2 text-sm">
+                <div className="space-y-1 text-xs">
                   {editData.payment_terms && (
                     <div className="flex justify-between">
                       <span className="text-blue-700">Paiement:</span>
                       <span className="font-medium text-blue-800">
-                        {editData.payment_terms}
+                        {
+                          paymentTermsOptions.find(
+                            opt => opt.value === editData.payment_terms
+                          )?.label
+                        }
                       </span>
                     </div>
                   )}
@@ -297,7 +284,7 @@ export function CommercialEditSection({
                     <div className="flex justify-between">
                       <span className="text-blue-700">Livraison:</span>
                       <span className="font-medium text-blue-800">
-                        {editData.delivery_time_days} jour
+                        {editData.delivery_time_days} j
                         {editData.delivery_time_days > 1 ? 's' : ''}
                       </span>
                     </div>
@@ -305,7 +292,7 @@ export function CommercialEditSection({
 
                   {editData.minimum_order_amount > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-blue-700">Commande min:</span>
+                      <span className="text-blue-700">Min:</span>
                       <span className="font-medium text-blue-800">
                         {editData.minimum_order_amount.toFixed(2)}{' '}
                         {editData.currency}

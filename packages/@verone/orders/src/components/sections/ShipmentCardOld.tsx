@@ -11,7 +11,12 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 
-import type { Shipment } from '@verone/orders/hooks';
+// TEMPORAIRE: Type Shipment local car table shipments supprimée
+// import type { Shipment } from '@verone/orders/hooks';
+interface Shipment {
+  id: string;
+  [key: string]: any;
+}
 
 interface ShipmentCardProps {
   shipment: Shipment;

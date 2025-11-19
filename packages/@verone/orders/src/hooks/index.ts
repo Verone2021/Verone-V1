@@ -10,5 +10,4 @@ export * from './use-sales-dashboard';
 export * from './use-sales-shipments';
 export * from './use-purchase-receptions';
 export * from './use-sales-orders';
-export * from './use-shipments';
 export * from './use-sample-order';

@@ -3187,45 +3187,6 @@ export type Database = {
           },
         ];
       };
-      parcel_items: {
-        Row: {
-          created_at: string;
-          id: string;
-          parcel_id: string;
-          quantity_shipped: number;
-          sales_order_item_id: string;
-        };
-        Insert: {
-          created_at?: string;
-          id?: string;
-          parcel_id: string;
-          quantity_shipped: number;
-          sales_order_item_id: string;
-        };
-        Update: {
-          created_at?: string;
-          id?: string;
-          parcel_id?: string;
-          quantity_shipped?: number;
-          sales_order_item_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'parcel_items_parcel_id_fkey';
-            columns: ['parcel_id'];
-            isOneToOne: false;
-            referencedRelation: 'shipping_parcels';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'parcel_items_sales_order_item_id_fkey';
-            columns: ['sales_order_item_id'];
-            isOneToOne: false;
-            referencedRelation: 'sales_order_items';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
       payments: {
         Row: {
           abby_payment_id: string | null;
@@ -5083,196 +5044,6 @@ export type Database = {
           },
         ];
       };
-      shipments: {
-        Row: {
-          carrier_name: string | null;
-          chronotruck_data: Json | null;
-          chronotruck_palette_count: number | null;
-          chronotruck_reference: string | null;
-          chronotruck_url: string | null;
-          collection_date: string | null;
-          content: string | null;
-          content_value: number | null;
-          cost_charged_eur: number | null;
-          cost_paid_eur: number | null;
-          created_at: string;
-          created_by: string | null;
-          delivered_at: string | null;
-          destination_dropoff_point_id: string | null;
-          estimated_delivery_at: string | null;
-          id: string;
-          insurance_enabled: boolean | null;
-          insurance_value: number | null;
-          metadata: Json | null;
-          mondial_relay_label_url: string | null;
-          mondial_relay_point_address: string | null;
-          mondial_relay_point_id: string | null;
-          mondial_relay_point_name: string | null;
-          mondial_relay_response: Json | null;
-          notes: string | null;
-          origin_dropoff_point_id: string | null;
-          packages: Json | null;
-          packlink_label_url: string | null;
-          packlink_response: Json | null;
-          packlink_service_id: number | null;
-          packlink_shipment_id: string | null;
-          recipient: Json | null;
-          sales_order_id: string;
-          sender: Json | null;
-          service_name: string | null;
-          shipment_type: Database['public']['Enums']['shipment_type'];
-          shipped_at: string | null;
-          shipping_address: Json | null;
-          shipping_method: Database['public']['Enums']['shipping_method'];
-          tracking_number: string | null;
-          tracking_url: string | null;
-          updated_at: string | null;
-        };
-        Insert: {
-          carrier_name?: string | null;
-          chronotruck_data?: Json | null;
-          chronotruck_palette_count?: number | null;
-          chronotruck_reference?: string | null;
-          chronotruck_url?: string | null;
-          collection_date?: string | null;
-          content?: string | null;
-          content_value?: number | null;
-          cost_charged_eur?: number | null;
-          cost_paid_eur?: number | null;
-          created_at?: string;
-          created_by?: string | null;
-          delivered_at?: string | null;
-          destination_dropoff_point_id?: string | null;
-          estimated_delivery_at?: string | null;
-          id?: string;
-          insurance_enabled?: boolean | null;
-          insurance_value?: number | null;
-          metadata?: Json | null;
-          mondial_relay_label_url?: string | null;
-          mondial_relay_point_address?: string | null;
-          mondial_relay_point_id?: string | null;
-          mondial_relay_point_name?: string | null;
-          mondial_relay_response?: Json | null;
-          notes?: string | null;
-          origin_dropoff_point_id?: string | null;
-          packages?: Json | null;
-          packlink_label_url?: string | null;
-          packlink_response?: Json | null;
-          packlink_service_id?: number | null;
-          packlink_shipment_id?: string | null;
-          recipient?: Json | null;
-          sales_order_id: string;
-          sender?: Json | null;
-          service_name?: string | null;
-          shipment_type?: Database['public']['Enums']['shipment_type'];
-          shipped_at?: string | null;
-          shipping_address?: Json | null;
-          shipping_method: Database['public']['Enums']['shipping_method'];
-          tracking_number?: string | null;
-          tracking_url?: string | null;
-          updated_at?: string | null;
-        };
-        Update: {
-          carrier_name?: string | null;
-          chronotruck_data?: Json | null;
-          chronotruck_palette_count?: number | null;
-          chronotruck_reference?: string | null;
-          chronotruck_url?: string | null;
-          collection_date?: string | null;
-          content?: string | null;
-          content_value?: number | null;
-          cost_charged_eur?: number | null;
-          cost_paid_eur?: number | null;
-          created_at?: string;
-          created_by?: string | null;
-          delivered_at?: string | null;
-          destination_dropoff_point_id?: string | null;
-          estimated_delivery_at?: string | null;
-          id?: string;
-          insurance_enabled?: boolean | null;
-          insurance_value?: number | null;
-          metadata?: Json | null;
-          mondial_relay_label_url?: string | null;
-          mondial_relay_point_address?: string | null;
-          mondial_relay_point_id?: string | null;
-          mondial_relay_point_name?: string | null;
-          mondial_relay_response?: Json | null;
-          notes?: string | null;
-          origin_dropoff_point_id?: string | null;
-          packages?: Json | null;
-          packlink_label_url?: string | null;
-          packlink_response?: Json | null;
-          packlink_service_id?: number | null;
-          packlink_shipment_id?: string | null;
-          recipient?: Json | null;
-          sales_order_id?: string;
-          sender?: Json | null;
-          service_name?: string | null;
-          shipment_type?: Database['public']['Enums']['shipment_type'];
-          shipped_at?: string | null;
-          shipping_address?: Json | null;
-          shipping_method?: Database['public']['Enums']['shipping_method'];
-          tracking_number?: string | null;
-          tracking_url?: string | null;
-          updated_at?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'shipments_sales_order_id_fkey';
-            columns: ['sales_order_id'];
-            isOneToOne: false;
-            referencedRelation: 'sales_orders';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
-      shipping_parcels: {
-        Row: {
-          created_at: string;
-          height_cm: number;
-          id: string;
-          length_cm: number;
-          parcel_number: number;
-          parcel_tracking_number: string | null;
-          parcel_type: Database['public']['Enums']['shipment_type'];
-          shipment_id: string;
-          weight_kg: number;
-          width_cm: number;
-        };
-        Insert: {
-          created_at?: string;
-          height_cm: number;
-          id?: string;
-          length_cm: number;
-          parcel_number: number;
-          parcel_tracking_number?: string | null;
-          parcel_type?: Database['public']['Enums']['shipment_type'];
-          shipment_id: string;
-          weight_kg: number;
-          width_cm: number;
-        };
-        Update: {
-          created_at?: string;
-          height_cm?: number;
-          id?: string;
-          length_cm?: number;
-          parcel_number?: number;
-          parcel_tracking_number?: string | null;
-          parcel_type?: Database['public']['Enums']['shipment_type'];
-          shipment_id?: string;
-          weight_kg?: number;
-          width_cm?: number;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'shipping_parcels_shipment_id_fkey';
-            columns: ['shipment_id'];
-            isOneToOne: false;
-            referencedRelation: 'shipments';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
       stock_alert_tracking: {
         Row: {
           added_to_draft_at: string | null;
@@ -5406,8 +5177,10 @@ export type Database = {
       stock_movements: {
         Row: {
           affects_forecast: boolean | null;
+          carrier_name: string | null;
           channel_id: string | null;
           created_at: string;
+          delivery_note: string | null;
           forecast_type: string | null;
           id: string;
           movement_type: Database['public']['Enums']['movement_type'];
@@ -5420,16 +5193,21 @@ export type Database = {
           quantity_before: number;
           quantity_change: number;
           reason_code: Database['public']['Enums']['stock_reason_code'] | null;
+          received_by_name: string | null;
           reference_id: string | null;
           reference_type: string | null;
+          shipped_by_name: string | null;
+          tracking_number: string | null;
           unit_cost: number | null;
           updated_at: string;
           warehouse_id: string | null;
         };
         Insert: {
           affects_forecast?: boolean | null;
+          carrier_name?: string | null;
           channel_id?: string | null;
           created_at?: string;
+          delivery_note?: string | null;
           forecast_type?: string | null;
           id?: string;
           movement_type: Database['public']['Enums']['movement_type'];
@@ -5442,16 +5220,21 @@ export type Database = {
           quantity_before: number;
           quantity_change: number;
           reason_code?: Database['public']['Enums']['stock_reason_code'] | null;
+          received_by_name?: string | null;
           reference_id?: string | null;
           reference_type?: string | null;
+          shipped_by_name?: string | null;
+          tracking_number?: string | null;
           unit_cost?: number | null;
           updated_at?: string;
           warehouse_id?: string | null;
         };
         Update: {
           affects_forecast?: boolean | null;
+          carrier_name?: string | null;
           channel_id?: string | null;
           created_at?: string;
+          delivery_note?: string | null;
           forecast_type?: string | null;
           id?: string;
           movement_type?: Database['public']['Enums']['movement_type'];
@@ -5464,8 +5247,11 @@ export type Database = {
           quantity_before?: number;
           quantity_change?: number;
           reason_code?: Database['public']['Enums']['stock_reason_code'] | null;
+          received_by_name?: string | null;
           reference_id?: string | null;
           reference_type?: string | null;
+          shipped_by_name?: string | null;
+          tracking_number?: string | null;
           unit_cost?: number | null;
           updated_at?: string;
           warehouse_id?: string | null;
@@ -8362,6 +8148,7 @@ export type Database = {
       product_status_type: 'active' | 'preorder' | 'discontinued' | 'draft';
       purchase_order_status:
         | 'draft'
+        | 'validated'
         | 'sent'
         | 'confirmed'
         | 'partially_received'
@@ -8418,8 +8205,6 @@ export type Database = {
         | 'rejected';
       schedule_frequency_type: 'manual' | 'daily' | 'weekly' | 'monthly';
       season_type: 'spring' | 'summer' | 'autumn' | 'winter' | 'all_year';
-      shipment_type: 'parcel' | 'pallet';
-      shipping_method: 'packlink' | 'mondial_relay' | 'chronotruck' | 'manual';
       sourcing_status_type:
         | 'draft'
         | 'sourcing_validated'
@@ -8665,6 +8450,7 @@ export const Constants = {
       product_status_type: ['active', 'preorder', 'discontinued', 'draft'],
       purchase_order_status: [
         'draft',
+        'validated',
         'sent',
         'confirmed',
         'partially_received',
@@ -8725,8 +8511,6 @@ export const Constants = {
       ],
       schedule_frequency_type: ['manual', 'daily', 'weekly', 'monthly'],
       season_type: ['spring', 'summer', 'autumn', 'winter', 'all_year'],
-      shipment_type: ['parcel', 'pallet'],
-      shipping_method: ['packlink', 'mondial_relay', 'chronotruck', 'manual'],
       sourcing_status_type: [
         'draft',
         'sourcing_validated',

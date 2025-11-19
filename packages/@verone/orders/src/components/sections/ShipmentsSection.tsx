@@ -14,9 +14,11 @@ import { Package, Truck, Plus, XCircle, TrendingUp } from 'lucide-react';
 
 import { CloseOrderModal } from '@verone/orders/components/modals/CloseOrderModal';
 import { CreateShipmentModal } from '@verone/orders/components/modals/CreateShipmentModal';
-import { useShipments } from '@verone/orders/hooks';
+// TEMPORAIRE: useShipments supprimé car PackLink abandonné
+// import { useShipments } from '@verone/orders/hooks';
 
-import { ShipmentCardOld } from './ShipmentCardOld';
+// TEMPORAIRE: ShipmentCardOld utilise table shipments qui n'existe plus
+// import { ShipmentCardOld } from './ShipmentCardOld';
 
 interface OrderItem {
   id: string;
@@ -43,8 +45,17 @@ export function ShipmentsSection({
   onUpdate,
   className,
 }: ShipmentsSectionProps) {
-  const { loading, fetchShipments, closeOrder, createShipment } =
-    useShipments();
+  // TEMPORAIRE: useShipments désactivé car PackLink abandonné
+  // const { loading, fetchShipments, closeOrder, createShipment } =
+  //   useShipments();
+  const loading = false;
+  const fetchShipments = async (..._args: any[]) => ({
+    shipments: [],
+    total: 0,
+  });
+  const closeOrder = async (..._args: any[]) => ({ success: false });
+  const createShipment = async (..._args: any[]) => ({ success: false });
+
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -204,7 +215,13 @@ export function ShipmentsSection({
           {!loading && !error && shipments.length > 0 && (
             <div className="space-y-4">
               {shipments.map(shipment => (
-                <ShipmentCardOld key={shipment.id} shipment={shipment} />
+                // TEMPORAIRE: ShipmentCardOld désactivé car table shipments supprimée
+                <div key={shipment.id} className="p-4 border rounded-md">
+                  <p className="text-sm text-muted-foreground">
+                    Expédition #{shipment.id} - À réimplémenter avec
+                    stock_movements
+                  </p>
+                </div>
               ))}
             </div>
           )}

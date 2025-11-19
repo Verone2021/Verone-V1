@@ -2,6 +2,12 @@
 
 import { useState } from 'react';
 
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
+import { Separator } from '@verone/ui';
+import { formatCurrency } from '@verone/utils';
 import {
   X,
   Package,
@@ -13,17 +19,6 @@ import {
   FileText,
 } from 'lucide-react';
 
-import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
-import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@verone/ui';
-import { Separator } from '@verone/ui';
-import { formatCurrency } from '@verone/utils';
 import type { PurchaseOrder } from '@verone/orders/hooks';
 import { usePurchaseOrders } from '@verone/orders/hooks';
 
@@ -59,6 +54,14 @@ const orderStatusColors: Record<string, string> = {
   partially_received: 'bg-yellow-100 text-yellow-800',
   received: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800',
+};
+
+// ✅ Payment Terms Labels (ENUM mapping - aligné avec CommercialEditSection)
+const paymentTermsLabels: Record<string, string> = {
+  PREPAID: 'Prépaiement obligatoire',
+  NET_30: '30 jours net',
+  NET_60: '60 jours net',
+  NET_90: '90 jours net',
 };
 
 export function PurchaseOrderDetailModal({
@@ -267,17 +270,26 @@ export function PurchaseOrderDetailModal({
                               </div>
                               <div>
                                 <span className="text-gray-600">
-                                  Total HT :
+                                  Éco-taxe :
                                 </span>
                                 <span className="font-medium ml-1">
-                                  {formatCurrency(
-                                    item.quantity *
-                                      item.unit_price_ht *
-                                      (1 -
-                                        (item.discount_percentage || 0) / 100)
-                                  )}
+                                  {formatCurrency(item.eco_tax || 0)}
                                 </span>
                               </div>
+                            </div>
+
+                            {/* Total HT avec éco-taxe */}
+                            <div className="mt-2 text-sm">
+                              <span className="text-gray-600">Total HT :</span>
+                              <span className="font-semibold ml-1">
+                                {formatCurrency(
+                                  item.quantity *
+                                    item.unit_price_ht *
+                                    (1 -
+                                      (item.discount_percentage || 0) / 100) +
+                                    (item.eco_tax || 0)
+                                )}
+                              </span>
                             </div>
 
                             {/* Quantité reçue (SPÉCIFIQUE achats) */}
@@ -321,27 +333,53 @@ export function PurchaseOrderDetailModal({
                   {/* Totaux */}
                   <Separator className="my-4" />
                   <div className="space-y-2 text-right">
-                    <div className="flex justify-between text-base">
-                      <span className="text-gray-600">Total HT :</span>
-                      <span className="font-semibold">
-                        {formatCurrency(order.total_ht || 0)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm text-gray-600">
-                      <span>TVA (20%) :</span>
-                      <span>
-                        {formatCurrency(
-                          (order.total_ttc || 0) - (order.total_ht || 0)
-                        )}
-                      </span>
-                    </div>
-                    <Separator />
-                    <div className="flex justify-between text-xl">
-                      <span className="font-bold">Total TTC :</span>
-                      <span className="font-bold text-primary">
-                        {formatCurrency(order.total_ttc || 0)}
-                      </span>
-                    </div>
+                    {/* Calculer total éco-taxe */}
+                    {(() => {
+                      const totalEcoTax =
+                        order.purchase_order_items?.reduce(
+                          (sum, item) => sum + (item.eco_tax || 0),
+                          0
+                        ) || 0;
+
+                      return (
+                        <>
+                          <div className="flex justify-between text-base">
+                            <span className="text-gray-600">Total HT :</span>
+                            <span className="font-semibold">
+                              {formatCurrency(order.total_ht || 0)}
+                            </span>
+                          </div>
+
+                          {/* Afficher éco-taxe si > 0 */}
+                          {totalEcoTax > 0 && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-green-600">
+                                🌿 Dont éco-taxe :
+                              </span>
+                              <span className="font-medium text-green-700">
+                                {formatCurrency(totalEcoTax)}
+                              </span>
+                            </div>
+                          )}
+
+                          <div className="flex justify-between text-sm text-gray-600">
+                            <span>TVA (20%) :</span>
+                            <span>
+                              {formatCurrency(
+                                (order.total_ttc || 0) - (order.total_ht || 0)
+                              )}
+                            </span>
+                          </div>
+                          <Separator />
+                          <div className="flex justify-between text-xl">
+                            <span className="font-bold">Total TTC :</span>
+                            <span className="font-bold text-primary">
+                              {formatCurrency(order.total_ttc || 0)}
+                            </span>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 </CardContent>
               </Card>
@@ -359,16 +397,20 @@ export function PurchaseOrderDetailModal({
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {order.payment_terms ? (
-                    <div>
-                      <span className="text-sm text-gray-600">
-                        Conditions :
-                      </span>
-                      <p className="text-sm font-medium">
-                        {order.payment_terms}
+                    <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                      <div className="text-xs text-green-600 font-medium mb-1">
+                        💳 CONDITIONS NÉGOCIÉES
+                      </div>
+                      <div className="text-sm font-semibold text-green-800">
+                        {paymentTermsLabels[order.payment_terms] ||
+                          order.payment_terms}
+                      </div>
+                      <p className="text-xs text-green-600 mt-1">
+                        Héritées de la fiche fournisseur
                       </p>
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 text-center py-4">
                       Aucune condition spécifiée
                     </p>
                   )}

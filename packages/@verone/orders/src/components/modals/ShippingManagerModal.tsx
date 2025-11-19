@@ -2,15 +2,10 @@
 
 import { useState, useEffect } from 'react';
 
+import { ButtonV2 } from '@verone/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
 import { X } from 'lucide-react';
 
-import { ButtonV2 } from '@verone/ui';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@verone/ui';
 import type { SalesOrder } from '@verone/orders/hooks';
 // TODO: Réactiver lors Phase 2+ (module logistics désactivé)
 // import { CarrierSelector } from './carrier-selector'
@@ -33,7 +28,8 @@ const PacklinkShipmentForm = () => null;
 const MondialRelayShipmentForm = () => null;
 const ChronotruckShipmentForm = () => null;
 const ManualShipmentForm = () => null;
-import { useShipments } from '@verone/orders/hooks';
+// TEMPORAIRE: useShipments supprimé car PackLink abandonné
+// import { useShipments } from '@verone/orders/hooks';
 
 interface ShippingManagerModalProps {
   order: SalesOrder;
@@ -57,11 +53,17 @@ export function ShippingManagerModal({
   );
   const [recapData, setRecapData] = useState<ShipmentRecapData | null>(null);
 
-  const {
-    loading: shipmentsLoading,
-    createPacklinkShipment,
-    createManualShipment,
-  } = useShipments();
+  // TEMPORAIRE: useShipments désactivé car PackLink abandonné
+  // const {
+  //   loading: shipmentsLoading,
+  //   createPacklinkShipment,
+  //   createManualShipment,
+  // } = useShipments();
+  const shipmentsLoading = false;
+  const createPacklinkShipment = async (..._args: any[]) => ({
+    success: false,
+  });
+  const createManualShipment = async (..._args: any[]) => ({ success: false });
 
   const [finalLoading, setFinalLoading] = useState(false);
 

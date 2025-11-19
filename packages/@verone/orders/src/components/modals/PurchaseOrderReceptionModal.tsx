@@ -2,7 +2,14 @@
 
 import { useState, useEffect } from 'react';
 
-import { Dialog, DialogContent } from '@verone/ui';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@verone/ui';
+
 import { PurchaseOrderReceptionForm } from '@verone/orders/components/forms/PurchaseOrderReceptionForm';
 import type { PurchaseOrder } from '@verone/orders/hooks';
 import { usePurchaseReceptions } from '@verone/orders/hooks';
@@ -42,6 +49,19 @@ export function PurchaseOrderReceptionModal({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold">
+            Réceptionner Commande Fournisseur
+          </DialogTitle>
+          {enrichedOrder && (
+            <DialogDescription>
+              {enrichedOrder.po_number}
+              {enrichedOrder.organisations &&
+                ` • ${enrichedOrder.organisations.trade_name || enrichedOrder.organisations.legal_name}`}
+            </DialogDescription>
+          )}
+        </DialogHeader>
+
         {loading ? (
           <div className="flex justify-center items-center py-12">
             <div className="text-muted-foreground">

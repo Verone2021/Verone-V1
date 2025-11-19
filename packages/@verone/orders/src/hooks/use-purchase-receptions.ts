@@ -212,6 +212,10 @@ export function usePurchaseReceptions() {
           notes,
           performed_by,
           product_id,
+          carrier_name,
+          tracking_number,
+          delivery_note,
+          received_by_name,
           products (
             name,
             sku
@@ -240,7 +244,10 @@ export function usePurchaseReceptions() {
               movement_id: movement.id,
               received_at: movement.performed_at,
               received_by: movement.performed_by,
-              received_by_name: 'Utilisateur', // TODO: Join user_profiles
+              received_by_name: movement.received_by_name || 'Utilisateur',
+              carrier_name: movement.carrier_name || undefined,
+              tracking_number: movement.tracking_number || undefined,
+              delivery_note: movement.delivery_note || undefined,
               items: [],
               notes: movement.notes || undefined,
               total_quantity: 0,

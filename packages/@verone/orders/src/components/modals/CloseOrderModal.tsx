@@ -14,7 +14,8 @@ import {
 import { ButtonV2 } from '@verone/ui';
 import { AlertTriangle, Package } from 'lucide-react';
 
-import { useShipments } from '@verone/orders/hooks';
+// TEMPORAIRE: useShipments supprimé car PackLink abandonné
+// import { useShipments } from '@verone/orders/hooks';
 
 interface CloseOrderModalProps {
   open: boolean;
@@ -34,19 +35,23 @@ export function CloseOrderModal({
   onSuccess,
 }: CloseOrderModalProps) {
   const { toast } = useToast();
-  const { closeOrder } = useShipments();
+  // TEMPORAIRE: Désactivé car PackLink abandonné
+  // const { closeOrder } = useShipments();
   const [loading, setLoading] = useState(false);
 
   const handleConfirm = async () => {
     setLoading(true);
 
     try {
-      const result = await closeOrder(orderId);
+      // TEMPORAIRE: closeOrder désactivé car PackLink abandonné
+      // const result = await closeOrder(orderId);
+      const result = { message: 'Fonctionnalité temporairement désactivée' };
 
       toast({
-        title: 'Commande clôturée',
+        title: 'Fonctionnalité désactivée',
         description:
-          result.message || `Commande ${orderNumber} clôturée avec succès`,
+          result.message ||
+          `Commande ${orderNumber} - Fonctionnalité à réimplémenter`,
         variant: 'default',
       });
 

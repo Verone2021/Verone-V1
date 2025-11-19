@@ -70,6 +70,11 @@ export interface ValidateReceptionPayload {
   /** Date de réception effective (défaut: NOW) */
   received_at?: string;
 
+  /** Métadonnées transporteur (optionnelles) */
+  carrier_name?: string;
+  tracking_number?: string;
+  delivery_note?: string;
+
   /** Notes réception optionnelles */
   notes?: string;
 
@@ -91,6 +96,11 @@ export interface ReceptionHistory {
   /** User qui a réceptionné */
   received_by: string;
   received_by_name: string;
+
+  /** Métadonnées transporteur (optionnelles) */
+  carrier_name?: string;
+  tracking_number?: string;
+  delivery_note?: string;
 
   /** Items réceptionnés */
   items: Array<{

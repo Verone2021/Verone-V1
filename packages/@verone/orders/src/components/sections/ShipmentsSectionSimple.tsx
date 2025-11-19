@@ -61,8 +61,10 @@ export function ShipmentsSectionSimple({
 
       setOrderData(order);
 
-      // Charger expéditions
-      const { data: shipmentData } = await supabase
+      // TEMPORAIRE: Table shipments supprimée (PackLink abandonné)
+      // Charger expéditions depuis stock_movements à implémenter
+      const shipmentData: any[] = [];
+      /* const { data: shipmentData } = await supabase
         .from('shipments')
         .select(
           `
@@ -83,7 +85,7 @@ export function ShipmentsSectionSimple({
         `
         )
         .eq('sales_order_id', salesOrderId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }); */
 
       setShipments(shipmentData || []);
       setLoading(false);
