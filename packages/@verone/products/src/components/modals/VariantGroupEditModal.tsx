@@ -4,8 +4,11 @@ import { useState, useEffect } from 'react';
 
 import Link from 'next/link';
 
-import { ExternalLink } from 'lucide-react';
-
+import { useSubcategories } from '@verone/categories/hooks';
+import { useOrganisations } from '@verone/organisations/hooks';
+import type { VariantGroup, UpdateVariantGroupData } from '@verone/types';
+import { ROOM_TYPES } from '@verone/types';
+import { DECORATIVE_STYLES } from '@verone/types';
 import { Button } from '@verone/ui';
 import { Checkbox } from '@verone/ui';
 import {
@@ -25,16 +28,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
-import { normalizeForSKU } from '@verone/products/utils';
 import { cn } from '@verone/utils';
-import { useSubcategories } from '@verone/categories/hooks';
-import { useOrganisations } from '@verone/organisations/hooks';
-import { ROOM_TYPES } from '@verone/types';
-import type {
-  VariantGroup,
-  UpdateVariantGroupData,
-} from '@verone/types';
-import { DECORATIVE_STYLES } from '@verone/types';
+import { ExternalLink } from 'lucide-react';
+
+import { normalizeForSKU } from '@verone/products/utils';
 
 interface VariantGroupEditModalProps {
   isOpen: boolean;
@@ -81,6 +78,7 @@ export function VariantGroupEditModal({
   const [hasCommonWeight, setHasCommonWeight] = useState(false);
   const [commonCostPrice, setCommonCostPrice] = useState<number | undefined>();
   const [hasCommonCostPrice, setHasCommonCostPrice] = useState(false);
+  const [commonEcoTax, setCommonEcoTax] = useState<number>(0); // ✅ Éco-taxe commune (liée au prix d'achat)
   const [style, setStyle] = useState<string>('');
   const [suitableRooms, setSuitableRooms] = useState<string[]>([]);
   const [hasCommonSupplier, setHasCommonSupplier] = useState(false);
@@ -108,6 +106,9 @@ export function VariantGroupEditModal({
       // Prix d'achat commun
       setCommonCostPrice(group.common_cost_price || undefined);
       setHasCommonCostPrice(group.has_common_cost_price || false);
+
+      // Éco-taxe commune (liée au prix d'achat)
+      setCommonEcoTax(group.common_eco_tax || 0);
 
       // Style décoratif
       setStyle(group.style || '');
@@ -190,6 +191,9 @@ export function VariantGroupEditModal({
         ? commonCostPrice || null
         : null;
       updateData.has_common_cost_price = hasCommonCostPrice;
+
+      // Éco-taxe commune (liée au prix d'achat)
+      updateData.common_eco_tax = hasCommonCostPrice ? commonEcoTax || 0 : null;
 
       // Style décoratif
       updateData.style = style || undefined;
@@ -451,7 +455,10 @@ export function VariantGroupEditModal({
                 checked={hasCommonCostPrice}
                 onCheckedChange={checked => {
                   setHasCommonCostPrice(checked as boolean);
-                  if (!checked) setCommonCostPrice(undefined);
+                  if (!checked) {
+                    setCommonCostPrice(undefined);
+                    setCommonEcoTax(0); // Reset éco-taxe car liée au prix
+                  }
                 }}
               />
               <Label
@@ -498,6 +505,43 @@ export function VariantGroupEditModal({
                   produits du groupe et ne pourra pas être modifié
                   individuellement
                 </p>
+
+                {/* ✅ TAXE ÉCO-RESPONSABLE (liée au prix d'achat) */}
+                <div className="mt-4 space-y-2 bg-orange-50 p-3 rounded-lg border border-orange-200">
+                  <Label
+                    htmlFor="common_eco_tax"
+                    className="text-sm font-medium text-orange-800"
+                  >
+                    🌿 Taxe éco-responsable commune
+                  </Label>
+                  <div className="flex items-end space-x-2">
+                    <Input
+                      id="common_eco_tax"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={commonEcoTax}
+                      onChange={e =>
+                        setCommonEcoTax(
+                          e.target.value ? parseFloat(e.target.value) : 0
+                        )
+                      }
+                      placeholder="0.00"
+                      className="flex-1 border-orange-300 focus:ring-orange-500"
+                    />
+                    <span className="text-sm text-orange-700 mb-2 min-w-[30px]">
+                      €
+                    </span>
+                  </div>
+                  <p className="text-xs text-orange-700">
+                    💡 S'additionne au prix d'achat fournisseur (peut être 0€)
+                  </p>
+                  <p className="text-xs text-orange-600 font-medium">
+                    Total coût d'achat = {(commonCostPrice || 0).toFixed(2)}€ +{' '}
+                    {commonEcoTax.toFixed(2)}€ ={' '}
+                    {((commonCostPrice || 0) + commonEcoTax).toFixed(2)}€
+                  </p>
+                </div>
               </div>
             )}
           </div>

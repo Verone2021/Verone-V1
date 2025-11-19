@@ -9,6 +9,7 @@ interface DraftPurchaseOrderParams {
   productId: string;
   quantity?: number; // Défaut: 1
   unitPrice?: number; // Défaut: cost_price du produit
+  ecoTax?: number; // ✅ Taxe éco-responsable unitaire (facultatif)
   notes?: string;
   itemType?: 'regular' | 'internal' | 'customer'; // Défaut: regular
 }
@@ -46,6 +47,7 @@ export function useDraftPurchaseOrder() {
         productId,
         quantity = 1,
         unitPrice,
+        ecoTax = 0, // ✅ Éco-taxe unitaire (défaut: 0)
         notes,
         itemType = 'regular',
       } = params;
@@ -113,6 +115,7 @@ export function useDraftPurchaseOrder() {
               product_id: productId,
               quantity,
               unit_price_ht: finalUnitPrice,
+              eco_tax: ecoTax, // ✅ Taxe éco-responsable unitaire
               discount_percentage: 0,
               sample_type: itemType === 'regular' ? null : itemType,
               notes: notes || `Commande ${product.name} (${product.sku})`,
@@ -187,6 +190,7 @@ export function useDraftPurchaseOrder() {
               product_id: productId,
               quantity,
               unit_price_ht: finalUnitPrice,
+              eco_tax: ecoTax, // ✅ Taxe éco-responsable unitaire
               discount_percentage: 0,
               sample_type: itemType === 'regular' ? null : itemType,
               notes: notes || `Commande ${product.name} (${product.sku})`,

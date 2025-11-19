@@ -758,6 +758,41 @@ export default function VariantGroupDetailPage({
             </div>
           )}
 
+          {/* Prix d'achat + Éco-taxe commune */}
+          {variantGroup.has_common_cost_price &&
+            variantGroup.common_cost_price !== null &&
+            variantGroup.common_cost_price !== undefined && (
+              <div className="md:col-span-2">
+                <label className="text-sm font-medium text-gray-700 block mb-2 flex items-center gap-2">
+                  💰 Prix d'achat commun + Éco-taxe
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-gray-50 text-gray-900 border-gray-300"
+                  >
+                    Hérité par tous les produits
+                  </Badge>
+                </label>
+                <div className="space-y-1">
+                  <p className="text-sm text-gray-900 font-medium">
+                    Prix d'achat HT: {variantGroup.common_cost_price.toFixed(2)}{' '}
+                    €
+                  </p>
+                  <p className="text-sm text-gray-700">
+                    🌿 Éco-taxe: {(variantGroup.common_eco_tax || 0).toFixed(2)}{' '}
+                    €
+                  </p>
+                  <p className="text-sm text-gray-900 font-semibold">
+                    Total:{' '}
+                    {(
+                      variantGroup.common_cost_price +
+                      (variantGroup.common_eco_tax || 0)
+                    ).toFixed(2)}{' '}
+                    €
+                  </p>
+                </div>
+              </div>
+            )}
+
           {/* Style décoratif */}
           {variantGroup.style && (
             <div>

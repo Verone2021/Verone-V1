@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 
+import { ButtonV2 } from '@verone/ui';
+import { cn, formatPrice } from '@verone/utils';
 import {
   DollarSign,
   Save,
@@ -11,18 +13,14 @@ import {
   TrendingUp,
 } from 'lucide-react';
 
-import { ButtonV2 } from '@verone/ui';
-import { cn, formatPrice } from '@verone/utils';
-import {
-  useInlineEdit,
-  type EditableSection,
-} from '@verone/common/hooks';
+import { useInlineEdit, type EditableSection } from '@verone/common/hooks';
 
 interface Product {
   id: string;
   variant_group_id?: string; // ID du groupe de variantes (si produit fait partie d'un groupe)
   // Tarification simplifiée 2025
   cost_price?: number; // Prix d'achat fournisseur HT (euros)
+  eco_tax_default?: number; // ✅ Taxe éco-responsable par défaut (euros)
   margin_percentage?: number; // Taux de marge en pourcentage (ex: 25 pour 25%)
   tax_rate?: number; // Taux de TVA (ex: 0.2 pour 20%)
 
@@ -35,6 +33,7 @@ interface VariantGroup {
   name: string;
   has_common_cost_price?: boolean | null;
   common_cost_price?: number | null;
+  common_eco_tax?: number | null; // ✅ Taxe éco-responsable commune (liée au prix d'achat)
 }
 
 interface SupplierVsPricingEditSectionProps {
@@ -54,6 +53,10 @@ export function SupplierVsPricingEditSection({
   const isCostPriceManagedByGroup = !!(
     variantGroup?.has_common_cost_price && product.variant_group_id
   );
+  // ✅ Verrouillage de l'éco-taxe si prix d'achat géré par le groupe
+  // (car éco-taxe et prix d'achat sont TOUJOURS liés)
+  const isEcoTaxManagedByGroup = isCostPriceManagedByGroup;
+
   const {
     isEditing,
     isSaving,
@@ -88,20 +91,28 @@ export function SupplierVsPricingEditSection({
   // Calcul automatique du prix de vente minimum
   const calculateMinSellingPrice = (
     costPrice: number,
+    ecoTax: number,
     marginPercentage: number
   ) => {
     if (!costPrice || costPrice <= 0) return 0;
-    return costPrice * (1 + marginPercentage / 100);
+    const totalCost = costPrice + (ecoTax || 0); // ✅ Ajouter éco-taxe au coût
+    return totalCost * (1 + marginPercentage / 100);
   };
 
+  // ✅ Si éco-taxe gérée par le groupe, utiliser common_eco_tax
+  const currentEcoTax = isEcoTaxManagedByGroup
+    ? variantGroup?.common_eco_tax || 0
+    : product.eco_tax_default || 0;
   const currentSellingPrice = calculateMinSellingPrice(
     currentCostPrice,
+    currentEcoTax,
     currentMarginPercentage
   );
 
   const handleStartEdit = () => {
     startEdit(section, {
       cost_price: currentCostPrice,
+      eco_tax_default: currentEcoTax, // ✅ Inclure éco-taxe
       margin_percentage: currentMarginPercentage,
     });
   };
@@ -124,12 +135,14 @@ export function SupplierVsPricingEditSection({
     const sellingPrice = editData?.cost_price
       ? calculateMinSellingPrice(
           editData.cost_price,
+          editData.eco_tax_default || 0,
           editData.margin_percentage || 25
         )
       : 0;
 
     const dataToSave = {
       cost_price: editData?.cost_price,
+      eco_tax_default: editData?.eco_tax_default || 0, // ✅ Inclure éco-taxe
       margin_percentage: editData?.margin_percentage,
       selling_price: sellingPrice, // Prix calculé automatiquement
     };
@@ -166,13 +179,15 @@ export function SupplierVsPricingEditSection({
   const editSellingPrice = editData
     ? calculateMinSellingPrice(
         editData.cost_price || 0,
+        editData.eco_tax_default || 0,
         editData.margin_percentage || 25
       )
     : currentSellingPrice;
 
   const editMarginAmount = editData
-    ? editSellingPrice - (editData.cost_price || 0)
-    : currentSellingPrice - currentCostPrice;
+    ? editSellingPrice -
+      ((editData.cost_price || 0) + (editData.eco_tax_default || 0))
+    : currentSellingPrice - (currentCostPrice + currentEcoTax);
 
   if (isEditing(section)) {
     return (
@@ -233,6 +248,47 @@ export function SupplierVsPricingEditSection({
               {editData?.cost_price && (
                 <div className="text-xs text-red-600 mt-1">
                   💰 Coût: {formatPrice(editData.cost_price)}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* TAXE ÉCO-RESPONSABLE (facultatif) */}
+          <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+            <h4 className="text-sm font-medium text-orange-800 mb-3">
+              🌿 TAXE ÉCO-RESPONSABLE (facultatif)
+            </h4>
+            <div>
+              <label className="block text-sm font-medium text-orange-700 mb-1">
+                Éco-participation (en euros)
+              </label>
+              <input
+                type="number"
+                value={editData?.eco_tax_default || ''}
+                onChange={e =>
+                  handlePriceChange('eco_tax_default', e.target.value)
+                }
+                className={cn(
+                  'w-full px-3 py-2 border border-orange-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500',
+                  isEcoTaxManagedByGroup && 'bg-gray-100 cursor-not-allowed'
+                )}
+                step="0.01"
+                min="0"
+                placeholder="Montant éco-taxe (ex: 2.50)"
+                disabled={isEcoTaxManagedByGroup}
+              />
+              {isEcoTaxManagedByGroup ? (
+                <div className="text-xs text-orange-700 mt-1">
+                  🔒 Éco-taxe liée au prix d'achat commun du groupe de variantes
+                </div>
+              ) : (
+                <div className="text-xs text-orange-600 mt-1">
+                  💡 S'additionne au prix d'achat fournisseur
+                </div>
+              )}
+              {editData?.eco_tax_default && editData.eco_tax_default > 0 && (
+                <div className="text-xs text-orange-600 mt-1">
+                  🌿 Éco-taxe: {formatPrice(editData.eco_tax_default)}
                 </div>
               )}
             </div>
@@ -323,11 +379,11 @@ export function SupplierVsPricingEditSection({
         </ButtonV2>
       </div>
 
-      {/* Banner informatif si cost_price géré par groupe */}
+      {/* Banner informatif si cost_price + éco-taxe gérés par groupe */}
       {isCostPriceManagedByGroup && (
         <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
-          ℹ️ Le prix d'achat est commun à toutes les variantes du groupe "
-          {variantGroup?.name}".{' '}
+          ℹ️ Le prix d'achat et l'éco-taxe sont communs à toutes les variantes
+          du groupe "{variantGroup?.name}".{' '}
           <a
             href={`/produits/catalogue/variantes/${variantGroup?.id}`}
             className="underline font-medium hover:text-blue-900"
@@ -348,6 +404,23 @@ export function SupplierVsPricingEditSection({
               <span className="text-red-700 font-medium">Coût HT:</span>
               <span className="text-lg font-bold text-red-800">
                 {formatPrice(currentCostPrice)}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Éco-taxe */}
+        {currentEcoTax > 0 && (
+          <div className="bg-orange-50 p-3 rounded-lg">
+            <div className="text-xs text-orange-600 font-medium mb-1">
+              🌿 TAXE ÉCO-RESPONSABLE
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-orange-700 font-medium">
+                Éco-participation:
+              </span>
+              <span className="text-lg font-bold text-orange-800">
+                {formatPrice(currentEcoTax)}
               </span>
             </div>
           </div>

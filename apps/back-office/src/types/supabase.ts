@@ -5589,7 +5589,50 @@ export type Database = {
           reserved_quantity?: number;
           updated_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'stock_reservations_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'product_prices_summary';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'stock_reservations_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'stock_reservations_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products_with_default_package';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'stock_reservations_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'stock_reservations_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_health_monitor';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'stock_reservations_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_overview';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       subcategories: {
         Row: {
@@ -5896,6 +5939,7 @@ export type Database = {
           base_sku: string;
           common_cost_price: number | null;
           common_dimensions: Json | null;
+          common_eco_tax: number | null;
           common_weight: number | null;
           created_at: string | null;
           dimensions_height: number | null;
@@ -5921,6 +5965,7 @@ export type Database = {
           base_sku: string;
           common_cost_price?: number | null;
           common_dimensions?: Json | null;
+          common_eco_tax?: number | null;
           common_weight?: number | null;
           created_at?: string | null;
           dimensions_height?: number | null;
@@ -5946,6 +5991,7 @@ export type Database = {
           base_sku?: string;
           common_cost_price?: number | null;
           common_dimensions?: Json | null;
+          common_eco_tax?: number | null;
           common_weight?: number | null;
           created_at?: string | null;
           dimensions_height?: number | null;

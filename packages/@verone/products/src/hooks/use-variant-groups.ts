@@ -2,9 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-import logger from '@verone/utils/logger';
-import { generateProductSKU } from '@verone/products/utils';
-import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@verone/common/hooks';
 import type {
   VariantGroup,
@@ -15,6 +12,10 @@ import type {
   VariantType,
   EditableProductFields,
 } from '@verone/types';
+import logger from '@verone/utils/logger';
+import { createClient } from '@verone/utils/supabase/client';
+
+import { generateProductSKU } from '@verone/products/utils';
 
 export function useVariantGroups(filters?: VariantGroupFilters) {
   const [variantGroups, setVariantGroups] = useState<VariantGroup[]>([]);
@@ -797,6 +798,11 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         updateData.has_common_cost_price = data.has_common_cost_price;
       }
 
+      // Gestion de l'éco-taxe commune (liée au prix d'achat)
+      if (data.common_eco_tax !== undefined) {
+        updateData.common_eco_tax = data.common_eco_tax;
+      }
+
       logger.info('Mise à jour variant group', {
         operation: 'update_variant_group',
         groupId,
@@ -944,6 +950,50 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
             groupId,
           });
           // Les produits gardent leur prix d'achat actuel - pas de propagation null
+        }
+      }
+
+      // Propager l'éco-taxe aux produits si has_common_cost_price est activé (car liées)
+      if (
+        data.has_common_cost_price !== undefined ||
+        data.common_eco_tax !== undefined
+      ) {
+        if (data.has_common_cost_price && data.common_eco_tax !== undefined) {
+          // Si prix d'achat commun activé, propager l'éco-taxe à tous les produits
+          logger.info('Propagation éco-taxe aux produits', {
+            operation: 'propagate_eco_tax_to_products',
+            groupId,
+            ecoTax: data.common_eco_tax,
+          });
+
+          const { error: ecoTaxPropagationError } = await supabase
+            .from('products')
+            .update({ eco_tax_default: data.common_eco_tax })
+            .eq('variant_group_id', groupId);
+
+          if (ecoTaxPropagationError) {
+            logger.error(
+              'Erreur propagation éco-taxe',
+              ecoTaxPropagationError,
+              {
+                operation: 'propagate_eco_tax_failed',
+              }
+            );
+          } else {
+            logger.info('Éco-taxe propagée avec succès', {
+              operation: 'propagate_eco_tax_success',
+            });
+          }
+        } else if (data.has_common_cost_price === false) {
+          // Si has_common_cost_price est désactivé, logger mais ne pas modifier l'éco-taxe
+          logger.info(
+            "Désactivation éco-taxe commune (prix d'achat désactivé)",
+            {
+              operation: 'disable_common_eco_tax',
+              groupId,
+            }
+          );
+          // Les produits gardent leur éco-taxe actuelle - pas de propagation null
         }
       }
 

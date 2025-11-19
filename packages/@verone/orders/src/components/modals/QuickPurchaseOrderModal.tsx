@@ -38,6 +38,7 @@ interface ProductData {
   supplier_id: string;
   cost_price: number;
   supplier_moq: number; // ✅ Phase 2.5: Minimum Order Quantity fournisseur
+  eco_tax_default: number; // ✅ Taxe éco-responsable par défaut
   primary_image_url?: string;
   supplier?: {
     id: string;
@@ -68,6 +69,7 @@ export function QuickPurchaseOrderModal({
   });
   const [quantity, setQuantity] = useState<number>(1);
   const [unitPrice, setUnitPrice] = useState<number>(0);
+  const [ecoTax, setEcoTax] = useState<number>(0); // ✅ Taxe éco-responsable
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -91,6 +93,7 @@ export function QuickPurchaseOrderModal({
             supplier_id,
             cost_price,
             supplier_moq,
+            eco_tax_default,
             product_images!left(public_url)
           `
           )
@@ -126,12 +129,14 @@ export function QuickPurchaseOrderModal({
           supplier_id: productData.supplier_id || '',
           cost_price: productData.cost_price || 0,
           supplier_moq: productData.supplier_moq || 1,
+          eco_tax_default: productData.eco_tax_default || 0,
           primary_image_url: primaryImageUrl,
           supplier: supplierInfo,
         };
 
         setProduct(formattedProduct);
         setUnitPrice(formattedProduct.cost_price);
+        setEcoTax(formattedProduct.eco_tax_default); // ✅ Initialiser avec valeur par défaut
 
         // 3. Vérifier si commande draft existe pour ce fournisseur
         if (productData.supplier_id) {
@@ -200,6 +205,7 @@ export function QuickPurchaseOrderModal({
       productId: product.id,
       quantity,
       unitPrice,
+      ecoTax, // ✅ Passer éco-taxe unitaire
       notes: `Commande ${product.name} (${product.sku})`,
     });
 
@@ -213,7 +219,9 @@ export function QuickPurchaseOrderModal({
   }
 
   // Calcul total
-  const lineTotal = quantity * unitPrice;
+  const subtotal = quantity * unitPrice;
+  const ecoTaxTotal = quantity * ecoTax;
+  const lineTotal = subtotal + ecoTaxTotal;
   const totalTTC = lineTotal * 1.2; // TVA 20%
 
   // Format currency
@@ -318,6 +326,29 @@ export function QuickPurchaseOrderModal({
                 </div>
               </div>
 
+              {/* Taxe éco-responsable (facultatif) */}
+              <div className="space-y-2">
+                <Label htmlFor="ecoTax">
+                  Taxe éco-responsable{' '}
+                  <span className="text-gray-500 text-xs font-normal">
+                    (facultatif)
+                  </span>
+                </Label>
+                <Input
+                  id="ecoTax"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={ecoTax}
+                  onChange={e => setEcoTax(Number(e.target.value))}
+                  disabled={isSubmitting}
+                  placeholder="0.00"
+                />
+                <p className="text-xs text-gray-500">
+                  💡 Montant ajouté au prix d'achat fournisseur
+                </p>
+              </div>
+
               {/* Aperçu calcul */}
               <Card className="bg-gray-50 border-gray-200">
                 <CardContent className="p-4">
@@ -332,6 +363,23 @@ export function QuickPurchaseOrderModal({
                         {formatCurrency(unitPrice)}
                       </span>
                     </div>
+                    {ecoTax > 0 && (
+                      <div className="flex justify-between text-xs text-orange-600">
+                        <span>+ Taxe éco-responsable unitaire</span>
+                        <span>{formatCurrency(ecoTax)}</span>
+                      </div>
+                    )}
+                    <Separator />
+                    <div className="flex justify-between">
+                      <span>Sous-total HT</span>
+                      <span>{formatCurrency(subtotal)}</span>
+                    </div>
+                    {ecoTaxTotal > 0 && (
+                      <div className="flex justify-between text-orange-600">
+                        <span>Éco-taxe totale</span>
+                        <span>{formatCurrency(ecoTaxTotal)}</span>
+                      </div>
+                    )}
                     <Separator />
                     <div className="flex justify-between font-semibold">
                       <span>Total HT</span>

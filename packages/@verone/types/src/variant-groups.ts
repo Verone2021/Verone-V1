@@ -53,6 +53,7 @@ export interface VariantGroup {
   has_common_weight?: boolean; // Si true, tous les produits héritent du common_weight
   common_cost_price?: number | null; // Prix d'achat indicatif commun
   has_common_cost_price?: boolean; // Si true, tous les produits héritent du common_cost_price
+  common_eco_tax?: number | null; // Taxe éco-responsable commune (liée au prix d'achat)
 
   // Attributs de catégorisation (alignés avec collections)
   style?: string | null; // Style décoratif (minimaliste, contemporain, etc.)
@@ -133,6 +134,9 @@ export interface CreateVariantGroupData {
   common_cost_price?: number | null;
   has_common_cost_price?: boolean;
 
+  // Taxe éco-responsable commune (liée au prix d'achat)
+  common_eco_tax?: number | null;
+
   // Catégorisation optionnelle
   style?: string; // Style décoratif
   suitable_rooms?: string[]; // Pièces compatibles
@@ -188,6 +192,9 @@ export interface UpdateVariantGroupData {
   // Prix d'achat commun
   common_cost_price?: number | null;
   has_common_cost_price?: boolean;
+
+  // Taxe éco-responsable commune (liée au prix d'achat)
+  common_eco_tax?: number | null;
 
   // Catégorisation
   style?: string;
