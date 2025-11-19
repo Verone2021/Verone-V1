@@ -214,6 +214,39 @@ export type Database = {
           },
         ];
       };
+      brands: {
+        Row: {
+          created_at: string | null;
+          description: string | null;
+          id: string;
+          logo_url: string | null;
+          name: string;
+          slug: string;
+          updated_at: string | null;
+          website_url: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          description?: string | null;
+          id?: string;
+          logo_url?: string | null;
+          name: string;
+          slug: string;
+          updated_at?: string | null;
+          website_url?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          description?: string | null;
+          id?: string;
+          logo_url?: string | null;
+          name?: string;
+          slug?: string;
+          updated_at?: string | null;
+          website_url?: string | null;
+        };
+        Relationships: [];
+      };
       bug_reports: {
         Row: {
           actual_behavior: string | null;
@@ -294,7 +327,10 @@ export type Database = {
           id: string;
           image_url: string | null;
           is_active: boolean | null;
+          is_visible_menu: boolean | null;
           level: number | null;
+          meta_description: string | null;
+          meta_title: string | null;
           name: string;
           slug: string;
           updated_at: string | null;
@@ -309,7 +345,10 @@ export type Database = {
           id?: string;
           image_url?: string | null;
           is_active?: boolean | null;
+          is_visible_menu?: boolean | null;
           level?: number | null;
+          meta_description?: string | null;
+          meta_title?: string | null;
           name: string;
           slug: string;
           updated_at?: string | null;
@@ -324,7 +363,10 @@ export type Database = {
           id?: string;
           image_url?: string | null;
           is_active?: boolean | null;
+          is_visible_menu?: boolean | null;
           level?: number | null;
+          meta_description?: string | null;
+          meta_title?: string | null;
           name?: string;
           slug?: string;
           updated_at?: string | null;
@@ -451,49 +493,64 @@ export type Database = {
       };
       channel_pricing: {
         Row: {
+          assembly_price: number | null;
           channel_id: string;
           created_at: string | null;
           created_by: string | null;
           custom_price_ht: number | null;
+          delivery_delay_weeks_max: number | null;
+          delivery_delay_weeks_min: number | null;
           discount_rate: number | null;
+          eco_participation_amount: number | null;
           id: string;
           is_active: boolean | null;
           markup_rate: number | null;
           min_quantity: number | null;
           notes: string | null;
           product_id: string;
+          requires_assembly: boolean | null;
           updated_at: string | null;
           valid_from: string | null;
           valid_until: string | null;
         };
         Insert: {
+          assembly_price?: number | null;
           channel_id: string;
           created_at?: string | null;
           created_by?: string | null;
           custom_price_ht?: number | null;
+          delivery_delay_weeks_max?: number | null;
+          delivery_delay_weeks_min?: number | null;
           discount_rate?: number | null;
+          eco_participation_amount?: number | null;
           id?: string;
           is_active?: boolean | null;
           markup_rate?: number | null;
           min_quantity?: number | null;
           notes?: string | null;
           product_id: string;
+          requires_assembly?: boolean | null;
           updated_at?: string | null;
           valid_from?: string | null;
           valid_until?: string | null;
         };
         Update: {
+          assembly_price?: number | null;
           channel_id?: string;
           created_at?: string | null;
           created_by?: string | null;
           custom_price_ht?: number | null;
+          delivery_delay_weeks_max?: number | null;
+          delivery_delay_weeks_min?: number | null;
           discount_rate?: number | null;
+          eco_participation_amount?: number | null;
           id?: string;
           is_active?: boolean | null;
           markup_rate?: number | null;
           min_quantity?: number | null;
           notes?: string | null;
           product_id?: string;
+          requires_assembly?: boolean | null;
           updated_at?: string | null;
           valid_from?: string | null;
           valid_until?: string | null;
@@ -550,12 +607,130 @@ export type Database = {
           },
         ];
       };
+      channel_pricing_history: {
+        Row: {
+          change_percentage: number | null;
+          change_reason: string | null;
+          change_type: string;
+          changed_at: string;
+          changed_by: string | null;
+          channel_id: string;
+          channel_pricing_id: string;
+          id: string;
+          metadata: Json | null;
+          new_custom_price_ht: number | null;
+          new_discount_rate: number | null;
+          new_markup_rate: number | null;
+          old_custom_price_ht: number | null;
+          old_discount_rate: number | null;
+          old_markup_rate: number | null;
+          product_id: string;
+        };
+        Insert: {
+          change_percentage?: number | null;
+          change_reason?: string | null;
+          change_type: string;
+          changed_at?: string;
+          changed_by?: string | null;
+          channel_id: string;
+          channel_pricing_id: string;
+          id?: string;
+          metadata?: Json | null;
+          new_custom_price_ht?: number | null;
+          new_discount_rate?: number | null;
+          new_markup_rate?: number | null;
+          old_custom_price_ht?: number | null;
+          old_discount_rate?: number | null;
+          old_markup_rate?: number | null;
+          product_id: string;
+        };
+        Update: {
+          change_percentage?: number | null;
+          change_reason?: string | null;
+          change_type?: string;
+          changed_at?: string;
+          changed_by?: string | null;
+          channel_id?: string;
+          channel_pricing_id?: string;
+          id?: string;
+          metadata?: Json | null;
+          new_custom_price_ht?: number | null;
+          new_discount_rate?: number | null;
+          new_markup_rate?: number | null;
+          old_custom_price_ht?: number | null;
+          old_discount_rate?: number | null;
+          old_markup_rate?: number | null;
+          product_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'channel_pricing_history_channel_id_fkey';
+            columns: ['channel_id'];
+            isOneToOne: false;
+            referencedRelation: 'sales_channels';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'channel_pricing_history_channel_pricing_id_fkey';
+            columns: ['channel_pricing_id'];
+            isOneToOne: false;
+            referencedRelation: 'channel_pricing';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'channel_pricing_history_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'product_prices_summary';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'channel_pricing_history_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'channel_pricing_history_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products_with_default_package';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'channel_pricing_history_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'channel_pricing_history_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_health_monitor';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'channel_pricing_history_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_overview';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       channel_product_metadata: {
         Row: {
           channel_id: string;
           created_at: string | null;
           created_by: string | null;
+          custom_brand: string | null;
           custom_description: string | null;
+          custom_description_long: string | null;
+          custom_selling_points: Json | null;
+          custom_technical_description: string | null;
           custom_title: string | null;
           id: string;
           metadata: Json | null;
@@ -567,7 +742,11 @@ export type Database = {
           channel_id: string;
           created_at?: string | null;
           created_by?: string | null;
+          custom_brand?: string | null;
           custom_description?: string | null;
+          custom_description_long?: string | null;
+          custom_selling_points?: Json | null;
+          custom_technical_description?: string | null;
           custom_title?: string | null;
           id?: string;
           metadata?: Json | null;
@@ -579,7 +758,11 @@ export type Database = {
           channel_id?: string;
           created_at?: string | null;
           created_by?: string | null;
+          custom_brand?: string | null;
           custom_description?: string | null;
+          custom_description_long?: string | null;
+          custom_selling_points?: Json | null;
+          custom_technical_description?: string | null;
           custom_title?: string | null;
           id?: string;
           metadata?: Json | null;
@@ -1033,77 +1216,118 @@ export type Database = {
       collections: {
         Row: {
           archived_at: string | null;
+          brand_id: string | null;
           color_theme: string | null;
           created_at: string | null;
           created_by: string;
           description: string | null;
+          description_long: string | null;
           display_order: number | null;
+          event_tags: string[] | null;
           id: string;
           image_url: string | null;
           is_active: boolean | null;
           is_featured: boolean | null;
+          is_published_online: boolean | null;
           last_shared: string | null;
           meta_description: string | null;
           meta_title: string | null;
           name: string;
           product_count: number | null;
+          publication_date: string | null;
+          season: Database['public']['Enums']['season_type'] | null;
+          selling_points: string[] | null;
           shared_count: number | null;
           shared_link_token: string | null;
+          slug: string | null;
+          sort_order_site: number | null;
           style: string | null;
           suitable_rooms: string[] | null;
           theme_tags: string[] | null;
+          unpublication_date: string | null;
           updated_at: string | null;
           visibility: string;
+          visible_channels: string[] | null;
         };
         Insert: {
           archived_at?: string | null;
+          brand_id?: string | null;
           color_theme?: string | null;
           created_at?: string | null;
           created_by: string;
           description?: string | null;
+          description_long?: string | null;
           display_order?: number | null;
+          event_tags?: string[] | null;
           id?: string;
           image_url?: string | null;
           is_active?: boolean | null;
           is_featured?: boolean | null;
+          is_published_online?: boolean | null;
           last_shared?: string | null;
           meta_description?: string | null;
           meta_title?: string | null;
           name: string;
           product_count?: number | null;
+          publication_date?: string | null;
+          season?: Database['public']['Enums']['season_type'] | null;
+          selling_points?: string[] | null;
           shared_count?: number | null;
           shared_link_token?: string | null;
+          slug?: string | null;
+          sort_order_site?: number | null;
           style?: string | null;
           suitable_rooms?: string[] | null;
           theme_tags?: string[] | null;
+          unpublication_date?: string | null;
           updated_at?: string | null;
           visibility?: string;
+          visible_channels?: string[] | null;
         };
         Update: {
           archived_at?: string | null;
+          brand_id?: string | null;
           color_theme?: string | null;
           created_at?: string | null;
           created_by?: string;
           description?: string | null;
+          description_long?: string | null;
           display_order?: number | null;
+          event_tags?: string[] | null;
           id?: string;
           image_url?: string | null;
           is_active?: boolean | null;
           is_featured?: boolean | null;
+          is_published_online?: boolean | null;
           last_shared?: string | null;
           meta_description?: string | null;
           meta_title?: string | null;
           name?: string;
           product_count?: number | null;
+          publication_date?: string | null;
+          season?: Database['public']['Enums']['season_type'] | null;
+          selling_points?: string[] | null;
           shared_count?: number | null;
           shared_link_token?: string | null;
+          slug?: string | null;
+          sort_order_site?: number | null;
           style?: string | null;
           suitable_rooms?: string[] | null;
           theme_tags?: string[] | null;
+          unpublication_date?: string | null;
           updated_at?: string | null;
           visibility?: string;
+          visible_channels?: string[] | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'collections_brand_id_fkey';
+            columns: ['brand_id'];
+            isOneToOne: false;
+            referencedRelation: 'brands';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       consultation_images: {
         Row: {
@@ -3326,6 +3550,131 @@ export type Database = {
         };
         Relationships: [];
       };
+      product_drafts: {
+        Row: {
+          category_id: string | null;
+          color: string | null;
+          condition: string | null;
+          cost_price: number | null;
+          created_at: string | null;
+          created_by: string | null;
+          description: string | null;
+          dimensions: Json | null;
+          family_id: string | null;
+          gallery_images: Json | null;
+          gtin: string | null;
+          id: string;
+          material: string | null;
+          min_stock_level: number | null;
+          name: string | null;
+          price_ht: number | null;
+          primary_image_url: string | null;
+          product_group_id: string | null;
+          selling_price: number | null;
+          sku: string | null;
+          status: string | null;
+          stock_quantity: number | null;
+          subcategory_id: string | null;
+          supplier_price: number | null;
+          supplier_reference: string | null;
+          tax_rate: number | null;
+          updated_at: string | null;
+          weight: number | null;
+          wizard_step_completed: number | null;
+        };
+        Insert: {
+          category_id?: string | null;
+          color?: string | null;
+          condition?: string | null;
+          cost_price?: number | null;
+          created_at?: string | null;
+          created_by?: string | null;
+          description?: string | null;
+          dimensions?: Json | null;
+          family_id?: string | null;
+          gallery_images?: Json | null;
+          gtin?: string | null;
+          id?: string;
+          material?: string | null;
+          min_stock_level?: number | null;
+          name?: string | null;
+          price_ht?: number | null;
+          primary_image_url?: string | null;
+          product_group_id?: string | null;
+          selling_price?: number | null;
+          sku?: string | null;
+          status?: string | null;
+          stock_quantity?: number | null;
+          subcategory_id?: string | null;
+          supplier_price?: number | null;
+          supplier_reference?: string | null;
+          tax_rate?: number | null;
+          updated_at?: string | null;
+          weight?: number | null;
+          wizard_step_completed?: number | null;
+        };
+        Update: {
+          category_id?: string | null;
+          color?: string | null;
+          condition?: string | null;
+          cost_price?: number | null;
+          created_at?: string | null;
+          created_by?: string | null;
+          description?: string | null;
+          dimensions?: Json | null;
+          family_id?: string | null;
+          gallery_images?: Json | null;
+          gtin?: string | null;
+          id?: string;
+          material?: string | null;
+          min_stock_level?: number | null;
+          name?: string | null;
+          price_ht?: number | null;
+          primary_image_url?: string | null;
+          product_group_id?: string | null;
+          selling_price?: number | null;
+          sku?: string | null;
+          status?: string | null;
+          stock_quantity?: number | null;
+          subcategory_id?: string | null;
+          supplier_price?: number | null;
+          supplier_reference?: string | null;
+          tax_rate?: number | null;
+          updated_at?: string | null;
+          weight?: number | null;
+          wizard_step_completed?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'product_drafts_category_id_fkey';
+            columns: ['category_id'];
+            isOneToOne: false;
+            referencedRelation: 'categories';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'product_drafts_family_id_fkey';
+            columns: ['family_id'];
+            isOneToOne: false;
+            referencedRelation: 'families';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'product_drafts_product_group_id_fkey';
+            columns: ['product_group_id'];
+            isOneToOne: false;
+            referencedRelation: 'product_groups';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'product_drafts_subcategory_id_fkey';
+            columns: ['subcategory_id'];
+            isOneToOne: false;
+            referencedRelation: 'subcategories';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       product_group_members: {
         Row: {
           added_at: string | null;
@@ -3762,12 +4111,16 @@ export type Database = {
           eco_tax_default: number | null;
           gtin: string | null;
           id: string;
+          is_published_online: boolean | null;
           item_group_id: string | null;
           margin_percentage: number | null;
+          meta_description: string | null;
+          meta_title: string | null;
           min_stock: number | null;
           name: string;
           product_status: Database['public']['Enums']['product_status_type'];
           product_type: string | null;
+          publication_date: string | null;
           rejection_reason: string | null;
           reorder_point: number | null;
           requires_sample: boolean | null;
@@ -3789,6 +4142,7 @@ export type Database = {
           supplier_reference: string | null;
           target_margin_percentage: number | null;
           technical_description: string | null;
+          unpublication_date: string | null;
           updated_at: string | null;
           variant_attributes: Json | null;
           variant_group_id: string | null;
@@ -3814,12 +4168,16 @@ export type Database = {
           eco_tax_default?: number | null;
           gtin?: string | null;
           id?: string;
+          is_published_online?: boolean | null;
           item_group_id?: string | null;
           margin_percentage?: number | null;
+          meta_description?: string | null;
+          meta_title?: string | null;
           min_stock?: number | null;
           name: string;
           product_status?: Database['public']['Enums']['product_status_type'];
           product_type?: string | null;
+          publication_date?: string | null;
           rejection_reason?: string | null;
           reorder_point?: number | null;
           requires_sample?: boolean | null;
@@ -3841,6 +4199,7 @@ export type Database = {
           supplier_reference?: string | null;
           target_margin_percentage?: number | null;
           technical_description?: string | null;
+          unpublication_date?: string | null;
           updated_at?: string | null;
           variant_attributes?: Json | null;
           variant_group_id?: string | null;
@@ -3866,12 +4225,16 @@ export type Database = {
           eco_tax_default?: number | null;
           gtin?: string | null;
           id?: string;
+          is_published_online?: boolean | null;
           item_group_id?: string | null;
           margin_percentage?: number | null;
+          meta_description?: string | null;
+          meta_title?: string | null;
           min_stock?: number | null;
           name?: string;
           product_status?: Database['public']['Enums']['product_status_type'];
           product_type?: string | null;
+          publication_date?: string | null;
           rejection_reason?: string | null;
           reorder_point?: number | null;
           requires_sample?: boolean | null;
@@ -3893,6 +4256,7 @@ export type Database = {
           supplier_reference?: string | null;
           target_margin_percentage?: number | null;
           technical_description?: string | null;
+          unpublication_date?: string | null;
           updated_at?: string | null;
           variant_attributes?: Json | null;
           variant_group_id?: string | null;
@@ -4278,47 +4642,74 @@ export type Database = {
       sales_channels: {
         Row: {
           code: string;
+          config: Json | null;
+          contact_email: string | null;
+          contact_phone: string | null;
           created_at: string | null;
           created_by: string | null;
           default_discount_rate: number | null;
+          default_meta_description: string | null;
+          default_meta_title: string | null;
           description: string | null;
           display_order: number | null;
+          domain_url: string | null;
           icon_name: string | null;
           id: string;
           is_active: boolean | null;
+          meta_keywords: string[] | null;
           min_order_value: number | null;
           name: string;
           requires_approval: boolean | null;
+          site_logo_url: string | null;
+          site_name: string | null;
           updated_at: string | null;
         };
         Insert: {
           code: string;
+          config?: Json | null;
+          contact_email?: string | null;
+          contact_phone?: string | null;
           created_at?: string | null;
           created_by?: string | null;
           default_discount_rate?: number | null;
+          default_meta_description?: string | null;
+          default_meta_title?: string | null;
           description?: string | null;
           display_order?: number | null;
+          domain_url?: string | null;
           icon_name?: string | null;
           id?: string;
           is_active?: boolean | null;
+          meta_keywords?: string[] | null;
           min_order_value?: number | null;
           name: string;
           requires_approval?: boolean | null;
+          site_logo_url?: string | null;
+          site_name?: string | null;
           updated_at?: string | null;
         };
         Update: {
           code?: string;
+          config?: Json | null;
+          contact_email?: string | null;
+          contact_phone?: string | null;
           created_at?: string | null;
           created_by?: string | null;
           default_discount_rate?: number | null;
+          default_meta_description?: string | null;
+          default_meta_title?: string | null;
           description?: string | null;
           display_order?: number | null;
+          domain_url?: string | null;
           icon_name?: string | null;
           id?: string;
           is_active?: boolean | null;
+          meta_keywords?: string[] | null;
           min_order_value?: number | null;
           name?: string;
           requires_approval?: boolean | null;
+          site_logo_url?: string | null;
+          site_name?: string | null;
           updated_at?: string | null;
         };
         Relationships: [];
@@ -4438,6 +4829,8 @@ export type Database = {
           cancelled_at: string | null;
           cancelled_by: string | null;
           channel_id: string | null;
+          closed_at: string | null;
+          closed_by: string | null;
           confirmed_at: string | null;
           confirmed_by: string | null;
           created_at: string;
@@ -4477,6 +4870,8 @@ export type Database = {
           cancelled_at?: string | null;
           cancelled_by?: string | null;
           channel_id?: string | null;
+          closed_at?: string | null;
+          closed_by?: string | null;
           confirmed_at?: string | null;
           confirmed_by?: string | null;
           created_at?: string;
@@ -4516,6 +4911,8 @@ export type Database = {
           cancelled_at?: string | null;
           cancelled_by?: string | null;
           channel_id?: string | null;
+          closed_at?: string | null;
+          closed_by?: string | null;
           confirmed_at?: string | null;
           confirmed_by?: string | null;
           created_at?: string;
@@ -4693,13 +5090,19 @@ export type Database = {
           chronotruck_palette_count: number | null;
           chronotruck_reference: string | null;
           chronotruck_url: string | null;
+          collection_date: string | null;
+          content: string | null;
+          content_value: number | null;
           cost_charged_eur: number | null;
           cost_paid_eur: number | null;
           created_at: string;
           created_by: string | null;
           delivered_at: string | null;
+          destination_dropoff_point_id: string | null;
           estimated_delivery_at: string | null;
           id: string;
+          insurance_enabled: boolean | null;
+          insurance_value: number | null;
           metadata: Json | null;
           mondial_relay_label_url: string | null;
           mondial_relay_point_address: string | null;
@@ -4707,11 +5110,15 @@ export type Database = {
           mondial_relay_point_name: string | null;
           mondial_relay_response: Json | null;
           notes: string | null;
+          origin_dropoff_point_id: string | null;
+          packages: Json | null;
           packlink_label_url: string | null;
           packlink_response: Json | null;
           packlink_service_id: number | null;
           packlink_shipment_id: string | null;
+          recipient: Json | null;
           sales_order_id: string;
+          sender: Json | null;
           service_name: string | null;
           shipment_type: Database['public']['Enums']['shipment_type'];
           shipped_at: string | null;
@@ -4727,13 +5134,19 @@ export type Database = {
           chronotruck_palette_count?: number | null;
           chronotruck_reference?: string | null;
           chronotruck_url?: string | null;
+          collection_date?: string | null;
+          content?: string | null;
+          content_value?: number | null;
           cost_charged_eur?: number | null;
           cost_paid_eur?: number | null;
           created_at?: string;
           created_by?: string | null;
           delivered_at?: string | null;
+          destination_dropoff_point_id?: string | null;
           estimated_delivery_at?: string | null;
           id?: string;
+          insurance_enabled?: boolean | null;
+          insurance_value?: number | null;
           metadata?: Json | null;
           mondial_relay_label_url?: string | null;
           mondial_relay_point_address?: string | null;
@@ -4741,11 +5154,15 @@ export type Database = {
           mondial_relay_point_name?: string | null;
           mondial_relay_response?: Json | null;
           notes?: string | null;
+          origin_dropoff_point_id?: string | null;
+          packages?: Json | null;
           packlink_label_url?: string | null;
           packlink_response?: Json | null;
           packlink_service_id?: number | null;
           packlink_shipment_id?: string | null;
+          recipient?: Json | null;
           sales_order_id: string;
+          sender?: Json | null;
           service_name?: string | null;
           shipment_type?: Database['public']['Enums']['shipment_type'];
           shipped_at?: string | null;
@@ -4761,13 +5178,19 @@ export type Database = {
           chronotruck_palette_count?: number | null;
           chronotruck_reference?: string | null;
           chronotruck_url?: string | null;
+          collection_date?: string | null;
+          content?: string | null;
+          content_value?: number | null;
           cost_charged_eur?: number | null;
           cost_paid_eur?: number | null;
           created_at?: string;
           created_by?: string | null;
           delivered_at?: string | null;
+          destination_dropoff_point_id?: string | null;
           estimated_delivery_at?: string | null;
           id?: string;
+          insurance_enabled?: boolean | null;
+          insurance_value?: number | null;
           metadata?: Json | null;
           mondial_relay_label_url?: string | null;
           mondial_relay_point_address?: string | null;
@@ -4775,11 +5198,15 @@ export type Database = {
           mondial_relay_point_name?: string | null;
           mondial_relay_response?: Json | null;
           notes?: string | null;
+          origin_dropoff_point_id?: string | null;
+          packages?: Json | null;
           packlink_label_url?: string | null;
           packlink_response?: Json | null;
           packlink_service_id?: number | null;
           packlink_shipment_id?: string | null;
+          recipient?: Json | null;
           sales_order_id?: string;
+          sender?: Json | null;
           service_name?: string | null;
           shipment_type?: Database['public']['Enums']['shipment_type'];
           shipped_at?: string | null;
@@ -4855,9 +5282,11 @@ export type Database = {
           draft_order_id: string | null;
           id: string;
           min_stock: number;
+          notes: string | null;
           product_id: string;
           quantity_in_draft: number | null;
           shortage_quantity: number;
+          stock_forecasted_in: number;
           stock_forecasted_out: number;
           stock_real: number;
           supplier_id: string;
@@ -4874,9 +5303,11 @@ export type Database = {
           draft_order_id?: string | null;
           id?: string;
           min_stock?: number;
+          notes?: string | null;
           product_id: string;
           quantity_in_draft?: number | null;
           shortage_quantity?: number;
+          stock_forecasted_in?: number;
           stock_forecasted_out?: number;
           stock_real?: number;
           supplier_id: string;
@@ -4893,9 +5324,11 @@ export type Database = {
           draft_order_id?: string | null;
           id?: string;
           min_stock?: number;
+          notes?: string | null;
           product_id?: string;
           quantity_in_draft?: number | null;
           shortage_quantity?: number;
+          stock_forecasted_in?: number;
           stock_forecasted_out?: number;
           stock_real?: number;
           supplier_id?: string;
@@ -5289,51 +5722,96 @@ export type Database = {
       };
       user_profiles: {
         Row: {
+          app: Database['public']['Enums']['app_type'];
           avatar_url: string | null;
           created_at: string | null;
           first_name: string | null;
+          individual_customer_id: string | null;
           job_title: string | null;
           last_name: string | null;
           last_sign_in_at: string | null;
+          organisation_id: string | null;
           partner_id: string | null;
           phone: string | null;
           role: Database['public']['Enums']['user_role_type'];
           scopes: string[] | null;
           updated_at: string | null;
           user_id: string;
-          user_type: Database['public']['Enums']['user_type'] | null;
+          user_type: string;
         };
         Insert: {
+          app?: Database['public']['Enums']['app_type'];
           avatar_url?: string | null;
           created_at?: string | null;
           first_name?: string | null;
+          individual_customer_id?: string | null;
           job_title?: string | null;
           last_name?: string | null;
           last_sign_in_at?: string | null;
+          organisation_id?: string | null;
           partner_id?: string | null;
           phone?: string | null;
           role: Database['public']['Enums']['user_role_type'];
           scopes?: string[] | null;
           updated_at?: string | null;
           user_id: string;
-          user_type?: Database['public']['Enums']['user_type'] | null;
+          user_type?: string;
         };
         Update: {
+          app?: Database['public']['Enums']['app_type'];
           avatar_url?: string | null;
           created_at?: string | null;
           first_name?: string | null;
+          individual_customer_id?: string | null;
           job_title?: string | null;
           last_name?: string | null;
           last_sign_in_at?: string | null;
+          organisation_id?: string | null;
           partner_id?: string | null;
           phone?: string | null;
           role?: Database['public']['Enums']['user_role_type'];
           scopes?: string[] | null;
           updated_at?: string | null;
           user_id?: string;
-          user_type?: Database['public']['Enums']['user_type'] | null;
+          user_type?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'fk_user_profiles_individual_customer';
+            columns: ['individual_customer_id'];
+            isOneToOne: false;
+            referencedRelation: 'customer_samples_view';
+            referencedColumns: ['customer_ind_id'];
+          },
+          {
+            foreignKeyName: 'fk_user_profiles_individual_customer';
+            columns: ['individual_customer_id'];
+            isOneToOne: false;
+            referencedRelation: 'individual_customers';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'fk_user_profiles_individual_customer';
+            columns: ['individual_customer_id'];
+            isOneToOne: false;
+            referencedRelation: 'individual_customers_display';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'fk_user_profiles_organisation';
+            columns: ['organisation_id'];
+            isOneToOne: false;
+            referencedRelation: 'customer_samples_view';
+            referencedColumns: ['customer_org_id'];
+          },
+          {
+            foreignKeyName: 'fk_user_profiles_organisation';
+            columns: ['organisation_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       user_sessions: {
         Row: {
@@ -6325,6 +6803,10 @@ export type Database = {
           price_source: string;
         }[];
       };
+      calculate_stock_forecasted: {
+        Args: { p_product_id: string };
+        Returns: number;
+      };
       calculate_stock_status: {
         Args: { p_stock_real: number };
         Returns: Database['public']['Enums']['stock_status_type'];
@@ -6372,6 +6854,7 @@ export type Database = {
           };
       cleanup_expired_webhook_events: { Args: never; Returns: number };
       cleanup_old_mcp_tasks: { Args: { days_old?: number }; Returns: number };
+      cleanup_old_product_drafts: { Args: never; Returns: number };
       cleanup_old_status_history: { Args: never; Returns: number };
       cleanup_old_sync_operations: { Args: never; Returns: number };
       cleanup_resolved_errors: { Args: never; Returns: number };
@@ -6624,6 +7107,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      custom_access_token_hook: { Args: { event: Json }; Returns: Json };
       detect_orphaned_stock: {
         Args: never;
         Returns: {
@@ -6729,6 +7213,24 @@ export type Database = {
           source: string;
         }[];
       };
+      get_archived_site_internet_products: {
+        Args: never;
+        Returns: {
+          archived_at: string;
+          has_variants: boolean;
+          is_eligible: boolean;
+          is_published: boolean;
+          name: string;
+          price_source: string;
+          price_ttc: number;
+          primary_image_url: string;
+          product_id: string;
+          sku: string;
+          slug: string;
+          status: string;
+          variants_count: number;
+        }[];
+      };
       get_available_stock: { Args: { p_product_id: string }; Returns: number };
       get_available_stock_advanced: {
         Args: { p_product_id: string };
@@ -6771,6 +7273,18 @@ export type Database = {
           slug: string;
           subcategory_count: number;
           updated_at: string;
+        }[];
+      };
+      get_channel_price_evolution: {
+        Args: { p_channel_id: string; p_limit?: number; p_product_id: string };
+        Returns: {
+          change_percentage: number;
+          change_reason: string;
+          change_type: string;
+          changed_at: string;
+          changed_by_email: string;
+          new_price: number;
+          old_price: number;
         }[];
       };
       get_cleanup_candidates: {
@@ -6990,6 +7504,26 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      get_product_margin_analysis: {
+        Args: {
+          p_end_date?: string;
+          p_product_id: string;
+          p_start_date?: string;
+        };
+        Returns: {
+          channel_code: string;
+          customer_name: string;
+          margin_ht: number;
+          margin_percentage: number;
+          order_date: string;
+          order_reference: string;
+          order_type: string;
+          quantity: number;
+          supplier_name: string;
+          total_ht: number;
+          unit_price_ht: number;
+        }[];
+      };
       get_product_stats: {
         Args: never;
         Returns: {
@@ -7074,6 +7608,97 @@ export type Database = {
       get_section_progress: {
         Args: { limit_param?: number; section_name_param: string };
         Returns: Json;
+      };
+      get_shipment_summary: {
+        Args: { p_sales_order_id: string };
+        Returns: {
+          completion_percentage: number;
+          last_shipment_date: string;
+          total_shipments: number;
+          total_units_ordered: number;
+          total_units_remaining: number;
+          total_units_shipped: number;
+        }[];
+      };
+      get_site_internet_collection_detail: {
+        Args: { p_slug: string };
+        Returns: Json;
+      };
+      get_site_internet_collections: {
+        Args: never;
+        Returns: {
+          brand_id: string;
+          brand_logo: string;
+          brand_name: string;
+          collection_id: string;
+          cover_image_alt: string;
+          cover_image_url: string;
+          description: string;
+          description_long: string;
+          event_tags: string[];
+          ineligibility_reasons: string[];
+          is_eligible: boolean;
+          max_price: number;
+          meta_description: string;
+          meta_title: string;
+          min_price: number;
+          name: string;
+          product_count: number;
+          publication_date: string;
+          season: Database['public']['Enums']['season_type'];
+          selling_points: string[];
+          slug: string;
+          sort_order_site: number;
+        }[];
+      };
+      get_site_internet_config: { Args: never; Returns: Json };
+      get_site_internet_product_detail: {
+        Args: { p_product_id: string };
+        Returns: Json;
+      };
+      get_site_internet_products: {
+        Args: never;
+        Returns: {
+          assembly_price: number;
+          brand: string;
+          delivery_delay_weeks_max: number;
+          delivery_delay_weeks_min: number;
+          description: string;
+          dimensions: Json;
+          discount_rate: number;
+          eco_participation_amount: number;
+          eligible_variants_count: number;
+          has_variants: boolean;
+          image_urls: string[];
+          ineligibility_reasons: string[];
+          is_eligible: boolean;
+          is_published: boolean;
+          metadata: Json;
+          name: string;
+          price_ht: number;
+          price_source: string;
+          price_ttc: number;
+          primary_image_url: string;
+          product_id: string;
+          product_type: string;
+          publication_date: string;
+          requires_assembly: boolean;
+          selling_points: string[];
+          seo_meta_description: string;
+          seo_title: string;
+          sku: string;
+          slug: string;
+          status: string;
+          subcategory_id: string;
+          subcategory_name: string;
+          suitable_rooms: string[];
+          supplier_moq: number;
+          technical_description: string;
+          variant_group_id: string;
+          variants_count: number;
+          video_url: string;
+          weight: number;
+        }[];
       };
       get_smart_stock_status: {
         Args: { p_product_id: string };
@@ -7227,6 +7852,10 @@ export type Database = {
           trend_percentage: number;
         }[];
       };
+      get_user_type: {
+        Args: never;
+        Returns: Database['public']['Enums']['user_type'];
+      };
       get_variant_siblings: {
         Args: { product_id: string };
         Returns: {
@@ -7250,9 +7879,15 @@ export type Database = {
       };
       has_been_ordered: { Args: { p_product_id: string }; Returns: boolean };
       has_scope: { Args: { required_scope: string }; Returns: boolean };
+      increment_quantity_shipped: {
+        Args: { p_item_id: string; p_quantity: number };
+        Returns: undefined;
+      };
       initialize_dashboard_tests: { Args: never; Returns: undefined };
       is_admin: { Args: never; Returns: boolean };
+      is_customer_user: { Args: never; Returns: boolean };
       is_owner: { Args: never; Returns: boolean };
+      is_staff_user: { Args: never; Returns: boolean };
       is_tester_or_admin: { Args: never; Returns: boolean };
       lock_section_when_complete: {
         Args: { force_lock?: boolean; section_name_param: string };
@@ -7377,6 +8012,10 @@ export type Database = {
         };
       };
       refresh_google_merchant_stats: { Args: never; Returns: undefined };
+      regenerate_product_slug: {
+        Args: { product_id_param: string };
+        Returns: string;
+      };
       remove_collection_tag: {
         Args: { collection_id: string; tag: string };
         Returns: undefined;
@@ -7423,27 +8062,38 @@ export type Database = {
         Args: { search_tags: string[] };
         Returns: {
           archived_at: string | null;
+          brand_id: string | null;
           color_theme: string | null;
           created_at: string | null;
           created_by: string;
           description: string | null;
+          description_long: string | null;
           display_order: number | null;
+          event_tags: string[] | null;
           id: string;
           image_url: string | null;
           is_active: boolean | null;
           is_featured: boolean | null;
+          is_published_online: boolean | null;
           last_shared: string | null;
           meta_description: string | null;
           meta_title: string | null;
           name: string;
           product_count: number | null;
+          publication_date: string | null;
+          season: Database['public']['Enums']['season_type'] | null;
+          selling_points: string[] | null;
           shared_count: number | null;
           shared_link_token: string | null;
+          slug: string | null;
+          sort_order_site: number | null;
           style: string | null;
           suitable_rooms: string[] | null;
           theme_tags: string[] | null;
+          unpublication_date: string | null;
           updated_at: string | null;
           visibility: string;
+          visible_channels: string[] | null;
         }[];
         SetofOptions: {
           from: '*';
@@ -7464,6 +8114,7 @@ export type Database = {
       set_current_user_id: { Args: { user_id: string }; Returns: undefined };
       show_limit: { Args: never; Returns: number };
       show_trgm: { Args: { '': string }; Returns: string[] };
+      slugify: { Args: { text_input: string }; Returns: string };
       suggest_matches: {
         Args: { p_limit?: number; p_transaction_id: string };
         Returns: {
@@ -7479,6 +8130,10 @@ export type Database = {
           remaining: number;
           total_ttc: number;
         }[];
+      };
+      test_custom_access_token_hook: {
+        Args: { test_user_id: string };
+        Returns: Json;
       };
       toggle_google_merchant_visibility: {
         Args: { p_product_id: string; p_visible: boolean };
@@ -7521,6 +8176,10 @@ export type Database = {
           success: boolean;
         }[];
       };
+      update_stock_on_shipment: {
+        Args: { p_product_id: string; p_quantity: number };
+        Returns: undefined;
+      };
       update_test_status: {
         Args: {
           execution_time_param?: number;
@@ -7535,6 +8194,14 @@ export type Database = {
         Returns: boolean;
       };
       validate_feed_filters: { Args: { filters_json: Json }; Returns: boolean };
+      validate_partner_id_migration: {
+        Args: never;
+        Returns: {
+          count: number;
+          details: string;
+          status: string;
+        }[];
+      };
       validate_rls_setup: {
         Args: never;
         Returns: {
@@ -7589,6 +8256,7 @@ export type Database = {
       };
     };
     Enums: {
+      app_type: 'back-office' | 'site-internet' | 'linkme';
       availability_type_enum:
         | 'normal'
         | 'preorder'
@@ -7691,7 +8359,8 @@ export type Database = {
         | 'partially_shipped'
         | 'shipped'
         | 'delivered'
-        | 'cancelled';
+        | 'cancelled'
+        | 'closed';
       sample_request_status_type: 'pending_approval' | 'approved' | 'rejected';
       sample_status_type:
         | 'not_required'
@@ -7702,6 +8371,7 @@ export type Database = {
         | 'approved'
         | 'rejected';
       schedule_frequency_type: 'manual' | 'daily' | 'weekly' | 'monthly';
+      season_type: 'spring' | 'summer' | 'autumn' | 'winter' | 'all_year';
       shipment_type: 'parcel' | 'pallet';
       shipping_method: 'packlink' | 'mondial_relay' | 'chronotruck' | 'manual';
       sourcing_status_type:
@@ -7749,7 +8419,8 @@ export type Database = {
         | 'admin'
         | 'catalog_manager'
         | 'sales'
-        | 'partner_manager';
+        | 'partner_manager'
+        | 'customer';
       user_type: 'staff' | 'supplier' | 'customer' | 'partner';
     };
     CompositeTypes: {
@@ -7881,6 +8552,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_type: ['back-office', 'site-internet', 'linkme'],
       availability_type_enum: [
         'normal',
         'preorder',
@@ -7993,6 +8665,7 @@ export const Constants = {
         'shipped',
         'delivered',
         'cancelled',
+        'closed',
       ],
       sample_request_status_type: ['pending_approval', 'approved', 'rejected'],
       sample_status_type: [
@@ -8005,6 +8678,7 @@ export const Constants = {
         'rejected',
       ],
       schedule_frequency_type: ['manual', 'daily', 'weekly', 'monthly'],
+      season_type: ['spring', 'summer', 'autumn', 'winter', 'all_year'],
       shipment_type: ['parcel', 'pallet'],
       shipping_method: ['packlink', 'mondial_relay', 'chronotruck', 'manual'],
       sourcing_status_type: [
@@ -8056,6 +8730,7 @@ export const Constants = {
         'catalog_manager',
         'sales',
         'partner_manager',
+        'customer',
       ],
       user_type: ['staff', 'supplier', 'customer', 'partner'],
     },

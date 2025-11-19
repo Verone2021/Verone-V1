@@ -5,8 +5,7 @@
 
 import React, { useState } from 'react';
 
-// FIXME: ProductCardV2 component can't be imported from apps/back-office in package
-// import { ProductCardV2 } from '@/components/business/product-card-v2';
+import { ProductCardV2 } from '@verone/products';
 import { ButtonV2 } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { cn } from '@verone/utils';
@@ -280,16 +279,11 @@ export const CollectionGrid: React.FC<CollectionGridProps> = ({
               )}
             >
               {filteredProducts.map(product => (
-                // FIXME: ProductCardV2 component can't be imported from apps/back-office
-                <div key={product.id} className="border p-4 rounded">
-                  <p className="font-medium">{product.name}</p>
-                  <p className="text-sm text-gray-500">{product.sku}</p>
-                </div>
-                // <ProductCardV2
-                //   key={product.id}
-                //   product={product as any}
-                //   className={viewMode === 'list' ? 'flex-row' : undefined}
-                // />
+                <ProductCardV2
+                  key={product.id}
+                  product={product as any}
+                  className={viewMode === 'list' ? 'flex-row' : undefined}
+                />
               ))}
             </div>
           )}

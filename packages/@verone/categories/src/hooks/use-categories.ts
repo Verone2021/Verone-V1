@@ -71,13 +71,13 @@ export function useCategories() {
       }
 
       // Si la RPC fonctionne, utiliser les données directement
-      const categoriesWithCount = data || [];
+      const categoriesWithCount = (data || []) as CategoryWithCount[];
 
       // Stocker la liste plate pour accès par family_id
       setAllCategories(categoriesWithCount);
 
       // Organiser en hiérarchie
-      const hierarchical = buildHierarchy(categoriesWithCount);
+      const hierarchical = buildHierarchy(categoriesWithCount as Category[]);
       setCategories(hierarchical);
     } catch (err) {
       console.error('Erreur lors du chargement des catégories:', err);

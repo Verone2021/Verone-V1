@@ -76,6 +76,7 @@ const statusLabels: Record<SalesOrderStatus, string> = {
   shipped: 'Expédiée',
   delivered: 'Livrée',
   cancelled: 'Annulée',
+  closed: 'Clôturée',
 };
 
 const statusColors: Record<SalesOrderStatus, string> = {
@@ -85,6 +86,7 @@ const statusColors: Record<SalesOrderStatus, string> = {
   shipped: 'bg-green-100 text-green-800',
   delivered: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800',
+  closed: 'bg-gray-100 text-gray-800',
 };
 
 type SortColumn = 'date' | 'client' | 'amount' | null;
@@ -453,9 +455,55 @@ export default function SalesOrdersPage() {
   const handleCancel = async (orderId: string) => {
     if (confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) {
       try {
-        await handleStatusChange(orderId, 'cancelled');
+        // ✅ FIX: Appeler DIRECTEMENT la Server Action (pas via le hook car import impossible depuis monorepo)
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user?.id) {
+          throw new Error('Utilisateur non authentifié');
+        }
+
+        const result = await updateSalesOrderStatus(
+          orderId,
+          'cancelled',
+          user.id
+        );
+
+        if (!result.success) {
+          throw new Error(result.error || "Erreur lors de l'annulation");
+        }
+
+        // Libérer les réservations de stock
+        await supabase
+          .from('stock_reservations')
+          .update({
+            released_at: new Date().toISOString(),
+            released_by: user.id,
+          })
+          .eq('reference_type', 'sales_order')
+          .eq('reference_id', orderId)
+          .is('released_at', null);
+
+        toast({
+          title: 'Succès',
+          description: 'Commande annulée avec succès',
+        });
+
+        // Rafraîchir la liste des commandes
+        await fetchOrders();
+        await fetchStats();
       } catch (error) {
         console.error("Erreur lors de l'annulation:", error);
+        toast({
+          title: 'Erreur',
+          description:
+            error instanceof Error
+              ? error.message
+              : "Impossible d'annuler la commande",
+          variant: 'destructive',
+        });
       }
     }
   };

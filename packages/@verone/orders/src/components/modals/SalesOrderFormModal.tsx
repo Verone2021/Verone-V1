@@ -20,10 +20,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@verone/ui';
-
-// FIXME: EcoTaxVatInput can't be imported from apps/back-office in package
-// import { EcoTaxVatInput } from '@/components/forms/eco-tax-vat-input';
 import { Badge } from '@verone/ui';
+import { EcoTaxVatInput } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import {
@@ -831,14 +829,12 @@ export function SalesOrderFormModal({
               </div>
 
               <div>
-                {/* FIXME: EcoTaxVatInput can't be imported from apps/back-office
                 <EcoTaxVatInput
                   value={ecoTaxVatRate}
                   onChange={setEcoTaxVatRate}
                   defaultTaxRate={20}
                   disabled={loading}
                 />
-                */}
               </div>
             </CardContent>
           </Card>

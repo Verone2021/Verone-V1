@@ -1,0 +1,1 @@
+export { EcoTaxVatInput } from './EcoTaxVatInput';

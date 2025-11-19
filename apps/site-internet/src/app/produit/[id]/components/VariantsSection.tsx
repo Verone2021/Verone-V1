@@ -34,7 +34,8 @@ interface VariantsSectionProps {
 /**
  * Section Variantes pour fiche produit site internet
  * - Récupère variantes éligibles via RPC get_site_internet_products()
- * - Affiche grid responsive avec miniatures + badges disponibilité
+ * - Affiche UNIQUEMENT photos 56x56px cliquables (sans texte)
+ * - Tooltip au survol pour nom variante
  * - Navigation vers fiches produits variantes
  */
 export function VariantsSection({
@@ -105,56 +106,49 @@ export function VariantsSection({
         </div>
       ) : (
         <>
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-gray-600 mb-3">
             {variants.length} autre{variants.length > 1 ? 's' : ''} variante
             {variants.length > 1 ? 's' : ''} disponible
             {variants.length > 1 ? 's' : ''}
           </p>
 
-          {/* Grid variantes */}
-          <div
-            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"
-            data-testid="variants-grid"
-          >
+          {/* Flex wrap variantes photo-only ultra compactes (56x56px) */}
+          <div className="flex flex-wrap gap-2" data-testid="variants-grid">
             {variants.map(variant => (
               <Link
                 key={variant.product_id}
                 href={`/produit/${variant.slug}`}
-                className="group"
+                className="group relative"
                 data-testid="variant-card"
+                title={variant.name} // Accessibilité
               >
-                <div className="border rounded-lg p-3 hover:shadow-lg hover:border-primary-300 transition-all duration-200">
-                  {/* Miniature */}
-                  <div className="relative mb-2 h-32 bg-gray-100 rounded-lg overflow-hidden">
-                    {variant.primary_image_url ? (
-                      <Image
-                        src={variant.primary_image_url}
-                        alt={variant.name}
-                        fill
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center h-full text-gray-400 text-xs">
-                        Aucune image
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Nom variante */}
-                  <div className="text-sm font-medium text-gray-900 truncate group-hover:text-primary-600 transition-colors mb-1">
-                    {variant.name}
-                  </div>
-
-                  {/* SKU */}
-                  <div className="text-xs text-gray-500 mb-1">
-                    {variant.sku}
-                  </div>
-
-                  {/* Prix */}
-                  <div className="text-sm font-semibold text-gray-900">
-                    {variant.price_ttc.toFixed(2)} € TTC
-                  </div>
+                {/* Photo 56x56px avec border active state */}
+                <div
+                  className={`relative w-14 h-14 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                    currentProductId === variant.product_id
+                      ? 'border-gray-900 ring-2 ring-gray-200'
+                      : 'border-gray-200 hover:border-gray-400'
+                  }`}
+                >
+                  {variant.primary_image_url ? (
+                    <Image
+                      src={variant.primary_image_url}
+                      alt={variant.name}
+                      fill
+                      className="object-contain p-1 bg-white"
+                      sizes="56px"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full bg-gray-50 text-gray-300 text-xs">
+                      ?
+                    </div>
+                  )}
                 </div>
+
+                {/* Tooltip au survol - apparaît au-dessus */}
+                <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-10 shadow-lg">
+                  {variant.name}
+                </span>
               </Link>
             ))}
           </div>

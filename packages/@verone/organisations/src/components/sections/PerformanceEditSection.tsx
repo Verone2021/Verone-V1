@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 
+import { useInlineEdit, type EditableSection } from '@verone/common/hooks';
+import { ButtonV2 } from '@verone/ui';
+import { cn } from '@verone/utils';
 import {
   TrendingUp,
   Save,
@@ -12,13 +15,6 @@ import {
   Heart,
   FileText,
 } from 'lucide-react';
-
-import { ButtonV2 } from '@verone/ui';
-import { cn } from '@verone/utils';
-import {
-  useInlineEdit,
-  type EditableSection,
-} from '@verone/common/hooks';
 
 interface Organisation {
   id: string;
@@ -32,12 +28,14 @@ interface PerformanceEditSectionProps {
   organisation: Organisation;
   onUpdate: (updatedOrganisation: Partial<Organisation>) => void;
   className?: string;
+  organisationType?: 'customer' | 'supplier';
 }
 
 export function PerformanceEditSection({
   organisation,
   onUpdate,
   className,
+  organisationType = 'supplier',
 }: PerformanceEditSectionProps) {
   const {
     isEditing,
@@ -167,34 +165,40 @@ export function PerformanceEditSection({
         </div>
 
         <div className="space-y-5">
-          {/* Évaluation (étoiles) */}
-          <div>
-            <label className="block text-sm font-medium text-black mb-2">
-              Évaluation globale
-            </label>
-            <div className="flex items-center space-x-2">
-              <div className="flex space-x-1">
-                {renderStars(editData?.rating || 0, true)}
+          {/* Évaluation (étoiles) - Fournisseurs seulement */}
+          {organisationType !== 'customer' && (
+            <div>
+              <label className="block text-sm font-medium text-black mb-2">
+                Évaluation globale
+              </label>
+              <div className="flex items-center space-x-2">
+                <div className="flex space-x-1">
+                  {renderStars(editData?.rating || 0, true)}
+                </div>
+                <span className="text-sm text-gray-600 ml-3">
+                  {editData?.rating ? `${editData.rating}/5` : 'Non évalué'}
+                </span>
               </div>
-              <span className="text-sm text-gray-600 ml-3">
-                {editData?.rating ? `${editData.rating}/5` : 'Non évalué'}
-              </span>
+              <div className="text-xs text-gray-500 mt-1">
+                Cliquez sur les étoiles pour évaluer ce fournisseur
+              </div>
             </div>
-            <div className="text-xs text-gray-500 mt-1">
-              Cliquez sur les étoiles pour évaluer ce fournisseur
-            </div>
-          </div>
+          )}
 
-          {/* Fournisseur préféré */}
+          {/* Client/Fournisseur préféré */}
           <div className="flex items-center justify-between p-3 bg-pink-50 rounded-lg border border-pink-200">
             <div className="flex items-center space-x-2">
               <Heart className="h-5 w-5 text-pink-600" />
               <div>
                 <div className="text-sm font-medium text-pink-800">
-                  Fournisseur préféré
+                  {organisationType === 'customer'
+                    ? 'Client préféré'
+                    : 'Fournisseur préféré'}
                 </div>
                 <div className="text-xs text-pink-600">
-                  Marquer comme fournisseur de confiance
+                  {organisationType === 'customer'
+                    ? 'Marquer comme client de confiance'
+                    : 'Marquer comme fournisseur de confiance'}
                 </div>
               </div>
             </div>
@@ -213,49 +217,52 @@ export function PerformanceEditSection({
             </label>
           </div>
 
-          {/* Certifications */}
-          <div>
-            <label className="block text-sm font-medium text-black mb-1">
-              Certifications & Labels qualité
-            </label>
-            <textarea
-              value={editData?.certification_labels?.join(', ') || ''}
-              onChange={e => handleCertificationChange(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-              placeholder="ISO 9001, FSC, CE..."
-              rows={2}
-            />
-            <div className="text-xs text-gray-500 mt-1">
-              Séparez les certifications par des virgules
-            </div>
+          {/* Certifications - Fournisseurs seulement */}
+          {organisationType !== 'customer' && (
+            <div>
+              <label className="block text-sm font-medium text-black mb-1">
+                Certifications & Labels qualité
+              </label>
+              <textarea
+                value={editData?.certification_labels?.join(', ') || ''}
+                onChange={e => handleCertificationChange(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
+                placeholder="ISO 9001, FSC, CE..."
+                rows={2}
+              />
+              <div className="text-xs text-gray-500 mt-1">
+                Séparez les certifications par des virgules
+              </div>
 
-            {/* Suggestions de certifications */}
-            <div className="mt-2">
-              <div className="text-xs text-gray-600 mb-2">
-                Certifications courantes :
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {commonCertifications.map(cert => (
-                  <button
-                    key={cert}
-                    type="button"
-                    onClick={() => {
-                      const currentCerts = editData?.certification_labels || [];
-                      if (!currentCerts.includes(cert)) {
-                        const newCerts = [...currentCerts, cert];
-                        updateEditedData(section, {
-                          certification_labels: newCerts,
-                        });
-                      }
-                    }}
-                    className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded border text-gray-700"
-                  >
-                    + {cert}
-                  </button>
-                ))}
+              {/* Suggestions de certifications */}
+              <div className="mt-2">
+                <div className="text-xs text-gray-600 mb-2">
+                  Certifications courantes :
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {commonCertifications.map(cert => (
+                    <button
+                      key={cert}
+                      type="button"
+                      onClick={() => {
+                        const currentCerts =
+                          editData?.certification_labels || [];
+                        if (!currentCerts.includes(cert)) {
+                          const newCerts = [...currentCerts, cert];
+                          updateEditedData(section, {
+                            certification_labels: newCerts,
+                          });
+                        }
+                      }}
+                      className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded border text-gray-700"
+                    >
+                      + {cert}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Notes internes */}
           <div>
@@ -354,25 +361,27 @@ export function PerformanceEditSection({
       <div className="space-y-3">
         {hasPerformanceData ? (
           <div className="space-y-3">
-            {/* Évaluation */}
-            {organisation.rating && organisation.rating > 0 && (
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <div className="text-xs text-gray-700 font-medium mb-1 flex items-center">
-                  <Star className="h-3 w-3 mr-1" />
-                  ÉVALUATION GLOBALE
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="flex space-x-1">
-                    {renderStars(organisation.rating)}
+            {/* Évaluation - Fournisseurs seulement */}
+            {organisationType !== 'customer' &&
+              organisation.rating &&
+              organisation.rating > 0 && (
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <div className="text-xs text-gray-700 font-medium mb-1 flex items-center">
+                    <Star className="h-3 w-3 mr-1" />
+                    ÉVALUATION GLOBALE
                   </div>
-                  <span className="text-sm font-semibold text-gray-900">
-                    {organisation.rating}/5
-                  </span>
+                  <div className="flex items-center space-x-2">
+                    <div className="flex space-x-1">
+                      {renderStars(organisation.rating)}
+                    </div>
+                    <span className="text-sm font-semibold text-gray-900">
+                      {organisation.rating}/5
+                    </span>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Fournisseur préféré */}
+            {/* Client/Fournisseur préféré */}
             {organisation.preferred_supplier && (
               <div className="bg-pink-50 p-3 rounded-lg">
                 <div className="text-xs text-pink-600 font-medium mb-1 flex items-center">
@@ -381,13 +390,16 @@ export function PerformanceEditSection({
                 </div>
                 <div className="text-sm font-semibold text-pink-800 flex items-center">
                   <Heart className="h-4 w-4 mr-1 fill-pink-600" />
-                  Fournisseur préféré
+                  {organisationType === 'customer'
+                    ? 'Client préféré'
+                    : 'Fournisseur préféré'}
                 </div>
               </div>
             )}
 
-            {/* Certifications */}
-            {organisation.certification_labels &&
+            {/* Certifications - Fournisseurs seulement */}
+            {organisationType !== 'customer' &&
+              organisation.certification_labels &&
               organisation.certification_labels.length > 0 && (
                 <div className="bg-green-50 p-3 rounded-lg">
                   <div className="text-xs text-green-600 font-medium mb-2 flex items-center">

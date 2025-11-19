@@ -80,7 +80,7 @@ export function CardProductLuxury({
           {/* Prix ou "Sur demande" */}
           <span className="text-lg font-semibold text-verone-black">
             {price != null && price > 0
-              ? `${(price / 100).toFixed(2)} €`
+              ? `${price.toFixed(2)} €`
               : 'Sur demande'}
           </span>
 

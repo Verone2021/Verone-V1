@@ -9,9 +9,7 @@ import type { SelectedProduct } from '@verone/products/components/selectors/Univ
 import { UniversalProductSelectorV2 } from '@verone/products/components/selectors/UniversalProductSelectorV2';
 import type { Database } from '@verone/types';
 import { ButtonV2 } from '@verone/ui';
-
-// FIXME: EcoTaxVatInput can't be imported from apps/back-office in package
-// import { EcoTaxVatInput } from '@/components/forms/eco-tax-vat-input';
+import { EcoTaxVatInput } from '@verone/ui';
 import {
   Card,
   CardContent,
@@ -494,14 +492,12 @@ export function PurchaseOrderFormModal({
                 </div>
 
                 <div className="col-span-2">
-                  {/* FIXME: EcoTaxVatInput can't be imported from apps/back-office
                   <EcoTaxVatInput
                     value={ecoTaxVatRate}
                     onChange={setEcoTaxVatRate}
                     defaultTaxRate={20}
                     disabled={isBlocked}
                   />
-                  */}
                 </div>
 
                 {/* Conditions de paiement éditables */}

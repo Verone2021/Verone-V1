@@ -18,7 +18,8 @@ export type SalesOrderStatus =
   | 'partially_shipped'
   | 'shipped'
   | 'delivered'
-  | 'cancelled';
+  | 'cancelled'
+  | 'closed';
 export type PaymentStatus =
   | 'pending'
   | 'partial'
@@ -201,8 +202,9 @@ const STATUS_TRANSITIONS: Record<SalesOrderStatus, SalesOrderStatus[]> = {
   confirmed: ['partially_shipped', 'shipped', 'delivered', 'cancelled'],
   partially_shipped: ['shipped', 'delivered', 'cancelled'],
   shipped: ['delivered', 'cancelled'], // Retour partiel possible
-  delivered: [], // État final - Pas de retour arrière direct (SAV séparé)
+  delivered: ['closed'], // Peut être clos après livraison
   cancelled: [], // État final
+  closed: [], // État final - Commande clôturée
 };
 
 /**

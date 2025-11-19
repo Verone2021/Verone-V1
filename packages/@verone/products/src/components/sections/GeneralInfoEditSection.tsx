@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 
+import { CategoryHierarchySelector } from '@verone/categories';
 import {
   useInlineEdit,
   type EditableSection,
@@ -10,9 +11,6 @@ import { ButtonV2 } from '@verone/ui';
 import { cn } from '@verone/utils';
 import { generateVariantName } from '@verone/utils/business-rules/naming-rules';
 import { Edit2, Save, X, FileText } from 'lucide-react';
-
-// FIXME: CategoryHierarchySelector component can't be imported from apps/back-office in package
-// import { CategoryHierarchySelector } from '@/components/business/category-hierarchy-selector';
 
 interface Product {
   id: string;
@@ -146,7 +144,6 @@ export function GeneralInfoEditSection({
 
           {/* Catégorisation */}
           <div>
-            {/* FIXME: CategoryHierarchySelector component can't be imported from apps/back-office
             <CategoryHierarchySelector
               value={editData?.subcategory_id || ''}
               onChange={(subcategoryId, hierarchyInfo) => {
@@ -157,12 +154,6 @@ export function GeneralInfoEditSection({
               placeholder="Sélectionner une sous-catégorie"
               required
             />
-            */}
-            <div className="p-2 border rounded bg-gray-50">
-              <p className="text-sm text-gray-600">
-                Sélecteur de catégorie (temporairement désactivé)
-              </p>
-            </div>
           </div>
 
           {/* Slug (auto-généré) */}

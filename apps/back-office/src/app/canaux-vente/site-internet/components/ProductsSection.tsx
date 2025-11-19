@@ -7,6 +7,8 @@
 
 import { useState, useMemo, useCallback } from 'react';
 
+import Link from 'next/link';
+
 import { useToast } from '@verone/common/hooks';
 import { useDebounce } from '@verone/hooks';
 import { ProductThumbnail } from '@verone/products';
@@ -44,6 +46,7 @@ import {
   Edit,
   Trash2,
   Eye,
+  FileText,
   Package,
   AlertCircle,
   CheckCircle,
@@ -51,6 +54,7 @@ import {
 } from 'lucide-react';
 
 import { EditSiteInternetProductModal } from './EditSiteInternetProductModal';
+import { ProductPreviewModal } from './ProductPreviewModal';
 
 // Hooks
 import {
@@ -73,6 +77,8 @@ export function ProductsSection() {
   const [productToRemove, setProductToRemove] = useState<string | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [previewProduct, setPreviewProduct] = useState<any>(null);
 
   // Hooks
   const {
@@ -351,6 +357,17 @@ export function ProductsSection() {
                     {/* Actions */}
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
+                        <Link
+                          href={`/canaux-vente/site-internet/produits/${product.product_id}`}
+                        >
+                          <ButtonV2
+                            variant="ghost"
+                            size="sm"
+                            title="Voir détails"
+                          >
+                            <FileText className="h-4 w-4" />
+                          </ButtonV2>
+                        </Link>
                         <ButtonV2
                           variant="ghost"
                           size="sm"
@@ -365,14 +382,10 @@ export function ProductsSection() {
                           variant="ghost"
                           size="sm"
                           onClick={() => {
-                            if (product.slug) {
-                              window.open(
-                                `https://verone.fr/produit/${product.slug}`,
-                                '_blank'
-                              );
-                            }
+                            setPreviewProduct(product);
+                            setPreviewModalOpen(true);
                           }}
-                          disabled={!product.slug}
+                          title="Prévisualiser le produit"
                         >
                           <Eye className="h-4 w-4" />
                         </ButtonV2>
@@ -424,6 +437,16 @@ export function ProductsSection() {
           }}
         />
       )}
+
+      {/* Modal prévisualisation produit */}
+      <ProductPreviewModal
+        product={previewProduct}
+        isOpen={previewModalOpen}
+        onClose={() => {
+          setPreviewModalOpen(false);
+          setPreviewProduct(null);
+        }}
+      />
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { useParams } from 'next/navigation';
 import { AddressEditSection } from '@verone/common';
 import { ContactEditSection } from '@verone/customers';
 import { ContactsManagementSection } from '@verone/customers';
+import { OrganisationSalesOrdersSection } from '@verone/orders';
 import { OrganisationLogoCard } from '@verone/organisations';
 import { OrganisationStatsCard } from '@verone/organisations';
 import { CommercialEditSection } from '@verone/organisations';
@@ -282,6 +283,7 @@ export default function CustomerDetailPage() {
             <PerformanceEditSection
               organisation={customer}
               onUpdate={handleCustomerUpdate}
+              organisationType="customer"
             />
           )}
 
@@ -311,15 +313,11 @@ export default function CustomerDetailPage() {
         </TabContent>
 
         <TabContent activeTab={activeTab} tabId="orders">
-          <div className="text-center py-12">
-            <ShoppingCart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-black mb-2">
-              Module Commandes Vente
-            </h3>
-            <p className="text-gray-600">
-              Ce module sera disponible dans une prochaine version.
-            </p>
-          </div>
+          <OrganisationSalesOrdersSection
+            organisationId={customer.id}
+            organisationName={getOrganisationDisplayName(customer)}
+            onUpdate={() => handleCustomerUpdate({})}
+          />
         </TabContent>
 
         <TabContent activeTab={activeTab} tabId="pricing">
