@@ -81,6 +81,11 @@ export async function updatePurchaseOrderStatus(
       // ✅ VALIDATION : rouge → vert (alerte stock)
       updateFields.validated_at = new Date().toISOString();
       updateFields.validated_by = userId;
+      // ✅ CONTRAINTE : statut != draft/sent nécessite sent_at
+      if (!existingOrder.sent_at) {
+        updateFields.sent_at = new Date().toISOString();
+        updateFields.sent_by = userId;
+      }
     } else if (newStatus === 'sent') {
       // Envoi fournisseur (nécessite validation préalable)
       if (!existingOrder.validated_at) {

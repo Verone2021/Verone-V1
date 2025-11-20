@@ -78,7 +78,8 @@ export function useStockAlerts() {
           )
         `
           )
-          .eq('validated', false) // ← FIX BUG #1: Filtrer alertes validées
+          // ✅ NE PAS filtrer alertes validées - elles doivent rester visibles en VERT
+          // Workflow: 🔴 Non validée → 🟢 Validée (commande en cours) → ✅ Disparaît (réceptionnée)
           .order('alert_priority', { ascending: false })
           .order('stock_real', { ascending: true });
 

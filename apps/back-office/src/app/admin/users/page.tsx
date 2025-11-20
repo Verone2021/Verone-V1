@@ -9,11 +9,15 @@ import React from 'react';
 
 import { redirect } from 'next/navigation';
 
+import { ButtonUnified } from '@verone/ui';
+import {
+  createServerClient,
+  createAdminClient,
+} from '@verone/utils/supabase/server';
 import { Users, Plus, Shield } from 'lucide-react';
 
 import { CreateUserDialog } from '@/components/admin/create-user-dialog';
 import { UserManagementTable } from '@/components/admin/user-management-table';
-import { createServerClient, createAdminClient } from '@verone/utils/supabase/server';
 
 // Types pour les utilisateurs
 export interface UserWithProfile {
@@ -173,10 +177,10 @@ export default async function AdminUsersPage() {
           </div>
 
           <CreateUserDialog>
-            <button className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors shadow-sm font-medium">
+            <ButtonUnified variant="outline">
               <Plus className="h-4 w-4" />
               Nouvel Utilisateur
-            </button>
+            </ButtonUnified>
           </CreateUserDialog>
         </div>
       </div>
