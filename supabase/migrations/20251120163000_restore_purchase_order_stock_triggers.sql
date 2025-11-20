@@ -31,21 +31,24 @@ CREATE INDEX IF NOT EXISTS idx_sales_shipments_product ON sales_order_shipments(
 -- RLS Policies (copie de purchase_order_receptions)
 ALTER TABLE sales_order_shipments ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Owner/Admin can read sales_order_shipments" ON sales_order_shipments;
 CREATE POLICY "Owner/Admin can read sales_order_shipments" ON sales_order_shipments
   FOR SELECT USING (
-    get_user_role() = ANY(ARRAY['owner'::user_role_type, 'admin'::user_role_type])
+    get_user_role() = ANY(ARRAY['owner'::user_role_type, 'admin'::user_role_type'])
     AND user_has_access_to_organisation(get_user_organisation_id())
   );
 
+DROP POLICY IF EXISTS "Owner/Admin can create sales_order_shipments" ON sales_order_shipments;
 CREATE POLICY "Owner/Admin can create sales_order_shipments" ON sales_order_shipments
   FOR INSERT WITH CHECK (
     get_user_role() = ANY(ARRAY['owner'::user_role_type, 'admin'::user_role_type])
     AND user_has_access_to_organisation(get_user_organisation_id())
   );
 
+DROP POLICY IF EXISTS "Owner/Admin can delete sales_order_shipments" ON sales_order_shipments;
 CREATE POLICY "Owner/Admin can delete sales_order_shipments" ON sales_order_shipments
   FOR DELETE USING (
-    get_user_role() = ANY(ARRAY['owner'::user_role_type, 'admin'::user_role_type])
+    get_user_role() = ANY(ARRAY['owner'::user_role_type, 'admin'::user_role_type'])
     AND user_has_access_to_organisation(get_user_organisation_id())
   );
 
@@ -67,10 +70,10 @@ BEGIN
     -- ALERTE 1: low_stock (stock_real < min_stock)
     IF NEW.stock_real < NEW.min_stock THEN
         INSERT INTO stock_alert_tracking (
-            product_id, alert_type, alert_priority, stock_real,
+            product_id, supplier_id, alert_type, alert_priority, stock_real,
             stock_forecasted_in, stock_forecasted_out, min_stock, validated
         ) VALUES (
-            NEW.id, 'low_stock', 'P2', NEW.stock_real,
+            NEW.id, NEW.supplier_id, 'low_stock', 2, NEW.stock_real,
             NEW.stock_forecasted_in, NEW.stock_forecasted_out, NEW.min_stock, false
         )
         ON CONFLICT (product_id, alert_type)
@@ -87,10 +90,10 @@ BEGIN
     -- ALERTE 2: out_of_stock (prévisionnel < 0) - INDÉPENDANTE
     IF v_previsionnel < 0 THEN
         INSERT INTO stock_alert_tracking (
-            product_id, alert_type, alert_priority, stock_real,
+            product_id, supplier_id, alert_type, alert_priority, stock_real,
             stock_forecasted_in, stock_forecasted_out, shortage_quantity, validated
         ) VALUES (
-            NEW.id, 'out_of_stock', 'P3', NEW.stock_real,
+            NEW.id, NEW.supplier_id, 'out_of_stock', 3, NEW.stock_real,
             NEW.stock_forecasted_in, NEW.stock_forecasted_out, ABS(v_previsionnel), false
         )
         ON CONFLICT (product_id, alert_type)

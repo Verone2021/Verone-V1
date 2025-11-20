@@ -30,4 +30,8 @@ DROP FUNCTION IF EXISTS rollback_so_forecasted() CASCADE;
 DROP FUNCTION IF EXISTS update_stock_on_shipment() CASCADE;
 DROP FUNCTION IF EXISTS create_notification_on_stock_alert() CASCADE;
 
-RAISE NOTICE '✅ Rollback triggers stock terminé - Prêt pour reconstruction';
+-- Message de confirmation
+DO $$
+BEGIN
+    RAISE NOTICE '✅ Rollback triggers stock terminé - Prêt pour reconstruction';
+END $$;
