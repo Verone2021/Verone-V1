@@ -27,7 +27,7 @@
 // 🔑 TOUJOURS accessible dans CLAUDE.md (lignes 84-97)
 // Fichier: /Users/romeodossantos/verone-back-office-V1/.env.local
 // Connection: aws-1-eu-west-3.pooler.supabase.com:5432
-// Password: ADFVKDJCJDNC934
+// Password: [Disponible dans .mcp.env]
 
 // Workflow automatisé:
 1. Read .env.local pour DATABASE_URL

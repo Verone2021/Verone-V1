@@ -5,10 +5,12 @@
       "args": [
         "-y",
         "@supabase/mcp-server-supabase@latest",
-        "--project-ref=aorroydfjsrygmosnzrl"
+        "--project-ref=${SUPABASE_PROJECT_REF}",
+        "--mode=remote"
       ],
       "env": {
-        "SUPABASE_ACCESS_TOKEN": "sbp_a38334ba650a3fe5820e1641e3d156c01528089b"
+        "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}",
+        "SUPABASE_SKIP_LOCAL": "true"
       }
     },
     "context7": {

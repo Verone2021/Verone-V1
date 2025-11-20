@@ -11,7 +11,8 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const DB_URL = 'postgresql://postgres.aorroydfjsrygmosnzrl:ADFVKDJCJDNC934@aws-1-eu-west-3.pooler.supabase.com:5432/postgres';
+// Database URL - Charger depuis .env.local ou .mcp.env
+const DB_URL = process.env.DATABASE_URL || 'postgresql://postgres.aorroydfjsrygmosnzrl:[PASSWORD]@aws-1-eu-west-3.pooler.supabase.com:5432/postgres';
 const OUTPUT_FILE = path.join(__dirname, '../apps/back-office/src/types/supabase.ts');
 const PACKAGE_OUTPUT = path.join(__dirname, '../packages/@verone/types/src/supabase.ts');
 
@@ -46,7 +47,7 @@ try {
   console.error(error.message);
 
   console.log('\n💡 Solution alternative :');
-  console.log('1. Ouvrir https://supabase.com/dashboard/project/dmwcnbcussoqychafcjg/api/types');
+  console.log('1. Ouvrir https://supabase.com/dashboard/project/aorroydfjsrygmosnzrl/api/types');
   console.log('2. Copier tout le code TypeScript généré');
   console.log(`3. Coller dans ${OUTPUT_FILE}`);
   console.log(`4. Copier vers ${PACKAGE_OUTPUT}`);

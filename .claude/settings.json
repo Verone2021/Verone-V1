@@ -42,18 +42,21 @@
       "Read",
       "Read(/Users/romeodossantos/verone-back-office-V1/**)",
       "Write",
-      "Write(/Users/romeodossantos/verone-back-office-V1/src/**)",
+      "Write(/Users/romeodossantos/verone-back-office-V1/apps/**)",
+      "Write(/Users/romeodossantos/verone-back-office-V1/packages/**)",
       "Write(/Users/romeodossantos/verone-back-office-V1/docs/**)",
       "Write(/Users/romeodossantos/verone-back-office-V1/.vscode/**)",
-      "Write(/Users/romeodossantos/verone-back-office-V1/packages/**)",
       "Write(/Users/romeodossantos/verone-back-office-V1/.claude/**)",
+      "Write(/Users/romeodossantos/verone-back-office-V1/supabase/**)",
       "Edit",
-      "Edit(/Users/romeodossantos/verone-back-office-V1/src/**)",
-      "Edit(/Users/romeodossantos/verone-back-office-V1/docs/**)",
+      "Edit(/Users/romeodossantos/verone-back-office-V1/apps/**)",
       "Edit(/Users/romeodossantos/verone-back-office-V1/packages/**)",
+      "Edit(/Users/romeodossantos/verone-back-office-V1/docs/**)",
       "Edit(/Users/romeodossantos/verone-back-office-V1/.vscode/**)",
+      "Edit(/Users/romeodossantos/verone-back-office-V1/supabase/**)",
       "MultiEdit",
-      "MultiEdit(/Users/romeodossantos/verone-back-office-V1/src/**)",
+      "MultiEdit(/Users/romeodossantos/verone-back-office-V1/apps/**)",
+      "MultiEdit(/Users/romeodossantos/verone-back-office-V1/packages/**)",
       "MultiEdit(/Users/romeodossantos/verone-back-office-V1/docs/**)",
 
       // Build & Dev (SPÉCIFIQUES)
@@ -118,15 +121,15 @@
       "Bash(gh pr create *)",
       "Bash(gh issue create *)",
 
-      // Database (LECTURE SEULEMENT - développement)
+      // Database (REMOTE ONLY - pas de Docker local)
+      // ⚠️ Connexion production: pooler.supabase.com (eu-west-3)
+      // ❌ Docker NOT USED - Commandes supabase start/stop supprimées
       "Bash(PGPASSWORD=* psql * -c \"SELECT *\")",
       "Bash(PGPASSWORD=* psql * -c 'SELECT *')",
       "Bash(npx supabase db diff)",
       "Bash(npx supabase db diff *)",
       "Bash(npx supabase gen types *)",
       "Bash(npx supabase status)",
-      "Bash(npx supabase start)",
-      "Bash(npx supabase stop)",
 
       // Node & Scripts
       "Bash(node scripts/*)",

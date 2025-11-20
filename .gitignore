@@ -29,6 +29,10 @@ build/
 .env.test.local
 .env.production.local
 
+# MCP Server credentials (DO NOT COMMIT)
+.mcp.env
+.mcp.local.json
+
 # Logs
 logs
 *.log

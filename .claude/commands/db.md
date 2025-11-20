@@ -18,8 +18,8 @@ Shortcuts pour opérations database courantes : queries, migrations, logs, advis
 
 **Exécution:**
 
-- Credentials `.env.local` chargés automatiquement
-- `mcp__supabase__execute_sql` avec query fournie
+- Connection string pooler Supabase (IPv4 + IPv6)
+- `psql "${DATABASE_URL}" -c "SELECT ..."` (DATABASE_URL depuis .mcp.env)
 - Résultat formaté en table lisible
 
 **Use Cases:**
@@ -97,11 +97,16 @@ Shortcuts pour opérations database courantes : queries, migrations, logs, advis
 
 **Exécution:**
 
-```typescript
-mcp__supabase__get_advisors({
-  schemas: ['public'],
-  focus: 'security', // ou 'performance' ou undefined
-});
+```bash
+# Security advisors
+psql "${DATABASE_URL}" -c "
+SELECT * FROM pg_policies WHERE schemaname = 'public';
+"
+
+# Performance advisors
+psql "${DATABASE_URL}" -c "
+SELECT * FROM pg_stat_user_indexes WHERE schemaname = 'public';
+"
 ```
 
 **Output:**
@@ -170,8 +175,15 @@ RLS Policies:
 
 **Exécution:**
 
-```typescript
-mcp__supabase__generate_typescript_types();
+```bash
+# Méthode officielle Supabase (sans Docker)
+# Token disponible dans .mcp.env (non committé)
+SUPABASE_ACCESS_TOKEN="${SUPABASE_ACCESS_TOKEN}" \
+npx supabase@latest gen types typescript --project-id aorroydfjsrygmosnzrl \
+> apps/back-office/src/types/supabase.ts
+
+# Copier vers packages
+cp apps/back-office/src/types/supabase.ts packages/@verone/types/src/supabase.ts
 ```
 
 **Actions:**
@@ -307,15 +319,22 @@ Activity (Last 24h):
 4. Fallback Direct Connection (port 6543) if timeout
 5. Cache credentials for session
 
-**Credentials:**
+**Connection String (TOUJOURS utiliser celle-ci):**
 
+```bash
+# Connection disponible dans .mcp.env (non committé)
+${DATABASE_URL}
+
+# Format complet (si besoin)
+postgresql://postgres.aorroydfjsrygmosnzrl:[PASSWORD]@aws-1-eu-west-3.pooler.supabase.com:5432/postgres
 ```
-Host: aws-1-eu-west-3.pooler.supabase.com
-Port: 5432 (pooler) or 6543 (direct)
-Database: postgres
-User: postgres
-Password: ADFVKDJCJDNC934 (from .env.local)
-```
+
+**Détails:**
+
+- **Mode**: Pooler Session (IPv4 + IPv6)
+- **Project**: aorroydfjsrygmosnzrl
+- **Region**: eu-west-3 (AWS Paris)
+- **JAMAIS** Docker/localhost:54322
 
 ## Error Handling
 

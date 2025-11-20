@@ -840,7 +840,7 @@ PGPASSWORD="ADFVKDJCJDNC934" psql \
 **Variables .env.local** :
 
 ```
-DATABASE_URL=postgresql://postgres.aorroydfjsrygmosnzrl:ADFVKDJCJDNC934@aws-1-eu-west-3.pooler.supabase.com:5432/postgres
+DATABASE_URL=postgresql://postgres.aorroydfjsrygmosnzrl:[PASSWORD]@aws-1-eu-west-3.pooler.supabase.com:5432/postgres
 ```
 
 ---

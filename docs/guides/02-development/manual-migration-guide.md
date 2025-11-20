@@ -7,7 +7,7 @@ Le MCP Supabase est en mode lecture seule. Vous devez appliquer les migrations m
 ### 🔗 Connexion Database
 
 ```
-URL: postgresql://postgres.aorroydfjsrygmosnzrl:ADFVKDJCJDNC934@aws-1-eu-west-3.pooler.supabase.com:5432/postgres
+URL: postgresql://postgres.aorroydfjsrygmosnzrl:[PASSWORD]@aws-1-eu-west-3.pooler.supabase.com:5432/postgres
 ```
 
 ## 📋 Étapes à Suivre

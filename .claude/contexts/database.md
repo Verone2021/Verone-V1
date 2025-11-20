@@ -167,9 +167,9 @@ add-tax-rate.sql                       // Pas de date
 
 ```typescript
 // 🔑 CREDENTIALS : TOUJOURS lire depuis .env.local (ligne 19)
-// Fichier : /Users/romeodossantos/verone-back-office-V1/.env.local
+// Fichier : /Users/romeodossantos/verone-back-office-V1/.mcp.env (ou .env.local)
 // Connection : aws-1-eu-west-3.pooler.supabase.com:5432
-// Password : ADFVKDJCJDNC934
+// Password : Disponible dans DATABASE_URL (variable env)
 
 // Workflow automatisé :
 1. Read .env.local pour DATABASE_URL

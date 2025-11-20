@@ -81,7 +81,7 @@ Après avoir appliqué les 3 migrations :
 
 ## 🔗 Accès Dashboard Supabase
 
-**URL** : https://supabase.com/dashboard/project/dmwcnbcussoqychafcjg
+**URL** : https://supabase.com/dashboard/project/aorroydfjsrygmosnzrl
 
 **Navigation** :
 
@@ -116,18 +116,12 @@ ORDER BY con.conname;
 
 ---
 
-## 🆘 Alternative : Appliquer via CLI
+## ⚠️ Note Technique
 
-Si Dashboard ne fonctionne pas :
+**Workflow actuel** : Dashboard uniquement (pas de CLI locale)
 
-```bash
-# 1. Démarrer Docker Desktop
-# 2. Lancer Supabase local
-supabase start
+- ✅ Base de données production distante (`eu-west-3`)
+- ❌ Pas de Docker local installé
+- ✅ Migrations via SQL Editor Dashboard uniquement
 
-# 3. Appliquer migrations
-supabase db push
-
-# 4. Vérifier
-supabase db diff
-```
+**Configuration archivée** : `supabase/archived/config.toml.docker-unused`

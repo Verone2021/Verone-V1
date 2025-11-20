@@ -39,10 +39,16 @@ jobs:
         with:
           version: latest
 
-      - name: 🗄️ Start Supabase local
+      - name: 🗄️ Connect to Supabase Remote
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: aorroydfjsrygmosnzrl
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          supabase init
-          supabase start
+          echo "Connecting to remote Supabase project: $SUPABASE_PROJECT_REF"
+          echo "✅ Using production database (eu-west-3)"
+          # Configuration remote - pas de Docker nécessaire
+          npx supabase link --project-ref $SUPABASE_PROJECT_REF
 
       - name: 🔍 Run Database Audit
         id: audit
