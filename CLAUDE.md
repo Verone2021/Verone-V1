@@ -284,6 +284,103 @@ supabase gen types typescript --local > apps/back-office/src/types/supabase.ts
 
 ---
 
+## 🔌 CONFIGURATION MCP (Model Context Protocol)
+
+**Fichiers critiques** :
+
+- `.claude/settings.json` - Permissions, hooks, projet, MCP servers
+- `.serena/project.yml` - Serena language server (TypeScript)
+- `.serena/memories/` - Mémoires Serena (39 fichiers)
+
+### 📂 Chemins Autorisés (settings.json)
+
+**✅ TURBOREPO PHASE 4** (Permissions Write, Edit, MultiEdit) :
+
+```json
+"Write(/Users/romeodossantos/verone-back-office-V1/apps/**)"
+"Write(/Users/romeodossantos/verone-back-office-V1/packages/**)"
+"Write(/Users/romeodossantos/verone-back-office-V1/docs/**)"
+"Write(/Users/romeodossantos/verone-back-office-V1/supabase/**)"
+"Edit(/Users/romeodossantos/verone-back-office-V1/apps/**)"
+"Edit(/Users/romeodossantos/verone-back-office-V1/packages/**)"
+```
+
+**❌ OBSOLÈTE (Phase 1-3 - SUPPRIMÉ)** :
+
+```json
+"Write(/Users/romeodossantos/verone-back-office-V1/src/**)" // ❌ Dossier n'existe plus
+```
+
+### 🧠 Mémoires Serena Actualisées (2025-11-20)
+
+**Mémoires Phase 4 Turborepo** (références correctes) :
+
+- ✅ `turborepo-paths-reference-2025-11-20.md` - Source de vérité chemins
+- ✅ `auth-multi-canal-phase1-phase2-complete-2025-11-19.md`
+- ✅ `purchase-orders-validated-workflow-2025-11-19.md`
+- ✅ `project_overview.md`
+
+**Mémoires obsolètes SUPPRIMÉES** (2025-11-20) :
+
+- ❌ `verone-design-system-v2-2025.md` (chemins Phase 1-3)
+- ❌ `refonte-ux-statuts-compacts-2025-11-05.md`
+- ❌ `stock-movement-traceability-implementation-complete.md`
+- ❌ `pricing-multi-canaux-implementation-complete-2025.md`
+- ❌ `migration-formulaire-fournisseur-design-v2-2025.md`
+- ❌ `characteristics-dynamic-display-patterns.md`
+
+### 🎯 MCP Servers Actifs
+
+**12 MCP servers configurés** (.claude/settings.json) :
+
+1. **supabase** - Database ops, migrations, types
+2. **context7** - Documentation libraries (npm, React, etc.)
+3. **serena** - Semantic code analysis (find_symbol, replace_symbol_body)
+4. **sequential-thinking** - Raisonnement multi-étapes
+5. **playwright** - Tests E2E, browser automation
+6. **github** - Issues, PRs, repositories
+7. **vercel** - Déploiement, logs, analytics
+8. **filesystem** - Read/Write/Edit files
+9. **memory** - Knowledge graph
+10. **ide** - VS Code integration
+11. Plus autres (voir settings.json ligne 3-12)
+
+### 🚨 Règles Anti-Hallucination MCP
+
+**AVANT toute opération fichier** :
+
+1. ✅ **Vérifier existence** : `ls -la [chemin]`
+2. ✅ **Consulter mémoire** : `turborepo-paths-reference-2025-11-20.md`
+3. ✅ **Utiliser chemins Phase 4** : `apps/`, `packages/` (JAMAIS `src/`)
+4. ✅ **Valider imports** : `npm run type-check`
+
+**Si erreur "fichier introuvable"** :
+
+```typescript
+// ❌ NE PAS chercher dans
+src/                    // N'existe plus
+src/app/                // Obsolète Phase 1-3
+src/components/         // Obsolète Phase 1-3
+
+// ✅ CHERCHER dans
+apps/back-office/src/
+packages/@verone/*/src/
+```
+
+### 📋 Validation Configuration
+
+**Checklist post-migration Turborepo** :
+
+- [x] `.claude/settings.json` - Permissions `apps/**` et `packages/**`
+- [x] Mémoires Serena - 6 obsolètes supprimées
+- [x] `turborepo-paths-reference-2025-11-20.md` - Créée
+- [x] `.claude/contexts/design-system.md` - Chemins actualisés
+- [x] Permissions `src/**` - Supprimées
+
+**Dernière vérification** : 2025-11-20
+
+---
+
 ## 🚫 GIT WORKFLOW - AUTORISATION OBLIGATOIRE
 
 **RÈGLE ABSOLUE** : **JAMAIS commit/push SANS autorisation EXPLICITE utilisateur**

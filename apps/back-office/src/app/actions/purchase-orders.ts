@@ -2,16 +2,11 @@
 
 import { revalidatePath } from 'next/cache';
 
+import type { Database } from '@verone/types';
 import { createAdminClient } from '@verone/utils/supabase/server';
 
 export type PurchaseOrderStatus =
-  | 'draft'
-  | 'validated' // ✅ Statut validation (rouge → vert)
-  | 'sent'
-  | 'confirmed'
-  | 'partially_received'
-  | 'received'
-  | 'cancelled';
+  Database['public']['Enums']['purchase_order_status'];
 
 interface UpdateStatusResult {
   success: boolean;
@@ -77,55 +72,22 @@ export async function updatePurchaseOrderStatus(
     const updateFields: any = { status: newStatus };
 
     // Gérer les timestamps selon les contraintes PostgreSQL
-    if (newStatus === 'validated') {
-      // ✅ VALIDATION : rouge → vert (alerte stock)
-      updateFields.validated_at = new Date().toISOString();
-      updateFields.validated_by = userId;
-      // ✅ CONTRAINTE : statut != draft/sent nécessite sent_at
-      if (!existingOrder.sent_at) {
-        updateFields.sent_at = new Date().toISOString();
-        updateFields.sent_by = userId;
-      }
-    } else if (newStatus === 'sent') {
-      // Envoi fournisseur (nécessite validation préalable)
-      if (!existingOrder.validated_at) {
-        updateFields.validated_at = new Date().toISOString();
-        updateFields.validated_by = userId;
-      }
-      updateFields.sent_at = new Date().toISOString();
-      updateFields.sent_by = userId;
-    } else if (newStatus === 'confirmed') {
-      if (!existingOrder.sent_at) {
-        updateFields.sent_at = new Date().toISOString();
-        updateFields.sent_by = userId;
-      }
-      updateFields.validated_at = new Date().toISOString();
-      updateFields.validated_by = userId;
-    } else if (newStatus === 'received' || newStatus === 'partially_received') {
-      if (!existingOrder.sent_at) {
-        updateFields.sent_at = new Date().toISOString();
-        updateFields.sent_by = userId;
-      }
-      if (!existingOrder.validated_at) {
-        updateFields.validated_at = new Date().toISOString();
-        updateFields.validated_by = userId;
-      }
-      if (newStatus === 'received') {
-        updateFields.received_at = new Date().toISOString();
-        updateFields.received_by = userId;
-      }
+    if (newStatus === 'confirmed') {
+      // ✅ CONFIRMATION : rouge → vert (alerte stock)
+      updateFields.confirmed_at = new Date().toISOString();
+      updateFields.confirmed_by = userId;
+    } else if (newStatus === 'received') {
+      // Réception complète
+      updateFields.received_at = new Date().toISOString();
+      updateFields.received_by = userId;
     } else if (newStatus === 'cancelled') {
-      // ✅ Contrainte valid_workflow_timestamps: cancelled nécessite validated_at + sent_at
-      if (!existingOrder.sent_at) {
-        updateFields.sent_at = new Date().toISOString();
-        updateFields.sent_by = userId;
-      }
-      if (!existingOrder.validated_at) {
-        updateFields.validated_at = new Date().toISOString();
-        updateFields.validated_by = userId;
-      }
+      // Annulation
       updateFields.cancelled_at = new Date().toISOString();
+      updateFields.cancelled_by = userId;
     }
+
+    // ✅ Workflow simplifié restauré : draft → confirmed → received → cancelled
+    // Les triggers DB gèrent les mouvements de stock automatiquement
 
     console.log(`🔧 [Server Action] Champs à mettre à jour:`, updateFields);
 

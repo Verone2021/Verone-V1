@@ -1584,13 +1584,6 @@ export type Database = {
             foreignKeyName: 'contacts_organisation_id_fkey';
             columns: ['organisation_id'];
             isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
-          },
-          {
-            foreignKeyName: 'contacts_organisation_id_fkey';
-            columns: ['organisation_id'];
-            isOneToOne: false;
             referencedRelation: 'organisations';
             referencedColumns: ['id'];
           },
@@ -2348,13 +2341,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'expense_categories';
             referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'financial_documents_partner_id_fkey';
-            columns: ['partner_id'];
-            isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
           },
           {
             foreignKeyName: 'financial_documents_partner_id_fkey';
@@ -4237,13 +4223,6 @@ export type Database = {
             foreignKeyName: 'products_assigned_client_id_fkey';
             columns: ['assigned_client_id'];
             isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
-          },
-          {
-            foreignKeyName: 'products_assigned_client_id_fkey';
-            columns: ['assigned_client_id'];
-            isOneToOne: false;
             referencedRelation: 'organisations';
             referencedColumns: ['id'];
           },
@@ -4253,13 +4232,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'subcategories';
             referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'products_supplier_id_fkey';
-            columns: ['supplier_id'];
-            isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
           },
           {
             foreignKeyName: 'products_supplier_id_fkey';
@@ -4333,13 +4305,6 @@ export type Database = {
             foreignKeyName: 'purchase_order_items_customer_individual_id_fkey';
             columns: ['customer_individual_id'];
             isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_ind_id'];
-          },
-          {
-            foreignKeyName: 'purchase_order_items_customer_individual_id_fkey';
-            columns: ['customer_individual_id'];
-            isOneToOne: false;
             referencedRelation: 'individual_customers';
             referencedColumns: ['id'];
           },
@@ -4349,13 +4314,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'individual_customers_display';
             referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'purchase_order_items_customer_organisation_id_fkey';
-            columns: ['customer_organisation_id'];
-            isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
           },
           {
             foreignKeyName: 'purchase_order_items_customer_organisation_id_fkey';
@@ -4584,13 +4542,6 @@ export type Database = {
           validated_by?: string | null;
         };
         Relationships: [
-          {
-            foreignKeyName: 'purchase_orders_supplier_id_fkey';
-            columns: ['supplier_id'];
-            isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
-          },
           {
             foreignKeyName: 'purchase_orders_supplier_id_fkey';
             columns: ['supplier_id'];
@@ -5032,13 +4983,6 @@ export type Database = {
             foreignKeyName: 'sample_orders_supplier_id_fkey';
             columns: ['supplier_id'];
             isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
-          },
-          {
-            foreignKeyName: 'sample_orders_supplier_id_fkey';
-            columns: ['supplier_id'];
-            isOneToOne: false;
             referencedRelation: 'organisations';
             referencedColumns: ['id'];
           },
@@ -5119,51 +5063,44 @@ export type Database = {
           {
             foreignKeyName: 'stock_alert_tracking_product_id_fkey';
             columns: ['product_id'];
-            isOneToOne: true;
+            isOneToOne: false;
             referencedRelation: 'product_prices_summary';
             referencedColumns: ['product_id'];
           },
           {
             foreignKeyName: 'stock_alert_tracking_product_id_fkey';
             columns: ['product_id'];
-            isOneToOne: true;
+            isOneToOne: false;
             referencedRelation: 'products';
             referencedColumns: ['id'];
           },
           {
             foreignKeyName: 'stock_alert_tracking_product_id_fkey';
             columns: ['product_id'];
-            isOneToOne: true;
+            isOneToOne: false;
             referencedRelation: 'products_with_default_package';
             referencedColumns: ['id'];
           },
           {
             foreignKeyName: 'stock_alert_tracking_product_id_fkey';
             columns: ['product_id'];
-            isOneToOne: true;
+            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
           },
           {
             foreignKeyName: 'stock_alert_tracking_product_id_fkey';
             columns: ['product_id'];
-            isOneToOne: true;
+            isOneToOne: false;
             referencedRelation: 'stock_health_monitor';
             referencedColumns: ['id'];
           },
           {
             foreignKeyName: 'stock_alert_tracking_product_id_fkey';
             columns: ['product_id'];
-            isOneToOne: true;
+            isOneToOne: false;
             referencedRelation: 'stock_overview';
             referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'stock_alert_tracking_supplier_id_fkey';
-            columns: ['supplier_id'];
-            isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
           },
           {
             foreignKeyName: 'stock_alert_tracking_supplier_id_fkey';
@@ -5312,13 +5249,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'stock_overview';
             referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'stock_movements_purchase_order_item_id_fkey';
-            columns: ['purchase_order_item_id'];
-            isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['sample_id'];
           },
           {
             foreignKeyName: 'stock_movements_purchase_order_item_id_fkey';
@@ -5530,13 +5460,6 @@ export type Database = {
             foreignKeyName: 'user_activity_logs_organisation_id_fkey';
             columns: ['organisation_id'];
             isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
-          },
-          {
-            foreignKeyName: 'user_activity_logs_organisation_id_fkey';
-            columns: ['organisation_id'];
-            isOneToOne: false;
             referencedRelation: 'organisations';
             referencedColumns: ['id'];
           },
@@ -5618,13 +5541,6 @@ export type Database = {
             foreignKeyName: 'fk_user_profiles_individual_customer';
             columns: ['individual_customer_id'];
             isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_ind_id'];
-          },
-          {
-            foreignKeyName: 'fk_user_profiles_individual_customer';
-            columns: ['individual_customer_id'];
-            isOneToOne: false;
             referencedRelation: 'individual_customers';
             referencedColumns: ['id'];
           },
@@ -5634,13 +5550,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'individual_customers_display';
             referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'fk_user_profiles_organisation';
-            columns: ['organisation_id'];
-            isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
           },
           {
             foreignKeyName: 'fk_user_profiles_organisation';
@@ -5711,13 +5620,6 @@ export type Database = {
           user_id?: string | null;
         };
         Relationships: [
-          {
-            foreignKeyName: 'user_sessions_organisation_id_fkey';
-            columns: ['organisation_id'];
-            isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
-          },
           {
             foreignKeyName: 'user_sessions_organisation_id_fkey';
             columns: ['organisation_id'];
@@ -5825,13 +5727,6 @@ export type Database = {
             foreignKeyName: 'variant_groups_supplier_id_fkey';
             columns: ['supplier_id'];
             isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
-          },
-          {
-            foreignKeyName: 'variant_groups_supplier_id_fkey';
-            columns: ['supplier_id'];
-            isOneToOne: false;
             referencedRelation: 'organisations';
             referencedColumns: ['id'];
           },
@@ -5888,108 +5783,6 @@ export type Database = {
           updated_at: string | null;
         };
         Relationships: [];
-      };
-      customer_samples_view: {
-        Row: {
-          archived_at: string | null;
-          customer_display_name: string | null;
-          customer_ind_email: string | null;
-          customer_ind_first_name: string | null;
-          customer_ind_id: string | null;
-          customer_ind_last_name: string | null;
-          customer_org_id: string | null;
-          customer_org_legal_name: string | null;
-          customer_org_trade_name: string | null;
-          customer_type: string | null;
-          expected_delivery_date: string | null;
-          po_created_at: string | null;
-          po_number: string | null;
-          po_status:
-            | Database['public']['Enums']['purchase_order_status']
-            | null;
-          product_description: string | null;
-          product_id: string | null;
-          product_image: string | null;
-          product_name: string | null;
-          product_sku: string | null;
-          purchase_order_id: string | null;
-          quantity: number | null;
-          sample_created_at: string | null;
-          sample_id: string | null;
-          sample_notes: string | null;
-          sample_status: string | null;
-          sample_type: string | null;
-          sample_updated_at: string | null;
-          supplier_id: string | null;
-          supplier_name: string | null;
-          supplier_trade_name: string | null;
-          unit_price_ht: number | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'purchase_order_items_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'product_prices_summary';
-            referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'purchase_order_items_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'products';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'purchase_order_items_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'products_with_default_package';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'purchase_order_items_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_alerts_view';
-            referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'purchase_order_items_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_health_monitor';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'purchase_order_items_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_overview';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'purchase_order_items_purchase_order_id_fkey';
-            columns: ['purchase_order_id'];
-            isOneToOne: false;
-            referencedRelation: 'purchase_orders';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'purchase_orders_supplier_id_fkey';
-            columns: ['supplier_id'];
-            isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
-          },
-          {
-            foreignKeyName: 'purchase_orders_supplier_id_fkey';
-            columns: ['supplier_id'];
-            isOneToOne: false;
-            referencedRelation: 'organisations';
-            referencedColumns: ['id'];
-          },
-        ];
       };
       google_merchant_stats: {
         Row: {
@@ -6054,22 +5847,6 @@ export type Database = {
           newest_task: string | null;
           oldest_task: string | null;
           status: string | null;
-        };
-        Relationships: [];
-      };
-      pending_orders: {
-        Row: {
-          created_at: string | null;
-          delivery_date: string | null;
-          id: string | null;
-          order_date: string | null;
-          order_number: string | null;
-          order_type: string | null;
-          organisation_id: string | null;
-          organisation_name: string | null;
-          status: string | null;
-          total_amount: number | null;
-          updated_at: string | null;
         };
         Relationships: [];
       };
@@ -6295,13 +6072,6 @@ export type Database = {
             foreignKeyName: 'products_assigned_client_id_fkey';
             columns: ['assigned_client_id'];
             isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
-          },
-          {
-            foreignKeyName: 'products_assigned_client_id_fkey';
-            columns: ['assigned_client_id'];
-            isOneToOne: false;
             referencedRelation: 'organisations';
             referencedColumns: ['id'];
           },
@@ -6311,13 +6081,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'subcategories';
             referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'products_supplier_id_fkey';
-            columns: ['supplier_id'];
-            isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
           },
           {
             foreignKeyName: 'products_supplier_id_fkey';
@@ -8173,8 +7936,7 @@ export type Database = {
       purchase_order_status:
         | 'draft'
         | 'validated'
-        | 'sent'
-        | 'confirmed'
+        | 'shipped'
         | 'partially_received'
         | 'received'
         | 'cancelled';
@@ -8212,12 +7974,11 @@ export type Database = {
         | 'sous_sol';
       sales_order_status:
         | 'draft'
-        | 'confirmed'
+        | 'validated'
         | 'partially_shipped'
         | 'shipped'
-        | 'delivered'
-        | 'cancelled'
-        | 'closed';
+        | 'received'
+        | 'cancelled';
       sample_request_status_type: 'pending_approval' | 'approved' | 'rejected';
       sample_status_type:
         | 'not_required'
@@ -8476,8 +8237,7 @@ export const Constants = {
       purchase_order_status: [
         'draft',
         'validated',
-        'sent',
-        'confirmed',
+        'shipped',
         'partially_received',
         'received',
         'cancelled',
@@ -8517,12 +8277,11 @@ export const Constants = {
       ],
       sales_order_status: [
         'draft',
-        'confirmed',
+        'validated',
         'partially_shipped',
         'shipped',
-        'delivered',
+        'received',
         'cancelled',
-        'closed',
       ],
       sample_request_status_type: ['pending_approval', 'approved', 'rejected'],
       sample_status_type: [

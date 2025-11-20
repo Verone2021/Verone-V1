@@ -169,8 +169,6 @@ export default function PurchaseOrdersPage() {
     return {
       all: orders.length,
       draft: orders.filter(o => o.status === 'draft').length,
-      validated: orders.filter(o => o.status === 'validated').length,
-      sent: orders.filter(o => o.status === 'sent').length,
       confirmed: orders.filter(o => o.status === 'confirmed').length,
       partially_received: orders.filter(o => o.status === 'partially_received')
         .length,
@@ -373,7 +371,7 @@ export default function PurchaseOrdersPage() {
       // Appeler la Server Action pour mettre à jour le statut
       const result = await updatePurchaseOrderStatus(
         orderId,
-        newStatus,
+        newStatus as PurchaseOrderStatus, // Cast nécessaire car database types pas encore à jour
         user.id
       );
 
@@ -630,15 +628,11 @@ export default function PurchaseOrdersPage() {
               setActiveTab(value as PurchaseOrderStatus | 'all')
             }
           >
-            <TabsList className="grid w-full grid-cols-8">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="all">Toutes ({tabCounts.all})</TabsTrigger>
               <TabsTrigger value="draft">
                 Brouillon ({tabCounts.draft})
               </TabsTrigger>
-              <TabsTrigger value="validated">
-                Validée ({tabCounts.validated})
-              </TabsTrigger>
-              <TabsTrigger value="sent">Envoyée ({tabCounts.sent})</TabsTrigger>
               <TabsTrigger value="confirmed">
                 Confirmée ({tabCounts.confirmed})
               </TabsTrigger>
@@ -796,7 +790,7 @@ export default function PurchaseOrdersPage() {
                                 size="sm"
                                 label="Valider la commande"
                                 onClick={() =>
-                                  handleStatusChange(order.id, 'validated')
+                                  handleStatusChange(order.id, 'confirmed')
                                 }
                               />
                               <IconButton
@@ -816,8 +810,8 @@ export default function PurchaseOrdersPage() {
                             </>
                           )}
 
-                          {/* VALIDATED : Réceptionner + Dévalider + Annuler */}
-                          {order.status === 'validated' && (
+                          {/* CONFIRMED : Réceptionner + Dévalider + Annuler */}
+                          {order.status === 'confirmed' && (
                             <>
                               <IconButton
                                 icon={Truck}

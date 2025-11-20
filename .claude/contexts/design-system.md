@@ -15,12 +15,12 @@
   /* Rouge critique */ --verone-neutral: #6c7293 /* Gris interface */;
 ```
 
-**Fichiers Design System V2** :
+**Fichiers Design System V2 (Phase 4 Turborepo)** :
 
 ```
-src/lib/design-system/       # Tokens, themes, utils
-src/lib/theme-v2.ts          # Thème complet avec gradients
-src/components/ui-v2/        # Composants modernes (Button, KPI Cards, etc.)
+packages/@verone/ui/src/lib/design-system/  # Tokens, themes, utils
+packages/@verone/ui/src/themes/theme-v2.ts  # Thème complet avec gradients
+packages/@verone/ui/src/components/         # Composants modernes (Button, KPI Cards, etc.)
 ```
 
 **Tendances 2025** :
@@ -37,10 +37,10 @@ src/components/ui-v2/        # Composants modernes (Button, KPI Cards, etc.)
 
 **Installation** : `npx storybook@latest init`
 
-**Structure stories** :
+**Structure stories (Phase 4 Turborepo)** :
 
 ```
-src/stories/
+packages/@verone/ui/src/stories/
 ├── design-system/
 │   ├── Colors.stories.tsx
 │   ├── Typography.stories.tsx
@@ -64,15 +64,16 @@ src/stories/
 
 ---
 
-## 🔄 WORKFLOW CRÉATION COMPOSANT
+## 🔄 WORKFLOW CRÉATION COMPOSANT (Phase 4 Turborepo)
 
 ```typescript
-1. Créer composant : src/components/ui-v2/NewComponent.tsx
-2. Créer story : src/stories/components/NewComponent.stories.tsx
-3. Tester dans Storybook : npm run storybook
-4. Documenter props, variants, best practices
-5. Ajouter tests unitaires (Vitest)
-6. PR avec screenshots Storybook
+1. Créer composant : packages/@verone/ui/src/components/NewComponent.tsx
+2. Exporter : packages/@verone/ui/src/index.ts
+3. Créer story : packages/@verone/ui/src/stories/components/NewComponent.stories.tsx
+4. Tester dans Storybook : npm run storybook
+5. Documenter props, variants, best practices
+6. Ajouter tests unitaires (Vitest)
+7. PR avec screenshots Storybook
 ```
 
 ---
