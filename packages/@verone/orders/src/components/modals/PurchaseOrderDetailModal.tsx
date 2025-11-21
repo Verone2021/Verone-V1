@@ -92,8 +92,8 @@ export function PurchaseOrderDetailModal({
     return 'Fournisseur inconnu';
   };
 
-  // ✅ Workflow Achats: Permettre réception pour confirmed + partially_received
-  const canReceive = ['confirmed', 'partially_received'].includes(order.status);
+  // ✅ Workflow Achats: Permettre réception pour validated + partially_received
+  const canReceive = ['validated', 'partially_received'].includes(order.status);
 
   // ✅ Récupérer payment_terms depuis organisation si non défini sur commande
   const paymentTerms =
@@ -164,15 +164,6 @@ export function PurchaseOrderDetailModal({
                         </span>
                         <span className="font-medium">
                           {formatDate(order.expected_delivery_date)}
-                        </span>
-                      </div>
-                    )}
-                    {order.sent_at && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Package className="h-4 w-4 text-gray-500" />
-                        <span className="text-gray-600">Envoyée le :</span>
-                        <span className="font-medium">
-                          {formatDate(order.sent_at)}
                         </span>
                       </div>
                     )}

@@ -4,8 +4,6 @@ import { useEffect, useState } from 'react';
 
 import Link from 'next/link';
 
-import { ArrowDownToLine, ArrowUpFromLine, Package } from 'lucide-react';
-
 import { Badge } from '@verone/ui';
 import {
   Dialog,
@@ -16,6 +14,7 @@ import {
 } from '@verone/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
+import { ArrowDownToLine, ArrowUpFromLine, Package } from 'lucide-react';
 
 interface ForecastBreakdownModalProps {
   productId: string | null;
@@ -59,7 +58,7 @@ export function ForecastBreakdownModal({
         .from('sales_order_items')
         .select('quantity, sales_orders!inner(id, order_number, status)')
         .eq('product_id', productId)
-        .eq('sales_orders.status', 'confirmed');
+        .eq('sales_orders.status', 'validated');
 
       const outgoing =
         salesOrders?.map(item => ({
@@ -75,7 +74,7 @@ export function ForecastBreakdownModal({
         .from('purchase_order_items')
         .select('quantity, purchase_orders!inner(id, po_number, status)')
         .eq('product_id', productId)
-        .in('purchase_orders.status', ['sent', 'confirmed']);
+        .in('purchase_orders.status', ['validated', 'validated']);
 
       const incoming =
         purchaseOrders?.map(item => ({

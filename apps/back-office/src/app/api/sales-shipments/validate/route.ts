@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!['confirmed', 'partially_shipped'].includes(salesOrder.status)) {
+    if (!['validated', 'partially_shipped'].includes(salesOrder.status)) {
       return NextResponse.json(
         {
           error: `Impossible d'expedier: commande au statut "${salesOrder.status}"`,

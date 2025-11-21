@@ -19,6 +19,8 @@
 
 import { useState, useEffect } from 'react';
 
+import { PurchaseOrderReceptionModal } from '@verone/orders';
+import { usePurchaseReceptions } from '@verone/orders';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -57,9 +59,6 @@ import {
   CheckCircle,
   Eye,
 } from 'lucide-react';
-
-import { PurchaseOrderReceptionModal } from '@verone/orders';
-import { usePurchaseReceptions } from '@verone/orders';
 
 export default function ReceptionsPage() {
   const {
@@ -294,7 +293,7 @@ export default function ReceptionsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tous les statuts</SelectItem>
-                    <SelectItem value="confirmed">Confirmée</SelectItem>
+                    <SelectItem value="validated">Validée</SelectItem>
                     <SelectItem value="partially_received">
                       Partielle
                     </SelectItem>
@@ -410,13 +409,13 @@ export default function ReceptionsPage() {
                             <TableCell>
                               <Badge
                                 className={
-                                  order.status === 'confirmed'
+                                  order.status === 'validated'
                                     ? 'bg-gray-100 text-gray-900'
                                     : 'bg-verone-warning text-white'
                                 }
                               >
-                                {order.status === 'confirmed'
-                                  ? 'Confirmée'
+                                {order.status === 'validated'
+                                  ? 'Validée'
                                   : 'Partielle'}
                               </Badge>
                             </TableCell>

@@ -14,7 +14,7 @@ import { createClient } from '@verone/utils/supabase/client';
 // Type pour les statuts de commandes
 export type OrderStatus =
   | 'pending'
-  | 'confirmed'
+  | 'validated'
   | 'processing'
   | 'shipped'
   | 'delivered'
@@ -44,7 +44,7 @@ interface UseOrdersStatusResult {
 // Configuration des statuts avec labels et couleurs
 const STATUS_CONFIG: Record<OrderStatus, { label: string; color: string }> = {
   pending: { label: 'En attente', color: '#ff9b3e' },
-  confirmed: { label: 'Confirmées', color: '#3b82f6' },
+  validated: { label: 'Validées', color: '#3b82f6' },
   processing: { label: 'En préparation', color: '#8b5cf6' },
   shipped: { label: 'Expédiées', color: '#06b6d4' },
   delivered: { label: 'Livrées', color: '#10b981' },
@@ -109,7 +109,7 @@ export function useOrdersStatus(): UseOrdersStatusResult {
       const mapSalesStatus = (status: string): OrderStatus => {
         const mapping: Record<string, OrderStatus> = {
           draft: 'pending',
-          confirmed: 'confirmed',
+          validated: 'validated',
           partially_shipped: 'processing',
           shipped: 'shipped',
           delivered: 'delivered',
@@ -121,8 +121,7 @@ export function useOrdersStatus(): UseOrdersStatusResult {
       const mapPurchaseStatus = (status: string): OrderStatus => {
         const mapping: Record<string, OrderStatus> = {
           draft: 'pending',
-          sent: 'confirmed',
-          confirmed: 'confirmed',
+          validated: 'validated',
           partially_received: 'processing',
           received: 'delivered',
           cancelled: 'cancelled',

@@ -344,7 +344,7 @@ export function useSalesShipments() {
         const { count: pending } = await supabase
           .from('sales_orders')
           .select('id', { count: 'exact', head: true })
-          .eq('status', 'confirmed');
+          .eq('status', 'validated');
 
         // SOs partiellement expédiés
         const { count: partial } = await supabase
@@ -363,7 +363,7 @@ export function useSalesShipments() {
         const { count: overdue } = await supabase
           .from('sales_orders')
           .select('id', { count: 'exact', head: true })
-          .in('status', ['confirmed', 'partially_shipped'])
+          .in('status', ['validated', 'partially_shipped'])
           .not('expected_delivery_date', 'is', null)
           .lt('expected_delivery_date', today.toISOString().split('T')[0]);
 
@@ -374,7 +374,7 @@ export function useSalesShipments() {
         const { count: urgent } = await supabase
           .from('sales_orders')
           .select('id', { count: 'exact', head: true })
-          .in('status', ['confirmed', 'partially_shipped'])
+          .in('status', ['validated', 'partially_shipped'])
           .not('expected_delivery_date', 'is', null)
           .gte('expected_delivery_date', today.toISOString().split('T')[0])
           .lte('expected_delivery_date', threeDays.toISOString().split('T')[0]);
@@ -430,7 +430,7 @@ export function useSalesShipments() {
           )
         `
           )
-          .in('status', ['confirmed', 'partially_shipped'])
+          .in('status', ['validated', 'partially_shipped'])
           .order('expected_delivery_date', {
             ascending: true,
             nullsFirst: false,

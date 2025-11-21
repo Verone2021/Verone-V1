@@ -76,7 +76,7 @@ export function useSalesDashboard() {
         .select(
           'id, order_number, customer_id, customer_type, status, total_ttc, created_at'
         )
-        .in('status', ['confirmed', 'partially_shipped'])
+        .in('status', ['validated', 'partially_shipped'])
         .order('created_at', { ascending: false });
 
       if (ordersError) throw ordersError;

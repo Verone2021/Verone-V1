@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
 
-import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@verone/common/hooks';
+import { createClient } from '@verone/utils/supabase/client';
+
 import { useStockUI } from '.';
 
 // =============================================
@@ -347,7 +348,7 @@ export function useStockDashboard() {
           purchase_order_items(quantity)
         `
         )
-        .in('status', ['draft', 'sent', 'confirmed', 'partially_received'])
+        .in('status', ['draft', 'validated', 'partially_received'])
         .order('expected_delivery_date', { ascending: true })
         .limit(5);
 
@@ -367,7 +368,7 @@ export function useStockDashboard() {
           sales_order_items(quantity)
         `
         )
-        .in('status', ['confirmed', 'partially_shipped'])
+        .in('status', ['validated', 'partially_shipped'])
         .order('expected_delivery_date', { ascending: true })
         .limit(5);
 

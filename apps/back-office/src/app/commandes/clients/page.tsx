@@ -71,7 +71,7 @@ import { updateSalesOrderStatus } from '@/app/actions/sales-orders';
 
 const statusLabels: Record<SalesOrderStatus, string> = {
   draft: 'Brouillon',
-  confirmed: 'Validée',
+  validated: 'Validée',
   partially_shipped: 'Partiellement expédiée',
   shipped: 'Expédiée',
   delivered: 'Livrée',
@@ -81,7 +81,7 @@ const statusLabels: Record<SalesOrderStatus, string> = {
 
 const statusColors: Record<SalesOrderStatus, string> = {
   draft: 'bg-gray-100 text-gray-800',
-  confirmed: 'bg-blue-100 text-blue-800',
+  validated: 'bg-blue-100 text-blue-800',
   partially_shipped: 'bg-yellow-100 text-yellow-800',
   shipped: 'bg-green-100 text-green-800',
   delivered: 'bg-green-100 text-green-800',
@@ -307,7 +307,7 @@ export default function SalesOrdersPage() {
         acc.total_ttc += order.total_ttc || 0;
         acc.eco_tax_total += order.eco_tax_total || 0;
 
-        if (order.status === 'draft' || order.status === 'confirmed') {
+        if (order.status === 'draft' || order.status === 'validated') {
           acc.pending_orders++;
         } else if (
           order.status === 'shipped' ||
@@ -342,7 +342,7 @@ export default function SalesOrdersPage() {
     return {
       all: orders.length,
       draft: orders.filter(o => o.status === 'draft').length,
-      confirmed: orders.filter(o => o.status === 'confirmed').length,
+      validated: orders.filter(o => o.status === 'validated').length,
       shipped: orders.filter(
         o => o.status === 'shipped' || o.status === 'partially_shipped'
       ).length,
@@ -377,7 +377,7 @@ export default function SalesOrdersPage() {
     newStatus: SalesOrderStatus
   ) => {
     // Si validation (draft → confirmed), afficher modal de confirmation
-    if (newStatus === 'confirmed') {
+    if (newStatus === 'validated') {
       setOrderToValidate(orderId);
       setShowValidateConfirmation(true);
       return;
@@ -411,7 +411,7 @@ export default function SalesOrdersPage() {
 
       const result = await updateSalesOrderStatus(
         orderToValidate,
-        'confirmed',
+        'validated',
         user.id
       );
 
@@ -751,8 +751,8 @@ export default function SalesOrdersPage() {
               <TabsTrigger value="draft">
                 Brouillon ({tabCounts.draft})
               </TabsTrigger>
-              <TabsTrigger value="confirmed">
-                Validée ({tabCounts.confirmed})
+              <TabsTrigger value="validated">
+                Validée ({tabCounts.validated})
               </TabsTrigger>
               <TabsTrigger value="shipped">
                 Expédiée ({tabCounts.shipped})
@@ -911,7 +911,7 @@ export default function SalesOrdersPage() {
 
                             {/* Modifier (draft ou confirmed non payée) */}
                             {(order.status === 'draft' ||
-                              order.status === 'confirmed') && (
+                              order.status === 'validated') && (
                               <IconButton
                                 icon={Edit}
                                 variant="outline"
@@ -929,13 +929,13 @@ export default function SalesOrdersPage() {
                                 size="sm"
                                 label="Valider"
                                 onClick={() =>
-                                  handleStatusChange(order.id, 'confirmed')
+                                  handleStatusChange(order.id, 'validated')
                                 }
                               />
                             )}
 
                             {/* Dévalider (confirmed uniquement) */}
-                            {order.status === 'confirmed' && (
+                            {order.status === 'validated' && (
                               <IconButton
                                 icon={RotateCcw}
                                 variant="outline"
@@ -948,7 +948,7 @@ export default function SalesOrdersPage() {
                             )}
 
                             {/* Expédier (confirmed ou partially_shipped) */}
-                            {(order.status === 'confirmed' ||
+                            {(order.status === 'validated' ||
                               order.status === 'partially_shipped') && (
                               <IconButton
                                 icon={Truck}
@@ -971,7 +971,7 @@ export default function SalesOrdersPage() {
                             )}
 
                             {/* Annuler disabled pour confirmed - Doit dévalider d'abord */}
-                            {order.status === 'confirmed' && (
+                            {order.status === 'validated' && (
                               <IconButton
                                 icon={Ban}
                                 variant="outline"
@@ -986,7 +986,7 @@ export default function SalesOrdersPage() {
                               order.status === 'delivered') &&
                               order.status !== 'cancelled' &&
                               order.status !== 'draft' &&
-                              order.status !== 'confirmed' && (
+                              order.status !== 'validated' && (
                                 <IconButton
                                   icon={Ban}
                                   variant="outline"

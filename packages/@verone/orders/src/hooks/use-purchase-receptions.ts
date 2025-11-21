@@ -287,7 +287,7 @@ export function usePurchaseReceptions() {
         const { count: pending } = await supabase
           .from('purchase_orders')
           .select('id', { count: 'exact', head: true })
-          .eq('status', 'confirmed');
+          .eq('status', 'validated');
 
         // POs partiellement reçus
         const { count: partial } = await supabase
@@ -306,7 +306,7 @@ export function usePurchaseReceptions() {
         const { count: overdue } = await supabase
           .from('purchase_orders')
           .select('id', { count: 'exact', head: true })
-          .in('status', ['confirmed', 'partially_received'])
+          .in('status', ['validated', 'partially_received'])
           .not('expected_delivery_date', 'is', null)
           .lt('expected_delivery_date', today.toISOString().split('T')[0]);
 
@@ -317,7 +317,7 @@ export function usePurchaseReceptions() {
         const { count: urgent } = await supabase
           .from('purchase_orders')
           .select('id', { count: 'exact', head: true })
-          .in('status', ['confirmed', 'partially_received'])
+          .in('status', ['validated', 'partially_received'])
           .not('expected_delivery_date', 'is', null)
           .gte('expected_delivery_date', today.toISOString().split('T')[0])
           .lte('expected_delivery_date', threeDays.toISOString().split('T')[0]);
@@ -376,7 +376,7 @@ export function usePurchaseReceptions() {
           )
         `
           )
-          .in('status', ['confirmed', 'partially_received'])
+          .in('status', ['validated', 'partially_received'])
           .order('expected_delivery_date', {
             ascending: true,
             nullsFirst: false,

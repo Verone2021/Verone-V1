@@ -42,9 +42,7 @@ export async function updatePurchaseOrderStatus(
     // Vérifier d'abord que la commande existe et récupérer son statut actuel + timestamps
     const { data: existingOrder, error: fetchError } = await supabase
       .from('purchase_orders')
-      .select(
-        'id, po_number, status, validated_at, sent_at, received_at, cancelled_at'
-      )
+      .select('id, po_number, status, validated_at, received_at, cancelled_at')
       .eq('id', orderId)
       .single();
 
@@ -72,10 +70,10 @@ export async function updatePurchaseOrderStatus(
     const updateFields: any = { status: newStatus };
 
     // Gérer les timestamps selon les contraintes PostgreSQL
-    if (newStatus === 'confirmed') {
-      // ✅ CONFIRMATION : rouge → vert (alerte stock)
-      updateFields.confirmed_at = new Date().toISOString();
-      updateFields.confirmed_by = userId;
+    if (newStatus === 'validated') {
+      // ✅ VALIDATION : rouge → vert (alerte stock)
+      updateFields.validated_at = new Date().toISOString();
+      updateFields.validated_by = userId;
     } else if (newStatus === 'received') {
       // Réception complète
       updateFields.received_at = new Date().toISOString();

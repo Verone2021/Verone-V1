@@ -2,6 +2,12 @@
 
 import { useState } from 'react';
 
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
+import { Separator } from '@verone/ui';
+import { formatCurrency } from '@verone/utils';
 import {
   X,
   Package,
@@ -13,17 +19,6 @@ import {
   FileText,
 } from 'lucide-react';
 
-import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
-import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@verone/ui';
-import { Separator } from '@verone/ui';
-import { formatCurrency } from '@verone/utils';
 import { SalesOrderShipmentModal } from '@verone/orders/components/modals/SalesOrderShipmentModal';
 import { useSalesOrders } from '@verone/orders/hooks';
 import type { SalesOrder } from '@verone/orders/hooks';
@@ -122,12 +117,12 @@ export function OrderDetailModal({
   };
 
   const canMarkAsPaid =
-    order.status === 'confirmed' &&
+    ['validated', 'partially_shipped', 'shipped'].includes(order.status) &&
     (order.payment_status === 'pending' || order.payment_status === 'partial');
 
-  // Workflow Odoo-inspired: Permettre expédition pour confirmed + partially_shipped
+  // Workflow Odoo-inspired: Permettre expédition pour validated + partially_shipped
   // Paiement non requis (clients avec conditions paiement 30j par exemple)
-  const canShip = ['confirmed', 'partially_shipped'].includes(order.status);
+  const canShip = ['validated', 'partially_shipped'].includes(order.status);
 
   return (
     <>

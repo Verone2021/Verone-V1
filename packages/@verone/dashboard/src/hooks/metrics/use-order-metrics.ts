@@ -67,7 +67,7 @@ export function useOrderMetrics() {
       // Calculer les métriques actuelles
       const pending =
         recentOrders?.filter(order =>
-          ['draft', 'confirmed'].includes(order.status)
+          ['draft', 'validated'].includes(order.status)
         ).length || 0;
 
       const processing =

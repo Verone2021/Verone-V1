@@ -86,8 +86,6 @@ interface ProductImage {
 const statusLabels: Record<PurchaseOrderStatus, string> = {
   draft: 'Brouillon',
   validated: 'Validée',
-  sent: 'Envoyée',
-  confirmed: 'Confirmée',
   partially_received: 'Partiellement reçue',
   received: 'Reçue',
   cancelled: 'Annulée',
@@ -96,8 +94,6 @@ const statusLabels: Record<PurchaseOrderStatus, string> = {
 const statusColors: Record<PurchaseOrderStatus, string> = {
   draft: 'bg-gray-100 text-gray-800',
   validated: 'bg-green-100 text-green-800', // 🟢 Alerte verte
-  sent: 'bg-blue-100 text-blue-800',
-  confirmed: 'bg-gray-100 text-gray-900',
   partially_received: 'bg-gray-100 text-gray-900',
   received: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800',
@@ -169,7 +165,7 @@ export default function PurchaseOrdersPage() {
     return {
       all: orders.length,
       draft: orders.filter(o => o.status === 'draft').length,
-      confirmed: orders.filter(o => o.status === 'confirmed').length,
+      validated: orders.filter(o => o.status === 'validated').length,
       partially_received: orders.filter(o => o.status === 'partially_received')
         .length,
       received: orders.filter(o => o.status === 'received').length,
@@ -285,7 +281,7 @@ export default function PurchaseOrdersPage() {
         acc.total_ttc += order.total_ttc || 0;
 
         if (
-          ['draft', 'sent', 'confirmed', 'partially_received'].includes(
+          ['draft', 'validated', 'validated', 'partially_received'].includes(
             order.status
           )
         ) {
@@ -345,7 +341,7 @@ export default function PurchaseOrdersPage() {
     newStatus: PurchaseOrderStatus
   ) => {
     // Si validation (draft → confirmed), afficher modal de confirmation
-    if (newStatus === 'confirmed') {
+    if (newStatus === 'validated') {
       setOrderToValidate(orderId);
       setShowValidateConfirmation(true);
       return;
@@ -421,7 +417,7 @@ export default function PurchaseOrdersPage() {
       // Appeler la Server Action pour confirmer
       const result = await updatePurchaseOrderStatus(
         orderToValidate,
-        'confirmed',
+        'validated',
         user.id
       );
 
@@ -633,8 +629,8 @@ export default function PurchaseOrdersPage() {
               <TabsTrigger value="draft">
                 Brouillon ({tabCounts.draft})
               </TabsTrigger>
-              <TabsTrigger value="confirmed">
-                Confirmée ({tabCounts.confirmed})
+              <TabsTrigger value="validated">
+                Validée ({tabCounts.validated})
               </TabsTrigger>
               <TabsTrigger value="partially_received">
                 Part. reçue ({tabCounts.partially_received})
@@ -790,7 +786,7 @@ export default function PurchaseOrdersPage() {
                                 size="sm"
                                 label="Valider la commande"
                                 onClick={() =>
-                                  handleStatusChange(order.id, 'confirmed')
+                                  handleStatusChange(order.id, 'validated')
                                 }
                               />
                               <IconButton
@@ -811,7 +807,7 @@ export default function PurchaseOrdersPage() {
                           )}
 
                           {/* CONFIRMED : Réceptionner + Dévalider + Annuler */}
-                          {order.status === 'confirmed' && (
+                          {order.status === 'validated' && (
                             <>
                               <IconButton
                                 icon={Truck}
@@ -840,7 +836,7 @@ export default function PurchaseOrdersPage() {
                           )}
 
                           {/* SENT : Confirmer + Dévalider + Annuler */}
-                          {order.status === 'sent' && (
+                          {order.status === 'validated' && (
                             <>
                               <IconButton
                                 icon={CheckCircle}
@@ -848,7 +844,7 @@ export default function PurchaseOrdersPage() {
                                 size="sm"
                                 label="Confirmer la commande"
                                 onClick={() =>
-                                  handleStatusChange(order.id, 'confirmed')
+                                  handleStatusChange(order.id, 'validated')
                                 }
                               />
                               <IconButton
@@ -871,7 +867,7 @@ export default function PurchaseOrdersPage() {
                           )}
 
                           {/* CONFIRMED : Réceptionner + Dévalider + Annuler */}
-                          {order.status === 'confirmed' && (
+                          {order.status === 'validated' && (
                             <>
                               <IconButton
                                 icon={Truck}

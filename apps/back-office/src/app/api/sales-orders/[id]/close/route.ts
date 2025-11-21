@@ -47,10 +47,10 @@ export async function POST(
       );
     }
 
-    const validStatuses = ['confirmed', 'partially_shipped'];
+    const validStatuses = ['validated', 'partially_shipped'];
     if (!validStatuses.includes(order.status as string)) {
       return NextResponse.json(
-        { error: 'Only confirmed or partially_shipped orders can be closed' },
+        { error: 'Only validated or partially_shipped orders can be closed' },
         { status: 400 }
       );
     }

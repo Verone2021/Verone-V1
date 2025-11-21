@@ -306,7 +306,7 @@ export default function ExpeditionsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tous les statuts</SelectItem>
-                    <SelectItem value="confirmed">Confirmée</SelectItem>
+                    <SelectItem value="validated">Validée</SelectItem>
                     <SelectItem value="partially_shipped">Partielle</SelectItem>
                   </SelectContent>
                 </Select>
@@ -420,13 +420,13 @@ export default function ExpeditionsPage() {
                             <TableCell>
                               <Badge
                                 className={
-                                  order.status === 'confirmed'
+                                  order.status === 'validated'
                                     ? 'bg-gray-100 text-gray-900'
                                     : 'bg-verone-warning text-white'
                                 }
                               >
-                                {order.status === 'confirmed'
-                                  ? 'Confirmée'
+                                {order.status === 'validated'
+                                  ? 'Validée'
                                   : 'Partielle'}
                               </Badge>
                             </TableCell>

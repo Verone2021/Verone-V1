@@ -66,7 +66,7 @@ export function useTopProducts(days = 30, limit = 5): UseTopProductsResult {
         .gte('sales_orders.created_at', startDate.toISOString())
         .in('sales_orders.status', [
           'draft',
-          'confirmed',
+          'validated',
           'partially_shipped',
           'shipped',
           'delivered',
@@ -154,7 +154,7 @@ export function useTopProducts(days = 30, limit = 5): UseTopProductsResult {
           .lt('sales_orders.created_at', startDate.toISOString())
           .in('sales_orders.status', [
             'draft',
-            'confirmed',
+            'validated',
             'partially_shipped',
             'shipped',
             'delivered',

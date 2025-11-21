@@ -4520,8 +4520,6 @@ export type Database = {
           po_number: string;
           received_at: string | null;
           received_by: string | null;
-          sent_at: string | null;
-          sent_by: string | null;
           status: Database['public']['Enums']['purchase_order_status'];
           supplier_id: string;
           tax_rate: number;
@@ -4546,8 +4544,6 @@ export type Database = {
           po_number: string;
           received_at?: string | null;
           received_by?: string | null;
-          sent_at?: string | null;
-          sent_by?: string | null;
           status?: Database['public']['Enums']['purchase_order_status'];
           supplier_id: string;
           tax_rate?: number;
@@ -4572,8 +4568,6 @@ export type Database = {
           po_number?: string;
           received_at?: string | null;
           received_by?: string | null;
-          sent_at?: string | null;
-          sent_by?: string | null;
           status?: Database['public']['Enums']['purchase_order_status'];
           supplier_id?: string;
           tax_rate?: number;
@@ -4792,8 +4786,8 @@ export type Database = {
           channel_id: string | null;
           closed_at: string | null;
           closed_by: string | null;
-          confirmed_at: string | null;
-          confirmed_by: string | null;
+          validated_at: string | null;
+          validated_by: string | null;
           created_at: string;
           created_by: string;
           currency: string;
@@ -4833,8 +4827,8 @@ export type Database = {
           channel_id?: string | null;
           closed_at?: string | null;
           closed_by?: string | null;
-          confirmed_at?: string | null;
-          confirmed_by?: string | null;
+          validated_at?: string | null;
+          validated_by?: string | null;
           created_at?: string;
           created_by: string;
           currency?: string;
@@ -4874,8 +4868,8 @@ export type Database = {
           channel_id?: string | null;
           closed_at?: string | null;
           closed_by?: string | null;
-          confirmed_at?: string | null;
-          confirmed_by?: string | null;
+          validated_at?: string | null;
+          validated_by?: string | null;
           created_at?: string;
           created_by?: string;
           currency?: string;
@@ -6838,8 +6832,6 @@ export type Database = {
           po_number: string;
           received_at: string | null;
           received_by: string | null;
-          sent_at: string | null;
-          sent_by: string | null;
           status: Database['public']['Enums']['purchase_order_status'];
           supplier_id: string;
           tax_rate: number;
@@ -8149,8 +8141,6 @@ export type Database = {
       purchase_order_status:
         | 'draft'
         | 'validated'
-        | 'sent'
-        | 'confirmed'
         | 'partially_received'
         | 'received'
         | 'cancelled';
@@ -8188,7 +8178,7 @@ export type Database = {
         | 'sous_sol';
       sales_order_status:
         | 'draft'
-        | 'confirmed'
+        | 'validated'
         | 'partially_shipped'
         | 'shipped'
         | 'delivered'
@@ -8451,8 +8441,6 @@ export const Constants = {
       purchase_order_status: [
         'draft',
         'validated',
-        'sent',
-        'confirmed',
         'partially_received',
         'received',
         'cancelled',
@@ -8492,7 +8480,7 @@ export const Constants = {
       ],
       sales_order_status: [
         'draft',
-        'confirmed',
+        'validated',
         'partially_shipped',
         'shipped',
         'delivered',

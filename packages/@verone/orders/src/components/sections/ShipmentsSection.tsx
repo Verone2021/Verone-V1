@@ -78,12 +78,12 @@ export function ShipmentsSection({
   };
 
   // Statuts permettant création shipment
-  const canCreateShipment = ['confirmed', 'partially_shipped'].includes(
+  const canCreateShipment = ['validated', 'partially_shipped'].includes(
     orderStatus
   );
 
   // Statuts permettant clôture partielle
-  const canCloseOrder = ['confirmed', 'partially_shipped'].includes(
+  const canCloseOrder = ['validated', 'partially_shipped'].includes(
     orderStatus
   );
 

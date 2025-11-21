@@ -18,8 +18,8 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { createServerClient } from '@verone/utils/supabase/server';
 import type { ValidateReceptionPayload } from '@verone/types';
+import { createServerClient } from '@verone/utils/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!['confirmed', 'partially_received'].includes(purchaseOrder.status)) {
+    if (!['validated', 'partially_received'].includes(purchaseOrder.status)) {
       return NextResponse.json(
         {
           error: `Impossible de réceptionner: commande au statut "${purchaseOrder.status}"`,

@@ -12,7 +12,7 @@
  *
  * @example
  * // Valider transition status
- * validateStatusTransition('draft', 'confirmed') // ✅ OK
+ * validateStatusTransition('draft', 'validated') // ✅ OK
  * validateStatusTransition('delivered', 'shipped') // ❌ Throws Error
  *
  * @example
@@ -34,7 +34,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
  */
 export type SalesOrderStatus =
   | 'draft'
-  | 'confirmed'
+  | 'validated'
   | 'partially_shipped'
   | 'shipped'
   | 'delivered'
@@ -96,13 +96,13 @@ export interface SalesOrderData {
 /**
  * Machine à états finis - Transitions autorisées
  *
- * Workflow standard: draft → confirmed → partially_shipped → shipped → delivered
- * Annulation: possible depuis draft, confirmed, partially_shipped, shipped
+ * Workflow standard: draft → validated → partially_shipped → shipped → delivered
+ * Annulation: possible depuis draft, validated, partially_shipped, shipped
  * États finaux: delivered, cancelled (pas de retour arrière)
  */
 const STATUS_TRANSITIONS: Record<SalesOrderStatus, SalesOrderStatus[]> = {
-  draft: ['confirmed', 'cancelled'],
-  confirmed: ['partially_shipped', 'shipped', 'delivered', 'cancelled'],
+  draft: ['validated', 'cancelled'],
+  validated: ['partially_shipped', 'shipped', 'delivered', 'cancelled'],
   partially_shipped: ['shipped', 'delivered', 'cancelled'],
   shipped: ['delivered', 'cancelled'],
   delivered: [], // État final - SAV géré séparément
@@ -114,7 +114,7 @@ const STATUS_TRANSITIONS: Record<SalesOrderStatus, SalesOrderStatus[]> = {
  */
 export const STATUS_LABELS: Record<SalesOrderStatus, string> = {
   draft: 'Brouillon',
-  confirmed: 'Confirmée',
+  validated: 'Validée',
   partially_shipped: 'Partiellement expédiée',
   shipped: 'Expédiée',
   delivered: 'Livrée',
@@ -129,7 +129,7 @@ export const STATUS_COLORS: Record<
   'gray' | 'blue' | 'yellow' | 'green' | 'red'
 > = {
   draft: 'gray',
-  confirmed: 'blue',
+  validated: 'blue',
   partially_shipped: 'yellow',
   shipped: 'green',
   delivered: 'green',
@@ -209,14 +209,14 @@ export function canConfirm(status: SalesOrderStatus): boolean {
  * Vérifier si status permet expédition
  */
 export function canShip(status: SalesOrderStatus): boolean {
-  return ['confirmed', 'partially_shipped'].includes(status);
+  return ['validated', 'partially_shipped'].includes(status);
 }
 
 /**
  * Vérifier si status permet marquage livraison
  */
 export function canDeliver(status: SalesOrderStatus): boolean {
-  return ['confirmed', 'partially_shipped', 'shipped'].includes(status);
+  return ['validated', 'partially_shipped', 'shipped'].includes(status);
 }
 
 // ============================================================================
@@ -327,10 +327,10 @@ export async function validateStatusChange(
 
   // 2. Business rules selon transition
   switch (newStatus) {
-    case 'confirmed':
+    case 'validated':
       // Vérifier items et stock
       if (!orderData.items || orderData.items.length === 0) {
-        errors.push('Impossible de confirmer: commande sans items');
+        errors.push('Impossible de valider: commande sans items');
       }
 
       if (context.checkStock !== false && context.supabase && orderData.items) {
@@ -360,7 +360,7 @@ export async function validateStatusChange(
     case 'delivered':
       // Vérifier que commande expédiée ou partiellement expédiée
       if (
-        !['shipped', 'partially_shipped', 'confirmed'].includes(currentStatus)
+        !['shipped', 'partially_shipped', 'validated'].includes(currentStatus)
       ) {
         errors.push('Commande doit être expédiée avant livraison');
       }

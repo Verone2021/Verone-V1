@@ -102,7 +102,7 @@ export function ShipmentsSectionSimple({
   };
 
   const canCreateShipment =
-    orderData && ['confirmed', 'partially_shipped'].includes(orderData.status);
+    orderData && ['validated', 'partially_shipped'].includes(orderData.status);
 
   const items = orderData?.sales_order_items || [];
   const totalUnits = items.reduce(

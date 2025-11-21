@@ -14,7 +14,7 @@ import { createClient } from '@verone/utils/supabase/client';
 // Types pour les commandes clients
 export type SalesOrderStatus =
   | 'draft'
-  | 'confirmed'
+  | 'validated'
   | 'partially_shipped'
   | 'shipped'
   | 'delivered'
@@ -174,13 +174,13 @@ interface SalesOrderStats {
   total_tva: number; // Total TVA
   total_ttc: number; // Total TTC
   average_basket: number; // Panier moyen (total_ttc / total_orders)
-  pending_orders: number; // draft + confirmed
+  pending_orders: number; // draft + validated
   shipped_orders: number;
   delivered_orders: number;
   cancelled_orders: number;
   orders_by_status: {
     draft: number;
-    confirmed: number;
+    validated: number;
     partially_shipped: number;
     shipped: number;
     delivered: number;
@@ -194,12 +194,12 @@ interface SalesOrderStats {
 
 /**
  * Machine à états finis (FSM) - Transitions autorisées
- * Workflow: draft → confirmed → partially_shipped → shipped → delivered
+ * Workflow: draft → validated → partially_shipped → shipped → delivered
  * Annulation possible à tout moment (sauf delivered)
  */
 const STATUS_TRANSITIONS: Record<SalesOrderStatus, SalesOrderStatus[]> = {
-  draft: ['confirmed', 'cancelled'],
-  confirmed: ['partially_shipped', 'shipped', 'delivered', 'cancelled'],
+  draft: ['validated', 'cancelled'],
+  validated: ['partially_shipped', 'shipped', 'delivered', 'cancelled'],
   partially_shipped: ['shipped', 'delivered', 'cancelled'],
   shipped: ['delivered', 'cancelled'], // Retour partiel possible
   delivered: ['closed'], // Peut être clos après livraison
@@ -509,8 +509,8 @@ export function useSalesOrders() {
                 acc.orders_by_status.draft++;
                 acc.pending_orders++;
                 break;
-              case 'confirmed':
-                acc.orders_by_status.confirmed++;
+              case 'validated':
+                acc.orders_by_status.validated++;
                 acc.pending_orders++;
                 break;
               case 'partially_shipped':
@@ -546,7 +546,7 @@ export function useSalesOrders() {
             cancelled_orders: 0,
             orders_by_status: {
               draft: 0,
-              confirmed: 0,
+              validated: 0,
               partially_shipped: 0,
               shipped: 0,
               delivered: 0,
@@ -827,11 +827,11 @@ export function useSalesOrders() {
         // - Validée (validated): Impact stock_forecasted_out pour TOUS les produits
         // - Expédiée/Livrée: Impact stock_real (géré par workflows séparés)
 
-        // On met à jour stock_forecasted_out UNIQUEMENT si la commande est créée directement en statut 'confirmed'
-        // Sinon, la mise à jour se fera lors de la validation (transition draft → confirmed)
+        // On met à jour stock_forecasted_out UNIQUEMENT si la commande est créée directement en statut 'validated'
+        // Sinon, la mise à jour se fera lors de la validation (transition draft → validated)
         const initialStatus = order.status || 'draft'; // Par défaut: brouillon
 
-        if (initialStatus === 'confirmed') {
+        if (initialStatus === 'validated') {
           // Commande validée → Impact stock prévisionnel pour TOUS les produits
           for (const item of data.items) {
             // Récupérer les valeurs actuelles
@@ -1339,7 +1339,7 @@ export function useSalesOrders() {
           item => item.quantity_shipped > 0
         );
 
-        let newStatus: SalesOrderStatus = 'confirmed';
+        let newStatus: SalesOrderStatus = 'validated';
         if (isFullyShipped) {
           newStatus = 'shipped';
         } else if (isPartiallyShipped) {

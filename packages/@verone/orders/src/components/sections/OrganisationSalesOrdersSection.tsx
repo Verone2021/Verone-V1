@@ -70,7 +70,7 @@ export function OrganisationSalesOrdersSection({
   const stats = {
     total: customerOrders.length,
     draft: customerOrders.filter(o => o.status === 'draft').length,
-    confirmed: customerOrders.filter(o => o.status === 'confirmed').length,
+    validated: customerOrders.filter(o => o.status === 'validated').length,
     shipped: customerOrders.filter(o => o.status === 'shipped').length,
     delivered: customerOrders.filter(o => o.status === 'delivered').length,
     totalValue: customerOrders.reduce((sum, o) => sum + o.total_ttc, 0),
@@ -147,9 +147,9 @@ export function OrganisationSalesOrdersSection({
             </div>
             <div className="text-center p-3 bg-blue-50 rounded-lg">
               <div className="text-2xl font-bold text-blue-600">
-                {stats.confirmed}
+                {stats.validated}
               </div>
-              <div className="text-xs text-gray-600">Confirmées</div>
+              <div className="text-xs text-gray-600">Validées</div>
             </div>
             <div className="text-center p-3 bg-purple-50 rounded-lg">
               <div className="text-2xl font-bold text-purple-600">

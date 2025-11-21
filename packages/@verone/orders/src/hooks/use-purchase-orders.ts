@@ -17,8 +17,6 @@ import { createClient } from '@verone/utils/supabase/client';
 export type PurchaseOrderStatus =
   | 'draft'
   | 'validated' // ✅ Statut validation (rouge → vert)
-  | 'sent'
-  | 'confirmed'
   | 'partially_received'
   | 'received'
   | 'cancelled';
@@ -42,11 +40,9 @@ export interface PurchaseOrder {
   // Workflow users et timestamps
   created_by: string;
   validated_by?: string;
-  sent_by?: string;
   received_by?: string;
 
   validated_at?: string;
-  sent_at?: string;
   received_at?: string;
   cancelled_at?: string;
 
@@ -173,10 +169,8 @@ export function usePurchaseOrders() {
           notes,
           created_by,
           validated_by,
-          sent_by,
           received_by,
           validated_at,
-          sent_at,
           received_at,
           cancelled_at,
           created_at,
@@ -297,10 +291,8 @@ export function usePurchaseOrders() {
           notes,
           created_by,
           validated_by,
-          sent_by,
           received_by,
           validated_at,
-          sent_at,
           received_at,
           cancelled_at,
           created_at,
@@ -411,8 +403,7 @@ export function usePurchaseOrders() {
 
             switch (order.status) {
               case 'draft':
-              case 'sent':
-              case 'confirmed':
+              case 'validated':
               case 'partially_received':
                 acc.pending_orders++;
                 break;
@@ -666,7 +657,7 @@ export function usePurchaseOrders() {
           item => item.quantity_received > 0
         );
 
-        let newStatus: PurchaseOrderStatus = 'confirmed';
+        let newStatus: PurchaseOrderStatus = 'validated';
         if (isFullyReceived) {
           newStatus = 'received';
         } else if (isPartiallyReceived) {
@@ -770,10 +761,10 @@ export function usePurchaseOrders() {
     [supabase]
   );
 
-  // Marquer une commande comme confirmée (déclenche stock prévisionnel)
+  // Marquer une commande comme validée (déclenche stock prévisionnel)
   const confirmOrder = useCallback(
     async (orderId: string) => {
-      return updateStatus(orderId, 'confirmed');
+      return updateStatus(orderId, 'validated');
     },
     [updateStatus]
   );

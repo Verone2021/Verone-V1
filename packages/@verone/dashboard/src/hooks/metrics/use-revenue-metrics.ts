@@ -51,7 +51,7 @@ export function useRevenueMetrics() {
         .from('sales_orders')
         .select('total_ht')
         .in('status', [
-          'confirmed',
+          'validated',
           'partially_shipped',
           'shipped',
           'delivered',
@@ -66,7 +66,7 @@ export function useRevenueMetrics() {
         .from('sales_orders')
         .select('total_ht')
         .in('status', [
-          'confirmed',
+          'validated',
           'partially_shipped',
           'shipped',
           'delivered',
@@ -81,7 +81,7 @@ export function useRevenueMetrics() {
         .from('sales_orders')
         .select('total_ht')
         .in('status', [
-          'confirmed',
+          'validated',
           'partially_shipped',
           'shipped',
           'delivered',
@@ -97,7 +97,7 @@ export function useRevenueMetrics() {
           .from('sales_orders')
           .select('total_ht')
           .in('status', [
-            'confirmed',
+            'validated',
             'partially_shipped',
             'shipped',
             'delivered',
