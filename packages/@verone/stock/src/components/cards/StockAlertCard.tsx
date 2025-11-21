@@ -238,17 +238,21 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
             </div>
 
             {/* Badge Statut Commande */}
-            {alert.is_in_draft && alert.quantity_in_draft && (
-              <div className="mt-2">
-                <Badge
-                  variant="outline"
-                  className="border-green-500 bg-green-50 text-green-700 text-xs font-medium"
-                >
-                  ✅ Commandé: {alert.quantity_in_draft} unités -{' '}
-                  {alert.draft_order_number}
-                </Badge>
-              </div>
-            )}
+            {alert.is_in_draft &&
+              alert.quantity_in_draft &&
+              alert.draft_order_id && (
+                <div className="mt-2">
+                  <Badge
+                    variant="outline"
+                    className="border-orange-500 bg-orange-50 text-orange-700 text-xs font-medium cursor-pointer hover:bg-orange-100 transition-colors"
+                    onClick={() => onActionClick?.(alert)}
+                  >
+                    ⏳ Commande en attente de validation:{' '}
+                    {alert.quantity_in_draft} unités - N°{' '}
+                    {alert.draft_order_number}
+                  </Badge>
+                </div>
+              )}
 
             {alert.validated && (
               <div className="mt-2">

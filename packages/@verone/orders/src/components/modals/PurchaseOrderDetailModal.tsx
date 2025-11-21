@@ -1,12 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
 import { Separator } from '@verone/ui';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@verone/ui';
 import { formatCurrency } from '@verone/utils';
 import {
   X,
@@ -15,7 +23,6 @@ import {
   Truck,
   Calendar,
   User,
-  MapPin,
   FileText,
 } from 'lucide-react';
 
@@ -74,6 +81,16 @@ export function PurchaseOrderDetailModal({
 }: PurchaseOrderDetailModalProps) {
   const [showReceivingModal, setShowReceivingModal] = useState(false);
 
+  // ✅ Calcul éco-taxe totale en useMemo (performance)
+  const totalEcoTax = useMemo(() => {
+    return (
+      order?.purchase_order_items?.reduce(
+        (sum, item) => sum + (item.eco_tax || 0),
+        0
+      ) || 0
+    );
+  }, [order?.purchase_order_items]);
+
   if (!order) return null;
 
   const formatDate = (date: string | null) => {
@@ -102,407 +119,342 @@ export function PurchaseOrderDetailModal({
   return (
     <>
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="max-w-7xl max-h-[95vh] overflow-y-auto">
+        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-center justify-between">
-              <DialogTitle className="text-2xl">
-                Commande {order.po_number}
-              </DialogTitle>
+              <div className="flex items-center gap-3">
+                <DialogTitle className="text-xl">
+                  Commande {order.po_number}
+                </DialogTitle>
+                <Badge className={orderStatusColors[order.status]}>
+                  {orderStatusLabels[order.status]}
+                </Badge>
+              </div>
               <ButtonV2 variant="ghost" size="sm" onClick={onClose}>
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4" />
               </ButtonV2>
             </div>
           </DialogHeader>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
-            {/* COLONNE 1 : Informations + Produits */}
-            <div className="space-y-6">
-              {/* Informations Fournisseur */}
+          {/* NOUVEAU LAYOUT : Flex avec colonne principale + sidebar */}
+          <div className="flex flex-col lg:flex-row gap-4 mt-3">
+            {/* COLONNE PRINCIPALE (70%) - Produits DataTable */}
+            <div className="flex-1 order-2 lg:order-1">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <User className="h-5 w-5" />
-                    Informations Fournisseur
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div>
-                    <p className="font-semibold text-lg">{getSupplierName()}</p>
-                    <Badge variant="secondary" className="mt-1">
-                      Fournisseur
-                    </Badge>
-                  </div>
-
-                  <Separator />
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600">Statut commande</p>
-                      <Badge
-                        className={`mt-1 ${orderStatusColors[order.status]}`}
-                      >
-                        {orderStatusLabels[order.status]}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Calendar className="h-4 w-4 text-gray-500" />
-                      <span className="text-gray-600">Créée le :</span>
-                      <span className="font-medium">
-                        {formatDate(order.created_at)}
-                      </span>
-                    </div>
-                    {order.expected_delivery_date && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Truck className="h-4 w-4 text-gray-500" />
-                        <span className="text-gray-600">
-                          Livraison prévue :
-                        </span>
-                        <span className="font-medium">
-                          {formatDate(order.expected_delivery_date)}
-                        </span>
-                      </div>
-                    )}
-                    {order.received_at && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Package className="h-4 w-4 text-gray-500" />
-                        <span className="text-gray-600">Reçue le :</span>
-                        <span className="font-medium">
-                          {formatDate(order.received_at)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Adresse Livraison */}
-              {order.delivery_address && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <MapPin className="h-5 w-5" />
-                      Adresse de Livraison
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm">
-                      {typeof order.delivery_address === 'string'
-                        ? order.delivery_address
-                        : order.delivery_address.address}
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Produits AVEC IMAGES (IDENTIQUE à OrderDetailModal) */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Package className="h-5 w-5" />
-                    Produits ({order.purchase_order_items?.length || 0})
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Package className="h-4 w-4" />
+                    Produits ({order.purchase_order_items?.length || 0} article
+                    {(order.purchase_order_items?.length || 0) > 1 ? 's' : ''})
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    {order.purchase_order_items?.map(item => {
-                      // ✅ BR-TECH-002: Récupérer image via product_images (colonne primary_image_url supprimée)
-                      const productImages = (item.products as any)
-                        ?.product_images as ProductImage[] | undefined;
-                      const primaryImageUrl =
-                        productImages?.find(img => img.is_primary)
-                          ?.public_url ||
-                        productImages?.[0]?.public_url ||
-                        null;
+                  {/* TABLE RESPONSIVE avec scroll horizontal mobile */}
+                  <div className="overflow-x-auto">
+                    <Table className="min-w-[700px]">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-20">Image</TableHead>
+                          <TableHead>Produit</TableHead>
+                          <TableHead className="w-20 text-right">Qté</TableHead>
+                          <TableHead className="w-28 text-right">
+                            Prix HT
+                          </TableHead>
+                          <TableHead className="w-28 text-right">
+                            Total HT
+                          </TableHead>
+                          <TableHead className="w-24 text-center">
+                            Réception
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {order.purchase_order_items?.map(item => {
+                          // ✅ BR-TECH-002: Récupérer image via product_images
+                          const productImages = (item.products as any)
+                            ?.product_images as ProductImage[] | undefined;
+                          const primaryImageUrl =
+                            productImages?.find(img => img.is_primary)
+                              ?.public_url ||
+                            productImages?.[0]?.public_url ||
+                            null;
 
-                      return (
-                        <div
-                          key={item.id}
-                          className="flex gap-4 items-start border-b pb-3 last:border-b-0 last:pb-0"
-                        >
-                          {/* IMAGE PRODUIT - SYSTÉMATIQUE (24x24px comme OrderDetailModal) */}
-                          <div className="flex-shrink-0">
-                            {primaryImageUrl ? (
-                              <img
-                                src={primaryImageUrl}
-                                alt={item?.products?.name ?? 'Produit'}
-                                className="w-24 h-24 object-cover rounded border"
-                              />
-                            ) : (
-                              <div className="w-24 h-24 bg-gray-100 rounded border flex items-center justify-center">
-                                <Package className="h-8 w-8 text-gray-400" />
-                              </div>
-                            )}
-                          </div>
+                          // Calcul total HT avec remise et éco-taxe
+                          const totalHT =
+                            item.quantity *
+                              item.unit_price_ht *
+                              (1 - (item.discount_percentage || 0) / 100) +
+                            (item.eco_tax || 0);
 
-                          {/* Détails produit */}
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-base">
-                              {item.products?.name}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              SKU: {item.products?.sku}
-                            </p>
-
-                            <div className="grid grid-cols-3 gap-2 mt-2 text-sm">
-                              <div>
-                                <span className="text-gray-600">
-                                  Quantité :
-                                </span>
-                                <span className="font-medium ml-1">
-                                  {item.quantity}
-                                </span>
-                              </div>
-                              <div>
-                                <span className="text-gray-600">
-                                  Prix unit. HT :
-                                </span>
-                                <span className="font-medium ml-1">
-                                  {formatCurrency(item.unit_price_ht)}
-                                </span>
-                              </div>
-                              <div>
-                                <span className="text-gray-600">
-                                  Éco-taxe :
-                                </span>
-                                <span className="font-medium ml-1">
-                                  {formatCurrency(item.eco_tax || 0)}
-                                </span>
-                              </div>
-                            </div>
-
-                            {/* Total HT avec éco-taxe */}
-                            <div className="mt-2 text-sm">
-                              <span className="text-gray-600">Total HT :</span>
-                              <span className="font-semibold ml-1">
-                                {formatCurrency(
-                                  item.quantity *
-                                    item.unit_price_ht *
-                                    (1 -
-                                      (item.discount_percentage || 0) / 100) +
-                                    (item.eco_tax || 0)
+                          return (
+                            <TableRow
+                              key={item.id}
+                              className="hover:bg-gray-50"
+                            >
+                              {/* IMAGE PRODUIT */}
+                              <TableCell>
+                                {primaryImageUrl ? (
+                                  <img
+                                    src={primaryImageUrl}
+                                    alt={item?.products?.name ?? 'Produit'}
+                                    className="w-12 h-12 object-cover rounded border"
+                                  />
+                                ) : (
+                                  <div className="w-12 h-12 bg-gray-100 rounded border flex items-center justify-center">
+                                    <Package className="h-5 w-5 text-gray-400" />
+                                  </div>
                                 )}
-                              </span>
-                            </div>
+                              </TableCell>
 
-                            {/* Quantité reçue (SPÉCIFIQUE achats) */}
-                            {item.quantity_received > 0 && (
-                              <div className="flex gap-2 mt-2">
-                                <Badge
-                                  variant="secondary"
-                                  className="bg-blue-100 text-blue-800 border-blue-200"
-                                >
-                                  Reçu: {item.quantity_received} /{' '}
-                                  {item.quantity}
-                                </Badge>
-                              </div>
-                            )}
+                              {/* NOM + SKU + BADGES */}
+                              <TableCell>
+                                <p className="font-medium text-sm">
+                                  {item.products?.name}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  SKU: {item.products?.sku}
+                                </p>
+                                {/* Badges inline (remise) */}
+                                {item.discount_percentage > 0 && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="mt-1 text-xs bg-green-100 text-green-800 border-green-200"
+                                  >
+                                    -{item.discount_percentage.toFixed(1)}%
+                                  </Badge>
+                                )}
+                              </TableCell>
 
-                            {/* Afficher remise seulement si > 0 (éviter affichage "0" en JSX) */}
-                            {item.discount_percentage > 0 && (
-                              <div className="flex gap-2 mt-2">
-                                <Badge
-                                  variant="secondary"
-                                  className="bg-green-100 text-green-800 border-green-200"
-                                >
-                                  Remise {item.discount_percentage.toFixed(1)}%
-                                </Badge>
-                                <span className="text-xs text-gray-600 self-center">
-                                  Économie:{' '}
-                                  {formatCurrency(
-                                    item.quantity *
-                                      item.unit_price_ht *
-                                      (item.discount_percentage / 100)
-                                  )}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
+                              {/* QUANTITÉ */}
+                              <TableCell className="text-right font-medium">
+                                {item.quantity}
+                              </TableCell>
+
+                              {/* PRIX UNITAIRE HT */}
+                              <TableCell className="text-right">
+                                {formatCurrency(item.unit_price_ht)}
+                                {item.eco_tax > 0 && (
+                                  <span className="block text-xs text-gray-500">
+                                    + éco-taxe {formatCurrency(item.eco_tax)}
+                                  </span>
+                                )}
+                              </TableCell>
+
+                              {/* TOTAL HT */}
+                              <TableCell className="text-right font-semibold">
+                                {formatCurrency(totalHT)}
+                              </TableCell>
+
+                              {/* RÉCEPTION */}
+                              <TableCell className="text-center">
+                                {item.quantity_received > 0 ? (
+                                  <Badge
+                                    variant="secondary"
+                                    className="text-xs bg-blue-100 text-blue-800 border-blue-200"
+                                  >
+                                    {item.quantity_received}/{item.quantity}
+                                  </Badge>
+                                ) : (
+                                  <span className="text-gray-400 text-sm">
+                                    -
+                                  </span>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
                   </div>
 
-                  {/* Totaux */}
+                  {/* TOTAUX (bas de table) */}
                   <Separator className="my-4" />
                   <div className="space-y-2 text-right">
-                    {/* Calculer total éco-taxe */}
-                    {(() => {
-                      const totalEcoTax =
-                        order.purchase_order_items?.reduce(
-                          (sum, item) => sum + (item.eco_tax || 0),
-                          0
-                        ) || 0;
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Total HT :</span>
+                      <span className="font-semibold">
+                        {formatCurrency(order.total_ht || 0)}
+                      </span>
+                    </div>
 
-                      return (
-                        <>
-                          <div className="flex justify-between text-base">
-                            <span className="text-gray-600">Total HT :</span>
-                            <span className="font-semibold">
-                              {formatCurrency(order.total_ht || 0)}
-                            </span>
-                          </div>
+                    {/* Éco-taxe si > 0 */}
+                    {totalEcoTax > 0 && (
+                      <div className="flex justify-between text-xs text-gray-600">
+                        <span>🌿 Dont éco-taxe :</span>
+                        <span>{formatCurrency(totalEcoTax)}</span>
+                      </div>
+                    )}
 
-                          {/* Afficher éco-taxe si > 0 */}
-                          {totalEcoTax > 0 && (
-                            <div className="flex justify-between text-sm">
-                              <span className="text-green-600">
-                                🌿 Dont éco-taxe :
-                              </span>
-                              <span className="font-medium text-green-700">
-                                {formatCurrency(totalEcoTax)}
-                              </span>
-                            </div>
-                          )}
-
-                          <div className="flex justify-between text-sm text-gray-600">
-                            <span>TVA (20%) :</span>
-                            <span>
-                              {formatCurrency(
-                                (order.total_ttc || 0) - (order.total_ht || 0)
-                              )}
-                            </span>
-                          </div>
-                          <Separator />
-                          <div className="flex justify-between text-xl">
-                            <span className="font-bold">Total TTC :</span>
-                            <span className="font-bold text-primary">
-                              {formatCurrency(order.total_ttc || 0)}
-                            </span>
-                          </div>
-                        </>
-                      );
-                    })()}
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span>TVA (20%) :</span>
+                      <span>
+                        {formatCurrency(
+                          (order.total_ttc || 0) - (order.total_ht || 0)
+                        )}
+                      </span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between text-base font-bold">
+                      <span>Total TTC :</span>
+                      <span className="text-primary">
+                        {formatCurrency(order.total_ttc || 0)}
+                      </span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
-            {/* COLONNE 2 : Paiement + Réception + Actions */}
-            <div className="space-y-6">
-              {/* Conditions de Paiement */}
+            {/* SIDEBAR (30%) - Informations contextuelles */}
+            <div className="w-full lg:w-80 space-y-3 order-1 lg:order-2">
+              {/* Card Fournisseur CONDENSÉE */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <CreditCard className="h-5 w-5" />
-                    Conditions de Paiement
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <CardTitle className="text-base">
+                        {getSupplierName()}
+                      </CardTitle>
+                      <Badge variant="outline" className="mt-1 text-xs">
+                        Fournisseur
+                      </Badge>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-2 text-xs">
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Calendar className="h-3 w-3" />
+                    <span>Créée : {formatDate(order.created_at)}</span>
+                  </div>
+                  {order.expected_delivery_date && (
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <Truck className="h-3 w-3" />
+                      <span>
+                        Livraison : {formatDate(order.expected_delivery_date)}
+                      </span>
+                    </div>
+                  )}
+                  {order.received_at && (
+                    <div className="flex items-center gap-2 text-green-600">
+                      <Package className="h-3 w-3" />
+                      <span>Reçue : {formatDate(order.received_at)}</span>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Card Conditions Paiement */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <CreditCard className="h-3 w-3" />
+                    Paiement
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent>
                   {paymentTerms ? (
-                    <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-                      <div className="text-xs text-green-600 font-medium mb-1">
-                        💳 CONDITIONS NÉGOCIÉES
-                      </div>
-                      <div className="text-sm font-semibold text-green-800">
+                    <div className="bg-green-50 p-2 rounded border border-green-200">
+                      <p className="text-xs font-medium text-green-800">
                         {paymentTermsLabels[paymentTerms] || paymentTerms}
-                      </div>
+                      </p>
                       <p className="text-xs text-green-600 mt-1">
                         {order.payment_terms
-                          ? 'Définies sur la commande'
-                          : 'Héritées de la fiche fournisseur'}
+                          ? 'Défini sur commande'
+                          : 'Hérité du fournisseur'}
                       </p>
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500 text-center py-4">
-                      Aucune condition spécifiée
+                    <p className="text-xs text-gray-500 text-center py-2">
+                      Non spécifié
                     </p>
                   )}
                 </CardContent>
               </Card>
 
-              {/* Réception (équivalent à Expédition pour ventes) */}
+              {/* Card Réception */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Truck className="h-5 w-5" />
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Truck className="h-3 w-3" />
                     Réception
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-2">
                   {order.received_at ? (
-                    <div className="space-y-2">
-                      <div className="bg-green-50 border border-green-200 rounded p-3">
-                        <p className="text-sm font-medium text-green-900">
-                          Reçue
-                        </p>
-                        <p className="text-xs text-green-700">
-                          Le {formatDate(order.received_at)}
-                        </p>
-                      </div>
-                    </div>
+                    <Badge
+                      variant="secondary"
+                      className="w-full justify-center bg-green-100 text-green-800 border-green-200"
+                    >
+                      Reçue le {formatDate(order.received_at)}
+                    </Badge>
                   ) : order.status === 'partially_received' ? (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
-                      <p className="text-sm font-medium text-yellow-900">
-                        Partiellement reçue
-                      </p>
-                      <p className="text-xs text-yellow-700">
-                        Réception en cours
-                      </p>
-                    </div>
+                    <Badge
+                      variant="secondary"
+                      className="w-full justify-center bg-yellow-100 text-yellow-800 border-yellow-200"
+                    >
+                      Partiellement reçue
+                    </Badge>
                   ) : (
-                    <div className="text-center py-6 text-gray-500">
-                      <Truck className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">Pas encore reçue</p>
-                    </div>
+                    <p className="text-center text-xs text-gray-500">
+                      Pas encore reçue
+                    </p>
                   )}
 
                   {canReceive && (
                     <ButtonV2
                       onClick={() => setShowReceivingModal(true)}
+                      size="sm"
                       className="w-full"
                     >
-                      <Truck className="h-4 w-4 mr-2" />
-                      Gérer la réception
+                      <Truck className="h-3 w-3 mr-1" />
+                      Gérer réception
                     </ButtonV2>
                   )}
                 </CardContent>
               </Card>
 
-              {/* Notes */}
+              {/* Card Notes (si existe) */}
               {order.notes && (
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <FileText className="h-5 w-5" />
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                      <FileText className="h-3 w-3" />
                       Notes
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                    <p className="text-xs text-gray-700 whitespace-pre-wrap">
                       {order.notes}
                     </p>
                   </CardContent>
                 </Card>
               )}
 
-              {/* Actions contextuelles */}
+              {/* Card Actions */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Actions</CardTitle>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium">Actions</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <ButtonV2
                     variant="outline"
-                    className="w-full justify-start opacity-50"
+                    size="sm"
+                    className="w-full justify-start opacity-50 text-xs"
                     disabled
                     title="Fonctionnalité disponible en Phase 2"
                   >
-                    <FileText className="h-4 w-4 mr-2" />
-                    Télécharger bon de commande
+                    <FileText className="h-3 w-3 mr-1" />
+                    Télécharger BC
                   </ButtonV2>
                   <ButtonV2
                     variant="outline"
-                    className="w-full justify-start opacity-50"
+                    size="sm"
+                    className="w-full justify-start opacity-50 text-xs"
                     disabled
                     title="Fonctionnalité disponible en Phase 2"
                   >
-                    <FileText className="h-4 w-4 mr-2" />
-                    Exporter en PDF
+                    <FileText className="h-3 w-3 mr-1" />
+                    Exporter PDF
                   </ButtonV2>
                 </CardContent>
               </Card>

@@ -7,6 +7,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useToast } from '@verone/common';
 import { useToggle } from '@verone/hooks';
+import { PurchaseOrderDetailModal } from '@verone/orders';
+import { usePurchaseOrders } from '@verone/orders';
 import { useStockAlerts } from '@verone/stock';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
@@ -102,6 +104,17 @@ export default function StockAlertesPage() {
     shortageQuantity: number;
   } | null>(null);
 
+  // State modal détail commande fournisseur
+  const [showOrderDetailModal, setShowOrderDetailModal] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+
+  // Hook pour récupérer commande complète
+  const {
+    fetchOrder,
+    currentOrder,
+    loading: loadingOrder,
+  } = usePurchaseOrders();
+
   const {
     loading,
     alerts,
@@ -195,6 +208,15 @@ export default function StockAlertesPage() {
       }
     }
   }, [searchParams, alerts]);
+
+  // Handler pour ouvrir modal détail commande
+  const handleOpenOrderDetail = async (orderId: string) => {
+    setSelectedOrderId(orderId);
+    const order = await fetchOrder(orderId);
+    if (order) {
+      setShowOrderDetailModal(true);
+    }
+  };
 
   // Filtres appliqués
   const filteredAlerts = mappedAlerts.filter(alert => {
@@ -523,7 +545,14 @@ export default function StockAlertesPage() {
                       validated: false, // Legacy code - cette page utilise l'ancien format d'alertes
                       validated_at: null,
                     }}
-                    onActionClick={() => {
+                    onActionClick={clickedAlert => {
+                      // Si clic sur badge commande brouillon → Ouvrir détails
+                      if (clickedAlert.draft_order_id) {
+                        handleOpenOrderDetail(clickedAlert.draft_order_id);
+                        return;
+                      }
+
+                      // Sinon, exécuter action par défaut (Commander Fournisseur)
                       if (alert.action) {
                         alert.action.handler();
                       }
@@ -548,6 +577,21 @@ export default function StockAlertesPage() {
           shortageQuantity={selectedProductForOrder.shortageQuantity}
           onSuccess={() => {
             fetchAlerts(); // Rafraîchir les alertes
+          }}
+        />
+      )}
+
+      {/* Modal détails commande fournisseur */}
+      {showOrderDetailModal && currentOrder && (
+        <PurchaseOrderDetailModal
+          order={currentOrder}
+          open={showOrderDetailModal}
+          onClose={() => {
+            setShowOrderDetailModal(false);
+            setSelectedOrderId(null);
+          }}
+          onUpdate={() => {
+            fetchAlerts(); // Rafraîchir alertes après modifications
           }}
         />
       )}
