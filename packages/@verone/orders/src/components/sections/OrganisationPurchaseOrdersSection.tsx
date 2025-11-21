@@ -72,8 +72,7 @@ export function OrganisationPurchaseOrdersSection({
   const stats = {
     total: supplierOrders.length,
     draft: supplierOrders.filter(o => o.status === 'draft').length,
-    sent: supplierOrders.filter(o => o.status === 'sent').length,
-    confirmed: supplierOrders.filter(o => o.status === 'confirmed').length,
+    validated: supplierOrders.filter(o => o.status === 'validated').length,
     received: supplierOrders.filter(o => o.status === 'received').length,
     totalValue: supplierOrders.reduce((sum, o) => sum + o.total_ttc, 0),
   };
@@ -149,15 +148,15 @@ export function OrganisationPurchaseOrdersSection({
             </div>
             <div className="text-center p-3 bg-blue-50 rounded-lg">
               <div className="text-2xl font-bold text-blue-600">
-                {stats.sent}
+                {stats.validated}
               </div>
-              <div className="text-xs text-gray-600">Envoyées</div>
+              <div className="text-xs text-gray-600">Validées</div>
             </div>
-            <div className="text-center p-3 bg-purple-50 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">
-                {stats.confirmed}
+            <div className="text-center p-3 bg-green-50 rounded-lg">
+              <div className="text-2xl font-bold text-green-600">
+                {stats.received}
               </div>
-              <div className="text-xs text-gray-600">Confirmées</div>
+              <div className="text-xs text-gray-600">Reçues</div>
             </div>
             <div className="text-center p-3 bg-green-50 rounded-lg">
               <div className="text-2xl font-bold text-green-600">
