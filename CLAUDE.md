@@ -231,6 +231,7 @@ EOF
 5. **Authorization Always** : JAMAIS commit sans autorisation EXPLICITE
 6. **Anti-Hallucination** : JAMAIS inventer, TOUJOURS vérifier Git history
 7. **Catalogue First** : TOUJOURS consulter catalogue composants AVANT créer
+8. **🚫 INTERDICTION ABSOLUE DONNÉES TEST** : JAMAIS ajouter/créer données test, seed, ou mock dans la base de données de production SANS autorisation EXPLICITE utilisateur. Base de données DOIT rester vide sauf si utilisateur demande explicitement de créer des données.
 
 ### 🛡️ Workflow Anti-Hallucination
 
