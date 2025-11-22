@@ -7,15 +7,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 
-import {
-  Package,
-  CheckCircle2,
-  AlertTriangle,
-  Calendar,
-  User,
-  TrendingUp,
-} from 'lucide-react';
-
+import type { ReceptionItem } from '@verone/types';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card } from '@verone/ui';
@@ -30,13 +22,21 @@ import {
   TableRow,
 } from '@verone/ui';
 import { Textarea } from '@verone/ui';
-import { createClient } from '@verone/utils/supabase/client';
 import { formatDate, formatCurrency } from '@verone/utils';
+import { createClient } from '@verone/utils/supabase/client';
+import {
+  Package,
+  CheckCircle2,
+  AlertTriangle,
+  Calendar,
+  User,
+  TrendingUp,
+} from 'lucide-react';
+
 import {
   usePurchaseReceptions,
   type PurchaseOrderForReception,
 } from '@verone/orders/hooks';
-import type { ReceptionItem } from '@verone/types';
 
 interface PurchaseOrderReceptionFormProps {
   purchaseOrder: PurchaseOrderForReception;
@@ -68,12 +68,14 @@ export function PurchaseOrderReceptionForm({
   useEffect(() => {
     const receptionItems = prepareReceptionItems(purchaseOrder);
     setItems(receptionItems);
-  }, [purchaseOrder, prepareReceptionItems]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [purchaseOrder]);
 
   // Charger historique
   useEffect(() => {
     loadReceptionHistory(purchaseOrder.id).then(setHistory);
-  }, [purchaseOrder.id, loadReceptionHistory]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [purchaseOrder.id]);
 
   // Calculer totaux
   const totals = useMemo(() => {
