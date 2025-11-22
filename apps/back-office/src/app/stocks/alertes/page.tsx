@@ -74,6 +74,12 @@ interface StockAlert {
   quantity_in_draft: number | null;
   draft_order_id: string | null;
   draft_order_number: string | null;
+  // ✅ NOUVEAUX - Champs du hook stock_alert_tracking
+  stock_forecasted_in?: number;
+  stock_forecasted_out?: number;
+  shortage_quantity?: number;
+  validated?: boolean;
+  validated_at?: string | null;
   action?: {
     label: string;
     handler: () => void;
@@ -158,6 +164,12 @@ export default function StockAlertesPage() {
       quantity_in_draft: alert.quantity_in_draft,
       draft_order_id: alert.draft_order_id,
       draft_order_number: alert.draft_order_number,
+      // ✅ CORRECTION - Mapper champs du hook pour calcul stock prévisionnel
+      stock_forecasted_in: alert.stock_forecasted_in,
+      stock_forecasted_out: alert.stock_forecasted_out,
+      shortage_quantity: alert.shortage_quantity,
+      validated: alert.validated,
+      validated_at: alert.validated_at,
       action: !alert.is_in_draft
         ? {
             label: 'Commander',
@@ -527,10 +539,10 @@ export default function StockAlertesPage() {
                       product_name: alert.productName || '',
                       sku: alert.productSku || '',
                       stock_real: alert.currentStock || 0,
-                      stock_forecasted_in: 0,
-                      stock_forecasted_out: 0,
+                      stock_forecasted_in: alert.stock_forecasted_in || 0,
+                      stock_forecasted_out: alert.stock_forecasted_out || 0,
                       min_stock: alert.minStock || 0,
-                      shortage_quantity: 0,
+                      shortage_quantity: alert.shortage_quantity || 0,
                       alert_type:
                         alert.title === 'Rupture de stock'
                           ? 'out_of_stock'
@@ -542,8 +554,8 @@ export default function StockAlertesPage() {
                       quantity_in_draft: alert.quantity_in_draft,
                       draft_order_id: alert.draft_order_id,
                       draft_order_number: alert.draft_order_number,
-                      validated: false, // Legacy code - cette page utilise l'ancien format d'alertes
-                      validated_at: null,
+                      validated: alert.validated || false,
+                      validated_at: alert.validated_at || null,
                     }}
                     onActionClick={clickedAlert => {
                       // Si clic sur badge commande brouillon → Ouvrir détails
