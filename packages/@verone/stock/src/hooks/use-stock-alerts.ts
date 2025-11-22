@@ -90,10 +90,15 @@ export function useStockAlerts() {
 
         const { data, error } = await query;
 
+        console.log('🔍 SUPABASE QUERY RESULT:', { data, error, count: data?.length });
+
         if (error) throw error;
 
         // Transformer en StockAlert[]
         const alertsList: StockAlert[] = (data || []).map((alert: any) => {
+          // 🔍 DEBUG: Log alert brut
+          console.log('🔍 ALERT RAW:', JSON.stringify(alert, null, 2));
+
           // Récupérer commandes liées pour type no_stock_but_ordered
           const relatedOrders: { order_number: string; quantity: number }[] =
             [];

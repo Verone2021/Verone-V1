@@ -87,7 +87,8 @@ export default function ReceptionsPage() {
   // Charger stats
   useEffect(() => {
     loadReceptionStats().then(setStats);
-  }, [loadReceptionStats]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Charger liste POs à recevoir
   useEffect(() => {
@@ -110,13 +111,8 @@ export default function ReceptionsPage() {
 
       loadPurchaseOrdersReadyForReception(filters).then(setOrders);
     }
-  }, [
-    loadPurchaseOrdersReadyForReception,
-    statusFilter,
-    searchTerm,
-    urgencyFilter,
-    activeTab,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilter, searchTerm, urgencyFilter, activeTab]);
 
   // Charger historique POs reçus
   useEffect(() => {
@@ -131,7 +127,8 @@ export default function ReceptionsPage() {
 
       loadPurchaseOrdersReadyForReception(filters).then(setHistoryOrders);
     }
-  }, [loadPurchaseOrdersReadyForReception, historySearchTerm, activeTab]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [historySearchTerm, activeTab]);
 
   const handleOpenReception = (order: any) => {
     setSelectedOrder(order);

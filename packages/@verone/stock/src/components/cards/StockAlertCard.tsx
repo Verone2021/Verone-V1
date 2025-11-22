@@ -102,6 +102,17 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
     }
   };
 
+  // 🔍 DEBUG MOUCHARD
+  console.log('DEBUG ALERTE:', {
+    sku: alert.sku,
+    validated: alert.validated,
+    real: alert.stock_real,
+    in: alert.stock_forecasted_in,
+    out: alert.stock_forecasted_out,
+    min: alert.min_stock,
+    logic_vert: (alert.validated && (alert.stock_real + (alert.stock_forecasted_in||0) - (alert.stock_forecasted_out||0)) >= alert.min_stock)
+  });
+
   return (
     <Card className={`border-2 ${getSeverityColor()}`}>
       <CardContent className="pt-4 pb-4">
@@ -148,7 +159,7 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
                   size="sm"
                   variant={alert.is_in_draft ? 'outline' : 'primary'}
                   onClick={() => onActionClick?.(alert)}
-                  disabled={alert.is_in_draft}
+                  disabled={alert.is_in_draft || alert.validated}
                   className={`text-xs ${alert.is_in_draft ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {alert.is_in_draft
@@ -159,7 +170,7 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
                 </Button>
                 {alert.draft_order_id ? (
                   <Link
-                    href={`/commandes/fournisseurs?id=${alert.draft_order_id}`}
+                    href={`/commandes/fournisseurs`}
                   >
                     <Button size="sm" variant="outline" className="text-xs">
                       Voir Commande

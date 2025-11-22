@@ -156,7 +156,7 @@ export function usePurchaseReceptions() {
   );
 
   /**
-   * Valider réception (appel action server)
+   * Valider réception (Server Action Next.js 15)
    */
   const validateReception = useCallback(
     async (
@@ -166,20 +166,17 @@ export function usePurchaseReceptions() {
         setValidating(true);
         setError(null);
 
-        // Appeler action server
-        const response = await fetch('/api/purchase-receptions/validate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
+        // ✅ Appeler Server Action (Next.js 15 best practice)
+        const { validatePurchaseReception } = await import(
+          '../actions/purchase-receptions'
+        );
+        const result = await validatePurchaseReception(payload);
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Erreur validation réception');
+        if (!result.success) {
+          throw new Error(result.error || 'Erreur validation réception');
         }
 
-        const result = await response.json();
-        return { success: true };
+        return result;
       } catch (err) {
         console.error('Erreur validation réception:', err);
         const errorMessage =
@@ -365,7 +362,7 @@ export function usePurchaseReceptions() {
           created_at,
           expected_delivery_date,
           received_at,
-          organisations (
+          organisations!left (
             id,
             legal_name,
             trade_name
@@ -376,14 +373,23 @@ export function usePurchaseReceptions() {
           )
         `
           )
-          .in('status', ['validated', 'partially_received'])
           .order('expected_delivery_date', {
             ascending: true,
             nullsFirst: false,
           });
 
-        // Filtres
-        if (filters?.status) {
+        // Filtres de statut (dynamique selon page appelante)
+        if (!filters?.status) {
+          // Par défaut : charger commandes "à recevoir"
+          query = query.in('status', ['validated', 'partially_received']);
+        } else if (filters.status === 'received') {
+          // Historique : charger commandes complètement reçues
+          query = query.eq('status', 'received');
+        } else if (filters.status === 'partially_received') {
+          // Filtre sur partiellement reçues uniquement
+          query = query.eq('status', 'partially_received');
+        } else {
+          // Autres cas : appliquer filtre tel quel
           query = query.eq('status', filters.status as any);
         }
 

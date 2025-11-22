@@ -23,7 +23,6 @@ import {
   AlertDialogTitle,
 } from '@verone/ui';
 import { Badge } from '@verone/ui';
-import { ButtonUnified } from '@verone/ui';
 import { IconButton } from '@verone/ui';
 import {
   Card,
@@ -54,8 +53,6 @@ import { formatCurrency, formatDate } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 import {
-  Plus,
-  Filter,
   Search,
   Eye,
   Edit,
@@ -64,7 +61,6 @@ import {
   Package,
   Truck,
   CheckCircle,
-  XCircle,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
@@ -74,14 +70,6 @@ import {
 import { updatePurchaseOrderStatus } from '@/app/actions/purchase-orders';
 
 type PurchaseOrderRow = Database['public']['Tables']['purchase_orders']['Row'];
-
-// ✅ Type Safety: Interface ProductImage stricte
-interface ProductImage {
-  id?: string;
-  public_url: string;
-  is_primary: boolean;
-  display_order?: number;
-}
 
 const statusLabels: Record<PurchaseOrderStatus, string> = {
   draft: 'Brouillon',
@@ -835,67 +823,7 @@ export default function PurchaseOrdersPage() {
                             </>
                           )}
 
-                          {/* SENT : Confirmer + Dévalider + Annuler */}
-                          {order.status === 'validated' && (
-                            <>
-                              <IconButton
-                                icon={CheckCircle}
-                                variant="success"
-                                size="sm"
-                                label="Confirmer la commande"
-                                onClick={() =>
-                                  handleStatusChange(order.id, 'validated')
-                                }
-                              />
-                              <IconButton
-                                icon={RotateCcw}
-                                variant="outline"
-                                size="sm"
-                                label="Dévalider (retour brouillon)"
-                                onClick={() =>
-                                  handleStatusChange(order.id, 'draft')
-                                }
-                              />
-                              <IconButton
-                                icon={Ban}
-                                variant="danger"
-                                size="sm"
-                                label="Annuler la commande"
-                                onClick={() => handleCancel(order.id)}
-                              />
-                            </>
-                          )}
-
-                          {/* CONFIRMED : Réceptionner + Dévalider + Annuler */}
-                          {order.status === 'validated' && (
-                            <>
-                              <IconButton
-                                icon={Truck}
-                                variant="outline"
-                                size="sm"
-                                label="Réceptionner la commande"
-                                onClick={() => openReceptionModal(order)}
-                              />
-                              <IconButton
-                                icon={RotateCcw}
-                                variant="outline"
-                                size="sm"
-                                label="Dévalider (retour brouillon)"
-                                onClick={() =>
-                                  handleStatusChange(order.id, 'draft')
-                                }
-                              />
-                              <IconButton
-                                icon={Ban}
-                                variant="danger"
-                                size="sm"
-                                label="Annuler la commande"
-                                onClick={() => handleCancel(order.id)}
-                              />
-                            </>
-                          )}
-
-                          {/* PARTIALLY_RECEIVED : Réceptionner + Annuler DISABLED */}
+                          {/* PARTIALLY_RECEIVED : Réceptionner + Annuler */}
                           {order.status === 'partially_received' && (
                             <>
                               <IconButton
@@ -907,24 +835,15 @@ export default function PurchaseOrdersPage() {
                               />
                               <IconButton
                                 icon={Ban}
-                                variant="outline"
+                                variant="danger"
                                 size="sm"
-                                label="Impossible d'annuler : réception en cours"
-                                disabled
+                                label="Annuler la commande"
+                                onClick={() => handleCancel(order.id)}
                               />
                             </>
                           )}
 
-                          {/* RECEIVED : Annuler DISABLED */}
-                          {order.status === 'received' && (
-                            <IconButton
-                              icon={Ban}
-                              variant="outline"
-                              size="sm"
-                              label="Impossible d'annuler : commande déjà reçue"
-                              disabled
-                            />
-                          )}
+                          {/* RECEIVED : Aucune action (commande terminée) */}
 
                           {/* CANCELLED : Supprimer */}
                           {order.status === 'cancelled' && (

@@ -216,7 +216,7 @@ export function useSalesShipments() {
   );
 
   /**
-   * Valider expédition (appel action server)
+   * Valider expédition (Server Action Next.js 15)
    */
   const validateShipment = useCallback(
     async (
@@ -226,20 +226,17 @@ export function useSalesShipments() {
         setValidating(true);
         setError(null);
 
-        // Appeler action server
-        const response = await fetch('/api/sales-shipments/validate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
+        // ✅ Appeler Server Action (Next.js 15 best practice)
+        const { validateSalesShipment } = await import(
+          '../actions/sales-shipments'
+        );
+        const result = await validateSalesShipment(payload);
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Erreur validation expédition');
+        if (!result.success) {
+          throw new Error(result.error || 'Erreur validation expédition');
         }
 
-        const result = await response.json();
-        return { success: true };
+        return result;
       } catch (err) {
         console.error('Erreur validation expédition:', err);
         const errorMessage =
