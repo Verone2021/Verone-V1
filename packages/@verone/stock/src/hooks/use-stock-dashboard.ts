@@ -348,7 +348,7 @@ export function useStockDashboard() {
           purchase_order_items(quantity)
         `
         )
-        .in('status', ['draft', 'validated', 'partially_received'])
+        .in('status', ['validated', 'partially_received'])
         .order('expected_delivery_date', { ascending: true })
         .limit(5);
 

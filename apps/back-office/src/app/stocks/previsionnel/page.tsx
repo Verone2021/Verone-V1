@@ -12,6 +12,8 @@
 
 import { useRouter } from 'next/navigation';
 
+import { OrderItemsTable } from '@verone/orders';
+import { useStockDashboard } from '@verone/stock';
 import {
   Accordion,
   AccordionContent,
@@ -40,8 +42,6 @@ import {
 } from 'lucide-react';
 
 import { StockKPICard } from '@/components/ui-v2/stock/stock-kpi-card';
-import { OrderItemsTable } from '@verone/orders';
-import { useStockDashboard } from '@verone/stock';
 
 export default function StockPrevisionnelPage() {
   const router = useRouter();
@@ -314,12 +314,12 @@ export default function StockPrevisionnelPage() {
                 <ul className="list-disc list-inside space-y-0.5 mt-2 text-gray-600">
                   <li>
                     <span className="font-medium">Entrées prévues</span>:
-                    Commandes fournisseurs en cours (draft, sent, confirmed,
+                    Commandes fournisseurs validées (validated,
                     partially_received)
                   </li>
                   <li>
                     <span className="font-medium">Sorties prévues</span>:
-                    Commandes clients confirmées (confirmed, partially_shipped)
+                    Commandes clients confirmées (validated, partially_shipped)
                   </li>
                   <li>
                     <span className="font-medium">Stock futur</span>: Estimation

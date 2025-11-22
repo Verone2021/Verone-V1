@@ -275,7 +275,7 @@ export default function StockAlertesPage() {
             <div className="flex items-center space-x-4">
               <ButtonV2
                 variant="outline"
-                onClick={() => router.back()}
+                onClick={() => router.push('/stocks')}
                 className="flex items-center text-gray-600 hover:text-black"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
