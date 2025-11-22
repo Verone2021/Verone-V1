@@ -408,7 +408,7 @@ Lignes commandes vente
 - **Colonnes clés** : id, sales_order_id, product_id, quantity, unit_price_ht, retrocession_rate, retrocession_amount
 - **📦 Gestion Expéditions** : `quantity_shipped` INTEGER NOT NULL DEFAULT 0 - Quantité expédiée (expéditions partielles)
   - **Calcul différentiel** : `quantity_remaining = quantity - quantity_shipped`
-  - **Workflow** : Incrémentation lors création shipments (voir table `shipments`)
+  - **Workflow** : Incrémentation lors création shipments via Server Action
   - **Trigger** : Déclenche `handle_sales_order_stock()` lors UPDATE
 - **🆕 Ristourne B2B** (2025-10-25) :
   - `retrocession_rate` NUMERIC(5,2) - Taux commission % (snapshot depuis customer_pricing)
@@ -544,7 +544,7 @@ Lignes commandes achat
 - **Colonnes clés** : id, purchase_order_id, product_id, quantity, unit_price_ht
 - **📦 Gestion Réceptions** : `quantity_received` INTEGER NOT NULL DEFAULT 0 - Quantité reçue (réceptions partielles)
   - **Calcul différentiel** : `quantity_remaining = quantity - quantity_received`
-  - **Workflow Simplifié** : Incrémentation directe via API `/api/purchase-receptions/validate`
+  - **Workflow** : Incrémentation via Server Action `validatePurchaseReception`
   - **Workflow Avancé** : Via table `purchase_order_receptions` (avec lots, batch_number)
   - **Trigger** : Déclenche `handle_purchase_order_forecast()` lors UPDATE
   - **Algorithme Idempotent** : Compare avec SUM mouvements stock déjà créés (évite duplications)

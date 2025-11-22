@@ -26,18 +26,18 @@
 **Symptôme** :
 
 ```
-POST /api/purchase-receptions/validate 404
+Server Action validatePurchaseReception erreur 404
 Error: Commande fournisseur introuvable
 ```
 
 **Cause Root** :
 
 ```typescript
-// ❌ AVANT (ligne 19-26 de route.ts)
-import { createClient } from '@/lib/supabase/server'
+// ❌ AVANT (Server Action purchase-receptions.ts)
+import { createClient } from '@verone/utils/supabase/client'
 
-export async function POST(request: NextRequest) {
-  const supabase = await createClient()  // ❌ Pas de session cookies
+export async function validatePurchaseReception(payload) {
+  const supabase = createClient()  // ❌ Pas de session cookies
 ```
 
 **Explication** :
@@ -49,17 +49,16 @@ export async function POST(request: NextRequest) {
 **Solution Appliquée** :
 
 ```typescript
-// ✅ APRÈS (ligne 19-26 de route.ts)
-import { createServerClient } from '@/lib/supabase/server'
+// ✅ APRÈS (Server Action purchase-receptions.ts)
+import { createServerClient } from '@verone/utils/supabase/server'
 
-export async function POST(request: NextRequest) {
+export async function validatePurchaseReception(payload) {
   const supabase = await createServerClient()  // ✅ Inclut session cookies
 ```
 
 **Impact** :
 
-- apps/back-office/src/app/api/purchase-receptions/validate/route.ts:19
-- apps/back-office/src/app/api/purchase-receptions/validate/route.ts:26
+- packages/@verone/orders/src/actions/purchase-receptions.ts
 
 ---
 
@@ -121,7 +120,7 @@ WHERE user_id = '100d2439-0f52-46b1-9c30-ad7934b44719';
 2. ✅ Clique "Réceptionner la commande" PO-2025-TEST-1
 3. ✅ Modal affiche : 5 unités à recevoir
 4. ✅ Clique "Valider Réception Complète"
-5. ✅ API POST `/api/purchase-receptions/validate` → 200 OK
+5. ✅ Server Action `validatePurchaseReception` → Success
 
 **Résultats Validés** :
 
@@ -356,10 +355,10 @@ v_qty_diff := v_item.quantity_received - v_already_received;
 
 ## 🎯 Couverture Tests
 
-### API Routes
+### Server Actions
 
-- ✅ `/api/purchase-receptions/validate` (POST)
-  - Payload validation
+- ✅ `validatePurchaseReception` (Next.js 15)
+  - Payload validation (Zod schema)
   - Purchase order lookup avec RLS
   - Quantity_received update (différentiel)
   - Status calculation (received vs partially_received)

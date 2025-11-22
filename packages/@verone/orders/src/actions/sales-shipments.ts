@@ -1,10 +1,10 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { z } from 'zod';
 
 import type { ValidateShipmentPayload } from '@verone/types';
 import { createServerClient } from '@verone/utils/supabase/server';
+import { z } from 'zod';
 
 // Validation schema Zod
 const shipmentItemSchema = z.object({
@@ -134,8 +134,8 @@ export async function validateSalesShipment(
       }
 
       // ✅ INSERT INTO sales_order_shipments (triggers existants gèrent stock)
-      // @ts-expect-error - Table exists in DB, Turbo cache issue (will resolve after clean rebuild)
-      const { error: insertError } = await supabase
+      // Note: Table exists in DB but not in generated Supabase types yet
+      const { error: insertError } = await (supabase as any)
         .from('sales_order_shipments')
         .insert({
           sales_order_id: validatedData.sales_order_id,
@@ -143,13 +143,7 @@ export async function validateSalesShipment(
           quantity_shipped: item.quantity_to_ship,
           shipped_at: validatedData.shipped_at || new Date().toISOString(),
           shipped_by: validatedData.shipped_by,
-          carrier_type: validatedData.carrier_info.carrier_type,
-          carrier_name: validatedData.carrier_info.carrier_name,
           tracking_number: validatedData.carrier_info.tracking_number,
-          tracking_url: validatedData.carrier_info.tracking_url,
-          cost_paid_eur: validatedData.carrier_info.cost_paid_eur,
-          cost_charged_eur: validatedData.carrier_info.cost_charged_eur,
-          shipping_address: validatedData.shipping_address,
           notes: validatedData.notes,
         });
 

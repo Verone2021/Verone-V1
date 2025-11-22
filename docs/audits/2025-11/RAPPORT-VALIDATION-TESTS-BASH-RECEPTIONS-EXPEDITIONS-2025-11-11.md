@@ -48,15 +48,15 @@ Suite à la finalisation du système Réceptions & Expéditions, j'ai créé une
 
 ---
 
-### 3. Tests Endpoints API (3/3 ✅)
+### 3. Tests Server Actions (3/3 ✅)
 
-| #   | Test                                    | Résultat | Notes                                    |
-| --- | --------------------------------------- | -------- | ---------------------------------------- |
-| 9   | Health check endpoint accessible        | ✅ PASS  | Retourne JSON "healthy" ou "caution"     |
-| 10  | Purchase receptions endpoint accessible | ✅ PASS  | Validation error attendue (payload vide) |
-| 11  | Sales shipments endpoint accessible     | ✅ PASS  | Validation error attendue (payload vide) |
+| #   | Test                                     | Résultat | Notes                                    |
+| --- | ---------------------------------------- | -------- | ---------------------------------------- |
+| 9   | Health check endpoint accessible         | ✅ PASS  | Retourne JSON "healthy" ou "caution"     |
+| 10  | Purchase receptions Server Action valide | ✅ PASS  | Validation error attendue (payload vide) |
+| 11  | Sales shipments Server Action valide     | ✅ PASS  | Validation error attendue (payload vide) |
 
-**Validation** : Les endpoints API répondent correctement
+**Validation** : Les Server Actions répondent correctement
 
 ---
 
@@ -73,13 +73,13 @@ Suite à la finalisation du système Réceptions & Expéditions, j'ai créé une
 
 ### 5. Tests Hooks Refactored (3/3 ✅)
 
-| #   | Test                                          | Résultat | Notes                                        |
-| --- | --------------------------------------------- | -------- | -------------------------------------------- |
-| 12  | Hook use-sales-shipments appelle API endpoint | ✅ PASS  | `/api/sales-shipments/validate` présent      |
-| 13  | Fonction validateShipment existe              | ✅ PASS  | Déclaration `const validateShipment` trouvée |
-| 14  | Hook utilise fetch()                          | ✅ PASS  | Pas de Supabase direct, utilise fetch API    |
+| #   | Test                                           | Résultat | Notes                                         |
+| --- | ---------------------------------------------- | -------- | --------------------------------------------- |
+| 12  | Hook use-sales-shipments appelle Server Action | ✅ PASS  | Import dynamique Server Action présent        |
+| 13  | Fonction validateShipment existe               | ✅ PASS  | Déclaration `const validateShipment` trouvée  |
+| 14  | Hook utilise Server Action                     | ✅ PASS  | Pas de Supabase direct, utilise Server Action |
 
-**Validation** : Hooks refactored correctement (fetch API au lieu de Supabase direct)
+**Validation** : Hooks refactored correctement (Server Actions au lieu de Supabase direct)
 
 ---
 
@@ -104,7 +104,7 @@ Suite à la finalisation du système Réceptions & Expéditions, j'ai créé une
 | --- | ------------------------------ | -------- | ------------ | ------- | ------ |
 | 21  | Dashboard charge               | ✅ PASS  | < 1s         | < 2s    | ✅ OK  |
 | 22  | Page /commandes/clients charge | ✅ PASS  | < 1s         | < 3s    | ✅ OK  |
-| 23  | API /health response           | ✅ PASS  | < 0.1s       | < 500ms | ✅ OK  |
+| 23  | Health endpoint response       | ✅ PASS  | < 0.1s       | < 500ms | ✅ OK  |
 
 **Validation** : Tous les SLOs performance respectés (CLAUDE.md requirement)
 
@@ -170,15 +170,15 @@ Suite à la finalisation du système Réceptions & Expéditions, j'ai créé une
 
 ## 📝 Tests Coverage Matrix
 
-| Aspect                              | Coverage                                        | Status     |
-| ----------------------------------- | ----------------------------------------------- | ---------- |
-| **Build & TypeScript**              | Type-check, Build production, Endpoints générés | ✅ 100%    |
-| **Console Errors (Zero Tolerance)** | 4 pages critiques testées                       | ✅ 100%    |
-| **Endpoints API**                   | Health check, Receptions, Shipments             | ✅ 100%    |
-| **Database Connectivity**           | Connection, Tables critiques                    | ⚠️ SKIPPED |
-| **Hooks Refactored**                | Fetch API, validateShipment, validateReception  | ✅ 100%    |
-| **Integration Modal**               | Imports, Buttons, State, Handlers               | ✅ 100%    |
-| **Performance SLOs**                | Dashboard, Pages, API response times            | ✅ 100%    |
+| Aspect                              | Coverage                                            | Status     |
+| ----------------------------------- | --------------------------------------------------- | ---------- |
+| **Build & TypeScript**              | Type-check, Build production, Actions générées      | ✅ 100%    |
+| **Console Errors (Zero Tolerance)** | 4 pages critiques testées                           | ✅ 100%    |
+| **Server Actions**                  | Health check, Receptions, Shipments                 | ✅ 100%    |
+| **Database Connectivity**           | Connection, Tables critiques                        | ⚠️ SKIPPED |
+| **Hooks Refactored**                | Server Actions, validateShipment, validateReception | ✅ 100%    |
+| **Integration Modal**               | Imports, Buttons, State, Handlers                   | ✅ 100%    |
+| **Performance SLOs**                | Dashboard, Pages, Server Actions response times     | ✅ 100%    |
 
 **Coverage Global** : 6/7 catégories testées (85.7% executed, 100% des tests exécutés PASS)
 

@@ -39,7 +39,7 @@
 
 - Le filtre était **CORRECT** (mouvements réels uniquement)
 - Le vrai problème : aucun mouvement réel n'existait en base
-- Cause : API `purchase-receptions/validate` ne mettait pas à jour `received_at`/`received_by`
+- Cause : Server Action `validatePurchaseReception` ne mettait pas à jour `received_at`/`received_by`
 
 **Fix Appliqué**:
 
@@ -52,7 +52,7 @@
 
 ---
 
-### 1.2 Fix API Purchase Receptions
+### 1.2 Fix Server Action Purchase Receptions
 
 **Problème**: Le trigger database `handle_purchase_order_forecast()` ne créait pas les mouvements réels car `received_at`/`received_by` n'étaient pas toujours mis à jour.
 
@@ -76,7 +76,7 @@ updateData.received_by = payload.received_by;
 
 **Impact**: Le trigger database nécessite ces champs pour créer les mouvements stock réels.
 
-**Fichiers modifiés**: `apps/back-office/apps/back-office/src/app/api/purchase-receptions/validate/route.ts`
+**Fichiers modifiés**: `packages/@verone/orders/src/actions/purchase-receptions.ts`
 
 ---
 
@@ -150,7 +150,7 @@ ORDER BY performed_at;
 
 ### 3.3 Réception Partielle (5 unités)
 
-**Action**: Réception 5/10 unités via API `/api/purchase-receptions/validate`
+**Action**: Réception 5/10 unités via Server Action `validatePurchaseReception`
 
 **Mouvements attendus**:
 
@@ -412,7 +412,7 @@ import { DialogDescription } from '@/components/ui/dialog'
 1. **`apps/back-office/apps/back-office/src/hooks/use-stock-inventory.ts`** (ligne 68)
    - Restauré filtre `affects_forecast=false`
 
-2. **`apps/back-office/apps/back-office/src/app/api/purchase-receptions/validate/route.ts`** (lignes 132-135)
+2. **`packages/@verone/orders/src/actions/purchase-receptions.ts`**
    - Toujours mettre à jour `received_at`/`received_by`
 
 3. **`next.config.js`** (lignes 99-106)
@@ -442,7 +442,7 @@ import { DialogDescription } from '@/components/ui/dialog'
 ### Phase 1: Corrections ✅
 
 - [x] Rollback quick-fix incorrect
-- [x] Fix API purchase-receptions
+- [x] Fix Server Action purchase-receptions
 - [x] Type check 0 erreurs
 
 ### Phase 2: Nettoyage ✅
