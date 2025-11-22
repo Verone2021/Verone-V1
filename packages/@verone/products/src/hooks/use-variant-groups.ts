@@ -134,7 +134,15 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    supabase,
+    filters?.search,
+    filters?.subcategory_id,
+    filters?.variant_type,
+    filters?.is_active,
+    filters?.has_products,
+  ]);
 
   useEffect(() => {
     fetchVariantGroups();
