@@ -37,7 +37,7 @@
 
 # Metrics & KPI
 /docs/metrics/** @owner
-/packages/kpi/** @owner
+/packages/@verone/kpi/** @owner
 
 # Configuration Projet
 /CLAUDE.md @owner

@@ -46,7 +46,7 @@
       "src/lib/supabase/**",
       "src/hooks/use-*.ts",
       "src/app/api/**",
-      "packages/kpi/**",
+      "packages/@verone/kpi/**",
       ".github/workflows/**",
       "src/components/ui-v2/**",
       "src/lib/design-system/**"

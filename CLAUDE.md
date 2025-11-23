@@ -1,696 +1,95 @@
-# 🚀 Vérone Back Office - Claude Code 2025
+# 🛡️ CLAUDE.md - Règles Projet Vérone (Turborepo + Supabase)
 
-**CRM/ERP modulaire** pour décoration et mobilier d'intérieur haut de gamme
-**Stack** : Next.js 15 (App Router) + Supabase + shadcn/ui + Turborepo
+## 🚨 DIRECTIVES LEAD DEVELOPER (Priorité Absolue)
 
----
+Tu es le **Senior Lead Developer** du projet. Ta mission est de maintenir la cohérence d'un Monorepo complexe (3 apps, 26 packages) et l'intégrité d'une base de données critique.
 
-## 🎯 PHASE ACTUELLE : PHASE 4 - MULTI-FRONTENDS TURBOREPO ✅ FINALISÉE
+### 🛑 RÈGLE N°1 : BASE DE DONNÉES (DB-FIRST)
 
-**Date** : 2025-11-19 (Finalisation Migration Turborepo ✅)
-**État** : Production multi-frontends avec 25 packages partagés @verone/\* - Migration Turborepo COMPLÉTÉE (47/47 problèmes résolus)
+**INTERDICTION FORMELLE de proposer une migration ou du code "Data" sans analyse préalable.**
+Pour toute tâche impliquant la donnée (création, lecture, modification) :
 
-### 🏗️ ARCHITECTURE TURBOREPO
+1.  **🔍 SCANNER :** Lis IMPÉRATIVEMENT `apps/back-office/src/types/supabase.ts` (Source de vérité actuelle).
+2.  **📂 HISTORIQUE :** Vérifie les dernières migrations dans `supabase/migrations/` pour ne pas écraser une logique récente.
+3.  **🛡️ VÉRIFIER :** Cherche si un champ/table équivalent existe déjà. (Ex: ne pas créer `tel_client`, utiliser `phone` existant).
+4.  **📝 PLANIFIER :** Rédige un plan : "Je vais utiliser la table X, ajouter la colonne Y (enum), et mettre à jour Z".
+5.  **🚦 ATTENDRE VALIDATION :** Ne génère aucun fichier SQL ou TypeScript sans mon "GO".
 
-**3 Applications Déployées** :
+### 🛑 RÈGLE N°2 : ANTI-DOUBLON (PACKAGES)
 
-1. **back-office** (Port 3000) - CRM/ERP Complet
-2. **site-internet** (Port 3001) - E-commerce Public
-3. **linkme** (Port 3002) - Commissions Apporteurs
+**Ne JAMAIS réinventer la roue.** Avant de créer une fonction ou un composant :
 
-**25 Packages Partagés** (@verone/\*) :
-
-- Design System : `@verone/ui` (54 composants)
-- Business : `@verone/products`, `@verone/orders`, `@verone/stock`, `@verone/customers`
-- Utils : `@verone/types`, `@verone/utils`, `@verone/testing`
-
-**Chiffres Clés** :
-
-- 🏗️ 25 packages partagés (Turborepo monorepo)
-- 🎨 86 composants React documentés
-- 📦 3 apps déployées
-- 🗄️ 78 tables database
-- 🔧 158 triggers automatiques
-- 🛡️ 239 RLS policies sécurité
+1.  Vérifie les 26 packages `@verone/*` existants.
+2.  **Interdiction** d'utiliser le dossier `packages/kpi/` (Legacy/Mort). Utilise **`@verone/kpi`**.
+3.  **Exemple :** Besoin d'un calcul financier ? → Vérifie `@verone/finance` d'abord.
 
 ---
 
-## 📂 RÈGLES CHEMINS TURBOREPO (CRITIQUE)
+## 🏗️ ARCHITECTURE & CHEMINS (AUDIT 23/11/2025)
 
-**RÈGLE ABSOLUE** : Depuis Phase 4, la structure est **TURBOREPO** avec 3 apps + 25 packages.
+### 📂 Applications (Ports)
 
-### ✅ Chemins CORRECTS
+- `apps/back-office` : CRM/ERP Principal (Port 3000)
+- `apps/site-internet` : E-commerce Public (Port 3001)
+- `apps/linkme` : Affiliation / Apporteurs (Port 3002)
 
-```typescript
-// Applications
-apps/back-office/src/app/          // Pages Next.js back-office
-apps/back-office/src/components/   // Composants back-office
-apps/site-internet/src/             // E-commerce public
-apps/linkme/src/                    // Commissions vendeurs
+### 📦 Packages Partagés (@verone/\*)
 
-// Packages
-packages/@verone/ui/src/            // Design System
-packages/@verone/products/src/      // Composants produits
-packages/@verone/orders/src/        // Composants commandes
-```
+Tous les packages sont dans `packages/@verone/`.
+**Liste officielle (26) :** `admin`, `categories`, `channels`, `collections`, `common`, `consultations`, `customers`, `dashboard`, `eslint-config`, `finance`, `hooks`, `integrations`, `kpi` (le bon!), `logistics`, `notifications`, `orders`, `organisations`, `prettier-config`, `products`, `stock`, `suppliers`, `testing`, `types`, `ui`, `ui-business`, `utils`.
 
-### ❌ Chemins OBSOLÈTES (N'EXISTENT PLUS)
+### ❌ ZONES INTERDITES (Legacy/Obsolète)
 
-```typescript
-src/app/                  // ❌ N'existe plus depuis Phase 4
-src/components/           // ❌ Utiliser apps/back-office/src/components/
-src/shared/modules/       // ❌ Migré vers packages/@verone/*
-```
-
-### ✅ Imports Corrects
-
-```typescript
-// Composants UI
-import { Button, Card } from '@verone/ui';
-
-// Composants business
-import { ProductCard, useProducts } from '@verone/products';
-import { StockAlertCard } from '@verone/stock';
-
-// Types & Utils
-import type { Database } from '@verone/types';
-import { cn, formatPrice } from '@verone/utils';
-```
-
-**Commande Supabase Types** :
-
-```bash
-# ✅ CORRECT (Phase 4)
-supabase gen types typescript --local > apps/back-office/src/types/supabase.ts
-```
+- `src/` (à la racine) → N'EXISTE PLUS.
+- `packages/kpi/` (hors scope @verone) → NE PAS TOUCHER (Code mort).
 
 ---
 
-## 📦 PACKAGES @VERONE/\* - WORKFLOW ANTI-HALLUCINATION
+## 🛠️ WORKFLOW & COMMANDES (ALIASES)
 
-**RÈGLE ABSOLUE** : **TOUJOURS consulter le catalogue composants AVANT créer/utiliser composant**
+Utilise ces "Mots Magiques" pour forcer le respect des procédures :
 
-### 🚨 WORKFLOW OBLIGATOIRE
+### **`!db-check`** (Analyse Impact DB)
 
-```typescript
-// ÉTAPE 1 : Consulter catalogue AVANT tout
-Read('docs/architecture/COMPOSANTS-CATALOGUE.md');
+_À lancer avant toute modif de donnée._
+→ Action : Analyse `apps/back-office/src/types/supabase.ts` + `supabase/migrations`. Liste les tables impactées, les triggers existants et propose un plan de modification sécurisé.
 
-// ÉTAPE 2 : Chercher composant existant
-// Exemple : "afficher miniature produit" → ProductThumbnail
+### **`!ui-check`** (Analyse Composants)
 
-// ÉTAPE 3 : Vérifier props TypeScript EXACTES
-interface ProductThumbnailProps {
-  src: string | null | undefined;
-  alt: string;
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-  className?: string;
-  priority?: boolean;
-}
+_À lancer avant toute création d'interface._
+→ Action : Vérifie `packages/@verone/ui` et `packages/@verone/ui-business`. Si un composant ressemble à la demande, propose de le réutiliser au lieu d'en créer un nouveau.
 
-// ÉTAPE 4 : Utiliser composant avec props exactes
-<ProductThumbnail
-  src={product.primary_image_url}
-  alt={product.name}
-  size="md"
-/>
-```
+### **`!clean-arch`** (Contrôle Architecture)
 
-### ⚠️ RÈGLES STRICTES
-
-**❌ INTERDIT :**
-
-- Créer composant SANS vérifier catalogue
-- Inventer props inexistantes
-- Dupliquer code UI déjà dans @verone/ui
-- Oublier imports depuis packages
-
-**✅ OBLIGATOIRE :**
-
-- Lire `docs/architecture/COMPOSANTS-CATALOGUE.md` EN PREMIER
-- Utiliser composants existants @verone/\* (86 composants)
-- Respecter props TypeScript exactes
-- Importer depuis packages : `import { X } from '@verone/[package]'`
-
-### 📚 Composants Critiques
-
-**ProductThumbnail** ⭐ (le plus oublié)
-
-```typescript
-import { ProductThumbnail } from '@verone/products';
-<ProductThumbnail src={url} alt={name} size="md" />
-```
-
-**Autres essentiels** :
-
-- `ButtonUnified` (@verone/ui) - Bouton avec loading
-- `KpiCardUnified` (@verone/ui) - KPI avec tendance
-- `Dialog` (@verone/ui) - Modal dialog
-- `QuickPurchaseOrderModal` (@verone/orders) - Commande rapide
-- `StockAlertCard` (@verone/stock) - Alerte stock
-
-**Documentation** : `docs/architecture/COMPOSANTS-CATALOGUE.md` (1600 lignes)
+_À lancer si tu as un doute sur où mettre un fichier._
+→ Action : Vérifie si le code doit aller dans une `app` spécifique ou un `package` partagé. (Règle : Si utilisé par >1 app, c'est un package).
 
 ---
 
-## 🚀 WORKFLOW UNIVERSEL 2025
+## ⚙️ STANDARDS TECHNIQUES
 
-**Philosophy** : Think → Test → Code → Re-test → Document → Commit
+### 1. Base de Données (Supabase)
 
-### Phase 1: THINK (Analyse)
+- **Types :** Utilise `Jsonb` (pas Text) pour les données structurées. Utilise `Enum` pour les statuts.
+- **Conventions :** Snake_case pour SQL (`order_status`), CamelCase pour TS (`orderStatus`).
+- **Migrations :** Format `YYYYMMDD_XXX_description.sql`.
 
-- Sequential Thinking si >3 étapes
-- Consulter documentation AVANT modifier
-- Identifier edge cases (min 3)
+### 2. TypeScript & Code
 
-### Phase 2: TEST (Validation AVANT)
+- **Strict :** Pas de `any`.
+- **Imports :** Toujours utiliser les alias `@verone/xxx`.
+  - ✅ `import { Button } from '@verone/ui'`
+  - ❌ `import { Button } from '../../packages/@verone/ui'`
 
-```typescript
-// Console Error Checking (RÈGLE SACRÉE)
-mcp__playwright__browser_navigate("http://localhost:3000")
-mcp__playwright__browser_console_messages()
-// Si erreurs → STOP complet
+### 3. Gestion des Erreurs
 
-// Build Validation
-npm run build  // Doit passer SANS erreurs
-```
-
-### Phase 3: CODE (Implémentation)
-
-- Code MINIMAL fonctionnel
-- Types TypeScript stricts (pas de `any`)
-- Migration SQL idempotente (si DB)
-
-### Phase 4: RE-TEST (Validation APRÈS)
-
-```typescript
-// ORDRE STRICT
-npm run type-check  // = 0 erreurs
-npm run build       // Doit passer
-
-// Console = 0 errors (RÈGLE SACRÉE)
-mcp__playwright__browser_navigate("/feature")
-mcp__playwright__browser_console_messages()
-// 1 erreur = ÉCHEC COMPLET
-```
-
-### Phase 5: DOCUMENT
-
-- Sauvegarder décisions clés
-- Mettre à jour documentation si applicable
-
-### Phase 6: COMMIT (Autorisation OBLIGATOIRE)
-
-```typescript
-// ⏸️ STOP - DEMANDER AUTORISATION
-"Voulez-vous que je commit et push maintenant ?"
-// ATTENDRE réponse EXPLICITE
-
-// Si "OUI" → Commit structuré
-git add [files]
-git commit -m "$(cat <<'EOF'
-feat(module): Description concise
-
-- Detail 1
-- Detail 2
-
-🤖 Generated with Claude Code
-Co-Authored-By: Claude <noreply@anthropic.com>
-EOF
-)"
-```
+- **Console :** 0 erreur console tolérée.
+- **Build :** `npm run build` doit passer sur TOUT le monorepo (Turbo).
 
 ---
 
-## 🚨 RÈGLES D'OR
-
-1. **Documentation First** : TOUJOURS consulter documentation AVANT modifier
-2. **Console Zero Tolerance** : 1 erreur console = ÉCHEC COMPLET
-3. **Test Before Code** : TOUJOURS valider que existant fonctionne AVANT modifier
-4. **Build Always** : TOUJOURS vérifier build passe AVANT et APRÈS modifications
-5. **Authorization Always** : JAMAIS commit sans autorisation EXPLICITE
-6. **Anti-Hallucination** : JAMAIS inventer, TOUJOURS vérifier Git history
-7. **Catalogue First** : TOUJOURS consulter catalogue composants AVANT créer
-8. **🚫 INTERDICTION ABSOLUE DONNÉES TEST** : JAMAIS ajouter/créer données test, seed, ou mock dans la base de données de production SANS autorisation EXPLICITE utilisateur. Base de données DOIT rester vide sauf si utilisateur demande explicitement de créer des données.
-
-### 🛡️ Workflow Anti-Hallucination
-
-```typescript
-// AVANT toute modification code existant
-git log --since="[date]" --oneline -- [file-path]
-git show [commit-sha]:[file-path]
-git diff [commit-sha] HEAD -- [file-path]
-
-// Si fonctionnait avant :
-// ✅ Chercher comment c'était codé dans Git
-// ✅ Restaurer le code fonctionnel
-// ✅ Appliquer SEULEMENT les corrections demandées
-// ❌ NE JAMAIS inventer nouvelle implémentation
-```
-
----
-
-## 🔧 STACK TECHNIQUE
-
-```typescript
-Frontend  : Next.js 15 (App Router, RSC, Server Actions)
-UI        : shadcn/ui + Radix UI + Tailwind CSS
-Database  : Supabase (PostgreSQL + Auth + RLS)
-Validation: Zod + React Hook Form
-Testing   : Vitest + Playwright + Storybook
-Monorepo  : Turborepo v2.6.0 + pnpm workspaces
-Deploy    : Vercel (auto-deploy production-stable)
-```
-
-### ⚡ Commandes Essentielles
-
-```bash
-# Développement
-npm run dev              # Next.js dev (localhost:3000)
-npm run build            # Production build (ESLint + TypeScript)
-npm run type-check       # TypeScript validation
-
-# Formatage & Linting
-npm run format           # Prettier : formater code
-npm run lint             # ESLint strict
-npm run lint:fix         # Auto-fix erreurs
-
-# Validation
-npm run validate:all     # type-check + validations
-
-# Database
-supabase db push         # Appliquer migrations
-supabase gen types typescript --local > apps/back-office/src/types/supabase.ts
-```
-
----
-
-## 🔌 CONFIGURATION MCP (Model Context Protocol)
-
-**Fichiers critiques** :
-
-- `.claude/settings.json` - Permissions, hooks, projet, MCP servers
-- `.serena/project.yml` - Serena language server (TypeScript)
-- `.serena/memories/` - Mémoires Serena (39 fichiers)
-
-### 📂 Chemins Autorisés (settings.json)
-
-**✅ TURBOREPO PHASE 4** (Permissions Write, Edit, MultiEdit) :
-
-```json
-"Write(/Users/romeodossantos/verone-back-office-V1/apps/**)"
-"Write(/Users/romeodossantos/verone-back-office-V1/packages/**)"
-"Write(/Users/romeodossantos/verone-back-office-V1/docs/**)"
-"Write(/Users/romeodossantos/verone-back-office-V1/supabase/**)"
-"Edit(/Users/romeodossantos/verone-back-office-V1/apps/**)"
-"Edit(/Users/romeodossantos/verone-back-office-V1/packages/**)"
-```
-
-**❌ OBSOLÈTE (Phase 1-3 - SUPPRIMÉ)** :
-
-```json
-"Write(/Users/romeodossantos/verone-back-office-V1/src/**)" // ❌ Dossier n'existe plus
-```
-
-### 🧠 Mémoires Serena Actualisées (2025-11-20)
-
-**Mémoires Phase 4 Turborepo** (références correctes) :
-
-- ✅ `turborepo-paths-reference-2025-11-20.md` - Source de vérité chemins
-- ✅ `auth-multi-canal-phase1-phase2-complete-2025-11-19.md`
-- ✅ `purchase-orders-validated-workflow-2025-11-19.md`
-- ✅ `project_overview.md`
-
-**Mémoires obsolètes SUPPRIMÉES** (2025-11-20) :
-
-- ❌ `verone-design-system-v2-2025.md` (chemins Phase 1-3)
-- ❌ `refonte-ux-statuts-compacts-2025-11-05.md`
-- ❌ `stock-movement-traceability-implementation-complete.md`
-- ❌ `pricing-multi-canaux-implementation-complete-2025.md`
-- ❌ `migration-formulaire-fournisseur-design-v2-2025.md`
-- ❌ `characteristics-dynamic-display-patterns.md`
-
-### 🎯 MCP Servers Actifs
-
-**12 MCP servers configurés** (.claude/settings.json) :
-
-1. **supabase** - Database ops, migrations, types
-2. **context7** - Documentation libraries (npm, React, etc.)
-3. **serena** - Semantic code analysis (find_symbol, replace_symbol_body)
-4. **sequential-thinking** - Raisonnement multi-étapes
-5. **playwright** - Tests E2E, browser automation
-6. **github** - Issues, PRs, repositories
-7. **vercel** - Déploiement, logs, analytics
-8. **filesystem** - Read/Write/Edit files
-9. **memory** - Knowledge graph
-10. **ide** - VS Code integration
-11. Plus autres (voir settings.json ligne 3-12)
-
-### 🚨 Règles Anti-Hallucination MCP
-
-**AVANT toute opération fichier** :
-
-1. ✅ **Vérifier existence** : `ls -la [chemin]`
-2. ✅ **Consulter mémoire** : `turborepo-paths-reference-2025-11-20.md`
-3. ✅ **Utiliser chemins Phase 4** : `apps/`, `packages/` (JAMAIS `src/`)
-4. ✅ **Valider imports** : `npm run type-check`
-
-**Si erreur "fichier introuvable"** :
-
-```typescript
-// ❌ NE PAS chercher dans
-src/                    // N'existe plus
-src/app/                // Obsolète Phase 1-3
-src/components/         // Obsolète Phase 1-3
-
-// ✅ CHERCHER dans
-apps/back-office/src/
-packages/@verone/*/src/
-```
-
-### 📋 Validation Configuration
-
-**Checklist post-migration Turborepo** :
-
-- [x] `.claude/settings.json` - Permissions `apps/**` et `packages/**`
-- [x] Mémoires Serena - 6 obsolètes supprimées
-- [x] `turborepo-paths-reference-2025-11-20.md` - Créée
-- [x] `.claude/contexts/design-system.md` - Chemins actualisés
-- [x] Permissions `src/**` - Supprimées
-
-**Dernière vérification** : 2025-11-20
-
----
-
-## 🚫 GIT WORKFLOW - AUTORISATION OBLIGATOIRE
-
-**RÈGLE ABSOLUE** : **JAMAIS commit/push SANS autorisation EXPLICITE utilisateur**
-
-### Workflow Obligatoire
-
-```typescript
-1. ✅ Effectuer modifications
-2. ✅ Tester localhost (MCP Playwright)
-3. ✅ Vérifier build (npm run build)
-4. ✅ Vérifier console errors = 0
-5. ⏸️ STOP - DEMANDER AUTORISATION
-6. ✅ Si "OUI" → git add, commit, push
-7. ❌ Si "NON" → NE PAS commit
-```
-
-### Branch Strategy
-
-```typescript
-production-stable  → Production Vercel (auto-deploy)
-main              → Staging/Development (tests)
-
-// Workflow
-1. Développement → Commit sur main
-2. Tests validation → PR validation
-3. Merge main → production-stable
-4. Auto-deploy production
-```
-
----
-
-## 🎯 SUCCESS METRICS (SLOS)
-
-- ✅ **Zero console errors** (tolérance zéro)
-- ✅ **Dashboard** : <2s (LCP)
-- ✅ **Pages** : <3s (LCP)
-- ✅ **Build** : <20s
-- ✅ **Test coverage** : >80% (nouveaux modules)
-
----
-
-## 📚 DOCUMENTATION NAVIGATION
-
-**Documentation exhaustive** : `/docs/`
-
-- **Architecture** : `docs/architecture/` (Turborepo, composants, multi-frontends)
-- **Database** : `docs/database/` (78 tables, 158 triggers, RLS)
-- **Business Rules** : `docs/business-rules/` (93 dossiers modulaires)
-- **Workflows** : `docs/workflows/` (Post-production, classification)
-- **CI/CD** : `docs/ci-cd/` (Déploiement, rollback)
-
-**Ressource anti-hallucination** : `docs/architecture/COMPOSANTS-CATALOGUE.md`
-
----
-
-## 📖 CONTEXTES SPÉCIALISÉS
-
-**Charger à la demande selon tâche** :
-
-```typescript
-// 🗄️ Database (migrations, schema, queries)
-Read('.claude/contexts/database.md');
-
-// 🚀 Déploiement (CI/CD, Vercel, rollback)
-Read('.claude/contexts/deployment.md');
-
-// 🎨 Design/UI (composants, Storybook)
-Read('.claude/contexts/design-system.md');
-
-// 📊 KPI (métriques, documentation YAML)
-Read('.claude/contexts/kpi.md');
-
-// 🏗️ Monorepo (architecture, migration)
-Read('.claude/contexts/monorepo.md');
-```
-
-**Principe** : Ne charger que le contexte nécessaire (éviter token overhead).
-
-### 📘 RÉFÉRENCES TURBOREPO (Phase 4 Finalisée)
-
-**Documentation Migration Turborepo** :
-
-- `docs/architecture/AUDIT-MIGRATION-TURBOREPO.md` - Audit détaillé (47 problèmes analysés)
-- `docs/architecture/TURBOREPO-FINAL-CHECKLIST.md` - Checklist post-migration (43 items validés)
-- `docs/architecture/MIGRATION-TURBOREPO-TODO.md` - Archive TODO (référence historique)
-- `.claude/contexts/monorepo.md` - Context architecture actualisé
-
-**Statut** : ✅ 47/47 problèmes résolus (100%) - Migration COMPLÉTÉE 2025-11-19
-
----
-
-## 📁 CLASSIFICATION DOCUMENTATION (WORKFLOW OBLIGATOIRE)
-
-**RÈGLE ABSOLUE** : **TOUJOURS consulter ce guide AVANT créer rapport/audit/documentation**
-
-### 🎯 Principe
-
-**Aucun fichier .md ne doit rester à la racine du projet** (sauf README.md, CHANGELOG.md, CLAUDE.md).
-**Tous rapports, audits, guides doivent être classés dans `/docs` avec structure appropriée.**
-
-### 📂 Structure /docs (Best Practices 2025)
-
-```
-docs/
-├── architecture/           # Architecture système, composants, ADR
-│   ├── decisions/         # ADR (Architecture Decision Records)
-│   └── design-system/     # Design System, composants UI
-├── audits/                # Audits par mois (2025-10/, 2025-11/, etc.)
-│   └── 2025-11/          # Rapports novembre 2025
-├── business-rules/        # Règles métier (93 dossiers modulaires)
-├── database/              # Schema, migrations, RLS, triggers
-├── guides/                # Guides développement (8 catégories)
-│   ├── 01-onboarding/    # Nouveaux développeurs
-│   ├── 02-development/   # Développement quotidien
-│   ├── 03-integrations/  # Intégrations externes
-│   ├── 04-deployment/    # CI/CD, Vercel
-│   ├── 05-database/      # Database guides
-│   ├── 06-ui-ux/         # Design, mockups
-│   ├── 07-troubleshooting/ # Debugging
-│   └── 08-best-practices/ # Bonnes pratiques
-├── project-management/    # Roadmap, sprints, retrospectives
-├── workflows/             # Workflows métier
-└── ... (voir structure complète dans docs/README.md)
-```
-
-### 🚨 WORKFLOW CLASSIFICATION
-
-**AVANT de créer tout fichier .md, suivre ce processus** :
-
-#### Étape 1 : Identifier Type Document
-
-```typescript
-// Types de documents courants
-const documentTypes = {
-  AUDIT: 'Rapport audit technique/qualité/sécurité',
-  RAPPORT: 'Analyse, investigation, tests',
-  GUIDE: 'Documentation développement/intégration',
-  ADR: 'Architecture Decision Record',
-  ROADMAP: 'Planification projet',
-  STATUS: 'État composants/features',
-};
-```
-
-#### Étape 2 : Déterminer Destination
-
-```typescript
-// Matrice de classification
-if (type === 'AUDIT' || type === 'RAPPORT') {
-  // → docs/audits/YYYY-MM/
-  destination = `docs/audits/${currentMonth}/`;
-  example = 'docs/audits/2025-11/RAPPORT-TESTS-AUTHENTIFICATION.md';
-} else if (type === 'GUIDE' && topic === 'intégration') {
-  // → docs/guides/03-integrations/[service]/
-  destination = `docs/guides/03-integrations/${serviceName}/`;
-  example = 'docs/guides/03-integrations/google-merchant/configuration.md';
-} else if (type === 'ADR') {
-  // → docs/architecture/decisions/
-  destination = 'docs/architecture/decisions/';
-  example = 'docs/architecture/decisions/0006-pricing-multi-canaux.md';
-} else if (type === 'ROADMAP' || type === 'SPRINT') {
-  // → docs/project-management/
-  destination = 'docs/project-management/';
-  example = 'docs/project-management/roadmap-2025-q4.md';
-} else if (type === 'STATUS') {
-  // → docs/architecture/design-system/
-  destination = 'docs/architecture/design-system/';
-  example = 'docs/architecture/design-system/status-composants.md';
-}
-```
-
-#### Étape 3 : Vérifier Sous-dossier Existe
-
-```typescript
-// Si sous-dossier n'existe pas, LE CRÉER
-if (!exists(destination)) {
-  mkdir(destination);
-  createREADME(destination); // Toujours créer README.md dans nouveau dossier
-}
-```
-
-#### Étape 4 : Nommer Fichier (Convention)
-
-```typescript
-// Convention naming
-const filename = `${TYPE}-${sujet}-${date}.md`;
-
-// Exemples corrects
-('RAPPORT-TESTS-AUTHENTIFICATION-2025-11-19.md');
-('AUDIT-BOUTONS-CRUD-COMPLET-2025-11-11.md');
-('GUIDE-INTEGRATION-STRIPE-2025-11-20.md');
-('ADR-0007-websockets-temps-reel.md');
-```
-
-### ✅ Exemples Concrets
-
-#### Exemple 1 : Audit Boutons CRUD
-
-```typescript
-// ❌ INCORRECT (racine projet)
-path = '/AUDIT-BOUTONS-CRUD-COMPLET.md';
-
-// ✅ CORRECT
-path = '/docs/audits/2025-11/AUDIT-BOUTONS-CRUD-COMPLET-2025-11-11.md';
-```
-
-#### Exemple 2 : Guide Intégration Stripe
-
-```typescript
-// ❌ INCORRECT (racine /docs ou guides plat)
-path = '/docs/GUIDE-INTEGRATION-STRIPE.md';
-path = '/docs/guides/GUIDE-INTEGRATION-STRIPE.md';
-
-// ✅ CORRECT
-path = '/docs/guides/03-integrations/stripe/configuration-complete.md';
-
-// + Créer README.md si dossier stripe/ n'existe pas
-path = '/docs/guides/03-integrations/stripe/README.md';
-```
-
-#### Exemple 3 : Décision Architecture Pricing
-
-```typescript
-// ❌ INCORRECT (mémoire Serena ou guides/)
-path = '/.serena/memories/pricing-multi-canaux.md';
-path = '/docs/guides/pricing-system.md';
-
-// ✅ CORRECT (ADR formel)
-path = '/docs/architecture/decisions/0004-pricing-multi-canaux.md';
-
-// Format ADR standard (voir template docs/architecture/decisions/adr-template.md)
-```
-
-### 📋 Checklist Avant Création Fichier
-
-- [ ] **Type document identifié** (Audit, Guide, ADR, Rapport, etc.)
-- [ ] **Destination déterminée** selon matrice classification
-- [ ] **Sous-dossier vérifié** (créer si inexistant + README.md)
-- [ ] **Nom fichier conforme** (TYPE-sujet-date.md)
-- [ ] **Aucun fichier à la racine** (sauf README, CHANGELOG, CLAUDE)
-- [ ] **README.md mis à jour** dans dossier parent si nécessaire
-
-### 🔗 Référence Complète
-
-**Documentation détaillée** :
-
-- Structure complète : `docs/README.md`
-- Template ADR : `docs/architecture/decisions/adr-template.md`
-- Audit réorganisation : `docs/architecture/TURBOREPO-FINAL-CHECKLIST.md` (Section "PHASE 2")
-
-**Memory Serena** :
-
-- `reorganisation-documentation-2025-11-19.md` (créée après Phase 2 réorganisation)
-
----
-
-## 🤖 MCP AGENTS & TOOLS
-
-### Agents Spécialisés (9 disponibles)
-
-- `verone-code-reviewer` - Review qualité/sécurité
-- `verone-database-architect` - Schema/migrations
-- `verone-debugger` - Debug erreurs
-- `verone-design-expert` - UI/UX patterns
-- `verone-orchestrator` - Coordination features
-- `verone-performance-optimizer` - Optimisation perf
-- `verone-security-auditor` - Audit sécurité
-- `verone-test-expert` - Tests E2E
-- `verone-typescript-fixer` - Corrections TS batch
-
-### Commands (1 essentielle)
-
-- `/db` - Opérations Supabase rapides (queries, migrations, logs, RLS testing)
-
-### Contexts (5 spécialisés)
-
-- `database.md` - Migrations, RLS, anti-hallucination
-- `deployment.md` - CI/CD, Vercel
-- `design-system.md` - UI/UX patterns
-- `kpi.md` - Métriques business
-- `monorepo.md` - Architecture Turborepo
-
----
-
-## 🇫🇷 LANGUE
-
-**TOUJOURS communiquer en français** (messages, docs, commits)
-**Exception** : Code (variables, fonctions en anglais)
-
----
-
-**Version** : 4.1.0
-**Dernière mise à jour** : 2025-11-19
-**Mainteneur** : Romeo Dos Santos
-
-**Changelog 4.1.0** (Finalisation Migration Turborepo) :
-
-- ✅ Migration Turborepo FINALISÉE (47/47 problèmes résolus - 100%)
-- ✅ Phase 4 Multi-Frontends stabilisée (3 apps + 25 packages)
-- ✅ Architecture documentation actualisée (CLAUDE.md, monorepo.md, checklist)
-- ✅ 86 composants UI documentés et fonctionnels
-- ✅ Build 100% strict TypeScript (ignoreBuildErrors: false)
-- ✅ Console errors : 0 (tolérance zéro maintenue)
-- ✅ Problem 12 (stock_reservations) : RLS policies + FK constraint appliqués
-
-**Changelog 4.0.0** :
-
-- ✅ Réduction drastique : 2,291 → 600 lignes (-74%)
-- ✅ Nettoyage .claude/ : 10,416 → ~3,000 lignes (-71%)
-- ✅ Suppression commandes obsolètes (garder db.md uniquement)
-- ✅ Suppression modes YOLO + security
-- ✅ Focus sur essentiel : workflow universel + règles d'or
-- ✅ Documentation détaillée extraite vers docs/
+## 📝 MÉMOIRE CONTEXTUELLE
+
+- **Stack :** Next.js 15 (App Router), Supabase, Turborepo, Tailwind.
+- **Spécificité :** Les types DB sont actuellement générés dans `apps/back-office`. Pour les autres apps, on s'y réfère temporairement.
+- **Sécurité :** Ne jamais injecter de fausses données (seed) en Production.
