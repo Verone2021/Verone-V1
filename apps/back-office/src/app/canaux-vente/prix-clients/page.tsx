@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 import type { CustomerPricing } from '@verone/finance';
+import type { Database } from '@verone/types';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -36,8 +37,6 @@ import {
   PercentIcon,
   Tag,
 } from 'lucide-react';
-
-import type { Database } from '@/types/supabase';
 
 // Stats interface
 interface Stats {

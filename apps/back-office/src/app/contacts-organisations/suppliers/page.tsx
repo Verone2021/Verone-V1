@@ -18,6 +18,7 @@ import {
   type Organisation,
 } from '@verone/organisations';
 import { SupplierSegmentBadge, SupplierSegmentType } from '@verone/suppliers';
+import type { Database } from '@verone/types';
 import {
   Table,
   TableBody,
@@ -60,7 +61,6 @@ import {
 
 import { FavoriteToggleButton } from '@/components/business/favorite-toggle-button';
 import { HeartBadge } from '@/components/business/heart-badge';
-import type { Database } from '@/types/supabase';
 
 // ✅ FIX TypeScript: Utiliser type Organisation (pas de Supplier local)
 // Interface Organisation définie dans use-organisations.ts

@@ -31,6 +31,7 @@
     "playwright:show-report": "npx playwright show-report .playwright-mcp/reports",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
+    "generate:types": "supabase gen types typescript --local > packages/@verone/types/src/supabase.ts",
     "generate:stories": "node tools/scripts/generate-stories.js",
     "generate:stories:force": "node tools/scripts/generate-stories.js --force",
     "audit:duplicates": "jscpd src/ --min-lines 5 --min-tokens 50 --format 'console'",

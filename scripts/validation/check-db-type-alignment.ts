@@ -30,7 +30,14 @@ import { fileURLToPath } from 'node:url';
 // ============================================================================
 
 const SRC_DIR = path.join(process.cwd(), 'apps', 'back-office', 'src');
-const SUPABASE_TYPES_FILE = path.join(SRC_DIR, 'types', 'supabase.ts');
+const SUPABASE_TYPES_FILE = path.join(
+  process.cwd(),
+  'packages',
+  '@verone',
+  'types',
+  'src',
+  'supabase.ts'
+);
 const SCHEMA_REFERENCE = path.join(
   process.cwd(),
   'docs',
@@ -192,9 +199,7 @@ function checkSupabaseTypesExist(): boolean {
     console.error(
       `❌ ERREUR: Fichier types Supabase non trouvé: ${SUPABASE_TYPES_FILE}`
     );
-    console.error(
-      '   Générer avec: supabase gen types typescript --local > apps/back-office/src/types/supabase.ts'
-    );
+    console.error('   Générer avec: npm run generate:types');
     return false;
   }
   return true;
@@ -252,13 +257,13 @@ function formatReport(issues: Issue[]): string {
   report += '═'.repeat(80) + '\n';
   report += '💡 RECOMMANDATIONS:\n';
   report +=
-    '   1. Toujours importer: import { Database } from "@/types/supabase"\n';
+    '   1. Toujours importer: import { Database } from "@verone/types"\n';
   report +=
     '   2. Typer avec: Database["public"]["Tables"]["products"]["Row"]\n';
   report +=
     '   3. Queries typées: .from<Database["public"]["Tables"]["..."]["Row"]>("table")\n';
   report +=
-    '   4. Pas de types manuels dupliqués (source vérité = supabase.ts)\n';
+    '   4. Pas de types manuels dupliqués (source vérité = @verone/types)\n';
   report += '═'.repeat(80) + '\n';
 
   return report;

@@ -23,6 +23,7 @@ import type { UnifiedCustomer } from '@verone/orders';
 import { CustomerSelector } from '@verone/orders';
 import type { SelectedProduct } from '@verone/products';
 import { UniversalProductSelectorV2 } from '@verone/products';
+import type { Database } from '@verone/types';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -87,8 +88,6 @@ import {
   Eye,
   Info,
 } from 'lucide-react';
-
-import type { Database } from '@/types/supabase';
 
 export default function SourcingEchantillonsPage() {
   const router = useRouter();

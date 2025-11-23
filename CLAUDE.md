@@ -91,5 +91,5 @@ _À lancer si tu as un doute sur où mettre un fichier._
 ## 📝 MÉMOIRE CONTEXTUELLE
 
 - **Stack :** Next.js 15 (App Router), Supabase, Turborepo, Tailwind.
-- **Spécificité :** Les types DB sont actuellement générés dans `apps/back-office`. Pour les autres apps, on s'y réfère temporairement.
+- **Types Supabase :** Générés dans `packages/@verone/types/src/supabase.ts` via `npm run generate:types`. Importés avec `import type { Database } from '@verone/types'`.
 - **Sécurité :** Ne jamais injecter de fausses données (seed) en Production.

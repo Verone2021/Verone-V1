@@ -13,6 +13,7 @@ import {
   getOrganisationDisplayName,
   type Organisation,
 } from '@verone/organisations';
+import type { Database } from '@verone/types';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -67,7 +68,6 @@ import {
 
 import { FavoriteToggleButton } from '@/components/business/favorite-toggle-button';
 import { HeartBadge } from '@/components/business/heart-badge';
-import type { Database } from '@/types/supabase';
 
 // ✅ FIX TypeScript: Utiliser type Organisation (pas de Partner local)
 // Interface Organisation définie dans use-organisations.ts

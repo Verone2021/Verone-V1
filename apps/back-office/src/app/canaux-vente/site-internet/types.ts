@@ -3,7 +3,7 @@
  * Generated: 2025-11-13
  */
 
-import type { Database } from '@/types/supabase';
+import type { Database } from '@verone/types';
 
 // =====================================================
 // Types Database Supabase

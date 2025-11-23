@@ -23,6 +23,7 @@ import { SupplierEditSection } from '@verone/products';
 import { WeightEditSection } from '@verone/products';
 import { StockEditSection } from '@verone/stock';
 import { StockStatusCompact } from '@verone/stock';
+import type { Database } from '@verone/types';
 import {
   Dialog,
   DialogContent,
@@ -49,8 +50,6 @@ import {
   Clock,
   Info,
 } from 'lucide-react';
-
-import type { Database } from '@/types/supabase';
 
 // Champs obligatoires pour un produit complet
 const REQUIRED_PRODUCT_FIELDS = [

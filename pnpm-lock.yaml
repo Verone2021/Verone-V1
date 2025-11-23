@@ -286,7 +286,11 @@ importers:
         specifier: ^5.3.3
         version: 5.9.3
 
-  apps/back-office: {}
+  apps/back-office:
+    dependencies:
+      '@verone/types':
+        specifier: workspace:*
+        version: link:../../packages/@verone/types
 
   apps/linkme:
     dependencies:
