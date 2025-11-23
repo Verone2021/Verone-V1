@@ -91,5 +91,9 @@ _À lancer si tu as un doute sur où mettre un fichier._
 ## 📝 MÉMOIRE CONTEXTUELLE
 
 - **Stack :** Next.js 15 (App Router), Supabase, Turborepo, Tailwind.
-- **Types Supabase :** Générés dans `packages/@verone/types/src/supabase.ts` via `npm run generate:types`. Importés avec `import type { Database } from '@verone/types'`.
+- **Types Supabase :**
+  - ✅ Source unique : `packages/@verone/types/src/supabase.ts` (généré via `npm run generate:types`)
+  - ✅ Import : `import type { Database } from '@verone/types'`
+  - ✅ Migration 2025-11-23 : Suppression database.ts obsolète (dédupliqué)
+  - ⚠️ NE PAS créer de doublons types dans apps/\*/src/types/ (utiliser package)
 - **Sécurité :** Ne jamais injecter de fausses données (seed) en Production.
