@@ -46,6 +46,19 @@ Tous les packages sont dans `packages/@verone/`.
 
 ---
 
+## 📁 ORGANISATION FICHIERS .claude/
+
+**Architecture "Clean Separation" :**
+
+- **`.claude/agents/`** → Identités des travailleurs (orchestrator.md, agent-db.md, agent-ui.md, agent-debug.md)
+- **`.claude/commands/`** → Procédures et workflows (feature-db.md, feature-ui.md, audit-arch.md, etc.)
+- **`.claude/contexts/`** → Documentation technique (database.md, monorepo.md, etc.)
+- **`.claude/workflows/`** → Méthodologies universelles (orchestration MCP, etc.)
+
+**Note :** Les commandes slash (`/orchestrator`, `/agent-db`, etc.) restent inchangées. Seule l'organisation interne change.
+
+---
+
 ## 🤖 AGENTS SPÉCIALISÉS (ARCHITECTURE AGENTIQUE)
 
 Le projet utilise une **architecture agentique hybride** combinant agents de coordination et workflows disciplinés.
