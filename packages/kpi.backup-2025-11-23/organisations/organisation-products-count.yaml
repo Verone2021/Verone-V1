@@ -1,0 +1,41 @@
+# KPI: Produits référencés (détail organisation)
+
+id: kpi-org-organisation-products-count
+name: Produits référencés (détail organisation)
+description: |
+  Nombre de produits catalogués pour l'organisation affichée (page détail).
+  Contexte page détail vs card liste.
+
+module: Organisations
+category: Indicateurs
+subcategory: Détail organisation
+owner: Romeo Dos Santos
+
+formula: |
+  products_count = organisation._count.products
+
+source:
+  table: products
+  relation: organisations._count.products
+  file: src/app/contacts-organisations/suppliers/[supplierId]/page.tsx
+
+displayed_in:
+  - component: Page détail organisation (tous types)
+    location: 'Section Statistiques - Produits référencés'
+    screenshot: supplier-detail-page.png
+
+thresholds:
+  excellent: '> 50'
+  good: '10-50'
+  warning: '1-10'
+  critical: '0'
+
+metadata:
+  created_at: 2025-10-22
+  version: 2.0.0
+  status: active
+  priority: high
+
+business_notes: |
+  Identique à products-per-supplier mais contexte UI différent (page détail vs card liste).
+  **Exemple production** : Fournisseur 9078f112... a 16 produits.

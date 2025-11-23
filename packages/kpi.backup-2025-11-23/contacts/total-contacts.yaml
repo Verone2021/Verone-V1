@@ -1,0 +1,52 @@
+# KPI: Total Contacts
+# Nombre total de contacts enregistrés
+
+id: kpi-contacts-total-contacts
+name: Total Contacts
+description: |
+  Nombre total de contacts (personnes physiques) enregistrés dans le système.
+  Liens avec organisations (fournisseurs, clients, prestataires).
+
+module: Contacts
+category: Compteurs
+subcategory: Vue globale
+owner: Romeo Dos Santos
+
+formula: |
+  total_contacts = contacts.length
+
+inputs:
+  - name: contacts
+    type: array
+    source: useOrganisations hook (includes contacts relation)
+
+output:
+  type: number
+  unit: count
+  format: integer
+
+source:
+  table: contacts
+  hook: useOrganisations (with contacts)
+  file: src/app/contacts-organisations/contacts/page.tsx
+  calculation_line: 76
+
+displayed_in:
+  - component: src/app/contacts-organisations/contacts/page.tsx
+    location: "Card 'Total contacts' (ligne ~172-192)"
+
+thresholds:
+  excellent: '> 500'
+  good: '200-500'
+  warning: '50-200'
+  critical: '< 50'
+
+metadata:
+  created_at: 2025-10-22
+  version: 2.0.0
+  status: active
+  priority: high
+
+business_notes: |
+  KPI principal module Contacts.
+  Affichage première card statistiques.

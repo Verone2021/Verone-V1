@@ -1,0 +1,36 @@
+# KPI: Contacts Principaux
+
+id: kpi-contacts-primary-contacts
+name: Contacts Principaux
+description: Contacts marqués comme principaux (is_primary_contact=true).
+
+module: Contacts
+category: Compteurs
+subcategory: Statut
+owner: Romeo Dos Santos
+
+formula: |
+  primary_contacts = COUNT(contacts WHERE is_primary_contact = true)
+
+source:
+  table: contacts
+  file: src/app/contacts-organisations/contacts/page.tsx
+  calculation_line: 79
+
+displayed_in:
+  - component: src/app/contacts-organisations/contacts/page.tsx
+    location: "Card 'Contacts principaux'"
+
+thresholds:
+  good: '1 par organisation minimum'
+  warning: 'Organisations sans contact principal'
+
+metadata:
+  created_at: 2025-10-22
+  version: 2.0.0
+  status: active
+  priority: medium
+
+business_notes: |
+  Contact principal = Point de contact prioritaire pour chaque organisation.
+  Idéalement 1 contact principal par organisation minimum.

@@ -1,0 +1,56 @@
+# KPI: Clients - Favoris
+# Clients marqués comme favoris (is_favorite=true)
+
+id: kpi-org-customers-favorites
+name: Clients - Favoris
+description: |
+  Nombre de clients marqués comme favoris/VIP (is_favorite=true).
+  Indique clients stratégiques prioritaires pour suivi commercial.
+
+module: Organisations
+category: Compteurs
+subcategory: Clients - Stats Header
+owner: Romeo Dos Santos
+
+formula: |
+  customers_favorites = COUNT(customers WHERE is_favorite = true)
+
+inputs:
+  - name: customers
+    type: array
+    source: useOrganisations hook
+
+output:
+  type: number
+  unit: count
+  format: integer
+
+source:
+  table: organisations
+  file: src/app/contacts-organisations/customers/page.tsx
+  calculation_line: 155
+
+displayed_in:
+  - component: src/app/contacts-organisations/customers/page.tsx
+    location: "Stats header - Badge 'Favoris' avec icône étoile"
+
+thresholds:
+  excellent: '5-15 favoris'
+  good: '1-5 favoris'
+  warning: '> 15 favoris OU 0 favoris'
+  interpretation: |
+    - 5-15 : Optimal (clients VIP bien identifiés)
+    - > 15 : Trop de favoris (perd sens priorisation)
+    - 0 : Aucun client stratégique identifié
+
+metadata:
+  created_at: 2025-10-22
+  last_updated: 2025-10-22
+  validated_by: Romeo Dos Santos
+  version: 2.0.0
+  status: active
+  priority: medium
+
+business_notes: |
+  Clients VIP/stratégiques pour suivi commercial renforcé.
+  Onglet dédié pour affichage filtre favoris.

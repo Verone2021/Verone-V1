@@ -28,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -109,6 +110,9 @@ export default function StockAlertesPage() {
     productId: string;
     shortageQuantity: number;
   } | null>(null);
+  const [activeTab, setActiveTab] = useState<'actives' | 'historique'>(
+    'actives'
+  );
 
   // State modal détail commande fournisseur
   const [showOrderDetailModal, setShowOrderDetailModal] = useState(false);
@@ -230,8 +234,19 @@ export default function StockAlertesPage() {
     }
   };
 
-  // Filtres appliqués
-  const filteredAlerts = mappedAlerts.filter(alert => {
+  // Séparer alertes actives vs historique
+  const activeAlerts = mappedAlerts.filter(
+    alert => (alert.currentStock || 0) < (alert.minStock || 0)
+  );
+  const historiqueAlerts = mappedAlerts.filter(
+    alert => (alert.currentStock || 0) >= (alert.minStock || 0)
+  );
+
+  // Filtres appliqués selon onglet actif
+  const alertsToFilter =
+    activeTab === 'actives' ? activeAlerts : historiqueAlerts;
+
+  const filteredAlerts = alertsToFilter.filter(alert => {
     if (filters.severity && alert.severity !== filters.severity) return false;
     if (filters.category && alert.category !== filters.category) return false;
     if (filters.acknowledged && !alert.acknowledged) return false;
@@ -499,82 +514,170 @@ export default function StockAlertesPage() {
           </CardContent>
         </Card>
 
-        {/* Liste des alertes */}
-        <Card className="border-black">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>Alertes ({filteredAlerts.length})</span>
-              {loading && (
-                <Badge
-                  variant="outline"
-                  className="border-blue-300 text-blue-600"
-                >
-                  Actualisation...
-                </Badge>
-              )}
-            </CardTitle>
-            <CardDescription>
-              Surveillance automatique avec actions recommandées
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {filteredAlerts.length === 0 ? (
-              <div className="text-center py-8">
-                <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
-                <p className="text-gray-500 mb-4">Aucune alerte trouvée</p>
-                <p className="text-sm text-gray-400">
-                  {searchTerm || filters.severity || filters.category
-                    ? 'Essayez de modifier vos filtres'
-                    : 'Tous les systèmes fonctionnent normalement'}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {filteredAlerts.map(alert => (
-                  <StockAlertCard
-                    key={alert.id}
-                    alert={{
-                      id: alert.id,
-                      product_id: alert.productId || '',
-                      product_name: alert.productName || '',
-                      sku: alert.productSku || '',
-                      stock_real: alert.currentStock || 0,
-                      stock_forecasted_in: alert.stock_forecasted_in || 0,
-                      stock_forecasted_out: alert.stock_forecasted_out || 0,
-                      min_stock: alert.minStock || 0,
-                      shortage_quantity: alert.shortage_quantity || 0,
-                      alert_type:
-                        alert.title === 'Rupture de stock'
-                          ? 'out_of_stock'
-                          : alert.title === 'Stock faible'
-                            ? 'low_stock'
-                            : 'no_stock_but_ordered',
-                      severity: alert.severity,
-                      is_in_draft: alert.is_in_draft,
-                      quantity_in_draft: alert.quantity_in_draft,
-                      draft_order_id: alert.draft_order_id,
-                      draft_order_number: alert.draft_order_number,
-                      validated: alert.validated || false,
-                      validated_at: alert.validated_at || null,
-                    }}
-                    onActionClick={clickedAlert => {
-                      // Si clic sur badge commande brouillon → Ouvrir détails
-                      if (clickedAlert.draft_order_id) {
-                        handleOpenOrderDetail(clickedAlert.draft_order_id);
-                        return;
-                      }
+        {/* Tabs: Actives / Historique */}
+        <Tabs
+          value={activeTab}
+          onValueChange={v => setActiveTab(v as 'actives' | 'historique')}
+          className="w-full"
+        >
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="actives">
+              Actives ({activeAlerts.length})
+            </TabsTrigger>
+            <TabsTrigger value="historique">
+              Historique ({historiqueAlerts.length})
+            </TabsTrigger>
+          </TabsList>
 
-                      // Sinon, exécuter action par défaut (Commander Fournisseur)
-                      if (alert.action) {
-                        alert.action.handler();
-                      }
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          <TabsContent value="actives" className="mt-6">
+            <Card className="border-black">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Alertes Actives ({filteredAlerts.length})</span>
+                  {loading && (
+                    <Badge
+                      variant="outline"
+                      className="border-blue-300 text-blue-600"
+                    >
+                      Actualisation...
+                    </Badge>
+                  )}
+                </CardTitle>
+                <CardDescription>
+                  Produits nécessitant une action (stock &lt; seuil minimum)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {filteredAlerts.length === 0 ? (
+                  <div className="text-center py-8">
+                    <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
+                    <p className="text-gray-500 mb-4">Aucune alerte active</p>
+                    <p className="text-sm text-gray-400">
+                      {searchTerm || filters.severity || filters.category
+                        ? 'Essayez de modifier vos filtres'
+                        : 'Tous les produits ont un stock suffisant'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {filteredAlerts.map(alert => (
+                      <StockAlertCard
+                        key={alert.id}
+                        alert={{
+                          id: alert.id,
+                          product_id: alert.productId || '',
+                          product_name: alert.productName || '',
+                          sku: alert.productSku || '',
+                          stock_real: alert.currentStock || 0,
+                          stock_forecasted_in: alert.stock_forecasted_in || 0,
+                          stock_forecasted_out: alert.stock_forecasted_out || 0,
+                          min_stock: alert.minStock || 0,
+                          shortage_quantity: alert.shortage_quantity || 0,
+                          alert_type:
+                            alert.title === 'Rupture de stock'
+                              ? 'out_of_stock'
+                              : alert.title === 'Stock faible'
+                                ? 'low_stock'
+                                : 'no_stock_but_ordered',
+                          severity: alert.severity,
+                          is_in_draft: alert.is_in_draft,
+                          quantity_in_draft: alert.quantity_in_draft,
+                          draft_order_id: alert.draft_order_id,
+                          draft_order_number: alert.draft_order_number,
+                          validated: alert.validated || false,
+                          validated_at: alert.validated_at || null,
+                        }}
+                        onActionClick={clickedAlert => {
+                          // Si clic sur badge commande brouillon → Ouvrir détails
+                          if (clickedAlert.draft_order_id) {
+                            handleOpenOrderDetail(clickedAlert.draft_order_id);
+                            return;
+                          }
+
+                          // Sinon, exécuter action par défaut (Commander Fournisseur)
+                          if (alert.action) {
+                            alert.action.handler();
+                          }
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="historique" className="mt-6">
+            <Card className="border-black">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Historique ({filteredAlerts.length})</span>
+                  {loading && (
+                    <Badge
+                      variant="outline"
+                      className="border-blue-300 text-blue-600"
+                    >
+                      Actualisation...
+                    </Badge>
+                  )}
+                </CardTitle>
+                <CardDescription>
+                  Alertes résolues (stock ≥ seuil minimum)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {filteredAlerts.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500 mb-4">
+                      Aucune alerte dans l'historique
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      Les alertes résolues apparaîtront ici
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {filteredAlerts.map(alert => (
+                      <StockAlertCard
+                        key={alert.id}
+                        alert={{
+                          id: alert.id,
+                          product_id: alert.productId || '',
+                          product_name: alert.productName || '',
+                          sku: alert.productSku || '',
+                          stock_real: alert.currentStock || 0,
+                          stock_forecasted_in: alert.stock_forecasted_in || 0,
+                          stock_forecasted_out: alert.stock_forecasted_out || 0,
+                          min_stock: alert.minStock || 0,
+                          shortage_quantity: alert.shortage_quantity || 0,
+                          alert_type:
+                            alert.title === 'Rupture de stock'
+                              ? 'out_of_stock'
+                              : alert.title === 'Stock faible'
+                                ? 'low_stock'
+                                : 'no_stock_but_ordered',
+                          severity: alert.severity,
+                          is_in_draft: alert.is_in_draft,
+                          quantity_in_draft: alert.quantity_in_draft,
+                          draft_order_id: alert.draft_order_id,
+                          draft_order_number: alert.draft_order_number,
+                          validated: alert.validated || false,
+                          validated_at: alert.validated_at || null,
+                        }}
+                        onActionClick={clickedAlert => {
+                          if (clickedAlert.draft_order_id) {
+                            handleOpenOrderDetail(clickedAlert.draft_order_id);
+                          }
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Modal commande rapide */}

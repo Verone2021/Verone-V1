@@ -123,19 +123,9 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
         icon: Activity,
       },
       {
-        title: 'Ajustements',
-        href: '/stocks/ajustements',
+        title: 'Mouvements de stock',
+        href: '/stocks/mouvements',
         icon: RefreshCw,
-      },
-      {
-        title: 'Entrées',
-        href: '/stocks/entrees',
-        icon: CheckCircle,
-      },
-      {
-        title: 'Sorties',
-        href: '/stocks/sorties',
-        icon: LogOut,
       },
       {
         title: 'Réceptions',

@@ -169,26 +169,6 @@ export default function StocksDashboardPage() {
                 <ButtonV2
                   variant="outline"
                   size="sm"
-                  className="border-black text-black hover:bg-black hover:text-white transition-colors"
-                  onClick={() => router.push('/stocks/entrees')}
-                >
-                  <ArrowDownToLine className="h-4 w-4 mr-2" />
-                  <span className="text-xs">Entrées</span>
-                </ButtonV2>
-
-                <ButtonV2
-                  variant="outline"
-                  size="sm"
-                  className="border-black text-black hover:bg-black hover:text-white transition-colors"
-                  onClick={() => router.push('/stocks/sorties')}
-                >
-                  <ArrowUpFromLine className="h-4 w-4 mr-2" />
-                  <span className="text-xs">Sorties</span>
-                </ButtonV2>
-
-                <ButtonV2
-                  variant="outline"
-                  size="sm"
                   className="border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white transition-colors"
                   onClick={() => router.push('/stocks/previsionnel')}
                 >

@@ -1,0 +1,77 @@
+# KPI: Sessions Totales (Utilisateur)
+# Nombre total de sessions enregistrées pour un utilisateur
+
+id: kpi-user-total-sessions
+name: Sessions Totales (Utilisateur)
+description: |
+  Nombre total de sessions d'authentification enregistrées pour un utilisateur spécifique.
+  Indicateur d'activité globale et d'engagement utilisateur.
+
+module: Profil et rôles
+category: Engagement
+subcategory: Activité
+owner: Romeo Dos Santos
+
+formula: |
+  total_sessions = COUNT(DISTINCT session_id FROM user_activity_tracking WHERE user_id = :user_id)
+
+inputs:
+  - name: user_id
+    type: uuid
+    description: ID de l'utilisateur
+    source: paramètre URL
+
+output:
+  type: number
+  unit: sessions
+  format: integer
+  description: Nombre de sessions totales
+
+source:
+  table: user_activity_tracking
+  rpc: get_user_activity_stats (analytics.total_sessions)
+  hook: useUserMetrics
+  file: src/app/admin/users/[id]/page.tsx
+  query_line: 123-137
+  display_line: 47
+
+displayed_in:
+  - component: src/app/admin/users/[id]/components/user-stats-cards.tsx
+    location: "Card 'Sessions totales' (première card)"
+    description: "Badge 'RÉELLES DONNÉES'"
+    screenshot: user-detail-profil-tab.png
+
+thresholds:
+  excellent: '> 100'
+  good: '50-100'
+  warning: '10-50'
+  critical: '< 10'
+
+tests:
+  - scenario: 'Utilisateur très actif (Romeo)'
+    inputs:
+      user_id: '100d2439-0f52-46b1-9c30-ad7934b44719'
+      sessions: 1103
+    expected_output: 1103
+    threshold_expected: 'excellent'
+
+metadata:
+  created_at: 2025-10-22
+  last_updated: 2025-10-22
+  validated_by: Romeo Dos Santos
+  version: 2.0.0
+  status: active
+  priority: high
+
+business_notes: |
+  **Contexte Vérone** :
+  - KPI principal engagement utilisateur
+  - Source : RPC Supabase get_user_activity_stats
+  - **Valeur production Romeo** : 1103 sessions (2025-10-22)
+  - Badge "RÉELLES DONNÉES" pour distinguer données réelles vs calculées
+
+references:
+  - docs/metrics/calculations.md
+  - docs/database/functions-rpc.md (get_user_activity_stats)
+  - src/hooks/metrics/use-user-metrics.ts
+  - Screenshot: tools/reports/2025-10-22/user-detail-profil-tab.png

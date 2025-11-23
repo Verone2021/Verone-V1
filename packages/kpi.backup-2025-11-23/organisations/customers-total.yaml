@@ -1,0 +1,76 @@
+# KPI: Clients - Total
+# Nombre total clients (vue liste clients)
+
+id: kpi-org-customers-total
+name: Clients - Total
+description: |
+  Nombre total de clients affichés dans la liste clients.
+  Inclut clients professionnels ET particuliers (B2B + B2C).
+
+module: Organisations
+category: Compteurs
+subcategory: Clients - Stats Header
+owner: Romeo Dos Santos
+
+formula: |
+  customers_total = customers.length
+
+  Liste filtrée sur type='customer' et archived_at IS NULL
+
+inputs:
+  - name: customers
+    type: array
+    description: Liste clients filtrés depuis organisations
+    source: useOrganisations hook + filter type='customer'
+
+output:
+  type: number
+  unit: count
+  format: integer
+  description: Nombre clients dans liste active
+
+source:
+  table: organisations
+  hook: useOrganisations
+  file: src/app/contacts-organisations/customers/page.tsx
+  query: |
+    SELECT COUNT(*) as total
+    FROM organisations
+    WHERE type = 'customer'
+    AND archived_at IS NULL
+  calculation_line: 152
+
+displayed_in:
+  - component: src/app/contacts-organisations/customers/page.tsx
+    location: "Stats header - Badge 'Total' (ligne ~185-200)"
+    description: 'Premier badge row statistiques clients'
+
+thresholds:
+  excellent: '> 200'
+  good: '100-200'
+  warning: '50-100'
+  critical: '< 50'
+
+tests:
+  - scenario: 'Base clients standard'
+    inputs:
+      customers_count: 144
+    expected_output: 144
+    threshold_expected: 'good'
+
+metadata:
+  created_at: 2025-10-22
+  last_updated: 2025-10-22
+  validated_by: Romeo Dos Santos
+  version: 2.0.0
+  status: active
+  priority: high
+
+business_notes: |
+  **Contexte Vérone** :
+  - Inclut B2B (professional) ET B2C (individual)
+  - Affiché en stats header liste clients
+  - **Valeur production** : ~144 clients (2025-10-22)
+
+references:
+  - src/app/contacts-organisations/customers/page.tsx

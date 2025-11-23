@@ -1,0 +1,33 @@
+# KPI: Sessions Totales (30 jours)
+
+id: kpi-user-sessions-30-days
+name: Sessions Totales (30 derniers jours)
+description: Sessions sur les 30 derniers jours (contexte onglet Activité).
+
+module: Profil et rôles
+category: Engagement
+owner: Romeo Dos Santos
+
+formula: |
+  sessions_30d = COUNT(sessions WHERE created_at >= NOW() - INTERVAL '30 days')
+
+source:
+  file: user-activity-tab.tsx
+  lines: 213-231
+
+displayed_in:
+  - component: user-activity-tab.tsx
+    location: "Métriques d'engagement - Card 2"
+
+output:
+  type: number
+  unit: sessions
+
+metadata:
+  created_at: 2025-10-22
+  version: 2.0.0
+  status: active
+  priority: high
+
+business_notes: |
+  **Valeur Romeo** : 1103 sessions sur 30j.

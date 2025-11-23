@@ -1,0 +1,35 @@
+# KPI: Date de création (organisation)
+
+id: kpi-org-organisation-created-date
+name: Date de création (organisation)
+description: Date de création de l'organisation dans le système.
+
+module: Organisations
+category: Indicateurs
+subcategory: Métadonnées
+owner: Romeo Dos Santos
+
+formula: |
+  created_date = formatDate(organisation.created_at)
+
+source:
+  table: organisations.created_at
+  file: src/app/contacts-organisations/*/[id]/page.tsx
+
+displayed_in:
+  - component: Page détail organisation
+    location: 'Section Statistiques'
+
+output:
+  type: date
+  format: 'DD/MM/YYYY'
+
+metadata:
+  created_at: 2025-10-22
+  version: 2.0.0
+  status: active
+  priority: low
+
+business_notes: |
+  Métadonnée informative pour historique organisation.
+  Utilisé pour calcul ancienneté relation commerciale.

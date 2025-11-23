@@ -1,0 +1,34 @@
+# KPI: Contacts Clients
+
+id: kpi-contacts-customer-contacts
+name: Contacts Clients
+description: Contacts liés à organisations type='customer'.
+
+module: Contacts
+category: Compteurs
+subcategory: Par type organisation
+owner: Romeo Dos Santos
+
+formula: |
+  customer_contacts = COUNT(contacts WHERE organisation.type = 'customer')
+
+source:
+  table: contacts
+  file: src/app/contacts-organisations/contacts/page.tsx
+  calculation_line: 78
+
+displayed_in:
+  - component: src/app/contacts-organisations/contacts/page.tsx
+    location: "Card 'Contacts clients'"
+
+thresholds:
+  excellent: '> 200'
+  good: '100-200'
+  warning: '30-100'
+  critical: '< 30'
+
+metadata:
+  created_at: 2025-10-22
+  version: 2.0.0
+  status: active
+  priority: high

@@ -1,0 +1,94 @@
+# KPI: Total Organisations
+# Compte toutes les organisations (tous types confondus)
+
+id: kpi-org-total-organisations
+name: Total Organisations
+description: |
+  Nombre total d'organisations enregistrées dans le système, tous types confondus
+  (fournisseurs, clients professionnels, prestataires).
+  Exclut les clients individuels (table individual_customers séparée).
+
+module: Organisations
+category: Compteurs
+subcategory: Vue globale
+owner: Romeo Dos Santos
+
+formula: |
+  total_organisations = COUNT(organisations WHERE archived_at IS NULL)
+
+  Filtrage : organisationsOnly.length
+  (exclut individual_customers de la table organisations)
+
+inputs:
+  - name: organisations
+    type: array
+    description: Liste organisations depuis table organisations
+    source: useOrganisations hook
+
+output:
+  type: number
+  unit: count
+  format: integer
+  description: Nombre total d'organisations actives
+
+source:
+  table: organisations
+  hook: useOrganisations
+  file: src/app/contacts-organisations/page.tsx
+  query: |
+    SELECT COUNT(*) as total
+    FROM organisations
+    WHERE archived_at IS NULL
+  calculation_line: 28
+
+displayed_in:
+  - component: src/app/contacts-organisations/page.tsx
+    location: "Card 'Total Organisations' (lignes ~100-125)"
+    description: 'Première carte statistiques page accueil'
+    screenshot: contacts-organisations-page.png
+
+thresholds:
+  excellent: '> 200'
+  good: '100-200'
+  warning: '50-100'
+  critical: '< 50'
+  interpretation: |
+    - > 200 : Base clients/fournisseurs solide
+    - 100-200 : Portefeuille en développement
+    - 50-100 : Démarrage activité
+    - < 50 : Phase initiale
+
+tests:
+  - scenario: 'Base standard'
+    inputs:
+      organisations_count: 157
+    expected_output: 157
+    threshold_expected: 'good'
+
+  - scenario: 'Démarrage'
+    inputs:
+      organisations_count: 45
+    expected_output: 45
+    threshold_expected: 'critical'
+
+metadata:
+  created_at: 2025-10-22
+  last_updated: 2025-10-22
+  validated_by: Romeo Dos Santos
+  version: 2.0.0
+  status: active
+  priority: high
+
+business_notes: |
+  **Contexte Vérone** :
+  - KPI principal vue globale Organisations
+  - Inclut suppliers + customers (B2B) + partners
+  - Exclut individual_customers (table séparée)
+  - Affiché en première position dashboard Organisations
+
+  **Valeur actuelle production** : 157 organisations (2025-10-22)
+
+references:
+  - docs/database/SCHEMA-REFERENCE.md (table organisations)
+  - src/hooks/use-organisations.ts
+  - Screenshot: tools/reports/2025-10-22/contacts-organisations-page.png

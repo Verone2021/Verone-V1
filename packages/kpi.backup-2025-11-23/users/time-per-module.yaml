@@ -1,0 +1,122 @@
+# KPI: Temps passé par module (Utilisateur)
+# Répartition du temps utilisateur par module applicatif
+
+id: kpi-user-time-per-module
+name: Temps passé par module (Utilisateur)
+description: |
+  Temps total passé par l'utilisateur dans chaque module de l'application.
+  Permet d'identifier les modules les plus utilisés et optimiser UX.
+  Retourne array avec métriques par module (7 modules trackés).
+
+module: Profil et rôles
+category: Activité
+subcategory: Usage modules
+owner: Romeo Dos Santos
+
+formula: |
+  time_per_module = SUM(time_spent_minutes) GROUP BY module_name
+  percentage = (time_per_module / total_time) * 100
+
+inputs:
+  - name: user_id
+    type: uuid
+    description: ID utilisateur
+    source: paramètre URL
+  - name: period_days
+    type: number
+    value: 30
+    description: Période d'analyse (jours)
+    source: paramètre
+
+output:
+  type: array
+  format: |
+    [{
+      module: string,
+      time_spent_minutes: number,
+      percentage: number,
+      page_views: number,
+      total_actions: number
+    }]
+  description: Répartition temps par module (7 modules)
+
+source:
+  table: user_activity_tracking
+  hook: useUserModuleMetrics
+  file: src/hooks/metrics/use-user-module-metrics.ts
+  query: |
+    SELECT
+      module_name,
+      SUM(time_spent_minutes) as time_spent,
+      COUNT(DISTINCT page_path) as page_views,
+      COUNT(*) as total_actions
+    FROM user_activity_tracking
+    WHERE user_id = :user_id
+    AND created_at >= NOW() - INTERVAL ':period_days days'
+    GROUP BY module_name
+    ORDER BY time_spent DESC
+
+displayed_in:
+  - component: src/app/admin/users/[id]/components/user-activity-tab.tsx
+    location: "Section 'Temps passé par module' (lignes 331-403)"
+    description: 'Barres progression pour chaque module avec détails'
+    screenshot: user-detail-activite-tab.png
+
+thresholds:
+  balanced: 'Aucun module > 50% du temps total'
+  focused: '1-2 modules représentent 60-80%'
+  specialized: '1 module > 80%'
+  interpretation: |
+    - Balanced : Utilisation équilibrée (idéal pour admin)
+    - Focused : Spécialisation modérée (bon pour rôles spécifiques)
+    - Specialized : Forte spécialisation (attention tunnel vision)
+
+tests:
+  - scenario: 'Utilisateur équilibré'
+    inputs:
+      modules:
+        [
+          { module: 'Dashboard', time: 120, pct: 40, views: 50, actions: 200 },
+          { module: 'Catalogue', time: 90, pct: 30, views: 40, actions: 150 },
+        ]
+    expected: 'Utilisation équilibrée'
+
+  - scenario: 'Utilisateur spécialisé Catalogue'
+    inputs:
+      modules:
+        [{ module: 'Catalogue', time: 240, pct: 85, views: 100, actions: 500 }]
+    expected: 'Spécialisation forte'
+
+metadata:
+  created_at: 2025-10-22
+  last_updated: 2025-10-22
+  validated_by: Romeo Dos Santos
+  version: 2.0.0
+  status: active
+  priority: high
+
+business_notes: |
+  **Contexte Vérone** :
+  - KPI clé pour optimisation UX/UI
+  - Identifie modules sous-utilisés
+  - Guide roadmap feature prioritization
+
+  **Modules trackés (7)** :
+  1. Dashboard
+  2. Catalogue
+  3. Commandes
+  4. Stock
+  5. Contacts
+  6. Rapports
+  7. Other (autres modules)
+
+  **Affichage** :
+  - Barres de progression colorées
+  - Pourcentage temps total
+  - Nombre pages vues
+  - Nombre actions effectuées
+
+references:
+  - docs/metrics/calculations.md
+  - src/hooks/metrics/use-user-module-metrics.ts
+  - Screenshot: tools/reports/2025-10-22/user-detail-activite-tab.png

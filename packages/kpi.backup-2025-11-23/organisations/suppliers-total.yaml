@@ -1,0 +1,78 @@
+# KPI: Fournisseurs - Total
+# Nombre total fournisseurs (vue liste fournisseurs)
+
+id: kpi-org-suppliers-total
+name: Fournisseurs - Total
+description: |
+  Nombre total de fournisseurs affichés dans la liste fournisseurs.
+  Identique à total-suppliers mais contexte affichage différent (stats header).
+
+module: Organisations
+category: Compteurs
+subcategory: Fournisseurs - Stats Header
+owner: Romeo Dos Santos
+
+formula: |
+  suppliers_total = suppliers.length
+
+  Liste filtrée sur type='supplier' et archived_at IS NULL
+
+inputs:
+  - name: suppliers
+    type: array
+    description: Liste fournisseurs filtrés depuis organisations
+    source: useOrganisations hook + filter type='supplier'
+
+output:
+  type: number
+  unit: count
+  format: integer
+  description: Nombre fournisseurs dans liste active
+
+source:
+  table: organisations
+  hook: useOrganisations
+  file: src/app/contacts-organisations/suppliers/page.tsx
+  query: |
+    SELECT COUNT(*) as total
+    FROM organisations
+    WHERE type = 'supplier'
+    AND archived_at IS NULL
+  calculation_line: 247
+
+displayed_in:
+  - component: src/app/contacts-organisations/suppliers/page.tsx
+    location: "Stats header - Badge 'Total' (ligne ~280-295)"
+    description: 'Premier badge row statistiques fournisseurs'
+    screenshot: suppliers-list-page.png
+
+thresholds:
+  excellent: '> 50'
+  good: '20-50'
+  warning: '5-20'
+  critical: '< 5'
+
+tests:
+  - scenario: 'Production actuelle'
+    inputs:
+      suppliers_count: 11
+    expected_output: 11
+    threshold_expected: 'warning'
+
+metadata:
+  created_at: 2025-10-22
+  last_updated: 2025-10-22
+  validated_by: Romeo Dos Santos
+  version: 2.0.0
+  status: active
+  priority: high
+
+business_notes: |
+  **Contexte Vérone** :
+  - Affiché en stats header liste fournisseurs
+  - Identique valeur à total-suppliers.yaml mais contexte UI différent
+  - **Valeur production** : 11 fournisseurs (2025-10-22)
+
+references:
+  - packages/kpi/organisations/total-suppliers.yaml (KPI similaire)
+  - Screenshot: tools/reports/2025-10-22/suppliers-list-page.png

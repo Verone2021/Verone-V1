@@ -1,0 +1,33 @@
+# KPI: Prestataires - Favoris
+
+id: kpi-org-partners-favorites
+name: Prestataires - Favoris
+description: Nombre de prestataires marqués comme favoris (is_favorite=true).
+
+module: Organisations
+category: Compteurs
+subcategory: Prestataires - Stats Header
+owner: Romeo Dos Santos
+
+formula: |
+  partners_favorites = COUNT(partners WHERE is_favorite = true)
+
+source:
+  table: organisations
+  file: src/app/contacts-organisations/partners/page.tsx
+  calculation_line: 227
+
+displayed_in:
+  - component: src/app/contacts-organisations/partners/page.tsx
+    location: "Stats header - Badge 'Favoris' avec icône étoile"
+
+thresholds:
+  excellent: '2-5 favoris'
+  good: '1-2 favoris'
+  warning: '> 5 favoris OU 0 favoris'
+
+metadata:
+  created_at: 2025-10-22
+  version: 2.0.0
+  status: active
+  priority: medium

@@ -1,0 +1,53 @@
+# KPI: Prestataires - Total
+# Nombre total prestataires (vue liste prestataires)
+
+id: kpi-org-partners-total
+name: Prestataires - Total
+description: |
+  Nombre total de prestataires affichés dans la liste prestataires.
+  Prestataires de services externes (transport, maintenance, etc.).
+
+module: Organisations
+category: Compteurs
+subcategory: Prestataires - Stats Header
+owner: Romeo Dos Santos
+
+formula: |
+  partners_total = partners.length
+
+inputs:
+  - name: partners
+    type: array
+    source: useOrganisations hook + filter type='partner'
+
+output:
+  type: number
+  unit: count
+  format: integer
+
+source:
+  table: organisations
+  file: src/app/contacts-organisations/partners/page.tsx
+  calculation_line: 224
+
+displayed_in:
+  - component: src/app/contacts-organisations/partners/page.tsx
+    location: "Stats header - Badge 'Total'"
+
+thresholds:
+  excellent: '> 20'
+  good: '10-20'
+  warning: '3-10'
+  critical: '< 3'
+
+metadata:
+  created_at: 2025-10-22
+  last_updated: 2025-10-22
+  validated_by: Romeo Dos Santos
+  version: 2.0.0
+  status: active
+  priority: medium
+
+business_notes: |
+  **Valeur production** : 1 prestataire (2025-10-22)
+  → Réseau prestataires à développer

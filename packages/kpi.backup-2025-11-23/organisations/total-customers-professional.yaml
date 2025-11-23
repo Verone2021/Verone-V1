@@ -1,0 +1,104 @@
+# KPI: Total Clients Professionnels (B2B)
+# Nombre de clients professionnels (customer_type='professional')
+
+id: kpi-org-total-customers-professional
+name: Total Clients Professionnels (B2B)
+description: |
+  Nombre total d'organisations de type 'customer' avec customer_type='professional'.
+  Représente la clientèle B2B (professionnels) excluant les particuliers.
+
+module: Organisations
+category: Compteurs
+subcategory: Clients
+owner: Romeo Dos Santos
+
+formula: |
+  total_customers_b2b = COUNT(organisations
+    WHERE type = 'customer'
+    AND (customer_type IS NULL OR customer_type = 'professional')
+    AND archived_at IS NULL)
+
+  Filtrage : organisations.filter(o =>
+    o.type === 'customer' &&
+    (!o.customer_type || o.customer_type === 'professional')
+  ).length
+
+inputs:
+  - name: organisations
+    type: array
+    description: Liste organisations depuis table organisations
+    source: useOrganisations hook
+
+output:
+  type: number
+  unit: count
+  format: integer
+  description: Nombre total clients professionnels actifs
+
+source:
+  table: organisations
+  hook: useOrganisations
+  file: src/app/contacts-organisations/page.tsx
+  query: |
+    SELECT COUNT(*) as total
+    FROM organisations
+    WHERE type = 'customer'
+    AND (customer_type IS NULL OR customer_type = 'professional')
+    AND archived_at IS NULL
+  calculation_line: 30-32
+
+displayed_in:
+  - component: src/app/contacts-organisations/page.tsx
+    location: "Card 'Clients Professionnels' (ligne ~160-185)"
+    description: 'Troisième carte statistiques page accueil'
+    screenshot: contacts-organisations-page.png
+
+thresholds:
+  excellent: '> 200'
+  good: '100-200'
+  warning: '50-100'
+  critical: '< 50'
+  interpretation: |
+    - > 200 : Base clients B2B solide
+    - 100-200 : Portefeuille clients sain
+    - 50-100 : Développement en cours
+    - < 50 : Phase acquisition
+
+tests:
+  - scenario: 'Base clients standard'
+    inputs:
+      customers_b2b_count: 144
+    expected_output: 144
+    threshold_expected: 'good'
+
+  - scenario: 'Grande base clients'
+    inputs:
+      customers_b2b_count: 250
+    expected_output: 250
+    threshold_expected: 'excellent'
+
+metadata:
+  created_at: 2025-10-22
+  last_updated: 2025-10-22
+  validated_by: Romeo Dos Santos
+  version: 2.0.0
+  status: active
+  priority: high
+
+business_notes: |
+  **Contexte Vérone** :
+  - Clients B2B uniquement (professionnels)
+  - Exclut clients particuliers (individual_customers table)
+  - customer_type NULL considéré comme 'professional' par défaut
+  - KPI stratégique croissance B2B
+
+  **Valeur actuelle production** : 144 clients professionnels (2025-10-22)
+
+  **Note importante** :
+  La logique (!o.customer_type || o.customer_type === 'professional')
+  traite les NULL comme professionnels pour rétrocompatibilité.
+
+references:
+  - docs/database/SCHEMA-REFERENCE.md (table organisations, customer_type)
+  - src/hooks/use-organisations.ts
+  - Screenshot: tools/reports/2025-10-22/contacts-organisations-page.png

@@ -151,7 +151,9 @@ export function PurchaseOrderReceptionForm({
     const result = await validateReception({
       purchase_order_id: purchaseOrder.id,
       items: itemsToReceive,
-      received_at: receivedAt + 'T' + new Date().toTimeString().split(' ')[0],
+      received_at: new Date(
+        `${receivedAt}T${new Date().toTimeString().split(' ')[0]}`
+      ).toISOString(),
       notes: notes || undefined,
       received_by: user.id,
     });
