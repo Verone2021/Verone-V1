@@ -134,8 +134,8 @@ async function testRoute(page: Page, route: string): Promise<TestResult> {
   const errors: ConsoleError[] = [];
   const warnings: ConsoleError[] = [];
 
-  // Configurer les listeners console AVANT navigation
-  page.on('console', (msg: ConsoleMessage) => {
+  // ✅ FIX: Définir handler comme variable nommée pour pouvoir le détacher
+  const consoleHandler = (msg: ConsoleMessage) => {
     const message = msg.text();
     const type = msg.type();
 
@@ -158,7 +158,10 @@ async function testRoute(page: Page, route: string): Promise<TestResult> {
     } else {
       warnings.push(error);
     }
-  });
+  };
+
+  // Configurer les listeners console AVANT navigation
+  page.on('console', consoleHandler);
 
   try {
     // Navigation vers la route avec timeout
@@ -210,6 +213,10 @@ async function testRoute(page: Page, route: string): Promise<TestResult> {
       warnings,
       duration,
     };
+  } finally {
+    // ✅ FIX CRITIQUE: Détacher listener console après test
+    // Évite accumulation erreurs entre routes (bug comptage cumulatif)
+    page.off('console', consoleHandler);
   }
 }
 
