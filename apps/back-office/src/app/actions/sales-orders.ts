@@ -47,7 +47,7 @@ export async function updateSalesOrderStatus(
     const { data: existingOrder, error: fetchError } = await supabase
       .from('sales_orders')
       .select(
-        'id, order_number, status, validated_at, shipped_at, delivered_at, cancelled_at'
+        'id, order_number, status, confirmed_at, shipped_at, delivered_at, cancelled_at'
       )
       .eq('id', orderId)
       .single();
@@ -77,18 +77,18 @@ export async function updateSalesOrderStatus(
 
     // Gérer les timestamps selon les contraintes PostgreSQL
     if (newStatus === 'validated') {
-      updateFields.validated_at = new Date().toISOString();
-      updateFields.validated_by = userId;
+      updateFields.confirmed_at = new Date().toISOString();
+      updateFields.confirmed_by = userId;
     } else if (newStatus === 'shipped' || newStatus === 'partially_shipped') {
-      if (!existingOrder.validated_at) {
-        updateFields.validated_at = new Date().toISOString();
-        updateFields.validated_by = userId;
+      if (!existingOrder.confirmed_at) {
+        updateFields.confirmed_at = new Date().toISOString();
+        updateFields.confirmed_by = userId;
       }
       updateFields.shipped_at = new Date().toISOString();
     } else if (newStatus === 'delivered') {
-      if (!existingOrder.validated_at) {
-        updateFields.validated_at = new Date().toISOString();
-        updateFields.validated_by = userId;
+      if (!existingOrder.confirmed_at) {
+        updateFields.confirmed_at = new Date().toISOString();
+        updateFields.confirmed_by = userId;
       }
       if (!existingOrder.shipped_at) {
         updateFields.shipped_at = new Date().toISOString();

@@ -134,8 +134,7 @@ export async function validateSalesShipment(
       }
 
       // ✅ INSERT INTO sales_order_shipments (triggers existants gèrent stock)
-      // Note: Table exists in DB but not in generated Supabase types yet
-      const { error: insertError } = await (supabase as any)
+      const { error: insertError } = await supabase
         .from('sales_order_shipments')
         .insert({
           sales_order_id: validatedData.sales_order_id,

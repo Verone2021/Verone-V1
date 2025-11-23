@@ -76,7 +76,6 @@ const statusLabels: Record<SalesOrderStatus, string> = {
   shipped: 'Expédiée',
   delivered: 'Livrée',
   cancelled: 'Annulée',
-  closed: 'Clôturée',
 };
 
 const statusColors: Record<SalesOrderStatus, string> = {
@@ -86,7 +85,6 @@ const statusColors: Record<SalesOrderStatus, string> = {
   shipped: 'bg-green-100 text-green-800',
   delivered: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800',
-  closed: 'bg-gray-100 text-gray-800',
 };
 
 type SortColumn = 'date' | 'client' | 'amount' | null;

@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: '13.0.5';
   };
+  graphql_public: {
+    Tables: {
+      [_ in never]: never;
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json;
+          operationName?: string;
+          query?: string;
+          variables?: Json;
+        };
+        Returns: Json;
+      };
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
+  };
   public: {
     Tables: {
       abby_sync_queue: {
@@ -213,39 +238,6 @@ export type Database = {
             referencedColumns: ['id'];
           },
         ];
-      };
-      brands: {
-        Row: {
-          created_at: string | null;
-          description: string | null;
-          id: string;
-          logo_url: string | null;
-          name: string;
-          slug: string;
-          updated_at: string | null;
-          website_url: string | null;
-        };
-        Insert: {
-          created_at?: string | null;
-          description?: string | null;
-          id?: string;
-          logo_url?: string | null;
-          name: string;
-          slug: string;
-          updated_at?: string | null;
-          website_url?: string | null;
-        };
-        Update: {
-          created_at?: string | null;
-          description?: string | null;
-          id?: string;
-          logo_url?: string | null;
-          name?: string;
-          slug?: string;
-          updated_at?: string | null;
-          website_url?: string | null;
-        };
-        Relationships: [];
       };
       bug_reports: {
         Row: {
@@ -581,29 +573,8 @@ export type Database = {
             foreignKeyName: 'channel_pricing_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
-            referencedRelation: 'products_with_default_package';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'channel_pricing_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'channel_pricing_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_health_monitor';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'channel_pricing_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_overview';
-            referencedColumns: ['id'];
           },
         ];
       };
@@ -695,29 +666,8 @@ export type Database = {
             foreignKeyName: 'channel_pricing_history_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
-            referencedRelation: 'products_with_default_package';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'channel_pricing_history_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'channel_pricing_history_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_health_monitor';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'channel_pricing_history_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_overview';
-            referencedColumns: ['id'];
           },
         ];
       };
@@ -796,29 +746,8 @@ export type Database = {
             foreignKeyName: 'channel_product_metadata_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
-            referencedRelation: 'products_with_default_package';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'channel_product_metadata_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'channel_product_metadata_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_health_monitor';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'channel_product_metadata_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_overview';
-            referencedColumns: ['id'];
           },
         ];
       };
@@ -869,29 +798,8 @@ export type Database = {
             foreignKeyName: 'channel_product_pricing_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
-            referencedRelation: 'products_with_default_package';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'channel_product_pricing_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'channel_product_pricing_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_health_monitor';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'channel_product_pricing_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_overview';
-            referencedColumns: ['id'];
           },
         ];
       };
@@ -1033,13 +941,6 @@ export type Database = {
             foreignKeyName: 'collection_images_collection_id_fkey';
             columns: ['collection_id'];
             isOneToOne: false;
-            referencedRelation: 'collection_primary_images';
-            referencedColumns: ['collection_id'];
-          },
-          {
-            foreignKeyName: 'collection_images_collection_id_fkey';
-            columns: ['collection_id'];
-            isOneToOne: false;
             referencedRelation: 'collections';
             referencedColumns: ['id'];
           },
@@ -1075,13 +976,6 @@ export type Database = {
             foreignKeyName: 'collection_products_collection_id_fkey';
             columns: ['collection_id'];
             isOneToOne: false;
-            referencedRelation: 'collection_primary_images';
-            referencedColumns: ['collection_id'];
-          },
-          {
-            foreignKeyName: 'collection_products_collection_id_fkey';
-            columns: ['collection_id'];
-            isOneToOne: false;
             referencedRelation: 'collections';
             referencedColumns: ['id'];
           },
@@ -1103,29 +997,8 @@ export type Database = {
             foreignKeyName: 'collection_products_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
-            referencedRelation: 'products_with_default_package';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'collection_products_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'collection_products_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_health_monitor';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'collection_products_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_overview';
-            referencedColumns: ['id'];
           },
         ];
       };
@@ -1155,13 +1028,6 @@ export type Database = {
           shared_by?: string | null;
         };
         Relationships: [
-          {
-            foreignKeyName: 'collection_shares_collection_id_fkey';
-            columns: ['collection_id'];
-            isOneToOne: false;
-            referencedRelation: 'collection_primary_images';
-            referencedColumns: ['collection_id'];
-          },
           {
             foreignKeyName: 'collection_shares_collection_id_fkey';
             columns: ['collection_id'];
@@ -1197,13 +1063,6 @@ export type Database = {
           name?: string;
         };
         Relationships: [
-          {
-            foreignKeyName: 'collection_translations_collection_id_fkey';
-            columns: ['collection_id'];
-            isOneToOne: false;
-            referencedRelation: 'collection_primary_images';
-            referencedColumns: ['collection_id'];
-          },
           {
             foreignKeyName: 'collection_translations_collection_id_fkey';
             columns: ['collection_id'];
@@ -1319,15 +1178,7 @@ export type Database = {
           visibility?: string;
           visible_channels?: string[] | null;
         };
-        Relationships: [
-          {
-            foreignKeyName: 'collections_brand_id_fkey';
-            columns: ['brand_id'];
-            isOneToOne: false;
-            referencedRelation: 'brands';
-            referencedColumns: ['id'];
-          },
-        ];
+        Relationships: [];
       };
       consultation_images: {
         Row: {
@@ -1389,13 +1240,6 @@ export type Database = {
             referencedRelation: 'client_consultations';
             referencedColumns: ['id'];
           },
-          {
-            foreignKeyName: 'consultation_images_consultation_id_fkey';
-            columns: ['consultation_id'];
-            isOneToOne: false;
-            referencedRelation: 'consultations_with_primary_image';
-            referencedColumns: ['id'];
-          },
         ];
       };
       consultation_products: {
@@ -1447,13 +1291,6 @@ export type Database = {
             referencedColumns: ['id'];
           },
           {
-            foreignKeyName: 'consultation_products_consultation_id_fkey';
-            columns: ['consultation_id'];
-            isOneToOne: false;
-            referencedRelation: 'consultations_with_primary_image';
-            referencedColumns: ['id'];
-          },
-          {
             foreignKeyName: 'consultation_products_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
@@ -1471,29 +1308,8 @@ export type Database = {
             foreignKeyName: 'consultation_products_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
-            referencedRelation: 'products_with_default_package';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'consultation_products_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'consultation_products_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_health_monitor';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'consultation_products_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_overview';
-            referencedColumns: ['id'];
           },
         ];
       };
@@ -1580,13 +1396,6 @@ export type Database = {
           updated_at?: string | null;
         };
         Relationships: [
-          {
-            foreignKeyName: 'contacts_organisation_id_fkey';
-            columns: ['organisation_id'];
-            isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
-          },
           {
             foreignKeyName: 'contacts_organisation_id_fkey';
             columns: ['organisation_id'];
@@ -1839,29 +1648,8 @@ export type Database = {
             foreignKeyName: 'customer_pricing_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
-            referencedRelation: 'products_with_default_package';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'customer_pricing_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'customer_pricing_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_health_monitor';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'customer_pricing_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_overview';
-            referencedColumns: ['id'];
           },
         ];
       };
@@ -2215,29 +2003,8 @@ export type Database = {
             foreignKeyName: 'financial_document_lines_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
-            referencedRelation: 'products_with_default_package';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'financial_document_lines_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'financial_document_lines_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_health_monitor';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'financial_document_lines_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_overview';
-            referencedColumns: ['id'];
           },
         ];
       };
@@ -2348,13 +2115,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'expense_categories';
             referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'financial_documents_partner_id_fkey';
-            columns: ['partner_id'];
-            isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
           },
           {
             foreignKeyName: 'financial_documents_partner_id_fkey';
@@ -2519,29 +2279,8 @@ export type Database = {
             foreignKeyName: 'google_merchant_syncs_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
-            referencedRelation: 'products_with_default_package';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'google_merchant_syncs_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'google_merchant_syncs_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_health_monitor';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'google_merchant_syncs_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_overview';
-            referencedColumns: ['id'];
           },
         ];
       };
@@ -3395,29 +3134,8 @@ export type Database = {
             foreignKeyName: 'price_list_items_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
-            referencedRelation: 'products_with_default_package';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'price_list_items_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'price_list_items_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_health_monitor';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'price_list_items_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_overview';
-            referencedColumns: ['id'];
           },
         ];
       };
@@ -3687,29 +3405,8 @@ export type Database = {
             foreignKeyName: 'product_group_members_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
-            referencedRelation: 'products_with_default_package';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'product_group_members_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'product_group_members_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_health_monitor';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'product_group_members_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_overview';
-            referencedColumns: ['id'];
           },
         ];
       };
@@ -3766,29 +3463,8 @@ export type Database = {
             foreignKeyName: 'product_groups_primary_product_id_fkey';
             columns: ['primary_product_id'];
             isOneToOne: false;
-            referencedRelation: 'products_with_default_package';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'product_groups_primary_product_id_fkey';
-            columns: ['primary_product_id'];
-            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'product_groups_primary_product_id_fkey';
-            columns: ['primary_product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_health_monitor';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'product_groups_primary_product_id_fkey';
-            columns: ['primary_product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_overview';
-            referencedColumns: ['id'];
           },
         ];
       };
@@ -3863,29 +3539,8 @@ export type Database = {
             foreignKeyName: 'product_images_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
-            referencedRelation: 'products_with_default_package';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'product_images_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'product_images_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_health_monitor';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'product_images_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_overview';
-            referencedColumns: ['id'];
           },
         ];
       };
@@ -3957,29 +3612,8 @@ export type Database = {
             foreignKeyName: 'product_packages_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
-            referencedRelation: 'products_with_default_package';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'product_packages_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'product_packages_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_health_monitor';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'product_packages_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_overview';
-            referencedColumns: ['id'];
           },
         ];
       };
@@ -4027,29 +3661,8 @@ export type Database = {
             foreignKeyName: 'product_status_changes_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
-            referencedRelation: 'products_with_default_package';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'product_status_changes_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'product_status_changes_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_health_monitor';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'product_status_changes_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_overview';
-            referencedColumns: ['id'];
           },
         ];
       };
@@ -4237,13 +3850,6 @@ export type Database = {
             foreignKeyName: 'products_assigned_client_id_fkey';
             columns: ['assigned_client_id'];
             isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
-          },
-          {
-            foreignKeyName: 'products_assigned_client_id_fkey';
-            columns: ['assigned_client_id'];
-            isOneToOne: false;
             referencedRelation: 'organisations';
             referencedColumns: ['id'];
           },
@@ -4253,13 +3859,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'subcategories';
             referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'products_supplier_id_fkey';
-            columns: ['supplier_id'];
-            isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
           },
           {
             foreignKeyName: 'products_supplier_id_fkey';
@@ -4333,29 +3932,8 @@ export type Database = {
             foreignKeyName: 'purchase_order_items_customer_individual_id_fkey';
             columns: ['customer_individual_id'];
             isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_ind_id'];
-          },
-          {
-            foreignKeyName: 'purchase_order_items_customer_individual_id_fkey';
-            columns: ['customer_individual_id'];
-            isOneToOne: false;
             referencedRelation: 'individual_customers';
             referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'purchase_order_items_customer_individual_id_fkey';
-            columns: ['customer_individual_id'];
-            isOneToOne: false;
-            referencedRelation: 'individual_customers_display';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'purchase_order_items_customer_organisation_id_fkey';
-            columns: ['customer_organisation_id'];
-            isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
           },
           {
             foreignKeyName: 'purchase_order_items_customer_organisation_id_fkey';
@@ -4382,29 +3960,8 @@ export type Database = {
             foreignKeyName: 'purchase_order_items_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
-            referencedRelation: 'products_with_default_package';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'purchase_order_items_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'purchase_order_items_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_health_monitor';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'purchase_order_items_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_overview';
-            referencedColumns: ['id'];
           },
           {
             foreignKeyName: 'purchase_order_items_purchase_order_id_fkey';
@@ -4471,29 +4028,8 @@ export type Database = {
             foreignKeyName: 'purchase_order_receptions_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
-            referencedRelation: 'products_with_default_package';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'purchase_order_receptions_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'purchase_order_receptions_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_health_monitor';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'purchase_order_receptions_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_overview';
-            referencedColumns: ['id'];
           },
           {
             foreignKeyName: 'purchase_order_receptions_purchase_order_id_fkey';
@@ -4520,6 +4056,8 @@ export type Database = {
           po_number: string;
           received_at: string | null;
           received_by: string | null;
+          sent_at: string | null;
+          sent_by: string | null;
           status: Database['public']['Enums']['purchase_order_status'];
           supplier_id: string;
           tax_rate: number;
@@ -4544,6 +4082,8 @@ export type Database = {
           po_number: string;
           received_at?: string | null;
           received_by?: string | null;
+          sent_at?: string | null;
+          sent_by?: string | null;
           status?: Database['public']['Enums']['purchase_order_status'];
           supplier_id: string;
           tax_rate?: number;
@@ -4568,6 +4108,8 @@ export type Database = {
           po_number?: string;
           received_at?: string | null;
           received_by?: string | null;
+          sent_at?: string | null;
+          sent_by?: string | null;
           status?: Database['public']['Enums']['purchase_order_status'];
           supplier_id?: string;
           tax_rate?: number;
@@ -4578,13 +4120,6 @@ export type Database = {
           validated_by?: string | null;
         };
         Relationships: [
-          {
-            foreignKeyName: 'purchase_orders_supplier_id_fkey';
-            columns: ['supplier_id'];
-            isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
-          },
           {
             foreignKeyName: 'purchase_orders_supplier_id_fkey';
             columns: ['supplier_id'];
@@ -4743,32 +4278,79 @@ export type Database = {
             foreignKeyName: 'sales_order_items_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
-            referencedRelation: 'products_with_default_package';
+            referencedRelation: 'stock_alerts_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'sales_order_items_sales_order_id_fkey';
+            columns: ['sales_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'sales_orders';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      sales_order_shipments: {
+        Row: {
+          created_at: string | null;
+          id: string;
+          notes: string | null;
+          product_id: string;
+          quantity_shipped: number;
+          sales_order_id: string;
+          shipped_at: string;
+          shipped_by: string;
+          tracking_number: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          id?: string;
+          notes?: string | null;
+          product_id: string;
+          quantity_shipped: number;
+          sales_order_id: string;
+          shipped_at?: string;
+          shipped_by: string;
+          tracking_number?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          id?: string;
+          notes?: string | null;
+          product_id?: string;
+          quantity_shipped?: number;
+          sales_order_id?: string;
+          shipped_at?: string;
+          shipped_by?: string;
+          tracking_number?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'sales_order_shipments_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'product_prices_summary';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'sales_order_shipments_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
             referencedColumns: ['id'];
           },
           {
-            foreignKeyName: 'sales_order_items_product_id_fkey';
+            foreignKeyName: 'sales_order_shipments_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
           },
           {
-            foreignKeyName: 'sales_order_items_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_health_monitor';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'sales_order_items_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_overview';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'sales_order_items_sales_order_id_fkey';
+            foreignKeyName: 'sales_order_shipments_sales_order_id_fkey';
             columns: ['sales_order_id'];
             isOneToOne: false;
             referencedRelation: 'sales_orders';
@@ -4786,8 +4368,8 @@ export type Database = {
           channel_id: string | null;
           closed_at: string | null;
           closed_by: string | null;
-          validated_at: string | null;
-          validated_by: string | null;
+          confirmed_at: string | null;
+          confirmed_by: string | null;
           created_at: string;
           created_by: string;
           currency: string;
@@ -4827,8 +4409,8 @@ export type Database = {
           channel_id?: string | null;
           closed_at?: string | null;
           closed_by?: string | null;
-          validated_at?: string | null;
-          validated_by?: string | null;
+          confirmed_at?: string | null;
+          confirmed_by?: string | null;
           created_at?: string;
           created_by: string;
           currency?: string;
@@ -4868,8 +4450,8 @@ export type Database = {
           channel_id?: string | null;
           closed_at?: string | null;
           closed_by?: string | null;
-          validated_at?: string | null;
-          validated_by?: string | null;
+          confirmed_at?: string | null;
+          confirmed_by?: string | null;
           created_at?: string;
           created_by?: string;
           currency?: string;
@@ -5026,13 +4608,6 @@ export type Database = {
             foreignKeyName: 'sample_orders_supplier_id_fkey';
             columns: ['supplier_id'];
             isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
-          },
-          {
-            foreignKeyName: 'sample_orders_supplier_id_fkey';
-            columns: ['supplier_id'];
-            isOneToOne: false;
             referencedRelation: 'organisations';
             referencedColumns: ['id'];
           },
@@ -5113,51 +4688,23 @@ export type Database = {
           {
             foreignKeyName: 'stock_alert_tracking_product_id_fkey';
             columns: ['product_id'];
-            isOneToOne: true;
+            isOneToOne: false;
             referencedRelation: 'product_prices_summary';
             referencedColumns: ['product_id'];
           },
           {
             foreignKeyName: 'stock_alert_tracking_product_id_fkey';
             columns: ['product_id'];
-            isOneToOne: true;
+            isOneToOne: false;
             referencedRelation: 'products';
             referencedColumns: ['id'];
           },
           {
             foreignKeyName: 'stock_alert_tracking_product_id_fkey';
             columns: ['product_id'];
-            isOneToOne: true;
-            referencedRelation: 'products_with_default_package';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'stock_alert_tracking_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: true;
+            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'stock_alert_tracking_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: true;
-            referencedRelation: 'stock_health_monitor';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'stock_alert_tracking_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: true;
-            referencedRelation: 'stock_overview';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'stock_alert_tracking_supplier_id_fkey';
-            columns: ['supplier_id'];
-            isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
           },
           {
             foreignKeyName: 'stock_alert_tracking_supplier_id_fkey';
@@ -5283,36 +4830,8 @@ export type Database = {
             foreignKeyName: 'fk_stock_movements_product_id';
             columns: ['product_id'];
             isOneToOne: false;
-            referencedRelation: 'products_with_default_package';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'fk_stock_movements_product_id';
-            columns: ['product_id'];
-            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'fk_stock_movements_product_id';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_health_monitor';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'fk_stock_movements_product_id';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_overview';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'stock_movements_purchase_order_item_id_fkey';
-            columns: ['purchase_order_item_id'];
-            isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['sample_id'];
           },
           {
             foreignKeyName: 'stock_movements_purchase_order_item_id_fkey';
@@ -5388,29 +4907,8 @@ export type Database = {
             foreignKeyName: 'stock_reservations_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
-            referencedRelation: 'products_with_default_package';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'stock_reservations_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'stock_reservations_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_health_monitor';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'stock_reservations_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_overview';
-            referencedColumns: ['id'];
           },
         ];
       };
@@ -5524,13 +5022,6 @@ export type Database = {
             foreignKeyName: 'user_activity_logs_organisation_id_fkey';
             columns: ['organisation_id'];
             isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
-          },
-          {
-            foreignKeyName: 'user_activity_logs_organisation_id_fkey';
-            columns: ['organisation_id'];
-            isOneToOne: false;
             referencedRelation: 'organisations';
             referencedColumns: ['id'];
           },
@@ -5546,7 +5037,9 @@ export type Database = {
       user_profiles: {
         Row: {
           app: Database['public']['Enums']['app_type'];
+          app_source: Database['public']['Enums']['app_type'] | null;
           avatar_url: string | null;
+          client_type: Database['public']['Enums']['client_type'] | null;
           created_at: string | null;
           first_name: string | null;
           individual_customer_id: string | null;
@@ -5554,17 +5047,20 @@ export type Database = {
           last_name: string | null;
           last_sign_in_at: string | null;
           organisation_id: string | null;
+          parent_user_id: string | null;
           partner_id: string | null;
           phone: string | null;
           role: Database['public']['Enums']['user_role_type'];
           scopes: string[] | null;
           updated_at: string | null;
           user_id: string;
-          user_type: string;
+          user_type: Database['public']['Enums']['user_type'] | null;
         };
         Insert: {
           app?: Database['public']['Enums']['app_type'];
+          app_source?: Database['public']['Enums']['app_type'] | null;
           avatar_url?: string | null;
+          client_type?: Database['public']['Enums']['client_type'] | null;
           created_at?: string | null;
           first_name?: string | null;
           individual_customer_id?: string | null;
@@ -5572,17 +5068,20 @@ export type Database = {
           last_name?: string | null;
           last_sign_in_at?: string | null;
           organisation_id?: string | null;
+          parent_user_id?: string | null;
           partner_id?: string | null;
           phone?: string | null;
           role: Database['public']['Enums']['user_role_type'];
           scopes?: string[] | null;
           updated_at?: string | null;
           user_id: string;
-          user_type?: string;
+          user_type?: Database['public']['Enums']['user_type'] | null;
         };
         Update: {
           app?: Database['public']['Enums']['app_type'];
+          app_source?: Database['public']['Enums']['app_type'] | null;
           avatar_url?: string | null;
+          client_type?: Database['public']['Enums']['client_type'] | null;
           created_at?: string | null;
           first_name?: string | null;
           individual_customer_id?: string | null;
@@ -5590,22 +5089,16 @@ export type Database = {
           last_name?: string | null;
           last_sign_in_at?: string | null;
           organisation_id?: string | null;
+          parent_user_id?: string | null;
           partner_id?: string | null;
           phone?: string | null;
           role?: Database['public']['Enums']['user_role_type'];
           scopes?: string[] | null;
           updated_at?: string | null;
           user_id?: string;
-          user_type?: string;
+          user_type?: Database['public']['Enums']['user_type'] | null;
         };
         Relationships: [
-          {
-            foreignKeyName: 'fk_user_profiles_individual_customer';
-            columns: ['individual_customer_id'];
-            isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_ind_id'];
-          },
           {
             foreignKeyName: 'fk_user_profiles_individual_customer';
             columns: ['individual_customer_id'];
@@ -5614,25 +5107,18 @@ export type Database = {
             referencedColumns: ['id'];
           },
           {
-            foreignKeyName: 'fk_user_profiles_individual_customer';
-            columns: ['individual_customer_id'];
-            isOneToOne: false;
-            referencedRelation: 'individual_customers_display';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'fk_user_profiles_organisation';
-            columns: ['organisation_id'];
-            isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
-          },
-          {
             foreignKeyName: 'fk_user_profiles_organisation';
             columns: ['organisation_id'];
             isOneToOne: false;
             referencedRelation: 'organisations';
             referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'user_profiles_parent_user_id_fkey';
+            columns: ['parent_user_id'];
+            isOneToOne: false;
+            referencedRelation: 'user_profiles';
+            referencedColumns: ['user_id'];
           },
         ];
       };
@@ -5689,13 +5175,6 @@ export type Database = {
           user_id?: string | null;
         };
         Relationships: [
-          {
-            foreignKeyName: 'user_sessions_organisation_id_fkey';
-            columns: ['organisation_id'];
-            isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
-          },
           {
             foreignKeyName: 'user_sessions_organisation_id_fkey';
             columns: ['organisation_id'];
@@ -5803,13 +5282,6 @@ export type Database = {
             foreignKeyName: 'variant_groups_supplier_id_fkey';
             columns: ['supplier_id'];
             isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
-          },
-          {
-            foreignKeyName: 'variant_groups_supplier_id_fkey';
-            columns: ['supplier_id'];
-            isOneToOne: false;
             referencedRelation: 'organisations';
             referencedColumns: ['id'];
           },
@@ -5817,158 +5289,6 @@ export type Database = {
       };
     };
     Views: {
-      audit_log_summary: {
-        Row: {
-          action: string | null;
-          event_count: number | null;
-          log_date: string | null;
-          severity: string | null;
-        };
-        Relationships: [];
-      };
-      collection_primary_images: {
-        Row: {
-          alt_text: string | null;
-          collection_id: string | null;
-          collection_name: string | null;
-          file_size: number | null;
-          height: number | null;
-          image_id: string | null;
-          public_url: string | null;
-          width: number | null;
-        };
-        Relationships: [];
-      };
-      consultations_with_primary_image: {
-        Row: {
-          assigned_to: string | null;
-          client_email: string | null;
-          client_phone: string | null;
-          created_at: string | null;
-          created_by: string | null;
-          descriptif: string | null;
-          estimated_response_date: string | null;
-          id: string | null;
-          image_url: string | null;
-          notes_internes: string | null;
-          organisation_name: string | null;
-          primary_image_alt_text: string | null;
-          primary_image_id: string | null;
-          primary_image_storage_path: string | null;
-          primary_image_url: string | null;
-          priority_level: number | null;
-          responded_at: string | null;
-          responded_by: string | null;
-          source_channel: string | null;
-          status: string | null;
-          tarif_maximum: number | null;
-          total_images: number | null;
-          updated_at: string | null;
-        };
-        Relationships: [];
-      };
-      customer_samples_view: {
-        Row: {
-          archived_at: string | null;
-          customer_display_name: string | null;
-          customer_ind_email: string | null;
-          customer_ind_first_name: string | null;
-          customer_ind_id: string | null;
-          customer_ind_last_name: string | null;
-          customer_org_id: string | null;
-          customer_org_legal_name: string | null;
-          customer_org_trade_name: string | null;
-          customer_type: string | null;
-          expected_delivery_date: string | null;
-          po_created_at: string | null;
-          po_number: string | null;
-          po_status:
-            | Database['public']['Enums']['purchase_order_status']
-            | null;
-          product_description: string | null;
-          product_id: string | null;
-          product_image: string | null;
-          product_name: string | null;
-          product_sku: string | null;
-          purchase_order_id: string | null;
-          quantity: number | null;
-          sample_created_at: string | null;
-          sample_id: string | null;
-          sample_notes: string | null;
-          sample_status: string | null;
-          sample_type: string | null;
-          sample_updated_at: string | null;
-          supplier_id: string | null;
-          supplier_name: string | null;
-          supplier_trade_name: string | null;
-          unit_price_ht: number | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'purchase_order_items_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'product_prices_summary';
-            referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'purchase_order_items_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'products';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'purchase_order_items_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'products_with_default_package';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'purchase_order_items_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_alerts_view';
-            referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'purchase_order_items_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_health_monitor';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'purchase_order_items_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_overview';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'purchase_order_items_purchase_order_id_fkey';
-            columns: ['purchase_order_id'];
-            isOneToOne: false;
-            referencedRelation: 'purchase_orders';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'purchase_orders_supplier_id_fkey';
-            columns: ['supplier_id'];
-            isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
-          },
-          {
-            foreignKeyName: 'purchase_orders_supplier_id_fkey';
-            columns: ['supplier_id'];
-            isOneToOne: false;
-            referencedRelation: 'organisations';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
       google_merchant_stats: {
         Row: {
           approved_products: number | null;
@@ -5986,134 +5306,6 @@ export type Database = {
         };
         Relationships: [];
       };
-      individual_customers_display: {
-        Row: {
-          city: string | null;
-          country: string | null;
-          created_at: string | null;
-          email: string | null;
-          full_name: string | null;
-          id: string | null;
-          is_active: boolean | null;
-          phone: string | null;
-          postal_code: string | null;
-          updated_at: string | null;
-        };
-        Insert: {
-          city?: string | null;
-          country?: string | null;
-          created_at?: string | null;
-          email?: string | null;
-          full_name?: never;
-          id?: string | null;
-          is_active?: boolean | null;
-          phone?: string | null;
-          postal_code?: string | null;
-          updated_at?: string | null;
-        };
-        Update: {
-          city?: string | null;
-          country?: string | null;
-          created_at?: string | null;
-          email?: string | null;
-          full_name?: never;
-          id?: string | null;
-          is_active?: boolean | null;
-          phone?: string | null;
-          postal_code?: string | null;
-          updated_at?: string | null;
-        };
-        Relationships: [];
-      };
-      mcp_queue_status: {
-        Row: {
-          avg_priority: number | null;
-          count: number | null;
-          newest_task: string | null;
-          oldest_task: string | null;
-          status: string | null;
-        };
-        Relationships: [];
-      };
-      pending_orders: {
-        Row: {
-          created_at: string | null;
-          delivery_date: string | null;
-          id: string | null;
-          order_date: string | null;
-          order_number: string | null;
-          order_type: string | null;
-          organisation_id: string | null;
-          organisation_name: string | null;
-          status: string | null;
-          total_amount: number | null;
-          updated_at: string | null;
-        };
-        Relationships: [];
-      };
-      product_images_complete: {
-        Row: {
-          alt_text: string | null;
-          created_at: string | null;
-          display_order: number | null;
-          file_size_bytes: number | null;
-          height: number | null;
-          id: string | null;
-          is_primary: boolean | null;
-          mime_type: string | null;
-          product_id: string | null;
-          product_name: string | null;
-          product_sku: string | null;
-          storage_path: string | null;
-          updated_at: string | null;
-          url: string | null;
-          width: number | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'product_images_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'product_prices_summary';
-            referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'product_images_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'products';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'product_images_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'products_with_default_package';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'product_images_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_alerts_view';
-            referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'product_images_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_health_monitor';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'product_images_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_overview';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
       product_prices_summary: {
         Row: {
           base_price: number | null;
@@ -6128,184 +5320,6 @@ export type Database = {
         };
         Relationships: [];
       };
-      products_with_default_package: {
-        Row: {
-          archived_at: string | null;
-          assigned_client_id: string | null;
-          availability_type:
-            | Database['public']['Enums']['availability_type_enum']
-            | null;
-          brand: string | null;
-          computed_stock_status: string | null;
-          condition: string | null;
-          created_at: string | null;
-          creation_mode: string | null;
-          description: string | null;
-          dimensions: Json | null;
-          gtin: string | null;
-          id: string | null;
-          margin_percentage: number | null;
-          min_stock: number | null;
-          name: string | null;
-          product_status:
-            | Database['public']['Enums']['product_status_type']
-            | null;
-          product_type: string | null;
-          projected_stock: number | null;
-          reorder_point: number | null;
-          requires_sample: boolean | null;
-          selling_points: Json | null;
-          sku: string | null;
-          slug: string | null;
-          sourcing_type: string | null;
-          stock_forecasted_in: number | null;
-          stock_forecasted_out: number | null;
-          stock_quantity: number | null;
-          stock_real: number | null;
-          stock_status: Database['public']['Enums']['stock_status_type'] | null;
-          subcategory_id: string | null;
-          supplier_id: string | null;
-          supplier_page_url: string | null;
-          supplier_reference: string | null;
-          target_margin_percentage: number | null;
-          technical_description: string | null;
-          updated_at: string | null;
-          variant_attributes: Json | null;
-          video_url: string | null;
-          weight: number | null;
-        };
-        Insert: {
-          archived_at?: string | null;
-          assigned_client_id?: string | null;
-          availability_type?:
-            | Database['public']['Enums']['availability_type_enum']
-            | null;
-          brand?: string | null;
-          computed_stock_status?: never;
-          condition?: string | null;
-          created_at?: string | null;
-          creation_mode?: string | null;
-          description?: string | null;
-          dimensions?: Json | null;
-          gtin?: string | null;
-          id?: string | null;
-          margin_percentage?: number | null;
-          min_stock?: number | null;
-          name?: string | null;
-          product_status?:
-            | Database['public']['Enums']['product_status_type']
-            | null;
-          product_type?: string | null;
-          projected_stock?: never;
-          reorder_point?: number | null;
-          requires_sample?: boolean | null;
-          selling_points?: Json | null;
-          sku?: string | null;
-          slug?: string | null;
-          sourcing_type?: string | null;
-          stock_forecasted_in?: number | null;
-          stock_forecasted_out?: number | null;
-          stock_quantity?: number | null;
-          stock_real?: number | null;
-          stock_status?:
-            | Database['public']['Enums']['stock_status_type']
-            | null;
-          subcategory_id?: string | null;
-          supplier_id?: string | null;
-          supplier_page_url?: string | null;
-          supplier_reference?: string | null;
-          target_margin_percentage?: number | null;
-          technical_description?: string | null;
-          updated_at?: string | null;
-          variant_attributes?: Json | null;
-          video_url?: string | null;
-          weight?: number | null;
-        };
-        Update: {
-          archived_at?: string | null;
-          assigned_client_id?: string | null;
-          availability_type?:
-            | Database['public']['Enums']['availability_type_enum']
-            | null;
-          brand?: string | null;
-          computed_stock_status?: never;
-          condition?: string | null;
-          created_at?: string | null;
-          creation_mode?: string | null;
-          description?: string | null;
-          dimensions?: Json | null;
-          gtin?: string | null;
-          id?: string | null;
-          margin_percentage?: number | null;
-          min_stock?: number | null;
-          name?: string | null;
-          product_status?:
-            | Database['public']['Enums']['product_status_type']
-            | null;
-          product_type?: string | null;
-          projected_stock?: never;
-          reorder_point?: number | null;
-          requires_sample?: boolean | null;
-          selling_points?: Json | null;
-          sku?: string | null;
-          slug?: string | null;
-          sourcing_type?: string | null;
-          stock_forecasted_in?: number | null;
-          stock_forecasted_out?: number | null;
-          stock_quantity?: number | null;
-          stock_real?: number | null;
-          stock_status?:
-            | Database['public']['Enums']['stock_status_type']
-            | null;
-          subcategory_id?: string | null;
-          supplier_id?: string | null;
-          supplier_page_url?: string | null;
-          supplier_reference?: string | null;
-          target_margin_percentage?: number | null;
-          technical_description?: string | null;
-          updated_at?: string | null;
-          variant_attributes?: Json | null;
-          video_url?: string | null;
-          weight?: number | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'products_assigned_client_id_fkey';
-            columns: ['assigned_client_id'];
-            isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
-          },
-          {
-            foreignKeyName: 'products_assigned_client_id_fkey';
-            columns: ['assigned_client_id'];
-            isOneToOne: false;
-            referencedRelation: 'organisations';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'products_subcategory_id_fkey';
-            columns: ['subcategory_id'];
-            isOneToOne: false;
-            referencedRelation: 'subcategories';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'products_supplier_id_fkey';
-            columns: ['supplier_id'];
-            isOneToOne: false;
-            referencedRelation: 'customer_samples_view';
-            referencedColumns: ['customer_org_id'];
-          },
-          {
-            foreignKeyName: 'products_supplier_id_fkey';
-            columns: ['supplier_id'];
-            isOneToOne: false;
-            referencedRelation: 'organisations';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
       stock_alerts_view: {
         Row: {
           alert_priority: number | null;
@@ -6316,94 +5330,6 @@ export type Database = {
           product_name: string | null;
           sku: string | null;
           stock_quantity: number | null;
-        };
-        Relationships: [];
-      };
-      stock_health_monitor: {
-        Row: {
-          calculated_stock: number | null;
-          difference: number | null;
-          id: string | null;
-          is_coherent: boolean | null;
-          name: string | null;
-          sku: string | null;
-          status: string | null;
-          stock_quantity: number | null;
-          stock_real: number | null;
-        };
-        Insert: {
-          calculated_stock?: never;
-          difference?: never;
-          id?: string | null;
-          is_coherent?: never;
-          name?: string | null;
-          sku?: string | null;
-          status?: never;
-          stock_quantity?: number | null;
-          stock_real?: number | null;
-        };
-        Update: {
-          calculated_stock?: never;
-          difference?: never;
-          id?: string | null;
-          is_coherent?: never;
-          name?: string | null;
-          sku?: string | null;
-          status?: never;
-          stock_quantity?: number | null;
-          stock_real?: number | null;
-        };
-        Relationships: [];
-      };
-      stock_overview: {
-        Row: {
-          id: string | null;
-          min_stock: number | null;
-          name: string | null;
-          product_status:
-            | Database['public']['Enums']['product_status_type']
-            | null;
-          reorder_point: number | null;
-          stock_alert_level: string | null;
-          stock_forecasted_in: number | null;
-          stock_forecasted_out: number | null;
-          stock_quantity: number | null;
-          stock_real: number | null;
-          stock_status: Database['public']['Enums']['stock_status_type'] | null;
-        };
-        Insert: {
-          id?: string | null;
-          min_stock?: number | null;
-          name?: string | null;
-          product_status?:
-            | Database['public']['Enums']['product_status_type']
-            | null;
-          reorder_point?: number | null;
-          stock_alert_level?: never;
-          stock_forecasted_in?: number | null;
-          stock_forecasted_out?: number | null;
-          stock_quantity?: number | null;
-          stock_real?: number | null;
-          stock_status?:
-            | Database['public']['Enums']['stock_status_type']
-            | null;
-        };
-        Update: {
-          id?: string | null;
-          min_stock?: number | null;
-          name?: string | null;
-          product_status?:
-            | Database['public']['Enums']['product_status_type']
-            | null;
-          reorder_point?: number | null;
-          stock_alert_level?: never;
-          stock_forecasted_in?: number | null;
-          stock_forecasted_out?: number | null;
-          stock_quantity?: number | null;
-          stock_real?: number | null;
-          stock_status?:
-            | Database['public']['Enums']['stock_status_type']
-            | null;
         };
         Relationships: [];
       };
@@ -6437,29 +5363,8 @@ export type Database = {
             foreignKeyName: 'fk_stock_movements_product_id';
             columns: ['product_id'];
             isOneToOne: false;
-            referencedRelation: 'products_with_default_package';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'fk_stock_movements_product_id';
-            columns: ['product_id'];
-            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'fk_stock_movements_product_id';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_health_monitor';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'fk_stock_movements_product_id';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_overview';
-            referencedColumns: ['id'];
           },
         ];
       };
@@ -6832,6 +5737,8 @@ export type Database = {
           po_number: string;
           received_at: string | null;
           received_by: string | null;
+          sent_at: string | null;
+          sent_by: string | null;
           status: Database['public']['Enums']['purchase_order_status'];
           supplier_id: string;
           tax_rate: number;
@@ -6931,6 +5838,14 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      current_user_has_role_in_org: {
+        Args: {
+          p_allowed_roles: Database['public']['Enums']['user_role_type'][];
+          p_organisation_id: string;
+        };
+        Returns: boolean;
+      };
+      current_user_has_scope: { Args: { p_scope: string }; Returns: boolean };
       custom_access_token_hook: { Args: { event: Json }; Returns: Json };
       detect_orphaned_stock: {
         Args: never;
@@ -7135,6 +6050,8 @@ export type Database = {
           supplier_name: string;
         }[];
       };
+      get_current_organisation_id: { Args: never; Returns: string };
+      get_current_user_id: { Args: never; Returns: string };
       get_daily_activity: {
         Args: never;
         Returns: {
@@ -7709,6 +6626,8 @@ export type Database = {
       };
       initialize_dashboard_tests: { Args: never; Returns: undefined };
       is_admin: { Args: never; Returns: boolean };
+      is_current_user_admin: { Args: never; Returns: boolean };
+      is_current_user_owner: { Args: never; Returns: boolean };
       is_customer_user: { Args: never; Returns: boolean };
       is_owner: { Args: never; Returns: boolean };
       is_staff_user: { Args: never; Returns: boolean };
@@ -8017,6 +6936,13 @@ export type Database = {
         Args: { org_id: string };
         Returns: boolean;
       };
+      user_has_role_in_org: {
+        Args: {
+          required_roles: Database['public']['Enums']['user_role_type'][];
+          target_org_id: string;
+        };
+        Returns: boolean;
+      };
       validate_feed_filters: { Args: { filters_json: Json }; Returns: boolean };
       validate_partner_id_migration: {
         Args: never;
@@ -8087,6 +7013,7 @@ export type Database = {
         | 'coming_soon'
         | 'discontinued';
       bank_provider: 'qonto' | 'revolut';
+      client_type: 'particulier' | 'professionnel';
       document_direction: 'inbound' | 'outbound';
       document_status:
         | 'draft'
@@ -8182,8 +7109,7 @@ export type Database = {
         | 'partially_shipped'
         | 'shipped'
         | 'delivered'
-        | 'cancelled'
-        | 'closed';
+        | 'cancelled';
       sample_request_status_type: 'pending_approval' | 'approved' | 'rejected';
       sample_status_type:
         | 'not_required'
@@ -8371,6 +7297,9 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       app_type: ['back-office', 'site-internet', 'linkme'],
@@ -8381,6 +7310,7 @@ export const Constants = {
         'discontinued',
       ],
       bank_provider: ['qonto', 'revolut'],
+      client_type: ['particulier', 'professionnel'],
       document_direction: ['inbound', 'outbound'],
       document_status: [
         'draft',
@@ -8485,7 +7415,6 @@ export const Constants = {
         'shipped',
         'delivered',
         'cancelled',
-        'closed',
       ],
       sample_request_status_type: ['pending_approval', 'approved', 'rejected'],
       sample_status_type: [
