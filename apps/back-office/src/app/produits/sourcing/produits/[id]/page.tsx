@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
 
 import { useToast } from '@verone/common';
+import { SupplierVsPricingEditSection } from '@verone/common';
 import { EditSourcingProductModal } from '@verone/products';
 import { useSourcingProducts } from '@verone/products';
 import { SupplierSelector } from '@verone/suppliers';
@@ -222,43 +223,27 @@ export default function SourcingProductDetailPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Prix et informations financières */}
-            {product.cost_price && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <div className="flex items-center mb-2">
-                    <Euro className="h-5 w-5 text-green-600 mr-2" />
-                    <h4 className="font-medium text-black">
-                      Prix d'achat fournisseur
-                    </h4>
-                  </div>
-                  <p className="text-2xl font-bold text-green-600">
-                    {formatPrice(product.cost_price)}
-                  </p>
-                </div>
-
-                {product.margin_percentage && (
-                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <div className="flex items-center mb-2">
-                      <Euro className="h-5 w-5 text-blue-600 mr-2" />
-                      <h4 className="font-medium text-black">
-                        Marge configurée
-                      </h4>
-                    </div>
-                    <p className="text-2xl font-bold text-blue-600">
-                      {product.margin_percentage}%
-                    </p>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Prix de vente calculé:{' '}
-                      {formatPrice(
-                        product.cost_price *
-                          (1 + product.margin_percentage / 100)
-                      )}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
+            {/* ✅ FIX RÉGRESSION: Utiliser composant pricing avec éco-taxe */}
+            <SupplierVsPricingEditSection
+              product={product as any}
+              variantGroup={null}
+              onUpdate={async updates => {
+                try {
+                  await updateSourcingProduct(productId, updates);
+                  toast({
+                    title: 'Tarification mise à jour',
+                    description: 'Les prix ont été sauvegardés avec succès',
+                  });
+                  await refetch();
+                } catch (error) {
+                  toast({
+                    title: 'Erreur',
+                    description: 'Impossible de mettre à jour la tarification',
+                    variant: 'destructive',
+                  });
+                }
+              }}
+            />
 
             {/* Informations fournisseur */}
             {product.supplier && (

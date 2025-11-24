@@ -4,18 +4,8 @@ import { useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import {
-  CheckCircle,
-  X,
-  Eye,
-  AlertTriangle,
-  Loader2,
-  Package,
-  Building,
-  Euro,
-  Calendar,
-} from 'lucide-react';
-
+import { useToast } from '@verone/common/hooks';
+import { useSourcingProducts } from '@verone/products/hooks';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -35,15 +25,24 @@ import {
   DialogTrigger,
 } from '@verone/ui';
 import { Textarea } from '@verone/ui';
-import { useToast } from '@verone/common/hooks';
-import { useSourcingProducts } from '@verone/products/hooks';
+import {
+  CheckCircle,
+  X,
+  Eye,
+  AlertTriangle,
+  Loader2,
+  Package,
+  Building,
+  Euro,
+  Calendar,
+} from 'lucide-react';
 
 export function SampleValidationSimple() {
   const router = useRouter();
   const { toast } = useToast();
   const { products, loading, approveSample, rejectSample } =
     useSourcingProducts({
-      status: 'echantillon_commande', // Filtre produits échantillon commandés
+      product_status: 'preorder', // Filtre produits échantillon commandés
     });
 
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
@@ -73,19 +72,25 @@ export function SampleValidationSimple() {
     }
   };
 
-  // Badge statut
+  // Badge statut (product_status enum)
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'echantillon_commande':
+      case 'preorder':
         return (
           <Badge variant="outline" className="border-blue-300 text-blue-600">
             Échantillon commandé
           </Badge>
         );
-      case 'in_stock':
+      case 'active':
         return (
           <Badge variant="outline" className="border-green-300 text-green-600">
-            En stock
+            Au catalogue
+          </Badge>
+        );
+      case 'draft':
+        return (
+          <Badge variant="outline" className="border-gray-300 text-gray-600">
+            Brouillon
           </Badge>
         );
       default:
@@ -137,7 +142,7 @@ export function SampleValidationSimple() {
                         <h3 className="font-semibold text-black text-lg">
                           {product.name}
                         </h3>
-                        {getStatusBadge(product.status)}
+                        {getStatusBadge(product.product_status || '')}
                       </div>
                       <p className="text-sm text-gray-500">
                         SKU: {product.sku} • Créé le{' '}

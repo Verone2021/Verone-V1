@@ -14,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@verone/ui';
+import { createClient } from '@verone/utils/supabase/client';
 import {
   Search,
   Eye,
@@ -35,37 +36,73 @@ export default function SourcingDashboardPage() {
   const { products: sourcingProducts, loading: sourcingLoading } =
     useSourcingProducts({});
 
+  // État pour compter les produits complétés ce mois-ci
+  const [completedThisMonth, setCompletedThisMonth] = useState<number>(0);
+  const [completedLoading, setCompletedLoading] = useState(true);
+
   // Calculs des statistiques basées sur les vraies données
   const stats = {
     totalDrafts:
-      sourcingProducts?.filter(p => p.status === 'sourcing').length || 0,
+      sourcingProducts?.filter(p => p.product_status === 'draft').length || 0,
     pendingValidation:
-      sourcingProducts?.filter(p => p.status === 'echantillon_a_commander')
-        .length || 0,
+      sourcingProducts?.filter(
+        p => p.product_status === 'preorder' || p.requires_sample
+      ).length || 0,
     samplesOrdered:
-      sourcingProducts?.filter(p => p.status === 'echantillon_commande')
-        .length || 0,
-    completedThisMonth:
-      sourcingProducts?.filter(p => {
-        if (p.status === 'in_stock' && p.created_at) {
-          const createdDate = new Date(p.created_at);
-          const currentMonth = new Date().getMonth();
-          const currentYear = new Date().getFullYear();
-          return (
-            createdDate.getMonth() === currentMonth &&
-            createdDate.getFullYear() === currentYear
-          );
-        }
-        return false;
-      }).length || 0,
+      sourcingProducts?.filter(
+        p => p.requires_sample && p.product_status === 'preorder'
+      ).length || 0,
+    completedThisMonth,
   };
+
+  // Charger le nombre de produits complétés ce mois-ci
+  useEffect(() => {
+    const fetchCompletedCount = async () => {
+      try {
+        setCompletedLoading(true);
+        const supabase = createClient();
+
+        // Calculer les dates du mois en cours
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(
+          now.getFullYear(),
+          now.getMonth() + 1,
+          0,
+          23,
+          59,
+          59
+        );
+
+        // Requête pour compter les produits validés ce mois-ci
+        const { count, error } = await supabase
+          .from('products')
+          .select('*', { count: 'exact', head: true })
+          .eq('creation_mode', 'complete')
+          .eq('product_status', 'active')
+          .gte('created_at', startOfMonth.toISOString())
+          .lte('created_at', endOfMonth.toISOString());
+
+        if (error) throw error;
+
+        setCompletedThisMonth(count || 0);
+      } catch (error) {
+        console.error('Erreur chargement produits complétés:', error);
+        setCompletedThisMonth(0);
+      } finally {
+        setCompletedLoading(false);
+      }
+    };
+
+    fetchCompletedCount();
+  }, []);
 
   // Activité récente basée sur les vraies données (5 plus récents)
   const recentActivity =
     sourcingProducts?.slice(0, 4).map(product => ({
       id: product.id,
       type:
-        product.status === 'sourcing'
+        product.product_status === 'draft'
           ? 'draft'
           : product.requires_sample
             ? 'sample'
@@ -73,9 +110,9 @@ export default function SourcingDashboardPage() {
       title: product.name,
       client: product.assigned_client?.name || 'Interne',
       status:
-        product.status === 'sourcing'
+        product.product_status === 'draft'
           ? 'pending'
-          : product.status === 'echantillon_commande'
+          : product.product_status === 'preorder' && product.requires_sample
             ? 'ordered'
             : 'ready',
       date: new Date(product.created_at).toLocaleDateString('fr-FR'),
@@ -136,11 +173,11 @@ export default function SourcingDashboardPage() {
             <div className="flex items-center space-x-3">
               <ButtonV2
                 variant="outline"
-                onClick={() => router.push('/produits/sourcing/validation')}
+                onClick={() => router.push('/produits/sourcing/produits')}
                 className="border-black text-black hover:bg-black hover:text-white"
               >
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Validation
+                <Package className="h-4 w-4 mr-2" />
+                Produits Sourcing
               </ButtonV2>
               <ButtonV2
                 onClick={() =>
@@ -259,11 +296,11 @@ export default function SourcingDashboardPage() {
               <ButtonV2
                 variant="outline"
                 className="h-20 border-black text-black hover:bg-black hover:text-white"
-                onClick={() => router.push('/produits/sourcing/validation')}
+                onClick={() => router.push('/produits/sourcing/produits')}
               >
                 <div className="flex flex-col items-center">
-                  <CheckCircle className="h-6 w-6 mb-2" />
-                  <span>Validation</span>
+                  <Package className="h-6 w-6 mb-2" />
+                  <span>Produits Sourcing</span>
                 </div>
               </ButtonV2>
             </div>

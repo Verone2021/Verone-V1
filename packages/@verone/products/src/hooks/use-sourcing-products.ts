@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 
-import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@verone/common/hooks';
+import { createClient } from '@verone/utils/supabase/client';
 
 export interface SourcingProduct {
   id: string;
@@ -16,7 +16,8 @@ export interface SourcingProduct {
   margin_percentage?: number; // Marge minimum en pourcentage
   // ❌ selling_price N'EXISTE PAS - Prix de vente sera dans sales_order_items (Phase 2)
 
-  status: string;
+  product_status: string;
+  stock_status?: string;
   supplier_id: string | null;
   supplier?: {
     id: string;
@@ -37,15 +38,21 @@ export interface SourcingProduct {
   };
   created_at: string;
   updated_at: string;
+  archived_at?: string | null; // ✅ Pour gestion Annuler/Supprimer
+
+  // ✅ FIX: Images produits (jointure LEFT depuis product_images)
+  product_images?: Array<{
+    public_url: string;
+    is_primary: boolean;
+  }>;
+
   // Calculs
   estimated_selling_price?: number;
-  // Images
-  main_image_url?: string;
 }
 
 interface SourcingFilters {
   search?: string;
-  status?: string;
+  product_status?: string;
   sourcing_type?: 'interne' | 'client';
   supplier_id?: string; // 🆕 Filtrer par fournisseur spécifique
   assigned_client_id?: string; // 🆕 Filtrer par client assigné spécifique
@@ -87,6 +94,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
           margin_percentage,
           created_at,
           updated_at,
+          archived_at,
           supplier:organisations!products_supplier_id_fkey(
             id,
             legal_name,
@@ -117,8 +125,8 @@ export function useSourcingProducts(filters?: SourcingFilters) {
         );
       }
 
-      if (filters?.status) {
-        query = query.eq('status', filters.status as any);
+      if (filters?.product_status) {
+        query = query.eq('product_status', filters.product_status as any);
       }
 
       if (filters?.sourcing_type) {
@@ -159,25 +167,15 @@ export function useSourcingProducts(filters?: SourcingFilters) {
         return;
       }
 
-      // Enrichir les produits avec les calculs et images (BR-TECH-002: product_images!left)
+      // Enrichir les produits avec les calculs (BR-TECH-002: images via product_images)
       const enrichedProducts = (data || []).map(product => {
         const supplierCost = product.cost_price || 0; // Prix d'achat LPP comme base calcul
         const margin = product.margin_percentage || 50; // Marge par défaut 50%
         const estimatedSellingPrice = supplierCost * (1 + margin / 100);
 
-        // Extraire image primaire depuis product_images (jointure)
-        const primaryImage = product.product_images?.find(
-          (img: any) => img.is_primary
-        );
-        const mainImageUrl =
-          primaryImage?.public_url ||
-          product.product_images?.[0]?.public_url ||
-          null;
-
         return {
           ...product,
           estimated_selling_price: estimatedSellingPrice,
-          main_image_url: mainImageUrl,
         };
       });
 
@@ -201,7 +199,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     filters?.search,
-    filters?.status,
+    filters?.product_status,
     filters?.sourcing_type,
     filters?.has_supplier,
     filters?.requires_sample,
@@ -243,15 +241,16 @@ export function useSourcingProducts(filters?: SourcingFilters) {
         return false;
       }
 
-      // 🔥 FIX: Mettre à jour statut + stocks pour respecter trigger validation
-      // Le trigger exige stock > 0 pour status "in_stock"
+      // ✅ FIX: Produit validé = ACTIF (visible immédiatement au catalogue)
       const { error } = await supabase
         .from('products')
         .update({
-          status: 'in_stock',
+          product_status: 'active', // ✅ Visible immédiatement au catalogue
+          stock_status: 'out_of_stock', // Pas de stock avant première réception
+          completion_status: 'complete', // Produit complet
           creation_mode: 'complete',
-          stock_real: 1, // Stock initial minimal pour valider le trigger
-          stock_forecasted_in: 0, // Pas de stock prévisionnel à l'entrée
+          // stock_real géré par triggers lors des réceptions
+          stock_forecasted_in: 0, // Pas de stock prévisionnel
         })
         .eq('id', productId);
 
@@ -265,8 +264,8 @@ export function useSourcingProducts(filters?: SourcingFilters) {
       }
 
       toast({
-        title: 'Succès',
-        description: 'Produit validé et ajouté au catalogue',
+        title: 'Produit publié',
+        description: 'Le produit est maintenant visible au catalogue',
       });
 
       await fetchSourcingProducts();
@@ -490,7 +489,8 @@ export function useSourcingProducts(filters?: SourcingFilters) {
       const { error: updateError } = await supabase
         .from('products')
         .update({
-          status: 'echantillon_a_commander', // Passage à "à commander" car ajouté à commande
+          product_status: 'preorder', // ✅ FIXED: Use 'preorder' for sample order
+          stock_status: 'coming_soon', // En attente d'échantillon
           requires_sample: true,
         })
         .eq('id', productId);
@@ -545,13 +545,17 @@ export function useSourcingProducts(filters?: SourcingFilters) {
       }
 
       // 2. Mettre à jour produit: statut actif + completion 100%
+      // ✅ FIX: Ne PAS toucher stock_real - il sera mis à jour par les triggers
+      // lors de la réception réelle de l'échantillon (purchase_order_receptions)
       const { error } = await supabase
         .from('products')
         .update({
-          status: 'in_stock',
+          product_status: 'active', // ✅ Visible au catalogue
+          // stock_status sera mis à jour automatiquement par trigger selon stock_real
+          completion_status: 'complete', // Produit complet
           creation_mode: 'complete',
           completion_percentage: 100,
-          stock_real: 1, // Stock initial minimal
+          // ❌ SUPPRIMÉ: stock_real: 1 - Géré par triggers réceptions
           stock_forecasted_in: 0,
         })
         .eq('id', productId);
@@ -592,7 +596,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
       const { error } = await supabase
         .from('products')
         .update({
-          status: 'discontinued',
+          product_status: 'discontinued',
           archived_at: new Date().toISOString(),
           rejection_reason:
             reason || 'Échantillon refusé lors de la validation',
@@ -671,7 +675,9 @@ export function useSourcingProducts(filters?: SourcingFilters) {
             assigned_client_id: data.assigned_client_id,
             creation_mode: 'sourcing',
             sourcing_type: data.assigned_client_id ? 'client' : 'interne',
-            status: 'sourcing', // Statut initial pour produit en sourcing
+            product_status: 'draft', // ✅ FIXED: Use 'draft' (valid enum value)
+            completion_status: 'draft', // Produit en cours de sourcing
+            stock_status: 'out_of_stock', // Pas encore commandé
           },
         ] as any)
         .select()
@@ -825,6 +831,99 @@ export function useSourcingProducts(filters?: SourcingFilters) {
     }
   };
 
+  // Archiver un produit sourcing (Annuler)
+  const archiveSourcingProduct = async (productId: string) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ archived_at: new Date().toISOString() })
+        .eq('id', productId);
+
+      if (error) {
+        toast({
+          title: 'Erreur',
+          description: error.message,
+          variant: 'destructive',
+        });
+        return false;
+      }
+
+      toast({
+        title: 'Produit archivé',
+        description: 'Le produit sourcing a été annulé et archivé',
+      });
+
+      await fetchSourcingProducts();
+      return true;
+    } catch (err) {
+      toast({
+        title: 'Erreur',
+        description: "Impossible d'archiver le produit",
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
+  // Supprimer définitivement un produit (seulement si archivé)
+  const deleteSourcingProduct = async (productId: string) => {
+    try {
+      // Vérifier que le produit est archivé
+      const { data: product, error: fetchError } = await supabase
+        .from('products')
+        .select('archived_at')
+        .eq('id', productId)
+        .single();
+
+      if (fetchError || !product) {
+        toast({
+          title: 'Erreur',
+          description: 'Produit non trouvé',
+          variant: 'destructive',
+        });
+        return false;
+      }
+
+      if (!product.archived_at) {
+        toast({
+          title: 'Action non autorisée',
+          description: 'Seuls les produits archivés peuvent être supprimés',
+          variant: 'destructive',
+        });
+        return false;
+      }
+
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', productId);
+
+      if (error) {
+        toast({
+          title: 'Erreur',
+          description: error.message,
+          variant: 'destructive',
+        });
+        return false;
+      }
+
+      toast({
+        title: 'Produit supprimé',
+        description: 'Le produit a été supprimé définitivement',
+      });
+
+      await fetchSourcingProducts();
+      return true;
+    } catch (err) {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de supprimer le produit',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
   return {
     products,
     loading,
@@ -836,5 +935,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
     rejectSample,
     createSourcingProduct,
     updateSourcingProduct,
+    archiveSourcingProduct,
+    deleteSourcingProduct,
   };
 }

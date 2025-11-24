@@ -53,6 +53,8 @@ import {
   Euro,
   AlertCircle,
   Globe,
+  Archive,
+  Trash2,
 } from 'lucide-react';
 
 export default function SourcingProduitsPage() {
@@ -86,10 +88,12 @@ export default function SourcingProduitsPage() {
     error,
     validateSourcing,
     orderSample,
+    archiveSourcingProduct,
+    deleteSourcingProduct,
     refetch,
   } = useSourcingProducts({
     search: debouncedSearchTerm || undefined, // ✅ Utiliser debouncedSearchTerm
-    status: statusFilter === 'all' ? undefined : statusFilter,
+    product_status: statusFilter === 'all' ? undefined : statusFilter, // ✅ FIX: product_status au lieu de status
     sourcing_type:
       sourcingTypeFilter === 'all'
         ? undefined
@@ -98,42 +102,40 @@ export default function SourcingProduitsPage() {
     assigned_client_id: clientFilter === 'all' ? undefined : clientFilter, // 🆕
   });
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'sourcing':
+  // ✅ FIX: Utiliser les vraies valeurs enum de product_status
+  const getStatusBadge = (productStatus: string | undefined) => {
+    switch (productStatus) {
+      case 'draft':
         return (
           <Badge variant="outline" className="border-blue-300 text-blue-600">
             En sourcing
           </Badge>
         );
-      case 'echantillon_a_commander':
+      case 'preorder':
         return (
-          <Badge variant="outline" className="border-gray-300 text-black">
-            Échantillon à commander
-          </Badge>
-        );
-      case 'echantillon_commande':
-        return (
-          <Badge variant="outline" className="border-gray-300 text-black">
+          <Badge
+            variant="outline"
+            className="border-orange-300 text-orange-600"
+          >
             Échantillon commandé
           </Badge>
         );
-      case 'in_stock':
+      case 'active':
         return (
           <Badge variant="outline" className="border-green-300 text-green-600">
-            En stock
+            Au catalogue
           </Badge>
         );
-      case 'draft':
+      case 'discontinued':
         return (
-          <Badge variant="outline" className="border-gray-300 text-gray-600">
-            Brouillon
+          <Badge variant="outline" className="border-red-300 text-red-600">
+            Discontinué
           </Badge>
         );
       default:
         return (
           <Badge variant="outline" className="border-gray-300 text-gray-600">
-            {status}
+            {productStatus || 'Inconnu'}
           </Badge>
         );
     }
@@ -185,6 +187,14 @@ export default function SourcingProduitsPage() {
 
   const handleOrderSample = async (productId: string) => {
     await orderSample(productId);
+  };
+
+  const handleArchiveProduct = async (productId: string) => {
+    await archiveSourcingProduct(productId);
+  };
+
+  const handleDeleteProduct = async (productId: string) => {
+    await deleteSourcingProduct(productId);
   };
 
   const formatPrice = (price: number | null) => {
@@ -334,7 +344,7 @@ export default function SourcingProduitsPage() {
                   <p className="text-sm text-gray-600">En cours</p>
                   <p className="text-2xl font-bold text-blue-600">
                     {
-                      filteredProducts.filter(p => p.status === 'sourcing')
+                      filteredProducts.filter(p => p.product_status === 'draft')
                         .length
                     }
                   </p>
@@ -365,8 +375,9 @@ export default function SourcingProduitsPage() {
                   <p className="text-sm text-gray-600">En stock</p>
                   <p className="text-2xl font-bold text-green-600">
                     {
-                      filteredProducts.filter(p => p.status === 'in_stock')
-                        .length
+                      filteredProducts.filter(
+                        p => p.product_status === 'active'
+                      ).length
                     }
                   </p>
                 </div>
@@ -416,7 +427,7 @@ export default function SourcingProduitsPage() {
                               <h3 className="font-semibold text-black">
                                 {product.name}
                               </h3>
-                              {getStatusBadge(product.status)}
+                              {getStatusBadge(product.product_status)}
                               {getSourcingTypeBadge(
                                 product.sourcing_type,
                                 product.requires_sample
@@ -568,7 +579,7 @@ export default function SourcingProduitsPage() {
                               <Edit className="h-4 w-4 mr-2" />
                               Modifier
                             </DropdownMenuItem>
-                            {product.status === 'sourcing' && (
+                            {product.product_status === 'draft' && (
                               <DropdownMenuItem
                                 onClick={() => handleOrderSample(product.id)}
                               >
@@ -578,7 +589,7 @@ export default function SourcingProduitsPage() {
                             )}
                             <DropdownMenuSeparator />
                             {product.supplier_id &&
-                              product.status === 'sourcing' && (
+                              product.product_status === 'draft' && (
                                 <DropdownMenuItem
                                   onClick={() =>
                                     handleValidateSourcing(product.id)
@@ -588,6 +599,23 @@ export default function SourcingProduitsPage() {
                                   Valider et ajouter au catalogue
                                 </DropdownMenuItem>
                               )}
+                            {!product.archived_at && (
+                              <DropdownMenuItem
+                                onClick={() => handleArchiveProduct(product.id)}
+                              >
+                                <Archive className="h-4 w-4 mr-2" />
+                                Annuler / Archiver
+                              </DropdownMenuItem>
+                            )}
+                            {product.archived_at && (
+                              <DropdownMenuItem
+                                onClick={() => handleDeleteProduct(product.id)}
+                                className="text-red-600"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Supprimer définitivement
+                              </DropdownMenuItem>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
