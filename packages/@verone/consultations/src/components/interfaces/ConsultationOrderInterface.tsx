@@ -1,23 +1,15 @@
 // @ts-nocheck - Table consultation_items non existante
 
 'use client';
-import type { ConsultationItem } from '@verone/types';
 
 import { useState, useEffect } from 'react';
 
-import {
-  Plus,
-  Minus,
-  Trash2,
-  Package,
-  Euro,
-  Calculator,
-  Edit,
-  Check,
-  X,
-  Sparkles,
-} from 'lucide-react';
-
+import { useToast } from '@verone/common/hooks';
+import type { SelectedProduct } from '@verone/products/components/selectors/UniversalProductSelectorV2';
+import { UniversalProductSelectorV2 } from '@verone/products/components/selectors/UniversalProductSelectorV2';
+import { SourcingProductModal } from '@verone/products/components/sourcing/SourcingProductModal';
+import { useProducts } from '@verone/products/hooks';
+import type { ConsultationItem } from '@verone/types';
 import { Alert, AlertDescription } from '@verone/ui';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
@@ -31,12 +23,20 @@ import {
 import { Checkbox } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
+import {
+  Plus,
+  Minus,
+  Trash2,
+  Package,
+  Euro,
+  Calculator,
+  Edit,
+  Check,
+  X,
+  Sparkles,
+} from 'lucide-react';
+
 import { useConsultationItems } from '@verone/consultations/hooks';
-import { useToast } from '@verone/common/hooks';
-import { EditSourcingProductModal } from '@verone/products/components/modals/EditSourcingProductModal';
-import type { SelectedProduct } from '@verone/products/components/selectors/UniversalProductSelectorV2';
-import { UniversalProductSelectorV2 } from '@verone/products/components/selectors/UniversalProductSelectorV2';
-import { useProducts } from '@verone/products/hooks';
 
 interface ConsultationOrderInterfaceProps {
   consultationId: string;
@@ -424,13 +424,11 @@ export function ConsultationOrderInterface({
         showImages
       />
 
-      <EditSourcingProductModal
-        {...({
-          open: showSourcingModal,
-          onClose: () => setShowSourcingModal(false),
-          consultationId: consultationId,
-          onProductCreatedAndAdded: handleProductAdded,
-        } as any)}
+      <SourcingProductModal
+        open={showSourcingModal}
+        onClose={() => setShowSourcingModal(false)}
+        consultationId={consultationId}
+        onProductCreatedAndAdded={handleProductAdded}
       />
     </div>
   );

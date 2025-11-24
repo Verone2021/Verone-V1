@@ -84,6 +84,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
           name,
           supplier_page_url,
           cost_price,
+          eco_tax_default,
           stock_status,
           product_status,
           supplier_id,
@@ -173,8 +174,31 @@ export function useSourcingProducts(filters?: SourcingFilters) {
         const margin = product.margin_percentage || 50; // Marge par défaut 50%
         const estimatedSellingPrice = supplierCost * (1 + margin / 100);
 
+        // ✅ FIX: Calculer les noms d'affichage pour supplier et assigned_client
+        const supplierWithName = product.supplier
+          ? {
+              ...product.supplier,
+              name:
+                product.supplier.trade_name ||
+                product.supplier.legal_name ||
+                'Fournisseur',
+            }
+          : null;
+
+        const clientWithName = product.assigned_client
+          ? {
+              ...product.assigned_client,
+              name:
+                product.assigned_client.trade_name ||
+                product.assigned_client.legal_name ||
+                'Client',
+            }
+          : null;
+
         return {
           ...product,
+          supplier: supplierWithName,
+          assigned_client: clientWithName,
           estimated_selling_price: estimatedSellingPrice,
         };
       });
@@ -720,7 +744,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
                 public_url: publicUrl,
                 storage_path: filePath,
                 is_primary: true,
-                image_type: 'product',
+                image_type: 'primary', // ✅ FIX: Utiliser valeur enum valide
               },
             ] as any);
           }
@@ -752,15 +776,20 @@ export function useSourcingProducts(filters?: SourcingFilters) {
     productId: string,
     data: {
       name?: string;
-      supplier_page_url?: string;
-      cost_price?: number;
+      supplier_page_url?: string | null;
+      cost_price?: number | null;
+      eco_tax_default?: number | null; // ✅ Ajout éco-taxe
       supplier_id?: string | null;
-      margin_percentage?: number;
+      margin_percentage?: number | null;
     }
   ) => {
     try {
       // Validation basique
-      if (data.cost_price !== undefined && data.cost_price <= 0) {
+      if (
+        data.cost_price !== undefined &&
+        data.cost_price !== null &&
+        data.cost_price <= 0
+      ) {
         toast({
           title: 'Erreur',
           description: "Le prix d'achat doit être > 0€",
@@ -781,10 +810,11 @@ export function useSourcingProducts(filters?: SourcingFilters) {
       // Construire l'objet de mise à jour avec uniquement les champs fournis
       const updateData: Partial<{
         name: string;
-        supplier_page_url: string;
-        cost_price: number;
+        supplier_page_url: string | null;
+        cost_price: number | null;
+        eco_tax_default: number | null; // ✅ Ajout éco-taxe
         supplier_id: string | null;
-        margin_percentage: number;
+        margin_percentage: number | null;
       }> = {};
 
       if (data.name !== undefined) updateData.name = data.name;
@@ -792,6 +822,8 @@ export function useSourcingProducts(filters?: SourcingFilters) {
         updateData.supplier_page_url = data.supplier_page_url;
       if (data.cost_price !== undefined)
         updateData.cost_price = data.cost_price;
+      if (data.eco_tax_default !== undefined)
+        updateData.eco_tax_default = data.eco_tax_default; // ✅ Ajout éco-taxe
       if (data.margin_percentage !== undefined)
         updateData.margin_percentage = data.margin_percentage;
 

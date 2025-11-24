@@ -1,17 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
 
 import { useToast } from '@verone/common';
-import { SupplierVsPricingEditSection } from '@verone/common';
-import { EditSourcingProductModal } from '@verone/products';
-import { useSourcingProducts } from '@verone/products';
-import { SupplierSelector } from '@verone/suppliers';
+import {
+  ProductPhotosModal,
+  SourcingProductEditCard,
+  useSourcingProducts,
+  useProductImages,
+} from '@verone/products';
 import { Alert, AlertDescription } from '@verone/ui';
-import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
   Card,
@@ -20,19 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@verone/ui';
-import {
-  ArrowLeft,
-  Edit,
-  CheckCircle,
-  Package,
-  AlertCircle,
-  ExternalLink,
-  User,
-  Building,
-  Clock,
-  Euro,
-  Globe,
-} from 'lucide-react';
+import { ArrowLeft, CheckCircle, Package, AlertCircle } from 'lucide-react';
 
 export default function SourcingProductDetailPage() {
   const router = useRouter();
@@ -46,26 +35,21 @@ export default function SourcingProductDetailPage() {
     updateSourcingProduct,
     refetch,
   } = useSourcingProducts();
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isPhotosModalOpen, setIsPhotosModalOpen] = useState(false);
 
   const productId = params.id as string;
   const product = products.find(p => p.id === productId);
 
-  const formatPrice = (price: number | null) => {
-    if (!price) return 'Non défini';
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-    }).format(price);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-    });
-  };
+  // Hook pour les images du produit
+  const {
+    primaryImage,
+    images,
+    loading: imagesLoading,
+    fetchImages,
+  } = useProductImages({
+    productId,
+    autoFetch: true,
+  });
 
   const handleOrderSample = async () => {
     try {
@@ -127,7 +111,7 @@ export default function SourcingProductDetailPage() {
               Ce produit n'existe pas ou n'est plus en mode sourcing.
             </p>
             <ButtonV2
-              onClick={() => router.push('/produits/sourcing/produits')}
+              onClick={() => router.push('/produits/sourcing')}
               className="bg-black hover:bg-gray-800 text-white"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -148,7 +132,7 @@ export default function SourcingProductDetailPage() {
             <div className="flex items-center space-x-4">
               <ButtonV2
                 variant="ghost"
-                onClick={() => router.push('/produits/sourcing/produits')}
+                onClick={() => router.push('/produits/sourcing')}
                 className="text-gray-600 hover:text-black"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
@@ -163,165 +147,35 @@ export default function SourcingProductDetailPage() {
                 </p>
               </div>
             </div>
-
-            <div className="flex items-center space-x-2">
-              <ButtonV2
-                variant="outline"
-                onClick={() => setIsEditModalOpen(true)}
-                className="border-black text-black hover:bg-black hover:text-white"
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                Modifier
-              </ButtonV2>
-            </div>
           </div>
         </div>
       </div>
 
       <div className="w-full px-4 py-8 space-y-6">
-        {/* Product Info Card */}
-        <Card className="border-black">
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <CardTitle className="text-2xl text-black">
-                  {product.name}
-                </CardTitle>
-                <CardDescription className="mt-2 text-base">
-                  <span className="font-medium">SKU:</span> {product.sku} •
-                  <span className="ml-2">
-                    Créé le {formatDate(product.created_at)}
-                  </span>
-                </CardDescription>
-              </div>
-              <div className="flex flex-col items-end space-y-2">
-                {product.sourcing_type === 'client' && (
-                  <Badge
-                    variant="outline"
-                    className="border-blue-300 text-blue-600"
-                  >
-                    <User className="h-3 w-3 mr-1" />
-                    Sourcing Client
-                  </Badge>
-                )}
-                {product.sourcing_type === 'interne' && (
-                  <Badge variant="outline" className="border-black text-black">
-                    <Building className="h-3 w-3 mr-1" />
-                    Sourcing Interne
-                  </Badge>
-                )}
-                {product.requires_sample && (
-                  <Badge
-                    variant="outline"
-                    className="border-gray-300 text-black"
-                  >
-                    <AlertCircle className="h-3 w-3 mr-1" />
-                    Échantillon requis
-                  </Badge>
-                )}
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* ✅ FIX RÉGRESSION: Utiliser composant pricing avec éco-taxe */}
-            <SupplierVsPricingEditSection
-              product={product as any}
-              variantGroup={null}
-              onUpdate={async updates => {
-                try {
-                  await updateSourcingProduct(productId, updates);
-                  toast({
-                    title: 'Tarification mise à jour',
-                    description: 'Les prix ont été sauvegardés avec succès',
-                  });
-                  await refetch();
-                } catch (error) {
-                  toast({
-                    title: 'Erreur',
-                    description: 'Impossible de mettre à jour la tarification',
-                    variant: 'destructive',
-                  });
-                }
-              }}
-            />
-
-            {/* Informations fournisseur */}
-            {product.supplier && (
-              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="flex items-center mb-3">
-                  <Building className="h-5 w-5 text-blue-600 mr-2" />
-                  <h4 className="font-medium text-black">Fournisseur</h4>
-                </div>
-                <p className="text-lg font-semibold text-blue-900 mb-3">
-                  {product.supplier.name}
-                </p>
-
-                <div className="flex flex-col space-y-2">
-                  {/* Lien vers page détails fournisseur (navigation interne) */}
-                  <a
-                    href={`/contacts-organisations/suppliers/${product.supplier.id}`}
-                    className="inline-flex items-center text-blue-600 hover:underline text-sm"
-                  >
-                    <Building className="h-4 w-4 mr-2" />
-                    Voir la fiche fournisseur
-                  </a>
-
-                  {/* Site web général du fournisseur */}
-                  {product.supplier.website && (
-                    <a
-                      href={product.supplier.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center text-blue-600 hover:underline text-sm"
-                    >
-                      <Globe className="h-4 w-4 mr-2" />
-                      Site web du fournisseur
-                    </a>
-                  )}
-
-                  {/* Lien vers URL externe fournisseur (page produit spécifique) */}
-                  {product.supplier_page_url && (
-                    <a
-                      href={product.supplier_page_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center text-blue-600 hover:underline text-sm"
-                    >
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Page du produit chez le fournisseur
-                    </a>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Client assigné */}
-            {product.assigned_client && (
-              <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-                <div className="flex items-center mb-2">
-                  <User className="h-5 w-5 text-purple-600 mr-2" />
-                  <h4 className="font-medium text-black">Client assigné</h4>
-                </div>
-                <p className="text-lg font-semibold text-purple-900">
-                  {product.assigned_client.name}
-                  {product.assigned_client.type === 'client'
-                    ? ' (Client)'
-                    : ` (${product.assigned_client.type})`}
-                </p>
-              </div>
-            )}
-
-            {/* Métadonnées */}
-            <div className="flex items-center text-sm text-gray-600 space-x-4 pt-4 border-t border-gray-200">
-              <div className="flex items-center">
-                <Clock className="h-4 w-4 mr-2" />
-                <span>
-                  Dernière modification: {formatDate(product.updated_at)}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Product Info Card - Éditable inline */}
+        <SourcingProductEditCard
+          product={product as any}
+          primaryImage={primaryImage}
+          images={images}
+          imagesLoading={imagesLoading}
+          onProductUpdate={async updates => {
+            try {
+              await updateSourcingProduct(productId, updates);
+              toast({
+                title: 'Produit mis à jour',
+                description: 'Les modifications ont été sauvegardées',
+              });
+              await refetch();
+            } catch (error) {
+              toast({
+                title: 'Erreur',
+                description: 'Impossible de mettre à jour le produit',
+                variant: 'destructive',
+              });
+            }
+          }}
+          onOpenPhotosModal={() => setIsPhotosModalOpen(true)}
+        />
 
         {/* Validation Actions */}
         <Card className="border-black">
@@ -405,25 +259,6 @@ export default function SourcingProductDetailPage() {
                 </AlertDescription>
               </Alert>
             )}
-
-            {/* Sélection fournisseur inline si absent */}
-            {!product.supplier_id && (
-              <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-300">
-                <SupplierSelector
-                  selectedSupplierId={null}
-                  onSupplierChange={async supplierId => {
-                    if (supplierId) {
-                      await updateSourcingProduct(productId, {
-                        supplier_id: supplierId,
-                      });
-                    }
-                  }}
-                  label="Sélectionner un fournisseur pour activer la validation"
-                  placeholder="Choisir un fournisseur..."
-                  required={false}
-                />
-              </div>
-            )}
           </CardContent>
         </Card>
 
@@ -439,13 +274,15 @@ export default function SourcingProductDetailPage() {
         </Alert>
       </div>
 
-      {/* Modal d'édition */}
+      {/* Modal de gestion des photos */}
       {product && (
-        <EditSourcingProductModal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          product={product as any}
-          onUpdate={updateSourcingProduct}
+        <ProductPhotosModal
+          isOpen={isPhotosModalOpen}
+          onClose={() => setIsPhotosModalOpen(false)}
+          productId={productId}
+          productName={product.name}
+          productType="draft"
+          onImagesUpdated={() => fetchImages()}
         />
       )}
     </div>
