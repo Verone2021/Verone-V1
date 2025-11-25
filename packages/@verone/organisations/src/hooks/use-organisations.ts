@@ -192,7 +192,8 @@ export function useOrganisations(filters?: OrganisationFilters) {
   const getOrganisationById = async (
     id: string
   ): Promise<Organisation | null> => {
-    if (!id) return null;
+    // Validation stricte de l'ID (doit être UUID valide ou non-vide)
+    if (!id || id.trim() === '') return null;
 
     try {
       const { data, error } = await supabase
@@ -200,6 +201,11 @@ export function useOrganisations(filters?: OrganisationFilters) {
         .select('*')
         .eq('id', id)
         .single();
+
+      // Erreur Supabase "no rows" (PGRST116) - organisation non trouvée, pas une vraie erreur
+      if (error?.code === 'PGRST116') {
+        return null;
+      }
 
       if (error) {
         throw error;
@@ -215,7 +221,45 @@ export function useOrganisations(filters?: OrganisationFilters) {
 
       return data;
     } catch (error) {
-      console.error("Erreur lors de la récupération de l'organisation:", error);
+      // Cast pour accéder aux propriétés
+      const pgError = error as {
+        code?: string;
+        message?: string | Error;
+        details?: string;
+      };
+      const errorMessage =
+        pgError?.message instanceof Error
+          ? pgError.message.message
+          : pgError?.message || (error instanceof Error ? error.message : '');
+
+      // Silencieusement ignorer les erreurs réseau (Failed to fetch, network, timeout)
+      if (
+        (error instanceof Error && error.message.includes('fetch')) ||
+        (typeof errorMessage === 'string' &&
+          (errorMessage.includes('fetch') ||
+            errorMessage.includes('network') ||
+            errorMessage.includes('timeout')))
+      ) {
+        return null;
+      }
+
+      // Silencieusement ignorer les erreurs Supabase "no rows" (PGRST116)
+      if (pgError?.code === 'PGRST116') {
+        return null;
+      }
+
+      // Silencieusement ignorer les erreurs vides/malformées (pas d'info utile)
+      const hasContent = errorMessage || pgError?.code || pgError?.details;
+      if (!hasContent) {
+        return null;
+      }
+
+      // Logger uniquement les erreurs significatives (non-réseau, non-expected)
+      console.error("Erreur lors de la récupération de l'organisation:", {
+        message: errorMessage || 'Erreur inconnue',
+        code: pgError?.code,
+        details: error,
+      });
       return null;
     }
   };

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 import { useToast } from '@verone/common/hooks';
 import type { Organisation } from '@verone/organisations/hooks';
@@ -34,17 +34,32 @@ import { Plus } from 'lucide-react';
 
 import type { CreateOrderItemData } from '@verone/orders/hooks';
 import { useOrderItems } from '@verone/orders/hooks';
-import {
-  usePurchaseOrders,
-  CreatePurchaseOrderData,
-} from '@verone/orders/hooks';
+import { usePurchaseOrders } from '@verone/orders/hooks';
 
-import { AddProductToOrderModal } from './add-product-to-order-modal';
 import { CreateOrganisationModal } from './create-organisation-modal';
 import { EditableOrderItemRow } from './editable-order-item-row';
 import { SupplierSelector } from './supplier-selector';
 
 type PurchaseOrder = Database['public']['Tables']['purchase_orders']['Row'];
+
+// Interface pour items locaux (mode création)
+// Note: utilise `products` (pluriel) pour compatibilité avec EditableOrderItemRow
+interface LocalOrderItem {
+  id: string;
+  product_id: string;
+  quantity: number;
+  unit_price_ht: number;
+  discount_percentage: number;
+  eco_tax: number;
+  notes?: string;
+  products?: {
+    id: string;
+    name: string;
+    sku: string;
+    primary_image_url?: string;
+    product_images?: Array<{ public_url: string; is_primary: boolean }>;
+  };
+}
 
 // ✅ Payment Terms Options (ENUM mapping - aligné avec CommercialEditSection)
 const paymentTermsOptions = [
@@ -123,6 +138,9 @@ export function PurchaseOrderFormModal({
   // Modal ajout produit
   const [showProductSelector, setShowProductSelector] = useState(false);
 
+  // État items local pour mode création (comme SalesOrderFormModal)
+  const [localItems, setLocalItems] = useState<LocalOrderItem[]>([]);
+
   // Hooks
   const {
     organisations: suppliers,
@@ -188,28 +206,36 @@ export function PurchaseOrderFormModal({
     }
   }, [prefilledProduct, open, isEditMode, prefilledSupplier]);
 
+  // Items à afficher : locaux en création, hook en édition
+  const displayItems = isEditMode ? items : localItems;
+
   // Calculs totaux (inclut eco_tax)
   const totalHT = useMemo(() => {
-    return items.reduce((sum, item) => {
+    return displayItems.reduce((sum, item) => {
       const subtotal =
         item.quantity *
         item.unit_price_ht *
         (1 - (item.discount_percentage || 0) / 100);
       return sum + subtotal + (item.eco_tax || 0);
     }, 0);
-  }, [items]);
+  }, [displayItems]);
 
   const totalTTC = totalHT * 1.2; // TVA 20%
 
   // Memoize excludeProductIds pour éviter re-renders infinis
   const excludeProductIds = useMemo(
-    () => items.map(item => item.product_id),
-    [items]
+    () => displayItems.map(item => item.product_id),
+    [displayItems]
   );
 
   // Gérer changement fournisseur
   const handleSupplierChange = async (supplierId: string | null) => {
     setSelectedSupplierId(supplierId || '');
+
+    // Règle métier : Vider les items locaux au changement de fournisseur (évite mélange produits)
+    if (!isEditMode) {
+      setLocalItems([]);
+    }
 
     // Pré-remplir automatiquement les conditions de paiement
     if (supplierId) {
@@ -239,38 +265,53 @@ export function PurchaseOrderFormModal({
 
   // Handler sélection produits depuis UniversalProductSelectorV2
   const handleProductsSelect = async (selectedProducts: SelectedProduct[]) => {
-    if (!isEditMode) {
-      toast({
-        variant: 'destructive',
-        title: "Impossible d'ajouter un produit",
-        description: "Créez d'abord la commande pour ajouter des produits.",
-      });
-      return;
-    }
-
     try {
-      // Ajouter chaque produit sélectionné
-      for (const product of selectedProducts) {
-        const itemData: CreateOrderItemData = {
+      if (isEditMode) {
+        // MODE ÉDITION : utiliser useOrderItems hook (existant)
+        for (const product of selectedProducts) {
+          const itemData: CreateOrderItemData = {
+            product_id: product.id,
+            quantity: product.quantity || 1,
+            unit_price_ht: product.unit_price || 0,
+            discount_percentage: product.discount_percentage || 0,
+            eco_tax: 0,
+            notes: product.notes || '',
+          };
+          await addItem(itemData);
+        }
+      } else {
+        // MODE CRÉATION : ajouter aux items locaux
+        // ✅ Utiliser cost_price (prix d'achat) et eco_tax_default (éco-taxe) du produit
+        const newItems: LocalOrderItem[] = selectedProducts.map(product => ({
+          id: `temp-${Date.now()}-${product.id}`,
           product_id: product.id,
           quantity: product.quantity || 1,
-          unit_price_ht: product.unit_price || 0,
+          unit_price_ht: product.cost_price ?? 0, // Prix d'achat depuis fiche produit
           discount_percentage: product.discount_percentage || 0,
-          eco_tax: 0, // TODO: Récupérer eco_tax du produit
+          eco_tax:
+            (product as { eco_tax_default?: number }).eco_tax_default ?? 0, // Éco-taxe depuis fiche produit
           notes: product.notes || '',
-        };
-
-        await addItem(itemData);
+          products: {
+            id: product.id,
+            name: product.name,
+            sku: product.sku || '',
+            primary_image_url:
+              product.product_images?.find(img => img.is_primary)?.public_url ||
+              product.product_images?.[0]?.public_url,
+            product_images: product.product_images,
+          },
+        }));
+        setLocalItems(prev => [...prev, ...newItems]);
       }
 
       setShowProductSelector(false);
 
       toast({
-        title: '✅ Produits ajoutés',
-        description: `${selectedProducts.length} produit(s) ajouté(s) à la commande.`,
+        title: 'Produits ajoutés',
+        description: `${selectedProducts.length} produit(s) ajouté(s)`,
       });
     } catch (error) {
-      console.error('❌ Erreur ajout produits:', error);
+      console.error('Erreur ajout produits:', error);
       toast({
         variant: 'destructive',
         title: 'Erreur',
@@ -280,35 +321,49 @@ export function PurchaseOrderFormModal({
     }
   };
 
-  // Handler modification item (via composant universel)
+  // Handler modification item (gère les deux modes)
   const handleUpdateItem = async (itemId: string, data: any) => {
-    try {
-      await updateItem(itemId, data);
-    } catch (error) {
-      console.error('❌ Erreur modification item:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Erreur',
-        description: 'Impossible de modifier le produit',
-      });
+    if (isEditMode) {
+      // Mode édition : utiliser hook useOrderItems
+      try {
+        await updateItem(itemId, data);
+      } catch (error) {
+        console.error('Erreur modification item:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Erreur',
+          description: 'Impossible de modifier le produit',
+        });
+      }
+    } else {
+      // Mode création : modifier items locaux
+      setLocalItems(prev =>
+        prev.map(item => (item.id === itemId ? { ...item, ...data } : item))
+      );
     }
   };
 
-  // Handler suppression item
+  // Handler suppression item (gère les deux modes)
   const handleRemoveItem = async (itemId: string) => {
-    try {
-      await removeItem(itemId);
-      toast({
-        title: '✅ Produit supprimé',
-        description: 'Le produit a été retiré de la commande.',
-      });
-    } catch (error) {
-      console.error('❌ Erreur suppression item:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Erreur',
-        description: 'Impossible de supprimer le produit',
-      });
+    if (isEditMode) {
+      // Mode édition : utiliser hook useOrderItems
+      try {
+        await removeItem(itemId);
+        toast({
+          title: 'Produit supprimé',
+          description: 'Le produit a été retiré de la commande.',
+        });
+      } catch (error) {
+        console.error('Erreur suppression item:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Erreur',
+          description: 'Impossible de supprimer le produit',
+        });
+      }
+    } else {
+      // Mode création : supprimer des items locaux
+      setLocalItems(prev => prev.filter(item => item.id !== itemId));
     }
   };
 
@@ -322,6 +377,7 @@ export function PurchaseOrderFormModal({
     setNotes('');
     setEcoTaxVatRate(null);
     setPaymentTerms('');
+    setLocalItems([]); // Réinitialiser items locaux
   };
 
   const handleClose = () => {
@@ -353,14 +409,30 @@ export function PurchaseOrderFormModal({
           description: `Commande ${order.po_number} modifiée avec succès`,
         });
       } else {
-        // MODE CRÉATION : Impossible sans items (UX)
-        toast({
-          variant: 'destructive',
-          title: 'Création impossible',
-          description:
-            'Utilisez le hook usePurchaseOrders avec createOrder et ajoutez des items après création.',
+        // MODE CRÉATION : Créer commande avec items locaux
+        const newOrder = await createOrder({
+          supplier_id: selectedSupplierId,
+          expected_delivery_date: expectedDeliveryDate || undefined,
+          delivery_address: deliveryAddress || undefined,
+          payment_terms: paymentTerms || undefined,
+          notes: notes || undefined,
+          eco_tax_vat_rate: ecoTaxVatRate,
+          items: localItems.map(item => ({
+            product_id: item.product_id,
+            quantity: item.quantity,
+            unit_price_ht: item.unit_price_ht,
+            discount_percentage: item.discount_percentage,
+            eco_tax: item.eco_tax,
+            notes: item.notes,
+          })),
         });
-        return;
+
+        toast({
+          title: 'Commande créée',
+          description: `Commande ${newOrder?.po_number || ''} créée avec ${localItems.length} article(s)`,
+        });
+
+        resetForm();
       }
 
       handleClose();
@@ -554,74 +626,79 @@ export function PurchaseOrderFormModal({
               </CardContent>
             </Card>
 
-            {/* Articles (MODE ÉDITION UNIQUEMENT) */}
-            {isEditMode && (
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle>Articles</CardTitle>
-                      <CardDescription>
-                        {items.length} article(s) dans la commande
-                      </CardDescription>
-                    </div>
-                    {!isBlocked && (
-                      <ButtonV2
-                        type="button"
-                        variant="outline"
-                        onClick={() => setShowProductSelector(true)}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Ajouter des produits
-                      </ButtonV2>
-                    )}
+            {/* Articles (disponible en création ET édition) */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Articles</CardTitle>
+                    <CardDescription>
+                      {displayItems.length} article(s){' '}
+                      {isEditMode ? 'dans la commande' : 'à ajouter'}
+                    </CardDescription>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  {itemsLoading ? (
-                    <div className="text-center py-8 text-gray-500">
-                      Chargement des articles...
-                    </div>
-                  ) : items.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      Aucun article dans la commande. Cliquez sur "Ajouter un
-                      produit" pour commencer.
-                    </div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Produit</TableHead>
-                            <TableHead>Quantité</TableHead>
-                            <TableHead>Prix unitaire HT</TableHead>
-                            <TableHead>Remise (%)</TableHead>
-                            <TableHead>Éco-taxe (€)</TableHead>
-                            <TableHead>Total HT</TableHead>
-                            <TableHead>Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {items.map(item => (
-                            <EditableOrderItemRow
-                              key={item.id}
-                              item={item}
-                              orderType="purchase"
-                              onUpdate={handleUpdateItem}
-                              onDelete={handleRemoveItem}
-                              readonly={isBlocked}
-                            />
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
+                  {!isBlocked && (
+                    <ButtonV2
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowProductSelector(true)}
+                      disabled={!selectedSupplierId}
+                      title={
+                        !selectedSupplierId
+                          ? "Veuillez sélectionner un fournisseur d'abord"
+                          : undefined
+                      }
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Ajouter des produits
+                    </ButtonV2>
                   )}
-                </CardContent>
-              </Card>
-            )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {isEditMode && itemsLoading ? (
+                  <div className="text-center py-8 text-gray-500">
+                    Chargement des articles...
+                  </div>
+                ) : displayItems.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    Aucun article. Cliquez sur "Ajouter des produits" pour
+                    commencer.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Produit</TableHead>
+                          <TableHead>Quantité</TableHead>
+                          <TableHead>Prix unitaire HT</TableHead>
+                          <TableHead>Remise (%)</TableHead>
+                          <TableHead>Éco-taxe (€)</TableHead>
+                          <TableHead>Total HT</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {displayItems.map(item => (
+                          <EditableOrderItemRow
+                            key={item.id}
+                            item={item}
+                            orderType="purchase"
+                            onUpdate={handleUpdateItem}
+                            onDelete={handleRemoveItem}
+                            readonly={isBlocked}
+                          />
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-            {/* Totaux (MODE ÉDITION UNIQUEMENT) */}
-            {isEditMode && items.length > 0 && (
+            {/* Totaux (affichés si items présents) */}
+            {displayItems.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle>Récapitulatif</CardTitle>
@@ -673,8 +750,8 @@ export function PurchaseOrderFormModal({
         </DialogContent>
       </Dialog>
 
-      {/* Modal UniversalProductSelectorV2 */}
-      {isEditMode && showProductSelector && (
+      {/* Modal UniversalProductSelectorV2 - disponible en création ET édition */}
+      {showProductSelector && (
         <UniversalProductSelectorV2
           open={showProductSelector}
           onClose={() => setShowProductSelector(false)}
@@ -684,6 +761,7 @@ export function PurchaseOrderFormModal({
           title="Sélectionner des produits pour la commande"
           description="Choisissez les produits à ajouter. Vous pourrez ajuster quantités et prix après sélection."
           excludeProductIds={excludeProductIds}
+          supplierId={selectedSupplierId || null}
           showImages
           showQuantity
           showPricing

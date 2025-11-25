@@ -20,19 +20,6 @@
 
 import { useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
 
-import {
-  Search,
-  X,
-  Check,
-  Package,
-  Plus,
-  Trash2,
-  Filter,
-  Layers,
-  Tag,
-  RotateCcw,
-} from 'lucide-react';
-
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -54,8 +41,21 @@ import {
   SelectValue,
 } from '@verone/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
-import { createClient } from '@verone/utils/supabase/client';
 import { cn } from '@verone/utils';
+import { createClient } from '@verone/utils/supabase/client';
+import {
+  Search,
+  X,
+  Check,
+  Package,
+  Plus,
+  Trash2,
+  Filter,
+  Layers,
+  Tag,
+  RotateCcw,
+} from 'lucide-react';
+
 import { ProductThumbnail } from '@verone/products/components/images/ProductThumbnail';
 
 // ============================================================================
@@ -75,6 +75,8 @@ export interface ProductData {
   supplier_id: string | null;
   subcategory_id?: string | null;
   stock_real?: number;
+  cost_price?: number; // Prix d'achat pour commandes fournisseurs
+  eco_tax_default?: number; // Éco-taxe par défaut du produit
   created_at?: string;
   updated_at?: string;
   archived_at?: string | null;
@@ -153,6 +155,8 @@ export interface UniversalProductSelectorV2Props {
   showImages?: boolean;
   searchDebounce?: number;
   className?: string;
+  /** Filtrer les produits par fournisseur (pour commandes fournisseurs) */
+  supplierId?: string | null;
 }
 
 // Types pour filtres hiérarchiques
@@ -300,6 +304,7 @@ interface ProductSearchFilters {
   subcategoryId?: string | null;
   creationMode?: 'complete' | 'sourcing' | null;
   sourcingType?: string | null;
+  supplierId?: string | null;
 }
 
 function useProductSearch(
@@ -326,6 +331,7 @@ function useProductSearch(
     filters.subcategoryId,
     filters.creationMode,
     filters.sourcingType,
+    filters.supplierId,
   ]);
 
   const fetchProducts = async () => {
@@ -346,6 +352,8 @@ function useProductSearch(
           supplier_id,
           subcategory_id,
           stock_real,
+          cost_price,
+          eco_tax_default,
           created_at,
           updated_at,
           product_images!left (
@@ -385,6 +393,11 @@ function useProductSearch(
       // Filtre par sourcing_type
       if (filters.sourcingType) {
         query = query.eq('sourcing_type', filters.sourcingType);
+      }
+
+      // Filtre par fournisseur (CRITIQUE pour commandes fournisseurs)
+      if (filters.supplierId) {
+        query = query.eq('supplier_id', filters.supplierId);
       }
 
       // Filtre par sous-catégorie (plus spécifique)
@@ -445,6 +458,8 @@ function useProductSearch(
         supplier_id: item.supplier_id,
         subcategory_id: item.subcategory_id,
         stock_real: item.stock_real,
+        cost_price: item.cost_price, // ✅ Prix d'achat pour commandes fournisseurs
+        eco_tax_default: item.eco_tax_default, // ✅ Éco-taxe par défaut
         created_at: item.created_at,
         updated_at: item.updated_at,
         archived_at: item.archived_at,
@@ -491,6 +506,228 @@ function ProductCardSkeleton() {
         <div className="h-3 bg-gray-200 rounded w-1/2" />
       </div>
       <div className="w-9 h-9 bg-gray-200 rounded-full" />
+    </div>
+  );
+}
+
+// ============================================================================
+// HELPER - getPrimaryImage
+// ============================================================================
+
+function getPrimaryImage(product: ProductData): string | null {
+  const images = product.product_images;
+  return (
+    images?.find(img => img.is_primary)?.public_url ||
+    images?.[0]?.public_url ||
+    null
+  );
+}
+
+// ============================================================================
+// COMPOSANT - AvailableProductCard (EXTERNE pour éviter re-renders)
+// ============================================================================
+
+interface AvailableProductCardProps {
+  product: ProductData;
+  showImages: boolean;
+  onAdd: (product: ProductData) => void;
+}
+
+function AvailableProductCard({
+  product,
+  showImages,
+  onAdd,
+}: AvailableProductCardProps) {
+  const primaryImage = showImages ? getPrimaryImage(product) : null;
+  const supplierName = product.supplier
+    ? product.supplier.has_different_trade_name && product.supplier.trade_name
+      ? product.supplier.trade_name
+      : product.supplier.legal_name
+    : null;
+
+  // Construire catégorie complète pour tooltip (hover)
+  const categoryPath = product.subcategory?.category?.family
+    ? [
+        product.subcategory.category.family.name,
+        product.subcategory.category?.name,
+        product.subcategory?.name,
+      ]
+        .filter(Boolean)
+        .join(' > ')
+    : null;
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('🔥 CLIC Ajouter (externe):', product.name);
+      onAdd(product);
+    },
+    [product, onAdd]
+  );
+
+  return (
+    <div
+      className={cn(
+        'group flex gap-2 p-3 border rounded-lg',
+        'transition-colors duration-150',
+        'border-gray-200 bg-white',
+        'hover:ring-2 hover:ring-[#3b86d1] hover:shadow-md'
+      )}
+      title={categoryPath || undefined}
+    >
+      {/* Image */}
+      {showImages && (
+        <ProductThumbnail
+          src={primaryImage}
+          alt={product.name}
+          size="sm"
+          className="flex-shrink-0"
+        />
+      )}
+
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5 mb-0.5">
+          <p className="font-semibold text-sm truncate text-gray-900 leading-tight">
+            {product.name}
+          </p>
+          {product.creation_mode === 'sourcing' && (
+            <Badge
+              variant="outline"
+              className="h-4 text-xs px-1.5 py-0 bg-[#844fc1]/10 border-[#844fc1]/20 text-[#844fc1] flex-shrink-0"
+            >
+              Sourcing
+            </Badge>
+          )}
+        </div>
+
+        <div className="space-y-0.5">
+          {product.sku && (
+            <p className="text-xs font-mono text-gray-500 leading-tight">
+              {product.sku}
+            </p>
+          )}
+          {supplierName && (
+            <p className="text-xs text-[#6c7293] truncate leading-tight">
+              {supplierName}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Bouton Add */}
+      <button
+        type="button"
+        onClick={handleClick}
+        className={cn(
+          'flex-shrink-0 w-9 h-9 rounded-full',
+          'flex items-center justify-center',
+          'bg-[#3b86d1] text-white',
+          'transition-colors duration-150',
+          'hover:bg-[#2d6ba8]',
+          'cursor-pointer',
+          'relative z-10'
+        )}
+        aria-label={`Ajouter ${product.name}`}
+      >
+        <Plus className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+// ============================================================================
+// COMPOSANT - SelectedProductCard (EXTERNE pour éviter re-renders)
+// ============================================================================
+
+interface SelectedProductCardProps {
+  product: SelectedProduct;
+  index: number;
+  showImages: boolean;
+  showQuantity: boolean;
+  onRemove: (productId: string) => void;
+  onUpdateQuantity: (productId: string, quantity: number) => void;
+}
+
+function SelectedProductCard({
+  product,
+  index,
+  showImages,
+  showQuantity,
+  onRemove,
+  onUpdateQuantity,
+}: SelectedProductCardProps) {
+  const primaryImage = showImages ? getPrimaryImage(product) : null;
+
+  return (
+    <div
+      className={cn(
+        'group flex gap-2 p-3 border rounded-lg',
+        'transition-all duration-150',
+        'border-[#38ce3c] bg-[#38ce3c]/5'
+      )}
+    >
+      {/* Badge Position */}
+      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#844fc1] text-white flex items-center justify-center font-bold text-xs">
+        {index + 1}
+      </div>
+
+      {/* Image */}
+      {showImages && (
+        <ProductThumbnail
+          src={primaryImage}
+          alt={product.name}
+          size="sm"
+          className="flex-shrink-0"
+        />
+      )}
+
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-sm truncate text-gray-900 mb-0.5 leading-tight">
+          {product.name}
+        </p>
+        <div className="space-y-0.5">
+          {product.sku && (
+            <p className="text-xs font-mono text-gray-500 leading-tight">
+              {product.sku}
+            </p>
+          )}
+          {showQuantity && product.quantity && (
+            <div className="flex items-center gap-2">
+              <Label className="text-xs text-[#6c7293]">Quantité:</Label>
+              <Input
+                type="number"
+                min="1"
+                value={product.quantity}
+                onChange={e =>
+                  onUpdateQuantity(product.id, parseInt(e.target.value) || 1)
+                }
+                className="w-16 h-7 text-xs"
+                onClick={e => e.stopPropagation()}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Bouton Remove */}
+      <button
+        type="button"
+        onClick={() => onRemove(product.id)}
+        className={cn(
+          'flex-shrink-0 w-9 h-9 rounded-full',
+          'flex items-center justify-center',
+          'bg-red-50 text-red-600',
+          'transition-all duration-150',
+          'hover:bg-red-600 hover:text-white hover:scale-110',
+          'active:scale-95'
+        )}
+        title="Retirer ce produit"
+      >
+        <Trash2 className="h-4 w-4" />
+      </button>
     </div>
   );
 }
@@ -564,6 +801,7 @@ export function UniversalProductSelectorV2({
   showImages = true,
   searchDebounce = 250,
   className,
+  supplierId,
 }: UniversalProductSelectorV2Props) {
   // ============================================================================
   // STATE
@@ -593,6 +831,7 @@ export function UniversalProductSelectorV2({
       subcategoryId: hierarchicalFilters.selectedSubcategoryId,
       creationMode: creationModeFilter,
       sourcingType: sourcingFilter,
+      supplierId: supplierId,
     },
     [...excludeProductIds, ...localSelectedProducts.map(p => p.id)],
     searchDebounce
@@ -619,6 +858,7 @@ export function UniversalProductSelectorV2({
 
   const handleAddProduct = useCallback(
     (product: ProductData) => {
+      console.log('🔥 handleAddProduct appelé:', product.name, product.id);
       setLocalSelectedProducts(prev => {
         const newProduct: SelectedProduct = {
           ...product,
@@ -672,15 +912,6 @@ export function UniversalProductSelectorV2({
   // HELPERS
   // ============================================================================
 
-  const getPrimaryImage = (product: ProductData): string | null => {
-    const images = product.product_images;
-    return (
-      images?.find(img => img.is_primary)?.public_url ||
-      images?.[0]?.public_url ||
-      null
-    );
-  };
-
   const getDefaultTitle = () => {
     switch (context) {
       case 'collections':
@@ -709,188 +940,6 @@ export function UniversalProductSelectorV2({
       default:
         return 'Recherchez et sélectionnez des produits';
     }
-  };
-
-  // ============================================================================
-  // RENDER - Product Cards
-  // ============================================================================
-
-  const AvailableProductCard = ({ product }: { product: ProductData }) => {
-    const primaryImage = showImages ? getPrimaryImage(product) : null;
-    const supplierName = product.supplier
-      ? product.supplier.has_different_trade_name && product.supplier.trade_name
-        ? product.supplier.trade_name
-        : product.supplier.legal_name
-      : null;
-
-    // Construire catégorie complète pour tooltip (hover)
-    const categoryPath = product.subcategory?.category?.family
-      ? [
-          product.subcategory.category.family.name,
-          product.subcategory.category?.name,
-          product.subcategory?.name,
-        ]
-          .filter(Boolean)
-          .join(' > ')
-      : null;
-
-    return (
-      <div
-        className={cn(
-          'group flex gap-2 p-3 border rounded-lg cursor-pointer',
-          'transition-all duration-150',
-          'border-gray-200 bg-white',
-          'hover:border-[#3b86d1] hover:shadow-md hover:scale-[1.01]',
-          'active:scale-[0.99]'
-        )}
-        onClick={() => handleAddProduct(product)}
-        title={categoryPath || undefined}
-      >
-        {/* Image */}
-        {showImages && (
-          <ProductThumbnail
-            src={primaryImage}
-            alt={product.name}
-            size="sm"
-            className="flex-shrink-0"
-          />
-        )}
-
-        {/* Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 mb-0.5">
-            <p className="font-semibold text-sm truncate text-gray-900 leading-tight">
-              {product.name}
-            </p>
-            {product.creation_mode === 'sourcing' && (
-              <Badge
-                variant="outline"
-                className="h-4 text-xs px-1.5 py-0 bg-[#844fc1]/10 border-[#844fc1]/20 text-[#844fc1] flex-shrink-0"
-              >
-                Sourcing
-              </Badge>
-            )}
-          </div>
-
-          <div className="space-y-0.5">
-            {product.sku && (
-              <p className="text-xs font-mono text-gray-500 leading-tight">
-                {product.sku}
-              </p>
-            )}
-            {supplierName && (
-              <p className="text-xs text-[#6c7293] truncate leading-tight">
-                {supplierName}
-              </p>
-            )}
-            {/* Catégorie supprimée pour densité, visible au hover via title */}
-          </div>
-        </div>
-
-        {/* Bouton Add */}
-        <button
-          onClick={e => {
-            e.stopPropagation();
-            handleAddProduct(product);
-          }}
-          className={cn(
-            'flex-shrink-0 w-9 h-9 rounded-full',
-            'flex items-center justify-center',
-            'bg-[#3b86d1] text-white',
-            'transition-all duration-150',
-            'hover:bg-[#2d6ba8] hover:scale-110',
-            'active:scale-95',
-            'group-hover:shadow-lg'
-          )}
-          title="Ajouter ce produit"
-        >
-          <Plus className="h-4 w-4" />
-        </button>
-      </div>
-    );
-  };
-
-  const SelectedProductCard = ({
-    product,
-    index,
-  }: {
-    product: SelectedProduct;
-    index: number;
-  }) => {
-    const primaryImage = showImages ? getPrimaryImage(product) : null;
-
-    return (
-      <div
-        className={cn(
-          'group flex gap-2 p-3 border rounded-lg',
-          'transition-all duration-150',
-          'border-[#38ce3c] bg-[#38ce3c]/5'
-        )}
-      >
-        {/* Badge Position */}
-        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#844fc1] text-white flex items-center justify-center font-bold text-xs">
-          {index + 1}
-        </div>
-
-        {/* Image */}
-        {showImages && (
-          <ProductThumbnail
-            src={primaryImage}
-            alt={product.name}
-            size="sm"
-            className="flex-shrink-0"
-          />
-        )}
-
-        {/* Info */}
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm truncate text-gray-900 mb-0.5 leading-tight">
-            {product.name}
-          </p>
-          <div className="space-y-0.5">
-            {product.sku && (
-              <p className="text-xs font-mono text-gray-500 leading-tight">
-                {product.sku}
-              </p>
-            )}
-            {showQuantity && product.quantity && (
-              <div className="flex items-center gap-2">
-                <Label className="text-xs text-[#6c7293]">Quantité:</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  value={product.quantity}
-                  onChange={e =>
-                    handleUpdateQuantity(
-                      product.id,
-                      parseInt(e.target.value) || 1
-                    )
-                  }
-                  className="w-16 h-7 text-xs"
-                  onClick={e => e.stopPropagation()}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Bouton Remove */}
-        <button
-          onClick={() => handleRemoveProduct(product.id)}
-          className={cn(
-            'flex-shrink-0 w-9 h-9 rounded-full',
-            'flex items-center justify-center',
-            'bg-red-50 text-red-600',
-            'transition-all duration-150',
-            'hover:bg-red-600 hover:text-white hover:scale-110',
-            'active:scale-95'
-          )}
-          title="Retirer ce produit"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
-      </div>
-    );
   };
 
   // ============================================================================
@@ -923,6 +972,7 @@ export function UniversalProductSelectorV2({
           />
           {searchQuery && (
             <button
+              type="button"
               onClick={() => setSearchQuery('')}
               className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
             >
@@ -1089,12 +1139,12 @@ export function UniversalProductSelectorV2({
             </div>
 
             {/* Liste produits disponibles */}
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 flex flex-col">
               <h3 className="font-semibold text-sm text-gray-700 mb-3">
                 Produits disponibles
               </h3>
-              <ScrollArea className="h-[calc(100%-2rem)]">
-                <div className="space-y-2 pr-4">
+              <div className="flex-1 overflow-y-auto pr-4">
+                <div className="space-y-2">
                   {loading ? (
                     <>
                       {[1, 2, 3, 4, 5].map(i => (
@@ -1116,11 +1166,13 @@ export function UniversalProductSelectorV2({
                       <AvailableProductCard
                         key={product.id}
                         product={product}
+                        showImages={showImages}
+                        onAdd={handleAddProduct}
                       />
                     ))
                   )}
                 </div>
-              </ScrollArea>
+              </div>
             </div>
           </div>
 
@@ -1152,6 +1204,10 @@ export function UniversalProductSelectorV2({
                       key={product.id}
                       product={product}
                       index={index}
+                      showImages={showImages}
+                      showQuantity={showQuantity}
+                      onRemove={handleRemoveProduct}
+                      onUpdateQuantity={handleUpdateQuantity}
                     />
                   ))
                 )}
