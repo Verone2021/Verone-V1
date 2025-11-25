@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+import { ProductThumbnail } from '@verone/products';
 import { useStockDashboard } from '@verone/stock';
 import { useStockAlerts } from '@verone/stock';
 import { useMovementsHistory } from '@verone/stock';
@@ -18,7 +18,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@verone/ui';
-import { formatPrice } from '@verone/utils';
 import {
   Package,
   BarChart3,
@@ -28,11 +27,10 @@ import {
   AlertTriangle,
   Grid3x3,
   TrendingUp,
-  TrendingDown,
   RefreshCw,
-  Clock,
   CheckCircle,
   Eye,
+  RotateCcw,
 } from 'lucide-react';
 
 import { StockKPICard } from '@/components/ui-v2/stock/stock-kpi-card';
@@ -271,17 +269,20 @@ export default function StocksDashboardPage() {
           />
         </div>
 
-        {/* Section STOCK RÉEL - Border Accent Vert Gauche + Background Vert Subtil */}
-        <Card className="border-l-4 border-green-500 bg-green-50 rounded-[10px] shadow-md">
+        {/* Section Stock Réel - Design sobre fond blanc */}
+        <Card className="border-gray-200 rounded-[10px] shadow-md">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Badge className="bg-green-100 text-green-700 border-green-300">
+              <Badge
+                variant="outline"
+                className="text-gray-600 border-gray-300"
+              >
                 <CheckCircle className="h-3 w-3 mr-1" />
                 Mouvements Effectués
               </Badge>
-              <CardTitle className="text-xl text-black">✓ STOCK RÉEL</CardTitle>
+              <CardTitle className="text-xl text-black">Stock Réel</CardTitle>
             </div>
-            <CardDescription className="text-gray-700 font-medium">
+            <CardDescription className="text-gray-600">
               Inventaire actuel et mouvements confirmés
             </CardDescription>
           </CardHeader>
@@ -318,8 +319,14 @@ export default function StocksDashboardPage() {
                       {criticalAlerts.slice(0, 3).map(alert => (
                         <div
                           key={alert.id}
-                          className="flex items-start justify-between border-b border-gray-100 pb-2 last:border-0"
+                          className="flex items-center gap-3 border-b border-gray-100 pb-2 last:border-0"
                         >
+                          {/* Photo produit */}
+                          <ProductThumbnail
+                            src={alert.product_image_url}
+                            alt={alert.product_name}
+                            size="sm"
+                          />
                           <div className="flex-1 min-w-0">
                             <Link
                               href={`/produits/catalogue/${alert.product_id}`}
@@ -331,7 +338,7 @@ export default function StocksDashboardPage() {
                               {alert.sku}
                             </p>
                           </div>
-                          <div className="text-right flex items-center gap-2 ml-4 flex-shrink-0">
+                          <div className="text-right flex items-center gap-2 ml-2 flex-shrink-0">
                             <Badge
                               variant="outline"
                               className="border-red-300 text-red-600 text-xs"
@@ -364,15 +371,15 @@ export default function StocksDashboardPage() {
               </CardContent>
             </Card>
 
-            {/* 🆕 Widget: Derniers Mouvements */}
+            {/* Widget: Historique des Stocks */}
             <Card className="border-gray-200 rounded-[10px]">
               <CardHeader className="pb-3">
                 <CardTitle className="text-black text-base flex items-center gap-2">
                   <ArrowUpDown className="h-4 w-4 text-blue-500" />
-                  Derniers Mouvements
+                  Historique des Stocks
                 </CardTitle>
                 <CardDescription className="text-xs">
-                  5 derniers mouvements de stock réels
+                  Derniers mouvements et ajustements
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -396,30 +403,40 @@ export default function StocksDashboardPage() {
                       {lastMovements.slice(0, 5).map(movement => (
                         <div
                           key={movement.id}
-                          className="flex items-center justify-between border-b border-gray-100 pb-2 last:border-0"
+                          className="flex items-center gap-3 border-b border-gray-100 pb-2 last:border-0"
                         >
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            {movement.movement_type === 'IN' ? (
-                              <ArrowDownToLine className="h-4 w-4 text-green-500 flex-shrink-0" />
-                            ) : (
-                              <ArrowUpFromLine className="h-4 w-4 text-red-500 flex-shrink-0" />
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-black truncate">
-                                {movement.product_name || 'Produit inconnu'}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {new Date(movement.performed_at).toLocaleString(
-                                  'fr-FR',
-                                  {
-                                    day: 'numeric',
-                                    month: 'short',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                  }
-                                )}
-                              </p>
-                            </div>
+                          {/* Photo produit */}
+                          <ProductThumbnail
+                            src={movement.product_image_url}
+                            alt={movement.product_name || 'Produit'}
+                            size="sm"
+                          />
+                          {/* Icône type mouvement */}
+                          {movement.movement_type === 'IN' ? (
+                            <ArrowDownToLine className="h-4 w-4 text-green-500 flex-shrink-0" />
+                          ) : movement.movement_type === 'OUT' ? (
+                            <ArrowUpFromLine className="h-4 w-4 text-red-500 flex-shrink-0" />
+                          ) : (
+                            <RotateCcw className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-black truncate">
+                              {movement.product_name || 'Produit inconnu'}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {movement.product_sku}
+                            </p>
+                            <p className="text-xs text-gray-400">
+                              {new Date(movement.performed_at).toLocaleString(
+                                'fr-FR',
+                                {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                }
+                              )}
+                            </p>
                           </div>
                           <Badge
                             variant="outline"

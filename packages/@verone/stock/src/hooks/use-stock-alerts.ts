@@ -14,6 +14,7 @@ export interface StockAlert {
   product_id: string;
   product_name: string;
   sku: string;
+  product_image_url?: string | null; // ✅ URL image principale produit
   alert_type: StockAlertType;
   severity: 'critical' | 'warning' | 'info';
   stock_real: number;
@@ -71,13 +72,18 @@ export function useStockAlerts() {
           products (
             name,
             sku,
-            stock_forecasted_in
+            stock_real,
+            stock_forecasted_in,
+            product_images!left (
+              public_url
+            )
           ),
           purchase_orders!stock_alert_tracking_draft_order_id_fkey (
             po_number
           )
         `
           )
+          .eq('products.product_images.is_primary', true)
           // ✅ NE PAS filtrer alertes validées - elles doivent rester visibles en VERT
           // Workflow: 🔴 Non validée → 🟢 Validée (commande en cours) → ✅ Disparaît (réceptionnée)
           .order('alert_priority', { ascending: false })
@@ -90,7 +96,11 @@ export function useStockAlerts() {
 
         const { data, error } = await query;
 
-        console.log('🔍 SUPABASE QUERY RESULT:', { data, error, count: data?.length });
+        console.log('🔍 SUPABASE QUERY RESULT:', {
+          data,
+          error,
+          count: data?.length,
+        });
 
         if (error) throw error;
 
@@ -108,6 +118,8 @@ export function useStockAlerts() {
             product_id: alert.product_id,
             product_name: alert.products?.name || 'Produit inconnu',
             sku: alert.products?.sku || 'N/A',
+            product_image_url:
+              alert.products?.product_images?.[0]?.public_url || null,
             alert_type: alert.alert_type as StockAlertType,
             severity:
               alert.alert_priority === 3
@@ -115,7 +127,8 @@ export function useStockAlerts() {
                 : alert.alert_priority === 2
                   ? 'warning'
                   : 'info',
-            stock_real: alert.stock_real,
+            // ✅ FIX: Lire stock_real depuis products (source de vérité, pas alert_tracking qui peut être désync)
+            stock_real: alert.products?.stock_real ?? alert.stock_real,
             stock_forecasted_in: alert.products?.stock_forecasted_in || 0,
             stock_forecasted_out: alert.stock_forecasted_out,
             min_stock: alert.min_stock,
