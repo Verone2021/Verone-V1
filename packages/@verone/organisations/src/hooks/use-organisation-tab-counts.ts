@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 
 import { usePurchaseOrders } from '@verone/orders/hooks/use-purchase-orders';
 import { useProducts } from '@verone/products/hooks/use-products';
+import { createClient } from '@verone/utils/supabase/client';
 
 import { useContacts } from './use-contacts';
 
@@ -17,6 +18,7 @@ export interface OrganisationTabCounts {
   orders: number;
   products: number;
   invoices: number;
+  samples: number; // Échantillons envoyés (clients professionnels)
   loading: boolean;
 }
 
@@ -34,6 +36,7 @@ export function useOrganisationTabCounts({
     orders: 0,
     products: 0,
     invoices: 0,
+    samples: 0,
     loading: true,
   });
 
@@ -79,6 +82,33 @@ export function useOrganisationTabCounts({
       });
     }
   }, [organisationId, organisationType, products.length]);
+
+  // Charger et compter les échantillons (si client)
+  useEffect(() => {
+    if (organisationId && organisationType === 'customer') {
+      const fetchSamplesCount = async () => {
+        try {
+          const supabase = createClient();
+          // Jointure avec sales_orders pour filtrer par customer_id
+          const { count, error } = await supabase
+            .from('sales_order_items')
+            .select('id, sales_order:sales_orders!inner(customer_id)', {
+              count: 'exact',
+              head: true,
+            })
+            .eq('is_sample', true)
+            .eq('sales_order.customer_id', organisationId);
+
+          if (!error && count !== null) {
+            setCounts(prev => ({ ...prev, samples: count }));
+          }
+        } catch (err) {
+          console.error('Erreur comptage échantillons:', err);
+        }
+      };
+      fetchSamplesCount();
+    }
+  }, [organisationId, organisationType]);
 
   // Rafraîchir tous les compteurs
   const refreshCounts = async () => {

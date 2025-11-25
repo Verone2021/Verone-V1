@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
@@ -10,6 +10,7 @@ import { SalesOrderFormModal } from '@verone/orders';
 import { OrderDetailModal } from '@verone/orders';
 import { SalesOrderShipmentModal } from '@verone/orders';
 import { useSalesOrders } from '@verone/orders';
+import { ProductThumbnail } from '@verone/products';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,7 +48,7 @@ import {
   TableRow,
 } from '@verone/ui';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@verone/ui';
-import { formatCurrency, formatDate } from '@verone/utils';
+import { cn, formatCurrency, formatDate } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import {
   Plus,
@@ -65,6 +66,7 @@ import {
   FileText,
   FileSpreadsheet,
   Truck,
+  ChevronDown,
 } from 'lucide-react';
 
 import { updateSalesOrderStatus } from '@/app/actions/sales-orders';
@@ -127,6 +129,21 @@ export default function SalesOrdersPage() {
   const [showValidateConfirmation, setShowValidateConfirmation] =
     useState(false);
   const [orderToValidate, setOrderToValidate] = useState<string | null>(null);
+
+  // État pour les lignes expandées (chevron)
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+  const toggleRow = (orderId: string) => {
+    setExpandedRows(prev => {
+      const next = new Set(prev);
+      if (next.has(orderId)) {
+        next.delete(orderId);
+      } else {
+        next.add(orderId);
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     fetchOrders();
@@ -834,6 +851,7 @@ export default function SalesOrdersPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-10" />
                     <TableHead>N° Commande</TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-gray-50"
@@ -842,6 +860,7 @@ export default function SalesOrdersPage() {
                       Client {renderSortIcon('client')}
                     </TableHead>
                     <TableHead>Statut</TableHead>
+                    <TableHead className="w-20 text-center">Articles</TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-gray-50"
                       onClick={() => handleSort('date')}
@@ -868,158 +887,237 @@ export default function SalesOrdersPage() {
                     const canDelete =
                       order.status === 'draft' || order.status === 'cancelled';
 
+                    const items = order.sales_order_items || [];
+                    const hasSamples = items.some(
+                      (item: any) => item.is_sample === true
+                    );
+                    const isExpanded = expandedRows.has(order.id);
+
                     return (
-                      <TableRow key={order.id}>
-                        <TableCell className="font-medium">
-                          {order.order_number}
-                        </TableCell>
-                        <TableCell>
-                          <div>
+                      <React.Fragment key={order.id}>
+                        <TableRow>
+                          {/* Chevron expansion */}
+                          <TableCell className="w-10">
+                            {items.length > 0 && (
+                              <button
+                                onClick={() => toggleRow(order.id)}
+                                className="p-1 hover:bg-gray-100 rounded"
+                              >
+                                <ChevronDown
+                                  className={cn(
+                                    'h-4 w-4 text-gray-500 transition-transform',
+                                    isExpanded && 'rotate-180'
+                                  )}
+                                />
+                              </button>
+                            )}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {order.order_number}
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">
+                                {customerName || 'Non défini'}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {order.customer_type === 'organization'
+                                  ? 'Professionnel'
+                                  : 'Particulier'}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Badge className={statusColors[order.status]}>
+                                {statusLabels[order.status]}
+                              </Badge>
+                              {hasSamples && (
+                                <Badge variant="secondary" className="text-xs">
+                                  Échantillon
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          {/* Colonne Articles */}
+                          <TableCell className="text-center">
+                            <span className="font-medium">{items.length}</span>
+                            <span className="text-muted-foreground text-xs ml-1">
+                              réf.
+                            </span>
+                          </TableCell>
+                          <TableCell>{formatDate(order.created_at)}</TableCell>
+                          <TableCell>
                             <div className="font-medium">
-                              {customerName || 'Non défini'}
+                              {formatCurrency(
+                                order.total_ttc || order.total_ht
+                              )}
                             </div>
-                            <div className="text-xs text-gray-500">
-                              {order.customer_type === 'organization'
-                                ? 'Professionnel'
-                                : 'Particulier'}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={statusColors[order.status]}>
-                            {statusLabels[order.status]}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{formatDate(order.created_at)}</TableCell>
-                        <TableCell>
-                          <div className="font-medium">
-                            {formatCurrency(order.total_ttc || order.total_ht)}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            {/* Voir */}
-                            <IconButton
-                              icon={Eye}
-                              variant="outline"
-                              size="sm"
-                              label="Voir détails"
-                              onClick={() => openOrderDetail(order)}
-                            />
-
-                            {/* Modifier (draft ou confirmed non payée) */}
-                            {(order.status === 'draft' ||
-                              order.status === 'validated') && (
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {/* Voir */}
                               <IconButton
-                                icon={Edit}
+                                icon={Eye}
                                 variant="outline"
                                 size="sm"
-                                label="Modifier"
-                                onClick={() => openEditOrder(order.id)}
+                                label="Voir détails"
+                                onClick={() => openOrderDetail(order)}
                               />
-                            )}
 
-                            {/* Valider (draft uniquement) */}
-                            {order.status === 'draft' && (
-                              <IconButton
-                                icon={CheckCircle}
-                                variant="success"
-                                size="sm"
-                                label="Valider"
-                                onClick={() =>
-                                  handleStatusChange(order.id, 'validated')
-                                }
-                              />
-                            )}
+                              {/* Modifier (draft ou confirmed non payée) */}
+                              {(order.status === 'draft' ||
+                                order.status === 'validated') && (
+                                <IconButton
+                                  icon={Edit}
+                                  variant="outline"
+                                  size="sm"
+                                  label="Modifier"
+                                  onClick={() => openEditOrder(order.id)}
+                                />
+                              )}
 
-                            {/* Dévalider (confirmed uniquement) */}
-                            {order.status === 'validated' && (
-                              <IconButton
-                                icon={RotateCcw}
-                                variant="outline"
-                                size="sm"
-                                label="Dévalider (retour brouillon)"
-                                onClick={() =>
-                                  handleStatusChange(order.id, 'draft')
-                                }
-                              />
-                            )}
+                              {/* Valider (draft uniquement) */}
+                              {order.status === 'draft' && (
+                                <IconButton
+                                  icon={CheckCircle}
+                                  variant="success"
+                                  size="sm"
+                                  label="Valider"
+                                  onClick={() =>
+                                    handleStatusChange(order.id, 'validated')
+                                  }
+                                />
+                              )}
 
-                            {/* Expédier (confirmed ou partially_shipped) */}
-                            {(order.status === 'validated' ||
-                              order.status === 'partially_shipped') && (
-                              <IconButton
-                                icon={Truck}
-                                variant="outline"
-                                size="sm"
-                                label="Expédier la commande"
-                                onClick={() => openShipmentModal(order)}
-                              />
-                            )}
+                              {/* Dévalider (confirmed uniquement) */}
+                              {order.status === 'validated' && (
+                                <IconButton
+                                  icon={RotateCcw}
+                                  variant="outline"
+                                  size="sm"
+                                  label="Dévalider (retour brouillon)"
+                                  onClick={() =>
+                                    handleStatusChange(order.id, 'draft')
+                                  }
+                                />
+                              )}
 
-                            {/* Annuler (UNIQUEMENT brouillon - Workflow: dévalidation obligatoire) */}
-                            {order.status === 'draft' && (
-                              <IconButton
-                                icon={Ban}
-                                variant="danger"
-                                size="sm"
-                                label="Annuler la commande (brouillon uniquement)"
-                                onClick={() => handleCancel(order.id)}
-                              />
-                            )}
+                              {/* Expédier (confirmed ou partially_shipped) */}
+                              {(order.status === 'validated' ||
+                                order.status === 'partially_shipped') && (
+                                <IconButton
+                                  icon={Truck}
+                                  variant="outline"
+                                  size="sm"
+                                  label="Expédier la commande"
+                                  onClick={() => openShipmentModal(order)}
+                                />
+                              )}
 
-                            {/* Annuler disabled pour confirmed - Doit dévalider d'abord */}
-                            {order.status === 'validated' && (
-                              <IconButton
-                                icon={Ban}
-                                variant="outline"
-                                size="sm"
-                                label="Impossible d'annuler directement une commande validée. Veuillez d'abord la dévalider (retour brouillon), puis l'annuler."
-                                disabled
-                              />
-                            )}
+                              {/* Annuler (UNIQUEMENT brouillon - Workflow: dévalidation obligatoire) */}
+                              {order.status === 'draft' && (
+                                <IconButton
+                                  icon={Ban}
+                                  variant="danger"
+                                  size="sm"
+                                  label="Annuler la commande (brouillon uniquement)"
+                                  onClick={() => handleCancel(order.id)}
+                                />
+                              )}
 
-                            {/* Annuler disabled pour paid/delivered - Règle absolue */}
-                            {(order.payment_status === 'paid' ||
-                              order.status === 'delivered') &&
-                              order.status !== 'cancelled' &&
-                              order.status !== 'draft' &&
-                              order.status !== 'validated' && (
+                              {/* Annuler disabled pour confirmed - Doit dévalider d'abord */}
+                              {order.status === 'validated' && (
                                 <IconButton
                                   icon={Ban}
                                   variant="outline"
                                   size="sm"
-                                  label={
-                                    order.payment_status === 'paid'
-                                      ? "Impossible d'annuler : commande déjà payée. Contacter un administrateur pour remboursement."
-                                      : "Impossible d'annuler : commande déjà livrée. Créer un avoir."
-                                  }
+                                  label="Impossible d'annuler directement une commande validée. Veuillez d'abord la dévalider (retour brouillon), puis l'annuler."
                                   disabled
                                 />
                               )}
 
-                            {/* Supprimer (cancelled uniquement) */}
-                            {order.status === 'cancelled' && (
-                              <IconButton
-                                icon={Trash2}
-                                variant="danger"
-                                size="sm"
-                                label="Supprimer"
-                                onClick={() => handleDelete(order.id)}
-                              />
-                            )}
+                              {/* Annuler disabled pour paid/delivered - Règle absolue */}
+                              {(order.payment_status === 'paid' ||
+                                order.status === 'delivered') &&
+                                order.status !== 'cancelled' &&
+                                order.status !== 'draft' &&
+                                order.status !== 'validated' && (
+                                  <IconButton
+                                    icon={Ban}
+                                    variant="outline"
+                                    size="sm"
+                                    label={
+                                      order.payment_status === 'paid'
+                                        ? "Impossible d'annuler : commande déjà payée. Contacter un administrateur pour remboursement."
+                                        : "Impossible d'annuler : commande déjà livrée. Créer un avoir."
+                                    }
+                                    disabled
+                                  />
+                                )}
 
-                            {/* Imprimer PDF */}
-                            <IconButton
-                              icon={FileText}
-                              variant="outline"
-                              size="sm"
-                              label="Imprimer PDF"
-                              onClick={() => handlePrintPDF(order)}
-                            />
-                          </div>
-                        </TableCell>
-                      </TableRow>
+                              {/* Supprimer (cancelled uniquement) */}
+                              {order.status === 'cancelled' && (
+                                <IconButton
+                                  icon={Trash2}
+                                  variant="danger"
+                                  size="sm"
+                                  label="Supprimer"
+                                  onClick={() => handleDelete(order.id)}
+                                />
+                              )}
+
+                              {/* Imprimer PDF */}
+                              <IconButton
+                                icon={FileText}
+                                variant="outline"
+                                size="sm"
+                                label="Imprimer PDF"
+                                onClick={() => handlePrintPDF(order)}
+                              />
+                            </div>
+                          </TableCell>
+                        </TableRow>
+
+                        {/* Ligne d'expansion - affiche les produits */}
+                        {isExpanded && items.length > 0 && (
+                          <TableRow className="bg-muted/50 hover:bg-muted/50">
+                            <TableCell colSpan={8} className="p-0">
+                              <div className="py-3 px-6 space-y-2">
+                                {items.map((item: any) => (
+                                  <div
+                                    key={item.id}
+                                    className="flex items-center gap-4 text-sm py-1"
+                                  >
+                                    <ProductThumbnail
+                                      src={item.products?.primary_image_url}
+                                      alt={item.products?.name || 'Produit'}
+                                      size="xs"
+                                    />
+                                    <span className="flex-1 font-medium">
+                                      {item.products?.name || 'Produit inconnu'}
+                                    </span>
+                                    <span className="text-muted-foreground">
+                                      x{item.quantity}
+                                    </span>
+                                    <span className="font-medium w-24 text-right">
+                                      {formatCurrency(item.total_ht || 0)}
+                                    </span>
+                                    {item.is_sample && (
+                                      <Badge
+                                        variant="secondary"
+                                        className="text-xs"
+                                      >
+                                        Échantillon
+                                      </Badge>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </React.Fragment>
                     );
                   })}
                 </TableBody>

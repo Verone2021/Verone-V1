@@ -8,7 +8,10 @@ import { useParams } from 'next/navigation';
 import { AddressEditSection } from '@verone/common';
 import { ContactEditSection } from '@verone/customers';
 import { ContactsManagementSection } from '@verone/customers';
-import { OrganisationSalesOrdersSection } from '@verone/orders';
+import {
+  OrganisationSalesOrdersSection,
+  CustomerSamplesSection,
+} from '@verone/orders';
 import { OrganisationLogoCard } from '@verone/organisations';
 import { OrganisationStatsCard } from '@verone/organisations';
 import { CommercialEditSection } from '@verone/organisations';
@@ -41,6 +44,7 @@ import {
   ShoppingCart,
   FileText,
   Euro,
+  FlaskConical,
 } from 'lucide-react';
 
 export default function CustomerDetailPage() {
@@ -99,6 +103,19 @@ export default function CustomerDetailPage() {
       disabled: !isModuleDeployed('invoices'),
       disabledBadge: getModulePhase('invoices'),
     },
+    // Onglet Échantillons - uniquement pour clients professionnels
+    ...(customer?.customer_type === 'professional'
+      ? [
+          {
+            id: 'samples',
+            label: 'Échantillons',
+            icon: <FlaskConical className="h-4 w-4" />,
+            badge: counts.samples?.toString() || '0',
+            disabled: !isModuleDeployed('sales_orders'),
+            disabledBadge: getModulePhase('sales_orders'),
+          },
+        ]
+      : []),
   ];
 
   if (loading) {
@@ -346,6 +363,16 @@ export default function CustomerDetailPage() {
             </p>
           </div>
         </TabContent>
+
+        {/* Onglet Échantillons - uniquement pour clients professionnels */}
+        {customer?.customer_type === 'professional' && (
+          <TabContent activeTab={activeTab} tabId="samples">
+            <CustomerSamplesSection
+              customerId={customer.id}
+              customerName={getOrganisationDisplayName(customer)}
+            />
+          </TabContent>
+        )}
       </div>
     </div>
   );

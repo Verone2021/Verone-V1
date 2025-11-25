@@ -1,19 +1,13 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { TableCell, TableRow } from '@verone/ui';
 import { formatCurrency } from '@verone/utils';
-import {
-  Plus,
-  Minus,
-  Trash2,
-  Package,
-  FlaskConical,
-  Building2,
-  User,
-} from 'lucide-react';
+import { Trash2, Package, FlaskConical, Building2, User } from 'lucide-react';
 
 import type { OrderItem, OrderType } from '@verone/orders/hooks';
 
@@ -71,6 +65,26 @@ export function EditableOrderItemRow({
   onDelete,
   readonly = false,
 }: EditableOrderItemRowProps) {
+  // États locaux pour édition fluide (évite re-render à chaque keystroke)
+  const [localPrice, setLocalPrice] = useState(item.unit_price_ht);
+  const [localDiscount, setLocalDiscount] = useState(
+    item.discount_percentage || 0
+  );
+  const [localEcoTax, setLocalEcoTax] = useState(item.eco_tax || 0);
+  const [localTaxRate, setLocalTaxRate] = useState(
+    (item.tax_rate || 0.2) * 100
+  );
+  const [localQuantity, setLocalQuantity] = useState(item.quantity);
+
+  // Synchroniser si item change de l'extérieur (changement d'item sélectionné)
+  useEffect(() => {
+    setLocalPrice(item.unit_price_ht);
+    setLocalDiscount(item.discount_percentage || 0);
+    setLocalEcoTax(item.eco_tax || 0);
+    setLocalTaxRate((item.tax_rate || 0.2) * 100);
+    setLocalQuantity(item.quantity);
+  }, [item.id]);
+
   // Calculer total ligne HT
   const calculateTotal = (): number => {
     const subtotal =
@@ -90,42 +104,71 @@ export function EditableOrderItemRow({
     );
   };
 
-  // Handler modification quantité
-  const handleQuantityChange = (newQuantity: number) => {
-    const validQuantity = Math.max(1, newQuantity);
-    if (onUpdate && !readonly) {
+  // ========== HANDLERS QUANTITÉ (état local + onBlur) ==========
+  const handleQuantityInputChange = (value: string) => {
+    setLocalQuantity(parseInt(value) || 1);
+  };
+
+  const handleQuantityBlur = () => {
+    const validQuantity = Math.max(1, localQuantity);
+    if (validQuantity !== item.quantity && onUpdate && !readonly) {
       onUpdate(item.id, { quantity: validQuantity });
     }
   };
 
-  // Handler modification prix
-  const handlePriceChange = (newPrice: number) => {
-    const validPrice = Math.max(0, newPrice);
-    if (onUpdate && !readonly) {
+  // ========== HANDLERS PRIX (état local + onBlur) ==========
+  const handlePriceChange = (value: string) => {
+    setLocalPrice(parseFloat(value) || 0);
+  };
+
+  const handlePriceBlur = () => {
+    const validPrice = Math.max(0, localPrice);
+    if (validPrice !== item.unit_price_ht && onUpdate && !readonly) {
       onUpdate(item.id, { unit_price_ht: validPrice });
     }
   };
 
-  // Handler modification remise
-  const handleDiscountChange = (newDiscount: number) => {
-    const validDiscount = Math.min(100, Math.max(0, newDiscount));
-    if (onUpdate && !readonly) {
+  // ========== HANDLERS REMISE (état local + onBlur) ==========
+  const handleDiscountChange = (value: string) => {
+    setLocalDiscount(parseFloat(value) || 0);
+  };
+
+  const handleDiscountBlur = () => {
+    const validDiscount = Math.min(100, Math.max(0, localDiscount));
+    if (
+      validDiscount !== (item.discount_percentage || 0) &&
+      onUpdate &&
+      !readonly
+    ) {
       onUpdate(item.id, { discount_percentage: validDiscount });
     }
   };
 
-  // Handler modification éco-taxe
-  const handleEcoTaxChange = (newEcoTax: number) => {
-    const validEcoTax = Math.max(0, newEcoTax);
-    if (onUpdate && !readonly) {
+  // ========== HANDLERS ÉCO-TAXE (état local + onBlur) ==========
+  const handleEcoTaxChange = (value: string) => {
+    setLocalEcoTax(parseFloat(value) || 0);
+  };
+
+  const handleEcoTaxBlur = () => {
+    const validEcoTax = Math.max(0, localEcoTax);
+    if (validEcoTax !== (item.eco_tax || 0) && onUpdate && !readonly) {
       onUpdate(item.id, { eco_tax: validEcoTax });
     }
   };
 
-  // Handler modification TVA (ventes uniquement)
-  const handleTaxRateChange = (newTaxRate: number) => {
-    const validTaxRate = Math.max(0, newTaxRate) / 100;
-    if (onUpdate && !readonly && orderType === 'sales') {
+  // ========== HANDLERS TVA (ventes uniquement, état local + onBlur) ==========
+  const handleTaxRateChange = (value: string) => {
+    setLocalTaxRate(parseFloat(value) || 20);
+  };
+
+  const handleTaxRateBlur = () => {
+    const validTaxRate = Math.max(0, localTaxRate) / 100;
+    if (
+      validTaxRate !== (item.tax_rate || 0.2) &&
+      onUpdate &&
+      !readonly &&
+      orderType === 'sales'
+    ) {
       onUpdate(item.id, { tax_rate: validTaxRate });
     }
   };
@@ -212,37 +255,19 @@ export function EditableOrderItemRow({
         </div>
       </TableCell>
 
-      {/* Colonne 2: Quantité avec +/- */}
+      {/* Colonne 2: Quantité */}
       <TableCell>
         {readonly ? (
           <span className="text-sm font-medium">{item.quantity}</span>
         ) : (
-          <div className="flex gap-1 items-center">
-            <ButtonV2
-              size="sm"
-              variant="outline"
-              onClick={() => handleQuantityChange(item.quantity - 1)}
-              disabled={item.quantity <= 1}
-            >
-              <Minus className="h-3 w-3" />
-            </ButtonV2>
-            <Input
-              type="number"
-              value={item.quantity}
-              onChange={e =>
-                handleQuantityChange(parseInt(e.target.value) || 1)
-              }
-              className="w-16 text-center"
-              min="1"
-            />
-            <ButtonV2
-              size="sm"
-              variant="outline"
-              onClick={() => handleQuantityChange(item.quantity + 1)}
-            >
-              <Plus className="h-3 w-3" />
-            </ButtonV2>
-          </div>
+          <Input
+            type="number"
+            value={localQuantity}
+            onChange={e => handleQuantityInputChange(e.target.value)}
+            onBlur={handleQuantityBlur}
+            className="w-20"
+            min="1"
+          />
         )}
       </TableCell>
 
@@ -254,8 +279,9 @@ export function EditableOrderItemRow({
           <Input
             type="number"
             step="0.01"
-            value={item.unit_price_ht}
-            onChange={e => handlePriceChange(parseFloat(e.target.value) || 0)}
+            value={localPrice}
+            onChange={e => handlePriceChange(e.target.value)}
+            onBlur={handlePriceBlur}
             className="w-24"
             min="0"
           />
@@ -272,10 +298,9 @@ export function EditableOrderItemRow({
             step="0.01"
             min="0"
             max="100"
-            value={item.discount_percentage || 0}
-            onChange={e =>
-              handleDiscountChange(parseFloat(e.target.value) || 0)
-            }
+            value={localDiscount}
+            onChange={e => handleDiscountChange(e.target.value)}
+            onBlur={handleDiscountBlur}
             className="w-20"
           />
         )}
@@ -289,8 +314,9 @@ export function EditableOrderItemRow({
           <Input
             type="number"
             step="0.01"
-            value={item.eco_tax || 0}
-            onChange={e => handleEcoTaxChange(parseFloat(e.target.value) || 0)}
+            value={localEcoTax}
+            onChange={e => handleEcoTaxChange(e.target.value)}
+            onBlur={handleEcoTaxBlur}
             className="w-20"
             min="0"
           />
@@ -308,10 +334,9 @@ export function EditableOrderItemRow({
             <Input
               type="number"
               step="0.1"
-              value={((item.tax_rate || 0.2) * 100).toFixed(1)}
-              onChange={e =>
-                handleTaxRateChange(parseFloat(e.target.value) || 20)
-              }
+              value={localTaxRate}
+              onChange={e => handleTaxRateChange(e.target.value)}
+              onBlur={handleTaxRateBlur}
               className="w-20"
               min="0"
             />

@@ -9,6 +9,7 @@ import { useState, useCallback } from 'react';
 
 import { useToast } from '@verone/common/hooks';
 import { useStockMovements } from '@verone/stock/hooks/use-stock-movements';
+import type { Database } from '@verone/types';
 import { createClient } from '@verone/utils/supabase/client';
 
 // Types pour les commandes clients
@@ -108,6 +109,9 @@ export interface SalesOrderItem {
   created_at: string;
   updated_at: string;
 
+  // Échantillon
+  is_sample: boolean; // Indique si cette ligne est un échantillon envoyé au client
+
   // Relations jointes
   products?: {
     id: string;
@@ -130,6 +134,8 @@ export interface CreateSalesOrderData {
   shipping_address?: any;
   billing_address?: any;
   payment_terms?: string;
+  payment_terms_type?: Database['public']['Enums']['payment_terms_type'] | null;
+  payment_terms_notes?: string;
   notes?: string;
   items: CreateSalesOrderItemData[];
 }
@@ -142,6 +148,7 @@ export interface CreateSalesOrderItemData {
   discount_percentage?: number;
   expected_delivery_date?: string;
   notes?: string;
+  is_sample?: boolean; // Marquer comme échantillon envoyé au client
 }
 
 export interface UpdateSalesOrderData {

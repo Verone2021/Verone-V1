@@ -8,6 +8,7 @@ import { CategoryHierarchySelector } from '@verone/categories';
 import { SupplierVsPricingEditSection } from '@verone/common';
 import { CompletionStatusCompact } from '@verone/products';
 import { ProductStatusCompact } from '@verone/products';
+import { SampleHistoryCompact } from '@verone/products';
 import { ProductVariantsGrid } from '@verone/products';
 import { ProductFixedCharacteristics } from '@verone/products';
 import { ProductImageGallery } from '@verone/products';
@@ -289,19 +290,38 @@ export default function ProductDetailPage() {
     }
   }, [productId, router]);
 
-  // Handler pour mettre à jour le produit (✅ Optimisé avec optimistic update)
-  // Note: Le DB update est déjà fait par use-inline-edit, pas besoin de double call
+  // Handler pour mettre à jour le produit (✅ Optimisé avec optimistic update + DB)
   const handleProductUpdate = useCallback(
     async (updatedData: Partial<Product>) => {
-      // ✅ Optimistic UI update (instantané - pas d'attente DB)
+      // 1. Optimistic UI update (instantané)
       setProduct(prev => (prev ? ({ ...prev, ...updatedData } as any) : null));
 
-      // Le hook use-inline-edit gère déjà le UPDATE Supabase
-      // Pas de second UPDATE ici pour éviter double call DB
-      console.log('✅ Produit mis à jour (optimistic):', updatedData);
+      // 2. Sauvegarde réelle en DB
+      try {
+        const supabase = createClient();
+        const { error } = await supabase
+          .from('products')
+          .update(updatedData as any) // Cast nécessaire car Product interface ≠ Supabase types
+          .eq('id', productId);
+
+        if (error) {
+          console.error('❌ Erreur sauvegarde produit:', error);
+          fetchProduct(); // Rollback UI si erreur
+        } else {
+          console.log('✅ Produit sauvegardé en DB:', updatedData);
+          // 3. Recharger les données complètes si champs relationnels modifiés
+          // (pour mettre à jour le breadcrumb et autres données jointes)
+          if ('subcategory_id' in updatedData || 'supplier_id' in updatedData) {
+            fetchProduct();
+          }
+        }
+      } catch (err) {
+        console.error('❌ Erreur sauvegarde produit:', err);
+        fetchProduct(); // Rollback UI
+      }
     },
-    []
-  ); // ✅ FIX: Dépendances vides car setProduct utilise forme fonctionnelle
+    [productId, fetchProduct]
+  );
 
   // Handler pour naviguer vers la page de partage
   const handleShare = () => {
@@ -485,6 +505,9 @@ export default function ProductDetailPage() {
               }}
               missingFields={missingFields}
             />
+
+            {/* Historique échantillons commandés */}
+            <SampleHistoryCompact productId={product.id} />
           </div>
         </aside>
 

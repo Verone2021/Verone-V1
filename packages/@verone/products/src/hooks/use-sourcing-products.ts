@@ -385,17 +385,9 @@ export function useSourcingProducts(filters?: SourcingFilters) {
         return false;
       }
 
-      // Vérification "jamais commandé" - Business Rule
-      const alreadyOrdered = await hasProductBeenOrdered(productId);
-      if (alreadyOrdered) {
-        toast({
-          title: 'Échantillon non autorisé',
-          description:
-            'Ce produit a déjà été commandé. Les échantillons ne sont disponibles que pour les produits jamais commandés.',
-          variant: 'destructive',
-        });
-        return false;
-      }
+      // NOTE: Restriction "jamais commandé" SUPPRIMÉE (2025-11-25)
+      // Les échantillons peuvent être commandés plusieurs fois tout au long de la vie du produit
+      // (pour différents clients, showroom, tests qualité, etc.)
 
       // 2. Vérifier s'il existe une commande fournisseur en "draft" pour ce fournisseur
       const { data: existingDraftOrders, error: ordersError } = await supabase

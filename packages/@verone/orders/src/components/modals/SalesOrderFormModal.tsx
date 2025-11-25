@@ -9,6 +9,7 @@ import type { SelectedProduct } from '@verone/products/components/selectors/Univ
 import { UniversalProductSelectorV2 } from '@verone/products/components/selectors/UniversalProductSelectorV2';
 import { useProducts } from '@verone/products/hooks';
 import { useStockMovements } from '@verone/stock/hooks';
+import type { Database } from '@verone/types';
 import { Alert, AlertDescription } from '@verone/ui';
 import {
   AlertDialog,
@@ -21,6 +22,7 @@ import {
   AlertDialogTitle,
 } from '@verone/ui';
 import { Badge } from '@verone/ui';
+import { Checkbox } from '@verone/ui';
 import { EcoTaxVatInput } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
@@ -70,6 +72,7 @@ interface OrderItem {
   eco_tax: number; // Éco-taxe par ligne (€)
   expected_delivery_date?: string;
   notes?: string;
+  is_sample?: boolean; // Marquer comme échantillon envoyé au client
   product?: {
     id: string;
     name: string;
@@ -127,7 +130,19 @@ export function SalesOrderFormModal({
   const [billingAddress, setBillingAddress] = useState('');
   const [notes, setNotes] = useState('');
   const [ecoTaxVatRate, setEcoTaxVatRate] = useState<number | null>(null);
-  const [paymentTerms, setPaymentTerms] = useState('');
+
+  // Conditions de paiement (enum + notes)
+  const [paymentTermsType, setPaymentTermsType] = useState<
+    Database['public']['Enums']['payment_terms_type'] | null
+  >(null);
+  const [paymentTermsNotes, setPaymentTermsNotes] = useState('');
+
+  // Canal de vente
+  const [channelId, setChannelId] = useState<string | null>(null);
+  const [availableChannels, setAvailableChannels] = useState<
+    Array<{ id: string; name: string; code: string }>
+  >([]);
+
   // RFA supprimé - Migration 003
 
   // Items management
@@ -142,6 +157,26 @@ export function SalesOrderFormModal({
   const { createOrder, updateOrderWithItems, fetchOrder } = useSalesOrders();
   const { getAvailableStock } = useStockMovements();
   const { toast } = useToast();
+
+  // Charger les canaux de vente disponibles
+  useEffect(() => {
+    const loadChannels = async () => {
+      const { data, error } = await supabase
+        .from('sales_channels')
+        .select('id, name, code')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+
+      if (error) {
+        console.error('Erreur chargement canaux:', error);
+        return;
+      }
+
+      setAvailableChannels(data || []);
+    };
+
+    loadChannels();
+  }, [supabase]);
 
   // Charger la commande existante en mode édition
   const loadExistingOrder = async (orderIdToLoad: string) => {
@@ -212,6 +247,9 @@ export function SalesOrderFormModal({
       );
       setNotes(order.notes || '');
       setEcoTaxVatRate(order.eco_tax_vat_rate ?? null);
+      setPaymentTermsType((order as any).payment_terms_type || '');
+      setPaymentTermsNotes((order as any).payment_terms_notes || '');
+      setChannelId((order as any).channel_id || null);
 
       // Transformer les items de la commande en OrderItem[]
       const loadedItems = await Promise.all(
@@ -228,6 +266,7 @@ export function SalesOrderFormModal({
             eco_tax: (item as any).eco_tax || 0, // Charger éco-taxe (cast car types Supabase non à jour)
             expected_delivery_date: item.expected_delivery_date,
             notes: item.notes,
+            is_sample: (item as any).is_sample || false, // Charger échantillon
             product: item.products
               ? {
                   id: item.products.id,
@@ -295,17 +334,40 @@ export function SalesOrderFormModal({
 
     // Pré-remplir automatiquement les conditions de paiement
     if (customer) {
-      let autoPaymentTerms = '';
-      if (customer.prepayment_required) {
-        autoPaymentTerms = customer.payment_terms
-          ? `Prépaiement requis + ${customer.payment_terms} jours`
-          : 'Prépaiement requis';
-      } else if (customer.payment_terms) {
-        autoPaymentTerms = `${customer.payment_terms} jours`;
+      // Pour les clients particuliers : IMMEDIATE par défaut
+      if (customer.type === 'individual') {
+        setPaymentTermsType('IMMEDIATE');
+        setPaymentTermsNotes('Client particulier - Paiement immédiat requis');
       }
-      setPaymentTerms(autoPaymentTerms);
+      // Pour les clients professionnels : récupérer depuis organisation
+      else if (customer.payment_terms_type) {
+        setPaymentTermsType(
+          customer.payment_terms_type as Database['public']['Enums']['payment_terms_type']
+        );
+        setPaymentTermsNotes(customer.payment_terms_notes || '');
+      } else {
+        // Fallback: essayer de déduire depuis l'ancien champ texte
+        if (customer.prepayment_required) {
+          setPaymentTermsType('IMMEDIATE');
+          setPaymentTermsNotes(
+            customer.payment_terms
+              ? `Prépaiement requis + ${customer.payment_terms} jours`
+              : 'Prépaiement requis'
+          );
+        } else {
+          setPaymentTermsType('NET_30'); // Défaut B2B
+          setPaymentTermsNotes('');
+        }
+      }
+
+      // Auto-remplir le canal si disponible
+      if (customer.default_channel_id) {
+        setChannelId(customer.default_channel_id);
+      }
     } else {
-      setPaymentTerms('');
+      setPaymentTermsType(null);
+      setPaymentTermsNotes('');
+      setChannelId(null);
     }
 
     // Pré-remplir automatiquement les adresses quand un client est sélectionné
@@ -412,7 +474,9 @@ export function SalesOrderFormModal({
     setBillingAddress('');
     setNotes('');
     setEcoTaxVatRate(null);
-    setPaymentTerms('');
+    setPaymentTermsType(null);
+    setPaymentTermsNotes('');
+    setChannelId(null);
     // RFA supprimé - Migration 003
     setItems([]);
     // setProductSearchTerm(''); // DEPRECATED - Migration 003
@@ -460,7 +524,7 @@ export function SalesOrderFormModal({
         {
           p_product_id: productId,
           p_quantity: quantity,
-          p_channel_id: null, // TODO: Ajouter sélecteur canal si besoin
+          p_channel_id: channelId, // Canal sélectionné dans le formulaire
           p_customer_id: selectedCustomer.id,
           p_customer_type:
             selectedCustomer.type === 'professional'
@@ -632,6 +696,7 @@ export function SalesOrderFormModal({
         eco_tax: item.eco_tax || 0, // Éco-taxe par ligne
         expected_delivery_date: item.expected_delivery_date,
         notes: item.notes,
+        is_sample: item.is_sample || false, // Marquer comme échantillon
       }));
 
       if (mode === 'edit' && orderId) {
@@ -644,7 +709,9 @@ export function SalesOrderFormModal({
           billing_address: billingAddress
             ? { address: billingAddress }
             : undefined,
-          payment_terms: paymentTerms || undefined,
+          payment_terms_type: paymentTermsType || undefined,
+          payment_terms_notes: paymentTermsNotes || undefined,
+          channel_id: channelId || undefined,
           notes: notes || undefined,
           eco_tax_vat_rate: ecoTaxVatRate,
         };
@@ -665,7 +732,9 @@ export function SalesOrderFormModal({
           billing_address: billingAddress
             ? { address: billingAddress }
             : undefined,
-          payment_terms: paymentTerms || undefined,
+          payment_terms_type: paymentTermsType || undefined,
+          payment_terms_notes: paymentTermsNotes || undefined,
+          channel_id: channelId || undefined,
           notes: notes || undefined,
           eco_tax_vat_rate: ecoTaxVatRate,
           items: itemsData,
@@ -771,28 +840,84 @@ export function SalesOrderFormModal({
                   />
                 </div>
 
-                {/* Conditions de paiement éditables */}
+                {/* Conditions de paiement (enum + notes) */}
                 <div className="space-y-2">
-                  <Label htmlFor="paymentTerms">Conditions de paiement</Label>
-                  <Input
-                    id="paymentTerms"
-                    type="text"
-                    value={paymentTerms}
-                    onChange={e => setPaymentTerms(e.target.value)}
-                    placeholder={
-                      selectedCustomer
-                        ? 'Conditions de paiement (auto-remplies depuis client)'
-                        : 'Sélectionnez un client pour auto-remplir'
+                  <Label htmlFor="paymentTermsType">
+                    Conditions de paiement
+                  </Label>
+                  <Select
+                    value={paymentTermsType || undefined}
+                    onValueChange={value =>
+                      setPaymentTermsType(
+                        value as Database['public']['Enums']['payment_terms_type']
+                      )
                     }
                     disabled={loading || !selectedCustomer}
-                  />
+                  >
+                    <SelectTrigger id="paymentTermsType">
+                      <SelectValue placeholder="Sélectionnez les conditions" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="IMMEDIATE">
+                        Paiement immédiat (comptant)
+                      </SelectItem>
+                      <SelectItem value="NET_15">Net 15 jours</SelectItem>
+                      <SelectItem value="NET_30">Net 30 jours</SelectItem>
+                      <SelectItem value="NET_45">Net 45 jours</SelectItem>
+                      <SelectItem value="NET_60">Net 60 jours</SelectItem>
+                      <SelectItem value="NET_90">Net 90 jours</SelectItem>
+                      <SelectItem value="CUSTOM">
+                        Conditions personnalisées
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {/* Notes complémentaires si CUSTOM */}
+                  {paymentTermsType === 'CUSTOM' && (
+                    <Textarea
+                      placeholder="Décrivez les conditions personnalisées..."
+                      value={paymentTermsNotes}
+                      onChange={e => setPaymentTermsNotes(e.target.value)}
+                      rows={2}
+                      disabled={loading}
+                    />
+                  )}
+
                   {selectedCustomer && (
                     <p className="text-xs text-gray-500">
-                      Auto-rempli depuis la fiche client. Vous pouvez modifier
-                      si nécessaire.
+                      {selectedCustomer.type === 'individual'
+                        ? 'Paiement immédiat requis pour les clients particuliers'
+                        : 'Auto-rempli depuis la fiche client. Modifiable si nécessaire.'}
                     </p>
                   )}
                 </div>
+              </div>
+
+              {/* Canal de vente */}
+              <div className="space-y-2">
+                <Label htmlFor="channelId">Canal de vente</Label>
+                <Select
+                  value={channelId || ''}
+                  onValueChange={value => setChannelId(value || null)}
+                  disabled={loading || !selectedCustomer}
+                >
+                  <SelectTrigger id="channelId">
+                    <SelectValue placeholder="Sélectionnez un canal" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableChannels.map(channel => (
+                      <SelectItem key={channel.id} value={channel.id}>
+                        {channel.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedCustomer && (
+                  <p className="text-xs text-gray-500">
+                    Canal utilisé pour cette commande (affecte les prix et le
+                    suivi)
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -876,6 +1001,7 @@ export function SalesOrderFormModal({
                         <TableHead>Total HT</TableHead>
                         <TableHead>Stock</TableHead>
                         <TableHead>Source</TableHead>
+                        <TableHead className="text-center">Éch.</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1058,6 +1184,17 @@ export function SalesOrderFormModal({
                                 </Badge>
                               )}
                             </TableCell>
+                            {/* Checkbox Échantillon */}
+                            <TableCell className="text-center">
+                              <Checkbox
+                                checked={item.is_sample || false}
+                                onCheckedChange={(checked: boolean) =>
+                                  updateItem(item.id, 'is_sample', checked)
+                                }
+                                disabled={loading}
+                                aria-label="Marquer comme échantillon"
+                              />
+                            </TableCell>
                             <TableCell>
                               <ButtonV2
                                 type="button"
@@ -1162,40 +1299,42 @@ export function SalesOrderFormModal({
                 ? 'Confirmer la mise à jour'
                 : 'Confirmer la création de la commande'}
             </AlertDialogTitle>
-            <AlertDialogDescription>
-              {mode === 'edit' ? (
-                <>
-                  Vous êtes sur le point de mettre à jour la commande avec{' '}
-                  {items.length} article(s).
-                </>
-              ) : (
-                <>
-                  Vous êtes sur le point de créer une commande client pour{' '}
-                  <span className="font-semibold">
-                    {selectedCustomer?.name}
-                  </span>{' '}
-                  avec {items.length} article(s) pour un montant total de{' '}
-                  <span className="font-semibold">
-                    {formatCurrency(totalTTC)}
+            <AlertDialogDescription asChild>
+              <div className="text-sm text-muted-foreground">
+                {mode === 'edit' ? (
+                  <span>
+                    Vous êtes sur le point de mettre à jour la commande avec{' '}
+                    {items.length} article(s).
                   </span>
-                  .
-                </>
-              )}
-              {stockWarnings.length > 0 && (
-                <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded">
-                  <p className="text-sm font-medium text-amber-800">
-                    ⚠️ Attention : Stock insuffisant
-                  </p>
-                  <ul className="mt-1 text-xs text-amber-700 space-y-1">
-                    {stockWarnings.slice(0, 3).map((warning, i) => (
-                      <li key={i}>• {warning}</li>
-                    ))}
-                    {stockWarnings.length > 3 && (
-                      <li>... et {stockWarnings.length - 3} autres</li>
-                    )}
-                  </ul>
-                </div>
-              )}
+                ) : (
+                  <span>
+                    Vous êtes sur le point de créer une commande client pour{' '}
+                    <span className="font-semibold">
+                      {selectedCustomer?.name}
+                    </span>{' '}
+                    avec {items.length} article(s) pour un montant total de{' '}
+                    <span className="font-semibold">
+                      {formatCurrency(totalTTC)}
+                    </span>
+                    .
+                  </span>
+                )}
+                {stockWarnings.length > 0 && (
+                  <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded">
+                    <p className="text-sm font-medium text-amber-800">
+                      ⚠️ Attention : Stock insuffisant
+                    </p>
+                    <ul className="mt-1 text-xs text-amber-700 space-y-1">
+                      {stockWarnings.slice(0, 3).map((warning, i) => (
+                        <li key={i}>• {warning}</li>
+                      ))}
+                      {stockWarnings.length > 3 && (
+                        <li>... et {stockWarnings.length - 3} autres</li>
+                      )}
+                    </ul>
+                  </div>
+                )}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

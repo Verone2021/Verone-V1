@@ -14,6 +14,7 @@ export * from './components/wizards';
 export * from './components/sourcing';
 export * from './components/badges';
 export * from './components/selectors';
+export * from './components/compact';
 
 // Hooks
 export * from './hooks';

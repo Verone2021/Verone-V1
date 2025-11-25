@@ -45,17 +45,24 @@ export function SampleOrderButton({
     purchaseOrderId?: string;
     isNewOrder?: boolean;
   } | null>(null);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
   const handleRequestSample = async () => {
     const response = await requestSample(productId);
     setResult(response);
     setShowConfirmDialog(false);
 
-    // Si succès, proposer d'ouvrir la commande
-    if (response.success && response.purchaseOrderId) {
-      // Optionnel : rediriger vers la commande
-      // router.push(`/commandes/fournisseurs/${response.purchaseOrderId}`)
+    // Si succès, afficher le modal de confirmation
+    if (response.success) {
+      setShowSuccessDialog(true);
     }
+  };
+
+  const handleViewOrder = () => {
+    if (result?.purchaseOrderId) {
+      router.push(`/commandes/fournisseurs/${result.purchaseOrderId}`);
+    }
+    setShowSuccessDialog(false);
   };
 
   return (
@@ -160,6 +167,73 @@ export function SampleOrderButton({
                   Confirmer la commande
                 </>
               )}
+            </ButtonV2>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de succès */}
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-green-700">
+              <CheckCircle className="h-5 w-5" />
+              Échantillon commandé !
+            </DialogTitle>
+            <DialogDescription>
+              Votre demande d'échantillon a bien été prise en compte.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-green-700">Produit :</span>
+                  <span className="font-medium text-green-900">
+                    {productName}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-green-700">Quantité :</span>
+                  <Badge
+                    variant="outline"
+                    className="bg-white border-green-300 text-green-700"
+                  >
+                    1 unité
+                  </Badge>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-green-700">Statut :</span>
+                  <Badge className="bg-green-100 text-green-800 border-green-300">
+                    {result?.isNewOrder
+                      ? 'Nouvelle commande créée'
+                      : 'Ajouté à commande existante'}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+
+            <p className="mt-4 text-sm text-gray-600">
+              L'échantillon a été ajouté à une commande fournisseur en
+              brouillon. Vous pouvez la consulter et la valider quand vous le
+              souhaitez.
+            </p>
+          </div>
+
+          <DialogFooter>
+            <ButtonV2
+              variant="outline"
+              onClick={() => setShowSuccessDialog(false)}
+            >
+              Fermer
+            </ButtonV2>
+            <ButtonV2
+              onClick={handleViewOrder}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <Package className="h-4 w-4 mr-2" />
+              Voir la commande
             </ButtonV2>
           </DialogFooter>
         </DialogContent>

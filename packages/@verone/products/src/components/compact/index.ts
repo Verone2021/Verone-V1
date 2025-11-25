@@ -1,0 +1,1 @@
+export { SampleHistoryCompact } from './SampleHistoryCompact';
