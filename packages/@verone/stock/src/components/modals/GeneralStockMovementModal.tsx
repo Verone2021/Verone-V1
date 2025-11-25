@@ -1,29 +1,19 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 
-import { RefreshCw, AlertTriangle, Package, Search } from 'lucide-react';
-
-import { Badge } from '@verone/ui';
+import { useToast } from '@verone/common/hooks';
+import { ProductThumbnail } from '@verone/products/components/images/ProductThumbnail';
+import type { SelectedProduct } from '@verone/products/components/selectors/UniversalProductSelectorV2';
+import { UniversalProductSelectorV2 } from '@verone/products/components/selectors/UniversalProductSelectorV2';
 import { Button } from '@verone/ui';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@verone/ui';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@verone/ui';
-import { Input } from '@verone/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
 import { Label } from '@verone/ui';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@verone/ui';
 import {
   Select,
   SelectContent,
@@ -31,16 +21,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
+import { Input } from '@verone/ui';
 import { Textarea } from '@verone/ui';
-// Removed Command imports - using native list instead
-import { useCatalogue } from '@verone/categories/hooks';
-import { useToast } from '@verone/common/hooks';
-import { StockDisplay } from '../../components/sections/StockDisplay';
+import { RefreshCw, AlertTriangle, Package, Search } from 'lucide-react';
+
 import { useStock } from '../../hooks';
-import {
-  useStockMovements,
-  type StockReasonCode,
-} from '../../hooks';
+import { useStockMovements, type StockReasonCode } from '../../hooks';
 
 interface GeneralStockMovementModalProps {
   isOpen: boolean;
@@ -53,9 +39,9 @@ export function GeneralStockMovementModal({
   onClose,
   onSuccess,
 }: GeneralStockMovementModalProps) {
-  const [selectedProductId, setSelectedProductId] = useState('');
-  const [productSearchOpen, setProductSearchOpen] = useState(false);
-  const [productSearch, setProductSearch] = useState('');
+  const [selectedProduct, setSelectedProduct] =
+    useState<SelectedProduct | null>(null);
+  const [showProductSelector, setShowProductSelector] = useState(false);
   const [movementType, setMovementType] = useState<'add' | 'remove' | 'adjust'>(
     'add'
   );
@@ -69,36 +55,16 @@ export function GeneralStockMovementModal({
 
   const { toast } = useToast();
   const { createManualMovement } = useStock();
-  const { products, loading: productsLoading } = useCatalogue();
   const { getReasonsByCategory, getReasonDescription } = useStockMovements();
 
-  // Produit sélectionné
-  const selectedProduct = useMemo(() => {
-    return products?.find(p => p.id === selectedProductId);
-  }, [products, selectedProductId]);
-
-  // Filtrage des produits pour la recherche
-  const filteredProducts = useMemo(() => {
-    if (!products) return [];
-    if (!productSearch) return products; // Afficher TOUS les produits sans recherche
-
-    const search = productSearch.toLowerCase();
-    return products
-      .filter(
-        product =>
-          product.name.toLowerCase().includes(search) ||
-          product.sku.toLowerCase().includes(search)
-      )
-      .slice(0, 50); // Limite plus élevée pour les résultats de recherche
-  }, [products, productSearch]);
-
   const currentStock = selectedProduct?.stock_real || 0;
-  const minLevel = selectedProduct?.min_stock || 5;
+  // min_stock n'est pas dans ProductData, utiliser valeur par défaut
+  const minLevel = 5;
   const reasonsByCategory = getReasonsByCategory();
 
   // Validation en temps réel
   const getValidationMessage = () => {
-    if (!selectedProductId)
+    if (!selectedProduct)
       return { type: 'error', message: 'Veuillez sélectionner un produit' };
     if (!quantity) return null;
 
@@ -141,7 +107,7 @@ export function GeneralStockMovementModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!selectedProductId) {
+    if (!selectedProduct) {
       toast({
         title: 'Erreur de validation',
         description: 'Veuillez sélectionner un produit',
@@ -171,7 +137,7 @@ export function GeneralStockMovementModal({
     setLoading(true);
     try {
       await createManualMovement({
-        product_id: selectedProductId,
+        product_id: selectedProduct.id,
         movement_type: movementType,
         quantity: parseInt(quantity),
         reason_code: reasonCode,
@@ -191,8 +157,7 @@ export function GeneralStockMovementModal({
   };
 
   const resetForm = () => {
-    setSelectedProductId('');
-    setProductSearch('');
+    setSelectedProduct(null);
     setQuantity('');
     setUnitCost('');
     setNotes('');
@@ -246,106 +211,53 @@ export function GeneralStockMovementModal({
               Produit <span className="text-red-500">*</span>
             </Label>
 
-            <Popover
-              open={productSearchOpen}
-              onOpenChange={setProductSearchOpen}
+            {/* Bouton pour ouvrir le sélecteur universel */}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full justify-between h-auto min-h-[2.5rem] p-3"
+              onClick={() => setShowProductSelector(true)}
             >
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={productSearchOpen}
-                  className="w-full justify-between h-auto min-h-[2.5rem] p-3"
-                >
-                  {selectedProduct ? (
-                    <div className="flex items-center gap-3 text-left">
-                      {selectedProduct.primary_image_url && (
-                        <img
-                          src={selectedProduct.primary_image_url}
-                          alt={selectedProduct.name}
-                          className="w-8 h-8 rounded object-cover"
-                        />
-                      )}
-                      <div>
-                        <div className="font-medium">
-                          {selectedProduct.name}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          {selectedProduct.sku}
-                        </div>
-                      </div>
+              {selectedProduct ? (
+                <div className="flex items-center gap-3 text-left">
+                  <ProductThumbnail
+                    src={selectedProduct.product_images?.[0]?.public_url}
+                    alt={selectedProduct.name}
+                    size="xs"
+                  />
+                  <div>
+                    <div className="font-medium">{selectedProduct.name}</div>
+                    <div className="text-sm text-gray-600">
+                      {selectedProduct.sku}
                     </div>
-                  ) : (
-                    <span className="text-gray-500">
-                      Rechercher un produit...
-                    </span>
-                  )}
-                  <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent
-                className="w-[400px] p-0"
-                style={{ pointerEvents: 'auto' }}
-              >
-                <div
-                  className="flex flex-col"
-                  style={{ pointerEvents: 'auto' }}
-                >
-                  <div className="p-2 border-b">
-                    <Input
-                      placeholder="Rechercher par nom ou SKU..."
-                      value={productSearch}
-                      onChange={e => setProductSearch(e.target.value)}
-                      className="w-full"
-                      autoFocus
-                    />
-                  </div>
-                  <div className="max-h-[300px] overflow-y-auto">
-                    {productsLoading ? (
-                      <div className="p-4 text-center text-gray-500">
-                        Chargement...
-                      </div>
-                    ) : filteredProducts.length === 0 ? (
-                      <div className="p-4 text-center text-gray-500">
-                        Aucun produit trouvé
-                      </div>
-                    ) : (
-                      filteredProducts.map(product => (
-                        <div
-                          key={product.id}
-                          onClick={() => {
-                            setSelectedProductId(product.id);
-                            setProductSearchOpen(false);
-                            setProductSearch('');
-                          }}
-                          className="flex items-center gap-3 p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
-                          style={{ pointerEvents: 'auto' }}
-                        >
-                          {product.primary_image_url && (
-                            <img
-                              src={product.primary_image_url}
-                              alt={product.name}
-                              className="w-8 h-8 rounded object-cover"
-                            />
-                          )}
-                          <div className="flex-1">
-                            <div className="font-medium">{product.name}</div>
-                            <div className="text-sm text-gray-600">
-                              {product.sku}
-                            </div>
-                          </div>
-                          <StockDisplay
-                            stock_real={product.stock_real || 0}
-                            min_stock={product.min_stock}
-                            size="sm"
-                          />
-                        </div>
-                      ))
-                    )}
                   </div>
                 </div>
-              </PopoverContent>
-            </Popover>
+              ) : (
+                <span className="text-gray-500">
+                  Sélectionner un produit...
+                </span>
+              )}
+              <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+
+            {/* Modal sélection produit avec filtres */}
+            <UniversalProductSelectorV2
+              open={showProductSelector}
+              onClose={() => setShowProductSelector(false)}
+              onSelect={products => {
+                if (products.length > 0) {
+                  setSelectedProduct(products[0]);
+                }
+                setShowProductSelector(false);
+              }}
+              mode="single"
+              context="orders"
+              title="Sélectionner un produit"
+              description="Recherchez par nom, SKU ou filtrez par catégorie/sous-catégorie"
+              showImages
+              showQuantity={false}
+              showPricing={false}
+            />
           </div>
 
           {/* Informations produit sélectionné */}
@@ -556,7 +468,7 @@ export function GeneralStockMovementModal({
             <Button
               type="submit"
               disabled={
-                loading || validation?.type === 'error' || !selectedProductId
+                loading || validation?.type === 'error' || !selectedProduct
               }
               className="flex-1"
             >
