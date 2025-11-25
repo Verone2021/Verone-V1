@@ -94,6 +94,7 @@ export interface CreatePurchaseOrderData {
   delivery_address?: any;
   payment_terms?: string;
   notes?: string;
+  eco_tax_vat_rate?: number | null;
   items: CreatePurchaseOrderItemData[];
 }
 
@@ -197,6 +198,19 @@ export function usePurchaseOrders() {
             notes,
             created_at,
             updated_at,
+            sample_type,
+            customer_organisation_id,
+            customer_individual_id,
+            customer_organisation:organisations!purchase_order_items_customer_organisation_id_fkey (
+              id,
+              legal_name,
+              trade_name
+            ),
+            customer_individual:individual_customers!purchase_order_items_customer_individual_id_fkey (
+              id,
+              first_name,
+              last_name
+            ),
             products (
               id,
               name,
@@ -319,6 +333,19 @@ export function usePurchaseOrders() {
             notes,
             created_at,
             updated_at,
+            sample_type,
+            customer_organisation_id,
+            customer_individual_id,
+            customer_organisation:organisations!purchase_order_items_customer_organisation_id_fkey (
+              id,
+              legal_name,
+              trade_name
+            ),
+            customer_individual:individual_customers!purchase_order_items_customer_individual_id_fkey (
+              id,
+              first_name,
+              last_name
+            ),
             products (
               id,
               name,

@@ -42,6 +42,21 @@ export interface OrderItem {
   quantity_received?: number;
   expected_delivery_date?: string | null;
 
+  // Champs échantillons (Purchase)
+  sample_type?: 'internal' | 'customer' | null;
+  customer_organisation_id?: string | null;
+  customer_individual_id?: string | null;
+  customer_organisation?: {
+    id: string;
+    legal_name: string;
+    trade_name: string | null;
+  } | null;
+  customer_individual?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+  } | null;
+
   // Champs spécifiques Sales
   sales_order_id?: string;
   quantity_shipped?: number;

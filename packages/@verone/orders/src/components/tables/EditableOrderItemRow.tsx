@@ -1,12 +1,20 @@
 'use client';
 
-import { Plus, Minus, Trash2, Package } from 'lucide-react';
-
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { TableCell, TableRow } from '@verone/ui';
 import { formatCurrency } from '@verone/utils';
+import {
+  Plus,
+  Minus,
+  Trash2,
+  Package,
+  FlaskConical,
+  Building2,
+  User,
+} from 'lucide-react';
+
 import type { OrderItem, OrderType } from '@verone/orders/hooks';
 
 /**
@@ -175,6 +183,29 @@ export function EditableOrderItemRow({
             {orderType === 'sales' && item.quantity_shipped! > 0 && (
               <Badge variant="secondary" className="mt-1 text-xs">
                 Expédié: {item.quantity_shipped}/{item.quantity}
+              </Badge>
+            )}
+
+            {/* Badge échantillon */}
+            {item.sample_type && (
+              <Badge variant="info" className="mt-1 text-xs">
+                <FlaskConical className="h-3 w-3 mr-1" />
+                Échantillon
+              </Badge>
+            )}
+
+            {/* Badge client assigné (traçabilité échantillon) */}
+            {(item.customer_organisation || item.customer_individual) && (
+              <Badge variant="warning" className="mt-1 text-xs">
+                {item.customer_individual ? (
+                  <User className="h-3 w-3 mr-1" />
+                ) : (
+                  <Building2 className="h-3 w-3 mr-1" />
+                )}
+                {item.customer_organisation?.trade_name ||
+                  item.customer_organisation?.legal_name ||
+                  (item.customer_individual &&
+                    `${item.customer_individual.first_name} ${item.customer_individual.last_name}`)}
               </Badge>
             )}
           </div>

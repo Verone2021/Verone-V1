@@ -341,10 +341,23 @@ export function useSourcingProducts(filters?: SourcingFilters) {
   // Commander un échantillon - Logique métier complète
   const orderSample = async (productId: string) => {
     try {
-      // 1. Récupérer les infos du produit (notamment le fournisseur et le prix)
+      // 1. Récupérer les infos du produit (notamment le fournisseur, le prix et le client assigné)
       const { data: product, error: productError } = await supabase
         .from('products')
-        .select('name, supplier_id, cost_price')
+        .select(
+          `
+          name,
+          supplier_id,
+          cost_price,
+          assigned_client_id,
+          assigned_client:organisations!products_assigned_client_id_fkey(
+            id,
+            legal_name,
+            trade_name,
+            type
+          )
+        `
+        )
         .eq('id', productId)
         .single();
 
@@ -401,6 +414,18 @@ export function useSourcingProducts(filters?: SourcingFilters) {
         // 3a. Ajouter l'échantillon à la commande draft existante
         purchaseOrderId = existingDraftOrders[0].id;
 
+        // Déterminer le type d'échantillon et le client
+        const assignedClient = product.assigned_client as {
+          id: string;
+          legal_name: string;
+          trade_name: string | null;
+          type: string;
+        } | null;
+        const clientName = assignedClient
+          ? assignedClient.trade_name || assignedClient.legal_name
+          : null;
+        const sampleType = product.assigned_client_id ? 'customer' : 'internal';
+
         // Ajouter un item à la commande existante
         const { error: itemError } = await supabase
           .from('purchase_order_items')
@@ -411,7 +436,11 @@ export function useSourcingProducts(filters?: SourcingFilters) {
               quantity: 1, // Échantillon = quantité 1
               unit_price_ht: product.cost_price,
               discount_percentage: 0,
-              notes: 'Échantillon pour validation',
+              sample_type: sampleType,
+              customer_organisation_id: product.assigned_client_id || null,
+              notes: clientName
+                ? `Échantillon sourcing - Client: ${clientName}`
+                : 'Échantillon pour validation',
             },
           ]);
 
@@ -487,6 +516,20 @@ export function useSourcingProducts(filters?: SourcingFilters) {
 
         purchaseOrderId = newOrder.id;
 
+        // Déterminer le type d'échantillon et le client
+        const assignedClientNew = product.assigned_client as {
+          id: string;
+          legal_name: string;
+          trade_name: string | null;
+          type: string;
+        } | null;
+        const clientNameNew = assignedClientNew
+          ? assignedClientNew.trade_name || assignedClientNew.legal_name
+          : null;
+        const sampleTypeNew = product.assigned_client_id
+          ? 'customer'
+          : 'internal';
+
         // Créer l'item échantillon
         const { error: itemError } = await supabase
           .from('purchase_order_items')
@@ -497,7 +540,11 @@ export function useSourcingProducts(filters?: SourcingFilters) {
               quantity: 1,
               unit_price_ht: product.cost_price,
               discount_percentage: 0,
-              notes: 'Échantillon pour validation',
+              sample_type: sampleTypeNew,
+              customer_organisation_id: product.assigned_client_id || null,
+              notes: clientNameNew
+                ? `Échantillon sourcing - Client: ${clientNameNew}`
+                : 'Échantillon pour validation',
             },
           ]);
 
