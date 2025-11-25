@@ -13,6 +13,7 @@ import { MovementDetailsModal } from '@verone/stock';
 import { MovementsStatsCards } from '@verone/stock';
 import { MovementsTable } from '@verone/stock';
 import { useMovementsHistory } from '@verone/stock';
+import { GeneralStockMovementModal } from '@verone/stock';
 import {
   Select,
   SelectContent,
@@ -41,6 +42,7 @@ import {
   ChevronDown,
   LayoutGrid,
   Table,
+  Plus,
 } from 'lucide-react';
 
 import { MovementsListView } from './components/MovementsListView';
@@ -85,6 +87,9 @@ export default function StockMovementsPage() {
   // États pour filtres sidebar collapsible
   const [filtersOpen, toggleFiltersOpen] = useToggle(false);
   const [activeFiltersCount, setActiveFiltersCount] = useState(0);
+
+  // États pour modals de création de mouvement
+  const [showGeneralModal, setShowGeneralModal] = useState(false);
 
   // Compter filtres actifs
   useEffect(() => {
@@ -194,6 +199,12 @@ export default function StockMovementsPage() {
     }
   };
 
+  // Handler après création d'un mouvement
+  const handleMovementCreated = () => {
+    // Rafraîchir la liste des mouvements
+    applyFilters({ ...filters, offset: 0 });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header compact avec badge info */}
@@ -235,6 +246,16 @@ export default function StockMovementsPage() {
                   className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`}
                 />
                 Actualiser
+              </ButtonV2>
+
+              {/* Bouton création de mouvement */}
+              <ButtonV2
+                size="sm"
+                onClick={() => setShowGeneralModal(true)}
+                className="bg-black text-white hover:bg-gray-800"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Nouveau mouvement
               </ButtonV2>
             </div>
           </div>
@@ -571,6 +592,13 @@ export default function StockMovementsPage() {
             setSelectedOrderId(null);
             setSelectedOrderType(null);
           }}
+        />
+
+        {/* Modals création de mouvement */}
+        <GeneralStockMovementModal
+          isOpen={showGeneralModal}
+          onClose={() => setShowGeneralModal(false)}
+          onSuccess={handleMovementCreated}
         />
       </div>
     </div>
