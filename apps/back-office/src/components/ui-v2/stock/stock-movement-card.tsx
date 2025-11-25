@@ -1,9 +1,9 @@
 'use client';
 
 /**
- * 🎨 StockMovementCard Component
+ * 🎨 StockMovementCard Component - Design V2 Minimaliste
  *
- * Card de mouvement de stock avec traçabilité complète
+ * Card de mouvement de stock compacte et minimaliste
  * Design System V2 - Best Practices 2025
  *
  * @example
@@ -15,9 +15,7 @@
  *     quantity_change: 50,
  *     reason_code: 'PURCHASE',
  *     performed_at: '2025-10-31T10:00:00Z',
- *     channel_id: 'ch-1',
- *     products: { name: 'Canapé Oslo', sku: 'CANAPE-001' },
- *     sales_channels: { name: 'E-commerce', code: 'ecommerce' }
+ *     products: { name: 'Canapé Oslo', sku: 'CANAPE-001' }
  *   }}
  *   onClick={() => console.log('Card clicked')}
  * />
@@ -28,14 +26,12 @@ import * as React from 'react';
 
 import Image from 'next/image';
 
-import { Card } from '@verone/ui';
 import { cn } from '@verone/utils';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Package } from 'lucide-react';
 
-import { ChannelBadge } from './ChannelBadge';
-import { MOVEMENT_CONFIG, type MovementType, type ChannelCode } from './types';
+import { MOVEMENT_CONFIG, type MovementType } from './types';
 
 export interface StockMovementCardProps {
   /**
@@ -51,7 +47,7 @@ export interface StockMovementCardProps {
     products?: {
       name: string;
       sku: string;
-      image_url?: string | null; // ✅ NOUVEAU - URL image produit
+      image_url?: string | null;
     } | null;
     sales_channels?: {
       name: string;
@@ -71,18 +67,14 @@ export interface StockMovementCardProps {
 }
 
 /**
- * Card mouvement de stock avec traçabilité complète
+ * Card mouvement de stock - Design V2 Minimaliste
  *
  * Features:
- * - Border-left 4px selon type mouvement (IN=green, OUT=red, ADJUST=blue, TRANSFER=purple)
- * - Grid layout 4 colonnes: Product | Quantity | Channel | Date
- * - Height fixe 120px
- * - Hover: shadow-md + cursor-pointer (si onClick fourni)
- * - ChannelBadge intégré si channel_id présent
- * - Quantité avec signe (+/-) et couleur
- * - Format date français (date-fns)
- * - Responsive mobile-first
- * - Accessibility compliant
+ * - Hauteur AUTO (pas de h-[120px] fixe)
+ * - Layout flex simple avec image 32x32
+ * - Infos essentielles seulement
+ * - Hover subtil
+ * - Pas de Card wrapper (double bordure évitée)
  */
 export function StockMovementCard({
   movement,
@@ -93,34 +85,31 @@ export function StockMovementCard({
   const isClickable = !!onClick;
 
   /**
-   * Normaliser code canal pour badge
-   */
-  const normalizeChannelCode = (code: string): ChannelCode => {
-    const lowerCode = code.toLowerCase();
-
-    if (lowerCode.includes('b2b')) return 'b2b';
-    if (lowerCode.includes('ecommerce') || lowerCode.includes('e-commerce'))
-      return 'ecommerce';
-    if (lowerCode.includes('retail')) return 'retail';
-    if (lowerCode.includes('wholesale')) return 'wholesale';
-
-    return 'ecommerce';
-  };
-
-  /**
-   * Formater la date
+   * Formater la date de façon concise
    */
   const formatDate = (dateStr: string): string => {
     try {
       const date = new Date(dateStr);
-      return format(date, "dd MMM yyyy 'à' HH:mm", { locale: fr });
+      const now = new Date();
+      const diffTime = now.getTime() - date.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 0) {
+        return format(date, 'HH:mm', { locale: fr });
+      } else if (diffDays === 1) {
+        return `Hier ${format(date, 'HH:mm', { locale: fr })}`;
+      } else if (diffDays < 7) {
+        return format(date, 'EEE HH:mm', { locale: fr });
+      } else {
+        return format(date, 'dd/MM HH:mm', { locale: fr });
+      }
     } catch {
       return dateStr;
     }
   };
 
   return (
-    <Card
+    <div
       role={isClickable ? 'button' : 'article'}
       tabIndex={isClickable ? 0 : undefined}
       aria-label={`Mouvement ${config.label}: ${movement.products?.name || 'Produit'}`}
@@ -136,96 +125,63 @@ export function StockMovementCard({
           : undefined
       }
       className={cn(
-        // Base styles
-        'relative h-[120px] overflow-hidden border-l-4 transition-all duration-200',
-
-        // Border color selon type
-        config.borderColor,
-
-        // Hover microinteraction (si clickable)
-        isClickable && [
-          'cursor-pointer',
-          'hover:shadow-md hover:scale-[1.01]',
-          'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
-        ],
-
+        // Base - hauteur AUTO
+        'bg-white rounded-lg border border-gray-200 p-3',
+        // Hover subtil
+        'hover:shadow-sm hover:border-gray-300 transition-all',
+        // Clickable
+        isClickable && 'cursor-pointer',
+        // Focus accessibility
+        isClickable &&
+          'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1',
         className
       )}
     >
-      <div className="h-full p-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 h-full items-center">
-          {/* Product Info */}
-          <div className="flex items-center gap-3 min-w-0">
-            {/* Image Produit */}
-            {movement.products?.image_url ? (
-              <Image
-                src={movement.products.image_url}
-                alt={movement.products?.name || 'Produit'}
-                width={48}
-                height={48}
-                className="rounded-lg object-cover border border-gray-200 flex-shrink-0"
-              />
-            ) : (
-              <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Package className="h-6 w-6 text-gray-400" />
-              </div>
-            )}
-
-            {/* Info Produit */}
-            <div className="flex flex-col gap-1 min-w-0 flex-1">
-              <p className="text-sm font-semibold text-gray-900 truncate">
-                {movement.products?.name || 'Produit inconnu'}
-              </p>
-              <p className="text-xs text-gray-500 font-mono">
-                {movement.products?.sku || 'N/A'}
-              </p>
-              <p className="text-xs text-gray-400 mt-1">
-                {config.label} · {movement.reason_code}
-              </p>
-            </div>
+      <div className="flex items-center gap-3">
+        {/* Image produit - petit (32x32) */}
+        {movement.products?.image_url ? (
+          <Image
+            src={movement.products.image_url}
+            alt={movement.products?.name || 'Produit'}
+            width={32}
+            height={32}
+            className="rounded object-cover flex-shrink-0"
+          />
+        ) : (
+          <div className="h-8 w-8 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
+            <Package className="h-4 w-4 text-gray-400" />
           </div>
+        )}
 
-          {/* Quantity */}
-          <div className="flex items-center justify-start md:justify-center">
-            <div
+        {/* Contenu principal */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            {/* Nom produit */}
+            <p className="text-sm font-medium text-gray-900 truncate">
+              {movement.products?.name || 'Produit'}
+            </p>
+
+            {/* Quantité avec couleur */}
+            <span
               className={cn(
-                'inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-semibold',
-                config.bgColor,
+                'text-sm font-semibold flex-shrink-0',
                 config.textColor
               )}
             >
-              <span className="text-lg">{config.sign}</span>
-              <span className="text-xl">
-                {Math.abs(movement.quantity_change)}
-              </span>
-            </div>
+              {config.sign}
+              {Math.abs(movement.quantity_change)}
+            </span>
           </div>
 
-          {/* Channel */}
-          <div className="flex items-center justify-start md:justify-center">
-            {movement.sales_channels ? (
-              <ChannelBadge
-                channelCode={normalizeChannelCode(movement.sales_channels.code)}
-                size="md"
-                showIcon
-              />
-            ) : (
-              <span className="text-xs text-gray-400 italic">Aucun canal</span>
-            )}
-          </div>
-
-          {/* Date */}
-          <div className="flex flex-col gap-0.5 text-right">
-            <p className="text-xs text-gray-500">
-              {formatDate(movement.performed_at)}
-            </p>
-            <p className="text-xs text-gray-400 font-mono">
-              #{movement.id.slice(0, 8)}
-            </p>
+          {/* Ligne infos secondaires */}
+          <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+            <span>{config.label}</span>
+            <span>•</span>
+            <span>{formatDate(movement.performed_at)}</span>
           </div>
         </div>
       </div>
-    </Card>
+    </div>
   );
 }
 

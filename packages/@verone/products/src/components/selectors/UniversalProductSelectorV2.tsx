@@ -1139,11 +1139,11 @@ export function UniversalProductSelectorV2({
             </div>
 
             {/* Liste produits disponibles */}
-            <div className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col min-h-0">
               <h3 className="font-semibold text-sm text-gray-700 mb-3">
                 Produits disponibles
               </h3>
-              <div className="flex-1 overflow-y-auto pr-4">
+              <div className="flex-1 overflow-y-auto pr-4 min-h-0">
                 <div className="space-y-2">
                   {loading ? (
                     <>

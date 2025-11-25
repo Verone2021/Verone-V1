@@ -21,13 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Badge } from '@verone/ui';
 import { cn } from '@verone/utils';
@@ -369,183 +362,166 @@ export default function StockMovementsPage() {
               )}
             </div>
 
-            {/* Contenu Principal (Tableau) */}
+            {/* Contenu Principal */}
             <div className="flex-1 space-y-4">
-              {/* En-tête table avec stats et pagination */}
-              <Card className="border-black rounded-[10px] shadow-md">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="flex items-center gap-2 text-black">
-                        {getTitle()}
-                        {hasFilters && (
-                          <Badge
-                            variant="outline"
-                            className="border-black text-black"
-                          >
-                            Filtré
-                          </Badge>
-                        )}
-                      </CardTitle>
-                      <CardDescription>
-                        {loading ? (
-                          'Chargement...'
-                        ) : (
-                          <>
-                            {total === 0 ? (
-                              'Aucun mouvement trouvé'
-                            ) : (
-                              <>
-                                {(pagination.currentPage - 1) *
-                                  pagination.pageSize +
-                                  1}
-                                -
-                                {Math.min(
-                                  pagination.currentPage * pagination.pageSize,
-                                  total
-                                )}{' '}
-                                sur {total} mouvements
-                              </>
-                            )}
-                          </>
-                        )}
-                      </CardDescription>
-                    </div>
-
-                    {/* Pagination et taille de page */}
-                    <div className="flex items-center gap-4">
-                      {/* Phase 3.4.5: Toggle Table/Cards */}
-                      <div className="flex items-center border border-black rounded-md">
-                        <ButtonV2
-                          variant={viewMode === 'table' ? 'primary' : 'ghost'}
-                          size="sm"
-                          onClick={() => setViewMode('table')}
-                          className={cn(
-                            'rounded-r-none',
-                            viewMode === 'table'
-                              ? 'bg-black text-white hover:bg-black/90'
-                              : 'text-black hover:bg-gray-100'
-                          )}
-                        >
-                          <Table className="h-4 w-4" />
-                        </ButtonV2>
-                        <ButtonV2
-                          variant={viewMode === 'cards' ? 'primary' : 'ghost'}
-                          size="sm"
-                          onClick={() => setViewMode('cards')}
-                          className={cn(
-                            'rounded-l-none',
-                            viewMode === 'cards'
-                              ? 'bg-black text-white hover:bg-black/90'
-                              : 'text-black hover:bg-gray-100'
-                          )}
-                        >
-                          <LayoutGrid className="h-4 w-4" />
-                        </ButtonV2>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600">Afficher:</span>
-                        <Select
-                          value={pagination.pageSize.toString()}
-                          onValueChange={handlePageSizeChange}
-                        >
-                          <SelectTrigger className="w-20">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="25">25</SelectItem>
-                            <SelectItem value="50">50</SelectItem>
-                            <SelectItem value="100">100</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {pagination.totalPages > 1 && (
-                        <div className="flex items-center gap-2">
-                          <ButtonV2
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              handlePageChange(pagination.currentPage - 1)
-                            }
-                            disabled={pagination.currentPage === 1 || loading}
-                            className="border-black text-black hover:bg-black hover:text-white"
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                          </ButtonV2>
-
-                          <span className="text-sm text-gray-600">
-                            Page {pagination.currentPage} sur{' '}
-                            {pagination.totalPages}
-                          </span>
-
-                          <ButtonV2
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              handlePageChange(pagination.currentPage + 1)
-                            }
-                            disabled={
-                              pagination.currentPage ===
-                                pagination.totalPages || loading
-                            }
-                            className="border-black text-black hover:bg-black hover:text-white"
-                          >
-                            <ChevronRight className="h-4 w-4" />
-                          </ButtonV2>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-
-                {/* Phase 3.4.5: Rendering conditionnel Table vs Cards */}
-                <CardContent className="p-0">
-                  {viewMode === 'table' ? (
-                    <MovementsTable
-                      movements={movements}
-                      loading={loading}
-                      onMovementClick={handleMovementClick}
-                      onCancelClick={handleCancelClick}
-                      onOrderClick={handleOrderClick}
-                    />
-                  ) : (
-                    <MovementsListView
-                      movements={movements}
-                      loading={loading}
-                    />
+              {/* En-tête avec titre, toggle vue et pagination */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-lg font-semibold text-black">
+                    {getTitle()}
+                  </h2>
+                  {hasFilters && (
+                    <Badge
+                      variant="outline"
+                      className="border-black text-black"
+                    >
+                      Filtré
+                    </Badge>
                   )}
-                </CardContent>
-              </Card>
+                  <span className="text-sm text-gray-500">
+                    {loading ? (
+                      'Chargement...'
+                    ) : total === 0 ? (
+                      'Aucun mouvement'
+                    ) : (
+                      <>
+                        {(pagination.currentPage - 1) * pagination.pageSize + 1}
+                        -
+                        {Math.min(
+                          pagination.currentPage * pagination.pageSize,
+                          total
+                        )}{' '}
+                        sur {total}
+                      </>
+                    )}
+                  </span>
+                </div>
 
-              {/* Message d'aide si aucun résultat */}
+                {/* Contrôles : Toggle vue + Pagination */}
+                <div className="flex items-center gap-4">
+                  {/* Toggle Table/Cards */}
+                  <div className="flex items-center border border-gray-300 rounded-md">
+                    <ButtonV2
+                      variant={viewMode === 'table' ? 'primary' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('table')}
+                      className={cn(
+                        'rounded-r-none',
+                        viewMode === 'table'
+                          ? 'bg-black text-white hover:bg-black/90'
+                          : 'text-gray-600 hover:bg-gray-100'
+                      )}
+                    >
+                      <Table className="h-4 w-4" />
+                    </ButtonV2>
+                    <ButtonV2
+                      variant={viewMode === 'cards' ? 'primary' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('cards')}
+                      className={cn(
+                        'rounded-l-none',
+                        viewMode === 'cards'
+                          ? 'bg-black text-white hover:bg-black/90'
+                          : 'text-gray-600 hover:bg-gray-100'
+                      )}
+                    >
+                      <LayoutGrid className="h-4 w-4" />
+                    </ButtonV2>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-500">Afficher:</span>
+                    <Select
+                      value={pagination.pageSize.toString()}
+                      onValueChange={handlePageSizeChange}
+                    >
+                      <SelectTrigger className="w-20 h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="25">25</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                        <SelectItem value="100">100</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {pagination.totalPages > 1 && (
+                    <div className="flex items-center gap-2">
+                      <ButtonV2
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          handlePageChange(pagination.currentPage - 1)
+                        }
+                        disabled={pagination.currentPage === 1 || loading}
+                        className="h-8 w-8 p-0"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </ButtonV2>
+
+                      <span className="text-sm text-gray-500">
+                        {pagination.currentPage}/{pagination.totalPages}
+                      </span>
+
+                      <ButtonV2
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          handlePageChange(pagination.currentPage + 1)
+                        }
+                        disabled={
+                          pagination.currentPage === pagination.totalPages ||
+                          loading
+                        }
+                        className="h-8 w-8 p-0"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </ButtonV2>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Table ou Cards - DIRECTEMENT sans wrapper */}
+              {viewMode === 'table' ? (
+                <MovementsTable
+                  movements={movements}
+                  loading={loading}
+                  onMovementClick={handleMovementClick}
+                  onCancelClick={handleCancelClick}
+                  onOrderClick={handleOrderClick}
+                />
+              ) : (
+                <MovementsListView movements={movements} loading={loading} />
+              )}
+
+              {/* État vide avec filtres */}
               {!loading && movements.length === 0 && hasFilters && (
-                <Card className="p-8 border-black rounded-[10px] shadow-md">
+                <div className="bg-white border border-gray-200 rounded-lg p-8">
                   <div className="text-center">
                     <Eye className="h-12 w-12 text-gray-300 mx-auto mb-3" />
                     <h3 className="text-lg font-medium text-black mb-2">
                       Aucun mouvement trouvé
                     </h3>
                     <p className="text-gray-500 mb-4">
-                      Aucun mouvement ne correspond aux critères de recherche
-                      sélectionnés.
+                      Aucun mouvement ne correspond aux critères sélectionnés.
                     </p>
                     <ButtonV2
                       variant="outline"
                       onClick={resetFilters}
-                      className="border-black text-black hover:bg-black hover:text-white"
+                      className="border-gray-300 text-gray-700 hover:bg-gray-100"
                     >
                       <RefreshCw className="h-4 w-4 mr-2" />
                       Réinitialiser les filtres
                     </ButtonV2>
                   </div>
-                </Card>
+                </div>
               )}
 
-              {/* Message d'aide si base vide */}
+              {/* État vide sans filtres */}
               {!loading && movements.length === 0 && !hasFilters && (
-                <Card className="p-8 border-black rounded-[10px] shadow-md">
+                <div className="bg-white border border-gray-200 rounded-lg p-8">
                   <div className="text-center">
                     <ArrowUpDown className="h-12 w-12 text-gray-300 mx-auto mb-3" />
                     <h3 className="text-lg font-medium text-black mb-2">
@@ -555,7 +531,7 @@ export default function StockMovementsPage() {
                       Les mouvements apparaîtront ici dès qu'ils seront créés.
                     </p>
                   </div>
-                </Card>
+                </div>
               )}
             </div>
           </div>

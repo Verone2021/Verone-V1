@@ -5,6 +5,16 @@ import React, { useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
+import { Badge } from '@verone/ui';
+import { Button } from '@verone/ui';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@verone/ui';
 import {
   Clock,
   Package,
@@ -16,16 +26,6 @@ import {
   Trash2,
 } from 'lucide-react';
 
-import { Badge } from '@verone/ui';
-import { Button } from '@verone/ui';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@verone/ui';
 import type { MovementWithDetails } from '../../hooks';
 
 interface MovementsTableProps {
@@ -203,19 +203,23 @@ export function MovementsTable({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[180px]">Date / Heure</TableHead>
+              <TableHead className="w-[50px]" />
+              <TableHead className="w-[160px]">Date / Heure</TableHead>
               <TableHead>Produit</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Quantité</TableHead>
+              <TableHead className="w-[110px]">Type</TableHead>
+              <TableHead className="w-[130px]">Quantité</TableHead>
               <TableHead>Commande Liée</TableHead>
               {onCancelClick && (
-                <TableHead className="w-[100px] text-center">Actions</TableHead>
+                <TableHead className="w-[80px] text-center">Actions</TableHead>
               )}
             </TableRow>
           </TableHeader>
           <TableBody>
             {[...Array(10)].map((_, i) => (
               <TableRow key={i}>
+                <TableCell className="p-2">
+                  <div className="h-8 w-8 bg-gray-200 rounded animate-pulse" />
+                </TableCell>
                 <TableCell>
                   <div className="h-4 bg-gray-200 rounded animate-pulse" />
                 </TableCell>
@@ -265,13 +269,14 @@ export function MovementsTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[180px]">Date / Heure</TableHead>
+            <TableHead className="w-[50px]" />
+            <TableHead className="w-[160px]">Date / Heure</TableHead>
             <TableHead>Produit</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Quantité</TableHead>
+            <TableHead className="w-[110px]">Type</TableHead>
+            <TableHead className="w-[130px]">Quantité</TableHead>
             <TableHead>Commande Liée</TableHead>
             {onCancelClick && (
-              <TableHead className="w-[100px] text-center">Actions</TableHead>
+              <TableHead className="w-[80px] text-center">Actions</TableHead>
             )}
           </TableRow>
         </TableHeader>
@@ -286,7 +291,24 @@ export function MovementsTable({
               }
               onClick={() => onMovementClick?.(movement)}
             >
-              {/* Date / Heure */}
+              {/* 1. Image Produit - Première colonne */}
+              <TableCell className="p-2">
+                {movement.product_image_url ? (
+                  <Image
+                    src={movement.product_image_url}
+                    alt={movement.product_name || 'Produit'}
+                    width={32}
+                    height={32}
+                    className="rounded object-cover border border-gray-200"
+                  />
+                ) : (
+                  <div className="h-8 w-8 bg-gray-100 rounded flex items-center justify-center">
+                    <Package className="h-4 w-4 text-gray-400" />
+                  </div>
+                )}
+              </TableCell>
+
+              {/* 2. Date / Heure */}
               <TableCell>
                 <div className="font-medium text-sm">
                   {formatDate(movement.performed_at)}
@@ -298,29 +320,13 @@ export function MovementsTable({
                 )}
               </TableCell>
 
-              {/* Produit - Avec lien cliquable */}
+              {/* 3. Produit - Nom avec lien */}
               <TableCell>
                 <Link
                   href={`/catalogue/${movement.product_id}`}
                   onClick={e => e.stopPropagation()}
-                  className="flex items-center gap-3 hover:text-black transition-colors group"
+                  className="flex items-center gap-2 hover:text-black transition-colors group"
                 >
-                  {/* Image Produit */}
-                  {movement.product_image_url ? (
-                    <Image
-                      src={movement.product_image_url}
-                      alt={movement.product_name || 'Produit'}
-                      width={40}
-                      height={40}
-                      className="rounded-lg object-cover border border-gray-200 flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <Package className="h-4 w-4 text-gray-400" />
-                    </div>
-                  )}
-
-                  {/* Info Produit */}
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-sm group-hover:underline">
                       {movement.product_name || 'Produit supprimé'}

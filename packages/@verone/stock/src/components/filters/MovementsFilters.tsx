@@ -2,15 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 
-import {
-  CalendarDays,
-  Filter,
-  RotateCcw,
-  Search,
-  Users,
-  Package,
-} from 'lucide-react';
-
 import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
 import { Calendar } from '@verone/ui';
@@ -24,11 +15,7 @@ import {
 import { Checkbox } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@verone/ui';
+import { Popover, PopoverContent, PopoverTrigger } from '@verone/ui';
 import {
   Select,
   SelectContent,
@@ -37,6 +24,15 @@ import {
   SelectValue,
 } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
+import {
+  CalendarDays,
+  Filter,
+  RotateCcw,
+  Search,
+  Users,
+  Package,
+} from 'lucide-react';
+
 import type { MovementHistoryFilters } from '../../hooks';
 import { useStockMovements } from '../../hooks';
 
@@ -384,11 +380,6 @@ export function MovementsFilters({
                 value: 'ADJUST',
                 label: 'Ajustements',
                 color: 'bg-blue-100 text-blue-800',
-              },
-              {
-                value: 'TRANSFER',
-                label: 'Transferts',
-                color: 'bg-purple-100 text-purple-800',
               },
             ].map(type => (
               <div key={type.value} className="flex items-center space-x-2">
