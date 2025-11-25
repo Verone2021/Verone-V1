@@ -187,6 +187,9 @@ export const useCatalogue = () => {
     // IMPORTANT : Exclure les produits archivés par défaut
     query = query.is('archived_at', null);
 
+    // ✅ RÉGRESSION FIX: Exclure les produits en mode sourcing du catalogue
+    query = query.neq('creation_mode', 'sourcing');
+
     // Filtres selon business rules
     if (filters.search) {
       query = query.or(

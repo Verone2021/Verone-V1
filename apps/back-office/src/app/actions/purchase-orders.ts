@@ -36,8 +36,8 @@ export async function updatePurchaseOrderStatus(
       `🔍 [Server Action ADMIN] Tentative mise à jour PO ${orderId} vers ${newStatus} par user ${userId}`
     );
 
-    // Stocker l'utilisateur courant en session PostgreSQL pour les triggers (notamment stock_movements)
-    await supabase.rpc('set_current_user_id', { user_id: userId });
+    // Note: set_current_user_id désactivé temporairement - cause erreur uuid = text
+    // await supabase.rpc('set_current_user_id', { user_id: userId });
 
     // Vérifier d'abord que la commande existe et récupérer son statut actuel + timestamps
     const { data: existingOrder, error: fetchError } = await supabase
@@ -66,23 +66,9 @@ export async function updatePurchaseOrderStatus(
       `📊 [Server Action] Commande trouvée: ${existingOrder.po_number}, statut actuel: ${existingOrder.status}`
     );
 
-    // Préparer les champs à mettre à jour selon le workflow
+    // Préparer les champs à mettre à jour - UNIQUEMENT le status
+    // Les timestamps (validated_at, cancelled_at, etc.) seront gérés plus tard si nécessaire
     const updateFields: any = { status: newStatus };
-
-    // Gérer les timestamps selon les contraintes PostgreSQL
-    if (newStatus === 'validated') {
-      // ✅ VALIDATION : rouge → vert (alerte stock)
-      updateFields.validated_at = new Date().toISOString();
-      updateFields.validated_by = userId;
-    } else if (newStatus === 'received') {
-      // Réception complète
-      updateFields.received_at = new Date().toISOString();
-      updateFields.received_by = userId;
-    } else if (newStatus === 'cancelled') {
-      // Annulation
-      updateFields.cancelled_at = new Date().toISOString();
-      updateFields.cancelled_by = userId;
-    }
 
     // ✅ Workflow simplifié restauré : draft → confirmed → received → cancelled
     // Les triggers DB gèrent les mouvements de stock automatiquement

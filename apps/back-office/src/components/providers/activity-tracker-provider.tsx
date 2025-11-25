@@ -12,7 +12,6 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 
 import type { User } from '@supabase/supabase-js';
-
 import { useUserActivityTracker } from '@verone/notifications';
 
 import { useSupabase } from './supabase-provider';
@@ -32,7 +31,6 @@ export function ActivityTrackerProvider({
 
   // Suivre l'authentification utilisateur
   useEffect(() => {
-
     // Obtenir session initiale
     const getSession = async () => {
       const {
@@ -76,14 +74,17 @@ export function ActivityTrackerProvider({
       const isPublicPath = publicPaths.some(path => pathname.startsWith(path));
 
       if (!isPublicPath) {
-        trackEvent({
-          action: 'page_view',
-          new_data: {
-            page_url: pathname,
-            page_title: document.title,
-            referrer: document.referrer,
-          },
-        });
+        // Defer tracking to avoid setState during Router render
+        setTimeout(() => {
+          trackEvent({
+            action: 'page_view',
+            new_data: {
+              page_url: pathname,
+              page_title: document.title,
+              referrer: document.referrer,
+            },
+          });
+        }, 0);
       }
     }
     // Seulement pathname et user dans les dépendances pour éviter boucles infinies

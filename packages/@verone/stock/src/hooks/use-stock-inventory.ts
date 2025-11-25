@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 
-import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@verone/common/hooks';
+import { createClient } from '@verone/utils/supabase/client';
 
 interface ProductInventory {
   id: string;
@@ -9,6 +9,9 @@ interface ProductInventory {
   sku: string;
   product_image_url?: string;
   stock_quantity: number;
+  stock_real: number;
+  stock_forecasted_in: number;
+  stock_forecasted_out: number;
   total_in: number;
   total_out: number;
   total_adjustments: number;
@@ -57,6 +60,8 @@ export function useStockInventory() {
           sku,
           stock_quantity,
           stock_real,
+          stock_forecasted_in,
+          stock_forecasted_out,
           cost_price,
           product_images!left(public_url)
         `
@@ -135,6 +140,9 @@ export function useStockInventory() {
             product_image_url:
               (product as any).product_images?.[0]?.public_url || null, // ✅ Phase 2: Image principale produit
             stock_quantity: product.stock_quantity || 0,
+            stock_real: product.stock_real || 0,
+            stock_forecasted_in: (product as any).stock_forecasted_in || 0,
+            stock_forecasted_out: (product as any).stock_forecasted_out || 0,
             total_in,
             total_out,
             total_adjustments,
@@ -192,7 +200,9 @@ export function useStockInventory() {
           'Entrées',
           'Sorties',
           'Ajustements',
-          'Stock Actuel',
+          'Stock Réel',
+          'Prév. Entrant',
+          'Prév. Sortant',
           'Dernière Activité',
         ].join(','),
         ...data.map(item =>
@@ -202,7 +212,9 @@ export function useStockInventory() {
             item.total_in,
             item.total_out,
             item.total_adjustments,
-            item.stock_quantity,
+            item.stock_real,
+            item.stock_forecasted_in,
+            item.stock_forecasted_out,
             item.last_movement_at
               ? new Date(item.last_movement_at).toLocaleDateString('fr-FR')
               : 'N/A',

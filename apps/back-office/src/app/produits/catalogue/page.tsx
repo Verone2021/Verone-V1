@@ -315,7 +315,7 @@ export default function CataloguePage() {
           {/* Boutons de création */}
           <div className="flex items-center space-x-2">
             <ButtonUnified
-              onClick={() => router.push('/produits/sourcing/validation')}
+              onClick={() => router.push('/produits/sourcing')}
               variant="outline"
               size="sm"
               icon={Zap}

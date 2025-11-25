@@ -29,7 +29,7 @@ export default function NewSourcingPage() {
     if (showForm) {
       setShowForm(false);
     } else {
-      router.push('/produits/sourcing/produits');
+      router.push('/produits/sourcing');
     }
   };
 

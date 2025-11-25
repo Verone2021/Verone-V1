@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: '13.0.5';
   };
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
   public: {
     Tables: {
       abby_sync_queue: {
@@ -2360,6 +2335,10 @@ export type Database = {
           language_preference: string | null;
           last_name: string;
           notes: string | null;
+          payment_terms_notes: string | null;
+          payment_terms_type:
+            | Database['public']['Enums']['payment_terms_type']
+            | null;
           phone: string | null;
           postal_code: string | null;
           region: string | null;
@@ -2389,6 +2368,10 @@ export type Database = {
           language_preference?: string | null;
           last_name: string;
           notes?: string | null;
+          payment_terms_notes?: string | null;
+          payment_terms_type?:
+            | Database['public']['Enums']['payment_terms_type']
+            | null;
           phone?: string | null;
           postal_code?: string | null;
           region?: string | null;
@@ -2418,6 +2401,10 @@ export type Database = {
           language_preference?: string | null;
           last_name?: string;
           notes?: string | null;
+          payment_terms_notes?: string | null;
+          payment_terms_type?:
+            | Database['public']['Enums']['payment_terms_type']
+            | null;
           phone?: string | null;
           postal_code?: string | null;
           region?: string | null;
@@ -2780,6 +2767,10 @@ export type Database = {
           minimum_order_amount: number | null;
           notes: string | null;
           payment_terms: string | null;
+          payment_terms_notes: string | null;
+          payment_terms_type:
+            | Database['public']['Enums']['payment_terms_type']
+            | null;
           phone: string | null;
           postal_code: string | null;
           preferred_supplier: boolean | null;
@@ -2836,6 +2827,10 @@ export type Database = {
           minimum_order_amount?: number | null;
           notes?: string | null;
           payment_terms?: string | null;
+          payment_terms_notes?: string | null;
+          payment_terms_type?:
+            | Database['public']['Enums']['payment_terms_type']
+            | null;
           phone?: string | null;
           postal_code?: string | null;
           preferred_supplier?: boolean | null;
@@ -2892,6 +2887,10 @@ export type Database = {
           minimum_order_amount?: number | null;
           notes?: string | null;
           payment_terms?: string | null;
+          payment_terms_notes?: string | null;
+          payment_terms_type?:
+            | Database['public']['Enums']['payment_terms_type']
+            | null;
           phone?: string | null;
           postal_code?: string | null;
           preferred_supplier?: boolean | null;
@@ -4053,6 +4052,10 @@ export type Database = {
           id: string;
           notes: string | null;
           payment_terms: string | null;
+          payment_terms_notes: string | null;
+          payment_terms_type:
+            | Database['public']['Enums']['payment_terms_type']
+            | null;
           po_number: string;
           received_at: string | null;
           received_by: string | null;
@@ -4079,6 +4082,10 @@ export type Database = {
           id?: string;
           notes?: string | null;
           payment_terms?: string | null;
+          payment_terms_notes?: string | null;
+          payment_terms_type?:
+            | Database['public']['Enums']['payment_terms_type']
+            | null;
           po_number: string;
           received_at?: string | null;
           received_by?: string | null;
@@ -4105,6 +4112,10 @@ export type Database = {
           id?: string;
           notes?: string | null;
           payment_terms?: string | null;
+          payment_terms_notes?: string | null;
+          payment_terms_type?:
+            | Database['public']['Enums']['payment_terms_type']
+            | null;
           po_number?: string;
           received_at?: string | null;
           received_by?: string | null;
@@ -4387,6 +4398,10 @@ export type Database = {
           paid_at: string | null;
           payment_status: string | null;
           payment_terms: string | null;
+          payment_terms_notes: string | null;
+          payment_terms_type:
+            | Database['public']['Enums']['payment_terms_type']
+            | null;
           ready_for_shipment: boolean | null;
           shipped_at: string | null;
           shipped_by: string | null;
@@ -4428,6 +4443,10 @@ export type Database = {
           paid_at?: string | null;
           payment_status?: string | null;
           payment_terms?: string | null;
+          payment_terms_notes?: string | null;
+          payment_terms_type?:
+            | Database['public']['Enums']['payment_terms_type']
+            | null;
           ready_for_shipment?: boolean | null;
           shipped_at?: string | null;
           shipped_by?: string | null;
@@ -4469,6 +4488,10 @@ export type Database = {
           paid_at?: string | null;
           payment_status?: string | null;
           payment_terms?: string | null;
+          payment_terms_notes?: string | null;
+          payment_terms_type?:
+            | Database['public']['Enums']['payment_terms_type']
+            | null;
           ready_for_shipment?: boolean | null;
           shipped_at?: string | null;
           shipped_by?: string | null;
@@ -5704,6 +5727,17 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      create_manual_stock_movement: {
+        Args: {
+          p_movement_type: string;
+          p_notes?: string;
+          p_performed_by?: string;
+          p_product_id: string;
+          p_quantity_change: number;
+          p_reason_code?: string;
+        };
+        Returns: string;
+      };
       create_notification_for_owners: {
         Args: {
           p_action_label?: string;
@@ -5734,6 +5768,10 @@ export type Database = {
           id: string;
           notes: string | null;
           payment_terms: string | null;
+          payment_terms_notes: string | null;
+          payment_terms_type:
+            | Database['public']['Enums']['payment_terms_type']
+            | null;
           po_number: string;
           received_at: string | null;
           received_by: string | null;
@@ -5757,6 +5795,10 @@ export type Database = {
       };
       create_purchase_order_forecast_movements: {
         Args: { p_performed_by?: string; p_purchase_order_id: string };
+        Returns: undefined;
+      };
+      create_purchase_order_reception_movements: {
+        Args: { p_performed_by?: string; p_reception_id: string };
         Returns: undefined;
       };
       create_purchase_reception_movement: {
@@ -7064,6 +7106,14 @@ export type Database = {
       movement_type: 'IN' | 'OUT' | 'ADJUST' | 'TRANSFER';
       organisation_type: 'internal' | 'supplier' | 'customer' | 'partner';
       package_type: 'single' | 'pack' | 'bulk' | 'custom';
+      payment_terms_type:
+        | 'IMMEDIATE'
+        | 'NET_15'
+        | 'NET_30'
+        | 'NET_45'
+        | 'NET_60'
+        | 'NET_90'
+        | 'CUSTOM';
       product_status_type: 'active' | 'preorder' | 'discontinued' | 'draft';
       purchase_order_status:
         | 'draft'
@@ -7297,9 +7347,6 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       app_type: ['back-office', 'site-internet', 'linkme'],
@@ -7367,6 +7414,15 @@ export const Constants = {
       movement_type: ['IN', 'OUT', 'ADJUST', 'TRANSFER'],
       organisation_type: ['internal', 'supplier', 'customer', 'partner'],
       package_type: ['single', 'pack', 'bulk', 'custom'],
+      payment_terms_type: [
+        'IMMEDIATE',
+        'NET_15',
+        'NET_30',
+        'NET_45',
+        'NET_60',
+        'NET_90',
+        'CUSTOM',
+      ],
       product_status_type: ['active', 'preorder', 'discontinued', 'draft'],
       purchase_order_status: [
         'draft',

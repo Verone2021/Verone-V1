@@ -134,6 +134,7 @@ export function ButtonV2({
   disabled,
   className,
   children,
+  type = 'button',
   ...props
 }: ButtonV2Props) {
   const isDisabled = disabled || loading;
@@ -266,6 +267,7 @@ export function ButtonV2({
 
   return (
     <button
+      type={type}
       {...props}
       disabled={isDisabled}
       className={cn(

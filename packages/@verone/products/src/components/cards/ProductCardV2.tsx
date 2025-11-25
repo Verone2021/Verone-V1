@@ -128,7 +128,7 @@ export const ProductCardV2 = memo(function ProductCardV2({
         {primaryImage?.public_url && !imageLoading ? (
           <Image
             src={primaryImage.public_url}
-            alt={primaryImage.alt_text || product.name}
+            alt={primaryImage?.alt_text || product.name}
             fill
             priority={priority || (index !== undefined && index < 6)}
             loading={

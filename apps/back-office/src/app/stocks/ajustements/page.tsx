@@ -51,6 +51,7 @@ import {
 export default function StockAdjustmentsPage() {
   const router = useRouter();
 
+  // ✅ Filtres initiaux : ADJUST uniquement (mouvements réels)
   const {
     loading,
     movements,
@@ -62,7 +63,12 @@ export default function StockAdjustmentsPage() {
     exportMovements,
     hasFilters,
     pagination,
-  } = useMovementsHistory();
+  } = useMovementsHistory({
+    initialFilters: {
+      movementTypes: ['ADJUST'], // ✅ Filtre ADJUST dès l'initialisation
+      affects_forecast: false, // ✅ Mouvements réels uniquement
+    },
+  });
 
   const [selectedMovement, setSelectedMovement] =
     useState<MovementWithDetails | null>(null);
@@ -97,13 +103,7 @@ export default function StockAdjustmentsPage() {
   >(null);
   const [showOrderModal, setShowOrderModal] = useState(false);
 
-  // Filtrer automatiquement sur ADJUST au montage
-  useEffect(() => {
-    applyFilters({
-      movementTypes: ['ADJUST'],
-      affects_forecast: false,
-    });
-  }, []);
+  // ✅ Supprimé : useEffect pour filtrer sur ADJUST - maintenant via initialFilters
 
   // Pagination
   const handlePageChange = (newPage: number) => {

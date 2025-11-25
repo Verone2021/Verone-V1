@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { useToast } from '@verone/common/hooks';
 import { ProductThumbnail } from '@verone/products/components/images/ProductThumbnail';
@@ -23,6 +23,7 @@ import {
 } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Textarea } from '@verone/ui';
+import { formatPrice } from '@verone/utils';
 import { RefreshCw, AlertTriangle, Package, Search } from 'lucide-react';
 
 import { useStock } from '../../hooks';
@@ -61,6 +62,18 @@ export function GeneralStockMovementModal({
   // min_stock n'est pas dans ProductData, utiliser valeur par défaut
   const minLevel = 5;
   const reasonsByCategory = getReasonsByCategory();
+
+  // Pré-remplir le coût unitaire avec le prix d'achat du produit
+  useEffect(() => {
+    if (selectedProduct && movementType === 'add') {
+      const costPrice = (selectedProduct as any).cost_price;
+      if (costPrice && costPrice > 0) {
+        setUnitCost(String(costPrice));
+      } else {
+        setUnitCost('');
+      }
+    }
+  }, [selectedProduct, movementType]);
 
   // Validation en temps réel
   const getValidationMessage = () => {
@@ -262,7 +275,7 @@ export function GeneralStockMovementModal({
 
           {/* Informations produit sélectionné */}
           {selectedProduct && (
-            <div className="bg-gray-50 p-3 rounded-lg text-sm">
+            <div className="bg-gray-50 p-3 rounded-lg text-sm space-y-2">
               <div className="flex justify-between items-center">
                 <span>
                   <strong>SKU:</strong> {selectedProduct.sku}
@@ -271,8 +284,22 @@ export function GeneralStockMovementModal({
                   <strong>Stock actuel:</strong> {currentStock} unités
                 </span>
               </div>
+              {/* Prix d'achat et éco-taxe */}
+              <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                <span>
+                  <strong>Prix d'achat:</strong>{' '}
+                  {formatPrice((selectedProduct as any).cost_price || 0)}
+                </span>
+                {(selectedProduct as any).eco_tax_default &&
+                  (selectedProduct as any).eco_tax_default > 0 && (
+                    <span>
+                      <strong>Éco-taxe:</strong>{' '}
+                      {formatPrice((selectedProduct as any).eco_tax_default)}
+                    </span>
+                  )}
+              </div>
               {currentStock <= minLevel && (
-                <div className="flex items-center gap-2 mt-2 text-white">
+                <div className="flex items-center gap-2 mt-2 text-orange-600 bg-orange-50 p-2 rounded">
                   <AlertTriangle className="h-4 w-4" />
                   <span>Stock sous le seuil minimum ({minLevel})</span>
                 </div>
@@ -443,7 +470,15 @@ export function GeneralStockMovementModal({
           {/* Coût unitaire optionnel */}
           {movementType === 'add' && (
             <div className="space-y-2">
-              <Label>Coût unitaire (optionnel)</Label>
+              <Label>
+                Coût unitaire (optionnel)
+                {selectedProduct && (selectedProduct as any).cost_price > 0 && (
+                  <span className="text-xs text-gray-500 ml-2 font-normal">
+                    (indicatif:{' '}
+                    {formatPrice((selectedProduct as any).cost_price)})
+                  </span>
+                )}
+              </Label>
               <Input
                 type="number"
                 step="0.01"

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
+import { useToast } from '@verone/common/hooks';
 import { Label } from '@verone/ui';
 import { RadioGroup, RadioGroupItem } from '@verone/ui';
 import {
@@ -12,7 +13,6 @@ import {
   SelectValue,
 } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
-import { useToast } from '@verone/common/hooks';
 
 import { CreateIndividualCustomerModal } from './create-individual-customer-modal';
 import { CreateOrganisationModal } from './create-organisation-modal';
@@ -24,8 +24,12 @@ export interface UnifiedCustomer {
   name: string;
   type: CustomerType;
   // Conditions de paiement
-  payment_terms?: string | null;
+  payment_terms?: string | null; // DEPRECATED - garder pour rétro-compatibilité
+  payment_terms_type?: string | null; // NOUVEAU - enum payment_terms_type
+  payment_terms_notes?: string | null; // NOUVEAU - notes complémentaires
   prepayment_required?: boolean | null;
+  // Canal de vente par défaut
+  default_channel_id?: string | null;
   // Adresses pour B2B (organisations)
   billing_address_line1?: string;
   billing_address_line2?: string;
@@ -102,7 +106,10 @@ export function CustomerSelector({
             legal_name,
             trade_name,
             payment_terms,
+            payment_terms_type,
+            payment_terms_notes,
             prepayment_required,
+            default_channel_id,
             billing_address_line1,
             billing_address_line2,
             billing_city,
@@ -151,6 +158,8 @@ export function CustomerSelector({
             id,
             first_name,
             last_name,
+            payment_terms_type,
+            payment_terms_notes,
             address_line1,
             address_line2,
             city,

@@ -147,6 +147,7 @@ export async function createUserWithRole(
         user_type: 'staff',
         scopes: [], // À définir selon les besoins
         partner_id: null,
+        organisation_id: null, // ✅ CORRECTION : Explicitement NULL pour staff back-office
         // Note: first_name, last_name, phone, job_title pas encore dans le schéma
         // Ces colonnes seront ajoutées dans une prochaine migration
       });

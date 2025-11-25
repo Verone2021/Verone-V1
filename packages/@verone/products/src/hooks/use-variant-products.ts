@@ -2,8 +2,8 @@
 
 import { useState, useCallback } from 'react';
 
-import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@verone/common/hooks';
+import { createClient } from '@verone/utils/supabase/client';
 
 export interface VariantProduct {
   id: string;
@@ -17,7 +17,6 @@ export interface VariantProduct {
   variant_position: number;
   is_variant_parent: boolean;
   stock_quantity?: number;
-  main_image_url?: string;
   created_at: string;
   updated_at: string;
 }

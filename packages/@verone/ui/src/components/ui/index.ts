@@ -17,9 +17,7 @@ export {
   type ButtonProps,
   type ButtonV2Props,
 } from './button';
-export * from './action-button';
-export * from './modern-action-button';
-export * from './standard-modify-button';
+// Composants supprimés (non utilisés) : action-button, modern-action-button, standard-modify-button
 
 // ========================================
 // FORM COMPONENTS
@@ -95,9 +93,7 @@ export * from './calendar';
 // KPI & METRICS COMPONENTS
 // ========================================
 export * from './kpi-card-unified';
-export * from './compact-kpi-card';
-export * from './medium-kpi-card';
-export * from './elegant-kpi-card';
+// Composants supprimés (non utilisés) : compact-kpi-card, medium-kpi-card, elegant-kpi-card
 
 // ========================================
 // NAVIGATION COMPONENTS

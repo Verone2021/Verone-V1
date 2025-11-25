@@ -272,9 +272,6 @@ export default function InventairePage() {
                       <th className="text-left py-2 px-3 font-medium text-gray-900 text-xs">
                         Produit
                       </th>
-                      <th className="text-left py-2 px-3 font-medium text-gray-900 text-xs">
-                        SKU
-                      </th>
                       <th className="text-right py-2 px-3 font-medium text-gray-900 text-xs">
                         Entrées
                       </th>
@@ -286,6 +283,15 @@ export default function InventairePage() {
                       </th>
                       <th className="text-right py-2 px-3 font-medium text-gray-900 text-xs">
                         Stock
+                      </th>
+                      <th className="text-right py-2 px-3 font-medium text-gray-900 text-xs">
+                        Prév. Entrant
+                      </th>
+                      <th className="text-right py-2 px-3 font-medium text-gray-900 text-xs">
+                        Prév. Sortant
+                      </th>
+                      <th className="text-right py-2 px-3 font-medium text-gray-900 text-xs">
+                        Prév. Total
                       </th>
                       <th className="text-left py-2 px-3 font-medium text-gray-900 text-xs">
                         Dernière MAJ
@@ -325,11 +331,6 @@ export default function InventairePage() {
                             {item.name}
                           </Link>
                         </td>
-                        <td className="py-2 px-3">
-                          <span className="text-gray-500 font-mono text-xs">
-                            {item.sku}
-                          </span>
-                        </td>
                         <td className="py-2 px-3 text-right">
                           <div className="flex items-center justify-end gap-1">
                             <TrendingUp className="h-4 w-4 text-black" />
@@ -367,7 +368,38 @@ export default function InventairePage() {
                         </td>
                         <td className="py-2 px-3 text-right">
                           <span className="font-bold text-black text-base">
-                            {item.stock_quantity}
+                            {item.stock_real}
+                          </span>
+                        </td>
+                        <td className="py-2 px-3 text-right">
+                          {item.stock_forecasted_in > 0 ? (
+                            <span className="flex items-center justify-end gap-1 text-green-600">
+                              <TrendingUp className="h-3 w-3" />
+                              <span className="font-medium text-sm">
+                                +{item.stock_forecasted_in}
+                              </span>
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 text-xs">-</span>
+                          )}
+                        </td>
+                        <td className="py-2 px-3 text-right">
+                          {item.stock_forecasted_out > 0 ? (
+                            <span className="flex items-center justify-end gap-1 text-orange-600">
+                              <TrendingDown className="h-3 w-3" />
+                              <span className="font-medium text-sm">
+                                -{item.stock_forecasted_out}
+                              </span>
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 text-xs">-</span>
+                          )}
+                        </td>
+                        <td className="py-2 px-3 text-right">
+                          <span className="font-bold text-blue-600 text-base">
+                            {item.stock_real +
+                              item.stock_forecasted_in -
+                              item.stock_forecasted_out}
                           </span>
                         </td>
                         <td className="py-2 px-3">

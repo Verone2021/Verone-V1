@@ -4,7 +4,9 @@ import React, { useEffect, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { useProductMetrics } from '@verone/dashboard';
 import { KPICardUnified } from '@verone/ui';
+import { colors } from '@verone/ui/design-system';
 import {
   Package,
   Grid3x3,
@@ -18,9 +20,6 @@ import {
   TrendingUp,
   BarChart3,
 } from 'lucide-react';
-
-import { useProductMetrics } from '@verone/dashboard';
-import { colors } from '@verone/ui/design-system';
 
 export default function ProduitsPage() {
   const router = useRouter();
@@ -75,7 +74,7 @@ export default function ProduitsPage() {
       title: 'Validation',
       description: 'Valider produits sourcés',
       icon: CheckCircle2,
-      path: '/produits/sourcing/validation',
+      path: '/produits/sourcing',
       gradient: 'from-green-500 to-green-600',
       iconBg: 'bg-green-100',
       iconColor: 'text-green-600',
@@ -227,7 +226,7 @@ export default function ProduitsPage() {
               value={loading ? '...' : validationsPendingCount}
               icon={Clock}
               description="En attente validation"
-              onClick={() => router.push('/produits/sourcing/validation')}
+              onClick={() => router.push('/produits/sourcing')}
             />
           </div>
         </div>
