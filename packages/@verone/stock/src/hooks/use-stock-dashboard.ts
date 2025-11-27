@@ -22,6 +22,11 @@ interface StockOverview {
   total_forecasted_in: number; // Total entrées prévisionnelles (commandes fournisseurs)
   total_forecasted_out: number; // Total sorties prévisionnelles (commandes clients)
   total_available: number; // Stock disponible (réel - prévisionnel sortant)
+  // ✅ NOUVEAUX KPIS Phase 3.7 - Inspirés ERP (ClicData, EazyStock)
+  po_total_ht: number; // Valeur HT commandes fournisseurs en cours
+  so_total_ht: number; // Valeur HT commandes clients en cours
+  po_count: number; // Nombre de PO en cours
+  so_count: number; // Nombre de SO en cours
 }
 
 interface MovementsSummary {
@@ -189,6 +194,11 @@ export function useStockDashboard() {
         productsWithRealMovements.has(p.id)
       );
 
+      // ✅ FIX Phase 3.7: total_forecasted_in/out DOIT utiliser TOUS les produits
+      // Pas seulement ceux avec mouvements récents !
+      // Sinon un produit avec stock_forecasted_in = 6 mais sans mouvement est EXCLU
+      const allProductsForForecasts = productsWithLegacyFields;
+
       const overview: StockOverview = {
         total_products: realProducts.length, // ✅ FIX: Uniquement produits avec mouvements
         total_quantity: realProducts.reduce(
@@ -210,21 +220,26 @@ export function useStockDashboard() {
             p.min_stock > 0 &&
             p.stock_real <= p.min_stock
         ).length, // ✅ FIX: Alertes sur produits réels
-        // NOUVEAUX CALCULS PRÉVISIONNELS (sur produits réels uniquement)
-        total_forecasted_in: realProducts.reduce(
+        // ✅ FIX Phase 3.7: Calculs prévisionnels sur TOUS les produits (pas realProducts!)
+        total_forecasted_in: allProductsForForecasts.reduce(
           (sum, p) => sum + (p.stock_forecasted_in || 0),
           0
         ),
-        total_forecasted_out: realProducts.reduce(
+        total_forecasted_out: allProductsForForecasts.reduce(
           (sum, p) => sum + (p.stock_forecasted_out || 0),
           0
         ),
-        total_available: realProducts.reduce(
+        total_available: allProductsForForecasts.reduce(
           (sum, p) =>
             sum +
             Math.max((p.stock_real || 0) - (p.stock_forecasted_out || 0), 0),
           0
         ),
+        // ✅ NOUVEAUX KPIS Phase 3.7: Seront calculés après queries PO/SO
+        po_total_ht: 0, // Placeholder, sera mis à jour
+        so_total_ht: 0,
+        po_count: 0,
+        so_count: 0,
       };
 
       // ============================================
@@ -333,9 +348,10 @@ export function useStockDashboard() {
       // ============================================
       // QUERY 5 & 6: Commandes Prévisionnelles
       // Récupération des commandes fournisseurs et clients en cours
+      // ✅ Phase 3.7: Ajout total_ht pour KPIs valeur
       // ============================================
 
-      // QUERY 5: Purchase Orders (commandes fournisseurs)
+      // QUERY 5: Purchase Orders (commandes fournisseurs) - TOP 5 pour affichage
       const { data: purchaseOrders, error: poError } = await supabase
         .from('purchase_orders')
         .select(
@@ -345,6 +361,7 @@ export function useStockDashboard() {
           expected_delivery_date,
           status,
           supplier_id,
+          total_ht,
           purchase_order_items(quantity)
         `
         )
@@ -354,7 +371,7 @@ export function useStockDashboard() {
 
       if (poError) throw poError;
 
-      // QUERY 6: Sales Orders (commandes clients)
+      // QUERY 6: Sales Orders (commandes clients) - TOP 5 pour affichage
       const { data: salesOrders, error: soError } = await supabase
         .from('sales_orders')
         .select(
@@ -365,6 +382,7 @@ export function useStockDashboard() {
           status,
           customer_id,
           customer_type,
+          total_ht,
           sales_order_items(quantity)
         `
         )
@@ -373,6 +391,38 @@ export function useStockDashboard() {
         .limit(5);
 
       if (soError) throw soError;
+
+      // ✅ NOUVEAUX QUERY 7 & 8: Agrégats TOTAUX (sans limite) pour KPIs
+      const [poAggregates, soAggregates] = await Promise.all([
+        // Query 7: Tous les PO en cours (COUNT + SUM)
+        supabase
+          .from('purchase_orders')
+          .select('id, total_ht')
+          .in('status', ['validated', 'partially_received']),
+        // Query 8: Tous les SO en cours (COUNT + SUM)
+        supabase
+          .from('sales_orders')
+          .select('id, total_ht')
+          .in('status', ['validated', 'partially_shipped']),
+      ]);
+
+      // Calculer totaux HT et counts
+      const poCount = poAggregates.data?.length || 0;
+      const poTotalHt = (poAggregates.data || []).reduce(
+        (sum, po) => sum + (po.total_ht || 0),
+        0
+      );
+      const soCount = soAggregates.data?.length || 0;
+      const soTotalHt = (soAggregates.data || []).reduce(
+        (sum, so) => sum + (so.total_ht || 0),
+        0
+      );
+
+      // ✅ Mettre à jour overview avec les nouveaux KPIs
+      overview.po_total_ht = poTotalHt;
+      overview.so_total_ht = soTotalHt;
+      overview.po_count = poCount;
+      overview.so_count = soCount;
 
       // Mapper Purchase Orders avec supplier names
       const incomingOrders: ForecastedOrder[] = [];
@@ -476,6 +526,18 @@ export function useStockDashboard() {
     fetchDashboardMetrics();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Charge une seule fois au montage
+
+  // ✅ Phase 3.7: Auto-refresh 60 secondes
+  // Inspiré best practices ERP (ClicData recommande 30-120s pour dashboards temps réel)
+  // 60 sec = bon compromis fraîcheur vs charge serveur
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      fetchDashboardMetrics();
+    }, 60000); // 60 secondes
+
+    return () => clearInterval(intervalId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Démarre interval une seule fois
 
   return {
     metrics,

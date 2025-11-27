@@ -8,6 +8,16 @@ import { Alert, AlertDescription } from '@verone/ui';
 import { Button } from '@verone/ui';
 import { Card, CardContent } from '@verone/ui';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@verone/ui';
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -72,6 +82,9 @@ export function QuickPurchaseOrderModal({
   const [ecoTax, setEcoTax] = useState<number>(0); // ✅ Taxe éco-responsable
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [hasConfirmedInsufficientQty, setHasConfirmedInsufficientQty] =
+    useState(false);
 
   // Chargement des données produit + vérification draft
   useEffect(() => {
@@ -185,13 +198,9 @@ export function QuickPurchaseOrderModal({
   async function handleSubmit() {
     if (!product) return;
 
-    const minQuantity = shortageQuantity || 1;
-
-    // Validation quantité >= shortage_quantity
-    if (quantity < minQuantity) {
-      setError(
-        `La quantité doit être >= ${minQuantity} (stock minimum requis)`
-      );
+    // Validation quantité > 0
+    if (quantity <= 0) {
+      setError('La quantité doit être supérieure à 0');
       return;
     }
 
@@ -200,6 +209,26 @@ export function QuickPurchaseOrderModal({
       setError('Le prix unitaire HT doit être supérieur à 0');
       return;
     }
+
+    // Si quantité < shortage requis ET pas encore confirmé → Ouvrir modal de confirmation
+    // hasConfirmedInsufficientQty permet de bypasser le modal après clic sur "Non, garder X"
+    if (
+      shortageQuantity &&
+      shortageQuantity > 0 &&
+      quantity < shortageQuantity &&
+      !hasConfirmedInsufficientQty
+    ) {
+      setShowConfirmModal(true);
+      return;
+    }
+
+    // Procéder à la création de commande
+    await submitOrder();
+  }
+
+  // Fonction de soumission effective (appelée après confirmation ou directement)
+  async function submitOrder() {
+    if (!product) return;
 
     const result = await addToDraftOrder({
       productId: product.id,
@@ -215,6 +244,7 @@ export function QuickPurchaseOrderModal({
       // Reset états
       setQuantity(1);
       setError(null);
+      setHasConfirmedInsufficientQty(false);
     }
   }
 
@@ -304,7 +334,11 @@ export function QuickPurchaseOrderModal({
                     type="number"
                     min="1"
                     value={quantity}
-                    onChange={e => setQuantity(Number(e.target.value))}
+                    onChange={e => {
+                      setQuantity(Number(e.target.value));
+                      // Réinitialiser le flag si l'utilisateur modifie la quantité
+                      setHasConfirmedInsufficientQty(false);
+                    }}
                     disabled={isSubmitting}
                   />
                 </div>
@@ -398,6 +432,23 @@ export function QuickPurchaseOrderModal({
                 </CardContent>
               </Card>
 
+              {/* Info: quantité < manque requis (le modal de confirmation s'ouvrira au clic) */}
+              {shortageQuantity &&
+                shortageQuantity > 0 &&
+                quantity < shortageQuantity && (
+                  <Alert className="border-blue-500 bg-blue-50">
+                    <Info className="h-4 w-4 text-blue-600" />
+                    <AlertDescription className="text-blue-700">
+                      <strong>Information :</strong> La quantité actuelle (
+                      {quantity}) est inférieure au seuil minimum (
+                      {shortageQuantity}).
+                      <br />
+                      Une confirmation vous sera demandée avant la création de
+                      la commande.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
               {/* Message erreur */}
               {error && (
                 <Alert variant="destructive">
@@ -429,6 +480,52 @@ export function QuickPurchaseOrderModal({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* Modal de confirmation si quantité insuffisante */}
+      <AlertDialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Quantité insuffisante</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>
+                  Il manque{' '}
+                  <strong>
+                    {(shortageQuantity || 0) - quantity} unité
+                    {(shortageQuantity || 0) - quantity > 1 ? 's' : ''}
+                  </strong>{' '}
+                  pour atteindre le seuil minimum ({shortageQuantity}).
+                </p>
+                <p>
+                  Souhaitez-vous ajuster la quantité à{' '}
+                  <strong>{shortageQuantity}</strong> ?
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setShowConfirmModal(false);
+                // L'utilisateur garde sa quantité, peut re-cliquer sur Créer commande pour valider
+                // On marque qu'il a confirmé vouloir garder la quantité insuffisante
+                setHasConfirmedInsufficientQty(true);
+              }}
+            >
+              Non, garder {quantity}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setQuantity(shortageQuantity || quantity);
+                setShowConfirmModal(false);
+                // L'utilisateur voit la nouvelle quantité, doit re-cliquer pour valider
+              }}
+            >
+              Oui, ajuster à {shortageQuantity}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

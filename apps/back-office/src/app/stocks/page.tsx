@@ -40,7 +40,12 @@ export default function StocksDashboardPage() {
   const { metrics, loading, error, refetch } = useStockDashboard();
 
   // 🆕 Phase 3.6: Hooks widgets minimalistes
-  const { alerts, criticalAlerts, loading: alertsLoading } = useStockAlerts();
+  const {
+    alerts,
+    criticalAlerts,
+    loading: alertsLoading,
+    fetchAlerts,
+  } = useStockAlerts();
   const {
     movements: lastMovements,
     loading: movementsLoading,
@@ -51,6 +56,15 @@ export default function StocksDashboardPage() {
   useEffect(() => {
     fetchMovements({ affects_forecast: false, limit: 5 });
   }, [fetchMovements]);
+
+  // ✅ Auto-refresh alertes stock toutes les 30 secondes (cohérent avec /stocks/alertes)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchAlerts();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [fetchAlerts]);
 
   // Extraction des métriques avec fallbacks
   const overview = metrics?.overview || {
@@ -287,15 +301,15 @@ export default function StocksDashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* 🆕 Widget: Alertes Stock Critiques */}
+            {/* 🆕 Widget: Alertes Stock (toutes sévérités) */}
             <Card className="border-gray-200 rounded-[10px]">
               <CardHeader className="pb-3">
                 <CardTitle className="text-black text-base flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-red-500" />
-                  Alertes Stock Critiques
+                  <AlertTriangle className="h-4 w-4 text-orange-500" />
+                  Alertes Stock
                 </CardTitle>
                 <CardDescription className="text-xs">
-                  Top 3 alertes nécessitant action immédiate
+                  Top 3 alertes nécessitant attention
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -307,55 +321,89 @@ export default function StocksDashboardPage() {
                         Chargement alertes...
                       </p>
                     </div>
-                  ) : criticalAlerts.length === 0 ? (
+                  ) : alerts.length === 0 ? (
                     <div className="text-center py-6">
                       <CheckCircle className="h-10 w-10 text-green-500 mx-auto mb-2" />
                       <p className="text-sm text-gray-500">
-                        Aucune alerte critique actuellement
+                        Aucune alerte stock actuellement
                       </p>
                     </div>
                   ) : (
                     <>
-                      {criticalAlerts.slice(0, 3).map(alert => (
-                        <div
-                          key={alert.id}
-                          className="flex items-center gap-3 border-b border-gray-100 pb-2 last:border-0"
-                        >
-                          {/* Photo produit */}
-                          <ProductThumbnail
-                            src={alert.product_image_url}
-                            alt={alert.product_name}
-                            size="sm"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <Link
-                              href={`/produits/catalogue/${alert.product_id}`}
-                              className="text-sm font-medium text-black hover:text-blue-600 hover:underline transition-colors block truncate"
-                            >
-                              {alert.product_name}
-                            </Link>
-                            <p className="text-xs text-gray-500 mt-0.5">
-                              {alert.sku}
-                            </p>
-                          </div>
-                          <div className="text-right flex items-center gap-2 ml-2 flex-shrink-0">
-                            <Badge
-                              variant="outline"
-                              className="border-red-300 text-red-600 text-xs"
-                            >
-                              {alert.stock_real} réel
-                            </Badge>
-                            {alert.min_stock && (
+                      {alerts.slice(0, 3).map(alert => {
+                        // ✅ Phase 3.7: Calcul stock prévisionnel pour affichage
+                        const stockPrevisionnel =
+                          alert.stock_real +
+                          (alert.stock_forecasted_in || 0) -
+                          (alert.stock_forecasted_out || 0);
+                        const seuilAtteint =
+                          stockPrevisionnel >= (alert.min_stock || 0);
+
+                        return (
+                          <div
+                            key={alert.id}
+                            className={`flex items-center gap-3 border-l-4 rounded-r-lg px-3 py-2 mb-2 last:mb-0 ${
+                              alert.validated && seuilAtteint
+                                ? 'border-green-500 bg-green-50'
+                                : alert.is_in_draft
+                                  ? 'border-orange-500 bg-orange-50'
+                                  : 'border-red-500 bg-red-50'
+                            }`}
+                          >
+                            {/* Photo produit */}
+                            <ProductThumbnail
+                              src={alert.product_image_url}
+                              alt={alert.product_name}
+                              size="sm"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <Link
+                                href={`/produits/catalogue/${alert.product_id}`}
+                                className="text-sm font-medium text-black hover:text-blue-600 hover:underline transition-colors block truncate"
+                              >
+                                {alert.product_name}
+                              </Link>
+                              <p className="text-xs text-gray-500 mt-0.5">
+                                {alert.sku}
+                              </p>
+                              {/* ✅ Phase 3.7: Afficher statut commande si disponible */}
+                              {alert.is_in_draft &&
+                                alert.draft_order_number && (
+                                  <p className="text-xs text-orange-600 mt-1 font-medium">
+                                    ⏳ En attente: {alert.draft_order_number} (
+                                    {alert.quantity_in_draft} unités)
+                                  </p>
+                                )}
+                              {alert.validated && seuilAtteint && (
+                                <p className="text-xs text-green-600 mt-1 font-medium">
+                                  ✅ Validé - Stock prévu suffisant
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-right flex flex-col gap-1 ml-2 flex-shrink-0">
                               <Badge
                                 variant="outline"
-                                className="border-orange-300 text-orange-600 text-xs"
+                                className="border-gray-300 text-gray-600 text-xs"
                               >
-                                Min: {alert.min_stock}
+                                {alert.stock_real} réel → {stockPrevisionnel}{' '}
+                                prévu
                               </Badge>
-                            )}
+                              {alert.min_stock && (
+                                <Badge
+                                  variant="outline"
+                                  className={`text-xs ${
+                                    seuilAtteint
+                                      ? 'border-green-300 text-green-600'
+                                      : 'border-red-300 text-red-600'
+                                  }`}
+                                >
+                                  Seuil: {alert.min_stock}
+                                </Badge>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                       <ButtonV2
                         variant="outline"
                         size="sm"

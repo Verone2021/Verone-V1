@@ -94,15 +94,23 @@ export default function StockPrevisionnelPage() {
   const incomingOrders = metrics?.incoming_orders || [];
   const outgoingOrders = metrics?.outgoing_orders || [];
 
-  // Calculer stock disponible futur
-  const stockRealTotal = overview?.total_quantity || 0;
+  // ✅ Phase 3.7: 6 KPIs séparés Entrées/Sorties (Best Practice ERP)
+  // Source: ClicData & EazyStock recommandent de séparer inbound/outbound metrics
   const forecastIn = overview?.total_forecasted_in || 0;
   const forecastOut = Math.abs(overview?.total_forecasted_out || 0);
-  const stockFutur = stockRealTotal - forecastOut + forecastIn;
+  const poTotalHt = overview?.po_total_ht || 0;
+  const soTotalHt = overview?.so_total_ht || 0;
+  const poCount = overview?.po_count || 0;
+  const soCount = overview?.so_count || 0;
 
-  // Compter commandes en attente
-  const nbCommandesFournisseurs = incomingOrders.length;
-  const nbCommandesClients = outgoingOrders.length;
+  // Formateur monétaire
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 2,
+    }).format(value);
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -134,42 +142,64 @@ export default function StockPrevisionnelPage() {
           </div>
         </div>
 
-        {/* 4 KPI Cards Prévisionnels */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* KPI 1: Entrées Prévues */}
+        {/* ✅ Phase 3.7: 6 KPIs en 2 lignes de 3 - Best Practice ERP */}
+        {/* Ligne 1: ENTRÉES (achats, fournisseurs, réceptions) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* KPI 1: Entrées Prévues (unités) */}
           <StockKPICard
             title="Entrées Prévues"
             value={`+${forecastIn}`}
-            subtitle="unités attendues"
+            subtitle="unités à recevoir"
             icon={TrendingUp}
             variant="success"
           />
 
-          {/* KPI 2: Sorties Prévues */}
+          {/* KPI 2: Valeur Achats HT */}
+          <StockKPICard
+            title="Valeur Achats"
+            value={formatCurrency(poTotalHt)}
+            subtitle="commandes fournisseurs HT"
+            icon={Truck}
+            variant="success"
+          />
+
+          {/* KPI 3: Nb Commandes Fournisseurs */}
+          <StockKPICard
+            title="Commandes Fournisseurs"
+            value={poCount.toString()}
+            subtitle="PO à réceptionner"
+            icon={Package}
+            variant="success"
+          />
+        </div>
+
+        {/* Ligne 2: SORTIES (ventes, clients, expéditions) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* KPI 4: Sorties Prévues (unités) */}
           <StockKPICard
             title="Sorties Prévues"
-            value={`-${forecastOut}`}
-            subtitle="unités planifiées"
+            value={forecastOut > 0 ? `-${forecastOut}` : '0'}
+            subtitle="unités à expédier"
             icon={TrendingDown}
             variant="danger"
           />
 
-          {/* KPI 3: Stock Disponible Futur */}
+          {/* KPI 5: Valeur Ventes HT */}
           <StockKPICard
-            title="Stock Futur"
-            value={stockFutur.toString()}
-            subtitle="unités après commandes"
-            icon={Package}
-            variant="default"
+            title="Valeur Ventes"
+            value={formatCurrency(soTotalHt)}
+            subtitle="commandes clients HT"
+            icon={ShoppingCart}
+            variant="danger"
           />
 
-          {/* KPI 4: Total Commandes */}
+          {/* KPI 6: Nb Commandes Clients */}
           <StockKPICard
-            title="Commandes en attente"
-            value={(nbCommandesFournisseurs + nbCommandesClients).toString()}
-            subtitle="commandes actives"
+            title="Commandes Clients"
+            value={soCount.toString()}
+            subtitle="SO à expédier"
             icon={Clock}
-            variant="default"
+            variant="danger"
           />
         </div>
 
@@ -188,11 +218,11 @@ export default function StockPrevisionnelPage() {
               <TabsList className="grid w-full grid-cols-2 mb-4">
                 <TabsTrigger value="in" className="flex items-center gap-2">
                   <Truck className="h-4 w-4" />
-                  Entrées Prévues ({nbCommandesFournisseurs})
+                  Entrées Prévues ({poCount})
                 </TabsTrigger>
                 <TabsTrigger value="out" className="flex items-center gap-2">
                   <ShoppingCart className="h-4 w-4" />
-                  Sorties Prévues ({nbCommandesClients})
+                  Sorties Prévues ({soCount})
                 </TabsTrigger>
               </TabsList>
 

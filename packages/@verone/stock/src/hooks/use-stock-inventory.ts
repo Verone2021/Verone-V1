@@ -12,6 +12,7 @@ interface ProductInventory {
   stock_real: number;
   stock_forecasted_in: number;
   stock_forecasted_out: number;
+  min_stock: number;
   total_in: number;
   total_out: number;
   total_adjustments: number;
@@ -62,6 +63,7 @@ export function useStockInventory() {
           stock_real,
           stock_forecasted_in,
           stock_forecasted_out,
+          min_stock,
           cost_price,
           product_images!left(public_url)
         `
@@ -143,6 +145,7 @@ export function useStockInventory() {
             stock_real: product.stock_real || 0,
             stock_forecasted_in: (product as any).stock_forecasted_in || 0,
             stock_forecasted_out: (product as any).stock_forecasted_out || 0,
+            min_stock: (product as any).min_stock || 5, // Seuil minimum du produit (fallback 5)
             total_in,
             total_out,
             total_adjustments,
@@ -153,9 +156,14 @@ export function useStockInventory() {
 
         const inventoryData = await Promise.all(inventoryPromises);
 
-        // Filtrer pour ne garder que les produits avec mouvements
+        // ✅ Filtrer pour garder les produits avec mouvements OU avec prévisionnel
+        // Cela permet de voir les produits avec commandes validées même sans mouvement de stock
+        // Le "rollback" est automatique : si le prévisionnel retombe à 0 et pas de mouvement, la ligne disparaît
         const activeInventory = inventoryData.filter(
-          item => item.movement_count > 0
+          item =>
+            item.movement_count > 0 ||
+            item.stock_forecasted_in > 0 ||
+            item.stock_forecasted_out > 0
         );
 
         // Calculer les statistiques

@@ -594,10 +594,22 @@ export default function StockAlertesPage() {
                             return;
                           }
 
-                          // Sinon, exécuter action par défaut (Commander Fournisseur)
-                          if (alert.action) {
-                            alert.action.handler();
-                          }
+                          // Calculer le manque réel : min_stock - stock_previsionnel
+                          const stockPrevisionnel =
+                            clickedAlert.stock_real +
+                            (clickedAlert.stock_forecasted_in || 0) -
+                            (clickedAlert.stock_forecasted_out || 0);
+                          const manqueReel = Math.max(
+                            0,
+                            clickedAlert.min_stock - stockPrevisionnel
+                          );
+
+                          // Ouvrir modal commande avec le manque réel calculé
+                          setSelectedProductForOrder({
+                            productId: clickedAlert.product_id,
+                            shortageQuantity: manqueReel,
+                          });
+                          setShowQuickPurchaseModal(true);
                         }}
                       />
                     ))}
@@ -666,9 +678,28 @@ export default function StockAlertesPage() {
                           validated_at: alert.validated_at || null,
                         }}
                         onActionClick={clickedAlert => {
+                          // Si clic sur badge commande brouillon → Ouvrir détails
                           if (clickedAlert.draft_order_id) {
                             handleOpenOrderDetail(clickedAlert.draft_order_id);
+                            return;
                           }
+
+                          // Calculer le manque réel : min_stock - stock_previsionnel
+                          const stockPrevisionnel =
+                            clickedAlert.stock_real +
+                            (clickedAlert.stock_forecasted_in || 0) -
+                            (clickedAlert.stock_forecasted_out || 0);
+                          const manqueReel = Math.max(
+                            0,
+                            clickedAlert.min_stock - stockPrevisionnel
+                          );
+
+                          // Ouvrir modal commande avec le manque réel calculé
+                          setSelectedProductForOrder({
+                            productId: clickedAlert.product_id,
+                            shortageQuantity: manqueReel,
+                          });
+                          setShowQuickPurchaseModal(true);
                         }}
                       />
                     ))}

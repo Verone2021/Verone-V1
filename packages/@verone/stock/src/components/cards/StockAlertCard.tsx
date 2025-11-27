@@ -102,16 +102,17 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
     }
   };
 
-  // 🔍 DEBUG MOUCHARD
-  console.log('DEBUG ALERTE:', {
-    sku: alert.sku,
-    validated: alert.validated,
-    real: alert.stock_real,
-    in: alert.stock_forecasted_in,
-    out: alert.stock_forecasted_out,
-    min: alert.min_stock,
-    logic_vert: (alert.validated && (alert.stock_real + (alert.stock_forecasted_in||0) - (alert.stock_forecasted_out||0)) >= alert.min_stock)
-  });
+  // Calcul stock prévisionnel pour condition bouton
+  const stock_previsionnel =
+    alert.stock_real +
+    (alert.stock_forecasted_in || 0) -
+    (alert.stock_forecasted_out || 0);
+
+  // Seuil atteint = bouton grisé (ne peut plus commander)
+  const seuilAtteint = stock_previsionnel >= alert.min_stock;
+
+  // Manque réel pour atteindre le seuil
+  const manque = Math.max(0, alert.min_stock - stock_previsionnel);
 
   return (
     <Card className={`border-2 ${getSeverityColor()}`}>
@@ -157,21 +158,27 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
               <div className="flex gap-2 flex-shrink-0">
                 <Button
                   size="sm"
-                  variant={alert.is_in_draft ? 'outline' : 'primary'}
+                  variant={
+                    alert.is_in_draft
+                      ? 'outline'
+                      : seuilAtteint
+                        ? 'outline'
+                        : 'primary'
+                  }
                   onClick={() => onActionClick?.(alert)}
-                  disabled={alert.is_in_draft || alert.validated}
-                  className={`text-xs ${alert.is_in_draft ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={alert.is_in_draft || seuilAtteint}
+                  className={`text-xs ${alert.is_in_draft || seuilAtteint ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {alert.is_in_draft
                     ? 'Déjà commandé'
-                    : alert.alert_type === 'no_stock_but_ordered'
-                      ? 'Voir Commandes'
-                      : 'Commander Fournisseur'}
+                    : seuilAtteint
+                      ? 'Seuil atteint'
+                      : alert.alert_type === 'no_stock_but_ordered'
+                        ? 'Voir Commandes'
+                        : 'Commander Fournisseur'}
                 </Button>
                 {alert.draft_order_id ? (
-                  <Link
-                    href={`/commandes/fournisseurs`}
-                  >
+                  <Link href={`/commandes/fournisseurs`}>
                     <Button size="sm" variant="outline" className="text-xs">
                       Voir Commande
                     </Button>
@@ -265,13 +272,27 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
                 </div>
               )}
 
-            {alert.validated && (
+            {/* Badge Validé avec indication du manque si insuffisant */}
+            {alert.validated && seuilAtteint && (
               <div className="mt-2">
                 <Badge
                   variant="outline"
                   className="border-green-600 bg-green-100 text-green-800 text-xs font-medium"
                 >
                   ✅ Validé - Stock prévisionnel suffisant
+                </Badge>
+              </div>
+            )}
+
+            {/* Message d'alerte si commande validée mais insuffisante */}
+            {alert.validated && !seuilAtteint && manque > 0 && (
+              <div className="mt-2">
+                <Badge
+                  variant="outline"
+                  className="border-orange-500 bg-orange-50 text-orange-700 text-xs font-medium"
+                >
+                  ⚠️ Commande validée mais il manque encore {manque} unité
+                  {manque > 1 ? 's' : ''} pour atteindre le seuil
                 </Badge>
               </div>
             )}

@@ -14,6 +14,7 @@ import { useStockInventory } from '@verone/stock';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent } from '@verone/ui';
+import { IconButton } from '@verone/ui';
 import {
   Dialog,
   DialogContent,
@@ -39,6 +40,10 @@ import {
   User,
   FileText,
   ExternalLink,
+  Filter,
+  X,
+  AlertTriangle,
+  CheckCircle,
 } from 'lucide-react';
 
 import { StockKPICard } from '@/components/ui-v2/stock';
@@ -51,6 +56,13 @@ export default function InventairePage() {
     dateFrom: '',
     dateTo: '',
   });
+  const [showOnlyWithStock, setShowOnlyWithStock] = useState(false);
+  const [quickDateFilter, setQuickDateFilter] = useState<
+    'all' | 'today' | '7days' | '30days'
+  >('all');
+  const [stockLevelFilter, setStockLevelFilter] = useState<
+    'all' | 'critical' | 'low' | 'sufficient'
+  >('all');
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isReportsModalOpen, setIsReportsModalOpen] = useState(false);
@@ -100,6 +112,80 @@ export default function InventairePage() {
     setSelectedProduct(product);
     setIsAdjustmentModalOpen(true);
   };
+
+  // Helper : Calcul dates pour filtres rapides
+  const getQuickDateRange = (
+    filter: 'all' | 'today' | '7days' | '30days'
+  ): { from: string; to: string } | null => {
+    const today = new Date();
+    const formatDate = (d: Date) => d.toISOString().split('T')[0];
+
+    switch (filter) {
+      case 'today':
+        return { from: formatDate(today), to: formatDate(today) };
+      case '7days':
+        const weekAgo = new Date(today);
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        return { from: formatDate(weekAgo), to: formatDate(today) };
+      case '30days':
+        const monthAgo = new Date(today);
+        monthAgo.setDate(monthAgo.getDate() - 30);
+        return { from: formatDate(monthAgo), to: formatDate(today) };
+      default:
+        return null;
+    }
+  };
+
+  // Handler filtre rapide date
+  const handleQuickDateFilter = (
+    filter: 'all' | 'today' | '7days' | '30days'
+  ) => {
+    setQuickDateFilter(filter);
+    const range = getQuickDateRange(filter);
+    if (range) {
+      setFilters(prev => ({ ...prev, dateFrom: range.from, dateTo: range.to }));
+    } else {
+      setFilters(prev => ({ ...prev, dateFrom: '', dateTo: '' }));
+    }
+  };
+
+  // Reset tous les filtres
+  const handleResetFilters = () => {
+    setFilters({ search: '', dateFrom: '', dateTo: '' });
+    setShowOnlyWithStock(false);
+    setQuickDateFilter('all');
+    setStockLevelFilter('all');
+    fetchInventory();
+  };
+
+  // Nombre de filtres actifs
+  const activeFiltersCount = [
+    filters.search,
+    filters.dateFrom,
+    filters.dateTo,
+    showOnlyWithStock,
+    stockLevelFilter !== 'all',
+  ].filter(Boolean).length;
+
+  // ✅ Filtrage local combiné : Stock > 0 + Niveau de stock
+  // Utilise le seuil min_stock propre à chaque produit (fallback 5 si non défini)
+  const filteredInventory = inventory.filter(item => {
+    // Filtre Stock > 0
+    if (showOnlyWithStock && item.stock_real <= 0) return false;
+
+    // Filtre niveau de stock (basé sur stock_real vs min_stock du produit)
+    const threshold = item.min_stock || 5; // Seuil du produit, fallback 5
+    if (stockLevelFilter === 'critical' && item.stock_real > 0) return false;
+    if (
+      stockLevelFilter === 'low' &&
+      (item.stock_real === 0 || item.stock_real >= threshold)
+    )
+      return false;
+    if (stockLevelFilter === 'sufficient' && item.stock_real < threshold)
+      return false;
+
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -203,43 +289,187 @@ export default function InventairePage() {
           />
         </div>
 
-        {/* Filtres - Inline compact */}
-        <div className="bg-white border border-black rounded-lg p-3">
-          <div className="flex items-center gap-2">
-            <div className="flex-1 relative">
-              <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
-              <Input
-                placeholder="Rechercher produit, SKU..."
-                value={filters.search}
-                onChange={e => handleSearch(e.target.value)}
-                className="pl-8 border-gray-300 h-9 text-sm"
-              />
+        {/* ✅ Filtres Refondus - Best Practices Odoo/ERP 2025 */}
+        <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+          {/* Ligne 1 : Recherche + Filtres rapides période */}
+          <div className="p-3 border-b border-gray-100">
+            <div className="flex items-center gap-3">
+              {/* Barre de recherche - Plus visible */}
+              <div className="flex-1 relative max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Rechercher produit, SKU..."
+                  value={filters.search}
+                  onChange={e => handleSearch(e.target.value)}
+                  className="pl-10 border-gray-300 h-10 text-sm rounded-lg"
+                />
+              </div>
+
+              {/* Séparateur vertical */}
+              <div className="h-8 w-px bg-gray-200" />
+
+              {/* Filtres rapides période - Style Odoo */}
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-gray-500 mr-1">Période:</span>
+                {[
+                  { key: 'all', label: 'Tout' },
+                  { key: 'today', label: "Aujourd'hui" },
+                  { key: '7days', label: '7 jours' },
+                  { key: '30days', label: '30 jours' },
+                ].map(opt => (
+                  <button
+                    key={opt.key}
+                    onClick={() =>
+                      handleQuickDateFilter(
+                        opt.key as 'all' | 'today' | '7days' | '30days'
+                      )
+                    }
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                      quickDateFilter === opt.key
+                        ? 'bg-black text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Séparateur vertical */}
+              <div className="h-8 w-px bg-gray-200" />
+
+              {/* Dates personnalisées */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">Du</span>
+                <Input
+                  type="date"
+                  value={filters.dateFrom}
+                  onChange={e => {
+                    setFilters(prev => ({
+                      ...prev,
+                      dateFrom: e.target.value,
+                    }));
+                    setQuickDateFilter('all');
+                  }}
+                  className="border-gray-300 w-36 h-9 text-xs rounded-md"
+                />
+                <span className="text-xs text-gray-500">au</span>
+                <Input
+                  type="date"
+                  value={filters.dateTo}
+                  onChange={e => {
+                    setFilters(prev => ({ ...prev, dateTo: e.target.value }));
+                    setQuickDateFilter('all');
+                  }}
+                  className="border-gray-300 w-36 h-9 text-xs rounded-md"
+                />
+              </div>
+
+              {/* Bouton Appliquer */}
+              <ButtonV2
+                onClick={handleApplyFilters}
+                size="sm"
+                className="bg-black hover:bg-gray-800 text-white h-9 px-4 text-xs"
+              >
+                <Filter className="h-3 w-3 mr-1.5" />
+                Appliquer
+              </ButtonV2>
             </div>
-            <Input
-              type="date"
-              value={filters.dateFrom}
-              onChange={e =>
-                setFilters(prev => ({ ...prev, dateFrom: e.target.value }))
-              }
-              className="border-gray-300 w-40 h-9 text-sm"
-              placeholder="Date début"
-            />
-            <Input
-              type="date"
-              value={filters.dateTo}
-              onChange={e =>
-                setFilters(prev => ({ ...prev, dateTo: e.target.value }))
-              }
-              className="border-gray-300 w-40 h-9 text-sm"
-              placeholder="Date fin"
-            />
-            <ButtonV2
-              onClick={handleApplyFilters}
-              size="sm"
-              className="bg-black hover:bg-gray-800 text-white h-9 px-4 text-sm"
-            >
-              Appliquer
-            </ButtonV2>
+          </div>
+
+          {/* Ligne 2 : Filtres avancés + Reset */}
+          <div className="px-3 py-2 bg-gray-50 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              {/* Filtre niveau de stock - Style badges */}
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-gray-500 mr-1">Stock:</span>
+                {[
+                  { key: 'all', label: 'Tous', icon: null },
+                  {
+                    key: 'critical',
+                    label: 'Rupture',
+                    icon: <X className="h-3 w-3" />,
+                    color: 'red',
+                  },
+                  {
+                    key: 'low',
+                    label: 'Faible',
+                    icon: <AlertTriangle className="h-3 w-3" />,
+                    color: 'orange',
+                  },
+                  {
+                    key: 'sufficient',
+                    label: 'OK',
+                    icon: <CheckCircle className="h-3 w-3" />,
+                    color: 'green',
+                  },
+                ].map(opt => (
+                  <button
+                    key={opt.key}
+                    onClick={() =>
+                      setStockLevelFilter(
+                        opt.key as 'all' | 'critical' | 'low' | 'sufficient'
+                      )
+                    }
+                    className={`flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                      stockLevelFilter === opt.key
+                        ? opt.color === 'red'
+                          ? 'bg-red-600 text-white'
+                          : opt.color === 'orange'
+                            ? 'bg-orange-500 text-white'
+                            : opt.color === 'green'
+                              ? 'bg-green-600 text-white'
+                              : 'bg-black text-white'
+                        : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    {opt.icon}
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Séparateur */}
+              <div className="h-6 w-px bg-gray-200" />
+
+              {/* Checkbox Stock > 0 */}
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={showOnlyWithStock}
+                  onChange={e => setShowOnlyWithStock(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-black focus:ring-black cursor-pointer"
+                />
+                <span className="text-xs text-gray-700">
+                  Uniquement stock &gt; 0
+                </span>
+              </label>
+            </div>
+
+            {/* Reset + Compteur filtres actifs */}
+            <div className="flex items-center gap-2">
+              {activeFiltersCount > 0 && (
+                <>
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-blue-50 text-blue-700 border-blue-200"
+                  >
+                    {activeFiltersCount} filtre
+                    {activeFiltersCount > 1 ? 's' : ''} actif
+                    {activeFiltersCount > 1 ? 's' : ''}
+                  </Badge>
+                  <ButtonV2
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleResetFilters}
+                    className="text-xs text-gray-500 hover:text-red-600 h-7 px-2"
+                  >
+                    <X className="h-3 w-3 mr-1" />
+                    Réinitialiser
+                  </ButtonV2>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
@@ -247,7 +477,12 @@ export default function InventairePage() {
         <Card className="border-black">
           <div className="p-3 border-b border-gray-200 bg-gray-50">
             <h2 className="text-sm font-bold text-black">
-              Inventaire Consolidé ({inventory.length} produits)
+              Inventaire Consolidé ({filteredInventory.length} produits)
+              {showOnlyWithStock && (
+                <span className="ml-2 text-xs font-normal text-gray-500">
+                  (filtre actif : Stock &gt; 0)
+                </span>
+              )}
             </h2>
           </div>
           <CardContent className="p-0">
@@ -255,12 +490,18 @@ export default function InventairePage() {
               <div className="flex justify-center py-12">
                 <RefreshCw className="h-8 w-8 animate-spin text-gray-400" />
               </div>
-            ) : inventory.length === 0 ? (
+            ) : filteredInventory.length === 0 ? (
               <div className="text-center py-12">
                 <Package className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">Aucun mouvement de stock trouvé</p>
+                <p className="text-gray-500">
+                  {showOnlyWithStock
+                    ? 'Aucun produit avec stock > 0'
+                    : 'Aucun mouvement de stock trouvé'}
+                </p>
                 <p className="text-sm text-gray-400 mt-2">
-                  Les produits apparaîtront après leur première entrée ou sortie
+                  {showOnlyWithStock
+                    ? 'Décochez le filtre pour voir tous les produits'
+                    : 'Les produits apparaîtront après leur première entrée ou sortie'}
                 </p>
               </div>
             ) : (
@@ -302,7 +543,7 @@ export default function InventairePage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {inventory.map(item => (
+                    {filteredInventory.map(item => (
                       <tr
                         key={item.id}
                         onClick={() => openHistoryModal(item)}
@@ -419,30 +660,26 @@ export default function InventairePage() {
                         </td>
                         <td className="py-2 px-3 text-center">
                           <div className="flex items-center justify-center gap-1">
-                            <ButtonV2
+                            <IconButton
+                              icon={Settings}
                               variant="outline"
                               size="sm"
+                              label="Ajuster le stock"
                               onClick={e => {
                                 e.stopPropagation();
                                 openAdjustmentModal(item);
                               }}
-                              title="Ajuster le stock"
-                              className="h-7 w-7 p-0 hover:bg-green-600 hover:text-white transition-colors"
-                            >
-                              <Settings className="h-3 w-3" />
-                            </ButtonV2>
-                            <ButtonV2
+                            />
+                            <IconButton
+                              icon={History}
                               variant="outline"
                               size="sm"
+                              label="Voir historique"
                               onClick={e => {
                                 e.stopPropagation();
                                 openHistoryModal(item);
                               }}
-                              title="Voir historique détaillé"
-                              className="h-7 w-7 p-0 hover:bg-black hover:text-white transition-colors"
-                            >
-                              <History className="h-3 w-3" />
-                            </ButtonV2>
+                            />
                           </div>
                         </td>
                       </tr>
@@ -457,8 +694,16 @@ export default function InventairePage() {
         {/* Footer stats - Compact */}
         <div className="flex items-center justify-between text-xs text-gray-600 px-1">
           <p>
-            <span className="font-medium text-black">{inventory.length}</span>{' '}
-            produit(s) avec mouvements
+            <span className="font-medium text-black">
+              {filteredInventory.length}
+            </span>{' '}
+            produit(s) affiché(s)
+            {showOnlyWithStock &&
+              inventory.length !== filteredInventory.length && (
+                <span className="text-gray-400 ml-1">
+                  (sur {inventory.length} au total)
+                </span>
+              )}
           </p>
           <p className="text-gray-500">
             {stats.total_movements} mouvements totaux

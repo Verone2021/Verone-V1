@@ -134,6 +134,21 @@ export default function PurchaseOrdersPage() {
     useState(false);
   const [orderToValidate, setOrderToValidate] = useState<string | null>(null);
 
+  // États pour le modal d'avertissement quantité insuffisante
+  const [showShortageWarning, setShowShortageWarning] = useState(false);
+  const [shortageDetails, setShortageDetails] = useState<
+    Array<{
+      itemId: string;
+      productName: string;
+      sku: string;
+      quantityOrdered: number;
+      minStock: number;
+      stockReal: number;
+      shortage: number;
+      newQuantity: number;
+    }>
+  >([]);
+
   // État pour les lignes expandées (chevron)
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
@@ -342,12 +357,141 @@ export default function PurchaseOrdersPage() {
     );
   };
 
+  // ✅ Fonction pour ajuster automatiquement les quantités au seuil minimum
+  const handleAutoAdjustQuantities = async () => {
+    if (!orderToValidate || shortageDetails.length === 0) return;
+
+    const supabase = createClient();
+
+    try {
+      // Mettre à jour chaque item avec sa nouvelle quantité
+      for (const item of shortageDetails) {
+        const { error } = await supabase
+          .from('purchase_order_items')
+          .update({ quantity: item.newQuantity })
+          .eq('id', item.itemId);
+
+        if (error) {
+          throw error;
+        }
+      }
+
+      // Fermer le modal
+      setShowShortageWarning(false);
+      setShortageDetails([]);
+
+      // Rafraîchir la liste des commandes
+      await fetchOrders();
+
+      // Toast de confirmation
+      toast({
+        title: 'Quantités ajustées',
+        description: `${shortageDetails.length} produit(s) mis à jour pour atteindre les seuils minimum`,
+      });
+    } catch (error) {
+      console.error('Erreur ajustement quantités:', error);
+      toast({
+        title: 'Erreur',
+        description: "Impossible d'ajuster les quantités",
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // ✅ Fonction pour vérifier les quantités vs seuils min_stock
+  // FIX: Ne plus dépendre de stock_forecasted_in qui peut être désynchronisé
+  // Calcul simplifié: besoin = min_stock - stock_real
+  // Si quantity >= besoin, le seuil est atteint → pas de modal
+  const checkOrderShortages = async (orderId: string) => {
+    const supabase = createClient();
+
+    // Récupérer les items de la commande avec les infos produits
+    const { data: orderItems, error } = await supabase
+      .from('purchase_order_items')
+      .select(
+        `
+        id,
+        quantity,
+        products (
+          name,
+          sku,
+          min_stock,
+          stock_real
+        )
+      `
+      )
+      .eq('purchase_order_id', orderId);
+
+    if (error) {
+      console.error('Erreur vérification shortages:', error);
+      return [];
+    }
+
+    // Pour chaque item, vérifier si la quantité commandée atteint le seuil
+    const shortages = (orderItems || [])
+      .map(item => {
+        const product = item.products as {
+          name: string;
+          sku: string;
+          min_stock: number | null;
+          stock_real: number | null;
+        } | null;
+
+        // Pas de seuil défini → pas de vérification
+        if (!product?.min_stock || product.min_stock === 0) return null;
+
+        // Besoin = ce qu'il manque pour atteindre le seuil
+        const stockReal = product.stock_real || 0;
+        const besoin = Math.max(0, product.min_stock - stockReal);
+
+        // Si la quantité commandée >= besoin, le seuil est atteint
+        if (item.quantity >= besoin) return null;
+
+        // Il y a un shortage
+        const shortage = besoin - item.quantity;
+        return {
+          itemId: item.id,
+          productName: product.name,
+          sku: product.sku,
+          quantityOrdered: item.quantity,
+          minStock: product.min_stock,
+          stockReal: stockReal,
+          shortage: shortage,
+          newQuantity: besoin, // La quantité cible pour atteindre le seuil
+        };
+      })
+      .filter(Boolean) as Array<{
+      itemId: string;
+      productName: string;
+      sku: string;
+      quantityOrdered: number;
+      minStock: number;
+      stockReal: number;
+      shortage: number;
+      newQuantity: number;
+    }>;
+
+    return shortages;
+  };
+
   const handleStatusChange = async (
     orderId: string,
     newStatus: PurchaseOrderStatus
   ) => {
-    // Si validation (draft → confirmed), afficher modal de confirmation
+    // Si validation (draft → validated), vérifier d'abord les quantités vs seuils
     if (newStatus === 'validated') {
+      // Vérifier si des produits n'atteignent pas leur seuil min_stock
+      const shortages = await checkOrderShortages(orderId);
+
+      if (shortages.length > 0) {
+        // Il y a des manques → Afficher modal d'avertissement
+        setOrderToValidate(orderId);
+        setShortageDetails(shortages);
+        setShowShortageWarning(true);
+        return;
+      }
+
+      // Pas de manque → Afficher modal de confirmation standard
       setOrderToValidate(orderId);
       setShowValidateConfirmation(true);
       return;
@@ -1028,6 +1172,77 @@ export default function PurchaseOrdersPage() {
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={handleValidateConfirmed}>
               Confirmer la commande
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* AlertDialog Avertissement Quantité Insuffisante */}
+      <AlertDialog
+        open={showShortageWarning}
+        onOpenChange={setShowShortageWarning}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Quantité insuffisante</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  Les produits suivants n'atteignent pas leur seuil minimum :
+                </p>
+                <ul className="list-disc pl-5 space-y-2">
+                  {shortageDetails.map((item, idx) => (
+                    <li key={idx}>
+                      <strong>{item.productName}</strong> ({item.sku})
+                      <br />
+                      <span className="text-sm text-gray-600">
+                        Stock réel : {item.stockReal} | Seuil : {item.minStock}
+                      </span>
+                      <br />
+                      <span>
+                        Quantité commandée : {item.quantityOrdered} →{' '}
+                        <span className="text-green-600 font-medium">
+                          {item.newQuantity}
+                        </span>
+                        <span className="text-red-600">
+                          {' '}
+                          (+{item.shortage})
+                        </span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-sm text-gray-600 mt-2">
+                  Cliquez sur "Ajuster automatiquement" pour mettre à jour les
+                  quantités.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setShowShortageWarning(false);
+                setShortageDetails([]);
+              }}
+            >
+              Annuler
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleAutoAdjustQuantities}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Ajuster automatiquement
+            </AlertDialogAction>
+            <AlertDialogAction
+              onClick={() => {
+                setShowShortageWarning(false);
+                setShortageDetails([]);
+                // Procéder à la validation malgré le manque
+                setShowValidateConfirmation(true);
+              }}
+            >
+              Valider quand même
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
