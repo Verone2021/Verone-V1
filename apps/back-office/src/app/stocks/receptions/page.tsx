@@ -68,6 +68,7 @@ export default function ReceptionsPage() {
     loadReceptionStats,
     loadPurchaseOrdersReadyForReception,
     loadReceptionHistory,
+    loadCancellationHistory,
   } = usePurchaseReceptions();
 
   const [stats, setStats] = useState<any>(null);
@@ -76,6 +77,7 @@ export default function ReceptionsPage() {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [showReceptionModal, setShowReceptionModal] = useState(false);
   const [receptionHistory, setReceptionHistory] = useState<any[]>([]);
+  const [cancellationHistory, setCancellationHistory] = useState<any[]>([]);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
 
   const [activeTab, setActiveTab] = useState<string>('to-receive');
@@ -146,8 +148,13 @@ export default function ReceptionsPage() {
 
   const handleViewHistory = async (order: any) => {
     setSelectedOrder(order);
-    const history = await loadReceptionHistory(order.id);
+    // Charger réceptions ET annulations en parallèle
+    const [history, cancellations] = await Promise.all([
+      loadReceptionHistory(order.id),
+      loadCancellationHistory(order.id),
+    ]);
     setReceptionHistory(history || []);
+    setCancellationHistory(cancellations || []);
     setShowHistoryModal(true);
   };
 
@@ -522,12 +529,19 @@ export default function ReceptionsPage() {
                     </TableHeader>
                     <TableBody>
                       {historyOrders.map(order => {
-                        // Calculer quantité totale
-                        const totalItems =
+                        // Calculer quantité totale commandée vs reçue
+                        const totalOrdered =
                           order.purchase_order_items?.reduce(
                             (sum: number, item: any) => sum + item.quantity,
                             0
                           ) || 0;
+                        const totalReceived =
+                          order.purchase_order_items?.reduce(
+                            (sum: number, item: any) =>
+                              sum + (item.quantity_received || 0),
+                            0
+                          ) || 0;
+                        const isComplete = totalReceived >= totalOrdered;
 
                         return (
                           <TableRow key={order.id}>
@@ -538,16 +552,25 @@ export default function ReceptionsPage() {
                               {order.supplier_name || 'Fournisseur inconnu'}
                             </TableCell>
                             <TableCell>
-                              <Badge className="bg-green-500 text-white">
-                                Reçue
-                              </Badge>
+                              {isComplete ? (
+                                <Badge className="bg-green-500 text-white">
+                                  Reçue complète
+                                </Badge>
+                              ) : (
+                                <Badge className="bg-amber-500 text-white">
+                                  Reçue et clôturée ({totalReceived}/
+                                  {totalOrdered})
+                                </Badge>
+                              )}
                             </TableCell>
                             <TableCell>
                               {order.received_at
                                 ? formatDate(order.received_at)
                                 : '-'}
                             </TableCell>
-                            <TableCell>{totalItems} unité(s)</TableCell>
+                            <TableCell>
+                              {totalReceived}/{totalOrdered} unité(s)
+                            </TableCell>
                             <TableCell>
                               <ButtonV2
                                 variant="outline"
@@ -599,6 +622,7 @@ export default function ReceptionsPage() {
                     setShowHistoryModal(false);
                     setSelectedOrder(null);
                     setReceptionHistory([]);
+                    setCancellationHistory([]);
                   }}
                 >
                   ✕
@@ -609,107 +633,200 @@ export default function ReceptionsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {receptionHistory.length === 0 ? (
+              {receptionHistory.length === 0 &&
+              cancellationHistory.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   Aucun détail de réception disponible
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {receptionHistory.map((reception: any, index: number) => (
-                    <Card
-                      key={index}
-                      className="border-l-4 border-verone-success"
-                    >
-                      <CardHeader>
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <CardTitle className="text-lg">
-                              Réception #{index + 1}
-                            </CardTitle>
-                            <CardDescription>
-                              {reception.received_at
-                                ? `Reçue le ${formatDate(reception.received_at)}`
-                                : 'Date non disponible'}
-                            </CardDescription>
-                          </div>
-                          {reception.received_by_name && (
-                            <Badge variant="outline">
-                              Par: {reception.received_by_name}
-                            </Badge>
+                  {/* SECTION RÉCEPTIONS */}
+                  {receptionHistory.length > 0 && (
+                    <>
+                      <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                        Réceptions ({receptionHistory.length})
+                      </h3>
+                      {receptionHistory.map((reception: any, index: number) => (
+                        <Card
+                          key={index}
+                          className="border-l-4 border-verone-success"
+                        >
+                          <CardHeader>
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <CardTitle className="text-lg">
+                                  Réception #{index + 1}
+                                </CardTitle>
+                                <CardDescription>
+                                  {reception.received_at
+                                    ? `Reçue le ${formatDate(reception.received_at)}`
+                                    : 'Date non disponible'}
+                                </CardDescription>
+                              </div>
+                              {reception.received_by_name && (
+                                <Badge variant="outline">
+                                  Par: {reception.received_by_name}
+                                </Badge>
+                              )}
+                            </div>
+                          </CardHeader>
+                          <CardContent>
+                            {/* Notes réception */}
+                            {reception.notes && (
+                              <div className="mb-4 p-3 bg-gray-50 rounded">
+                                <p className="text-sm font-medium text-gray-700">
+                                  Notes:
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  {reception.notes}
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Liste articles reçus */}
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead className="w-[50px]" />
+                                  <TableHead>Produit</TableHead>
+                                  <TableHead>SKU</TableHead>
+                                  <TableHead className="text-right">
+                                    Quantité reçue
+                                  </TableHead>
+                                  <TableHead className="text-right">
+                                    Stock avant
+                                  </TableHead>
+                                  <TableHead className="text-right">
+                                    Stock après
+                                  </TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {reception.items?.map(
+                                  (item: any, idx: number) => (
+                                    <TableRow key={idx}>
+                                      <TableCell className="w-[50px] p-1">
+                                        <ProductThumbnail
+                                          src={item.product_image_url}
+                                          alt={item.product_name}
+                                          size="xs"
+                                        />
+                                      </TableCell>
+                                      <TableCell>{item.product_name}</TableCell>
+                                      <TableCell className="font-mono text-sm">
+                                        {item.product_sku}
+                                      </TableCell>
+                                      <TableCell className="text-right font-medium text-green-600">
+                                        +{item.quantity_received}
+                                      </TableCell>
+                                      <TableCell className="text-right text-gray-600">
+                                        {item.stock_before}
+                                      </TableCell>
+                                      <TableCell className="text-right font-medium">
+                                        {item.stock_after}
+                                      </TableCell>
+                                    </TableRow>
+                                  )
+                                )}
+                              </TableBody>
+                            </Table>
+
+                            {/* Résumé */}
+                            <div className="mt-4 pt-4 border-t">
+                              <p className="text-sm font-medium text-gray-700">
+                                Total reçu:{' '}
+                                <span className="text-verone-success font-bold">
+                                  {reception.total_quantity} unités
+                                </span>
+                              </p>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </>
+                  )}
+
+                  {/* SECTION ANNULATIONS */}
+                  {cancellationHistory.length > 0 && (
+                    <>
+                      <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mt-6">
+                        <AlertTriangle className="h-5 w-5 text-amber-500" />
+                        Annulations ({cancellationHistory.length} produit
+                        {cancellationHistory.length > 1 ? 's' : ''})
+                      </h3>
+                      <Card className="border-l-4 border-amber-500">
+                        <CardHeader>
+                          <CardTitle className="text-lg text-amber-700">
+                            Reliquat annulé
+                          </CardTitle>
+                          <CardDescription>
+                            {cancellationHistory[0]?.performed_at
+                              ? `Annulé le ${formatDate(cancellationHistory[0].performed_at)}`
+                              : 'Date non disponible'}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          {/* Notes annulation (si présentes) */}
+                          {cancellationHistory[0]?.notes && (
+                            <div className="mb-4 p-3 bg-amber-50 rounded border border-amber-200">
+                              <p className="text-sm font-medium text-amber-800">
+                                Raison:
+                              </p>
+                              <p className="text-sm text-amber-700">
+                                {cancellationHistory[0].notes}
+                              </p>
+                            </div>
                           )}
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        {/* Notes réception */}
-                        {reception.notes && (
-                          <div className="mb-4 p-3 bg-gray-50 rounded">
+
+                          {/* Liste produits annulés */}
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Produit</TableHead>
+                                <TableHead>SKU</TableHead>
+                                <TableHead className="text-right">
+                                  Quantité annulée
+                                </TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {cancellationHistory.map(
+                                (cancellation: any, idx: number) => (
+                                  <TableRow key={idx}>
+                                    <TableCell>
+                                      {cancellation.product_name}
+                                    </TableCell>
+                                    <TableCell className="font-mono text-sm">
+                                      {cancellation.product_sku}
+                                    </TableCell>
+                                    <TableCell className="text-right font-medium text-amber-600">
+                                      -{cancellation.quantity_cancelled}
+                                    </TableCell>
+                                  </TableRow>
+                                )
+                              )}
+                            </TableBody>
+                          </Table>
+
+                          {/* Résumé annulations */}
+                          <div className="mt-4 pt-4 border-t">
                             <p className="text-sm font-medium text-gray-700">
-                              Notes:
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              {reception.notes}
+                              Total annulé:{' '}
+                              <span className="text-amber-600 font-bold">
+                                {cancellationHistory.reduce(
+                                  (sum: number, c: any) =>
+                                    sum + c.quantity_cancelled,
+                                  0
+                                )}{' '}
+                                unités
+                              </span>
                             </p>
                           </div>
-                        )}
-
-                        {/* Liste articles reçus */}
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead className="w-[50px]" />
-                              <TableHead>Produit</TableHead>
-                              <TableHead>SKU</TableHead>
-                              <TableHead className="text-right">
-                                Quantité reçue
-                              </TableHead>
-                              <TableHead className="text-right">
-                                Stock avant
-                              </TableHead>
-                              <TableHead className="text-right">
-                                Stock après
-                              </TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {reception.items?.map((item: any, idx: number) => (
-                              <TableRow key={idx}>
-                                <TableCell className="w-[50px] p-1">
-                                  <ProductThumbnail
-                                    src={item.product_image_url}
-                                    alt={item.product_name}
-                                    size="xs"
-                                  />
-                                </TableCell>
-                                <TableCell>{item.product_name}</TableCell>
-                                <TableCell className="font-mono text-sm">
-                                  {item.product_sku}
-                                </TableCell>
-                                <TableCell className="text-right font-medium text-green-600">
-                                  +{item.quantity_received}
-                                </TableCell>
-                                <TableCell className="text-right text-gray-600">
-                                  {item.stock_before}
-                                </TableCell>
-                                <TableCell className="text-right font-medium">
-                                  {item.stock_after}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-
-                        {/* Résumé */}
-                        <div className="mt-4 pt-4 border-t">
-                          <p className="text-sm font-medium text-gray-700">
-                            Total reçu:{' '}
-                            <span className="text-verone-success font-bold">
-                              {reception.total_quantity} unités
-                            </span>
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    </>
+                  )}
                 </div>
               )}
             </CardContent>

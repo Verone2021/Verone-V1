@@ -53,6 +53,48 @@ export interface ReceptionItem {
 }
 
 /**
+ * Payload pour annulation reliquat commande partiellement reçue
+ * Envoyé à l'action server cancelPurchaseOrderRemainder
+ */
+export interface CancelRemainderPayload {
+  /** ID du purchase order */
+  purchase_order_id: string;
+
+  /** Motif d'annulation (optionnel) */
+  reason?: string;
+
+  /** ID utilisateur qui annule */
+  cancelled_by: string;
+}
+
+/**
+ * Résultat d'annulation reliquat avec détails
+ */
+export interface CancelRemainderResult {
+  /** Succès de l'opération */
+  success: boolean;
+
+  /** Message d'erreur si échec */
+  error?: string;
+
+  /** Détails de l'annulation si succès */
+  details?: {
+    /** Nombre d'items affectés */
+    items_cancelled: number;
+
+    /** Quantité totale annulée */
+    total_quantity_cancelled: number;
+
+    /** Produits affectés */
+    products: Array<{
+      product_id: string;
+      product_name: string;
+      quantity_cancelled: number;
+    }>;
+  };
+}
+
+/**
  * Payload pour validation réception
  * Envoyé à l'action server validatePurchaseReception
  */

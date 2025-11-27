@@ -12,6 +12,7 @@ export { UniversalOrderDetailsModal } from './UniversalOrderDetailsModal';
 export { CreateShipmentModal } from './CreateShipmentModal';
 export { CloseOrderModal } from './CloseOrderModal';
 export { CreateManualShipmentModal } from './CreateManualShipmentModal';
+export { CancelRemainderModal } from './CancelRemainderModal';
 export {
   CustomerSelector,
   type UnifiedCustomer,

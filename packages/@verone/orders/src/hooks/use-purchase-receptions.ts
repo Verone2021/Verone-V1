@@ -24,6 +24,8 @@ import type {
   ValidateReceptionPayload,
   ReceptionHistory,
   ReceptionShipmentStats,
+  CancelRemainderPayload,
+  CancelRemainderResult,
 } from '@verone/types';
 import { createClient } from '@verone/utils/supabase/client';
 
@@ -64,6 +66,7 @@ export function usePurchaseReceptions() {
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
   const [validating, setValidating] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   /**
@@ -242,7 +245,7 @@ export function usePurchaseReceptions() {
           .or('affects_forecast.is.null,affects_forecast.is.false')
           .eq('movement_type', 'IN')
           .eq('products.product_images.is_primary', true)
-          .order('performed_at', { ascending: false });
+          .order('performed_at', { ascending: true }); // Chronologique: plus ancien en premier
 
         if (movementsError) {
           console.error('Erreur chargement historique:', movementsError);
@@ -296,6 +299,73 @@ export function usePurchaseReceptions() {
         return Array.from(grouped.values());
       } catch (err) {
         console.error('Exception historique réceptions:', err);
+        return [];
+      }
+    },
+    [supabase]
+  );
+
+  /**
+   * Charger les annulations de reliquat pour un PO
+   * Critères: reason_code='cancelled' ET reference_id=poId
+   */
+  const loadCancellationHistory = useCallback(
+    async (
+      poId: string
+    ): Promise<
+      Array<{
+        id: string;
+        performed_at: string;
+        notes: string | null;
+        quantity_cancelled: number;
+        product_name: string;
+        product_sku: string;
+      }>
+    > => {
+      try {
+        const { data: cancellations, error: cancellationsError } =
+          await supabase
+            .from('stock_movements')
+            .select(
+              `
+            id,
+            performed_at,
+            notes,
+            quantity_change,
+            quantity_before,
+            quantity_after,
+            product_id,
+            products (
+              name,
+              sku
+            )
+          `
+            )
+            .eq('reason_code', 'cancelled') // ✅ ENUM valide pour annulations
+            .eq('reference_id', poId)
+            .eq('movement_type', 'ADJUST')
+            .order('performed_at', { ascending: true });
+
+        if (cancellationsError || !cancellations) {
+          console.error('Erreur chargement annulations:', cancellationsError);
+          return [];
+        }
+
+        return cancellations.map(c => {
+          const product = c.products as { name: string; sku: string } | null;
+          // quantity_change est négatif (-2), on prend la valeur absolue
+          const quantityCancelled = Math.abs(c.quantity_change || 0);
+          return {
+            id: c.id,
+            performed_at: c.performed_at,
+            notes: c.notes,
+            quantity_cancelled: quantityCancelled,
+            product_name: product?.name || 'Produit inconnu',
+            product_sku: product?.sku || 'N/A',
+          };
+        });
+      } catch (err) {
+        console.error('Exception chargement annulations:', err);
         return [];
       }
     },
@@ -458,15 +528,68 @@ export function usePurchaseReceptions() {
     [supabase]
   );
 
+  /**
+   * Annuler le reliquat d'une commande partiellement reçue
+   * Clôture la commande et réinitialise stock_forecasted_in
+   */
+  const cancelRemainder = useCallback(
+    async (
+      payload: Omit<CancelRemainderPayload, 'cancelled_by'>
+    ): Promise<CancelRemainderResult> => {
+      try {
+        setCancelling(true);
+        setError(null);
+
+        // Obtenir l'utilisateur courant
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user?.id) {
+          return {
+            success: false,
+            error: 'Utilisateur non authentifié',
+          };
+        }
+
+        // Appeler Server Action
+        const { cancelPurchaseOrderRemainder } = await import(
+          '../actions/purchase-receptions'
+        );
+        const result = await cancelPurchaseOrderRemainder({
+          ...payload,
+          cancelled_by: user.id,
+        });
+
+        if (!result.success) {
+          setError(result.error || 'Erreur annulation reliquat');
+        }
+
+        return result;
+      } catch (err) {
+        console.error('Erreur annulation reliquat:', err);
+        const errorMessage =
+          err instanceof Error ? err.message : 'Erreur inconnue';
+        setError(errorMessage);
+        return { success: false, error: errorMessage };
+      } finally {
+        setCancelling(false);
+      }
+    },
+    [supabase]
+  );
+
   return {
     loading,
     validating,
+    cancelling,
     error,
     loadPurchaseOrderForReception,
     prepareReceptionItems,
     validateReception,
     loadReceptionHistory,
+    loadCancellationHistory,
     loadReceptionStats,
     loadPurchaseOrdersReadyForReception,
+    cancelRemainder,
   };
 }
