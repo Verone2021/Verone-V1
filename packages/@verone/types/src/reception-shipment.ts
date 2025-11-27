@@ -106,6 +106,7 @@ export interface ReceptionHistory {
   items: Array<{
     product_name: string;
     product_sku: string;
+    product_image_url?: string | null;
     quantity_received: number;
     stock_before: number;
     stock_after: number;

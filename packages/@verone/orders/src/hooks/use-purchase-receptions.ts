@@ -196,7 +196,20 @@ export function usePurchaseReceptions() {
   const loadReceptionHistory = useCallback(
     async (poId: string): Promise<ReceptionHistory[]> => {
       try {
-        // Récupérer mouvements stock IN (affects_forecast=false) pour ce PO
+        // ✅ D'abord récupérer les réceptions liées au PO
+        const { data: receptions, error: receptionsError } = await supabase
+          .from('purchase_order_receptions')
+          .select('id')
+          .eq('purchase_order_id', poId);
+
+        if (receptionsError || !receptions || receptions.length === 0) {
+          // Pas de réceptions trouvées
+          return [];
+        }
+
+        const receptionIds = receptions.map(r => r.id);
+
+        // ✅ Récupérer mouvements stock IN liés aux réceptions (reference_type='reception')
         const { data: movements, error: movementsError } = await supabase
           .from('stock_movements')
           .select(
@@ -215,14 +228,20 @@ export function usePurchaseReceptions() {
           received_by_name,
           products (
             name,
-            sku
+            sku,
+            product_images!left(public_url, is_primary)
+          ),
+          user_profiles!performed_by (
+            first_name,
+            last_name
           )
         `
           )
-          .eq('reference_type', 'purchase_order')
-          .eq('reference_id', poId)
+          .eq('reference_type', 'reception')
+          .in('reference_id', receptionIds)
           .or('affects_forecast.is.null,affects_forecast.is.false')
           .eq('movement_type', 'IN')
+          .eq('products.product_images.is_primary', true)
           .order('performed_at', { ascending: false });
 
         if (movementsError) {
@@ -236,12 +255,21 @@ export function usePurchaseReceptions() {
         movements?.forEach(movement => {
           const key = movement.performed_at;
 
+          // Récupérer le nom de l'utilisateur depuis user_profiles ou fallback
+          const userProfile = movement.user_profiles as {
+            first_name: string | null;
+            last_name: string | null;
+          } | null;
+          const userName = userProfile
+            ? `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim()
+            : movement.received_by_name || 'Utilisateur';
+
           if (!grouped.has(key)) {
             grouped.set(key, {
               movement_id: movement.id,
               received_at: movement.performed_at,
               received_by: movement.performed_by,
-              received_by_name: movement.received_by_name || 'Utilisateur',
+              received_by_name: userName,
               carrier_name: movement.carrier_name || undefined,
               tracking_number: movement.tracking_number || undefined,
               delivery_note: movement.delivery_note || undefined,
@@ -252,9 +280,12 @@ export function usePurchaseReceptions() {
           }
 
           const history = grouped.get(key)!;
+          const productData = movement.products as any;
           history.items.push({
-            product_name: (movement.products as any).name,
-            product_sku: (movement.products as any).sku,
+            product_name: productData.name,
+            product_sku: productData.sku,
+            product_image_url:
+              productData.product_images?.[0]?.public_url || null,
             quantity_received: movement.quantity_change,
             stock_before: movement.quantity_before,
             stock_after: movement.quantity_after,

@@ -21,6 +21,7 @@ import { useState, useEffect } from 'react';
 
 import { PurchaseOrderReceptionModal } from '@verone/orders';
 import { usePurchaseReceptions } from '@verone/orders';
+import { ProductThumbnail } from '@verone/products';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -537,7 +538,7 @@ export default function ReceptionsPage() {
                               {order.supplier_name || 'Fournisseur inconnu'}
                             </TableCell>
                             <TableCell>
-                              <Badge className="bg-verone-success text-white">
+                              <Badge className="bg-green-500 text-white">
                                 Reçue
                               </Badge>
                             </TableCell>
@@ -631,9 +632,9 @@ export default function ReceptionsPage() {
                                 : 'Date non disponible'}
                             </CardDescription>
                           </div>
-                          {reception.received_by && (
+                          {reception.received_by_name && (
                             <Badge variant="outline">
-                              Par: {reception.received_by}
+                              Par: {reception.received_by_name}
                             </Badge>
                           )}
                         </div>
@@ -655,6 +656,7 @@ export default function ReceptionsPage() {
                         <Table>
                           <TableHeader>
                             <TableRow>
+                              <TableHead className="w-[50px]" />
                               <TableHead>Produit</TableHead>
                               <TableHead>SKU</TableHead>
                               <TableHead className="text-right">
@@ -671,11 +673,18 @@ export default function ReceptionsPage() {
                           <TableBody>
                             {reception.items?.map((item: any, idx: number) => (
                               <TableRow key={idx}>
+                                <TableCell className="w-[50px] p-1">
+                                  <ProductThumbnail
+                                    src={item.product_image_url}
+                                    alt={item.product_name}
+                                    size="xs"
+                                  />
+                                </TableCell>
                                 <TableCell>{item.product_name}</TableCell>
                                 <TableCell className="font-mono text-sm">
                                   {item.product_sku}
                                 </TableCell>
-                                <TableCell className="text-right font-medium text-verone-success">
+                                <TableCell className="text-right font-medium text-green-600">
                                   +{item.quantity_received}
                                 </TableCell>
                                 <TableCell className="text-right text-gray-600">
