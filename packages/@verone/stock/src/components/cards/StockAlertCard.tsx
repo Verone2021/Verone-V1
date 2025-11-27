@@ -257,6 +257,7 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
 
             {/* Badge Statut Commande */}
             {alert.is_in_draft &&
+              !alert.validated && // ← Ne pas afficher si déjà validé
               alert.quantity_in_draft &&
               alert.draft_order_id && (
                 <div className="mt-2">

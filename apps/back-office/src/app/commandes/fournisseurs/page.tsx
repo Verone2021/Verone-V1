@@ -84,9 +84,9 @@ const statusLabels: Record<PurchaseOrderStatus, string> = {
 
 const statusColors: Record<PurchaseOrderStatus, string> = {
   draft: 'bg-gray-100 text-gray-800',
-  validated: 'bg-green-100 text-green-800', // 🟢 Alerte verte
-  partially_received: 'bg-gray-100 text-gray-900',
-  received: 'bg-green-100 text-green-800',
+  validated: 'bg-blue-100 text-blue-800', // 🔵 En attente réception
+  partially_received: 'bg-amber-100 text-amber-800', // 🟠 Partiel
+  received: 'bg-green-100 text-green-800', // 🟢 Complet
   cancelled: 'bg-red-100 text-red-800',
 };
 

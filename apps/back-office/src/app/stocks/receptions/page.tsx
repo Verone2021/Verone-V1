@@ -408,8 +408,8 @@ export default function ReceptionsPage() {
                               <Badge
                                 className={
                                   order.status === 'validated'
-                                    ? 'bg-gray-100 text-gray-900'
-                                    : 'bg-verone-warning text-white'
+                                    ? 'bg-blue-100 text-blue-800'
+                                    : 'bg-amber-500 text-white'
                                 }
                               >
                                 {order.status === 'validated'
@@ -426,7 +426,7 @@ export default function ReceptionsPage() {
                               <div className="flex items-center gap-2">
                                 <div className="flex-1 bg-gray-200 rounded-full h-2">
                                   <div
-                                    className="bg-verone-success h-2 rounded-full transition-all"
+                                    className="bg-green-500 h-2 rounded-full transition-all"
                                     style={{ width: `${progressPercent}%` }}
                                   />
                                 </div>

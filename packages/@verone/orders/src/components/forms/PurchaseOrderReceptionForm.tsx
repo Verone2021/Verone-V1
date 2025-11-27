@@ -189,33 +189,28 @@ export function PurchaseOrderReceptionForm({
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
-        <Card className="p-4">
-          <div className="text-sm font-medium text-muted-foreground">
-            À recevoir
-          </div>
-          <div className="text-2xl font-bold mt-1">
+        <Card className="p-4 border-l-4 border-l-blue-500">
+          <div className="text-sm font-medium text-gray-600">À recevoir</div>
+          <div className="text-2xl font-bold mt-1 text-blue-600">
             {totals.totalQuantityToReceive}
           </div>
-          <div className="text-xs text-muted-foreground mt-1">unités</div>
+          <div className="text-xs text-gray-500 mt-1">unités</div>
         </Card>
-        <Card className="p-4">
-          <div className="text-sm font-medium text-muted-foreground">
-            Valeur
-          </div>
-          <div className="text-2xl font-bold mt-1">
+        <Card className="p-4 border-l-4 border-l-emerald-500">
+          <div className="text-sm font-medium text-gray-600">Valeur</div>
+          <div className="text-2xl font-bold mt-1 text-emerald-600">
             {formatCurrency(totals.totalValue)}
           </div>
-          <div className="text-xs text-muted-foreground mt-1">HT</div>
+          <div className="text-xs text-gray-500 mt-1">HT</div>
         </Card>
-        <Card className="p-4">
-          <div className="text-sm font-medium text-muted-foreground">
-            Statut
+        <Card className="p-4 border-l-4 border-l-amber-500">
+          <div className="text-sm font-medium text-gray-600">
+            Statut réception
           </div>
           <Badge
-            className="mt-1"
-            variant={totals.allFullyReceived ? 'secondary' : 'secondary'}
+            className={`mt-2 ${totals.allFullyReceived ? 'bg-green-500 text-white' : 'bg-amber-500 text-white'}`}
           >
-            {totals.allFullyReceived ? 'Complète' : 'Partielle'}
+            {totals.allFullyReceived ? '✓ Complète' : '⏳ Partielle'}
           </Badge>
         </Card>
       </div>
@@ -224,65 +219,112 @@ export function PurchaseOrderReceptionForm({
       <Card>
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Produit</TableHead>
-              <TableHead className="text-center">Commandée</TableHead>
-              <TableHead className="text-center">Déjà reçue</TableHead>
-              <TableHead className="text-center">Restante</TableHead>
-              <TableHead className="text-center">À recevoir</TableHead>
-              <TableHead className="text-right">Prix Unit.</TableHead>
-              <TableHead className="text-right">Total</TableHead>
+            <TableRow className="bg-gray-50">
+              <TableHead className="font-semibold">Produit</TableHead>
+              <TableHead className="text-center font-semibold text-blue-700">
+                Commandée
+              </TableHead>
+              <TableHead className="text-center font-semibold text-green-700">
+                Déjà reçue
+              </TableHead>
+              <TableHead className="text-center font-semibold text-amber-700">
+                Restante
+              </TableHead>
+              <TableHead className="text-center font-semibold text-indigo-700">
+                À recevoir
+              </TableHead>
+              <TableHead className="text-right font-semibold">
+                Prix Unit.
+              </TableHead>
+              <TableHead className="text-right font-semibold">Total</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {items.map(item => (
-              <TableRow key={item.purchase_order_item_id}>
-                <TableCell>
-                  <div>
-                    <div className="font-medium">{item.product_name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {item.product_sku}
+            {items.map(item => {
+              const progressPercent =
+                item.quantity_ordered > 0
+                  ? Math.round(
+                      (item.quantity_already_received / item.quantity_ordered) *
+                        100
+                    )
+                  : 0;
+
+              return (
+                <TableRow
+                  key={item.purchase_order_item_id}
+                  className="hover:bg-gray-50"
+                >
+                  <TableCell>
+                    <div>
+                      <div className="font-medium">{item.product_name}</div>
+                      <div className="text-xs text-gray-500">
+                        {item.product_sku}
+                      </div>
+                      {/* Mini barre de progression */}
+                      <div className="mt-1 flex items-center gap-2">
+                        <div className="flex-1 bg-gray-200 rounded-full h-1.5 max-w-[100px]">
+                          <div
+                            className="bg-green-500 h-1.5 rounded-full transition-all"
+                            style={{ width: `${progressPercent}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-gray-500">
+                          {progressPercent}%
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </TableCell>
-                <TableCell className="text-center">
-                  {item.quantity_ordered}
-                </TableCell>
-                <TableCell className="text-center">
-                  {item.quantity_already_received > 0 && (
-                    <Badge variant="secondary">
-                      {item.quantity_already_received}
-                    </Badge>
-                  )}
-                </TableCell>
-                <TableCell className="text-center">
-                  <span className="font-medium">{item.quantity_remaining}</span>
-                </TableCell>
-                <TableCell className="text-center">
-                  <Input
-                    type="number"
-                    min="0"
-                    max={item.quantity_remaining}
-                    value={item.quantity_to_receive}
-                    onChange={e =>
-                      handleQuantityChange(
-                        item.purchase_order_item_id,
-                        e.target.value
-                      )
-                    }
-                    className="w-20 text-center"
-                  />
-                </TableCell>
-                <TableCell className="text-right text-muted-foreground">
-                  {formatCurrency(item.unit_price_ht)}
-                </TableCell>
-                <TableCell className="text-right font-medium">
-                  {formatCurrency(
-                    item.quantity_to_receive * item.unit_price_ht
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <span className="font-semibold text-blue-600 text-lg">
+                      {item.quantity_ordered}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {item.quantity_already_received > 0 ? (
+                      <Badge className="bg-green-100 text-green-800 border border-green-300">
+                        ✓ {item.quantity_already_received}
+                      </Badge>
+                    ) : (
+                      <span className="text-gray-400">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {item.quantity_remaining > 0 ? (
+                      <span className="font-semibold text-amber-600 text-lg">
+                        {item.quantity_remaining}
+                      </span>
+                    ) : (
+                      <Badge className="bg-green-500 text-white">Complet</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Input
+                      type="number"
+                      min="0"
+                      max={item.quantity_remaining}
+                      value={item.quantity_to_receive}
+                      onChange={e =>
+                        handleQuantityChange(
+                          item.purchase_order_item_id,
+                          e.target.value
+                        )
+                      }
+                      className="w-20 text-center border-indigo-300 focus:border-indigo-500 focus:ring-indigo-500"
+                    />
+                  </TableCell>
+                  <TableCell className="text-right text-gray-600">
+                    {formatCurrency(item.unit_price_ht)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <span className="font-semibold text-emerald-600">
+                      {formatCurrency(
+                        item.quantity_to_receive * item.unit_price_ht
+                      )}
+                    </span>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </Card>

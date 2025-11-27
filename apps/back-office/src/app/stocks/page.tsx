@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -9,15 +9,8 @@ import { ProductThumbnail } from '@verone/products';
 import { useStockDashboard } from '@verone/stock';
 import { useStockAlerts } from '@verone/stock';
 import { useMovementsHistory } from '@verone/stock';
-import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@verone/ui';
+import { Badge, ButtonV2 } from '@verone/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import {
   Package,
   BarChart3,
@@ -39,10 +32,11 @@ export default function StocksDashboardPage() {
   const router = useRouter();
   const { metrics, loading, error, refetch } = useStockDashboard();
 
-  // 🆕 Phase 3.6: Hooks widgets minimalistes
+  // Hooks pour widgets
   const {
     alerts,
     criticalAlerts,
+    warningAlerts,
     loading: alertsLoading,
     fetchAlerts,
   } = useStockAlerts();
@@ -57,7 +51,7 @@ export default function StocksDashboardPage() {
     fetchMovements({ affects_forecast: false, limit: 5 });
   }, [fetchMovements]);
 
-  // ✅ Auto-refresh alertes stock toutes les 30 secondes (cohérent avec /stocks/alertes)
+  // Auto-refresh alertes stock toutes les 30 secondes
   useEffect(() => {
     const interval = setInterval(() => {
       fetchAlerts();
@@ -87,25 +81,14 @@ export default function StocksDashboardPage() {
     total_movements: 0,
   };
 
-  const lowStockProducts = metrics?.low_stock_products || [];
-  const recentMovements = metrics?.recent_movements || [];
-  const incomingOrders = metrics?.incoming_orders || [];
-  const outgoingOrders = metrics?.outgoing_orders || [];
+  // Vraies alertes depuis useStockAlerts (pas le calcul basique)
+  const realAlertsCount = alerts.length;
+  const criticalCount = criticalAlerts?.length || 0;
 
-  const totalAlerts =
-    overview.products_out_of_stock + overview.products_below_min;
-
-  // Handler pour ouvrir les détails de commande (modal)
-  const handleOrderClick = (
-    orderId: string,
-    orderType: 'purchase' | 'sales'
-  ) => {
-    if (orderType === 'purchase') {
-      router.push(`/commandes/fournisseurs/${orderId}`);
-    } else {
-      router.push(`/commandes/clients/${orderId}`);
-    }
-  };
+  // Rotation 7 jours = entrées + sorties
+  const rotation7j =
+    (movements.last_7_days?.entries?.quantity || 0) +
+    (movements.last_7_days?.exits?.quantity || 0);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -130,143 +113,46 @@ export default function StocksDashboardPage() {
         </div>
       </div>
 
-      <div className="w-full px-4 py-6 space-y-6">
-        {/* Navigation - TOUJOURS VISIBLE EN HAUT */}
-        <Card className="border-gray-300 rounded-[10px] shadow-sm">
-          <CardContent className="pt-5 pb-4 space-y-4">
-            {/* Section Pages Stock */}
-            <div>
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-                Pages Stock
-              </p>
-              <div className="flex gap-2 flex-wrap">
-                <ButtonV2
-                  variant="outline"
-                  size="sm"
-                  className="border-black text-black hover:bg-black hover:text-white transition-colors"
-                  onClick={() => router.push('/stocks/inventaire')}
-                >
-                  <Grid3x3 className="h-4 w-4 mr-2" />
-                  <span className="text-xs">Inventaire</span>
-                </ButtonV2>
-
-                <ButtonV2
-                  variant="outline"
-                  size="sm"
-                  className="border-black text-black hover:bg-black hover:text-white transition-colors"
-                  onClick={() => router.push('/stocks/mouvements')}
-                >
-                  <ArrowUpDown className="h-4 w-4 mr-2" />
-                  <span className="text-xs">Mouvements</span>
-                </ButtonV2>
-
-                <ButtonV2
-                  variant="outline"
-                  size="sm"
-                  className="border-black text-black hover:bg-black hover:text-white transition-colors"
-                  onClick={() => router.push('/stocks/alertes')}
-                >
-                  <AlertTriangle className="h-4 w-4 mr-2" />
-                  <span className="text-xs">Alertes</span>
-                  {totalAlerts > 0 && (
-                    <Badge
-                      variant="destructive"
-                      className="ml-2 h-5 px-1.5 text-xs"
-                    >
-                      {totalAlerts}
-                    </Badge>
-                  )}
-                </ButtonV2>
-
-                <ButtonV2
-                  variant="outline"
-                  size="sm"
-                  className="border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white transition-colors"
-                  onClick={() => router.push('/stocks/previsionnel')}
-                >
-                  <TrendingUp className="h-4 w-4 mr-2" />
-                  <span className="text-xs">Prévisionnels</span>
-                  <Badge
-                    variant="outline"
-                    className="ml-2 h-5 px-1.5 text-[10px] border-blue-400 text-blue-600"
-                  >
-                    NEW
-                  </Badge>
-                </ButtonV2>
-              </div>
-            </div>
-
-            {/* Section Pages Connexes */}
-            <div>
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-                Pages Connexes
-              </p>
-              <div className="flex gap-4 flex-wrap items-center text-sm">
-                <Link
-                  href="/produits/catalogue"
-                  className="text-gray-600 hover:text-black hover:underline decoration-wavy transition-colors flex items-center gap-1"
-                >
-                  <span>→</span>
-                  <span>Catalogue</span>
-                </Link>
-
-                <Link
-                  href="/commandes/fournisseurs"
-                  className="text-gray-600 hover:text-black hover:underline decoration-wavy transition-colors flex items-center gap-1"
-                >
-                  <span>→</span>
-                  <span>Commandes Fournisseurs</span>
-                </Link>
-
-                <Link
-                  href="/commandes/clients"
-                  className="text-gray-600 hover:text-black hover:underline decoration-wavy transition-colors flex items-center gap-1"
-                >
-                  <span>→</span>
-                  <span>Commandes Clients</span>
-                </Link>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* KPIs Compacts - 4 Cards Design System V2 (Height 80px) */}
+      <div className="w-full px-4 py-6 space-y-4">
+        {/* KPIs EN HAUT - Best Practice ERP */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {/* KPI 1: Stock Réel */}
+          {/* KPI 1: Stock Total */}
           <StockKPICard
-            title="Stock Réel"
+            title="Stock Total"
             value={overview.total_quantity}
             icon={Package}
             variant="success"
             subtitle={`${overview.products_in_stock} produits en stock`}
           />
 
-          {/* KPI 2: Stock Disponible */}
-          <StockKPICard
-            title="Disponible"
-            value={overview.total_available || 0}
-            icon={CheckCircle}
-            variant="info"
-            subtitle="Réel - Réservé"
-          />
-
-          {/* KPI 3: Alertes Stock */}
+          {/* KPI 2: Alertes (vraies données!) */}
           <StockKPICard
             title="Alertes"
-            value={totalAlerts}
+            value={realAlertsCount}
             icon={AlertTriangle}
             variant={
-              totalAlerts > 5
+              criticalCount > 0
                 ? 'danger'
-                : totalAlerts > 0
+                : realAlertsCount > 0
                   ? 'warning'
                   : 'success'
             }
             subtitle={
-              totalAlerts > 0
-                ? `${totalAlerts} actions requises`
-                : 'Aucune alerte'
+              criticalCount > 0
+                ? `${criticalCount} critiques`
+                : realAlertsCount > 0
+                  ? `${realAlertsCount} à traiter`
+                  : 'Aucune alerte'
             }
+          />
+
+          {/* KPI 3: Rotation 7 jours (remplace "Disponible") */}
+          <StockKPICard
+            title="Rotation 7j"
+            value={rotation7j}
+            icon={ArrowUpDown}
+            variant="info"
+            subtitle="entrées + sorties"
           />
 
           {/* KPI 4: Valeur Stock */}
@@ -283,202 +169,242 @@ export default function StocksDashboardPage() {
           />
         </div>
 
-        {/* Section Stock Réel - Design sobre fond blanc */}
-        <Card className="border-gray-200 rounded-[10px] shadow-md">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Badge
-                variant="outline"
-                className="text-gray-600 border-gray-300"
-              >
-                <CheckCircle className="h-3 w-3 mr-1" />
-                Mouvements Effectués
-              </Badge>
-              <CardTitle className="text-xl text-black">Stock Réel</CardTitle>
-            </div>
-            <CardDescription className="text-gray-600">
-              Inventaire actuel et mouvements confirmés
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* 🆕 Widget: Alertes Stock (toutes sévérités) */}
-            <Card className="border-gray-200 rounded-[10px]">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-black text-base flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-orange-500" />
-                  Alertes Stock
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Top 3 alertes nécessitant attention
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {alertsLoading ? (
-                    <div className="text-center py-6">
-                      <RefreshCw className="h-6 w-6 text-gray-300 mx-auto mb-2 animate-spin" />
-                      <p className="text-sm text-gray-500">
-                        Chargement alertes...
-                      </p>
-                    </div>
-                  ) : alerts.length === 0 ? (
-                    <div className="text-center py-6">
-                      <CheckCircle className="h-10 w-10 text-green-500 mx-auto mb-2" />
-                      <p className="text-sm text-gray-500">
-                        Aucune alerte stock actuellement
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      {alerts.slice(0, 3).map(alert => {
-                        // ✅ Phase 3.7: Calcul stock prévisionnel pour affichage
-                        const stockPrevisionnel =
-                          alert.stock_real +
-                          (alert.stock_forecasted_in || 0) -
-                          (alert.stock_forecasted_out || 0);
-                        const seuilAtteint =
-                          stockPrevisionnel >= (alert.min_stock || 0);
+        {/* Navigation Compacte - 1 seule ligne */}
+        <div className="flex flex-wrap items-center gap-2 py-2 px-1">
+          {/* Boutons Pages Stock */}
+          <ButtonV2
+            variant="outline"
+            size="sm"
+            className="border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors h-8"
+            onClick={() => router.push('/stocks/inventaire')}
+          >
+            <Grid3x3 className="h-3.5 w-3.5 mr-1.5" />
+            <span className="text-xs">Inventaire</span>
+          </ButtonV2>
 
-                        return (
+          <ButtonV2
+            variant="outline"
+            size="sm"
+            className="border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors h-8"
+            onClick={() => router.push('/stocks/mouvements')}
+          >
+            <ArrowUpDown className="h-3.5 w-3.5 mr-1.5" />
+            <span className="text-xs">Mouvements</span>
+          </ButtonV2>
+
+          <ButtonV2
+            variant="outline"
+            size="sm"
+            className="border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors h-8"
+            onClick={() => router.push('/stocks/alertes')}
+          >
+            <AlertTriangle className="h-3.5 w-3.5 mr-1.5" />
+            <span className="text-xs">Alertes</span>
+            {realAlertsCount > 0 && (
+              <Badge
+                variant="destructive"
+                className="ml-1.5 h-4 px-1 text-[10px]"
+              >
+                {realAlertsCount}
+              </Badge>
+            )}
+          </ButtonV2>
+
+          <ButtonV2
+            variant="outline"
+            size="sm"
+            className="border-blue-400 text-blue-600 hover:bg-blue-50 transition-colors h-8"
+            onClick={() => router.push('/stocks/previsionnel')}
+          >
+            <TrendingUp className="h-3.5 w-3.5 mr-1.5" />
+            <span className="text-xs">Prévisionnels</span>
+          </ButtonV2>
+
+          {/* Séparateur */}
+          <span className="text-gray-300 mx-1">|</span>
+
+          {/* Liens Connexes */}
+          <Link
+            href="/produits/catalogue"
+            className="text-xs text-gray-500 hover:text-black hover:underline transition-colors"
+          >
+            Catalogue
+          </Link>
+          <Link
+            href="/commandes/fournisseurs"
+            className="text-xs text-gray-500 hover:text-black hover:underline transition-colors"
+          >
+            Fournisseurs
+          </Link>
+          <Link
+            href="/commandes/clients"
+            className="text-xs text-gray-500 hover:text-black hover:underline transition-colors"
+          >
+            Clients
+          </Link>
+        </div>
+
+        {/* Widgets en 2 colonnes - Cartes compactes */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Widget: Alertes Stock */}
+          <Card className="border-gray-200 rounded-[10px] min-h-[500px] flex flex-col">
+            <CardHeader className="pb-2 pt-3 px-4">
+              <CardTitle className="text-black text-sm font-semibold flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-orange-500" />
+                Alertes Stock ({alerts.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 px-3 pb-3">
+              <div className="space-y-1">
+                {alertsLoading ? (
+                  <div className="text-center py-8">
+                    <RefreshCw className="h-5 w-5 text-gray-300 mx-auto mb-2 animate-spin" />
+                    <p className="text-xs text-gray-500">Chargement...</p>
+                  </div>
+                ) : alerts.length === 0 ? (
+                  <div className="text-center py-8">
+                    <CheckCircle className="h-10 w-10 text-green-500 mx-auto mb-2" />
+                    <p className="text-xs text-gray-500">Aucune alerte</p>
+                  </div>
+                ) : (
+                  <>
+                    {alerts.slice(0, 10).map(alert => {
+                      const stockPrevisionnel =
+                        alert.stock_real +
+                        (alert.stock_forecasted_in || 0) -
+                        (alert.stock_forecasted_out || 0);
+                      const seuilAtteint =
+                        stockPrevisionnel >= (alert.min_stock || 0);
+
+                      // Couleur indicateur vertical
+                      const indicatorColor =
+                        alert.validated && seuilAtteint
+                          ? 'bg-green-500'
+                          : alert.is_in_draft
+                            ? 'bg-orange-500'
+                            : 'bg-red-500';
+
+                      return (
+                        <div
+                          key={alert.id}
+                          className="flex items-center gap-2 bg-white border border-gray-100 rounded py-1.5 px-2"
+                        >
+                          {/* Indicateur vertical coloré */}
                           <div
-                            key={alert.id}
-                            className={`flex items-center gap-3 border-l-4 rounded-r-lg px-3 py-2 mb-2 last:mb-0 ${
-                              alert.validated && seuilAtteint
-                                ? 'border-green-500 bg-green-50'
-                                : alert.is_in_draft
-                                  ? 'border-orange-500 bg-orange-50'
-                                  : 'border-red-500 bg-red-50'
-                            }`}
-                          >
-                            {/* Photo produit */}
-                            <ProductThumbnail
-                              src={alert.product_image_url}
-                              alt={alert.product_name}
-                              size="sm"
-                            />
-                            <div className="flex-1 min-w-0">
-                              <Link
-                                href={`/produits/catalogue/${alert.product_id}`}
-                                className="text-sm font-medium text-black hover:text-blue-600 hover:underline transition-colors block truncate"
+                            className={`w-1 h-8 rounded-full ${indicatorColor} flex-shrink-0`}
+                          />
+
+                          <ProductThumbnail
+                            src={alert.product_image_url}
+                            alt={alert.product_name}
+                            size="xs"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <Link
+                              href={`/produits/catalogue/${alert.product_id}`}
+                              className="text-xs font-medium text-black hover:text-blue-600 block truncate"
+                            >
+                              {alert.product_name}
+                            </Link>
+                            <div className="flex items-center gap-2 text-[10px] text-gray-500">
+                              <span>{alert.sku}</span>
+                              <span>•</span>
+                              <span>Stock: {alert.stock_real}</span>
+                              <span>→</span>
+                              <span
+                                className={
+                                  seuilAtteint
+                                    ? 'text-green-600'
+                                    : 'text-red-600'
+                                }
                               >
-                                {alert.product_name}
-                              </Link>
-                              <p className="text-xs text-gray-500 mt-0.5">
-                                {alert.sku}
-                              </p>
-                              {/* ✅ Phase 3.7: Afficher statut commande si disponible */}
-                              {alert.is_in_draft &&
-                                alert.draft_order_number && (
-                                  <p className="text-xs text-orange-600 mt-1 font-medium">
-                                    ⏳ En attente: {alert.draft_order_number} (
-                                    {alert.quantity_in_draft} unités)
-                                  </p>
-                                )}
-                              {alert.validated && seuilAtteint && (
-                                <p className="text-xs text-green-600 mt-1 font-medium">
-                                  ✅ Validé - Stock prévu suffisant
-                                </p>
-                              )}
-                            </div>
-                            <div className="text-right flex flex-col gap-1 ml-2 flex-shrink-0">
-                              <Badge
-                                variant="outline"
-                                className="border-gray-300 text-gray-600 text-xs"
-                              >
-                                {alert.stock_real} réel → {stockPrevisionnel}{' '}
-                                prévu
-                              </Badge>
-                              {alert.min_stock && (
-                                <Badge
-                                  variant="outline"
-                                  className={`text-xs ${
-                                    seuilAtteint
-                                      ? 'border-green-300 text-green-600'
-                                      : 'border-red-300 text-red-600'
-                                  }`}
-                                >
-                                  Seuil: {alert.min_stock}
-                                </Badge>
-                              )}
+                                {stockPrevisionnel}
+                              </span>
+                              <span>/ {alert.min_stock}</span>
                             </div>
                           </div>
-                        );
-                      })}
-                      <ButtonV2
-                        variant="outline"
-                        size="sm"
-                        onClick={() => router.push('/stocks/alertes')}
-                        className="w-full border-orange-200 text-orange-600 hover:bg-orange-50 transition-colors text-xs mt-2"
-                      >
-                        <AlertTriangle className="h-3 w-3 mr-2" />
-                        Voir toutes les alertes ({alerts.length})
-                      </ButtonV2>
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                          {alert.is_in_draft && (
+                            <span className="text-[9px] text-orange-600 bg-orange-50 px-1 rounded">
+                              ⏳
+                            </span>
+                          )}
+                          {alert.validated && seuilAtteint && (
+                            <span className="text-[9px] text-green-600 bg-green-50 px-1 rounded">
+                              ✓
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                    <ButtonV2
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => router.push('/stocks/alertes')}
+                      className="w-full text-orange-600 hover:bg-orange-50 text-[10px] mt-1 h-6"
+                    >
+                      Voir tout ({alerts.length})
+                    </ButtonV2>
+                  </>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
-            {/* Widget: Historique des Stocks */}
-            <Card className="border-gray-200 rounded-[10px]">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-black text-base flex items-center gap-2">
-                  <ArrowUpDown className="h-4 w-4 text-blue-500" />
-                  Historique des Stocks
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Derniers mouvements et ajustements
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {movementsLoading ? (
-                    <div className="text-center py-6">
-                      <RefreshCw className="h-6 w-6 text-gray-300 mx-auto mb-2 animate-spin" />
-                      <p className="text-sm text-gray-500">
-                        Chargement mouvements...
-                      </p>
-                    </div>
-                  ) : lastMovements.length === 0 ? (
-                    <div className="text-center py-6">
-                      <Package className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-                      <p className="text-sm text-gray-500">
-                        Aucun mouvement récent
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      {lastMovements.slice(0, 5).map(movement => (
+          {/* Widget: Derniers Mouvements */}
+          <Card className="border-gray-200 rounded-[10px] min-h-[500px] flex flex-col">
+            <CardHeader className="pb-2 pt-3 px-4">
+              <CardTitle className="text-black text-sm font-semibold flex items-center gap-2">
+                <ArrowUpDown className="h-4 w-4 text-blue-500" />
+                Derniers Mouvements
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 px-3 pb-3">
+              <div className="space-y-1">
+                {movementsLoading ? (
+                  <div className="text-center py-8">
+                    <RefreshCw className="h-5 w-5 text-gray-300 mx-auto mb-2 animate-spin" />
+                    <p className="text-xs text-gray-500">Chargement...</p>
+                  </div>
+                ) : lastMovements.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Package className="h-10 w-10 text-gray-300 mx-auto mb-2" />
+                    <p className="text-xs text-gray-500">Aucun mouvement</p>
+                  </div>
+                ) : (
+                  <>
+                    {lastMovements.slice(0, 12).map(movement => {
+                      // Couleur indicateur selon type
+                      const indicatorColor =
+                        movement.movement_type === 'IN'
+                          ? 'bg-green-500'
+                          : movement.movement_type === 'OUT'
+                            ? 'bg-red-500'
+                            : 'bg-blue-500';
+
+                      return (
                         <div
                           key={movement.id}
-                          className="flex items-center gap-3 border-b border-gray-100 pb-2 last:border-0"
+                          className="flex items-center gap-2 bg-white border border-gray-100 rounded py-1.5 px-2"
                         >
-                          {/* Photo produit */}
+                          {/* Indicateur vertical coloré */}
+                          <div
+                            className={`w-1 h-8 rounded-full ${indicatorColor} flex-shrink-0`}
+                          />
+
                           <ProductThumbnail
                             src={movement.product_image_url}
                             alt={movement.product_name || 'Produit'}
-                            size="sm"
+                            size="xs"
                           />
-                          {/* Icône type mouvement */}
-                          {movement.movement_type === 'IN' ? (
-                            <ArrowDownToLine className="h-4 w-4 text-green-500 flex-shrink-0" />
-                          ) : movement.movement_type === 'OUT' ? (
-                            <ArrowUpFromLine className="h-4 w-4 text-red-500 flex-shrink-0" />
-                          ) : (
-                            <RotateCcw className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                          )}
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-black truncate">
-                              {movement.product_name || 'Produit inconnu'}
+                            <p className="text-xs font-medium text-black truncate">
+                              {movement.product_name || 'Produit'}
                             </p>
-                            <p className="text-xs text-gray-500">
-                              {movement.product_sku}
-                            </p>
-                            <p className="text-xs text-gray-400">
+                            <p className="text-[10px] text-gray-500">
                               {new Date(movement.performed_at).toLocaleString(
                                 'fr-FR',
                                 {
-                                  day: 'numeric',
+                                  day: '2-digit',
                                   month: 'short',
                                   hour: '2-digit',
                                   minute: '2-digit',
@@ -486,35 +412,33 @@ export default function StocksDashboardPage() {
                               )}
                             </p>
                           </div>
-                          <Badge
-                            variant="outline"
-                            className={
+                          <span
+                            className={`text-xs font-semibold ${
                               movement.quantity_change > 0
-                                ? 'border-green-300 text-green-600 text-xs'
-                                : 'border-red-300 text-red-600 text-xs'
-                            }
+                                ? 'text-green-600'
+                                : 'text-red-600'
+                            }`}
                           >
                             {movement.quantity_change > 0 ? '+' : ''}
                             {movement.quantity_change}
-                          </Badge>
+                          </span>
                         </div>
-                      ))}
-                      <ButtonV2
-                        variant="outline"
-                        size="sm"
-                        onClick={() => router.push('/stocks/mouvements')}
-                        className="w-full border-blue-200 text-blue-600 hover:bg-blue-50 transition-colors text-xs mt-2"
-                      >
-                        <Eye className="h-3 w-3 mr-2" />
-                        Voir l'historique complet
-                      </ButtonV2>
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </CardContent>
-        </Card>
+                      );
+                    })}
+                    <ButtonV2
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => router.push('/stocks/mouvements')}
+                      className="w-full text-blue-600 hover:bg-blue-50 text-[10px] mt-1 h-6"
+                    >
+                      Voir l'historique complet
+                    </ButtonV2>
+                  </>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

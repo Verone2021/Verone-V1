@@ -82,10 +82,10 @@ const statusLabels: Record<SalesOrderStatus, string> = {
 
 const statusColors: Record<SalesOrderStatus, string> = {
   draft: 'bg-gray-100 text-gray-800',
-  validated: 'bg-blue-100 text-blue-800',
-  partially_shipped: 'bg-yellow-100 text-yellow-800',
-  shipped: 'bg-green-100 text-green-800',
-  delivered: 'bg-green-100 text-green-800',
+  validated: 'bg-blue-100 text-blue-800', // 🔵 En attente expédition
+  partially_shipped: 'bg-amber-100 text-amber-800', // 🟠 Partiel
+  shipped: 'bg-cyan-100 text-cyan-800', // 🔷 En transit
+  delivered: 'bg-green-100 text-green-800', // 🟢 Complet
   cancelled: 'bg-red-100 text-red-800',
 };
 
