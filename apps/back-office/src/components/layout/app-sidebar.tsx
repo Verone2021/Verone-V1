@@ -75,9 +75,41 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
     icon: Home,
   },
   {
-    title: 'Organisations & Contacts',
-    href: '/organisation',
+    title: 'Contacts & Clients',
+    href: '/contacts-organisations',
     icon: Building2,
+    children: [
+      {
+        title: 'Enseignes',
+        href: '/contacts-organisations/enseignes',
+        icon: Building2,
+      },
+      {
+        title: 'Organisations',
+        href: '/contacts-organisations/customers',
+        icon: Users,
+      },
+      {
+        title: 'Particuliers',
+        href: '/contacts-organisations/particuliers',
+        icon: User,
+      },
+      {
+        title: 'Contacts',
+        href: '/contacts-organisations/contacts',
+        icon: User,
+      },
+      {
+        title: 'Fournisseurs',
+        href: '/contacts-organisations/suppliers',
+        icon: Truck,
+      },
+      {
+        title: 'Partenaires',
+        href: '/contacts-organisations/partners',
+        icon: Users,
+      },
+    ],
   },
   // ============ PHASE 2+ MODULES ============
   {
