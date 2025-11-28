@@ -4,6 +4,8 @@
 export * from './use-organisation-tab-counts';
 export * from './use-organisations';
 export * from './use-contacts';
+export * from './use-enseignes';
+export * from './use-enseigne-stats';
 
 // Re-export Contact type from database for consistency
 export type { Contact } from '@verone/types';
