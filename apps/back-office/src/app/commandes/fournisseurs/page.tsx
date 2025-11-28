@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
 import { useToast } from '@verone/common';
@@ -25,6 +26,7 @@ import {
   AlertDialogTitle,
 } from '@verone/ui';
 import { Badge } from '@verone/ui';
+import { ButtonUnified } from '@verone/ui';
 import { IconButton } from '@verone/ui';
 import {
   Card,
@@ -70,6 +72,7 @@ import {
   RotateCcw,
   ChevronDown,
   XCircle,
+  PackageCheck,
 } from 'lucide-react';
 
 import { updatePurchaseOrderStatus } from '@/app/actions/purchase-orders';
@@ -722,7 +725,14 @@ export default function PurchaseOrdersPage() {
             Gestion des commandes et approvisionnements
           </p>
         </div>
-        <PurchaseOrderFormModal onSuccess={() => fetchOrders()} />
+        <div className="flex gap-2">
+          <Link href="/stocks/receptions">
+            <ButtonUnified variant="outline" icon={PackageCheck}>
+              Réceptions
+            </ButtonUnified>
+          </Link>
+          <PurchaseOrderFormModal onSuccess={() => fetchOrders()} />
+        </div>
       </div>
 
       {/* ✅ KPI Dynamiques */}

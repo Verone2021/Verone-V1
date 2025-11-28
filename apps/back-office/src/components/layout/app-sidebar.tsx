@@ -123,6 +123,11 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
         icon: Activity,
       },
       {
+        title: 'Inventaire',
+        href: '/stocks/inventaire',
+        icon: Package,
+      },
+      {
         title: 'Mouvements de stock',
         href: '/stocks/mouvements',
         icon: RefreshCw,

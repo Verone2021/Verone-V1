@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
 import { useToast } from '@verone/common';
@@ -657,6 +658,11 @@ export default function SalesOrdersPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Link href="/stocks/expeditions">
+            <ButtonUnified variant="outline" icon={Truck}>
+              Expéditions
+            </ButtonUnified>
+          </Link>
           <ButtonUnified
             onClick={handleExportExcel}
             variant="outline"
