@@ -109,10 +109,11 @@ export function PurchaseOrderDetailModal({
   }, [open, order?.id, loadReceptionHistory, loadCancellationHistory]);
 
   // ✅ Calcul éco-taxe totale en useMemo (performance)
+  // L'écotaxe est TOUJOURS par unité, donc on multiplie par la quantité
   const totalEcoTax = useMemo(() => {
     return (
       order?.purchase_order_items?.reduce(
-        (sum, item) => sum + (item.eco_tax || 0),
+        (sum, item) => sum + (item.eco_tax || 0) * item.quantity,
         0
       ) || 0
     );
@@ -176,8 +177,8 @@ export function PurchaseOrderDetailModal({
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {/* TABLE RESPONSIVE avec scroll horizontal mobile */}
-                  <div className="overflow-x-auto">
+                  {/* TABLE RESPONSIVE avec scroll horizontal mobile + hauteur limitée */}
+                  <div className="overflow-x-auto max-h-[320px] overflow-y-auto">
                     <Table className="min-w-[700px]">
                       <TableHeader>
                         <TableRow>
@@ -207,11 +208,12 @@ export function PurchaseOrderDetailModal({
                             null;
 
                           // Calcul total HT avec remise et éco-taxe
+                          // L'écotaxe est par unité, donc on multiplie par la quantité
                           const totalHT =
                             item.quantity *
                               item.unit_price_ht *
                               (1 - (item.discount_percentage || 0) / 100) +
-                            (item.eco_tax || 0);
+                            (item.eco_tax || 0) * item.quantity;
 
                           return (
                             <TableRow
@@ -298,7 +300,7 @@ export function PurchaseOrderDetailModal({
                   <Separator className="my-4" />
                   <div className="space-y-2 text-right">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Total HT :</span>
+                      <span className="text-gray-600">Total HT produits :</span>
                       <span className="font-semibold">
                         {formatCurrency(order.total_ht || 0)}
                       </span>
@@ -312,11 +314,47 @@ export function PurchaseOrderDetailModal({
                       </div>
                     )}
 
+                    {/* Frais additionnels fournisseurs */}
+                    {((order as any).shipping_cost_ht > 0 ||
+                      (order as any).customs_cost_ht > 0 ||
+                      (order as any).insurance_cost_ht > 0) && (
+                      <>
+                        {(order as any).shipping_cost_ht > 0 && (
+                          <div className="flex justify-between text-sm text-gray-600">
+                            <span>Frais de livraison HT :</span>
+                            <span>
+                              {formatCurrency((order as any).shipping_cost_ht)}
+                            </span>
+                          </div>
+                        )}
+                        {(order as any).customs_cost_ht > 0 && (
+                          <div className="flex justify-between text-sm text-gray-600">
+                            <span>Frais de douane HT :</span>
+                            <span>
+                              {formatCurrency((order as any).customs_cost_ht)}
+                            </span>
+                          </div>
+                        )}
+                        {(order as any).insurance_cost_ht > 0 && (
+                          <div className="flex justify-between text-sm text-gray-600">
+                            <span>Frais d'assurance HT :</span>
+                            <span>
+                              {formatCurrency((order as any).insurance_cost_ht)}
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    )}
+
                     <div className="flex justify-between text-sm text-gray-600">
                       <span>TVA (20%) :</span>
                       <span>
                         {formatCurrency(
-                          (order.total_ttc || 0) - (order.total_ht || 0)
+                          (order.total_ttc || 0) -
+                            (order.total_ht || 0) -
+                            ((order as any).shipping_cost_ht || 0) -
+                            ((order as any).customs_cost_ht || 0) -
+                            ((order as any).insurance_cost_ht || 0)
                         )}
                       </span>
                     </div>
@@ -332,8 +370,8 @@ export function PurchaseOrderDetailModal({
               </Card>
             </div>
 
-            {/* SIDEBAR (30%) - Informations contextuelles */}
-            <div className="w-full lg:w-80 space-y-3 order-1 lg:order-2">
+            {/* SIDEBAR (35%) - Informations contextuelles - Élargie pour meilleure lisibilité */}
+            <div className="w-full lg:w-[420px] space-y-3 order-1 lg:order-2">
               {/* Card Fournisseur CONDENSÉE */}
               <Card>
                 <CardHeader className="pb-3">
@@ -450,7 +488,7 @@ export function PurchaseOrderDetailModal({
                       {receptionHistory.length + cancellations.length})
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-2 max-h-64 overflow-y-auto">
+                  <CardContent className="space-y-2 max-h-[320px] overflow-y-auto">
                     {/* Réceptions */}
                     {receptionHistory.map((h, idx) => (
                       <div

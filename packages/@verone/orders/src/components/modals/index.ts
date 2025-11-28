@@ -5,14 +5,10 @@ export { PurchaseOrderFormModal } from './PurchaseOrderFormModal';
 export { PurchaseOrderReceptionModal } from './PurchaseOrderReceptionModal';
 export { QuickPurchaseOrderModal } from './QuickPurchaseOrderModal';
 export { SalesOrderFormModal } from './SalesOrderFormModal';
-export { SalesOrderShipmentModal } from './SalesOrderShipmentModal';
-export { ShipmentRecapModal } from './ShipmentRecapModal';
-export { ShippingManagerModal } from './ShippingManagerModal';
 export { UniversalOrderDetailsModal } from './UniversalOrderDetailsModal';
-export { CreateShipmentModal } from './CreateShipmentModal';
 export { CloseOrderModal } from './CloseOrderModal';
-export { CreateManualShipmentModal } from './CreateManualShipmentModal';
 export { CancelRemainderModal } from './CancelRemainderModal';
+export { SalesOrderShipmentModal } from './SalesOrderShipmentModal';
 export {
   CustomerSelector,
   type UnifiedCustomer,

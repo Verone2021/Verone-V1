@@ -9,18 +9,18 @@
  * - Liste commandes confirmées/partiellement expédiées
  * - Historique commandes expédiées/livrées
  * - Filtres intelligents (urgent, en retard, statut)
- * - Expédition inline via modal complète
  * - Support expéditions partielles
- * - Workflow transporteurs (Packlink, Mondial Relay, Chronotruck, Manuel)
+ *
+ * NOTE: Le modal d'expédition sera recréé ultérieurement (simple sortie stock)
  *
  * @since Phase 3.7 - Unification expéditions (2025-11-04)
- * @updated Phase 3.8 - Historique + Tabs (2025-11-04)
+ * @updated 2025-11-28 - Suppression modal PackLink (sera recréé)
  */
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
-import { SalesOrderShipmentModal } from '@verone/orders';
-import { useSalesShipments } from '@verone/orders';
+import { useSalesShipments, SalesOrderShipmentModal } from '@verone/orders';
+import { ProductThumbnail } from '@verone/products';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -58,6 +58,8 @@ import {
   TrendingUp,
   CheckCircle,
   Eye,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 
 export default function ExpeditionsPage() {
@@ -67,15 +69,23 @@ export default function ExpeditionsPage() {
     loadShipmentStats,
     loadSalesOrdersReadyForShipment,
     loadShipmentHistory,
+    loadShippedOrdersHistory,
   } = useSalesShipments();
 
   const [stats, setStats] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [historyOrders, setHistoryOrders] = useState<any[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
-  const [showShipmentModal, setShowShipmentModal] = useState(false);
   const [shipmentHistory, setShipmentHistory] = useState<any[]>([]);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showShipmentModal, setShowShipmentModal] = useState(false);
+  const [orderToShip, setOrderToShip] = useState<any>(null);
+
+  // État pour les lignes expandées (affichage détails produits)
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [expandedHistoryRows, setExpandedHistoryRows] = useState<Set<string>>(
+    new Set()
+  );
 
   const [activeTab, setActiveTab] = useState<string>('to-ship');
   const [searchTerm, setSearchTerm] = useState('');
@@ -84,6 +94,31 @@ export default function ExpeditionsPage() {
 
   const [historySearchTerm, setHistorySearchTerm] = useState('');
   const [historyStatusFilter, setHistoryStatusFilter] = useState<string>('all');
+
+  // Toggle expansion d'une ligne
+  const toggleRowExpansion = (orderId: string) => {
+    setExpandedRows(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(orderId)) {
+        newSet.delete(orderId);
+      } else {
+        newSet.add(orderId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleHistoryRowExpansion = (orderId: string) => {
+    setExpandedHistoryRows(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(orderId)) {
+        newSet.delete(orderId);
+      } else {
+        newSet.add(orderId);
+      }
+      return newSet;
+    });
+  };
 
   // Charger stats
   useEffect(() => {
@@ -120,41 +155,46 @@ export default function ExpeditionsPage() {
   ]);
 
   // Charger historique commandes expédiées
+  // ✅ FIX 2025-11-28: Utiliser loadShippedOrdersHistory avec filtrage .in() pour éviter erreur enum
   useEffect(() => {
     if (activeTab === 'history') {
       const filters: any = {};
 
+      // ✅ Status filter: 'all' = ['shipped', 'delivered'], sinon single status
       if (historyStatusFilter !== 'all') {
         filters.status = historyStatusFilter;
-      } else {
-        // Par défaut, charger shipped ET delivered
-        filters.status = 'shipped,delivered';
       }
 
       if (historySearchTerm) {
         filters.search = historySearchTerm;
       }
 
-      loadSalesOrdersReadyForShipment(filters).then(setHistoryOrders);
+      // ✅ Utiliser la bonne fonction qui gère le filtrage par array de statuts
+      loadShippedOrdersHistory(filters).then(setHistoryOrders);
     }
   }, [
-    loadSalesOrdersReadyForShipment,
+    loadShippedOrdersHistory,
     historyStatusFilter,
     historySearchTerm,
     activeTab,
   ]);
 
-  const handleOpenShipment = (order: any) => {
-    setSelectedOrder(order);
+  // Handler pour ouvrir le modal d'expédition
+  const handleOpenShipmentModal = (order: any) => {
+    setOrderToShip(order);
     setShowShipmentModal(true);
   };
 
+  // Handler pour fermeture + refresh après succès
   const handleShipmentSuccess = () => {
-    // Recharger stats et liste
-    loadShipmentStats().then(setStats);
-    loadSalesOrdersReadyForShipment().then(setOrders);
     setShowShipmentModal(false);
-    setSelectedOrder(null);
+    setOrderToShip(null);
+    // Recharger stats et commandes
+    loadShipmentStats().then(setStats);
+    loadSalesOrdersReadyForShipment({
+      status: statusFilter !== 'all' ? statusFilter : undefined,
+      search: searchTerm || undefined,
+    }).then(setOrders);
   };
 
   const handleViewHistory = async (order: any) => {
@@ -351,6 +391,7 @@ export default function ExpeditionsPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-8" />
                         <TableHead>N° Commande</TableHead>
                         <TableHead>Client</TableHead>
                         <TableHead>Statut</TableHead>
@@ -396,69 +437,162 @@ export default function ExpeditionsPage() {
                           daysUntil <= 3 &&
                           daysUntil >= 0;
 
+                        const isExpanded = expandedRows.has(order.id);
+
                         return (
-                          <TableRow key={order.id}>
-                            <TableCell className="font-medium">
-                              {order.order_number}
-                              {isOverdue && (
+                          <React.Fragment key={order.id}>
+                            <TableRow
+                              className="cursor-pointer hover:bg-gray-50"
+                              onClick={() => toggleRowExpansion(order.id)}
+                            >
+                              <TableCell className="w-8">
+                                {isExpanded ? (
+                                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                                ) : (
+                                  <ChevronRight className="h-4 w-4 text-gray-500" />
+                                )}
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {order.order_number}
+                                {isOverdue && (
+                                  <Badge
+                                    variant="destructive"
+                                    className="ml-2 text-xs"
+                                  >
+                                    En retard
+                                  </Badge>
+                                )}
+                                {isUrgent && !isOverdue && (
+                                  <Badge className="ml-2 text-xs bg-verone-warning">
+                                    Urgent
+                                  </Badge>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {order.customer_name || 'Client inconnu'}
+                              </TableCell>
+                              <TableCell>
                                 <Badge
-                                  variant="destructive"
-                                  className="ml-2 text-xs"
+                                  className={
+                                    order.status === 'validated'
+                                      ? 'bg-gray-100 text-gray-900'
+                                      : 'bg-verone-warning text-white'
+                                  }
                                 >
-                                  En retard
+                                  {order.status === 'validated'
+                                    ? 'Validée'
+                                    : 'Partielle'}
                                 </Badge>
-                              )}
-                              {isUrgent && !isOverdue && (
-                                <Badge className="ml-2 text-xs bg-verone-warning">
-                                  Urgent
-                                </Badge>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {order.customer_name || 'Client inconnu'}
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                className={
-                                  order.status === 'validated'
-                                    ? 'bg-gray-100 text-gray-900'
-                                    : 'bg-verone-warning text-white'
-                                }
-                              >
-                                {order.status === 'validated'
-                                  ? 'Validée'
-                                  : 'Partielle'}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {order.expected_delivery_date
-                                ? formatDate(order.expected_delivery_date)
-                                : 'Non définie'}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <div className="flex-1 bg-gray-200 rounded-full h-2">
-                                  <div
-                                    className="bg-verone-success h-2 rounded-full transition-all"
-                                    style={{ width: `${progressPercent}%` }}
-                                  />
+                              </TableCell>
+                              <TableCell>
+                                {order.expected_delivery_date
+                                  ? formatDate(order.expected_delivery_date)
+                                  : 'Non définie'}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <div className="flex-1 bg-gray-200 rounded-full h-2">
+                                    <div
+                                      className="bg-verone-success h-2 rounded-full transition-all"
+                                      style={{ width: `${progressPercent}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-sm text-gray-600 w-12 text-right">
+                                    {progressPercent}%
+                                  </span>
                                 </div>
-                                <span className="text-sm text-gray-600 w-12 text-right">
-                                  {progressPercent}%
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <ButtonV2
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleOpenShipment(order)}
-                              >
-                                <Truck className="h-4 w-4 mr-2" />
-                                Expédier
-                              </ButtonV2>
-                            </TableCell>
-                          </TableRow>
+                              </TableCell>
+                              <TableCell>
+                                <ButtonV2
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    handleOpenShipmentModal(order);
+                                  }}
+                                >
+                                  <Truck className="h-4 w-4 mr-2" />
+                                  Expédier
+                                </ButtonV2>
+                              </TableCell>
+                            </TableRow>
+                            {/* Ligne expandable avec détails produits */}
+                            {isExpanded && (
+                              <TableRow key={`${order.id}-details`}>
+                                <TableCell
+                                  colSpan={7}
+                                  className="bg-gray-50 p-0"
+                                >
+                                  <div className="p-4">
+                                    <h4 className="font-medium text-sm mb-3 text-gray-700">
+                                      Produits de la commande (
+                                      {order.sales_order_items?.length || 0})
+                                    </h4>
+                                    <div className="space-y-2">
+                                      {order.sales_order_items?.map(
+                                        (item: any) => (
+                                          <div
+                                            key={item.id}
+                                            className="flex items-center gap-4 p-2 bg-white rounded-lg border"
+                                          >
+                                            <ProductThumbnail
+                                              src={
+                                                item.products?.product_images?.find(
+                                                  (img: any) => img.is_primary
+                                                )?.public_url ||
+                                                item.products
+                                                  ?.product_images?.[0]
+                                                  ?.public_url
+                                              }
+                                              alt={
+                                                item.products?.name || 'Produit'
+                                              }
+                                              size="sm"
+                                            />
+                                            <div className="flex-1 min-w-0">
+                                              <p className="font-medium text-sm truncate">
+                                                {item.products?.name ||
+                                                  'Produit inconnu'}
+                                              </p>
+                                              <p className="text-xs text-gray-500 font-mono">
+                                                SKU:{' '}
+                                                {item.products?.sku || 'N/A'}
+                                              </p>
+                                            </div>
+                                            <div className="text-right">
+                                              <p className="text-sm font-medium">
+                                                {item.quantity_shipped || 0} /{' '}
+                                                {item.quantity} expédié(s)
+                                              </p>
+                                              <p className="text-xs text-gray-500">
+                                                Stock:{' '}
+                                                {item.products?.stock_real ??
+                                                  '-'}
+                                              </p>
+                                            </div>
+                                            <div className="text-right">
+                                              <p className="text-sm font-medium">
+                                                {formatCurrency(
+                                                  item.unit_price_ht *
+                                                    item.quantity
+                                                )}
+                                              </p>
+                                              <p className="text-xs text-gray-500">
+                                                {formatCurrency(
+                                                  item.unit_price_ht
+                                                )}{' '}
+                                                HT/u
+                                              </p>
+                                            </div>
+                                          </div>
+                                        )
+                                      )}
+                                    </div>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </React.Fragment>
                         );
                       })}
                     </TableBody>
@@ -538,6 +672,7 @@ export default function ExpeditionsPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-8" />
                         <TableHead>N° Commande</TableHead>
                         <TableHead>Client</TableHead>
                         <TableHead>Statut</TableHead>
@@ -556,49 +691,144 @@ export default function ExpeditionsPage() {
                             0
                           ) || 0;
 
+                        const isExpanded = expandedHistoryRows.has(order.id);
+
                         return (
-                          <TableRow key={order.id}>
-                            <TableCell className="font-medium">
-                              {order.order_number}
-                            </TableCell>
-                            <TableCell>
-                              {order.customer_name || 'Client inconnu'}
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                className={
-                                  order.status === 'shipped'
-                                    ? 'bg-verone-success text-white'
-                                    : 'bg-blue-500 text-white'
-                                }
-                              >
-                                {order.status === 'shipped'
-                                  ? 'Expédiée'
-                                  : 'Livrée'}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {order.shipped_at
-                                ? formatDate(order.shipped_at)
-                                : '-'}
-                            </TableCell>
-                            <TableCell>
-                              {order.delivered_at
-                                ? formatDate(order.delivered_at)
-                                : '-'}
-                            </TableCell>
-                            <TableCell>{totalItems} unité(s)</TableCell>
-                            <TableCell>
-                              <ButtonV2
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleViewHistory(order)}
-                              >
-                                <Eye className="h-4 w-4 mr-2" />
-                                Voir détails
-                              </ButtonV2>
-                            </TableCell>
-                          </TableRow>
+                          <React.Fragment key={order.id}>
+                            <TableRow
+                              className="cursor-pointer hover:bg-gray-50"
+                              onClick={() =>
+                                toggleHistoryRowExpansion(order.id)
+                              }
+                            >
+                              <TableCell className="w-8">
+                                {isExpanded ? (
+                                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                                ) : (
+                                  <ChevronRight className="h-4 w-4 text-gray-500" />
+                                )}
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {order.order_number}
+                              </TableCell>
+                              <TableCell>
+                                {order.customer_name || 'Client inconnu'}
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  className={
+                                    order.status === 'shipped'
+                                      ? 'bg-verone-success text-white'
+                                      : 'bg-blue-500 text-white'
+                                  }
+                                >
+                                  {order.status === 'shipped'
+                                    ? 'Expédiée'
+                                    : 'Livrée'}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                {order.shipped_at
+                                  ? formatDate(order.shipped_at)
+                                  : '-'}
+                              </TableCell>
+                              <TableCell>
+                                {order.delivered_at
+                                  ? formatDate(order.delivered_at)
+                                  : '-'}
+                              </TableCell>
+                              <TableCell>{totalItems} unité(s)</TableCell>
+                              <TableCell>
+                                <ButtonV2
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    handleViewHistory(order);
+                                  }}
+                                >
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  Voir détails
+                                </ButtonV2>
+                              </TableCell>
+                            </TableRow>
+                            {/* Ligne expandable avec détails produits */}
+                            {isExpanded && (
+                              <TableRow key={`${order.id}-details`}>
+                                <TableCell
+                                  colSpan={8}
+                                  className="bg-gray-50 p-0"
+                                >
+                                  <div className="p-4">
+                                    <h4 className="font-medium text-sm mb-3 text-gray-700">
+                                      Produits de la commande (
+                                      {order.sales_order_items?.length || 0})
+                                    </h4>
+                                    <div className="space-y-2">
+                                      {order.sales_order_items?.map(
+                                        (item: any) => (
+                                          <div
+                                            key={item.id}
+                                            className="flex items-center gap-4 p-2 bg-white rounded-lg border"
+                                          >
+                                            <ProductThumbnail
+                                              src={
+                                                item.products?.product_images?.find(
+                                                  (img: any) => img.is_primary
+                                                )?.public_url ||
+                                                item.products
+                                                  ?.product_images?.[0]
+                                                  ?.public_url
+                                              }
+                                              alt={
+                                                item.products?.name || 'Produit'
+                                              }
+                                              size="sm"
+                                            />
+                                            <div className="flex-1 min-w-0">
+                                              <p className="font-medium text-sm truncate">
+                                                {item.products?.name ||
+                                                  'Produit inconnu'}
+                                              </p>
+                                              <p className="text-xs text-gray-500 font-mono">
+                                                SKU:{' '}
+                                                {item.products?.sku || 'N/A'}
+                                              </p>
+                                            </div>
+                                            <div className="text-right">
+                                              <p className="text-sm font-medium">
+                                                {item.quantity_shipped || 0} /{' '}
+                                                {item.quantity} expédié(s)
+                                              </p>
+                                              <p className="text-xs text-gray-500">
+                                                Stock:{' '}
+                                                {item.products?.stock_real ??
+                                                  '-'}
+                                              </p>
+                                            </div>
+                                            <div className="text-right">
+                                              <p className="text-sm font-medium">
+                                                {formatCurrency(
+                                                  item.unit_price_ht *
+                                                    item.quantity
+                                                )}
+                                              </p>
+                                              <p className="text-xs text-gray-500">
+                                                {formatCurrency(
+                                                  item.unit_price_ht
+                                                )}{' '}
+                                                HT/u
+                                              </p>
+                                            </div>
+                                          </div>
+                                        )
+                                      )}
+                                    </div>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </React.Fragment>
                         );
                       })}
                     </TableBody>
@@ -611,13 +841,13 @@ export default function ExpeditionsPage() {
       </Tabs>
 
       {/* Modal d'expédition */}
-      {selectedOrder && showShipmentModal && (
+      {orderToShip && (
         <SalesOrderShipmentModal
-          order={selectedOrder}
+          order={orderToShip}
           open={showShipmentModal}
           onClose={() => {
             setShowShipmentModal(false);
-            setSelectedOrder(null);
+            setOrderToShip(null);
           }}
           onSuccess={handleShipmentSuccess}
         />

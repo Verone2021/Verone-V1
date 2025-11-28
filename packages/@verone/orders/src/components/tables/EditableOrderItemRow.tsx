@@ -86,12 +86,13 @@ export function EditableOrderItemRow({
   }, [item.id]);
 
   // Calculer total ligne HT
+  // L'écotaxe est TOUJOURS par unité, donc on multiplie par la quantité
   const calculateTotal = (): number => {
     const subtotal =
       item.quantity *
       item.unit_price_ht *
       (1 - (item.discount_percentage || 0) / 100);
-    return subtotal + (item.eco_tax || 0);
+    return subtotal + (item.eco_tax || 0) * item.quantity;
   };
 
   // Récupérer image primaire produit

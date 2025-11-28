@@ -1,9 +1,7 @@
 /**
- * Shipments Components
+ * Shipments Components - PLACEHOLDER
+ * Le module expéditions sera recréé ultérieurement
  */
 
-export * from './PackagesBuilder';
-export * from './PickupPointSelector';
-export * from './ServiceSelector';
-export * from './ShipmentStatusBadge';
-export * from './ShipmentCard';
+// Module vidé temporairement - sera recréé plus tard
+export {};

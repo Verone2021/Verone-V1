@@ -34,9 +34,8 @@ export default function StocksDashboardPage() {
 
   // Hooks pour widgets
   const {
-    alerts,
+    activeAlerts,
     criticalAlerts,
-    warningAlerts,
     loading: alertsLoading,
     fetchAlerts,
   } = useStockAlerts();
@@ -81,9 +80,10 @@ export default function StocksDashboardPage() {
     total_movements: 0,
   };
 
-  // Vraies alertes depuis useStockAlerts (pas le calcul basique)
-  const realAlertsCount = alerts.length;
-  const criticalCount = criticalAlerts?.length || 0;
+  // Vraies alertes actives depuis useStockAlerts (filtrées: stock_real < min_stock)
+  const realAlertsCount = activeAlerts.length;
+  const criticalCount =
+    criticalAlerts?.filter(a => a.stock_real < a.min_stock).length || 0;
 
   // Rotation 7 jours = entrées + sorties
   const rotation7j =
@@ -251,7 +251,7 @@ export default function StocksDashboardPage() {
             <CardHeader className="pb-2 pt-3 px-4">
               <CardTitle className="text-black text-sm font-semibold flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-orange-500" />
-                Alertes Stock ({alerts.length})
+                Alertes Stock ({activeAlerts.length})
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 px-3 pb-3">
@@ -261,14 +261,14 @@ export default function StocksDashboardPage() {
                     <RefreshCw className="h-5 w-5 text-gray-300 mx-auto mb-2 animate-spin" />
                     <p className="text-xs text-gray-500">Chargement...</p>
                   </div>
-                ) : alerts.length === 0 ? (
+                ) : activeAlerts.length === 0 ? (
                   <div className="text-center py-8">
                     <CheckCircle className="h-10 w-10 text-green-500 mx-auto mb-2" />
                     <p className="text-xs text-gray-500">Aucune alerte</p>
                   </div>
                 ) : (
                   <>
-                    {alerts.slice(0, 10).map(alert => {
+                    {activeAlerts.slice(0, 10).map(alert => {
                       const stockPrevisionnel =
                         alert.stock_real +
                         (alert.stock_forecasted_in || 0) -
@@ -342,7 +342,7 @@ export default function StocksDashboardPage() {
                       onClick={() => router.push('/stocks/alertes')}
                       className="w-full text-orange-600 hover:bg-orange-50 text-[10px] mt-1 h-6"
                     >
-                      Voir tout ({alerts.length})
+                      Voir tout ({activeAlerts.length})
                     </ButtonV2>
                   </>
                 )}

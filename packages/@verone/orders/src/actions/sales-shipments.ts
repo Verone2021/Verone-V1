@@ -13,32 +13,11 @@ const shipmentItemSchema = z.object({
   quantity_to_ship: z.number().int().positive(),
 });
 
-const shippingAddressSchema = z.object({
-  recipient_name: z.string().min(1),
-  company: z.string().optional(),
-  address_line1: z.string().min(1),
-  address_line2: z.string().optional(),
-  postal_code: z.string().min(1),
-  city: z.string().min(1),
-  country: z.string().min(1),
-  phone: z.string().optional(),
-  email: z.string().email().optional(),
-});
-
 const validateShipmentSchema = z.object({
   sales_order_id: z.string().uuid(),
   items: z.array(shipmentItemSchema).min(1),
   shipped_at: z.string().datetime().optional(),
-  carrier_info: z.object({
-    carrier_type: z.enum(['packlink', 'mondial_relay', 'chronotruck', 'other']),
-    carrier_name: z.string().optional(),
-    service_name: z.string().optional(),
-    tracking_number: z.string().optional(),
-    tracking_url: z.string().optional(),
-    cost_paid_eur: z.number().optional(),
-    cost_charged_eur: z.number().optional(),
-  }),
-  shipping_address: shippingAddressSchema,
+  tracking_number: z.string().optional(),
   notes: z.string().optional(),
   shipped_by: z.string().uuid(),
 });
@@ -48,7 +27,7 @@ const validateShipmentSchema = z.object({
  *
  * Workflow:
  * 1. Validation Zod payload
- * 2. Vérifier SO existe et status valide
+ * 2. Vérifier SO existe et status valide (validated | partially_shipped)
  * 3. Pour chaque item: INSERT INTO sales_order_shipments
  * 4. Triggers PostgreSQL gèrent automatiquement:
  *    - Sync quantity_shipped dans sales_order_items
@@ -57,11 +36,16 @@ const validateShipmentSchema = z.object({
  *    - Update sales_orders.status
  * 5. Revalidate cache Next.js
  *
- * @param payload ValidateShipmentPayload
+ * @param payload ValidateShipmentPayload (simplifié sans carrier_info/shipping_address)
  * @returns Promise<{ success: boolean; error?: string }>
  */
 export async function validateSalesShipment(
-  payload: ValidateShipmentPayload
+  payload: Omit<
+    ValidateShipmentPayload,
+    'carrier_info' | 'shipping_address'
+  > & {
+    tracking_number?: string;
+  }
 ): Promise<{ success: boolean; error?: string }> {
   try {
     // 1. Validation Zod
@@ -97,7 +81,7 @@ export async function validateSalesShipment(
       // Vérifier cohérence quantité
       const { data: currentItem, error: itemError } = await supabase
         .from('sales_order_items')
-        .select('id, quantity, quantity_shipped')
+        .select('id, quantity, quantity_shipped, product_id')
         .eq('id', item.sales_order_item_id)
         .single();
 
@@ -121,15 +105,21 @@ export async function validateSalesShipment(
       // Vérifier stock disponible
       const { data: product, error: productError } = await supabase
         .from('products')
-        .select('stock_real')
+        .select('id, stock_real, name')
         .eq('id', item.product_id)
         .single();
 
-      const stockReal = product?.stock_real ?? 0;
-      if (productError || !product || stockReal < item.quantity_to_ship) {
+      if (productError || !product) {
         return {
           success: false,
-          error: `Stock insuffisant pour produit ${item.product_id}`,
+          error: `Produit ${item.product_id} introuvable`,
+        };
+      }
+
+      if ((product.stock_real || 0) < item.quantity_to_ship) {
+        return {
+          success: false,
+          error: `Stock insuffisant pour ${product.name}: ${product.stock_real || 0} disponibles, ${item.quantity_to_ship} demandés`,
         };
       }
 
@@ -142,7 +132,7 @@ export async function validateSalesShipment(
           quantity_shipped: item.quantity_to_ship,
           shipped_at: validatedData.shipped_at || new Date().toISOString(),
           shipped_by: validatedData.shipped_by,
-          tracking_number: validatedData.carrier_info.tracking_number,
+          tracking_number: validatedData.tracking_number,
           notes: validatedData.notes,
         });
 
@@ -157,6 +147,7 @@ export async function validateSalesShipment(
 
     // 5. Revalidate cache Next.js
     revalidatePath('/stocks/expeditions');
+    revalidatePath('/commandes/clients');
     revalidatePath(`/commandes/clients/${validatedData.sales_order_id}`);
 
     return { success: true };

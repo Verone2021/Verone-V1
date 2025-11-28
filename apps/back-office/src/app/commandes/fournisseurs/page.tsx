@@ -9,6 +9,7 @@ import type { PurchaseOrder, PurchaseOrderStatus } from '@verone/orders';
 import { PurchaseOrderFormModal } from '@verone/orders';
 import { PurchaseOrderReceptionModal } from '@verone/orders';
 import { PurchaseOrderDetailModal } from '@verone/orders';
+import { CancelRemainderModal } from '@verone/orders';
 import { usePurchaseOrders } from '@verone/orders';
 import { useOrganisations } from '@verone/organisations';
 import { ProductThumbnail } from '@verone/products';
@@ -68,6 +69,7 @@ import {
   ArrowDown,
   RotateCcw,
   ChevronDown,
+  XCircle,
 } from 'lucide-react';
 
 import { updatePurchaseOrderStatus } from '@/app/actions/purchase-orders';
@@ -151,6 +153,19 @@ export default function PurchaseOrdersPage() {
 
   // État pour les lignes expandées (chevron)
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+  // État pour modal annulation reliquat
+  const [showCancelRemainderModal, setShowCancelRemainderModal] =
+    useState(false);
+  const [cancelRemainderOrder, setCancelRemainderOrder] =
+    useState<PurchaseOrder | null>(null);
+  const [cancelRemainderItems, setCancelRemainderItems] = useState<
+    Array<{
+      product_name: string;
+      product_sku: string;
+      quantity_remaining: number;
+    }>
+  >([]);
 
   const toggleRow = (orderId: string) => {
     setExpandedRows(prev => {
@@ -673,6 +688,28 @@ export default function PurchaseOrdersPage() {
     setShowReceptionModal(true);
   };
 
+  // Ouvrir modal annulation reliquat
+  const openCancelRemainderModal = (order: PurchaseOrder) => {
+    // Calculer les items avec reliquat
+    const items = order.purchase_order_items || [];
+    const remainderItems = items
+      .filter(item => {
+        const quantityOrdered = item.quantity || 0;
+        const quantityReceived = item.quantity_received || 0;
+        return quantityOrdered > quantityReceived;
+      })
+      .map(item => ({
+        product_name: item.products?.name || 'Produit inconnu',
+        product_sku: item.products?.sku || 'N/A',
+        quantity_remaining:
+          (item.quantity || 0) - (item.quantity_received || 0),
+      }));
+
+    setCancelRemainderOrder(order);
+    setCancelRemainderItems(remainderItems);
+    setShowCancelRemainderModal(true);
+  };
+
   return (
     <div className="space-y-6 p-6">
       {/* En-tête */}
@@ -989,7 +1026,7 @@ export default function PurchaseOrdersPage() {
                                 </>
                               )}
 
-                              {/* CONFIRMED : Réceptionner + Dévalider + Annuler */}
+                              {/* VALIDATED : Réceptionner + Dévalider (PAS d'annulation directe!) */}
                               {order.status === 'validated' && (
                                 <>
                                   <IconButton
@@ -1008,17 +1045,11 @@ export default function PurchaseOrdersPage() {
                                       handleStatusChange(order.id, 'draft')
                                     }
                                   />
-                                  <IconButton
-                                    icon={Ban}
-                                    variant="danger"
-                                    size="sm"
-                                    label="Annuler la commande"
-                                    onClick={() => handleCancel(order.id)}
-                                  />
+                                  {/* ❌ Bouton Annuler RETIRÉ - Workflow strict: validated → draft → cancelled */}
                                 </>
                               )}
 
-                              {/* PARTIALLY_RECEIVED : Réceptionner + Annuler */}
+                              {/* PARTIALLY_RECEIVED : Réceptionner + Annuler Reliquat (PAS d'annulation complète!) */}
                               {order.status === 'partially_received' && (
                                 <>
                                   <IconButton
@@ -1029,12 +1060,16 @@ export default function PurchaseOrdersPage() {
                                     onClick={() => openReceptionModal(order)}
                                   />
                                   <IconButton
-                                    icon={Ban}
-                                    variant="danger"
+                                    icon={XCircle}
+                                    variant="outline"
                                     size="sm"
-                                    label="Annuler la commande"
-                                    onClick={() => handleCancel(order.id)}
+                                    label="Annuler le reliquat"
+                                    className="border-orange-500 text-orange-600 hover:bg-orange-50"
+                                    onClick={() =>
+                                      openCancelRemainderModal(order)
+                                    }
                                   />
+                                  {/* ❌ Bouton Annuler RETIRÉ - Impossible d'annuler une commande avec réceptions */}
                                 </>
                               )}
 
@@ -1247,6 +1282,27 @@ export default function PurchaseOrdersPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Modal Annulation Reliquat */}
+      {cancelRemainderOrder && (
+        <CancelRemainderModal
+          open={showCancelRemainderModal}
+          onClose={() => {
+            setShowCancelRemainderModal(false);
+            setCancelRemainderOrder(null);
+            setCancelRemainderItems([]);
+          }}
+          purchaseOrderId={cancelRemainderOrder.id}
+          poNumber={cancelRemainderOrder.po_number}
+          remainderItems={cancelRemainderItems}
+          onSuccess={() => {
+            fetchOrders();
+            setShowCancelRemainderModal(false);
+            setCancelRemainderOrder(null);
+            setCancelRemainderItems([]);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -12,7 +12,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-import { ShipmentsSection } from '@verone/orders';
+// NOTE: ShipmentsSection supprimée - sera recréée ultérieurement
 import { Badge } from '@verone/ui';
 import { Card } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/server';
@@ -311,21 +311,7 @@ export default async function OrderDetailPage({
           </div>
         </div>
 
-        {/* Section Expéditions */}
-        <div className="mt-6">
-          <ShipmentsSection
-            orderId={id}
-            orderNumber={order.order_number}
-            orderStatus={order.status}
-            orderItems={items.map((item: any) => ({
-              id: item.id,
-              product_id: item.product_id,
-              product_name: item.products?.name || 'Produit inconnu',
-              quantity: item.quantity,
-              quantity_shipped: item.quantity_shipped || 0,
-            }))}
-          />
-        </div>
+        {/* NOTE: Section Expéditions supprimée - sera recréée ultérieurement */}
       </div>
     </div>
   );

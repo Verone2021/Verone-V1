@@ -22,7 +22,6 @@ import {
   AlertDialogTitle,
 } from '@verone/ui';
 import { Badge } from '@verone/ui';
-import { Checkbox } from '@verone/ui';
 import { EcoTaxVatInput } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
@@ -143,6 +142,11 @@ export function SalesOrderFormModal({
     Array<{ id: string; name: string; code: string }>
   >([]);
 
+  // Frais additionnels clients
+  const [shippingCostHt, setShippingCostHt] = useState<number>(0);
+  const [insuranceCostHt, setInsuranceCostHt] = useState<number>(0);
+  const [handlingCostHt, setHandlingCostHt] = useState<number>(0);
+
   // RFA supprimé - Migration 003
 
   // Items management
@@ -250,6 +254,10 @@ export function SalesOrderFormModal({
       setPaymentTermsType((order as any).payment_terms_type || '');
       setPaymentTermsNotes((order as any).payment_terms_notes || '');
       setChannelId((order as any).channel_id || null);
+      // Charger frais additionnels
+      setShippingCostHt((order as any).shipping_cost_ht || 0);
+      setInsuranceCostHt((order as any).insurance_cost_ht || 0);
+      setHandlingCostHt((order as any).handling_cost_ht || 0);
 
       // Transformer les items de la commande en OrderItem[]
       const loadedItems = await Promise.all(
@@ -302,25 +310,41 @@ export function SalesOrderFormModal({
   }, [open, mode, orderId]);
 
   // Calculs totaux (inclut eco_tax - Migration eco_tax 2025-10-31)
-  const totalHT = items.reduce((sum, item) => {
+  // ✅ FIX: L'écotaxe est PAR UNITÉ, donc multipliée par la quantité
+  const totalHTProducts = items.reduce((sum, item) => {
     const itemSubtotal =
       item.quantity *
       item.unit_price_ht *
       (1 - (item.discount_percentage || 0) / 100);
-    return sum + itemSubtotal + (item.eco_tax || 0);
+    const itemEcoTax = (item.eco_tax || 0) * item.quantity; // Écotaxe × quantité
+    return sum + itemSubtotal + itemEcoTax;
   }, 0);
 
-  // TVA calculée dynamiquement par ligne avec taux spécifique
-  const totalTVA = items.reduce((sum, item) => {
-    const lineHT =
-      item.quantity *
-      item.unit_price_ht *
-      (1 - (item.discount_percentage || 0) / 100);
-    const lineTVA = lineHT * (item.tax_rate || 0.2);
-    return sum + lineTVA;
-  }, 0);
+  // Total des frais additionnels
+  const totalCharges = shippingCostHt + insuranceCostHt + handlingCostHt;
 
-  const totalTTC = totalHT + totalTVA;
+  // Total HT global (produits + frais)
+  const totalHT = totalHTProducts + totalCharges;
+
+  // TVA calculée dynamiquement par ligne avec taux spécifique + TVA sur frais (20%)
+  // ✅ FIX: Inclure TVA sur écotaxe (écotaxe × quantité × taux TVA écotaxe)
+  const totalTVA =
+    items.reduce((sum, item) => {
+      const lineHT =
+        item.quantity *
+        item.unit_price_ht *
+        (1 - (item.discount_percentage || 0) / 100);
+      const lineTVA = lineHT * (item.tax_rate || 0.2);
+      // TVA sur écotaxe: ecoTaxVatRate est en % (ex: 20), item.tax_rate est en décimal (ex: 0.2)
+      const ecoTaxHT = (item.eco_tax || 0) * item.quantity;
+      const ecoTaxTvaRate =
+        ecoTaxVatRate !== null ? ecoTaxVatRate / 100 : item.tax_rate || 0.2;
+      const ecoTaxTVA = ecoTaxHT * ecoTaxTvaRate;
+      return sum + lineTVA + ecoTaxTVA;
+    }, 0) +
+    totalCharges * 0.2; // TVA 20% sur les frais
+
+  const totalTTC = totalHTProducts + totalCharges + totalTVA;
 
   // Memoize excludeProductIds pour éviter re-renders infinis
   const excludeProductIds = useMemo(
@@ -481,6 +505,10 @@ export function SalesOrderFormModal({
     setItems([]);
     // setProductSearchTerm(''); // DEPRECATED - Migration 003
     setStockWarnings([]);
+    // Réinitialiser frais additionnels
+    setShippingCostHt(0);
+    setInsuranceCostHt(0);
+    setHandlingCostHt(0);
   };
 
   // Vérifier la disponibilité du stock pour tous les items
@@ -714,6 +742,10 @@ export function SalesOrderFormModal({
           channel_id: channelId || undefined,
           notes: notes || undefined,
           eco_tax_vat_rate: ecoTaxVatRate,
+          // Frais additionnels clients
+          shipping_cost_ht: shippingCostHt || 0,
+          insurance_cost_ht: insuranceCostHt || 0,
+          handling_cost_ht: handlingCostHt || 0,
         };
 
         await updateOrderWithItems(orderId, updateData, itemsData);
@@ -737,6 +769,10 @@ export function SalesOrderFormModal({
           channel_id: channelId || undefined,
           notes: notes || undefined,
           eco_tax_vat_rate: ecoTaxVatRate,
+          // Frais additionnels clients
+          shipping_cost_ht: shippingCostHt || 0,
+          insurance_cost_ht: insuranceCostHt || 0,
+          handling_cost_ht: handlingCostHt || 0,
           items: itemsData,
         };
 
@@ -964,6 +1000,66 @@ export function SalesOrderFormModal({
             </CardContent>
           </Card>
 
+          {/* Frais additionnels clients */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Frais additionnels</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="shippingCostHt">
+                  Frais de livraison HT (€)
+                </Label>
+                <Input
+                  id="shippingCostHt"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={shippingCostHt || ''}
+                  onChange={e =>
+                    setShippingCostHt(parseFloat(e.target.value) || 0)
+                  }
+                  placeholder="0.00"
+                  disabled={loading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="insuranceCostHt">
+                  Frais d'assurance HT (€)
+                </Label>
+                <Input
+                  id="insuranceCostHt"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={insuranceCostHt || ''}
+                  onChange={e =>
+                    setInsuranceCostHt(parseFloat(e.target.value) || 0)
+                  }
+                  placeholder="0.00"
+                  disabled={loading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="handlingCostHt">
+                  Frais de manutention HT (€)
+                </Label>
+                <Input
+                  id="handlingCostHt"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={handlingCostHt || ''}
+                  onChange={e =>
+                    setHandlingCostHt(parseFloat(e.target.value) || 0)
+                  }
+                  placeholder="0.00"
+                  disabled={loading}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Articles */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
@@ -989,72 +1085,42 @@ export function SalesOrderFormModal({
                     <TableHeader>
                       <TableRow>
                         <TableHead>Produit</TableHead>
-                        <TableHead>SKU</TableHead>
-                        <TableHead>Quantité</TableHead>
-                        <TableHead>Prix unitaire HT</TableHead>
-                        <TableHead>TVA (%)</TableHead>
-                        <TableHead>Éco-taxe (€)</TableHead>
-                        {/* Afficher colonne Remise seulement si au moins 1 item a une remise > 0 */}
-                        {items.some(
-                          item => (item.discount_percentage || 0) > 0
-                        ) && <TableHead>Remise (%)</TableHead>}
-                        <TableHead>Total HT</TableHead>
-                        <TableHead>Stock</TableHead>
-                        <TableHead>Source</TableHead>
-                        <TableHead className="text-center">Éch.</TableHead>
-                        <TableHead>Actions</TableHead>
+                        <TableHead className="w-20">Quantité</TableHead>
+                        <TableHead className="w-28">Prix unitaire HT</TableHead>
+                        <TableHead className="w-24">Remise (%)</TableHead>
+                        <TableHead className="w-24">Éco-taxe (€)</TableHead>
+                        <TableHead className="w-28">Total HT</TableHead>
+                        <TableHead className="w-20">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {items.map(item => {
-                        const hasAnyDiscount = items.some(
-                          item => (item.discount_percentage || 0) > 0
-                        );
                         const itemSubtotal =
                           item.quantity *
                           item.unit_price_ht *
                           (1 - (item.discount_percentage || 0) / 100);
-                        const itemTotal = itemSubtotal + (item.eco_tax || 0); // Inclure éco-taxe
-                        const stockStatus =
-                          (item.availableStock || 0) >= item.quantity;
-
-                        // Labels et couleurs pour source pricing
-                        const pricingSourceLabels = {
-                          customer_specific: 'Contrat',
-                          customer_group: 'Groupe',
-                          channel: 'Canal',
-                          base_catalog: 'Catalogue',
-                        };
-                        const pricingSourceColors = {
-                          customer_specific:
-                            'bg-purple-100 text-purple-800 border-purple-200',
-                          customer_group:
-                            'bg-blue-100 text-blue-800 border-blue-200',
-                          channel:
-                            'bg-green-100 text-green-800 border-green-200',
-                          base_catalog:
-                            'bg-gray-100 text-gray-800 border-gray-200',
-                        };
+                        // ✅ FIX: Écotaxe × quantité
+                        const itemTotal =
+                          itemSubtotal + (item.eco_tax || 0) * item.quantity;
 
                         return (
                           <TableRow key={item.id}>
+                            {/* Produit avec image */}
                             <TableCell>
-                              <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-2">
                                 {item.product?.primary_image_url && (
                                   <img
                                     src={item.product.primary_image_url}
                                     alt={item.product.name}
-                                    className="w-10 h-10 object-cover rounded"
+                                    className="w-8 h-8 object-cover rounded"
                                   />
                                 )}
-                                <div>
-                                  <p className="font-medium">
-                                    {item.product?.name}
-                                  </p>
-                                </div>
+                                <span className="font-medium text-sm truncate max-w-[180px]">
+                                  {item.product?.name}
+                                </span>
                               </div>
                             </TableCell>
-                            <TableCell>{item.product?.sku}</TableCell>
+                            {/* Quantité */}
                             <TableCell>
                               <Input
                                 type="number"
@@ -1067,63 +1133,48 @@ export function SalesOrderFormModal({
                                     parseInt(e.target.value) || 1
                                   )
                                 }
-                                className="w-20"
+                                className="w-16 h-8 text-sm"
                                 disabled={loading}
                               />
                             </TableCell>
+                            {/* Prix unitaire HT */}
                             <TableCell>
-                              <div className="space-y-1">
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  value={item.unit_price_ht}
-                                  onChange={e =>
-                                    updateItem(
-                                      item.id,
-                                      'unit_price_ht',
-                                      parseFloat(e.target.value) || 0
-                                    )
-                                  }
-                                  className="w-24"
-                                  disabled={loading}
-                                />
-                                {item.auto_calculated &&
-                                  item.original_price_ht &&
-                                  item.original_price_ht !==
-                                    item.unit_price_ht && (
-                                    <p className="text-xs text-gray-500 line-through">
-                                      Prix minimum de vente:{' '}
-                                      {formatCurrency(item.original_price_ht)}
-                                    </p>
-                                  )}
-                              </div>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={item.unit_price_ht}
+                                onChange={e =>
+                                  updateItem(
+                                    item.id,
+                                    'unit_price_ht',
+                                    parseFloat(e.target.value) || 0
+                                  )
+                                }
+                                className="w-24 h-8 text-sm"
+                                disabled={loading}
+                              />
                             </TableCell>
+                            {/* Remise (%) */}
                             <TableCell>
-                              <div className="space-y-1">
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  max="100"
-                                  value={((item.tax_rate || 0.2) * 100).toFixed(
-                                    2
-                                  )}
-                                  onChange={e =>
-                                    updateItem(
-                                      item.id,
-                                      'tax_rate',
-                                      (parseFloat(e.target.value) || 20) / 100
-                                    )
-                                  }
-                                  className="w-24"
-                                  disabled={loading}
-                                />
-                                <p className="text-xs text-gray-500">
-                                  {((item.tax_rate || 0.2) * 100).toFixed(2)}%
-                                </p>
-                              </div>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                max="100"
+                                value={item.discount_percentage || 0}
+                                onChange={e =>
+                                  updateItem(
+                                    item.id,
+                                    'discount_percentage',
+                                    parseFloat(e.target.value) || 0
+                                  )
+                                }
+                                className="w-20 h-8 text-sm"
+                                disabled={loading}
+                              />
                             </TableCell>
+                            {/* Éco-taxe (€) */}
                             <TableCell>
                               <Input
                                 type="number"
@@ -1137,64 +1188,15 @@ export function SalesOrderFormModal({
                                     parseFloat(e.target.value) || 0
                                   )
                                 }
-                                className="w-24"
+                                className="w-20 h-8 text-sm"
                                 disabled={loading}
                               />
                             </TableCell>
-                            {/* Afficher cellule Remise seulement si au moins 1 item a une remise > 0 */}
-                            {hasAnyDiscount && (
-                              <TableCell>
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  max="100"
-                                  step="0.1"
-                                  value={item.discount_percentage}
-                                  onChange={e =>
-                                    updateItem(
-                                      item.id,
-                                      'discount_percentage',
-                                      parseFloat(e.target.value) || 0
-                                    )
-                                  }
-                                  className="w-20"
-                                  disabled={loading || item.auto_calculated}
-                                />
-                              </TableCell>
-                            )}
-                            <TableCell>{formatCurrency(itemTotal)}</TableCell>
-                            <TableCell>
-                              <Badge
-                                variant={
-                                  stockStatus ? 'secondary' : 'destructive'
-                                }
-                              >
-                                {item.availableStock || 0} dispo
-                              </Badge>
+                            {/* Total HT */}
+                            <TableCell className="font-medium text-sm whitespace-nowrap">
+                              {formatCurrency(itemTotal)}
                             </TableCell>
-                            <TableCell>
-                              {item.pricing_source && (
-                                <Badge
-                                  variant="outline"
-                                  className={
-                                    pricingSourceColors[item.pricing_source]
-                                  }
-                                >
-                                  {pricingSourceLabels[item.pricing_source]}
-                                </Badge>
-                              )}
-                            </TableCell>
-                            {/* Checkbox Échantillon */}
-                            <TableCell className="text-center">
-                              <Checkbox
-                                checked={item.is_sample || false}
-                                onCheckedChange={(checked: boolean) =>
-                                  updateItem(item.id, 'is_sample', checked)
-                                }
-                                disabled={loading}
-                                aria-label="Marquer comme échantillon"
-                              />
-                            </TableCell>
+                            {/* Actions */}
                             <TableCell>
                               <ButtonV2
                                 type="button"
@@ -1203,7 +1205,7 @@ export function SalesOrderFormModal({
                                 onClick={() => removeItem(item.id)}
                                 disabled={loading}
                                 title="Supprimer"
-                                className="text-red-600 hover:text-red-700"
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </ButtonV2>
@@ -1227,9 +1229,14 @@ export function SalesOrderFormModal({
                 <div className="flex justify-end space-y-2">
                   <div className="text-right space-y-1">
                     <p className="text-lg">
-                      <span className="font-medium">Total HT:</span>{' '}
-                      {formatCurrency(totalHT)}
+                      <span className="font-medium">Total HT produits:</span>{' '}
+                      {formatCurrency(totalHTProducts)}
                     </p>
+                    {totalCharges > 0 && (
+                      <p className="text-sm text-gray-600">
+                        Frais additionnels: {formatCurrency(totalCharges)}
+                      </p>
+                    )}
                     <p className="text-sm text-gray-600">
                       TVA: {formatCurrency(totalTVA)}
                     </p>

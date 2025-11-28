@@ -81,6 +81,9 @@ interface StockAlert {
   shortage_quantity?: number;
   validated?: boolean;
   validated_at?: string | null;
+  // ✅ 2025-11-28 - Couleur calculée par la vue dynamique
+  alert_color?: 'critical_red' | 'red' | 'orange' | 'green' | 'resolved';
+  alert_type?: string;
   action?: {
     label: string;
     handler: () => void;
@@ -174,6 +177,7 @@ export default function StockAlertesPage() {
       shortage_quantity: alert.shortage_quantity,
       validated: alert.validated,
       validated_at: alert.validated_at,
+      alert_type: alert.alert_type,
       action: !alert.is_in_draft
         ? {
             label: 'Commander',
@@ -235,11 +239,15 @@ export default function StockAlertesPage() {
   };
 
   // Séparer alertes actives vs historique
+  // ✅ FIX 2025-11-28 - Revenir à la logique originale basée sur stock_real < min_stock
+  // Le hook utilise stock_alert_tracking, pas la vue avec alert_color
+  // Actives = stock_real < min_stock (besoin action)
+  // Historique = stock_real >= min_stock (résolu)
   const activeAlerts = mappedAlerts.filter(
-    alert => (alert.currentStock || 0) < (alert.minStock || 0)
+    alert => (alert.currentStock ?? 0) < (alert.minStock ?? 0)
   );
   const historiqueAlerts = mappedAlerts.filter(
-    alert => (alert.currentStock || 0) >= (alert.minStock || 0)
+    alert => (alert.currentStock ?? 0) >= (alert.minStock ?? 0)
   );
 
   // Filtres appliqués selon onglet actif
@@ -262,13 +270,30 @@ export default function StockAlertesPage() {
     return true;
   });
 
-  // Auto-refresh
+  // Auto-refresh polling (fallback)
   useEffect(() => {
     const interval = setInterval(() => {
       fetchAlerts();
     }, 30000); // Rafraîchir toutes les 30 secondes
 
     return () => clearInterval(interval);
+  }, [fetchAlerts]);
+
+  // ✅ Écouter événements de changement de commandes pour rafraîchissement immédiat
+  useEffect(() => {
+    const handleStockAlertsRefresh = () => {
+      console.log(
+        '📢 [ALERTES] Événement stock-alerts-refresh reçu, rafraîchissement...'
+      );
+      fetchAlerts();
+    };
+
+    window.addEventListener('stock-alerts-refresh', handleStockAlertsRefresh);
+    return () =>
+      window.removeEventListener(
+        'stock-alerts-refresh',
+        handleStockAlertsRefresh
+      );
   }, [fetchAlerts]);
 
   const getSeverityIcon = (severity: AlertSeverity) => {
@@ -588,12 +613,6 @@ export default function StockAlertesPage() {
                           validated_at: alert.validated_at || null,
                         }}
                         onActionClick={clickedAlert => {
-                          // Si clic sur badge commande brouillon → Ouvrir détails
-                          if (clickedAlert.draft_order_id) {
-                            handleOpenOrderDetail(clickedAlert.draft_order_id);
-                            return;
-                          }
-
                           // Calculer le manque réel : min_stock - stock_previsionnel
                           const stockPrevisionnel =
                             clickedAlert.stock_real +
@@ -603,6 +622,16 @@ export default function StockAlertesPage() {
                             0,
                             clickedAlert.min_stock - stockPrevisionnel
                           );
+                          const seuilAtteint =
+                            stockPrevisionnel >= clickedAlert.min_stock;
+
+                          // ✅ LOGIQUE CORRIGÉE :
+                          // - Si seuil atteint ET commande existe → Ouvrir détails commande
+                          // - Si seuil NON atteint (même avec commande existante) → Ouvrir modal pour commander le complément
+                          if (seuilAtteint && clickedAlert.draft_order_id) {
+                            handleOpenOrderDetail(clickedAlert.draft_order_id);
+                            return;
+                          }
 
                           // Ouvrir modal commande avec le manque réel calculé
                           setSelectedProductForOrder({
@@ -678,12 +707,6 @@ export default function StockAlertesPage() {
                           validated_at: alert.validated_at || null,
                         }}
                         onActionClick={clickedAlert => {
-                          // Si clic sur badge commande brouillon → Ouvrir détails
-                          if (clickedAlert.draft_order_id) {
-                            handleOpenOrderDetail(clickedAlert.draft_order_id);
-                            return;
-                          }
-
                           // Calculer le manque réel : min_stock - stock_previsionnel
                           const stockPrevisionnel =
                             clickedAlert.stock_real +
@@ -693,6 +716,16 @@ export default function StockAlertesPage() {
                             0,
                             clickedAlert.min_stock - stockPrevisionnel
                           );
+                          const seuilAtteint =
+                            stockPrevisionnel >= clickedAlert.min_stock;
+
+                          // ✅ LOGIQUE CORRIGÉE :
+                          // - Si seuil atteint ET commande existe → Ouvrir détails commande
+                          // - Si seuil NON atteint (même avec commande existante) → Ouvrir modal pour commander le complément
+                          if (seuilAtteint && clickedAlert.draft_order_id) {
+                            handleOpenOrderDetail(clickedAlert.draft_order_id);
+                            return;
+                          }
 
                           // Ouvrir modal commande avec le manque réel calculé
                           setSelectedProductForOrder({

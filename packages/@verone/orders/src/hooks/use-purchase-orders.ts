@@ -111,6 +111,10 @@ export interface CreatePurchaseOrderData {
   payment_terms?: string;
   notes?: string;
   eco_tax_vat_rate?: number | null;
+  // Frais additionnels fournisseurs
+  shipping_cost_ht?: number;
+  customs_cost_ht?: number;
+  insurance_cost_ht?: number;
   items: CreatePurchaseOrderItemData[];
 }
 

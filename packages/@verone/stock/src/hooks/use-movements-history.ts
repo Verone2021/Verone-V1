@@ -32,7 +32,7 @@ export interface MovementHistoryFilters {
 export interface MovementWithDetails {
   id: string;
   product_id: string;
-  movement_type: 'IN' | 'OUT' | 'ADJUST' | 'TRANSFER';
+  movement_type: 'IN' | 'OUT' | 'ADJUST';
   quantity_change: number;
   quantity_before: number;
   quantity_after: number;
@@ -72,7 +72,6 @@ export interface MovementsStats {
     IN: number;
     OUT: number;
     ADJUST: number;
-    TRANSFER: number;
   };
 
   realMovements?: number;
@@ -365,8 +364,6 @@ export function useMovementsHistory(options?: UseMovementsHistoryOptions) {
           OUT: typeStats?.filter(m => m.movement_type === 'OUT').length || 0,
           ADJUST:
             typeStats?.filter(m => m.movement_type === 'ADJUST').length || 0,
-          TRANSFER:
-            typeStats?.filter(m => m.movement_type === 'TRANSFER').length || 0,
         };
 
         // Comptage mouvements réels vs prévisionnels (global, sans filtre movementTypes)

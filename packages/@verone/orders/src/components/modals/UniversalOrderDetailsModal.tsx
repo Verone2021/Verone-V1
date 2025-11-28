@@ -2,6 +2,21 @@
 
 import { useEffect, useState } from 'react';
 
+import { useInlineEdit } from '@verone/common/hooks';
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@verone/ui';
+import { Separator } from '@verone/ui';
+import { Table, TableBody, TableHead, TableHeader, TableRow } from '@verone/ui';
+import { formatCurrency } from '@verone/utils';
+import { createClient } from '@verone/utils/supabase/client';
 import {
   X,
   Package,
@@ -14,27 +29,6 @@ import {
   Save,
 } from 'lucide-react';
 
-import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
-import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@verone/ui';
-import { Separator } from '@verone/ui';
-import {
-  Table,
-  TableBody,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@verone/ui';
-import { createClient } from '@verone/utils/supabase/client';
-import { formatCurrency } from '@verone/utils';
-import { useInlineEdit } from '@verone/common/hooks';
 import { AddProductToOrderModal } from '@verone/orders/components/modals/AddProductToOrderModal';
 import { OrderHeaderEditSection } from '@verone/orders/components/sections/OrderHeaderEditSection';
 import { EditableOrderItemRow } from '@verone/orders/components/tables/EditableOrderItemRow';
@@ -361,13 +355,14 @@ export function UniversalOrderDetailsModal({
   };
 
   // Calculer total à partir des items du hook
+  // L'écotaxe est TOUJOURS par unité, donc on multiplie par la quantité
   const calculateTotal = () => {
     return items.reduce((sum, item) => {
       const subtotal =
         item.quantity *
         item.unit_price_ht *
         (1 - (item.discount_percentage || 0) / 100);
-      return sum + subtotal + (item.eco_tax || 0);
+      return sum + subtotal + (item.eco_tax || 0) * item.quantity;
     }, 0);
   };
 

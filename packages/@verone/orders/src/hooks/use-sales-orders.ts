@@ -137,6 +137,10 @@ export interface CreateSalesOrderData {
   payment_terms_type?: Database['public']['Enums']['payment_terms_type'] | null;
   payment_terms_notes?: string;
   notes?: string;
+  // Frais additionnels clients
+  shipping_cost_ht?: number;
+  insurance_cost_ht?: number;
+  handling_cost_ht?: number;
   items: CreateSalesOrderItemData[];
 }
 
@@ -146,6 +150,7 @@ export interface CreateSalesOrderItemData {
   unit_price_ht: number;
   tax_rate?: number; // Taux de TVA (défaut: 0.20 = 20%)
   discount_percentage?: number;
+  eco_tax?: number; // Éco-taxe par ligne (défaut: 0)
   expected_delivery_date?: string;
   notes?: string;
   is_sample?: boolean; // Marquer comme échantillon envoyé au client
@@ -202,10 +207,17 @@ interface SalesOrderStats {
  * Machine à états finis (FSM) - Transitions autorisées
  * Workflow: draft → validated → partially_shipped → shipped → delivered
  * Annulation possible à tout moment (sauf delivered)
+ * Dévalidation (validated → draft) autorisée si aucune expédition
  */
 const STATUS_TRANSITIONS: Record<SalesOrderStatus, SalesOrderStatus[]> = {
   draft: ['validated', 'cancelled'],
-  validated: ['partially_shipped', 'shipped', 'delivered', 'cancelled'],
+  validated: [
+    'draft',
+    'partially_shipped',
+    'shipped',
+    'delivered',
+    'cancelled',
+  ], // ✅ 'draft' ajouté pour dévalidation
   partially_shipped: ['shipped', 'delivered', 'cancelled'],
   shipped: ['delivered', 'cancelled'], // Retour partiel possible
   delivered: [], // État final - Livraison complétée
@@ -802,6 +814,10 @@ export function useSalesOrders() {
               total_ht: totalHT,
               total_ttc: totalTTC,
               created_by: (await supabase.auth.getUser()).data.user?.id,
+              // Frais additionnels clients
+              shipping_cost_ht: data.shipping_cost_ht || 0,
+              insurance_cost_ht: data.insurance_cost_ht || 0,
+              handling_cost_ht: data.handling_cost_ht || 0,
             },
           ] as any)
           .select()
@@ -809,20 +825,24 @@ export function useSalesOrders() {
 
         if (orderError) throw orderError;
 
-        // 5. Créer les items
-        const { error: itemsError } = await supabase
-          .from('sales_order_items')
-          .insert(
-            data.items.map(item => ({
+        // 5. Créer les items via RPC (SECURITY DEFINER pour bypass RLS)
+        const { error: itemsError } = await supabase.rpc(
+          'insert_sales_order_items',
+          {
+            p_items: data.items.map(item => ({
               sales_order_id: order.id,
               product_id: item.product_id,
               quantity: item.quantity,
               unit_price_ht: item.unit_price_ht,
+              tax_rate: item.tax_rate ?? 0.2, // TVA par défaut 20%
               discount_percentage: item.discount_percentage || 0,
+              eco_tax: item.eco_tax ?? 0, // Éco-taxe (défaut 0)
               expected_delivery_date: item.expected_delivery_date,
               notes: item.notes,
-            }))
-          );
+              is_sample: item.is_sample ?? false, // Échantillon (défaut false)
+            })),
+          }
+        );
 
         if (itemsError) throw itemsError;
 
@@ -1129,9 +1149,12 @@ export function useSalesOrders() {
                 product_id: item.product_id,
                 quantity: item.quantity,
                 unit_price_ht: item.unit_price_ht,
+                tax_rate: item.tax_rate ?? 0.2, // TVA par défaut 20%
                 discount_percentage: item.discount_percentage || 0,
+                eco_tax: item.eco_tax ?? 0, // Éco-taxe (défaut 0)
                 expected_delivery_date: item.expected_delivery_date,
                 notes: item.notes,
+                is_sample: item.is_sample ?? false, // Échantillon (défaut false)
               }))
             );
 
@@ -1148,9 +1171,12 @@ export function useSalesOrders() {
             .update({
               quantity: itemToUpdate.quantity,
               unit_price_ht: itemToUpdate.unit_price_ht,
+              tax_rate: itemToUpdate.tax_rate ?? 0.2, // TVA par défaut 20%
               discount_percentage: itemToUpdate.discount_percentage || 0,
+              eco_tax: itemToUpdate.eco_tax ?? 0, // Éco-taxe (défaut 0)
               expected_delivery_date: itemToUpdate.expected_delivery_date,
               notes: itemToUpdate.notes,
+              is_sample: itemToUpdate.is_sample ?? false, // Échantillon (défaut false)
             })
             .eq('id', existingItem.id);
 
@@ -1240,26 +1266,44 @@ export function useSalesOrders() {
           `✅ [FSM] Transition validée: ${currentStatus} → ${newStatus}`
         );
 
-        // FIXME: Server actions can't be imported from monorepo packages
-        // Solution: Call Server Action directly from page.tsx, not from this hook
-        // const { updateSalesOrderStatus } = await import(
-        //   '@/app/actions/sales-orders'
-        // );
+        // ✅ DÉVALIDATION: Bloquer si expédition a commencé (même règle que PO)
+        if (currentStatus === 'validated' && newStatus === 'draft') {
+          const { data: items } = await supabase
+            .from('sales_order_items')
+            .select('quantity_shipped')
+            .eq('sales_order_id', orderId);
 
-        // const result = await updateSalesOrderStatus(
-        //   orderId,
-        //   newStatus,
-        //   user.id
-        // );
+          const hasShipped = items?.some(
+            item => (item.quantity_shipped || 0) > 0
+          );
+          if (hasShipped) {
+            throw new Error(
+              'Impossible de dévalider : des expéditions ont déjà été effectuées'
+            );
+          }
+          console.log(
+            `✅ [DEVALIDATION] Aucune expédition, dévalidation autorisée`
+          );
+        }
 
-        // if (!result.success) {
-        //   throw new Error(
-        //     result.error || 'Erreur lors de la mise à jour du statut'
-        //   );
-        // }
+        // ✅ Mettre à jour le statut dans la base de données
+        const { error: updateError } = await supabase
+          .from('sales_orders')
+          .update({
+            status: newStatus,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', orderId);
 
-        // Libérer les réservations de stock en cas d'annulation (via client car pas bloqué par RLS)
-        if (newStatus === 'cancelled') {
+        if (updateError) {
+          throw new Error(
+            updateError.message || 'Erreur lors de la mise à jour du statut'
+          );
+        }
+        console.log(`✅ [STATUS] Statut mis à jour: ${newStatus}`);
+
+        // Libérer les réservations de stock en cas d'annulation OU dévalidation (via client car pas bloqué par RLS)
+        if (newStatus === 'cancelled' || newStatus === 'draft') {
           const userId = (await supabase.auth.getUser()).data.user?.id;
           await supabase
             .from('stock_reservations')
@@ -1270,6 +1314,9 @@ export function useSalesOrders() {
             .eq('reference_type', 'sales_order')
             .eq('reference_id', orderId)
             .is('released_at', null);
+          console.log(
+            `✅ [STOCK] Réservations libérées pour commande ${orderId}`
+          );
         }
 
         toast({
@@ -1280,6 +1327,12 @@ export function useSalesOrders() {
         await fetchOrders();
         if (currentOrder?.id === orderId) {
           await fetchOrder(orderId);
+        }
+
+        // ✅ Notifier les composants d'alertes stock pour rafraîchissement immédiat
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('stock-alerts-refresh'));
+          console.log('📢 [EVENT] stock-alerts-refresh émis');
         }
       } catch (error: any) {
         console.error('Erreur lors du changement de statut:', error);

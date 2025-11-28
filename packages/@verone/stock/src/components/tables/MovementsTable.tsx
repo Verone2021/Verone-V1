@@ -99,8 +99,6 @@ export function MovementsTable({
         return <TrendingDown className="h-4 w-4 text-red-600" />;
       case 'ADJUST':
         return <RotateCcw className="h-4 w-4 text-blue-600" />;
-      case 'TRANSFER':
-        return <FileText className="h-4 w-4 text-purple-600" />;
       default:
         return <Clock className="h-4 w-4 text-gray-600" />;
     }
@@ -126,15 +124,6 @@ export function MovementsTable({
             className="bg-blue-100 text-blue-800 hover:bg-blue-100"
           >
             Ajustement
-          </Badge>
-        );
-      case 'TRANSFER':
-        return (
-          <Badge
-            variant="secondary"
-            className="bg-purple-100 text-purple-800 hover:bg-purple-100"
-          >
-            Transfert
           </Badge>
         );
       default:

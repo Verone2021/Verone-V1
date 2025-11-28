@@ -79,6 +79,10 @@ export interface SalesOrderForShipment {
       stock_quantity: number;
       stock_real: number;
       stock_forecasted_out: number;
+      product_images?: Array<{
+        public_url: string;
+        is_primary: boolean;
+      }>;
     };
   }>;
 }
@@ -124,7 +128,11 @@ export function useSalesShipments() {
               sku,
               stock_quantity,
               stock_real,
-              stock_forecasted_out
+              stock_forecasted_out,
+              product_images!left (
+                public_url,
+                is_primary
+              )
             )
           )
         `
@@ -216,33 +224,31 @@ export function useSalesShipments() {
   );
 
   /**
-   * Valider expédition (Server Action Next.js 15)
+   * Valider expédition
+   * Appelle la Server Action validateSalesShipment()
    */
   const validateShipment = useCallback(
     async (
-      payload: ValidateShipmentPayload
+      payload: Omit<
+        ValidateShipmentPayload,
+        'carrier_info' | 'shipping_address'
+      > & {
+        tracking_number?: string;
+      }
     ): Promise<{ success: boolean; error?: string }> => {
       try {
         setValidating(true);
         setError(null);
-
-        // ✅ Appeler Server Action (Next.js 15 best practice)
         const { validateSalesShipment } = await import(
           '../actions/sales-shipments'
         );
-        const result = await validateSalesShipment(payload);
-
-        if (!result.success) {
-          throw new Error(result.error || 'Erreur validation expédition');
-        }
-
-        return result;
+        return await validateSalesShipment(payload);
       } catch (err) {
         console.error('Erreur validation expédition:', err);
-        const errorMessage =
-          err instanceof Error ? err.message : 'Erreur inconnue';
-        setError(errorMessage);
-        return { success: false, error: errorMessage };
+        return {
+          success: false,
+          error: err instanceof Error ? err.message : 'Erreur inconnue',
+        };
       } finally {
         setValidating(false);
       }
@@ -409,6 +415,9 @@ export function useSalesShipments() {
         setLoading(true);
         setError(null);
 
+        // Déterminer les statuts à filtrer
+        const defaultStatuses = ['validated', 'partially_shipped'] as const;
+
         let query = supabase
           .from('sales_orders')
           .select(
@@ -422,12 +431,25 @@ export function useSalesShipments() {
           customer_id,
           customer_type,
           sales_order_items (
+            id,
+            product_id,
             quantity,
-            quantity_shipped
+            quantity_shipped,
+            unit_price_ht,
+            products (
+              id,
+              name,
+              sku,
+              stock_real,
+              product_images!left (
+                public_url,
+                is_primary
+              )
+            )
           )
         `
           )
-          .in('status', ['validated', 'partially_shipped'])
+          .in('status', defaultStatuses)
           .order('expected_delivery_date', {
             ascending: true,
             nullsFirst: false,
@@ -435,7 +457,43 @@ export function useSalesShipments() {
 
         // Filtres
         if (filters?.status) {
-          query = query.eq('status', filters.status as any);
+          // Remplacer le filtre par défaut si un statut spécifique est demandé
+          query = supabase
+            .from('sales_orders')
+            .select(
+              `
+            id,
+            order_number,
+            status,
+            created_at,
+            expected_delivery_date,
+            shipped_at,
+            customer_id,
+            customer_type,
+            sales_order_items (
+              id,
+              product_id,
+              quantity,
+              quantity_shipped,
+              unit_price_ht,
+              products (
+                id,
+                name,
+                sku,
+                stock_real,
+                product_images!left (
+                  public_url,
+                  is_primary
+                )
+              )
+            )
+          `
+            )
+            .eq('status', filters.status as any)
+            .order('expected_delivery_date', {
+              ascending: true,
+              nullsFirst: false,
+            });
         }
 
         if (filters?.search) {
@@ -519,6 +577,138 @@ export function useSalesShipments() {
     [supabase]
   );
 
+  /**
+   * Charger historique des commandes expédiées (pour onglet Historique)
+   * Supporte filtres: shipped, delivered, ou tous
+   */
+  const loadShippedOrdersHistory = useCallback(
+    async (filters?: { status?: string; search?: string }) => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Déterminer les statuts à charger - typage explicite pour Supabase
+        type ShippedStatus = 'shipped' | 'delivered';
+        let statusesToLoad: ShippedStatus[] = ['shipped', 'delivered'];
+        if (filters?.status && filters.status !== 'all') {
+          statusesToLoad = [filters.status as ShippedStatus];
+        }
+
+        let query = supabase
+          .from('sales_orders')
+          .select(
+            `
+            id,
+            order_number,
+            status,
+            created_at,
+            expected_delivery_date,
+            shipped_at,
+            delivered_at,
+            customer_id,
+            customer_type,
+            sales_order_items (
+              id,
+              product_id,
+              quantity,
+              quantity_shipped,
+              unit_price_ht,
+              products (
+                id,
+                name,
+                sku,
+                stock_real,
+                product_images!left (
+                  public_url,
+                  is_primary
+                )
+              )
+            )
+          `
+          )
+          .in('status', statusesToLoad)
+          .order('shipped_at', { ascending: false, nullsFirst: false });
+
+        if (filters?.search) {
+          query = query.ilike('order_number', `%${filters.search}%`);
+        }
+
+        const { data: orders, error: fetchError } = await query;
+
+        if (fetchError) {
+          console.error('Erreur chargement historique SOs:', fetchError);
+          setError(fetchError.message);
+          return [];
+        }
+
+        if (!orders || orders.length === 0) {
+          return [];
+        }
+
+        // Charger noms clients selon customer_type (relation polymorphique)
+        const orgIds = orders
+          .filter((o: any) => o.customer_type === 'organization')
+          .map((o: any) => o.customer_id);
+
+        const indivIds = orders
+          .filter((o: any) => o.customer_type === 'individual_customer')
+          .map((o: any) => o.customer_id);
+
+        // Query organisations si nécessaire
+        const organisationsMap = new Map();
+        if (orgIds.length > 0) {
+          const { data: orgs } = await supabase
+            .from('organisations')
+            .select('id, legal_name, trade_name')
+            .in('id', orgIds);
+
+          if (orgs) {
+            orgs.forEach((org: any) =>
+              organisationsMap.set(org.id, org.trade_name || org.legal_name)
+            );
+          }
+        }
+
+        // Query individual_customers si nécessaire
+        const individualsMap = new Map();
+        if (indivIds.length > 0) {
+          const { data: indivs } = await supabase
+            .from('individual_customers')
+            .select('id, first_name, last_name')
+            .in('id', indivIds);
+
+          if (indivs) {
+            indivs.forEach((indiv: any) =>
+              individualsMap.set(
+                indiv.id,
+                `${indiv.first_name} ${indiv.last_name}`
+              )
+            );
+          }
+        }
+
+        // Enrichir orders avec customer_name
+        const enrichedOrders = orders.map((order: any) => ({
+          ...order,
+          customer_name:
+            order.customer_type === 'organization'
+              ? organisationsMap.get(order.customer_id) ||
+                'Organisation inconnue'
+              : individualsMap.get(order.customer_id) || 'Client inconnu',
+        }));
+
+        return enrichedOrders;
+      } catch (err) {
+        console.error('Exception chargement historique SOs:', err);
+        setError(err instanceof Error ? err.message : 'Erreur inconnue');
+        return [];
+      } finally {
+        setLoading(false);
+      }
+    },
+    [supabase]
+  );
+
   return {
     loading,
     validating,
@@ -529,5 +719,6 @@ export function useSalesShipments() {
     loadShipmentHistory,
     loadShipmentStats,
     loadSalesOrdersReadyForShipment,
+    loadShippedOrdersHistory,
   };
 }

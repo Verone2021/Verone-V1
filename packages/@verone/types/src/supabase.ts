@@ -548,6 +548,13 @@ export type Database = {
             foreignKeyName: 'channel_pricing_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'channel_pricing_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
           },
@@ -641,6 +648,13 @@ export type Database = {
             foreignKeyName: 'channel_pricing_history_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'channel_pricing_history_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
           },
@@ -721,6 +735,13 @@ export type Database = {
             foreignKeyName: 'channel_product_metadata_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'channel_product_metadata_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
           },
@@ -768,6 +789,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'products';
             referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'channel_product_pricing_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
           },
           {
             foreignKeyName: 'channel_product_pricing_product_id_fkey';
@@ -967,6 +995,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'products';
             referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'collection_products_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
           },
           {
             foreignKeyName: 'collection_products_product_id_fkey';
@@ -1278,6 +1313,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'products';
             referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'consultation_products_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
           },
           {
             foreignKeyName: 'consultation_products_product_id_fkey';
@@ -1618,6 +1660,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'products';
             referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'customer_pricing_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
           },
           {
             foreignKeyName: 'customer_pricing_product_id_fkey';
@@ -1978,6 +2027,13 @@ export type Database = {
             foreignKeyName: 'financial_document_lines_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'financial_document_lines_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
           },
@@ -2249,6 +2305,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'products';
             referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'google_merchant_syncs_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
           },
           {
             foreignKeyName: 'google_merchant_syncs_product_id_fkey';
@@ -3133,6 +3196,13 @@ export type Database = {
             foreignKeyName: 'price_list_items_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'price_list_items_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
           },
@@ -3404,6 +3474,13 @@ export type Database = {
             foreignKeyName: 'product_group_members_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'product_group_members_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
           },
@@ -3457,6 +3534,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'products';
             referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'product_groups_primary_product_id_fkey';
+            columns: ['primary_product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
           },
           {
             foreignKeyName: 'product_groups_primary_product_id_fkey';
@@ -3538,6 +3622,13 @@ export type Database = {
             foreignKeyName: 'product_images_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'product_images_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
           },
@@ -3611,6 +3702,13 @@ export type Database = {
             foreignKeyName: 'product_packages_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'product_packages_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
           },
@@ -3655,6 +3753,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'products';
             referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'product_status_changes_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
           },
           {
             foreignKeyName: 'product_status_changes_product_id_fkey';
@@ -3959,6 +4064,13 @@ export type Database = {
             foreignKeyName: 'purchase_order_items_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'purchase_order_items_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
           },
@@ -4027,6 +4139,13 @@ export type Database = {
             foreignKeyName: 'purchase_order_receptions_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'purchase_order_receptions_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
           },
@@ -4045,11 +4164,13 @@ export type Database = {
           created_at: string;
           created_by: string;
           currency: string;
+          customs_cost_ht: number | null;
           delivery_address: Json | null;
           eco_tax_total: number;
           eco_tax_vat_rate: number | null;
           expected_delivery_date: string | null;
           id: string;
+          insurance_cost_ht: number | null;
           notes: string | null;
           payment_terms: string | null;
           payment_terms_notes: string | null;
@@ -4061,6 +4182,7 @@ export type Database = {
           received_by: string | null;
           sent_at: string | null;
           sent_by: string | null;
+          shipping_cost_ht: number | null;
           status: Database['public']['Enums']['purchase_order_status'];
           supplier_id: string;
           tax_rate: number;
@@ -4075,11 +4197,13 @@ export type Database = {
           created_at?: string;
           created_by: string;
           currency?: string;
+          customs_cost_ht?: number | null;
           delivery_address?: Json | null;
           eco_tax_total?: number;
           eco_tax_vat_rate?: number | null;
           expected_delivery_date?: string | null;
           id?: string;
+          insurance_cost_ht?: number | null;
           notes?: string | null;
           payment_terms?: string | null;
           payment_terms_notes?: string | null;
@@ -4091,6 +4215,7 @@ export type Database = {
           received_by?: string | null;
           sent_at?: string | null;
           sent_by?: string | null;
+          shipping_cost_ht?: number | null;
           status?: Database['public']['Enums']['purchase_order_status'];
           supplier_id: string;
           tax_rate?: number;
@@ -4105,11 +4230,13 @@ export type Database = {
           created_at?: string;
           created_by?: string;
           currency?: string;
+          customs_cost_ht?: number | null;
           delivery_address?: Json | null;
           eco_tax_total?: number;
           eco_tax_vat_rate?: number | null;
           expected_delivery_date?: string | null;
           id?: string;
+          insurance_cost_ht?: number | null;
           notes?: string | null;
           payment_terms?: string | null;
           payment_terms_notes?: string | null;
@@ -4121,6 +4248,7 @@ export type Database = {
           received_by?: string | null;
           sent_at?: string | null;
           sent_by?: string | null;
+          shipping_cost_ht?: number | null;
           status?: Database['public']['Enums']['purchase_order_status'];
           supplier_id?: string;
           tax_rate?: number;
@@ -4222,6 +4350,7 @@ export type Database = {
           eco_tax: number;
           expected_delivery_date: string | null;
           id: string;
+          is_sample: boolean;
           notes: string | null;
           product_id: string;
           quantity: number;
@@ -4240,6 +4369,7 @@ export type Database = {
           eco_tax?: number;
           expected_delivery_date?: string | null;
           id?: string;
+          is_sample?: boolean;
           notes?: string | null;
           product_id: string;
           quantity: number;
@@ -4258,6 +4388,7 @@ export type Database = {
           eco_tax?: number;
           expected_delivery_date?: string | null;
           id?: string;
+          is_sample?: boolean;
           notes?: string | null;
           product_id?: string;
           quantity?: number;
@@ -4284,6 +4415,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'products';
             referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sales_order_items_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
           },
           {
             foreignKeyName: 'sales_order_items_product_id_fkey';
@@ -4357,6 +4495,13 @@ export type Database = {
             foreignKeyName: 'sales_order_shipments_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'sales_order_shipments_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
           },
@@ -4391,7 +4536,9 @@ export type Database = {
           eco_tax_total: number;
           eco_tax_vat_rate: number | null;
           expected_delivery_date: string | null;
+          handling_cost_ht: number | null;
           id: string;
+          insurance_cost_ht: number | null;
           notes: string | null;
           order_number: string;
           paid_amount: number | null;
@@ -4406,6 +4553,7 @@ export type Database = {
           shipped_at: string | null;
           shipped_by: string | null;
           shipping_address: Json | null;
+          shipping_cost_ht: number | null;
           status: Database['public']['Enums']['sales_order_status'];
           tax_rate: number;
           total_discount_amount: number | null;
@@ -4436,7 +4584,9 @@ export type Database = {
           eco_tax_total?: number;
           eco_tax_vat_rate?: number | null;
           expected_delivery_date?: string | null;
+          handling_cost_ht?: number | null;
           id?: string;
+          insurance_cost_ht?: number | null;
           notes?: string | null;
           order_number: string;
           paid_amount?: number | null;
@@ -4451,6 +4601,7 @@ export type Database = {
           shipped_at?: string | null;
           shipped_by?: string | null;
           shipping_address?: Json | null;
+          shipping_cost_ht?: number | null;
           status?: Database['public']['Enums']['sales_order_status'];
           tax_rate?: number;
           total_discount_amount?: number | null;
@@ -4481,7 +4632,9 @@ export type Database = {
           eco_tax_total?: number;
           eco_tax_vat_rate?: number | null;
           expected_delivery_date?: string | null;
+          handling_cost_ht?: number | null;
           id?: string;
+          insurance_cost_ht?: number | null;
           notes?: string | null;
           order_number?: string;
           paid_amount?: number | null;
@@ -4496,6 +4649,7 @@ export type Database = {
           shipped_at?: string | null;
           shipped_by?: string | null;
           shipping_address?: Json | null;
+          shipping_cost_ht?: number | null;
           status?: Database['public']['Enums']['sales_order_status'];
           tax_rate?: number;
           total_discount_amount?: number | null;
@@ -4643,6 +4797,7 @@ export type Database = {
           alert_type: string;
           created_at: string;
           draft_order_id: string | null;
+          draft_order_number: string | null;
           id: string;
           min_stock: number;
           notes: string | null;
@@ -4664,6 +4819,7 @@ export type Database = {
           alert_type: string;
           created_at?: string;
           draft_order_id?: string | null;
+          draft_order_number?: string | null;
           id?: string;
           min_stock?: number;
           notes?: string | null;
@@ -4685,6 +4841,7 @@ export type Database = {
           alert_type?: string;
           created_at?: string;
           draft_order_id?: string | null;
+          draft_order_number?: string | null;
           id?: string;
           min_stock?: number;
           notes?: string | null;
@@ -4721,6 +4878,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'products';
             referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'stock_alert_tracking_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
           },
           {
             foreignKeyName: 'stock_alert_tracking_product_id_fkey';
@@ -4853,6 +5017,13 @@ export type Database = {
             foreignKeyName: 'fk_stock_movements_product_id';
             columns: ['product_id'];
             isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'fk_stock_movements_product_id';
+            columns: ['product_id'];
+            isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
           },
@@ -4925,6 +5096,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'products';
             referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'stock_reservations_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
           },
           {
             foreignKeyName: 'stock_reservations_product_id_fkey';
@@ -5343,6 +5521,49 @@ export type Database = {
         };
         Relationships: [];
       };
+      stock_alerts_unified_view: {
+        Row: {
+          alert_color: string | null;
+          alert_priority: number | null;
+          alert_type: string | null;
+          draft_order_id: string | null;
+          draft_order_number: string | null;
+          id: string | null;
+          is_in_draft: boolean | null;
+          min_stock: number | null;
+          product_id: string | null;
+          product_image_url: string | null;
+          product_name: string | null;
+          quantity_in_draft: number | null;
+          severity: string | null;
+          shortage_quantity: number | null;
+          sku: string | null;
+          stock_forecasted_in: number | null;
+          stock_forecasted_out: number | null;
+          stock_previsionnel: number | null;
+          stock_previsionnel_avec_draft: number | null;
+          stock_real: number | null;
+          supplier_id: string | null;
+          validated: boolean | null;
+          validated_at: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'stock_alert_tracking_draft_order_id_fkey';
+            columns: ['draft_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'purchase_orders';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'stock_alert_tracking_supplier_id_fkey';
+            columns: ['supplier_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       stock_alerts_view: {
         Row: {
           alert_priority: number | null;
@@ -5381,6 +5602,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'products';
             referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'fk_stock_movements_product_id';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
           },
           {
             foreignKeyName: 'fk_stock_movements_product_id';
@@ -5589,6 +5817,10 @@ export type Database = {
         }[];
       };
       check_overdue_invoices: { Args: never; Returns: number };
+      check_sales_order_exists: {
+        Args: { p_sales_order_id: string };
+        Returns: boolean;
+      };
       classify_error_with_ai:
         | {
             Args: {
@@ -5761,11 +5993,13 @@ export type Database = {
           created_at: string;
           created_by: string;
           currency: string;
+          customs_cost_ht: number | null;
           delivery_address: Json | null;
           eco_tax_total: number;
           eco_tax_vat_rate: number | null;
           expected_delivery_date: string | null;
           id: string;
+          insurance_cost_ht: number | null;
           notes: string | null;
           payment_terms: string | null;
           payment_terms_notes: string | null;
@@ -5777,6 +6011,7 @@ export type Database = {
           received_by: string | null;
           sent_at: string | null;
           sent_by: string | null;
+          shipping_cost_ht: number | null;
           status: Database['public']['Enums']['purchase_order_status'];
           supplier_id: string;
           tax_rate: number;
@@ -6667,6 +6902,7 @@ export type Database = {
         Returns: undefined;
       };
       initialize_dashboard_tests: { Args: never; Returns: undefined };
+      insert_sales_order_items: { Args: { p_items: Json }; Returns: undefined };
       is_admin: { Args: never; Returns: boolean };
       is_current_user_admin: { Args: never; Returns: boolean };
       is_current_user_owner: { Args: never; Returns: boolean };

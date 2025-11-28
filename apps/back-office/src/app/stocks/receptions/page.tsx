@@ -17,7 +17,7 @@
  * @updated Phase 3.8 - Historique + Tabs (2025-11-04)
  */
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { PurchaseOrderReceptionModal } from '@verone/orders';
 import { usePurchaseReceptions } from '@verone/orders';
@@ -59,6 +59,8 @@ import {
   TrendingUp,
   CheckCircle,
   Eye,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 
 export default function ReceptionsPage() {
@@ -86,6 +88,37 @@ export default function ReceptionsPage() {
   const [urgencyFilter, setUrgencyFilter] = useState<string>('all');
 
   const [historySearchTerm, setHistorySearchTerm] = useState('');
+
+  // État pour les lignes expandées (affichage détails produits)
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [expandedHistoryRows, setExpandedHistoryRows] = useState<Set<string>>(
+    new Set()
+  );
+
+  // Toggle expansion d'une ligne
+  const toggleRowExpansion = (orderId: string) => {
+    setExpandedRows(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(orderId)) {
+        newSet.delete(orderId);
+      } else {
+        newSet.add(orderId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleHistoryRowExpansion = (orderId: string) => {
+    setExpandedHistoryRows(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(orderId)) {
+        newSet.delete(orderId);
+      } else {
+        newSet.add(orderId);
+      }
+      return newSet;
+    });
+  };
 
   // Charger stats
   useEffect(() => {
@@ -345,6 +378,7 @@ export default function ReceptionsPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-8" />
                         <TableHead>N° Commande</TableHead>
                         <TableHead>Fournisseur</TableHead>
                         <TableHead>Statut</TableHead>
@@ -390,69 +424,165 @@ export default function ReceptionsPage() {
                           daysUntil <= 3 &&
                           daysUntil >= 0;
 
+                        const isExpanded = expandedRows.has(order.id);
+
                         return (
-                          <TableRow key={order.id}>
-                            <TableCell className="font-medium">
-                              {order.po_number}
-                              {isOverdue && (
+                          <React.Fragment key={order.id}>
+                            <TableRow
+                              className="cursor-pointer hover:bg-gray-50"
+                              onClick={() => toggleRowExpansion(order.id)}
+                            >
+                              <TableCell className="w-8">
+                                {isExpanded ? (
+                                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                                ) : (
+                                  <ChevronRight className="h-4 w-4 text-gray-500" />
+                                )}
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {order.po_number}
+                                {isOverdue && (
+                                  <Badge
+                                    variant="destructive"
+                                    className="ml-2 text-xs"
+                                  >
+                                    En retard
+                                  </Badge>
+                                )}
+                                {isUrgent && !isOverdue && (
+                                  <Badge className="ml-2 text-xs bg-verone-warning">
+                                    Urgent
+                                  </Badge>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {order.supplier_name || 'Fournisseur inconnu'}
+                              </TableCell>
+                              <TableCell>
                                 <Badge
-                                  variant="destructive"
-                                  className="ml-2 text-xs"
+                                  className={
+                                    order.status === 'validated'
+                                      ? 'bg-blue-100 text-blue-800'
+                                      : 'bg-amber-500 text-white'
+                                  }
                                 >
-                                  En retard
+                                  {order.status === 'validated'
+                                    ? 'Validée'
+                                    : 'Partielle'}
                                 </Badge>
-                              )}
-                              {isUrgent && !isOverdue && (
-                                <Badge className="ml-2 text-xs bg-verone-warning">
-                                  Urgent
-                                </Badge>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {order.supplier_name || 'Fournisseur inconnu'}
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                className={
-                                  order.status === 'validated'
-                                    ? 'bg-blue-100 text-blue-800'
-                                    : 'bg-amber-500 text-white'
-                                }
-                              >
-                                {order.status === 'validated'
-                                  ? 'Validée'
-                                  : 'Partielle'}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {order.expected_delivery_date
-                                ? formatDate(order.expected_delivery_date)
-                                : 'Non définie'}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <div className="flex-1 bg-gray-200 rounded-full h-2">
-                                  <div
-                                    className="bg-green-500 h-2 rounded-full transition-all"
-                                    style={{ width: `${progressPercent}%` }}
-                                  />
+                              </TableCell>
+                              <TableCell>
+                                {order.expected_delivery_date
+                                  ? formatDate(order.expected_delivery_date)
+                                  : 'Non définie'}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <div className="flex-1 bg-gray-200 rounded-full h-2">
+                                    <div
+                                      className="bg-green-500 h-2 rounded-full transition-all"
+                                      style={{ width: `${progressPercent}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-sm text-gray-600 w-12 text-right">
+                                    {progressPercent}%
+                                  </span>
                                 </div>
-                                <span className="text-sm text-gray-600 w-12 text-right">
-                                  {progressPercent}%
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <ButtonV2
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleOpenReception(order)}
-                              >
-                                <Truck className="h-4 w-4 mr-2" />
-                                Recevoir
-                              </ButtonV2>
-                            </TableCell>
-                          </TableRow>
+                              </TableCell>
+                              <TableCell>
+                                <ButtonV2
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    handleOpenReception(order);
+                                  }}
+                                >
+                                  <Truck className="h-4 w-4 mr-2" />
+                                  Recevoir
+                                </ButtonV2>
+                              </TableCell>
+                            </TableRow>
+                            {/* Ligne expandable avec détails produits */}
+                            {isExpanded && (
+                              <TableRow key={`${order.id}-details`}>
+                                <TableCell
+                                  colSpan={7}
+                                  className="bg-gray-50 p-0"
+                                >
+                                  <div className="p-4">
+                                    <h4 className="font-medium text-sm mb-3 text-gray-700">
+                                      Produits de la commande (
+                                      {order.purchase_order_items?.length || 0})
+                                    </h4>
+                                    <div className="space-y-2">
+                                      {order.purchase_order_items?.map(
+                                        (item: any, itemIndex: number) => (
+                                          <div
+                                            key={
+                                              item.id ||
+                                              `item-${order.id}-${itemIndex}`
+                                            }
+                                            className="flex items-center gap-4 p-2 bg-white rounded-lg border"
+                                          >
+                                            <ProductThumbnail
+                                              src={
+                                                item.products?.product_images?.find(
+                                                  (img: any) => img.is_primary
+                                                )?.public_url ||
+                                                item.products
+                                                  ?.product_images?.[0]
+                                                  ?.public_url
+                                              }
+                                              alt={
+                                                item.products?.name || 'Produit'
+                                              }
+                                              size="sm"
+                                            />
+                                            <div className="flex-1 min-w-0">
+                                              <p className="font-medium text-sm truncate">
+                                                {item.products?.name ||
+                                                  'Produit inconnu'}
+                                              </p>
+                                              <p className="text-xs text-gray-500 font-mono">
+                                                SKU:{' '}
+                                                {item.products?.sku || 'N/A'}
+                                              </p>
+                                            </div>
+                                            <div className="text-right">
+                                              <p className="text-sm font-medium">
+                                                {item.quantity_received || 0} /{' '}
+                                                {item.quantity} reçu(s)
+                                              </p>
+                                              <p className="text-xs text-gray-500">
+                                                Stock actuel:{' '}
+                                                {item.products?.stock_real ??
+                                                  '-'}
+                                              </p>
+                                            </div>
+                                            <div className="text-right">
+                                              <p className="text-sm font-medium">
+                                                {formatCurrency(
+                                                  (item.unit_price_ht || 0) *
+                                                    item.quantity
+                                                )}
+                                              </p>
+                                              <p className="text-xs text-gray-500">
+                                                {formatCurrency(
+                                                  item.unit_price_ht || 0
+                                                )}{' '}
+                                                /u
+                                              </p>
+                                            </div>
+                                          </div>
+                                        )
+                                      )}
+                                    </div>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </React.Fragment>
                         );
                       })}
                     </TableBody>
@@ -519,6 +649,7 @@ export default function ReceptionsPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-8" />
                         <TableHead>N° Commande</TableHead>
                         <TableHead>Fournisseur</TableHead>
                         <TableHead>Statut</TableHead>
@@ -543,45 +674,143 @@ export default function ReceptionsPage() {
                           ) || 0;
                         const isComplete = totalReceived >= totalOrdered;
 
+                        const isExpanded = expandedHistoryRows.has(order.id);
+
                         return (
-                          <TableRow key={order.id}>
-                            <TableCell className="font-medium">
-                              {order.po_number}
-                            </TableCell>
-                            <TableCell>
-                              {order.supplier_name || 'Fournisseur inconnu'}
-                            </TableCell>
-                            <TableCell>
-                              {isComplete ? (
-                                <Badge className="bg-green-500 text-white">
-                                  Reçue complète
-                                </Badge>
-                              ) : (
-                                <Badge className="bg-amber-500 text-white">
-                                  Reçue et clôturée ({totalReceived}/
-                                  {totalOrdered})
-                                </Badge>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {order.received_at
-                                ? formatDate(order.received_at)
-                                : '-'}
-                            </TableCell>
-                            <TableCell>
-                              {totalReceived}/{totalOrdered} unité(s)
-                            </TableCell>
-                            <TableCell>
-                              <ButtonV2
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleViewHistory(order)}
-                              >
-                                <Eye className="h-4 w-4 mr-2" />
-                                Voir détails
-                              </ButtonV2>
-                            </TableCell>
-                          </TableRow>
+                          <React.Fragment key={order.id}>
+                            <TableRow
+                              className="cursor-pointer hover:bg-gray-50"
+                              onClick={() =>
+                                toggleHistoryRowExpansion(order.id)
+                              }
+                            >
+                              <TableCell className="w-8">
+                                {isExpanded ? (
+                                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                                ) : (
+                                  <ChevronRight className="h-4 w-4 text-gray-500" />
+                                )}
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {order.po_number}
+                              </TableCell>
+                              <TableCell>
+                                {order.supplier_name || 'Fournisseur inconnu'}
+                              </TableCell>
+                              <TableCell>
+                                {isComplete ? (
+                                  <Badge className="bg-green-500 text-white">
+                                    Reçue complète
+                                  </Badge>
+                                ) : (
+                                  <Badge className="bg-amber-500 text-white">
+                                    Reçue et clôturée ({totalReceived}/
+                                    {totalOrdered})
+                                  </Badge>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {order.received_at
+                                  ? formatDate(order.received_at)
+                                  : '-'}
+                              </TableCell>
+                              <TableCell>
+                                {totalReceived}/{totalOrdered} unité(s)
+                              </TableCell>
+                              <TableCell>
+                                <ButtonV2
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    handleViewHistory(order);
+                                  }}
+                                >
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  Voir détails
+                                </ButtonV2>
+                              </TableCell>
+                            </TableRow>
+                            {/* Ligne expandable avec détails produits */}
+                            {isExpanded && (
+                              <TableRow key={`${order.id}-details`}>
+                                <TableCell
+                                  colSpan={7}
+                                  className="bg-gray-50 p-0"
+                                >
+                                  <div className="p-4">
+                                    <h4 className="font-medium text-sm mb-3 text-gray-700">
+                                      Produits de la commande (
+                                      {order.purchase_order_items?.length || 0})
+                                    </h4>
+                                    <div className="space-y-2">
+                                      {order.purchase_order_items?.map(
+                                        (item: any, itemIndex: number) => (
+                                          <div
+                                            key={
+                                              item.id ||
+                                              `item-${order.id}-${itemIndex}`
+                                            }
+                                            className="flex items-center gap-4 p-2 bg-white rounded-lg border"
+                                          >
+                                            <ProductThumbnail
+                                              src={
+                                                item.products?.product_images?.find(
+                                                  (img: any) => img.is_primary
+                                                )?.public_url ||
+                                                item.products
+                                                  ?.product_images?.[0]
+                                                  ?.public_url
+                                              }
+                                              alt={
+                                                item.products?.name || 'Produit'
+                                              }
+                                              size="sm"
+                                            />
+                                            <div className="flex-1 min-w-0">
+                                              <p className="font-medium text-sm truncate">
+                                                {item.products?.name ||
+                                                  'Produit inconnu'}
+                                              </p>
+                                              <p className="text-xs text-gray-500 font-mono">
+                                                SKU:{' '}
+                                                {item.products?.sku || 'N/A'}
+                                              </p>
+                                            </div>
+                                            <div className="text-right">
+                                              <p className="text-sm font-medium">
+                                                {item.quantity_received || 0} /{' '}
+                                                {item.quantity} reçu(s)
+                                              </p>
+                                              <p className="text-xs text-gray-500">
+                                                Stock actuel:{' '}
+                                                {item.products?.stock_real ??
+                                                  '-'}
+                                              </p>
+                                            </div>
+                                            <div className="text-right">
+                                              <p className="text-sm font-medium">
+                                                {formatCurrency(
+                                                  (item.unit_price_ht || 0) *
+                                                    item.quantity
+                                                )}
+                                              </p>
+                                              <p className="text-xs text-gray-500">
+                                                {formatCurrency(
+                                                  item.unit_price_ht || 0
+                                                )}{' '}
+                                                /u
+                                              </p>
+                                            </div>
+                                          </div>
+                                        )
+                                      )}
+                                    </div>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </React.Fragment>
                         );
                       })}
                     </TableBody>

@@ -163,10 +163,15 @@ export function useStockAlerts() {
     fetchAlerts();
   }, [fetchAlerts]);
 
+  // ✅ Alertes actives = stock réel < seuil minimum (filtre cohérent avec page alertes)
+  const activeAlerts = alerts.filter(a => a.stock_real < a.min_stock);
+
   return {
     loading,
     alerts,
     fetchAlerts,
+    // ✅ Alertes actives (stock_real < min_stock)
+    activeAlerts,
     // Helpers existants
     criticalAlerts: alerts.filter(a => a.severity === 'critical'),
     warningAlerts: alerts.filter(a => a.severity === 'warning'),

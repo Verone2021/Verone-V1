@@ -1,33 +1,26 @@
 'use client';
 
-/**
- * 📦 Modal Wrapper: Expédition Sales Order
- * Charge données enrichies et affiche SalesOrderShipmentForm
- */
+import { useState, useEffect } from 'react';
 
-import { useEffect, useState } from 'react';
-
-import { X } from 'lucide-react';
-
-import { ButtonV2 } from '@verone/ui';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@verone/ui';
+
 import { SalesOrderShipmentForm } from '@verone/orders/components/forms/SalesOrderShipmentForm';
-import {
-  useSalesShipments,
-  type SalesOrderForShipment,
-} from '@verone/orders/hooks';
-import type { SalesOrder } from '@verone/orders/hooks';
+import { useSalesShipments } from '@verone/orders/hooks';
 
 interface SalesOrderShipmentModalProps {
-  order: SalesOrder;
+  order: {
+    id: string;
+    order_number?: string;
+  };
   open: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess?: () => void;
 }
 
 export function SalesOrderShipmentModal({
@@ -36,60 +29,58 @@ export function SalesOrderShipmentModal({
   onClose,
   onSuccess,
 }: SalesOrderShipmentModalProps) {
-  const { loadSalesOrderForShipment, loading } = useSalesShipments();
-  const [enrichedOrder, setEnrichedOrder] =
-    useState<SalesOrderForShipment | null>(null);
+  const { loadSalesOrderForShipment } = useSalesShipments();
+  const [enrichedOrder, setEnrichedOrder] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Charger données enrichies (items avec stock) quand modal s'ouvre
   useEffect(() => {
     if (open && order?.id) {
+      setLoading(true);
       loadSalesOrderForShipment(order.id).then(data => {
         setEnrichedOrder(data);
+        setLoading(false);
       });
-    } else {
-      // Reset quand modal se ferme
-      setEnrichedOrder(null);
     }
   }, [open, order?.id, loadSalesOrderForShipment]);
 
+  const handleSuccess = () => {
+    onSuccess?.();
+    onClose();
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl max-h-[95vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <DialogTitle className="text-2xl font-bold">
-                Expédition Marchandise
-              </DialogTitle>
-              <p className="text-sm text-gray-600 mt-1">
-                Commande {order.order_number}
-                {enrichedOrder?.organisations &&
-                  ` • ${enrichedOrder.organisations.trade_name || enrichedOrder.organisations.legal_name}`}
-              </p>
-            </div>
-            <ButtonV2 variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-5 w-5" />
-            </ButtonV2>
-          </div>
+          <DialogTitle className="text-2xl font-bold">
+            Expédier Commande Client
+          </DialogTitle>
+          {enrichedOrder && (
+            <DialogDescription>
+              {enrichedOrder.order_number}
+              {enrichedOrder.customer_name &&
+                ` • ${enrichedOrder.customer_name}`}
+            </DialogDescription>
+          )}
         </DialogHeader>
 
-        {/* Afficher loading ou formulaire */}
-        <div className="mt-6">
-          {loading || !enrichedOrder ? (
-            <div className="flex justify-center py-12">
-              <div className="text-gray-500">Chargement des données...</div>
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="text-muted-foreground">
+              Chargement des données...
             </div>
-          ) : (
-            <SalesOrderShipmentForm
-              salesOrder={enrichedOrder}
-              onSuccess={() => {
-                onSuccess();
-                onClose();
-              }}
-              onCancel={onClose}
-            />
-          )}
-        </div>
+          </div>
+        ) : enrichedOrder ? (
+          <SalesOrderShipmentForm
+            salesOrder={enrichedOrder}
+            onSuccess={handleSuccess}
+            onCancel={onClose}
+          />
+        ) : (
+          <div className="text-center py-8 text-red-600">
+            Erreur lors du chargement de la commande
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

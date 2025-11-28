@@ -5,6 +5,9 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
+import { Badge } from '@verone/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
+import { formatPrice } from '@verone/utils';
 import {
   X,
   Package,
@@ -20,14 +23,6 @@ import {
   ShoppingCart,
 } from 'lucide-react';
 
-import { Badge } from '@verone/ui';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@verone/ui';
-import { formatPrice } from '@verone/utils';
 import type { MovementWithDetails } from '../../hooks';
 
 interface MovementDetailsModalProps {
@@ -63,8 +58,6 @@ export function MovementDetailsModal({
         return <TrendingDown className="h-5 w-5 text-red-600" />;
       case 'ADJUST':
         return <RotateCcw className="h-5 w-5 text-blue-600" />;
-      case 'TRANSFER':
-        return <FileText className="h-5 w-5 text-purple-600" />;
       default:
         return <Clock className="h-5 w-5 text-gray-600" />;
     }
@@ -80,10 +73,6 @@ export function MovementDetailsModal({
         return <Badge variant="destructive">Sortie de Stock</Badge>;
       case 'ADJUST':
         return <Badge className="bg-blue-100 text-blue-800">Ajustement</Badge>;
-      case 'TRANSFER':
-        return (
-          <Badge className="bg-purple-100 text-purple-800">Transfert</Badge>
-        );
       default:
         return <Badge variant="secondary">{movementType}</Badge>;
     }

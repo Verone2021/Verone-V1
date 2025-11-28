@@ -126,6 +126,7 @@ export default function SalesOrdersPage() {
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showShipmentModal, setShowShipmentModal] = useState(false);
+  const [orderToShip, setOrderToShip] = useState<SalesOrder | null>(null);
   const [showValidateConfirmation, setShowValidateConfirmation] =
     useState(false);
   const [orderToValidate, setOrderToValidate] = useState<string | null>(null);
@@ -626,16 +627,21 @@ export default function SalesOrdersPage() {
     setShowEditModal(true);
   };
 
+  // Handlers pour le modal d'expédition
   const openShipmentModal = (order: SalesOrder) => {
-    setSelectedOrder(order);
+    setOrderToShip(order);
     setShowShipmentModal(true);
   };
 
   const handleShipmentSuccess = () => {
+    setShowShipmentModal(false);
+    setOrderToShip(null);
     fetchOrders();
     fetchStats();
-    setShowShipmentModal(false);
-    setSelectedOrder(null);
+    toast({
+      title: 'Succès',
+      description: 'Expédition enregistrée avec succès',
+    });
   };
 
   return (
@@ -1010,7 +1016,7 @@ export default function SalesOrdersPage() {
                                   icon={Truck}
                                   variant="outline"
                                   size="sm"
-                                  label="Expédier la commande"
+                                  label="Expédier"
                                   onClick={() => openShipmentModal(order)}
                                 />
                               )}
@@ -1160,13 +1166,13 @@ export default function SalesOrdersPage() {
       )}
 
       {/* Modal Expédition */}
-      {selectedOrder && (
+      {orderToShip && (
         <SalesOrderShipmentModal
-          order={selectedOrder}
+          order={orderToShip}
           open={showShipmentModal}
           onClose={() => {
             setShowShipmentModal(false);
-            setSelectedOrder(null);
+            setOrderToShip(null);
           }}
           onSuccess={handleShipmentSuccess}
         />

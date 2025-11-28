@@ -245,7 +245,7 @@ export function usePurchaseReceptions() {
           .or('affects_forecast.is.null,affects_forecast.is.false')
           .eq('movement_type', 'IN')
           .eq('products.product_images.is_primary', true)
-          .order('performed_at', { ascending: true }); // Chronologique: plus ancien en premier
+          .order('performed_at', { ascending: false }); // ✅ FIX 2025-11-28: Plus récent en premier
 
         if (movementsError) {
           console.error('Erreur chargement historique:', movementsError);
@@ -344,7 +344,7 @@ export function usePurchaseReceptions() {
             .eq('reason_code', 'cancelled') // ✅ ENUM valide pour annulations
             .eq('reference_id', poId)
             .eq('movement_type', 'ADJUST')
-            .order('performed_at', { ascending: true });
+            .order('performed_at', { ascending: false }); // ✅ FIX 2025-11-28: Plus récent en premier
 
         if (cancellationsError || !cancellations) {
           console.error('Erreur chargement annulations:', cancellationsError);
@@ -469,14 +469,29 @@ export function usePurchaseReceptions() {
             trade_name
           ),
           purchase_order_items (
+            id,
+            product_id,
             quantity,
-            quantity_received
+            quantity_received,
+            unit_price_ht,
+            products (
+              id,
+              name,
+              sku,
+              stock_real,
+              product_images!left (
+                public_url,
+                is_primary
+              )
+            )
           )
         `
           )
-          .order('expected_delivery_date', {
-            ascending: true,
-            nullsFirst: false,
+          // ✅ FIX 2025-11-28: Trier par date de réception (plus récente d'abord) pour l'historique
+          // Pour les commandes "à recevoir", on garde le tri par date prévue
+          .order('received_at', {
+            ascending: false, // Plus récente en premier
+            nullsFirst: true, // Les commandes non reçues (null) en premier (pour "à recevoir")
           });
 
         // Filtres de statut (dynamique selon page appelante)

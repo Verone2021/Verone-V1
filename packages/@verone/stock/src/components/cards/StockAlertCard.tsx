@@ -59,34 +59,26 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
   };
 
   const getSeverityColor = () => {
-    // ✅ CALCUL STOCK PRÉVISIONNEL
-    // Formule : stock_real + stock_forecasted_in - stock_forecasted_out
-    const stock_previsionnel =
+    // Stock prévisionnel basé sur PO VALIDÉES uniquement (pas les brouillons)
+    // stock_forecasted_in = quantité des PO validées (en transit)
+    const stock_previsionnel_valide =
       alert.stock_real +
       (alert.stock_forecasted_in || 0) -
       (alert.stock_forecasted_out || 0);
 
-    // ✅ WORKFLOW COMPLET : ROUGE (brouillon ou insuffisant) → VERT (validé et suffisant) → DISPARAÎT (réceptionné)
+    // PRIORITÉ 1 : Si PO brouillon existe → ORANGE (en attente de validation)
+    // Un brouillon indique qu'une action est en cours mais pas encore confirmée
+    if (alert.is_in_draft) {
+      return 'border-orange-500 !bg-orange-50';
+    }
 
-    // 🟢 VERT si commande validée ET stock prévisionnel >= min_stock
-    if (alert.validated && stock_previsionnel >= alert.min_stock) {
+    // PRIORITÉ 2 : Si PO validée couvre le besoin → VERT
+    if (stock_previsionnel_valide >= alert.min_stock) {
       return 'border-green-600 !bg-green-50';
     }
 
-    // 🔴 ROUGE si commande brouillon OU stock prévisionnel < min_stock
-    if (alert.is_in_draft || stock_previsionnel < alert.min_stock) {
-      return 'border-red-600 !bg-red-50';
-    }
-
-    // Couleurs selon sévérité (cas par défaut - normalement pas atteint)
-    switch (alert.severity) {
-      case 'critical':
-        return 'border-red-600 !bg-red-50';
-      case 'warning':
-        return 'border-orange-600 !bg-orange-50';
-      default:
-        return 'border-blue-600 !bg-blue-50';
-    }
+    // PRIORITÉ 3 : Sinon → ROUGE (besoin non couvert, aucune commande)
+    return 'border-red-600 !bg-red-50';
   };
 
   const getAlertTypeLabel = () => {
@@ -103,16 +95,32 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
   };
 
   // Calcul stock prévisionnel pour condition bouton
+  // stock_forecasted_in = commandes validées uniquement (PO validated, en transit)
+  // stock_forecasted_out = commandes clients validées (SO validated, réservations)
   const stock_previsionnel =
     alert.stock_real +
     (alert.stock_forecasted_in || 0) -
     (alert.stock_forecasted_out || 0);
 
-  // Seuil atteint = bouton grisé (ne peut plus commander)
-  const seuilAtteint = stock_previsionnel >= alert.min_stock;
+  // ✅ FIX: quantity_in_draft est la quantité du draft actuel UNIQUEMENT (pas un cumul!)
+  // C'est INDÉPENDANT de stock_forecasted_in (qui concerne les PO validées)
+  const quantiteBrouillon = alert.is_in_draft
+    ? alert.quantity_in_draft || 0
+    : 0;
 
-  // Manque réel pour atteindre le seuil
-  const manque = Math.max(0, alert.min_stock - stock_previsionnel);
+  // Stock prévisionnel TOTAL incluant les brouillons
+  const stock_previsionnel_total = stock_previsionnel + quantiteBrouillon;
+
+  // Seuil atteint = bouton grisé (incluant brouillons dans le calcul)
+  const seuilAtteint = stock_previsionnel_total >= alert.min_stock;
+
+  // Manque réel pour atteindre le seuil (en tenant compte des brouillons)
+  const manque = Math.max(0, alert.min_stock - stock_previsionnel_total);
+
+  // Logique bouton Commander :
+  // - Désactivé si seuil atteint (stock_previsionnel >= min_stock)
+  // - Activé si seuil non atteint (permet de commander le complément, même si commande existante)
+  const peutCommander = !seuilAtteint && manque > 0;
 
   return (
     <Card className={`border-2 ${getSeverityColor()}`}>
@@ -158,23 +166,17 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
               <div className="flex gap-2 flex-shrink-0">
                 <Button
                   size="sm"
-                  variant={
-                    alert.is_in_draft
-                      ? 'outline'
-                      : seuilAtteint
-                        ? 'outline'
-                        : 'primary'
-                  }
+                  variant={peutCommander ? 'primary' : 'outline'}
                   onClick={() => onActionClick?.(alert)}
-                  disabled={alert.is_in_draft || seuilAtteint}
-                  className={`text-xs ${alert.is_in_draft || seuilAtteint ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={!peutCommander}
+                  className={`text-xs ${!peutCommander ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  {alert.is_in_draft
-                    ? 'Déjà commandé'
-                    : seuilAtteint
-                      ? 'Seuil atteint'
-                      : alert.alert_type === 'no_stock_but_ordered'
-                        ? 'Voir Commandes'
+                  {seuilAtteint
+                    ? 'Seuil atteint'
+                    : alert.alert_type === 'no_stock_but_ordered'
+                      ? 'Voir Commandes'
+                      : manque > 0
+                        ? `Commander ${manque} manquant${manque > 1 ? 's' : ''}`
                         : 'Commander Fournisseur'}
                 </Button>
                 {alert.draft_order_id ? (
@@ -255,48 +257,47 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
               )}
             </div>
 
-            {/* Badge Statut Commande */}
-            {alert.is_in_draft &&
-              !alert.validated && // ← Ne pas afficher si déjà validé
-              alert.quantity_in_draft &&
-              alert.draft_order_id && (
-                <div className="mt-2">
+            {/* Section Statut Commandes */}
+            <div className="mt-2 space-y-1">
+              {/* Badge VERT : Commandes validées en transit (stock_forecasted_in > 0) */}
+              {alert.stock_forecasted_in > 0 && (
+                <Badge
+                  variant="outline"
+                  className="border-green-600 bg-green-100 text-green-800 text-xs font-medium mr-2"
+                >
+                  ✅ {alert.stock_forecasted_in} unité
+                  {alert.stock_forecasted_in > 1 ? 's' : ''} validée
+                  {alert.stock_forecasted_in > 1 ? 's' : ''} (en cours de
+                  livraison)
+                </Badge>
+              )}
+
+              {/* Badge ORANGE : Commande brouillon en attente */}
+              {/* ✅ FIX: quantity_in_draft est la quantité du draft actuel (pas un cumul) */}
+              {alert.is_in_draft &&
+                quantiteBrouillon > 0 &&
+                alert.draft_order_id && (
                   <Badge
                     variant="outline"
                     className="border-orange-500 bg-orange-50 text-orange-700 text-xs font-medium cursor-pointer hover:bg-orange-100 transition-colors"
                     onClick={() => onActionClick?.(alert)}
                   >
-                    ⏳ Commande en attente de validation:{' '}
-                    {alert.quantity_in_draft} unités - N°{' '}
-                    {alert.draft_order_number}
+                    ⏳ {quantiteBrouillon} unité
+                    {quantiteBrouillon > 1 ? 's' : ''} en attente de validation
+                    - N° {alert.draft_order_number}
                   </Badge>
-                </div>
-              )}
+                )}
 
-            {/* Badge Validé avec indication du manque si insuffisant */}
-            {alert.validated && seuilAtteint && (
-              <div className="mt-2">
+              {/* Badge VERT COMPLET : Seuil atteint */}
+              {seuilAtteint && !alert.is_in_draft && (
                 <Badge
                   variant="outline"
                   className="border-green-600 bg-green-100 text-green-800 text-xs font-medium"
                 >
-                  ✅ Validé - Stock prévisionnel suffisant
+                  ✅ Seuil atteint - Stock prévisionnel suffisant
                 </Badge>
-              </div>
-            )}
-
-            {/* Message d'alerte si commande validée mais insuffisante */}
-            {alert.validated && !seuilAtteint && manque > 0 && (
-              <div className="mt-2">
-                <Badge
-                  variant="outline"
-                  className="border-orange-500 bg-orange-50 text-orange-700 text-xs font-medium"
-                >
-                  ⚠️ Commande validée mais il manque encore {manque} unité
-                  {manque > 1 ? 's' : ''} pour atteindre le seuil
-                </Badge>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Commandes clients en attente (INLINE, TOUTES affichées) */}
             {alert.alert_type === 'no_stock_but_ordered' &&

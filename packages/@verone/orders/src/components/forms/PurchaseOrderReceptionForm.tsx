@@ -5,7 +5,7 @@
  * Workflow Odoo-inspired avec validation inline
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 
 import type { ReceptionItem } from '@verone/types';
 import { Badge } from '@verone/ui';
@@ -31,12 +31,15 @@ import {
   Calendar,
   User,
   TrendingUp,
+  XCircle,
 } from 'lucide-react';
 
 import {
   usePurchaseReceptions,
   type PurchaseOrderForReception,
 } from '@verone/orders/hooks';
+
+import { CancelRemainderModal } from '../modals';
 
 interface PurchaseOrderReceptionFormProps {
   purchaseOrder: PurchaseOrderForReception;
@@ -55,6 +58,7 @@ export function PurchaseOrderReceptionForm({
     validateReception,
     validating,
     loadReceptionHistory,
+    loadCancellationHistory,
   } = usePurchaseReceptions();
 
   const [items, setItems] = useState<ReceptionItem[]>([]);
@@ -63,6 +67,18 @@ export function PurchaseOrderReceptionForm({
   );
   const [notes, setNotes] = useState('');
   const [history, setHistory] = useState<any[]>([]);
+  const [cancellations, setCancellations] = useState<
+    Array<{
+      id: string;
+      performed_at: string;
+      notes: string | null;
+      quantity_cancelled: number;
+      product_name: string;
+      product_sku: string;
+    }>
+  >([]);
+  const [showCancelRemainderModal, setShowCancelRemainderModal] =
+    useState(false);
 
   // Initialiser items
   useEffect(() => {
@@ -71,9 +87,15 @@ export function PurchaseOrderReceptionForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [purchaseOrder]);
 
-  // Charger historique
+  // Charger historique réceptions
   useEffect(() => {
     loadReceptionHistory(purchaseOrder.id).then(setHistory);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [purchaseOrder.id]);
+
+  // Charger historique annulations reliquat
+  useEffect(() => {
+    loadCancellationHistory(purchaseOrder.id).then(setCancellations);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [purchaseOrder.id]);
 
@@ -95,6 +117,42 @@ export function PurchaseOrderReceptionForm({
 
     return { totalQuantityToReceive, totalValue, allFullyReceived };
   }, [items]);
+
+  // Calculer les items avec reliquat (pour modal annulation)
+  const remainderItems = useMemo(() => {
+    return items
+      .filter(item => item.quantity_remaining > 0)
+      .map(item => ({
+        product_name: item.product_name,
+        product_sku: item.product_sku,
+        quantity_remaining: item.quantity_remaining,
+      }));
+  }, [items]);
+
+  // Total reliquat
+  const totalRemainder = useMemo(() => {
+    return remainderItems.reduce(
+      (sum, item) => sum + item.quantity_remaining,
+      0
+    );
+  }, [remainderItems]);
+
+  // Condition pour afficher le bouton "Annuler reliquat"
+  // Visible si: status partiellement reçu OU (confirmé avec au moins une réception partielle effectuée)
+  const canCancelRemainder = useMemo(() => {
+    const hasRemainder = totalRemainder > 0;
+    const hasPartialReception = items.some(
+      item => item.quantity_already_received > 0
+    );
+    const isPartiallyReceived = purchaseOrder.status === 'partially_received';
+    const isValidated = purchaseOrder.status === 'validated';
+
+    // Afficher si partiellement reçu avec reliquat OU si validé avec réceptions partielles et reliquat
+    return (
+      hasRemainder &&
+      (isPartiallyReceived || (isValidated && hasPartialReception))
+    );
+  }, [totalRemainder, items, purchaseOrder.status]);
 
   // Update quantité item
   const handleQuantityChange = (itemId: string, value: string) => {
@@ -352,50 +410,208 @@ export function PurchaseOrderReceptionForm({
         </div>
       </div>
 
-      {/* Historique */}
-      {history.length > 0 && (
+      {/* Historique enrichi */}
+      {(history.length > 0 || cancellations.length > 0) && (
         <Card className="p-4">
           <h4 className="font-semibold mb-3 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4" />
-            Historique réceptions ({history.length})
+            <Package className="w-4 h-4 text-verone-primary" />
+            Historique des réceptions ({history.length + cancellations.length})
           </h4>
-          <div className="space-y-2">
-            {history.map((h, idx) => (
-              <div
-                key={idx}
-                className="text-sm border-l-2 border-verone-success pl-3 py-1"
-              >
-                <div className="font-medium">
-                  {formatDate(h.received_at)} • {h.total_quantity} unités
+          <div className="space-y-3">
+            {/* Réceptions */}
+            {history.map((h, idx) => {
+              // Calculer stats pour cette réception
+              const totalItemsInReception = h.items?.length || 0;
+
+              return (
+                <div
+                  key={`reception-${idx}`}
+                  className="border rounded-lg p-3 bg-gray-50"
+                >
+                  {/* Header réception */}
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-600" />
+                      <span className="font-semibold text-gray-800">
+                        Réception #{idx + 1}
+                      </span>
+                      <span className="text-gray-500">—</span>
+                      <span className="text-gray-600">
+                        {formatDate(h.received_at)}
+                      </span>
+                    </div>
+                    <Badge className="bg-green-100 text-green-800 border border-green-300">
+                      {h.total_quantity} unité{h.total_quantity > 1 ? 's' : ''}{' '}
+                      reçue{h.total_quantity > 1 ? 's' : ''}
+                    </Badge>
+                  </div>
+
+                  {/* Détails par produit */}
+                  <div className="space-y-1 ml-6">
+                    {h.items?.map((item: any, itemIdx: number) => {
+                      // Trouver l'item correspondant pour avoir quantity_ordered
+                      const orderItem = items.find(
+                        i => i.product_sku === item.product_sku
+                      );
+                      const qtyOrdered = orderItem?.quantity_ordered || '?';
+                      const isPartial = orderItem
+                        ? item.quantity_received < orderItem.quantity_ordered
+                        : false;
+
+                      return (
+                        <div
+                          key={itemIdx}
+                          className="flex items-center justify-between text-sm py-1 border-b border-gray-100 last:border-0"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-400">├─</span>
+                            <span className="font-medium text-gray-700">
+                              {item.product_name || item.product_sku}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-600">
+                              {item.quantity_received}/{qtyOrdered} reçu
+                              {item.quantity_received > 1 ? 's' : ''}
+                            </span>
+                            {isPartial ? (
+                              <Badge
+                                variant="outline"
+                                className="text-xs text-amber-600 border-amber-300"
+                              >
+                                partiel
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="outline"
+                                className="text-xs text-green-600 border-green-300"
+                              >
+                                complet
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="text-muted-foreground text-xs">
-                  {h.items
-                    .map((i: any) => `${i.product_sku}: ${i.quantity_received}`)
-                    .join(', ')}
+              );
+            })}
+
+            {/* Annulations reliquat */}
+            {cancellations.map((c, idx) => {
+              // Extraire le motif depuis les notes (format: "Annulation reliquat PO xxx: X unités. Motif")
+              const motifMatch = c.notes?.match(/unités\.\s*(.+)$/);
+              const motif = motifMatch?.[1]?.trim() || null;
+
+              return (
+                <div
+                  key={`cancellation-${idx}`}
+                  className="border rounded-lg p-3 bg-red-50 border-red-200"
+                >
+                  {/* Header annulation */}
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <XCircle className="w-4 h-4 text-red-600" />
+                      <span className="font-semibold text-red-800">
+                        Reliquat annulé
+                      </span>
+                      <span className="text-red-400">—</span>
+                      <span className="text-red-600">
+                        {formatDate(c.performed_at)}
+                      </span>
+                    </div>
+                    <Badge className="bg-red-100 text-red-800 border border-red-300">
+                      {c.quantity_cancelled} unité
+                      {c.quantity_cancelled > 1 ? 's' : ''} annulée
+                      {c.quantity_cancelled > 1 ? 's' : ''}
+                    </Badge>
+                  </div>
+
+                  {/* Détails annulation */}
+                  <div className="space-y-1 ml-6">
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-red-400">├─</span>
+                      <span className="font-medium text-red-700">
+                        {c.product_name}
+                      </span>
+                      <span className="text-red-500 text-xs">
+                        ({c.product_sku})
+                      </span>
+                    </div>
+                    {motif && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-red-400">└─</span>
+                        <span className="text-red-600 italic">
+                          Motif : {motif}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
+
+          {/* Résumé si commande clôturée avec réception partielle */}
+          {purchaseOrder.status === 'received' && cancellations.length > 0 && (
+            <div className="mt-4 pt-3 border-t border-gray-200">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-500" />
+                <span className="text-sm font-medium text-amber-700">
+                  Commande clôturée avec réception partielle
+                </span>
+              </div>
+            </div>
+          )}
         </Card>
       )}
 
       {/* Actions */}
-      <div className="flex justify-end gap-3">
-        <ButtonV2 variant="outline" onClick={onCancel} disabled={validating}>
-          Annuler
-        </ButtonV2>
-        <ButtonV2
-          onClick={handleValidate}
-          disabled={validating || totals.totalQuantityToReceive === 0}
-          className="bg-verone-success hover:bg-verone-success/90"
-        >
-          {validating
-            ? 'Validation...'
-            : totals.allFullyReceived
-              ? 'Valider Réception Complète'
-              : 'Valider Réception Partielle'}
-        </ButtonV2>
+      <div className="flex justify-between gap-3">
+        {/* Bouton Annuler Reliquat (à gauche) */}
+        <div>
+          {canCancelRemainder && (
+            <ButtonV2
+              variant="outline"
+              className="border-orange-500 text-orange-600 hover:bg-orange-50"
+              onClick={() => setShowCancelRemainderModal(true)}
+              disabled={validating}
+            >
+              <XCircle className="w-4 h-4 mr-2" />
+              Annuler reliquat ({totalRemainder} unités)
+            </ButtonV2>
+          )}
+        </div>
+
+        {/* Boutons Annuler/Valider (à droite) */}
+        <div className="flex gap-3">
+          <ButtonV2 variant="outline" onClick={onCancel} disabled={validating}>
+            Annuler
+          </ButtonV2>
+          <ButtonV2
+            onClick={handleValidate}
+            disabled={validating || totals.totalQuantityToReceive === 0}
+            className="bg-verone-success hover:bg-verone-success/90"
+          >
+            {validating
+              ? 'Validation...'
+              : totals.allFullyReceived
+                ? 'Valider Réception Complète'
+                : 'Valider Réception Partielle'}
+          </ButtonV2>
+        </div>
       </div>
+
+      {/* Modal Annulation Reliquat */}
+      <CancelRemainderModal
+        open={showCancelRemainderModal}
+        onClose={() => setShowCancelRemainderModal(false)}
+        purchaseOrderId={purchaseOrder.id}
+        poNumber={purchaseOrder.po_number}
+        remainderItems={remainderItems}
+        onSuccess={onSuccess}
+      />
     </div>
   );
 }

@@ -135,6 +135,17 @@ export function PurchaseOrderFormModal({
   );
   const [paymentTerms, setPaymentTerms] = useState(order?.payment_terms || '');
 
+  // Frais additionnels (fournisseurs)
+  const [shippingCostHt, setShippingCostHt] = useState<number>(
+    (order as any)?.shipping_cost_ht || 0
+  );
+  const [customsCostHt, setCustomsCostHt] = useState<number>(
+    (order as any)?.customs_cost_ht || 0
+  );
+  const [insuranceCostHt, setInsuranceCostHt] = useState<number>(
+    (order as any)?.insurance_cost_ht || 0
+  );
+
   // Modal ajout produit
   const [showProductSelector, setShowProductSelector] = useState(false);
 
@@ -209,18 +220,25 @@ export function PurchaseOrderFormModal({
   // Items à afficher : locaux en création, hook en édition
   const displayItems = isEditMode ? items : localItems;
 
-  // Calculs totaux (inclut eco_tax)
+  // Calculs totaux (inclut eco_tax + frais additionnels)
+  // ✅ FIX: L'écotaxe est PAR UNITÉ, donc multipliée par la quantité
   const totalHT = useMemo(() => {
     return displayItems.reduce((sum, item) => {
       const subtotal =
         item.quantity *
         item.unit_price_ht *
         (1 - (item.discount_percentage || 0) / 100);
-      return sum + subtotal + (item.eco_tax || 0);
+      const itemEcoTax = (item.eco_tax || 0) * item.quantity; // Écotaxe × quantité
+      return sum + subtotal + itemEcoTax;
     }, 0);
   }, [displayItems]);
 
-  const totalTTC = totalHT * 1.2; // TVA 20%
+  // Total des frais additionnels
+  const totalCharges = useMemo(() => {
+    return shippingCostHt + customsCostHt + insuranceCostHt;
+  }, [shippingCostHt, customsCostHt, insuranceCostHt]);
+
+  const totalTTC = (totalHT + totalCharges) * 1.2; // TVA 20%
 
   // Memoize excludeProductIds pour éviter re-renders infinis
   const excludeProductIds = useMemo(
@@ -378,6 +396,10 @@ export function PurchaseOrderFormModal({
     setEcoTaxVatRate(null);
     setPaymentTerms('');
     setLocalItems([]); // Réinitialiser items locaux
+    // Réinitialiser frais additionnels
+    setShippingCostHt(0);
+    setCustomsCostHt(0);
+    setInsuranceCostHt(0);
   };
 
   const handleClose = () => {
@@ -402,6 +424,10 @@ export function PurchaseOrderFormModal({
           delivery_address: deliveryAddress || undefined,
           notes: notes || undefined,
           eco_tax_vat_rate: ecoTaxVatRate,
+          // Frais additionnels fournisseurs
+          shipping_cost_ht: shippingCostHt || 0,
+          customs_cost_ht: customsCostHt || 0,
+          insurance_cost_ht: insuranceCostHt || 0,
         } as any); // Cast car UpdatePurchaseOrderData type incomplet
 
         toast({
@@ -417,6 +443,10 @@ export function PurchaseOrderFormModal({
           payment_terms: paymentTerms || undefined,
           notes: notes || undefined,
           eco_tax_vat_rate: ecoTaxVatRate,
+          // Frais additionnels fournisseurs
+          shipping_cost_ht: shippingCostHt || 0,
+          customs_cost_ht: customsCostHt || 0,
+          insurance_cost_ht: insuranceCostHt || 0,
           items: localItems.map(item => ({
             product_id: item.product_id,
             quantity: item.quantity,
@@ -626,6 +656,67 @@ export function PurchaseOrderFormModal({
               </CardContent>
             </Card>
 
+            {/* Frais additionnels fournisseurs */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Frais additionnels</CardTitle>
+                <CardDescription>
+                  Frais de transport, douane et assurance (optionnels)
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="shippingCostHt">
+                    Frais de livraison HT (€)
+                  </Label>
+                  <Input
+                    id="shippingCostHt"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={shippingCostHt || ''}
+                    onChange={e =>
+                      setShippingCostHt(parseFloat(e.target.value) || 0)
+                    }
+                    placeholder="0.00"
+                    disabled={isBlocked}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="customsCostHt">Frais de douane HT (€)</Label>
+                  <Input
+                    id="customsCostHt"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={customsCostHt || ''}
+                    onChange={e =>
+                      setCustomsCostHt(parseFloat(e.target.value) || 0)
+                    }
+                    placeholder="0.00"
+                    disabled={isBlocked}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="insuranceCostHt">
+                    Frais d'assurance HT (€)
+                  </Label>
+                  <Input
+                    id="insuranceCostHt"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={insuranceCostHt || ''}
+                    onChange={e =>
+                      setInsuranceCostHt(parseFloat(e.target.value) || 0)
+                    }
+                    placeholder="0.00"
+                    disabled={isBlocked}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Articles (disponible en création ET édition) */}
             <Card>
               <CardHeader>
@@ -704,17 +795,25 @@ export function PurchaseOrderFormModal({
                   <CardTitle>Récapitulatif</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-3 gap-4 text-center">
+                  <div className="grid grid-cols-4 gap-4 text-center">
                     <div>
-                      <p className="text-sm text-gray-600">Total HT</p>
+                      <p className="text-sm text-gray-600">Total HT produits</p>
                       <p className="text-lg font-semibold">
                         {formatCurrency(totalHT)}
                       </p>
                     </div>
                     <div>
+                      <p className="text-sm text-gray-600">
+                        Frais additionnels
+                      </p>
+                      <p className="text-lg font-semibold">
+                        {formatCurrency(totalCharges)}
+                      </p>
+                    </div>
+                    <div>
                       <p className="text-sm text-gray-600">TVA (20%)</p>
                       <p className="text-lg font-semibold">
-                        {formatCurrency(totalTTC - totalHT)}
+                        {formatCurrency(totalTTC - totalHT - totalCharges)}
                       </p>
                     </div>
                     <div>
