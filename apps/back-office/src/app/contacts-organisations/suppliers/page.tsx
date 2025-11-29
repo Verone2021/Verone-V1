@@ -37,7 +37,7 @@ import {
 } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
+import { ButtonV2, IconButton } from '@verone/ui';
 import { Badge } from '@verone/ui';
 import { spacing, colors } from '@verone/ui/design-system';
 import { cn } from '@verone/utils';
@@ -561,12 +561,12 @@ export default function SuppliersPage() {
                           )}
                         </div>
 
-                        {/* Boutons - Toujours en bas avec mt-auto */}
+                        {/* Boutons - Pattern Catalogue IconButton */}
                         <div
                           className="mt-auto pt-4 border-t"
                           style={{ borderColor: colors.border.DEFAULT }}
                         >
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
                             {activeTab === 'active' ||
                             activeTab === 'preferred' ? (
                               <>
@@ -586,22 +586,19 @@ export default function SuppliersPage() {
                                 <Link
                                   href={`/contacts-organisations/suppliers/${supplier.id}`}
                                 >
-                                  <ButtonV2
+                                  <IconButton
                                     variant="outline"
                                     size="sm"
-                                    className="text-xs h-7 px-3"
                                     icon={Eye}
-                                  >
-                                    Voir
-                                  </ButtonV2>
+                                    label="Voir détails"
+                                  />
                                 </Link>
-                                <ButtonV2
+                                <IconButton
                                   variant="danger"
                                   size="sm"
                                   onClick={() => handleArchive(supplier)}
                                   icon={Archive}
-                                  className="h-7 px-2"
-                                  aria-label="Archiver"
+                                  label="Archiver"
                                 />
                               </>
                             ) : (
@@ -619,33 +616,29 @@ export default function SuppliersPage() {
                                   }}
                                   className="h-7 px-2"
                                 />
-                                <ButtonV2
+                                <IconButton
                                   variant="success"
                                   size="sm"
                                   onClick={() => handleArchive(supplier)}
                                   icon={ArchiveRestore}
-                                  className="h-7 px-2"
-                                  aria-label="Restaurer"
+                                  label="Restaurer"
                                 />
-                                <ButtonV2
+                                <IconButton
                                   variant="danger"
                                   size="sm"
                                   onClick={() => handleDelete(supplier)}
                                   icon={Trash2}
-                                  className="h-7 px-2"
-                                  aria-label="Supprimer"
+                                  label="Supprimer"
                                 />
                                 <Link
                                   href={`/contacts-organisations/suppliers/${supplier.id}`}
                                 >
-                                  <ButtonV2
+                                  <IconButton
                                     variant="outline"
                                     size="sm"
-                                    className="text-xs h-7 px-3"
                                     icon={Eye}
-                                  >
-                                    Voir
-                                  </ButtonV2>
+                                    label="Voir détails"
+                                  />
                                 </Link>
                               </>
                             )}
@@ -795,9 +788,9 @@ export default function SuppliersPage() {
                         )}
                       </TableCell>
 
-                      {/* Actions */}
+                      {/* Actions - Pattern Catalogue IconButton */}
                       <TableCell className="text-right">
-                        <div className="flex justify-end items-center gap-2">
+                        <div className="flex justify-end items-center gap-1">
                           {activeTab === 'active' ||
                           activeTab === 'preferred' ? (
                             <>
@@ -817,21 +810,19 @@ export default function SuppliersPage() {
                               <Link
                                 href={`/contacts-organisations/suppliers/${supplier.id}`}
                               >
-                                <ButtonV2
+                                <IconButton
                                   variant="outline"
                                   size="sm"
                                   icon={Eye}
-                                  className="h-7 px-2"
-                                  aria-label="Voir"
+                                  label="Voir détails"
                                 />
                               </Link>
-                              <ButtonV2
+                              <IconButton
                                 variant="danger"
                                 size="sm"
                                 onClick={() => handleArchive(supplier)}
                                 icon={Archive}
-                                className="h-7 px-2"
-                                aria-label="Archiver"
+                                label="Archiver"
                               />
                             </>
                           ) : (
@@ -849,31 +840,28 @@ export default function SuppliersPage() {
                                 }}
                                 className="h-7 px-2"
                               />
-                              <ButtonV2
+                              <IconButton
                                 variant="success"
                                 size="sm"
                                 onClick={() => handleArchive(supplier)}
                                 icon={ArchiveRestore}
-                                className="h-7 px-2"
-                                aria-label="Restaurer"
+                                label="Restaurer"
                               />
-                              <ButtonV2
+                              <IconButton
                                 variant="danger"
                                 size="sm"
                                 onClick={() => handleDelete(supplier)}
                                 icon={Trash2}
-                                className="h-7 px-2"
-                                aria-label="Supprimer"
+                                label="Supprimer"
                               />
                               <Link
                                 href={`/contacts-organisations/suppliers/${supplier.id}`}
                               >
-                                <ButtonV2
+                                <IconButton
                                   variant="outline"
                                   size="sm"
                                   icon={Eye}
-                                  className="h-7 px-2"
-                                  aria-label="Voir"
+                                  label="Voir détails"
                                 />
                               </Link>
                             </>

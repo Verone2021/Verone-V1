@@ -12,13 +12,21 @@ import { ConfirmDeleteOrganisationModal } from '@verone/organisations';
 import {
   useOrganisations,
   getOrganisationDisplayName,
+  useActiveEnseignes,
   type Organisation,
 } from '@verone/organisations';
 import type { Database } from '@verone/types';
 import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
+import { ButtonV2, IconButton } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import { Input } from '@verone/ui';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@verone/ui';
 import {
   Pagination,
   PaginationContent,
@@ -56,6 +64,7 @@ import {
   ExternalLink,
   LayoutGrid,
   List,
+  Filter,
 } from 'lucide-react';
 
 import { FavoriteToggleButton } from '@/components/business/favorite-toggle-button';
@@ -91,6 +100,8 @@ export default function CustomersPage() {
   const [deleteModalCustomer, setDeleteModalCustomer] =
     useState<Organisation | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [enseigneFilter, setEnseigneFilter] = useState<string | null>(null);
+  const { enseignes } = useActiveEnseignes();
   const itemsPerPage = 12; // 3 lignes × 4 colonnes
 
   const handleViewModeChange = (mode: 'grid' | 'list') => {
@@ -139,8 +150,17 @@ export default function CustomersPage() {
 
   const filteredCustomers = useMemo(() => {
     if (!customers) return [];
-    return customers.filter(customer => customer.type === 'customer');
-  }, [customers]);
+    let result = customers.filter(customer => customer.type === 'customer');
+
+    // Filtrer par enseigne si un filtre est actif
+    if (enseigneFilter) {
+      result = result.filter(
+        customer => (customer as any).enseigne_id === enseigneFilter
+      );
+    }
+
+    return result;
+  }, [customers, enseigneFilter]);
 
   const stats = useMemo(() => {
     const total = filteredCustomers.length;
@@ -250,10 +270,10 @@ export default function CustomersPage() {
 
   const totalPages = Math.ceil(displayedCustomers.length / itemsPerPage);
 
-  // Reset page quand recherche ou tab change
+  // Reset page quand recherche, tab ou filtre enseigne change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, activeTab]);
+  }, [searchQuery, activeTab, enseigneFilter]);
 
   const isLoading =
     activeTab === 'active' || activeTab === 'preferred'
@@ -426,6 +446,29 @@ export default function CustomersPage() {
           />
         </div>
 
+        {/* Filtre par enseigne */}
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4" style={{ color: colors.text.muted }} />
+          <Select
+            value={enseigneFilter || 'all'}
+            onValueChange={value =>
+              setEnseigneFilter(value === 'all' ? null : value)
+            }
+          >
+            <SelectTrigger className="w-[180px] h-10">
+              <SelectValue placeholder="Toutes les enseignes" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes les enseignes</SelectItem>
+              {enseignes.map(enseigne => (
+                <SelectItem key={enseigne.id} value={enseigne.id}>
+                  {enseigne.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Toggle Grid/List View */}
         <div className="flex gap-1 ml-auto">
           <ButtonV2
@@ -565,12 +608,12 @@ export default function CustomersPage() {
                           )}
                         </div>
 
-                        {/* Boutons - Toujours en bas avec mt-auto */}
+                        {/* Boutons - Pattern Catalogue IconButton */}
                         <div
                           className="mt-auto pt-4 border-t"
                           style={{ borderColor: colors.border.DEFAULT }}
                         >
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
                             {activeTab === 'active' ||
                             activeTab === 'preferred' ? (
                               <>
@@ -590,22 +633,19 @@ export default function CustomersPage() {
                                 <Link
                                   href={`/contacts-organisations/customers/${customer.id}`}
                                 >
-                                  <ButtonV2
+                                  <IconButton
                                     variant="outline"
                                     size="sm"
-                                    className="text-xs h-7 px-3"
                                     icon={Eye}
-                                  >
-                                    Voir
-                                  </ButtonV2>
+                                    label="Voir détails"
+                                  />
                                 </Link>
-                                <ButtonV2
+                                <IconButton
                                   variant="danger"
                                   size="sm"
                                   onClick={() => handleArchive(customer)}
                                   icon={Archive}
-                                  className="h-7 px-2"
-                                  aria-label="Archiver"
+                                  label="Archiver"
                                 />
                               </>
                             ) : (
@@ -623,33 +663,29 @@ export default function CustomersPage() {
                                   }}
                                   className="h-7 px-2"
                                 />
-                                <ButtonV2
+                                <IconButton
                                   variant="success"
                                   size="sm"
                                   onClick={() => handleArchive(customer)}
                                   icon={ArchiveRestore}
-                                  className="h-7 px-2"
-                                  aria-label="Restaurer"
+                                  label="Restaurer"
                                 />
-                                <ButtonV2
+                                <IconButton
                                   variant="danger"
                                   size="sm"
                                   onClick={() => handleDelete(customer)}
                                   icon={Trash2}
-                                  className="h-7 px-2"
-                                  aria-label="Supprimer"
+                                  label="Supprimer"
                                 />
                                 <Link
                                   href={`/contacts-organisations/customers/${customer.id}`}
                                 >
-                                  <ButtonV2
+                                  <IconButton
                                     variant="outline"
                                     size="sm"
-                                    className="text-xs h-7 px-3"
                                     icon={Eye}
-                                  >
-                                    Voir
-                                  </ButtonV2>
+                                    label="Voir détails"
+                                  />
                                 </Link>
                               </>
                             )}
@@ -777,9 +813,9 @@ export default function CustomersPage() {
                         </div>
                       </TableCell>
 
-                      {/* Actions */}
+                      {/* Actions - Pattern Catalogue IconButton */}
                       <TableCell className="text-right">
-                        <div className="flex justify-end items-center gap-2">
+                        <div className="flex justify-end items-center gap-1">
                           {activeTab === 'active' ||
                           activeTab === 'preferred' ? (
                             <>
@@ -799,21 +835,19 @@ export default function CustomersPage() {
                               <Link
                                 href={`/contacts-organisations/customers/${customer.id}`}
                               >
-                                <ButtonV2
+                                <IconButton
                                   variant="outline"
                                   size="sm"
                                   icon={Eye}
-                                  className="h-7 px-2"
-                                  aria-label="Voir"
+                                  label="Voir détails"
                                 />
                               </Link>
-                              <ButtonV2
+                              <IconButton
                                 variant="danger"
                                 size="sm"
                                 onClick={() => handleArchive(customer)}
                                 icon={Archive}
-                                className="h-7 px-2"
-                                aria-label="Archiver"
+                                label="Archiver"
                               />
                             </>
                           ) : (
@@ -831,31 +865,28 @@ export default function CustomersPage() {
                                 }}
                                 className="h-7 px-2"
                               />
-                              <ButtonV2
+                              <IconButton
                                 variant="success"
                                 size="sm"
                                 onClick={() => handleArchive(customer)}
                                 icon={ArchiveRestore}
-                                className="h-7 px-2"
-                                aria-label="Restaurer"
+                                label="Restaurer"
                               />
-                              <ButtonV2
+                              <IconButton
                                 variant="danger"
                                 size="sm"
                                 onClick={() => handleDelete(customer)}
                                 icon={Trash2}
-                                className="h-7 px-2"
-                                aria-label="Supprimer"
+                                label="Supprimer"
                               />
                               <Link
                                 href={`/contacts-organisations/customers/${customer.id}`}
                               >
-                                <ButtonV2
+                                <IconButton
                                   variant="outline"
                                   size="sm"
                                   icon={Eye}
-                                  className="h-7 px-2"
-                                  aria-label="Voir"
+                                  label="Voir détails"
                                 />
                               </Link>
                             </>

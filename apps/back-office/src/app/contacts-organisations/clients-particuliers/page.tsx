@@ -2,14 +2,11 @@
 
 import { useState } from 'react';
 
-import { useRouter } from 'next/navigation';
-
 import { useToast } from '@verone/common/hooks';
 import { useCustomers } from '@verone/customers';
 import { CreateIndividualCustomerModal } from '@verone/orders';
-import { ButtonV2 } from '@verone/ui';
+import { ButtonV2, IconButton } from '@verone/ui';
 import { Input } from '@verone/ui';
-import { Badge } from '@verone/ui';
 import {
   Table,
   TableBody,
@@ -18,32 +15,26 @@ import {
   TableHeader,
   TableRow,
 } from '@verone/ui';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
 import {
   User,
   Search,
   Plus,
-  MoreHorizontal,
   Mail,
   Phone,
   MapPin,
   Trash2,
   Eye,
-  Edit,
+  Archive,
+  ArchiveRestore,
 } from 'lucide-react';
 
 export default function ClientsParticuliersPage() {
-  const router = useRouter();
   const { toast } = useToast();
   const supabase = createClient();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
 
   // Charger uniquement les clients particuliers (individual)
   const { customers, loading, error, refetch } = useCustomers({
@@ -80,30 +71,51 @@ export default function ClientsParticuliersPage() {
     }
   };
 
-  const handleToggleActive = async (
-    customerId: string,
-    currentStatus: boolean,
-    customerName: string
-  ) => {
+  const handleArchive = async (customerId: string, customerName: string) => {
     try {
       const { error: updateError } = await supabase
         .from('individual_customers')
-        .update({ is_active: !currentStatus })
+        .update({ is_active: false })
         .eq('id', customerId);
 
       if (updateError) throw updateError;
 
       toast({
-        title: currentStatus ? 'Client désactivé' : 'Client activé',
-        description: `${customerName} a été ${currentStatus ? 'désactivé' : 'activé'}.`,
+        title: 'Client archivé',
+        description: `${customerName} a été archivé.`,
       });
 
       refetch();
     } catch (err) {
-      console.error('Erreur changement statut:', err);
+      console.error('Erreur archivage:', err);
       toast({
         title: 'Erreur',
-        description: 'Impossible de modifier le statut.',
+        description: "Impossible d'archiver le client.",
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleUnarchive = async (customerId: string, customerName: string) => {
+    try {
+      const { error: updateError } = await supabase
+        .from('individual_customers')
+        .update({ is_active: true })
+        .eq('id', customerId);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: 'Client restauré',
+        description: `${customerName} a été restauré.`,
+      });
+
+      refetch();
+    } catch (err) {
+      console.error('Erreur restauration:', err);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de restaurer le client.',
         variant: 'destructive',
       });
     }
@@ -166,6 +178,24 @@ export default function ClientsParticuliersPage() {
       </div>
 
       <div className="p-6 space-y-6">
+        {/* Onglets Actifs/Archivés */}
+        <div className="flex gap-2">
+          <ButtonV2
+            variant={activeTab === 'active' ? 'primary' : 'outline'}
+            size="sm"
+            onClick={() => setActiveTab('active')}
+          >
+            Actifs
+          </ButtonV2>
+          <ButtonV2
+            variant={activeTab === 'archived' ? 'primary' : 'outline'}
+            size="sm"
+            onClick={() => setActiveTab('archived')}
+          >
+            Archivés
+          </ButtonV2>
+        </div>
+
         {/* Barre de recherche et stats */}
         <div className="flex items-center justify-between gap-4">
           <div className="relative flex-1 max-w-md">
@@ -179,9 +209,16 @@ export default function ClientsParticuliersPage() {
           </div>
           <div className="text-sm text-slate-600">
             <span className="font-semibold text-slate-900">
-              {customers.length}
+              {
+                customers.filter(c =>
+                  activeTab === 'active'
+                    ? (c as any).is_active !== false
+                    : (c as any).is_active === false
+                ).length
+              }
             </span>{' '}
-            client{customers.length > 1 ? 's' : ''} particulier
+            client{customers.length > 1 ? 's' : ''}{' '}
+            {activeTab === 'active' ? 'actif' : 'archivé'}
             {customers.length > 1 ? 's' : ''}
           </div>
         </div>
@@ -218,116 +255,135 @@ export default function ClientsParticuliersPage() {
                   <TableHead>Client</TableHead>
                   <TableHead>Contact</TableHead>
                   <TableHead>Adresse</TableHead>
-                  <TableHead>Statut</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {customers.map(customer => (
-                  <TableRow key={customer.id}>
-                    {/* Nom */}
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center">
-                          <User className="h-5 w-5 text-slate-500" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-slate-900">
-                            {customer.displayName}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            {customer.first_name} {customer.last_name}
-                          </p>
-                        </div>
-                      </div>
-                    </TableCell>
-
-                    {/* Contact */}
-                    <TableCell>
-                      <div className="space-y-1">
-                        {customer.email && (
-                          <div className="flex items-center gap-1 text-sm text-slate-600">
-                            <Mail className="h-3 w-3" />
-                            <span>{customer.email}</span>
+                {customers
+                  .filter(c =>
+                    activeTab === 'active'
+                      ? (c as any).is_active !== false
+                      : (c as any).is_active === false
+                  )
+                  .map(customer => (
+                    <TableRow key={customer.id}>
+                      {/* Nom */}
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center">
+                            <User className="h-5 w-5 text-slate-500" />
                           </div>
-                        )}
-                        {customer.phone && (
-                          <div className="flex items-center gap-1 text-sm text-slate-600">
-                            <Phone className="h-3 w-3" />
-                            <span>{customer.phone}</span>
+                          <div>
+                            <p className="font-medium text-slate-900">
+                              {customer.displayName}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              {customer.first_name} {customer.last_name}
+                            </p>
                           </div>
-                        )}
-                      </div>
-                    </TableCell>
-
-                    {/* Adresse */}
-                    <TableCell>
-                      {customer.city || customer.postal_code ? (
-                        <div className="flex items-center gap-1 text-sm text-slate-600">
-                          <MapPin className="h-3 w-3" />
-                          <span>
-                            {[customer.postal_code, customer.city]
-                              .filter(Boolean)
-                              .join(' ')}
-                          </span>
                         </div>
-                      ) : (
-                        <span className="text-slate-400 text-sm">-</span>
-                      )}
-                    </TableCell>
+                      </TableCell>
 
-                    {/* Statut */}
-                    <TableCell>
-                      <Badge
-                        variant={
-                          (customer as any).is_active !== false
-                            ? 'default'
-                            : 'secondary'
-                        }
-                      >
-                        {(customer as any).is_active !== false
-                          ? 'Actif'
-                          : 'Inactif'}
-                      </Badge>
-                    </TableCell>
+                      {/* Contact */}
+                      <TableCell>
+                        <div className="space-y-1">
+                          {customer.email && (
+                            <div className="flex items-center gap-1 text-sm text-slate-600">
+                              <Mail className="h-3 w-3" />
+                              <span>{customer.email}</span>
+                            </div>
+                          )}
+                          {customer.phone && (
+                            <div className="flex items-center gap-1 text-sm text-slate-600">
+                              <Phone className="h-3 w-3" />
+                              <span>{customer.phone}</span>
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
 
-                    {/* Actions */}
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <ButtonV2 variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </ButtonV2>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() =>
-                              handleToggleActive(
-                                customer.id,
-                                (customer as any).is_active !== false,
-                                customer.displayName
-                              )
-                            }
-                          >
-                            <Edit className="h-4 w-4 mr-2" />
-                            {(customer as any).is_active !== false
-                              ? 'Désactiver'
-                              : 'Activer'}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              handleDelete(customer.id, customer.displayName)
-                            }
-                            className="text-red-600"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Supprimer
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      {/* Adresse */}
+                      <TableCell>
+                        {customer.city || customer.postal_code ? (
+                          <div className="flex items-center gap-1 text-sm text-slate-600">
+                            <MapPin className="h-3 w-3" />
+                            <span>
+                              {[customer.postal_code, customer.city]
+                                .filter(Boolean)
+                                .join(' ')}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 text-sm">-</span>
+                        )}
+                      </TableCell>
+
+                      {/* Actions - Pattern Catalogue IconButton */}
+                      <TableCell className="text-right">
+                        <div className="flex justify-end items-center gap-1">
+                          {activeTab === 'active' ? (
+                            <>
+                              {/* Bouton Voir */}
+                              <IconButton
+                                variant="outline"
+                                size="sm"
+                                icon={Eye}
+                                label="Voir détails"
+                                onClick={() => {
+                                  toast({
+                                    title: 'Détails client',
+                                    description: `Fonctionnalité à venir pour ${customer.displayName}`,
+                                  });
+                                }}
+                              />
+                              {/* Bouton Archiver */}
+                              <IconButton
+                                variant="danger"
+                                size="sm"
+                                icon={Archive}
+                                label="Archiver"
+                                onClick={() =>
+                                  handleArchive(
+                                    customer.id,
+                                    customer.displayName
+                                  )
+                                }
+                              />
+                            </>
+                          ) : (
+                            <>
+                              {/* Bouton Restaurer */}
+                              <IconButton
+                                variant="success"
+                                size="sm"
+                                icon={ArchiveRestore}
+                                label="Restaurer"
+                                onClick={() =>
+                                  handleUnarchive(
+                                    customer.id,
+                                    customer.displayName
+                                  )
+                                }
+                              />
+                              {/* Bouton Supprimer */}
+                              <IconButton
+                                variant="danger"
+                                size="sm"
+                                icon={Trash2}
+                                label="Supprimer définitivement"
+                                onClick={() =>
+                                  handleDelete(
+                                    customer.id,
+                                    customer.displayName
+                                  )
+                                }
+                              />
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
               </TableBody>
             </Table>
           )}

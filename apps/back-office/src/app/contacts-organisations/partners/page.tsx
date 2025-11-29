@@ -15,7 +15,7 @@ import {
 } from '@verone/organisations';
 import type { Database } from '@verone/types';
 import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
+import { ButtonV2, IconButton } from '@verone/ui';
 import {
   Card,
   CardContent,
@@ -529,7 +529,7 @@ export default function PartnersPage() {
                           className="mt-auto pt-4 border-t"
                           style={{ borderColor: colors.border.DEFAULT }}
                         >
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
                             {activeTab === 'active' ||
                             activeTab === 'preferred' ? (
                               <>
@@ -549,21 +549,19 @@ export default function PartnersPage() {
                                 <Link
                                   href={`/contacts-organisations/partners/${partner.id}`}
                                 >
-                                  <ButtonV2
+                                  <IconButton
                                     variant="outline"
                                     size="sm"
                                     icon={Eye}
-                                    className="h-7 px-2"
-                                    aria-label="Voir"
+                                    label="Voir détails"
                                   />
                                 </Link>
-                                <ButtonV2
+                                <IconButton
                                   variant="danger"
                                   size="sm"
                                   onClick={() => handleArchive(partner)}
                                   icon={Archive}
-                                  className="h-7 px-2"
-                                  aria-label="Archiver"
+                                  label="Archiver"
                                 />
                               </>
                             ) : (
@@ -581,31 +579,28 @@ export default function PartnersPage() {
                                   }}
                                   className="h-7 px-2"
                                 />
-                                <ButtonV2
+                                <IconButton
                                   variant="success"
                                   size="sm"
                                   onClick={() => handleArchive(partner)}
                                   icon={ArchiveRestore}
-                                  className="h-7 px-2"
-                                  aria-label="Restaurer"
+                                  label="Restaurer"
                                 />
-                                <ButtonV2
+                                <IconButton
                                   variant="danger"
                                   size="sm"
                                   onClick={() => handleDelete(partner)}
                                   icon={Trash2}
-                                  className="h-7 px-2"
-                                  aria-label="Supprimer"
+                                  label="Supprimer"
                                 />
                                 <Link
                                   href={`/contacts-organisations/partners/${partner.id}`}
                                 >
-                                  <ButtonV2
+                                  <IconButton
                                     variant="outline"
                                     size="sm"
                                     icon={Eye}
-                                    className="h-7 px-2"
-                                    aria-label="Voir"
+                                    label="Voir détails"
                                   />
                                 </Link>
                               </>
@@ -736,7 +731,7 @@ export default function PartnersPage() {
 
                       {/* Actions */}
                       <TableCell className="text-right">
-                        <div className="flex justify-end items-center gap-2">
+                        <div className="flex justify-end items-center gap-1">
                           {activeTab === 'active' ||
                           activeTab === 'preferred' ? (
                             <>
@@ -754,21 +749,19 @@ export default function PartnersPage() {
                               <Link
                                 href={`/contacts-organisations/partners/${partner.id}`}
                               >
-                                <ButtonV2
+                                <IconButton
                                   variant="outline"
                                   size="sm"
                                   icon={Eye}
-                                  className="h-7 px-2"
-                                  aria-label="Voir"
+                                  label="Voir détails"
                                 />
                               </Link>
-                              <ButtonV2
+                              <IconButton
                                 variant="danger"
                                 size="sm"
                                 onClick={() => handleArchive(partner)}
                                 icon={Archive}
-                                className="h-7 px-2"
-                                aria-label="Archiver"
+                                label="Archiver"
                               />
                             </>
                           ) : (
@@ -784,31 +777,28 @@ export default function PartnersPage() {
                                 }}
                                 className="h-7 px-2"
                               />
-                              <ButtonV2
+                              <IconButton
                                 variant="success"
                                 size="sm"
                                 onClick={() => handleArchive(partner)}
                                 icon={ArchiveRestore}
-                                className="h-7 px-2"
-                                aria-label="Restaurer"
+                                label="Restaurer"
                               />
-                              <ButtonV2
+                              <IconButton
                                 variant="danger"
                                 size="sm"
                                 onClick={() => handleDelete(partner)}
                                 icon={Trash2}
-                                className="h-7 px-2"
-                                aria-label="Supprimer"
+                                label="Supprimer"
                               />
                               <Link
                                 href={`/contacts-organisations/partners/${partner.id}`}
                               >
-                                <ButtonV2
+                                <IconButton
                                   variant="outline"
                                   size="sm"
                                   icon={Eye}
-                                  className="h-7 px-2"
-                                  aria-label="Voir"
+                                  label="Voir détails"
                                 />
                               </Link>
                             </>

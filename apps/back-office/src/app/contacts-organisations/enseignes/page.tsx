@@ -15,7 +15,7 @@ import {
   type EnseigneOrganisation,
 } from '@verone/organisations';
 import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
+import { ButtonV2, IconButton } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import { Input } from '@verone/ui';
 import {
@@ -46,10 +46,9 @@ import {
   Building,
   Users,
   Star,
-  Edit2,
+  Pencil,
   Trash2,
-  ToggleLeft,
-  ToggleRight,
+  Power,
   Eye,
   LayoutGrid,
   List,
@@ -487,8 +486,8 @@ export default function EnseignesPage() {
                       </div>
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-2 pt-3 border-t flex-wrap">
+                    {/* Actions - Pattern Catalogue IconButton */}
+                    <div className="flex items-center gap-1 pt-3 border-t flex-wrap">
                       <ButtonV2
                         variant="outline"
                         size="sm"
@@ -497,24 +496,26 @@ export default function EnseignesPage() {
                       >
                         Organisations
                       </ButtonV2>
-                      <ButtonV2
-                        variant="ghost"
+                      <IconButton
+                        variant="outline"
                         size="sm"
-                        icon={Edit2}
+                        icon={Pencil}
+                        label="Modifier"
                         onClick={() => handleOpenEditModal(enseigne)}
                       />
-                      <ButtonV2
-                        variant="ghost"
+                      <IconButton
+                        variant={enseigne.is_active ? 'outline' : 'success'}
                         size="sm"
-                        icon={enseigne.is_active ? ToggleRight : ToggleLeft}
+                        icon={Power}
+                        label={enseigne.is_active ? 'Désactiver' : 'Activer'}
                         onClick={() => handleToggleStatus(enseigne)}
                       />
-                      <ButtonV2
-                        variant="ghost"
+                      <IconButton
+                        variant="danger"
                         size="sm"
                         icon={Trash2}
+                        label="Supprimer"
                         onClick={() => setDeleteConfirmEnseigne(enseigne)}
-                        className="text-red-500 hover:text-red-700"
                       />
                     </div>
                   </CardContent>
@@ -614,31 +615,41 @@ export default function EnseignesPage() {
                           {enseigne.is_active ? 'Active' : 'Inactive'}
                         </Badge>
                       </td>
+                      {/* Actions - Pattern Catalogue IconButton */}
                       <td className="p-4">
                         <div className="flex items-center justify-end gap-1">
                           <Link
                             href={`/contacts-organisations/enseignes/${enseigne.id}`}
                           >
-                            <ButtonV2 variant="ghost" size="sm" icon={Eye} />
+                            <IconButton
+                              variant="outline"
+                              size="sm"
+                              icon={Eye}
+                              label="Voir détails"
+                            />
                           </Link>
-                          <ButtonV2
-                            variant="ghost"
+                          <IconButton
+                            variant="outline"
                             size="sm"
-                            icon={Edit2}
+                            icon={Pencil}
+                            label="Modifier"
                             onClick={() => handleOpenEditModal(enseigne)}
                           />
-                          <ButtonV2
-                            variant="ghost"
+                          <IconButton
+                            variant={enseigne.is_active ? 'outline' : 'success'}
                             size="sm"
-                            icon={enseigne.is_active ? ToggleRight : ToggleLeft}
+                            icon={Power}
+                            label={
+                              enseigne.is_active ? 'Désactiver' : 'Activer'
+                            }
                             onClick={() => handleToggleStatus(enseigne)}
                           />
-                          <ButtonV2
-                            variant="ghost"
+                          <IconButton
+                            variant="danger"
                             size="sm"
                             icon={Trash2}
+                            label="Supprimer"
                             onClick={() => setDeleteConfirmEnseigne(enseigne)}
-                            className="text-red-500 hover:text-red-700"
                           />
                         </div>
                       </td>
