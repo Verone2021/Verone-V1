@@ -86,8 +86,13 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
       },
       {
         title: 'Organisations',
-        href: '/contacts-organisations/customers',
+        href: '/contacts-organisations',
         icon: Users,
+      },
+      {
+        title: 'Clients Particuliers',
+        href: '/contacts-organisations/clients-particuliers',
+        icon: User,
       },
     ],
   },

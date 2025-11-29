@@ -14,3 +14,4 @@ export {
   type UnifiedCustomer,
   type CustomerType,
 } from './customer-selector';
+export { CreateIndividualCustomerModal } from './create-individual-customer-modal';
