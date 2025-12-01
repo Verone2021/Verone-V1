@@ -6,16 +6,13 @@ import Image from 'next/image';
 
 import { useLogoUpload } from '@verone/common/hooks';
 import { ButtonV2 } from '@verone/ui';
-
-// FIXME: OrganisationLogo component doesn't exist in monorepo (unused import removed)
-// import { OrganisationLogo } from '@/components/business/organisation-logo';
 import { spacing, colors } from '@verone/ui';
 import { cn } from '@verone/utils';
 import { Upload, Trash2, Loader2, AlertCircle, ImagePlus } from 'lucide-react';
 
-interface LogoUploadButtonProps {
-  organisationId: string;
-  organisationName: string;
+interface EnseigneLogoUploadButtonProps {
+  enseigneId: string;
+  enseigneName: string;
   currentLogoUrl?: string | null;
   onUploadSuccess?: () => void;
   size?: 'sm' | 'md' | 'lg' | 'xl';
@@ -23,38 +20,38 @@ interface LogoUploadButtonProps {
 }
 
 /**
- * Composant pour upload/supprimer un logo d'organisation avec drag & drop
+ * Composant pour upload/supprimer un logo d'enseigne avec drag & drop
  *
- * @param organisationId - ID de l'organisation
- * @param organisationName - Nom de l'organisation (pour affichage)
+ * @param enseigneId - ID de l'enseigne
+ * @param enseigneName - Nom de l'enseigne (pour affichage)
  * @param currentLogoUrl - URL actuelle du logo (path Storage)
  * @param onUploadSuccess - Callback appelé après upload/delete réussi
  * @param size - Taille du logo affiché
  * @param className - Classes CSS additionnelles
  *
  * @example
- * <LogoUploadButton
- *   organisationId={supplier.id}
- *   organisationName={supplier.name}
- *   currentLogoUrl={supplier.logo_url}
+ * <EnseigneLogoUploadButton
+ *   enseigneId={enseigne.id}
+ *   enseigneName={enseigne.name}
+ *   currentLogoUrl={enseigne.logo_url}
  *   onUploadSuccess={() => refetch()}
  *   size="lg"
  * />
  */
-export function LogoUploadButton({
-  organisationId,
-  organisationName,
+export function EnseigneLogoUploadButton({
+  enseigneId,
+  enseigneName,
   currentLogoUrl,
   onUploadSuccess,
   size = 'lg',
   className,
-}: LogoUploadButtonProps) {
+}: EnseigneLogoUploadButtonProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
 
   const { uploadLogo, deleteLogo, uploading, deleting, error } = useLogoUpload({
-    entityId: organisationId,
-    entityType: 'organisation',
+    entityId: enseigneId,
+    entityType: 'enseigne',
     currentLogoUrl,
     onSuccess: () => {
       setPreviewUrl(null);
@@ -63,7 +60,7 @@ export function LogoUploadButton({
       }
     },
     onError: err => {
-      console.error('Erreur logo:', err);
+      console.error('Erreur logo enseigne:', err);
     },
   });
 
@@ -137,7 +134,7 @@ export function LogoUploadButton({
    */
   const handleDelete = async () => {
     const confirmed = confirm(
-      `Êtes-vous sûr de vouloir supprimer le logo de "${organisationName}" ?`
+      `Êtes-vous sûr de vouloir supprimer le logo de "${enseigneName}" ?`
     );
 
     if (confirmed) {
@@ -192,7 +189,7 @@ export function LogoUploadButton({
                 >
                   <Image
                     src={logoUrl}
-                    alt={`Logo ${organisationName}`}
+                    alt={`Logo ${enseigneName}`}
                     fill
                     className="bo-object-contain"
                     sizes="(max-width: 768px) 100vw, 200px"

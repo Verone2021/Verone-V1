@@ -29,6 +29,7 @@ import {
   ArrowUpDown,
   BarChart3,
   TrendingUp,
+  Users,
 } from 'lucide-react';
 
 // Configuration des canaux de vente actifs
@@ -59,7 +60,21 @@ const ACTIVE_CHANNELS = [
     revenue_this_month: 45670,
     orders_this_month: 89,
     api: false,
-    path: '/canaux-vente/boutique',
+    path: '/canaux-vente/site-internet',
+  },
+  {
+    id: 'linkme',
+    name: 'LinkMe',
+    description: 'Plateforme d\'affiliation B2B2C - Apporteurs d\'affaires',
+    icon: Users,
+    status: 'active',
+    products_synced: 0,
+    last_sync: null,
+    sync_status: 'pending',
+    revenue_this_month: 0,
+    orders_this_month: 0,
+    api: false,
+    path: '/canaux-vente/linkme',
   },
 ];
 
