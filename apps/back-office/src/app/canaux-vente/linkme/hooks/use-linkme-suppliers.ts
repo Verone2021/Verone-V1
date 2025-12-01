@@ -13,12 +13,12 @@ export interface LinkMeSupplier {
   id: string;
   supplier_id: string;
   is_visible_as_partner: boolean;
-  display_order: number;
+  display_order: number | null;
   supplier: {
     id: string;
     legal_name: string;
     logo_url: string | null;
-  } | null;
+  };
   products_count?: number;
 }
 
@@ -27,7 +27,7 @@ export interface LinkMeSupplier {
  */
 async function fetchLinkMeSuppliers(): Promise<LinkMeSupplier[]> {
   // Récupérer les fournisseurs du canal LinkMe
-  const { data: suppliers, error } = await (supabase as any)
+  const { data: suppliers, error } = await supabase
     .from('linkme_channel_suppliers')
     .select(
       `
@@ -51,7 +51,7 @@ async function fetchLinkMeSuppliers(): Promise<LinkMeSupplier[]> {
   // Récupérer le compte de produits par fournisseur
   const supplierIds = suppliers.map((s: LinkMeSupplier) => s.supplier_id);
 
-  const { data: productCounts } = await (supabase as any)
+  const { data: productCounts } = await supabase
     .from('channel_pricing')
     .select(
       `
@@ -105,7 +105,7 @@ export function useToggleLinkMeSupplierVisibility() {
       id: string;
       isVisible: boolean;
     }) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('linkme_channel_suppliers')
         .update({ is_visible_as_partner: isVisible })
         .eq('id', id);
@@ -132,7 +132,7 @@ export function useUpdateLinkMeSupplierOrder() {
       id: string;
       displayOrder: number;
     }) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('linkme_channel_suppliers')
         .update({ display_order: displayOrder })
         .eq('id', id);
