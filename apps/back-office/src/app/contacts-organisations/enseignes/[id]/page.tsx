@@ -173,14 +173,14 @@ export default function EnseigneDetailPage() {
       if (currentParent?.id !== parentId) {
         // Reset ancien parent
         if (currentParent && newIds.has(currentParent.id)) {
-          await supabase
+          await (supabase as any)
             .from('organisations')
             .update({ is_enseigne_parent: false })
             .eq('id', currentParent.id);
         }
         // Set nouveau parent
         if (parentId && newIds.has(parentId)) {
-          await supabase
+          await (supabase as any)
             .from('organisations')
             .update({ is_enseigne_parent: true })
             .eq('id', parentId);
