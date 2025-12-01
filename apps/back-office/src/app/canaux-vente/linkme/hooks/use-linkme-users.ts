@@ -524,18 +524,15 @@ export const LINKME_ROLE_COLORS: Record<LinkMeRole, string> = {
  */
 export const LINKME_ROLE_PERMISSIONS: Record<LinkMeRole, string[]> = {
   enseigne_admin: [
-    'Voir toutes les commandes du réseau',
+    'Voir les commandes de toutes les organisations du réseau',
     'Créer et gérer les utilisateurs',
     'Assigner des utilisateurs aux organisations',
-    "Gérer le catalogue de l'enseigne",
+    'Gérer les sélections de produits du réseau',
   ],
   organisation_admin: [
-    'Voir les commandes de son organisation',
-    'Créer et gérer le catalogue',
-    'Créer des sélections',
+    'Voir les commandes des clients utilisant ses sélections',
+    'Créer et modifier des sélections de produits',
+    'Définir le taux de marge par produit',
   ],
-  client: [
-    'Voir les sélections (publiques ou de son réseau)',
-    'Passer des commandes',
-  ],
+  client: ['Accéder aux sélections via lien partagé', 'Passer des commandes'],
 };
