@@ -51,7 +51,6 @@ export function EnseigneLogoUploadButton({
 
   const { uploadLogo, deleteLogo, uploading, deleting, error } = useLogoUpload({
     entityId: enseigneId,
-    entityType: 'enseigne',
     currentLogoUrl,
     onSuccess: () => {
       setPreviewUrl(null);

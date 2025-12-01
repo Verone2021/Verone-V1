@@ -54,7 +54,6 @@ export function LogoUploadButton({
 
   const { uploadLogo, deleteLogo, uploading, deleting, error } = useLogoUpload({
     entityId: organisationId,
-    entityType: 'organisation',
     currentLogoUrl,
     onSuccess: () => {
       setPreviewUrl(null);

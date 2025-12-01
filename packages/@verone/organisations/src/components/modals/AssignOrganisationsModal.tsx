@@ -2,17 +2,6 @@
 
 import { useState, useEffect, useMemo } from 'react';
 
-import {
-  Building2,
-  Search,
-  Plus,
-  X,
-  Check,
-  Star,
-  Loader2,
-  Users,
-} from 'lucide-react';
-
 import { ButtonV2 } from '@verone/ui';
 import {
   Dialog,
@@ -27,6 +16,16 @@ import { Checkbox } from '@verone/ui';
 import { Badge } from '@verone/ui';
 import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
+import {
+  Building2,
+  Search,
+  Plus,
+  X,
+  Check,
+  Star,
+  Loader2,
+  Users,
+} from 'lucide-react';
 
 import type { EnseigneOrganisation, Enseigne } from '../../hooks/use-enseignes';
 
@@ -46,10 +45,7 @@ interface AssignOrganisationsModalProps {
   onOpenChange: (open: boolean) => void;
   enseigne: Enseigne | null;
   currentOrganisations: EnseigneOrganisation[];
-  onAssign: (
-    organisationId: string,
-    isParent: boolean
-  ) => Promise<boolean>;
+  onAssign: (organisationId: string, isParent: boolean) => Promise<boolean>;
   onUnassign: (organisationId: string) => Promise<boolean>;
   onSuccess?: () => void;
 }
@@ -90,7 +86,7 @@ export function AssignOrganisationsModal({
       setError(null);
 
       try {
-        let query = supabase
+        let query = (supabase as any)
           .from('organisations')
           .select(
             'id, legal_name, trade_name, is_active, city, country, enseigne_id, is_enseigne_parent'
@@ -112,7 +108,7 @@ export function AssignOrganisationsModal({
           return;
         }
 
-        setAvailableOrganisations(data || []);
+        setAvailableOrganisations((data as OrganisationListItem[]) || []);
       } catch (err) {
         setError(
           err instanceof Error
@@ -140,9 +136,7 @@ export function AssignOrganisationsModal({
       const success = await onAssign(orgId, asParent);
       if (success) {
         // Retirer de la liste disponible
-        setAvailableOrganisations(prev =>
-          prev.filter(org => org.id !== orgId)
-        );
+        setAvailableOrganisations(prev => prev.filter(org => org.id !== orgId));
         if (onSuccess) onSuccess();
       }
     } catch (err) {

@@ -5,10 +5,12 @@ import { useState } from 'react';
 import { createClient } from '@verone/utils/supabase/client';
 
 interface UseLogoUploadOptions {
-  organisationId: string;
+  entityId: string;
   currentLogoUrl?: string | null;
   onSuccess?: (logoUrl: string) => void;
   onError?: (error: Error) => void;
+  /** @deprecated Use entityId instead */
+  organisationId?: string;
 }
 
 interface UseLogoUploadReturn {
@@ -20,27 +22,32 @@ interface UseLogoUploadReturn {
 }
 
 /**
- * Hook personnalisé pour gérer l'upload et la suppression de logos organisations
+ * Hook personnalisé pour gérer l'upload et la suppression de logos d'organisations
  *
- * @param organisationId - ID de l'organisation
+ * @param entityId - ID de l'organisation
  * @param currentLogoUrl - URL actuelle du logo (pour suppression)
  * @param onSuccess - Callback appelé après upload réussi
  * @param onError - Callback appelé en cas d'erreur
  *
  * @example
  * const { uploadLogo, deleteLogo, uploading } = useLogoUpload({
- *   organisationId: supplier.id,
+ *   entityId: supplier.id,
  *   currentLogoUrl: supplier.logo_url,
  *   onSuccess: (url) => console.log('Logo uploaded:', url),
- *   onError: (err) => console.error('Upload failed:', err)
  * })
  */
 export function useLogoUpload({
-  organisationId,
+  entityId,
   currentLogoUrl,
   onSuccess,
   onError,
+  organisationId, // deprecated, backward compat
 }: UseLogoUploadOptions): UseLogoUploadReturn {
+  // Backward compatibility: use organisationId if entityId not provided
+  const id = entityId || organisationId || '';
+
+  // Table and storage path for organisations
+  const storagePath = id;
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -82,7 +89,7 @@ export function useLogoUpload({
       // Générer nom de fichier unique
       const timestamp = Date.now();
       const extension = file.name.split('.').pop()?.toLowerCase() || 'png';
-      const filePath = `${organisationId}/${timestamp}-logo.${extension}`;
+      const filePath = `${storagePath}/${timestamp}-logo.${extension}`;
 
       // Upload vers Storage
       const { data: uploadData, error: uploadError } = await supabase.storage
@@ -110,8 +117,8 @@ export function useLogoUpload({
       // Update DB avec nouveau path
       const { error: updateError } = await supabase
         .from('organisations')
-        .update({ logo_url: filePath } as any)
-        .eq('id', organisationId);
+        .update({ logo_url: filePath })
+        .eq('id', id);
 
       if (updateError) {
         // Rollback: supprimer le fichier uploadé
@@ -174,8 +181,8 @@ export function useLogoUpload({
       // Update DB (logo_url = null)
       const { error: updateError } = await supabase
         .from('organisations')
-        .update({ logo_url: null } as any)
-        .eq('id', organisationId);
+        .update({ logo_url: null })
+        .eq('id', id);
 
       if (updateError) {
         throw new Error(`Erreur mise à jour DB: ${updateError.message}`);

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
+import { useToast } from '@verone/common';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -29,7 +30,6 @@ import {
   TableHeader,
   TableRow,
 } from '@verone/ui';
-import { useToast } from '@verone/common';
 import { createClient } from '@verone/utils/supabase/client';
 import {
   Search,
@@ -123,7 +123,9 @@ export function CommissionsSection() {
 
     try {
       // Fetch commissions with affiliate info
-      const { data: commissionsData, error: commissionsError } = await supabase
+      const { data: commissionsData, error: commissionsError } = await (
+        supabase as any
+      )
         .from('linkme_commissions')
         .select(
           `
@@ -136,7 +138,9 @@ export function CommissionsSection() {
       if (commissionsError) throw commissionsError;
 
       // Fetch affiliates for filter
-      const { data: affiliatesData, error: affiliatesError } = await supabase
+      const { data: affiliatesData, error: affiliatesError } = await (
+        supabase as any
+      )
         .from('linkme_affiliates')
         .select('id, display_name');
 
@@ -161,7 +165,7 @@ export function CommissionsSection() {
     setProcessing(true);
 
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('linkme_commissions')
         .update({
           status: 'validated',
@@ -195,7 +199,7 @@ export function CommissionsSection() {
     setProcessing(true);
 
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('linkme_commissions')
         .update({
           status: 'paid',
@@ -294,8 +298,7 @@ export function CommissionsSection() {
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
     const matchesAffiliate =
-      affiliateFilter === 'all' ||
-      commission.affiliate_id === affiliateFilter;
+      affiliateFilter === 'all' || commission.affiliate_id === affiliateFilter;
     const matchesStatus =
       statusFilter === 'all' || commission.status === statusFilter;
     return matchesSearch && matchesAffiliate && matchesStatus;
@@ -486,7 +489,8 @@ export function CommissionsSection() {
                         selectedIds.length > 0 &&
                         selectedIds.length ===
                           filteredCommissions.filter(
-                            c => c.status === 'pending' || c.status === 'validated'
+                            c =>
+                              c.status === 'pending' || c.status === 'validated'
                           ).length
                       }
                       onCheckedChange={toggleSelectAll}
@@ -503,7 +507,11 @@ export function CommissionsSection() {
               </TableHeader>
               <TableBody>
                 {filteredCommissions.map(commission => {
-                  const statusInfo = statusConfig[(commission.status || 'pending') as keyof typeof statusConfig];
+                  const statusInfo =
+                    statusConfig[
+                      (commission.status ||
+                        'pending') as keyof typeof statusConfig
+                    ];
                   const canSelect =
                     commission.status === 'pending' ||
                     commission.status === 'validated';
@@ -518,9 +526,11 @@ export function CommissionsSection() {
                         />
                       </TableCell>
                       <TableCell>
-                        {commission.created_at ? new Date(commission.created_at).toLocaleDateString(
-                          'fr-FR'
-                        ) : '-'}
+                        {commission.created_at
+                          ? new Date(commission.created_at).toLocaleDateString(
+                              'fr-FR'
+                            )
+                          : '-'}
                       </TableCell>
                       <TableCell>
                         {commission.affiliate?.display_name || 'N/A'}

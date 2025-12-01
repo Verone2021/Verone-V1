@@ -348,7 +348,7 @@ export function OrganisationSelectorModal({
       try {
         // Filtrer uniquement les organisations clientes (type = 'customer')
         // Les fournisseurs et autres types ne peuvent pas être membres d'une enseigne
-        let query = supabase
+        let query = (supabase as any)
           .from('organisations')
           .select(
             'id, legal_name, trade_name, is_active, city, country, enseigne_id, is_enseigne_parent, type, logo_url'
@@ -373,7 +373,7 @@ export function OrganisationSelectorModal({
 
         // Double vérification côté client : ne garder que les customers
         // (car le .or() peut annuler les filtres précédents)
-        const filteredData: OrganisationListItem[] = (data || [])
+        const filteredData: OrganisationListItem[] = ((data as any[]) || [])
           .filter(org => org.type === 'customer')
           .map(org => ({
             ...org,

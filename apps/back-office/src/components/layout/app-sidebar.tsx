@@ -51,6 +51,7 @@ import {
   Banknote,
   RefreshCw,
   Globe,
+  Link2,
 } from 'lucide-react';
 
 // Phase 1: use-stock-alerts-count hook désactivé (Phase 2+)
@@ -202,6 +203,11 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
         title: 'Site Internet',
         href: '/canaux-vente/site-internet',
         icon: Globe,
+      },
+      {
+        title: 'LinkMe',
+        href: '/canaux-vente/linkme',
+        icon: Link2,
       },
     ],
   },

@@ -1,19 +1,12 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import {
-  Search,
-  Package,
-  Eye,
-  EyeOff,
-  Star,
-  Plus,
-  Loader2,
-  ToggleLeft,
-  ToggleRight,
-  X,
-} from 'lucide-react';
 
+import { ProductThumbnail } from '@verone/products/components/images/ProductThumbnail';
+import {
+  UniversalProductSelectorV2,
+  type SelectedProduct,
+} from '@verone/products/components/selectors/UniversalProductSelectorV2';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent } from '@verone/ui';
@@ -27,8 +20,19 @@ import {
 } from '@verone/ui';
 import { Switch } from '@verone/ui';
 import { cn } from '@verone/utils';
-import { ProductThumbnail } from '@verone/products/components/images/ProductThumbnail';
-import { UniversalProductSelectorV2, type SelectedProduct } from '@verone/products/components/selectors/UniversalProductSelectorV2';
+import {
+  Search,
+  Package,
+  Eye,
+  EyeOff,
+  Star,
+  Plus,
+  Loader2,
+  ToggleLeft,
+  ToggleRight,
+  X,
+  Building2,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
@@ -37,6 +41,7 @@ import {
   useToggleProductEnabled,
   useToggleProductShowcase,
   useToggleProductFeatured,
+  useToggleShowSupplier,
   type LinkMeCatalogProduct,
 } from '../hooks/use-linkme-catalog';
 
@@ -52,28 +57,34 @@ import {
 export default function LinkMeCataloguePage() {
   // State: Filtres
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'enabled' | 'disabled' | 'showcase'>('all');
+  const [statusFilter, setStatusFilter] = useState<
+    'all' | 'enabled' | 'disabled' | 'showcase'
+  >('all');
   const [familyFilter, setFamilyFilter] = useState<string>('all');
 
   // State: Modal ajout produits
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   // Hooks
-  const { data: catalogProducts, isLoading: catalogLoading } = useLinkMeCatalogProducts();
+  const { data: catalogProducts, isLoading: catalogLoading } =
+    useLinkMeCatalogProducts();
   const addProductsMutation = useAddProductsToCatalog();
   const toggleEnabledMutation = useToggleProductEnabled();
   const toggleShowcaseMutation = useToggleProductShowcase();
   const toggleFeaturedMutation = useToggleProductFeatured();
+  const toggleShowSupplierMutation = useToggleShowSupplier();
 
   // Produits déjà dans le catalogue (IDs) - pour exclure du sélecteur
   const catalogProductIds = useMemo(() => {
-    return (catalogProducts?.map(p => p.product_id) || []);
+    return catalogProducts?.map(p => p.product_id) || [];
   }, [catalogProducts]);
 
   // Extraction familles uniques
   const families = useMemo(() => {
     const unique = new Set(
-      (catalogProducts || []).map(p => p.product_family_name).filter(Boolean) as string[]
+      (catalogProducts || [])
+        .map(p => p.product_family_name)
+        .filter(Boolean) as string[]
     );
     return Array.from(unique).sort();
   }, [catalogProducts]);
@@ -85,17 +96,23 @@ export default function LinkMeCataloguePage() {
       if (searchTerm) {
         const search = searchTerm.toLowerCase();
         const matchName = product.product_name.toLowerCase().includes(search);
-        const matchRef = product.product_reference.toLowerCase().includes(search);
+        const matchRef = product.product_reference
+          .toLowerCase()
+          .includes(search);
         if (!matchName && !matchRef) return false;
       }
 
       // Statut
       if (statusFilter === 'enabled' && !product.is_enabled) return false;
       if (statusFilter === 'disabled' && product.is_enabled) return false;
-      if (statusFilter === 'showcase' && !product.is_public_showcase) return false;
+      if (statusFilter === 'showcase' && !product.is_public_showcase)
+        return false;
 
       // Famille
-      if (familyFilter !== 'all' && product.product_family_name !== familyFilter) {
+      if (
+        familyFilter !== 'all' &&
+        product.product_family_name !== familyFilter
+      ) {
         return false;
       }
 
@@ -163,6 +180,22 @@ export default function LinkMeCataloguePage() {
     }
   };
 
+  const handleToggleShowSupplier = async (product: LinkMeCatalogProduct) => {
+    try {
+      await toggleShowSupplierMutation.mutateAsync({
+        catalogProductId: product.id,
+        showSupplier: !product.show_supplier,
+      });
+      toast.success(
+        product.show_supplier
+          ? 'Fournisseur masqué des partenaires'
+          : 'Fournisseur affiché dans les partenaires'
+      );
+    } catch {
+      toast.error('Erreur lors de la modification');
+    }
+  };
+
   const handleAddProducts = async (products: SelectedProduct[]) => {
     if (products.length === 0) return;
 
@@ -172,7 +205,7 @@ export default function LinkMeCataloguePage() {
       toast.success(`${products.length} produit(s) ajouté(s) au catalogue`);
       setIsAddModalOpen(false);
     } catch {
-      toast.error('Erreur lors de l\'ajout des produits');
+      toast.error("Erreur lors de l'ajout des produits");
     }
   };
 
@@ -289,7 +322,10 @@ export default function LinkMeCataloguePage() {
               </div>
 
               {/* Filtre Statut */}
-              <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
+              <Select
+                value={statusFilter}
+                onValueChange={v => setStatusFilter(v as typeof statusFilter)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Statut" />
                 </SelectTrigger>
@@ -319,9 +355,13 @@ export default function LinkMeCataloguePage() {
 
             <div className="flex items-center justify-between mt-4 pt-4 border-t">
               <p className="text-sm text-gray-600">
-                {filteredProducts.length} produit{filteredProducts.length > 1 ? 's' : ''} affiché{filteredProducts.length > 1 ? 's' : ''}
+                {filteredProducts.length} produit
+                {filteredProducts.length > 1 ? 's' : ''} affiché
+                {filteredProducts.length > 1 ? 's' : ''}
               </p>
-              {(searchTerm || statusFilter !== 'all' || familyFilter !== 'all') && (
+              {(searchTerm ||
+                statusFilter !== 'all' ||
+                familyFilter !== 'all') && (
                 <ButtonV2
                   variant="ghost"
                   size="sm"
@@ -343,7 +383,9 @@ export default function LinkMeCataloguePage() {
         {filteredProducts.length === 0 ? (
           <div className="text-center py-24 border-2 border-dashed border-gray-300 rounded-lg bg-white">
             <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 font-medium">Aucun produit dans le catalogue</p>
+            <p className="text-gray-600 font-medium">
+              Aucun produit dans le catalogue
+            </p>
             <p className="text-sm text-gray-500 mt-1">
               Cliquez sur "Ajouter des produits" pour commencer
             </p>
@@ -358,8 +400,8 @@ export default function LinkMeCataloguePage() {
                   !product.is_enabled
                     ? 'border-gray-200 bg-gray-50 opacity-75'
                     : product.is_public_showcase
-                    ? 'border-purple-300 bg-purple-50/30'
-                    : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-purple-300 bg-purple-50/30'
+                      : 'border-gray-200 hover:border-gray-300'
                 )}
               >
                 <CardContent className="p-4 space-y-3">
@@ -381,12 +423,18 @@ export default function LinkMeCataloguePage() {
                       </p>
                       <div className="flex items-center gap-1 mt-1">
                         {product.is_featured && (
-                          <Badge variant="outline" className="text-xs border-yellow-500 text-yellow-700 bg-yellow-50">
+                          <Badge
+                            variant="outline"
+                            className="text-xs border-yellow-500 text-yellow-700 bg-yellow-50"
+                          >
                             Vedette
                           </Badge>
                         )}
                         {product.is_public_showcase && (
-                          <Badge variant="outline" className="text-xs border-purple-500 text-purple-700 bg-purple-50">
+                          <Badge
+                            variant="outline"
+                            className="text-xs border-purple-500 text-purple-700 bg-purple-50"
+                          >
                             Vitrine
                           </Badge>
                         )}
@@ -442,23 +490,58 @@ export default function LinkMeCataloguePage() {
                       <Switch
                         checked={product.is_public_showcase}
                         onCheckedChange={() => handleToggleShowcase(product)}
-                        disabled={toggleShowcaseMutation.isPending || !product.is_enabled}
+                        disabled={
+                          toggleShowcaseMutation.isPending ||
+                          !product.is_enabled
+                        }
                       />
                     </div>
 
                     {/* Toggle Vedette */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Star className={cn(
-                          'h-4 w-4',
-                          product.is_featured ? 'text-yellow-500 fill-yellow-500' : 'text-gray-400'
-                        )} />
+                        <Star
+                          className={cn(
+                            'h-4 w-4',
+                            product.is_featured
+                              ? 'text-yellow-500 fill-yellow-500'
+                              : 'text-gray-400'
+                          )}
+                        />
                         <span className="text-sm">Produit vedette</span>
                       </div>
                       <Switch
                         checked={product.is_featured}
                         onCheckedChange={() => handleToggleFeatured(product)}
-                        disabled={toggleFeaturedMutation.isPending || !product.is_enabled}
+                        disabled={
+                          toggleFeaturedMutation.isPending ||
+                          !product.is_enabled
+                        }
+                      />
+                    </div>
+
+                    {/* Toggle Afficher Fournisseur */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Building2
+                          className={cn(
+                            'h-4 w-4',
+                            product.show_supplier
+                              ? 'text-blue-600'
+                              : 'text-gray-400'
+                          )}
+                        />
+                        <span className="text-sm">Afficher fournisseur</span>
+                      </div>
+                      <Switch
+                        checked={product.show_supplier || false}
+                        onCheckedChange={() =>
+                          handleToggleShowSupplier(product)
+                        }
+                        disabled={
+                          toggleShowSupplierMutation.isPending ||
+                          !product.is_enabled
+                        }
                       />
                     </div>
                   </div>

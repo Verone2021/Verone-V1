@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, Building2, Users } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-
+import { AddressSelector } from '@verone/common/components/address/AddressSelector';
+import {
+  useOrganisations,
+  useActiveEnseignes,
+} from '@verone/organisations/hooks';
 import { Button } from '@verone/ui';
 import {
   Dialog,
@@ -26,8 +27,9 @@ import {
 } from '@verone/ui';
 import { Switch } from '@verone/ui';
 import { Textarea } from '@verone/ui';
-import { AddressSelector } from '@verone/common/components/address/AddressSelector';
-import { useOrganisations } from '@verone/organisations/hooks';
+import { Loader2, Building2, Users } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 // Schema de validation pour client professionnel
 const customerSchema = z.object({
@@ -52,6 +54,10 @@ const customerSchema = z.object({
   payment_terms: z.enum(['0', '30', '60', '90']).optional(),
   prepayment_required: z.boolean().default(false),
   currency: z.string().default('EUR'),
+
+  // Enseigne (franchise/groupe)
+  enseigne_id: z.string().optional().nullable(),
+  is_enseigne_parent: z.boolean().default(false),
 
   // Adresse de facturation
   billing_address_line1: z.string().optional(),
@@ -112,6 +118,7 @@ export function CustomerFormModal({
 }: CustomerFormModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { createOrganisation, updateOrganisation } = useOrganisations();
+  const { enseignes } = useActiveEnseignes();
 
   const form = useForm<CustomerFormData>({
     resolver: zodResolver(customerSchema) as any,
@@ -130,6 +137,8 @@ export function CustomerFormModal({
       payment_terms: '30',
       prepayment_required: false,
       currency: 'EUR',
+      enseigne_id: null,
+      is_enseigne_parent: false,
     },
   });
 
@@ -152,6 +161,8 @@ export function CustomerFormModal({
           (customer.payment_terms as '0' | '30' | '60' | '90') || '30',
         prepayment_required: customer.prepayment_required || false,
         currency: customer.currency || 'EUR',
+        enseigne_id: (customer as any).enseigne_id || null,
+        is_enseigne_parent: (customer as any).is_enseigne_parent || false,
       });
     }
   }, [mode, customer, form]);
@@ -176,6 +187,8 @@ export function CustomerFormModal({
         prepayment_required: data.prepayment_required,
         currency: data.currency,
         notes: data.description || null,
+        enseigne_id: data.enseigne_id || null,
+        is_enseigne_parent: data.is_enseigne_parent,
       };
 
       if (mode === 'edit' && customer) {
@@ -260,7 +273,10 @@ export function CustomerFormModal({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(handleSubmit as any)} className="space-y-6">
+        <form
+          onSubmit={form.handleSubmit(handleSubmit as any)}
+          className="space-y-6"
+        >
           {/* Informations de base */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium text-black border-b pb-2">
@@ -314,6 +330,68 @@ export function CustomerFormModal({
               />
             </div>
           </div>
+
+          {/* Enseigne / Franchise */}
+          {enseignes.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-black border-b pb-2">
+                Enseigne / Franchise
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="enseigne_id">Enseigne</Label>
+                  <Select
+                    value={form.watch('enseigne_id') || ''}
+                    onValueChange={value =>
+                      form.setValue('enseigne_id', value === '' ? null : value)
+                    }
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Aucune enseigne" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Aucune enseigne</SelectItem>
+                      {enseignes.map(enseigne => (
+                        <SelectItem key={enseigne.id} value={enseigne.id}>
+                          {enseigne.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Associez ce client à une enseigne (groupe de franchises)
+                  </p>
+                </div>
+
+                {form.watch('enseigne_id') && (
+                  <div className="flex items-start pt-6">
+                    <div className="flex items-center space-x-3">
+                      <Switch
+                        id="is_enseigne_parent"
+                        checked={form.watch('is_enseigne_parent')}
+                        onCheckedChange={checked =>
+                          form.setValue('is_enseigne_parent', checked)
+                        }
+                      />
+                      <div>
+                        <Label
+                          htmlFor="is_enseigne_parent"
+                          className="font-medium"
+                        >
+                          Société mère
+                        </Label>
+                        <p className="text-xs text-gray-500">
+                          Cochez si ce client est la holding/maison mère de
+                          l'enseigne
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Informations de contact */}
           <div className="space-y-4">

@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -24,9 +26,10 @@ import {
   FileText,
   Webhook,
   Star,
+  Building2,
+  Store,
   type LucideIcon,
 } from 'lucide-react';
-import { useState } from 'react';
 
 interface LinkMeNavItem {
   title: string;
@@ -43,6 +46,40 @@ const LINKME_NAV: LinkMeNavItem[] = [
     icon: LayoutDashboard,
   },
   {
+    title: 'Utilisateurs',
+    href: '/canaux-vente/linkme/utilisateurs',
+    icon: Users,
+    children: [
+      {
+        title: 'Liste',
+        href: '/canaux-vente/linkme/utilisateurs',
+        icon: Users,
+      },
+      {
+        title: 'Demandes',
+        href: '/canaux-vente/linkme/utilisateurs/demandes',
+        icon: UserPlus,
+      },
+    ],
+  },
+  {
+    title: 'Enseignes',
+    href: '/canaux-vente/linkme/enseignes',
+    icon: Building2,
+    children: [
+      {
+        title: 'Liste',
+        href: '/canaux-vente/linkme/enseignes',
+        icon: Building2,
+      },
+      {
+        title: 'Organisations',
+        href: '/canaux-vente/linkme/enseignes/organisations',
+        icon: Store,
+      },
+    ],
+  },
+  {
     title: 'Catalogue',
     href: '/canaux-vente/linkme/catalogue',
     icon: Package,
@@ -56,28 +93,6 @@ const LINKME_NAV: LinkMeNavItem[] = [
         title: 'Configuration Prix',
         href: '/canaux-vente/linkme/catalogue/configuration',
         icon: Sliders,
-      },
-    ],
-  },
-  {
-    title: 'Apporteurs',
-    href: '/canaux-vente/linkme/apporteurs',
-    icon: Users,
-    children: [
-      {
-        title: 'Liste Affiliés',
-        href: '/canaux-vente/linkme/apporteurs',
-        icon: Users,
-      },
-      {
-        title: 'Demandes',
-        href: '/canaux-vente/linkme/apporteurs/demandes',
-        icon: UserPlus,
-      },
-      {
-        title: 'Statistiques',
-        href: '/canaux-vente/linkme/apporteurs/stats',
-        icon: TrendingUp,
       },
     ],
   },
@@ -126,7 +141,7 @@ const LINKME_NAV: LinkMeNavItem[] = [
     icon: BarChart3,
     children: [
       {
-        title: 'Vue d\'ensemble',
+        title: "Vue d'ensemble",
         href: '/canaux-vente/linkme/analytics',
         icon: BarChart3,
       },
@@ -206,7 +221,7 @@ function NavItemComponent({ item, isActive, isChildActive }: NavItemProps) {
 
         {isOpen && (
           <div className="ml-4 pl-3 border-l border-gray-200 space-y-1">
-            {item.children!.map((child) => {
+            {item.children!.map(child => {
               const ChildIcon = child.icon;
               const isChildExactActive = pathname === child.href;
               return (
@@ -278,12 +293,14 @@ export function LinkMeSidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {LINKME_NAV.map((item) => {
+        {LINKME_NAV.map(item => {
           // Check if current path is this item or any of its children
           const isActive = pathname === item.href;
-          const isChildActive = item.children?.some(
-            (child) => pathname === child.href || pathname.startsWith(child.href + '/')
-          ) || pathname.startsWith(item.href + '/');
+          const isChildActive =
+            item.children?.some(
+              child =>
+                pathname === child.href || pathname.startsWith(child.href + '/')
+            ) || pathname.startsWith(item.href + '/');
 
           return (
             <NavItemComponent

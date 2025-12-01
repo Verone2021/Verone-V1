@@ -2,13 +2,13 @@
 
 import { useQuery } from '@tanstack/react-query';
 
-import { createClient } from '../supabase';
 import type {
   SelectionWithAffiliate,
   SelectionWithProducts,
   AffiliateWithSelections,
   LinkMeAffiliate,
 } from '../../types';
+import { createClient } from '../supabase';
 
 const supabase = createClient();
 
@@ -237,4 +237,102 @@ export function useIncrementSelectionViews() {
       console.error('Erreur increment views:', error);
     }
   };
+}
+
+/**
+ * Interface pour les fournisseurs visibles
+ */
+export interface VisibleSupplier {
+  id: string;
+  name: string;
+  logo_url: string | null;
+}
+
+/**
+ * Construit l'URL publique complète pour un logo stocké dans Supabase Storage
+ */
+function getLogoPublicUrl(logoPath: string | null): string | null {
+  if (!logoPath) return null;
+
+  // Si c'est déjà une URL complète, la retourner telle quelle
+  if (logoPath.startsWith('http://') || logoPath.startsWith('https://')) {
+    return logoPath;
+  }
+
+  // Construire l'URL publique Supabase Storage
+  const { data } = supabase.storage.from('logos').getPublicUrl(logoPath);
+  return data?.publicUrl || null;
+}
+
+/**
+ * Hook: Récupère les fournisseurs Vérone visibles dans la section "Nos partenaires"
+ * Ce sont les fournisseurs dont au moins un produit a show_supplier = true dans le catalogue LinkMe
+ */
+export function useVisibleSuppliers() {
+  return useQuery({
+    queryKey: ['linkme-visible-suppliers'],
+    queryFn: async (): Promise<VisibleSupplier[]> => {
+      // Récupérer les produits du catalogue LinkMe où show_supplier = true
+      const { data: catalogProducts, error: catalogError } = await supabase
+        .from('linkme_catalog_products')
+        .select('product_id')
+        .eq('show_supplier', true)
+        .eq('is_enabled', true);
+
+      if (catalogError) {
+        console.error('Erreur fetch catalog products:', catalogError);
+        throw catalogError;
+      }
+
+      if (!catalogProducts || catalogProducts.length === 0) {
+        return [];
+      }
+
+      // Récupérer les supplier_id des produits correspondants
+      const productIds = catalogProducts.map(cp => cp.product_id);
+      const { data: products, error: productsError } = await supabase
+        .from('products')
+        .select('supplier_id')
+        .in('id', productIds)
+        .not('supplier_id', 'is', null);
+
+      if (productsError) {
+        console.error('Erreur fetch products:', productsError);
+        throw productsError;
+      }
+
+      if (!products || products.length === 0) {
+        return [];
+      }
+
+      // Récupérer les supplier_id uniques
+      const supplierIds = [
+        ...new Set(products.map(p => p.supplier_id).filter(Boolean)),
+      ];
+
+      if (supplierIds.length === 0) {
+        return [];
+      }
+
+      // Récupérer les organisations (fournisseurs)
+      const { data: suppliers, error: suppliersError } = await supabase
+        .from('organisations')
+        .select('id, legal_name, trade_name, logo_url')
+        .in('id', supplierIds)
+        .eq('is_active', true);
+
+      if (suppliersError) {
+        console.error('Erreur fetch suppliers:', suppliersError);
+        throw suppliersError;
+      }
+
+      // Transformer en format VisibleSupplier avec URL logo complète
+      return (suppliers || []).map(s => ({
+        id: s.id,
+        name: s.trade_name || s.legal_name || 'Fournisseur',
+        logo_url: getLogoPublicUrl(s.logo_url),
+      }));
+    },
+    staleTime: 60000, // 1 minute
+  });
 }

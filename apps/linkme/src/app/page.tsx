@@ -1,10 +1,14 @@
 'use client';
 
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
+
 import { Store, ArrowRight, Package } from 'lucide-react';
 
-import { useFeaturedSelections, useActiveAffiliates } from '../lib/hooks/use-linkme-public';
+import {
+  useFeaturedSelections,
+  useVisibleSuppliers,
+} from '../lib/hooks/use-linkme-public';
 
 function formatPrice(price: number): string {
   return new Intl.NumberFormat('fr-FR', {
@@ -14,8 +18,10 @@ function formatPrice(price: number): string {
 }
 
 export default function HomePage() {
-  const { data: selections, isLoading: selectionsLoading } = useFeaturedSelections();
-  const { data: affiliates, isLoading: affiliatesLoading } = useActiveAffiliates();
+  const { data: selections, isLoading: selectionsLoading } =
+    useFeaturedSelections();
+  const { data: suppliers, isLoading: suppliersLoading } =
+    useVisibleSuppliers();
 
   return (
     <div className="min-h-screen">
@@ -26,8 +32,8 @@ export default function HomePage() {
             Découvrez les sélections de nos partenaires
           </h1>
           <p className="text-xl text-blue-100 max-w-2xl mx-auto mb-8">
-            Mobilier et décoration d'intérieur haut de gamme,
-            sélectionnés par des professionnels passionnés.
+            Mobilier et décoration d'intérieur haut de gamme, sélectionnés par
+            des professionnels passionnés.
           </p>
         </div>
       </section>
@@ -104,7 +110,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Affiliés */}
+      {/* Fournisseurs Partenaires */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center mb-8">
@@ -113,7 +119,7 @@ export default function HomePage() {
             </h2>
           </div>
 
-          {affiliatesLoading ? (
+          {suppliersLoading ? (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {[1, 2, 3, 4, 5, 6].map(i => (
                 <div
@@ -122,20 +128,19 @@ export default function HomePage() {
                 />
               ))}
             </div>
-          ) : affiliates && affiliates.length > 0 ? (
+          ) : suppliers && suppliers.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {affiliates.map(affiliate => (
-                <Link
-                  key={affiliate.id}
-                  href={`/${affiliate.slug}`}
+              {suppliers.map(supplier => (
+                <div
+                  key={supplier.id}
                   className="bg-white rounded-lg p-4 text-center hover:shadow-md transition-shadow"
                 >
                   {/* Logo */}
                   <div className="relative w-16 h-16 mx-auto mb-3 bg-gray-100 rounded-full overflow-hidden">
-                    {affiliate.logo_url ? (
+                    {supplier.logo_url ? (
                       <Image
-                        src={affiliate.logo_url}
-                        alt={affiliate.display_name}
+                        src={supplier.logo_url}
+                        alt={supplier.name}
                         fill
                         className="object-cover"
                       />
@@ -146,9 +151,9 @@ export default function HomePage() {
                     )}
                   </div>
                   <h3 className="font-medium text-gray-900 text-sm truncate">
-                    {affiliate.display_name}
+                    {supplier.name}
                   </h3>
-                </Link>
+                </div>
               ))}
             </div>
           ) : (

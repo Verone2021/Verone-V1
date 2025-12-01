@@ -63,7 +63,7 @@ export function useEnseigneStats(enseigneId: string | null) {
 
     try {
       // 1. Récupérer les organisations de l'enseigne
-      const { data: organisations, error: orgsError } = await supabase
+      const { data: organisations, error: orgsError } = await (supabase as any)
         .from('organisations')
         .select(
           'id, legal_name, trade_name, is_enseigne_parent, is_active, city, country, logo_url'

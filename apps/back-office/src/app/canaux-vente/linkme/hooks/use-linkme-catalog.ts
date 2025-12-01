@@ -16,6 +16,7 @@ export interface LinkMeCatalogProduct {
   product_id: string;
   is_enabled: boolean;
   is_public_showcase: boolean;
+  show_supplier: boolean;
   max_margin_rate: number;
   min_margin_rate: number;
   suggested_margin_rate: number;
@@ -36,6 +37,7 @@ export interface LinkMeCatalogProduct {
   product_is_active: boolean;
   product_family_name: string | null;
   product_category_name: string | null;
+  product_supplier_name: string | null;
 }
 
 /**
@@ -57,7 +59,7 @@ export interface EligibleProduct {
  * Fetch produits du catalogue LinkMe
  */
 async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
-  const { data, error } = await supabase.rpc(
+  const { data, error } = await (supabase as any).rpc(
     'get_linkme_catalog_products_for_affiliate' as any
   );
 
@@ -74,9 +76,10 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
  * Note: Tous les produits actifs sont affichés, même sans stock
  */
 async function fetchEligibleProducts(): Promise<EligibleProduct[]> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('products')
-    .select(`
+    .select(
+      `
       id,
       name,
       sku,
@@ -85,7 +88,8 @@ async function fetchEligibleProducts(): Promise<EligibleProduct[]> {
       product_status,
       subcategory_id,
       subcategories:subcategory_id(name)
-    `)
+    `
+    )
     .eq('product_status', 'active')
     .order('name');
 
@@ -96,13 +100,15 @@ async function fetchEligibleProducts(): Promise<EligibleProduct[]> {
 
   // Récupérer les images primaires pour ces produits
   const productIds = (data || []).map((p: any) => p.id);
-  const { data: images } = await supabase
+  const { data: images } = await (supabase as any)
     .from('product_images')
     .select('product_id, public_url')
     .in('product_id', productIds)
     .eq('is_primary', true);
 
-  const imageMap = new Map((images || []).map((img: any) => [img.product_id, img.public_url]));
+  const imageMap = new Map(
+    (images || []).map((img: any) => [img.product_id, img.public_url])
+  );
 
   // Mapper les données
   return (data || []).map((p: any) => ({
@@ -153,12 +159,12 @@ export function useAddProductsToCatalog() {
         product_id: productId,
         is_enabled: true,
         is_public_showcase: false,
-        max_margin_rate: 20.00,
-        min_margin_rate: 0.00,
-        suggested_margin_rate: 10.00,
+        max_margin_rate: 20.0,
+        min_margin_rate: 0.0,
+        suggested_margin_rate: 10.0,
       }));
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('linkme_catalog_products')
         .upsert(productsToInsert, { onConflict: 'product_id' });
 
@@ -181,7 +187,7 @@ export function useRemoveProductFromCatalog() {
 
   return useMutation({
     mutationFn: async (catalogProductId: string) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('linkme_catalog_products')
         .delete()
         .eq('id', catalogProductId);
@@ -208,7 +214,7 @@ export function useToggleProductEnabled() {
       catalogProductId: string;
       isEnabled: boolean;
     }) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('linkme_catalog_products')
         .update({ is_enabled: isEnabled })
         .eq('id', catalogProductId);
@@ -216,7 +222,9 @@ export function useToggleProductEnabled() {
       if (error) throw error;
     },
     onMutate: async ({ catalogProductId, isEnabled }) => {
-      await queryClient.cancelQueries({ queryKey: ['linkme-catalog-products'] });
+      await queryClient.cancelQueries({
+        queryKey: ['linkme-catalog-products'],
+      });
 
       const previousData = queryClient.getQueryData<LinkMeCatalogProduct[]>([
         'linkme-catalog-products',
@@ -264,7 +272,7 @@ export function useToggleProductShowcase() {
       catalogProductId: string;
       isPublicShowcase: boolean;
     }) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('linkme_catalog_products')
         .update({ is_public_showcase: isPublicShowcase })
         .eq('id', catalogProductId);
@@ -272,7 +280,9 @@ export function useToggleProductShowcase() {
       if (error) throw error;
     },
     onMutate: async ({ catalogProductId, isPublicShowcase }) => {
-      await queryClient.cancelQueries({ queryKey: ['linkme-catalog-products'] });
+      await queryClient.cancelQueries({
+        queryKey: ['linkme-catalog-products'],
+      });
 
       const previousData = queryClient.getQueryData<LinkMeCatalogProduct[]>([
         'linkme-catalog-products',
@@ -320,7 +330,7 @@ export function useToggleProductFeatured() {
       catalogProductId: string;
       isFeatured: boolean;
     }) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('linkme_catalog_products')
         .update({ is_featured: isFeatured })
         .eq('id', catalogProductId);
@@ -328,7 +338,9 @@ export function useToggleProductFeatured() {
       if (error) throw error;
     },
     onMutate: async ({ catalogProductId, isFeatured }) => {
-      await queryClient.cancelQueries({ queryKey: ['linkme-catalog-products'] });
+      await queryClient.cancelQueries({
+        queryKey: ['linkme-catalog-products'],
+      });
 
       const previousData = queryClient.getQueryData<LinkMeCatalogProduct[]>([
         'linkme-catalog-products',
@@ -341,6 +353,65 @@ export function useToggleProductFeatured() {
             old?.map(product =>
               product.id === catalogProductId
                 ? { ...product, is_featured: isFeatured }
+                : product
+            ) ?? []
+        );
+      }
+
+      return { previousData };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(
+          ['linkme-catalog-products'],
+          context.previousData
+        );
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
+    },
+  });
+}
+
+/**
+ * Hook: toggle affichage fournisseur (show_supplier)
+ * Contrôle si le fournisseur de ce produit apparaît dans "Nos partenaires"
+ */
+export function useToggleShowSupplier() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      catalogProductId,
+      showSupplier,
+    }: {
+      catalogProductId: string;
+      showSupplier: boolean;
+    }) => {
+      const { error } = await (supabase as any)
+        .from('linkme_catalog_products')
+        .update({ show_supplier: showSupplier })
+        .eq('id', catalogProductId);
+
+      if (error) throw error;
+    },
+    onMutate: async ({ catalogProductId, showSupplier }) => {
+      await queryClient.cancelQueries({
+        queryKey: ['linkme-catalog-products'],
+      });
+
+      const previousData = queryClient.getQueryData<LinkMeCatalogProduct[]>([
+        'linkme-catalog-products',
+      ]);
+
+      if (previousData) {
+        queryClient.setQueryData<LinkMeCatalogProduct[]>(
+          ['linkme-catalog-products'],
+          old =>
+            old?.map(product =>
+              product.id === catalogProductId
+                ? { ...product, show_supplier: showSupplier }
                 : product
             ) ?? []
         );
@@ -380,7 +451,7 @@ export function useUpdateMarginSettings() {
         suggested_margin_rate?: number;
       };
     }) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('linkme_catalog_products')
         .update(marginSettings)
         .eq('id', catalogProductId);
@@ -411,7 +482,7 @@ export function useUpdateCustomMetadata() {
         custom_selling_points?: string[] | null;
       };
     }) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('linkme_catalog_products')
         .update(metadata)
         .eq('id', catalogProductId);
@@ -431,7 +502,7 @@ export function useLinkMeCatalogStats() {
   return useQuery({
     queryKey: ['linkme-catalog-stats'],
     queryFn: async () => {
-      const { data } = await supabase.rpc(
+      const { data } = await (supabase as any).rpc(
         'get_linkme_catalog_products_for_affiliate' as any
       );
       const products = data as unknown as LinkMeCatalogProduct[];
@@ -447,7 +518,8 @@ export function useLinkMeCatalogStats() {
         enabled,
         showcase,
         featured,
-        enabledPercentage: products.length > 0 ? (enabled / products.length) * 100 : 0,
+        enabledPercentage:
+          products.length > 0 ? (enabled / products.length) * 100 : 0,
       };
     },
     staleTime: 60000,

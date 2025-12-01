@@ -134,7 +134,7 @@ export interface CreateSalesOrderData {
   shipping_address?: any;
   billing_address?: any;
   payment_terms?: string;
-  payment_terms_type?: Database['public']['Enums']['payment_terms_type'] | null;
+  payment_terms_type?: string | null;
   payment_terms_notes?: string;
   notes?: string;
   // Frais additionnels clients
@@ -825,11 +825,11 @@ export function useSalesOrders() {
 
         if (orderError) throw orderError;
 
-        // 5. Créer les items via RPC (SECURITY DEFINER pour bypass RLS)
-        const { error: itemsError } = await supabase.rpc(
-          'insert_sales_order_items',
-          {
-            p_items: data.items.map(item => ({
+        // 5. Créer les items via INSERT direct
+        const { error: itemsError } = await supabase
+          .from('sales_order_items')
+          .insert(
+            data.items.map(item => ({
               sales_order_id: order.id,
               product_id: item.product_id,
               quantity: item.quantity,
@@ -840,9 +840,8 @@ export function useSalesOrders() {
               expected_delivery_date: item.expected_delivery_date,
               notes: item.notes,
               is_sample: item.is_sample ?? false, // Échantillon (défaut false)
-            })),
-          }
-        );
+            }))
+          );
 
         if (itemsError) throw itemsError;
 

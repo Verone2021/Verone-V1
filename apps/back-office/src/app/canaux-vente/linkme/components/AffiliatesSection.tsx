@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 
+import { useToast } from '@verone/common';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -37,7 +38,6 @@ import {
   TableHeader,
   TableRow,
 } from '@verone/ui';
-import { useToast } from '@verone/common';
 import { createClient } from '@verone/utils/supabase/client';
 import {
   Plus,
@@ -58,7 +58,7 @@ interface Affiliate {
   user_id: string | null;
   organisation_id: string | null;
   enseigne_id: string | null;
-  affiliate_type: string; // 'enseigne' | 'prescripteur' - relaxed for Supabase types
+  affiliate_type: string; // 'enseigne' | 'client_professionnel' | 'client_particulier'
   display_name: string;
   slug: string;
   logo_url: string | null;
@@ -116,22 +116,29 @@ const typeConfig = {
     color: 'text-blue-600',
     bgColor: 'bg-blue-100',
   },
-  prescripteur: {
-    label: 'Prescripteur',
-    icon: User,
+  client_professionnel: {
+    label: 'Client Pro',
+    icon: Briefcase,
     color: 'text-purple-600',
     bgColor: 'bg-purple-100',
+  },
+  client_particulier: {
+    label: 'Particulier',
+    icon: User,
+    color: 'text-green-600',
+    bgColor: 'bg-green-100',
   },
 };
 
 /**
- * AffiliatesSection - Gestion des apporteurs/affiliés
+ * AffiliatesSection - Gestion des apporteurs/affiliés LinkMe
  *
- * Fonctionnalités:
- * - Liste des affiliés avec filtres (type, statut)
- * - Création nouvel affilié
- * - Validation/Suspension affiliés
- * - Modification plafond marge
+ * Types d'affiliés valides :
+ * - enseigne : Réseau d'enseignes (ex: Pokawa)
+ * - client_professionnel : Client B2B
+ * - client_particulier : Client B2C
+ *
+ * Note : Commission et marge sont gérées au niveau produit, pas affilié
  */
 export function AffiliatesSection() {
   const { toast } = useToast();
@@ -142,6 +149,8 @@ export function AffiliatesSection() {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [enseigneFilter, setEnseigneFilter] = useState<string>('all');
+  const [organisationFilter, setOrganisationFilter] = useState<string>('all');
 
   // Modal state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -151,16 +160,17 @@ export function AffiliatesSection() {
   );
 
   // Form state - entity_type = 'organisation' | 'enseigne'
+  type AffiliateType =
+    | 'enseigne'
+    | 'client_professionnel'
+    | 'client_particulier';
   const [formData, setFormData] = useState({
     entity_type: 'organisation' as 'organisation' | 'enseigne',
     entity_id: '',
     display_name: '',
     slug: '',
-    affiliate_type: 'prescripteur' as 'enseigne' | 'prescripteur',
+    affiliate_type: 'enseigne' as AffiliateType,
     bio: '',
-    default_margin_rate: 10,
-    max_margin_rate: 20,
-    linkme_commission_rate: 5,
   });
   const [saving, setSaving] = useState(false);
   const [entitySearch, setEntitySearch] = useState('');
@@ -173,12 +183,16 @@ export function AffiliatesSection() {
 
   // Filtrer les entités déjà liées à un affilié
   const availableOrganisations = useMemo(() => {
-    const linkedOrgIds = new Set(affiliates.map(a => a.organisation_id).filter(Boolean));
+    const linkedOrgIds = new Set(
+      affiliates.map(a => a.organisation_id).filter(Boolean)
+    );
     return organisations.filter(org => !linkedOrgIds.has(org.id));
   }, [organisations, affiliates]);
 
   const availableEnseignes = useMemo(() => {
-    const linkedEnsIds = new Set(affiliates.map(a => a.enseigne_id).filter(Boolean));
+    const linkedEnsIds = new Set(
+      affiliates.map(a => a.enseigne_id).filter(Boolean)
+    );
     return enseignes.filter(ens => !linkedEnsIds.has(ens.id));
   }, [enseignes, affiliates]);
 
@@ -186,29 +200,38 @@ export function AffiliatesSection() {
   const filteredEntities = useMemo(() => {
     const searchLower = entitySearch.toLowerCase();
     if (formData.entity_type === 'organisation') {
-      return availableOrganisations.filter(org =>
-        org.legal_name.toLowerCase().includes(searchLower) ||
-        (org.trade_name && org.trade_name.toLowerCase().includes(searchLower))
+      return availableOrganisations.filter(
+        org =>
+          org.legal_name.toLowerCase().includes(searchLower) ||
+          (org.trade_name && org.trade_name.toLowerCase().includes(searchLower))
       );
     } else {
       return availableEnseignes.filter(ens =>
         ens.name.toLowerCase().includes(searchLower)
       );
     }
-  }, [formData.entity_type, entitySearch, availableOrganisations, availableEnseignes]);
+  }, [
+    formData.entity_type,
+    entitySearch,
+    availableOrganisations,
+    availableEnseignes,
+  ]);
 
   async function fetchAffiliates() {
     const supabase = createClient();
     setLoading(true);
 
     try {
-      const { data, error } = await supabase
+      // Note: Cast as any car les types Supabase ne sont pas à jour pour linkme_affiliates
+      // TODO: Régénérer les types Supabase quand possible
+      const { data, error } = await (supabase as any)
         .from('linkme_affiliates')
-        .select(`
+        .select(
+          `
           *,
-          organisations:organisation_id(legal_name, trade_name),
-          enseignes:enseigne_id(name)
-        `)
+          organisations:organisation_id(legal_name, trade_name)
+        `
+        )
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -216,8 +239,9 @@ export function AffiliatesSection() {
       // Mapper les données avec les noms des entités liées
       const affiliatesWithNames = (data || []).map((a: any) => ({
         ...a,
-        organisation_name: a.organisations?.trade_name || a.organisations?.legal_name || null,
-        enseigne_name: a.enseignes?.name || null,
+        organisation_name:
+          a.organisations?.trade_name || a.organisations?.legal_name || null,
+        enseigne_name: null, // Sera peuplé via le mapping organisations->enseignes
       }));
 
       setAffiliates(affiliatesWithNames);
@@ -252,14 +276,23 @@ export function AffiliatesSection() {
   async function fetchEnseignes() {
     const supabase = createClient();
     try {
+      // Note: la table enseignes n'existe pas encore dans les types générés
+      // La fonctionnalité Enseignes LinkMe utilise les organisations avec is_enseigne_parent=true
+      // TODO: Migrer vers organisations filtrées ou créer table enseignes dédiée
       const { data, error } = await supabase
-        .from('enseignes')
-        .select('id, name, logo_url')
+        .from('organisations')
+        .select('id, legal_name, trade_name, logo_url')
         .eq('is_active', true)
-        .order('name');
+        .order('legal_name');
 
       if (error) throw error;
-      setEnseignes(data || []);
+      // Mapper vers interface Enseigne pour compatibilité
+      const mappedData = (data || []).map(org => ({
+        id: org.id,
+        name: org.trade_name || org.legal_name,
+        logo_url: org.logo_url,
+      }));
+      setEnseignes(mappedData);
     } catch (error) {
       console.error('Error fetching enseignes:', error);
     }
@@ -270,21 +303,26 @@ export function AffiliatesSection() {
     setSaving(true);
 
     try {
-      // Construire les données avec l'entité liée
+      // Construire les données avec l'entité liée (sans marge/commission - gérés au niveau produit)
       const insertData = {
         display_name: formData.display_name,
         slug: formData.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
         affiliate_type: formData.affiliate_type,
         bio: formData.bio || null,
-        default_margin_rate: formData.default_margin_rate,
-        max_margin_rate: formData.max_margin_rate,
-        linkme_commission_rate: formData.linkme_commission_rate,
         status: 'pending' as const,
-        organisation_id: formData.entity_type === 'organisation' && formData.entity_id ? formData.entity_id : null,
-        enseigne_id: formData.entity_type === 'enseigne' && formData.entity_id ? formData.entity_id : null,
+        organisation_id:
+          formData.entity_type === 'organisation' && formData.entity_id
+            ? formData.entity_id
+            : null,
+        enseigne_id:
+          formData.entity_type === 'enseigne' && formData.entity_id
+            ? formData.entity_id
+            : null,
       };
 
-      const { error } = await supabase.from('linkme_affiliates').insert(insertData);
+      const { error } = await (supabase as any)
+        .from('linkme_affiliates')
+        .insert(insertData);
 
       if (error) throw error;
 
@@ -300,7 +338,7 @@ export function AffiliatesSection() {
       console.error('Error creating affiliate:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible de créer l\'affilié',
+        description: "Impossible de créer l'affilié",
         variant: 'destructive',
       });
     } finally {
@@ -314,16 +352,13 @@ export function AffiliatesSection() {
     setSaving(true);
 
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('linkme_affiliates')
         .update({
           display_name: formData.display_name,
           slug: formData.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
           affiliate_type: formData.affiliate_type,
           bio: formData.bio || null,
-          default_margin_rate: formData.default_margin_rate,
-          max_margin_rate: formData.max_margin_rate,
-          linkme_commission_rate: formData.linkme_commission_rate,
         })
         .eq('id', selectedAffiliate.id);
 
@@ -342,7 +377,7 @@ export function AffiliatesSection() {
       console.error('Error updating affiliate:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible de mettre à jour l\'affilié',
+        description: "Impossible de mettre à jour l'affilié",
         variant: 'destructive',
       });
     } finally {
@@ -365,7 +400,7 @@ export function AffiliatesSection() {
         updateData.verified_at = new Date().toISOString();
       }
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('linkme_affiliates')
         .update(updateData)
         .eq('id', affiliateId);
@@ -395,7 +430,7 @@ export function AffiliatesSection() {
     const supabase = createClient();
 
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('linkme_affiliates')
         .delete()
         .eq('id', affiliateId);
@@ -412,7 +447,7 @@ export function AffiliatesSection() {
       console.error('Error deleting affiliate:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible de supprimer l\'affilié',
+        description: "Impossible de supprimer l'affilié",
         variant: 'destructive',
       });
     }
@@ -424,11 +459,8 @@ export function AffiliatesSection() {
       entity_id: '',
       display_name: '',
       slug: '',
-      affiliate_type: 'prescripteur',
+      affiliate_type: 'enseigne',
       bio: '',
-      default_margin_rate: 10,
-      max_margin_rate: 20,
-      linkme_commission_rate: 5,
     });
     setEntitySearch('');
   }
@@ -439,8 +471,10 @@ export function AffiliatesSection() {
       const org = organisations.find(o => o.id === entityId);
       if (org) {
         const displayName = org.trade_name || org.legal_name;
-        const slug = displayName.toLowerCase()
-          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        const slug = displayName
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
           .replace(/[^a-z0-9]+/g, '-')
           .replace(/^-+|-+$/g, '');
         setFormData(prev => ({
@@ -454,8 +488,10 @@ export function AffiliatesSection() {
       const ens = enseignes.find(e => e.id === entityId);
       if (ens) {
         const displayName = ens.name;
-        const slug = displayName.toLowerCase()
-          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        const slug = displayName
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
           .replace(/[^a-z0-9]+/g, '-')
           .replace(/^-+|-+$/g, '');
         setFormData(prev => ({
@@ -476,11 +512,8 @@ export function AffiliatesSection() {
       entity_id: affiliate.enseigne_id || affiliate.organisation_id || '',
       display_name: affiliate.display_name,
       slug: affiliate.slug,
-      affiliate_type: (affiliate.affiliate_type || 'prescripteur') as 'enseigne' | 'prescripteur',
+      affiliate_type: (affiliate.affiliate_type || 'enseigne') as AffiliateType,
       bio: affiliate.bio || '',
-      default_margin_rate: affiliate.default_margin_rate ?? 10,
-      max_margin_rate: affiliate.max_margin_rate ?? 20,
-      linkme_commission_rate: affiliate.linkme_commission_rate ?? 5,
     });
     setIsEditModalOpen(true);
   }
@@ -494,7 +527,18 @@ export function AffiliatesSection() {
       typeFilter === 'all' || affiliate.affiliate_type === typeFilter;
     const matchesStatus =
       statusFilter === 'all' || affiliate.status === statusFilter;
-    return matchesSearch && matchesType && matchesStatus;
+    const matchesEnseigne =
+      enseigneFilter === 'all' || affiliate.enseigne_id === enseigneFilter;
+    const matchesOrganisation =
+      organisationFilter === 'all' ||
+      affiliate.organisation_id === organisationFilter;
+    return (
+      matchesSearch &&
+      matchesType &&
+      matchesStatus &&
+      matchesEnseigne &&
+      matchesOrganisation
+    );
   });
 
   if (loading) {
@@ -523,7 +567,7 @@ export function AffiliatesSection() {
             <div>
               <CardTitle>Apporteurs / Affiliés</CardTitle>
               <CardDescription>
-                Gestion des enseignes et prescripteurs LinkMe
+                Gestion des enseignes et clients LinkMe
               </CardDescription>
             </div>
             <ButtonV2 onClick={() => setIsCreateModalOpen(true)}>
@@ -551,7 +595,10 @@ export function AffiliatesSection() {
               <SelectContent>
                 <SelectItem value="all">Tous les types</SelectItem>
                 <SelectItem value="enseigne">Enseignes</SelectItem>
-                <SelectItem value="prescripteur">Prescripteurs</SelectItem>
+                <SelectItem value="client_professionnel">
+                  Clients Pro
+                </SelectItem>
+                <SelectItem value="client_particulier">Particuliers</SelectItem>
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -563,6 +610,37 @@ export function AffiliatesSection() {
                 <SelectItem value="pending">En attente</SelectItem>
                 <SelectItem value="active">Actifs</SelectItem>
                 <SelectItem value="suspended">Suspendus</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={enseigneFilter} onValueChange={setEnseigneFilter}>
+              <SelectTrigger className="w-[180px]">
+                <Building2 className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Enseigne" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes les enseignes</SelectItem>
+                {enseignes.map(enseigne => (
+                  <SelectItem key={enseigne.id} value={enseigne.id}>
+                    {enseigne.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={organisationFilter}
+              onValueChange={setOrganisationFilter}
+            >
+              <SelectTrigger className="w-[180px]">
+                <Store className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Organisation" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes les organisations</SelectItem>
+                {organisations.map(org => (
+                  <SelectItem key={org.id} value={org.id}>
+                    {org.trade_name || org.legal_name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -594,18 +672,29 @@ export function AffiliatesSection() {
                   <TableHead>Entité liée</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Slug</TableHead>
-                  <TableHead>Marge Max</TableHead>
-                  <TableHead>Commission</TableHead>
                   <TableHead>Statut</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredAffiliates.map(affiliate => {
-                  const typeInfo = typeConfig[(affiliate.affiliate_type || 'prescripteur') as keyof typeof typeConfig];
-                  const statusInfo = statusConfig[(affiliate.status || 'pending') as keyof typeof statusConfig];
-                  const linkedEntityName = affiliate.organisation_name || affiliate.enseigne_name;
-                  const linkedEntityType = affiliate.enseigne_id ? 'enseigne' : (affiliate.organisation_id ? 'organisation' : null);
+                  const typeInfo =
+                    typeConfig[
+                      (affiliate.affiliate_type ||
+                        'enseigne') as keyof typeof typeConfig
+                    ];
+                  const statusInfo =
+                    statusConfig[
+                      (affiliate.status ||
+                        'pending') as keyof typeof statusConfig
+                    ];
+                  const linkedEntityName =
+                    affiliate.organisation_name || affiliate.enseigne_name;
+                  const linkedEntityType = affiliate.enseigne_id
+                    ? 'enseigne'
+                    : affiliate.organisation_id
+                      ? 'organisation'
+                      : null;
 
                   return (
                     <TableRow key={affiliate.id}>
@@ -624,9 +713,11 @@ export function AffiliatesSection() {
                             </div>
                             <div className="text-sm text-muted-foreground">
                               Créé le{' '}
-                              {affiliate.created_at ? new Date(
-                                affiliate.created_at
-                              ).toLocaleDateString('fr-FR') : '-'}
+                              {affiliate.created_at
+                                ? new Date(
+                                    affiliate.created_at
+                                  ).toLocaleDateString('fr-FR')
+                                : '-'}
                             </div>
                           </div>
                         </div>
@@ -634,7 +725,9 @@ export function AffiliatesSection() {
                       <TableCell>
                         {linkedEntityName ? (
                           <div className="flex items-center gap-2">
-                            <div className={`p-1 rounded ${linkedEntityType === 'enseigne' ? 'bg-purple-100' : 'bg-blue-100'}`}>
+                            <div
+                              className={`p-1 rounded ${linkedEntityType === 'enseigne' ? 'bg-purple-100' : 'bg-blue-100'}`}
+                            >
                               {linkedEntityType === 'enseigne' ? (
                                 <Store className="h-3 w-3 text-purple-600" />
                               ) : (
@@ -644,7 +737,9 @@ export function AffiliatesSection() {
                             <span className="text-sm">{linkedEntityName}</span>
                           </div>
                         ) : (
-                          <span className="text-sm text-muted-foreground">-</span>
+                          <span className="text-sm text-muted-foreground">
+                            -
+                          </span>
                         )}
                       </TableCell>
                       <TableCell>
@@ -653,8 +748,6 @@ export function AffiliatesSection() {
                       <TableCell className="font-mono text-sm">
                         /{affiliate.slug}
                       </TableCell>
-                      <TableCell>{affiliate.max_margin_rate}%</TableCell>
-                      <TableCell>{affiliate.linkme_commission_rate}%</TableCell>
                       <TableCell>
                         <Badge variant={statusInfo.variant}>
                           <statusInfo.icon className="h-3 w-3 mr-1" />
@@ -730,7 +823,8 @@ export function AffiliatesSection() {
           <DialogHeader>
             <DialogTitle>Nouvel Affilié</DialogTitle>
             <DialogDescription>
-              Sélectionnez une organisation ou une enseigne existante pour créer un affilié LinkMe
+              Sélectionnez une organisation ou une enseigne existante pour créer
+              un affilié LinkMe
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -740,7 +834,11 @@ export function AffiliatesSection() {
               <div className="flex gap-2">
                 <ButtonV2
                   type="button"
-                  variant={formData.entity_type === 'organisation' ? 'default' : 'outline'}
+                  variant={
+                    formData.entity_type === 'organisation'
+                      ? 'default'
+                      : 'outline'
+                  }
                   className="flex-1"
                   onClick={() => {
                     setFormData(prev => ({
@@ -749,7 +847,7 @@ export function AffiliatesSection() {
                       entity_id: '',
                       display_name: '',
                       slug: '',
-                      affiliate_type: 'prescripteur',
+                      affiliate_type: 'client_professionnel',
                     }));
                     setEntitySearch('');
                   }}
@@ -759,7 +857,9 @@ export function AffiliatesSection() {
                 </ButtonV2>
                 <ButtonV2
                   type="button"
-                  variant={formData.entity_type === 'enseigne' ? 'default' : 'outline'}
+                  variant={
+                    formData.entity_type === 'enseigne' ? 'default' : 'outline'
+                  }
                   className="flex-1"
                   onClick={() => {
                     setFormData(prev => ({
@@ -782,7 +882,10 @@ export function AffiliatesSection() {
             {/* Recherche et sélection d'entité */}
             <div className="grid gap-2">
               <Label>
-                {formData.entity_type === 'organisation' ? 'Organisation' : 'Enseigne'} *
+                {formData.entity_type === 'organisation'
+                  ? 'Organisation'
+                  : 'Enseigne'}{' '}
+                *
               </Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -795,7 +898,8 @@ export function AffiliatesSection() {
               </div>
               {/* Liste des entités disponibles */}
               <div className="max-h-48 overflow-y-auto border rounded-md">
-                {(filteredEntities as (Organisation | Enseigne)[]).length === 0 ? (
+                {(filteredEntities as (Organisation | Enseigne)[]).length ===
+                0 ? (
                   <div className="p-4 text-center text-muted-foreground text-sm">
                     {entitySearch
                       ? 'Aucun résultat'
@@ -805,43 +909,50 @@ export function AffiliatesSection() {
                   </div>
                 ) : (
                   <div className="divide-y">
-                    {(filteredEntities as (Organisation | Enseigne)[]).slice(0, 10).map((entity) => {
-                      const isOrg = formData.entity_type === 'organisation';
-                      const name = isOrg
-                        ? (entity as Organisation).trade_name || (entity as Organisation).legal_name
-                        : (entity as Enseigne).name;
-                      const isSelected = formData.entity_id === entity.id;
+                    {(filteredEntities as (Organisation | Enseigne)[])
+                      .slice(0, 10)
+                      .map(entity => {
+                        const isOrg = formData.entity_type === 'organisation';
+                        const name = isOrg
+                          ? (entity as Organisation).trade_name ||
+                            (entity as Organisation).legal_name
+                          : (entity as Enseigne).name;
+                        const isSelected = formData.entity_id === entity.id;
 
-                      return (
-                        <button
-                          key={entity.id}
-                          type="button"
-                          onClick={() => handleEntitySelect(entity.id)}
-                          className={`w-full p-3 text-left hover:bg-gray-50 flex items-center gap-3 transition-colors ${
-                            isSelected ? 'bg-blue-50 border-l-4 border-blue-500' : ''
-                          }`}
-                        >
-                          <div className={`p-2 rounded-full ${isOrg ? 'bg-blue-100' : 'bg-purple-100'}`}>
-                            {isOrg ? (
-                              <Briefcase className="h-4 w-4 text-blue-600" />
-                            ) : (
-                              <Store className="h-4 w-4 text-purple-600" />
+                        return (
+                          <button
+                            key={entity.id}
+                            type="button"
+                            onClick={() => handleEntitySelect(entity.id)}
+                            className={`w-full p-3 text-left hover:bg-gray-50 flex items-center gap-3 transition-colors ${
+                              isSelected
+                                ? 'bg-blue-50 border-l-4 border-blue-500'
+                                : ''
+                            }`}
+                          >
+                            <div
+                              className={`p-2 rounded-full ${isOrg ? 'bg-blue-100' : 'bg-purple-100'}`}
+                            >
+                              {isOrg ? (
+                                <Briefcase className="h-4 w-4 text-blue-600" />
+                              ) : (
+                                <Store className="h-4 w-4 text-purple-600" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium truncate">{name}</p>
+                              {isOrg && (entity as Organisation).trade_name && (
+                                <p className="text-xs text-muted-foreground truncate">
+                                  {(entity as Organisation).legal_name}
+                                </p>
+                              )}
+                            </div>
+                            {isSelected && (
+                              <CheckCircle className="h-5 w-5 text-blue-600 flex-shrink-0" />
                             )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">{name}</p>
-                            {isOrg && (entity as Organisation).trade_name && (
-                              <p className="text-xs text-muted-foreground truncate">
-                                {(entity as Organisation).legal_name}
-                              </p>
-                            )}
-                          </div>
-                          {isSelected && (
-                            <CheckCircle className="h-5 w-5 text-blue-600 flex-shrink-0" />
-                          )}
-                        </button>
-                      );
-                    })}
+                          </button>
+                        );
+                      })}
                   </div>
                 )}
               </div>
@@ -877,7 +988,7 @@ export function AffiliatesSection() {
                   <Label htmlFor="type">Type d'affilié</Label>
                   <Select
                     value={formData.affiliate_type}
-                    onValueChange={(value: 'enseigne' | 'prescripteur') =>
+                    onValueChange={(value: AffiliateType) =>
                       setFormData({ ...formData, affiliate_type: value })
                     }
                   >
@@ -885,16 +996,22 @@ export function AffiliatesSection() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="prescripteur">
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4" />
-                          Prescripteur
-                        </div>
-                      </SelectItem>
                       <SelectItem value="enseigne">
                         <div className="flex items-center gap-2">
                           <Building2 className="h-4 w-4" />
                           Enseigne
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="client_professionnel">
+                        <div className="flex items-center gap-2">
+                          <Briefcase className="h-4 w-4" />
+                          Client Pro
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="client_particulier">
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          Particulier
                         </div>
                       </SelectItem>
                     </SelectContent>
@@ -905,59 +1022,11 @@ export function AffiliatesSection() {
                   <Input
                     id="bio"
                     value={formData.bio}
-                    onChange={e => setFormData({ ...formData, bio: e.target.value })}
+                    onChange={e =>
+                      setFormData({ ...formData, bio: e.target.value })
+                    }
                     placeholder="Description courte..."
                   />
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="default_margin">Marge défaut (%)</Label>
-                    <Input
-                      id="default_margin"
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={formData.default_margin_rate}
-                      onChange={e =>
-                        setFormData({
-                          ...formData,
-                          default_margin_rate: Number(e.target.value),
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="max_margin">Marge max (%)</Label>
-                    <Input
-                      id="max_margin"
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={formData.max_margin_rate}
-                      onChange={e =>
-                        setFormData({
-                          ...formData,
-                          max_margin_rate: Number(e.target.value),
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="commission">Commission (%)</Label>
-                    <Input
-                      id="commission"
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={formData.linkme_commission_rate}
-                      onChange={e =>
-                        setFormData({
-                          ...formData,
-                          linkme_commission_rate: Number(e.target.value),
-                        })
-                      }
-                    />
-                  </div>
                 </div>
               </>
             )}
@@ -975,10 +1044,13 @@ export function AffiliatesSection() {
             <ButtonV2
               onClick={handleCreateAffiliate}
               disabled={
-                saving || !formData.entity_id || !formData.display_name.trim() || !formData.slug.trim()
+                saving ||
+                !formData.entity_id ||
+                !formData.display_name.trim() ||
+                !formData.slug.trim()
               }
             >
-              {saving ? 'Création...' : 'Créer l\'affilié'}
+              {saving ? 'Création...' : "Créer l'affilié"}
             </ButtonV2>
           </DialogFooter>
         </DialogContent>
@@ -1018,7 +1090,7 @@ export function AffiliatesSection() {
               <Label htmlFor="edit_type">Type *</Label>
               <Select
                 value={formData.affiliate_type}
-                onValueChange={(value: 'enseigne' | 'prescripteur') =>
+                onValueChange={(value: AffiliateType) =>
                   setFormData({ ...formData, affiliate_type: value })
                 }
               >
@@ -1026,8 +1098,13 @@ export function AffiliatesSection() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="prescripteur">Prescripteur</SelectItem>
                   <SelectItem value="enseigne">Enseigne</SelectItem>
+                  <SelectItem value="client_professionnel">
+                    Client Pro
+                  </SelectItem>
+                  <SelectItem value="client_particulier">
+                    Particulier
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1036,58 +1113,10 @@ export function AffiliatesSection() {
               <Input
                 id="edit_bio"
                 value={formData.bio}
-                onChange={e => setFormData({ ...formData, bio: e.target.value })}
+                onChange={e =>
+                  setFormData({ ...formData, bio: e.target.value })
+                }
               />
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="edit_default_margin">Marge défaut (%)</Label>
-                <Input
-                  id="edit_default_margin"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={formData.default_margin_rate}
-                  onChange={e =>
-                    setFormData({
-                      ...formData,
-                      default_margin_rate: Number(e.target.value),
-                    })
-                  }
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit_max_margin">Marge max (%)</Label>
-                <Input
-                  id="edit_max_margin"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={formData.max_margin_rate}
-                  onChange={e =>
-                    setFormData({
-                      ...formData,
-                      max_margin_rate: Number(e.target.value),
-                    })
-                  }
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit_commission">Commission (%)</Label>
-                <Input
-                  id="edit_commission"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={formData.linkme_commission_rate}
-                  onChange={e =>
-                    setFormData({
-                      ...formData,
-                      linkme_commission_rate: Number(e.target.value),
-                    })
-                  }
-                />
-              </div>
             </div>
           </div>
           <DialogFooter>

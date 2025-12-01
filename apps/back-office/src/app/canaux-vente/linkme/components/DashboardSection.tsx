@@ -52,7 +52,7 @@ export function DashboardSection() {
 
       try {
         // Fetch affiliates stats
-        const { data: affiliates } = await supabase
+        const { data: affiliates } = await (supabase as any)
           .from('linkme_affiliates')
           .select('id, status');
 
@@ -63,7 +63,7 @@ export function DashboardSection() {
           affiliates?.filter(a => a.status === 'pending').length || 0;
 
         // Fetch selections stats
-        const { data: selections } = await supabase
+        const { data: selections } = await (supabase as any)
           .from('linkme_selections')
           .select('id, status');
 
@@ -72,7 +72,7 @@ export function DashboardSection() {
           selections?.filter(s => s.status === 'active').length || 0;
 
         // Fetch commissions stats
-        const { data: commissions } = await supabase
+        const { data: commissions } = await (supabase as any)
           .from('linkme_commissions')
           .select('id, status, order_amount_ht, affiliate_commission');
 
@@ -165,7 +165,7 @@ export function DashboardSection() {
     {
       title: 'CA Généré',
       value: `${(stats?.totalRevenue || 0).toLocaleString('fr-FR')} €`,
-      description: 'Chiffre d\'affaires HT',
+      description: "Chiffre d'affaires HT",
       icon: TrendingUp,
       color: 'text-emerald-600',
       bgColor: 'bg-emerald-100',

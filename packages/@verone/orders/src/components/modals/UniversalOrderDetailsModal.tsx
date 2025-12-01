@@ -372,7 +372,10 @@ export function UniversalOrderDetailsModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
+      <DialogContent
+        className="max-w-5xl max-h-[95vh] overflow-y-auto"
+        hideCloseButton
+      >
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-2xl font-bold flex items-center gap-2">
