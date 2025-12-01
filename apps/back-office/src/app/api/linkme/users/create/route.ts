@@ -97,6 +97,10 @@ export async function POST(request: NextRequest) {
     const userId = authData.user.id;
 
     // 2. Créer le profil utilisateur
+    // Mapper le rôle LinkMe vers l'enum user_role_type valide
+    // enseigne_admin/organisation_admin → partner_manager, client → customer
+    const profileRole = role === 'client' ? 'customer' : 'partner_manager';
+
     const { error: profileError } = await supabaseAdmin
       .from('user_profiles')
       .insert({
@@ -104,8 +108,9 @@ export async function POST(request: NextRequest) {
         first_name,
         last_name,
         phone: phone || null,
+        app: 'linkme',
         app_source: 'linkme',
-        role: role,
+        role: profileRole,
       });
 
     if (profileError) {

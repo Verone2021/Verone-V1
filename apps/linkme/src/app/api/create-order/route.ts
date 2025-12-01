@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
+
 import { createRevolutOrder } from '../../../lib/revolut';
 import type { LinkMeOrderData } from '../../../lib/revolut';
 

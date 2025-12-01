@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
+
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-import { CartProvider } from '../cart/CartProvider';
+import { AuthProvider } from '../../contexts/AuthContext';
 import { CartDrawer } from '../cart/CartDrawer';
+import { CartProvider } from '../cart/CartProvider';
 
 interface ProvidersProps {
   children: ReactNode;
@@ -25,10 +27,12 @@ export function Providers({ children }: ProvidersProps): React.ReactElement {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <CartProvider>
-        {children}
-        <CartDrawer />
-      </CartProvider>
+      <AuthProvider>
+        <CartProvider>
+          {children}
+          <CartDrawer />
+        </CartProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

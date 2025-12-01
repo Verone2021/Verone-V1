@@ -1,12 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart } from 'lucide-react';
 
+import { ShoppingCart, LogIn, Loader2 } from 'lucide-react';
+
+import { useAuth } from '../../contexts/AuthContext';
+import { UserMenu } from '../auth/UserMenu';
 import { useCart } from '../cart/CartProvider';
 
 export function Header() {
   const { itemCount, openCart } = useCart();
+  const { user, loading } = useAuth();
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -25,6 +29,14 @@ export function Header() {
             >
               Accueil
             </Link>
+            {user && (
+              <Link
+                href="/dashboard"
+                className="text-gray-600 hover:text-gray-900 font-medium"
+              >
+                Dashboard
+              </Link>
+            )}
           </nav>
 
           {/* Actions */}
@@ -42,6 +54,23 @@ export function Header() {
                 </span>
               )}
             </button>
+
+            {/* Auth */}
+            {loading ? (
+              <div className="p-2">
+                <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+              </div>
+            ) : user ? (
+              <UserMenu />
+            ) : (
+              <Link
+                href="/login"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+              >
+                <LogIn className="h-4 w-4" />
+                <span className="hidden sm:inline">Connexion</span>
+              </Link>
+            )}
           </div>
         </div>
       </div>

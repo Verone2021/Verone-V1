@@ -1,8 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
-import { verifyWebhookSignature, getRevolutOrder } from '../../../../lib/revolut';
-import type { RevolutWebhookEvent } from '../../../../lib/revolut';
+import { type NextRequest, NextResponse } from 'next/server';
+
 import { createClient } from '@supabase/supabase-js';
+
+import {
+  verifyWebhookSignature,
+  getRevolutOrder,
+} from '../../../../lib/revolut';
+import type { RevolutWebhookEvent } from '../../../../lib/revolut';
 
 // Créer un client Supabase avec la clé service pour les opérations serveur
 function getSupabaseAdmin() {
@@ -44,7 +49,12 @@ export async function POST(request: NextRequest) {
     // Parser l'événement
     const event: RevolutWebhookEvent = JSON.parse(rawBody);
 
-    console.log('Received Revolut webhook:', event.event, 'for order:', event.order_id);
+    console.log(
+      'Received Revolut webhook:',
+      event.event,
+      'for order:',
+      event.order_id
+    );
 
     // Traiter selon le type d'événement
     switch (event.event) {
@@ -141,8 +151,10 @@ async function handleOrderCompleted(event: RevolutWebhookEvent) {
 
       if (affiliate) {
         const orderAmountHt = revolutOrder.order_amount.value / 100 / 1.2;
-        const affiliateCommission = orderAmountHt * (affiliate.default_margin_rate / 100);
-        const linkmeCommission = orderAmountHt * (affiliate.linkme_commission_rate / 100);
+        const affiliateCommission =
+          orderAmountHt * (affiliate.default_margin_rate / 100);
+        const linkmeCommission =
+          orderAmountHt * (affiliate.linkme_commission_rate / 100);
 
         await supabase.from('linkme_commissions').insert({
           affiliate_id: affiliateId,
