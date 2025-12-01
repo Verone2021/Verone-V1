@@ -90,6 +90,11 @@ const LINKME_NAV: LinkMeNavItem[] = [
         icon: Package,
       },
       {
+        title: 'Fournisseurs',
+        href: '/canaux-vente/linkme/catalogue/fournisseurs',
+        icon: Store,
+      },
+      {
         title: 'Configuration Prix',
         href: '/canaux-vente/linkme/catalogue/configuration',
         icon: Sliders,

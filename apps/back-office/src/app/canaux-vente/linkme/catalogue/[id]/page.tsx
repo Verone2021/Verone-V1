@@ -155,9 +155,7 @@ export default function LinkMeProductDetailPage() {
               <ProductDetailHeader
                 product={product}
                 onToggleActive={v => handleToggle('is_active', v)}
-                onToggleShowcase={v => handleToggle('is_public_showcase', v)}
                 onToggleFeatured={v => handleToggle('is_featured', v)}
-                onToggleShowSupplier={v => handleToggle('show_supplier', v)}
                 isUpdating={toggleField.isPending}
               />
             </CardContent>
