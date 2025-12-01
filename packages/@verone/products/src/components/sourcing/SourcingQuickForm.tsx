@@ -4,16 +4,16 @@ import { useState, useRef } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { Upload, Link, Package, ArrowRight, Loader2, Euro } from 'lucide-react';
-
+import { useToast } from '@verone/common/hooks';
 import { Button } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { cn } from '@verone/utils';
-import { useToast } from '@verone/common/hooks';
+import { Upload, Link, Package, ArrowRight, Loader2, Euro } from 'lucide-react';
+
 import { useSourcingProducts } from '@verone/products/hooks';
 
-import { ClientAssignmentSelector } from './client-assignment-selector';
+import { ClientOrEnseigneSelector } from './ClientOrEnseigneSelector';
 import { ConsultationSuggestions } from './consultation-suggestions';
 import { SupplierSelector } from './supplier-selector';
 
@@ -41,6 +41,7 @@ export function SourcingQuickForm({
     cost_price: 0, // Prix d'achat fournisseur HT - OBLIGATOIRE
     supplier_id: '', // Facultatif - fournisseur assigné
     assigned_client_id: '', // Facultatif - détermine automatiquement le type de sourcing
+    enseigne_id: '', // Facultatif - enseigne pour sourcing groupe de magasins
   });
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
@@ -149,6 +150,7 @@ export function SourcingQuickForm({
         cost_price: formData.cost_price, // 🔥 FIX: Prix réel saisi par utilisateur
         supplier_id: formData.supplier_id || undefined, // Facultatif - pour activer lien fournisseur
         assigned_client_id: formData.assigned_client_id || undefined,
+        enseigne_id: formData.enseigne_id || undefined, // Enseigne pour sourcing groupe magasins
         imageFile: selectedImage || undefined, // Upload image si fournie
       };
 
@@ -389,24 +391,39 @@ export function SourcingQuickForm({
           </p>
         </div>
 
-        {/* 6. ORGANISATION CLIENT PROFESSIONNELLE - Facultatif */}
+        {/* 6. CLIENT DESTINATAIRE (ENSEIGNE OU ORGANISATION) - Facultatif */}
         <div className="space-y-2">
-          <ClientAssignmentSelector
-            value={formData.assigned_client_id}
-            onChange={(clientId, client) => {
-              setFormData(prev => ({ ...prev, assigned_client_id: clientId }));
+          <ClientOrEnseigneSelector
+            enseigneId={formData.enseigne_id || null}
+            organisationId={formData.assigned_client_id || null}
+            onEnseigneChange={(enseigneId, _enseigneName, parentOrgId) => {
+              // Quand enseigne sélectionnée → assigned_client_id = société mère
+              setFormData(prev => ({
+                ...prev,
+                enseigne_id: enseigneId || '',
+                assigned_client_id: parentOrgId || '',
+              }));
             }}
-            label="Organisation client professionnelle (facultatif)"
-            placeholder="Laisser vide pour sourcing interne ou sélectionner un client..."
+            onOrganisationChange={(organisationId, _organisationName) => {
+              // Quand organisation sélectionnée → enseigne_id = null
+              setFormData(prev => ({
+                ...prev,
+                assigned_client_id: organisationId || '',
+                enseigne_id: '',
+              }));
+            }}
+            label="Client destinataire (facultatif)"
             required={false}
-            className="mb-4"
           />
           <p className="text-xs text-gray-500">
             <strong>Sourcing interne :</strong> Laissez vide pour ajouter au
             catalogue général
             <br />
-            <strong>Sourcing client :</strong> Sélectionnez un client pour une
-            consultation spécifique
+            <strong>Sourcing enseigne :</strong> Sélectionnez une enseigne
+            (groupe de magasins)
+            <br />
+            <strong>Sourcing organisation :</strong> Sélectionnez une
+            organisation cliente directe
           </p>
         </div>
 

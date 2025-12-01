@@ -703,6 +703,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
     cost_price: number; // REQUIRED - validation > 0
     supplier_id?: string;
     assigned_client_id?: string;
+    enseigne_id?: string; // Enseigne pour sourcing groupe magasins
     imageFile?: File; // Upload image optionnel
   }) => {
     try {
@@ -726,6 +727,9 @@ export function useSourcingProducts(filters?: SourcingFilters) {
         return null;
       }
 
+      // Déterminer sourcing_type : 'client' si enseigne OU organisation, sinon 'interne'
+      const isClientSourcing = !!(data.enseigne_id || data.assigned_client_id);
+
       // Créer le produit
       const { data: newProduct, error } = await supabase
         .from('products')
@@ -736,8 +740,9 @@ export function useSourcingProducts(filters?: SourcingFilters) {
             cost_price: data.cost_price,
             supplier_id: data.supplier_id,
             assigned_client_id: data.assigned_client_id,
+            enseigne_id: data.enseigne_id, // Nouvelle colonne pour traçabilité enseigne
             creation_mode: 'sourcing',
-            sourcing_type: data.assigned_client_id ? 'client' : 'interne',
+            sourcing_type: isClientSourcing ? 'client' : 'interne',
             product_status: 'draft', // ✅ FIXED: Use 'draft' (valid enum value)
             completion_status: 'draft', // Produit en cours de sourcing
             stock_status: 'out_of_stock', // Pas encore commandé
