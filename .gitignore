@@ -43,6 +43,9 @@ logs
 *.swp
 *.swo
 
+# AI/Claude memory (local only)
+.aim/
+
 # OS generated files
 .DS_Store
 .DS_Store?
