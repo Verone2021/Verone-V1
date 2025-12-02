@@ -13,8 +13,9 @@
  * @module EnseigneDetailPage
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 
@@ -43,7 +44,17 @@ import { Label } from '@verone/ui';
 import { Textarea } from '@verone/ui';
 import { Switch } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Package, ExternalLink } from 'lucide-react';
+
+// Interface pour les produits de l'enseigne
+interface EnseigneProduct {
+  id: string;
+  name: string;
+  sku: string | null;
+  product_status: string;
+  created_at: string | null;
+  primary_image_url?: string | null;
+}
 
 export default function EnseigneDetailPage() {
   const params = useParams();
@@ -84,6 +95,49 @@ export default function EnseigneDetailPage() {
     logo_url: '',
     is_active: true,
   });
+
+  // État pour les produits de l'enseigne
+  const [enseigneProducts, setEnseigneProducts] = useState<EnseigneProduct[]>(
+    []
+  );
+  const [productsLoading, setProductsLoading] = useState(false);
+
+  // Charger les produits de cette enseigne
+  useEffect(() => {
+    async function fetchEnseigneProducts() {
+      if (!enseigneId) return;
+      setProductsLoading(true);
+      try {
+        const { data } = await supabase
+          .from('products')
+          .select(
+            `id, name, sku, product_status, created_at,
+            product_images!left(public_url, is_primary)`
+          )
+          .eq('enseigne_id', enseigneId)
+          .order('created_at', { ascending: false });
+
+        // Mapper les données avec l'image primaire
+        const mappedProducts: EnseigneProduct[] = (data || []).map(p => ({
+          id: p.id,
+          name: p.name,
+          sku: p.sku,
+          product_status: p.product_status,
+          created_at: p.created_at,
+          primary_image_url:
+            (
+              p.product_images as { public_url: string; is_primary: boolean }[]
+            )?.find(img => img.is_primary)?.public_url || null,
+        }));
+        setEnseigneProducts(mappedProducts);
+      } catch (err) {
+        console.error('Erreur chargement produits enseigne:', err);
+      } finally {
+        setProductsLoading(false);
+      }
+    }
+    fetchEnseigneProducts();
+  }, [enseigneId, supabase]);
 
   // Refresh tout
   const handleRefresh = useCallback(() => {
@@ -303,6 +357,87 @@ export default function EnseigneDetailPage() {
             className="col-span-2"
           />
         </div>
+
+        {/* Section Produits Sourcés */}
+        <Card className="border-gray-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Package className="h-5 w-5 text-gray-600" />
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Produits sourcés pour cette enseigne
+                </h3>
+                {enseigneProducts.length > 0 && (
+                  <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-sm">
+                    {enseigneProducts.length}
+                  </span>
+                )}
+              </div>
+              <Link href={`/produits/sourcing?enseigne=${enseigneId}`}>
+                <ButtonV2 variant="ghost" size="sm">
+                  Voir tout
+                  <ExternalLink className="h-4 w-4 ml-1" />
+                </ButtonV2>
+              </Link>
+            </div>
+
+            {productsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+              </div>
+            ) : enseigneProducts.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <Package className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                <p>Aucun produit sourcé pour cette enseigne</p>
+                <p className="text-sm mt-1">
+                  Les produits avec{' '}
+                  <code className="bg-gray-100 px-1 rounded">enseigne_id</code>{' '}
+                  correspondant apparaîtront ici.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                {enseigneProducts.slice(0, 12).map(product => (
+                  <Link
+                    key={product.id}
+                    href={`/produits/catalogue/${product.id}`}
+                    className="group block bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="aspect-square bg-white rounded-md border border-gray-200 overflow-hidden mb-2 flex items-center justify-center">
+                      {product.primary_image_url ? (
+                        <Image
+                          src={product.primary_image_url}
+                          alt={product.name}
+                          width={120}
+                          height={120}
+                          className="object-cover w-full h-full"
+                        />
+                      ) : (
+                        <Package className="h-8 w-8 text-gray-300" />
+                      )}
+                    </div>
+                    <h4 className="text-sm font-medium text-gray-900 truncate group-hover:text-black">
+                      {product.name}
+                    </h4>
+                    <p className="text-xs text-gray-500 truncate">
+                      {product.sku || 'Sans SKU'}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            {enseigneProducts.length > 12 && (
+              <div className="text-center mt-4">
+                <Link href={`/produits/sourcing?enseigne=${enseigneId}`}>
+                  <ButtonV2 variant="outline" size="sm">
+                    Voir les {enseigneProducts.length - 12} autres produits
+                  </ButtonV2>
+                </Link>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Modal Gestion Organisations (deux colonnes) */}

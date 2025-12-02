@@ -12,7 +12,7 @@ import {
   useSourcingProducts,
   useProductImages,
 } from '@verone/products';
-import { Alert, AlertDescription } from '@verone/ui';
+import { Alert, AlertDescription, Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
   Card,
@@ -21,7 +21,13 @@ import {
   CardHeader,
   CardTitle,
 } from '@verone/ui';
-import { ArrowLeft, CheckCircle, Package, AlertCircle } from 'lucide-react';
+import {
+  ArrowLeft,
+  CheckCircle,
+  Package,
+  AlertCircle,
+  Building2,
+} from 'lucide-react';
 
 export default function SourcingProductDetailPage() {
   const router = useRouter();
@@ -139,9 +145,29 @@ export default function SourcingProductDetailPage() {
                 Retour au sourcing
               </ButtonV2>
               <div>
-                <h1 className="text-3xl font-bold text-black">
-                  Détail Sourcing
-                </h1>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-3xl font-bold text-black">
+                    Détail Sourcing
+                  </h1>
+                  {/* Badge Sourcing */}
+                  {product.assigned_client ? (
+                    <Badge
+                      variant="customer"
+                      className="flex items-center gap-1"
+                    >
+                      <Building2 className="h-3 w-3" />
+                      Client: {product.assigned_client.name}
+                    </Badge>
+                  ) : (
+                    <Badge
+                      variant="secondary"
+                      className="flex items-center gap-1"
+                    >
+                      <Package className="h-3 w-3" />
+                      Sourcing interne
+                    </Badge>
+                  )}
+                </div>
                 <p className="text-gray-600 mt-1">
                   Validation et gestion du produit en sourcing
                 </p>

@@ -33,7 +33,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@verone/ui';
-import { ButtonUnified, IconButton } from '@verone/ui';
+import { Badge, ButtonUnified, IconButton } from '@verone/ui';
 import { cn, checkSLOCompliance } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import {
@@ -50,6 +50,7 @@ import {
   Beaker,
   Clock,
   Info,
+  Building2,
 } from 'lucide-react';
 
 // Champs obligatoires pour un produit complet
@@ -145,6 +146,11 @@ interface Product {
   created_at: string;
   updated_at: string;
   organisation_id: string;
+  enseigne_id: string | null;
+  enseigne?: {
+    id: string;
+    name: string;
+  } | null;
   supplier?: {
     id: string;
     legal_name: string;
@@ -152,6 +158,7 @@ interface Product {
     email: string | null;
     phone: string | null;
     is_active: boolean;
+    type: string | null;
   } | null;
   subcategory?: {
     id: string;
@@ -224,13 +231,18 @@ export default function ProductDetailPage() {
         .select(
           `
           *,
+          enseigne:enseignes!products_enseigne_id_fkey(
+            id,
+            name
+          ),
           supplier:organisations!products_supplier_id_fkey(
             id,
             legal_name,
             trade_name,
             email,
             phone,
-            is_active
+            is_active,
+            type
           ),
           subcategory:subcategories(
             id,
@@ -373,6 +385,29 @@ export default function ProductDetailPage() {
     ]
   );
 
+  // Calcul sourcing (interne vs client)
+  const sourcing = useMemo((): {
+    type: 'interne' | 'client';
+    clientType?: 'enseigne' | 'organisation';
+    clientName?: string;
+  } => {
+    if (product?.enseigne) {
+      return {
+        type: 'client',
+        clientType: 'enseigne',
+        clientName: product.enseigne.name,
+      };
+    }
+    if (product?.supplier?.type === 'customer') {
+      return {
+        type: 'client',
+        clientType: 'organisation',
+        clientName: product.supplier.trade_name || product.supplier.legal_name,
+      };
+    }
+    return { type: 'interne' };
+  }, [product?.enseigne, product?.supplier]);
+
   // État de chargement
   if (loading) {
     return (
@@ -427,6 +462,18 @@ export default function ProductDetailPage() {
               <nav className="text-sm text-neutral-600">
                 {breadcrumbParts.join(' › ')}
               </nav>
+              {/* Badge Sourcing */}
+              {sourcing.type === 'client' ? (
+                <Badge variant="customer" className="flex items-center gap-1">
+                  <Building2 className="h-3 w-3" />
+                  Client: {sourcing.clientName}
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <Package className="h-3 w-3" />
+                  Sourcing interne
+                </Badge>
+              )}
             </div>
             <ButtonUnified
               variant="outline"

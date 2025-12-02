@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -34,6 +34,7 @@ import {
   isModuleDeployed,
   getModulePhase,
 } from '@verone/utils/deployed-modules';
+import { createClient } from '@verone/utils/supabase/client';
 import {
   ArrowLeft,
   Building2,
@@ -47,15 +48,66 @@ import {
   FlaskConical,
 } from 'lucide-react';
 
+// Interface pour les produits du client
+interface CustomerProduct {
+  id: string;
+  name: string;
+  sku: string | null;
+  product_status: string;
+  created_at: string | null;
+  primary_image_url?: string;
+}
+
 export default function CustomerDetailPage() {
   const { customerId } = useParams();
   const [activeTab, setActiveTab] = useState('contacts');
+  const [customerProducts, setCustomerProducts] = useState<CustomerProduct[]>(
+    []
+  );
+  const [productsLoading, setProductsLoading] = useState(false);
 
   const {
     organisation: customer,
     loading,
     error,
   } = useOrganisation(customerId as string);
+
+  // Charger les produits sourcés pour ce client
+  useEffect(() => {
+    async function fetchCustomerProducts() {
+      if (!customerId || typeof customerId !== 'string') return;
+      setProductsLoading(true);
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from('products')
+          .select(
+            `id, name, sku, product_status, created_at,
+            product_images!left(public_url, is_primary)`
+          )
+          .eq('assigned_client_id', customerId)
+          .order('created_at', { ascending: false });
+
+        // Mapper les données avec l'image primaire
+        const mappedProducts: CustomerProduct[] = (data || []).map(p => ({
+          id: p.id,
+          name: p.name,
+          sku: p.sku,
+          product_status: p.product_status,
+          created_at: p.created_at,
+          primary_image_url:
+            (p.product_images as any[])?.find((img: any) => img.is_primary)
+              ?.public_url || null,
+        }));
+        setCustomerProducts(mappedProducts);
+      } catch (err) {
+        console.error('Erreur chargement produits client:', err);
+      } finally {
+        setProductsLoading(false);
+      }
+    }
+    fetchCustomerProducts();
+  }, [customerId]);
   const { archiveOrganisation, unarchiveOrganisation, refetch } =
     useOrganisations({ type: 'customer' });
 
@@ -81,6 +133,12 @@ export default function CustomerDetailPage() {
       icon: <Phone className="h-4 w-4" />,
       badge: counts.contacts.toString(),
       disabled: !isModuleDeployed('contacts'),
+    },
+    {
+      id: 'products',
+      label: 'Produits',
+      icon: <Package className="h-4 w-4" />,
+      badge: customerProducts.length.toString(),
     },
     {
       id: 'pricing',
@@ -327,6 +385,84 @@ export default function CustomerDetailPage() {
             organisationType="customer"
             onUpdate={() => handleCustomerUpdate({})}
           />
+        </TabContent>
+
+        <TabContent activeTab={activeTab} tabId="products">
+          {productsLoading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto mb-4" />
+              <p className="text-gray-600">Chargement des produits...</p>
+            </div>
+          ) : customerProducts.length === 0 ? (
+            <div className="text-center py-12">
+              <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-black mb-2">
+                Aucun produit sourcé
+              </h3>
+              <p className="text-gray-600">
+                Aucun produit n'a été sourcé pour ce client.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium text-black">
+                  Produits sourcés pour ce client
+                </h3>
+                <Badge variant="secondary">{customerProducts.length}</Badge>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {customerProducts.map(product => (
+                  <Link
+                    key={product.id}
+                    href={`/produits/catalogue/${product.id}`}
+                    className="block"
+                  >
+                    <Card className="hover:border-black transition-colors cursor-pointer">
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          {product.primary_image_url ? (
+                            <img
+                              src={product.primary_image_url}
+                              alt={product.name}
+                              className="w-12 h-12 object-cover rounded"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">
+                              <Package className="h-6 w-6 text-gray-400" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-black truncate">
+                              {product.name}
+                            </h4>
+                            {product.sku && (
+                              <p className="text-xs text-gray-500">
+                                SKU: {product.sku}
+                              </p>
+                            )}
+                            <Badge
+                              variant={
+                                product.product_status === 'active'
+                                  ? 'success'
+                                  : 'secondary'
+                              }
+                              size="sm"
+                              className="mt-1"
+                            >
+                              {product.product_status === 'active'
+                                ? 'Actif'
+                                : product.product_status}
+                            </Badge>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </TabContent>
 
         <TabContent activeTab={activeTab} tabId="orders">
