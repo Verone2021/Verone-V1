@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
+import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 
 import { CategoryHierarchySelector } from '@verone/categories';
@@ -390,12 +391,14 @@ export default function ProductDetailPage() {
     type: 'interne' | 'client';
     clientType?: 'enseigne' | 'organisation';
     clientName?: string;
+    clientId?: string;
   } => {
     if (product?.enseigne) {
       return {
         type: 'client',
         clientType: 'enseigne',
         clientName: product.enseigne.name,
+        clientId: product.enseigne.id,
       };
     }
     if (product?.supplier?.type === 'customer') {
@@ -403,6 +406,7 @@ export default function ProductDetailPage() {
         type: 'client',
         clientType: 'organisation',
         clientName: product.supplier.trade_name || product.supplier.legal_name,
+        clientId: product.supplier.id,
       };
     }
     return { type: 'interne' };
@@ -463,11 +467,22 @@ export default function ProductDetailPage() {
                 {breadcrumbParts.join(' › ')}
               </nav>
               {/* Badge Sourcing */}
-              {sourcing.type === 'client' ? (
-                <Badge variant="customer" className="flex items-center gap-1">
-                  <Building2 className="h-3 w-3" />
-                  Client: {sourcing.clientName}
-                </Badge>
+              {sourcing.type === 'client' && sourcing.clientId ? (
+                <Link
+                  href={
+                    sourcing.clientType === 'enseigne'
+                      ? `/contacts-organisations/enseignes/${sourcing.clientId}`
+                      : `/contacts-organisations/customers/${sourcing.clientId}`
+                  }
+                >
+                  <Badge
+                    variant="customer"
+                    className="flex items-center gap-1 cursor-pointer hover:bg-purple-200 transition-colors"
+                  >
+                    <Building2 className="h-3 w-3" />
+                    Client: {sourcing.clientName}
+                  </Badge>
+                </Link>
               ) : (
                 <Badge variant="secondary" className="flex items-center gap-1">
                   <Package className="h-3 w-3" />
