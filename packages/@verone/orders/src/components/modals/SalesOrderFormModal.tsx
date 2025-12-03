@@ -97,6 +97,7 @@ interface SalesOrderFormModalProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   onSuccess?: () => void;
+  buttonLabel?: string;
 }
 
 export function SalesOrderFormModal({
@@ -105,6 +106,7 @@ export function SalesOrderFormModal({
   open: controlledOpen,
   onOpenChange,
   onSuccess,
+  buttonLabel = 'Nouvelle commande',
 }: SalesOrderFormModalProps) {
   const [internalOpen, setInternalOpen] = useState(false);
 
@@ -806,7 +808,7 @@ export function SalesOrderFormModal({
       <DialogTrigger asChild>
         <ButtonV2 className="flex items-center gap-2">
           <Plus className="h-4 w-4" />
-          Nouvelle commande
+          {buttonLabel}
         </ButtonV2>
       </DialogTrigger>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">

@@ -2,16 +2,6 @@
 
 import { useState, useEffect } from 'react';
 
-import {
-  X,
-  Save,
-  Calendar,
-  Mail,
-  Phone,
-  Building,
-  AlertCircle,
-} from 'lucide-react';
-
 import { Alert, AlertDescription } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -32,6 +22,16 @@ import {
 } from '@verone/ui';
 import { Textarea } from '@verone/ui';
 import { cn } from '@verone/utils';
+import {
+  X,
+  Save,
+  Calendar,
+  Mail,
+  Phone,
+  Building,
+  AlertCircle,
+} from 'lucide-react';
+
 import type { ClientConsultation } from '@verone/consultations/hooks';
 
 interface EditConsultationModalProps {
@@ -48,7 +48,6 @@ export function EditConsultationModal({
   onUpdated,
 }: EditConsultationModalProps) {
   const [formData, setFormData] = useState({
-    organisation_name: '',
     client_email: '',
     client_phone: '',
     descriptif: '',
@@ -65,7 +64,6 @@ export function EditConsultationModal({
   useEffect(() => {
     if (consultation) {
       setFormData({
-        organisation_name: consultation.organisation_name || '',
         client_email: consultation.client_email || '',
         client_phone: consultation.client_phone || '',
         descriptif: consultation.descriptif || '',
@@ -84,10 +82,6 @@ export function EditConsultationModal({
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-
-    if (!formData.organisation_name.trim()) {
-      newErrors.organisation_name = "L'organisation cliente est obligatoire";
-    }
 
     if (!formData.client_email.trim()) {
       newErrors.client_email = "L'email client est obligatoire";
@@ -118,7 +112,6 @@ export function EditConsultationModal({
 
     try {
       const updates: Partial<ClientConsultation> = {
-        organisation_name: formData.organisation_name,
         client_email: formData.client_email,
         client_phone: formData.client_phone || undefined,
         descriptif: formData.descriptif,
@@ -161,38 +154,6 @@ export function EditConsultationModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-1 mt-1">
-          {/* Organisation Client (éditable) */}
-          <div className="space-y-1">
-            <Label htmlFor="organisation-name" className="text-xs font-medium">
-              Organisation cliente *
-            </Label>
-            <div className="relative">
-              <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
-              <Input
-                id="organisation-name"
-                type="text"
-                value={formData.organisation_name}
-                onChange={e => {
-                  setFormData(prev => ({
-                    ...prev,
-                    organisation_name: e.target.value,
-                  }));
-                  if (errors.organisation_name)
-                    setErrors(prev => ({ ...prev, organisation_name: '' }));
-                }}
-                placeholder="Nom de l'organisation cliente"
-                className={cn(
-                  'pl-10',
-                  errors.organisation_name &&
-                    'border-red-300 focus:border-red-500'
-                )}
-              />
-            </div>
-            {errors.organisation_name && (
-              <p className="text-xs text-red-600">{errors.organisation_name}</p>
-            )}
-          </div>
-
           {/* Email Client */}
           <div className="space-y-1">
             <Label htmlFor="client-email" className="text-xs font-medium">

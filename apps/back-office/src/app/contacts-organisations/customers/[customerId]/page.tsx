@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 
 import { AddressEditSection } from '@verone/common';
 import { ContactEditSection } from '@verone/customers';
@@ -60,6 +60,8 @@ interface CustomerProduct {
 
 export default function CustomerDetailPage() {
   const { customerId } = useParams();
+  const searchParams = useSearchParams();
+  const returnUrl = searchParams.get('returnUrl');
   const [activeTab, setActiveTab] = useState('contacts');
   const [customerProducts, setCustomerProducts] = useState<CustomerProduct[]>(
     []
@@ -241,12 +243,25 @@ export default function CustomerDetailPage() {
       <div className="flex justify-between items-start">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <Link href="/contacts-organisations/customers">
-              <ButtonV2 variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-1" />
-                Clients
-              </ButtonV2>
-            </Link>
+            {returnUrl ? (
+              <Link href={decodeURIComponent(returnUrl)}>
+                <ButtonV2
+                  variant="ghost"
+                  size="sm"
+                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-1" />
+                  Retour à LinkMe
+                </ButtonV2>
+              </Link>
+            ) : (
+              <Link href="/contacts-organisations/customers">
+                <ButtonV2 variant="ghost" size="sm">
+                  <ArrowLeft className="h-4 w-4 mr-1" />
+                  Clients
+                </ButtonV2>
+              </Link>
+            )}
           </div>
           <div className="flex items-center gap-3 mb-2">
             <Building2 className="h-5 w-5 text-black" />

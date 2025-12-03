@@ -2,14 +2,18 @@
 
 import { useState, useMemo } from 'react';
 
+import Link from 'next/link';
+
+import { CategoryFilterCombobox } from '@verone/categories';
 import { ProductThumbnail } from '@verone/products/components/images/ProductThumbnail';
 import {
   UniversalProductSelectorV2,
   type SelectedProduct,
 } from '@verone/products/components/selectors/UniversalProductSelectorV2';
-import { Badge } from '@verone/ui';
+import { Badge, Progress } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent } from '@verone/ui';
+import { IconButton } from '@verone/ui';
 import { Input } from '@verone/ui';
 import {
   Select,
@@ -18,20 +22,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
-import { Switch } from '@verone/ui';
 import { cn } from '@verone/utils';
 import {
   Search,
   Package,
-  Eye,
-  EyeOff,
   Star,
   Plus,
   Loader2,
-  ToggleLeft,
   ToggleRight,
   X,
-  Building2,
+  LayoutGrid,
+  List,
+  Eye,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -39,11 +41,10 @@ import {
   useLinkMeCatalogProducts,
   useAddProductsToCatalog,
   useToggleProductEnabled,
-  useToggleProductShowcase,
   useToggleProductFeatured,
-  useToggleShowSupplier,
   type LinkMeCatalogProduct,
 } from '../hooks/use-linkme-catalog';
+import { calculateSimpleCompleteness } from '../types';
 
 /**
  * Page Catalogue LinkMe
@@ -58,9 +59,14 @@ export default function LinkMeCataloguePage() {
   // State: Filtres
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<
-    'all' | 'enabled' | 'disabled' | 'showcase'
+    'all' | 'enabled' | 'disabled'
   >('all');
-  const [familyFilter, setFamilyFilter] = useState<string>('all');
+  const [subcategoryFilter, setSubcategoryFilter] = useState<
+    string | undefined
+  >(undefined);
+
+  // State: Vue (grille ou liste)
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   // State: Modal ajout produits
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -70,23 +76,11 @@ export default function LinkMeCataloguePage() {
     useLinkMeCatalogProducts();
   const addProductsMutation = useAddProductsToCatalog();
   const toggleEnabledMutation = useToggleProductEnabled();
-  const toggleShowcaseMutation = useToggleProductShowcase();
   const toggleFeaturedMutation = useToggleProductFeatured();
-  const toggleShowSupplierMutation = useToggleShowSupplier();
 
   // Produits déjà dans le catalogue (IDs) - pour exclure du sélecteur
   const catalogProductIds = useMemo(() => {
     return catalogProducts?.map(p => p.product_id) || [];
-  }, [catalogProducts]);
-
-  // Extraction familles uniques
-  const families = useMemo(() => {
-    const unique = new Set(
-      (catalogProducts || [])
-        .map(p => p.product_family_name)
-        .filter(Boolean) as string[]
-    );
-    return Array.from(unique).sort();
   }, [catalogProducts]);
 
   // Produits filtrés
@@ -105,20 +99,15 @@ export default function LinkMeCataloguePage() {
       // Statut
       if (statusFilter === 'enabled' && !product.is_enabled) return false;
       if (statusFilter === 'disabled' && product.is_enabled) return false;
-      if (statusFilter === 'showcase' && !product.is_public_showcase)
-        return false;
 
-      // Famille
-      if (
-        familyFilter !== 'all' &&
-        product.product_family_name !== familyFilter
-      ) {
+      // Sous-catégorie (filtre hiérarchique)
+      if (subcategoryFilter && product.subcategory_id !== subcategoryFilter) {
         return false;
       }
 
       return true;
     });
-  }, [catalogProducts, searchTerm, statusFilter, familyFilter]);
+  }, [catalogProducts, searchTerm, statusFilter, subcategoryFilter]);
 
   // Stats
   const stats = useMemo(() => {
@@ -126,7 +115,6 @@ export default function LinkMeCataloguePage() {
     return {
       total: products.length,
       enabled: products.filter(p => p.is_enabled).length,
-      showcase: products.filter(p => p.is_public_showcase).length,
       featured: products.filter(p => p.is_featured).length,
     };
   }, [catalogProducts]);
@@ -148,22 +136,6 @@ export default function LinkMeCataloguePage() {
     }
   };
 
-  const handleToggleShowcase = async (product: LinkMeCatalogProduct) => {
-    try {
-      await toggleShowcaseMutation.mutateAsync({
-        catalogProductId: product.id,
-        isPublicShowcase: !product.is_public_showcase,
-      });
-      toast.success(
-        product.is_public_showcase
-          ? 'Produit retiré de la vitrine'
-          : 'Produit ajouté à la vitrine'
-      );
-    } catch {
-      toast.error('Erreur lors de la modification');
-    }
-  };
-
   const handleToggleFeatured = async (product: LinkMeCatalogProduct) => {
     try {
       await toggleFeaturedMutation.mutateAsync({
@@ -174,22 +146,6 @@ export default function LinkMeCataloguePage() {
         product.is_featured
           ? 'Produit retiré des vedettes'
           : 'Produit ajouté aux vedettes'
-      );
-    } catch {
-      toast.error('Erreur lors de la modification');
-    }
-  };
-
-  const handleToggleShowSupplier = async (product: LinkMeCatalogProduct) => {
-    try {
-      await toggleShowSupplierMutation.mutateAsync({
-        catalogProductId: product.id,
-        showSupplier: !product.show_supplier,
-      });
-      toast.success(
-        product.show_supplier
-          ? 'Fournisseur masqué des partenaires'
-          : 'Fournisseur affiché dans les partenaires'
       );
     } catch {
       toast.error('Erreur lors de la modification');
@@ -247,7 +203,7 @@ export default function LinkMeCataloguePage() {
       {/* Content */}
       <div className="flex-1 p-6 overflow-auto space-y-6">
         {/* Stats KPI */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <Card>
             <CardContent className="pt-4">
               <div className="flex items-center gap-3">
@@ -271,20 +227,6 @@ export default function LinkMeCataloguePage() {
                 <div>
                   <p className="text-2xl font-bold">{stats.enabled}</p>
                   <p className="text-sm text-gray-500">Actifs</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
-                  <Eye className="h-5 w-5 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{stats.showcase}</p>
-                  <p className="text-sm text-gray-500">En vitrine</p>
                 </div>
               </div>
             </CardContent>
@@ -333,24 +275,16 @@ export default function LinkMeCataloguePage() {
                   <SelectItem value="all">Tous les statuts</SelectItem>
                   <SelectItem value="enabled">Actifs uniquement</SelectItem>
                   <SelectItem value="disabled">Désactivés</SelectItem>
-                  <SelectItem value="showcase">En vitrine</SelectItem>
                 </SelectContent>
               </Select>
 
-              {/* Filtre Famille */}
-              <Select value={familyFilter} onValueChange={setFamilyFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Famille" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Toutes familles</SelectItem>
-                  {families.map(family => (
-                    <SelectItem key={family} value={family}>
-                      {family}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {/* Filtre Catégorie hiérarchique */}
+              <CategoryFilterCombobox
+                value={subcategoryFilter}
+                onValueChange={setSubcategoryFilter}
+                entityType="products"
+                placeholder="Catégorie..."
+              />
             </div>
 
             <div className="flex items-center justify-between mt-4 pt-4 border-t">
@@ -359,27 +293,58 @@ export default function LinkMeCataloguePage() {
                 {filteredProducts.length > 1 ? 's' : ''} affiché
                 {filteredProducts.length > 1 ? 's' : ''}
               </p>
-              {(searchTerm ||
-                statusFilter !== 'all' ||
-                familyFilter !== 'all') && (
-                <ButtonV2
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setSearchTerm('');
-                    setStatusFilter('all');
-                    setFamilyFilter('all');
-                  }}
-                >
-                  <X className="h-4 w-4 mr-1" />
-                  Réinitialiser filtres
-                </ButtonV2>
-              )}
+
+              <div className="flex items-center gap-2">
+                {/* Toggle Vue Grille/Liste */}
+                <div className="flex items-center border rounded-lg p-0.5 bg-gray-100">
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    className={cn(
+                      'p-1.5 rounded transition-colors',
+                      viewMode === 'grid'
+                        ? 'bg-white shadow-sm text-purple-600'
+                        : 'text-gray-500 hover:text-gray-700'
+                    )}
+                    title="Vue grille"
+                  >
+                    <LayoutGrid className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={cn(
+                      'p-1.5 rounded transition-colors',
+                      viewMode === 'list'
+                        ? 'bg-white shadow-sm text-purple-600'
+                        : 'text-gray-500 hover:text-gray-700'
+                    )}
+                    title="Vue liste"
+                  >
+                    <List className="h-4 w-4" />
+                  </button>
+                </div>
+
+                {(searchTerm ||
+                  statusFilter !== 'all' ||
+                  subcategoryFilter) && (
+                  <ButtonV2
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSearchTerm('');
+                      setStatusFilter('all');
+                      setSubcategoryFilter(undefined);
+                    }}
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Réinitialiser filtres
+                  </ButtonV2>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Grille produits */}
+        {/* Produits */}
         {filteredProducts.length === 0 ? (
           <div className="text-center py-24 border-2 border-dashed border-gray-300 rounded-lg bg-white">
             <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
@@ -387,10 +352,11 @@ export default function LinkMeCataloguePage() {
               Aucun produit dans le catalogue
             </p>
             <p className="text-sm text-gray-500 mt-1">
-              Cliquez sur "Ajouter des produits" pour commencer
+              Cliquez sur &quot;Ajouter des produits&quot; pour commencer
             </p>
           </div>
-        ) : (
+        ) : viewMode === 'grid' ? (
+          /* VUE GRILLE */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredProducts.map(product => (
               <Card
@@ -399,9 +365,7 @@ export default function LinkMeCataloguePage() {
                   'border-2 transition-all duration-150',
                   !product.is_enabled
                     ? 'border-gray-200 bg-gray-50 opacity-75'
-                    : product.is_public_showcase
-                      ? 'border-purple-300 bg-purple-50/30'
-                      : 'border-gray-200 hover:border-gray-300'
+                    : 'border-gray-200 hover:border-gray-300'
                 )}
               >
                 <CardContent className="p-4 space-y-3">
@@ -415,13 +379,13 @@ export default function LinkMeCataloguePage() {
                     />
 
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-sm text-black line-clamp-2">
+                      <h3 className="font-semibold text-xs text-black truncate">
                         {product.product_name}
                       </h3>
                       <p className="text-xs text-gray-500 font-mono">
                         {product.product_reference}
                       </p>
-                      <div className="flex items-center gap-1 mt-1">
+                      <div className="flex items-center gap-2 mt-1">
                         {product.is_featured && (
                           <Badge
                             variant="outline"
@@ -430,131 +394,172 @@ export default function LinkMeCataloguePage() {
                             Vedette
                           </Badge>
                         )}
-                        {product.is_public_showcase && (
-                          <Badge
-                            variant="outline"
-                            className="text-xs border-purple-500 text-purple-700 bg-purple-50"
-                          >
-                            Vitrine
+                        {product.is_enabled ? (
+                          <Badge variant="success" className="text-xs">
+                            Actif
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="text-xs">
+                            Inactif
                           </Badge>
                         )}
                       </div>
                     </div>
                   </div>
 
-                  {/* Prix et Marge */}
-                  <div className="flex items-center justify-between bg-gray-50 rounded p-2">
-                    <div>
-                      <p className="text-xs text-gray-500">Prix HT</p>
-                      <p className="text-sm font-semibold">
-                        {product.product_price_ht?.toFixed(2) ?? '0.00'} €
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-gray-500">Marge affilié</p>
-                      <p className="text-sm font-semibold text-purple-600">
-                        {product.min_margin_rate}% - {product.max_margin_rate}%
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Toggles */}
-                  <div className="space-y-2 pt-2 border-t">
-                    {/* Toggle Actif */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {product.is_enabled ? (
-                          <ToggleRight className="h-4 w-4 text-green-600" />
-                        ) : (
-                          <ToggleLeft className="h-4 w-4 text-gray-400" />
-                        )}
-                        <span className="text-sm">Actif (affiliés)</span>
-                      </div>
-                      <Switch
-                        checked={product.is_enabled}
-                        onCheckedChange={() => handleToggleEnabled(product)}
-                        disabled={toggleEnabledMutation.isPending}
-                      />
-                    </div>
-
-                    {/* Toggle Vitrine */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {product.is_public_showcase ? (
-                          <Eye className="h-4 w-4 text-purple-600" />
-                        ) : (
-                          <EyeOff className="h-4 w-4 text-gray-400" />
-                        )}
-                        <span className="text-sm">Vitrine publique</span>
-                      </div>
-                      <Switch
-                        checked={product.is_public_showcase}
-                        onCheckedChange={() => handleToggleShowcase(product)}
-                        disabled={
-                          toggleShowcaseMutation.isPending ||
-                          !product.is_enabled
-                        }
-                      />
-                    </div>
-
-                    {/* Toggle Vedette */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Star
+                  {/* Complétude */}
+                  {(() => {
+                    const completeness = calculateSimpleCompleteness(product);
+                    return (
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-xs">
+                          <span
+                            className={cn(
+                              completeness === 100
+                                ? 'text-green-600'
+                                : 'text-amber-600'
+                            )}
+                          >
+                            {completeness}% complet
+                          </span>
+                          {completeness < 100 && (
+                            <span className="text-gray-400">Non validé</span>
+                          )}
+                        </div>
+                        <Progress
+                          value={completeness}
                           className={cn(
-                            'h-4 w-4',
-                            product.is_featured
-                              ? 'text-yellow-500 fill-yellow-500'
-                              : 'text-gray-400'
+                            'h-1.5',
+                            completeness === 100
+                              ? '[&>div]:bg-green-500'
+                              : '[&>div]:bg-amber-500'
                           )}
                         />
-                        <span className="text-sm">Produit vedette</span>
                       </div>
-                      <Switch
-                        checked={product.is_featured}
-                        onCheckedChange={() => handleToggleFeatured(product)}
-                        disabled={
-                          toggleFeaturedMutation.isPending ||
-                          !product.is_enabled
-                        }
-                      />
-                    </div>
+                    );
+                  })()}
 
-                    {/* Toggle Afficher Fournisseur */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Building2
-                          className={cn(
-                            'h-4 w-4',
-                            product.show_supplier
-                              ? 'text-blue-600'
-                              : 'text-gray-400'
-                          )}
-                        />
-                        <span className="text-sm">Afficher fournisseur</span>
-                      </div>
-                      <Switch
-                        checked={product.show_supplier || false}
-                        onCheckedChange={() =>
-                          handleToggleShowSupplier(product)
-                        }
-                        disabled={
-                          toggleShowSupplierMutation.isPending ||
-                          !product.is_enabled
-                        }
-                      />
+                  {/* Footer: Stats + Action */}
+                  <div className="flex items-center justify-between pt-2 border-t">
+                    <div className="text-xs text-gray-500">
+                      <span>{product.views_count} vues</span>
+                      <span className="mx-1">•</span>
+                      <span>{product.selections_count} sél.</span>
                     </div>
-                  </div>
-
-                  {/* Stats */}
-                  <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t">
-                    <span>{product.views_count} vues</span>
-                    <span>{product.selections_count} sélections</span>
+                    <Link href={`/canaux-vente/linkme/catalogue/${product.id}`}>
+                      <IconButton
+                        variant="outline"
+                        size="sm"
+                        icon={Eye}
+                        label="Voir détails"
+                      />
+                    </Link>
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
+        ) : (
+          /* VUE LISTE */
+          <Card>
+            <div className="divide-y">
+              {filteredProducts.map(product => (
+                <div
+                  key={product.id}
+                  className={cn(
+                    'flex items-center gap-4 p-4 transition-colors',
+                    !product.is_enabled
+                      ? 'bg-gray-50 opacity-75'
+                      : 'hover:bg-gray-50'
+                  )}
+                >
+                  {/* Thumbnail */}
+                  <ProductThumbnail
+                    src={product.product_image_url}
+                    alt={product.product_name}
+                    size="sm"
+                    className="flex-shrink-0"
+                  />
+
+                  {/* Info produit */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-xs text-black truncate">
+                        {product.product_name}
+                      </h3>
+                      {product.is_featured && (
+                        <Badge
+                          variant="outline"
+                          className="text-xs border-yellow-500 text-yellow-700 bg-yellow-50"
+                        >
+                          Vedette
+                        </Badge>
+                      )}
+                      {product.is_enabled ? (
+                        <Badge variant="success" className="text-xs">
+                          Actif
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary" className="text-xs">
+                          Inactif
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 font-mono">
+                      {product.product_reference}
+                    </p>
+                  </div>
+
+                  {/* Complétude compacte */}
+                  <div className="hidden md:flex items-center gap-2 min-w-[100px]">
+                    {(() => {
+                      const completeness = calculateSimpleCompleteness(product);
+                      return (
+                        <>
+                          <Progress
+                            value={completeness}
+                            className={cn(
+                              'h-1.5 w-16',
+                              completeness === 100
+                                ? '[&>div]:bg-green-500'
+                                : '[&>div]:bg-amber-500'
+                            )}
+                          />
+                          <span
+                            className={cn(
+                              'text-xs',
+                              completeness === 100
+                                ? 'text-green-600'
+                                : 'text-amber-600'
+                            )}
+                          >
+                            {completeness}%
+                          </span>
+                        </>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Stats compactes */}
+                  <div className="text-xs text-gray-500 hidden lg:block">
+                    <span>{product.views_count} vues</span>
+                    <span className="mx-1">•</span>
+                    <span>{product.selections_count} sél.</span>
+                  </div>
+
+                  {/* Lien détail */}
+                  <Link href={`/canaux-vente/linkme/catalogue/${product.id}`}>
+                    <IconButton
+                      variant="outline"
+                      size="sm"
+                      icon={Eye}
+                      label="Voir détails"
+                    />
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </Card>
         )}
       </div>
 

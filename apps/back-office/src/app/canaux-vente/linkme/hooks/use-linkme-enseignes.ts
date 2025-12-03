@@ -16,6 +16,7 @@ export interface EnseigneWithStats {
   name: string;
   description: string | null;
   logo_url: string | null;
+  city?: string | null;
   member_count: number;
   is_active: boolean;
   created_at: string;

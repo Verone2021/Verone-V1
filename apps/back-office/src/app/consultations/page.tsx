@@ -49,6 +49,20 @@ import {
 import { ConsultationImageViewerModal } from '../../components/business/consultation-image-viewer-modal';
 import { ConsultationOrderInterface } from '../../components/business/consultation-order-interface';
 
+// Helper pour récupérer le nom du client (enseigne ou organisation)
+function getClientName(consultation: any): string {
+  if (consultation.enseigne?.name) {
+    return consultation.enseigne.name;
+  }
+  if (consultation.organisation?.trade_name) {
+    return consultation.organisation.trade_name;
+  }
+  if (consultation.organisation?.legal_name) {
+    return consultation.organisation.legal_name;
+  }
+  return 'Client inconnu';
+}
+
 // Composant pour afficher une ligne de consultation avec miniature photo
 interface ConsultationRowProps {
   consultation: any;
@@ -76,17 +90,14 @@ function ConsultationRow({
           ) : hasImages && primaryImage ? (
             <button
               onClick={() =>
-                onOpenPhotoModal(
-                  consultation.id,
-                  consultation.organisation_name
-                )
+                onOpenPhotoModal(consultation.id, getClientName(consultation))
               }
               className="relative w-12 h-12 overflow-hidden rounded border border-gray-200 hover:border-black transition-colors group"
               title="Cliquer pour voir toutes les photos"
             >
               <Image
                 src={primaryImage.public_url || '/placeholder-consultation.svg'}
-                alt={`Photo ${consultation.organisation_name}`}
+                alt={`Photo ${getClientName(consultation)}`}
                 fill
                 className="object-cover group-hover:scale-110 transition-transform"
                 sizes="48px"
@@ -106,7 +117,7 @@ function ConsultationRow({
         <div className="flex-1 space-y-2">
           <div className="flex items-center space-x-4">
             <h3 className="text-lg font-semibold">
-              {consultation.organisation_name}
+              {getClientName(consultation)}
             </h3>
             <Badge
               variant="outline"
@@ -237,7 +248,7 @@ export default function ConsultationsPage() {
   // Filtrer les consultations
   const filteredConsultations = consultations.filter(consultation => {
     const matchesSearch =
-      consultation.organisation_name
+      getClientName(consultation)
         .toLowerCase()
         .includes(searchTerm.toLowerCase()) ||
       consultation.descriptif

@@ -37,6 +37,21 @@ import {
   Package,
 } from 'lucide-react';
 
+// Helper pour récupérer le nom du client (enseigne ou organisation)
+function getClientName(consultation: ClientConsultation | null): string {
+  if (!consultation) return 'Client inconnu';
+  if (consultation.enseigne?.name) {
+    return consultation.enseigne.name;
+  }
+  if (consultation.organisation?.trade_name) {
+    return consultation.organisation.trade_name;
+  }
+  if (consultation.organisation?.legal_name) {
+    return consultation.organisation.legal_name;
+  }
+  return 'Client inconnu';
+}
+
 export default function ConsultationDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -241,9 +256,7 @@ export default function ConsultationDetailPage() {
                 <h1 className="text-xs font-bold text-black">
                   Détail Consultation
                 </h1>
-                <p className="text-gray-600">
-                  {consultation.organisation_name}
-                </p>
+                <p className="text-gray-600">{getClientName(consultation)}</p>
               </div>
             </div>
 
@@ -283,7 +296,7 @@ export default function ConsultationDetailPage() {
               <CardContent>
                 <ConsultationImageGallery
                   consultationId={consultationId}
-                  consultationTitle={consultation.organisation_name}
+                  consultationTitle={getClientName(consultation)}
                   consultationStatus={consultation.status}
                   allowEdit
                   className="w-full"
@@ -315,9 +328,9 @@ export default function ConsultationDetailPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
                   <div className="space-y-1">
                     <div>
-                      <p className="text-xs text-gray-600">Organisation</p>
+                      <p className="text-xs text-gray-600">Client</p>
                       <p className="font-medium">
-                        {consultation.organisation_name}
+                        {getClientName(consultation)}
                       </p>
                     </div>
                     <div>

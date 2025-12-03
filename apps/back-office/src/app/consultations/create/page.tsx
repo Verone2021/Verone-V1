@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
 import { useToast } from '@verone/common';
-import { useConsultations } from '@verone/consultations';
 import type { CreateConsultationData } from '@verone/consultations';
-import { useOrganisations } from '@verone/organisations';
+import { ClientOrEnseigneSelector } from '@verone/products';
 import { ButtonUnified } from '@verone/ui';
 import {
   Card,
@@ -16,7 +15,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@verone/ui';
-import { Combobox } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import {
@@ -28,15 +26,14 @@ import {
 } from '@verone/ui';
 import { Textarea } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
-import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 import { ArrowLeft, Send, Upload, Calendar, AlertCircle } from 'lucide-react';
 
-import { CreateOrganisationModal } from '../../../components/business/create-organisation-modal';
 import { createConsultation as createConsultationAction } from '../../actions/consultations';
 
-// Interface pour le formulaire (utilise organisation_id pour le sélecteur)
+// Interface pour le formulaire
 interface ConsultationFormData {
-  organisation_id: string;
+  enseigne_id: string | null;
+  organisation_id: string | null;
   client_email: string;
   client_phone?: string;
   descriptif: string;
@@ -50,19 +47,12 @@ interface ConsultationFormData {
 export default function CreateConsultationPage() {
   const router = useRouter();
   const supabase = createClient();
-  const {
-    organisations,
-    loading: loadingOrgs,
-    refetch,
-  } = useOrganisations({
-    type: 'customer',
-    is_active: true,
-  });
   const { toast } = useToast();
 
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<ConsultationFormData>({
-    organisation_id: '',
+    enseigne_id: null,
+    organisation_id: null,
     client_email: '',
     client_phone: '',
     descriptif: '',
@@ -75,12 +65,6 @@ export default function CreateConsultationPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Options pour le Combobox
-  const organisationOptions = organisations.map(org => ({
-    value: org.id,
-    label: getOrganisationDisplayName(org),
-  }));
-
   const handleInputChange = (field: keyof ConsultationFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
 
@@ -90,29 +74,43 @@ export default function CreateConsultationPage() {
     }
   };
 
-  // Handler pour la création d'organisation depuis le modal
-  const handleOrganisationCreated = async (
-    organisationId: string,
-    organisationName: string
+  // Handlers pour ClientOrEnseigneSelector
+  const handleEnseigneChange = (
+    enseigneId: string | null,
+    _enseigneName: string | null,
+    _parentOrgId: string | null
   ) => {
-    // Rafraîchir la liste des organisations
-    await refetch();
+    setFormData(prev => ({
+      ...prev,
+      enseigne_id: enseigneId,
+    }));
+    // Clear error when selection changes
+    if (errors.client) {
+      setErrors(prev => ({ ...prev, client: '' }));
+    }
+  };
 
-    // Auto-sélectionner la nouvelle organisation
-    setFormData(prev => ({ ...prev, organisation_id: organisationId }));
-
-    toast({
-      title: '✅ Client créé et sélectionné',
-      description: `${organisationName} a été créé et sélectionné automatiquement.`,
-    });
+  const handleOrganisationChange = (
+    organisationId: string | null,
+    _organisationName: string | null
+  ) => {
+    setFormData(prev => ({
+      ...prev,
+      organisation_id: organisationId,
+    }));
+    // Clear error when selection changes
+    if (errors.client) {
+      setErrors(prev => ({ ...prev, client: '' }));
+    }
   };
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    // Required fields
-    if (!formData.organisation_id.trim()) {
-      newErrors.organisation_id = "L'organisation cliente est requise";
+    // Required: au moins enseigne_id OU organisation_id
+    if (!formData.enseigne_id && !formData.organisation_id) {
+      newErrors.client =
+        'Veuillez sélectionner une enseigne ou une organisation';
     }
 
     if (!formData.client_email.trim()) {
@@ -159,18 +157,10 @@ export default function CreateConsultationPage() {
         throw new Error('Utilisateur non authentifié');
       }
 
-      // Récupérer le nom de l'organisation sélectionnée
-      const selectedOrg = organisations.find(
-        o => o.id === formData.organisation_id
-      );
-      if (!selectedOrg) {
-        throw new Error('Organisation non trouvée');
-      }
-      const orgName = getOrganisationDisplayName(selectedOrg);
-
-      // Préparer les données en supprimant les champs vides optionnels
+      // Préparer les données avec enseigne_id et/ou organisation_id
       const dataToSubmit: CreateConsultationData = {
-        organisation_name: orgName, // ✅ FIX Bug #9: Utiliser organisation_name au lieu de organisation_id
+        enseigne_id: formData.enseigne_id || undefined,
+        organisation_id: formData.organisation_id || undefined,
         client_email: formData.client_email.trim(),
         descriptif: formData.descriptif.trim(),
         priority_level: formData.priority_level || 2,
@@ -203,7 +193,7 @@ export default function CreateConsultationPage() {
 
       toast({
         title: 'Consultation créée',
-        description: `Nouvelle consultation pour ${orgName}`,
+        description: 'La consultation a été créée avec succès',
       });
       router.push('/consultations');
     } catch (error) {
@@ -269,42 +259,21 @@ export default function CreateConsultationPage() {
                   </h3>
 
                   <div className="grid grid-cols-1 gap-4">
-                    {/* Sélection organisation client + Création */}
+                    {/* Sélection enseigne ou organisation */}
                     <div className="space-y-2">
-                      <Label htmlFor="organisation_id">
-                        Client Professionnel{' '}
-                        <span className="text-red-500">*</span>
-                      </Label>
-                      <div className="flex gap-2">
-                        <div className="flex-1">
-                          <Combobox
-                            options={organisationOptions}
-                            value={formData.organisation_id}
-                            onValueChange={value =>
-                              handleInputChange('organisation_id', value)
-                            }
-                            placeholder={
-                              loadingOrgs
-                                ? 'Chargement...'
-                                : 'Sélectionner un client...'
-                            }
-                            searchPlaceholder="Rechercher un client..."
-                            emptyMessage="Aucun client trouvé."
-                            disabled={loadingOrgs}
-                            className={
-                              errors.organisation_id ? 'border-red-500' : ''
-                            }
-                          />
-                        </div>
-                        <CreateOrganisationModal
-                          onOrganisationCreated={handleOrganisationCreated}
-                          defaultType="customer"
-                        />
-                      </div>
-                      {errors.organisation_id && (
+                      <ClientOrEnseigneSelector
+                        enseigneId={formData.enseigne_id}
+                        organisationId={formData.organisation_id}
+                        onEnseigneChange={handleEnseigneChange}
+                        onOrganisationChange={handleOrganisationChange}
+                        label="Client (enseigne ou organisation)"
+                        required
+                        className={errors.client ? 'border-red-500' : ''}
+                      />
+                      {errors.client && (
                         <p className="text-xs text-red-500 flex items-center">
                           <AlertCircle className="h-3 w-3 mr-1" />
-                          {errors.organisation_id}
+                          {errors.client}
                         </p>
                       )}
                     </div>

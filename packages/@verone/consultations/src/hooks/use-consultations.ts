@@ -2,15 +2,16 @@
 
 import { useState, useEffect } from 'react';
 
-import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@verone/common/hooks';
+import { createClient } from '@verone/utils/supabase/client';
 
 const supabase = createClient();
 
 // Types pour les consultations
 export interface ClientConsultation {
   id: string;
-  organisation_name: string;
+  enseigne_id?: string;
+  organisation_id?: string;
   client_email: string;
   client_phone?: string;
   descriptif: string;
@@ -34,6 +35,9 @@ export interface ClientConsultation {
   archived_by?: string;
   deleted_at?: string;
   deleted_by?: string;
+  // Relations (optionnelles, pour joins)
+  enseigne?: { id: string; name: string };
+  organisation?: { id: string; legal_name: string; trade_name?: string };
 }
 
 // Interface existante maintenue pour rétrocompatibilité
@@ -81,7 +85,8 @@ export interface ConsultationItem {
 }
 
 export interface CreateConsultationData {
-  organisation_name: string; // Nom de l'organisation cliente
+  enseigne_id?: string;
+  organisation_id?: string;
   client_email: string;
   client_phone?: string;
   descriptif: string;
@@ -202,9 +207,16 @@ export function useConsultations() {
         .from('client_consultations')
         .insert([
           {
-            ...data,
+            enseigne_id: data.enseigne_id || null,
+            organisation_id: data.organisation_id || null,
+            client_email: data.client_email,
+            client_phone: data.client_phone,
+            descriptif: data.descriptif,
+            image_url: data.image_url,
+            tarif_maximum: data.tarif_maximum,
             priority_level: data.priority_level || 2,
             source_channel: data.source_channel || 'website',
+            estimated_response_date: data.estimated_response_date,
           },
         ])
         .select()
@@ -217,7 +229,7 @@ export function useConsultations() {
 
       toast({
         title: 'Consultation créée',
-        description: `Nouvelle consultation pour ${data.organisation_name}`,
+        description: 'La consultation a été créée avec succès',
       });
 
       return newConsultation as any;

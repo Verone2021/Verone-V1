@@ -10,13 +10,14 @@ import {
   ProductDetailHeader,
   ProductPricingCard,
   ProductInfoCard,
-  ProductStatsCard,
+  ProductVariantsCard,
 } from '../../components';
 import {
   useLinkMeProductDetail,
   useUpdateLinkMePricing,
   useUpdateLinkMeMetadata,
   useToggleLinkMeProductField,
+  useLinkMeProductVariants,
 } from '../../hooks/use-linkme-catalog';
 import type { LinkMePricingUpdate, LinkMeMetadataUpdate } from '../../types';
 
@@ -27,14 +28,18 @@ import type { LinkMePricingUpdate, LinkMeMetadataUpdate } from '../../types';
 export default function LinkMeProductDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const channelPricingId = params.id as string;
+  const catalogProductId = params.id as string;
 
   // Hooks données
   const {
     data: product,
     isLoading,
     error,
-  } = useLinkMeProductDetail(channelPricingId);
+  } = useLinkMeProductDetail(catalogProductId);
+
+  // Hook variantes (dépend de product_id)
+  const { data: variants, isLoading: variantsLoading } =
+    useLinkMeProductVariants(product?.product_id ?? null);
 
   // Hooks mutations
   const updatePricing = useUpdateLinkMePricing();
@@ -43,11 +48,15 @@ export default function LinkMeProductDetailPage() {
 
   // Handlers
   const handleToggle = async (
-    field: 'is_active' | 'is_public_showcase' | 'is_featured' | 'show_supplier',
+    field:
+      | 'is_enabled'
+      | 'is_public_showcase'
+      | 'is_featured'
+      | 'show_supplier',
     value: boolean
   ) => {
     try {
-      await toggleField.mutateAsync({ channelPricingId, field, value });
+      await toggleField.mutateAsync({ catalogProductId, field, value });
       toast.success('Paramètre mis à jour');
     } catch {
       toast.error('Erreur lors de la mise à jour');
@@ -56,7 +65,7 @@ export default function LinkMeProductDetailPage() {
 
   const handleSavePricing = async (pricing: LinkMePricingUpdate) => {
     try {
-      await updatePricing.mutateAsync({ channelPricingId, pricing });
+      await updatePricing.mutateAsync({ catalogProductId, pricing });
       toast.success('Pricing enregistré');
     } catch {
       toast.error('Erreur lors de la sauvegarde du pricing');
@@ -65,7 +74,7 @@ export default function LinkMeProductDetailPage() {
 
   const handleSaveMetadata = async (metadata: LinkMeMetadataUpdate) => {
     try {
-      await updateMetadata.mutateAsync({ channelPricingId, metadata });
+      await updateMetadata.mutateAsync({ catalogProductId, metadata });
       toast.success('Informations enregistrées');
     } catch {
       toast.error('Erreur lors de la sauvegarde des informations');
@@ -146,39 +155,40 @@ export default function LinkMeProductDetailPage() {
         </div>
       </div>
 
-      {/* Contenu principal - Grid 2 colonnes */}
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Colonne gauche : Header + Infos */}
-        <div className="space-y-6">
-          <Card>
-            <CardContent className="pt-6">
-              <ProductDetailHeader
-                product={product}
-                onToggleActive={v => handleToggle('is_active', v)}
-                onToggleFeatured={v => handleToggle('is_featured', v)}
-                isUpdating={toggleField.isPending}
-              />
-            </CardContent>
-          </Card>
-
-          <ProductInfoCard
+      {/* Section 1 : Header produit - Pleine largeur */}
+      <Card>
+        <CardContent className="pt-6">
+          <ProductDetailHeader
             product={product}
-            onSave={handleSaveMetadata}
-            isSaving={updateMetadata.isPending}
+            onToggleActive={v => handleToggle('is_enabled', v)}
+            onToggleFeatured={v => handleToggle('is_featured', v)}
+            isUpdating={toggleField.isPending}
           />
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* Colonne droite : Pricing + Stats */}
-        <div className="space-y-6">
-          <ProductPricingCard
-            product={product}
-            onSave={handleSavePricing}
-            isSaving={updatePricing.isPending}
-          />
+      {/* Section 2 : Deux colonnes asymétriques (60% / 40%) */}
+      <div className="grid md:grid-cols-[3fr_2fr] gap-6">
+        {/* Colonne gauche (plus large) : Informations personnalisées */}
+        <ProductInfoCard
+          product={product}
+          onSave={handleSaveMetadata}
+          isSaving={updateMetadata.isPending}
+        />
 
-          <ProductStatsCard product={product} />
-        </div>
+        {/* Colonne droite (plus petite) : Pricing & Marges */}
+        <ProductPricingCard
+          product={product}
+          onSave={handleSavePricing}
+          isSaving={updatePricing.isPending}
+        />
       </div>
+
+      {/* Section 3 : Variantes - Pleine largeur en bas */}
+      <ProductVariantsCard
+        variants={variants || []}
+        isLoading={variantsLoading}
+      />
     </div>
   );
 }

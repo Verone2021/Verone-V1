@@ -1,0 +1,520 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+
+import { useParams, useRouter } from 'next/navigation';
+
+import {
+  EnseigneDetailHeader,
+  EnseigneKPIGrid,
+  EnseigneGeographySection,
+  EnseigneOrganisationsTable,
+  useEnseigne,
+  useEnseigneStats,
+} from '@verone/organisations';
+import { ProductThumbnail } from '@verone/products';
+import { Button, Badge } from '@verone/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@verone/ui';
+import { createClient } from '@verone/utils/supabase/client';
+import {
+  ArrowLeft,
+  Loader2,
+  Building2,
+  MapPin,
+  Package,
+  Mail,
+  Phone,
+  ShoppingBag,
+  Eye,
+  ShoppingCart,
+  ChevronRight,
+} from 'lucide-react';
+
+/**
+ * Type pour les sélections de l'affilié
+ */
+interface EnseigneSelection {
+  id: string;
+  name: string;
+  description: string | null;
+  status: 'draft' | 'active' | 'archived';
+  is_public: boolean;
+  products_count: number;
+  views_count: number;
+  orders_count: number;
+  created_at: string;
+}
+
+/**
+ * Hook pour récupérer les sélections d'une enseigne via l'affilié
+ */
+function useEnseigneSelections(enseigneId: string | null) {
+  const [selections, setSelections] = useState<EnseigneSelection[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!enseigneId) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchSelections = async () => {
+      setLoading(true);
+      const supabase = createClient();
+
+      // D'abord récupérer l'affilié lié à cette enseigne
+      const { data: affiliate, error: affiliateError } = await supabase
+        .from('linkme_affiliates')
+        .select('id')
+        .eq('enseigne_id', enseigneId)
+        .single();
+
+      if (affiliateError || !affiliate) {
+        setSelections([]);
+        setLoading(false);
+        return;
+      }
+
+      // Ensuite récupérer les sélections de cet affilié
+      const { data, error } = await supabase
+        .from('linkme_selections')
+        .select(
+          'id, name, description, status, is_public, products_count, views_count, orders_count, created_at'
+        )
+        .eq('affiliate_id', affiliate.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Erreur chargement sélections:', error);
+        setSelections([]);
+      } else {
+        // Cast to EnseigneSelection[] - status type comes as string from DB
+        setSelections((data || []) as EnseigneSelection[]);
+      }
+      setLoading(false);
+    };
+
+    fetchSelections();
+  }, [enseigneId]);
+
+  return { selections, loading };
+}
+
+/**
+ * Type pour les produits sourcés par enseigne
+ */
+interface EnseigneProduct {
+  id: string;
+  name: string;
+  supplier_reference: string | null;
+  primary_image_url: string | null;
+  created_at: string | null;
+}
+
+/**
+ * Hook pour récupérer les produits sourcés pour une enseigne
+ */
+function useEnseigneProducts(enseigneId: string | null) {
+  const [products, setProducts] = useState<EnseigneProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!enseigneId) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchProducts = async () => {
+      setLoading(true);
+      const supabase = createClient();
+
+      // Query products with primary image from product_images table
+      const { data, error } = await supabase
+        .from('products')
+        .select(
+          `
+          id,
+          name,
+          supplier_reference,
+          created_at,
+          product_images!left(public_url, is_primary)
+        `
+        )
+        .eq('enseigne_id', enseigneId)
+        .is('archived_at', null)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) {
+        // If join fails (no images), try without images
+        const { data: dataNoImg, error: errorNoImg } = await supabase
+          .from('products')
+          .select('id, name, supplier_reference, created_at')
+          .eq('enseigne_id', enseigneId)
+          .is('archived_at', null)
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        if (errorNoImg) {
+          console.error('Erreur chargement produits enseigne:', errorNoImg);
+          setProducts([]);
+        } else {
+          setProducts(
+            (dataNoImg || []).map(p => ({
+              ...p,
+              primary_image_url: null,
+            }))
+          );
+        }
+      } else {
+        // Transform data to flatten public_url - filter for is_primary
+        setProducts(
+          (data || []).map((p: any) => {
+            const primaryImg = (p.product_images || []).find(
+              (img: any) => img.is_primary
+            );
+            return {
+              id: p.id,
+              name: p.name,
+              supplier_reference: p.supplier_reference,
+              created_at: p.created_at,
+              primary_image_url: primaryImg?.public_url || null,
+            };
+          })
+        );
+      }
+      setLoading(false);
+    };
+
+    fetchProducts();
+  }, [enseigneId]);
+
+  return { products, loading };
+}
+
+/**
+ * Page détail enseigne LinkMe
+ * Affiche toutes les informations agrégées d'une enseigne avec onglets
+ */
+export default function EnseigneDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  const id = params.id as string;
+
+  // Hooks pour données enseigne
+  const {
+    enseigne,
+    loading: enseigneLoading,
+    error: enseigneError,
+  } = useEnseigne(id);
+  const { stats, loading: statsLoading } = useEnseigneStats(id);
+  const { products, loading: productsLoading } = useEnseigneProducts(id);
+  const { selections, loading: selectionsLoading } = useEnseigneSelections(id);
+
+  // État onglet actif
+  const [activeTab, setActiveTab] = useState('overview');
+
+  // Gestion erreur
+  if (enseigneError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <p className="text-red-500">Erreur : {enseigneError}</p>
+        <Button variant="outline" onClick={() => router.back()}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Retour
+        </Button>
+      </div>
+    );
+  }
+
+  // Chargement
+  if (enseigneLoading || !enseigne) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header avec bouton retour */}
+      <EnseigneDetailHeader
+        enseigne={enseigne}
+        backUrl="/canaux-vente/linkme/enseignes"
+        onEdit={() => {
+          // TODO: Modal édition enseigne
+          console.log('Edit enseigne:', enseigne.id);
+        }}
+      />
+
+      {/* Infos Organisation Mère (sous le header) */}
+      {stats?.parentOrganisation && (
+        <Card className="bg-amber-50 border-amber-200">
+          <CardContent className="py-4">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+              <div className="flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-amber-600" />
+                <span className="font-medium text-amber-900">
+                  {stats.parentOrganisation.trade_name ||
+                    stats.parentOrganisation.legal_name}
+                </span>
+                <span className="text-xs text-amber-600 bg-amber-100 px-2 py-0.5 rounded">
+                  Siège
+                </span>
+              </div>
+              {(stats.parentOrganisation.siret ||
+                stats.parentOrganisation.siren) && (
+                <div className="text-sm text-amber-800">
+                  <span className="font-medium">
+                    {stats.parentOrganisation.siret ? 'SIRET' : 'SIREN'}:
+                  </span>{' '}
+                  {stats.parentOrganisation.siret ||
+                    stats.parentOrganisation.siren}
+                </div>
+              )}
+              {(stats.parentOrganisation.billing_address_line1 ||
+                stats.parentOrganisation.billing_postal_code ||
+                stats.parentOrganisation.city) && (
+                <div className="flex items-center gap-1.5 text-sm text-amber-800">
+                  <MapPin className="h-3.5 w-3.5" />
+                  {[
+                    stats.parentOrganisation.billing_address_line1,
+                    stats.parentOrganisation.billing_postal_code,
+                    stats.parentOrganisation.billing_city ||
+                      stats.parentOrganisation.city,
+                  ]
+                    .filter(Boolean)
+                    .join(', ')}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* KPIs */}
+      <EnseigneKPIGrid stats={stats} loading={statsLoading} />
+
+      {/* Onglets */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList variant="underline" className="w-full justify-start border-b">
+          <TabsTrigger value="overview" variant="underline">
+            <Building2 className="h-4 w-4 mr-2" />
+            Vue d&apos;ensemble
+          </TabsTrigger>
+          <TabsTrigger value="geography" variant="underline">
+            <MapPin className="h-4 w-4 mr-2" />
+            Géographie
+          </TabsTrigger>
+          <TabsTrigger value="products" variant="underline">
+            <Package className="h-4 w-4 mr-2" />
+            Produits sourcés ({products.length})
+          </TabsTrigger>
+          <TabsTrigger value="selections" variant="underline">
+            <ShoppingBag className="h-4 w-4 mr-2" />
+            Sélections ({selections.length})
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Onglet Vue d'ensemble */}
+        <TabsContent value="overview" className="mt-6">
+          {/* Tableau organisations membres (seul contenu de la vue d'ensemble) */}
+          <EnseigneOrganisationsTable
+            organisations={stats?.organisationsWithRevenue || []}
+            parentOrganisation={stats?.parentOrganisation || null}
+            loading={statsLoading}
+            enseigneId={id}
+            onAddOrganisations={() => {
+              // TODO: Modal ajout organisations
+              console.log('Add organisations to enseigne:', enseigne.id);
+            }}
+          />
+        </TabsContent>
+
+        {/* Onglet Géographie */}
+        <TabsContent value="geography" className="mt-6">
+          <EnseigneGeographySection
+            citiesDistribution={stats?.citiesDistribution || []}
+            loading={statsLoading}
+            className="max-w-none"
+          />
+        </TabsContent>
+
+        {/* Onglet Produits sourcés */}
+        <TabsContent value="products" className="mt-6">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center">
+                <Package className="h-5 w-5 mr-2 text-blue-500" />
+                Produits sourcés pour {enseigne.name}
+                <span className="ml-2 text-sm font-normal text-gray-500">
+                  ({products.length} produit{products.length > 1 ? 's' : ''})
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {productsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                </div>
+              ) : products.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-8">
+                  Aucun produit sourcé pour cette enseigne
+                </p>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                  {products.map(product => (
+                    <div
+                      key={product.id}
+                      className="group cursor-pointer"
+                      onClick={() =>
+                        router.push(`/catalogue/produits/${product.id}`)
+                      }
+                    >
+                      <ProductThumbnail
+                        src={product.primary_image_url}
+                        alt={product.name}
+                        size="lg"
+                        className="group-hover:ring-2 ring-blue-500 transition-all"
+                      />
+                      <p className="mt-2 text-xs font-medium truncate">
+                        {product.name}
+                      </p>
+                      {product.supplier_reference && (
+                        <p className="text-xs text-gray-500 truncate">
+                          {product.supplier_reference}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Onglet Sélections */}
+        <TabsContent value="selections" className="mt-6">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center">
+                <ShoppingBag className="h-5 w-5 mr-2 text-purple-500" />
+                Sélections de produits
+                <span className="ml-2 text-sm font-normal text-gray-500">
+                  ({selections.length} sélection
+                  {selections.length > 1 ? 's' : ''})
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {selectionsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                </div>
+              ) : selections.length === 0 ? (
+                <div className="text-center py-8">
+                  <ShoppingBag className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+                  <p className="text-sm text-gray-500 mb-4">
+                    Aucune sélection pour cette enseigne
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      router.push('/canaux-vente/linkme/selections')
+                    }
+                  >
+                    Voir toutes les sélections
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {selections.map(selection => {
+                    const selectionStatusConfig = {
+                      draft: {
+                        label: 'Brouillon',
+                        variant: 'secondary' as const,
+                        className: 'bg-gray-100 text-gray-700',
+                      },
+                      active: {
+                        label: 'Active',
+                        variant: 'default' as const,
+                        className: 'bg-green-100 text-green-700',
+                      },
+                      archived: {
+                        label: 'Archivée',
+                        variant: 'outline' as const,
+                        className: 'bg-gray-50 text-gray-500',
+                      },
+                    };
+                    const config =
+                      selectionStatusConfig[selection.status] ||
+                      selectionStatusConfig.draft;
+
+                    return (
+                      <div
+                        key={selection.id}
+                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors group"
+                        onClick={() =>
+                          router.push(
+                            `/canaux-vente/linkme/selections/${selection.id}`
+                          )
+                        }
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-medium truncate">
+                              {selection.name}
+                            </h3>
+                            <Badge
+                              variant={config.variant}
+                              className={config.className}
+                            >
+                              {config.label}
+                            </Badge>
+                            {selection.is_public && (
+                              <Badge
+                                variant="outline"
+                                className="bg-blue-50 text-blue-600"
+                              >
+                                Public
+                              </Badge>
+                            )}
+                          </div>
+                          {selection.description && (
+                            <p className="text-sm text-gray-500 truncate mb-2">
+                              {selection.description}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-4 text-xs text-gray-500">
+                            <span className="flex items-center gap-1">
+                              <Package className="h-3.5 w-3.5" />
+                              {selection.products_count} produit
+                              {selection.products_count > 1 ? 's' : ''}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Eye className="h-3.5 w-3.5" />
+                              {selection.views_count} vue
+                              {selection.views_count > 1 ? 's' : ''}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <ShoppingCart className="h-3.5 w-3.5" />
+                              {selection.orders_count} commande
+                              {selection.orders_count > 1 ? 's' : ''}
+                            </span>
+                          </div>
+                        </div>
+                        <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

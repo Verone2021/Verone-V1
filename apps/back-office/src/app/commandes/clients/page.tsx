@@ -68,9 +68,14 @@ import {
   FileSpreadsheet,
   Truck,
   ChevronDown,
+  ExternalLink,
 } from 'lucide-react';
 
 import { updateSalesOrderStatus } from '@/app/actions/sales-orders';
+
+// Canaux de vente connus
+const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
+const SITE_INTERNET_CHANNEL_ID = '0c2639e9-df80-41fa-84d0-9da96a128f7f';
 
 const statusLabels: Record<SalesOrderStatus, string> = {
   draft: 'Brouillon',
@@ -92,6 +97,25 @@ const statusColors: Record<SalesOrderStatus, string> = {
 
 type SortColumn = 'date' | 'client' | 'amount' | null;
 type SortDirection = 'asc' | 'desc';
+
+const isOrderEditable = (order: SalesOrder) => {
+  // Seules les commandes sans canal spécifique sont éditables
+  return (
+    !order.channel_id ||
+    (order.channel_id !== LINKME_CHANNEL_ID &&
+      order.channel_id !== SITE_INTERNET_CHANNEL_ID)
+  );
+};
+
+const getChannelRedirectUrl = (order: SalesOrder) => {
+  if (order.channel_id === LINKME_CHANNEL_ID) {
+    return '/canaux-vente/linkme/commandes';
+  }
+  if (order.channel_id === SITE_INTERNET_CHANNEL_ID) {
+    return '/canaux-vente/site-internet/commandes';
+  }
+  return null;
+};
 
 export default function SalesOrdersPage() {
   const {
@@ -671,6 +695,7 @@ export default function SalesOrdersPage() {
             Exporter Excel
           </ButtonUnified>
           <SalesOrderFormModal
+            buttonLabel="Nouvelle commande manuelle"
             onSuccess={() => {
               fetchOrders();
               fetchStats();
@@ -879,6 +904,7 @@ export default function SalesOrdersPage() {
                     >
                       Date {renderSortIcon('date')}
                     </TableHead>
+                    <TableHead>Canal</TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-gray-50"
                       onClick={() => handleSort('amount')}
@@ -960,6 +986,18 @@ export default function SalesOrdersPage() {
                           </TableCell>
                           <TableCell>{formatDate(order.created_at)}</TableCell>
                           <TableCell>
+                            {order.sales_channel?.name ? (
+                              <Badge
+                                variant="outline"
+                                className="text-xs font-medium"
+                              >
+                                {order.sales_channel.name}
+                              </Badge>
+                            ) : (
+                              <span className="text-gray-400 text-sm">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
                             <div className="font-medium">
                               {formatCurrency(
                                 order.total_ttc || order.total_ht
@@ -968,125 +1006,167 @@ export default function SalesOrdersPage() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              {/* Voir */}
-                              <IconButton
-                                icon={Eye}
-                                variant="outline"
-                                size="sm"
-                                label="Voir détails"
-                                onClick={() => openOrderDetail(order)}
-                              />
-
-                              {/* Modifier (draft ou confirmed non payée) */}
-                              {(order.status === 'draft' ||
-                                order.status === 'validated') && (
-                                <IconButton
-                                  icon={Edit}
-                                  variant="outline"
-                                  size="sm"
-                                  label="Modifier"
-                                  onClick={() => openEditOrder(order.id)}
-                                />
-                              )}
-
-                              {/* Valider (draft uniquement) */}
-                              {order.status === 'draft' && (
-                                <IconButton
-                                  icon={CheckCircle}
-                                  variant="success"
-                                  size="sm"
-                                  label="Valider"
-                                  onClick={() =>
-                                    handleStatusChange(order.id, 'validated')
-                                  }
-                                />
-                              )}
-
-                              {/* Dévalider (confirmed uniquement) */}
-                              {order.status === 'validated' && (
-                                <IconButton
-                                  icon={RotateCcw}
-                                  variant="outline"
-                                  size="sm"
-                                  label="Dévalider (retour brouillon)"
-                                  onClick={() =>
-                                    handleStatusChange(order.id, 'draft')
-                                  }
-                                />
-                              )}
-
-                              {/* Expédier (confirmed ou partially_shipped) */}
-                              {(order.status === 'validated' ||
-                                order.status === 'partially_shipped') && (
-                                <IconButton
-                                  icon={Truck}
-                                  variant="outline"
-                                  size="sm"
-                                  label="Expédier"
-                                  onClick={() => openShipmentModal(order)}
-                                />
-                              )}
-
-                              {/* Annuler (UNIQUEMENT brouillon - Workflow: dévalidation obligatoire) */}
-                              {order.status === 'draft' && (
-                                <IconButton
-                                  icon={Ban}
-                                  variant="danger"
-                                  size="sm"
-                                  label="Annuler la commande (brouillon uniquement)"
-                                  onClick={() => handleCancel(order.id)}
-                                />
-                              )}
-
-                              {/* Annuler disabled pour confirmed - Doit dévalider d'abord */}
-                              {order.status === 'validated' && (
-                                <IconButton
-                                  icon={Ban}
-                                  variant="outline"
-                                  size="sm"
-                                  label="Impossible d'annuler directement une commande validée. Veuillez d'abord la dévalider (retour brouillon), puis l'annuler."
-                                  disabled
-                                />
-                              )}
-
-                              {/* Annuler disabled pour paid/delivered - Règle absolue */}
-                              {(order.payment_status === 'paid' ||
-                                order.status === 'delivered') &&
-                                order.status !== 'cancelled' &&
-                                order.status !== 'draft' &&
-                                order.status !== 'validated' && (
+                              {/* Commandes provenant de canaux externes (LinkMe, Site Internet) */}
+                              {!isOrderEditable(order) ? (
+                                <>
+                                  {/* Voir */}
                                   <IconButton
-                                    icon={Ban}
+                                    icon={Eye}
                                     variant="outline"
                                     size="sm"
-                                    label={
-                                      order.payment_status === 'paid'
-                                        ? "Impossible d'annuler : commande déjà payée. Contacter un administrateur pour remboursement."
-                                        : "Impossible d'annuler : commande déjà livrée. Créer un avoir."
-                                    }
-                                    disabled
+                                    label="Voir détails"
+                                    onClick={() => openOrderDetail(order)}
                                   />
-                                )}
 
-                              {/* Supprimer (cancelled uniquement) */}
-                              {order.status === 'cancelled' && (
-                                <IconButton
-                                  icon={Trash2}
-                                  variant="danger"
-                                  size="sm"
-                                  label="Supprimer"
-                                  onClick={() => handleDelete(order.id)}
-                                />
+                                  {/* Redirection vers CMS du canal */}
+                                  <Link
+                                    href={getChannelRedirectUrl(order) || '#'}
+                                  >
+                                    <IconButton
+                                      icon={ExternalLink}
+                                      variant="outline"
+                                      size="sm"
+                                      label={`Gérer dans ${order.sales_channel?.name || 'le CMS du canal'}`}
+                                    />
+                                  </Link>
+
+                                  {/* Imprimer PDF */}
+                                  <IconButton
+                                    icon={FileText}
+                                    variant="outline"
+                                    size="sm"
+                                    label="Imprimer PDF"
+                                    onClick={() => handlePrintPDF(order)}
+                                  />
+                                </>
+                              ) : (
+                                <>
+                                  {/* Actions standard pour commandes manuelles */}
+
+                                  {/* Voir */}
+                                  <IconButton
+                                    icon={Eye}
+                                    variant="outline"
+                                    size="sm"
+                                    label="Voir détails"
+                                    onClick={() => openOrderDetail(order)}
+                                  />
+
+                                  {/* Modifier (draft ou confirmed non payée) */}
+                                  {(order.status === 'draft' ||
+                                    order.status === 'validated') && (
+                                    <IconButton
+                                      icon={Edit}
+                                      variant="outline"
+                                      size="sm"
+                                      label="Modifier"
+                                      onClick={() => openEditOrder(order.id)}
+                                    />
+                                  )}
+
+                                  {/* Valider (draft uniquement) */}
+                                  {order.status === 'draft' && (
+                                    <IconButton
+                                      icon={CheckCircle}
+                                      variant="success"
+                                      size="sm"
+                                      label="Valider"
+                                      onClick={() =>
+                                        handleStatusChange(
+                                          order.id,
+                                          'validated'
+                                        )
+                                      }
+                                    />
+                                  )}
+
+                                  {/* Dévalider (confirmed uniquement) */}
+                                  {order.status === 'validated' && (
+                                    <IconButton
+                                      icon={RotateCcw}
+                                      variant="outline"
+                                      size="sm"
+                                      label="Dévalider (retour brouillon)"
+                                      onClick={() =>
+                                        handleStatusChange(order.id, 'draft')
+                                      }
+                                    />
+                                  )}
+
+                                  {/* Expédier (confirmed ou partially_shipped) */}
+                                  {(order.status === 'validated' ||
+                                    order.status === 'partially_shipped') && (
+                                    <IconButton
+                                      icon={Truck}
+                                      variant="outline"
+                                      size="sm"
+                                      label="Expédier"
+                                      onClick={() => openShipmentModal(order)}
+                                    />
+                                  )}
+
+                                  {/* Annuler (UNIQUEMENT brouillon - Workflow: dévalidation obligatoire) */}
+                                  {order.status === 'draft' && (
+                                    <IconButton
+                                      icon={Ban}
+                                      variant="danger"
+                                      size="sm"
+                                      label="Annuler la commande (brouillon uniquement)"
+                                      onClick={() => handleCancel(order.id)}
+                                    />
+                                  )}
+
+                                  {/* Annuler disabled pour confirmed - Doit dévalider d'abord */}
+                                  {order.status === 'validated' && (
+                                    <IconButton
+                                      icon={Ban}
+                                      variant="outline"
+                                      size="sm"
+                                      label="Impossible d'annuler directement une commande validée. Veuillez d'abord la dévalider (retour brouillon), puis l'annuler."
+                                      disabled
+                                    />
+                                  )}
+
+                                  {/* Annuler disabled pour paid/delivered - Règle absolue */}
+                                  {(order.payment_status === 'paid' ||
+                                    order.status === 'delivered') &&
+                                    order.status !== 'cancelled' &&
+                                    order.status !== 'draft' &&
+                                    order.status !== 'validated' && (
+                                      <IconButton
+                                        icon={Ban}
+                                        variant="outline"
+                                        size="sm"
+                                        label={
+                                          order.payment_status === 'paid'
+                                            ? "Impossible d'annuler : commande déjà payée. Contacter un administrateur pour remboursement."
+                                            : "Impossible d'annuler : commande déjà livrée. Créer un avoir."
+                                        }
+                                        disabled
+                                      />
+                                    )}
+
+                                  {/* Supprimer (cancelled uniquement) */}
+                                  {order.status === 'cancelled' && (
+                                    <IconButton
+                                      icon={Trash2}
+                                      variant="danger"
+                                      size="sm"
+                                      label="Supprimer"
+                                      onClick={() => handleDelete(order.id)}
+                                    />
+                                  )}
+
+                                  {/* Imprimer PDF */}
+                                  <IconButton
+                                    icon={FileText}
+                                    variant="outline"
+                                    size="sm"
+                                    label="Imprimer PDF"
+                                    onClick={() => handlePrintPDF(order)}
+                                  />
+                                </>
                               )}
-
-                              {/* Imprimer PDF */}
-                              <IconButton
-                                icon={FileText}
-                                variant="outline"
-                                size="sm"
-                                label="Imprimer PDF"
-                                onClick={() => handlePrintPDF(order)}
-                              />
                             </div>
                           </TableCell>
                         </TableRow>

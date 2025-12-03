@@ -2,7 +2,7 @@
 
 import { ProductThumbnail } from '@verone/products';
 import { Badge, Switch, Label } from '@verone/ui';
-import { Package, Eye, Star } from 'lucide-react';
+import { Package, Eye, Star, Scale, Ruler, Home } from 'lucide-react';
 
 import type { LinkMeProductDetail } from '../types';
 
@@ -51,24 +51,61 @@ export function ProductDetailHeader({
             {product.product_supplier_name && (
               <Badge variant="secondary">{product.product_supplier_name}</Badge>
             )}
+
+            {/* Badge poids */}
+            {product.weight_kg && (
+              <Badge variant="outline">
+                <Scale className="h-3 w-3 mr-1" />
+                {product.weight_kg} kg
+              </Badge>
+            )}
+
+            {/* Badge dimensions */}
+            {product.dimensions_cm &&
+              (product.dimensions_cm.length ||
+                product.dimensions_cm.width ||
+                product.dimensions_cm.height) && (
+                <Badge variant="outline">
+                  <Ruler className="h-3 w-3 mr-1" />
+                  {[
+                    product.dimensions_cm.length &&
+                      `L: ${product.dimensions_cm.length}`,
+                    product.dimensions_cm.width &&
+                      `l: ${product.dimensions_cm.width}`,
+                    product.dimensions_cm.height &&
+                      `H: ${product.dimensions_cm.height}`,
+                  ]
+                    .filter(Boolean)
+                    .join(' × ')}{' '}
+                  cm
+                </Badge>
+              )}
+
+            {/* Badge pièces d'habitation */}
+            {product.room_types && product.room_types.length > 0 && (
+              <Badge variant="outline">
+                <Home className="h-3 w-3 mr-1" />
+                {product.room_types.join(', ')}
+              </Badge>
+            )}
           </div>
         </div>
       </div>
 
       {/* Toggles de configuration - Simplifiés */}
       <div className="flex gap-6 p-4 bg-muted/50 rounded-lg">
-        {/* Toggle Actif (visible sur catalogue LinkMe) */}
+        {/* Toggle Activé (visible sur catalogue LinkMe) */}
         <div className="flex items-center gap-3">
           <Switch
-            id="toggle-active"
-            checked={product.is_active}
+            id="toggle-enabled"
+            checked={product.is_enabled}
             onCheckedChange={onToggleActive}
             disabled={isUpdating}
           />
           <div className="flex items-center gap-2">
             <Eye className="h-4 w-4 text-muted-foreground" />
-            <Label htmlFor="toggle-active" className="text-sm cursor-pointer">
-              Actif
+            <Label htmlFor="toggle-enabled" className="text-sm cursor-pointer">
+              Activé
             </Label>
           </div>
         </div>

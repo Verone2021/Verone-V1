@@ -28,6 +28,7 @@ import {
   Star,
   Building2,
   Store,
+  ShoppingCart,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -110,6 +111,11 @@ const LINKME_NAV: LinkMeNavItem[] = [
     title: 'Sélections',
     href: '/canaux-vente/linkme/selections',
     icon: Layers,
+  },
+  {
+    title: 'Commandes',
+    href: '/canaux-vente/linkme/commandes',
+    icon: ShoppingCart,
   },
   {
     title: 'Commissions',

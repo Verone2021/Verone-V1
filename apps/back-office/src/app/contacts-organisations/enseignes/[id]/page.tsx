@@ -30,7 +30,8 @@ import {
   EnseigneOrganisationsTable,
 } from '@verone/organisations';
 import { ButtonV2 } from '@verone/ui';
-import { Card, CardContent } from '@verone/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@verone/ui';
 import { Input } from '@verone/ui';
 import {
   Dialog,
@@ -41,10 +42,16 @@ import {
   DialogTitle,
 } from '@verone/ui';
 import { Label } from '@verone/ui';
-import { Textarea } from '@verone/ui';
 import { Switch } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
-import { ArrowLeft, Loader2, Package, ExternalLink } from 'lucide-react';
+import {
+  ArrowLeft,
+  Loader2,
+  Package,
+  ExternalLink,
+  Building2,
+  MapPin,
+} from 'lucide-react';
 
 // Interface pour les produits de l'enseigne
 interface EnseigneProduct {
@@ -81,6 +88,9 @@ export default function EnseigneDetailPage() {
     loading: statsLoading,
     refetch: refetchStats,
   } = useEnseigneStats(enseigneId);
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState('overview');
 
   // Modal states
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -335,109 +345,152 @@ export default function EnseigneDetailPage() {
 
       {/* Contenu principal */}
       <div className="container mx-auto p-6 space-y-6">
+        {/* Hook jaune - Organisation Mère */}
+        {stats?.parentOrganisation && (
+          <Card className="bg-amber-50 border-amber-200">
+            <CardContent className="py-4">
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4 text-amber-600" />
+                  <span className="font-medium text-amber-900">
+                    {stats.parentOrganisation.trade_name ||
+                      stats.parentOrganisation.legal_name}
+                  </span>
+                  <span className="text-xs text-amber-600 bg-amber-100 px-2 py-0.5 rounded">
+                    Siege
+                  </span>
+                </div>
+                {(stats.parentOrganisation.siret ||
+                  stats.parentOrganisation.siren) && (
+                  <div className="text-sm text-amber-800">
+                    <span className="font-medium">
+                      {stats.parentOrganisation.siret ? 'SIRET' : 'SIREN'}:
+                    </span>{' '}
+                    {stats.parentOrganisation.siret ||
+                      stats.parentOrganisation.siren}
+                  </div>
+                )}
+                {(stats.parentOrganisation.billing_address_line1 ||
+                  stats.parentOrganisation.billing_postal_code ||
+                  stats.parentOrganisation.billing_city) && (
+                  <div className="flex items-center gap-1.5 text-sm text-amber-800">
+                    <MapPin className="h-3.5 w-3.5" />
+                    {[
+                      stats.parentOrganisation.billing_address_line1,
+                      stats.parentOrganisation.billing_postal_code,
+                      stats.parentOrganisation.billing_city,
+                    ]
+                      .filter(Boolean)
+                      .join(', ')}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* KPIs */}
         <EnseigneKPIGrid stats={stats} loading={statsLoading} />
 
-        {/* Deux colonnes : Géographie + Table */}
-        <div className="grid grid-cols-3 gap-6">
-          {/* Répartition géographique (1/3) */}
-          <EnseigneGeographySection
-            citiesDistribution={stats?.citiesDistribution || []}
-            loading={statsLoading}
-            className="col-span-1"
-          />
+        {/* Onglets */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList
+            variant="underline"
+            className="w-full justify-start border-b"
+          >
+            <TabsTrigger value="overview" variant="underline">
+              <Building2 className="h-4 w-4 mr-2" />
+              Vue d&apos;ensemble
+            </TabsTrigger>
+            <TabsTrigger value="geography" variant="underline">
+              <MapPin className="h-4 w-4 mr-2" />
+              Geographie
+            </TabsTrigger>
+            <TabsTrigger value="products" variant="underline">
+              <Package className="h-4 w-4 mr-2" />
+              Produits sources ({enseigneProducts.length})
+            </TabsTrigger>
+          </TabsList>
 
-          {/* Tableau organisations (2/3) */}
-          <EnseigneOrganisationsTable
-            organisations={stats?.organisationsWithRevenue || []}
-            parentOrganisation={stats?.parentOrganisation || null}
-            onAddOrganisations={() => setIsOrganisationModalOpen(true)}
-            onRemoveOrganisation={handleRemoveOrganisation}
-            loading={statsLoading}
-            className="col-span-2"
-          />
-        </div>
+          {/* Onglet Vue d'ensemble */}
+          <TabsContent value="overview" className="mt-6">
+            <EnseigneOrganisationsTable
+              organisations={stats?.organisationsWithRevenue || []}
+              parentOrganisation={stats?.parentOrganisation || null}
+              onAddOrganisations={() => setIsOrganisationModalOpen(true)}
+              onRemoveOrganisation={handleRemoveOrganisation}
+              loading={statsLoading}
+            />
+          </TabsContent>
 
-        {/* Section Produits Sourcés */}
-        <Card className="border-gray-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Package className="h-5 w-5 text-gray-600" />
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Produits sourcés pour cette enseigne
-                </h3>
-                {enseigneProducts.length > 0 && (
-                  <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-sm">
-                    {enseigneProducts.length}
+          {/* Onglet Geographie */}
+          <TabsContent value="geography" className="mt-6">
+            <EnseigneGeographySection
+              citiesDistribution={stats?.citiesDistribution || []}
+              loading={statsLoading}
+              className="max-w-none"
+            />
+          </TabsContent>
+
+          {/* Onglet Produits sources */}
+          <TabsContent value="products" className="mt-6">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center">
+                  <Package className="h-5 w-5 mr-2 text-blue-500" />
+                  Produits sources pour {enseigne.name}
+                  <span className="ml-2 text-sm font-normal text-gray-500">
+                    ({enseigneProducts.length} produit
+                    {enseigneProducts.length > 1 ? 's' : ''})
                   </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {productsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                  </div>
+                ) : enseigneProducts.length === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-8">
+                    Aucun produit source pour cette enseigne
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    {enseigneProducts.map(product => (
+                      <Link
+                        key={product.id}
+                        href={`/catalogue/produits/${product.id}`}
+                        className="group cursor-pointer"
+                      >
+                        <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-2 flex items-center justify-center group-hover:ring-2 ring-blue-500 transition-all">
+                          {product.primary_image_url ? (
+                            <Image
+                              src={product.primary_image_url}
+                              alt={product.name}
+                              width={120}
+                              height={120}
+                              className="object-cover w-full h-full"
+                            />
+                          ) : (
+                            <Package className="h-8 w-8 text-gray-300" />
+                          )}
+                        </div>
+                        <p className="text-xs font-medium truncate">
+                          {product.name}
+                        </p>
+                        {product.sku && (
+                          <p className="text-xs text-gray-500 truncate">
+                            {product.sku}
+                          </p>
+                        )}
+                      </Link>
+                    ))}
+                  </div>
                 )}
-              </div>
-              <Link href={`/produits/sourcing?enseigne=${enseigneId}`}>
-                <ButtonV2 variant="ghost" size="sm">
-                  Voir tout
-                  <ExternalLink className="h-4 w-4 ml-1" />
-                </ButtonV2>
-              </Link>
-            </div>
-
-            {productsLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-              </div>
-            ) : enseigneProducts.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <Package className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                <p>Aucun produit sourcé pour cette enseigne</p>
-                <p className="text-sm mt-1">
-                  Les produits avec{' '}
-                  <code className="bg-gray-100 px-1 rounded">enseigne_id</code>{' '}
-                  correspondant apparaîtront ici.
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                {enseigneProducts.slice(0, 12).map(product => (
-                  <Link
-                    key={product.id}
-                    href={`/produits/catalogue/${product.id}`}
-                    className="group block bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors"
-                  >
-                    <div className="aspect-square bg-white rounded-md border border-gray-200 overflow-hidden mb-2 flex items-center justify-center">
-                      {product.primary_image_url ? (
-                        <Image
-                          src={product.primary_image_url}
-                          alt={product.name}
-                          width={120}
-                          height={120}
-                          className="object-cover w-full h-full"
-                        />
-                      ) : (
-                        <Package className="h-8 w-8 text-gray-300" />
-                      )}
-                    </div>
-                    <h4 className="text-sm font-medium text-gray-900 truncate group-hover:text-black">
-                      {product.name}
-                    </h4>
-                    <p className="text-xs text-gray-500 truncate">
-                      {product.sku || 'Sans SKU'}
-                    </p>
-                  </Link>
-                ))}
-              </div>
-            )}
-
-            {enseigneProducts.length > 12 && (
-              <div className="text-center mt-4">
-                <Link href={`/produits/sourcing?enseigne=${enseigneId}`}>
-                  <ButtonV2 variant="outline" size="sm">
-                    Voir les {enseigneProducts.length - 12} autres produits
-                  </ButtonV2>
-                </Link>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Modal Gestion Organisations (deux colonnes) */}
@@ -470,22 +523,6 @@ export default function EnseigneDetailPage() {
                   setFormData(prev => ({ ...prev, name: e.target.value }))
                 }
                 placeholder="Ex: Pokawa, Black and White..."
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={e =>
-                  setFormData(prev => ({
-                    ...prev,
-                    description: e.target.value,
-                  }))
-                }
-                placeholder="Description de l'enseigne..."
-                rows={3}
               />
             </div>
 

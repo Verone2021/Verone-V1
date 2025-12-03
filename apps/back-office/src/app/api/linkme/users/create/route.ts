@@ -150,6 +150,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 4. Créer le contact et le lier à l'enseigne/organisation
+    const contactData: Record<string, unknown> = {
+      first_name,
+      last_name,
+      email,
+      phone: phone || null,
+      is_primary_contact: true, // Premier contact créé = contact principal
+      is_active: true,
+      notes: `Contact créé automatiquement pour utilisateur LinkMe (${role})`,
+    };
+
+    // Lier à l'entité appropriée selon le rôle
+    if (role === 'enseigne_admin' && enseigne_id) {
+      contactData.enseigne_id = enseigne_id;
+      contactData.owner_type = 'enseigne';
+    } else if (role === 'organisation_admin' && organisation_id) {
+      contactData.organisation_id = organisation_id;
+      contactData.owner_type = 'organisation';
+    }
+
+    const { error: contactError } = await supabaseAdmin
+      .from('contacts')
+      .insert(contactData);
+
+    if (contactError) {
+      // Log l'erreur mais ne pas bloquer - le contact est optionnel
+      console.error('Erreur création contact (non-bloquant):', contactError);
+    }
+
     return NextResponse.json({
       success: true,
       user_id: userId,

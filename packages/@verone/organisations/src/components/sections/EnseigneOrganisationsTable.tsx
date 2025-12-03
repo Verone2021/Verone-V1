@@ -48,6 +48,10 @@ interface EnseigneOrganisationsTableProps {
   onRemoveOrganisation?: (organisationId: string) => Promise<void>;
   loading?: boolean;
   className?: string;
+  /** ID de l'enseigne pour le lien de retour (optionnel) */
+  enseigneId?: string;
+  /** URL de retour personnalisée (optionnel) */
+  returnUrl?: string;
 }
 
 /**
@@ -103,6 +107,8 @@ export function EnseigneOrganisationsTable({
   onRemoveOrganisation,
   loading = false,
   className,
+  enseigneId,
+  returnUrl,
 }: EnseigneOrganisationsTableProps) {
   const router = useRouter();
   const [removingId, setRemovingId] = useState<string | null>(null);
@@ -129,7 +135,19 @@ export function EnseigneOrganisationsTable({
   };
 
   const handleViewOrganisation = (orgId: string) => {
-    router.push(`/contacts-organisations/organisations/${orgId}`);
+    // Construire l'URL de retour si fournie ou si enseigneId est disponible
+    const effectiveReturnUrl =
+      returnUrl ||
+      (enseigneId ? `/canaux-vente/linkme/enseignes/${enseigneId}` : null);
+
+    if (effectiveReturnUrl) {
+      const encodedReturnUrl = encodeURIComponent(effectiveReturnUrl);
+      router.push(
+        `/contacts-organisations/customers/${orgId}?returnUrl=${encodedReturnUrl}`
+      );
+    } else {
+      router.push(`/contacts-organisations/customers/${orgId}`);
+    }
   };
 
   return (

@@ -25,6 +25,13 @@ export interface OrganisationWithRevenue {
   city: string | null;
   country: string | null;
   revenue: number;
+  // Champs additionnels pour l'organisation mère
+  siret?: string | null;
+  siren?: string | null;
+  billing_address_line1?: string | null;
+  billing_address_line2?: string | null;
+  billing_postal_code?: string | null;
+  billing_city?: string | null;
 }
 
 /**
@@ -66,7 +73,7 @@ export function useEnseigneStats(enseigneId: string | null) {
       const { data: organisations, error: orgsError } = await (supabase as any)
         .from('organisations')
         .select(
-          'id, legal_name, trade_name, is_enseigne_parent, is_active, city, country, logo_url'
+          'id, legal_name, trade_name, is_enseigne_parent, is_active, city, country, logo_url, siret, siren, billing_address_line1, billing_address_line2, billing_postal_code, billing_city'
         )
         .eq('enseigne_id', enseigneId)
         .order('is_enseigne_parent', { ascending: false })

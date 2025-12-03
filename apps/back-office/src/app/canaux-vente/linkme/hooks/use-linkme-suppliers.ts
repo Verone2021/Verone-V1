@@ -49,7 +49,7 @@ async function fetchLinkMeSuppliers(): Promise<LinkMeSupplier[]> {
   if (!suppliers) return [];
 
   // Récupérer le compte de produits par fournisseur
-  const supplierIds = suppliers.map((s: LinkMeSupplier) => s.supplier_id);
+  const supplierIds = suppliers.map(s => s.supplier_id);
 
   const { data: productCounts } = await supabase
     .from('channel_pricing')
@@ -73,11 +73,11 @@ async function fetchLinkMeSuppliers(): Promise<LinkMeSupplier[]> {
     }
   }
 
-  // Ajouter le compte aux fournisseurs
-  return suppliers.map((s: LinkMeSupplier) => ({
+  // Ajouter le compte aux fournisseurs - cast explicite pour retour typé
+  return suppliers.map(s => ({
     ...s,
     products_count: countBySupplier[s.supplier_id] || 0,
-  }));
+  })) as LinkMeSupplier[];
 }
 
 /**

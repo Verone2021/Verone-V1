@@ -416,14 +416,11 @@ export function SourcingQuickForm({
             required={false}
           />
           <p className="text-xs text-gray-500">
-            <strong>Sourcing interne :</strong> Laissez vide pour ajouter au
-            catalogue général
+            <strong>Sourcing interne :</strong> Catalogue général (sans client
+            assigné)
             <br />
-            <strong>Sourcing enseigne :</strong> Sélectionnez une enseigne
-            (groupe de magasins)
-            <br />
-            <strong>Sourcing organisation :</strong> Sélectionnez une
-            organisation cliente directe
+            <strong>Sourcing client :</strong> Pour un client spécifique
+            (enseigne ou organisation)
           </p>
         </div>
 

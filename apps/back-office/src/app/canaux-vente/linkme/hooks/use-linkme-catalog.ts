@@ -1,42 +1,68 @@
 /**
  * Hook: useLinkMeCatalog
  * Gestion du catalogue LinkMe (produits disponibles pour les affiliés)
+ *
+ * ARCHITECTURE : Utilise `channel_pricing` (table générique multi-canaux)
+ * Le canal LinkMe a l'ID: 93c68db1-5a30-4168-89ec-6383152be405
+ *
+ * MIGRATION 2025-12-02:
+ * - Remplace linkme_catalog_products (OBSOLÈTE) par channel_pricing
+ * - is_enabled → is_active
+ * - linkme_commission_rate → channel_commission_rate
+ * - selling_price_ht → custom_price_ht
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
 
+import type { LinkMeProductDetail } from '../types';
+
 const supabase = createClient();
+
+// ID du canal LinkMe dans sales_channels
+const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
 
 /**
  * Interface produit catalogue LinkMe
+ * Mappé depuis channel_pricing + products
  */
 export interface LinkMeCatalogProduct {
   id: string;
   product_id: string;
-  is_enabled: boolean;
+  is_enabled: boolean; // Mapped from is_active
   is_public_showcase: boolean;
   show_supplier: boolean;
-  max_margin_rate: number;
-  min_margin_rate: number;
-  suggested_margin_rate: number;
+  max_margin_rate: number | null;
+  min_margin_rate: number | null;
+  suggested_margin_rate: number | null;
   custom_title: string | null;
   custom_description: string | null;
   custom_selling_points: string[] | null;
-  linkme_commission_rate: number | null;
+  linkme_commission_rate: number | null; // Mapped from channel_commission_rate (= channel_commission_rate)
   views_count: number;
   selections_count: number;
   display_order: number;
   is_featured: boolean;
+  // Champs Pricing pour complétude (9 champs total)
+  public_price_ht: number | null; // Tarif public HT
+  channel_commission_rate: number | null; // Commission LinkMe (alias direct)
   // Champs produit joint
   product_name: string;
   product_reference: string;
-  product_price_ht: number;
+  product_price_ht: number; // custom_price_ht ou cost_price fallback
+  product_selling_price_ht: number | null; // Prix de vente HT (= custom_price_ht s'il existe)
   product_image_url: string | null;
   product_stock_real: number;
   product_is_active: boolean;
-  product_family_name: string | null;
-  product_category_name: string | null;
+  // Hiérarchie de catégorisation
+  subcategory_id: string | null;
+  subcategory_name: string | null;
+  category_id: string | null;
+  category_name: string | null;
+  family_id: string | null;
+  family_name: string | null;
+  /** Chemin complet: "Famille > Catégorie > Sous-catégorie" */
+  category_full_path: string | null;
   product_supplier_name: string | null;
 }
 
@@ -56,19 +82,179 @@ export interface EligibleProduct {
 }
 
 /**
- * Fetch produits du catalogue LinkMe
+ * Fetch produits du catalogue LinkMe depuis channel_pricing
  */
 async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
-  const { data, error } = await (supabase as any).rpc(
-    'get_linkme_catalog_products_for_affiliate' as any
-  );
+  // Requête channel_pricing avec JOIN products
+  const { data, error } = await supabase
+    .from('channel_pricing')
+    .select(
+      `
+      id,
+      product_id,
+      is_active,
+      is_public_showcase,
+      is_featured,
+      show_supplier,
+      min_margin_rate,
+      max_margin_rate,
+      suggested_margin_rate,
+      channel_commission_rate,
+      buffer_rate,
+      custom_title,
+      custom_description,
+      custom_selling_points,
+      custom_price_ht,
+      public_price_ht,
+      views_count,
+      selections_count,
+      display_order,
+      products!inner(
+        id,
+        sku,
+        name,
+        cost_price,
+        eco_tax_default,
+        margin_percentage,
+        stock_real,
+        product_status,
+        subcategory_id,
+        supplier_id
+      )
+    `
+    )
+    .eq('channel_id', LINKME_CHANNEL_ID)
+    .eq('is_active', true);
 
   if (error) {
     console.error('Erreur fetch catalogue LinkMe:', error);
     throw error;
   }
 
-  return (data as unknown as LinkMeCatalogProduct[]) || [];
+  if (!data || data.length === 0) return [];
+
+  // Récupérer les images primaires pour ces produits
+  const productIds = data.map((cp: any) => cp.product_id);
+  const { data: images } = await supabase
+    .from('product_images')
+    .select('product_id, public_url')
+    .in('product_id', productIds)
+    .eq('is_primary', true);
+
+  const imageMap = new Map(
+    (images || []).map((img: any) => [img.product_id, img.public_url])
+  );
+
+  // Récupérer les sous-catégories avec hiérarchie complète (catégorie + famille)
+  const subcategoryIds = data
+    .map((cp: any) => cp.products?.subcategory_id)
+    .filter(Boolean);
+
+  const { data: subcategoriesWithHierarchy } = await supabase
+    .from('subcategories')
+    .select(
+      `
+      id,
+      name,
+      category:categories!inner(
+        id,
+        name,
+        family:families!inner(
+          id,
+          name
+        )
+      )
+    `
+    )
+    .in('id', subcategoryIds);
+
+  // Map pour accès rapide à la hiérarchie complète
+  interface CategoryHierarchy {
+    subcategory_id: string;
+    subcategory_name: string;
+    category_id: string;
+    category_name: string;
+    family_id: string;
+    family_name: string;
+    full_path: string;
+  }
+
+  const hierarchyMap = new Map<string, CategoryHierarchy>();
+  (subcategoriesWithHierarchy || []).forEach((sc: any) => {
+    const familyName = sc.category?.family?.name || '';
+    const categoryName = sc.category?.name || '';
+    const subcategoryName = sc.name || '';
+
+    hierarchyMap.set(sc.id, {
+      subcategory_id: sc.id,
+      subcategory_name: subcategoryName,
+      category_id: sc.category?.id || null,
+      category_name: categoryName,
+      family_id: sc.category?.family?.id || null,
+      family_name: familyName,
+      full_path: [familyName, categoryName, subcategoryName]
+        .filter(Boolean)
+        .join(' > '),
+    });
+  });
+
+  // Récupérer les fournisseurs
+  const supplierIds = data
+    .map((cp: any) => cp.products?.supplier_id)
+    .filter(Boolean);
+  const { data: suppliers } = await supabase
+    .from('organisations')
+    .select('id, legal_name')
+    .in('id', supplierIds);
+
+  const supplierMap = new Map(
+    (suppliers || []).map((s: any) => [s.id, s.legal_name])
+  );
+
+  // Mapper les données avec hiérarchie complète
+  return data.map((cp: any) => {
+    const subcategoryId = cp.products?.subcategory_id;
+    const hierarchy = subcategoryId ? hierarchyMap.get(subcategoryId) : null;
+
+    return {
+      id: cp.id,
+      product_id: cp.product_id,
+      is_enabled: cp.is_active ?? true, // Map is_active → is_enabled
+      is_public_showcase: cp.is_public_showcase ?? false,
+      is_featured: cp.is_featured ?? false,
+      show_supplier: cp.show_supplier ?? false,
+      min_margin_rate: cp.min_margin_rate ?? null, // null si non défini
+      max_margin_rate: cp.max_margin_rate ?? null, // null si non défini
+      suggested_margin_rate: cp.suggested_margin_rate ?? null, // null si non défini
+      custom_title: cp.custom_title,
+      custom_description: cp.custom_description,
+      custom_selling_points: cp.custom_selling_points,
+      linkme_commission_rate: cp.channel_commission_rate, // Map channel_commission_rate
+      // Champs Pricing pour complétude
+      public_price_ht: cp.public_price_ht ?? null,
+      channel_commission_rate: cp.channel_commission_rate ?? null, // Alias direct
+      views_count: cp.views_count ?? 0,
+      selections_count: cp.selections_count ?? 0,
+      display_order: cp.display_order ?? 0,
+      product_name: cp.products?.name || '',
+      product_reference: cp.products?.sku || '',
+      product_price_ht: cp.custom_price_ht ?? cp.products?.cost_price ?? 0,
+      // Prix de vente HT = custom_price_ht si défini (null si non défini = pas validé)
+      product_selling_price_ht: cp.custom_price_ht ?? null,
+      product_image_url: imageMap.get(cp.product_id) || null,
+      product_stock_real: cp.products?.stock_real ?? 0,
+      product_is_active: cp.products?.product_status === 'active',
+      // Hiérarchie de catégorisation
+      subcategory_id: hierarchy?.subcategory_id || null,
+      subcategory_name: hierarchy?.subcategory_name || null,
+      category_id: hierarchy?.category_id || null,
+      category_name: hierarchy?.category_name || null,
+      family_id: hierarchy?.family_id || null,
+      family_name: hierarchy?.family_name || null,
+      category_full_path: hierarchy?.full_path || null,
+      product_supplier_name: supplierMap.get(cp.products?.supplier_id) || null,
+    };
+  });
 }
 
 /**
@@ -76,7 +262,7 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
  * Note: Tous les produits actifs sont affichés, même sans stock
  */
 async function fetchEligibleProducts(): Promise<EligibleProduct[]> {
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('products')
     .select(
       `
@@ -100,7 +286,7 @@ async function fetchEligibleProducts(): Promise<EligibleProduct[]> {
 
   // Récupérer les images primaires pour ces produits
   const productIds = (data || []).map((p: any) => p.id);
-  const { data: images } = await (supabase as any)
+  const { data: images } = await supabase
     .from('product_images')
     .select('product_id, public_url')
     .in('product_id', productIds)
@@ -115,7 +301,7 @@ async function fetchEligibleProducts(): Promise<EligibleProduct[]> {
     id: p.id,
     name: p.name,
     reference: p.sku,
-    price_ht: p.cost_price,
+    price_ht: p.cost_price || 0,
     primary_image_url: imageMap.get(p.id) || null,
     stock_real: p.stock_real,
     is_active: p.product_status === 'active',
@@ -149,28 +335,27 @@ export function useEligibleProducts() {
 
 /**
  * Hook: ajouter des produits au catalogue LinkMe
+ * Utilise fonction RPC SECURITY DEFINER pour bypasser RLS
  */
 export function useAddProductsToCatalog() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (productIds: string[]) => {
-      const productsToInsert = productIds.map(productId => ({
-        product_id: productId,
-        is_enabled: true,
-        is_public_showcase: false,
-        max_margin_rate: 20.0,
-        min_margin_rate: 0.0,
-        suggested_margin_rate: 10.0,
-      }));
+      // Appel RPC SECURITY DEFINER pour bypasser RLS
+      // Note: Cast via unknown car fonction RPC custom pas dans types Supabase générés
+      const rpcCall = supabase.rpc as unknown as (
+        fn: string,
+        args: { p_product_ids: string[] }
+      ) => Promise<{ data: number | null; error: { message: string } | null }>;
 
-      const { error } = await (supabase as any)
-        .from('linkme_catalog_products')
-        .upsert(productsToInsert, { onConflict: 'product_id' });
+      const { data, error } = await rpcCall('add_products_to_linkme_catalog', {
+        p_product_ids: productIds,
+      });
 
-      if (error) throw error;
+      if (error) throw new Error(error.message);
 
-      return productIds.length;
+      return data ?? 0;
     },
     onSuccess: count => {
       queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
@@ -187,8 +372,8 @@ export function useRemoveProductFromCatalog() {
 
   return useMutation({
     mutationFn: async (catalogProductId: string) => {
-      const { error } = await (supabase as any)
-        .from('linkme_catalog_products')
+      const { error } = await supabase
+        .from('channel_pricing')
         .delete()
         .eq('id', catalogProductId);
 
@@ -201,7 +386,7 @@ export function useRemoveProductFromCatalog() {
 }
 
 /**
- * Hook: toggle activation produit (is_enabled)
+ * Hook: toggle activation produit (is_active dans channel_pricing)
  */
 export function useToggleProductEnabled() {
   const queryClient = useQueryClient();
@@ -214,9 +399,9 @@ export function useToggleProductEnabled() {
       catalogProductId: string;
       isEnabled: boolean;
     }) => {
-      const { error } = await (supabase as any)
-        .from('linkme_catalog_products')
-        .update({ is_enabled: isEnabled })
+      const { error } = await supabase
+        .from('channel_pricing')
+        .update({ is_active: isEnabled }) // Map is_enabled → is_active
         .eq('id', catalogProductId);
 
       if (error) throw error;
@@ -272,8 +457,8 @@ export function useToggleProductShowcase() {
       catalogProductId: string;
       isPublicShowcase: boolean;
     }) => {
-      const { error } = await (supabase as any)
-        .from('linkme_catalog_products')
+      const { error } = await supabase
+        .from('channel_pricing')
         .update({ is_public_showcase: isPublicShowcase })
         .eq('id', catalogProductId);
 
@@ -330,8 +515,8 @@ export function useToggleProductFeatured() {
       catalogProductId: string;
       isFeatured: boolean;
     }) => {
-      const { error } = await (supabase as any)
-        .from('linkme_catalog_products')
+      const { error } = await supabase
+        .from('channel_pricing')
         .update({ is_featured: isFeatured })
         .eq('id', catalogProductId);
 
@@ -389,8 +574,8 @@ export function useToggleShowSupplier() {
       catalogProductId: string;
       showSupplier: boolean;
     }) => {
-      const { error } = await (supabase as any)
-        .from('linkme_catalog_products')
+      const { error } = await supabase
+        .from('channel_pricing')
         .update({ show_supplier: showSupplier })
         .eq('id', catalogProductId);
 
@@ -451,8 +636,8 @@ export function useUpdateMarginSettings() {
         suggested_margin_rate?: number;
       };
     }) => {
-      const { error } = await (supabase as any)
-        .from('linkme_catalog_products')
+      const { error } = await supabase
+        .from('channel_pricing')
         .update(marginSettings)
         .eq('id', catalogProductId);
 
@@ -482,8 +667,8 @@ export function useUpdateCustomMetadata() {
         custom_selling_points?: string[] | null;
       };
     }) => {
-      const { error } = await (supabase as any)
-        .from('linkme_catalog_products')
+      const { error } = await supabase
+        .from('channel_pricing')
         .update(metadata)
         .eq('id', catalogProductId);
 
@@ -502,10 +687,7 @@ export function useLinkMeCatalogStats() {
   return useQuery({
     queryKey: ['linkme-catalog-stats'],
     queryFn: async () => {
-      const { data } = await (supabase as any).rpc(
-        'get_linkme_catalog_products_for_affiliate' as any
-      );
-      const products = data as unknown as LinkMeCatalogProduct[];
+      const products = await fetchLinkMeCatalogProducts();
 
       if (!products) return null;
 
@@ -527,52 +709,20 @@ export function useLinkMeCatalogStats() {
 }
 
 // ============================================================================
-// HOOKS PAGE DÉTAIL PRODUIT (channel_pricing unifié)
+// HOOKS PAGE DÉTAIL PRODUIT (channel_pricing + products JOIN)
 // ============================================================================
 
-/** ID du canal LinkMe */
-const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
-
-/**
- * Interface détail produit pour page [id]
- */
-export interface LinkMeProductDetail {
-  id: string;
-  product_id: string;
-  sku: string;
-  name: string;
-  cost_price: number;
-  custom_price_ht: number | null;
-  is_active: boolean;
-  is_public_showcase: boolean;
-  is_featured: boolean;
-  show_supplier: boolean;
-  min_margin_rate: number;
-  max_margin_rate: number;
-  suggested_margin_rate: number | null;
-  channel_commission_rate: number | null;
-  custom_title: string | null;
-  custom_description: string | null;
-  custom_selling_points: string[] | null;
-  primary_image_url: string | null;
-  stock_real: number;
-  product_is_active: boolean;
-  product_family_name: string | null;
-  product_category_name: string | null;
-  product_supplier_name: string | null;
-  views_count: number;
-  selections_count: number;
-  display_order: number;
-}
+// Type LinkMeProductDetail importé depuis ../types
 
 /**
  * Fetch détail d'un produit LinkMe depuis channel_pricing
+ * Utilise l'ID de channel_pricing
  */
 async function fetchLinkMeProductDetail(
-  channelPricingId: string
+  catalogProductId: string
 ): Promise<LinkMeProductDetail | null> {
   // Requête channel_pricing avec JOIN products
-  const { data: cpData, error: cpError } = await (supabase as any)
+  const { data: cpData, error: cpError } = await supabase
     .from('channel_pricing')
     .select(
       `
@@ -586,10 +736,12 @@ async function fetchLinkMeProductDetail(
       max_margin_rate,
       suggested_margin_rate,
       channel_commission_rate,
+      buffer_rate,
       custom_title,
       custom_description,
       custom_selling_points,
       custom_price_ht,
+      public_price_ht,
       views_count,
       selections_count,
       display_order,
@@ -598,16 +750,21 @@ async function fetchLinkMeProductDetail(
         sku,
         name,
         cost_price,
+        eco_tax_default,
+        margin_percentage,
         stock_real,
         product_status,
-        subcategories:subcategory_id(name),
-        supplier:supplier_id(legal_name),
-        product_images(public_url, is_primary)
+        subcategory_id,
+        supplier_id,
+        weight,
+        dimensions,
+        suitable_rooms,
+        description,
+        selling_points
       )
     `
     )
-    .eq('id', channelPricingId)
-    .eq('channel_id', LINKME_CHANNEL_ID)
+    .eq('id', catalogProductId)
     .single();
 
   if (cpError) {
@@ -617,86 +774,139 @@ async function fetchLinkMeProductDetail(
 
   if (!cpData) return null;
 
-  const product = cpData.products;
+  // Note: buffer_rate et autres colonnes existent en DB mais pas dans les types Git - utiliser any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cp = cpData as any;
+  const product = cp.products;
+
+  // Récupérer l'image primaire
+  const { data: images } = await supabase
+    .from('product_images')
+    .select('public_url')
+    .eq('product_id', product.id)
+    .eq('is_primary', true)
+    .limit(1);
+
+  const primaryImageUrl = images?.[0]?.public_url || null;
+
+  // Récupérer la sous-catégorie
+  let categoryName: string | null = null;
+  if (product.subcategory_id) {
+    const { data: subcat } = await supabase
+      .from('subcategories')
+      .select('name')
+      .eq('id', product.subcategory_id)
+      .single();
+    categoryName = subcat?.name || null;
+  }
+
+  // Récupérer le fournisseur
+  let supplierName: string | null = null;
+  if (product.supplier_id) {
+    const { data: supplier } = await supabase
+      .from('organisations')
+      .select('legal_name')
+      .eq('id', product.supplier_id)
+      .single();
+    supplierName = supplier?.legal_name || null;
+  }
+
+  // Calcul du prix minimum de vente: (cost_price + eco_tax) * (1 + margin/100)
+  const costPrice = product.cost_price || 0;
+  const ecoTax = product.eco_tax_default || 0;
+  const marginPct = product.margin_percentage ?? 25; // Défaut 25%
+  const minSellingPriceHt =
+    costPrice > 0 ? (costPrice + ecoTax) * (1 + marginPct / 100) : null;
 
   return {
-    id: cpData.id,
-    product_id: cpData.product_id,
+    id: cp.id,
+    product_id: cp.product_id,
     sku: product.sku,
     name: product.name,
+    selling_price_ht: cp.custom_price_ht ?? minSellingPriceHt, // custom_price_ht ou prix minimum calculé
+    public_price_ht: cp.public_price_ht ?? null, // Tarif public (éditable)
     cost_price: product.cost_price || 0,
-    custom_price_ht: cpData.custom_price_ht,
-    is_active: cpData.is_active ?? true,
-    is_public_showcase: cpData.is_public_showcase ?? false,
-    is_featured: cpData.is_featured ?? false,
-    show_supplier: cpData.show_supplier ?? false,
-    min_margin_rate: cpData.min_margin_rate ?? 0,
-    max_margin_rate: cpData.max_margin_rate ?? 100,
-    suggested_margin_rate: cpData.suggested_margin_rate,
-    channel_commission_rate: cpData.channel_commission_rate,
-    custom_title: cpData.custom_title,
-    custom_description: cpData.custom_description,
-    custom_selling_points: cpData.custom_selling_points,
-    primary_image_url:
-      product.product_images?.find(
-        (img: { is_primary: boolean }) => img.is_primary
-      )?.public_url ||
-      product.product_images?.[0]?.public_url ||
-      null,
+    min_selling_price_ht: minSellingPriceHt, // Prix minimum calculé (lecture seule)
+    is_enabled: cp.is_active ?? true, // Map is_active → is_enabled
+    is_public_showcase: cp.is_public_showcase ?? false,
+    is_featured: cp.is_featured ?? false,
+    show_supplier: cp.show_supplier ?? false,
+    min_margin_rate: cp.min_margin_rate ?? 0,
+    max_margin_rate: cp.max_margin_rate ?? 100,
+    suggested_margin_rate: cp.suggested_margin_rate,
+    linkme_commission_rate: cp.channel_commission_rate, // Map channel_commission_rate
+    buffer_rate: cp.buffer_rate ?? 0.05, // Marge de sécurité (défaut 5%)
+    custom_title: cp.custom_title,
+    custom_description: cp.custom_description,
+    custom_selling_points: cp.custom_selling_points,
+    // Valeurs source depuis produit (pour système de validation "copier")
+    source_description: product.description || null,
+    source_selling_points: Array.isArray(product.selling_points)
+      ? product.selling_points
+      : null,
+    primary_image_url: primaryImageUrl,
     stock_real: product.stock_real || 0,
     product_is_active: product.product_status === 'active',
     product_family_name: null,
-    product_category_name: product.subcategories?.name || null,
-    product_supplier_name: product.supplier?.legal_name || null,
-    views_count: cpData.views_count ?? 0,
-    selections_count: cpData.selections_count ?? 0,
-    display_order: cpData.display_order ?? 0,
+    product_category_name: categoryName,
+    product_supplier_name: supplierName,
+    subcategory_id: product.subcategory_id,
+    supplier_id: product.supplier_id,
+    weight_kg: product.weight || null,
+    dimensions_cm: product.dimensions || null,
+    room_types: product.suitable_rooms || null,
+    views_count: cp.views_count ?? 0,
+    selections_count: cp.selections_count ?? 0,
+    display_order: cp.display_order ?? 0,
   };
 }
 
 /**
  * Hook: récupère le détail d'un produit LinkMe
+ * @param catalogProductId - ID de channel_pricing
  */
-export function useLinkMeProductDetail(channelPricingId: string | null) {
+export function useLinkMeProductDetail(catalogProductId: string | null) {
   return useQuery({
-    queryKey: ['linkme-product-detail', channelPricingId],
+    queryKey: ['linkme-product-detail', catalogProductId],
     queryFn: () =>
-      channelPricingId ? fetchLinkMeProductDetail(channelPricingId) : null,
-    enabled: !!channelPricingId,
+      catalogProductId ? fetchLinkMeProductDetail(catalogProductId) : null,
+    enabled: !!catalogProductId,
     staleTime: 30000,
   });
 }
 
 /**
- * Hook: mettre à jour pricing produit (channel_pricing)
+ * Hook: mettre à jour marges produit LinkMe (channel_pricing)
  */
 export function useUpdateLinkMePricing() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({
-      channelPricingId,
+      catalogProductId,
       pricing,
     }: {
-      channelPricingId: string;
+      catalogProductId: string;
       pricing: {
-        custom_price_ht?: number | null;
         min_margin_rate?: number;
         max_margin_rate?: number;
         suggested_margin_rate?: number | null;
-        channel_commission_rate?: number | null;
+        channel_commission_rate?: number | null; // Correct column name
+        buffer_rate?: number | null; // Marge de sécurité (décimal)
+        custom_price_ht?: number | null; // Prix de vente canal
+        public_price_ht?: number | null; // Tarif public HT
       };
     }) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('channel_pricing')
         .update(pricing)
-        .eq('id', channelPricingId);
+        .eq('id', catalogProductId);
 
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ['linkme-product-detail', variables.channelPricingId],
+        queryKey: ['linkme-product-detail', variables.catalogProductId],
       });
       queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
     },
@@ -711,26 +921,26 @@ export function useUpdateLinkMeMetadata() {
 
   return useMutation({
     mutationFn: async ({
-      channelPricingId,
+      catalogProductId,
       metadata,
     }: {
-      channelPricingId: string;
+      catalogProductId: string;
       metadata: {
         custom_title?: string | null;
         custom_description?: string | null;
         custom_selling_points?: string[] | null;
       };
     }) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('channel_pricing')
         .update(metadata)
-        .eq('id', channelPricingId);
+        .eq('id', catalogProductId);
 
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ['linkme-product-detail', variables.channelPricingId],
+        queryKey: ['linkme-product-detail', variables.catalogProductId],
       });
       queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
     },
@@ -738,37 +948,149 @@ export function useUpdateLinkMeMetadata() {
 }
 
 /**
- * Hook: toggle pour page détail (unifié channel_pricing)
+ * Hook: toggle pour page détail (channel_pricing)
+ * Supporte 'is_enabled' qui est mappé vers 'is_active' dans channel_pricing
  */
 export function useToggleLinkMeProductField() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({
-      channelPricingId,
+      catalogProductId,
       field,
       value,
     }: {
-      channelPricingId: string;
+      catalogProductId: string;
       field:
+        | 'is_enabled' // UI field, mapped to is_active
         | 'is_active'
         | 'is_public_showcase'
         | 'is_featured'
         | 'show_supplier';
       value: boolean;
     }) => {
-      const { error } = await (supabase as any)
+      // Map is_enabled to is_active (column name in channel_pricing)
+      const dbField = field === 'is_enabled' ? 'is_active' : field;
+
+      const { error } = await supabase
         .from('channel_pricing')
-        .update({ [field]: value })
-        .eq('id', channelPricingId);
+        .update({ [dbField]: value })
+        .eq('id', catalogProductId);
 
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ['linkme-product-detail', variables.channelPricingId],
+        queryKey: ['linkme-product-detail', variables.catalogProductId],
       });
       queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
     },
+  });
+}
+
+/**
+ * Interface variante produit
+ */
+export interface ProductVariant {
+  id: string;
+  sku: string | null;
+  name: string | null;
+  variant_attributes: Record<string, string> | null;
+  stock_real: number;
+  cost_price: number | null;
+  /** URL image principale de la variante */
+  image_url: string | null;
+}
+
+/**
+ * Hook: récupérer les variantes d'un produit présentes dans le catalogue LinkMe
+ * Note: Filtre les variantes pour n'afficher que celles qui sont dans channel_pricing
+ */
+export function useLinkMeProductVariants(productId: string | null) {
+  return useQuery({
+    queryKey: ['linkme-product-variants', productId],
+    queryFn: async (): Promise<ProductVariant[]> => {
+      if (!productId) return [];
+
+      // 1. Récupérer le variant_group_id du produit principal
+      const { data: mainProduct, error: mainError } = await supabase
+        .from('products')
+        .select('variant_group_id')
+        .eq('id', productId)
+        .single();
+
+      if (mainError || !mainProduct?.variant_group_id) {
+        return [];
+      }
+
+      // 2. Récupérer toutes les variantes du même groupe
+      const { data: allVariants, error } = await supabase
+        .from('products')
+        .select(
+          `
+          id,
+          sku,
+          name,
+          variant_attributes,
+          stock_real,
+          cost_price
+        `
+        )
+        .eq('variant_group_id', mainProduct.variant_group_id)
+        .neq('id', productId) // Exclure le produit principal
+        .order('variant_position');
+
+      if (error) {
+        console.error('Erreur fetch variantes produit:', error);
+        return [];
+      }
+
+      if (!allVariants || allVariants.length === 0) return [];
+
+      // 3. Filtrer par présence dans channel_pricing (catalogue LinkMe)
+      const variantIds = allVariants.map((v: any) => v.id);
+      const { data: catalogEntries } = await supabase
+        .from('channel_pricing')
+        .select('product_id')
+        .eq('channel_id', LINKME_CHANNEL_ID)
+        .in('product_id', variantIds);
+
+      // Set des product_id présents dans le catalogue LinkMe
+      const catalogProductIds = new Set(
+        (catalogEntries || []).map((e: any) => e.product_id)
+      );
+
+      // Filtrer les variantes pour ne garder que celles dans le catalogue
+      const variantsInCatalog = allVariants.filter((v: any) =>
+        catalogProductIds.has(v.id)
+      );
+
+      if (variantsInCatalog.length === 0) return [];
+
+      // 4. Récupérer les images primaires pour les variantes filtrées
+      const filteredIds = variantsInCatalog.map((v: any) => v.id);
+      const { data: images } = await supabase
+        .from('product_images')
+        .select('product_id, public_url')
+        .in('product_id', filteredIds)
+        .eq('is_primary', true);
+
+      // Map des images par product_id
+      const imageMap = new Map(
+        (images || []).map((img: any) => [img.product_id, img.public_url])
+      );
+
+      return variantsInCatalog.map((v: any) => ({
+        id: v.id,
+        sku: v.sku,
+        name: v.name,
+        variant_attributes: v.variant_attributes,
+        stock_real: v.stock_real || 0,
+        cost_price: v.cost_price,
+        image_url: imageMap.get(v.id) || null,
+      }));
+    },
+    enabled: !!productId,
+    staleTime: 60000,
   });
 }

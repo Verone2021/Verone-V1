@@ -47,6 +47,12 @@ export interface SalesOrder {
   payment_terms?: string;
   notes?: string;
   channel_id?: string | null; // 🆕 Canal vente (b2b, ecommerce, retail, wholesale) - Pour traçabilité stock
+  // 🆕 Relation jointe pour affichage nom canal
+  sales_channel?: {
+    id: string;
+    name: string;
+    code?: string;
+  } | null;
 
   // Workflow users et timestamps
   created_by: string;
@@ -276,6 +282,7 @@ export function useSalesOrders() {
           .select(
             `
           *,
+          sales_channel:sales_channels!left(id, name, code),
           sales_order_items (
             *,
             products (
@@ -408,6 +415,7 @@ export function useSalesOrders() {
           .select(
             `
           *,
+          sales_channel:sales_channels!left(id, name, code),
           sales_order_items (
             *,
             products (

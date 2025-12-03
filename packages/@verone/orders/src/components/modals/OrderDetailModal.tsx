@@ -1,5 +1,7 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
@@ -22,6 +24,8 @@ import {
   Calendar,
   MapPin,
   FileText,
+  Store,
+  ExternalLink,
 } from 'lucide-react';
 
 // NOTE: SalesOrderShipmentModal supprimé - sera recréé ultérieurement
@@ -41,6 +45,8 @@ interface OrderDetailModalProps {
   open: boolean;
   onClose: () => void;
   onUpdate?: () => void;
+  readOnly?: boolean; // Mode lecture seule pour commandes d'autres canaux
+  channelRedirectUrl?: string | null; // URL de redirection vers CMS du canal
 }
 
 const paymentStatusLabels: Record<string, string> = {
@@ -82,9 +88,12 @@ export function OrderDetailModal({
   open,
   onClose,
   onUpdate,
+  readOnly = false,
+  channelRedirectUrl,
 }: OrderDetailModalProps) {
   // NOTE: showShippingModal supprimé - modal sera recréé ultérieurement
   const { markAsPaid } = useSalesOrders();
+  const router = useRouter();
 
   if (!order) return null;
 
@@ -144,6 +153,12 @@ export function OrderDetailModal({
                 <Badge className={orderStatusColors[order.status]}>
                   {orderStatusLabels[order.status]}
                 </Badge>
+                {order.sales_channel?.name && (
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <Store className="h-3 w-3" />
+                    {order.sales_channel.name}
+                  </Badge>
+                )}
               </div>
               <ButtonV2 variant="ghost" size="sm" onClick={onClose}>
                 <X className="h-4 w-4" />
@@ -439,7 +454,7 @@ export function OrderDetailModal({
                     </div>
                   )}
 
-                  {canMarkAsPaid && (
+                  {!readOnly && canMarkAsPaid && (
                     <ButtonV2
                       onClick={handleMarkAsPaid}
                       size="sm"
@@ -488,7 +503,7 @@ export function OrderDetailModal({
                     </p>
                   )}
 
-                  {canShip && (
+                  {!readOnly && canShip && (
                     <ButtonV2
                       size="sm"
                       className="w-full"
@@ -525,26 +540,51 @@ export function OrderDetailModal({
                   <CardTitle className="text-sm font-medium">Actions</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <ButtonV2
-                    variant="outline"
-                    size="sm"
-                    className="w-full justify-start opacity-50 text-xs"
-                    disabled
-                    title="Fonctionnalité disponible en Phase 2"
-                  >
-                    <FileText className="h-3 w-3 mr-1" />
-                    Télécharger BC
-                  </ButtonV2>
-                  <ButtonV2
-                    variant="outline"
-                    size="sm"
-                    className="w-full justify-start opacity-50 text-xs"
-                    disabled
-                    title="Fonctionnalité disponible en Phase 2"
-                  >
-                    <FileText className="h-3 w-3 mr-1" />
-                    Générer facture
-                  </ButtonV2>
+                  {/* Bouton de redirection vers CMS du canal (si commande d'un autre canal) */}
+                  {channelRedirectUrl && (
+                    <ButtonV2
+                      variant="default"
+                      size="sm"
+                      className="w-full justify-start"
+                      onClick={() => router.push(channelRedirectUrl)}
+                    >
+                      <ExternalLink className="h-3 w-3 mr-1" />
+                      Gérer dans {order.sales_channel?.name || 'CMS'}
+                    </ButtonV2>
+                  )}
+
+                  {/* Actions de gestion (masquées si readOnly) */}
+                  {!readOnly && (
+                    <>
+                      <ButtonV2
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-start opacity-50 text-xs"
+                        disabled
+                        title="Fonctionnalité disponible en Phase 2"
+                      >
+                        <FileText className="h-3 w-3 mr-1" />
+                        Télécharger BC
+                      </ButtonV2>
+                      <ButtonV2
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-start opacity-50 text-xs"
+                        disabled
+                        title="Fonctionnalité disponible en Phase 2"
+                      >
+                        <FileText className="h-3 w-3 mr-1" />
+                        Générer facture
+                      </ButtonV2>
+                    </>
+                  )}
+
+                  {/* Message mode lecture seule */}
+                  {readOnly && !channelRedirectUrl && (
+                    <p className="text-xs text-gray-500 text-center py-2">
+                      Mode lecture seule
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             </div>

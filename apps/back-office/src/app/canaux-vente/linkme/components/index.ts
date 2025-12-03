@@ -9,3 +9,5 @@ export { ProductDetailHeader } from './ProductDetailHeader';
 export { ProductPricingCard } from './ProductPricingCard';
 export { ProductInfoCard } from './ProductInfoCard';
 export { ProductStatsCard } from './ProductStatsCard';
+export { ProductReadOnlyCard } from './ProductReadOnlyCard';
+export { ProductVariantsCard } from './ProductVariantsCard';

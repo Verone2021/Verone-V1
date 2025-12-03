@@ -571,6 +571,7 @@ export type Database = {
           min_quantity: number | null;
           notes: string | null;
           product_id: string;
+          public_price_ht: number | null;
           requires_assembly: boolean | null;
           selections_count: number | null;
           show_supplier: boolean | null;
@@ -605,6 +606,7 @@ export type Database = {
           min_quantity?: number | null;
           notes?: string | null;
           product_id: string;
+          public_price_ht?: number | null;
           requires_assembly?: boolean | null;
           selections_count?: number | null;
           show_supplier?: boolean | null;
@@ -639,6 +641,7 @@ export type Database = {
           min_quantity?: number | null;
           notes?: string | null;
           product_id?: string;
+          public_price_ht?: number | null;
           requires_assembly?: boolean | null;
           selections_count?: number | null;
           show_supplier?: boolean | null;
@@ -1000,11 +1003,12 @@ export type Database = {
           deleted_at: string | null;
           deleted_by: string | null;
           descriptif: string;
+          enseigne_id: string | null;
           estimated_response_date: string | null;
           id: string;
           image_url: string | null;
           notes_internes: string | null;
-          organisation_name: string;
+          organisation_id: string | null;
           priority_level: number | null;
           responded_at: string | null;
           responded_by: string | null;
@@ -1026,11 +1030,12 @@ export type Database = {
           deleted_at?: string | null;
           deleted_by?: string | null;
           descriptif: string;
+          enseigne_id?: string | null;
           estimated_response_date?: string | null;
           id?: string;
           image_url?: string | null;
           notes_internes?: string | null;
-          organisation_name: string;
+          organisation_id?: string | null;
           priority_level?: number | null;
           responded_at?: string | null;
           responded_by?: string | null;
@@ -1052,11 +1057,12 @@ export type Database = {
           deleted_at?: string | null;
           deleted_by?: string | null;
           descriptif?: string;
+          enseigne_id?: string | null;
           estimated_response_date?: string | null;
           id?: string;
           image_url?: string | null;
           notes_internes?: string | null;
-          organisation_name?: string;
+          organisation_id?: string | null;
           priority_level?: number | null;
           responded_at?: string | null;
           responded_by?: string | null;
@@ -1123,6 +1129,27 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'v_users_with_roles';
             referencedColumns: ['user_id'];
+          },
+          {
+            foreignKeyName: 'client_consultations_enseigne_id_fkey';
+            columns: ['enseigne_id'];
+            isOneToOne: false;
+            referencedRelation: 'enseignes';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'client_consultations_enseigne_id_fkey';
+            columns: ['enseigne_id'];
+            isOneToOne: false;
+            referencedRelation: 'enseignes_with_stats';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'client_consultations_organisation_id_fkey';
+            columns: ['organisation_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
+            referencedColumns: ['id'];
           },
           {
             foreignKeyName: 'client_consultations_responded_by_fkey';

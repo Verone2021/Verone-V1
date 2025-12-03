@@ -11,8 +11,6 @@ import {
   AssignOrganisationsModal,
   type Enseigne,
   type CreateEnseigneData,
-  type UpdateEnseigneData,
-  type EnseigneOrganisation,
 } from '@verone/organisations';
 import { Badge } from '@verone/ui';
 import { ButtonV2, IconButton } from '@verone/ui';
@@ -35,28 +33,37 @@ import {
   DialogTitle,
 } from '@verone/ui';
 import { Label } from '@verone/ui';
-import { Textarea } from '@verone/ui';
 import { Switch } from '@verone/ui';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@verone/ui';
 import { spacing, colors } from '@verone/ui/design-system';
 import { cn } from '@verone/utils';
+import { createClient } from '@verone/utils/supabase/client';
 import {
   Search,
   Plus,
   ArrowLeft,
   Building,
   Users,
-  Star,
   Pencil,
   Trash2,
-  Power,
   Eye,
   LayoutGrid,
   List,
+  Archive,
+  ArchiveRestore,
+  AlertTriangle,
 } from 'lucide-react';
 
 export default function EnseignesPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'active' | 'inactive' | 'all'>(
+  const [activeTab, setActiveTab] = useState<'active' | 'archived' | 'all'>(
     'active'
   );
   const [currentPage, setCurrentPage] = useState(1);
@@ -73,6 +80,10 @@ export default function EnseignesPage() {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Archived enseignes state
+  const [archivedEnseignes, setArchivedEnseignes] = useState<Enseigne[]>([]);
+  const [archivedLoading, setArchivedLoading] = useState(false);
+
   // Form state
   const [formData, setFormData] = useState<CreateEnseigneData>({
     name: '',
@@ -81,16 +92,14 @@ export default function EnseignesPage() {
     is_active: true,
   });
 
-  // Filtres selon l'onglet
+  // Filtres selon l'onglet - actives seulement pour l'onglet actif
   const filters = useMemo(() => {
     const base: { is_active?: boolean; search?: string } = {};
 
     if (activeTab === 'active') {
       base.is_active = true;
-    } else if (activeTab === 'inactive') {
-      base.is_active = false;
     }
-    // 'all' → pas de filtre is_active
+    // 'archived' et 'all' gérés séparément
 
     if (searchQuery) {
       base.search = searchQuery;
@@ -117,23 +126,93 @@ export default function EnseignesPage() {
     assignOrgsEnseigne?.id || ''
   );
 
-  // Stats
+  // Charger les enseignes archivées
+  const loadArchivedEnseignes = async () => {
+    setArchivedLoading(true);
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('enseignes')
+        .select(
+          `
+          *,
+          enseigne_organisations!enseigne_organisations_enseigne_id_fkey(
+            organisation_id
+          )
+        `
+        )
+        .eq('is_active', false)
+        .order('updated_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Transformer les données pour avoir member_count
+      const transformedData = (data || []).map(e => ({
+        ...e,
+        member_count: e.enseigne_organisations?.length || 0,
+      }));
+
+      setArchivedEnseignes(transformedData as unknown as Enseigne[]);
+    } catch (err) {
+      console.error('Erreur chargement enseignes archivées:', err);
+    } finally {
+      setArchivedLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'archived') {
+      loadArchivedEnseignes();
+    }
+  }, [activeTab]);
+
+  // Stats - combiner actives et archivées
   const stats = useMemo(() => {
+    const activeCount = enseignes.filter(e => e.is_active).length;
+    const archivedCount = archivedEnseignes.length;
+    const totalMembers =
+      enseignes.reduce((sum, e) => sum + e.member_count, 0) +
+      archivedEnseignes.reduce((sum, e) => sum + e.member_count, 0);
+
     return {
-      total: enseignes.length,
-      active: enseignes.filter(e => e.is_active).length,
-      inactive: enseignes.filter(e => !e.is_active).length,
-      totalMembers: enseignes.reduce((sum, e) => sum + e.member_count, 0),
+      total: activeCount + archivedCount,
+      active: activeCount,
+      archived: archivedCount,
+      totalMembers,
     };
-  }, [enseignes]);
+  }, [enseignes, archivedEnseignes]);
+
+  // Enseignes à afficher selon l'onglet
+  const displayedEnseignes = useMemo(() => {
+    if (activeTab === 'active') {
+      return enseignes.filter(e => e.is_active);
+    } else if (activeTab === 'archived') {
+      // Filtrer par recherche si nécessaire
+      if (searchQuery) {
+        return archivedEnseignes.filter(e =>
+          e.name.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
+      return archivedEnseignes;
+    } else {
+      // 'all' - combiner actives et archivées
+      const all = [...enseignes, ...archivedEnseignes];
+      if (searchQuery) {
+        return all.filter(e =>
+          e.name.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
+      return all;
+    }
+  }, [activeTab, enseignes, archivedEnseignes, searchQuery]);
 
   // Pagination
   const paginatedEnseignes = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
-    return enseignes.slice(startIndex, startIndex + itemsPerPage);
-  }, [enseignes, currentPage, itemsPerPage]);
+    return displayedEnseignes.slice(startIndex, startIndex + itemsPerPage);
+  }, [displayedEnseignes, currentPage, itemsPerPage]);
 
-  const totalPages = Math.ceil(enseignes.length / itemsPerPage);
+  const totalPages = Math.ceil(displayedEnseignes.length / itemsPerPage);
 
   // Reset page quand recherche ou tab change
   useEffect(() => {
@@ -197,21 +276,30 @@ export default function EnseignesPage() {
     }
   };
 
+  // Archiver/Désarchiver une enseigne
+  const handleArchive = async (enseigne: Enseigne) => {
+    await toggleEnseigneStatus(enseigne.id);
+    refetch();
+    loadArchivedEnseignes();
+  };
+
+  // Supprimer une enseigne (avec dissociation des organisations)
   const handleDelete = async () => {
     if (!deleteConfirmEnseigne) return;
 
     setIsSubmitting(true);
     try {
+      // Les organisations seront automatiquement dissociées par la cascade FK
       await deleteEnseigne(deleteConfirmEnseigne.id);
       setDeleteConfirmEnseigne(null);
+      refetch();
+      loadArchivedEnseignes();
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleToggleStatus = async (enseigne: Enseigne) => {
-    await toggleEnseigneStatus(enseigne.id);
-  };
+  const isLoading = activeTab === 'archived' ? archivedLoading : loading;
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -277,10 +365,10 @@ export default function EnseignesPage() {
               className="text-2xl font-bold"
               style={{ color: colors.text.muted }}
             >
-              {stats.inactive}
+              {stats.archived}
             </div>
             <p className="text-sm" style={{ color: colors.text.subtle }}>
-              Inactives
+              Archivées
             </p>
           </CardContent>
         </Card>
@@ -311,24 +399,20 @@ export default function EnseignesPage() {
           )}
         >
           Actives
-          <span className="ml-2 opacity-70">
-            ({enseignes.filter(e => e.is_active).length})
-          </span>
+          <span className="ml-2 opacity-70">({stats.active})</span>
         </button>
 
         <button
-          onClick={() => setActiveTab('inactive')}
+          onClick={() => setActiveTab('archived')}
           className={cn(
             'px-4 py-2 rounded-lg text-sm font-medium transition-all',
-            activeTab === 'inactive'
+            activeTab === 'archived'
               ? 'bg-black text-white'
               : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
           )}
         >
-          Inactives
-          <span className="ml-2 opacity-70">
-            ({enseignes.filter(e => !e.is_active).length})
-          </span>
+          Archivées
+          <span className="ml-2 opacity-70">({stats.archived})</span>
         </button>
 
         <button
@@ -341,7 +425,7 @@ export default function EnseignesPage() {
           )}
         >
           Toutes
-          <span className="ml-2 opacity-70">({enseignes.length})</span>
+          <span className="ml-2 opacity-70">({stats.total})</span>
         </button>
 
         {/* Barre de recherche */}
@@ -396,10 +480,10 @@ export default function EnseignesPage() {
         </div>
       )}
 
-      {/* Enseignes Grid */}
+      {/* Enseignes Grid ou List */}
       {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {loading
+          {isLoading
             ? Array.from({ length: 8 }).map((_, i) => (
                 <Card key={i} className="animate-pulse">
                   <CardHeader style={{ padding: spacing[3] }}>
@@ -414,15 +498,184 @@ export default function EnseignesPage() {
             : paginatedEnseignes.map(enseigne => (
                 <Card
                   key={enseigne.id}
-                  className="hover:shadow-lg transition-all duration-200 relative group"
+                  className="hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() =>
+                    (window.location.href = `/contacts-organisations/enseignes/${enseigne.id}`)
+                  }
                 >
-                  <CardContent style={{ padding: spacing[4] }}>
-                    {/* Header avec logo et statut */}
-                    <div className="flex items-start justify-between mb-3">
+                  <CardContent className="p-6">
+                    {/* Header: Logo à gauche, Badge à droite */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="h-16 w-16 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden border">
+                        {enseigne.logo_url ? (
+                          <img
+                            src={enseigne.logo_url}
+                            alt={enseigne.name}
+                            className="w-full h-full object-contain"
+                          />
+                        ) : (
+                          <Building className="h-8 w-8 text-gray-400" />
+                        )}
+                      </div>
+                      <Badge
+                        variant={enseigne.is_active ? 'default' : 'secondary'}
+                      >
+                        {enseigne.is_active ? 'Active' : 'Archivée'}
+                      </Badge>
+                    </div>
+
+                    {/* Nom */}
+                    <h3 className="font-semibold text-lg mb-4">
+                      {enseigne.name}
+                    </h3>
+
+                    {/* Stats sur une ligne */}
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Users className="h-4 w-4" />
+                        <span>{enseigne.member_count} organisation(s)</span>
+                      </div>
+                    </div>
+
+                    {/* Actions - IconButton 32x32px UNIQUEMENT */}
+                    <div className="flex items-center gap-2 mt-4 pt-4 border-t">
+                      {enseigne.is_active ? (
+                        <>
+                          <IconButton
+                            icon={Eye}
+                            label="Voir"
+                            variant="outline"
+                            size="sm"
+                            onClick={e => {
+                              e.stopPropagation();
+                              window.location.href = `/contacts-organisations/enseignes/${enseigne.id}`;
+                            }}
+                          />
+                          <IconButton
+                            icon={Pencil}
+                            label="Modifier"
+                            variant="outline"
+                            size="sm"
+                            onClick={e => {
+                              e.stopPropagation();
+                              handleOpenEditModal(enseigne);
+                            }}
+                          />
+                          <IconButton
+                            icon={Archive}
+                            label="Archiver"
+                            variant="danger"
+                            size="sm"
+                            onClick={e => {
+                              e.stopPropagation();
+                              handleArchive(enseigne);
+                            }}
+                          />
+                        </>
+                      ) : (
+                        <>
+                          <IconButton
+                            icon={Eye}
+                            label="Voir"
+                            variant="outline"
+                            size="sm"
+                            onClick={e => {
+                              e.stopPropagation();
+                              window.location.href = `/contacts-organisations/enseignes/${enseigne.id}`;
+                            }}
+                          />
+                          <IconButton
+                            icon={ArchiveRestore}
+                            label="Restaurer"
+                            variant="success"
+                            size="sm"
+                            onClick={e => {
+                              e.stopPropagation();
+                              handleArchive(enseigne);
+                            }}
+                          />
+                          <IconButton
+                            icon={Trash2}
+                            label="Supprimer"
+                            variant="danger"
+                            size="sm"
+                            onClick={e => {
+                              e.stopPropagation();
+                              setDeleteConfirmEnseigne(enseigne);
+                            }}
+                          />
+                        </>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+        </div>
+      ) : (
+        /* List View */
+        <div
+          className="rounded-lg border"
+          style={{ borderColor: colors.border.DEFAULT }}
+        >
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead style={{ color: colors.text.DEFAULT }}>
+                  Enseigne
+                </TableHead>
+                <TableHead
+                  className="text-center"
+                  style={{ color: colors.text.DEFAULT }}
+                >
+                  Organisations
+                </TableHead>
+                <TableHead
+                  className="text-center"
+                  style={{ color: colors.text.DEFAULT }}
+                >
+                  Statut
+                </TableHead>
+                <TableHead
+                  className="text-right"
+                  style={{ color: colors.text.DEFAULT }}
+                >
+                  Actions
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i} className="animate-pulse">
+                    <TableCell>
+                      <div className="h-4 bg-gray-200 rounded w-32" />
+                    </TableCell>
+                    <TableCell>
+                      <div className="h-4 bg-gray-200 rounded w-8 mx-auto" />
+                    </TableCell>
+                    <TableCell>
+                      <div className="h-4 bg-gray-200 rounded w-16 mx-auto" />
+                    </TableCell>
+                    <TableCell>
+                      <div className="h-4 bg-gray-200 rounded w-24 ml-auto" />
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : paginatedEnseignes.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="p-8 text-center">
+                    <p style={{ color: colors.text.subtle }}>
+                      Aucune enseigne trouvée
+                    </p>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                paginatedEnseignes.map(enseigne => (
+                  <TableRow key={enseigne.id} className="hover:bg-neutral-50">
+                    <TableCell>
                       <div className="flex items-center gap-3">
-                        {/* Logo ou icône */}
                         <div
-                          className="w-12 h-12 rounded-lg flex items-center justify-center"
+                          className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
                           style={{
                             backgroundColor: colors.primary[100],
                             color: colors.primary[600],
@@ -435,231 +688,90 @@ export default function EnseignesPage() {
                               className="w-full h-full object-cover rounded-lg"
                             />
                           ) : (
-                            <Building className="w-6 h-6" />
+                            <Building className="w-5 h-5" />
                           )}
                         </div>
-                        <div>
-                          <CardTitle className="text-base font-semibold line-clamp-1">
-                            {enseigne.name}
-                          </CardTitle>
-                          <Badge
-                            variant={
-                              enseigne.is_active ? 'default' : 'secondary'
-                            }
-                            className="mt-1"
-                          >
-                            {enseigne.is_active ? 'Active' : 'Inactive'}
-                          </Badge>
-                        </div>
+                        <span className="font-medium">{enseigne.name}</span>
                       </div>
-                    </div>
-
-                    {/* Description */}
-                    {enseigne.description && (
-                      <p
-                        className="text-sm line-clamp-2 mb-3"
-                        style={{ color: colors.text.subtle }}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <span className="font-medium">
+                        {enseigne.member_count}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge
+                        variant={enseigne.is_active ? 'default' : 'secondary'}
                       >
-                        {enseigne.description}
-                      </p>
-                    )}
-
-                    {/* Stats */}
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="flex items-center gap-1.5">
-                        <Users
-                          className="w-4 h-4"
-                          style={{ color: colors.text.muted }}
-                        />
-                        <span
-                          className="text-sm font-medium"
-                          style={{ color: colors.text.DEFAULT }}
-                        >
-                          {enseigne.member_count}
-                        </span>
-                        <span
-                          className="text-sm"
-                          style={{ color: colors.text.subtle }}
-                        >
-                          membres
-                        </span>
-                      </div>
-                    </div>
-
+                        {enseigne.is_active ? 'Active' : 'Archivée'}
+                      </Badge>
+                    </TableCell>
                     {/* Actions - Pattern Catalogue IconButton */}
-                    <div className="flex items-center gap-1 pt-3 border-t flex-wrap">
-                      <ButtonV2
-                        variant="outline"
-                        size="sm"
-                        icon={Users}
-                        onClick={() => setAssignOrgsEnseigne(enseigne)}
-                      >
-                        Organisations
-                      </ButtonV2>
-                      <IconButton
-                        variant="outline"
-                        size="sm"
-                        icon={Pencil}
-                        label="Modifier"
-                        onClick={() => handleOpenEditModal(enseigne)}
-                      />
-                      <IconButton
-                        variant={enseigne.is_active ? 'outline' : 'success'}
-                        size="sm"
-                        icon={Power}
-                        label={enseigne.is_active ? 'Désactiver' : 'Activer'}
-                        onClick={() => handleToggleStatus(enseigne)}
-                      />
-                      <IconButton
-                        variant="danger"
-                        size="sm"
-                        icon={Trash2}
-                        label="Supprimer"
-                        onClick={() => setDeleteConfirmEnseigne(enseigne)}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-        </div>
-      ) : (
-        /* List View */
-        <Card>
-          <CardContent style={{ padding: 0 }}>
-            <table className="w-full">
-              <thead>
-                <tr
-                  className="border-b"
-                  style={{ borderColor: colors.border.DEFAULT }}
-                >
-                  <th className="text-left p-4 font-medium">Enseigne</th>
-                  <th className="text-left p-4 font-medium">Description</th>
-                  <th className="text-center p-4 font-medium">Membres</th>
-                  <th className="text-center p-4 font-medium">Statut</th>
-                  <th className="text-right p-4 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <tr key={i} className="animate-pulse">
-                      <td className="p-4">
-                        <div className="h-4 bg-gray-200 rounded w-32" />
-                      </td>
-                      <td className="p-4">
-                        <div className="h-4 bg-gray-200 rounded w-48" />
-                      </td>
-                      <td className="p-4">
-                        <div className="h-4 bg-gray-200 rounded w-8 mx-auto" />
-                      </td>
-                      <td className="p-4">
-                        <div className="h-4 bg-gray-200 rounded w-16 mx-auto" />
-                      </td>
-                      <td className="p-4">
-                        <div className="h-4 bg-gray-200 rounded w-24 ml-auto" />
-                      </td>
-                    </tr>
-                  ))
-                ) : paginatedEnseignes.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="p-8 text-center">
-                      <p style={{ color: colors.text.subtle }}>
-                        Aucune enseigne trouvée
-                      </p>
-                    </td>
-                  </tr>
-                ) : (
-                  paginatedEnseignes.map(enseigne => (
-                    <tr
-                      key={enseigne.id}
-                      className="border-b hover:bg-neutral-50"
-                      style={{ borderColor: colors.border.DEFAULT }}
-                    >
-                      <td className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                            style={{
-                              backgroundColor: colors.primary[100],
-                              color: colors.primary[600],
-                            }}
-                          >
-                            {enseigne.logo_url ? (
-                              <img
-                                src={enseigne.logo_url}
-                                alt={enseigne.name}
-                                className="w-full h-full object-cover rounded-lg"
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-1">
+                        {enseigne.is_active ? (
+                          <>
+                            <Link
+                              href={`/contacts-organisations/enseignes/${enseigne.id}`}
+                            >
+                              <IconButton
+                                variant="outline"
+                                size="sm"
+                                icon={Eye}
+                                label="Voir détails"
                               />
-                            ) : (
-                              <Building className="w-5 h-5" />
-                            )}
-                          </div>
-                          <span className="font-medium">{enseigne.name}</span>
-                        </div>
-                      </td>
-                      <td
-                        className="p-4 max-w-xs truncate"
-                        style={{ color: colors.text.subtle }}
-                      >
-                        {enseigne.description || '-'}
-                      </td>
-                      <td className="p-4 text-center">
-                        <span className="font-medium">
-                          {enseigne.member_count}
-                        </span>
-                      </td>
-                      <td className="p-4 text-center">
-                        <Badge
-                          variant={enseigne.is_active ? 'default' : 'secondary'}
-                        >
-                          {enseigne.is_active ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </td>
-                      {/* Actions - Pattern Catalogue IconButton */}
-                      <td className="p-4">
-                        <div className="flex items-center justify-end gap-1">
-                          <Link
-                            href={`/contacts-organisations/enseignes/${enseigne.id}`}
-                          >
+                            </Link>
                             <IconButton
                               variant="outline"
                               size="sm"
-                              icon={Eye}
-                              label="Voir détails"
+                              icon={Pencil}
+                              label="Modifier"
+                              onClick={() => handleOpenEditModal(enseigne)}
                             />
-                          </Link>
-                          <IconButton
-                            variant="outline"
-                            size="sm"
-                            icon={Pencil}
-                            label="Modifier"
-                            onClick={() => handleOpenEditModal(enseigne)}
-                          />
-                          <IconButton
-                            variant={enseigne.is_active ? 'outline' : 'success'}
-                            size="sm"
-                            icon={Power}
-                            label={
-                              enseigne.is_active ? 'Désactiver' : 'Activer'
-                            }
-                            onClick={() => handleToggleStatus(enseigne)}
-                          />
-                          <IconButton
-                            variant="danger"
-                            size="sm"
-                            icon={Trash2}
-                            label="Supprimer"
-                            onClick={() => setDeleteConfirmEnseigne(enseigne)}
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </CardContent>
-        </Card>
+                            <IconButton
+                              variant="danger"
+                              size="sm"
+                              icon={Archive}
+                              label="Archiver"
+                              onClick={() => handleArchive(enseigne)}
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <IconButton
+                              variant="success"
+                              size="sm"
+                              icon={ArchiveRestore}
+                              label="Restaurer"
+                              onClick={() => handleArchive(enseigne)}
+                            />
+                            <IconButton
+                              variant="danger"
+                              size="sm"
+                              icon={Trash2}
+                              label="Supprimer"
+                              onClick={() => setDeleteConfirmEnseigne(enseigne)}
+                            />
+                            <Link
+                              href={`/contacts-organisations/enseignes/${enseigne.id}`}
+                            >
+                              <IconButton
+                                variant="outline"
+                                size="sm"
+                                icon={Eye}
+                                label="Voir détails"
+                              />
+                            </Link>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       )}
 
       {/* Pagination */}
@@ -723,22 +835,6 @@ export default function EnseignesPage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={e =>
-                  setFormData(prev => ({
-                    ...prev,
-                    description: e.target.value,
-                  }))
-                }
-                placeholder="Description de l'enseigne..."
-                rows={3}
-              />
-            </div>
-
             {/* Logo Upload - uniquement en mode édition */}
             {editingEnseigne ? (
               <div className="space-y-2">
@@ -788,22 +884,55 @@ export default function EnseignesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete Confirmation Modal - avec avertissement organisations */}
       <Dialog
         open={!!deleteConfirmEnseigne}
         onOpenChange={() => setDeleteConfirmEnseigne(null)}
       >
-        <DialogContent className="sm:max-w-[400px]">
+        <DialogContent className="sm:max-w-[450px]">
           <DialogHeader>
-            <DialogTitle>Supprimer l'enseigne</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Supprimer l'enseigne
+            </DialogTitle>
+            <DialogDescription className="pt-2">
               Êtes-vous sûr de vouloir supprimer l'enseigne "
-              {deleteConfirmEnseigne?.name}" ? Les organisations membres seront
-              dissociées mais pas supprimées.
+              <strong>{deleteConfirmEnseigne?.name}</strong>" ?
             </DialogDescription>
           </DialogHeader>
 
-          <DialogFooter>
+          {/* Avertissement si des organisations sont liées */}
+          {deleteConfirmEnseigne && deleteConfirmEnseigne.member_count > 0 && (
+            <div
+              className="p-4 rounded-lg flex items-start gap-3"
+              style={{
+                backgroundColor: colors.warning[50],
+                borderColor: colors.warning[200],
+              }}
+            >
+              <AlertTriangle
+                className="h-5 w-5 flex-shrink-0 mt-0.5"
+                style={{ color: colors.warning[600] }}
+              />
+              <div>
+                <p
+                  className="text-sm font-medium"
+                  style={{ color: colors.warning[800] }}
+                >
+                  {deleteConfirmEnseigne.member_count} organisation(s) liée(s)
+                </p>
+                <p
+                  className="text-sm mt-1"
+                  style={{ color: colors.warning[700] }}
+                >
+                  Les organisations seront automatiquement dissociées de cette
+                  enseigne mais ne seront pas supprimées.
+                </p>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="mt-4">
             <ButtonV2
               variant="ghost"
               onClick={() => setDeleteConfirmEnseigne(null)}
@@ -815,7 +944,7 @@ export default function EnseignesPage() {
               onClick={handleDelete}
               loading={isSubmitting}
             >
-              Supprimer
+              Supprimer définitivement
             </ButtonV2>
           </DialogFooter>
         </DialogContent>

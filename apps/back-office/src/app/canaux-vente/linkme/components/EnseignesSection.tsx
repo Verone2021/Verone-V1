@@ -3,9 +3,10 @@
 import { useState, useMemo } from 'react';
 
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 import { useToast } from '@verone/common';
-import { Badge } from '@verone/ui';
+import { Badge, IconButton } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
   Card,
@@ -25,7 +26,6 @@ import {
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { Skeleton } from '@verone/ui';
-import { Textarea } from '@verone/ui';
 import { Switch } from '@verone/ui';
 import {
   Plus,
@@ -62,6 +62,7 @@ import {
  */
 export function EnseignesSection() {
   const { toast } = useToast();
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<
     'all' | 'active' | 'inactive'
@@ -393,7 +394,9 @@ export function EnseignesSection() {
                 <Card
                   key={enseigne.id}
                   className="hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => openDetailModal(enseigne)}
+                  onClick={() =>
+                    router.push(`/canaux-vente/linkme/enseignes/${enseigne.id}`)
+                  }
                 >
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
@@ -419,13 +422,10 @@ export function EnseignesSection() {
                       </Badge>
                     </div>
 
-                    {/* Name and description */}
-                    <h3 className="font-semibold text-lg mb-1">
+                    {/* Name */}
+                    <h3 className="font-semibold text-lg mb-4">
                       {enseigne.name}
                     </h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
-                      {enseigne.description || 'Aucune description'}
-                    </p>
 
                     {/* Stats */}
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -443,39 +443,39 @@ export function EnseignesSection() {
                       </div>
                     </div>
 
-                    {/* Actions */}
+                    {/* Actions - IconButton 32x32px pattern */}
                     <div className="flex items-center gap-2 mt-4 pt-4 border-t">
-                      <ButtonV2
+                      <IconButton
+                        icon={Eye}
+                        label="Voir les détails"
                         variant="outline"
                         size="sm"
-                        icon={Eye}
                         onClick={e => {
                           e.stopPropagation();
-                          openDetailModal(enseigne);
+                          router.push(
+                            `/canaux-vente/linkme/enseignes/${enseigne.id}`
+                          );
                         }}
-                      >
-                        Détails
-                      </ButtonV2>
-                      <ButtonV2
+                      />
+                      <IconButton
+                        icon={Edit}
+                        label="Modifier"
                         variant="outline"
                         size="sm"
-                        icon={Edit}
                         onClick={e => {
                           e.stopPropagation();
                           openEditModal(enseigne);
                         }}
-                      >
-                        Modifier
-                      </ButtonV2>
-                      <ButtonV2
-                        variant="ghost"
-                        size="sm"
+                      />
+                      <IconButton
                         icon={Trash2}
+                        label="Supprimer"
+                        variant="danger"
+                        size="sm"
                         onClick={e => {
                           e.stopPropagation();
                           handleDeleteEnseigne(enseigne);
                         }}
-                        className="text-red-600 hover:text-red-700"
                       />
                     </div>
                   </CardContent>
@@ -505,18 +505,6 @@ export function EnseignesSection() {
                 onChange={e =>
                   setFormData({ ...formData, name: e.target.value })
                 }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                placeholder="Description de l'enseigne..."
-                value={formData.description || ''}
-                onChange={e =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                rows={3}
               />
             </div>
             <div className="flex items-center justify-between">
@@ -574,18 +562,6 @@ export function EnseignesSection() {
                 onChange={e =>
                   setFormData({ ...formData, name: e.target.value })
                 }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-description">Description</Label>
-              <Textarea
-                id="edit-description"
-                placeholder="Description de l'enseigne..."
-                value={formData.description || ''}
-                onChange={e =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                rows={3}
               />
             </div>
             <div className="flex items-center justify-between">

@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useMemo } from 'react';
 
+import Link from 'next/link';
+
 import { useToast } from '@verone/common';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
@@ -39,6 +41,7 @@ import {
   TableHeader,
   TableRow,
 } from '@verone/ui';
+import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import {
   Search,
@@ -49,11 +52,13 @@ import {
   ShoppingBag,
   FileEdit,
   Archive,
+  ArchiveRestore,
   CheckCircle,
   Plus,
   Trash2,
   Globe,
   Lock,
+  Pencil,
 } from 'lucide-react';
 
 interface Selection {
@@ -138,7 +143,7 @@ export function SelectionsSection() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [affiliateFilter, setAffiliateFilter] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
 
   // Modal création
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -356,6 +361,47 @@ export function SelectionsSection() {
     );
   }
 
+  // Supprimer une sélection
+  async function handleDeleteSelection(
+    selectionId: string,
+    selectionName: string
+  ) {
+    if (
+      !confirm(
+        `Êtes-vous sûr de vouloir supprimer la sélection "${selectionName}" ?\n\nCette action est irréversible.`
+      )
+    ) {
+      return;
+    }
+
+    const supabase = createClient();
+
+    try {
+      // Les items sont supprimés en cascade (ON DELETE CASCADE)
+      const { error } = await (supabase as any)
+        .from('linkme_selections')
+        .delete()
+        .eq('id', selectionId);
+
+      if (error) throw error;
+
+      // Mettre à jour localement
+      setSelections(prev => prev.filter(s => s.id !== selectionId));
+
+      toast({
+        title: 'Sélection supprimée',
+        description: `La sélection "${selectionName}" a été supprimée définitivement.`,
+      });
+    } catch (error) {
+      console.error('Error deleting selection:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de supprimer la sélection',
+        variant: 'destructive',
+      });
+    }
+  }
+
   // Toggle visibilité (is_public)
   async function toggleVisibility(
     selectionId: string,
@@ -395,6 +441,50 @@ export function SelectionsSection() {
     }
   }
 
+  // Archiver/Désarchiver une sélection
+  async function handleArchive(selection: Selection) {
+    const supabase = createClient();
+    const isCurrentlyArchived = selection.status === 'archived';
+    const newStatus = isCurrentlyArchived ? 'active' : 'archived';
+
+    try {
+      const { error } = await (supabase as any)
+        .from('linkme_selections')
+        .update({
+          status: newStatus,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', selection.id);
+
+      if (error) throw error;
+
+      // Mettre à jour localement
+      setSelections(prev =>
+        prev.map(s => (s.id === selection.id ? { ...s, status: newStatus } : s))
+      );
+
+      toast({
+        title: isCurrentlyArchived
+          ? 'Sélection désarchivée'
+          : 'Sélection archivée',
+        description: isCurrentlyArchived
+          ? `"${selection.name}" est maintenant active.`
+          : `"${selection.name}" a été archivée.`,
+      });
+    } catch (error) {
+      console.error('Error archiving selection:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de modifier le statut de la sélection',
+        variant: 'destructive',
+      });
+    }
+  }
+
+  // Compteurs pour les onglets
+  const activeCount = selections.filter(s => s.status !== 'archived').length;
+  const archivedCount = selections.filter(s => s.status === 'archived').length;
+
   // Filter selections
   const filteredSelections = selections.filter(selection => {
     const matchesSearch =
@@ -402,9 +492,11 @@ export function SelectionsSection() {
       selection.slug.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesAffiliate =
       affiliateFilter === 'all' || selection.affiliate_id === affiliateFilter;
-    const matchesStatus =
-      statusFilter === 'all' || selection.status === statusFilter;
-    return matchesSearch && matchesAffiliate && matchesStatus;
+    const matchesTab =
+      activeTab === 'active'
+        ? selection.status !== 'archived'
+        : selection.status === 'archived';
+    return matchesSearch && matchesAffiliate && matchesTab;
   });
 
   if (loading) {
@@ -443,6 +535,35 @@ export function SelectionsSection() {
           </div>
         </CardHeader>
         <CardContent>
+          {/* Onglets Actives/Archivées */}
+          <div className="flex items-center gap-3 mb-4">
+            <button
+              onClick={() => setActiveTab('active')}
+              className={cn(
+                'px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                activeTab === 'active'
+                  ? 'bg-black text-white'
+                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+              )}
+            >
+              Actives
+              <span className="ml-2 opacity-70">({activeCount})</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('archived')}
+              className={cn(
+                'px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                activeTab === 'archived'
+                  ? 'bg-black text-white'
+                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+              )}
+            >
+              Archivées
+              <span className="ml-2 opacity-70">({archivedCount})</span>
+            </button>
+          </div>
+
           {/* Filters */}
           <div className="flex flex-wrap gap-4 mb-6">
             <div className="relative flex-1 min-w-[200px]">
@@ -467,17 +588,6 @@ export function SelectionsSection() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Statut" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les statuts</SelectItem>
-                <SelectItem value="draft">Brouillons</SelectItem>
-                <SelectItem value="active">Publiées</SelectItem>
-                <SelectItem value="archived">Archivées</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           {/* Table */}
@@ -486,11 +596,11 @@ export function SelectionsSection() {
               <Layers className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-2">Aucune sélection</h3>
               <p className="text-muted-foreground">
-                {searchTerm ||
-                affiliateFilter !== 'all' ||
-                statusFilter !== 'all'
+                {searchTerm || affiliateFilter !== 'all'
                   ? 'Aucun résultat pour ces filtres'
-                  : "Les affiliés n'ont pas encore créé de sélections"}
+                  : activeTab === 'archived'
+                    ? 'Aucune sélection archivée'
+                    : "Les affiliés n'ont pas encore créé de sélections"}
               </p>
             </div>
           ) : (
@@ -587,19 +697,53 @@ export function SelectionsSection() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
-                          {selection.status === 'active' && (
+                          {/* Bouton Voir (page détail) */}
+                          <Link
+                            href={`/canaux-vente/linkme/selections/${selection.id}`}
+                            className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:scale-105 transition-all"
+                            title="Voir la sélection"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Link>
+
+                          {/* Bouton Archiver/Désarchiver */}
+                          {selection.status === 'archived' ? (
                             <ButtonV2
                               variant="outline"
-                              size="sm"
+                              size="icon"
+                              className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                              onClick={() => handleArchive(selection)}
+                              title="Désarchiver la sélection"
+                            >
+                              <ArchiveRestore className="h-4 w-4" />
+                            </ButtonV2>
+                          ) : (
+                            <ButtonV2
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8 text-orange-500 hover:text-orange-600 hover:bg-orange-50"
+                              onClick={() => handleArchive(selection)}
+                              title="Archiver la sélection"
+                            >
+                              <Archive className="h-4 w-4" />
+                            </ButtonV2>
+                          )}
+
+                          {/* Bouton Supprimer (uniquement pour archivées) */}
+                          {selection.status === 'archived' && (
+                            <ButtonV2
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
                               onClick={() =>
-                                window.open(
-                                  `https://linkme.verone.fr/s/${selection.affiliate?.slug}/${selection.slug}`,
-                                  '_blank'
+                                handleDeleteSelection(
+                                  selection.id,
+                                  selection.name
                                 )
                               }
+                              title="Supprimer la sélection"
                             >
-                              <ExternalLink className="h-4 w-4 mr-1" />
-                              Voir
+                              <Trash2 className="h-4 w-4" />
                             </ButtonV2>
                           )}
                         </div>

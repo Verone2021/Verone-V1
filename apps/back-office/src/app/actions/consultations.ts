@@ -5,7 +5,8 @@ import { revalidatePath } from 'next/cache';
 import { createAdminClient } from '@verone/utils/supabase/server';
 
 interface CreateConsultationData {
-  organisation_name: string;
+  enseigne_id?: string;
+  organisation_id?: string;
   client_email: string;
   client_phone?: string;
   descriptif: string;
@@ -35,11 +36,23 @@ export async function createConsultation(
   userId: string
 ): Promise<CreateConsultationResult> {
   try {
+    // Validation: au moins enseigne_id ou organisation_id requis
+    if (!consultationData.enseigne_id && !consultationData.organisation_id) {
+      return {
+        success: false,
+        error: 'Une enseigne ou une organisation est requise',
+      };
+    }
+
     // Créer le client Supabase ADMIN (bypasse RLS policies)
     const supabase = createAdminClient();
 
+    const clientLabel = consultationData.enseigne_id
+      ? `enseigne ${consultationData.enseigne_id}`
+      : `organisation ${consultationData.organisation_id}`;
+
     console.log(
-      `🔍 [Server Action ADMIN] Tentative création consultation pour ${consultationData.organisation_name} par user ${userId}`
+      `🔍 [Server Action ADMIN] Tentative création consultation pour ${clientLabel} par user ${userId}`
     );
 
     // Stocker l'utilisateur courant en session PostgreSQL pour les triggers
@@ -47,9 +60,16 @@ export async function createConsultation(
 
     // Préparer les données avec valeurs par défaut
     const dataToInsert = {
-      ...consultationData,
+      enseigne_id: consultationData.enseigne_id || null,
+      organisation_id: consultationData.organisation_id || null,
+      client_email: consultationData.client_email,
+      client_phone: consultationData.client_phone,
+      descriptif: consultationData.descriptif,
+      image_url: consultationData.image_url,
+      tarif_maximum: consultationData.tarif_maximum,
       priority_level: consultationData.priority_level || 2,
       source_channel: consultationData.source_channel || 'website',
+      estimated_response_date: consultationData.estimated_response_date,
       status: 'en_attente' as const,
       created_by: userId,
     };
