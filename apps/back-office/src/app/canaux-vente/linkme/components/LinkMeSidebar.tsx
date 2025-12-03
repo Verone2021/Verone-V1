@@ -90,6 +90,11 @@ const LINKME_NAV: LinkMeNavItem[] = [
         icon: Package,
       },
       {
+        title: 'Vedettes',
+        href: '/canaux-vente/linkme/catalogue/vedettes',
+        icon: Star,
+      },
+      {
         title: 'Fournisseurs',
         href: '/canaux-vente/linkme/catalogue/fournisseurs',
         icon: Store,
@@ -105,18 +110,6 @@ const LINKME_NAV: LinkMeNavItem[] = [
     title: 'Sélections',
     href: '/canaux-vente/linkme/selections',
     icon: Layers,
-    children: [
-      {
-        title: 'Toutes',
-        href: '/canaux-vente/linkme/selections',
-        icon: Layers,
-      },
-      {
-        title: 'Vedettes',
-        href: '/canaux-vente/linkme/selections/vedettes',
-        icon: Star,
-      },
-    ],
   },
   {
     title: 'Commissions',
