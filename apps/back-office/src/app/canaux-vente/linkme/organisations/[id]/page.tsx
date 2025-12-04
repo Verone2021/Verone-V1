@@ -2,15 +2,12 @@
 
 import { useState, useEffect } from 'react';
 
+import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 
 import {
-  EnseigneDetailHeader,
-  EnseigneKPIGrid,
-  EnseigneGeographySection,
-  EnseigneOrganisationsTable,
-  useEnseigne,
-  useEnseigneStats,
+  useOrganisation,
+  getOrganisationDisplayName,
 } from '@verone/organisations';
 import { ProductThumbnail } from '@verone/products';
 import { Button, Badge } from '@verone/ui';
@@ -23,8 +20,6 @@ import {
   Building2,
   MapPin,
   Package,
-  Mail,
-  Phone,
   ShoppingBag,
   Eye,
   ShoppingCart,
@@ -34,7 +29,7 @@ import {
 /**
  * Type pour les sélections de l'affilié
  */
-interface EnseigneSelection {
+interface OrganisationSelection {
   id: string;
   name: string;
   description: string | null;
@@ -47,18 +42,22 @@ interface EnseigneSelection {
 }
 
 /**
- * Hook pour récupérer les sélections d'une enseigne via l'affilié
+ * Hook pour récupérer les sélections d'une organisation via l'affilié
  *
- * ARCHITECTURE: Cherche l'affilié via 2 chemins possibles:
- * 1. linkme_affiliates.enseigne_id = enseigneId (lien direct)
- * 2. linkme_affiliates.organisation_id → organisations.enseigne_id = enseigneId (via organisation)
+ * ARCHITECTURE: Requête DIRECTE par organisation_id
+ * linkme_affiliates.organisation_id = organisationId
  */
-function useEnseigneSelections(enseigneId: string | null) {
-  const [selections, setSelections] = useState<EnseigneSelection[]>([]);
+function useOrganisationSelections(organisationId: string | null) {
+  const [selections, setSelections] = useState<OrganisationSelection[]>([]);
   const [loading, setLoading] = useState(true);
+  const [affiliateInfo, setAffiliateInfo] = useState<{
+    id: string;
+    display_name: string;
+    status: string | null;
+  } | null>(null);
 
   useEffect(() => {
-    if (!enseigneId) {
+    if (!organisationId) {
       setLoading(false);
       return;
     }
@@ -67,46 +66,21 @@ function useEnseigneSelections(enseigneId: string | null) {
       setLoading(true);
       const supabase = createClient();
 
-      // CHEMIN 1: Chercher affilié avec enseigne_id direct
-      let affiliateId: string | null = null;
-
-      const { data: directAffiliate } = await supabase
+      // Requête DIRECTE: chercher affilié avec organisation_id
+      const { data: affiliate } = await supabase
         .from('linkme_affiliates')
-        .select('id')
-        .eq('enseigne_id', enseigneId)
+        .select('id, display_name, status')
+        .eq('organisation_id', organisationId)
         .single();
 
-      if (directAffiliate) {
-        affiliateId = directAffiliate.id;
-      } else {
-        // CHEMIN 2: Chercher affilié via organisation.enseigne_id
-        // D'abord trouver les organisations de cette enseigne
-        const { data: orgs } = await supabase
-          .from('organisations')
-          .select('id')
-          .eq('enseigne_id', enseigneId);
-
-        if (orgs && orgs.length > 0) {
-          const orgIds = orgs.map(o => o.id);
-          // Chercher un affilié lié à une de ces organisations
-          const { data: orgAffiliate } = await supabase
-            .from('linkme_affiliates')
-            .select('id')
-            .in('organisation_id', orgIds)
-            .limit(1)
-            .single();
-
-          if (orgAffiliate) {
-            affiliateId = orgAffiliate.id;
-          }
-        }
-      }
-
-      if (!affiliateId) {
+      if (!affiliate) {
         setSelections([]);
+        setAffiliateInfo(null);
         setLoading(false);
         return;
       }
+
+      setAffiliateInfo(affiliate);
 
       // Récupérer les sélections de cet affilié
       const { data, error } = await supabase
@@ -114,29 +88,28 @@ function useEnseigneSelections(enseigneId: string | null) {
         .select(
           'id, name, description, status, is_public, products_count, views_count, orders_count, created_at'
         )
-        .eq('affiliate_id', affiliateId)
+        .eq('affiliate_id', affiliate.id)
         .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Erreur chargement sélections:', error);
         setSelections([]);
       } else {
-        // Cast to EnseigneSelection[] - status type comes as string from DB
-        setSelections((data || []) as EnseigneSelection[]);
+        setSelections((data || []) as OrganisationSelection[]);
       }
       setLoading(false);
     };
 
     fetchSelections();
-  }, [enseigneId]);
+  }, [organisationId]);
 
-  return { selections, loading };
+  return { selections, loading, affiliateInfo };
 }
 
 /**
- * Type pour les produits sourcés par enseigne
+ * Type pour les produits sourcés par organisation
  */
-interface EnseigneProduct {
+interface OrganisationProduct {
   id: string;
   name: string;
   supplier_reference: string | null;
@@ -145,14 +118,18 @@ interface EnseigneProduct {
 }
 
 /**
- * Hook pour récupérer les produits sourcés pour une enseigne
+ * Hook pour récupérer les produits sourcés pour une organisation
+ * Cherche selon le type: assigned_client_id (customer) ou supplier_id (supplier)
  */
-function useEnseigneProducts(enseigneId: string | null) {
-  const [products, setProducts] = useState<EnseigneProduct[]>([]);
+function useOrganisationProducts(
+  organisationId: string | null,
+  organisationType: string | null
+) {
+  const [products, setProducts] = useState<OrganisationProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!enseigneId) {
+    if (!organisationId || !organisationType) {
       setLoading(false);
       return;
     }
@@ -161,7 +138,10 @@ function useEnseigneProducts(enseigneId: string | null) {
       setLoading(true);
       const supabase = createClient();
 
-      // Query products with primary image from product_images table
+      // Choisir la colonne selon le type d'organisation
+      const columnFilter =
+        organisationType === 'supplier' ? 'supplier_id' : 'assigned_client_id';
+
       const { data, error } = await supabase
         .from('products')
         .select(
@@ -173,23 +153,23 @@ function useEnseigneProducts(enseigneId: string | null) {
           product_images!left(public_url, is_primary)
         `
         )
-        .eq('enseigne_id', enseigneId)
+        .eq(columnFilter, organisationId)
         .is('archived_at', null)
         .order('created_at', { ascending: false })
         .limit(50);
 
       if (error) {
-        // If join fails (no images), try without images
+        // Si join échoue, essayer sans images
         const { data: dataNoImg, error: errorNoImg } = await supabase
           .from('products')
           .select('id, name, supplier_reference, created_at')
-          .eq('enseigne_id', enseigneId)
+          .eq(columnFilter, organisationId)
           .is('archived_at', null)
           .order('created_at', { ascending: false })
           .limit(50);
 
         if (errorNoImg) {
-          console.error('Erreur chargement produits enseigne:', errorNoImg);
+          console.error('Erreur chargement produits organisation:', errorNoImg);
           setProducts([]);
         } else {
           setProducts(
@@ -200,7 +180,7 @@ function useEnseigneProducts(enseigneId: string | null) {
           );
         }
       } else {
-        // Transform data to flatten public_url - filter for is_primary
+        // Transformer les données pour aplatir public_url
         setProducts(
           (data || []).map((p: any) => {
             const primaryImg = (p.product_images || []).find(
@@ -220,38 +200,77 @@ function useEnseigneProducts(enseigneId: string | null) {
     };
 
     fetchProducts();
-  }, [enseigneId]);
+  }, [organisationId, organisationType]);
 
   return { products, loading };
 }
 
 /**
- * Page détail enseigne LinkMe
- * Affiche toutes les informations agrégées d'une enseigne avec onglets
+ * Retourne l'URL de retour selon le type d'organisation
  */
-export default function EnseigneDetailPage() {
+function getReturnUrl(orgType: string | null, orgId: string): string {
+  switch (orgType) {
+    case 'customer':
+      return `/contacts-organisations/customers/${orgId}`;
+    case 'supplier':
+      return `/contacts-organisations/suppliers/${orgId}`;
+    case 'partner':
+      return `/contacts-organisations/partners/${orgId}`;
+    default:
+      return '/canaux-vente/linkme';
+  }
+}
+
+/**
+ * Retourne le label du type d'organisation
+ */
+function getTypeLabel(orgType: string | null): string {
+  switch (orgType) {
+    case 'customer':
+      return 'Client';
+    case 'supplier':
+      return 'Fournisseur';
+    case 'partner':
+      return 'Partenaire';
+    default:
+      return 'Organisation';
+  }
+}
+
+/**
+ * Page détail organisation LinkMe
+ * Affiche les informations d'une organisation affiliée avec onglets
+ */
+export default function OrganisationLinkMeDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
 
-  // Hooks pour données enseigne
+  // Hook pour données organisation
   const {
-    enseigne,
-    loading: enseigneLoading,
-    error: enseigneError,
-  } = useEnseigne(id);
-  const { stats, loading: statsLoading } = useEnseigneStats(id);
-  const { products, loading: productsLoading } = useEnseigneProducts(id);
-  const { selections, loading: selectionsLoading } = useEnseigneSelections(id);
+    organisation,
+    loading: orgLoading,
+    error: orgError,
+  } = useOrganisation(id);
+
+  const { products, loading: productsLoading } = useOrganisationProducts(
+    id,
+    organisation?.type || null
+  );
+  const {
+    selections,
+    loading: selectionsLoading,
+    affiliateInfo,
+  } = useOrganisationSelections(id);
 
   // État onglet actif
   const [activeTab, setActiveTab] = useState('overview');
 
   // Gestion erreur
-  if (enseigneError) {
+  if (orgError) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <p className="text-red-500">Erreur : {enseigneError}</p>
+        <p className="text-red-500">Erreur : {orgError}</p>
         <Button variant="outline" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Retour
@@ -261,7 +280,7 @@ export default function EnseigneDetailPage() {
   }
 
   // Chargement
-  if (enseigneLoading || !enseigne) {
+  if (orgLoading || !organisation) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
@@ -269,80 +288,127 @@ export default function EnseigneDetailPage() {
     );
   }
 
+  // Si pas d'affilié LinkMe pour cette organisation
+  if (!affiliateInfo && !selectionsLoading) {
+    return (
+      <div className="space-y-6">
+        {/* Header avec bouton retour */}
+        <div className="flex items-center gap-4">
+          <Link href={getReturnUrl(organisation.type, id)}>
+            <Button variant="ghost" size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Retour à l&apos;organisation
+            </Button>
+          </Link>
+        </div>
+
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="py-8 text-center">
+            <ShoppingBag className="h-12 w-12 mx-auto text-amber-400 mb-4" />
+            <h2 className="text-lg font-semibold mb-2">Pas de compte LinkMe</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              L&apos;organisation{' '}
+              <strong>{getOrganisationDisplayName(organisation)}</strong>{' '}
+              n&apos;a pas encore de compte affilié LinkMe.
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => router.push('/canaux-vente/linkme/affilies')}
+            >
+              Voir les affiliés LinkMe
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const returnUrl = getReturnUrl(organisation.type, id);
+  const typeLabel = getTypeLabel(organisation.type);
+
   return (
     <div className="space-y-6">
       {/* Header avec bouton retour */}
-      <EnseigneDetailHeader
-        enseigne={enseigne}
-        backUrl="/canaux-vente/linkme/enseignes"
-        onEdit={() => {
-          // TODO: Modal édition enseigne
-          console.log('Edit enseigne:', enseigne.id);
-        }}
-      />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link href={returnUrl}>
+            <Button variant="ghost" size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Retour {typeLabel}
+            </Button>
+          </Link>
+        </div>
+      </div>
 
-      {/* Infos Organisation Mère (sous le header) */}
-      {stats?.parentOrganisation && (
-        <Card className="bg-amber-50 border-amber-200">
-          <CardContent className="py-4">
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-              <div className="flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-amber-600" />
-                <span className="font-medium text-amber-900">
-                  {stats.parentOrganisation.trade_name ||
-                    stats.parentOrganisation.legal_name}
-                </span>
-                <span className="text-xs text-amber-600 bg-amber-100 px-2 py-0.5 rounded">
-                  Siège
-                </span>
+      {/* Card Header Organisation */}
+      <Card>
+        <CardContent className="py-6">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-4">
+              <div className="h-16 w-16 rounded-xl bg-purple-100 flex items-center justify-center">
+                <Building2 className="h-8 w-8 text-purple-600" />
               </div>
-              {(stats.parentOrganisation.siret ||
-                stats.parentOrganisation.siren) && (
-                <div className="text-sm text-amber-800">
-                  <span className="font-medium">
-                    {stats.parentOrganisation.siret ? 'SIRET' : 'SIREN'}:
-                  </span>{' '}
-                  {stats.parentOrganisation.siret ||
-                    stats.parentOrganisation.siren}
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <h1 className="text-xl font-semibold">
+                    {getOrganisationDisplayName(organisation)}
+                  </h1>
+                  <Badge
+                    variant="secondary"
+                    className="bg-purple-100 text-purple-700"
+                  >
+                    LinkMe
+                  </Badge>
                 </div>
-              )}
-              {(stats.parentOrganisation.billing_address_line1 ||
-                stats.parentOrganisation.billing_postal_code ||
-                stats.parentOrganisation.city) && (
-                <div className="flex items-center gap-1.5 text-sm text-amber-800">
-                  <MapPin className="h-3.5 w-3.5" />
-                  {[
-                    stats.parentOrganisation.billing_address_line1,
-                    stats.parentOrganisation.billing_postal_code,
-                    stats.parentOrganisation.billing_city ||
-                      stats.parentOrganisation.city,
-                  ]
-                    .filter(Boolean)
-                    .join(', ')}
+                <div className="flex items-center gap-3 text-sm text-gray-500">
+                  <span className="flex items-center gap-1">
+                    <Building2 className="h-3.5 w-3.5" />
+                    {typeLabel}
+                  </span>
+                  {organisation.city && (
+                    <span className="flex items-center gap-1">
+                      <MapPin className="h-3.5 w-3.5" />
+                      {organisation.city}
+                    </span>
+                  )}
                 </div>
-              )}
+                {affiliateInfo && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <Badge
+                      variant={
+                        affiliateInfo.status === 'active'
+                          ? 'default'
+                          : 'secondary'
+                      }
+                      className={
+                        affiliateInfo.status === 'active'
+                          ? 'bg-green-100 text-green-700'
+                          : ''
+                      }
+                    >
+                      Affilié{' '}
+                      {affiliateInfo.status === 'active'
+                        ? 'actif'
+                        : affiliateInfo.status}
+                    </Badge>
+                  </div>
+                )}
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* KPIs */}
-      <EnseigneKPIGrid stats={stats} loading={statsLoading} />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Onglets */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList variant="underline" className="w-full justify-start border-b">
           <TabsTrigger value="overview" variant="underline">
             <Building2 className="h-4 w-4 mr-2" />
-            Vue d&apos;ensemble
-          </TabsTrigger>
-          <TabsTrigger value="geography" variant="underline">
-            <MapPin className="h-4 w-4 mr-2" />
-            Géographie
+            Informations
           </TabsTrigger>
           <TabsTrigger value="products" variant="underline">
             <Package className="h-4 w-4 mr-2" />
-            Produits sourcés ({products.length})
+            Produits ({products.length})
           </TabsTrigger>
           <TabsTrigger value="selections" variant="underline">
             <ShoppingBag className="h-4 w-4 mr-2" />
@@ -350,37 +416,93 @@ export default function EnseigneDetailPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Onglet Vue d'ensemble */}
+        {/* Onglet Informations */}
         <TabsContent value="overview" className="mt-6">
-          {/* Tableau organisations membres (seul contenu de la vue d'ensemble) */}
-          <EnseigneOrganisationsTable
-            organisations={stats?.organisationsWithRevenue || []}
-            parentOrganisation={stats?.parentOrganisation || null}
-            loading={statsLoading}
-            enseigneId={id}
-            onAddOrganisations={() => {
-              // TODO: Modal ajout organisations
-              console.log('Add organisations to enseigne:', enseigne.id);
-            }}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Infos Organisation */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">
+                  Informations Organisation
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Nom légal</span>
+                  <span className="font-medium">{organisation.legal_name}</span>
+                </div>
+                {organisation.trade_name && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Nom commercial</span>
+                    <span className="font-medium">
+                      {organisation.trade_name}
+                    </span>
+                  </div>
+                )}
+                {organisation.siret && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">SIRET</span>
+                    <span className="font-mono">{organisation.siret}</span>
+                  </div>
+                )}
+                {organisation.city && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Ville</span>
+                    <span>{organisation.city}</span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Infos Affilié LinkMe */}
+            {affiliateInfo && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Compte LinkMe</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Nom d&apos;affichage</span>
+                    <span className="font-medium">
+                      {affiliateInfo.display_name}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Statut</span>
+                    <Badge
+                      variant={
+                        affiliateInfo.status === 'active'
+                          ? 'default'
+                          : 'secondary'
+                      }
+                      className={
+                        affiliateInfo.status === 'active'
+                          ? 'bg-green-100 text-green-700'
+                          : ''
+                      }
+                    >
+                      {affiliateInfo.status === 'active'
+                        ? 'Actif'
+                        : affiliateInfo.status}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Sélections</span>
+                    <span className="font-medium">{selections.length}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </TabsContent>
 
-        {/* Onglet Géographie */}
-        <TabsContent value="geography" className="mt-6">
-          <EnseigneGeographySection
-            citiesDistribution={stats?.citiesDistribution || []}
-            loading={statsLoading}
-            className="max-w-none"
-          />
-        </TabsContent>
-
-        {/* Onglet Produits sourcés */}
+        {/* Onglet Produits */}
         <TabsContent value="products" className="mt-6">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center">
                 <Package className="h-5 w-5 mr-2 text-blue-500" />
-                Produits sourcés pour {enseigne.name}
+                Produits liés
                 <span className="ml-2 text-sm font-normal text-gray-500">
                   ({products.length} produit{products.length > 1 ? 's' : ''})
                 </span>
@@ -393,7 +515,7 @@ export default function EnseigneDetailPage() {
                 </div>
               ) : products.length === 0 ? (
                 <p className="text-sm text-gray-500 text-center py-8">
-                  Aucun produit sourcé pour cette enseigne
+                  Aucun produit lié à cette organisation
                 </p>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -449,7 +571,7 @@ export default function EnseigneDetailPage() {
                 <div className="text-center py-8">
                   <ShoppingBag className="h-12 w-12 mx-auto text-gray-300 mb-4" />
                   <p className="text-sm text-gray-500 mb-4">
-                    Aucune sélection pour cette enseigne
+                    Aucune sélection pour cette organisation
                   </p>
                   <Button
                     variant="outline"

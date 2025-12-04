@@ -18,10 +18,13 @@ import {
   Search,
   ChevronRight,
   Users,
+  Layers,
 } from 'lucide-react';
 
 import {
   useLinkMeEnseigneCustomers,
+  useCreateEnseigneOrganisation,
+  useCreateEnseigneIndividualCustomer,
   type EnseigneOrganisationCustomer,
   type EnseigneIndividualCustomer,
 } from '../hooks/use-linkme-enseigne-customers';
@@ -31,6 +34,12 @@ import {
   type CreateLinkMeOrderInput,
   type LinkMeOrderItemInput,
 } from '../hooks/use-linkme-orders';
+import {
+  useLinkMeSelectionsByEnseigne,
+  useLinkMeSelection,
+  type SelectionSummary,
+  type SelectionItem,
+} from '../hooks/use-linkme-selections';
 
 interface CreateLinkMeOrderModalProps {
   isOpen: boolean;
@@ -66,6 +75,7 @@ export function CreateLinkMeOrderModal({
   const [customerType, setCustomerType] =
     useState<CustomerType>('organization');
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
+  const [selectedSelectionId, setSelectedSelectionId] = useState<string>('');
 
   // Panier de produits
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -76,9 +86,28 @@ export function CreateLinkMeOrderModal({
   // Notes internes
   const [internalNotes, setInternalNotes] = useState('');
 
+  // Formulaire création client
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newCustomerName, setNewCustomerName] = useState('');
+  const [newCustomerFirstName, setNewCustomerFirstName] = useState('');
+  const [newCustomerLastName, setNewCustomerLastName] = useState('');
+  const [newCustomerEmail, setNewCustomerEmail] = useState('');
+  const [newCustomerPhone, setNewCustomerPhone] = useState('');
+
   // Données
   const { data: enseignes } = useLinkMeEnseignes();
   const customers = useLinkMeEnseigneCustomers(selectedEnseigneId || null);
+
+  // Sélections (mini-boutiques) de l'enseigne
+  const { data: selections, isLoading: selectionsLoading } =
+    useLinkMeSelectionsByEnseigne(selectedEnseigneId || null);
+  // Détails de la sélection choisie (avec produits)
+  const { data: selectionDetails, isLoading: selectionDetailsLoading } =
+    useLinkMeSelection(selectedSelectionId || null);
+
+  // Mutations pour création de clients
+  const createOrganisation = useCreateEnseigneOrganisation();
+  const createIndividualCustomer = useCreateEnseigneIndividualCustomer();
 
   // Reset à l'ouverture
   useEffect(() => {
@@ -87,16 +116,26 @@ export function CreateLinkMeOrderModal({
       setSelectedEnseigneId(preselectedEnseigneId || '');
       setCustomerType('organization');
       setSelectedCustomerId('');
+      setSelectedSelectionId('');
       setCart([]);
       setSearchQuery('');
       setInternalNotes('');
+      // Reset formulaire création client
+      setShowCreateForm(false);
+      setNewCustomerName('');
+      setNewCustomerFirstName('');
+      setNewCustomerLastName('');
+      setNewCustomerEmail('');
+      setNewCustomerPhone('');
     }
   }, [isOpen, preselectedEnseigneId]);
 
-  // Reset client quand enseigne change
+  // Reset client et sélection quand enseigne change
   useEffect(() => {
     setSelectedCustomerId('');
     setCustomerType('organization');
+    setSelectedSelectionId('');
+    setCart([]);
   }, [selectedEnseigneId]);
 
   // Enseigne sélectionnée
@@ -135,6 +174,49 @@ export function CreateLinkMeOrderModal({
     );
   }, [customers.individuals, searchQuery]);
 
+  // Créer un nouveau client
+  const handleCreateCustomer = async () => {
+    if (!selectedEnseigneId) return;
+
+    try {
+      if (customerType === 'organization') {
+        if (!newCustomerName.trim()) return;
+        const result = await createOrganisation.mutateAsync({
+          enseigne_id: selectedEnseigneId,
+          legal_name: newCustomerName.trim(),
+          email: newCustomerEmail.trim() || undefined,
+          phone: newCustomerPhone.trim() || undefined,
+          source_type: 'linkme',
+        });
+        // Sélectionner automatiquement le client créé
+        setSelectedCustomerId(result.id);
+        customers.refetch();
+      } else {
+        if (!newCustomerFirstName.trim() || !newCustomerLastName.trim()) return;
+        const result = await createIndividualCustomer.mutateAsync({
+          enseigne_id: selectedEnseigneId,
+          first_name: newCustomerFirstName.trim(),
+          last_name: newCustomerLastName.trim(),
+          email: newCustomerEmail.trim() || undefined,
+          phone: newCustomerPhone.trim() || undefined,
+          source_type: 'linkme',
+        });
+        // Sélectionner automatiquement le client créé
+        setSelectedCustomerId(result.id);
+        customers.refetch();
+      }
+      // Fermer le formulaire et reset
+      setShowCreateForm(false);
+      setNewCustomerName('');
+      setNewCustomerFirstName('');
+      setNewCustomerLastName('');
+      setNewCustomerEmail('');
+      setNewCustomerPhone('');
+    } catch (error) {
+      console.error('Erreur création client:', error);
+    }
+  };
+
   // Calculs panier
   const cartTotals = useMemo(() => {
     let totalHt = 0;
@@ -154,7 +236,45 @@ export function CreateLinkMeOrderModal({
     };
   }, [cart]);
 
-  // Ajouter un produit au panier (formulaire simplifié)
+  // Ajouter un produit au panier depuis la sélection LinkMe
+  const addProductFromSelection = (item: SelectionItem) => {
+    // Vérifier si déjà dans le panier
+    const existing = cart.find(
+      cartItem => cartItem.product_id === item.product_id
+    );
+    if (existing) {
+      setCart(
+        cart.map(cartItem =>
+          cartItem.product_id === item.product_id
+            ? { ...cartItem, quantity: cartItem.quantity + 1 }
+            : cartItem
+        )
+      );
+      return;
+    }
+
+    // Prix de vente = selling_price_ht de la sélection (base_price_ht + marge)
+    // Si pas défini, calculer: base_price_ht * (1 + margin_rate)
+    const sellingPrice =
+      item.selling_price_ht || item.base_price_ht * (1 + item.margin_rate);
+
+    // Commission = margin_rate de la sélection (ce que l'affilié touche)
+    const retrocessionRate = item.margin_rate;
+
+    const newItem: CartItem = {
+      id: `${item.product_id}-${Date.now()}`,
+      product_id: item.product_id,
+      product_name: item.product?.name || 'Produit inconnu',
+      sku: item.product?.sku || '',
+      quantity: 1,
+      unit_price_ht: sellingPrice,
+      retrocession_rate: retrocessionRate,
+      linkme_selection_item_id: item.id, // Lien vers la sélection pour traçabilité
+    };
+    setCart([...cart, newItem]);
+  };
+
+  // Ajouter un produit manuellement (fallback si pas de sélection)
   const addProductToCart = (product: {
     id: string;
     name: string;
@@ -225,13 +345,16 @@ export function CreateLinkMeOrderModal({
   const handleSubmit = async () => {
     if (!selectedCustomerId || cart.length === 0) return;
 
+    // Récupérer l'affiliate_id depuis la sélection choisie
+    const affiliateId = selectionDetails?.affiliate_id || '';
+
     const input: CreateLinkMeOrderInput = {
       customer_type: customerType,
       customer_organisation_id:
         customerType === 'organization' ? selectedCustomerId : null,
       individual_customer_id:
         customerType === 'individual' ? selectedCustomerId : null,
-      affiliate_id: '', // TODO: sélectionner affilié si nécessaire
+      affiliate_id: affiliateId,
       items: cart.map(item => ({
         product_id: item.product_id,
         product_name: item.product_name,
@@ -442,17 +565,124 @@ export function CreateLinkMeOrderModal({
                   </div>
                 </div>
 
-                {/* Recherche */}
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    placeholder="Rechercher un client..."
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                {/* Recherche + Bouton créer */}
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      placeholder="Rechercher un client..."
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <button
+                    onClick={() => setShowCreateForm(!showCreateForm)}
+                    className={cn(
+                      'flex items-center gap-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors',
+                      showCreateForm
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    )}
+                    title="Créer un nouveau client"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span className="hidden sm:inline">Nouveau</span>
+                  </button>
                 </div>
+
+                {/* Formulaire création client */}
+                {showCreateForm && (
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-3">
+                    <p className="text-sm font-medium text-blue-800">
+                      {customerType === 'organization'
+                        ? 'Nouvelle organisation'
+                        : 'Nouveau particulier'}
+                    </p>
+
+                    {customerType === 'organization' ? (
+                      <input
+                        type="text"
+                        value={newCustomerName}
+                        onChange={e => setNewCustomerName(e.target.value)}
+                        placeholder="Nom de l'organisation *"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="text"
+                          value={newCustomerFirstName}
+                          onChange={e =>
+                            setNewCustomerFirstName(e.target.value)
+                          }
+                          placeholder="Prénom *"
+                          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <input
+                          type="text"
+                          value={newCustomerLastName}
+                          onChange={e => setNewCustomerLastName(e.target.value)}
+                          placeholder="Nom *"
+                          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="email"
+                        value={newCustomerEmail}
+                        onChange={e => setNewCustomerEmail(e.target.value)}
+                        placeholder="Email"
+                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <input
+                        type="tel"
+                        value={newCustomerPhone}
+                        onChange={e => setNewCustomerPhone(e.target.value)}
+                        placeholder="Téléphone"
+                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleCreateCustomer}
+                        disabled={
+                          createOrganisation.isPending ||
+                          createIndividualCustomer.isPending ||
+                          (customerType === 'organization' &&
+                            !newCustomerName.trim()) ||
+                          (customerType === 'individual' &&
+                            (!newCustomerFirstName.trim() ||
+                              !newCustomerLastName.trim()))
+                        }
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                      >
+                        {createOrganisation.isPending ||
+                        createIndividualCustomer.isPending ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Création...
+                          </>
+                        ) : (
+                          <>
+                            <Check className="h-4 w-4" />
+                            Créer et sélectionner
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => setShowCreateForm(false)}
+                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-white text-sm"
+                      >
+                        Annuler
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Liste clients */}
                 <div className="space-y-2 max-h-60 overflow-y-auto">
@@ -541,13 +771,149 @@ export function CreateLinkMeOrderModal({
                   </p>
                 </div>
 
-                {/* Ajouter un produit (formulaire simplifié temporaire) */}
-                <div className="border border-dashed border-gray-300 rounded-lg p-4">
-                  <p className="text-sm font-medium text-gray-700 mb-3">
-                    Ajouter un produit (mode simplifié)
-                  </p>
-                  <QuickAddProduct onAdd={addProductToCart} />
+                {/* Sélection de la mini-boutique */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <Layers className="h-4 w-4 inline mr-1" />
+                    Sélection (mini-boutique)
+                  </label>
+                  {selectionsLoading ? (
+                    <div className="flex items-center gap-2 py-4">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="text-sm text-gray-500">
+                        Chargement des sélections...
+                      </span>
+                    </div>
+                  ) : selections && selections.length > 0 ? (
+                    <div className="space-y-2">
+                      {selections.map(selection => (
+                        <button
+                          key={selection.id}
+                          onClick={() => {
+                            setSelectedSelectionId(selection.id);
+                            // Reset panier quand on change de sélection
+                            if (selectedSelectionId !== selection.id) {
+                              setCart([]);
+                            }
+                          }}
+                          className={cn(
+                            'w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left',
+                            selectedSelectionId === selection.id
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          )}
+                        >
+                          <Layers
+                            className={cn(
+                              'h-5 w-5',
+                              selectedSelectionId === selection.id
+                                ? 'text-blue-600'
+                                : 'text-gray-400'
+                            )}
+                          />
+                          <div className="flex-1">
+                            <p className="font-medium">{selection.name}</p>
+                            <p className="text-xs text-gray-500">
+                              {selection.products_count || 0} produit
+                              {(selection.products_count || 0) > 1 ? 's' : ''}
+                              {selection.status === 'draft' && ' • Brouillon'}
+                            </p>
+                          </div>
+                          {selectedSelectionId === selection.id && (
+                            <Check className="h-5 w-5 text-blue-600" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-amber-600 py-2">
+                      <AlertCircle className="h-4 w-4 inline mr-1" />
+                      Aucune sélection disponible pour cette enseigne
+                    </p>
+                  )}
                 </div>
+
+                {/* Produits de la sélection choisie */}
+                {selectedSelectionId && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <Package className="h-4 w-4 inline mr-1" />
+                      Produits disponibles
+                    </label>
+                    {selectionDetailsLoading ? (
+                      <div className="flex items-center gap-2 py-4">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span className="text-sm text-gray-500">
+                          Chargement des produits...
+                        </span>
+                      </div>
+                    ) : selectionDetails?.items &&
+                      selectionDetails.items.length > 0 ? (
+                      <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto">
+                        {selectionDetails.items.map(item => {
+                          const isInCart = cart.some(
+                            c => c.product_id === item.product_id
+                          );
+                          const sellingPrice =
+                            item.selling_price_ht ||
+                            item.base_price_ht * (1 + item.margin_rate);
+                          return (
+                            <button
+                              key={item.id}
+                              onClick={() => addProductFromSelection(item)}
+                              className={cn(
+                                'flex items-center gap-3 p-2 rounded-lg border transition-all text-left',
+                                isInCart
+                                  ? 'border-green-300 bg-green-50'
+                                  : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                              )}
+                            >
+                              {item.product_image_url ? (
+                                <img
+                                  src={item.product_image_url}
+                                  alt={item.product?.name || ''}
+                                  className="w-10 h-10 object-cover rounded"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center">
+                                  <Package className="h-4 w-4 text-gray-400" />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">
+                                  {item.product?.name || 'Produit'}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {sellingPrice.toFixed(2)}€ HT • Marge{' '}
+                                  {(item.margin_rate * 100).toFixed(0)}%
+                                </p>
+                              </div>
+                              {isInCart ? (
+                                <Check className="h-4 w-4 text-green-600" />
+                              ) : (
+                                <Plus className="h-4 w-4 text-blue-600" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500 py-2">
+                        Aucun produit dans cette sélection
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Mode manuel (si pas de sélection ou fallback) */}
+                {(!selections || selections.length === 0) && (
+                  <div className="border border-dashed border-gray-300 rounded-lg p-4">
+                    <p className="text-sm font-medium text-gray-700 mb-3">
+                      Ajouter un produit manuellement
+                    </p>
+                    <QuickAddProduct onAdd={addProductToCart} />
+                  </div>
+                )}
 
                 {/* Panier */}
                 {cart.length > 0 ? (

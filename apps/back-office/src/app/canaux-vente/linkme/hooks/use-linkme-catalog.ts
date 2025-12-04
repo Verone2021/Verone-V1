@@ -17,10 +17,16 @@ import { createClient } from '@verone/utils/supabase/client';
 
 import type { LinkMeProductDetail } from '../types';
 
-const supabase = createClient();
-
 // ID du canal LinkMe dans sales_channels
 const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
+
+/**
+ * Helper: créer un client Supabase (à l'intérieur des fonctions, pas au niveau module)
+ * Évite les problèmes de contexte d'authentification au chargement du module
+ */
+function getSupabaseClient() {
+  return createClient();
+}
 
 /**
  * Interface produit catalogue LinkMe
@@ -85,6 +91,8 @@ export interface EligibleProduct {
  * Fetch produits du catalogue LinkMe depuis channel_pricing
  */
 async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
+  const supabase = getSupabaseClient();
+
   // Requête channel_pricing avec JOIN products
   const { data, error } = await supabase
     .from('channel_pricing')
@@ -238,7 +246,7 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
       display_order: cp.display_order ?? 0,
       product_name: cp.products?.name || '',
       product_reference: cp.products?.sku || '',
-      product_price_ht: cp.custom_price_ht ?? cp.products?.cost_price ?? 0,
+      product_price_ht: cp.products?.cost_price ?? 0, // Toujours cost_price (prix d'achat réel)
       // Prix de vente HT = custom_price_ht si défini (null si non défini = pas validé)
       product_selling_price_ht: cp.custom_price_ht ?? null,
       product_image_url: imageMap.get(cp.product_id) || null,
@@ -262,6 +270,7 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
  * Note: Tous les produits actifs sont affichés, même sans stock
  */
 async function fetchEligibleProducts(): Promise<EligibleProduct[]> {
+  const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from('products')
     .select(
@@ -342,6 +351,7 @@ export function useAddProductsToCatalog() {
 
   return useMutation({
     mutationFn: async (productIds: string[]) => {
+      const supabase = getSupabaseClient();
       // Appel RPC SECURITY DEFINER pour bypasser RLS
       // Note: Cast via unknown car fonction RPC custom pas dans types Supabase générés
       const rpcCall = supabase.rpc as unknown as (
@@ -372,6 +382,7 @@ export function useRemoveProductFromCatalog() {
 
   return useMutation({
     mutationFn: async (catalogProductId: string) => {
+      const supabase = getSupabaseClient();
       const { error } = await supabase
         .from('channel_pricing')
         .delete()
@@ -399,6 +410,7 @@ export function useToggleProductEnabled() {
       catalogProductId: string;
       isEnabled: boolean;
     }) => {
+      const supabase = getSupabaseClient();
       const { error } = await supabase
         .from('channel_pricing')
         .update({ is_active: isEnabled }) // Map is_enabled → is_active
@@ -457,6 +469,7 @@ export function useToggleProductShowcase() {
       catalogProductId: string;
       isPublicShowcase: boolean;
     }) => {
+      const supabase = getSupabaseClient();
       const { error } = await supabase
         .from('channel_pricing')
         .update({ is_public_showcase: isPublicShowcase })
@@ -515,6 +528,7 @@ export function useToggleProductFeatured() {
       catalogProductId: string;
       isFeatured: boolean;
     }) => {
+      const supabase = getSupabaseClient();
       const { error } = await supabase
         .from('channel_pricing')
         .update({ is_featured: isFeatured })
@@ -574,6 +588,7 @@ export function useToggleShowSupplier() {
       catalogProductId: string;
       showSupplier: boolean;
     }) => {
+      const supabase = getSupabaseClient();
       const { error } = await supabase
         .from('channel_pricing')
         .update({ show_supplier: showSupplier })
@@ -636,6 +651,7 @@ export function useUpdateMarginSettings() {
         suggested_margin_rate?: number;
       };
     }) => {
+      const supabase = getSupabaseClient();
       const { error } = await supabase
         .from('channel_pricing')
         .update(marginSettings)
@@ -667,6 +683,7 @@ export function useUpdateCustomMetadata() {
         custom_selling_points?: string[] | null;
       };
     }) => {
+      const supabase = getSupabaseClient();
       const { error } = await supabase
         .from('channel_pricing')
         .update(metadata)
@@ -721,6 +738,8 @@ export function useLinkMeCatalogStats() {
 async function fetchLinkMeProductDetail(
   catalogProductId: string
 ): Promise<LinkMeProductDetail | null> {
+  const supabase = getSupabaseClient();
+
   // Requête channel_pricing avec JOIN products
   const { data: cpData, error: cpError } = await supabase
     .from('channel_pricing')
@@ -897,6 +916,7 @@ export function useUpdateLinkMePricing() {
         public_price_ht?: number | null; // Tarif public HT
       };
     }) => {
+      const supabase = getSupabaseClient();
       const { error } = await supabase
         .from('channel_pricing')
         .update(pricing)
@@ -931,6 +951,7 @@ export function useUpdateLinkMeMetadata() {
         custom_selling_points?: string[] | null;
       };
     }) => {
+      const supabase = getSupabaseClient();
       const { error } = await supabase
         .from('channel_pricing')
         .update(metadata)
@@ -969,6 +990,7 @@ export function useToggleLinkMeProductField() {
         | 'show_supplier';
       value: boolean;
     }) => {
+      const supabase = getSupabaseClient();
       // Map is_enabled to is_active (column name in channel_pricing)
       const dbField = field === 'is_enabled' ? 'is_active' : field;
 
@@ -1011,6 +1033,8 @@ export function useLinkMeProductVariants(productId: string | null) {
     queryKey: ['linkme-product-variants', productId],
     queryFn: async (): Promise<ProductVariant[]> => {
       if (!productId) return [];
+
+      const supabase = getSupabaseClient();
 
       // 1. Récupérer le variant_group_id du produit principal
       const { data: mainProduct, error: mainError } = await supabase

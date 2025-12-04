@@ -27,10 +27,36 @@ export interface SelectionItem {
     sku: string;
     cost_price: number | null;
     product_status: string;
+    /** Description du produit (pour modal détail) */
+    description?: string | null;
+    /** Arguments de vente (pour modal détail) */
+    selling_points?: string[] | null;
+    /** Poids en kg */
+    weight_kg?: number | null;
+    /** Dimensions en cm (jsonb) */
+    dimensions_cm?: Record<string, number | string> | null;
+    /** Sous-catégorie */
+    category_name?: string | null;
+    /** Fournisseur */
+    supplier_name?: string | null;
   };
   product_image_url?: string | null;
   /** Commission NITMI/LinkMe en décimal (0.05 = 5%) - depuis channel_pricing */
   commission_rate?: number | null;
+  /** Prix client LinkMe calculé (custom_price_ht) - depuis channel_pricing du catalogue général */
+  catalog_price_ht?: number | null;
+  /** Prix public HT (pour comparaison) - depuis channel_pricing */
+  public_price_ht?: number | null;
+  /** Marge minimum autorisée (décimal) - depuis channel_pricing */
+  min_margin_rate?: number | null;
+  /** Marge maximum autorisée (décimal) - depuis channel_pricing */
+  max_margin_rate?: number | null;
+  /** Marge suggérée (décimal) - depuis channel_pricing */
+  suggested_margin_rate?: number | null;
+  /** Buffer rate sous prix public (décimal) - depuis channel_pricing */
+  buffer_rate?: number | null;
+  /** ID du channel_pricing pour lien vers catalogue LinkMe */
+  channel_pricing_id?: string | null;
 }
 
 export interface SelectionDetail {
@@ -108,7 +134,7 @@ async function fetchSelectionById(
         display_name,
         slug,
         enseigne_id,
-        organisation:organisations(enseigne_id)
+        organisation:organisations!organisation_id(enseigne_id)
       )
     `
     )
@@ -122,13 +148,19 @@ async function fetchSelectionById(
 
   if (!selection) return null;
 
-  // 2. Récupérer les items de la sélection avec les produits
-  const { data: items, error: itemsError } = await supabase
+  // 2. Récupérer les items de la sélection avec les produits (données étendues pour modal)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: items, error: itemsError } = await (supabase as any)
     .from('linkme_selection_items')
     .select(
       `
       *,
-      product:products(id, name, sku, cost_price, product_status)
+      product:products(
+        id, name, sku, cost_price, product_status,
+        description, selling_points, weight, dimensions,
+        subcategory:subcategories(name),
+        supplier:organisations!supplier_id(trade_name, legal_name)
+      )
     `
     )
     .eq('selection_id', selectionId)
@@ -143,6 +175,18 @@ async function fetchSelectionById(
   const productIds = items?.map((item: SelectionItem) => item.product_id) || [];
   let imagesByProductId: Record<string, string> = {};
   const commissionByProductId: Record<string, number | null> = {};
+  const catalogPriceByProductId: Record<string, number | null> = {};
+  const channelPricingIdByProductId: Record<string, string | null> = {};
+  const channelPricingDataByProductId: Record<
+    string,
+    {
+      public_price_ht: number | null;
+      min_margin_rate: number | null;
+      max_margin_rate: number | null;
+      suggested_margin_rate: number | null;
+      buffer_rate: number | null;
+    }
+  > = {};
 
   if (productIds.length > 0) {
     // Récupérer les images primaires
@@ -164,26 +208,69 @@ async function fetchSelectionById(
       );
     }
 
-    // 4. Récupérer les commissions depuis channel_pricing (canal LinkMe)
-    const { data: channelPrices } = await supabase
+    // 4. Récupérer les données channel_pricing complètes (canal LinkMe)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: channelPrices } = await (supabase as any)
       .from('channel_pricing')
-      .select('product_id, channel_commission_rate')
+      .select(
+        'id, product_id, channel_commission_rate, custom_price_ht, public_price_ht, min_margin_rate, max_margin_rate, suggested_margin_rate, buffer_rate'
+      )
       .eq('channel_id', LINKME_CHANNEL_ID)
       .in('product_id', productIds);
 
     if (channelPrices) {
       channelPrices.forEach(cp => {
         commissionByProductId[cp.product_id] = cp.channel_commission_rate;
+        catalogPriceByProductId[cp.product_id] = cp.custom_price_ht;
+        channelPricingIdByProductId[cp.product_id] = cp.id;
+        // Stocker les données supplémentaires pour le modal
+        channelPricingDataByProductId[cp.product_id] = {
+          public_price_ht: cp.public_price_ht,
+          min_margin_rate: cp.min_margin_rate,
+          max_margin_rate: cp.max_margin_rate,
+          suggested_margin_rate: cp.suggested_margin_rate,
+          buffer_rate: cp.buffer_rate,
+        };
       });
     }
   }
 
-  // 5. Combiner les données
-  const itemsWithImages = (items || []).map(item => ({
-    ...item,
-    product_image_url: imagesByProductId[item.product_id] || null,
-    commission_rate: commissionByProductId[item.product_id] ?? null,
-  })) as SelectionItem[];
+  // 5. Combiner les données (y compris données étendues pour modal)
+  const itemsWithImages = (items || []).map(item => {
+    const channelData = channelPricingDataByProductId[item.product_id];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rawProduct = item.product;
+    return {
+      ...item,
+      product: rawProduct
+        ? {
+            id: rawProduct.id,
+            name: rawProduct.name,
+            sku: rawProduct.sku,
+            cost_price: rawProduct.cost_price,
+            product_status: rawProduct.product_status,
+            description: rawProduct.description,
+            selling_points: rawProduct.selling_points,
+            weight_kg: rawProduct.weight,
+            dimensions_cm: rawProduct.dimensions,
+            category_name: rawProduct.subcategory?.name || null,
+            supplier_name:
+              rawProduct.supplier?.trade_name ||
+              rawProduct.supplier?.legal_name ||
+              null,
+          }
+        : undefined,
+      product_image_url: imagesByProductId[item.product_id] || null,
+      channel_pricing_id: channelPricingIdByProductId[item.product_id] ?? null,
+      commission_rate: commissionByProductId[item.product_id] ?? null,
+      catalog_price_ht: catalogPriceByProductId[item.product_id] ?? null,
+      public_price_ht: channelData?.public_price_ht ?? null,
+      min_margin_rate: channelData?.min_margin_rate ?? null,
+      max_margin_rate: channelData?.max_margin_rate ?? null,
+      suggested_margin_rate: channelData?.suggested_margin_rate ?? null,
+      buffer_rate: channelData?.buffer_rate ?? null,
+    };
+  }) as SelectionItem[];
 
   return {
     ...selection,
@@ -632,5 +719,103 @@ export function useEnseigneSourcedProducts(enseigneId: string | null) {
     queryFn: () => (enseigneId ? fetchEnseigneSourcedProducts(enseigneId) : []),
     enabled: !!enseigneId,
     staleTime: 60000, // 1 minute
+  });
+}
+
+// ============================================================================
+// Sélections par Enseigne
+// ============================================================================
+
+/**
+ * Type simplifié pour liste des sélections
+ */
+export interface SelectionSummary {
+  id: string;
+  name: string;
+  slug: string;
+  status: string | null;
+  products_count: number | null;
+  affiliate_id: string;
+  affiliate_name: string;
+}
+
+/**
+ * Récupère les sélections disponibles pour une enseigne
+ * Chemin: enseigne → organisations → linkme_affiliates → linkme_selections
+ */
+async function fetchSelectionsByEnseigne(
+  enseigneId: string
+): Promise<SelectionSummary[]> {
+  // Récupérer les organisations de cette enseigne
+  const { data: organisations, error: orgError } = await supabase
+    .from('organisations')
+    .select('id')
+    .eq('enseigne_id', enseigneId);
+
+  if (orgError) {
+    console.error('Error fetching organisations:', orgError);
+    throw orgError;
+  }
+
+  if (!organisations || organisations.length === 0) {
+    return [];
+  }
+
+  const organisationIds = organisations.map(o => o.id);
+
+  // Récupérer les affiliés de ces organisations
+  const { data: affiliates, error: affError } = await supabase
+    .from('linkme_affiliates')
+    .select('id, display_name')
+    .in('organisation_id', organisationIds);
+
+  if (affError) {
+    console.error('Error fetching affiliates:', affError);
+    throw affError;
+  }
+
+  if (!affiliates || affiliates.length === 0) {
+    return [];
+  }
+
+  const affiliateIds = affiliates.map(a => a.id);
+  const affiliateNamesById: Record<string, string> = {};
+  affiliates.forEach(a => {
+    affiliateNamesById[a.id] = a.display_name;
+  });
+
+  // Récupérer les sélections actives de ces affiliés
+  const { data: selections, error: selError } = await supabase
+    .from('linkme_selections')
+    .select('id, name, slug, status, products_count, affiliate_id')
+    .in('affiliate_id', affiliateIds)
+    .in('status', ['active', 'draft']) // Exclure les archivées
+    .order('name', { ascending: true });
+
+  if (selError) {
+    console.error('Error fetching selections:', selError);
+    throw selError;
+  }
+
+  return (selections || []).map(s => ({
+    id: s.id,
+    name: s.name,
+    slug: s.slug,
+    status: s.status,
+    products_count: s.products_count,
+    affiliate_id: s.affiliate_id,
+    affiliate_name: affiliateNamesById[s.affiliate_id] || '',
+  }));
+}
+
+/**
+ * Hook: Récupérer les sélections d'une enseigne
+ */
+export function useLinkMeSelectionsByEnseigne(enseigneId: string | null) {
+  return useQuery({
+    queryKey: ['linkme-selections-by-enseigne', enseigneId],
+    queryFn: () => (enseigneId ? fetchSelectionsByEnseigne(enseigneId) : []),
+    enabled: !!enseigneId,
+    staleTime: 30000, // 30 secondes
   });
 }

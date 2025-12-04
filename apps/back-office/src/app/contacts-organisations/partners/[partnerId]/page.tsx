@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -23,10 +23,12 @@ import { TabsNavigation, TabContent } from '@verone/ui';
 import { Card, CardContent } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Badge } from '@verone/ui';
+import { cn } from '@verone/utils';
 import {
   isModuleDeployed,
   getModulePhase,
 } from '@verone/utils/deployed-modules';
+import { createClient } from '@verone/utils/supabase/client';
 import {
   ArrowLeft,
   Building2,
@@ -34,11 +36,25 @@ import {
   ArchiveRestore,
   Phone,
   FileText,
+  Store,
+  Sparkles,
 } from 'lucide-react';
+
+// Interface pour les canaux de vente de l'organisation
+interface OrganisationChannel {
+  code: 'linkme' | 'site-internet' | 'b2b';
+  name: string;
+  link: string;
+  isActive: boolean;
+}
 
 export default function PartnerDetailPage() {
   const { partnerId } = useParams();
   const [activeTab, setActiveTab] = useState('contacts');
+  // État pour les canaux de vente
+  const [organisationChannels, setOrganisationChannels] = useState<
+    OrganisationChannel[]
+  >([]);
 
   const {
     organisation: partner,
@@ -47,6 +63,39 @@ export default function PartnerDetailPage() {
   } = useOrganisation(partnerId as string);
   const { archiveOrganisation, unarchiveOrganisation, refetch } =
     useOrganisations({ type: 'partner' });
+
+  // Charger les canaux de vente de cette organisation
+  useEffect(() => {
+    async function fetchOrganisationChannels() {
+      if (!partnerId || typeof partnerId !== 'string') return;
+
+      const channels: OrganisationChannel[] = [];
+
+      try {
+        const supabase = createClient();
+        // Requête DIRECTE: chercher affilié avec organisation_id
+        const { data: linkmeAffiliate } = await supabase
+          .from('linkme_affiliates')
+          .select('id, status')
+          .eq('organisation_id', partnerId)
+          .single();
+
+        if (linkmeAffiliate) {
+          channels.push({
+            code: 'linkme',
+            name: 'LinkMe',
+            link: `/canaux-vente/linkme/organisations/${partnerId}`,
+            isActive: linkmeAffiliate.status === 'active',
+          });
+        }
+
+        setOrganisationChannels(channels);
+      } catch (err) {
+        console.error('Erreur chargement canaux organisation:', err);
+      }
+    }
+    fetchOrganisationChannels();
+  }, [partnerId]);
 
   // Hook centralisé pour les compteurs d'onglets
   const { counts, refreshCounts } = useOrganisationTabCounts({
@@ -201,6 +250,44 @@ export default function PartnerDetailPage() {
           </ButtonV2>
         </div>
       </div>
+
+      {/* Section Canaux de Vente */}
+      {organisationChannels.length > 0 && (
+        <Card className="border-purple-200 bg-purple-50/30">
+          <CardContent className="py-3">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                <Store className="h-4 w-4" />
+                Canaux de vente:
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {organisationChannels.map(channel => (
+                  <Link key={channel.code} href={channel.link}>
+                    <Badge
+                      variant={channel.isActive ? 'default' : 'outline'}
+                      className={cn(
+                        'cursor-pointer hover:opacity-80 transition-opacity',
+                        channel.code === 'linkme' &&
+                          'bg-purple-600 hover:bg-purple-700 text-white'
+                      )}
+                    >
+                      {channel.code === 'linkme' && (
+                        <Sparkles className="h-3 w-3 mr-1" />
+                      )}
+                      {channel.name}
+                      {!channel.isActive && (
+                        <span className="ml-1 text-xs opacity-70">
+                          (inactif)
+                        </span>
+                      )}
+                    </Badge>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Layout en 2 colonnes avec composants EditSection */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
