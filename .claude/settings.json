@@ -1,16 +1,6 @@
 {
   "enableAllProjectMcpServers": true,
-  "enabledMcpServers": [
-    "supabase",
-    "context7",
-    "serena",
-    "sequential-thinking",
-    "playwright",
-    "github",
-    "vercel",
-    "filesystem",
-    "memory"
-  ],
+  "enabledMcpServers": ["context7", "serena", "playwright"],
   "statusLine": {
     "type": "command",
     "command": "npx ccusage@latest statusline --visual-burn-rate emoji --no-offline",
@@ -28,14 +18,8 @@
       // MCP Servers (OK - déjà granulaires)
       "mcp__*",
       "mcp__serena__*",
-      "mcp__sequential-thinking__*",
       "mcp__context7__*",
-      "mcp__supabase__*",
       "mcp__playwright__*",
-      "mcp__github__*",
-      "mcp__vercel__*",
-      "mcp__filesystem__*",
-      "mcp__memory__*",
       "mcp__ide__*",
 
       // File Operations (RESTREINTES au projet)

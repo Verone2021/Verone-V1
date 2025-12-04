@@ -159,7 +159,7 @@ import { ProductThumbnail } from '@verone/products';
 
 ### Phase 1: THINK (Analyse)
 
-- Sequential Thinking si >3 étapes
+- Décomposer en étapes si >3 actions
 - Consulter documentation AVANT modifier
 - Identifier edge cases (min 3)
 
@@ -332,19 +332,17 @@ supabase gen types typescript --local > apps/back-office/src/types/supabase.ts
 
 ### 🎯 MCP Servers Actifs
 
-**12 MCP servers configurés** (.claude/settings.json) :
+**3 MCP servers optimisés** (.claude/settings.json) :
 
-1. **supabase** - Database ops, migrations, types
-2. **context7** - Documentation libraries (npm, React, etc.)
-3. **serena** - Semantic code analysis (find_symbol, replace_symbol_body)
-4. **sequential-thinking** - Raisonnement multi-étapes
-5. **playwright** - Tests E2E, browser automation
-6. **github** - Issues, PRs, repositories
-7. **vercel** - Déploiement, logs, analytics
-8. **filesystem** - Read/Write/Edit files
-9. **memory** - Knowledge graph
-10. **ide** - VS Code integration
-11. Plus autres (voir settings.json ligne 3-12)
+1. **context7** - Documentation libraries à jour (Next.js 15, Supabase, etc.)
+2. **serena** - Semantic code analysis (find_symbol, mémoires)
+3. **playwright** - Tests E2E, browser automation
+
+**Alternatives CLI** (sans MCP) :
+
+- Supabase : `npx supabase ...` ou `psql`
+- GitHub : `gh pr list`, `gh issue create`
+- Vercel : `vercel deploy`, `vercel logs`
 
 ### 🚨 Règles Anti-Hallucination MCP
 

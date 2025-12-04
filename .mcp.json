@@ -1,18 +1,5 @@
 {
   "mcpServers": {
-    "supabase": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@supabase/mcp-server-supabase@latest",
-        "--project-ref=${SUPABASE_PROJECT_REF}",
-        "--mode=remote"
-      ],
-      "env": {
-        "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}",
-        "SUPABASE_SKIP_LOCAL": "true"
-      }
-    },
     "context7": {
       "command": "npx",
       "args": ["-y", "@upstash/context7-mcp@latest"]
@@ -30,38 +17,9 @@
         "."
       ]
     },
-    "github": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github@latest"],
-      "env": {
-        "GITHUB_TOKEN": "${GITHUB_TOKEN}"
-      }
-    },
-    "vercel": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-vercel@latest"],
-      "env": {
-        "VERCEL_API_TOKEN": "${VERCEL_API_TOKEN}"
-      }
-    },
-    "sequential-thinking": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking@latest"]
-    },
     "playwright": {
       "command": "npx",
       "args": ["-y", "@playwright/mcp@latest", "--browser", "chrome"]
-    },
-    "filesystem": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem@latest", "."]
-    },
-    "memory": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-memory"],
-      "env": {
-        "MEMORY_FILE_PATH": ".aim/verone-knowledge-graph.json"
-      }
     }
   }
 }
