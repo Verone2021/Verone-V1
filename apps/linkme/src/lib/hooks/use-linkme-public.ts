@@ -264,23 +264,26 @@ function getLogoPublicUrl(logoPath: string | null): string | null {
   return data?.publicUrl || null;
 }
 
+// ID du canal LinkMe dans channel_pricing
+const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
+
 /**
  * Hook: Récupère les fournisseurs Vérone visibles dans la section "Nos partenaires"
- * Ce sont les fournisseurs dont au moins un produit a show_supplier = true dans le catalogue LinkMe
+ * Ce sont les fournisseurs dont au moins un produit est activé dans le catalogue LinkMe (channel_pricing)
  */
 export function useVisibleSuppliers() {
   return useQuery({
     queryKey: ['linkme-visible-suppliers'],
     queryFn: async (): Promise<VisibleSupplier[]> => {
-      // Récupérer les produits du catalogue LinkMe où show_supplier = true
+      // Récupérer les produits du catalogue LinkMe (channel_pricing)
       const { data: catalogProducts, error: catalogError } = await supabase
-        .from('linkme_catalog_products')
+        .from('channel_pricing')
         .select('product_id')
-        .eq('show_supplier', true)
-        .eq('is_enabled', true);
+        .eq('channel_id', LINKME_CHANNEL_ID)
+        .eq('is_active', true);
 
       if (catalogError) {
-        console.error('Erreur fetch catalog products:', catalogError);
+        console.error('Erreur fetch channel_pricing:', catalogError);
         throw catalogError;
       }
 

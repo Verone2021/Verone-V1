@@ -2,15 +2,30 @@
 
 import Link from 'next/link';
 
-import { ShoppingCart, LogIn, Loader2 } from 'lucide-react';
+import { ShoppingCart, LogIn, Loader2, Package, Star } from 'lucide-react';
 
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth, type LinkMeRole } from '../../contexts/AuthContext';
 import { UserMenu } from '../auth/UserMenu';
 import { useCart } from '../cart/CartProvider';
 
+// Rôles autorisés à voir le catalogue
+const CATALOG_ROLES: LinkMeRole[] = [
+  'enseigne_admin',
+  'org_independante',
+  'organisation_admin',
+];
+
+// Rôles autorisés à voir "Ma sélection"
+const SELECTION_ROLES: LinkMeRole[] = ['enseigne_admin', 'org_independante'];
+
 export function Header() {
   const { itemCount, openCart } = useCart();
-  const { user, loading } = useAuth();
+  const { user, linkMeRole, loading } = useAuth();
+
+  // Vérifier les droits
+  const canSeeCatalog = linkMeRole && CATALOG_ROLES.includes(linkMeRole.role);
+  const canSeeSelection =
+    linkMeRole && SELECTION_ROLES.includes(linkMeRole.role);
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -35,6 +50,24 @@ export function Header() {
                 className="text-gray-600 hover:text-gray-900 font-medium"
               >
                 Dashboard
+              </Link>
+            )}
+            {canSeeCatalog && (
+              <Link
+                href="/catalogue"
+                className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 font-medium"
+              >
+                <Package className="h-4 w-4" />
+                Catalogue
+              </Link>
+            )}
+            {canSeeSelection && (
+              <Link
+                href="/ma-selection"
+                className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 font-medium"
+              >
+                <Star className="h-4 w-4" />
+                Ma sélection
               </Link>
             )}
           </nav>

@@ -1,27 +1,48 @@
 'use client';
 
+/**
+ * Page d'accueil LinkMe
+ *
+ * Présentation de la plateforme LinkMe:
+ * - Hero avec CTA
+ * - Section fonctionnalités/avantages
+ * - Section partenaires (fournisseurs)
+ *
+ * @module HomePage
+ * @since 2025-12-04
+ */
+
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { Store, ArrowRight, Package } from 'lucide-react';
-
 import {
-  useFeaturedSelections,
-  useVisibleSuppliers,
-} from '../lib/hooks/use-linkme-public';
+  Store,
+  Package,
+  TrendingUp,
+  Users,
+  ShoppingBag,
+  CheckCircle2,
+  ArrowRight,
+} from 'lucide-react';
 
-function formatPrice(price: number): string {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR',
-  }).format(price);
-}
+import { useAuth, type LinkMeRole } from '../contexts/AuthContext';
+import { useVisibleSuppliers } from '../lib/hooks/use-linkme-public';
+
+// Rôles autorisés à voir le catalogue
+const CATALOG_ROLES: LinkMeRole[] = [
+  'enseigne_admin',
+  'org_independante',
+  'organisation_admin',
+];
 
 export default function HomePage() {
-  const { data: selections, isLoading: selectionsLoading } =
-    useFeaturedSelections();
+  const { user, linkMeRole } = useAuth();
   const { data: suppliers, isLoading: suppliersLoading } =
     useVisibleSuppliers();
+
+  // Vérifier si l'utilisateur peut accéder au catalogue
+  const canAccessCatalog =
+    user && linkMeRole && CATALOG_ROLES.includes(linkMeRole.role);
 
   return (
     <div className="min-h-screen">
@@ -29,89 +50,200 @@ export default function HomePage() {
       <section className="bg-gradient-to-br from-blue-600 to-blue-800 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
-            Découvrez les sélections de nos partenaires
+            LinkMe - Votre plateforme de vente partenaire
           </h1>
           <p className="text-xl text-blue-100 max-w-2xl mx-auto mb-8">
-            Mobilier et décoration d'intérieur haut de gamme, sélectionnés par
-            des professionnels passionnés.
+            Mobilier et décoration d'intérieur haut de gamme. Créez vos
+            sélections personnalisées et gagnez des commissions sur vos ventes.
           </p>
+
+          {/* CTA */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            {canAccessCatalog ? (
+              <Link
+                href="/catalogue"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+              >
+                <Package className="h-5 w-5" />
+                Découvrir le catalogue
+              </Link>
+            ) : user ? (
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+              >
+                Accéder au dashboard
+                <ArrowRight className="h-5 w-5" />
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+              >
+                Se connecter
+                <ArrowRight className="h-5 w-5" />
+              </Link>
+            )}
+          </div>
         </div>
       </section>
 
-      {/* Sélections Vedettes */}
+      {/* Section Fonctionnalités */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-900">
-              Sélections à découvrir
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Comment ça fonctionne ?
             </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              LinkMe vous permet de créer vos propres sélections de produits et
+              de les partager avec vos clients. Gagnez des commissions sur
+              chaque vente.
+            </p>
           </div>
 
-          {selectionsLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[1, 2, 3, 4].map(i => (
-                <div
-                  key={i}
-                  className="bg-gray-100 rounded-lg h-64 animate-pulse"
-                />
-              ))}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Étape 1 */}
+            <div className="text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Package className="h-8 w-8 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                1. Parcourez le catalogue
+              </h3>
+              <p className="text-gray-600">
+                Découvrez notre large sélection de mobilier et décoration haut
+                de gamme issus de nos partenaires.
+              </p>
             </div>
-          ) : selections && selections.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {selections.map(selection => (
-                <Link
-                  key={selection.id}
-                  href={`/${selection.affiliate.slug}/${selection.slug}`}
-                  className="group bg-white border rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
-                >
-                  {/* Image */}
-                  <div className="relative h-40 bg-gray-100">
-                    {selection.image_url ? (
-                      <Image
-                        src={selection.image_url}
-                        alt={selection.name}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        <Package className="h-12 w-12" />
-                      </div>
-                    )}
-                  </div>
 
-                  {/* Content */}
-                  <div className="p-4">
-                    <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-                      {selection.name}
-                    </h3>
-                    <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
-                      <Store className="h-4 w-4" />
-                      {selection.affiliate.display_name}
+            {/* Étape 2 */}
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <ShoppingBag className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                2. Créez votre sélection
+              </h3>
+              <p className="text-gray-600">
+                Constituez votre propre sélection de produits adaptée aux goûts
+                de vos clients et partagez-la.
+              </p>
+            </div>
+
+            {/* Étape 3 */}
+            <div className="text-center">
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <TrendingUp className="h-8 w-8 text-purple-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                3. Gagnez des commissions
+              </h3>
+              <p className="text-gray-600">
+                Pour chaque vente réalisée via votre sélection, recevez une
+                commission attractive.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section Avantages */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Texte */}
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-6">
+                Pourquoi rejoindre LinkMe ?
+              </h2>
+
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="h-6 w-6 text-green-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-gray-900">
+                      Catalogue premium
+                    </h4>
+                    <p className="text-gray-600">
+                      Accédez à une sélection de produits haut de gamme,
+                      soigneusement choisis par nos équipes.
                     </p>
-                    <div className="mt-3 flex justify-between items-center text-sm">
-                      <span className="text-gray-600">
-                        {selection.products_count} produits
-                      </span>
-                      <span className="text-blue-600 flex items-center gap-1 group-hover:gap-2 transition-all">
-                        Voir <ArrowRight className="h-4 w-4" />
-                      </span>
-                    </div>
                   </div>
-                </Link>
-              ))}
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="h-6 w-6 text-green-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-gray-900">
+                      Marges personnalisables
+                    </h4>
+                    <p className="text-gray-600">
+                      Définissez vos propres prix de vente et optimisez vos
+                      marges sur chaque produit.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="h-6 w-6 text-green-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-gray-900">
+                      Suivi en temps réel
+                    </h4>
+                    <p className="text-gray-600">
+                      Suivez vos ventes, commissions et performances depuis
+                      votre tableau de bord.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="h-6 w-6 text-green-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-gray-900">
+                      Support dédié
+                    </h4>
+                    <p className="text-gray-600">
+                      Une équipe à votre écoute pour vous accompagner dans le
+                      développement de votre activité.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
-          ) : (
-            <div className="text-center py-12 text-gray-500">
-              <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Aucune sélection disponible pour le moment</p>
+
+            {/* Image/Stats */}
+            <div className="bg-white rounded-2xl shadow-lg p-8">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="text-center p-4 bg-blue-50 rounded-xl">
+                  <Users className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+                  <p className="text-3xl font-bold text-gray-900">150+</p>
+                  <p className="text-sm text-gray-600">Partenaires actifs</p>
+                </div>
+                <div className="text-center p-4 bg-green-50 rounded-xl">
+                  <Package className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                  <p className="text-3xl font-bold text-gray-900">2000+</p>
+                  <p className="text-sm text-gray-600">Produits disponibles</p>
+                </div>
+                <div className="text-center p-4 bg-purple-50 rounded-xl">
+                  <ShoppingBag className="h-8 w-8 text-purple-600 mx-auto mb-2" />
+                  <p className="text-3xl font-bold text-gray-900">10k+</p>
+                  <p className="text-sm text-gray-600">Ventes réalisées</p>
+                </div>
+                <div className="text-center p-4 bg-orange-50 rounded-xl">
+                  <TrendingUp className="h-8 w-8 text-orange-600 mx-auto mb-2" />
+                  <p className="text-3xl font-bold text-gray-900">25%</p>
+                  <p className="text-sm text-gray-600">Commission moyenne</p>
+                </div>
+              </div>
             </div>
-          )}
+          </div>
         </div>
       </section>
 
       {/* Fournisseurs Partenaires */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl font-bold text-gray-900">
@@ -124,7 +256,7 @@ export default function HomePage() {
               {[1, 2, 3, 4, 5, 6].map(i => (
                 <div
                   key={i}
-                  className="bg-white rounded-lg h-32 animate-pulse"
+                  className="bg-gray-100 rounded-lg h-32 animate-pulse"
                 />
               ))}
             </div>
@@ -133,10 +265,10 @@ export default function HomePage() {
               {suppliers.map(supplier => (
                 <div
                   key={supplier.id}
-                  className="bg-white rounded-lg p-4 text-center hover:shadow-md transition-shadow"
+                  className="bg-gray-50 rounded-lg p-4 text-center hover:shadow-md transition-shadow"
                 >
                   {/* Logo */}
-                  <div className="relative w-16 h-16 mx-auto mb-3 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="relative w-16 h-16 mx-auto mb-3 bg-white rounded-full overflow-hidden shadow-sm">
                     {supplier.logo_url ? (
                       <Image
                         src={supplier.logo_url}
@@ -161,6 +293,45 @@ export default function HomePage() {
               <Store className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>Aucun partenaire pour le moment</p>
             </div>
+          )}
+        </div>
+      </section>
+
+      {/* CTA Final */}
+      <section className="py-16 bg-gradient-to-br from-blue-600 to-blue-800 text-white">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold mb-4">
+            Prêt à développer votre activité ?
+          </h2>
+          <p className="text-blue-100 mb-8">
+            Rejoignez LinkMe et commencez à créer vos sélections personnalisées
+            dès aujourd'hui.
+          </p>
+
+          {canAccessCatalog ? (
+            <Link
+              href="/catalogue"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+            >
+              <Package className="h-5 w-5" />
+              Accéder au catalogue
+            </Link>
+          ) : user ? (
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+            >
+              Voir mon dashboard
+              <ArrowRight className="h-5 w-5" />
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+            >
+              Commencer maintenant
+              <ArrowRight className="h-5 w-5" />
+            </Link>
           )}
         </div>
       </section>
