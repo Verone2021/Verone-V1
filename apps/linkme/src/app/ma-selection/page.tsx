@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { EditMarginModal } from '../../components/selection/EditMarginModal';
 import { useAuth, type LinkMeRole } from '../../contexts/AuthContext';
 import {
   useUserAffiliate,
@@ -311,6 +312,9 @@ function SelectionDetail({
   const { data: items, isLoading } = useSelectionItems(selection.id);
   const removeItemMutation = useRemoveFromSelection();
 
+  // State pour édition de marge
+  const [editingItem, setEditingItem] = useState<SelectionItem | null>(null);
+
   const handleRemoveItem = async (item: SelectionItem) => {
     if (!confirm('Retirer ce produit de la sélection ?')) return;
 
@@ -450,7 +454,14 @@ function SelectionDetail({
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setEditingItem(item)}
+                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Modifier la marge"
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </button>
                   <button
                     onClick={() => handleRemoveItem(item)}
                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -481,6 +492,15 @@ function SelectionDetail({
             Parcourir le catalogue
           </Link>
         </div>
+      )}
+
+      {/* Modal édition marge */}
+      {editingItem && (
+        <EditMarginModal
+          item={editingItem}
+          selectionId={selection.id}
+          onClose={() => setEditingItem(null)}
+        />
       )}
     </div>
   );

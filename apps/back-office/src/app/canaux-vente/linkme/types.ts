@@ -401,13 +401,21 @@ export function calculateLinkMeMargins(
   }
 
   // FORMULE CORRECTE (Calcul-marge-linkme.md):
-  // 1. Capacité totale de marge = écart entre prix public et prix de base
-  const rCapTotal = (publicPriceHT - basePriceHT) / basePriceHT;
+  // Étape 1: Prix client LinkMe = prix de vente HT × (1 + commission%)
+  const prixClientLinkMe = basePriceHT * (1 + platformFeeRate);
 
-  // 2. Marge maximum affilié = capacité - commission - buffer (SOUSTRACTION!)
-  const maxRate = Math.max(0, rCapTotal - platformFeeRate - bufferRate);
+  // Étape 2: Prix plafond avec buffer de sécurité (5% SOUS le prix public en euros)
+  // Ex: 180€ × 0.95 = 171€
+  const prixPlafondSecurite = publicPriceHT * (1 - bufferRate);
 
-  // 3. Marge suggérée = 1/3 de la marge max (top de la zone verte)
+  // Étape 3: Marge max affilié = (prix plafond - prix client) / prix client
+  // Ex: (171 - 137.61) / 137.61 = 24.3%
+  const maxRate = Math.max(
+    0,
+    (prixPlafondSecurite - prixClientLinkMe) / prixClientLinkMe
+  );
+
+  // Étape 4: Division en 3 zones égales (vert, orange, rouge)
   const suggestedRate = maxRate / 3;
 
   return {

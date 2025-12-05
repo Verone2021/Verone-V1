@@ -31,6 +31,7 @@ export interface LinkMeCatalogProduct {
   custom_selling_points: string[] | null;
   selling_price_ht: number; // Prix de vente HT (custom_price_ht ou calculé)
   public_price_ht: number | null; // Tarif public HT
+  channel_commission_rate: number | null; // Commission LinkMe % (pour calcul prix client)
   image_url: string | null;
   is_featured: boolean;
   subcategory_id: string | null;
@@ -69,6 +70,7 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
       custom_selling_points,
       custom_price_ht,
       public_price_ht,
+      channel_commission_rate,
       products!inner(
         id,
         sku,
@@ -184,6 +186,7 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
       custom_selling_points: cp.custom_selling_points,
       selling_price_ht: sellingPrice,
       public_price_ht: cp.public_price_ht,
+      channel_commission_rate: cp.channel_commission_rate ?? null,
       image_url: imageMap.get(cp.product_id) || null,
       is_featured: cp.is_featured ?? false,
       subcategory_id: subcategoryId,

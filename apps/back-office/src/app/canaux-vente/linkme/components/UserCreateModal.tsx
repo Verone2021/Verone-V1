@@ -54,9 +54,11 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
   const [organisationId, setOrganisationId] = useState<string>('');
 
   // Fetch organisations basées sur l'enseigne sélectionnée
-  // Pour org_independante: charge TOUTES les organisations (sans filtre enseigne)
+  // Pour org_independante: charge TOUTES les organisations DISPONIBLES (sans filtre enseigne)
+  // Le 2ème paramètre exclut les organisations qui ont déjà un utilisateur org_independante
   const { data: organisations } = useLinkMeOrganisationsSelect(
-    role === 'org_independante' ? undefined : enseigneId || undefined
+    role === 'org_independante' ? undefined : enseigneId || undefined,
+    role === 'org_independante' // Exclure les orgs déjà utilisées pour org_independante
   );
 
   // Validation

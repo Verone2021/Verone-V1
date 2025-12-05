@@ -292,6 +292,22 @@ export default function CataloguePage() {
 }
 
 // ============================================================================
+// Helpers
+// ============================================================================
+
+/**
+ * Calcule le prix client LinkMe avec commission
+ * Formule: prix_vente × (1 + commission_rate / 100)
+ */
+function calculateCustomerPrice(
+  sellingPriceHT: number,
+  commissionRate: number | null
+): number {
+  const commission = commissionRate ?? 0;
+  return sellingPriceHT * (1 + commission / 100);
+}
+
+// ============================================================================
 // Composants internes
 // ============================================================================
 
@@ -308,6 +324,12 @@ function ProductCard({
 }: ProductCardProps) {
   const displayTitle = product.custom_title || product.name;
   const displayDescription = product.custom_description || product.description;
+
+  // Prix client calculé = prix vente × (1 + commission%)
+  const customerPriceHT = calculateCustomerPrice(
+    product.selling_price_ht,
+    product.channel_commission_rate
+  );
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
@@ -351,15 +373,17 @@ function ProductCard({
         </p>
 
         {/* Prix */}
-        <div className="flex items-baseline gap-2 mb-4">
-          <span className="text-lg font-bold text-gray-900">
-            {product.selling_price_ht.toFixed(2)} €
-          </span>
-          <span className="text-xs text-gray-500">HT</span>
-          {product.public_price_ht && (
-            <span className="text-sm text-gray-400 line-through">
-              {product.public_price_ht.toFixed(2)} €
+        <div className="mb-4">
+          <div className="flex items-baseline gap-2">
+            <span className="text-lg font-bold text-gray-900">
+              {customerPriceHT.toFixed(2)} €
             </span>
+            <span className="text-xs text-gray-500">HT</span>
+          </div>
+          {product.public_price_ht && (
+            <p className="text-xs text-gray-400 mt-1">
+              Prix public : {product.public_price_ht.toFixed(2)} € HT
+            </p>
           )}
         </div>
 
@@ -393,6 +417,12 @@ function ProductListItem({
   onAddToSelection,
 }: ProductListItemProps) {
   const displayTitle = product.custom_title || product.name;
+
+  // Prix client calculé = prix vente × (1 + commission%)
+  const customerPriceHT = calculateCustomerPrice(
+    product.selling_price_ht,
+    product.channel_commission_rate
+  );
 
   return (
     <div className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors">
@@ -432,11 +462,11 @@ function ProductListItem({
       {/* Prix */}
       <div className="text-right">
         <p className="font-bold text-gray-900">
-          {product.selling_price_ht.toFixed(2)} € HT
+          {customerPriceHT.toFixed(2)} € HT
         </p>
         {product.public_price_ht && (
-          <p className="text-sm text-gray-400 line-through">
-            {product.public_price_ht.toFixed(2)} €
+          <p className="text-xs text-gray-400">
+            Prix public : {product.public_price_ht.toFixed(2)} €
           </p>
         )}
       </div>

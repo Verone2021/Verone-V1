@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
-import { cn } from '@verone/utils';
+import { cn, formatPrice } from '@verone/utils';
 import {
   Search,
   Package,
@@ -463,101 +463,142 @@ export default function LinkMeCataloguePage() {
           /* VUE LISTE */
           <Card>
             <div className="divide-y">
-              {filteredProducts.map(product => (
-                <div
-                  key={product.id}
-                  className={cn(
-                    'flex items-center gap-4 p-4 transition-colors',
-                    !product.is_enabled
-                      ? 'bg-gray-50 opacity-75'
-                      : 'hover:bg-gray-50'
-                  )}
-                >
-                  {/* Thumbnail */}
-                  <ProductThumbnail
-                    src={product.product_image_url}
-                    alt={product.product_name}
-                    size="sm"
-                    className="flex-shrink-0"
-                  />
+              {filteredProducts.map(product => {
+                // Calcul du prix client LinkMe
+                const clientPrice =
+                  product.product_selling_price_ht &&
+                  product.linkme_commission_rate !== null
+                    ? product.product_selling_price_ht *
+                      (1 + product.linkme_commission_rate / 100)
+                    : null;
 
-                  {/* Info produit */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-xs text-black truncate">
-                        {product.product_name}
-                      </h3>
-                      {product.is_featured && (
-                        <Badge
-                          variant="outline"
-                          className="text-xs border-yellow-500 text-yellow-700 bg-yellow-50"
-                        >
-                          Vedette
-                        </Badge>
-                      )}
-                      {product.is_enabled ? (
-                        <Badge variant="success" className="text-xs">
-                          Actif
-                        </Badge>
+                return (
+                  <div
+                    key={product.id}
+                    className={cn(
+                      'flex items-center gap-4 p-4 transition-colors',
+                      !product.is_enabled
+                        ? 'bg-gray-50 opacity-75'
+                        : 'hover:bg-gray-50'
+                    )}
+                  >
+                    {/* Thumbnail */}
+                    <ProductThumbnail
+                      src={product.product_image_url}
+                      alt={product.product_name}
+                      size="sm"
+                      className="flex-shrink-0"
+                    />
+
+                    {/* Info produit */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-xs text-black truncate">
+                          {product.product_name}
+                        </h3>
+                        {product.is_featured && (
+                          <Badge
+                            variant="outline"
+                            className="text-xs border-yellow-500 text-yellow-700 bg-yellow-50"
+                          >
+                            Vedette
+                          </Badge>
+                        )}
+                        {product.is_enabled ? (
+                          <Badge variant="success" className="text-xs">
+                            Actif
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="text-xs">
+                            Inactif
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 font-mono">
+                        {product.product_reference}
+                      </p>
+                    </div>
+
+                    {/* Prix d'achat HT */}
+                    <div className="hidden md:block text-right min-w-[70px]">
+                      <p className="text-[10px] text-gray-400">Achat HT</p>
+                      <p className="text-xs text-gray-600">
+                        {formatPrice(product.product_price_ht)}
+                      </p>
+                    </div>
+
+                    {/* Prix de vente HT (LinkMe) */}
+                    <div className="hidden md:block text-right min-w-[70px]">
+                      <p className="text-[10px] text-gray-400">Vente HT</p>
+                      {product.product_selling_price_ht ? (
+                        <p className="text-xs font-medium text-blue-600">
+                          {formatPrice(product.product_selling_price_ht)}
+                        </p>
                       ) : (
-                        <Badge variant="secondary" className="text-xs">
-                          Inactif
-                        </Badge>
+                        <p className="text-xs text-gray-400">—</p>
                       )}
                     </div>
-                    <p className="text-xs text-gray-500 font-mono">
-                      {product.product_reference}
-                    </p>
-                  </div>
 
-                  {/* Complétude compacte */}
-                  <div className="hidden md:flex items-center gap-2 min-w-[100px]">
-                    {(() => {
-                      const completeness = calculateSimpleCompleteness(product);
-                      return (
-                        <>
-                          <Progress
-                            value={completeness}
-                            className={cn(
-                              'h-1.5 w-16',
-                              completeness === 100
-                                ? '[&>div]:bg-green-500'
-                                : '[&>div]:bg-amber-500'
-                            )}
-                          />
-                          <span
-                            className={cn(
-                              'text-xs',
-                              completeness === 100
-                                ? 'text-green-600'
-                                : 'text-amber-600'
-                            )}
-                          >
-                            {completeness}%
-                          </span>
-                        </>
-                      );
-                    })()}
-                  </div>
+                    {/* Commission LinkMe */}
+                    <div className="hidden lg:block text-right min-w-[50px]">
+                      <p className="text-[10px] text-gray-400">Comm.</p>
+                      {product.linkme_commission_rate !== null ? (
+                        <p className="text-xs text-purple-600">
+                          {product.linkme_commission_rate}%
+                        </p>
+                      ) : (
+                        <p className="text-xs text-gray-400">—</p>
+                      )}
+                    </div>
 
-                  {/* Stats compactes */}
-                  <div className="text-xs text-gray-500 hidden lg:block">
-                    <span>{product.views_count} vues</span>
-                    <span className="mx-1">•</span>
-                    <span>{product.selections_count} sél.</span>
-                  </div>
+                    {/* Prix client LinkMe (calculé) */}
+                    <div className="hidden lg:block text-right min-w-[80px]">
+                      <p className="text-[10px] text-gray-400">Prix Client</p>
+                      {clientPrice ? (
+                        <p className="text-xs font-medium text-green-600">
+                          {formatPrice(clientPrice)}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-gray-400">—</p>
+                      )}
+                    </div>
 
-                  {/* Lien détail */}
-                  <Link href={`/canaux-vente/linkme/catalogue/${product.id}`}>
-                    <IconButton
-                      variant="outline"
-                      size="sm"
-                      icon={Eye}
-                      label="Voir détails"
-                    />
-                  </Link>
-                </div>
-              ))}
+                    {/* Marge de sécurité (buffer_rate) */}
+                    <div className="hidden xl:block text-right min-w-[55px]">
+                      <p className="text-[10px] text-gray-400">Marge sécu</p>
+                      {product.buffer_rate !== null ? (
+                        <p className="text-xs text-amber-600">
+                          {(product.buffer_rate * 100).toFixed(0)}%
+                        </p>
+                      ) : (
+                        <p className="text-xs text-gray-400">—</p>
+                      )}
+                    </div>
+
+                    {/* Marge suggérée */}
+                    <div className="hidden xl:block text-right min-w-[55px]">
+                      <p className="text-[10px] text-gray-400">Marge sugg.</p>
+                      {product.suggested_margin_rate !== null ? (
+                        <p className="text-xs font-medium text-emerald-600">
+                          {product.suggested_margin_rate}%
+                        </p>
+                      ) : (
+                        <p className="text-xs text-gray-400">—</p>
+                      )}
+                    </div>
+
+                    {/* Lien détail */}
+                    <Link href={`/canaux-vente/linkme/catalogue/${product.id}`}>
+                      <IconButton
+                        variant="outline"
+                        size="sm"
+                        icon={Eye}
+                        label="Voir détails"
+                      />
+                    </Link>
+                  </div>
+                );
+              })}
             </div>
           </Card>
         )}

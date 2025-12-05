@@ -209,8 +209,13 @@ async function fetchEnseignesForSelect(): Promise<EnseigneSelectOption[]> {
 
 /**
  * Fetch organisations pour dropdown (filtrées par enseigne si fourni)
+ * @param enseigneId - Filtrer par enseigne
+ * @param forOrgIndependante - Si true, exclut les organisations qui ont déjà un utilisateur org_independante
  */
-async function fetchOrganisationsForSelect(enseigneId?: string) {
+async function fetchOrganisationsForSelect(
+  enseigneId?: string,
+  forOrgIndependante: boolean = false
+) {
   let query = (supabase as any)
     .from('organisations')
     .select('id, legal_name, trade_name, logo_url, enseigne_id')
@@ -228,12 +233,29 @@ async function fetchOrganisationsForSelect(enseigneId?: string) {
     throw error;
   }
 
-  return (data || []).map((org: any) => ({
+  let organisations = (data || []).map((org: any) => ({
     id: org.id,
     name: org.trade_name || org.legal_name,
     logo_url: org.logo_url,
     enseigne_id: org.enseigne_id,
   }));
+
+  // Si création pour org_independante, exclure les orgs qui ont déjà un utilisateur
+  if (forOrgIndependante) {
+    const { data: existingRoles } = await (supabase as any)
+      .from('user_app_roles')
+      .select('organisation_id')
+      .eq('app', 'linkme')
+      .eq('role', 'org_independante')
+      .not('organisation_id', 'is', null);
+
+    const usedOrgIds = new Set(
+      (existingRoles || []).map((r: any) => r.organisation_id)
+    );
+    organisations = organisations.filter((org: any) => !usedOrgIds.has(org.id));
+  }
+
+  return organisations;
 }
 
 // ============================================
@@ -289,11 +311,16 @@ export function useLinkMeEnseignesSelect() {
 
 /**
  * Hook: organisations pour dropdown
+ * @param enseigneId - Filtrer par enseigne
+ * @param forOrgIndependante - Si true, exclut les organisations qui ont déjà un utilisateur org_independante
  */
-export function useLinkMeOrganisationsSelect(enseigneId?: string) {
+export function useLinkMeOrganisationsSelect(
+  enseigneId?: string,
+  forOrgIndependante: boolean = false
+) {
   return useQuery({
-    queryKey: ['linkme-organisations-select', enseigneId],
-    queryFn: () => fetchOrganisationsForSelect(enseigneId),
+    queryKey: ['linkme-organisations-select', enseigneId, forOrgIndependante],
+    queryFn: () => fetchOrganisationsForSelect(enseigneId, forOrgIndependante),
     staleTime: 60000,
   });
 }

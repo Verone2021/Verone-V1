@@ -92,11 +92,13 @@ export function AddToSelectionModal({
     // Prix LinkMe = prix base × (1 + commission)
     const prixLinkMe = basePriceHt * (1 + commissionRate / 100);
 
-    // Calcul marge max: (P_public - P_linkme) / P_linkme - buffer
-    const rCapTotal = (publicPriceHt - prixLinkMe) / prixLinkMe;
+    // FORMULE CORRECTE: Buffer en euros (pas en %)
+    // Prix plafond sécurité = prix public × (1 - buffer)
+    const prixPlafondSecurite = publicPriceHt * (1 - BUFFER_RATE / 100);
+    // Marge max = (prix plafond - prix LinkMe) / prix LinkMe
     const maxMargin = Math.max(
       MIN_MARGIN,
-      (rCapTotal - BUFFER_RATE / 100) * 100
+      ((prixPlafondSecurite - prixLinkMe) / prixLinkMe) * 100
     );
 
     // Zones couleurs (max / 3)
@@ -389,7 +391,7 @@ export function AddToSelectionModal({
                         [&::-moz-range-thumb]:cursor-pointer"
                     />
 
-                    {/* Légende des zones */}
+                    {/* Légende des zones avec icônes */}
                     <div className="flex justify-between mt-2 text-xs">
                       <div className="flex items-center gap-1">
                         <span className="w-2 h-2 rounded-full bg-green-400" />
@@ -403,6 +405,29 @@ export function AddToSelectionModal({
                         <span className="w-2 h-2 rounded-full bg-red-400" />
                         <span className="text-gray-500">Proche public</span>
                       </div>
+                    </div>
+
+                    {/* Pourcentages aux jonctions des zones */}
+                    <div className="flex justify-between mt-2 text-xs font-medium">
+                      <span className="text-gray-500">{marginLimits.min}%</span>
+                      <span className="text-green-600">
+                        {marginLimits.greenEnd.toFixed(1)}%
+                      </span>
+                      <span className="text-orange-500">
+                        {marginLimits.orangeEnd.toFixed(1)}%
+                      </span>
+                      <span className="text-gray-500">
+                        {marginLimits.max.toFixed(1)}%
+                      </span>
+                    </div>
+
+                    {/* Légende complète des plages */}
+                    <div className="mt-1 text-center text-xs text-gray-400">
+                      Vert: 0-{marginLimits.greenEnd.toFixed(1)}% | Orange:{' '}
+                      {marginLimits.greenEnd.toFixed(1)}-
+                      {marginLimits.orangeEnd.toFixed(1)}% | Rouge:{' '}
+                      {marginLimits.orangeEnd.toFixed(1)}-
+                      {marginLimits.max.toFixed(1)}%
                     </div>
                   </div>
 

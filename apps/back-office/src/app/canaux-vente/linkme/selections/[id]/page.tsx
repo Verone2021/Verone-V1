@@ -59,8 +59,11 @@ import {
 import { MarginSliderCompact } from '../../components/MarginSlider';
 import { SelectionProductDetailModal } from '../../components/SelectionProductDetailModal';
 import {
-  useLinkMeSelection,
   useLinkMeCatalogProducts,
+  type LinkMeCatalogProduct,
+} from '../../hooks/use-linkme-catalog';
+import {
+  useLinkMeSelection,
   useEnseigneSourcedProducts,
   useUpdateSelection,
   useAddProductToSelection,
@@ -69,19 +72,10 @@ import {
   type SelectionItem,
   type SourcedProduct,
 } from '../../hooks/use-linkme-selections';
+// Import du hook catalogue avec les BONS prix (depuis channel_pricing)
 
-// Types pour le catalogue
-interface CatalogProduct {
-  id: string;
-  product_id: string;
-  product_name: string;
-  product_reference: string;
-  product_price_ht: number;
-  product_image_url: string | null;
-  suggested_margin_rate: number | null;
-  min_margin_rate: number | null;
-  max_margin_rate: number | null;
-}
+// Type alias pour compatibilité
+type CatalogProduct = LinkMeCatalogProduct;
 
 // Configuration des statuts
 const statusConfig = {
@@ -209,7 +203,10 @@ export default function SelectionDetailPage({
         (p: CatalogProduct) => p.product_id === selectedProductId
       );
       if (!product) return;
-      basePriceHt = product.product_price_ht;
+      // Utiliser le prix de vente HT (custom_price_ht de channel_pricing)
+      // Fallback sur prix d'achat si pas de prix de vente défini
+      basePriceHt =
+        product.product_selling_price_ht ?? product.product_price_ht;
     } else {
       const product = sourcedProducts?.find(
         (p: SourcedProduct) => p.id === selectedProductId
@@ -796,7 +793,11 @@ export default function SelectionDetailPage({
                           </p>
                           <p className="text-sm text-muted-foreground">
                             {product.product_reference} -{' '}
-                            {product.product_price_ht.toFixed(2)} €
+                            {(
+                              product.product_selling_price_ht ??
+                              product.product_price_ht
+                            ).toFixed(2)}{' '}
+                            € HT
                           </p>
                         </div>
                         {selectedProductId === product.product_id && (

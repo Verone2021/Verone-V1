@@ -52,6 +52,7 @@ export interface LinkMeCatalogProduct {
   // Champs Pricing pour complétude (9 champs total)
   public_price_ht: number | null; // Tarif public HT
   channel_commission_rate: number | null; // Commission LinkMe (alias direct)
+  buffer_rate: number | null; // Marge de sécurité (décimal, ex: 0.05 = 5%)
   // Champs produit joint
   product_name: string;
   product_reference: string;
@@ -241,6 +242,7 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
       // Champs Pricing pour complétude
       public_price_ht: cp.public_price_ht ?? null,
       channel_commission_rate: cp.channel_commission_rate ?? null, // Alias direct
+      buffer_rate: cp.buffer_rate ?? null, // Marge de sécurité
       views_count: cp.views_count ?? 0,
       selections_count: cp.selections_count ?? 0,
       display_order: cp.display_order ?? 0,

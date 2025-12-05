@@ -38,12 +38,15 @@ export function MarginSlider({
   readOnly = false,
   className,
 }: MarginSliderProps) {
-  const { minRate, maxRate, suggestedRate, isProductSellable } = marginResult;
+  const { minRate, maxRate, suggestedRate, orangeZoneEnd, isProductSellable } =
+    marginResult;
 
   // Conversion en pourcentages pour affichage
   const minPercent = Math.round(minRate * 100 * 10) / 10;
   const maxPercent = Math.round(maxRate * 100 * 10) / 10;
   const suggestedPercent = Math.round(suggestedRate * 100 * 10) / 10;
+  const orangeEndPercent =
+    Math.round((orangeZoneEnd || suggestedRate * 2) * 100 * 10) / 10;
   const valuePercent = value ? Math.round(value * 100 * 10) / 10 : null;
 
   // Calcul des positions des zones (en % de la barre)
@@ -123,7 +126,7 @@ export function MarginSlider({
           </div>
         )}
 
-        {/* Marqueur suggéré (ligne pointillée) */}
+        {/* Marqueur jonction vert/orange (suggéré) */}
         {suggestedRate > 0 && maxRate > 0 && (
           <div
             className="absolute top-0 h-3 border-l-2 border-dashed border-green-800/50"
@@ -131,15 +134,29 @@ export function MarginSlider({
             title={`Suggéré: ${suggestedPercent}%`}
           />
         )}
+
+        {/* Marqueur jonction orange/rouge */}
+        {orangeZoneEnd && orangeZoneEnd > 0 && maxRate > 0 && (
+          <div
+            className="absolute top-0 h-3 border-l-2 border-dashed border-orange-700/50"
+            style={{ left: `${(orangeZoneEnd / maxRate) * 100}%` }}
+            title={`Orange/Rouge: ${orangeEndPercent}%`}
+          />
+        )}
       </div>
 
-      {/* Labels min/suggéré/max */}
+      {/* Labels des zones avec pourcentages aux jonctions */}
       <div className="flex justify-between text-xs">
         <span className="text-muted-foreground">{minPercent}%</span>
-        <span className="font-medium text-green-600">
-          {suggestedPercent}% (suggéré)
-        </span>
+        <span className="font-medium text-green-600">{suggestedPercent}%</span>
+        <span className="font-medium text-orange-500">{orangeEndPercent}%</span>
         <span className="text-muted-foreground">{maxPercent}%</span>
+      </div>
+
+      {/* Légende pourcentages */}
+      <div className="text-xs text-center text-muted-foreground">
+        Vert: 0-{suggestedPercent}% | Orange: {suggestedPercent}-
+        {orangeEndPercent}% | Rouge: {orangeEndPercent}-{maxPercent}%
       </div>
 
       {/* Affichage de la valeur actuelle */}
