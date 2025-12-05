@@ -44,12 +44,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Validation rôle
-    const validRoles = ['enseigne_admin', 'organisation_admin', 'client'];
+    const validRoles = [
+      'enseigne_admin',
+      'organisation_admin',
+      'org_independante',
+      'client',
+    ];
     if (!validRoles.includes(role)) {
       return NextResponse.json(
         {
           message:
-            'Rôle invalide. Doit être: enseigne_admin, organisation_admin, ou client',
+            'Rôle invalide. Doit être: enseigne_admin, organisation_admin, org_independante, ou client',
         },
         { status: 400 }
       );
@@ -67,6 +72,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           message: 'Un admin organisation doit être associé à une organisation',
+        },
+        { status: 400 }
+      );
+    }
+
+    if (role === 'org_independante' && !organisation_id) {
+      return NextResponse.json(
+        {
+          message:
+            'Une org. indépendante doit être associée à une organisation',
         },
         { status: 400 }
       );
@@ -168,6 +183,9 @@ export async function POST(request: NextRequest) {
     } else if (role === 'organisation_admin' && organisation_id) {
       contactData.organisation_id = organisation_id;
       contactData.owner_type = 'organisation';
+    } else if (role === 'org_independante' && organisation_id) {
+      contactData.organisation_id = organisation_id;
+      contactData.owner_type = 'organisation';
     }
 
     const { error: contactError } = await supabaseAdmin
@@ -177,6 +195,74 @@ export async function POST(request: NextRequest) {
     if (contactError) {
       // Log l'erreur mais ne pas bloquer - le contact est optionnel
       console.error('Erreur création contact (non-bloquant):', contactError);
+    }
+
+    // 5. Créer l'affilié LinkMe pour enseigne_admin et org_independante
+    // (organisation_admin n'a pas besoin d'affilié - ils voient via leur org)
+    if (role === 'enseigne_admin' || role === 'org_independante') {
+      // Générer un slug unique basé sur le nom
+      const baseSlug = `${first_name}-${last_name}`
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+      const uniqueSlug = `${baseSlug}-${Date.now().toString(36)}`;
+
+      // Récupérer le nom de l'enseigne ou organisation pour le display_name
+      let displayName = `${first_name} ${last_name}`;
+
+      if (role === 'enseigne_admin' && enseigne_id) {
+        const { data: enseigne } = await supabaseAdmin
+          .from('enseignes')
+          .select('name')
+          .eq('id', enseigne_id)
+          .single();
+        if (enseigne?.name) {
+          displayName = enseigne.name;
+        }
+      } else if (role === 'org_independante' && organisation_id) {
+        const { data: org } = await supabaseAdmin
+          .from('organisations')
+          .select('trade_name, legal_name')
+          .eq('id', organisation_id)
+          .single();
+        if (org) {
+          displayName = org.trade_name || org.legal_name || displayName;
+        }
+      }
+
+      const affiliateData: Record<string, unknown> = {
+        user_id: userId,
+        affiliate_type: role === 'enseigne_admin' ? 'enseigne' : 'prescripteur',
+        display_name: displayName,
+        slug: uniqueSlug,
+        email: email,
+        phone: phone || null,
+        status: 'active',
+        default_margin_rate: 20,
+        max_margin_rate: 50,
+        linkme_commission_rate: 5,
+      };
+
+      // Lier à l'entité appropriée
+      if (role === 'enseigne_admin' && enseigne_id) {
+        affiliateData.enseigne_id = enseigne_id;
+      } else if (role === 'org_independante' && organisation_id) {
+        affiliateData.organisation_id = organisation_id;
+      }
+
+      const { error: affiliateError } = await supabaseAdmin
+        .from('linkme_affiliates')
+        .insert(affiliateData);
+
+      if (affiliateError) {
+        // Log l'erreur mais ne pas bloquer - l'affilié peut être créé manuellement
+        console.error(
+          'Erreur création affilié (non-bloquant):',
+          affiliateError
+        );
+      }
     }
 
     return NextResponse.json({

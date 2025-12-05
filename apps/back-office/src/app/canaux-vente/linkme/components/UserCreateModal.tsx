@@ -12,6 +12,7 @@ import {
   Building2,
   Store,
   ShoppingCart,
+  Briefcase,
   Eye,
   EyeOff,
   AlertCircle,
@@ -53,8 +54,9 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
   const [organisationId, setOrganisationId] = useState<string>('');
 
   // Fetch organisations basées sur l'enseigne sélectionnée
+  // Pour org_independante: charge TOUTES les organisations (sans filtre enseigne)
   const { data: organisations } = useLinkMeOrganisationsSelect(
-    enseigneId || undefined
+    role === 'org_independante' ? undefined : enseigneId || undefined
   );
 
   // Validation
@@ -112,6 +114,11 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
         'Organisation requise pour un Admin Organisation';
     }
 
+    if (role === 'org_independante' && !organisationId) {
+      newErrors.organisationId =
+        'Organisation requise pour une Org. Indépendante';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -149,9 +156,9 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
 
       {/* Modal */}
       <div className="relative min-h-screen flex items-center justify-center p-4">
-        <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg">
+        <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-100 rounded-lg">
                 <User className="h-5 w-5 text-blue-600" />
@@ -170,7 +177,11 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          <form
+            id="create-user-form"
+            onSubmit={handleSubmit}
+            className="p-6 space-y-5 overflow-y-auto flex-1"
+          >
             {/* Email */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -306,11 +317,12 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Rôle *
               </label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {(
                   [
                     'enseigne_admin',
                     'organisation_admin',
+                    'org_independante',
                     'client',
                   ] as LinkMeRole[]
                 ).map(r => {
@@ -319,7 +331,9 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
                       ? Building2
                       : r === 'organisation_admin'
                         ? Store
-                        : ShoppingCart;
+                        : r === 'org_independante'
+                          ? Briefcase
+                          : ShoppingCart;
                   const isSelected = role === r;
 
                   return (
@@ -342,7 +356,7 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
                       />
                       <span
                         className={cn(
-                          'text-xs font-medium',
+                          'text-xs font-medium text-center',
                           isSelected ? 'text-blue-700' : 'text-gray-600'
                         )}
                       >
@@ -407,8 +421,8 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
               </div>
             )}
 
-            {/* Organisation (si organisation_admin) */}
-            {role === 'organisation_admin' && (
+            {/* Organisation (si organisation_admin ou org_independante) */}
+            {(role === 'organisation_admin' || role === 'org_independante') && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Organisation *
@@ -424,13 +438,17 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
                       errors.organisationId
                         ? 'border-red-300 focus:ring-red-500'
                         : 'border-gray-300 focus:ring-blue-500',
-                      !enseigneId && 'bg-gray-100 cursor-not-allowed'
+                      !enseigneId &&
+                        role === 'organisation_admin' &&
+                        'bg-gray-100 cursor-not-allowed'
                     )}
                   >
                     <option value="">
-                      {enseigneId
+                      {role === 'org_independante'
                         ? 'Sélectionner une organisation'
-                        : "Choisir d'abord une enseigne"}
+                        : enseigneId
+                          ? 'Sélectionner une organisation'
+                          : "Choisir d'abord une enseigne"}
                     </option>
                     {organisations?.map(o => (
                       <option key={o.id} value={o.id}>
@@ -439,6 +457,11 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
                     ))}
                   </select>
                 </div>
+                {role === 'org_independante' && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    Organisation non liée à une enseigne
+                  </p>
+                )}
                 {errors.organisationId && (
                   <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
                     <AlertCircle className="h-3 w-3" />
@@ -459,35 +482,36 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
                 </p>
               </div>
             )}
-
-            {/* Actions */}
-            <div className="flex gap-3 pt-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Annuler
-              </button>
-              <button
-                type="submit"
-                disabled={createUser.isPending}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
-              >
-                {createUser.isPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Création...
-                  </>
-                ) : (
-                  <>
-                    <Check className="h-4 w-4" />
-                    Créer l'utilisateur
-                  </>
-                )}
-              </button>
-            </div>
           </form>
+
+          {/* Footer Actions - Fixed */}
+          <div className="flex gap-3 px-6 py-4 border-t border-gray-200 flex-shrink-0">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              form="create-user-form"
+              disabled={createUser.isPending}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
+            >
+              {createUser.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Création...
+                </>
+              ) : (
+                <>
+                  <Check className="h-4 w-4" />
+                  Créer l'utilisateur
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>

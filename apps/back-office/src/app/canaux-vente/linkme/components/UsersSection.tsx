@@ -2,28 +2,30 @@
 
 import { useState, useMemo } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import { cn } from '@verone/utils';
 import {
   Users,
   Plus,
   Search,
   Filter,
-  MoreHorizontal,
   Building2,
   Store,
   ShoppingCart,
+  Briefcase,
   Mail,
   Phone,
   Check,
   X,
   Eye,
-  Edit,
-  Trash2,
-  UserCog,
-  Shield,
+  Pencil,
+  UserX,
+  UserCheck,
 } from 'lucide-react';
 
 import { UserCreateModal } from './UserCreateModal';
+import { UserEditModal } from './UserEditModal';
 import {
   useLinkMeUsers,
   useLinkMeUsersStats,
@@ -43,7 +45,9 @@ function RoleBadge({ role }: { role: LinkMeRole }) {
       ? Building2
       : role === 'organisation_admin'
         ? Store
-        : ShoppingCart;
+        : role === 'org_independante'
+          ? Briefcase
+          : ShoppingCart;
 
   return (
     <span
@@ -111,14 +115,13 @@ function UserRow({
   user,
   onToggleActive,
   onEdit,
-  onView,
+  onNavigate,
 }: {
   user: LinkMeUser;
   onToggleActive: (userId: string, isActive: boolean) => void;
   onEdit: (user: LinkMeUser) => void;
-  onView: (user: LinkMeUser) => void;
+  onNavigate: (userId: string) => void;
 }) {
-  const [showMenu, setShowMenu] = useState(false);
   const fullName =
     [user.first_name, user.last_name].filter(Boolean).join(' ') || 'Sans nom';
   const initials =
@@ -126,7 +129,10 @@ function UserRow({
     '?';
 
   return (
-    <tr className="hover:bg-gray-50 transition-colors">
+    <tr
+      className="hover:bg-gray-50 transition-colors cursor-pointer"
+      onClick={() => onNavigate(user.user_id)}
+    >
       {/* Avatar + Nom */}
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
@@ -195,65 +201,37 @@ function UserRow({
         <StatusBadge isActive={user.is_active} />
       </td>
 
-      {/* Actions */}
+      {/* Actions - Boutons visibles */}
       <td className="px-4 py-3 text-right">
-        <div className="relative inline-block">
+        <div
+          className="flex items-center justify-end gap-1"
+          onClick={e => e.stopPropagation()}
+        >
           <button
-            onClick={() => setShowMenu(!showMenu)}
+            onClick={() => onNavigate(user.user_id)}
             className="p-1.5 rounded hover:bg-gray-100 transition-colors"
+            title="Voir détails"
           >
-            <MoreHorizontal className="h-4 w-4 text-gray-500" />
+            <Eye className="h-4 w-4 text-gray-500" />
           </button>
-
-          {showMenu && (
-            <>
-              <div
-                className="fixed inset-0 z-10"
-                onClick={() => setShowMenu(false)}
-              />
-              <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
-                <button
-                  onClick={() => {
-                    onView(user);
-                    setShowMenu(false);
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                >
-                  <Eye className="h-4 w-4" />
-                  Voir détails
-                </button>
-                <button
-                  onClick={() => {
-                    onEdit(user);
-                    setShowMenu(false);
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                >
-                  <Edit className="h-4 w-4" />
-                  Modifier
-                </button>
-                <button
-                  onClick={() => {
-                    onToggleActive(user.user_id, !user.is_active);
-                    setShowMenu(false);
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                >
-                  {user.is_active ? (
-                    <>
-                      <X className="h-4 w-4" />
-                      Désactiver
-                    </>
-                  ) : (
-                    <>
-                      <Check className="h-4 w-4" />
-                      Activer
-                    </>
-                  )}
-                </button>
-              </div>
-            </>
-          )}
+          <button
+            onClick={() => onEdit(user)}
+            className="p-1.5 rounded hover:bg-gray-100 transition-colors"
+            title="Modifier compte"
+          >
+            <Pencil className="h-4 w-4 text-gray-500" />
+          </button>
+          <button
+            onClick={() => onToggleActive(user.user_id, !user.is_active)}
+            className="p-1.5 rounded hover:bg-gray-100 transition-colors"
+            title={user.is_active ? 'Désactiver' : 'Activer'}
+          >
+            {user.is_active ? (
+              <UserX className="h-4 w-4 text-orange-500" />
+            ) : (
+              <UserCheck className="h-4 w-4 text-green-500" />
+            )}
+          </button>
         </div>
       </td>
     </tr>
@@ -264,6 +242,7 @@ function UserRow({
  * Section Utilisateurs LinkMe
  */
 export function UsersSection() {
+  const router = useRouter();
   const { data: users, isLoading, error } = useLinkMeUsers();
   const { data: stats } = useLinkMeUsersStats();
   const toggleActive = useToggleLinkMeUserActive();
@@ -277,6 +256,10 @@ export function UsersSection() {
 
   // Modal création
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // Modal edit (compte uniquement : email/password)
+  const [selectedUser, setSelectedUser] = useState<LinkMeUser | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Utilisateurs filtrés
   const filteredUsers = useMemo(() => {
@@ -312,13 +295,12 @@ export function UsersSection() {
   };
 
   const handleEdit = (user: LinkMeUser) => {
-    // TODO: Ouvrir modal édition
-    console.log('Edit user:', user);
+    setSelectedUser(user);
+    setIsEditModalOpen(true);
   };
 
-  const handleView = (user: LinkMeUser) => {
-    // TODO: Ouvrir modal détails
-    console.log('View user:', user);
+  const handleNavigate = (userId: string) => {
+    router.push(`/canaux-vente/linkme/utilisateurs/${userId}`);
   };
 
   if (isLoading) {
@@ -491,7 +473,7 @@ export function UsersSection() {
                     user={user}
                     onToggleActive={handleToggleActive}
                     onEdit={handleEdit}
-                    onView={handleView}
+                    onNavigate={handleNavigate}
                   />
                 ))}
               </tbody>
@@ -513,6 +495,18 @@ export function UsersSection() {
         <UserCreateModal
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
+        />
+      )}
+
+      {/* Modal Modifier Compte (email/password) */}
+      {isEditModalOpen && selectedUser && (
+        <UserEditModal
+          isOpen={isEditModalOpen}
+          user={selectedUser}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedUser(null);
+          }}
         />
       )}
     </div>

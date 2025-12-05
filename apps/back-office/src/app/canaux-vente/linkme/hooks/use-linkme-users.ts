@@ -10,7 +10,11 @@ import { createClient } from '@verone/utils/supabase/client';
 const supabase = createClient();
 
 // Types
-export type LinkMeRole = 'enseigne_admin' | 'organisation_admin' | 'client';
+export type LinkMeRole =
+  | 'enseigne_admin'
+  | 'organisation_admin'
+  | 'org_independante'
+  | 'client';
 
 export interface LinkMeUser {
   user_id: string;
@@ -481,6 +485,9 @@ export function useLinkMeUsersStats() {
         organisation_admin: users.filter(
           u => u.linkme_role === 'organisation_admin'
         ).length,
+        org_independante: users.filter(
+          u => u.linkme_role === 'org_independante'
+        ).length,
         client: users.filter(u => u.linkme_role === 'client').length,
       };
 
@@ -506,7 +513,8 @@ export function useLinkMeUsersStats() {
  */
 export const LINKME_ROLE_LABELS: Record<LinkMeRole, string> = {
   enseigne_admin: 'Admin Enseigne',
-  organisation_admin: 'Admin Organisation',
+  organisation_admin: 'Organisation Enseigne',
+  org_independante: 'Org. Indépendante',
   client: 'Client',
 };
 
@@ -516,6 +524,7 @@ export const LINKME_ROLE_LABELS: Record<LinkMeRole, string> = {
 export const LINKME_ROLE_COLORS: Record<LinkMeRole, string> = {
   enseigne_admin: 'bg-purple-100 text-purple-800',
   organisation_admin: 'bg-blue-100 text-blue-800',
+  org_independante: 'bg-orange-100 text-orange-800',
   client: 'bg-green-100 text-green-800',
 };
 
@@ -530,6 +539,11 @@ export const LINKME_ROLE_PERMISSIONS: Record<LinkMeRole, string[]> = {
     'Gérer les sélections de produits du réseau',
   ],
   organisation_admin: [
+    'Voir les commandes des clients utilisant ses sélections',
+    'Créer et modifier des sélections de produits',
+    'Définir le taux de marge par produit',
+  ],
+  org_independante: [
     'Voir les commandes des clients utilisant ses sélections',
     'Créer et modifier des sélections de produits',
     'Définir le taux de marge par produit',

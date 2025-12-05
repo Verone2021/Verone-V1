@@ -294,23 +294,31 @@ export function calculateSimpleCompleteness(product: {
 /**
  * Entrées pour le calcul automatique des marges
  *
- * FORMULE (Commission NITMI s'ajoute au prix de vente):
- * 1. Prix max client = publicPriceHT × (1 - bufferRate)
- * 2. Prix max affilié = Prix max client / (1 + platformFeeRate)
- *    → Car: prix_affilié × (1 + commission) = prix_client
- * 3. maxMarginAmount = Prix max affilié - costPriceHT
- * 4. maxRate = maxMarginAmount / costPriceHT
- * 5. suggestedRate = maxRate / 3 (top de la zone verte)
- * 6. minRate = 0.01 (1% constant)
+ * FORMULE CORRECTE (source: Calcul-marge-linkme.md):
  *
- * EXEMPLE: cost=40€, public=100€, buffer=5%, commission=5%
- * - Prix max client = 100 × 0.95 = 95€
- * - Prix max affilié = 95 / 1.05 = 90.48€
- * - Marge max = 90.48 - 40 = 50.48€ (126.2%)
+ * 1. r_cap_total = (publicPriceHT - basePriceHT) / basePriceHT
+ *    → Capacité totale de marge disponible
+ *
+ * 2. maxRate = r_cap_total - platformFeeRate - bufferRate (SOUSTRACTION!)
+ *    → Marge maximum que l'affilié peut prendre
+ *
+ * 3. suggestedRate = maxRate / 3
+ *    → Top de la zone verte (prix très compétitif)
+ *
+ * 4. minRate = 0.01 (1% constant)
+ *
+ * PRIX FINAL:
+ * P_vente = basePriceHT × (1 + platformFeeRate + affiliateMarginRate)
+ *
+ * EXEMPLE: base=100€, public=150€, commission=5%, buffer=5%
+ * - r_cap_total = (150 - 100) / 100 = 50%
+ * - maxRate = 50% - 5% - 5% = 40%
+ * - suggestedRate = 40% / 3 = 13.3%
+ * - Si marge affilié = 10%, prix final = 100 × 1.15 = 115€
  */
 export interface MarginCalculationInput {
-  /** Prix d'achat HT (products.cost_price) */
-  costPriceHT: number;
+  /** Prix de vente catalogue HT (selling_price_ht ou custom_price_ht) */
+  basePriceHT: number;
   /** Tarif public HT (channel_pricing.public_price_ht) */
   publicPriceHT: number;
   /** Commission LinkMe en décimal (0.05 = 5%) */
@@ -338,33 +346,38 @@ export interface MarginCalculationResult {
 }
 
 /**
- * Calcule automatiquement les marges LinkMe à partir du prix d'achat et du tarif public
+ * Calcule automatiquement les marges LinkMe à partir du prix de vente et du tarif public
  *
- * LOGIQUE: La commission NITMI s'ajoute au prix de vente affilié pour donner le prix client.
- * Donc: prix_client = prix_affilié × (1 + commission)
+ * FORMULE CORRECTE (source: Calcul-marge-linkme.md):
+ * - r_cap_total = (publicPrice - basePrice) / basePrice
+ * - maxRate = r_cap_total - platformFeeRate - bufferRate (SOUSTRACTION!)
+ * - suggestedRate = maxRate / 3
+ *
+ * PRIX FINAL CLIENT:
+ * P_vente = basePrice × (1 + platformFeeRate + affiliateMarginRate)
  *
  * ZONES DE COULEUR (Traffic Light System):
- * - VERT (compétitif): 0 → maxRate/3
+ * - VERT (compétitif): 0% → maxRate/3
  * - ORANGE (correct): maxRate/3 → 2×maxRate/3
  * - ROUGE (proche public): 2×maxRate/3 → maxRate
  *
  * @example
- * // Exemple avec cost_price=40€, public_price=100€, commission=5%, buffer=5%
+ * // Exemple avec base=100€, public=150€, commission=5%, buffer=5%
  * const result = calculateLinkMeMargins({
- *   costPriceHT: 40,
- *   publicPriceHT: 100,
+ *   basePriceHT: 100,
+ *   publicPriceHT: 150,
  *   platformFeeRate: 0.05,
  *   bufferRate: 0.05
  * });
- * // Prix max client = 100 × 0.95 = 95€
- * // Prix max affilié = 95 / 1.05 = 90.48€
- * // Marge max = (90.48 - 40) / 40 = 126.2%
+ * // r_cap_total = (150 - 100) / 100 = 50%
+ * // maxRate = 50% - 5% - 5% = 40%
+ * // suggestedRate = 40% / 3 = 13.3%
  */
 export function calculateLinkMeMargins(
   input: MarginCalculationInput
 ): MarginCalculationResult {
   const {
-    costPriceHT,
+    basePriceHT,
     publicPriceHT,
     platformFeeRate,
     bufferRate = 0.05,
@@ -374,8 +387,8 @@ export function calculateLinkMeMargins(
   if (
     !publicPriceHT ||
     publicPriceHT <= 0 ||
-    !costPriceHT ||
-    costPriceHT <= 0
+    !basePriceHT ||
+    basePriceHT <= 0
   ) {
     return {
       minRate: 0.01,
@@ -387,33 +400,46 @@ export function calculateLinkMeMargins(
     };
   }
 
-  // NOUVELLE FORMULE (Commission s'ajoute au prix de vente):
-  // 1. Prix max que le client peut payer (avec buffer sous le prix public)
-  const maxCustomerPrice = publicPriceHT * (1 - bufferRate);
+  // FORMULE CORRECTE (Calcul-marge-linkme.md):
+  // 1. Capacité totale de marge = écart entre prix public et prix de base
+  const rCapTotal = (publicPriceHT - basePriceHT) / basePriceHT;
 
-  // 2. Prix max que l'affilié peut facturer (avant ajout commission)
-  //    Car: prix_affilié × (1 + commission) = prix_client
-  //    Donc: prix_affilié = prix_client / (1 + commission)
-  const maxAffiliatePrice = maxCustomerPrice / (1 + platformFeeRate);
+  // 2. Marge maximum affilié = capacité - commission - buffer (SOUSTRACTION!)
+  const maxRate = Math.max(0, rCapTotal - platformFeeRate - bufferRate);
 
-  // 3. Marge maximum en euros
-  const maxMarginAmount = maxAffiliatePrice - costPriceHT;
-
-  // 4. Taux de marge maximum
-  const maxRate = maxMarginAmount / costPriceHT;
-
-  // Clamp à 0 minimum et calcul des zones
-  const clampedMaxRate = Math.max(0, maxRate);
-  const suggestedRate = clampedMaxRate / 3;
+  // 3. Marge suggérée = 1/3 de la marge max (top de la zone verte)
+  const suggestedRate = maxRate / 3;
 
   return {
     minRate: 0.01, // 1% constant
-    maxRate: Math.round(clampedMaxRate * 10000) / 10000, // 4 décimales
+    maxRate: Math.round(maxRate * 10000) / 10000, // 4 décimales
     suggestedRate: Math.round(suggestedRate * 10000) / 10000,
-    isProductSellable: clampedMaxRate > 0.01,
+    isProductSellable: maxRate > 0.01,
     greenZoneEnd: suggestedRate,
     orangeZoneEnd: suggestedRate * 2,
   };
+}
+
+/**
+ * Calcule le prix de vente final client
+ *
+ * FORMULE: P_vente = basePriceHT × (1 + platformFeeRate + affiliateMarginRate)
+ *
+ * @param basePriceHT Prix de vente catalogue HT
+ * @param platformFeeRate Commission LinkMe en décimal (0.05 = 5%)
+ * @param affiliateMarginRate Marge affilié en décimal (0.10 = 10%)
+ * @returns Prix final client HT
+ *
+ * @example
+ * // base=100€, commission=5%, marge affilié=10%
+ * calculateFinalClientPrice(100, 0.05, 0.10) // → 115€
+ */
+export function calculateFinalClientPrice(
+  basePriceHT: number,
+  platformFeeRate: number,
+  affiliateMarginRate: number
+): number {
+  return basePriceHT * (1 + platformFeeRate + affiliateMarginRate);
 }
 
 /**
