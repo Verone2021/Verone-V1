@@ -6,8 +6,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
 
-const supabase = createClient();
-
 /**
  * Interface Enseigne avec statistiques
  */
@@ -53,9 +51,12 @@ export interface UpdateEnseigneInput {
 
 /**
  * Fetch toutes les enseignes avec statistiques
+ * OPTIMISÉ: Utilise Promise.all pour requêtes parallèles (4 au lieu de 5 séquentielles)
  */
 async function fetchEnseignesWithStats(): Promise<EnseigneWithStats[]> {
-  // Fetch enseignes
+  const supabase = createClient();
+
+  // Fetch enseignes d'abord (nécessaire pour avoir les IDs)
   const { data: enseignes, error } = await (supabase as any)
     .from('enseignes')
     .select('*')
@@ -70,64 +71,55 @@ async function fetchEnseignesWithStats(): Promise<EnseigneWithStats[]> {
     return [];
   }
 
-  // Fetch stats pour chaque enseigne
-  const enseigneIds = enseignes.map(e => e.id);
+  const enseigneIds = enseignes.map((e: any) => e.id);
 
-  // Fetch organisations count
-  const { data: orgsCounts } = await (supabase as any)
-    .from('organisations')
-    .select('enseigne_id')
-    .in('enseigne_id', enseigneIds);
+  // OPTIMISATION: Exécuter les 3 requêtes de stats EN PARALLÈLE
+  const [orgsResult, affiliatesResult, selectionsResult] = await Promise.all([
+    // 1. Organisations par enseigne
+    (supabase as any)
+      .from('organisations')
+      .select('enseigne_id')
+      .in('enseigne_id', enseigneIds),
+    // 2. Affiliates par enseigne (avec ID pour les sélections)
+    (supabase as any)
+      .from('linkme_affiliates')
+      .select('id, enseigne_id')
+      .in('enseigne_id', enseigneIds),
+    // 3. Toutes les sélections (on filtrera côté client)
+    (supabase as any).from('linkme_selections').select('affiliate_id'),
+  ]);
 
+  // Compter organisations par enseigne
   const orgsCountMap = new Map<string, number>();
-  (orgsCounts || []).forEach((o: any) => {
-    const current = orgsCountMap.get(o.enseigne_id) || 0;
-    orgsCountMap.set(o.enseigne_id, current + 1);
+  (orgsResult.data || []).forEach((o: any) => {
+    orgsCountMap.set(o.enseigne_id, (orgsCountMap.get(o.enseigne_id) || 0) + 1);
   });
 
-  // Fetch affiliates count
-  const { data: affiliatesCounts } = await (supabase as any)
-    .from('linkme_affiliates')
-    .select('enseigne_id')
-    .in('enseigne_id', enseigneIds);
-
+  // Compter affiliates par enseigne + créer map affiliate->enseigne
   const affiliatesCountMap = new Map<string, number>();
-  (affiliatesCounts || []).forEach((a: any) => {
-    const current = affiliatesCountMap.get(a.enseigne_id) || 0;
-    affiliatesCountMap.set(a.enseigne_id, current + 1);
+  const affiliateToEnseigneMap = new Map<string, string>();
+  (affiliatesResult.data || []).forEach((a: any) => {
+    affiliatesCountMap.set(
+      a.enseigne_id,
+      (affiliatesCountMap.get(a.enseigne_id) || 0) + 1
+    );
+    affiliateToEnseigneMap.set(a.id, a.enseigne_id);
   });
 
-  // Fetch selections count via affiliates
-  const { data: affiliatesForSelections } = await (supabase as any)
-    .from('linkme_affiliates')
-    .select('id, enseigne_id')
-    .in('enseigne_id', enseigneIds);
-
-  const affiliateIdsForSelections = (affiliatesForSelections || []).map(
-    (a: any) => a.id
-  );
-
-  const { data: selectionsCounts } =
-    affiliateIdsForSelections.length > 0
-      ? await (supabase as any)
-          .from('linkme_selections')
-          .select('affiliate_id')
-          .in('affiliate_id', affiliateIdsForSelections)
-      : { data: [] };
-
+  // Compter sélections par enseigne (via affiliate->enseigne mapping)
   const selectionsCountMap = new Map<string, number>();
-  (selectionsCounts || []).forEach((s: any) => {
-    const affiliate = (affiliatesForSelections || []).find(
-      (a: any) => a.id === s.affiliate_id
-    );
-    if (affiliate?.enseigne_id) {
-      const current = selectionsCountMap.get(affiliate.enseigne_id) || 0;
-      selectionsCountMap.set(affiliate.enseigne_id, current + 1);
+  (selectionsResult.data || []).forEach((s: any) => {
+    const enseigneId = affiliateToEnseigneMap.get(s.affiliate_id);
+    if (enseigneId) {
+      selectionsCountMap.set(
+        enseigneId,
+        (selectionsCountMap.get(enseigneId) || 0) + 1
+      );
     }
   });
 
   // Mapper les résultats
-  return enseignes.map(enseigne => ({
+  return enseignes.map((enseigne: any) => ({
     id: enseigne.id,
     name: enseigne.name,
     description: enseigne.description,
@@ -141,18 +133,21 @@ async function fetchEnseignesWithStats(): Promise<EnseigneWithStats[]> {
     organisations_count: orgsCountMap.get(enseigne.id) || 0,
     affiliates_count: affiliatesCountMap.get(enseigne.id) || 0,
     selections_count: selectionsCountMap.get(enseigne.id) || 0,
-    orders_count: 0, // TODO: Implémenter quand table orders sera liée
-    total_ca_ht: 0, // TODO: Implémenter quand table orders sera liée
-    total_commissions: 0, // TODO: Implémenter quand table commissions sera liée
+    orders_count: 0,
+    total_ca_ht: 0,
+    total_commissions: 0,
   }));
 }
 
 /**
  * Fetch une enseigne par ID avec statistiques détaillées
+ * OPTIMISÉ: Requêtes parallèles avec Promise.all
  */
 async function fetchEnseigneById(
   enseigneId: string
 ): Promise<EnseigneWithStats | null> {
+  const supabase = createClient();
+
   const { data: enseigne, error } = await (supabase as any)
     .from('enseignes')
     .select('*')
@@ -166,25 +161,19 @@ async function fetchEnseigneById(
 
   if (!enseigne) return null;
 
-  // Fetch organisations
-  const { count: orgsCount } = await (supabase as any)
-    .from('organisations')
-    .select('id', { count: 'exact', head: true })
-    .eq('enseigne_id', enseigneId);
+  // OPTIMISATION: Requêtes parallèles pour les counts
+  const [orgsResult, affiliatesResult] = await Promise.all([
+    (supabase as any)
+      .from('organisations')
+      .select('id', { count: 'exact', head: true })
+      .eq('enseigne_id', enseigneId),
+    (supabase as any)
+      .from('linkme_affiliates')
+      .select('id')
+      .eq('enseigne_id', enseigneId),
+  ]);
 
-  // Fetch affiliates
-  const { count: affiliatesCount } = await (supabase as any)
-    .from('linkme_affiliates')
-    .select('id', { count: 'exact', head: true })
-    .eq('enseigne_id', enseigneId);
-
-  // Fetch selections count
-  const { data: affiliatesData } = await (supabase as any)
-    .from('linkme_affiliates')
-    .select('id')
-    .eq('enseigne_id', enseigneId);
-
-  const affiliateIds = (affiliatesData || []).map((a: any) => a.id);
+  const affiliateIds = (affiliatesResult.data || []).map((a: any) => a.id);
 
   const { count: selectionsCount } =
     affiliateIds.length > 0
@@ -204,8 +193,8 @@ async function fetchEnseigneById(
     created_at: enseigne.created_at,
     updated_at: enseigne.updated_at,
     created_by: enseigne.created_by,
-    organisations_count: orgsCount || 0,
-    affiliates_count: affiliatesCount || 0,
+    organisations_count: orgsResult.count || 0,
+    affiliates_count: affiliatesResult.data?.length || 0,
     selections_count: selectionsCount || 0,
     orders_count: 0,
     total_ca_ht: 0,
@@ -228,6 +217,8 @@ export interface EnseigneOrganisation {
 async function fetchEnseigneOrganisations(
   enseigneId: string
 ): Promise<EnseigneOrganisation[]> {
+  const supabase = createClient();
+
   const { data, error } = await (supabase as any)
     .from('organisations')
     .select('id, name, is_enseigne_parent, is_active, logo_url, created_at')
@@ -298,6 +289,7 @@ export function useCreateEnseigne() {
 
   return useMutation({
     mutationFn: async (input: CreateEnseigneInput) => {
+      const supabase = createClient();
       const { data, error } = await (supabase as any)
         .from('enseignes')
         .insert({
@@ -333,6 +325,7 @@ export function useUpdateEnseigne() {
       enseigneId: string;
       input: UpdateEnseigneInput;
     }) => {
+      const supabase = createClient();
       const { data, error } = await (supabase as any)
         .from('enseignes')
         .update({
@@ -363,6 +356,7 @@ export function useDeleteEnseigne() {
 
   return useMutation({
     mutationFn: async (enseigneId: string) => {
+      const supabase = createClient();
       const { error } = await (supabase as any)
         .from('enseignes')
         .delete()
@@ -390,6 +384,7 @@ export function useToggleEnseigneActive() {
       enseigneId: string;
       isActive: boolean;
     }) => {
+      const supabase = createClient();
       const { error } = await (supabase as any)
         .from('enseignes')
         .update({

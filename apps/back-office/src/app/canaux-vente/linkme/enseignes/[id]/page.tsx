@@ -29,6 +29,9 @@ import {
   Eye,
   ShoppingCart,
   ChevronRight,
+  Globe,
+  FileText,
+  Users,
 } from 'lucide-react';
 
 /**
@@ -245,7 +248,7 @@ export default function EnseigneDetailPage() {
   const { selections, loading: selectionsLoading } = useEnseigneSelections(id);
 
   // État onglet actif
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('infos');
 
   // Gestion erreur
   if (enseigneError) {
@@ -271,60 +274,8 @@ export default function EnseigneDetailPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header avec bouton retour */}
-      <EnseigneDetailHeader
-        enseigne={enseigne}
-        backUrl="/canaux-vente/linkme/enseignes"
-        onEdit={() => {
-          // TODO: Modal édition enseigne
-          console.log('Edit enseigne:', enseigne.id);
-        }}
-      />
-
-      {/* Infos Organisation Mère (sous le header) */}
-      {stats?.parentOrganisation && (
-        <Card className="bg-amber-50 border-amber-200">
-          <CardContent className="py-4">
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-              <div className="flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-amber-600" />
-                <span className="font-medium text-amber-900">
-                  {stats.parentOrganisation.trade_name ||
-                    stats.parentOrganisation.legal_name}
-                </span>
-                <span className="text-xs text-amber-600 bg-amber-100 px-2 py-0.5 rounded">
-                  Siège
-                </span>
-              </div>
-              {(stats.parentOrganisation.siret ||
-                stats.parentOrganisation.siren) && (
-                <div className="text-sm text-amber-800">
-                  <span className="font-medium">
-                    {stats.parentOrganisation.siret ? 'SIRET' : 'SIREN'}:
-                  </span>{' '}
-                  {stats.parentOrganisation.siret ||
-                    stats.parentOrganisation.siren}
-                </div>
-              )}
-              {(stats.parentOrganisation.billing_address_line1 ||
-                stats.parentOrganisation.billing_postal_code ||
-                stats.parentOrganisation.city) && (
-                <div className="flex items-center gap-1.5 text-sm text-amber-800">
-                  <MapPin className="h-3.5 w-3.5" />
-                  {[
-                    stats.parentOrganisation.billing_address_line1,
-                    stats.parentOrganisation.billing_postal_code,
-                    stats.parentOrganisation.billing_city ||
-                      stats.parentOrganisation.city,
-                  ]
-                    .filter(Boolean)
-                    .join(', ')}
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Header avec bouton retour (sans bouton Modifier pour LinkMe) */}
+      <EnseigneDetailHeader enseigne={enseigne} onBack={() => router.back()} />
 
       {/* KPIs */}
       <EnseigneKPIGrid stats={stats} loading={statsLoading} />
@@ -332,9 +283,13 @@ export default function EnseigneDetailPage() {
       {/* Onglets */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList variant="underline" className="w-full justify-start border-b">
-          <TabsTrigger value="overview" variant="underline">
-            <Building2 className="h-4 w-4 mr-2" />
-            Vue d&apos;ensemble
+          <TabsTrigger value="infos" variant="underline">
+            <FileText className="h-4 w-4 mr-2" />
+            Informations personnelles
+          </TabsTrigger>
+          <TabsTrigger value="organisations" variant="underline">
+            <Users className="h-4 w-4 mr-2" />
+            Organisation
           </TabsTrigger>
           <TabsTrigger value="geography" variant="underline">
             <MapPin className="h-4 w-4 mr-2" />
@@ -350,9 +305,9 @@ export default function EnseigneDetailPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Onglet Vue d'ensemble */}
-        <TabsContent value="overview" className="mt-6">
-          {/* Tableau organisations membres (seul contenu de la vue d'ensemble) */}
+        {/* Onglet Organisations */}
+        <TabsContent value="organisations" className="mt-6">
+          {/* Tableau organisations membres */}
           <EnseigneOrganisationsTable
             organisations={stats?.organisationsWithRevenue || []}
             parentOrganisation={stats?.parentOrganisation || null}
@@ -363,6 +318,117 @@ export default function EnseigneDetailPage() {
               console.log('Add organisations to enseigne:', enseigne.id);
             }}
           />
+        </TabsContent>
+
+        {/* Onglet Informations personnelles */}
+        <TabsContent value="infos" className="mt-6">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Building2 className="h-5 w-5 text-blue-500" />
+                Informations de l&apos;enseigne
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Colonne 1 : Infos enseigne */}
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      Nom de l&apos;enseigne
+                    </p>
+                    <p className="font-medium">{enseigne.name}</p>
+                  </div>
+                  {enseigne.description && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        Description
+                      </p>
+                      <p className="font-medium">{enseigne.description}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm text-muted-foreground">Statut</p>
+                    <Badge
+                      variant={enseigne.is_active ? 'default' : 'secondary'}
+                      className={
+                        enseigne.is_active
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-gray-100 text-gray-600'
+                      }
+                    >
+                      {enseigne.is_active ? 'Active' : 'Inactive'}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Colonne 2 : Infos siège (organisation mère) */}
+                {stats?.parentOrganisation && (
+                  <div className="space-y-4 border-l pl-6">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Building2 className="h-4 w-4 text-amber-600" />
+                      <span className="font-medium text-amber-900">
+                        Organisation Siège
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        Raison sociale
+                      </p>
+                      <p className="font-medium">
+                        {stats.parentOrganisation.legal_name ||
+                          stats.parentOrganisation.trade_name ||
+                          '-'}
+                      </p>
+                    </div>
+                    {stats.parentOrganisation.trade_name &&
+                      stats.parentOrganisation.trade_name !==
+                        stats.parentOrganisation.legal_name && (
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            Nom commercial
+                          </p>
+                          <p className="font-medium">
+                            {stats.parentOrganisation.trade_name}
+                          </p>
+                        </div>
+                      )}
+                    {(stats.parentOrganisation.siret ||
+                      stats.parentOrganisation.siren) && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">
+                          {stats.parentOrganisation.siret ? 'SIRET' : 'SIREN'}
+                        </p>
+                        <p className="font-medium">
+                          {stats.parentOrganisation.siret ||
+                            stats.parentOrganisation.siren}
+                        </p>
+                      </div>
+                    )}
+                    {(stats.parentOrganisation.billing_address_line1 ||
+                      stats.parentOrganisation.city) && (
+                      <div>
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <MapPin className="h-3.5 w-3.5" />
+                          Adresse
+                        </p>
+                        <p className="font-medium">
+                          {[
+                            stats.parentOrganisation.billing_address_line1,
+                            stats.parentOrganisation.billing_postal_code,
+                            stats.parentOrganisation.billing_city ||
+                              stats.parentOrganisation.city,
+                          ]
+                            .filter(Boolean)
+                            .join(', ') || '-'}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Onglet Géographie */}

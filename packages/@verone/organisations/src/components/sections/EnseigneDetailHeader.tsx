@@ -33,6 +33,9 @@ interface EnseigneDetailHeaderProps {
   enseigne: Enseigne;
   onEdit?: () => void;
   onManageOrganisations?: () => void;
+  /** Callback pour navigation retour (prioritaire sur backUrl) */
+  onBack?: () => void;
+  /** URL de retour fallback si onBack non fourni */
   backUrl?: string;
   className?: string;
 }
@@ -45,6 +48,7 @@ export function EnseigneDetailHeader({
   enseigne,
   onEdit,
   onManageOrganisations,
+  onBack,
   backUrl = '/contacts-organisations/enseignes',
   className,
 }: EnseigneDetailHeaderProps) {
@@ -52,13 +56,23 @@ export function EnseigneDetailHeader({
     <div className={cn('border-b bg-white', className)}>
       <div className="px-6 py-4">
         {/* Breadcrumb / Back */}
-        <Link
-          href={backUrl}
-          className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4 transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Retour aux enseignes
-        </Link>
+        {onBack ? (
+          <button
+            onClick={onBack}
+            className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Retour
+          </button>
+        ) : (
+          <Link
+            href={backUrl}
+            className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Retour aux enseignes
+          </Link>
+        )}
 
         {/* Main Header */}
         <div className="flex items-center justify-between">

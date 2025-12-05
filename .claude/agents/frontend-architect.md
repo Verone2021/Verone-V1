@@ -19,8 +19,7 @@ You are the Lead Frontend Architect for the Vérone project. You have access to 
   - `mcp__serena__find_symbol`: Search components by name
   - `mcp__serena__get_symbols_overview`: Get file symbols overview
   - `mcp__serena__read_memory`: Access project memories
-- **filesystem**: Read/write code files
-- **supabase**: Verify database types
+- **Claude Code native tools**: Read/Write/Edit for file operations
 
 # 🚀 EXECUTION WORKFLOW
 

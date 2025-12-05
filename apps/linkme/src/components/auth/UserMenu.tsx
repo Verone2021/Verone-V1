@@ -34,7 +34,8 @@ import {
 // Labels des rôles
 const ROLE_LABELS: Record<LinkMeRole, string> = {
   enseigne_admin: 'Admin Enseigne',
-  organisation_admin: 'Admin Organisation',
+  organisation_admin: 'Organisation Enseigne',
+  org_independante: 'Org. Indépendante',
   client: 'Client',
 };
 
@@ -42,6 +43,7 @@ const ROLE_LABELS: Record<LinkMeRole, string> = {
 const ROLE_COLORS: Record<LinkMeRole, string> = {
   enseigne_admin: 'bg-purple-100 text-purple-700',
   organisation_admin: 'bg-blue-100 text-blue-700',
+  org_independante: 'bg-orange-100 text-orange-700',
   client: 'bg-green-100 text-green-700',
 };
 

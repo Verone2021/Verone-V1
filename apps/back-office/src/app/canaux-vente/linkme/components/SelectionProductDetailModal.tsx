@@ -90,12 +90,13 @@ export function SelectionProductDetailModal({
   }, [item]);
 
   // Calcul des marges pour le slider
+  // FORMULE CORRECTE: basePriceHT = prix de vente catalogue (PAS cost_price!)
   const marginResult = item
     ? item.public_price_ht && item.public_price_ht > 0
       ? calculateLinkMeMargins({
-          costPriceHT: item.product?.cost_price || 0,
+          basePriceHT: item.base_price_ht || 0,
           publicPriceHT: item.public_price_ht,
-          platformFeeRate: item.commission_rate || 0.05,
+          platformFeeRate: (item.commission_rate || 5) / 100,
           bufferRate: item.buffer_rate || 0.05,
         })
       : item.min_margin_rate !== null && item.max_margin_rate !== null
@@ -123,10 +124,14 @@ export function SelectionProductDetailModal({
     mode === 'edit' ? localCustomPriceHT : item?.base_price_ht || 0;
   const commissionRate = (item?.commission_rate || 0) / 100; // Conversion % → décimal (5.00 → 0.05)
 
-  // Prix de vente avec marge locale + commission
+  // Prix de vente avec marge locale
+  // Note: sellingPriceWithMargin = ce que l'affilié gagne (basePrice + sa marge)
   const sellingPriceWithMargin = basePrice * (1 + localMarginRate);
+
+  // FORMULE CORRECTE: P_vente = basePrice × (1 + commission + marge)
+  // La commission LinkMe et la marge affilié s'ADDITIONNENT (pas multiplication!)
   const finalPriceWithCommission =
-    sellingPriceWithMargin * (1 + commissionRate);
+    basePrice * (1 + commissionRate + localMarginRate);
 
   // Prix client LinkMe (calculé) = base × (1 + commission)
   const prixClientLinkMe = basePrice * (1 + commissionRate);

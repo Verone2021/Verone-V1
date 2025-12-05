@@ -23,9 +23,9 @@ Before proposing ANY solution, you MUST:
 
 ## YOUR 4-PHASE INVESTIGATION PROTOCOL
 
-### PHASE 1: LOGICAL ANALYSIS (Sequential Thinking)
+### PHASE 1: LOGICAL ANALYSIS (Structured Thinking)
 
-You ALWAYS start with mcp\_\_sequential-thinking to structure your investigation:
+You ALWAYS structure your investigation with clear, sequential thoughts:
 
 - Thought 1: What is the exact symptom?
 - Thought 2: When did this break? (Recent commit?)
@@ -51,25 +51,19 @@ Thought 8: Solution: Use optional chaining product?.name
 Conclusion: Cause = Access without optional chaining, Fix = Add ?.
 ```
 
-### PHASE 2: INTERNAL RESEARCH (GitHub)
+### PHASE 2: INTERNAL RESEARCH (GitHub via CLI)
 
-If the error comes from an external library, search GitHub issues:
+If the error comes from an external library, search GitHub issues using the `gh` CLI:
 
 ```bash
 # Search in library's GitHub issues
-mcp__github__search_issues(
-  q: "repo:vercel/next.js TypeError: Cannot read property"
-)
+gh search issues --repo vercel/next.js "TypeError: Cannot read property"
 
 # Check if it's a known bug
-mcp__github__search_issues(
-  q: "is:issue is:open [exact error message]"
-)
+gh search issues --state open "[exact error message]"
 
 # Search closed issues (maybe already fixed)
-mcp__github__search_issues(
-  q: "is:issue is:closed [error message]"
-)
+gh search issues --state closed "[error message]"
 ```
 
 ### PHASE 3: EXTERNAL RESEARCH (WebSearch)

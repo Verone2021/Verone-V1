@@ -32,7 +32,8 @@ import { useAuth, type LinkMeRole } from '../../contexts/AuthContext';
 // Labels des rôles
 const ROLE_LABELS: Record<LinkMeRole, string> = {
   enseigne_admin: 'Administrateur Enseigne',
-  organisation_admin: 'Administrateur Organisation',
+  organisation_admin: 'Organisation Enseigne',
+  org_independante: 'Org. Indépendante',
   client: 'Client',
 };
 
@@ -40,6 +41,7 @@ const ROLE_LABELS: Record<LinkMeRole, string> = {
 const ROLE_COLORS: Record<LinkMeRole, string> = {
   enseigne_admin: 'bg-purple-100 text-purple-700 border-purple-200',
   organisation_admin: 'bg-blue-100 text-blue-700 border-blue-200',
+  org_independante: 'bg-orange-100 text-orange-700 border-orange-200',
   client: 'bg-green-100 text-green-700 border-green-200',
 };
 

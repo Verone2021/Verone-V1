@@ -17,8 +17,6 @@ import {
   ChevronDown,
   ChevronRight,
   Sliders,
-  UserPlus,
-  TrendingUp,
   CreditCard,
   FileSpreadsheet,
   Activity,
@@ -50,35 +48,11 @@ const LINKME_NAV: LinkMeNavItem[] = [
     title: 'Utilisateurs',
     href: '/canaux-vente/linkme/utilisateurs',
     icon: Users,
-    children: [
-      {
-        title: 'Liste',
-        href: '/canaux-vente/linkme/utilisateurs',
-        icon: Users,
-      },
-      {
-        title: 'Demandes',
-        href: '/canaux-vente/linkme/utilisateurs/demandes',
-        icon: UserPlus,
-      },
-    ],
   },
   {
-    title: 'Enseignes',
+    title: 'Enseignes & Orgs',
     href: '/canaux-vente/linkme/enseignes',
     icon: Building2,
-    children: [
-      {
-        title: 'Liste',
-        href: '/canaux-vente/linkme/enseignes',
-        icon: Building2,
-      },
-      {
-        title: 'Organisations',
-        href: '/canaux-vente/linkme/enseignes/organisations',
-        icon: Store,
-      },
-    ],
   },
   {
     title: 'Catalogue',

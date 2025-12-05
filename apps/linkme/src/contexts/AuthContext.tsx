@@ -16,15 +16,21 @@ import {
   useEffect,
   useState,
   useCallback,
+  useRef,
   type ReactNode,
 } from 'react';
 
 import type { User, Session } from '@supabase/supabase-js';
 
-import { createClient } from '../lib/supabase';
+// Utiliser le singleton supabase (ne PAS créer une nouvelle instance à chaque render)
+import { supabase } from '../lib/supabase';
 
 // Types
-export type LinkMeRole = 'enseigne_admin' | 'organisation_admin' | 'client';
+export type LinkMeRole =
+  | 'enseigne_admin'
+  | 'organisation_admin'
+  | 'org_independante'
+  | 'client';
 
 export interface LinkMeUserRole {
   id: string;
@@ -60,9 +66,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [linkMeRole, setLinkMeRole] = useState<LinkMeUserRole | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const supabase = createClient();
+  // Ref pour éviter les appels multiples lors de l'initialisation
+  const initializedRef = useRef(false);
 
-  // Fonction pour récupérer le rôle LinkMe
+  // Fonction pour récupérer le rôle LinkMe (ne dépend pas de supabase car c'est un singleton)
   const fetchLinkMeRole = useCallback(
     async (userId: string) => {
       try {
@@ -142,7 +149,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setLinkMeRole(null);
       }
     },
-    [supabase]
+    [] // Pas de dépendance car supabase est un singleton
   );
 
   // Rafraîchir le rôle manuellement
@@ -154,6 +161,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Initialisation et écoute des changements d'auth
   useEffect(() => {
+    // Éviter les doubles initialisations (StrictMode React)
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
     // Récupérer la session initiale
     const initSession = async () => {
       try {
@@ -198,7 +209,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [supabase, fetchLinkMeRole]);
+  }, [fetchLinkMeRole]); // supabase retiré car c'est un singleton stable
 
   // Connexion
   const signIn = async (

@@ -29,6 +29,7 @@ export interface LinkMeUser {
   permissions: string[];
   is_active: boolean;
   role_created_at: string;
+  default_margin_rate: number | null;
   enseigne_name: string | null;
   enseigne_logo: string | null;
   organisation_name: string | null;
@@ -102,6 +103,7 @@ async function fetchLinkMeUsers(): Promise<LinkMeUser[]> {
     permissions: user.permissions || [],
     is_active: user.is_active ?? true,
     role_created_at: user.role_created_at,
+    default_margin_rate: user.default_margin_rate,
     enseigne_name: user.enseigne_name,
     enseigne_logo: user.enseigne_logo,
     organisation_name: user.organisation_name,
@@ -140,6 +142,7 @@ async function fetchLinkMeUserById(userId: string): Promise<LinkMeUser | null> {
     permissions: data.permissions || [],
     is_active: data.is_active ?? true,
     role_created_at: data.role_created_at,
+    default_margin_rate: data.default_margin_rate,
     enseigne_name: data.enseigne_name,
     enseigne_logo: data.enseigne_logo,
     organisation_name: data.organisation_name,
@@ -178,6 +181,7 @@ async function fetchLinkMeUsersByEnseigne(
     permissions: user.permissions || [],
     is_active: user.is_active ?? true,
     role_created_at: user.role_created_at,
+    default_margin_rate: user.default_margin_rate,
     enseigne_name: user.enseigne_name,
     enseigne_logo: user.enseigne_logo,
     organisation_name: user.organisation_name,

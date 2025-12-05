@@ -2,13 +2,9 @@
 
 import { useState, useEffect } from 'react';
 
-import Link from 'next/link';
+import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 
-import {
-  useOrganisation,
-  getOrganisationDisplayName,
-} from '@verone/organisations';
 import { ProductThumbnail } from '@verone/products';
 import { Button, Badge } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
@@ -24,10 +20,32 @@ import {
   Eye,
   ShoppingCart,
   ChevronRight,
+  FileText,
+  Users,
+  Briefcase,
 } from 'lucide-react';
 
 /**
- * Type pour les sélections de l'affilié
+ * Type pour l'organisation
+ */
+interface OrganisationDetail {
+  id: string;
+  legal_name: string;
+  trade_name: string | null;
+  logo_url: string | null;
+  siret: string | null;
+  siren: string | null;
+  address_line1: string | null;
+  address_line2: string | null;
+  city: string | null;
+  postal_code: string | null;
+  country: string | null;
+  phone: string | null;
+  email: string | null;
+}
+
+/**
+ * Type pour les sélections
  */
 interface OrganisationSelection {
   id: string;
@@ -42,19 +60,69 @@ interface OrganisationSelection {
 }
 
 /**
+ * Type pour les produits sourcés
+ */
+interface OrganisationProduct {
+  id: string;
+  name: string;
+  supplier_reference: string | null;
+  primary_image_url: string | null;
+}
+
+/**
+ * Hook pour récupérer les détails d'une organisation
+ */
+function useOrganisation(organisationId: string | null) {
+  const [organisation, setOrganisation] = useState<OrganisationDetail | null>(
+    null
+  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!organisationId) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchOrganisation = async () => {
+      setLoading(true);
+      const supabase = createClient();
+
+      const { data, error } = await supabase
+        .from('organisations')
+        .select(
+          `
+          id, legal_name, trade_name, logo_url,
+          siret, siren,
+          address_line1, address_line2, city, postal_code, country,
+          phone, email
+        `
+        )
+        .eq('id', organisationId)
+        .single();
+
+      if (error) {
+        console.error('Erreur chargement organisation:', error);
+        setError('Organisation non trouvée');
+      } else {
+        setOrganisation(data);
+      }
+      setLoading(false);
+    };
+
+    fetchOrganisation();
+  }, [organisationId]);
+
+  return { organisation, loading, error };
+}
+
+/**
  * Hook pour récupérer les sélections d'une organisation via l'affilié
- *
- * ARCHITECTURE: Requête DIRECTE par organisation_id
- * linkme_affiliates.organisation_id = organisationId
  */
 function useOrganisationSelections(organisationId: string | null) {
   const [selections, setSelections] = useState<OrganisationSelection[]>([]);
   const [loading, setLoading] = useState(true);
-  const [affiliateInfo, setAffiliateInfo] = useState<{
-    id: string;
-    display_name: string;
-    status: string | null;
-  } | null>(null);
 
   useEffect(() => {
     if (!organisationId) {
@@ -66,21 +134,19 @@ function useOrganisationSelections(organisationId: string | null) {
       setLoading(true);
       const supabase = createClient();
 
-      // Requête DIRECTE: chercher affilié avec organisation_id
+      // Chercher l'affilié lié à cette organisation
       const { data: affiliate } = await supabase
         .from('linkme_affiliates')
-        .select('id, display_name, status')
+        .select('id')
         .eq('organisation_id', organisationId)
         .single();
 
       if (!affiliate) {
+        // Pas d'affilié = pas de sélections
         setSelections([]);
-        setAffiliateInfo(null);
         setLoading(false);
         return;
       }
-
-      setAffiliateInfo(affiliate);
 
       // Récupérer les sélections de cet affilié
       const { data, error } = await supabase
@@ -103,33 +169,18 @@ function useOrganisationSelections(organisationId: string | null) {
     fetchSelections();
   }, [organisationId]);
 
-  return { selections, loading, affiliateInfo };
-}
-
-/**
- * Type pour les produits sourcés par organisation
- */
-interface OrganisationProduct {
-  id: string;
-  name: string;
-  supplier_reference: string | null;
-  primary_image_url: string | null;
-  created_at: string | null;
+  return { selections, loading };
 }
 
 /**
  * Hook pour récupérer les produits sourcés pour une organisation
- * Cherche selon le type: assigned_client_id (customer) ou supplier_id (supplier)
  */
-function useOrganisationProducts(
-  organisationId: string | null,
-  organisationType: string | null
-) {
+function useOrganisationProducts(organisationId: string | null) {
   const [products, setProducts] = useState<OrganisationProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!organisationId || !organisationType) {
+    if (!organisationId) {
       setLoading(false);
       return;
     }
@@ -138,49 +189,34 @@ function useOrganisationProducts(
       setLoading(true);
       const supabase = createClient();
 
-      // Choisir la colonne selon le type d'organisation
-      const columnFilter =
-        organisationType === 'supplier' ? 'supplier_id' : 'assigned_client_id';
-
+      // Récupérer les produits liés à cette organisation (supplier_id)
       const { data, error } = await supabase
         .from('products')
         .select(
           `
-          id,
-          name,
-          supplier_reference,
-          created_at,
+          id, name, supplier_reference,
           product_images!left(public_url, is_primary)
         `
         )
-        .eq(columnFilter, organisationId)
+        .eq('supplier_id', organisationId)
         .is('archived_at', null)
         .order('created_at', { ascending: false })
         .limit(50);
 
       if (error) {
-        // Si join échoue, essayer sans images
-        const { data: dataNoImg, error: errorNoImg } = await supabase
+        // Fallback sans images
+        const { data: dataNoImg } = await supabase
           .from('products')
-          .select('id, name, supplier_reference, created_at')
-          .eq(columnFilter, organisationId)
+          .select('id, name, supplier_reference')
+          .eq('supplier_id', organisationId)
           .is('archived_at', null)
           .order('created_at', { ascending: false })
           .limit(50);
 
-        if (errorNoImg) {
-          console.error('Erreur chargement produits organisation:', errorNoImg);
-          setProducts([]);
-        } else {
-          setProducts(
-            (dataNoImg || []).map(p => ({
-              ...p,
-              primary_image_url: null,
-            }))
-          );
-        }
+        setProducts(
+          (dataNoImg || []).map(p => ({ ...p, primary_image_url: null }))
+        );
       } else {
-        // Transformer les données pour aplatir public_url
         setProducts(
           (data || []).map((p: any) => {
             const primaryImg = (p.product_images || []).find(
@@ -190,7 +226,6 @@ function useOrganisationProducts(
               id: p.id,
               name: p.name,
               supplier_reference: p.supplier_reference,
-              created_at: p.created_at,
               primary_image_url: primaryImg?.public_url || null,
             };
           })
@@ -200,71 +235,75 @@ function useOrganisationProducts(
     };
 
     fetchProducts();
-  }, [organisationId, organisationType]);
+  }, [organisationId]);
 
   return { products, loading };
 }
 
 /**
- * Retourne l'URL de retour selon le type d'organisation
+ * Hook pour récupérer le nombre d'utilisateurs LinkMe pour cette organisation
  */
-function getReturnUrl(orgType: string | null, orgId: string): string {
-  switch (orgType) {
-    case 'customer':
-      return `/contacts-organisations/customers/${orgId}`;
-    case 'supplier':
-      return `/contacts-organisations/suppliers/${orgId}`;
-    case 'partner':
-      return `/contacts-organisations/partners/${orgId}`;
-    default:
-      return '/canaux-vente/linkme';
-  }
-}
+function useOrganisationUsersCount(organisationId: string | null) {
+  const [count, setCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-/**
- * Retourne le label du type d'organisation
- */
-function getTypeLabel(orgType: string | null): string {
-  switch (orgType) {
-    case 'customer':
-      return 'Client';
-    case 'supplier':
-      return 'Fournisseur';
-    case 'partner':
-      return 'Partenaire';
-    default:
-      return 'Organisation';
-  }
+  useEffect(() => {
+    if (!organisationId) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchCount = async () => {
+      setLoading(true);
+      const supabase = createClient();
+
+      const { count: userCount, error } = await supabase
+        .from('v_linkme_users')
+        .select('*', { count: 'exact', head: true })
+        .eq('organisation_id', organisationId);
+
+      if (!error && userCount !== null) {
+        setCount(userCount);
+      }
+      setLoading(false);
+    };
+
+    fetchCount();
+  }, [organisationId]);
+
+  return { count, loading };
 }
 
 /**
  * Page détail organisation LinkMe
- * Affiche les informations d'une organisation affiliée avec onglets
+ * Structure identique à enseignes mais adaptée aux organisations
  */
-export default function OrganisationLinkMeDetailPage() {
+export default function OrganisationDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
 
-  // Hook pour données organisation
+  // Hooks pour données
   const {
     organisation,
     loading: orgLoading,
     error: orgError,
   } = useOrganisation(id);
-
-  const { products, loading: productsLoading } = useOrganisationProducts(
-    id,
-    organisation?.type || null
-  );
-  const {
-    selections,
-    loading: selectionsLoading,
-    affiliateInfo,
-  } = useOrganisationSelections(id);
+  const { products, loading: productsLoading } = useOrganisationProducts(id);
+  const { selections, loading: selectionsLoading } =
+    useOrganisationSelections(id);
+  const { count: usersCount, loading: usersLoading } =
+    useOrganisationUsersCount(id);
 
   // État onglet actif
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('infos');
+
+  // Logo URL helper
+  const getLogoUrl = (logoPath: string | null) => {
+    if (!logoPath) return null;
+    if (logoPath.startsWith('http')) return logoPath;
+    return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/organisation-logos/${logoPath}`;
+  };
 
   // Gestion erreur
   if (orgError) {
@@ -288,127 +327,105 @@ export default function OrganisationLinkMeDetailPage() {
     );
   }
 
-  // Si pas d'affilié LinkMe pour cette organisation
-  if (!affiliateInfo && !selectionsLoading) {
-    return (
-      <div className="space-y-6">
-        {/* Header avec bouton retour */}
-        <div className="flex items-center gap-4">
-          <Link href={getReturnUrl(organisation.type, id)}>
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Retour à l&apos;organisation
-            </Button>
-          </Link>
-        </div>
-
-        <Card className="border-amber-200 bg-amber-50">
-          <CardContent className="py-8 text-center">
-            <ShoppingBag className="h-12 w-12 mx-auto text-amber-400 mb-4" />
-            <h2 className="text-lg font-semibold mb-2">Pas de compte LinkMe</h2>
-            <p className="text-sm text-gray-600 mb-4">
-              L&apos;organisation{' '}
-              <strong>{getOrganisationDisplayName(organisation)}</strong>{' '}
-              n&apos;a pas encore de compte affilié LinkMe.
-            </p>
-            <Button
-              variant="outline"
-              onClick={() => router.push('/canaux-vente/linkme/affilies')}
-            >
-              Voir les affiliés LinkMe
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const returnUrl = getReturnUrl(organisation.type, id);
-  const typeLabel = getTypeLabel(organisation.type);
+  const displayName = organisation.trade_name || organisation.legal_name;
 
   return (
     <div className="space-y-6">
-      {/* Header avec bouton retour */}
+      {/* Header - PAS de bouton Modifier */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href={returnUrl}>
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Retour {typeLabel}
-            </Button>
-          </Link>
+          <Button variant="ghost" size="sm" onClick={() => router.back()}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Retour
+          </Button>
+
+          {/* Logo */}
+          <div className="h-12 w-12 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden border">
+            {organisation.logo_url ? (
+              <Image
+                src={getLogoUrl(organisation.logo_url) || ''}
+                alt={displayName}
+                width={48}
+                height={48}
+                className="object-contain"
+              />
+            ) : (
+              <Briefcase className="h-6 w-6 text-gray-400" />
+            )}
+          </div>
+
+          <div>
+            <h1 className="text-2xl font-bold">{displayName}</h1>
+            {organisation.trade_name &&
+              organisation.trade_name !== organisation.legal_name && (
+                <p className="text-sm text-muted-foreground">
+                  {organisation.legal_name}
+                </p>
+              )}
+          </div>
+
+          <Badge variant="default" className="bg-green-100 text-green-700">
+            Active
+          </Badge>
         </div>
       </div>
 
-      {/* Card Header Organisation */}
-      <Card>
-        <CardContent className="py-6">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-xl bg-purple-100 flex items-center justify-center">
-                <Building2 className="h-8 w-8 text-purple-600" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <h1 className="text-xl font-semibold">
-                    {getOrganisationDisplayName(organisation)}
-                  </h1>
-                  <Badge
-                    variant="secondary"
-                    className="bg-purple-100 text-purple-700"
-                  >
-                    LinkMe
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-3 text-sm text-gray-500">
-                  <span className="flex items-center gap-1">
-                    <Building2 className="h-3.5 w-3.5" />
-                    {typeLabel}
-                  </span>
-                  {organisation.city && (
-                    <span className="flex items-center gap-1">
-                      <MapPin className="h-3.5 w-3.5" />
-                      {organisation.city}
-                    </span>
-                  )}
-                </div>
-                {affiliateInfo && (
-                  <div className="flex items-center gap-2 mt-2">
-                    <Badge
-                      variant={
-                        affiliateInfo.status === 'active'
-                          ? 'default'
-                          : 'secondary'
-                      }
-                      className={
-                        affiliateInfo.status === 'active'
-                          ? 'bg-green-100 text-green-700'
-                          : ''
-                      }
-                    >
-                      Affilié{' '}
-                      {affiliateInfo.status === 'active'
-                        ? 'actif'
-                        : affiliateInfo.status}
-                    </Badge>
-                  </div>
-                )}
-              </div>
+      {/* KPIs */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Produits sourcés
+            </CardTitle>
+            <Package className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {productsLoading ? '...' : products.length}
             </div>
-          </div>
-        </CardContent>
-      </Card>
+            <p className="text-xs text-muted-foreground">
+              produits dans le catalogue
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Sélections</CardTitle>
+            <ShoppingBag className="h-4 w-4 text-purple-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {selectionsLoading ? '...' : selections.length}
+            </div>
+            <p className="text-xs text-muted-foreground">sélections créées</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Utilisateurs LinkMe
+            </CardTitle>
+            <Users className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {usersLoading ? '...' : usersCount}
+            </div>
+            <p className="text-xs text-muted-foreground">utilisateurs actifs</p>
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* Onglets */}
+      {/* Onglets - Infos, Produits, Sélections (PAS de Géographie ni Organisation) */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList variant="underline" className="w-full justify-start border-b">
-          <TabsTrigger value="overview" variant="underline">
-            <Building2 className="h-4 w-4 mr-2" />
-            Informations
+          <TabsTrigger value="infos" variant="underline">
+            <FileText className="h-4 w-4 mr-2" />
+            Informations personnelles
           </TabsTrigger>
           <TabsTrigger value="products" variant="underline">
             <Package className="h-4 w-4 mr-2" />
-            Produits ({products.length})
+            Produits sourcés ({products.length})
           </TabsTrigger>
           <TabsTrigger value="selections" variant="underline">
             <ShoppingBag className="h-4 w-4 mr-2" />
@@ -416,93 +433,89 @@ export default function OrganisationLinkMeDetailPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Onglet Informations */}
-        <TabsContent value="overview" className="mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Infos Organisation */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">
-                  Informations Organisation
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Nom légal</span>
-                  <span className="font-medium">{organisation.legal_name}</span>
+        {/* Onglet Informations personnelles */}
+        <TabsContent value="infos" className="mt-6">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Building2 className="h-5 w-5 text-blue-500" />
+                Informations de l&apos;organisation
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      Raison sociale
+                    </p>
+                    <p className="font-medium">{organisation.legal_name}</p>
+                  </div>
+                  {organisation.trade_name &&
+                    organisation.trade_name !== organisation.legal_name && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">
+                          Nom commercial
+                        </p>
+                        <p className="font-medium">{organisation.trade_name}</p>
+                      </div>
+                    )}
+                  {(organisation.siret || organisation.siren) && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        {organisation.siret ? 'SIRET' : 'SIREN'}
+                      </p>
+                      <p className="font-medium">
+                        {organisation.siret || organisation.siren}
+                      </p>
+                    </div>
+                  )}
                 </div>
-                {organisation.trade_name && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Nom commercial</span>
-                    <span className="font-medium">
-                      {organisation.trade_name}
-                    </span>
-                  </div>
-                )}
-                {organisation.siret && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">SIRET</span>
-                    <span className="font-mono">{organisation.siret}</span>
-                  </div>
-                )}
-                {organisation.city && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Ville</span>
-                    <span>{organisation.city}</span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Infos Affilié LinkMe */}
-            {affiliateInfo && (
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Compte LinkMe</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Nom d&apos;affichage</span>
-                    <span className="font-medium">
-                      {affiliateInfo.display_name}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Statut</span>
-                    <Badge
-                      variant={
-                        affiliateInfo.status === 'active'
-                          ? 'default'
-                          : 'secondary'
-                      }
-                      className={
-                        affiliateInfo.status === 'active'
-                          ? 'bg-green-100 text-green-700'
-                          : ''
-                      }
-                    >
-                      {affiliateInfo.status === 'active'
-                        ? 'Actif'
-                        : affiliateInfo.status}
-                    </Badge>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Sélections</span>
-                    <span className="font-medium">{selections.length}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+                <div className="space-y-4 border-l pl-6">
+                  {(organisation.address_line1 || organisation.city) && (
+                    <div>
+                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                        <MapPin className="h-3.5 w-3.5" />
+                        Adresse
+                      </p>
+                      <p className="font-medium">
+                        {[
+                          organisation.address_line1,
+                          organisation.address_line2,
+                          organisation.postal_code,
+                          organisation.city,
+                          organisation.country,
+                        ]
+                          .filter(Boolean)
+                          .join(', ') || '-'}
+                      </p>
+                    </div>
+                  )}
+                  {organisation.email && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Email</p>
+                      <p className="font-medium">{organisation.email}</p>
+                    </div>
+                  )}
+                  {organisation.phone && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Téléphone</p>
+                      <p className="font-medium">{organisation.phone}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        {/* Onglet Produits */}
+        {/* Onglet Produits sourcés */}
         <TabsContent value="products" className="mt-6">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center">
                 <Package className="h-5 w-5 mr-2 text-blue-500" />
-                Produits liés
+                Produits sourcés par {displayName}
                 <span className="ml-2 text-sm font-normal text-gray-500">
                   ({products.length} produit{products.length > 1 ? 's' : ''})
                 </span>
@@ -515,7 +528,7 @@ export default function OrganisationLinkMeDetailPage() {
                 </div>
               ) : products.length === 0 ? (
                 <p className="text-sm text-gray-500 text-center py-8">
-                  Aucun produit lié à cette organisation
+                  Aucun produit sourcé pour cette organisation
                 </p>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -524,7 +537,7 @@ export default function OrganisationLinkMeDetailPage() {
                       key={product.id}
                       className="group cursor-pointer"
                       onClick={() =>
-                        router.push(`/catalogue/produits/${product.id}`)
+                        router.push(`/produits/catalogue/${product.id}`)
                       }
                     >
                       <ProductThumbnail
@@ -585,26 +598,22 @@ export default function OrganisationLinkMeDetailPage() {
               ) : (
                 <div className="space-y-3">
                   {selections.map(selection => {
-                    const selectionStatusConfig = {
+                    const statusConfig = {
                       draft: {
                         label: 'Brouillon',
-                        variant: 'secondary' as const,
                         className: 'bg-gray-100 text-gray-700',
                       },
                       active: {
                         label: 'Active',
-                        variant: 'default' as const,
                         className: 'bg-green-100 text-green-700',
                       },
                       archived: {
                         label: 'Archivée',
-                        variant: 'outline' as const,
                         className: 'bg-gray-50 text-gray-500',
                       },
                     };
                     const config =
-                      selectionStatusConfig[selection.status] ||
-                      selectionStatusConfig.draft;
+                      statusConfig[selection.status] || statusConfig.draft;
 
                     return (
                       <div
@@ -621,10 +630,7 @@ export default function OrganisationLinkMeDetailPage() {
                             <h3 className="font-medium truncate">
                               {selection.name}
                             </h3>
-                            <Badge
-                              variant={config.variant}
-                              className={config.className}
-                            >
+                            <Badge className={config.className}>
                               {config.label}
                             </Badge>
                             {selection.is_public && (

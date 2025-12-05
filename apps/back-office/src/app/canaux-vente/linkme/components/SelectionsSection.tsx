@@ -55,11 +55,13 @@ import {
   ArchiveRestore,
   CheckCircle,
   Plus,
-  Trash2,
   Globe,
   Lock,
   Pencil,
+  Trash2,
 } from 'lucide-react';
+
+import { ProductMarginEditor } from './ProductMarginEditor';
 
 interface Selection {
   id: string;
@@ -94,6 +96,8 @@ interface CatalogProduct {
   max_margin_rate: number;
   min_margin_rate: number;
   suggested_margin_rate: number;
+  /** Commission LinkMe (%) - depuis RPC get_linkme_catalog_products_for_affiliate */
+  linkme_commission_rate: number | null;
 }
 
 interface SelectedProduct {
@@ -101,6 +105,12 @@ interface SelectedProduct {
   product_name: string;
   base_price_ht: number;
   margin_rate: number;
+  /** Limites de marge depuis le catalogue */
+  min_margin_rate: number;
+  max_margin_rate: number;
+  suggested_margin_rate: number;
+  /** Commission LinkMe (%) */
+  linkme_commission_rate: number;
 }
 
 const statusConfig = {
@@ -338,6 +348,9 @@ export function SelectionsSection() {
       return;
     }
 
+    // Commission par défaut si non définie
+    const commissionRate = product.linkme_commission_rate ?? 5;
+
     setSelectedProducts(prev => [
       ...prev,
       {
@@ -345,6 +358,11 @@ export function SelectionsSection() {
         product_name: product.product_name,
         base_price_ht: product.product_price_ht,
         margin_rate: product.suggested_margin_rate,
+        // Transférer les limites de marge du catalogue
+        min_margin_rate: product.min_margin_rate,
+        max_margin_rate: product.max_margin_rate,
+        suggested_margin_rate: product.suggested_margin_rate,
+        linkme_commission_rate: commissionRate,
       },
     ]);
   }
@@ -361,6 +379,26 @@ export function SelectionsSection() {
     );
   }
 
+  // Validation des marges - vérifie que toutes les marges sont dans les limites
+  const marginValidationErrors = useMemo(() => {
+    const errors: string[] = [];
+    for (const product of selectedProducts) {
+      if (product.margin_rate < product.min_margin_rate) {
+        errors.push(
+          `${product.product_name}: marge ${product.margin_rate}% < min ${product.min_margin_rate}%`
+        );
+      }
+      if (product.margin_rate > product.max_margin_rate) {
+        errors.push(
+          `${product.product_name}: marge ${product.margin_rate}% > max ${product.max_margin_rate}%`
+        );
+      }
+    }
+    return errors;
+  }, [selectedProducts]);
+
+  const hasValidationErrors = marginValidationErrors.length > 0;
+
   // Supprimer une sélection
   async function handleDeleteSelection(
     selectionId: string,
@@ -374,16 +412,21 @@ export function SelectionsSection() {
       return;
     }
 
-    const supabase = createClient();
-
     try {
-      // Les items sont supprimés en cascade (ON DELETE CASCADE)
-      const { error } = await (supabase as any)
-        .from('linkme_selections')
-        .delete()
-        .eq('id', selectionId);
+      // Utiliser l'API route pour bypasser les restrictions RLS
+      const response = await fetch('/api/linkme/selections/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ selection_id: selectionId }),
+      });
 
-      if (error) throw error;
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Erreur lors de la suppression');
+      }
 
       // Mettre à jour localement
       setSelections(prev => prev.filter(s => s.id !== selectionId));
@@ -528,10 +571,12 @@ export function SelectionsSection() {
                 Toutes les mini-boutiques créées par les affiliés
               </CardDescription>
             </div>
-            <ButtonV2 onClick={() => setIsCreateModalOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Créer une sélection
-            </ButtonV2>
+            <Link href="/canaux-vente/linkme/selections/new">
+              <ButtonV2>
+                <Plus className="h-4 w-4 mr-2" />
+                Créer une sélection
+              </ButtonV2>
+            </Link>
           </div>
         </CardHeader>
         <CardContent>
@@ -875,57 +920,20 @@ export function SelectionsSection() {
                 />
               </div>
 
-              {/* Liste des produits sélectionnés */}
+              {/* Liste des produits sélectionnés avec slider de marge */}
               {selectedProducts.length > 0 && (
                 <div className="border rounded-md p-3 bg-blue-50 space-y-2">
                   <p className="text-sm font-medium text-blue-800">
                     Produits dans la sélection :
                   </p>
                   {selectedProducts.map(product => (
-                    <div
+                    <ProductMarginEditor
                       key={product.product_id}
-                      className="flex items-center justify-between bg-white p-2 rounded border"
-                    >
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">
-                          {product.product_name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Prix: {product.base_price_ht.toFixed(2)}€ HT | Marge:{' '}
-                          {product.margin_rate}% | PV:{' '}
-                          {(
-                            product.base_price_ht *
-                            (1 + product.margin_rate / 100)
-                          ).toFixed(2)}
-                          €
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          type="number"
-                          min="0"
-                          max="50"
-                          value={product.margin_rate}
-                          onChange={e =>
-                            updateProductMargin(
-                              product.product_id,
-                              Number(e.target.value)
-                            )
-                          }
-                          className="w-16 h-8 text-center"
-                        />
-                        <span className="text-sm text-muted-foreground">%</span>
-                        <ButtonV2
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            removeProductFromSelection(product.product_id)
-                          }
-                        >
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </ButtonV2>
-                      </div>
-                    </div>
+                      product={product}
+                      onMarginChange={updateProductMargin}
+                      onRemove={removeProductFromSelection}
+                      compact
+                    />
                   ))}
                 </div>
               )}
@@ -981,6 +989,20 @@ export function SelectionsSection() {
             </div>
           </div>
 
+          {/* Erreurs de validation des marges */}
+          {hasValidationErrors && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-3 mx-6 mb-4">
+              <p className="text-sm font-medium text-red-800 mb-2">
+                Erreurs de validation des marges :
+              </p>
+              <ul className="text-xs text-red-700 space-y-1">
+                {marginValidationErrors.map((error, index) => (
+                  <li key={index}>• {error}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <DialogFooter>
             <ButtonV2
               variant="outline"
@@ -997,12 +1019,15 @@ export function SelectionsSection() {
                 saving ||
                 !formData.affiliate_id ||
                 !formData.name.trim() ||
-                selectedProducts.length === 0
+                selectedProducts.length === 0 ||
+                hasValidationErrors
               }
             >
               {saving
                 ? 'Création...'
-                : `Créer (${selectedProducts.length} produit${selectedProducts.length > 1 ? 's' : ''})`}
+                : hasValidationErrors
+                  ? 'Corrigez les marges'
+                  : `Créer (${selectedProducts.length} produit${selectedProducts.length > 1 ? 's' : ''})`}
             </ButtonV2>
           </DialogFooter>
         </DialogContent>

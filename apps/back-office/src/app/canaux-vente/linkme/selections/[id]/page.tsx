@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from 'react';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import { ProductThumbnail } from '@verone/products';
 import {
@@ -95,6 +96,7 @@ export default function SelectionDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const router = useRouter();
 
   // Hooks de données
   const { data: selection, isLoading, error } = useLinkMeSelection(id);
@@ -317,13 +319,13 @@ export default function SelectionDetailPage({
             <p className="text-destructive">
               Erreur lors du chargement de la sélection.
             </p>
-            <Link
-              href="/canaux-vente/linkme/selections"
+            <button
+              onClick={() => router.back()}
               className="inline-flex items-center justify-center mt-4 px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Retour aux sélections
-            </Link>
+              Retour
+            </button>
           </CardContent>
         </Card>
       </div>
@@ -335,12 +337,12 @@ export default function SelectionDetailPage({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link
-            href="/canaux-vente/linkme/selections"
+          <button
+            onClick={() => router.back()}
             className="inline-flex items-center justify-center h-10 w-10 rounded-lg hover:bg-gray-100 transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
-          </Link>
+          </button>
           <div>
             <h1 className="text-2xl font-bold">{selection.name}</h1>
             <p className="text-muted-foreground">

@@ -98,19 +98,37 @@ You MUST follow the 5-step workflow for EVERY database modification request. Thi
 - Validate user ownership using `auth.uid()` comparisons
 - Use `auth.jwt() ->> 'role'` for role-based access
 
-# AVAILABLE MCP TOOLS
+# AVAILABLE TOOLS
 
 You have access to:
 
-- `mcp__supabase__execute_sql`: Execute SQL queries to inspect database structure, triggers, policies (use `information_schema` queries)
-- `mcp__supabase__list_tables`: List all tables in schemas
-- `mcp__supabase__list_migrations`: List applied migrations
-- `mcp__supabase__apply_migration`: Apply DDL migrations (use for schema changes)
-- `mcp__supabase__get_advisors`: Get security/performance recommendations
-- `mcp__supabase__generate_typescript_types`: Generate TypeScript types after migration
-- `mcp__filesystem__read_text_file`: Read `supabase.ts`, migrations, and other files
-- `mcp__filesystem__list_directory`: List migrations directory
+## Database Operations (via Supabase CLI & psql)
+
+- **Execute SQL queries**: Use `psql` command via Bash with proper connection string
+  ```bash
+  PGPASSWORD="$SUPABASE_DB_PASSWORD" psql -h db.aorroydfjsrygmosnzrl.supabase.co -p 5432 -U postgres -d postgres -c "SELECT * FROM information_schema.tables WHERE table_schema = 'public'"
+  ```
+- **Apply migrations**: Write SQL file to `supabase/migrations/` then run:
+  ```bash
+  npx supabase db push
+  ```
+- **Generate TypeScript types**:
+  ```bash
+  npx supabase gen types typescript --local > apps/back-office/src/types/supabase.ts
+  ```
+- **List migrations**: Read the `supabase/migrations/` directory
+
+## Code Analysis (via Serena MCP)
+
 - `mcp__serena__read_memory`: Access project memories (verone-db-foundation-plan, business-rules-organisations, supabase-workflow-correct)
+- `mcp__serena__find_symbol`: Search for symbols in the codebase
+- `mcp__serena__get_symbols_overview`: Get overview of symbols in a file
+
+## File Operations (via Claude Code native tools)
+
+- `Read`: Read files (supabase.ts, migrations, etc.)
+- `Write`: Write migration files
+- `Glob`: Find files by pattern
 
 # OUTPUT FORMAT
 

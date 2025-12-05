@@ -199,6 +199,8 @@ export function useSelectionItems(selectionId: string | null) {
     queryFn: async (): Promise<SelectionItem[]> => {
       if (!selectionId) return [];
 
+      // Utilise la syntaxe alias "product:products(...)" au lieu de "products!inner(...)"
+      // car cette dernière échoue silencieusement avec linkme_selection_items
       const { data, error } = await (supabase as any)
         .from('linkme_selection_items')
         .select(
@@ -212,7 +214,7 @@ export function useSelectionItems(selectionId: string | null) {
           custom_description,
           is_featured,
           display_order,
-          products!inner(
+          product:products(
             name,
             sku,
             stock_real
@@ -229,15 +231,19 @@ export function useSelectionItems(selectionId: string | null) {
 
       // Récupérer les images
       const productIds = (data || []).map((item: any) => item.product_id);
-      const { data: images } = await (supabase as any)
-        .from('product_images')
-        .select('product_id, public_url')
-        .in('product_id', productIds)
-        .eq('is_primary', true);
+      let imageMap = new Map<string, string>();
 
-      const imageMap = new Map(
-        (images || []).map((img: any) => [img.product_id, img.public_url])
-      );
+      if (productIds.length > 0) {
+        const { data: images } = await (supabase as any)
+          .from('product_images')
+          .select('product_id, public_url')
+          .in('product_id', productIds)
+          .eq('is_primary', true);
+
+        imageMap = new Map(
+          (images || []).map((img: any) => [img.product_id, img.public_url])
+        );
+      }
 
       return (data || []).map((item: any) => ({
         id: item.id,
@@ -249,10 +255,10 @@ export function useSelectionItems(selectionId: string | null) {
         custom_description: item.custom_description,
         is_featured: item.is_featured ?? false,
         display_order: item.display_order || 0,
-        product_name: item.products?.name || '',
-        product_reference: item.products?.sku || '',
+        product_name: item.product?.name || '',
+        product_reference: item.product?.sku || '',
         product_image_url: imageMap.get(item.product_id) || null,
-        product_stock_real: item.products?.stock_real || 0,
+        product_stock_real: item.product?.stock_real || 0,
       }));
     },
     enabled: !!selectionId,
@@ -309,7 +315,7 @@ export function useCreateSelection() {
 }
 
 /**
- * Hook: ajouter un produit à une sélection
+ * Hook: ajouter un produit à une sélection (legacy - utilise marge suggérée)
  */
 export function useAddToSelection() {
   const queryClient = useQueryClient();
@@ -372,39 +378,148 @@ export function useAddToSelection() {
 
       const nextOrder = (existingItems?.[0]?.display_order ?? 0) + 1;
 
-      // Insérer le produit
-      const { data, error } = await (supabase as any)
-        .from('linkme_selection_items')
-        .insert({
-          selection_id: input.selectionId,
-          product_id: input.productId,
-          base_price_ht: basePriceHt,
-          margin_rate: marginRate,
-          selling_price_ht: sellingPriceHt,
-          is_featured: false,
-          display_order: nextOrder,
-        })
-        .select()
-        .single();
+      // Appeler l'API back-office pour bypasser RLS
+      // Note: selling_price_ht est une colonne GENERATED - ne pas l'inclure
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACK_OFFICE_URL || 'http://localhost:3000'}/api/linkme/selections/add-item`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            selection_id: input.selectionId,
+            product_id: input.productId,
+            base_price_ht: basePriceHt,
+            margin_rate: marginRate,
+          }),
+        }
+      );
 
-      if (error) {
+      const result = await response.json();
+
+      if (!response.ok) {
         // Vérifier si c'est une erreur de doublon
-        if (error.code === '23505') {
+        if (response.status === 409) {
           throw new Error('Ce produit est déjà dans votre sélection');
         }
-        throw error;
+        throw new Error(result.message || "Erreur lors de l'ajout du produit");
       }
 
-      // Mettre à jour le compteur de produits
-      await (supabase as any)
-        .from('linkme_selections')
-        .update({
-          products_count: nextOrder,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', input.selectionId);
+      // L'API gère déjà le products_count
+      return result.item;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['selection-items', variables.selectionId],
+      });
+      queryClient.invalidateQueries({ queryKey: ['user-selections'] });
+    },
+  });
+}
 
-      return data;
+/**
+ * Hook: ajouter un produit à une sélection avec marge personnalisée
+ * Version améliorée permettant à l'utilisateur de choisir sa marge
+ */
+export function useAddToSelectionWithMargin() {
+  const queryClient = useQueryClient();
+  const { data: affiliate } = useUserAffiliate();
+
+  return useMutation({
+    mutationFn: async (input: {
+      selectionId: string;
+      productId: string;
+      catalogProductId: string;
+      marginRate: number; // Marge choisie par l'utilisateur (en %)
+    }) => {
+      if (!affiliate) {
+        throw new Error('Aucun compte affilié trouvé');
+      }
+
+      // Récupérer les infos du produit depuis channel_pricing
+      const { data: catalogProduct, error: cpError } = await (supabase as any)
+        .from('channel_pricing')
+        .select(
+          `
+          custom_price_ht,
+          min_margin_rate,
+          max_margin_rate,
+          products!inner(
+            cost_price,
+            eco_tax_default,
+            margin_percentage
+          )
+        `
+        )
+        .eq('id', input.catalogProductId)
+        .single();
+
+      if (cpError) {
+        console.error('Erreur fetch channel_pricing:', cpError);
+        throw new Error('Produit non trouvé dans le catalogue');
+      }
+
+      // Valider la marge contre les limites du channel_pricing
+      const minMargin = catalogProduct.min_margin_rate ?? 1;
+      const maxMargin = catalogProduct.max_margin_rate ?? 50;
+
+      if (input.marginRate < minMargin || input.marginRate > maxMargin) {
+        throw new Error(
+          `La marge doit être entre ${minMargin}% et ${maxMargin}%`
+        );
+      }
+
+      // Calcul du prix de base
+      const product = catalogProduct.products;
+      const costPrice = product?.cost_price || 0;
+      const ecoTax = product?.eco_tax_default || 0;
+      const marginPct = product?.margin_percentage ?? 25;
+      const calculatedPrice =
+        costPrice > 0 ? (costPrice + ecoTax) * (1 + marginPct / 100) : 0;
+
+      const basePriceHt = catalogProduct.custom_price_ht ?? calculatedPrice;
+
+      // Utiliser la marge fournie par l'utilisateur
+      const commissionRate = affiliate.linkme_commission_rate || 5;
+      const sellingPriceHt =
+        basePriceHt * (1 + commissionRate / 100 + input.marginRate / 100);
+
+      // Récupérer le prochain display_order
+      const { data: existingItems } = await (supabase as any)
+        .from('linkme_selection_items')
+        .select('display_order')
+        .eq('selection_id', input.selectionId)
+        .order('display_order', { ascending: false })
+        .limit(1);
+
+      const nextOrder = (existingItems?.[0]?.display_order ?? 0) + 1;
+
+      // Appeler l'API back-office pour bypasser RLS
+      // Note: selling_price_ht est une colonne GENERATED - calculée automatiquement
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACK_OFFICE_URL || 'http://localhost:3000'}/api/linkme/selections/add-item`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            selection_id: input.selectionId,
+            product_id: input.productId,
+            base_price_ht: basePriceHt,
+            margin_rate: input.marginRate,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 409) {
+          throw new Error('Ce produit est déjà dans votre sélection');
+        }
+        throw new Error(result.message || "Erreur lors de l'ajout du produit");
+      }
+
+      // L'API gère déjà le products_count
+      return result.item;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({

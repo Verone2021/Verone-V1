@@ -31,6 +31,7 @@ import {
   Filter,
 } from 'lucide-react';
 
+import { AddToSelectionModal } from '../../components/catalogue/AddToSelectionModal';
 import { useAuth, type LinkMeRole } from '../../contexts/AuthContext';
 import {
   useLinkMeCatalogProducts,
@@ -64,6 +65,11 @@ export default function CataloguePage() {
     undefined
   );
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  // State modal ajout sélection
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] =
+    useState<LinkMeCatalogProduct | null>(null);
 
   // Vérifier les droits d'accès
   useEffect(() => {
@@ -112,8 +118,14 @@ export default function CataloguePage() {
 
   // Handler ajouter à la sélection
   const handleAddToSelection = (product: LinkMeCatalogProduct) => {
-    // TODO: Implémenter l'ajout à la sélection
-    console.log('Ajouter à la sélection:', product.name);
+    setSelectedProduct(product);
+    setIsAddModalOpen(true);
+  };
+
+  // Handler fermer le modal
+  const handleCloseModal = () => {
+    setIsAddModalOpen(false);
+    setSelectedProduct(null);
   };
 
   // Chargement
@@ -268,6 +280,13 @@ export default function CataloguePage() {
           </div>
         )}
       </div>
+
+      {/* Modal ajout à la sélection */}
+      <AddToSelectionModal
+        isOpen={isAddModalOpen}
+        onClose={handleCloseModal}
+        product={selectedProduct}
+      />
     </div>
   );
 }

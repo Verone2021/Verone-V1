@@ -89,9 +89,10 @@ export function ProductPricingCard({
   const [isDirty, setIsDirty] = useState(false);
 
   // Calcul automatique des marges en temps réel
-  // Utilise buffer_rate du formulaire (configurable par l'utilisateur)
+  // FORMULE CORRECTE: basePriceHT = selling_price_ht (PAS cost_price!)
+  // Utilise custom_price_ht du formulaire car il peut être modifié par l'utilisateur
   const marginResult = useCalculateLinkMeMargins(
-    product.cost_price,
+    formData.custom_price_ht ?? product.selling_price_ht,
     formData.public_price_ht,
     formData.channel_commission_rate,
     formData.buffer_rate ?? LINKME_MARGIN_DEFAULTS.bufferRate

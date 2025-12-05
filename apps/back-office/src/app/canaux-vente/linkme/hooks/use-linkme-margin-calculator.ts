@@ -20,15 +20,20 @@ export const LINKME_MARGIN_DEFAULTS = {
 /**
  * Hook pour calculer automatiquement les marges LinkMe
  *
+ * FORMULE CORRECTE (source: Calcul-marge-linkme.md):
+ * - r_cap_total = (publicPrice - basePrice) / basePrice
+ * - maxRate = r_cap_total - platformFeeRate - bufferRate
+ * - suggestedRate = maxRate / 3
+ *
  * Le calcul se met à jour automatiquement (useMemo) dès qu'une des valeurs change :
- * - costPriceHT (prix d'achat)
+ * - basePriceHT (prix de vente catalogue = selling_price_ht ou custom_price_ht)
  * - publicPriceHT (tarif public)
  * - commissionRate (commission LinkMe)
  * - bufferRate (marge de sécurité)
  *
  * @example
  * const marginResult = useCalculateLinkMeMargins(
- *   product.cost_price,
+ *   product.selling_price_ht, // Prix de vente catalogue (PAS cost_price!)
  *   formData.public_price_ht,
  *   formData.channel_commission_rate,
  *   config.bufferRate
@@ -40,14 +45,14 @@ export const LINKME_MARGIN_DEFAULTS = {
  * }
  */
 export function useCalculateLinkMeMargins(
-  costPriceHT: number | null | undefined,
+  basePriceHT: number | null | undefined,
   publicPriceHT: number | null | undefined,
   commissionRatePercent: number | null | undefined,
   bufferRate: number = LINKME_MARGIN_DEFAULTS.bufferRate
 ): MarginCalculationResult | null {
   return useMemo(() => {
     // Validation des entrées requises
-    if (!costPriceHT || costPriceHT <= 0) return null;
+    if (!basePriceHT || basePriceHT <= 0) return null;
     if (!publicPriceHT || publicPriceHT <= 0) return null;
 
     // Conversion du taux de commission de % vers décimal
@@ -58,12 +63,12 @@ export function useCalculateLinkMeMargins(
         : LINKME_MARGIN_DEFAULTS.defaultCommissionRate;
 
     return calculateLinkMeMargins({
-      costPriceHT,
+      basePriceHT,
       publicPriceHT,
       platformFeeRate,
       bufferRate,
     });
-  }, [costPriceHT, publicPriceHT, commissionRatePercent, bufferRate]);
+  }, [basePriceHT, publicPriceHT, commissionRatePercent, bufferRate]);
 }
 
 /**

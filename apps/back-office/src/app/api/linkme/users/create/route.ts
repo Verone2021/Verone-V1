@@ -233,7 +233,6 @@ export async function POST(request: NextRequest) {
       }
 
       const affiliateData: Record<string, unknown> = {
-        user_id: userId,
         affiliate_type: role === 'enseigne_admin' ? 'enseigne' : 'prescripteur',
         display_name: displayName,
         slug: uniqueSlug,
@@ -241,7 +240,6 @@ export async function POST(request: NextRequest) {
         phone: phone || null,
         status: 'active',
         default_margin_rate: 20,
-        max_margin_rate: 50,
         linkme_commission_rate: 5,
       };
 
