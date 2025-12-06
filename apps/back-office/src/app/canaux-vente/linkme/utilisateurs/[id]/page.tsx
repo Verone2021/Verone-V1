@@ -43,8 +43,7 @@ interface UserSelection {
   id: string;
   name: string;
   description: string | null;
-  status: 'draft' | 'active' | 'archived';
-  is_public: boolean;
+  archived_at: string | null;
   products_count: number;
   views_count: number;
   orders_count: number;
@@ -112,7 +111,7 @@ function useUserSelections(
       const { data, error } = await supabase
         .from('linkme_selections')
         .select(
-          'id, name, description, status, is_public, products_count, views_count, orders_count, created_at'
+          'id, name, description, archived_at, products_count, views_count, orders_count, created_at'
         )
         .eq('affiliate_id', affiliateId)
         .order('created_at', { ascending: false });
@@ -644,26 +643,18 @@ export default function UserDetailPage() {
               ) : (
                 <div className="space-y-3">
                   {selections.map(selection => {
-                    const selectionStatusConfig = {
-                      draft: {
-                        label: 'Brouillon',
-                        variant: 'secondary' as const,
-                        className: 'bg-gray-100 text-gray-700',
-                      },
-                      active: {
-                        label: 'Active',
-                        variant: 'default' as const,
-                        className: 'bg-green-100 text-green-700',
-                      },
-                      archived: {
-                        label: 'Archivée',
-                        variant: 'outline' as const,
-                        className: 'bg-gray-50 text-gray-500',
-                      },
-                    };
-                    const config =
-                      selectionStatusConfig[selection.status] ||
-                      selectionStatusConfig.draft;
+                    const isArchived = selection.archived_at !== null;
+                    const config = isArchived
+                      ? {
+                          label: 'Archivée',
+                          variant: 'outline' as const,
+                          className: 'bg-gray-50 text-gray-500',
+                        }
+                      : {
+                          label: 'Active',
+                          variant: 'default' as const,
+                          className: 'bg-green-100 text-green-700',
+                        };
 
                     return (
                       <div
@@ -686,14 +677,6 @@ export default function UserDetailPage() {
                             >
                               {config.label}
                             </Badge>
-                            {selection.is_public && (
-                              <Badge
-                                variant="outline"
-                                className="bg-blue-50 text-blue-600"
-                              >
-                                Public
-                              </Badge>
-                            )}
                           </div>
                           {selection.description && (
                             <p className="text-sm text-gray-500 truncate mb-2">

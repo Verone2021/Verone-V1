@@ -41,8 +41,7 @@ interface EnseigneSelection {
   id: string;
   name: string;
   description: string | null;
-  status: 'draft' | 'active' | 'archived';
-  is_public: boolean;
+  archived_at: string | null;
   products_count: number;
   views_count: number;
   orders_count: number;
@@ -115,7 +114,7 @@ function useEnseigneSelections(enseigneId: string | null) {
       const { data, error } = await supabase
         .from('linkme_selections')
         .select(
-          'id, name, description, status, is_public, products_count, views_count, orders_count, created_at'
+          'id, name, description, archived_at, products_count, views_count, orders_count, created_at'
         )
         .eq('affiliate_id', affiliateId)
         .order('created_at', { ascending: false });
@@ -529,26 +528,7 @@ export default function EnseigneDetailPage() {
               ) : (
                 <div className="space-y-3">
                   {selections.map(selection => {
-                    const selectionStatusConfig = {
-                      draft: {
-                        label: 'Brouillon',
-                        variant: 'secondary' as const,
-                        className: 'bg-gray-100 text-gray-700',
-                      },
-                      active: {
-                        label: 'Active',
-                        variant: 'default' as const,
-                        className: 'bg-green-100 text-green-700',
-                      },
-                      archived: {
-                        label: 'Archivée',
-                        variant: 'outline' as const,
-                        className: 'bg-gray-50 text-gray-500',
-                      },
-                    };
-                    const config =
-                      selectionStatusConfig[selection.status] ||
-                      selectionStatusConfig.draft;
+                    const isArchived = selection.archived_at !== null;
 
                     return (
                       <div
@@ -566,19 +546,15 @@ export default function EnseigneDetailPage() {
                               {selection.name}
                             </h3>
                             <Badge
-                              variant={config.variant}
-                              className={config.className}
+                              variant={isArchived ? 'outline' : 'default'}
+                              className={
+                                isArchived
+                                  ? 'bg-gray-50 text-gray-500'
+                                  : 'bg-green-100 text-green-700'
+                              }
                             >
-                              {config.label}
+                              {isArchived ? 'Archivée' : 'Active'}
                             </Badge>
-                            {selection.is_public && (
-                              <Badge
-                                variant="outline"
-                                className="bg-blue-50 text-blue-600"
-                              >
-                                Public
-                              </Badge>
-                            )}
                           </div>
                           {selection.description && (
                             <p className="text-sm text-gray-500 truncate mb-2">

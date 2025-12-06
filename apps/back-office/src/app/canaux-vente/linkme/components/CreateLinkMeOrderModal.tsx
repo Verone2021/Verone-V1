@@ -816,7 +816,7 @@ export function CreateLinkMeOrderModal({
                             <p className="text-xs text-gray-500">
                               {selection.products_count || 0} produit
                               {(selection.products_count || 0) > 1 ? 's' : ''}
-                              {selection.status === 'draft' && ' • Brouillon'}
+                              {selection.archived_at && ' • Archivée'}
                             </p>
                           </div>
                           {selectedSelectionId === selection.id && (

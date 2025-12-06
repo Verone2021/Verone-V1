@@ -50,14 +50,10 @@ import {
   ExternalLink,
   Package,
   ShoppingBag,
-  FileEdit,
   Archive,
   ArchiveRestore,
   CheckCircle,
   Plus,
-  Globe,
-  Lock,
-  Pencil,
   Trash2,
 } from 'lucide-react';
 
@@ -70,12 +66,11 @@ interface Selection {
   slug: string;
   description: string | null;
   image_url: string | null;
-  is_public: boolean | null;
   share_token: string | null;
   products_count: number | null;
   views_count: number | null;
   orders_count: number | null;
-  status: string | null; // 'draft' | 'active' | 'archived' - relaxed for Supabase types
+  archived_at: string | null; // NULL = active, timestamp = archivée
   published_at: string | null;
   created_at: string | null;
   updated_at: string | null;
@@ -113,27 +108,6 @@ interface SelectedProduct {
   linkme_commission_rate: number;
 }
 
-const statusConfig = {
-  draft: {
-    label: 'Brouillon',
-    variant: 'outline' as const,
-    icon: FileEdit,
-    color: 'text-gray-600',
-  },
-  active: {
-    label: 'Publiée',
-    variant: 'default' as const,
-    icon: CheckCircle,
-    color: 'text-green-600',
-  },
-  archived: {
-    label: 'Archivée',
-    variant: 'secondary' as const,
-    icon: Archive,
-    color: 'text-gray-500',
-  },
-};
-
 /**
  * SelectionsSection - Liste des sélections (mini-boutiques)
  *
@@ -162,7 +136,6 @@ export function SelectionsSection() {
     affiliate_id: '',
     name: '',
     description: '',
-    status: 'draft' as 'draft' | 'active',
   });
   const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>(
     []
@@ -269,7 +242,7 @@ export function SelectionsSection() {
       // Générer un token de partage unique
       const shareToken = crypto.randomUUID().slice(0, 8);
 
-      // 1. Créer la sélection
+      // 1. Créer la sélection (toujours publiée immédiatement)
       const { data: selectionData, error: selectionError } = await (
         supabase as any
       )
@@ -279,14 +252,12 @@ export function SelectionsSection() {
           name: formData.name.trim(),
           slug: slug,
           description: formData.description || null,
-          status: formData.status,
           share_token: shareToken,
-          is_public: formData.status === 'active',
           products_count: selectedProducts.length,
           views_count: 0,
           orders_count: 0,
-          published_at:
-            formData.status === 'active' ? new Date().toISOString() : null,
+          archived_at: null,
+          published_at: new Date().toISOString(),
         })
         .select()
         .single();
@@ -336,7 +307,6 @@ export function SelectionsSection() {
       affiliate_id: '',
       name: '',
       description: '',
-      status: 'draft',
     });
     setSelectedProducts([]);
     setProductSearch('');
@@ -445,56 +415,17 @@ export function SelectionsSection() {
     }
   }
 
-  // Toggle visibilité (is_public)
-  async function toggleVisibility(
-    selectionId: string,
-    currentValue: boolean | null
-  ) {
-    const supabase = createClient();
-    const newValue = !currentValue;
-
-    try {
-      const { error } = await (supabase as any)
-        .from('linkme_selections')
-        .update({ is_public: newValue })
-        .eq('id', selectionId);
-
-      if (error) throw error;
-
-      // Mettre à jour localement
-      setSelections(prev =>
-        prev.map(s =>
-          s.id === selectionId ? { ...s, is_public: newValue } : s
-        )
-      );
-
-      toast({
-        title: 'Visibilité mise à jour',
-        description: newValue
-          ? 'La sélection est maintenant publique (visible sur internet)'
-          : 'La sélection est maintenant privée (réseau LinkMe uniquement)',
-      });
-    } catch (error) {
-      console.error('Error toggling visibility:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de modifier la visibilité',
-        variant: 'destructive',
-      });
-    }
-  }
-
   // Archiver/Désarchiver une sélection
   async function handleArchive(selection: Selection) {
     const supabase = createClient();
-    const isCurrentlyArchived = selection.status === 'archived';
-    const newStatus = isCurrentlyArchived ? 'active' : 'archived';
+    const isCurrentlyArchived = selection.archived_at !== null;
+    const newArchivedAt = isCurrentlyArchived ? null : new Date().toISOString();
 
     try {
       const { error } = await (supabase as any)
         .from('linkme_selections')
         .update({
-          status: newStatus,
+          archived_at: newArchivedAt,
           updated_at: new Date().toISOString(),
         })
         .eq('id', selection.id);
@@ -503,7 +434,9 @@ export function SelectionsSection() {
 
       // Mettre à jour localement
       setSelections(prev =>
-        prev.map(s => (s.id === selection.id ? { ...s, status: newStatus } : s))
+        prev.map(s =>
+          s.id === selection.id ? { ...s, archived_at: newArchivedAt } : s
+        )
       );
 
       toast({
@@ -525,8 +458,8 @@ export function SelectionsSection() {
   }
 
   // Compteurs pour les onglets
-  const activeCount = selections.filter(s => s.status !== 'archived').length;
-  const archivedCount = selections.filter(s => s.status === 'archived').length;
+  const activeCount = selections.filter(s => s.archived_at === null).length;
+  const archivedCount = selections.filter(s => s.archived_at !== null).length;
 
   // Filter selections
   const filteredSelections = selections.filter(selection => {
@@ -537,8 +470,8 @@ export function SelectionsSection() {
       affiliateFilter === 'all' || selection.affiliate_id === affiliateFilter;
     const matchesTab =
       activeTab === 'active'
-        ? selection.status !== 'archived'
-        : selection.status === 'archived';
+        ? selection.archived_at === null
+        : selection.archived_at !== null;
     return matchesSearch && matchesAffiliate && matchesTab;
   });
 
@@ -657,145 +590,101 @@ export function SelectionsSection() {
                   <TableHead>Produits</TableHead>
                   <TableHead>Vues</TableHead>
                   <TableHead>Commandes</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Visibilité</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredSelections.map(selection => {
-                  const statusInfo =
-                    statusConfig[
-                      (selection.status || 'draft') as keyof typeof statusConfig
-                    ];
-
-                  return (
-                    <TableRow key={selection.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-full bg-blue-100">
-                            <Layers className="h-4 w-4 text-blue-600" />
-                          </div>
-                          <div>
-                            <div className="font-medium">{selection.name}</div>
-                            <div className="text-sm text-muted-foreground font-mono">
-                              /{selection.affiliate?.slug}/{selection.slug}
-                            </div>
+                {filteredSelections.map(selection => (
+                  <TableRow key={selection.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-full bg-blue-100">
+                          <Layers className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <div className="font-medium">{selection.name}</div>
+                          <div className="text-sm text-muted-foreground font-mono">
+                            /{selection.affiliate?.slug}/{selection.slug}
                           </div>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        {selection.affiliate?.display_name || 'N/A'}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Package className="h-4 w-4 text-muted-foreground" />
-                          {selection.products_count}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Eye className="h-4 w-4 text-muted-foreground" />
-                          {selection.views_count}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-                          {selection.orders_count}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={statusInfo.variant}>
-                          <statusInfo.icon className="h-3 w-3 mr-1" />
-                          {statusInfo.label}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <button
-                          onClick={() =>
-                            toggleVisibility(selection.id, selection.is_public)
-                          }
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-                            selection.is_public
-                              ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                          }`}
-                          title={
-                            selection.is_public
-                              ? 'Cliquer pour rendre privée'
-                              : 'Cliquer pour rendre publique'
-                          }
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {selection.affiliate?.display_name || 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Package className="h-4 w-4 text-muted-foreground" />
+                        {selection.products_count}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                        {selection.views_count}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+                        {selection.orders_count}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        {/* Bouton Voir (page détail) */}
+                        <Link
+                          href={`/canaux-vente/linkme/selections/${selection.id}`}
+                          className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:scale-105 transition-all"
+                          title="Voir la sélection"
                         >
-                          {selection.is_public ? (
-                            <>
-                              <Globe className="h-3 w-3" />
-                              Publique
-                            </>
-                          ) : (
-                            <>
-                              <Lock className="h-3 w-3" />
-                              Réseau
-                            </>
-                          )}
-                        </button>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {/* Bouton Voir (page détail) */}
-                          <Link
-                            href={`/canaux-vente/linkme/selections/${selection.id}`}
-                            className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:scale-105 transition-all"
-                            title="Voir la sélection"
+                          <Eye className="h-4 w-4" />
+                        </Link>
+
+                        {/* Bouton Archiver/Désarchiver */}
+                        {selection.archived_at !== null ? (
+                          <ButtonV2
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                            onClick={() => handleArchive(selection)}
+                            title="Désarchiver la sélection"
                           >
-                            <Eye className="h-4 w-4" />
-                          </Link>
+                            <ArchiveRestore className="h-4 w-4" />
+                          </ButtonV2>
+                        ) : (
+                          <ButtonV2
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8 text-orange-500 hover:text-orange-600 hover:bg-orange-50"
+                            onClick={() => handleArchive(selection)}
+                            title="Archiver la sélection"
+                          >
+                            <Archive className="h-4 w-4" />
+                          </ButtonV2>
+                        )}
 
-                          {/* Bouton Archiver/Désarchiver */}
-                          {selection.status === 'archived' ? (
-                            <ButtonV2
-                              variant="outline"
-                              size="icon"
-                              className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
-                              onClick={() => handleArchive(selection)}
-                              title="Désarchiver la sélection"
-                            >
-                              <ArchiveRestore className="h-4 w-4" />
-                            </ButtonV2>
-                          ) : (
-                            <ButtonV2
-                              variant="outline"
-                              size="icon"
-                              className="h-8 w-8 text-orange-500 hover:text-orange-600 hover:bg-orange-50"
-                              onClick={() => handleArchive(selection)}
-                              title="Archiver la sélection"
-                            >
-                              <Archive className="h-4 w-4" />
-                            </ButtonV2>
-                          )}
-
-                          {/* Bouton Supprimer (uniquement pour archivées) */}
-                          {selection.status === 'archived' && (
-                            <ButtonV2
-                              variant="outline"
-                              size="icon"
-                              className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                              onClick={() =>
-                                handleDeleteSelection(
-                                  selection.id,
-                                  selection.name
-                                )
-                              }
-                              title="Supprimer la sélection"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </ButtonV2>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                        {/* Bouton Supprimer (uniquement pour archivées) */}
+                        {selection.archived_at !== null && (
+                          <ButtonV2
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                            onClick={() =>
+                              handleDeleteSelection(
+                                selection.id,
+                                selection.name
+                              )
+                            }
+                            title="Supprimer la sélection"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </ButtonV2>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           )}
@@ -869,38 +758,6 @@ export function SelectionsSection() {
                 }
                 placeholder="Description courte de la sélection..."
               />
-            </div>
-
-            {/* Statut */}
-            <div className="grid gap-2">
-              <Label>Statut</Label>
-              <Select
-                value={formData.status}
-                onValueChange={value =>
-                  setFormData(prev => ({
-                    ...prev,
-                    status: value as 'draft' | 'active',
-                  }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">
-                    <div className="flex items-center gap-2">
-                      <FileEdit className="h-4 w-4" />
-                      Brouillon (non publié)
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="active">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4" />
-                      Publié immédiatement
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             {/* Sélection de produits */}

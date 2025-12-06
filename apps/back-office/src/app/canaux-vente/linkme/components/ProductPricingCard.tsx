@@ -34,6 +34,27 @@ import {
 import type { LinkMeProductDetail, LinkMePricingUpdate } from '../types';
 import { MarginSlider } from './MarginSlider';
 
+// ============================================
+// CONSTANTES TVA ET FONCTIONS DE CONVERSION
+// ============================================
+
+/**
+ * Taux de TVA par défaut (20% France)
+ */
+const TVA_RATE = 0.2;
+
+/**
+ * Convertit un prix TTC en HT
+ * Formule : HT = TTC / (1 + TVA) = TTC / 1.20
+ */
+const ttcToHt = (ttc: number): number => ttc / (1 + TVA_RATE);
+
+/**
+ * Convertit un prix HT en TTC
+ * Formule : TTC = HT × (1 + TVA) = HT × 1.20
+ */
+const htToTtc = (ht: number): number => ht * (1 + TVA_RATE);
+
 interface ProductPricingCardProps {
   product: LinkMeProductDetail;
   onSave: (data: LinkMePricingUpdate) => Promise<void>;
@@ -88,6 +109,12 @@ export function ProductPricingCard({
 
   const [isDirty, setIsDirty] = useState(false);
 
+  // État pour la valeur TTC (dérivée du HT stocké)
+  const [publicPriceTtc, setPublicPriceTtc] = useState<number | null>(() => {
+    const ht = product.public_price_ht;
+    return ht !== null && ht !== undefined ? htToTtc(ht) : null;
+  });
+
   // Calcul automatique des marges en temps réel
   // FORMULE CORRECTE: basePriceHT = selling_price_ht (PAS cost_price!)
   // Utilise custom_price_ht du formulaire car il peut être modifié par l'utilisateur
@@ -128,6 +155,12 @@ export function ProductPricingCard({
       public_price_ht: product.public_price_ht,
       buffer_rate: product.buffer_rate ?? LINKME_MARGIN_DEFAULTS.bufferRate,
     });
+    // Mettre à jour TTC depuis le HT du produit
+    setPublicPriceTtc(
+      product.public_price_ht !== null && product.public_price_ht !== undefined
+        ? htToTtc(product.public_price_ht)
+        : null
+    );
     setIsDirty(false);
   }, [product]);
 
@@ -160,6 +193,27 @@ export function ProductPricingCard({
   const handleChange = (field: keyof LinkMePricingUpdate, value: string) => {
     const numValue = value === '' ? null : parseFloat(value);
     setFormData(prev => ({ ...prev, [field]: numValue }));
+    setIsDirty(true);
+  };
+
+  // Handler modification TTC → met à jour HT automatiquement
+  const handlePublicPriceTtcChange = (ttcValue: string) => {
+    const ttc = ttcValue === '' ? null : parseFloat(ttcValue);
+    setPublicPriceTtc(ttc);
+
+    // Convertir TTC → HT et stocker dans formData
+    const htValue = ttc !== null && !isNaN(ttc) ? ttcToHt(ttc) : null;
+    setFormData(prev => ({ ...prev, public_price_ht: htValue }));
+    setIsDirty(true);
+  };
+
+  // Handler modification HT → met à jour TTC automatiquement
+  const handlePublicPriceHtChange = (htValue: string) => {
+    const ht = htValue === '' ? null : parseFloat(htValue);
+    setFormData(prev => ({ ...prev, public_price_ht: ht }));
+
+    // Convertir HT → TTC pour affichage
+    setPublicPriceTtc(ht !== null && !isNaN(ht) ? htToTtc(ht) : null);
     setIsDirty(true);
   };
 
@@ -246,36 +300,85 @@ export function ProductPricingCard({
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Tarif Public HT - ÉDITABLE */}
+        {/* Tarif Public - TTC et HT avec conversion automatique */}
         <div className="space-y-2">
-          <Label
-            htmlFor="public-price"
-            className="font-medium flex items-center gap-2"
-          >
+          <Label className="font-medium flex items-center gap-2">
             <Tag className="h-4 w-4" />
-            Tarif Public HT
+            Tarif Public
             {isPublicPriceValid ? (
               <Check className="h-4 w-4 text-green-600" />
             ) : (
               <AlertCircle className="h-4 w-4 text-amber-500" />
             )}
           </Label>
-          <div className="flex items-center gap-2">
-            <Input
-              id="public-price"
-              type="number"
-              step="0.01"
-              min="0"
-              value={formData.public_price_ht ?? ''}
-              onChange={e => handleChange('public_price_ht', e.target.value)}
-              className={cn(
-                'font-mono text-lg font-semibold',
-                !isPublicPriceValid && 'border-amber-300 focus:border-amber-500'
-              )}
-              placeholder="Tarif public catalogue..."
-            />
-            <span className="text-muted-foreground">€</span>
+
+          <div className="grid grid-cols-2 gap-3">
+            {/* Champ TTC */}
+            <div className="space-y-1">
+              <Label
+                htmlFor="public-price-ttc"
+                className="text-xs text-muted-foreground"
+              >
+                TTC
+              </Label>
+              <div className="relative">
+                <Input
+                  id="public-price-ttc"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={
+                    publicPriceTtc !== null ? publicPriceTtc.toFixed(2) : ''
+                  }
+                  onChange={e => handlePublicPriceTtcChange(e.target.value)}
+                  className={cn(
+                    'font-mono text-lg font-semibold pr-8',
+                    !isPublicPriceValid &&
+                      'border-amber-300 focus:border-amber-500'
+                  )}
+                  placeholder="TTC..."
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                  €
+                </span>
+              </div>
+            </div>
+
+            {/* Champ HT */}
+            <div className="space-y-1">
+              <Label
+                htmlFor="public-price-ht"
+                className="text-xs text-muted-foreground"
+              >
+                HT
+              </Label>
+              <div className="relative">
+                <Input
+                  id="public-price-ht"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={
+                    formData.public_price_ht !== null &&
+                    formData.public_price_ht !== undefined
+                      ? formData.public_price_ht.toFixed(2)
+                      : ''
+                  }
+                  onChange={e => handlePublicPriceHtChange(e.target.value)}
+                  className={cn(
+                    'font-mono text-lg font-semibold pr-8',
+                    !isPublicPriceValid &&
+                      'border-amber-300 focus:border-amber-500'
+                  )}
+                  placeholder="HT..."
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                  €
+                </span>
+              </div>
+            </div>
           </div>
+
           {!isPublicPriceValid ? (
             <p className="text-xs text-amber-600 flex items-center gap-1">
               <AlertCircle className="h-3 w-3" />
@@ -283,7 +386,8 @@ export function ProductPricingCard({
             </p>
           ) : (
             <p className="text-xs text-muted-foreground">
-              Prix public conseillé (pour calcul des marges)
+              Prix public conseillé (TVA 20%). Modifiez TTC ou HT, l&apos;autre
+              se met à jour.
             </p>
           )}
         </div>

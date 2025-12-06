@@ -86,6 +86,18 @@ export interface LinkMeProductDetail {
   /** Nom fournisseur */
   product_supplier_name: string | null;
 
+  // === PRODUITS SUR MESURE (READ-ONLY) ===
+  /** ID enseigne si produit exclusif */
+  enseigne_id: string | null;
+  /** Nom de l'enseigne */
+  enseigne_name: string | null;
+  /** ID organisation si produit exclusif */
+  assigned_client_id: string | null;
+  /** Nom de l'organisation */
+  assigned_client_name: string | null;
+  /** true si produit exclusif à une enseigne ou organisation */
+  is_sourced: boolean;
+
   // === INFORMATIONS PRODUIT SUPPLÉMENTAIRES (READ-ONLY) ===
   /** ID sous-catégorie */
   subcategory_id: string | null;

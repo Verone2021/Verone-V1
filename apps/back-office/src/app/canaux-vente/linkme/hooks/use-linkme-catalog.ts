@@ -71,6 +71,13 @@ export interface LinkMeCatalogProduct {
   /** Chemin complet: "Famille > Catégorie > Sous-catégorie" */
   category_full_path: string | null;
   product_supplier_name: string | null;
+  // Produits sur mesure (sourcés)
+  enseigne_id: string | null;
+  enseigne_name: string | null;
+  assigned_client_id: string | null;
+  assigned_client_name: string | null;
+  /** true si produit exclusif à une enseigne ou organisation */
+  is_sourced: boolean;
 }
 
 /**
@@ -93,6 +100,20 @@ export interface EligibleProduct {
  */
 async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
   const supabase = getSupabaseClient();
+
+  // Récupérer les enseignes/organisations avec affiliés LinkMe actifs
+  // Règle métier: seuls les produits sur mesure des entités avec utilisateurs LinkMe sont visibles
+  const { data: affiliates } = await supabase
+    .from('linkme_affiliates')
+    .select('enseigne_id, organisation_id')
+    .eq('status', 'active');
+
+  const affiliatedEnseigneIds = new Set<string>();
+  const affiliatedOrgIds = new Set<string>();
+  (affiliates || []).forEach((a: any) => {
+    if (a.enseigne_id) affiliatedEnseigneIds.add(a.enseigne_id);
+    if (a.organisation_id) affiliatedOrgIds.add(a.organisation_id);
+  });
 
   // Requête channel_pricing avec JOIN products
   const { data, error } = await supabase
@@ -128,7 +149,9 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
         stock_real,
         product_status,
         subcategory_id,
-        supplier_id
+        supplier_id,
+        enseigne_id,
+        assigned_client_id
       )
     `
     )
@@ -220,51 +243,116 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
     (suppliers || []).map((s: any) => [s.id, s.legal_name])
   );
 
-  // Mapper les données avec hiérarchie complète
-  return data.map((cp: any) => {
-    const subcategoryId = cp.products?.subcategory_id;
-    const hierarchy = subcategoryId ? hierarchyMap.get(subcategoryId) : null;
+  // Récupérer les enseignes (produits sur mesure)
+  const enseigneIds = data
+    .map((cp: any) => cp.products?.enseigne_id)
+    .filter(Boolean);
+  const enseigneMap = new Map<string, string>();
+  if (enseigneIds.length > 0) {
+    const { data: enseignes } = await supabase
+      .from('enseignes')
+      .select('id, name')
+      .in('id', enseigneIds);
+    (enseignes || []).forEach((e: any) => enseigneMap.set(e.id, e.name));
+  }
 
-    return {
-      id: cp.id,
-      product_id: cp.product_id,
-      is_enabled: cp.is_active ?? true, // Map is_active → is_enabled
-      is_public_showcase: cp.is_public_showcase ?? false,
-      is_featured: cp.is_featured ?? false,
-      show_supplier: cp.show_supplier ?? false,
-      min_margin_rate: cp.min_margin_rate ?? null, // null si non défini
-      max_margin_rate: cp.max_margin_rate ?? null, // null si non défini
-      suggested_margin_rate: cp.suggested_margin_rate ?? null, // null si non défini
-      custom_title: cp.custom_title,
-      custom_description: cp.custom_description,
-      custom_selling_points: cp.custom_selling_points,
-      linkme_commission_rate: cp.channel_commission_rate, // Map channel_commission_rate
-      // Champs Pricing pour complétude
-      public_price_ht: cp.public_price_ht ?? null,
-      channel_commission_rate: cp.channel_commission_rate ?? null, // Alias direct
-      buffer_rate: cp.buffer_rate ?? null, // Marge de sécurité
-      views_count: cp.views_count ?? 0,
-      selections_count: cp.selections_count ?? 0,
-      display_order: cp.display_order ?? 0,
-      product_name: cp.products?.name || '',
-      product_reference: cp.products?.sku || '',
-      product_price_ht: cp.products?.cost_price ?? 0, // Toujours cost_price (prix d'achat réel)
-      // Prix de vente HT = custom_price_ht si défini (null si non défini = pas validé)
-      product_selling_price_ht: cp.custom_price_ht ?? null,
-      product_image_url: imageMap.get(cp.product_id) || null,
-      product_stock_real: cp.products?.stock_real ?? 0,
-      product_is_active: cp.products?.product_status === 'active',
-      // Hiérarchie de catégorisation
-      subcategory_id: hierarchy?.subcategory_id || null,
-      subcategory_name: hierarchy?.subcategory_name || null,
-      category_id: hierarchy?.category_id || null,
-      category_name: hierarchy?.category_name || null,
-      family_id: hierarchy?.family_id || null,
-      family_name: hierarchy?.family_name || null,
-      category_full_path: hierarchy?.full_path || null,
-      product_supplier_name: supplierMap.get(cp.products?.supplier_id) || null,
-    };
-  });
+  // Récupérer les organisations assignées (produits sur mesure)
+  const assignedClientIds = data
+    .map((cp: any) => cp.products?.assigned_client_id)
+    .filter(Boolean);
+  const assignedClientMap = new Map<string, string>();
+  if (assignedClientIds.length > 0) {
+    const { data: assignedOrgs } = await supabase
+      .from('organisations')
+      .select('id, trade_name, legal_name')
+      .in('id', assignedClientIds);
+    (assignedOrgs || []).forEach((o: any) =>
+      assignedClientMap.set(o.id, o.trade_name || o.legal_name)
+    );
+  }
+
+  // Mapper les données avec hiérarchie complète
+  return (
+    data
+      .map((cp: any) => {
+        const subcategoryId = cp.products?.subcategory_id;
+        const hierarchy = subcategoryId
+          ? hierarchyMap.get(subcategoryId)
+          : null;
+
+        return {
+          id: cp.id,
+          product_id: cp.product_id,
+          is_enabled: cp.is_active ?? true, // Map is_active → is_enabled
+          is_public_showcase: cp.is_public_showcase ?? false,
+          is_featured: cp.is_featured ?? false,
+          show_supplier: cp.show_supplier ?? false,
+          min_margin_rate: cp.min_margin_rate ?? null, // null si non défini
+          max_margin_rate: cp.max_margin_rate ?? null, // null si non défini
+          suggested_margin_rate: cp.suggested_margin_rate ?? null, // null si non défini
+          custom_title: cp.custom_title,
+          custom_description: cp.custom_description,
+          custom_selling_points: cp.custom_selling_points,
+          linkme_commission_rate: cp.channel_commission_rate, // Map channel_commission_rate
+          // Champs Pricing pour complétude
+          public_price_ht: cp.public_price_ht ?? null,
+          channel_commission_rate: cp.channel_commission_rate ?? null, // Alias direct
+          buffer_rate: cp.buffer_rate ?? null, // Marge de sécurité
+          views_count: cp.views_count ?? 0,
+          selections_count: cp.selections_count ?? 0,
+          display_order: cp.display_order ?? 0,
+          product_name: cp.products?.name || '',
+          product_reference: cp.products?.sku || '',
+          product_price_ht: cp.products?.cost_price ?? 0, // Toujours cost_price (prix d'achat réel)
+          // Prix de vente HT = custom_price_ht si défini (null si non défini = pas validé)
+          product_selling_price_ht: cp.custom_price_ht ?? null,
+          product_image_url: imageMap.get(cp.product_id) || null,
+          product_stock_real: cp.products?.stock_real ?? 0,
+          product_is_active: cp.products?.product_status === 'active',
+          // Hiérarchie de catégorisation
+          subcategory_id: hierarchy?.subcategory_id || null,
+          subcategory_name: hierarchy?.subcategory_name || null,
+          category_id: hierarchy?.category_id || null,
+          category_name: hierarchy?.category_name || null,
+          family_id: hierarchy?.family_id || null,
+          family_name: hierarchy?.family_name || null,
+          category_full_path: hierarchy?.full_path || null,
+          product_supplier_name:
+            supplierMap.get(cp.products?.supplier_id) || null,
+          // Produits sur mesure (sourcés)
+          enseigne_id: cp.products?.enseigne_id || null,
+          enseigne_name: enseigneMap.get(cp.products?.enseigne_id) || null,
+          assigned_client_id: cp.products?.assigned_client_id || null,
+          assigned_client_name:
+            assignedClientMap.get(cp.products?.assigned_client_id) || null,
+          is_sourced: !!(
+            cp.products?.enseigne_id || cp.products?.assigned_client_id
+          ),
+        };
+      })
+      // Filtre: exclure les produits sourcés sans affiliés actifs
+      .filter(product => {
+        // Produits non-sourcés (catalogue général) : toujours inclure
+        if (!product.is_sourced) return true;
+
+        // Produits sourcés : vérifier si l'enseigne/organisation a des affiliés actifs
+        if (
+          product.enseigne_id &&
+          affiliatedEnseigneIds.has(product.enseigne_id)
+        ) {
+          return true;
+        }
+        if (
+          product.assigned_client_id &&
+          affiliatedOrgIds.has(product.assigned_client_id)
+        ) {
+          return true;
+        }
+
+        // Produit sourcé sans affilié actif → exclure du catalogue
+        return false;
+      })
+  );
 }
 
 /**
@@ -777,6 +865,8 @@ async function fetchLinkMeProductDetail(
         product_status,
         subcategory_id,
         supplier_id,
+        enseigne_id,
+        assigned_client_id,
         weight,
         dimensions,
         suitable_rooms,
@@ -832,6 +922,29 @@ async function fetchLinkMeProductDetail(
     supplierName = supplier?.legal_name || null;
   }
 
+  // Récupérer l'enseigne (produit sur mesure)
+  let enseigneName: string | null = null;
+  if (product.enseigne_id) {
+    const { data: enseigne } = await supabase
+      .from('enseignes')
+      .select('name')
+      .eq('id', product.enseigne_id)
+      .single();
+    enseigneName = enseigne?.name || null;
+  }
+
+  // Récupérer l'organisation assignée (produit sur mesure)
+  let assignedClientName: string | null = null;
+  if (product.assigned_client_id) {
+    const { data: assignedOrg } = await supabase
+      .from('organisations')
+      .select('trade_name, legal_name')
+      .eq('id', product.assigned_client_id)
+      .single();
+    assignedClientName =
+      assignedOrg?.trade_name || assignedOrg?.legal_name || null;
+  }
+
   // Calcul du prix minimum de vente: (cost_price + eco_tax) * (1 + margin/100)
   const costPrice = product.cost_price || 0;
   const ecoTax = product.eco_tax_default || 0;
@@ -871,6 +984,12 @@ async function fetchLinkMeProductDetail(
     product_family_name: null,
     product_category_name: categoryName,
     product_supplier_name: supplierName,
+    // Produits sur mesure (sourcés)
+    enseigne_id: product.enseigne_id || null,
+    enseigne_name: enseigneName,
+    assigned_client_id: product.assigned_client_id || null,
+    assigned_client_name: assignedClientName,
+    is_sourced: !!(product.enseigne_id || product.assigned_client_id),
     subcategory_id: product.subcategory_id,
     supplier_id: product.supplier_id,
     weight_kg: product.weight || null,
@@ -1118,5 +1237,272 @@ export function useLinkMeProductVariants(productId: string | null) {
     },
     enabled: !!productId,
     staleTime: 60000,
+  });
+}
+
+// =============================================================================
+// PRODUITS SUR MESURE (SOURCÉS)
+// Récupère les produits avec enseigne_id ou assigned_client_id depuis products
+// Indépendant de channel_pricing - utilisé pour l'onglet "Produits sur mesure"
+// =============================================================================
+
+/**
+ * Interface produit sur mesure (sourcé pour une enseigne ou organisation)
+ * Version simplifiée pour affichage dans l'onglet "Produits sur mesure"
+ */
+export interface SourcingProduct {
+  id: string;
+  catalog_id: string | null; // channel_pricing.id pour navigation vers page détail LinkMe
+  name: string;
+  reference: string;
+  description: string | null;
+  cost_price: number;
+  margin_percentage: number;
+  selling_price_ht: number; // Calculé: cost_price * (1 + margin_percentage/100)
+  stock_real: number;
+  image_url: string | null;
+  created_at: string | null;
+  // Attribution exclusive
+  enseigne_id: string | null;
+  enseigne_name: string | null;
+  assigned_client_id: string | null;
+  assigned_client_name: string | null;
+  // Catégorisation
+  subcategory_id: string | null;
+  subcategory_name: string | null;
+  category_name: string | null;
+  family_name: string | null;
+  // Fournisseur
+  supplier_id: string | null;
+  supplier_name: string | null;
+}
+
+/**
+ * Fetch les produits sur mesure (sourcés) directement depuis products
+ * Condition: enseigne_id ou assigned_client_id correspondant à un affilié LinkMe actif
+ * IMPORTANT: Ne montre que les produits des enseignes/organisations qui ont des utilisateurs LinkMe
+ */
+async function fetchSourcingProducts(): Promise<SourcingProduct[]> {
+  const supabase = getSupabaseClient();
+
+  // 1. Récupérer les enseignes et organisations qui ont des affiliés LinkMe
+  const { data: affiliates } = await supabase
+    .from('linkme_affiliates')
+    .select('enseigne_id, organisation_id')
+    .eq('status', 'active');
+
+  // Extraire les IDs uniques des enseignes et organisations avec affiliés
+  const affiliatedEnseigneIds = new Set<string>();
+  const affiliatedOrgIds = new Set<string>();
+
+  (affiliates || []).forEach((a: any) => {
+    if (a.enseigne_id) affiliatedEnseigneIds.add(a.enseigne_id);
+    if (a.organisation_id) affiliatedOrgIds.add(a.organisation_id);
+  });
+
+  // Si aucun affilié, pas de produits sur mesure à afficher
+  if (affiliatedEnseigneIds.size === 0 && affiliatedOrgIds.size === 0) {
+    return [];
+  }
+
+  // 2. Requête products avec attribution exclusive
+  const { data, error } = await supabase
+    .from('products')
+    .select(
+      `
+      id,
+      name,
+      sku,
+      description,
+      cost_price,
+      eco_tax_default,
+      margin_percentage,
+      stock_real,
+      created_at,
+      enseigne_id,
+      assigned_client_id,
+      subcategory_id,
+      supplier_id
+    `
+    )
+    .or('enseigne_id.not.is.null,assigned_client_id.not.is.null')
+    .is('archived_at', null)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Erreur fetch produits sur mesure:', error);
+    throw error;
+  }
+
+  if (!data || data.length === 0) return [];
+
+  // 3. Filtrer pour ne garder que les produits des enseignes/organisations avec affiliés
+  const filteredData = data.filter((p: any) => {
+    // Produit avec enseigne_id → vérifier si l'enseigne a des affiliés
+    if (p.enseigne_id && affiliatedEnseigneIds.has(p.enseigne_id)) {
+      return true;
+    }
+    // Produit avec assigned_client_id → vérifier si l'organisation a des affiliés
+    if (p.assigned_client_id && affiliatedOrgIds.has(p.assigned_client_id)) {
+      return true;
+    }
+    return false;
+  });
+
+  if (filteredData.length === 0) return [];
+
+  // Récupérer les IDs pour les jointures (depuis filteredData, pas data)
+  const productIds = filteredData.map((p: any) => p.id);
+  const enseigneIds = filteredData
+    .map((p: any) => p.enseigne_id)
+    .filter(Boolean);
+  const assignedClientIds = filteredData
+    .map((p: any) => p.assigned_client_id)
+    .filter(Boolean);
+  const subcategoryIds = filteredData
+    .map((p: any) => p.subcategory_id)
+    .filter(Boolean);
+  const supplierIds = filteredData
+    .map((p: any) => p.supplier_id)
+    .filter(Boolean);
+
+  // Fetch images primaires
+  const { data: images } = await supabase
+    .from('product_images')
+    .select('product_id, public_url')
+    .in('product_id', productIds)
+    .eq('is_primary', true);
+
+  const imageMap = new Map(
+    (images || []).map((img: any) => [img.product_id, img.public_url])
+  );
+
+  // Fetch enseignes
+  const enseigneMap = new Map<string, string>();
+  if (enseigneIds.length > 0) {
+    const { data: enseignes } = await supabase
+      .from('enseignes')
+      .select('id, name')
+      .in('id', enseigneIds);
+    (enseignes || []).forEach((e: any) => enseigneMap.set(e.id, e.name));
+  }
+
+  // Fetch organisations assignées
+  const assignedClientMap = new Map<string, string>();
+  if (assignedClientIds.length > 0) {
+    const { data: orgs } = await supabase
+      .from('organisations')
+      .select('id, trade_name, legal_name')
+      .in('id', assignedClientIds);
+    (orgs || []).forEach((o: any) =>
+      assignedClientMap.set(o.id, o.trade_name || o.legal_name)
+    );
+  }
+
+  // Fetch sous-catégories avec hiérarchie
+  const categoryMap = new Map<
+    string,
+    { subcategory_name: string; category_name: string; family_name: string }
+  >();
+  if (subcategoryIds.length > 0) {
+    const { data: subcategories } = await supabase
+      .from('subcategories')
+      .select(
+        `
+        id,
+        name,
+        category:categories!inner(
+          name,
+          family:families!inner(name)
+        )
+      `
+      )
+      .in('id', subcategoryIds);
+
+    (subcategories || []).forEach((sc: any) => {
+      categoryMap.set(sc.id, {
+        subcategory_name: sc.name || '',
+        category_name: sc.category?.name || '',
+        family_name: sc.category?.family?.name || '',
+      });
+    });
+  }
+
+  // Fetch fournisseurs
+  const supplierMap = new Map<string, string>();
+  if (supplierIds.length > 0) {
+    const { data: suppliers } = await supabase
+      .from('organisations')
+      .select('id, trade_name, legal_name')
+      .in('id', supplierIds);
+    (suppliers || []).forEach((s: any) =>
+      supplierMap.set(s.id, s.trade_name || s.legal_name)
+    );
+  }
+
+  // Fetch channel_pricing pour obtenir les IDs catalogue (navigation page détail)
+  const channelPricingMap = new Map<string, string>();
+  if (productIds.length > 0) {
+    const { data: channelPricingData } = await supabase
+      .from('channel_pricing')
+      .select('id, product_id')
+      .eq('channel_id', LINKME_CHANNEL_ID)
+      .in('product_id', productIds);
+    (channelPricingData || []).forEach((cp: any) =>
+      channelPricingMap.set(cp.product_id, cp.id)
+    );
+  }
+
+  // Mapper les données (filteredData = produits des enseignes/orgs avec affiliés)
+  return filteredData.map((p: any) => {
+    const categoryData = p.subcategory_id
+      ? categoryMap.get(p.subcategory_id)
+      : null;
+    const costPrice = p.cost_price || 0;
+    const ecoTax = p.eco_tax_default || 0;
+    const marginPct = p.margin_percentage ?? 25;
+    const sellingPrice =
+      costPrice > 0 ? (costPrice + ecoTax) * (1 + marginPct / 100) : 0;
+
+    return {
+      id: p.id,
+      catalog_id: channelPricingMap.get(p.id) || null,
+      name: p.name,
+      reference: p.sku || '',
+      description: p.description || null,
+      cost_price: costPrice,
+      margin_percentage: marginPct,
+      selling_price_ht: sellingPrice,
+      stock_real: p.stock_real || 0,
+      image_url: imageMap.get(p.id) || null,
+      created_at: p.created_at,
+      // Attribution exclusive
+      enseigne_id: p.enseigne_id || null,
+      enseigne_name: enseigneMap.get(p.enseigne_id) || null,
+      assigned_client_id: p.assigned_client_id || null,
+      assigned_client_name: assignedClientMap.get(p.assigned_client_id) || null,
+      // Catégorisation
+      subcategory_id: p.subcategory_id || null,
+      subcategory_name: categoryData?.subcategory_name || null,
+      category_name: categoryData?.category_name || null,
+      family_name: categoryData?.family_name || null,
+      // Fournisseur
+      supplier_id: p.supplier_id || null,
+      supplier_name: supplierMap.get(p.supplier_id) || null,
+    };
+  });
+}
+
+/**
+ * Hook: récupère les produits sur mesure (sourcés)
+ * Produits avec enseigne_id ou assigned_client_id
+ * Utilisé pour l'onglet "Produits sur mesure" dans le catalogue LinkMe
+ */
+export function useSourcingProducts() {
+  return useQuery({
+    queryKey: ['linkme-sourcing-products'],
+    queryFn: fetchSourcingProducts,
+    staleTime: 30000,
+    refetchOnWindowFocus: true,
   });
 }

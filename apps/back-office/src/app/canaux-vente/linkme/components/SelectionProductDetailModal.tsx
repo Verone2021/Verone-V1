@@ -28,7 +28,7 @@ import {
   Loader2,
 } from 'lucide-react';
 
-import { MarginSlider, MarginSliderCompact } from './MarginSlider';
+import { MarginSlider } from './MarginSlider';
 import type { SelectionItem } from '../hooks/use-linkme-selections';
 import { calculateLinkMeMargins } from '../types';
 
@@ -157,6 +157,28 @@ export function SelectionProductDetailModal({
   // Handler sauvegarde
   const handleSave = async () => {
     if (!item || !hasChanges || !onSave) return;
+
+    // Validation: vérifier que le prix final ne dépasse pas le prix public
+    if (item.public_price_ht && item.public_price_ht > 0) {
+      const commissionRate = (item.commission_rate || 0) / 100;
+      const marginRateDecimal = localMarginRate;
+      const bufferRate = item.buffer_rate || 0.05;
+
+      // Prix final = base × (1 + commission + marge)
+      const finalPrice =
+        localCustomPriceHT * (1 + commissionRate + marginRateDecimal);
+      // Prix maximum autorisé = prix public × (1 - buffer)
+      const maxAllowedPrice = item.public_price_ht * (1 - bufferRate);
+
+      if (finalPrice > maxAllowedPrice) {
+        alert(
+          `Le prix de vente final (${finalPrice.toFixed(2)} €) dépasse le prix public autorisé (${maxAllowedPrice.toFixed(2)} €).\n\n` +
+            `Veuillez réduire la marge ou le prix de vente HT.`
+        );
+        return;
+      }
+    }
+
     await onSave(item.id, {
       marginRate: localMarginRate * 100, // Reconvertir en %
       customPriceHT: localCustomPriceHT,
@@ -404,18 +426,14 @@ export function SelectionProductDetailModal({
               </div>
 
               {marginResult && marginResult.isProductSellable ? (
-                isViewMode ? (
-                  // Mode Vue: Barre compacte lecture seule
-                  <MarginSliderCompact marginResult={marginResult} />
-                ) : (
-                  // Mode Édition: Slider interactif
-                  <MarginSlider
-                    marginResult={marginResult}
-                    value={localMarginRate}
-                    onChange={handleMarginChange}
-                    readOnly={false}
-                  />
-                )
+                // Utiliser MarginSlider unifié pour VIEW et EDIT
+                // readOnly désactive le slider mais garde tous les labels
+                <MarginSlider
+                  marginResult={marginResult}
+                  value={localMarginRate}
+                  onChange={isViewMode ? undefined : handleMarginChange}
+                  readOnly={isViewMode}
+                />
               ) : (
                 <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
                   Données de marge insuffisantes pour ce produit.

@@ -56,7 +56,6 @@ import {
   BookOpen,
 } from 'lucide-react';
 
-import { MarginSliderCompact } from '../../components/MarginSlider';
 import { SelectionProductDetailModal } from '../../components/SelectionProductDetailModal';
 import {
   useLinkMeCatalogProducts,
@@ -109,8 +108,7 @@ export default function SelectionDetailPage({
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    status: 'draft' as 'draft' | 'active' | 'archived',
-    is_public: false,
+    archived_at: null as string | null,
   });
   const [isDirty, setIsDirty] = useState(false);
 
@@ -143,9 +141,7 @@ export default function SelectionDetailPage({
       setFormData({
         name: selection.name || '',
         description: selection.description || '',
-        status:
-          (selection.status as 'draft' | 'active' | 'archived') || 'draft',
-        is_public: selection.is_public || false,
+        archived_at: selection.archived_at || null,
       });
     }
   }, [selection]);
@@ -348,7 +344,7 @@ export default function SelectionDetailPage({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {selection.status === 'active' && selection.share_token && (
+          {selection.archived_at === null && selection.share_token && (
             <a
               href={`https://linkme.verone.fr/s/${selection.share_token}`}
               target="_blank"
@@ -396,25 +392,6 @@ export default function SelectionDetailPage({
                   }}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="status">Statut</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value: 'draft' | 'active' | 'archived') => {
-                    setFormData(prev => ({ ...prev, status: value }));
-                    setIsDirty(true);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="draft">Brouillon</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="archived">Archivée</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
 
             <div className="space-y-2">
@@ -430,31 +407,6 @@ export default function SelectionDetailPage({
                   setIsDirty(true);
                 }}
                 rows={3}
-              />
-            </div>
-
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex items-center gap-3">
-                {formData.is_public ? (
-                  <Eye className="h-5 w-5 text-primary" />
-                ) : (
-                  <EyeOff className="h-5 w-5 text-muted-foreground" />
-                )}
-                <div>
-                  <p className="font-medium">Visibilité publique</p>
-                  <p className="text-sm text-muted-foreground">
-                    {formData.is_public
-                      ? 'Visible par tous'
-                      : 'Visible uniquement par le réseau'}
-                  </p>
-                </div>
-              </div>
-              <Switch
-                checked={formData.is_public}
-                onCheckedChange={checked => {
-                  setFormData(prev => ({ ...prev, is_public: checked }));
-                  setIsDirty(true);
-                }}
               />
             </div>
           </CardContent>
@@ -495,9 +447,14 @@ export default function SelectionDetailPage({
             </div>
             <div className="pt-2">
               <Badge
-                variant={statusConfig[formData.status]?.variant || 'secondary'}
+                variant={selection.archived_at ? 'outline' : 'default'}
+                className={
+                  selection.archived_at
+                    ? 'bg-gray-50 text-gray-500'
+                    : 'bg-green-100 text-green-700'
+                }
               >
-                {statusConfig[formData.status]?.label || formData.status}
+                {selection.archived_at ? 'Archivée' : 'Active'}
               </Badge>
             </div>
           </CardContent>
@@ -525,12 +482,14 @@ export default function SelectionDetailPage({
                 <TableRow>
                   <TableHead className="w-16">Image</TableHead>
                   <TableHead>Produit</TableHead>
+                  <TableHead className="text-right">Prix HT (+comm.)</TableHead>
                   <TableHead className="text-right">
-                    Prix HT (+ comm.)
+                    Prix TTC (+comm.)
                   </TableHead>
-                  <TableHead className="text-center w-32">Marge %</TableHead>
+                  <TableHead className="text-center w-28">Marge %</TableHead>
                   <TableHead className="text-right">Marge nette €</TableHead>
                   <TableHead className="text-right">Prix vente HT</TableHead>
+                  <TableHead className="text-right">Prix vente TTC</TableHead>
                   <TableHead className="text-right w-24">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -538,11 +497,15 @@ export default function SelectionDetailPage({
                 {selection.items.map((item: SelectionItem) => {
                   const marginRate = item.margin_rate;
                   const commissionRate = (item.commission_rate || 0) / 100; // Conversion % → décimal (5.00 → 0.05)
+                  const TVA_RATE = 0.2; // 20% TVA
 
                   // Calculs selon les formules du plan
                   // Prix HT (+ commission) = base × (1 + commission)
                   const priceWithCommission =
                     item.base_price_ht * (1 + commissionRate);
+                  // Prix TTC (+ commission) = prix HT avec comm × (1 + TVA)
+                  const priceWithCommissionTTC =
+                    priceWithCommission * (1 + TVA_RATE);
                   // Marge nette en € = base × (margin_rate / 100)
                   const marginNetEuros =
                     item.base_price_ht * (marginRate / 100);
@@ -551,6 +514,9 @@ export default function SelectionDetailPage({
                     item.base_price_ht *
                     (1 + marginRate / 100) *
                     (1 + commissionRate);
+                  // Prix vente total TTC = prix vente HT × (1 + TVA)
+                  const totalSellingPriceTTC =
+                    totalSellingPrice * (1 + TVA_RATE);
 
                   return (
                     <TableRow key={item.id}>
@@ -589,24 +555,11 @@ export default function SelectionDetailPage({
                               </span>
                             )}
                           </div>
-                          {/* Prix client LinkMe (calculé) - affiché SEULEMENT si inférieur au prix sélection */}
-                          {(() => {
-                            if (item.catalog_price_ht == null) return null;
-                            const catalogCommRate =
-                              (item.commission_rate || 0) / 100; // Conversion % → décimal
-                            const prixClientLinkMe =
-                              item.catalog_price_ht * (1 + catalogCommRate);
-                            // Afficher uniquement si prix sélection < prix catalogue LinkMe
-                            if (priceWithCommission >= prixClientLinkMe)
-                              return null;
-                            return (
-                              <div className="text-xs text-blue-600">
-                                ({prixClientLinkMe.toFixed(2)} € Prix client
-                                LinkMe (calculé))
-                              </div>
-                            );
-                          })()}
                         </div>
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {/* Prix TTC (+ commission) */}
+                        <span>{priceWithCommissionTTC.toFixed(2)} €</span>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1.5">
@@ -630,6 +583,9 @@ export default function SelectionDetailPage({
                       </TableCell>
                       <TableCell className="text-right font-mono font-medium">
                         {totalSellingPrice.toFixed(2)} €
+                      </TableCell>
+                      <TableCell className="text-right font-mono font-medium text-primary">
+                        {totalSellingPriceTTC.toFixed(2)} €
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
@@ -920,363 +876,13 @@ export default function SelectionDetailPage({
         </DialogContent>
       </Dialog>
 
-      {/* Modal Vue Produit (READ-ONLY) - Design Dribbble 2025 */}
-      {isViewModalOpen && viewItem && (
-        <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader className="pb-4 border-b">
-              <DialogTitle className="text-2xl">Fiche Produit</DialogTitle>
-              <DialogDescription className="text-slate-600">
-                Informations détaillées du produit (lecture seule)
-              </DialogDescription>
-            </DialogHeader>
-
-            {/* Layout Grid 2 colonnes (desktop) / Stack (mobile) */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 py-6">
-              {/* COLONNE GAUCHE: Image Produit */}
-              <div className="flex flex-col items-center justify-start">
-                <div className="w-full max-w-md aspect-square bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-center overflow-hidden">
-                  <ProductThumbnail
-                    src={viewItem.product_image_url}
-                    alt={viewItem.product?.name || 'Produit'}
-                    size="xl"
-                    priority
-                  />
-                </div>
-              </div>
-
-              {/* COLONNE DROITE: Informations Produit */}
-              <div className="space-y-6">
-                {/* En-tête Produit */}
-                <div className="space-y-3">
-                  <h2 className="text-3xl font-semibold text-slate-900 leading-tight">
-                    {viewItem.product?.name}
-                  </h2>
-                  <p className="text-sm text-slate-500 font-mono">
-                    SKU: {viewItem.product?.sku}
-                  </p>
-
-                  {/* Badges */}
-                  <div className="flex flex-wrap gap-2">
-                    {viewItem.is_featured && (
-                      <Badge className="bg-amber-500 hover:bg-amber-600">
-                        Produit Vedette
-                      </Badge>
-                    )}
-                    {viewItem.product?.category_name && (
-                      <Badge
-                        variant="outline"
-                        className="border-blue-300 text-blue-700"
-                      >
-                        {viewItem.product.category_name}
-                      </Badge>
-                    )}
-                    <Badge
-                      variant={
-                        viewItem.product?.product_status === 'active'
-                          ? 'default'
-                          : 'secondary'
-                      }
-                    >
-                      {viewItem.product?.product_status === 'active'
-                        ? 'Actif'
-                        : 'Inactif'}
-                    </Badge>
-                  </div>
-                </div>
-
-                {/* Divider */}
-                <div className="border-t border-slate-200" />
-
-                {/* Section Description */}
-                {(viewItem.custom_description ||
-                  viewItem.product?.description) && (
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
-                      Description
-                    </h3>
-                    <p className="text-sm text-slate-600 leading-relaxed">
-                      {viewItem.custom_description ||
-                        viewItem.product?.description}
-                    </p>
-                  </div>
-                )}
-
-                {/* Section Arguments de Vente */}
-                {viewItem.product?.selling_points &&
-                  viewItem.product.selling_points.length > 0 && (
-                    <div className="space-y-2">
-                      <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
-                        Arguments de Vente
-                      </h3>
-                      <ul className="space-y-1.5">
-                        {viewItem.product.selling_points.map((point, idx) => (
-                          <li
-                            key={idx}
-                            className="text-sm text-slate-600 flex items-start gap-2"
-                          >
-                            <span className="text-green-600 mt-0.5">•</span>
-                            <span>{point}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-              </div>
-            </div>
-
-            {/* Section Tarification (pleine largeur) */}
-            {(() => {
-              // CALCULS IDENTIQUES AU TABLEAU pour cohérence
-              const viewCommissionRate = (viewItem.commission_rate || 0) / 100;
-              const viewMarginRate = viewItem.margin_rate || 0;
-              // Prix client LinkMe (calculé) = base × (1 + commission)
-              const viewPrixClientLinkMe =
-                viewItem.base_price_ht * (1 + viewCommissionRate);
-              // Prix vente total HT = base × (1 + margin_rate/100) × (1 + commission)
-              const viewTotalSellingPrice =
-                viewItem.base_price_ht *
-                (1 + viewMarginRate / 100) *
-                (1 + viewCommissionRate);
-              // Marge nette en € = base × (margin_rate / 100)
-              const viewMarginNetEuros =
-                viewItem.base_price_ht * (viewMarginRate / 100);
-              // Couleur de la marge
-              const viewMarginColor = getMarginIndicatorColor(viewMarginRate);
-
-              return (
-                <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-xl border border-slate-200 p-6 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-slate-800">
-                      Tarification
-                    </h3>
-                    {/* Prix Public HT - déplacé en haut à droite */}
-                    {viewItem.public_price_ht && (
-                      <div className="text-right">
-                        <p className="text-xs text-slate-500">Prix Public HT</p>
-                        <p className="text-lg font-bold text-slate-600 font-mono">
-                          {viewItem.public_price_ht.toFixed(2)} €
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Grille de prix 5 cases (nouvelle organisation) */}
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                    {/* 1. Prix Base HT */}
-                    <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
-                      <p className="text-xs text-slate-500 mb-1">
-                        Prix Base HT
-                      </p>
-                      <p className="text-xl font-bold text-slate-800 font-mono">
-                        {viewItem.base_price_ht.toFixed(2)} €
-                      </p>
-                    </div>
-
-                    {/* 2. Commission LinkMe */}
-                    <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
-                      <p className="text-xs text-slate-500 mb-1">
-                        Commission LinkMe
-                      </p>
-                      <p className="text-xl font-bold text-purple-700 font-mono">
-                        {(viewCommissionRate * 100).toFixed(1)}%
-                      </p>
-                    </div>
-
-                    {/* 3. Prix Client LinkMe (calculé) - NOUVELLE LIGNE */}
-                    <div className="bg-white rounded-lg p-4 shadow-sm border border-purple-200 bg-purple-50/50">
-                      <p className="text-xs text-purple-600 mb-1 font-medium">
-                        Prix Client LinkMe
-                      </p>
-                      <p className="text-xl font-bold text-purple-700 font-mono">
-                        {viewPrixClientLinkMe.toFixed(2)} €
-                      </p>
-                      <p className="text-[10px] text-purple-500 mt-0.5">
-                        {viewItem.base_price_ht.toFixed(2)}€ +{' '}
-                        {(viewCommissionRate * 100).toFixed(1)}%
-                      </p>
-                    </div>
-
-                    {/* 4. Marge Actuelle avec point couleur */}
-                    <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
-                      <p className="text-xs text-slate-500 mb-1">
-                        Marge Actuelle
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className={`w-3 h-3 rounded-full ${marginIndicatorColors[viewMarginColor]}`}
-                          title={marginIndicatorTooltips[viewMarginColor]}
-                        />
-                        <p className="text-xl font-bold text-green-700 font-mono">
-                          {viewMarginRate.toFixed(1)}%
-                        </p>
-                      </div>
-                      <p className="text-xs text-green-600 mt-0.5 font-mono">
-                        +{viewMarginNetEuros.toFixed(2)} €
-                      </p>
-                    </div>
-
-                    {/* 5. Prix Vente HT (avec commission) - CALCULÉ comme le tableau */}
-                    <div className="bg-white rounded-lg p-4 shadow-sm border border-blue-300">
-                      <p className="text-xs text-blue-600 mb-1 font-medium">
-                        Prix Vente HT
-                      </p>
-                      <p className="text-xl font-bold text-blue-700 font-mono">
-                        {viewTotalSellingPrice.toFixed(2)} €
-                      </p>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        avec marge + comm.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Jauge de Marge avec indicateur point */}
-                  {viewItem.min_margin_rate != null &&
-                    viewItem.max_margin_rate != null && (
-                      <div className="mt-4 space-y-2">
-                        {/* Barre de marge avec point indicateur */}
-                        <div className="relative">
-                          <div className="flex h-3 w-full overflow-hidden rounded-full">
-                            <div
-                              className="bg-green-500"
-                              style={{
-                                width: `${viewItem.max_margin_rate > 0 ? ((viewItem.suggested_margin_rate || viewItem.max_margin_rate / 3) / viewItem.max_margin_rate) * 100 : 33.33}%`,
-                              }}
-                            />
-                            <div
-                              className="bg-orange-500"
-                              style={{
-                                width: `${viewItem.max_margin_rate > 0 ? ((viewItem.suggested_margin_rate || viewItem.max_margin_rate / 3) / viewItem.max_margin_rate) * 100 : 33.33}%`,
-                              }}
-                            />
-                            <div className="flex-1 bg-red-500" />
-                          </div>
-                          {/* Point indicateur de la marge actuelle */}
-                          {viewItem.max_margin_rate > 0 && (
-                            <div
-                              className="absolute top-1/2 -translate-y-1/2 transition-all"
-                              style={{
-                                left: `${Math.min((viewMarginRate / viewItem.max_margin_rate) * 100, 100)}%`,
-                              }}
-                            >
-                              <div
-                                className={`h-5 w-5 -ml-2.5 rounded-full border-2 border-white shadow-md ${marginIndicatorColors[viewMarginColor]}`}
-                              />
-                            </div>
-                          )}
-                        </div>
-                        {/* Labels min/max */}
-                        <div className="flex justify-between text-xs text-slate-500">
-                          <span>
-                            Min: {viewItem.min_margin_rate.toFixed(0)}%
-                          </span>
-                          {viewItem.suggested_margin_rate != null && (
-                            <span className="text-green-600 font-medium">
-                              Suggéré:{' '}
-                              {viewItem.suggested_margin_rate.toFixed(0)}%
-                            </span>
-                          )}
-                          <span>
-                            Max: {viewItem.max_margin_rate.toFixed(0)}%
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                </div>
-              );
-            })()}
-
-            {/* Section Informations Complémentaires */}
-            <div className="bg-slate-50 rounded-xl border border-slate-200 p-6">
-              <h3 className="text-lg font-semibold text-slate-800 mb-4">
-                Informations Complémentaires
-              </h3>
-
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                {viewItem.product?.supplier_name && (
-                  <div>
-                    <p className="text-slate-500 mb-1">Fournisseur</p>
-                    <p className="font-medium text-slate-800">
-                      {viewItem.product.supplier_name}
-                    </p>
-                  </div>
-                )}
-
-                {viewItem.product?.weight_kg && (
-                  <div>
-                    <p className="text-slate-500 mb-1">Poids</p>
-                    <p className="font-medium text-slate-800">
-                      {viewItem.product.weight_kg} kg
-                    </p>
-                  </div>
-                )}
-
-                {viewItem.product?.dimensions_cm && (
-                  <div>
-                    <p className="text-slate-500 mb-1">Dimensions</p>
-                    <p className="font-medium text-slate-800">
-                      {(() => {
-                        const d = viewItem.product.dimensions_cm;
-                        const parts: string[] = [];
-                        if (d.length || d.longueur || d.L)
-                          parts.push(`L: ${d.length || d.longueur || d.L} cm`);
-                        if (d.width || d.largeur || d.l)
-                          parts.push(`l: ${d.width || d.largeur || d.l} cm`);
-                        if (d.height || d.hauteur || d.H || d.h)
-                          parts.push(
-                            `H: ${d.height || d.hauteur || d.H || d.h} cm`
-                          );
-                        if (d.diameter || d.diametre)
-                          parts.push(`Ø: ${d.diameter || d.diametre} cm`);
-                        return parts.length > 0
-                          ? parts.join(' × ')
-                          : JSON.stringify(d);
-                      })()}
-                    </p>
-                  </div>
-                )}
-
-                {viewItem.product?.category_name && (
-                  <div>
-                    <p className="text-slate-500 mb-1">Sous-catégorie</p>
-                    <p className="font-medium text-slate-800">
-                      {viewItem.product.category_name}
-                    </p>
-                  </div>
-                )}
-
-                {viewItem.product?.product_status && (
-                  <div>
-                    <p className="text-slate-500 mb-1">Statut Produit</p>
-                    <p className="font-medium text-slate-800 capitalize">
-                      {viewItem.product.product_status}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Footer Buttons */}
-            <DialogFooter className="pt-4 border-t gap-2">
-              {viewItem.channel_pricing_id && (
-                <Link
-                  href={`/canaux-vente/linkme/catalogue/${viewItem.channel_pricing_id}`}
-                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium border border-blue-300 bg-blue-50 hover:bg-blue-100 text-blue-700 h-10 px-4 py-2 transition-colors"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  Voir dans catalogue
-                </Link>
-              )}
-              <Button
-                variant="outline"
-                onClick={() => setIsViewModalOpen(false)}
-              >
-                Fermer
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+      {/* Modal Vue Produit (READ-ONLY) - Utilise le composant unifié */}
+      <SelectionProductDetailModal
+        open={isViewModalOpen}
+        onOpenChange={setIsViewModalOpen}
+        item={viewItem}
+        mode="view"
+      />
 
       {/* Modal Édition Produit (avec jauge de marge interactive) - Pencil button */}
       <SelectionProductDetailModal

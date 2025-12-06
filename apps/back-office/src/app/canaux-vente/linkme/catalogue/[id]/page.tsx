@@ -3,7 +3,7 @@
 import { useParams, useRouter } from 'next/navigation';
 
 import { Card, CardContent, Button, Skeleton } from '@verone/ui';
-import { ArrowLeft, AlertCircle } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Users } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
@@ -166,6 +166,24 @@ export default function LinkMeProductDetailPage() {
           />
         </CardContent>
       </Card>
+
+      {/* Section Produit Sur Mesure (si applicable) */}
+      {product.is_sourced && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-amber-600" />
+            <span className="font-medium text-amber-800">
+              Produit sur mesure
+            </span>
+          </div>
+          <p className="text-sm text-amber-700 mt-1">
+            Exclusif à :{' '}
+            <span className="font-semibold">
+              {product.enseigne_name || product.assigned_client_name}
+            </span>
+          </p>
+        </div>
+      )}
 
       {/* Section 2 : Deux colonnes asymétriques (60% / 40%) */}
       <div className="grid md:grid-cols-[3fr_2fr] gap-6">

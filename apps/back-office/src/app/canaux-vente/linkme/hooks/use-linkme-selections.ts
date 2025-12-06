@@ -66,13 +66,12 @@ export interface SelectionDetail {
   slug: string;
   description: string | null;
   image_url: string | null;
-  is_public: boolean | null;
   share_token: string | null;
   products_count: number | null;
   views_count: number | null;
   orders_count: number | null;
   total_revenue: number | null;
-  status: string | null;
+  archived_at: string | null; // NULL = active, timestamp = archivée
   published_at: string | null;
   created_at: string | null;
   updated_at: string | null;
@@ -103,8 +102,7 @@ export interface SourcedProduct {
 export interface UpdateSelectionData {
   name?: string;
   description?: string | null;
-  status?: 'draft' | 'active' | 'archived';
-  is_public?: boolean;
+  archived_at?: string | null;
 }
 
 export interface AddProductData {
@@ -369,7 +367,7 @@ export function useUpdateSelection() {
 
 /**
  * Hook: Ajouter un produit à la sélection
- * Utilise la fonction RPC SECURITY DEFINER pour contourner les problèmes RLS
+ * Utilise l'API Route avec supabaseAdmin pour bypass RLS
  */
 export function useAddProductToSelection() {
   const queryClient = useQueryClient();
@@ -383,26 +381,30 @@ export function useAddProductToSelection() {
       selectionId: string;
       productData: AddProductData;
     }) => {
-      // Utiliser la fonction RPC SECURITY DEFINER qui gère tout:
-      // - Vérification permissions (staff ou affiliate owner)
+      // Utiliser l'API Route qui gère tout avec supabaseAdmin:
+      // - Vérification sélection et produit existent
+      // - Vérification pas de doublon
       // - Calcul display_order
       // - Insert dans linkme_selection_items
       // - Mise à jour products_count
-      // Note: RPC function exists in DB but not in TypeScript types - use any cast
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any).rpc(
-        'add_product_to_selection',
-        {
-          p_selection_id: selectionId,
-          p_product_id: productData.product_id,
-          p_base_price_ht: productData.base_price_ht,
-          p_margin_rate: productData.margin_rate,
-        }
-      );
+      const response = await fetch('/api/linkme/selections/add-item', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          selection_id: selectionId,
+          product_id: productData.product_id,
+          base_price_ht: productData.base_price_ht,
+          margin_rate: productData.margin_rate,
+        }),
+      });
 
-      if (error) throw error;
+      const data = await response.json();
 
-      return data; // Retourne l'ID du nouvel item
+      if (!response.ok) {
+        throw new Error(data.message || 'Erreur ajout produit');
+      }
+
+      return data.item?.id; // Retourne l'ID du nouvel item
     },
     onSuccess: (_, { selectionId }) => {
       queryClient.invalidateQueries({
@@ -414,11 +416,11 @@ export function useAddProductToSelection() {
         description: 'Le produit a été ajouté à la sélection.',
       });
     },
-    onError: error => {
+    onError: (error: Error) => {
       console.error('Error adding product:', error);
       toast({
         title: 'Erreur',
-        description: "Impossible d'ajouter le produit.",
+        description: error.message || "Impossible d'ajouter le produit.",
         variant: 'destructive',
       });
     },
@@ -426,7 +428,9 @@ export function useAddProductToSelection() {
 }
 
 /**
- * Hook: Retirer un produit de la sélection
+ * Hook: Retirer un produit de la sélection (Hard Delete)
+ * Supprime définitivement l'item de la sélection.
+ * L'historique des ventes est préservé dans les tables orders/order_items.
  */
 export function useRemoveProductFromSelection() {
   const queryClient = useQueryClient();
@@ -440,6 +444,7 @@ export function useRemoveProductFromSelection() {
       selectionId: string;
       itemId: string;
     }) => {
+      // Hard Delete : suppression définitive de l'item
       const { error } = await supabase
         .from('linkme_selection_items')
         .delete()
@@ -462,11 +467,19 @@ export function useRemoveProductFromSelection() {
         description: 'Le produit a été retiré de la sélection.',
       });
     },
-    onError: error => {
-      console.error('Error removing product:', error);
+    onError: (error: unknown) => {
+      console.error('Error removing product:', {
+        error,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        details: JSON.stringify(error, null, 2),
+      });
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Impossible de retirer le produit.';
       toast({
         title: 'Erreur',
-        description: 'Impossible de retirer le produit.',
+        description: errorMessage,
         variant: 'destructive',
       });
     },
@@ -508,11 +521,20 @@ export function useUpdateProductMargin() {
         description: 'Le taux de marque a été enregistré.',
       });
     },
-    onError: error => {
-      console.error('Error updating margin:', error);
+    onError: (error: unknown) => {
+      // Log détaillé pour diagnostic
+      console.error('Error updating margin:', {
+        error,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        details: JSON.stringify(error, null, 2),
+      });
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Impossible de mettre à jour la marge.';
       toast({
         title: 'Erreur',
-        description: 'Impossible de mettre à jour la marge.',
+        description: errorMessage,
         variant: 'destructive',
       });
     },
@@ -733,7 +755,7 @@ export interface SelectionSummary {
   id: string;
   name: string;
   slug: string;
-  status: string | null;
+  archived_at: string | null;
   products_count: number | null;
   affiliate_id: string;
   affiliate_name: string;
@@ -784,12 +806,12 @@ async function fetchSelectionsByEnseigne(
     affiliateNamesById[a.id] = a.display_name;
   });
 
-  // Récupérer les sélections actives de ces affiliés
+  // Récupérer les sélections actives de ces affiliés (non archivées)
   const { data: selections, error: selError } = await supabase
     .from('linkme_selections')
-    .select('id, name, slug, status, products_count, affiliate_id')
+    .select('id, name, slug, archived_at, products_count, affiliate_id')
     .in('affiliate_id', affiliateIds)
-    .in('status', ['active', 'draft']) // Exclure les archivées
+    .is('archived_at', null) // Exclure les archivées
     .order('name', { ascending: true });
 
   if (selError) {
@@ -801,7 +823,7 @@ async function fetchSelectionsByEnseigne(
     id: s.id,
     name: s.name,
     slug: s.slug,
-    status: s.status,
+    archived_at: s.archived_at,
     products_count: s.products_count,
     affiliate_id: s.affiliate_id,
     affiliate_name: affiliateNamesById[s.affiliate_id] || '',

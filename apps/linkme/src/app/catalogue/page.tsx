@@ -29,12 +29,13 @@ import {
   List,
   Plus,
   Filter,
+  Sparkles,
 } from 'lucide-react';
 
 import { AddToSelectionModal } from '../../components/catalogue/AddToSelectionModal';
 import { useAuth, type LinkMeRole } from '../../contexts/AuthContext';
 import {
-  useLinkMeCatalogProducts,
+  useCategorizedCatalogProducts,
   filterCatalogProducts,
   type LinkMeCatalogProduct,
   type CatalogFilters,
@@ -56,8 +57,17 @@ const CAN_ADD_TO_SELECTION_ROLES: LinkMeRole[] = [
 export default function CataloguePage() {
   const router = useRouter();
   const { user, linkMeRole, loading: authLoading } = useAuth();
-  const { data: products, isLoading: productsLoading } =
-    useLinkMeCatalogProducts();
+
+  // Récupérer les produits catégorisés (sur mesure + général)
+  const {
+    customProducts,
+    generalProducts,
+    allProducts,
+    isLoading: productsLoading,
+  } = useCategorizedCatalogProducts(
+    linkMeRole?.enseigne_id || null,
+    linkMeRole?.organisation_id || null
+  );
 
   // State filtres
   const [searchTerm, setSearchTerm] = useState('');
@@ -95,26 +105,37 @@ export default function CataloguePage() {
     );
   }, [linkMeRole]);
 
-  // Produits filtrés
-  const filteredProducts = useMemo(() => {
-    if (!products) return [];
-
-    const filters: CatalogFilters = {
+  // Filtres actifs
+  const filters: CatalogFilters = useMemo(
+    () => ({
       search: searchTerm || undefined,
       category: selectedCategory,
-    };
+    }),
+    [searchTerm, selectedCategory]
+  );
 
-    return filterCatalogProducts(products, filters);
-  }, [products, searchTerm, selectedCategory]);
+  // Produits sur mesure filtrés
+  const filteredCustomProducts = useMemo(() => {
+    return filterCatalogProducts(customProducts, filters);
+  }, [customProducts, filters]);
 
-  // Catégories uniques pour le filtre
+  // Produits généraux filtrés
+  const filteredGeneralProducts = useMemo(() => {
+    return filterCatalogProducts(generalProducts, filters);
+  }, [generalProducts, filters]);
+
+  // Total produits filtrés (pour affichage)
+  const totalFilteredProducts =
+    filteredCustomProducts.length + filteredGeneralProducts.length;
+
+  // Catégories uniques pour le filtre (tous produits visibles)
   const categories = useMemo(() => {
-    if (!products) return [];
+    const allVisibleProducts = [...customProducts, ...generalProducts];
     const uniqueCategories = new Set(
-      products.map(p => p.category_name).filter(Boolean) as string[]
+      allVisibleProducts.map(p => p.category_name).filter(Boolean) as string[]
     );
     return Array.from(uniqueCategories).sort();
-  }, [products]);
+  }, [customProducts, generalProducts]);
 
   // Handler ajouter à la sélection
   const handleAddToSelection = (product: LinkMeCatalogProduct) => {
@@ -227,9 +248,14 @@ export default function CataloguePage() {
           {/* Résultats + Reset */}
           <div className="flex items-center justify-between mt-4 pt-4 border-t">
             <p className="text-sm text-gray-600">
-              {filteredProducts.length} produit
-              {filteredProducts.length > 1 ? 's' : ''} trouvé
-              {filteredProducts.length > 1 ? 's' : ''}
+              {totalFilteredProducts} produit
+              {totalFilteredProducts > 1 ? 's' : ''} trouvé
+              {totalFilteredProducts > 1 ? 's' : ''}
+              {filteredCustomProducts.length > 0 && (
+                <span className="text-purple-600 ml-1">
+                  (dont {filteredCustomProducts.length} sur mesure)
+                </span>
+              )}
             </p>
 
             {(searchTerm || selectedCategory) && (
@@ -247,8 +273,8 @@ export default function CataloguePage() {
           </div>
         </div>
 
-        {/* Grille produits */}
-        {filteredProducts.length === 0 ? (
+        {/* Aucun produit */}
+        {totalFilteredProducts === 0 ? (
           <div className="text-center py-24 bg-white rounded-xl border border-gray-200">
             <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-600 font-medium">Aucun produit trouvé</p>
@@ -256,28 +282,106 @@ export default function CataloguePage() {
               Essayez de modifier vos filtres
             </p>
           </div>
-        ) : viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredProducts.map(product => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                canAddToSelection={canAddToSelection}
-                onAddToSelection={() => handleAddToSelection(product)}
-              />
-            ))}
-          </div>
         ) : (
-          <div className="bg-white rounded-xl border border-gray-200 divide-y">
-            {filteredProducts.map(product => (
-              <ProductListItem
-                key={product.id}
-                product={product}
-                canAddToSelection={canAddToSelection}
-                onAddToSelection={() => handleAddToSelection(product)}
-              />
-            ))}
-          </div>
+          <>
+            {/* Section: Produits sur mesure */}
+            {filteredCustomProducts.length > 0 && (
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
+                    <Sparkles className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900">
+                      Produits sur mesure
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                      {filteredCustomProducts.length} produit
+                      {filteredCustomProducts.length > 1 ? 's' : ''} créé
+                      {filteredCustomProducts.length > 1 ? 's' : ''}{' '}
+                      spécialement pour vous
+                    </p>
+                  </div>
+                </div>
+
+                {viewMode === 'grid' ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {filteredCustomProducts.map(product => (
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        canAddToSelection={canAddToSelection}
+                        onAddToSelection={() => handleAddToSelection(product)}
+                        showCustomBadge
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-xl border border-gray-200 divide-y">
+                    {filteredCustomProducts.map(product => (
+                      <ProductListItem
+                        key={product.id}
+                        product={product}
+                        canAddToSelection={canAddToSelection}
+                        onAddToSelection={() => handleAddToSelection(product)}
+                        showCustomBadge
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Séparateur si les deux sections existent */}
+            {filteredCustomProducts.length > 0 &&
+              filteredGeneralProducts.length > 0 && (
+                <div className="border-t border-gray-200 my-8" />
+              )}
+
+            {/* Section: Catalogue général */}
+            {filteredGeneralProducts.length > 0 && (
+              <div>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+                    <Package className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900">
+                      Catalogue général
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                      {filteredGeneralProducts.length} produit
+                      {filteredGeneralProducts.length > 1 ? 's' : ''}
+                    </p>
+                  </div>
+                </div>
+
+                {viewMode === 'grid' ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {filteredGeneralProducts.map(product => (
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        canAddToSelection={canAddToSelection}
+                        onAddToSelection={() => handleAddToSelection(product)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-xl border border-gray-200 divide-y">
+                    {filteredGeneralProducts.map(product => (
+                      <ProductListItem
+                        key={product.id}
+                        product={product}
+                        canAddToSelection={canAddToSelection}
+                        onAddToSelection={() => handleAddToSelection(product)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -315,12 +419,14 @@ interface ProductCardProps {
   product: LinkMeCatalogProduct;
   canAddToSelection: boolean;
   onAddToSelection: () => void;
+  showCustomBadge?: boolean;
 }
 
 function ProductCard({
   product,
   canAddToSelection,
   onAddToSelection,
+  showCustomBadge = false,
 }: ProductCardProps) {
   const displayTitle = product.custom_title || product.name;
   const displayDescription = product.custom_description || product.description;
@@ -345,6 +451,14 @@ function ProductCard({
           <div className="w-full h-full flex items-center justify-center">
             <Package className="h-16 w-16 text-gray-300" />
           </div>
+        )}
+
+        {/* Badge sur mesure */}
+        {showCustomBadge && (
+          <span className="absolute top-2 right-2 bg-purple-500 text-white text-xs font-bold px-2 py-1 rounded flex items-center gap-1">
+            <Sparkles className="h-3 w-3" />
+            Sur mesure
+          </span>
         )}
 
         {/* Badge vedette */}
@@ -409,12 +523,14 @@ interface ProductListItemProps {
   product: LinkMeCatalogProduct;
   canAddToSelection: boolean;
   onAddToSelection: () => void;
+  showCustomBadge?: boolean;
 }
 
 function ProductListItem({
   product,
   canAddToSelection,
   onAddToSelection,
+  showCustomBadge = false,
 }: ProductListItemProps) {
   const displayTitle = product.custom_title || product.name;
 
@@ -447,6 +563,12 @@ function ProductListItem({
           <h3 className="font-semibold text-gray-900 truncate">
             {displayTitle}
           </h3>
+          {showCustomBadge && (
+            <span className="bg-purple-100 text-purple-700 text-xs font-medium px-2 py-0.5 rounded flex items-center gap-1">
+              <Sparkles className="h-3 w-3" />
+              Sur mesure
+            </span>
+          )}
           {product.is_featured && (
             <span className="bg-yellow-100 text-yellow-700 text-xs font-medium px-2 py-0.5 rounded">
               Vedette

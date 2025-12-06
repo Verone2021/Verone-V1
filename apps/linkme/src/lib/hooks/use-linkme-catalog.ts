@@ -9,6 +9,8 @@
  * @since 2025-12-04
  */
 
+import * as React from 'react';
+
 import { useQuery } from '@tanstack/react-query';
 
 import { supabase } from '../../lib/supabase';
@@ -40,6 +42,18 @@ export interface LinkMeCatalogProduct {
   family_name: string | null;
   supplier_name: string | null;
   stock_real: number;
+  // Produits sur mesure
+  enseigne_id: string | null; // Produit exclusif à une enseigne
+  assigned_client_id: string | null; // Produit exclusif à une organisation
+  is_custom: boolean; // true si enseigne_id OU assigned_client_id
+}
+
+/**
+ * Interface résultat catégorisation produits
+ */
+export interface CategorizedProducts {
+  customProducts: LinkMeCatalogProduct[]; // Produits sur mesure
+  generalProducts: LinkMeCatalogProduct[]; // Catalogue général
 }
 
 /**
@@ -82,7 +96,9 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
         stock_real,
         product_status,
         subcategory_id,
-        supplier_id
+        supplier_id,
+        enseigne_id,
+        assigned_client_id
       )
     `
     )
@@ -175,6 +191,10 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
       costPrice > 0 ? (costPrice + ecoTax) * (1 + marginPct / 100) : 0;
     const sellingPrice = cp.custom_price_ht ?? calculatedPrice;
 
+    const enseigneId = product?.enseigne_id || null;
+    const assignedClientId = product?.assigned_client_id || null;
+    const isCustom = !!(enseigneId || assignedClientId);
+
     return {
       id: cp.id,
       product_id: cp.product_id,
@@ -195,6 +215,10 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
       family_name: categoryData?.family_name || null,
       supplier_name: supplierMap.get(product?.supplier_id) || null,
       stock_real: product?.stock_real || 0,
+      // Produits sur mesure
+      enseigne_id: enseigneId,
+      assigned_client_id: assignedClientId,
+      is_custom: isCustom,
     };
   });
 }
@@ -354,4 +378,73 @@ export function filterCatalogProducts(
 
     return true;
   });
+}
+
+/**
+ * Catégorise les produits en "sur mesure" vs "catalogue général"
+ *
+ * Logique:
+ * - Si product.enseigne_id != null ET == userEnseigneId → sur mesure
+ * - Si product.assigned_client_id != null ET == userOrganisationId → sur mesure
+ * - Si product n'a pas d'attribution exclusive → catalogue général
+ * - Si product a attribution mais pas pour cet utilisateur → FILTRÉ (invisible)
+ */
+export function categorizeProducts(
+  products: LinkMeCatalogProduct[],
+  userEnseigneId: string | null,
+  userOrganisationId: string | null
+): CategorizedProducts {
+  const customProducts: LinkMeCatalogProduct[] = [];
+  const generalProducts: LinkMeCatalogProduct[] = [];
+
+  for (const product of products) {
+    // Produit exclusif à une enseigne
+    if (product.enseigne_id) {
+      // Visible uniquement si c'est l'enseigne de l'utilisateur
+      if (product.enseigne_id === userEnseigneId) {
+        customProducts.push(product);
+      }
+      // Sinon: produit invisible pour cet utilisateur
+      continue;
+    }
+
+    // Produit exclusif à une organisation (org_independante)
+    if (product.assigned_client_id) {
+      // Visible uniquement si c'est l'organisation de l'utilisateur
+      if (product.assigned_client_id === userOrganisationId) {
+        customProducts.push(product);
+      }
+      // Sinon: produit invisible pour cet utilisateur
+      continue;
+    }
+
+    // Pas d'attribution exclusive → catalogue général (visible par tous)
+    generalProducts.push(product);
+  }
+
+  return { customProducts, generalProducts };
+}
+
+/**
+ * Hook: récupère les produits catégorisés (sur mesure + général)
+ * Filtre selon l'enseigne ou organisation de l'utilisateur
+ */
+export function useCategorizedCatalogProducts(
+  userEnseigneId: string | null,
+  userOrganisationId: string | null
+) {
+  const { data: products, isLoading, error } = useLinkMeCatalogProducts();
+
+  const categorized = React.useMemo(() => {
+    if (!products) return { customProducts: [], generalProducts: [] };
+    return categorizeProducts(products, userEnseigneId, userOrganisationId);
+  }, [products, userEnseigneId, userOrganisationId]);
+
+  return {
+    customProducts: categorized.customProducts,
+    generalProducts: categorized.generalProducts,
+    allProducts: products || [],
+    isLoading,
+    error,
+  };
 }

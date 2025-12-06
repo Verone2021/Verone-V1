@@ -23,6 +23,7 @@ import { ProductInfoSection } from '@verone/products';
 import { SampleRequirementSection } from '@verone/products';
 import { SupplierEditSection } from '@verone/products';
 import { WeightEditSection } from '@verone/products';
+import { ClientOrEnseigneSelector } from '@verone/products';
 import { StockEditSection } from '@verone/stock';
 import { StockStatusCompact } from '@verone/stock';
 import type { Database } from '@verone/types';
@@ -52,6 +53,7 @@ import {
   Clock,
   Info,
   Building2,
+  Sparkles,
 } from 'lucide-react';
 
 // Champs obligatoires pour un produit complet
@@ -148,9 +150,15 @@ interface Product {
   updated_at: string;
   organisation_id: string;
   enseigne_id: string | null;
+  assigned_client_id: string | null;
   enseigne?: {
     id: string;
     name: string;
+  } | null;
+  assigned_client?: {
+    id: string;
+    legal_name: string;
+    trade_name: string | null;
   } | null;
   supplier?: {
     id: string;
@@ -235,6 +243,11 @@ export default function ProductDetailPage() {
           enseigne:enseignes!products_enseigne_id_fkey(
             id,
             name
+          ),
+          assigned_client:organisations!products_assigned_client_id_fkey(
+            id,
+            legal_name,
+            trade_name
           ),
           supplier:organisations!products_supplier_id_fkey(
             id,
@@ -386,7 +399,8 @@ export default function ProductDetailPage() {
     ]
   );
 
-  // Calcul sourcing (interne vs client)
+  // Calcul sourcing (interne vs client/sur mesure)
+  // Logique: enseigne_id OU assigned_client_id = produit sur mesure
   const sourcing = useMemo((): {
     type: 'interne' | 'client';
     clientType?: 'enseigne' | 'organisation';
@@ -401,16 +415,18 @@ export default function ProductDetailPage() {
         clientId: product.enseigne.id,
       };
     }
-    if (product?.supplier?.type === 'customer') {
+    if (product?.assigned_client) {
       return {
         type: 'client',
         clientType: 'organisation',
-        clientName: product.supplier.trade_name || product.supplier.legal_name,
-        clientId: product.supplier.id,
+        clientName:
+          product.assigned_client.trade_name ||
+          product.assigned_client.legal_name,
+        clientId: product.assigned_client.id,
       };
     }
     return { type: 'interne' };
-  }, [product?.enseigne, product?.supplier]);
+  }, [product?.enseigne, product?.assigned_client]);
 
   // État de chargement
   if (loading) {
@@ -600,6 +616,59 @@ export default function ProductDetailPage() {
               }}
               onUpdate={handleProductUpdate as any}
             />
+
+            {/* Section: Attribution client (produit sur mesure) */}
+            <div className="mt-6 pt-6 border-t border-neutral-200">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h4 className="text-sm font-medium text-neutral-900 flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-purple-600" />
+                    Attribution client (produit sur mesure)
+                  </h4>
+                  <p className="text-xs text-neutral-500 mt-0.5">
+                    Assignez ce produit à une enseigne ou organisation pour le
+                    rendre exclusif
+                  </p>
+                </div>
+                <Badge
+                  variant={
+                    sourcing.type === 'client' ? 'customer' : 'secondary'
+                  }
+                  className="flex items-center gap-1"
+                >
+                  {sourcing.type === 'client' ? (
+                    <>
+                      <Sparkles className="h-3 w-3" />
+                      Sur mesure
+                    </>
+                  ) : (
+                    <>
+                      <Package className="h-3 w-3" />
+                      Catalogue général
+                    </>
+                  )}
+                </Badge>
+              </div>
+
+              <ClientOrEnseigneSelector
+                enseigneId={product.enseigne_id}
+                organisationId={product.assigned_client_id}
+                onEnseigneChange={(enseigneId, _enseigneName, _parentOrgId) => {
+                  handleProductUpdate({
+                    enseigne_id: enseigneId,
+                    assigned_client_id: null, // Reset l'autre si on sélectionne une enseigne
+                  });
+                }}
+                onOrganisationChange={(organisationId, _organisationName) => {
+                  handleProductUpdate({
+                    assigned_client_id: organisationId,
+                    enseigne_id: null, // Reset l'autre si on sélectionne une organisation
+                  });
+                }}
+                label=""
+                className="max-w-md"
+              />
+            </div>
           </ProductDetailAccordion>
 
           {/* Accordion 2: Descriptions */}

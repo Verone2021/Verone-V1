@@ -34,6 +34,8 @@ import {
   LayoutGrid,
   List,
   Eye,
+  Users,
+  ShoppingBag,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -71,21 +73,34 @@ export default function LinkMeCataloguePage() {
   // State: Modal ajout produits
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  // Hooks
-  const { data: catalogProducts, isLoading: catalogLoading } =
+  // State: Onglet actif (général vs sourcés)
+  const [activeTab, setActiveTab] = useState<'general' | 'sourced'>('general');
+
+  // Hooks - Un seul hook pour tous les produits
+  const { data: allCatalogProducts, isLoading: catalogLoading } =
     useLinkMeCatalogProducts();
   const addProductsMutation = useAddProductsToCatalog();
   const toggleEnabledMutation = useToggleProductEnabled();
   const toggleFeaturedMutation = useToggleProductFeatured();
 
+  // Séparer les produits par is_sourced (catalogue général vs sur mesure)
+  const generalCatalogProducts = useMemo(
+    () => (allCatalogProducts || []).filter(p => !p.is_sourced),
+    [allCatalogProducts]
+  );
+  const sourcingProducts = useMemo(
+    () => (allCatalogProducts || []).filter(p => p.is_sourced),
+    [allCatalogProducts]
+  );
+
   // Produits déjà dans le catalogue (IDs) - pour exclure du sélecteur
   const catalogProductIds = useMemo(() => {
-    return catalogProducts?.map(p => p.product_id) || [];
-  }, [catalogProducts]);
+    return allCatalogProducts?.map(p => p.product_id) || [];
+  }, [allCatalogProducts]);
 
-  // Produits filtrés
-  const filteredProducts = useMemo(() => {
-    return (catalogProducts || []).filter(product => {
+  // Produits catalogue général filtrés
+  const filteredCatalogProducts = useMemo(() => {
+    return (generalCatalogProducts || []).filter(product => {
       // Recherche
       if (searchTerm) {
         const search = searchTerm.toLowerCase();
@@ -107,17 +122,46 @@ export default function LinkMeCataloguePage() {
 
       return true;
     });
-  }, [catalogProducts, searchTerm, statusFilter, subcategoryFilter]);
+  }, [generalCatalogProducts, searchTerm, statusFilter, subcategoryFilter]);
+
+  // Produits sur mesure filtrés (même type LinkMeCatalogProduct)
+  const filteredSourcingProducts = useMemo(() => {
+    return (sourcingProducts || []).filter(product => {
+      // Recherche
+      if (searchTerm) {
+        const search = searchTerm.toLowerCase();
+        const matchName = product.product_name.toLowerCase().includes(search);
+        const matchRef = product.product_reference
+          .toLowerCase()
+          .includes(search);
+        if (!matchName && !matchRef) return false;
+      }
+
+      // Statut
+      if (statusFilter === 'enabled' && !product.is_enabled) return false;
+      if (statusFilter === 'disabled' && product.is_enabled) return false;
+
+      // Sous-catégorie (filtre hiérarchique)
+      if (subcategoryFilter && product.subcategory_id !== subcategoryFilter) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [sourcingProducts, searchTerm, statusFilter, subcategoryFilter]);
 
   // Stats
   const stats = useMemo(() => {
-    const products = catalogProducts || [];
+    const allProducts = allCatalogProducts || [];
     return {
-      total: products.length,
-      enabled: products.filter(p => p.is_enabled).length,
-      featured: products.filter(p => p.is_featured).length,
+      total: allProducts.length,
+      enabled: allProducts.filter(p => p.is_enabled).length,
+      featured: allProducts.filter(p => p.is_featured).length,
+      // Compteurs par onglet
+      generalCount: generalCatalogProducts.length,
+      sourcedCount: sourcingProducts.length,
     };
-  }, [catalogProducts]);
+  }, [allCatalogProducts, generalCatalogProducts, sourcingProducts]);
 
   // Handlers
   const handleToggleEnabled = async (product: LinkMeCatalogProduct) => {
@@ -165,6 +209,7 @@ export default function LinkMeCataloguePage() {
     }
   };
 
+  // Loading: un seul état pour tout le catalogue
   if (catalogLoading) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -247,6 +292,54 @@ export default function LinkMeCataloguePage() {
           </Card>
         </div>
 
+        {/* Onglets: Catalogue Général vs Produits Sur Mesure */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => setActiveTab('general')}
+            className={cn(
+              'flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors',
+              activeTab === 'general'
+                ? 'bg-purple-600 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            )}
+          >
+            <ShoppingBag className="h-4 w-4" />
+            Catalogue général
+            <span
+              className={cn(
+                'px-2 py-0.5 rounded-full text-xs font-bold',
+                activeTab === 'general'
+                  ? 'bg-white/20 text-white'
+                  : 'bg-gray-200 text-gray-700'
+              )}
+            >
+              {stats.generalCount}
+            </span>
+          </button>
+          <button
+            onClick={() => setActiveTab('sourced')}
+            className={cn(
+              'flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors',
+              activeTab === 'sourced'
+                ? 'bg-amber-600 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            )}
+          >
+            <Users className="h-4 w-4" />
+            Produits sur mesure
+            <span
+              className={cn(
+                'px-2 py-0.5 rounded-full text-xs font-bold',
+                activeTab === 'sourced'
+                  ? 'bg-white/20 text-white'
+                  : 'bg-gray-200 text-gray-700'
+              )}
+            >
+              {stats.sourcedCount}
+            </span>
+          </button>
+        </div>
+
         {/* Filtres */}
         <Card>
           <CardContent className="pt-4">
@@ -289,9 +382,21 @@ export default function LinkMeCataloguePage() {
 
             <div className="flex items-center justify-between mt-4 pt-4 border-t">
               <p className="text-sm text-gray-600">
-                {filteredProducts.length} produit
-                {filteredProducts.length > 1 ? 's' : ''} affiché
-                {filteredProducts.length > 1 ? 's' : ''}
+                {activeTab === 'general'
+                  ? filteredCatalogProducts.length
+                  : filteredSourcingProducts.length}{' '}
+                produit
+                {(activeTab === 'general'
+                  ? filteredCatalogProducts.length
+                  : filteredSourcingProducts.length) > 1
+                  ? 's'
+                  : ''}{' '}
+                affiché
+                {(activeTab === 'general'
+                  ? filteredCatalogProducts.length
+                  : filteredSourcingProducts.length) > 1
+                  ? 's'
+                  : ''}
               </p>
 
               <div className="flex items-center gap-2">
@@ -344,28 +449,320 @@ export default function LinkMeCataloguePage() {
           </CardContent>
         </Card>
 
-        {/* Produits */}
-        {filteredProducts.length === 0 ? (
-          <div className="text-center py-24 border-2 border-dashed border-gray-300 rounded-lg bg-white">
-            <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+        {/* Produits - Rendu conditionnel selon onglet */}
+        {activeTab === 'general' ? (
+          /* ========== ONGLET CATALOGUE GÉNÉRAL ========== */
+          filteredCatalogProducts.length === 0 ? (
+            <div className="text-center py-24 border-2 border-dashed border-gray-300 rounded-lg bg-white">
+              <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600 font-medium">
+                Aucun produit dans le catalogue
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
+                Cliquez sur &quot;Ajouter des produits&quot; pour commencer
+              </p>
+            </div>
+          ) : viewMode === 'grid' ? (
+            /* VUE GRILLE - Catalogue Général */
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredCatalogProducts.map(product => (
+                <Card
+                  key={product.id}
+                  className={cn(
+                    'border-2 transition-all duration-150',
+                    !product.is_enabled
+                      ? 'border-gray-200 bg-gray-50 opacity-75'
+                      : 'border-gray-200 hover:border-gray-300'
+                  )}
+                >
+                  <CardContent className="p-4 space-y-3">
+                    {/* Header: Thumbnail + Info */}
+                    <div className="flex items-start gap-3">
+                      <ProductThumbnail
+                        src={product.product_image_url}
+                        alt={product.product_name}
+                        size="md"
+                        className="flex-shrink-0"
+                      />
+
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-xs text-black truncate">
+                          {product.product_name}
+                        </h3>
+                        <p className="text-xs text-gray-500 font-mono">
+                          {product.product_reference}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          {product.is_featured && (
+                            <Badge
+                              variant="outline"
+                              className="text-xs border-yellow-500 text-yellow-700 bg-yellow-50"
+                            >
+                              Vedette
+                            </Badge>
+                          )}
+                          {product.is_enabled ? (
+                            <Badge variant="success" className="text-xs">
+                              Actif
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary" className="text-xs">
+                              Inactif
+                            </Badge>
+                          )}
+                        </div>
+                        {/* Badge produit sourcé avec enseigne/organisation */}
+                        {product.is_sourced && (
+                          <div className="mt-1">
+                            <Badge
+                              variant="outline"
+                              className="text-xs border-amber-500 text-amber-700 bg-amber-50"
+                            >
+                              <Users className="h-3 w-3 mr-1" />
+                              {product.enseigne_name ||
+                                product.assigned_client_name}
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Complétude */}
+                    {(() => {
+                      const completeness = calculateSimpleCompleteness(product);
+                      return (
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-xs">
+                            <span
+                              className={cn(
+                                completeness === 100
+                                  ? 'text-green-600'
+                                  : 'text-amber-600'
+                              )}
+                            >
+                              {completeness}% complet
+                            </span>
+                            {completeness < 100 && (
+                              <span className="text-gray-400">Non validé</span>
+                            )}
+                          </div>
+                          <Progress
+                            value={completeness}
+                            className={cn(
+                              'h-1.5',
+                              completeness === 100
+                                ? '[&>div]:bg-green-500'
+                                : '[&>div]:bg-amber-500'
+                            )}
+                          />
+                        </div>
+                      );
+                    })()}
+
+                    {/* Footer: Stats + Action */}
+                    <div className="flex items-center justify-between pt-2 border-t">
+                      <div className="text-xs text-gray-500">
+                        <span>{product.views_count} vues</span>
+                        <span className="mx-1">•</span>
+                        <span>{product.selections_count} sél.</span>
+                      </div>
+                      <Link
+                        href={`/canaux-vente/linkme/catalogue/${product.id}`}
+                      >
+                        <IconButton
+                          variant="outline"
+                          size="sm"
+                          icon={Eye}
+                          label="Voir détails"
+                        />
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            /* VUE LISTE - Catalogue Général */
+            <Card>
+              <div className="divide-y">
+                {filteredCatalogProducts.map(product => {
+                  // Calcul du prix client LinkMe
+                  const clientPrice =
+                    product.product_selling_price_ht &&
+                    product.linkme_commission_rate !== null
+                      ? product.product_selling_price_ht *
+                        (1 + product.linkme_commission_rate / 100)
+                      : null;
+
+                  return (
+                    <div
+                      key={product.id}
+                      className={cn(
+                        'flex items-center gap-4 p-4 transition-colors',
+                        !product.is_enabled
+                          ? 'bg-gray-50 opacity-75'
+                          : 'hover:bg-gray-50'
+                      )}
+                    >
+                      {/* Thumbnail */}
+                      <ProductThumbnail
+                        src={product.product_image_url}
+                        alt={product.product_name}
+                        size="sm"
+                        className="flex-shrink-0"
+                      />
+
+                      {/* Info produit */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-xs text-black truncate">
+                            {product.product_name}
+                          </h3>
+                          {product.is_featured && (
+                            <Badge
+                              variant="outline"
+                              className="text-xs border-yellow-500 text-yellow-700 bg-yellow-50"
+                            >
+                              Vedette
+                            </Badge>
+                          )}
+                          {product.is_enabled ? (
+                            <Badge variant="success" className="text-xs">
+                              Actif
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary" className="text-xs">
+                              Inactif
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs text-gray-500 font-mono">
+                            {product.product_reference}
+                          </p>
+                          {/* Badge produit sourcé avec enseigne/organisation */}
+                          {product.is_sourced && (
+                            <Badge
+                              variant="outline"
+                              className="text-xs border-amber-500 text-amber-700 bg-amber-50"
+                            >
+                              <Users className="h-3 w-3 mr-1" />
+                              {product.enseigne_name ||
+                                product.assigned_client_name}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Prix d'achat HT */}
+                      <div className="hidden md:block text-right min-w-[70px]">
+                        <p className="text-[10px] text-gray-400">Achat HT</p>
+                        <p className="text-xs text-gray-600">
+                          {formatPrice(product.product_price_ht)}
+                        </p>
+                      </div>
+
+                      {/* Prix de vente HT (LinkMe) */}
+                      <div className="hidden md:block text-right min-w-[70px]">
+                        <p className="text-[10px] text-gray-400">Vente HT</p>
+                        {product.product_selling_price_ht ? (
+                          <p className="text-xs font-medium text-blue-600">
+                            {formatPrice(product.product_selling_price_ht)}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-gray-400">—</p>
+                        )}
+                      </div>
+
+                      {/* Commission LinkMe */}
+                      <div className="hidden lg:block text-right min-w-[50px]">
+                        <p className="text-[10px] text-gray-400">Comm.</p>
+                        {product.linkme_commission_rate !== null ? (
+                          <p className="text-xs text-purple-600">
+                            {product.linkme_commission_rate}%
+                          </p>
+                        ) : (
+                          <p className="text-xs text-gray-400">—</p>
+                        )}
+                      </div>
+
+                      {/* Prix client LinkMe (calculé) */}
+                      <div className="hidden lg:block text-right min-w-[80px]">
+                        <p className="text-[10px] text-gray-400">Prix Client</p>
+                        {clientPrice ? (
+                          <p className="text-xs font-medium text-green-600">
+                            {formatPrice(clientPrice)}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-gray-400">—</p>
+                        )}
+                      </div>
+
+                      {/* Marge de sécurité (buffer_rate) */}
+                      <div className="hidden xl:block text-right min-w-[55px]">
+                        <p className="text-[10px] text-gray-400">Marge sécu</p>
+                        {product.buffer_rate !== null ? (
+                          <p className="text-xs text-amber-600">
+                            {(product.buffer_rate * 100).toFixed(0)}%
+                          </p>
+                        ) : (
+                          <p className="text-xs text-gray-400">—</p>
+                        )}
+                      </div>
+
+                      {/* Marge suggérée */}
+                      <div className="hidden xl:block text-right min-w-[55px]">
+                        <p className="text-[10px] text-gray-400">Marge sugg.</p>
+                        {product.suggested_margin_rate !== null ? (
+                          <p className="text-xs font-medium text-emerald-600">
+                            {product.suggested_margin_rate}%
+                          </p>
+                        ) : (
+                          <p className="text-xs text-gray-400">—</p>
+                        )}
+                      </div>
+
+                      {/* Lien détail */}
+                      <Link
+                        href={`/canaux-vente/linkme/catalogue/${product.id}`}
+                      >
+                        <IconButton
+                          variant="outline"
+                          size="sm"
+                          icon={Eye}
+                          label="Voir détails"
+                        />
+                      </Link>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          )
+        ) : /* ========== ONGLET PRODUITS SUR MESURE ========== */
+        /* Même rendu que Catalogue Général (type LinkMeCatalogProduct) */
+        filteredSourcingProducts.length === 0 ? (
+          <div className="text-center py-24 border-2 border-dashed border-amber-300 rounded-lg bg-amber-50/50">
+            <Users className="h-16 w-16 text-amber-400 mx-auto mb-4" />
             <p className="text-gray-600 font-medium">
-              Aucun produit dans le catalogue
+              Aucun produit sur mesure
             </p>
             <p className="text-sm text-gray-500 mt-1">
-              Cliquez sur &quot;Ajouter des produits&quot; pour commencer
+              Les produits sourcés pour une enseigne ou organisation
+              apparaîtront ici
             </p>
           </div>
         ) : viewMode === 'grid' ? (
-          /* VUE GRILLE */
+          /* VUE GRILLE - Produits Sur Mesure (identique à Catalogue Général) */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredProducts.map(product => (
+            {filteredSourcingProducts.map(product => (
               <Card
                 key={product.id}
                 className={cn(
                   'border-2 transition-all duration-150',
                   !product.is_enabled
                     ? 'border-gray-200 bg-gray-50 opacity-75'
-                    : 'border-gray-200 hover:border-gray-300'
+                    : 'border-amber-200 hover:border-amber-300'
                 )}
               >
                 <CardContent className="p-4 space-y-3">
@@ -385,7 +782,7 @@ export default function LinkMeCataloguePage() {
                       <p className="text-xs text-gray-500 font-mono">
                         {product.product_reference}
                       </p>
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
                         {product.is_featured && (
                           <Badge
                             variant="outline"
@@ -403,6 +800,17 @@ export default function LinkMeCataloguePage() {
                             Inactif
                           </Badge>
                         )}
+                      </div>
+                      {/* Badge produit sur mesure avec enseigne/organisation */}
+                      <div className="mt-1">
+                        <Badge
+                          variant="outline"
+                          className="text-xs border-amber-500 text-amber-700 bg-amber-50"
+                        >
+                          <Users className="h-3 w-3 mr-1" />
+                          {product.enseigne_name ||
+                            product.assigned_client_name}
+                        </Badge>
                       </div>
                     </div>
                   </div>
@@ -460,10 +868,10 @@ export default function LinkMeCataloguePage() {
             ))}
           </div>
         ) : (
-          /* VUE LISTE */
+          /* VUE LISTE - Produits Sur Mesure (identique à Catalogue Général) */
           <Card>
             <div className="divide-y">
-              {filteredProducts.map(product => {
+              {filteredSourcingProducts.map(product => {
                 // Calcul du prix client LinkMe
                 const clientPrice =
                   product.product_selling_price_ht &&
@@ -479,7 +887,7 @@ export default function LinkMeCataloguePage() {
                       'flex items-center gap-4 p-4 transition-colors',
                       !product.is_enabled
                         ? 'bg-gray-50 opacity-75'
-                        : 'hover:bg-gray-50'
+                        : 'hover:bg-amber-50/30'
                     )}
                   >
                     {/* Thumbnail */}
@@ -514,9 +922,20 @@ export default function LinkMeCataloguePage() {
                           </Badge>
                         )}
                       </div>
-                      <p className="text-xs text-gray-500 font-mono">
-                        {product.product_reference}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs text-gray-500 font-mono">
+                          {product.product_reference}
+                        </p>
+                        {/* Badge produit sur mesure avec enseigne/organisation */}
+                        <Badge
+                          variant="outline"
+                          className="text-xs border-amber-500 text-amber-700 bg-amber-50"
+                        >
+                          <Users className="h-3 w-3 mr-1" />
+                          {product.enseigne_name ||
+                            product.assigned_client_name}
+                        </Badge>
+                      </div>
                     </div>
 
                     {/* Prix d'achat HT */}
