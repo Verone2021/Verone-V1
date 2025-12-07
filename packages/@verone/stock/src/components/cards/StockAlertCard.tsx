@@ -59,26 +59,34 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
   };
 
   const getSeverityColor = () => {
-    // Stock prévisionnel basé sur PO VALIDÉES uniquement (pas les brouillons)
-    // stock_forecasted_in = quantité des PO validées (en transit)
-    const stock_previsionnel_valide =
+    // ✅ CALCUL STOCK PRÉVISIONNEL
+    // Formule : stock_real + stock_forecasted_in - stock_forecasted_out
+    const stock_previsionnel =
       alert.stock_real +
       (alert.stock_forecasted_in || 0) -
       (alert.stock_forecasted_out || 0);
 
-    // PRIORITÉ 1 : Si PO brouillon existe → ORANGE (en attente de validation)
-    // Un brouillon indique qu'une action est en cours mais pas encore confirmée
-    if (alert.is_in_draft) {
-      return 'border-orange-500 !bg-orange-50';
-    }
+    // ✅ WORKFLOW COMPLET : ROUGE (brouillon ou insuffisant) → VERT (validé et suffisant) → DISPARAÎT (réceptionné)
 
-    // PRIORITÉ 2 : Si PO validée couvre le besoin → VERT
-    if (stock_previsionnel_valide >= alert.min_stock) {
+    // 🟢 VERT si commande validée ET stock prévisionnel >= min_stock
+    if (alert.validated && stock_previsionnel >= alert.min_stock) {
       return 'border-green-600 !bg-green-50';
     }
 
-    // PRIORITÉ 3 : Sinon → ROUGE (besoin non couvert, aucune commande)
-    return 'border-red-600 !bg-red-50';
+    // 🔴 ROUGE si commande brouillon OU stock prévisionnel < min_stock
+    if (alert.is_in_draft || stock_previsionnel < alert.min_stock) {
+      return 'border-red-600 !bg-red-50';
+    }
+
+    // Couleurs selon sévérité (cas par défaut - normalement pas atteint)
+    switch (alert.severity) {
+      case 'critical':
+        return 'border-red-600 !bg-red-50';
+      case 'warning':
+        return 'border-orange-600 !bg-orange-50';
+      default:
+        return 'border-blue-600 !bg-blue-50';
+    }
   };
 
   const getAlertTypeLabel = () => {
