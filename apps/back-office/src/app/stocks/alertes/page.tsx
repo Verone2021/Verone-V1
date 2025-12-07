@@ -239,16 +239,24 @@ export default function StockAlertesPage() {
   };
 
   // Séparer alertes actives vs historique
-  // ✅ FIX 2025-11-28 - Revenir à la logique originale basée sur stock_real < min_stock
-  // Le hook utilise stock_alert_tracking, pas la vue avec alert_color
-  // Actives = stock_real < min_stock (besoin action)
-  // Historique = stock_real >= min_stock (résolu)
-  const activeAlerts = mappedAlerts.filter(
-    alert => (alert.currentStock ?? 0) < (alert.minStock ?? 0)
-  );
-  const historiqueAlerts = mappedAlerts.filter(
-    alert => (alert.currentStock ?? 0) >= (alert.minStock ?? 0)
-  );
+  // ✅ FIX 2025-12-07 - Utiliser stock PRÉVISIONNEL (pas stock_real)
+  // Stock prévisionnel = stock_real + forecasted_in - forecasted_out
+  // Actives = stock_previsionnel < min_stock (besoin action)
+  // Historique = stock_previsionnel >= min_stock (résolu)
+  const activeAlerts = mappedAlerts.filter(alert => {
+    const stockPrevisionnel =
+      (alert.currentStock ?? 0) +
+      (alert.stock_forecasted_in ?? 0) -
+      (alert.stock_forecasted_out ?? 0);
+    return stockPrevisionnel < (alert.minStock ?? 0);
+  });
+  const historiqueAlerts = mappedAlerts.filter(alert => {
+    const stockPrevisionnel =
+      (alert.currentStock ?? 0) +
+      (alert.stock_forecasted_in ?? 0) -
+      (alert.stock_forecasted_out ?? 0);
+    return stockPrevisionnel >= (alert.minStock ?? 0);
+  });
 
   // Filtres appliqués selon onglet actif
   const alertsToFilter =

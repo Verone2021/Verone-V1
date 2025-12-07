@@ -34,7 +34,7 @@ export default function StocksDashboardPage() {
 
   // Hooks pour widgets
   const {
-    activeAlerts,
+    alerts: activeAlerts, // Renommé pour compatibilité
     criticalAlerts,
     loading: alertsLoading,
     fetchAlerts,

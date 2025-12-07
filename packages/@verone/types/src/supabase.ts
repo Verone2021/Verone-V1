@@ -3025,6 +3025,7 @@ export type Database = {
           language_preference: string | null;
           last_name: string;
           notes: string | null;
+          organisation_id: string | null;
           payment_terms_notes: string | null;
           payment_terms_type:
             | Database['public']['Enums']['payment_terms_type']
@@ -3063,6 +3064,7 @@ export type Database = {
           language_preference?: string | null;
           last_name: string;
           notes?: string | null;
+          organisation_id?: string | null;
           payment_terms_notes?: string | null;
           payment_terms_type?:
             | Database['public']['Enums']['payment_terms_type']
@@ -3101,6 +3103,7 @@ export type Database = {
           language_preference?: string | null;
           last_name?: string;
           notes?: string | null;
+          organisation_id?: string | null;
           payment_terms_notes?: string | null;
           payment_terms_type?:
             | Database['public']['Enums']['payment_terms_type']
@@ -3127,6 +3130,13 @@ export type Database = {
             columns: ['enseigne_id'];
             isOneToOne: false;
             referencedRelation: 'enseignes_with_stats';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'individual_customers_organisation_id_fkey';
+            columns: ['organisation_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
             referencedColumns: ['id'];
           },
           {
@@ -6026,6 +6036,8 @@ export type Database = {
       };
       sales_orders: {
         Row: {
+          affiliate_total_ht: number | null;
+          affiliate_total_ttc: number | null;
           applied_discount_codes: string[] | null;
           billing_address: Json | null;
           cancellation_reason: string | null;
@@ -6049,6 +6061,7 @@ export type Database = {
           handling_cost_ht: number | null;
           id: string;
           insurance_cost_ht: number | null;
+          linkme_selection_id: string | null;
           notes: string | null;
           order_number: string;
           paid_amount: number | null;
@@ -6074,6 +6087,8 @@ export type Database = {
           warehouse_exit_by: string | null;
         };
         Insert: {
+          affiliate_total_ht?: number | null;
+          affiliate_total_ttc?: number | null;
           applied_discount_codes?: string[] | null;
           billing_address?: Json | null;
           cancellation_reason?: string | null;
@@ -6097,6 +6112,7 @@ export type Database = {
           handling_cost_ht?: number | null;
           id?: string;
           insurance_cost_ht?: number | null;
+          linkme_selection_id?: string | null;
           notes?: string | null;
           order_number: string;
           paid_amount?: number | null;
@@ -6122,6 +6138,8 @@ export type Database = {
           warehouse_exit_by?: string | null;
         };
         Update: {
+          affiliate_total_ht?: number | null;
+          affiliate_total_ttc?: number | null;
           applied_discount_codes?: string[] | null;
           billing_address?: Json | null;
           cancellation_reason?: string | null;
@@ -6145,6 +6163,7 @@ export type Database = {
           handling_cost_ht?: number | null;
           id?: string;
           insurance_cost_ht?: number | null;
+          linkme_selection_id?: string | null;
           notes?: string | null;
           order_number?: string;
           paid_amount?: number | null;
@@ -6246,6 +6265,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'v_users_with_roles';
             referencedColumns: ['user_id'];
+          },
+          {
+            foreignKeyName: 'sales_orders_linkme_selection_id_fkey';
+            columns: ['linkme_selection_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_selections';
+            referencedColumns: ['id'];
           },
           {
             foreignKeyName: 'sales_orders_shipped_by_fkey';

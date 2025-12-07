@@ -60,7 +60,10 @@ export interface CreateOrganisationInput {
 }
 
 export interface CreateIndividualCustomerInput {
-  enseigne_id: string;
+  /** ID de l'enseigne (optionnel pour org_independante) */
+  enseigne_id?: string | null;
+  /** ID de l'organisation (pour org_independante sans enseigne) */
+  organisation_id?: string | null;
   first_name: string;
   last_name: string;
   email?: string | null;
@@ -150,6 +153,53 @@ async function fetchEnseigneIndividualCustomers(
   }));
 }
 
+/**
+ * Récupère les clients particuliers d'une organisation indépendante
+ * Cherche par organisation_id OU source_affiliate_id
+ */
+async function fetchOrganisationIndividualCustomers(
+  organisationId: string,
+  affiliateId?: string
+): Promise<EnseigneIndividualCustomer[]> {
+  // Requête avec OR pour trouver clients par organisation_id OU source_affiliate_id
+  let query = supabase
+    .from('individual_customers')
+    .select(
+      'id, first_name, last_name, email, phone, address_line1, city, postal_code, created_at, source_type, source_affiliate_id'
+    );
+
+  // Construire le filtre OR
+  if (affiliateId) {
+    query = query.or(
+      `organisation_id.eq.${organisationId},source_affiliate_id.eq.${affiliateId}`
+    );
+  } else {
+    query = query.eq('organisation_id', organisationId);
+  }
+
+  const { data, error } = await query.order('last_name');
+
+  if (error) {
+    console.error('Erreur fetch individual customers organisation:', error);
+    throw error;
+  }
+
+  return (data || []).map((customer: any) => ({
+    id: customer.id,
+    first_name: customer.first_name,
+    last_name: customer.last_name,
+    full_name: `${customer.first_name} ${customer.last_name}`.trim(),
+    email: customer.email,
+    phone: customer.phone,
+    address_line1: customer.address_line1,
+    city: customer.city,
+    postal_code: customer.postal_code,
+    created_at: customer.created_at,
+    source_type: customer.source_type,
+    source_affiliate_id: customer.source_affiliate_id,
+  }));
+}
+
 // ============================================
 // HOOKS REACT-QUERY
 // ============================================
@@ -202,6 +252,108 @@ export function useLinkMeEnseigneCustomers(enseigneId: string | null) {
 }
 
 /**
+ * Hook: récupère les clients particuliers d'une organisation indépendante
+ */
+export function useLinkMeOrganisationIndividualCustomers(
+  organisationId: string | null,
+  affiliateId?: string | null
+) {
+  return useQuery({
+    queryKey: [
+      'linkme-organisation-individual-customers',
+      organisationId,
+      affiliateId,
+    ],
+    queryFn: () =>
+      fetchOrganisationIndividualCustomers(
+        organisationId!,
+        affiliateId || undefined
+      ),
+    enabled: !!organisationId,
+    staleTime: 30000,
+  });
+}
+
+// ============================================
+// TYPE AFFILIATE POUR HOOK UNIFIÉ
+// ============================================
+
+export interface LinkMeAffiliateInfo {
+  id: string;
+  enseigne_id: string | null;
+  organisation_id: string | null;
+  affiliate_type: string;
+}
+
+/**
+ * Hook unifié: récupère les clients selon le type d'affilié
+ * - Pour enseignes: organisations liées + clients particuliers via enseigne_id
+ * - Pour org_independante: clients particuliers via organisation_id
+ */
+export function useLinkMeAffiliateCustomers(
+  affiliate: LinkMeAffiliateInfo | null
+) {
+  const isEnseigne = !!affiliate?.enseigne_id;
+  const isOrgIndependante = !!affiliate?.organisation_id && !isEnseigne;
+
+  // Hook pour enseignes
+  const enseigneOrgsQuery = useLinkMeEnseigneOrganisations(
+    isEnseigne ? (affiliate?.enseigne_id ?? null) : null
+  );
+  const enseigneIndividualsQuery = useLinkMeEnseigneIndividualCustomers(
+    isEnseigne ? (affiliate?.enseigne_id ?? null) : null
+  );
+
+  // Hook pour org_independante
+  const orgIndividualsQuery = useLinkMeOrganisationIndividualCustomers(
+    isOrgIndependante ? (affiliate?.organisation_id ?? null) : null,
+    isOrgIndependante ? affiliate?.id : null
+  );
+
+  // Pour org_independante: pas d'organisations liées (c'est le point!)
+  // Les clients sont uniquement des particuliers ou des organisations externes créées
+
+  return {
+    // Pour enseignes: organisations liées
+    // Pour org_independante: liste vide (normal, pas d'orgs liées)
+    organisations: isEnseigne ? enseigneOrgsQuery.data || [] : [],
+
+    // Clients particuliers selon le type
+    individuals: isEnseigne
+      ? enseigneIndividualsQuery.data || []
+      : orgIndividualsQuery.data || [],
+
+    isLoading: isEnseigne
+      ? enseigneOrgsQuery.isLoading || enseigneIndividualsQuery.isLoading
+      : orgIndividualsQuery.isLoading,
+
+    isError: isEnseigne
+      ? enseigneOrgsQuery.isError || enseigneIndividualsQuery.isError
+      : orgIndividualsQuery.isError,
+
+    error: isEnseigne
+      ? enseigneOrgsQuery.error || enseigneIndividualsQuery.error
+      : orgIndividualsQuery.error,
+
+    refetch: () => {
+      if (isEnseigne) {
+        enseigneOrgsQuery.refetch();
+        enseigneIndividualsQuery.refetch();
+      } else {
+        orgIndividualsQuery.refetch();
+      }
+    },
+
+    // Info sur le type d'affilié (utile pour le UI)
+    affiliateType: isEnseigne
+      ? 'enseigne'
+      : isOrgIndependante
+        ? 'org_independante'
+        : null,
+  };
+}
+
+/**
  * Hook: créer une nouvelle organisation cliente pour une enseigne
  * Source automatiquement définie sur 'linkme' si appelé depuis le CMS
  */
@@ -243,7 +395,8 @@ export function useCreateEnseigneOrganisation() {
 }
 
 /**
- * Hook: créer un nouveau client particulier pour une enseigne
+ * Hook: créer un nouveau client particulier
+ * Supporte les enseignes ET les organisations indépendantes
  * Source automatiquement définie sur 'linkme' si appelé depuis le CMS
  */
 export function useCreateEnseigneIndividualCustomer() {
@@ -251,34 +404,72 @@ export function useCreateEnseigneIndividualCustomer() {
 
   return useMutation({
     mutationFn: async (input: CreateIndividualCustomerInput) => {
+      // Validation: email est REQUIRED dans la table
+      if (!input.email?.trim()) {
+        throw new Error('Email requis pour créer un client particulier');
+      }
+
+      const insertData: Record<string, unknown> = {
+        first_name: input.first_name,
+        last_name: input.last_name,
+        email: input.email.trim(), // NOT NULL - requis
+        phone: input.phone || null,
+        address_line1: input.address_line1 || null,
+        address_line2: input.address_line2 || null,
+        city: input.city || null,
+        postal_code: input.postal_code || null,
+        country: input.country || 'FR',
+        source_type: input.source_type || 'linkme',
+        source_affiliate_id: input.source_affiliate_id || null,
+      };
+
+      // enseigne_id pour les enseignes
+      if (input.enseigne_id) {
+        insertData.enseigne_id = input.enseigne_id;
+      }
+
+      // organisation_id pour les org_independante (NOUVEAU)
+      if (input.organisation_id) {
+        insertData.organisation_id = input.organisation_id;
+      }
+
+      console.log('📝 Création client particulier:', insertData);
+
       const { data, error } = await (supabase as any)
         .from('individual_customers')
-        .insert({
-          enseigne_id: input.enseigne_id,
-          first_name: input.first_name,
-          last_name: input.last_name,
-          email: input.email || null,
-          phone: input.phone || null,
-          address_line1: input.address_line1 || null,
-          address_line2: input.address_line2 || null,
-          city: input.city || null,
-          postal_code: input.postal_code || null,
-          country: input.country || 'FR',
-          source_type: input.source_type || 'linkme', // Par défaut depuis CMS LinkMe
-          source_affiliate_id: input.source_affiliate_id || null,
-        })
+        .insert(insertData)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erreur création client:', error);
+        throw error;
+      }
+
+      console.log('✅ Client créé:', data);
       return data;
     },
     onSuccess: (_, variables) => {
+      // Invalider le cache pour l'enseigne si spécifiée
+      if (variables.enseigne_id) {
+        queryClient.invalidateQueries({
+          queryKey: [
+            'linkme-enseigne-individual-customers',
+            variables.enseigne_id,
+          ],
+        });
+      }
+
+      // Invalider le cache pour l'organisation si spécifiée (NOUVEAU - org_independante)
+      if (variables.organisation_id) {
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-organisation-individual-customers'],
+        });
+      }
+
+      // Toujours invalider la liste générale des clients
       queryClient.invalidateQueries({
-        queryKey: [
-          'linkme-enseigne-individual-customers',
-          variables.enseigne_id,
-        ],
+        queryKey: ['individual-customers'],
       });
     },
   });

@@ -11,7 +11,7 @@
 
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
 
 // ID du canal LinkMe (récupéré depuis les sales_channels)
@@ -69,7 +69,6 @@ export interface LinkMeOrder {
   total_ttc: number;
   created_at: string;
   updated_at: string;
-  // Relations
   organisation?: {
     id: string;
     trade_name: string | null;
@@ -99,48 +98,6 @@ export interface LinkMeOrderItem {
 // ============================================
 // FETCH FUNCTIONS
 // ============================================
-
-/**
- * Récupère les commandes LinkMe (canal = LinkMe)
- * Note: customer_id est polymorphique (organisation OU individual)
- */
-async function fetchLinkMeOrders(): Promise<LinkMeOrder[]> {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from('sales_orders')
-    .select(
-      `
-      id,
-      order_number,
-      channel_id,
-      customer_id,
-      customer_type,
-      status,
-      payment_status,
-      total_ht,
-      total_ttc,
-      created_at,
-      updated_at
-    `
-    )
-    .eq('channel_id', LINKME_CHANNEL_ID)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('Erreur fetch commandes LinkMe:', error);
-    throw error;
-  }
-
-  // Mapper les données pour compatibilité avec l'interface LinkMeOrder
-  return (data || []).map((order: any) => ({
-    ...order,
-    // Pour compatibilité avec l'ancienne interface
-    customer_organisation_id:
-      order.customer_type === 'organization' ? order.customer_id : null,
-    individual_customer_id:
-      order.customer_type === 'individual' ? order.customer_id : null,
-  }));
-}
 
 /**
  * Crée une commande LinkMe
@@ -176,18 +133,23 @@ async function createLinkMeOrder(
     throw new Error('Impossible de générer le numéro de commande');
   }
 
-  // 2. Calculer les totaux
+  // 2. Calculer les totaux avec précision à 2 décimales
+  // Helper pour arrondir les montants monétaires
+  const roundMoney = (value: number): number => Math.round(value * 100) / 100;
+
   let totalHt = 0;
   let totalRetrocession = 0;
 
   for (const item of input.items) {
-    const lineTotal = item.quantity * item.unit_price_ht;
-    totalHt += lineTotal;
-    totalRetrocession += lineTotal * item.retrocession_rate;
+    const lineTotal = roundMoney(item.quantity * item.unit_price_ht);
+    totalHt = roundMoney(totalHt + lineTotal);
+    totalRetrocession = roundMoney(
+      totalRetrocession + lineTotal * item.retrocession_rate
+    );
   }
 
-  // TVA 20%
-  const totalTtc = totalHt * 1.2;
+  // TVA 20% avec arrondi
+  const totalTtc = roundMoney(totalHt * 1.2);
 
   // 3. Déterminer le customer_id (organisation OU individual)
   const customerId =
@@ -245,12 +207,13 @@ async function createLinkMeOrder(
     sales_order_id: order.id,
     product_id: item.product_id,
     quantity: item.quantity,
-    unit_price_ht: item.unit_price_ht,
+    unit_price_ht: roundMoney(item.unit_price_ht),
     // total_ht est GENERATED - ne pas l'insérer
-    tax_rate: 0.2, // 20% TVA
+    tax_rate: 0.2,
     retrocession_rate: item.retrocession_rate,
-    retrocession_amount:
-      item.quantity * item.unit_price_ht * item.retrocession_rate,
+    retrocession_amount: roundMoney(
+      item.quantity * item.unit_price_ht * item.retrocession_rate
+    ),
     linkme_selection_item_id: item.linkme_selection_item_id || null,
   }));
 
@@ -262,27 +225,17 @@ async function createLinkMeOrder(
     console.error('Erreur création lignes commande:', itemsError);
     // Rollback: supprimer la commande
     await supabase.from('sales_orders').delete().eq('id', order.id);
-    throw itemsError;
+    throw new Error(
+      `Erreur création lignes: ${itemsError.message || 'Erreur inconnue'}`
+    );
   }
 
-  // Note: cast to unknown first because DB response may have different column names
   return order as unknown as LinkMeOrder;
 }
 
 // ============================================
 // HOOKS REACT-QUERY
 // ============================================
-
-/**
- * Hook: récupère les commandes LinkMe
- */
-export function useLinkMeOrders() {
-  return useQuery({
-    queryKey: ['linkme-orders'],
-    queryFn: fetchLinkMeOrders,
-    staleTime: 30000,
-  });
-}
 
 /**
  * Hook: créer une commande LinkMe
@@ -293,7 +246,6 @@ export function useCreateLinkMeOrder() {
   return useMutation({
     mutationFn: createLinkMeOrder,
     onSuccess: () => {
-      // Invalider le cache pour rafraîchir les listes
       queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
       queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
     },

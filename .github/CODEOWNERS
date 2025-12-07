@@ -45,6 +45,31 @@
 /.github/CODEOWNERS @owner
 
 # ==============================================================================
+# SYSTEME ALERTES STOCK - PROTECTION CRITIQUE (2025-12-07)
+# ==============================================================================
+# Ces fichiers gerent le workflow complet des alertes stock.
+# Toute modification peut casser le systeme de suivi des ruptures.
+#
+# WORKFLOW METIER :
+# - ROUGE : Commande brouillon OU stock previsionnel < min_stock
+# - VERT  : Commande validee ET stock previsionnel >= min_stock
+# - DISPARAIT : Reception complete ET stock_real >= min_stock
+#
+# TESTS OBLIGATOIRES avant merge :
+# 1. Valider PO -> Alerte passe ROUGE -> VERT
+# 2. Devalider PO -> Alerte passe VERT -> ROUGE
+# 3. Expedition partielle SO -> Alerte RECALCULE (ne disparait pas)
+# 4. Annulation reliquat -> Alerte RECALCULE
+# 5. Reception complete -> Alerte DISPARAIT
+# ==============================================================================
+
+/packages/@verone/stock/src/hooks/use-stock-alerts.ts @owner
+/packages/@verone/stock/src/components/cards/StockAlertCard.tsx @owner
+/apps/back-office/src/app/stocks/alertes/page.tsx @owner
+/supabase/migrations/*stock_alert* @owner
+/supabase/migrations/*unified_view* @owner
+
+# ==============================================================================
 # HOOKS & COMPOSANTS CRITIQUES
 # ==============================================================================
 

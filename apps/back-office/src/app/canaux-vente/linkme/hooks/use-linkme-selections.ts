@@ -35,7 +35,9 @@ export interface SelectionItem {
     weight_kg?: number | null;
     /** Dimensions en cm (jsonb) */
     dimensions_cm?: Record<string, number | string> | null;
-    /** Sous-catégorie */
+    /** ID de la sous-catégorie (pour filtrage) */
+    subcategory_id?: string | null;
+    /** Nom de la sous-catégorie */
     category_name?: string | null;
     /** Fournisseur */
     supplier_name?: string | null;
@@ -156,7 +158,8 @@ async function fetchSelectionById(
       product:products(
         id, name, sku, cost_price, product_status,
         description, selling_points, weight, dimensions,
-        subcategory:subcategories(name),
+        subcategory_id,
+        subcategory:subcategories(id, name),
         supplier:organisations!supplier_id(trade_name, legal_name)
       )
     `
@@ -251,6 +254,8 @@ async function fetchSelectionById(
             selling_points: rawProduct.selling_points,
             weight_kg: rawProduct.weight,
             dimensions_cm: rawProduct.dimensions,
+            subcategory_id:
+              rawProduct.subcategory_id || rawProduct.subcategory?.id || null,
             category_name: rawProduct.subcategory?.name || null,
             supplier_name:
               rawProduct.supplier?.trade_name ||

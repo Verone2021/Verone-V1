@@ -403,12 +403,12 @@ export default function SalesOrdersPage() {
 
   const renderSortIcon = (column: SortColumn) => {
     if (sortColumn !== column) {
-      return <ArrowUpDown className="h-4 w-4 ml-1 inline" />;
+      return <ArrowUpDown className="h-4 w-4 opacity-50" />;
     }
     return sortDirection === 'asc' ? (
-      <ArrowUp className="h-4 w-4 ml-1 inline" />
+      <ArrowUp className="h-4 w-4" />
     ) : (
-      <ArrowDown className="h-4 w-4 ml-1 inline" />
+      <ArrowDown className="h-4 w-4" />
     );
   };
 
@@ -894,7 +894,10 @@ export default function SalesOrdersPage() {
                       className="cursor-pointer hover:bg-gray-50"
                       onClick={() => handleSort('client')}
                     >
-                      Client {renderSortIcon('client')}
+                      <span className="inline-flex items-center gap-1">
+                        Client
+                        {renderSortIcon('client')}
+                      </span>
                     </TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead className="w-20 text-center">Articles</TableHead>
@@ -902,14 +905,20 @@ export default function SalesOrdersPage() {
                       className="cursor-pointer hover:bg-gray-50"
                       onClick={() => handleSort('date')}
                     >
-                      Date {renderSortIcon('date')}
+                      <span className="inline-flex items-center gap-1">
+                        Date
+                        {renderSortIcon('date')}
+                      </span>
                     </TableHead>
                     <TableHead>Canal</TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-gray-50"
                       onClick={() => handleSort('amount')}
                     >
-                      Montant {renderSortIcon('amount')}
+                      <span className="inline-flex items-center gap-1">
+                        Montant TTC
+                        {renderSortIcon('amount')}
+                      </span>
                     </TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>

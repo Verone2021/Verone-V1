@@ -333,14 +333,13 @@ export function OrderDetailModal({
                       </>
                     )}
                     <div className="flex justify-between text-sm text-gray-600">
-                      <span>TVA (20%) :</span>
+                      <span>
+                        TVA ({((order as any).tax_rate || 0.2) * 100}%) :
+                      </span>
                       <span>
                         {formatCurrency(
-                          (order.total_ttc || 0) -
-                            (order.total_ht || 0) -
-                            ((order as any).shipping_cost_ht || 0) -
-                            ((order as any).insurance_cost_ht || 0) -
-                            ((order as any).handling_cost_ht || 0)
+                          (order.total_ht || 0) *
+                            ((order as any).tax_rate || 0.2)
                         )}
                       </span>
                     </div>
@@ -348,7 +347,10 @@ export function OrderDetailModal({
                     <div className="flex justify-between text-base font-bold">
                       <span>Total TTC :</span>
                       <span className="text-primary">
-                        {formatCurrency(order.total_ttc || 0)}
+                        {formatCurrency(
+                          (order.total_ht || 0) *
+                            (1 + ((order as any).tax_rate || 0.2))
+                        )}
                       </span>
                     </div>
                   </div>

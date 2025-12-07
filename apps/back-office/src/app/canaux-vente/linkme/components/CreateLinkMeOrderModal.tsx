@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 
+import { CategoryFilterCombobox } from '@verone/categories';
 import { cn } from '@verone/utils';
 import {
   X,
@@ -16,111 +17,141 @@ import {
   Check,
   Loader2,
   Search,
-  ChevronRight,
-  Users,
+  Store,
   Layers,
+  Eye,
 } from 'lucide-react';
 
 import {
-  useLinkMeEnseigneCustomers,
+  useLinkMeAffiliates,
+  useLinkMeSelectionsByAffiliate,
+  type AffiliateType,
+  type LinkMeAffiliate,
+} from '../hooks/use-linkme-affiliates';
+import {
+  useLinkMeAffiliateCustomers,
   useCreateEnseigneOrganisation,
   useCreateEnseigneIndividualCustomer,
   type EnseigneOrganisationCustomer,
   type EnseigneIndividualCustomer,
 } from '../hooks/use-linkme-enseigne-customers';
-import { useLinkMeEnseignes } from '../hooks/use-linkme-enseignes';
 import {
   useCreateLinkMeOrder,
   type CreateLinkMeOrderInput,
   type LinkMeOrderItemInput,
 } from '../hooks/use-linkme-orders';
 import {
-  useLinkMeSelectionsByEnseigne,
   useLinkMeSelection,
-  type SelectionSummary,
   type SelectionItem,
 } from '../hooks/use-linkme-selections';
 
 interface CreateLinkMeOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
-  /** Pré-sélectionner une enseigne */
-  preselectedEnseigneId?: string;
+  /** Pré-sélectionner un affilié */
+  preselectedAffiliateId?: string;
 }
 
 type CustomerType = 'organization' | 'individual';
 
 interface CartItem extends LinkMeOrderItemInput {
-  id: string; // Pour la clé unique dans la liste
+  id: string;
 }
 
 /**
  * Modal de création de commande LinkMe
- * Workflow: Enseigne → Client → Produits → Validation
+ * Formulaire tout-en-un (style SalesOrderFormModal)
+ * Workflow: Type affilié → Affilié → Sélection → Client → Produits → Validation
  */
 export function CreateLinkMeOrderModal({
   isOpen,
   onClose,
-  preselectedEnseigneId,
+  preselectedAffiliateId,
 }: CreateLinkMeOrderModalProps) {
   const createOrder = useCreateLinkMeOrder();
 
-  // Étape courante (1: Enseigne, 2: Client, 3: Produits)
-  const [step, setStep] = useState(1);
-
-  // Données sélectionnées
-  const [selectedEnseigneId, setSelectedEnseigneId] = useState<string>(
-    preselectedEnseigneId || ''
+  // Type d'affilié sélectionné
+  const [affiliateType, setAffiliateType] = useState<AffiliateType | null>(
+    null
   );
+  const [selectedAffiliateId, setSelectedAffiliateId] = useState<string>(
+    preselectedAffiliateId || ''
+  );
+  const [selectedSelectionId, setSelectedSelectionId] = useState<string>('');
+
+  // Client
   const [customerType, setCustomerType] =
     useState<CustomerType>('organization');
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
-  const [selectedSelectionId, setSelectedSelectionId] = useState<string>('');
 
-  // Panier de produits
+  // Panier
   const [cart, setCart] = useState<CartItem[]>([]);
 
-  // Recherche
+  // Recherche produits (Section 5)
+  const [productSearchQuery, setProductSearchQuery] = useState('');
+  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<
+    string | undefined
+  >(undefined);
+
+  // Recherche clients et formulaire création
   const [searchQuery, setSearchQuery] = useState('');
-
-  // Notes internes
   const [internalNotes, setInternalNotes] = useState('');
-
-  // Formulaire création client
   const [showCreateForm, setShowCreateForm] = useState(false);
+
+  // Preview sélection
+  const [previewSelectionId, setPreviewSelectionId] = useState<string | null>(
+    null
+  );
   const [newCustomerName, setNewCustomerName] = useState('');
   const [newCustomerFirstName, setNewCustomerFirstName] = useState('');
   const [newCustomerLastName, setNewCustomerLastName] = useState('');
   const [newCustomerEmail, setNewCustomerEmail] = useState('');
   const [newCustomerPhone, setNewCustomerPhone] = useState('');
 
-  // Données
-  const { data: enseignes } = useLinkMeEnseignes();
-  const customers = useLinkMeEnseigneCustomers(selectedEnseigneId || null);
-
-  // Sélections (mini-boutiques) de l'enseigne
+  // Hooks data
+  const { data: affiliates, isLoading: affiliatesLoading } =
+    useLinkMeAffiliates(affiliateType || undefined);
   const { data: selections, isLoading: selectionsLoading } =
-    useLinkMeSelectionsByEnseigne(selectedEnseigneId || null);
-  // Détails de la sélection choisie (avec produits)
+    useLinkMeSelectionsByAffiliate(selectedAffiliateId || null);
   const { data: selectionDetails, isLoading: selectionDetailsLoading } =
     useLinkMeSelection(selectedSelectionId || null);
 
-  // Mutations pour création de clients
+  // Preview sélection
+  const { data: previewSelection, isLoading: previewLoading } =
+    useLinkMeSelection(previewSelectionId);
+
+  // Récupérer l'enseigne_id de l'affilié sélectionné pour les clients
+  const selectedAffiliate = useMemo(() => {
+    return affiliates?.find(a => a.id === selectedAffiliateId);
+  }, [affiliates, selectedAffiliateId]);
+
+  // Clients selon le type d'affilié (enseigne ou org_independante)
+  const customers = useLinkMeAffiliateCustomers(
+    selectedAffiliate
+      ? {
+          id: selectedAffiliate.id,
+          enseigne_id: selectedAffiliate.enseigne_id,
+          organisation_id: selectedAffiliate.organisation_id,
+          affiliate_type: selectedAffiliate.type, // 'type' dans LinkMeAffiliate
+        }
+      : null
+  );
+
+  // Mutations création client
   const createOrganisation = useCreateEnseigneOrganisation();
   const createIndividualCustomer = useCreateEnseigneIndividualCustomer();
 
   // Reset à l'ouverture
   useEffect(() => {
     if (isOpen) {
-      setStep(1);
-      setSelectedEnseigneId(preselectedEnseigneId || '');
+      setAffiliateType(null);
+      setSelectedAffiliateId(preselectedAffiliateId || '');
+      setSelectedSelectionId('');
       setCustomerType('organization');
       setSelectedCustomerId('');
-      setSelectedSelectionId('');
       setCart([]);
       setSearchQuery('');
       setInternalNotes('');
-      // Reset formulaire création client
       setShowCreateForm(false);
       setNewCustomerName('');
       setNewCustomerFirstName('');
@@ -128,20 +159,27 @@ export function CreateLinkMeOrderModal({
       setNewCustomerEmail('');
       setNewCustomerPhone('');
     }
-  }, [isOpen, preselectedEnseigneId]);
+  }, [isOpen, preselectedAffiliateId]);
 
-  // Reset client et sélection quand enseigne change
+  // Reset affilié quand type change
   useEffect(() => {
-    setSelectedCustomerId('');
-    setCustomerType('organization');
+    setSelectedAffiliateId('');
     setSelectedSelectionId('');
+    setSelectedCustomerId('');
     setCart([]);
-  }, [selectedEnseigneId]);
+  }, [affiliateType]);
 
-  // Enseigne sélectionnée
-  const selectedEnseigne = useMemo(() => {
-    return enseignes?.find(e => e.id === selectedEnseigneId);
-  }, [enseignes, selectedEnseigneId]);
+  // Reset sélection et panier quand affilié change
+  useEffect(() => {
+    setSelectedSelectionId('');
+    setSelectedCustomerId('');
+    setCart([]);
+  }, [selectedAffiliateId]);
+
+  // Reset panier quand sélection change
+  useEffect(() => {
+    setCart([]);
+  }, [selectedSelectionId]);
 
   // Client sélectionné
   const selectedCustomer = useMemo(() => {
@@ -152,7 +190,7 @@ export function CreateLinkMeOrderModal({
     return customers.individuals.find(i => i.id === selectedCustomerId);
   }, [customerType, selectedCustomerId, customers]);
 
-  // Filtrer les clients par recherche
+  // Filtrage clients
   const filteredOrganisations = useMemo(() => {
     if (!searchQuery.trim()) return customers.organisations;
     const q = searchQuery.toLowerCase();
@@ -174,38 +212,72 @@ export function CreateLinkMeOrderModal({
     );
   }, [customers.individuals, searchQuery]);
 
-  // Créer un nouveau client
+  // Filtrage produits de la sélection (texte + catégorie)
+  const filteredSelectionItems = useMemo(() => {
+    if (!selectionDetails?.items) return [];
+
+    return selectionDetails.items.filter(item => {
+      // Filtre par recherche texte (nom ou SKU)
+      const matchesSearch =
+        !productSearchQuery.trim() ||
+        item.product?.name
+          ?.toLowerCase()
+          .includes(productSearchQuery.toLowerCase()) ||
+        item.product?.sku
+          ?.toLowerCase()
+          .includes(productSearchQuery.toLowerCase());
+
+      // Filtre par sous-catégorie (si sélectionnée)
+      const matchesCategory =
+        !selectedSubcategoryId ||
+        item.product?.subcategory_id === selectedSubcategoryId;
+
+      return matchesSearch && matchesCategory;
+    });
+  }, [selectionDetails?.items, productSearchQuery, selectedSubcategoryId]);
+
+  // Création client
+  // Supporte les enseignes ET les organisations indépendantes
   const handleCreateCustomer = async () => {
-    if (!selectedEnseigneId) return;
+    // Pour les org indépendantes, on n'a pas d'enseigne_id mais on a l'organisation_id
+    const hasEnseigne = !!selectedAffiliate?.enseigne_id;
+    const hasOrganisation = !!selectedAffiliate?.organisation_id;
+
+    // Au moins l'un des deux doit être présent
+    if (!hasEnseigne && !hasOrganisation) {
+      console.error('Ni enseigne_id ni organisation_id disponible');
+      return;
+    }
 
     try {
       if (customerType === 'organization') {
         if (!newCustomerName.trim()) return;
         const result = await createOrganisation.mutateAsync({
-          enseigne_id: selectedEnseigneId,
+          enseigne_id: selectedAffiliate.enseigne_id || '',
           legal_name: newCustomerName.trim(),
           email: newCustomerEmail.trim() || undefined,
           phone: newCustomerPhone.trim() || undefined,
           source_type: 'linkme',
         });
-        // Sélectionner automatiquement le client créé
         setSelectedCustomerId(result.id);
         customers.refetch();
       } else {
         if (!newCustomerFirstName.trim() || !newCustomerLastName.trim()) return;
+        // Pour les org indépendantes, on passe organisation_id au lieu de enseigne_id
         const result = await createIndividualCustomer.mutateAsync({
-          enseigne_id: selectedEnseigneId,
+          enseigne_id: selectedAffiliate.enseigne_id || null,
+          organisation_id: hasEnseigne
+            ? null
+            : selectedAffiliate.organisation_id,
           first_name: newCustomerFirstName.trim(),
           last_name: newCustomerLastName.trim(),
           email: newCustomerEmail.trim() || undefined,
           phone: newCustomerPhone.trim() || undefined,
           source_type: 'linkme',
         });
-        // Sélectionner automatiquement le client créé
         setSelectedCustomerId(result.id);
         customers.refetch();
       }
-      // Fermer le formulaire et reset
       setShowCreateForm(false);
       setNewCustomerName('');
       setNewCustomerFirstName('');
@@ -217,49 +289,53 @@ export function CreateLinkMeOrderModal({
     }
   };
 
-  // Calculs panier
+  // Totaux panier avec précision à 2 décimales
   const cartTotals = useMemo(() => {
+    // Helper pour arrondir les montants monétaires
+    const roundMoney = (value: number): number => Math.round(value * 100) / 100;
+
     let totalHt = 0;
     let totalRetrocession = 0;
 
     for (const item of cart) {
-      const lineTotal = item.quantity * item.unit_price_ht;
-      totalHt += lineTotal;
-      totalRetrocession += lineTotal * item.retrocession_rate;
+      const lineTotal = roundMoney(item.quantity * item.unit_price_ht);
+      totalHt = roundMoney(totalHt + lineTotal);
+      totalRetrocession = roundMoney(
+        totalRetrocession + lineTotal * item.retrocession_rate
+      );
     }
 
     return {
       totalHt,
-      totalTtc: totalHt * 1.2,
+      totalTtc: roundMoney(totalHt * 1.2),
       totalRetrocession,
-      beneficeNet: totalHt - totalRetrocession,
+      beneficeNet: roundMoney(totalHt - totalRetrocession),
     };
   }, [cart]);
 
-  // Ajouter un produit au panier depuis la sélection LinkMe
+  // Ajouter produit au panier
   const addProductFromSelection = (item: SelectionItem) => {
-    // Vérifier si déjà dans le panier
-    const existing = cart.find(
-      cartItem => cartItem.product_id === item.product_id
-    );
+    // Helper pour arrondir les montants monétaires
+    const roundMoney = (value: number): number => Math.round(value * 100) / 100;
+
+    const existing = cart.find(c => c.product_id === item.product_id);
     if (existing) {
       setCart(
-        cart.map(cartItem =>
-          cartItem.product_id === item.product_id
-            ? { ...cartItem, quantity: cartItem.quantity + 1 }
-            : cartItem
+        cart.map(c =>
+          c.product_id === item.product_id
+            ? { ...c, quantity: c.quantity + 1 }
+            : c
         )
       );
       return;
     }
 
-    // Prix de vente = selling_price_ht de la sélection (base_price_ht + marge)
-    // Si pas défini, calculer: base_price_ht * (1 + margin_rate)
-    const sellingPrice =
-      item.selling_price_ht || item.base_price_ht * (1 + item.margin_rate);
-
-    // Commission = margin_rate de la sélection (ce que l'affilié touche)
-    const retrocessionRate = item.margin_rate;
+    // margin_rate est stocké en POURCENTAGE (10 = 10%)
+    // Arrondir le prix de vente à 2 décimales
+    const sellingPrice = roundMoney(
+      item.selling_price_ht || item.base_price_ht * (1 + item.margin_rate / 100)
+    );
+    const retrocessionRate = item.margin_rate / 100;
 
     const newItem: CartItem = {
       id: `${item.product_id}-${Date.now()}`,
@@ -269,40 +345,7 @@ export function CreateLinkMeOrderModal({
       quantity: 1,
       unit_price_ht: sellingPrice,
       retrocession_rate: retrocessionRate,
-      linkme_selection_item_id: item.id, // Lien vers la sélection pour traçabilité
-    };
-    setCart([...cart, newItem]);
-  };
-
-  // Ajouter un produit manuellement (fallback si pas de sélection)
-  const addProductToCart = (product: {
-    id: string;
-    name: string;
-    sku: string;
-    price: number;
-    retrocessionRate: number;
-  }) => {
-    // Vérifier si déjà dans le panier
-    const existing = cart.find(item => item.product_id === product.id);
-    if (existing) {
-      setCart(
-        cart.map(item =>
-          item.product_id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        )
-      );
-      return;
-    }
-
-    const newItem: CartItem = {
-      id: `${product.id}-${Date.now()}`,
-      product_id: product.id,
-      product_name: product.name,
-      sku: product.sku,
-      quantity: 1,
-      unit_price_ht: product.price,
-      retrocession_rate: product.retrocessionRate,
+      linkme_selection_item_id: item.id,
     };
     setCart([...cart, newItem]);
   };
@@ -327,26 +370,16 @@ export function CreateLinkMeOrderModal({
     setCart(cart.filter(item => item.id !== itemId));
   };
 
-  // Validation
-  const canProceed = () => {
-    switch (step) {
-      case 1:
-        return !!selectedEnseigneId;
-      case 2:
-        return !!selectedCustomerId;
-      case 3:
-        return cart.length > 0;
-      default:
-        return false;
-    }
-  };
+  // Validation formulaire
+  const canSubmit =
+    selectedAffiliateId &&
+    selectedSelectionId &&
+    selectedCustomerId &&
+    cart.length > 0;
 
-  // Soumettre la commande
+  // Soumettre commande
   const handleSubmit = async () => {
-    if (!selectedCustomerId || cart.length === 0) return;
-
-    // Récupérer l'affiliate_id depuis la sélection choisie
-    const affiliateId = selectionDetails?.affiliate_id || '';
+    if (!canSubmit) return;
 
     const input: CreateLinkMeOrderInput = {
       customer_type: customerType,
@@ -354,7 +387,7 @@ export function CreateLinkMeOrderModal({
         customerType === 'organization' ? selectedCustomerId : null,
       individual_customer_id:
         customerType === 'individual' ? selectedCustomerId : null,
-      affiliate_id: affiliateId,
+      affiliate_id: selectedAffiliateId,
       items: cart.map(item => ({
         product_id: item.product_id,
         product_name: item.product_name,
@@ -384,24 +417,19 @@ export function CreateLinkMeOrderModal({
 
       {/* Modal */}
       <div className="relative min-h-screen flex items-center justify-center p-4">
-        <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+        <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <ShoppingCart className="h-5 w-5 text-blue-600" />
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <ShoppingCart className="h-5 w-5 text-purple-600" />
               </div>
               <div>
                 <h2 className="text-lg font-semibold">
                   Nouvelle commande LinkMe
                 </h2>
                 <p className="text-sm text-gray-500">
-                  Étape {step}/3 :{' '}
-                  {step === 1
-                    ? 'Sélection enseigne'
-                    : step === 2
-                      ? 'Sélection client'
-                      : 'Produits & validation'}
+                  Créer une commande depuis une sélection affilié
                 </p>
               </div>
             </div>
@@ -413,159 +441,297 @@ export function CreateLinkMeOrderModal({
             </button>
           </div>
 
-          {/* Steps indicator */}
-          <div className="px-6 py-3 border-b border-gray-100 bg-gray-50">
-            <div className="flex items-center gap-2">
-              {[1, 2, 3].map(s => (
-                <div key={s} className="flex items-center">
-                  <div
-                    className={cn(
-                      'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors',
-                      s < step
-                        ? 'bg-green-500 text-white'
-                        : s === step
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-200 text-gray-500'
-                    )}
-                  >
-                    {s < step ? <Check className="h-4 w-4" /> : s}
-                  </div>
-                  {s < 3 && (
-                    <ChevronRight
-                      className={cn(
-                        'h-4 w-4 mx-2',
-                        s < step ? 'text-green-500' : 'text-gray-300'
-                      )}
-                    />
+          {/* Content - Formulaire tout-en-un */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            {/* Section 1: Type d'affilié */}
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-700">
+                Type d&apos;affilié *
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setAffiliateType('enseigne')}
+                  className={cn(
+                    'flex items-center gap-3 p-4 rounded-lg border-2 transition-all text-left',
+                    affiliateType === 'enseigne'
+                      ? 'border-purple-500 bg-purple-50'
+                      : 'border-gray-200 hover:border-gray-300'
                   )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="flex-1 overflow-y-auto p-6">
-            {/* Étape 1: Sélection enseigne */}
-            {step === 1 && (
-              <div className="space-y-4">
-                <label className="block text-sm font-medium text-gray-700">
-                  Sélectionner une enseigne
-                </label>
-                <div className="space-y-2">
-                  {enseignes?.map(enseigne => (
-                    <button
-                      key={enseigne.id}
-                      onClick={() => setSelectedEnseigneId(enseigne.id)}
+                >
+                  <Store
+                    className={cn(
+                      'h-5 w-5',
+                      affiliateType === 'enseigne'
+                        ? 'text-purple-600'
+                        : 'text-gray-400'
+                    )}
+                  />
+                  <div>
+                    <p
                       className={cn(
-                        'w-full flex items-center gap-3 p-4 rounded-lg border-2 transition-all text-left',
-                        selectedEnseigneId === enseigne.id
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                        'font-medium',
+                        affiliateType === 'enseigne'
+                          ? 'text-purple-700'
+                          : 'text-gray-700'
                       )}
                     >
-                      <Building2
-                        className={cn(
-                          'h-5 w-5',
-                          selectedEnseigneId === enseigne.id
-                            ? 'text-blue-600'
-                            : 'text-gray-400'
-                        )}
-                      />
-                      <div>
-                        <p className="font-medium">{enseigne.name}</p>
-                        <p className="text-sm text-gray-500">
-                          {enseigne.city || 'France'}
-                        </p>
-                      </div>
-                      {selectedEnseigneId === enseigne.id && (
-                        <Check className="h-5 w-5 text-blue-600 ml-auto" />
+                      Enseigne
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Chaîne de magasins affiliée
+                    </p>
+                  </div>
+                  {affiliateType === 'enseigne' && (
+                    <Check className="h-5 w-5 text-purple-600 ml-auto" />
+                  )}
+                </button>
+
+                <button
+                  onClick={() => setAffiliateType('org_independante')}
+                  className={cn(
+                    'flex items-center gap-3 p-4 rounded-lg border-2 transition-all text-left',
+                    affiliateType === 'org_independante'
+                      ? 'border-purple-500 bg-purple-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  )}
+                >
+                  <Building2
+                    className={cn(
+                      'h-5 w-5',
+                      affiliateType === 'org_independante'
+                        ? 'text-purple-600'
+                        : 'text-gray-400'
+                    )}
+                  />
+                  <div>
+                    <p
+                      className={cn(
+                        'font-medium',
+                        affiliateType === 'org_independante'
+                          ? 'text-purple-700'
+                          : 'text-gray-700'
                       )}
-                    </button>
-                  ))}
-                </div>
-                {enseignes?.length === 0 && (
-                  <p className="text-center text-gray-500 py-8">
-                    Aucune enseigne disponible
+                    >
+                      Organisation indépendante
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Entreprise affiliée autonome
+                    </p>
+                  </div>
+                  {affiliateType === 'org_independante' && (
+                    <Check className="h-5 w-5 text-purple-600 ml-auto" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Section 2: Sélection affilié */}
+            {affiliateType && (
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-700">
+                  Affilié *
+                </label>
+                {affiliatesLoading ? (
+                  <div className="flex items-center gap-2 py-4">
+                    <Loader2 className="h-4 w-4 animate-spin text-purple-600" />
+                    <span className="text-sm text-gray-500">
+                      Chargement des affiliés...
+                    </span>
+                  </div>
+                ) : affiliates && affiliates.length > 0 ? (
+                  <div className="grid gap-2 max-h-40 overflow-y-auto">
+                    {affiliates.map(affiliate => (
+                      <button
+                        key={affiliate.id}
+                        onClick={() => setSelectedAffiliateId(affiliate.id)}
+                        className={cn(
+                          'flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left',
+                          selectedAffiliateId === affiliate.id
+                            ? 'border-purple-500 bg-purple-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        )}
+                      >
+                        {affiliate.logo_url ? (
+                          <img
+                            src={affiliate.logo_url}
+                            alt={affiliate.display_name}
+                            className="w-10 h-10 object-cover rounded"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center">
+                            <Store className="h-5 w-5 text-gray-400" />
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <p className="font-medium">
+                            {affiliate.display_name}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {affiliate.enseigne_name ||
+                              affiliate.organisation_name ||
+                              'Affilié LinkMe'}{' '}
+                            • {affiliate.selections_count} sélection
+                            {affiliate.selections_count > 1 ? 's' : ''}
+                          </p>
+                        </div>
+                        {selectedAffiliateId === affiliate.id && (
+                          <Check className="h-5 w-5 text-purple-600" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-amber-600 py-2">
+                    <AlertCircle className="h-4 w-4 inline mr-1" />
+                    Aucun affilié de ce type disponible
                   </p>
                 )}
               </div>
             )}
 
-            {/* Étape 2: Sélection client */}
-            {step === 2 && (
-              <div className="space-y-4">
-                {/* Type de client */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Type de client
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      onClick={() => {
-                        setCustomerType('organization');
-                        setSelectedCustomerId('');
-                      }}
-                      className={cn(
-                        'flex items-center gap-2 p-3 rounded-lg border-2 transition-all',
-                        customerType === 'organization'
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      )}
-                    >
-                      <Building2
-                        className={cn(
-                          'h-5 w-5',
-                          customerType === 'organization'
-                            ? 'text-blue-600'
-                            : 'text-gray-400'
-                        )}
-                      />
-                      <span
-                        className={cn(
-                          'font-medium',
-                          customerType === 'organization'
-                            ? 'text-blue-700'
-                            : 'text-gray-600'
-                        )}
-                      >
-                        Organisation
-                      </span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setCustomerType('individual');
-                        setSelectedCustomerId('');
-                      }}
-                      className={cn(
-                        'flex items-center gap-2 p-3 rounded-lg border-2 transition-all',
-                        customerType === 'individual'
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      )}
-                    >
-                      <User
-                        className={cn(
-                          'h-5 w-5',
-                          customerType === 'individual'
-                            ? 'text-blue-600'
-                            : 'text-gray-400'
-                        )}
-                      />
-                      <span
-                        className={cn(
-                          'font-medium',
-                          customerType === 'individual'
-                            ? 'text-blue-700'
-                            : 'text-gray-600'
-                        )}
-                      >
-                        Particulier
-                      </span>
-                    </button>
+            {/* Section 3: Sélection (mini-boutique) */}
+            {selectedAffiliateId && (
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-700">
+                  <Layers className="h-4 w-4 inline mr-1" />
+                  Sélection (mini-boutique) *
+                </label>
+                {selectionsLoading ? (
+                  <div className="flex items-center gap-2 py-4">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="text-sm text-gray-500">
+                      Chargement des sélections...
+                    </span>
                   </div>
+                ) : selections && selections.length > 0 ? (
+                  <div className="grid gap-2 max-h-40 overflow-y-auto">
+                    {selections.map((selection: any) => (
+                      <div
+                        key={selection.id}
+                        className="flex items-center gap-2"
+                      >
+                        <button
+                          onClick={() => setSelectedSelectionId(selection.id)}
+                          className={cn(
+                            'flex-1 flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left',
+                            selectedSelectionId === selection.id
+                              ? 'border-purple-500 bg-purple-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          )}
+                        >
+                          <Layers
+                            className={cn(
+                              'h-5 w-5',
+                              selectedSelectionId === selection.id
+                                ? 'text-purple-600'
+                                : 'text-gray-400'
+                            )}
+                          />
+                          <div className="flex-1">
+                            <p className="font-medium">{selection.name}</p>
+                            <p className="text-xs text-gray-500">
+                              {selection.products_count || 0} produit
+                              {(selection.products_count || 0) > 1 ? 's' : ''}
+                            </p>
+                          </div>
+                          {selectedSelectionId === selection.id && (
+                            <Check className="h-5 w-5 text-purple-600" />
+                          )}
+                        </button>
+                        {/* Bouton preview */}
+                        <button
+                          onClick={() => setPreviewSelectionId(selection.id)}
+                          className="p-2 hover:bg-purple-100 rounded-lg transition-colors border border-gray-200"
+                          title="Aperçu des produits"
+                        >
+                          <Eye className="h-4 w-4 text-gray-500 hover:text-purple-600" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-amber-600 py-2">
+                    <AlertCircle className="h-4 w-4 inline mr-1" />
+                    Aucune sélection disponible pour cet affilié
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Section 4: Client */}
+            {selectedSelectionId && selectedAffiliateId && (
+              <div className="space-y-3 border-t pt-6">
+                <label className="block text-sm font-medium text-gray-700">
+                  Client *
+                </label>
+
+                {/* Type de client */}
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => {
+                      setCustomerType('organization');
+                      setSelectedCustomerId('');
+                    }}
+                    className={cn(
+                      'flex items-center gap-2 p-3 rounded-lg border-2 transition-all',
+                      customerType === 'organization'
+                        ? 'border-purple-500 bg-purple-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    )}
+                  >
+                    <Building2
+                      className={cn(
+                        'h-5 w-5',
+                        customerType === 'organization'
+                          ? 'text-purple-600'
+                          : 'text-gray-400'
+                      )}
+                    />
+                    <span
+                      className={cn(
+                        'font-medium',
+                        customerType === 'organization'
+                          ? 'text-purple-700'
+                          : 'text-gray-600'
+                      )}
+                    >
+                      Organisation
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setCustomerType('individual');
+                      setSelectedCustomerId('');
+                    }}
+                    className={cn(
+                      'flex items-center gap-2 p-3 rounded-lg border-2 transition-all',
+                      customerType === 'individual'
+                        ? 'border-purple-500 bg-purple-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    )}
+                  >
+                    <User
+                      className={cn(
+                        'h-5 w-5',
+                        customerType === 'individual'
+                          ? 'text-purple-600'
+                          : 'text-gray-400'
+                      )}
+                    />
+                    <span
+                      className={cn(
+                        'font-medium',
+                        customerType === 'individual'
+                          ? 'text-purple-700'
+                          : 'text-gray-600'
+                      )}
+                    >
+                      Particulier
+                    </span>
+                  </button>
                 </div>
 
-                {/* Recherche + Bouton créer */}
+                {/* Recherche + Nouveau */}
                 <div className="flex gap-2">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -574,7 +740,7 @@ export function CreateLinkMeOrderModal({
                       value={searchQuery}
                       onChange={e => setSearchQuery(e.target.value)}
                       placeholder="Rechercher un client..."
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                     />
                   </div>
                   <button
@@ -582,10 +748,9 @@ export function CreateLinkMeOrderModal({
                     className={cn(
                       'flex items-center gap-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors',
                       showCreateForm
-                        ? 'bg-blue-600 text-white border-blue-600'
+                        ? 'bg-purple-600 text-white border-purple-600'
                         : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                     )}
-                    title="Créer un nouveau client"
                   >
                     <Plus className="h-4 w-4" />
                     <span className="hidden sm:inline">Nouveau</span>
@@ -594,8 +759,8 @@ export function CreateLinkMeOrderModal({
 
                 {/* Formulaire création client */}
                 {showCreateForm && (
-                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-3">
-                    <p className="text-sm font-medium text-blue-800">
+                  <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg space-y-3">
+                    <p className="text-sm font-medium text-purple-800">
                       {customerType === 'organization'
                         ? 'Nouvelle organisation'
                         : 'Nouveau particulier'}
@@ -607,7 +772,7 @@ export function CreateLinkMeOrderModal({
                         value={newCustomerName}
                         onChange={e => setNewCustomerName(e.target.value)}
                         placeholder="Nom de l'organisation *"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                       />
                     ) : (
                       <div className="grid grid-cols-2 gap-2">
@@ -618,14 +783,14 @@ export function CreateLinkMeOrderModal({
                             setNewCustomerFirstName(e.target.value)
                           }
                           placeholder="Prénom *"
-                          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                         />
                         <input
                           type="text"
                           value={newCustomerLastName}
                           onChange={e => setNewCustomerLastName(e.target.value)}
                           placeholder="Nom *"
-                          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                         />
                       </div>
                     )}
@@ -636,14 +801,14 @@ export function CreateLinkMeOrderModal({
                         value={newCustomerEmail}
                         onChange={e => setNewCustomerEmail(e.target.value)}
                         placeholder="Email"
-                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                       />
                       <input
                         type="tel"
                         value={newCustomerPhone}
                         onChange={e => setNewCustomerPhone(e.target.value)}
                         placeholder="Téléphone"
-                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                       />
                     </div>
 
@@ -659,7 +824,7 @@ export function CreateLinkMeOrderModal({
                             (!newCustomerFirstName.trim() ||
                               !newCustomerLastName.trim()))
                         }
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                       >
                         {createOrganisation.isPending ||
                         createIndividualCustomer.isPending ? (
@@ -685,10 +850,10 @@ export function CreateLinkMeOrderModal({
                 )}
 
                 {/* Liste clients */}
-                <div className="space-y-2 max-h-60 overflow-y-auto">
+                <div className="space-y-2 max-h-40 overflow-y-auto">
                   {customers.isLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="h-6 w-6 animate-spin text-purple-600" />
                     </div>
                   ) : customerType === 'organization' ? (
                     filteredOrganisations.length > 0 ? (
@@ -699,7 +864,7 @@ export function CreateLinkMeOrderModal({
                           className={cn(
                             'w-full flex items-center gap-3 p-3 rounded-lg border transition-all text-left',
                             selectedCustomerId === org.id
-                              ? 'border-blue-500 bg-blue-50'
+                              ? 'border-purple-500 bg-purple-50'
                               : 'border-gray-200 hover:border-gray-300'
                           )}
                         >
@@ -711,7 +876,7 @@ export function CreateLinkMeOrderModal({
                             </p>
                           </div>
                           {selectedCustomerId === org.id && (
-                            <Check className="h-4 w-4 text-blue-600" />
+                            <Check className="h-4 w-4 text-purple-600" />
                           )}
                         </button>
                       ))
@@ -728,7 +893,7 @@ export function CreateLinkMeOrderModal({
                         className={cn(
                           'w-full flex items-center gap-3 p-3 rounded-lg border transition-all text-left',
                           selectedCustomerId === individual.id
-                            ? 'border-blue-500 bg-blue-50'
+                            ? 'border-purple-500 bg-purple-50'
                             : 'border-gray-200 hover:border-gray-300'
                         )}
                       >
@@ -744,7 +909,7 @@ export function CreateLinkMeOrderModal({
                           </p>
                         </div>
                         {selectedCustomerId === individual.id && (
-                          <Check className="h-4 w-4 text-blue-600" />
+                          <Check className="h-4 w-4 text-purple-600" />
                         )}
                       </button>
                     ))
@@ -757,281 +922,292 @@ export function CreateLinkMeOrderModal({
               </div>
             )}
 
-            {/* Étape 3: Produits */}
-            {step === 3 && (
-              <div className="space-y-4">
-                {/* Résumé client */}
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-500">Client</p>
-                  <p className="font-medium">
-                    {customerType === 'organization'
-                      ? (selectedCustomer as EnseigneOrganisationCustomer)?.name
-                      : (selectedCustomer as EnseigneIndividualCustomer)
-                          ?.full_name}
-                  </p>
-                </div>
-
-                {/* Sélection de la mini-boutique */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Layers className="h-4 w-4 inline mr-1" />
-                    Sélection (mini-boutique)
-                  </label>
-                  {selectionsLoading ? (
-                    <div className="flex items-center gap-2 py-4">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="text-sm text-gray-500">
-                        Chargement des sélections...
-                      </span>
+            {/* Section 4 bis: Résumé client sélectionné */}
+            {selectedCustomer && (
+              <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                      {customerType === 'organization' ? (
+                        <Building2 className="h-5 w-5 text-purple-600" />
+                      ) : (
+                        <User className="h-5 w-5 text-purple-600" />
+                      )}
                     </div>
-                  ) : selections && selections.length > 0 ? (
-                    <div className="space-y-2">
-                      {selections.map(selection => (
-                        <button
-                          key={selection.id}
-                          onClick={() => {
-                            setSelectedSelectionId(selection.id);
-                            // Reset panier quand on change de sélection
-                            if (selectedSelectionId !== selection.id) {
-                              setCart([]);
-                            }
-                          }}
-                          className={cn(
-                            'w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left',
-                            selectedSelectionId === selection.id
-                              ? 'border-blue-500 bg-blue-50'
-                              : 'border-gray-200 hover:border-gray-300'
-                          )}
-                        >
-                          <Layers
-                            className={cn(
-                              'h-5 w-5',
-                              selectedSelectionId === selection.id
-                                ? 'text-blue-600'
-                                : 'text-gray-400'
-                            )}
-                          />
-                          <div className="flex-1">
-                            <p className="font-medium">{selection.name}</p>
-                            <p className="text-xs text-gray-500">
-                              {selection.products_count || 0} produit
-                              {(selection.products_count || 0) > 1 ? 's' : ''}
-                              {selection.archived_at && ' • Archivée'}
-                            </p>
-                          </div>
-                          {selectedSelectionId === selection.id && (
-                            <Check className="h-5 w-5 text-blue-600" />
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-amber-600 py-2">
-                      <AlertCircle className="h-4 w-4 inline mr-1" />
-                      Aucune sélection disponible pour cette enseigne
-                    </p>
-                  )}
-                </div>
-
-                {/* Produits de la sélection choisie */}
-                {selectedSelectionId && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <Package className="h-4 w-4 inline mr-1" />
-                      Produits disponibles
-                    </label>
-                    {selectionDetailsLoading ? (
-                      <div className="flex items-center gap-2 py-4">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span className="text-sm text-gray-500">
-                          Chargement des produits...
-                        </span>
-                      </div>
-                    ) : selectionDetails?.items &&
-                      selectionDetails.items.length > 0 ? (
-                      <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto">
-                        {selectionDetails.items.map(item => {
-                          const isInCart = cart.some(
-                            c => c.product_id === item.product_id
-                          );
-                          const sellingPrice =
-                            item.selling_price_ht ||
-                            item.base_price_ht * (1 + item.margin_rate);
-                          return (
-                            <button
-                              key={item.id}
-                              onClick={() => addProductFromSelection(item)}
-                              className={cn(
-                                'flex items-center gap-3 p-2 rounded-lg border transition-all text-left',
-                                isInCart
-                                  ? 'border-green-300 bg-green-50'
-                                  : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
-                              )}
-                            >
-                              {item.product_image_url ? (
-                                <img
-                                  src={item.product_image_url}
-                                  alt={item.product?.name || ''}
-                                  className="w-10 h-10 object-cover rounded"
-                                />
-                              ) : (
-                                <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center">
-                                  <Package className="h-4 w-4 text-gray-400" />
-                                </div>
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate">
-                                  {item.product?.name || 'Produit'}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {sellingPrice.toFixed(2)}€ HT • Marge{' '}
-                                  {(item.margin_rate * 100).toFixed(0)}%
-                                </p>
-                              </div>
-                              {isInCart ? (
-                                <Check className="h-4 w-4 text-green-600" />
-                              ) : (
-                                <Plus className="h-4 w-4 text-blue-600" />
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-500 py-2">
-                        Aucun produit dans cette sélection
+                    <div className="space-y-1">
+                      <p className="font-semibold text-purple-900">
+                        {customerType === 'organization'
+                          ? (selectedCustomer as any).name ||
+                            (selectedCustomer as any).legal_name
+                          : (selectedCustomer as any).full_name}
                       </p>
+                      {(selectedCustomer as any).email && (
+                        <p className="text-sm text-purple-700">
+                          📧 {(selectedCustomer as any).email}
+                        </p>
+                      )}
+                      {(selectedCustomer as any).phone && (
+                        <p className="text-sm text-purple-700">
+                          📞 {(selectedCustomer as any).phone}
+                        </p>
+                      )}
+                      {((selectedCustomer as any).address_line1 ||
+                        (selectedCustomer as any).city) && (
+                        <p className="text-sm text-purple-700">
+                          📍{' '}
+                          {[
+                            (selectedCustomer as any).address_line1,
+                            (selectedCustomer as any).postal_code,
+                            (selectedCustomer as any).city,
+                          ]
+                            .filter(Boolean)
+                            .join(', ')}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedCustomerId('')}
+                    className="text-xs text-purple-600 hover:text-purple-800 underline"
+                  >
+                    Modifier
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Section 5: Produits de la sélection */}
+            {selectedSelectionId && selectedCustomerId && (
+              <div className="space-y-3 border-t pt-6">
+                <label className="block text-sm font-medium text-gray-700">
+                  <Package className="h-4 w-4 inline mr-1" />
+                  Produits disponibles ({selectionDetails?.items?.length || 0})
+                </label>
+
+                {/* Barre de recherche produits + Filtre catégorie */}
+                <div className="flex gap-2">
+                  {/* Recherche texte */}
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      type="text"
+                      value={productSearchQuery}
+                      onChange={e => setProductSearchQuery(e.target.value)}
+                      placeholder="Rechercher (nom ou SKU)..."
+                      className="w-full pl-10 pr-8 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                    {productSearchQuery && (
+                      <button
+                        onClick={() => setProductSearchQuery('')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Filtre hiérarchique par catégorie */}
+                  <CategoryFilterCombobox
+                    value={selectedSubcategoryId}
+                    onValueChange={setSelectedSubcategoryId}
+                    placeholder="Filtrer par catégorie..."
+                    entityType="products"
+                    className="w-64"
+                  />
+                </div>
+
+                {/* Indicateur de filtres actifs */}
+                {(productSearchQuery || selectedSubcategoryId) && (
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <span>
+                      {filteredSelectionItems.length} produit(s) trouvé(s)
+                    </span>
+                    {(productSearchQuery || selectedSubcategoryId) && (
+                      <button
+                        onClick={() => {
+                          setProductSearchQuery('');
+                          setSelectedSubcategoryId(undefined);
+                        }}
+                        className="text-purple-600 hover:underline"
+                      >
+                        Réinitialiser les filtres
+                      </button>
                     )}
                   </div>
                 )}
 
-                {/* Mode manuel (si pas de sélection ou fallback) */}
-                {(!selections || selections.length === 0) && (
-                  <div className="border border-dashed border-gray-300 rounded-lg p-4">
-                    <p className="text-sm font-medium text-gray-700 mb-3">
-                      Ajouter un produit manuellement
-                    </p>
-                    <QuickAddProduct onAdd={addProductToCart} />
+                {selectionDetailsLoading ? (
+                  <div className="flex items-center gap-2 py-4">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="text-sm text-gray-500">
+                      Chargement des produits...
+                    </span>
                   </div>
-                )}
-
-                {/* Panier */}
-                {cart.length > 0 ? (
-                  <div className="space-y-3">
-                    <p className="text-sm font-medium text-gray-700">
-                      Panier ({cart.length} produit{cart.length > 1 ? 's' : ''})
-                    </p>
-                    <div className="space-y-2">
-                      {cart.map(item => (
-                        <div
+                ) : filteredSelectionItems.length > 0 ? (
+                  <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto">
+                    {filteredSelectionItems.map(item => {
+                      const isInCart = cart.some(
+                        c => c.product_id === item.product_id
+                      );
+                      // margin_rate est en POURCENTAGE
+                      const sellingPrice =
+                        item.selling_price_ht ||
+                        item.base_price_ht * (1 + item.margin_rate / 100);
+                      return (
+                        <button
                           key={item.id}
-                          className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                          onClick={() => addProductFromSelection(item)}
+                          className={cn(
+                            'flex items-center gap-3 p-2 rounded-lg border transition-all text-left',
+                            isInCart
+                              ? 'border-green-300 bg-green-50'
+                              : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50'
+                          )}
                         >
-                          <Package className="h-4 w-4 text-gray-400" />
+                          {item.product_image_url ? (
+                            <img
+                              src={item.product_image_url}
+                              alt={item.product?.name || ''}
+                              className="w-10 h-10 object-cover rounded"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center">
+                              <Package className="h-4 w-4 text-gray-400" />
+                            </div>
+                          )}
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">
-                              {item.product_name}
+                            <p className="text-sm font-medium truncate">
+                              {item.product?.name || 'Produit'}
                             </p>
                             <p className="text-xs text-gray-500">
-                              {item.unit_price_ht.toFixed(2)}€ HT ×{' '}
-                              {item.quantity} ={' '}
-                              {(item.unit_price_ht * item.quantity).toFixed(2)}€
-                              HT
-                            </p>
-                            <p className="text-xs text-orange-600">
-                              Commission:{' '}
-                              {(item.retrocession_rate * 100).toFixed(0)}% (
-                              {(
-                                item.unit_price_ht *
-                                item.quantity *
-                                item.retrocession_rate
-                              ).toFixed(2)}
-                              €)
+                              {sellingPrice.toFixed(2)}€ HT • Marge{' '}
+                              {item.margin_rate.toFixed(0)}%
                             </p>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => updateQuantity(item.id, -1)}
-                              className="p-1 hover:bg-gray-200 rounded"
-                            >
-                              <Minus className="h-4 w-4" />
-                            </button>
-                            <span className="w-8 text-center text-sm font-medium">
-                              {item.quantity}
-                            </span>
-                            <button
-                              onClick={() => updateQuantity(item.id, 1)}
-                              className="p-1 hover:bg-gray-200 rounded"
-                            >
-                              <Plus className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => removeFromCart(item.id)}
-                              className="p-1 hover:bg-red-100 rounded text-red-600 ml-2"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Totaux */}
-                    <div className="border-t border-gray-200 pt-3 space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Total HT</span>
-                        <span className="font-medium">
-                          {cartTotals.totalHt.toFixed(2)}€
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">TVA (20%)</span>
-                        <span>
-                          {(cartTotals.totalTtc - cartTotals.totalHt).toFixed(
-                            2
+                          {isInCart ? (
+                            <Check className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <Plus className="h-4 w-4 text-purple-600" />
                           )}
-                          €
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm font-medium">
-                        <span>Total TTC</span>
-                        <span>{cartTotals.totalTtc.toFixed(2)}€</span>
-                      </div>
-                      <div className="flex justify-between text-sm text-orange-600">
-                        <span>Commissions affilié</span>
-                        <span>-{cartTotals.totalRetrocession.toFixed(2)}€</span>
-                      </div>
-                      <div className="flex justify-between text-sm font-medium text-green-600">
-                        <span>Bénéfice net</span>
-                        <span>{cartTotals.beneficeNet.toFixed(2)}€</span>
-                      </div>
-                    </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 ) : (
-                  <p className="text-center text-gray-500 py-8">
-                    Aucun produit dans le panier
+                  <p className="text-sm text-gray-500 py-2">
+                    {productSearchQuery.trim()
+                      ? `Aucun produit ne correspond à "${productSearchQuery}"`
+                      : 'Aucun produit dans cette sélection'}
                   </p>
                 )}
+              </div>
+            )}
 
-                {/* Notes */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Notes internes (optionnel)
-                  </label>
-                  <textarea
-                    value={internalNotes}
-                    onChange={e => setInternalNotes(e.target.value)}
-                    placeholder="Notes visibles uniquement par l'équipe..."
-                    rows={2}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+            {/* Section 6: Panier */}
+            {cart.length > 0 && (
+              <div className="space-y-3 border-t pt-6">
+                <p className="text-sm font-medium text-gray-700">
+                  Panier ({cart.length} produit{cart.length > 1 ? 's' : ''})
+                </p>
+                <div className="space-y-2">
+                  {cart.map(item => (
+                    <div
+                      key={item.id}
+                      className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                    >
+                      <Package className="h-4 w-4 text-gray-400" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">
+                          {item.product_name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {item.unit_price_ht.toFixed(2)}€ HT × {item.quantity}{' '}
+                          = {(item.unit_price_ht * item.quantity).toFixed(2)}€
+                          HT
+                        </p>
+                        <p className="text-xs text-orange-600">
+                          Commission:{' '}
+                          {(item.retrocession_rate * 100).toFixed(0)}% (
+                          {(
+                            item.unit_price_ht *
+                            item.quantity *
+                            item.retrocession_rate
+                          ).toFixed(2)}
+                          €)
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => updateQuantity(item.id, -1)}
+                          className="p-1 hover:bg-gray-200 rounded"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </button>
+                        <span className="w-8 text-center text-sm font-medium">
+                          {item.quantity}
+                        </span>
+                        <button
+                          onClick={() => updateQuantity(item.id, 1)}
+                          className="p-1 hover:bg-gray-200 rounded"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => removeFromCart(item.id)}
+                          className="p-1 hover:bg-red-100 rounded text-red-600 ml-2"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
+
+                {/* Totaux */}
+                <div className="border-t border-gray-200 pt-3 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Total HT</span>
+                    <span className="font-medium">
+                      {cartTotals.totalHt.toFixed(2)}€
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">TVA (20%)</span>
+                    <span>
+                      {(cartTotals.totalTtc - cartTotals.totalHt).toFixed(2)}€
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm font-medium">
+                    <span>Total TTC</span>
+                    <span>{cartTotals.totalTtc.toFixed(2)}€</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-orange-600">
+                    <span>Commissions affilié</span>
+                    <span>-{cartTotals.totalRetrocession.toFixed(2)}€</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Section 7: Notes */}
+            {selectedSelectionId && (
+              <div className="space-y-2 border-t pt-6">
+                <label className="block text-sm font-medium text-gray-700">
+                  Notes internes (optionnel)
+                </label>
+                <textarea
+                  value={internalNotes}
+                  onChange={e => setInternalNotes(e.target.value)}
+                  placeholder="Notes visibles uniquement par l'équipe..."
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
               </div>
             )}
 
             {/* Erreur */}
             {createOrder.error && (
-              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
                 <AlertCircle className="h-4 w-4 text-red-600 mt-0.5" />
                 <p className="text-sm text-red-700">
                   {createOrder.error instanceof Error
@@ -1042,16 +1218,8 @@ export function CreateLinkMeOrderModal({
             )}
           </div>
 
-          {/* Footer actions */}
+          {/* Footer */}
           <div className="flex gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
-            {step > 1 && (
-              <button
-                onClick={() => setStep(step - 1)}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-white transition-colors"
-              >
-                Retour
-              </button>
-            )}
             <div className="flex-1" />
             <button
               type="button"
@@ -1060,110 +1228,106 @@ export function CreateLinkMeOrderModal({
             >
               Annuler
             </button>
-            {step < 3 ? (
-              <button
-                onClick={() => setStep(step + 1)}
-                disabled={!canProceed()}
-                className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Continuer
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            ) : (
-              <button
-                onClick={handleSubmit}
-                disabled={!canProceed() || createOrder.isPending}
-                className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {createOrder.isPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Création...
-                  </>
-                ) : (
-                  <>
-                    <Check className="h-4 w-4" />
-                    Créer la commande
-                  </>
-                )}
-              </button>
-            )}
+            <button
+              onClick={handleSubmit}
+              disabled={!canSubmit || createOrder.isPending}
+              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {createOrder.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Création...
+                </>
+              ) : (
+                <>
+                  <Check className="h-4 w-4" />
+                  Créer la commande
+                </>
+              )}
+            </button>
           </div>
         </div>
       </div>
-    </div>
-  );
-}
 
-/**
- * Composant temporaire pour ajouter un produit rapidement
- * TODO: Remplacer par un sélecteur depuis les sélections LinkMe
- */
-function QuickAddProduct({
-  onAdd,
-}: {
-  onAdd: (product: {
-    id: string;
-    name: string;
-    sku: string;
-    price: number;
-    retrocessionRate: number;
-  }) => void;
-}) {
-  const [name, setName] = useState('');
-  const [sku, setSku] = useState('');
-  const [price, setPrice] = useState('');
-  const [commission, setCommission] = useState('10');
+      {/* Dialog Preview Sélection */}
+      {previewSelectionId && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden mx-4">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="font-semibold text-lg">
+                Aperçu : {previewSelection?.name || 'Chargement...'}
+              </h3>
+              <button
+                onClick={() => setPreviewSelectionId(null)}
+                className="p-1 hover:bg-gray-100 rounded"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
 
-  const handleAdd = () => {
-    if (!name || !price) return;
+            {/* Contenu */}
+            <div className="p-4 overflow-y-auto max-h-[60vh]">
+              {previewLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-purple-600" />
+                </div>
+              ) : !previewSelection?.items?.length ? (
+                <div className="text-center py-8 text-gray-500">
+                  Aucun produit dans cette sélection
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                  {previewSelection.items.map(item => {
+                    const sellingPrice =
+                      item.selling_price_ht ||
+                      item.base_price_ht * (1 + (item.margin_rate || 0) / 100);
+                    return (
+                      <div
+                        key={item.id}
+                        className="border rounded-lg p-2 bg-gray-50 hover:bg-gray-100 transition-colors"
+                      >
+                        {/* Image petite 64x64 */}
+                        <div className="w-16 h-16 mx-auto mb-2 overflow-hidden rounded">
+                          {item.product_image_url ? (
+                            <img
+                              src={item.product_image_url}
+                              alt={item.product?.name || 'Produit'}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                              <Package className="h-6 w-6 text-gray-400" />
+                            </div>
+                          )}
+                        </div>
+                        {/* Nom tronqué */}
+                        <p className="text-xs font-medium text-center truncate">
+                          {item.product?.name || 'Produit'}
+                        </p>
+                        {/* Prix */}
+                        <p className="text-xs text-gray-500 text-center">
+                          {sellingPrice.toFixed(2)}€
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
 
-    onAdd({
-      id: `temp-${Date.now()}`,
-      name,
-      sku: sku || 'SKU-TEMP',
-      price: parseFloat(price),
-      retrocessionRate: parseFloat(commission) / 100,
-    });
-
-    // Reset
-    setName('');
-    setSku('');
-    setPrice('');
-  };
-
-  return (
-    <div className="grid grid-cols-4 gap-2">
-      <input
-        type="text"
-        value={name}
-        onChange={e => setName(e.target.value)}
-        placeholder="Nom produit"
-        className="col-span-2 px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-      />
-      <input
-        type="number"
-        value={price}
-        onChange={e => setPrice(e.target.value)}
-        placeholder="Prix HT"
-        className="px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-      />
-      <div className="flex gap-1">
-        <input
-          type="number"
-          value={commission}
-          onChange={e => setCommission(e.target.value)}
-          placeholder="%"
-          className="w-14 px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-        />
-        <button
-          onClick={handleAdd}
-          disabled={!name || !price}
-          className="px-2 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Plus className="h-4 w-4" />
-        </button>
-      </div>
+            {/* Footer */}
+            <div className="p-4 border-t flex justify-end">
+              <button
+                onClick={() => setPreviewSelectionId(null)}
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm transition-colors"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
