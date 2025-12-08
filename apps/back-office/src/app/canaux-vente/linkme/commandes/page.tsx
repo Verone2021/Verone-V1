@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
-import Link from 'next/link';
-
+import { ProductThumbnail } from '@verone/products';
 import { Badge } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import { Input } from '@verone/ui';
@@ -23,17 +22,17 @@ import {
   TableHeader,
   TableRow,
 } from '@verone/ui';
-import { IconButton } from '@verone/ui';
+// Accordéon géré manuellement avec state (pas de Collapsible pour les tables)
 import { cn, formatPrice } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import {
   ShoppingCart,
   Loader2,
   Plus,
-  Eye,
   Search,
   Filter,
   ChevronDown,
+  ChevronRight,
   Building2,
   User,
   DollarSign,
@@ -48,6 +47,18 @@ import { CreateLinkMeOrderModal } from '../components/CreateLinkMeOrderModal';
 const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
 
 // Types
+interface OrderItem {
+  id: string;
+  product_id: string;
+  product_name: string;
+  product_image_url: string | null;
+  quantity: number;
+  unit_price_ht: number;
+  total_ht: number;
+  selling_price_ht: number | null;
+  affiliate_margin: number;
+}
+
 interface LinkMeOrder {
   id: string;
   order_number: string;
@@ -58,22 +69,23 @@ interface LinkMeOrder {
   customer_type: 'organization' | 'individual';
   customer_id: string;
   created_at: string;
-  // Client info (polymorphique)
+  // Client info
   customer_name: string;
   customer_city: string | null;
-  // Commission info (agrégée depuis items)
-  total_commission: number;
-  net_benefit: number;
-  // Affilié (tracé via source_affiliate_id du client ou via selection_items)
+  // Affilié (tracé via selection_items)
   affiliate_name: string | null;
-  items_count: number;
+  // Sélection
+  selection_name: string | null;
+  // Marge affilié totale (somme des marges affilié de chaque produit)
+  total_affiliate_margin: number;
+  // Items pour accordéon
+  items: OrderItem[];
 }
 
 interface OrderStats {
   total_orders: number;
   total_ht: number;
-  total_commissions: number;
-  net_benefit: number;
+  total_affiliate_margins: number;
   orders_by_status: Record<string, number>;
 }
 
@@ -115,7 +127,7 @@ const PAYMENT_STATUS_LABELS: Record<
 /**
  * Page Commandes LinkMe
  * Affiche les commandes filtrées par channel_id = LinkMe
- * Avec colonnes spécifiques: affilié, commission, bénéfice net
+ * Avec accordéon pour voir les produits et leur taux de marge
  */
 export default function LinkMeOrdersPage() {
   const [orders, setOrders] = useState<LinkMeOrder[]>([]);
@@ -124,8 +136,22 @@ export default function LinkMeOrdersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
 
   const supabase = createClient();
+
+  // Toggle accordéon
+  const toggleOrder = (orderId: string) => {
+    setExpandedOrders(prev => {
+      const next = new Set(prev);
+      if (next.has(orderId)) {
+        next.delete(orderId);
+      } else {
+        next.add(orderId);
+      }
+      return next;
+    });
+  };
 
   // Fetch commandes LinkMe
   useEffect(() => {
@@ -148,9 +174,13 @@ export default function LinkMeOrdersPage() {
             created_at,
             sales_order_items (
               id,
+              product_id,
               quantity,
+              unit_price_ht,
+              total_ht,
               retrocession_rate,
-              retrocession_amount
+              retrocession_amount,
+              linkme_selection_item_id
             )
           `
           )
@@ -159,38 +189,26 @@ export default function LinkMeOrdersPage() {
 
         if (ordersError) throw ordersError;
 
-        // Enrichir avec les données clients
+        // Enrichir avec les données clients, affilié, sélection et produits
         const enrichedOrders: LinkMeOrder[] = await Promise.all(
           (ordersData || []).map(async (order: any) => {
             let customerName = 'Client inconnu';
             let customerCity: string | null = null;
             let affiliateName: string | null = null;
+            let selectionName: string | null = null;
 
             // Fetch customer info selon type
-            // Note: source_affiliate_id existe en DB mais pas dans les types Git - utiliser any
             if (order.customer_type === 'organization' && order.customer_id) {
               const { data } = await supabase
                 .from('organisations')
-                .select('trade_name, legal_name, city, source_affiliate_id')
+                .select('trade_name, legal_name, city')
                 .eq('id', order.customer_id)
                 .single();
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const org = data as any;
 
-              if (org) {
+              if (data) {
                 customerName =
-                  org.trade_name || org.legal_name || 'Organisation';
-                customerCity = org.city;
-
-                // Fetch affiliate name si source_affiliate_id existe
-                if (org.source_affiliate_id) {
-                  const { data: affiliate } = await supabase
-                    .from('linkme_affiliates')
-                    .select('display_name')
-                    .eq('id', org.source_affiliate_id)
-                    .single();
-                  affiliateName = affiliate?.display_name || null;
-                }
+                  data.trade_name || data.legal_name || 'Organisation';
+                customerCity = data.city;
               }
             } else if (
               order.customer_type === 'individual' &&
@@ -198,36 +216,125 @@ export default function LinkMeOrdersPage() {
             ) {
               const { data } = await supabase
                 .from('individual_customers')
-                .select('first_name, last_name, city, source_affiliate_id')
+                .select('first_name, last_name, city')
                 .eq('id', order.customer_id)
                 .single();
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const individual = data as any;
 
-              if (individual) {
-                customerName =
-                  `${individual.first_name} ${individual.last_name}`.trim();
-                customerCity = individual.city;
+              if (data) {
+                customerName = `${data.first_name} ${data.last_name}`.trim();
+                customerCity = data.city;
+              }
+            }
 
-                // Fetch affiliate name si source_affiliate_id existe
-                if (individual.source_affiliate_id) {
-                  const { data: affiliate } = await supabase
-                    .from('linkme_affiliates')
-                    .select('display_name')
-                    .eq('id', individual.source_affiliate_id)
+            // Tracer affilié et sélection via les items
+            const items = order.sales_order_items || [];
+            if (items.length > 0) {
+              const itemWithSelection = items.find(
+                (item: any) => item.linkme_selection_item_id
+              );
+
+              if (itemWithSelection?.linkme_selection_item_id) {
+                // Tracer: linkme_selection_items → linkme_selections
+                const { data: selectionItem } = await supabase
+                  .from('linkme_selection_items')
+                  .select('selection_id')
+                  .eq('id', itemWithSelection.linkme_selection_item_id)
+                  .single();
+
+                if (selectionItem?.selection_id) {
+                  // Récupérer la sélection et l'affilié
+                  const { data: selection } = await supabase
+                    .from('linkme_selections')
+                    .select('name, affiliate_id')
+                    .eq('id', selectionItem.selection_id)
                     .single();
-                  affiliateName = affiliate?.display_name || null;
+
+                  if (selection) {
+                    selectionName = selection.name || null;
+
+                    // Récupérer l'affilié
+                    if (selection.affiliate_id) {
+                      const { data: affiliate } = await supabase
+                        .from('linkme_affiliates')
+                        .select('display_name')
+                        .eq('id', selection.affiliate_id)
+                        .single();
+
+                      affiliateName = affiliate?.display_name || null;
+                    }
+                  }
                 }
               }
             }
 
-            // Calculer commission totale (somme des retrocession_amount)
-            const items = order.sales_order_items || [];
-            const totalCommission = items.reduce(
-              (sum: number, item: any) => sum + (item.retrocession_amount || 0),
+            // Récupérer les données produits et sélection pour les items
+            const enrichedItems: OrderItem[] = await Promise.all(
+              items.map(async (item: any) => {
+                let productName = 'Produit inconnu';
+                let productImageUrl: string | null = null;
+                let sellingPriceHt: number | null = null;
+                let basePriceHt: number = item.unit_price_ht || 0;
+
+                // Récupérer nom du produit
+                if (item.product_id) {
+                  const { data: product } = await supabase
+                    .from('products')
+                    .select('name')
+                    .eq('id', item.product_id)
+                    .single();
+
+                  productName = product?.name || 'Produit inconnu';
+
+                  // Récupérer l'image primaire depuis product_images
+                  const { data: primaryImage } = await supabase
+                    .from('product_images')
+                    .select('public_url')
+                    .eq('product_id', item.product_id)
+                    .eq('is_primary', true)
+                    .single();
+
+                  productImageUrl = primaryImage?.public_url || null;
+                }
+
+                // Récupérer les prix depuis linkme_selection_items
+                if (item.linkme_selection_item_id) {
+                  const { data: selectionItem } = await supabase
+                    .from('linkme_selection_items')
+                    .select('base_price_ht, selling_price_ht')
+                    .eq('id', item.linkme_selection_item_id)
+                    .single();
+
+                  if (selectionItem) {
+                    sellingPriceHt = selectionItem.selling_price_ht;
+                    basePriceHt =
+                      selectionItem.base_price_ht || item.unit_price_ht || 0;
+                  }
+                }
+
+                // Calcul marge affilié = (prix vente affilié - prix LinkMe) * quantité
+                const affiliateMargin = sellingPriceHt
+                  ? (sellingPriceHt - basePriceHt) * item.quantity
+                  : 0;
+
+                return {
+                  id: item.id,
+                  product_id: item.product_id,
+                  product_name: productName,
+                  product_image_url: productImageUrl,
+                  quantity: item.quantity,
+                  unit_price_ht: basePriceHt,
+                  total_ht: item.total_ht || 0,
+                  selling_price_ht: sellingPriceHt,
+                  affiliate_margin: affiliateMargin,
+                };
+              })
+            );
+
+            // Calculer marge affilié totale
+            const totalAffiliateMargin = enrichedItems.reduce(
+              (sum, item) => sum + item.affiliate_margin,
               0
             );
-            const netBenefit = order.total_ht - totalCommission;
 
             return {
               id: order.id,
@@ -241,10 +348,10 @@ export default function LinkMeOrdersPage() {
               created_at: order.created_at,
               customer_name: customerName,
               customer_city: customerCity,
-              total_commission: totalCommission,
-              net_benefit: netBenefit,
               affiliate_name: affiliateName,
-              items_count: items.length,
+              selection_name: selectionName,
+              total_affiliate_margin: totalAffiliateMargin,
+              items: enrichedItems,
             };
           })
         );
@@ -255,12 +362,8 @@ export default function LinkMeOrdersPage() {
         const statsData: OrderStats = {
           total_orders: enrichedOrders.length,
           total_ht: enrichedOrders.reduce((sum, o) => sum + o.total_ht, 0),
-          total_commissions: enrichedOrders.reduce(
-            (sum, o) => sum + o.total_commission,
-            0
-          ),
-          net_benefit: enrichedOrders.reduce(
-            (sum, o) => sum + o.net_benefit,
+          total_affiliate_margins: enrichedOrders.reduce(
+            (sum, o) => sum + o.total_affiliate_margin,
             0
           ),
           orders_by_status: enrichedOrders.reduce(
@@ -290,7 +393,8 @@ export default function LinkMeOrdersPage() {
         const query = searchQuery.toLowerCase();
         if (
           !order.order_number.toLowerCase().includes(query) &&
-          !order.customer_name.toLowerCase().includes(query)
+          !order.customer_name.toLowerCase().includes(query) &&
+          !(order.affiliate_name?.toLowerCase().includes(query) ?? false)
         ) {
           return false;
         }
@@ -342,7 +446,7 @@ export default function LinkMeOrdersPage() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-4 gap-4 p-6 border-b bg-gray-50">
+      <div className="grid grid-cols-3 gap-4 p-6 border-b bg-gray-50">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-500 flex items-center gap-2">
@@ -373,26 +477,12 @@ export default function LinkMeOrdersPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-500 flex items-center gap-2">
               <DollarSign className="h-4 w-4" />
-              Commissions
+              Marge Affilié
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-orange-600">
-              {formatPrice(stats?.total_commissions || 0)}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500 flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Bénéfice Net
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-green-600">
-              {formatPrice(stats?.net_benefit || 0)}
+              {formatPrice(stats?.total_affiliate_margins || 0)}
             </p>
           </CardContent>
         </Card>
@@ -403,7 +493,7 @@ export default function LinkMeOrdersPage() {
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
-            placeholder="Rechercher par n° ou client..."
+            placeholder="Rechercher par n°, client ou affilié..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -446,20 +536,21 @@ export default function LinkMeOrdersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10" />
                   <TableHead>N° Commande</TableHead>
-                  <TableHead>Client</TableHead>
                   <TableHead>Affilié</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Sélection</TableHead>
                   <TableHead className="text-right">Total HT</TableHead>
-                  <TableHead className="text-right">Commission</TableHead>
-                  <TableHead className="text-right">Bénéfice Net</TableHead>
+                  <TableHead className="text-right">Marge Affilié</TableHead>
                   <TableHead>Statut</TableHead>
                   <TableHead>Paiement</TableHead>
                   <TableHead>Date</TableHead>
-                  <TableHead className="w-12" />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredOrders.map(order => {
+                  const isExpanded = expandedOrders.has(order.id);
                   const statusInfo = STATUS_LABELS[order.status] || {
                     label: order.status,
                     variant: 'secondary' as const,
@@ -472,103 +563,188 @@ export default function LinkMeOrdersPage() {
                     : null;
 
                   return (
-                    <TableRow key={order.id}>
-                      <TableCell>
-                        <Link
-                          href={`/commandes/clients/${order.id}`}
-                          className="font-mono text-sm text-blue-600 hover:underline"
-                        >
-                          {order.order_number}
-                        </Link>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {order.customer_type === 'organization' ? (
-                            <Building2 className="h-4 w-4 text-gray-400" />
+                    <React.Fragment key={order.id}>
+                      <TableRow
+                        className={cn(
+                          'cursor-pointer hover:bg-gray-50',
+                          isExpanded && 'bg-blue-50'
+                        )}
+                        onClick={() => toggleOrder(order.id)}
+                      >
+                        <TableCell>
+                          <button className="p-1 hover:bg-gray-200 rounded">
+                            {isExpanded ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
+                          </button>
+                        </TableCell>
+                        <TableCell>
+                          <span className="font-mono text-sm text-blue-600">
+                            {order.order_number}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          {order.affiliate_name ? (
+                            <Badge variant="outline" className="text-xs">
+                              {order.affiliate_name}
+                            </Badge>
                           ) : (
-                            <User className="h-4 w-4 text-gray-400" />
+                            <span className="text-xs text-gray-400">-</span>
                           )}
-                          <div>
-                            <p className="font-medium text-sm">
-                              {order.customer_name}
-                            </p>
-                            {order.customer_city && (
-                              <p className="text-xs text-gray-500">
-                                {order.customer_city}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {order.customer_type === 'organization' ? (
+                              <Building2 className="h-4 w-4 text-gray-400" />
+                            ) : (
+                              <User className="h-4 w-4 text-gray-400" />
+                            )}
+                            <div>
+                              <p className="font-medium text-sm">
+                                {order.customer_name}
                               </p>
+                              {order.customer_city && (
+                                <p className="text-xs text-gray-500">
+                                  {order.customer_city}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {order.selection_name ? (
+                            <span className="text-sm text-gray-700">
+                              {order.selection_name}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-400">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatPrice(order.total_ht)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <span
+                            className={cn(
+                              'font-medium',
+                              order.total_affiliate_margin > 0
+                                ? 'text-orange-600'
+                                : 'text-gray-400'
+                            )}
+                          >
+                            {order.total_affiliate_margin > 0
+                              ? formatPrice(order.total_affiliate_margin)
+                              : '-'}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={statusInfo.variant}>
+                            {statusInfo.label}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {paymentInfo ? (
+                            <Badge variant={paymentInfo.variant}>
+                              {paymentInfo.label}
+                            </Badge>
+                          ) : (
+                            <span className="text-xs text-gray-400">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                            <CalendarDays className="h-3 w-3" />
+                            {new Date(order.created_at).toLocaleDateString(
+                              'fr-FR',
+                              {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric',
+                              }
                             )}
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {order.affiliate_name ? (
-                          <Badge variant="outline" className="text-xs">
-                            {order.affiliate_name}
-                          </Badge>
-                        ) : (
-                          <span className="text-xs text-gray-400">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        {formatPrice(order.total_ht)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <span
-                          className={cn(
-                            'font-medium',
-                            order.total_commission > 0
-                              ? 'text-orange-600'
-                              : 'text-gray-400'
-                          )}
-                        >
-                          {order.total_commission > 0
-                            ? formatPrice(order.total_commission)
-                            : '-'}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <span className="font-medium text-green-600">
-                          {formatPrice(order.net_benefit)}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={statusInfo.variant}>
-                          {statusInfo.label}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {paymentInfo ? (
-                          <Badge variant={paymentInfo.variant}>
-                            {paymentInfo.label}
-                          </Badge>
-                        ) : (
-                          <span className="text-xs text-gray-400">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1 text-xs text-gray-500">
-                          <CalendarDays className="h-3 w-3" />
-                          {new Date(order.created_at).toLocaleDateString(
-                            'fr-FR',
-                            {
-                              day: '2-digit',
-                              month: 'short',
-                              year: 'numeric',
-                            }
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Link href={`/commandes/clients/${order.id}`}>
-                          <IconButton
-                            variant="ghost"
-                            size="sm"
-                            icon={Eye}
-                            label="Voir détails"
-                          />
-                        </Link>
-                      </TableCell>
-                    </TableRow>
+                        </TableCell>
+                      </TableRow>
+
+                      {/* Accordéon - Détails des produits */}
+                      {isExpanded && (
+                        <TableRow className="bg-gray-50 hover:bg-gray-50">
+                          <TableCell colSpan={10} className="p-0">
+                            <div className="px-8 py-4">
+                              <h4 className="text-sm font-medium text-gray-700 mb-3">
+                                Produits ({order.items.length})
+                              </h4>
+                              <div className="bg-white rounded border">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow className="bg-gray-100">
+                                      <TableHead className="text-xs w-16">
+                                        Photo
+                                      </TableHead>
+                                      <TableHead className="text-xs">
+                                        Produit
+                                      </TableHead>
+                                      <TableHead className="text-xs text-right">
+                                        Qté
+                                      </TableHead>
+                                      <TableHead className="text-xs text-right">
+                                        Prix unit. HT
+                                      </TableHead>
+                                      <TableHead className="text-xs text-right">
+                                        Total HT
+                                      </TableHead>
+                                      <TableHead className="text-xs text-right">
+                                        Marge Affilié (€)
+                                      </TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {order.items.map(item => (
+                                      <TableRow key={item.id}>
+                                        <TableCell className="p-2">
+                                          <ProductThumbnail
+                                            src={item.product_image_url}
+                                            alt={item.product_name}
+                                            size="xs"
+                                          />
+                                        </TableCell>
+                                        <TableCell className="text-sm">
+                                          {item.product_name}
+                                        </TableCell>
+                                        <TableCell className="text-sm text-right">
+                                          {item.quantity}
+                                        </TableCell>
+                                        <TableCell className="text-sm text-right">
+                                          {formatPrice(item.unit_price_ht)}
+                                        </TableCell>
+                                        <TableCell className="text-sm text-right font-medium">
+                                          {formatPrice(item.total_ht)}
+                                        </TableCell>
+                                        <TableCell className="text-sm text-right">
+                                          {item.affiliate_margin > 0 ? (
+                                            <span className="text-orange-600 font-medium">
+                                              {formatPrice(
+                                                item.affiliate_margin
+                                              )}
+                                            </span>
+                                          ) : (
+                                            <span className="text-gray-400">
+                                              -
+                                            </span>
+                                          )}
+                                        </TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </React.Fragment>
                   );
                 })}
               </TableBody>

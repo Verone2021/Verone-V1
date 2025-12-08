@@ -68,6 +68,7 @@ import {
   useAddProductToSelection,
   useRemoveProductFromSelection,
   useUpdateProductMargin,
+  useUpdateSelectionItem,
   type SelectionItem,
   type SourcedProduct,
 } from '../../hooks/use-linkme-selections';
@@ -131,6 +132,7 @@ export default function SelectionDetailPage({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editItem, setEditItem] = useState<SelectionItem | null>(null);
   const updateMargin = useUpdateProductMargin();
+  const updateItem = useUpdateSelectionItem();
 
   // Note: Les marges ne sont plus éditables depuis cette vue
   // L'utilisateur doit aller dans la page détail du produit pour modifier
@@ -255,16 +257,24 @@ export default function SelectionDetailPage({
     updates: { marginRate?: number; customPriceHT?: number }
   ) => {
     if (!selection) return;
-    // Mettre à jour la marge si fournie
+
+    // Utiliser useUpdateSelectionItem pour MAJ marge ET prix en une seule requête
+    const updateData: { margin_rate?: number; base_price_ht?: number } = {};
+
     if (updates.marginRate !== undefined) {
-      await updateMargin.mutateAsync({
+      updateData.margin_rate = updates.marginRate;
+    }
+    if (updates.customPriceHT !== undefined) {
+      updateData.base_price_ht = updates.customPriceHT;
+    }
+
+    if (Object.keys(updateData).length > 0) {
+      await updateItem.mutateAsync({
         itemId,
-        marginRate: updates.marginRate,
         selectionId: selection.id,
+        data: updateData,
       });
     }
-    // Note: customPriceHT sera géré par un hook séparé si nécessaire
-    // Pour l'instant, on met à jour uniquement la marge
   };
 
   // Déterminer la couleur de l'indicateur de marge (Traffic Light System)
@@ -482,14 +492,16 @@ export default function SelectionDetailPage({
                 <TableRow>
                   <TableHead className="w-16">Image</TableHead>
                   <TableHead>Produit</TableHead>
-                  <TableHead className="text-right">Prix HT (+comm.)</TableHead>
+                  <TableHead className="text-right">Catalogue HT</TableHead>
                   <TableHead className="text-right">
-                    Prix TTC (+comm.)
+                    Prix vente LinkMe HT
                   </TableHead>
-                  <TableHead className="text-center w-28">Marge %</TableHead>
-                  <TableHead className="text-right">Marge nette €</TableHead>
-                  <TableHead className="text-right">Prix vente HT</TableHead>
-                  <TableHead className="text-right">Prix vente TTC</TableHead>
+                  <TableHead className="text-right">
+                    Prix vente Final HT
+                  </TableHead>
+                  <TableHead className="text-center w-24">Marge %</TableHead>
+                  <TableHead className="text-right">Marge €</TableHead>
+                  <TableHead className="text-right">Prix affilié HT</TableHead>
                   <TableHead className="text-right w-24">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -497,26 +509,28 @@ export default function SelectionDetailPage({
                 {selection.items.map((item: SelectionItem) => {
                   const marginRate = item.margin_rate;
                   const commissionRate = (item.commission_rate || 0) / 100; // Conversion % → décimal (5.00 → 0.05)
-                  const TVA_RATE = 0.2; // 20% TVA
 
-                  // Calculs selon les formules du plan
-                  // Prix HT (+ commission) = base × (1 + commission)
-                  const priceWithCommission =
-                    item.base_price_ht * (1 + commissionRate);
-                  // Prix TTC (+ commission) = prix HT avec comm × (1 + TVA)
-                  const priceWithCommissionTTC =
-                    priceWithCommission * (1 + TVA_RATE);
-                  // Marge nette en € = base × (margin_rate / 100)
-                  const marginNetEuros =
-                    item.base_price_ht * (marginRate / 100);
-                  // Prix vente total HT = base × (1 + margin_rate/100) × (1 + commission)
-                  const totalSellingPrice =
-                    item.base_price_ht *
-                    (1 + marginRate / 100) *
-                    (1 + commissionRate);
-                  // Prix vente total TTC = prix vente HT × (1 + TVA)
-                  const totalSellingPriceTTC =
-                    totalSellingPrice * (1 + TVA_RATE);
+                  // FORMULES LINKME
+                  // Prix Catalogue HT = prix du catalogue LinkMe (référence)
+                  const catalogPriceHT =
+                    item.catalog_price_ht || item.base_price_ht;
+                  // Prix de vente LinkMe HT = prix de base de la sélection (modifiable via modal)
+                  const selectionPriceHT = item.base_price_ht;
+                  // Prix de vente LinkMe Final HT = Prix × (1 + commission)
+                  const prixVenteFinalHT =
+                    selectionPriceHT * (1 + commissionRate);
+                  // Marge € = Prix Sélection × (margin_rate / 100)
+                  const marginEuros = selectionPriceHT * (marginRate / 100);
+                  // Prix affilié HT = Prix × (1 + commission + marge) - ADDITION pas multiplication!
+                  const prixAffilieHT =
+                    selectionPriceHT * (1 + commissionRate + marginRate / 100);
+                  // Calcul remise si Prix Sélection < Prix Catalogue
+                  const hasDiscount =
+                    selectionPriceHT < catalogPriceHT && catalogPriceHT > 0;
+                  const discountPercent = hasDiscount
+                    ? ((catalogPriceHT - selectionPriceHT) / catalogPriceHT) *
+                      100
+                    : 0;
 
                   return (
                     <TableRow key={item.id}>
@@ -544,26 +558,33 @@ export default function SelectionDetailPage({
                           </p>
                         </div>
                       </TableCell>
+                      {/* Prix Catalogue HT */}
+                      <TableCell className="text-right font-mono text-muted-foreground">
+                        {catalogPriceHT.toFixed(2)} €
+                      </TableCell>
+                      {/* Prix vente LinkMe HT (avec badge remise si applicable) */}
                       <TableCell className="text-right font-mono">
-                        <div className="space-y-0.5">
-                          {/* Prix de vente complet HT (base + commission) */}
-                          <div>
-                            <span>{priceWithCommission.toFixed(2)} €</span>
-                            {commissionRate > 0 && (
-                              <span className="text-xs text-muted-foreground ml-1">
-                                (+{(commissionRate * 100).toFixed(0)}%)
-                              </span>
-                            )}
-                          </div>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <span className="font-medium">
+                            {selectionPriceHT.toFixed(2)} €
+                          </span>
+                          {hasDiscount && (
+                            <Badge
+                              variant="secondary"
+                              className="text-xs bg-green-100 text-green-700 border-green-200"
+                            >
+                              -{discountPercent.toFixed(1)}%
+                            </Badge>
+                          )}
                         </div>
                       </TableCell>
-                      <TableCell className="text-right font-mono">
-                        {/* Prix TTC (+ commission) */}
-                        <span>{priceWithCommissionTTC.toFixed(2)} €</span>
+                      {/* Prix vente Final HT = prix × (1 + commission) */}
+                      <TableCell className="text-right font-mono font-medium text-primary">
+                        {prixVenteFinalHT.toFixed(2)} €
                       </TableCell>
+                      {/* Marge % avec indicateur Traffic Light */}
                       <TableCell>
-                        <div className="flex items-center gap-1.5">
-                          {/* Indicateur de marge (Traffic Light) */}
+                        <div className="flex items-center justify-center gap-1.5">
                           <div
                             className={`w-2.5 h-2.5 rounded-full ${marginIndicatorColors[getMarginIndicatorColor(marginRate)]} shrink-0`}
                             title={
@@ -572,21 +593,20 @@ export default function SelectionDetailPage({
                               ]
                             }
                           />
-                          {/* Marge en lecture seule avec décimales */}
                           <span className="font-mono text-sm">
                             {marginRate.toFixed(2)} %
                           </span>
                         </div>
                       </TableCell>
+                      {/* Marge € */}
                       <TableCell className="text-right font-mono text-green-600">
-                        {marginNetEuros.toFixed(2)} €
+                        {marginEuros.toFixed(2)} €
                       </TableCell>
-                      <TableCell className="text-right font-mono font-medium">
-                        {totalSellingPrice.toFixed(2)} €
+                      {/* Prix affilié HT = base × (1 + marge) × (1 + commission) */}
+                      <TableCell className="text-right font-mono font-semibold text-blue-600">
+                        {prixAffilieHT.toFixed(2)} €
                       </TableCell>
-                      <TableCell className="text-right font-mono font-medium text-primary">
-                        {totalSellingPriceTTC.toFixed(2)} €
-                      </TableCell>
+                      {/* Actions */}
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
                           {/* Bouton Vue (READ-ONLY) */}
@@ -890,7 +910,7 @@ export default function SelectionDetailPage({
         onOpenChange={setIsEditModalOpen}
         item={editItem}
         onSave={handleSaveFromDetail}
-        isSaving={updateMargin.isPending}
+        isSaving={updateItem.isPending}
       />
     </div>
   );

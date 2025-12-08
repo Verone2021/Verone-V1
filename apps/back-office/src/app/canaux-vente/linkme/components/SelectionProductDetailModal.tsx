@@ -26,11 +26,16 @@ import {
   FileDown,
   Euro,
   Loader2,
+  Calculator,
+  TrendingDown,
 } from 'lucide-react';
 
 import { MarginSlider } from './MarginSlider';
+import {
+  useCalculateLinkMeMargins,
+  LINKME_MARGIN_DEFAULTS,
+} from '../hooks/use-linkme-margin-calculator';
 import type { SelectionItem } from '../hooks/use-linkme-selections';
-import { calculateLinkMeMargins } from '../types';
 
 interface SelectionProductDetailModalProps {
   /** État d'ouverture du modal */
@@ -89,35 +94,15 @@ export function SelectionProductDetailModal({
     }
   }, [item]);
 
-  // Calcul des marges pour le slider
-  // FORMULE CORRECTE: basePriceHT = prix de vente catalogue (PAS cost_price!)
-  const marginResult = item
-    ? item.public_price_ht && item.public_price_ht > 0
-      ? calculateLinkMeMargins({
-          basePriceHT: item.base_price_ht || 0,
-          publicPriceHT: item.public_price_ht,
-          platformFeeRate: (item.commission_rate || 5) / 100,
-          bufferRate: item.buffer_rate || 0.05,
-        })
-      : item.min_margin_rate !== null && item.max_margin_rate !== null
-        ? {
-            minRate: (item.min_margin_rate ?? 1) / 100,
-            maxRate: (item.max_margin_rate ?? 100) / 100,
-            suggestedRate:
-              (item.suggested_margin_rate ?? (item.max_margin_rate ?? 30) / 3) /
-              100,
-            isProductSellable: true,
-            greenZoneEnd:
-              (item.suggested_margin_rate ?? (item.max_margin_rate ?? 30) / 3) /
-              100,
-            orangeZoneEnd:
-              ((item.suggested_margin_rate ??
-                (item.max_margin_rate ?? 30) / 3) *
-                2) /
-              100,
-          }
-        : null
-    : null;
+  // Calcul dynamique des marges avec le hook
+  // FORMULE CORRECTE: basePriceHT = prix de vente sélection (PAS cost_price!)
+  // Ce hook calcule automatiquement min, max, suggested, zones de couleur
+  const marginResult = useCalculateLinkMeMargins(
+    mode === 'edit' ? localCustomPriceHT : item?.base_price_ht,
+    item?.public_price_ht,
+    item?.commission_rate,
+    item?.buffer_rate ?? LINKME_MARGIN_DEFAULTS.bufferRate
+  );
 
   // Calcul des prix
   const basePrice =
@@ -136,11 +121,21 @@ export function SelectionProductDetailModal({
   // Prix client LinkMe (calculé) = base × (1 + commission)
   const prixClientLinkMe = basePrice * (1 + commissionRate);
 
-  // Prix client LinkMe catalogue (pour comparaison)
-  const catalogCommRate = (item?.commission_rate || 0) / 100; // Conversion % → décimal
-  const prixClientLinkMeCatalogue = item?.catalog_price_ht
-    ? item.catalog_price_ht * (1 + catalogCommRate)
+  // Prix client LinkMe catalogue NITMI (pour comparaison)
+  // C'est le prix que le client paie si on utilise le prix catalogue standard
+  const prixClientNITMI = item?.catalog_price_ht
+    ? item.catalog_price_ht * (1 + commissionRate)
     : null;
+
+  // Remise vs catalogue (en %)
+  // Négatif = moins cher que le catalogue, Positif = plus cher
+  const remiseVsCatalogue =
+    prixClientNITMI && prixClientLinkMe
+      ? ((prixClientLinkMe - prixClientNITMI) / prixClientNITMI) * 100
+      : null;
+
+  // Buffer rate pour les calculs
+  const bufferRate = item?.buffer_rate ?? LINKME_MARGIN_DEFAULTS.bufferRate;
 
   // Handler changement marge (décimal)
   const handleMarginChange = useCallback((newRate: number) => {
@@ -325,6 +320,53 @@ export function SelectionProductDetailModal({
 
           <Separator />
 
+          {/* === COMPARATIF PRIX (NITMI vs Sélection) === */}
+          {prixClientNITMI && (
+            <div className="rounded-xl border bg-blue-50/50 p-4 space-y-3">
+              <h4 className="font-medium text-sm flex items-center gap-2">
+                <TrendingDown className="h-4 w-4 text-blue-600" />
+                Comparatif Prix
+              </h4>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                {/* Prix catalogue NITMI */}
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    Prix client NITMI (catalogue)
+                  </p>
+                  <p className="font-mono font-semibold text-lg">
+                    {prixClientNITMI.toFixed(2)} €
+                  </p>
+                </div>
+                {/* Prix sélection */}
+                <div>
+                  <p className="text-xs text-blue-600">Prix client sélection</p>
+                  <p className="font-mono font-semibold text-lg text-blue-600">
+                    {prixClientLinkMe.toFixed(2)} €
+                  </p>
+                </div>
+                {/* Remise vs catalogue */}
+                {remiseVsCatalogue !== null && (
+                  <div className="col-span-2">
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        'font-mono',
+                        remiseVsCatalogue < 0
+                          ? 'border-green-500 text-green-600 bg-green-50'
+                          : remiseVsCatalogue > 0
+                            ? 'border-red-500 text-red-600 bg-red-50'
+                            : 'border-gray-500 text-gray-600'
+                      )}
+                    >
+                      {remiseVsCatalogue > 0 ? '+' : ''}
+                      {remiseVsCatalogue.toFixed(2)}% vs catalogue
+                    </Badge>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* === SECTION TARIFICATION === */}
           <div className="rounded-xl border bg-gradient-to-br from-slate-50 to-slate-100/50 p-5 space-y-4">
             <h3 className="font-semibold flex items-center gap-2 text-lg">
@@ -332,14 +374,17 @@ export function SelectionProductDetailModal({
               Tarification
             </h3>
 
-            {/* Mode ÉDITION: Champs éditables */}
-            {!isViewMode && (
-              <div className="grid grid-cols-2 gap-6">
-                {/* Prix de vente HT (éditable) */}
-                <div className="space-y-2">
-                  <Label htmlFor="custom_price" className="text-sm font-medium">
-                    Prix de vente HT
-                  </Label>
+            {/* Prix de vente HT */}
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="custom_price" className="text-sm font-medium">
+                  Prix de vente HT (sélection)
+                </Label>
+                {isViewMode ? (
+                  <p className="text-2xl font-bold font-mono">
+                    {basePrice.toFixed(2)} €
+                  </p>
+                ) : (
                   <div className="relative">
                     <Input
                       id="custom_price"
@@ -356,48 +401,24 @@ export function SelectionProductDetailModal({
                       €
                     </span>
                   </div>
-                </div>
-
-                {/* Prix client LinkMe (calculé) */}
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-blue-600">
-                    Prix client LinkMe (calculé)
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl font-bold text-blue-600">
-                      {prixClientLinkMe.toFixed(2)} €
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      (× {((1 + commissionRate) * 100).toFixed(0)}%)
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Mode VUE: Affichage lecture seule */}
-            {isViewMode && (
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-muted-foreground">
-                    Prix de base HT
-                  </p>
-                  <p className="text-xl font-semibold">
-                    {basePrice.toFixed(2)} €
-                  </p>
-                </div>
-                {prixClientLinkMeCatalogue && (
-                  <div>
-                    <p className="text-xs text-blue-600">
-                      Prix catalogue LinkMe
-                    </p>
-                    <p className="text-xl font-semibold text-blue-600">
-                      {prixClientLinkMeCatalogue.toFixed(2)} €
-                    </p>
-                  </div>
                 )}
               </div>
-            )}
+
+              {/* Prix client LinkMe (calculé) */}
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-blue-600">
+                  Prix client (calculé)
+                </p>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl font-bold text-blue-600">
+                    {prixClientLinkMe.toFixed(2)} €
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    (× {((1 + commissionRate) * 100).toFixed(0)}%)
+                  </span>
+                </div>
+              </div>
+            </div>
 
             <Separator />
 
@@ -426,8 +447,6 @@ export function SelectionProductDetailModal({
               </div>
 
               {marginResult && marginResult.isProductSellable ? (
-                // Utiliser MarginSlider unifié pour VIEW et EDIT
-                // readOnly désactive le slider mais garde tous les labels
                 <MarginSlider
                   marginResult={marginResult}
                   value={localMarginRate}
@@ -435,8 +454,14 @@ export function SelectionProductDetailModal({
                   readOnly={isViewMode}
                 />
               ) : (
-                <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
-                  Données de marge insuffisantes pour ce produit.
+                <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-700">
+                  <p className="font-medium">
+                    Données de marge non disponibles
+                  </p>
+                  <p className="text-xs mt-1">
+                    Vérifiez que le prix public HT est renseigné sur la fiche
+                    produit catalogue.
+                  </p>
                 </div>
               )}
             </div>
@@ -448,12 +473,83 @@ export function SelectionProductDetailModal({
               <div>
                 <p className="text-sm font-medium">Prix de vente final HT</p>
                 <p className="text-xs text-muted-foreground">
-                  (base × marge × commission)
+                  (base + marge + commission)
                 </p>
               </div>
               <p className="text-3xl font-bold text-primary">
                 {finalPriceWithCommission.toFixed(2)} €
               </p>
+            </div>
+          </div>
+
+          {/* === DÉTAIL DES CALCULS === */}
+          <div className="rounded-xl border p-4 space-y-3">
+            <h4 className="font-medium flex items-center gap-2 text-sm">
+              <Calculator className="h-4 w-4" />
+              Détail des calculs
+            </h4>
+            <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
+              <span>Prix de vente HT</span>
+              <span className="font-mono text-right text-foreground">
+                {basePrice.toFixed(2)} €
+              </span>
+
+              <span>
+                Commission LinkMe ({(item?.commission_rate || 0).toFixed(0)}%)
+              </span>
+              <span className="font-mono text-right">
+                {(basePrice * commissionRate).toFixed(2)} €
+              </span>
+
+              <span>Marge affilié ({(localMarginRate * 100).toFixed(1)}%)</span>
+              <span className="font-mono text-right">
+                {(basePrice * localMarginRate).toFixed(2)} €
+              </span>
+
+              {item?.public_price_ht && (
+                <>
+                  <Separator className="col-span-2 my-2" />
+
+                  <span>Prix public HT</span>
+                  <span className="font-mono text-right">
+                    {item.public_price_ht.toFixed(2)} €
+                  </span>
+
+                  <span>
+                    Buffer sécurité ({(bufferRate * 100).toFixed(0)}%)
+                  </span>
+                  <span className="font-mono text-right">
+                    {(item.public_price_ht * bufferRate).toFixed(2)} €
+                  </span>
+
+                  <span>Prix max autorisé</span>
+                  <span className="font-mono text-right">
+                    {(item.public_price_ht * (1 - bufferRate)).toFixed(2)} €
+                  </span>
+
+                  <span>Écart vs prix public</span>
+                  <span
+                    className={cn(
+                      'font-mono text-right',
+                      finalPriceWithCommission <=
+                        item.public_price_ht * (1 - bufferRate)
+                        ? 'text-green-600'
+                        : 'text-red-600'
+                    )}
+                  >
+                    {(item.public_price_ht - finalPriceWithCommission).toFixed(
+                      2
+                    )}{' '}
+                    € (
+                    {(
+                      ((item.public_price_ht - finalPriceWithCommission) /
+                        item.public_price_ht) *
+                      100
+                    ).toFixed(1)}
+                    %)
+                  </span>
+                </>
+              )}
             </div>
           </div>
 

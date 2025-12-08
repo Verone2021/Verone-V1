@@ -177,8 +177,8 @@ export async function POST(request: NextRequest) {
         name,
         slug: selectionSlug,
         description: description || null,
-        status,
-        is_public: status === 'active',
+        // published_at = NOW() si status === 'active', sinon NULL (brouillon)
+        published_at: status === 'active' ? new Date().toISOString() : null,
         products_count: products.length,
         views_count: 0,
         orders_count: 0,

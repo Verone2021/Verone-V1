@@ -549,11 +549,8 @@ export function ProductPricingCard({
                 min="0"
                 max="100"
                 value={formData.min_margin_rate ?? ''}
-                onChange={e => handleChange('min_margin_rate', e.target.value)}
-                className={cn(
-                  'font-mono',
-                  !isMinMarginValid && 'border-amber-300'
-                )}
+                disabled
+                className="font-mono bg-muted cursor-not-allowed"
               />
             </div>
             <div className="space-y-2">
@@ -573,13 +570,8 @@ export function ProductPricingCard({
                 min="0"
                 max="100"
                 value={formData.suggested_margin_rate ?? ''}
-                onChange={e =>
-                  handleChange('suggested_margin_rate', e.target.value)
-                }
-                className={cn(
-                  'font-mono',
-                  !isSuggestedMarginValid && 'border-amber-300'
-                )}
+                disabled
+                className="font-mono bg-muted cursor-not-allowed"
               />
             </div>
             <div className="space-y-2">
@@ -599,11 +591,8 @@ export function ProductPricingCard({
                 min="0"
                 max="100"
                 value={formData.max_margin_rate ?? ''}
-                onChange={e => handleChange('max_margin_rate', e.target.value)}
-                className={cn(
-                  'font-mono',
-                  !isMaxMarginValid && 'border-amber-300'
-                )}
+                disabled
+                className="font-mono bg-muted cursor-not-allowed"
               />
             </div>
           </div>

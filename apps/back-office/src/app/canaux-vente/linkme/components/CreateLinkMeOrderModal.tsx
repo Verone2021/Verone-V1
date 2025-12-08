@@ -258,6 +258,7 @@ export function CreateLinkMeOrderModal({
           email: newCustomerEmail.trim() || undefined,
           phone: newCustomerPhone.trim() || undefined,
           source_type: 'linkme',
+          source_affiliate_id: selectedAffiliateId || undefined,
         });
         setSelectedCustomerId(result.id);
         customers.refetch();
@@ -274,6 +275,7 @@ export function CreateLinkMeOrderModal({
           email: newCustomerEmail.trim() || undefined,
           phone: newCustomerPhone.trim() || undefined,
           source_type: 'linkme',
+          source_affiliate_id: selectedAffiliateId || undefined,
         });
         setSelectedCustomerId(result.id);
         customers.refetch();
@@ -330,10 +332,12 @@ export function CreateLinkMeOrderModal({
       return;
     }
 
-    // margin_rate est stocké en POURCENTAGE (10 = 10%)
-    // Arrondir le prix de vente à 2 décimales
+    // margin_rate et commission_rate sont en POURCENTAGE (10 = 10%)
+    // Prix affilié = base × (1 + commission + marge) - ADDITION pas multiplication!
+    const commissionRate = (item.commission_rate || 0) / 100;
+    const marginRate = item.margin_rate / 100;
     const sellingPrice = roundMoney(
-      item.selling_price_ht || item.base_price_ht * (1 + item.margin_rate / 100)
+      item.base_price_ht * (1 + commissionRate + marginRate)
     );
     const retrocessionRate = item.margin_rate / 100;
 
@@ -1049,10 +1053,12 @@ export function CreateLinkMeOrderModal({
                       const isInCart = cart.some(
                         c => c.product_id === item.product_id
                       );
-                      // margin_rate est en POURCENTAGE
+                      // margin_rate et commission_rate sont en POURCENTAGE
+                      // Prix affilié = base × (1 + commission + marge) - ADDITION pas multiplication!
+                      const commissionRate = (item.commission_rate || 0) / 100;
+                      const marginRate = item.margin_rate / 100;
                       const sellingPrice =
-                        item.selling_price_ht ||
-                        item.base_price_ht * (1 + item.margin_rate / 100);
+                        item.base_price_ht * (1 + commissionRate + marginRate);
                       return (
                         <button
                           key={item.id}
@@ -1279,9 +1285,11 @@ export function CreateLinkMeOrderModal({
               ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                   {previewSelection.items.map(item => {
+                    // Prix affilié = base × (1 + commission + marge) - ADDITION pas multiplication!
+                    const commissionRate = (item.commission_rate || 0) / 100;
+                    const marginRate = (item.margin_rate || 0) / 100;
                     const sellingPrice =
-                      item.selling_price_ht ||
-                      item.base_price_ht * (1 + (item.margin_rate || 0) / 100);
+                      item.base_price_ht * (1 + commissionRate + marginRate);
                     return (
                       <div
                         key={item.id}
