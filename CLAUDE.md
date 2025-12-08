@@ -232,6 +232,7 @@ EOF
 6. **Anti-Hallucination** : JAMAIS inventer, TOUJOURS vérifier Git history
 7. **Catalogue First** : TOUJOURS consulter catalogue composants AVANT créer
 8. **🚫 INTERDICTION ABSOLUE DONNÉES TEST** : JAMAIS ajouter/créer données test, seed, ou mock dans la base de données de production SANS autorisation EXPLICITE utilisateur. Base de données DOIT rester vide sauf si utilisateur demande explicitement de créer des données.
+9. **🧠 Expert Advisor - Solution Simple First** : TOUJOURS proposer la solution la plus simple EN PREMIER. Avant de coder une nouvelle fonctionnalité, vérifier si l'existant peut être réutilisé avec un simple changement (label, condition, etc.). Si l'utilisateur propose une solution complexe, CHALLENGER et proposer l'alternative simple. Poser la question : "Peut-on faire plus simple avec ce qui existe déjà ?"
 
 ### 🛡️ Workflow Anti-Hallucination
 

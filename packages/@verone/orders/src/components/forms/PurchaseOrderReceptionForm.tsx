@@ -137,22 +137,21 @@ export function PurchaseOrderReceptionForm({
     );
   }, [remainderItems]);
 
-  // Condition pour afficher le bouton "Annuler reliquat"
-  // Visible si: status partiellement reçu OU (confirmé avec au moins une réception partielle effectuée)
+  // Condition pour afficher le bouton "Annuler commande/reliquat"
+  // Visible si: status partiellement reçu OU validé (avec ou sans réception)
   const canCancelRemainder = useMemo(() => {
     const hasRemainder = totalRemainder > 0;
-    const hasPartialReception = items.some(
-      item => item.quantity_already_received > 0
-    );
     const isPartiallyReceived = purchaseOrder.status === 'partially_received';
     const isValidated = purchaseOrder.status === 'validated';
 
-    // Afficher si partiellement reçu avec reliquat OU si validé avec réceptions partielles et reliquat
-    return (
-      hasRemainder &&
-      (isPartiallyReceived || (isValidated && hasPartialReception))
-    );
-  }, [totalRemainder, items, purchaseOrder.status]);
+    // Afficher si: reliquat > 0 ET (partiellement reçu OU validé)
+    return hasRemainder && (isPartiallyReceived || isValidated);
+  }, [totalRemainder, purchaseOrder.status]);
+
+  // Déterminer si aucune réception n'a été faite (pour le label du bouton)
+  const hasNoReceptionYet = useMemo(() => {
+    return items.every(item => item.quantity_already_received === 0);
+  }, [items]);
 
   // Update quantité item
   const handleQuantityChange = (itemId: string, value: string) => {
@@ -579,7 +578,9 @@ export function PurchaseOrderReceptionForm({
               disabled={validating}
             >
               <XCircle className="w-4 h-4 mr-2" />
-              Annuler reliquat ({totalRemainder} unités)
+              {hasNoReceptionYet
+                ? `Annuler commande (${totalRemainder} unités)`
+                : `Annuler reliquat (${totalRemainder} unités)`}
             </ButtonV2>
           )}
         </div>
