@@ -341,7 +341,7 @@ export const useCatalogue = () => {
       const { error } = await supabase
         .from('products')
         .update({
-          status: 'discontinued',
+          product_status: 'discontinued',
           archived_at: new Date().toISOString(),
         })
         .eq('id', id);
