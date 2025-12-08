@@ -147,10 +147,21 @@ export function useStockAlerts() {
     fetchAlerts();
   }, [fetchAlerts]);
 
+  // ✅ Alertes actives = low_stock OU out_of_stock
+  // - low_stock : stock_real < min_stock (nécessite min_stock > 0)
+  // - out_of_stock : stock_previsionnel < 0 (INDÉPENDANT de min_stock)
+  const activeAlerts = alerts.filter(a => {
+    const stockPrevisionnel =
+      a.stock_real + a.stock_forecasted_in - a.stock_forecasted_out;
+    return a.stock_real < a.min_stock || stockPrevisionnel < 0;
+  });
+
   return {
     loading,
     alerts,
     fetchAlerts,
+    // ✅ Alertes actives (restauré)
+    activeAlerts,
     // Helpers existants
     criticalAlerts: alerts.filter(a => a.severity === 'critical'),
     warningAlerts: alerts.filter(a => a.severity === 'warning'),

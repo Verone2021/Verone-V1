@@ -239,22 +239,52 @@ export default function StockAlertesPage() {
   };
 
   // Séparer alertes actives vs historique
-  // ✅ FIX 2025-12-07 - Utiliser stock PRÉVISIONNEL (pas stock_real)
+  // ✅ FIX 2025-12-08 - Inclure alertes VERTES (PO validée en transit)
   // Stock prévisionnel = stock_real + forecasted_in - forecasted_out
-  // Actives = stock_previsionnel < min_stock (besoin action)
-  // Historique = stock_previsionnel >= min_stock (résolu)
+  // ACTIVES = TROIS CONDITIONS :
+  //   1. stock_previsionnel < 0 (out_of_stock ROUGE)
+  //   2. stock_previsionnel < min_stock (low_stock)
+  //   3. validated = true ET forecasted_in > 0 ET forecasted_out > 0 (out_of_stock VERT - PO en transit)
+  // HISTORIQUE = alertes résolues (stock OK, pas de PO en transit)
   const activeAlerts = mappedAlerts.filter(alert => {
     const stockPrevisionnel =
       (alert.currentStock ?? 0) +
       (alert.stock_forecasted_in ?? 0) -
       (alert.stock_forecasted_out ?? 0);
-    return stockPrevisionnel < (alert.minStock ?? 0);
+
+    // Condition 1 : Stock prévisionnel négatif (ROUGE)
+    if (stockPrevisionnel < 0) return true;
+
+    // Condition 2 : Stock sous le seuil minimum (low_stock)
+    if (stockPrevisionnel < (alert.minStock ?? 0)) return true;
+
+    // Condition 3 : VERT - PO validée en transit couvre SO en attente
+    // L'alerte doit rester visible jusqu'à réception effective
+    if (
+      alert.validated === true &&
+      (alert.stock_forecasted_in ?? 0) > 0 &&
+      (alert.stock_forecasted_out ?? 0) > 0
+    ) {
+      return true;
+    }
+
+    return false;
   });
   const historiqueAlerts = mappedAlerts.filter(alert => {
     const stockPrevisionnel =
       (alert.currentStock ?? 0) +
       (alert.stock_forecasted_in ?? 0) -
       (alert.stock_forecasted_out ?? 0);
+
+    // Historique = stock OK ET pas de PO en transit avec SO
+    const isGreenAlert =
+      alert.validated === true &&
+      (alert.stock_forecasted_in ?? 0) > 0 &&
+      (alert.stock_forecasted_out ?? 0) > 0;
+
+    // Si c'est une alerte VERTE, elle reste dans "actives" pas "historique"
+    if (isGreenAlert) return false;
+
     return stockPrevisionnel >= (alert.minStock ?? 0);
   });
 
