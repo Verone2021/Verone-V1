@@ -84,6 +84,10 @@ interface CatalogProduct {
   suggested_margin_rate: number | null;
   is_active: boolean;
   is_featured: boolean;
+  // Champs pour filtrage par organisation/enseigne
+  enseigne_id: string | null;
+  assigned_client_id: string | null;
+  is_sourced: boolean;
 }
 
 // ============================================================================
@@ -313,21 +317,44 @@ export default function NewSelectionPage() {
     );
   }, [users]);
 
-  // Filtered catalog products
+  // Filtered catalog products - filtrage par organisation/enseigne + recherche
   const filteredCatalog = useMemo(() => {
     if (!catalogProducts) return [];
     // Cast via unknown car le type généré par Supabase peut différer
     const products = catalogProducts as unknown as CatalogProduct[];
 
-    if (!searchQuery.trim()) return products;
+    // RÈGLE 1: Si aucun utilisateur sélectionné, ne rien afficher
+    if (!selectedUser) return [];
+
+    // RÈGLE 2: Filtrer par organisation/enseigne de l'utilisateur
+    const orgFilteredProducts = products.filter(p => {
+      // Produits généraux (non sourcés) : toujours visibles
+      if (!p.is_sourced) return true;
+
+      // Produits sur mesure enseigne : visibles si même enseigne
+      if (p.enseigne_id && selectedUser.enseigne_id) {
+        return p.enseigne_id === selectedUser.enseigne_id;
+      }
+
+      // Produits sur mesure organisation : visibles si même organisation
+      if (p.assigned_client_id && selectedUser.organisation_id) {
+        return p.assigned_client_id === selectedUser.organisation_id;
+      }
+
+      // Produit sourcé sans correspondance : masquer
+      return false;
+    });
+
+    // RÈGLE 3: Filtrer par recherche textuelle
+    if (!searchQuery.trim()) return orgFilteredProducts;
 
     const query = searchQuery.toLowerCase();
-    return products.filter(
+    return orgFilteredProducts.filter(
       p =>
         p.product_name.toLowerCase().includes(query) ||
         p.product_reference.toLowerCase().includes(query)
     );
-  }, [catalogProducts, searchQuery]);
+  }, [catalogProducts, searchQuery, selectedUser]);
 
   // IDs des produits déjà sélectionnés
   const selectedProductIds = useMemo(
@@ -644,9 +671,19 @@ export default function NewSelectionPage() {
                   <div className="text-center py-8 text-gray-500">
                     Chargement du catalogue...
                   </div>
+                ) : !selectedUser ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <User className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                    <p>Sélectionnez un utilisateur</p>
+                    <p className="text-sm mt-1">
+                      pour voir les produits disponibles
+                    </p>
+                  </div>
                 ) : filteredCatalog.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
-                    Aucun produit trouvé
+                    <Package className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                    <p>Aucun produit disponible</p>
+                    <p className="text-sm mt-1">pour cette organisation</p>
                   </div>
                 ) : (
                   filteredCatalog.map(product => {

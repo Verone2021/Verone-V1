@@ -155,8 +155,9 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
       )
     `
     )
-    .eq('channel_id', LINKME_CHANNEL_ID)
-    .eq('is_active', true);
+    .eq('channel_id', LINKME_CHANNEL_ID);
+  // Note: Ne pas filtrer par is_active ici - le filtrage est fait côté frontend
+  // via statusFilter ('all' | 'enabled' | 'disabled')
 
   if (error) {
     console.error('Erreur fetch catalogue LinkMe:', error);
@@ -304,8 +305,10 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
           product_name: cp.products?.name || '',
           product_reference: cp.products?.sku || '',
           product_price_ht: cp.products?.cost_price ?? 0, // Toujours cost_price (prix d'achat réel)
-          // Prix de vente HT = custom_price_ht si défini (null si non défini = pas validé)
-          product_selling_price_ht: cp.custom_price_ht ?? null,
+          // Prix de vente HT = public_price_ht (prix catalogue LinkMe) - source de vérité
+          // Fallback sur custom_price_ht si public_price_ht non défini
+          product_selling_price_ht:
+            cp.public_price_ht ?? cp.custom_price_ht ?? null,
           product_image_url: imageMap.get(cp.product_id) || null,
           product_stock_real: cp.products?.stock_real ?? 0,
           product_is_active: cp.products?.product_status === 'active',
