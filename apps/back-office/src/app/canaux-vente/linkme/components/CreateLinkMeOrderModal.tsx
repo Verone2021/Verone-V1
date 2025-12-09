@@ -993,6 +993,40 @@ export function CreateLinkMeOrderModal({
               </div>
             )}
 
+            {/* Section 4 ter: Taux de TVA */}
+            {selectedCustomer && (
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-700">
+                  Taux de TVA
+                </label>
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { value: 0.2, label: '20%', desc: 'Standard' },
+                    { value: 0.1, label: '10%', desc: 'Intermédiaire' },
+                    { value: 0.055, label: '5,5%', desc: 'Réduit' },
+                    { value: 0, label: '0%', desc: 'Exonéré' },
+                  ].map(opt => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setTaxRate(opt.value)}
+                      className={cn(
+                        'p-3 rounded-lg border-2 transition-all text-center',
+                        taxRate === opt.value
+                          ? 'border-purple-500 bg-purple-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      )}
+                    >
+                      <span className="block text-lg font-semibold">
+                        {opt.label}
+                      </span>
+                      <span className="text-xs text-gray-500">{opt.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Section 5: Produits de la sélection */}
             {selectedSelectionId && selectedCustomerId && (
               <div className="space-y-3 border-t pt-6">
@@ -1190,20 +1224,11 @@ export function CreateLinkMeOrderModal({
                       {cartTotals.totalHt.toFixed(2)}€
                     </span>
                   </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-600">TVA</span>
-                      <select
-                        value={taxRate}
-                        onChange={e => setTaxRate(parseFloat(e.target.value))}
-                        className="text-xs border border-gray-300 rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-purple-500"
-                      >
-                        <option value={0.2}>20%</option>
-                        <option value={0.1}>10%</option>
-                        <option value={0.055}>5.5%</option>
-                        <option value={0}>0%</option>
-                      </select>
-                    </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">
+                      TVA ({(taxRate * 100).toFixed(taxRate === 0.055 ? 1 : 0)}
+                      %)
+                    </span>
                     <span>
                       {(cartTotals.totalTtc - cartTotals.totalHt).toFixed(2)}€
                     </span>
@@ -1233,6 +1258,132 @@ export function CreateLinkMeOrderModal({
                   rows={2}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
+              </div>
+            )}
+
+            {/* Section 7 bis: Récapitulatif - Design 2025 */}
+            {canSubmit && (
+              <div className="space-y-4 border-t pt-6">
+                <h3 className="text-sm font-semibold text-gray-800 uppercase tracking-wide">
+                  Récapitulatif de la commande
+                </h3>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Card Client */}
+                  <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                    <div className="flex items-center gap-2 mb-3">
+                      {customerType === 'organization' ? (
+                        <Building2 className="h-4 w-4 text-slate-400" />
+                      ) : (
+                        <User className="h-4 w-4 text-slate-400" />
+                      )}
+                      <span className="text-xs font-medium text-slate-500 uppercase">
+                        Client
+                      </span>
+                    </div>
+                    <p className="font-medium text-slate-900">
+                      {customerType === 'organization'
+                        ? (selectedCustomer as any)?.name ||
+                          (selectedCustomer as any)?.legal_name
+                        : (selectedCustomer as any)?.full_name}
+                    </p>
+                    {(selectedCustomer as any)?.email && (
+                      <p className="text-sm text-slate-600 mt-1">
+                        {(selectedCustomer as any).email}
+                      </p>
+                    )}
+                    {((selectedCustomer as any)?.address_line1 ||
+                      (selectedCustomer as any)?.city) && (
+                      <p className="text-sm text-slate-500 mt-1">
+                        {[
+                          (selectedCustomer as any).address_line1,
+                          (selectedCustomer as any).postal_code,
+                          (selectedCustomer as any).city,
+                        ]
+                          .filter(Boolean)
+                          .join(', ')}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Card Affilié */}
+                  <div className="p-4 bg-purple-50 rounded-xl border border-purple-100">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Store className="h-4 w-4 text-purple-400" />
+                      <span className="text-xs font-medium text-purple-500 uppercase">
+                        Affilié
+                      </span>
+                    </div>
+                    <p className="font-medium text-purple-900">
+                      {selectedAffiliate?.display_name}
+                    </p>
+                    <p className="text-sm text-purple-600">
+                      {affiliateType === 'enseigne'
+                        ? 'Enseigne'
+                        : 'Organisation indépendante'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Ligne Produits */}
+                <div className="p-4 bg-white rounded-xl border border-slate-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Package className="h-4 w-4 text-slate-400" />
+                      <span className="text-xs font-medium text-slate-500 uppercase">
+                        {cart.length} Produit{cart.length > 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    <span className="text-xs text-slate-500">
+                      TVA {(taxRate * 100).toFixed(taxRate === 0.055 ? 1 : 0)}%
+                    </span>
+                  </div>
+
+                  {/* Mini liste produits */}
+                  <div className="space-y-2 max-h-24 overflow-y-auto">
+                    {cart.map(item => (
+                      <div
+                        key={item.id}
+                        className="flex justify-between text-sm"
+                      >
+                        <span className="text-slate-700 truncate flex-1">
+                          {item.product_name} × {item.quantity}
+                        </span>
+                        <span className="text-slate-900 font-medium ml-2">
+                          {(item.unit_price_ht * item.quantity).toFixed(2)}€
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Totaux - Design épuré */}
+                <div className="flex justify-end">
+                  <div className="w-64 space-y-2">
+                    <div className="flex justify-between text-sm text-slate-600">
+                      <span>Total HT</span>
+                      <span>{cartTotals.totalHt.toFixed(2)}€</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-slate-600">
+                      <span>
+                        TVA (
+                        {(taxRate * 100).toFixed(taxRate === 0.055 ? 1 : 0)}
+                        %)
+                      </span>
+                      <span>
+                        {(cartTotals.totalTtc - cartTotals.totalHt).toFixed(2)}€
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-base font-semibold text-slate-900 pt-2 border-t">
+                      <span>Total TTC</span>
+                      <span>{cartTotals.totalTtc.toFixed(2)}€</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-orange-600 pt-1">
+                      <span>Commission affilié</span>
+                      <span>-{cartTotals.totalRetrocession.toFixed(2)}€</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
