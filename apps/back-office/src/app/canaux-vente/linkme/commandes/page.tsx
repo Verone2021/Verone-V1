@@ -274,6 +274,7 @@ export default function LinkMeOrdersPage() {
                 let productImageUrl: string | null = null;
                 let sellingPriceHt: number | null = null;
                 let basePriceHt: number = item.unit_price_ht || 0;
+                let marginRate: number = 0;
 
                 // Récupérer nom du produit
                 if (item.product_id) {
@@ -296,25 +297,46 @@ export default function LinkMeOrdersPage() {
                   productImageUrl = primaryImage?.public_url || null;
                 }
 
-                // Récupérer les prix depuis linkme_selection_items
+                // Récupérer les prix depuis linkme_selection_items avec margin_rate
+                // et commission_rate depuis channel_pricing (joint par product_id)
                 if (item.linkme_selection_item_id) {
                   const { data: selectionItem } = await supabase
                     .from('linkme_selection_items')
-                    .select('base_price_ht, selling_price_ht')
+                    .select('base_price_ht, margin_rate, product_id')
                     .eq('id', item.linkme_selection_item_id)
                     .single();
 
                   if (selectionItem) {
-                    sellingPriceHt = selectionItem.selling_price_ht;
                     basePriceHt =
                       selectionItem.base_price_ht || item.unit_price_ht || 0;
+
+                    // Récupérer commission_rate depuis channel_pricing (joint par product_id + channel_id)
+                    let commissionRate = 0;
+                    if (selectionItem.product_id) {
+                      const { data: channelPricing } = await supabase
+                        .from('channel_pricing')
+                        .select('channel_commission_rate')
+                        .eq('product_id', selectionItem.product_id)
+                        .eq('channel_id', LINKME_CHANNEL_ID)
+                        .single();
+
+                      // channel_commission_rate est stocké en pourcentage (10 = 10%)
+                      commissionRate =
+                        (channelPricing?.channel_commission_rate || 0) / 100;
+                    }
+
+                    marginRate = (selectionItem.margin_rate || 0) / 100;
+                    // Prix affilié = base_price × (1 + commission_rate + margin_rate)
+                    // Ex: 135 × (1 + 0.10 + 0.15) = 168.75€
+                    sellingPriceHt =
+                      basePriceHt * (1 + commissionRate + marginRate);
                   }
                 }
 
-                // Calcul marge affilié = (prix vente affilié - prix LinkMe) * quantité
-                const affiliateMargin = sellingPriceHt
-                  ? (sellingPriceHt - basePriceHt) * item.quantity
-                  : 0;
+                // Marge affilié = base_price × margin_rate × quantité
+                // Ex: 135 × 0.15 × 1 = 20.25€
+                const affiliateMargin =
+                  basePriceHt * marginRate * item.quantity;
 
                 return {
                   id: item.id,
@@ -537,15 +559,14 @@ export default function LinkMeOrdersPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-10" />
+                  <TableHead>Date</TableHead>
                   <TableHead>N° Commande</TableHead>
                   <TableHead>Affilié</TableHead>
                   <TableHead>Client</TableHead>
                   <TableHead>Sélection</TableHead>
-                  <TableHead className="text-right">Total HT</TableHead>
+                  <TableHead className="text-right">Total TTC</TableHead>
                   <TableHead className="text-right">Marge Affilié</TableHead>
                   <TableHead>Statut</TableHead>
-                  <TableHead>Paiement</TableHead>
-                  <TableHead>Date</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -571,6 +592,7 @@ export default function LinkMeOrdersPage() {
                         )}
                         onClick={() => toggleOrder(order.id)}
                       >
+                        {/* Expand button */}
                         <TableCell>
                           <button className="p-1 hover:bg-gray-200 rounded">
                             {isExpanded ? (
@@ -580,11 +602,27 @@ export default function LinkMeOrdersPage() {
                             )}
                           </button>
                         </TableCell>
+                        {/* Date (déplacé en premier) */}
+                        <TableCell>
+                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                            <CalendarDays className="h-3 w-3" />
+                            {new Date(order.created_at).toLocaleDateString(
+                              'fr-FR',
+                              {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric',
+                              }
+                            )}
+                          </div>
+                        </TableCell>
+                        {/* N° Commande */}
                         <TableCell>
                           <span className="font-mono text-sm text-blue-600">
                             {order.order_number}
                           </span>
                         </TableCell>
+                        {/* Affilié */}
                         <TableCell>
                           {order.affiliate_name ? (
                             <Badge variant="outline" className="text-xs">
@@ -594,6 +632,7 @@ export default function LinkMeOrdersPage() {
                             <span className="text-xs text-gray-400">-</span>
                           )}
                         </TableCell>
+                        {/* Client */}
                         <TableCell>
                           <div className="flex items-center gap-2">
                             {order.customer_type === 'organization' ? (
@@ -613,6 +652,7 @@ export default function LinkMeOrdersPage() {
                             </div>
                           </div>
                         </TableCell>
+                        {/* Sélection */}
                         <TableCell>
                           {order.selection_name ? (
                             <span className="text-sm text-gray-700">
@@ -622,9 +662,11 @@ export default function LinkMeOrdersPage() {
                             <span className="text-xs text-gray-400">-</span>
                           )}
                         </TableCell>
+                        {/* Total TTC (calculé: HT × 1.2) */}
                         <TableCell className="text-right font-medium">
-                          {formatPrice(order.total_ht)}
+                          {formatPrice(order.total_ttc)}
                         </TableCell>
+                        {/* Marge Affilié */}
                         <TableCell className="text-right">
                           <span
                             className={cn(
@@ -639,39 +681,18 @@ export default function LinkMeOrdersPage() {
                               : '-'}
                           </span>
                         </TableCell>
+                        {/* Statut */}
                         <TableCell>
                           <Badge variant={statusInfo.variant}>
                             {statusInfo.label}
                           </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {paymentInfo ? (
-                            <Badge variant={paymentInfo.variant}>
-                              {paymentInfo.label}
-                            </Badge>
-                          ) : (
-                            <span className="text-xs text-gray-400">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1 text-xs text-gray-500">
-                            <CalendarDays className="h-3 w-3" />
-                            {new Date(order.created_at).toLocaleDateString(
-                              'fr-FR',
-                              {
-                                day: '2-digit',
-                                month: 'short',
-                                year: 'numeric',
-                              }
-                            )}
-                          </div>
                         </TableCell>
                       </TableRow>
 
                       {/* Accordéon - Détails des produits */}
                       {isExpanded && (
                         <TableRow className="bg-gray-50 hover:bg-gray-50">
-                          <TableCell colSpan={10} className="p-0">
+                          <TableCell colSpan={9} className="p-0">
                             <div className="px-8 py-4">
                               <h4 className="text-sm font-medium text-gray-700 mb-3">
                                 Produits ({order.items.length})
@@ -717,7 +738,10 @@ export default function LinkMeOrdersPage() {
                                           {item.quantity}
                                         </TableCell>
                                         <TableCell className="text-sm text-right">
-                                          {formatPrice(item.unit_price_ht)}
+                                          {formatPrice(
+                                            item.selling_price_ht ||
+                                              item.unit_price_ht
+                                          )}
                                         </TableCell>
                                         <TableCell className="text-sm text-right font-medium">
                                           {formatPrice(item.total_ht)}

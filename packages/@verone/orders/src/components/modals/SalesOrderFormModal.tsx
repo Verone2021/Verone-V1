@@ -136,8 +136,9 @@ interface LinkMeCartItem {
   product_name: string;
   sku: string;
   quantity: number;
-  unit_price_ht: number; // Prix de vente (non modifiable)
-  retrocession_rate: number; // Commission affilié (décimal 0.05 = 5%)
+  unit_price_ht: number; // Prix de vente affilié (168.75€)
+  base_price_ht: number; // Prix de base pour calcul commission (135€)
+  retrocession_rate: number; // Commission affilié (décimal 0.15 = 15%)
   linkme_selection_item_id: string;
   product_image_url?: string | null;
 }
@@ -620,11 +621,11 @@ export function SalesOrderFormModal({
 
   // Ajouter un produit au panier LinkMe
   const addLinkMeProduct = (item: SelectionItem) => {
-    // Calculer le prix de vente: selling_price_ht OU base_price_ht * (1 + margin_rate/100)
-    // margin_rate est stocké en POURCENTAGE (10 = 10%)
-    const sellingPrice =
-      item.selling_price_ht ||
-      item.base_price_ht * (1 + (item.margin_rate || 0) / 100);
+    // Calculer le prix affilié HT: base_price × (1 + commission_rate + margin_rate)
+    // Exemple: 135 × (1 + 0.10 + 0.15) = 135 × 1.25 = 168.75€
+    const commissionRate = (item.commission_rate || 0) / 100;
+    const marginRate = (item.margin_rate || 0) / 100;
+    const sellingPrice = item.base_price_ht * (1 + commissionRate + marginRate);
 
     const newItem: LinkMeCartItem = {
       id: `${item.product_id}-${Date.now()}`,
@@ -632,8 +633,9 @@ export function SalesOrderFormModal({
       product_name: item.product?.name || 'Produit inconnu',
       sku: item.product?.sku || '',
       quantity: 1,
-      unit_price_ht: sellingPrice,
-      retrocession_rate: (item.margin_rate || 0) / 100, // Convertir % en décimal
+      unit_price_ht: Math.round(sellingPrice * 100) / 100, // 168.75€
+      base_price_ht: item.base_price_ht, // 135€ pour calcul commission
+      retrocession_rate: marginRate, // 0.15 (15%)
       linkme_selection_item_id: item.id,
       product_image_url: item.product_image_url,
     };
@@ -677,13 +679,16 @@ export function SalesOrderFormModal({
     for (const item of linkmeCart) {
       const lineTotal = item.quantity * item.unit_price_ht;
       totalHt += lineTotal;
-      totalRetrocession += lineTotal * item.retrocession_rate;
+      // Commission calculée sur base_price_ht (135€), pas sur unit_price_ht (168.75€)
+      // Formule: base_price × margin_rate = 135 × 0.15 = 20.25€
+      totalRetrocession +=
+        item.quantity * item.base_price_ht * item.retrocession_rate;
     }
 
     return {
-      totalHt,
-      totalTtc: totalHt * 1.2, // TVA 20%
-      totalRetrocession,
+      totalHt: Math.round(totalHt * 100) / 100,
+      totalTtc: Math.round(totalHt * 1.2 * 100) / 100, // TVA 20%
+      totalRetrocession: Math.round(totalRetrocession * 100) / 100,
       beneficeNet: totalHt - totalRetrocession,
     };
   }, [linkmeCart]);
@@ -952,6 +957,7 @@ export function SalesOrderFormModal({
           sku: item.sku,
           quantity: item.quantity,
           unit_price_ht: item.unit_price_ht,
+          base_price_ht: item.base_price_ht,
           retrocession_rate: item.retrocession_rate,
           linkme_selection_item_id: item.linkme_selection_item_id,
         })),
@@ -1442,11 +1448,16 @@ export function SalesOrderFormModal({
                       ) : (
                         <div className="grid gap-3 max-h-80 overflow-y-auto pr-2">
                           {(linkmeSelectionDetail?.items || []).map(item => {
-                            // margin_rate est stocké en POURCENTAGE (10 = 10%)
+                            // Prix affilié = base_price × (1 + commission_rate + margin_rate)
+                            // commission_rate et margin_rate sont en POURCENTAGE (10 = 10%)
+                            // IMPORTANT: Toujours recalculer le prix (ne pas utiliser selling_price_ht qui peut être obsolète)
+                            // Exemple: 135 × (1 + 0.10 + 0.15) = 168.75€
+                            const commissionRate =
+                              (item.commission_rate || 0) / 100;
+                            const marginRate = (item.margin_rate || 0) / 100;
                             const sellingPrice =
-                              item.selling_price_ht ||
                               item.base_price_ht *
-                                (1 + (item.margin_rate || 0) / 100);
+                              (1 + commissionRate + marginRate);
                             const marginPercent = (
                               item.margin_rate || 0
                             ).toFixed(0);
@@ -2257,10 +2268,13 @@ export function SalesOrderFormModal({
               ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                   {previewSelection.items.map(item => {
-                    // margin_rate est stocké en POURCENTAGE (10 = 10%)
+                    // Prix affilié = base_price × (1 + commission_rate + margin_rate)
+                    // commission_rate et margin_rate sont en POURCENTAGE (10 = 10%)
+                    // IMPORTANT: Toujours recalculer le prix (ne pas utiliser selling_price_ht qui peut être obsolète)
+                    const commissionRate = (item.commission_rate || 0) / 100;
+                    const marginRate = (item.margin_rate || 0) / 100;
                     const sellingPrice =
-                      item.selling_price_ht ||
-                      item.base_price_ht * (1 + (item.margin_rate || 0) / 100);
+                      item.base_price_ht * (1 + commissionRate + marginRate);
                     return (
                       <div
                         key={item.id}

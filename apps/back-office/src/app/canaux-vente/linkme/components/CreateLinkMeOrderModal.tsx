@@ -87,6 +87,9 @@ export function CreateLinkMeOrderModal({
   // Panier
   const [cart, setCart] = useState<CartItem[]>([]);
 
+  // Taux TVA (par défaut 20%)
+  const [taxRate, setTaxRate] = useState<number>(0.2);
+
   // Recherche produits (Section 5)
   const [productSearchQuery, setProductSearchQuery] = useState('');
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<
@@ -302,18 +305,21 @@ export function CreateLinkMeOrderModal({
     for (const item of cart) {
       const lineTotal = roundMoney(item.quantity * item.unit_price_ht);
       totalHt = roundMoney(totalHt + lineTotal);
+      // Commission calculée sur base_price_ht (135€), pas sur unit_price_ht (168.75€)
+      // Formule: base_price × margin_rate = 135 × 0.15 = 20.25€
       totalRetrocession = roundMoney(
-        totalRetrocession + lineTotal * item.retrocession_rate
+        totalRetrocession +
+          item.quantity * item.base_price_ht * item.retrocession_rate
       );
     }
 
     return {
       totalHt,
-      totalTtc: roundMoney(totalHt * 1.2),
+      totalTtc: roundMoney(totalHt * (1 + taxRate)),
       totalRetrocession,
-      beneficeNet: roundMoney(totalHt - totalRetrocession),
+      taxRate,
     };
-  }, [cart]);
+  }, [cart, taxRate]);
 
   // Ajouter produit au panier
   const addProductFromSelection = (item: SelectionItem) => {
@@ -332,14 +338,18 @@ export function CreateLinkMeOrderModal({
       return;
     }
 
-    // margin_rate et commission_rate sont en POURCENTAGE (10 = 10%)
-    // Prix affilié = base × (1 + commission + marge) - ADDITION pas multiplication!
+    // IMPORTANT: Toujours calculer le prix affilié HT
+    // NE PAS utiliser selling_price_ht de la DB (colonne GENERATED avec formule incomplète)
+    // Formule correcte: base × (1 + commission + marge)
+    // - commission_rate: 10% (channel_pricing.channel_commission_rate)
+    // - margin_rate: 15% (marge affilié)
+    // Exemple: 135 × (1 + 0.10 + 0.15) = 135 × 1.25 = 168.75€
     const commissionRate = (item.commission_rate || 0) / 100;
     const marginRate = item.margin_rate / 100;
     const sellingPrice = roundMoney(
       item.base_price_ht * (1 + commissionRate + marginRate)
     );
-    const retrocessionRate = item.margin_rate / 100;
+    const retrocessionRate = marginRate;
 
     const newItem: CartItem = {
       id: `${item.product_id}-${Date.now()}`,
@@ -348,6 +358,7 @@ export function CreateLinkMeOrderModal({
       sku: item.product?.sku || '',
       quantity: 1,
       unit_price_ht: sellingPrice,
+      base_price_ht: item.base_price_ht, // Prix de base pour calcul commission
       retrocession_rate: retrocessionRate,
       linkme_selection_item_id: item.id,
     };
@@ -398,9 +409,11 @@ export function CreateLinkMeOrderModal({
         sku: item.sku,
         quantity: item.quantity,
         unit_price_ht: item.unit_price_ht,
+        base_price_ht: item.base_price_ht,
         retrocession_rate: item.retrocession_rate,
         linkme_selection_item_id: item.linkme_selection_item_id,
       })),
+      tax_rate: taxRate,
       internal_notes: internalNotes || undefined,
     };
 
@@ -1135,7 +1148,7 @@ export function CreateLinkMeOrderModal({
                           Commission:{' '}
                           {(item.retrocession_rate * 100).toFixed(0)}% (
                           {(
-                            item.unit_price_ht *
+                            item.base_price_ht *
                             item.quantity *
                             item.retrocession_rate
                           ).toFixed(2)}
@@ -1177,8 +1190,20 @@ export function CreateLinkMeOrderModal({
                       {cartTotals.totalHt.toFixed(2)}€
                     </span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">TVA (20%)</span>
+                  <div className="flex justify-between items-center text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-600">TVA</span>
+                      <select
+                        value={taxRate}
+                        onChange={e => setTaxRate(parseFloat(e.target.value))}
+                        className="text-xs border border-gray-300 rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      >
+                        <option value={0.2}>20%</option>
+                        <option value={0.1}>10%</option>
+                        <option value={0.055}>5.5%</option>
+                        <option value={0}>0%</option>
+                      </select>
+                    </div>
                     <span>
                       {(cartTotals.totalTtc - cartTotals.totalHt).toFixed(2)}€
                     </span>

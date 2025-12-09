@@ -31,6 +31,8 @@ export interface LinkMeOrderItemInput {
   retrocession_rate: number;
   /** ID de l'item de sélection (pour traçabilité) */
   linkme_selection_item_id?: string;
+  /** Prix de base HT pour calcul commission (avant majoration affilié) */
+  base_price_ht: number;
 }
 
 export interface CreateLinkMeOrderInput {
@@ -44,6 +46,8 @@ export interface CreateLinkMeOrderInput {
   affiliate_id: string;
   /** Lignes de commande */
   items: LinkMeOrderItemInput[];
+  /** Taux de TVA (décimal, ex: 0.2 pour 20%) - défaut 20% */
+  tax_rate?: number;
   /** Notes internes */
   internal_notes?: string;
   /** Adresse de livraison */
@@ -183,11 +187,14 @@ async function createLinkMeOrder(
   for (const item of input.items) {
     const lineTotal = item.quantity * item.unit_price_ht;
     totalHt += lineTotal;
-    totalRetrocession += lineTotal * item.retrocession_rate;
+    // Commission calculée sur base_price_ht (135€), pas sur unit_price_ht (168.75€)
+    totalRetrocession +=
+      item.quantity * item.base_price_ht * item.retrocession_rate;
   }
 
-  // TVA 20%
-  const totalTtc = totalHt * 1.2;
+  // TVA (défaut 20% si non spécifié)
+  const taxRate = input.tax_rate ?? 0.2;
+  const totalTtc = totalHt * (1 + taxRate);
 
   // 3. Déterminer le customer_id (organisation OU individual)
   const customerId =
@@ -210,7 +217,7 @@ async function createLinkMeOrder(
     payment_status: 'pending',
     total_ht: totalHt,
     total_ttc: totalTtc,
-    tax_rate: 0.2,
+    tax_rate: taxRate,
     notes: input.internal_notes || null,
     // Adresse de livraison (JSON)
     shipping_address: input.shipping_address
@@ -247,7 +254,7 @@ async function createLinkMeOrder(
     quantity: item.quantity,
     unit_price_ht: item.unit_price_ht,
     // total_ht est GENERATED - ne pas l'insérer
-    tax_rate: 0.2, // 20% TVA
+    tax_rate: taxRate,
     retrocession_rate: item.retrocession_rate,
     retrocession_amount:
       item.quantity * item.unit_price_ht * item.retrocession_rate,

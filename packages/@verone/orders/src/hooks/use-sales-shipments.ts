@@ -206,11 +206,21 @@ export function useSalesShipments() {
         const quantityRemaining = quantityOrdered - quantityAlreadyShipped;
         const stockAvailable = item.products.stock_real || 0;
 
+        // Extraire l'image principale du produit
+        const primaryImage = item.products.product_images?.find(
+          img => img.is_primary
+        );
+        const imageUrl =
+          primaryImage?.public_url ||
+          item.products.product_images?.[0]?.public_url ||
+          null;
+
         return {
           sales_order_item_id: item.id,
           product_id: item.product_id,
           product_name: item.products.name,
           product_sku: item.products.sku,
+          primary_image_url: imageUrl,
           quantity_ordered: quantityOrdered,
           quantity_already_shipped: quantityAlreadyShipped,
           quantity_remaining: quantityRemaining,

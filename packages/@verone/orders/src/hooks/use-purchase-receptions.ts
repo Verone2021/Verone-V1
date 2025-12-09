@@ -58,6 +58,10 @@ export interface PurchaseOrderForReception {
       sku: string;
       stock_quantity: number;
       stock_forecasted_in: number;
+      product_images?: Array<{
+        public_url: string;
+        is_primary: boolean;
+      }>;
     };
   }>;
 }
@@ -105,7 +109,8 @@ export function usePurchaseReceptions() {
               name,
               sku,
               stock_quantity,
-              stock_forecasted_in
+              stock_forecasted_in,
+              product_images!left(public_url, is_primary)
             )
           )
         `
@@ -141,11 +146,21 @@ export function usePurchaseReceptions() {
         const quantityAlreadyReceived = item.quantity_received || 0;
         const quantityRemaining = quantityOrdered - quantityAlreadyReceived;
 
+        // Extraire l'image principale du produit
+        const primaryImage = item.products.product_images?.find(
+          img => img.is_primary
+        );
+        const imageUrl =
+          primaryImage?.public_url ||
+          item.products.product_images?.[0]?.public_url ||
+          null;
+
         return {
           purchase_order_item_id: item.id,
           product_id: item.product_id,
           product_name: item.products.name,
           product_sku: item.products.sku,
+          primary_image_url: imageUrl,
           quantity_ordered: quantityOrdered,
           quantity_already_received: quantityAlreadyReceived,
           quantity_remaining: quantityRemaining,

@@ -31,6 +31,8 @@ export interface LinkMeOrderItemInput {
   retrocession_rate: number;
   /** ID de l'item de sélection (pour traçabilité) */
   linkme_selection_item_id?: string;
+  /** Prix de base HT pour calcul commission (avant majoration affilié) */
+  base_price_ht: number;
 }
 
 export interface CreateLinkMeOrderInput {
@@ -143,8 +145,10 @@ async function createLinkMeOrder(
   for (const item of input.items) {
     const lineTotal = roundMoney(item.quantity * item.unit_price_ht);
     totalHt = roundMoney(totalHt + lineTotal);
+    // Commission calculée sur base_price_ht (135€), pas sur unit_price_ht (168.75€)
     totalRetrocession = roundMoney(
-      totalRetrocession + lineTotal * item.retrocession_rate
+      totalRetrocession +
+        item.quantity * item.base_price_ht * item.retrocession_rate
     );
   }
 

@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 
+import { ProductThumbnail } from '@verone/products';
 import type { ShipmentItem } from '@verone/types';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
@@ -279,22 +280,29 @@ export function SalesOrderShipmentForm({
                   className={`hover:bg-gray-50 ${hasStockProblem ? 'bg-red-50' : ''}`}
                 >
                   <TableCell>
-                    <div>
-                      <div className="font-medium">{item.product_name}</div>
-                      <div className="text-xs text-gray-500">
-                        {item.product_sku}
-                      </div>
-                      {/* Mini barre de progression */}
-                      <div className="mt-1 flex items-center gap-2">
-                        <div className="flex-1 bg-gray-200 rounded-full h-1.5 max-w-[100px]">
-                          <div
-                            className="bg-green-500 h-1.5 rounded-full transition-all"
-                            style={{ width: `${progressPercent}%` }}
-                          />
+                    <div className="flex items-center gap-3">
+                      <ProductThumbnail
+                        src={item.primary_image_url}
+                        alt={item.product_name}
+                        size="sm"
+                      />
+                      <div>
+                        <div className="font-medium">{item.product_name}</div>
+                        <div className="text-xs text-gray-500">
+                          {item.product_sku}
                         </div>
-                        <span className="text-xs text-gray-500">
-                          {progressPercent}%
-                        </span>
+                        {/* Mini barre de progression */}
+                        <div className="mt-1 flex items-center gap-2">
+                          <div className="flex-1 bg-gray-200 rounded-full h-1.5 max-w-[100px]">
+                            <div
+                              className="bg-green-500 h-1.5 rounded-full transition-all"
+                              style={{ width: `${progressPercent}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {progressPercent}%
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </TableCell>

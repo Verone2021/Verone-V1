@@ -33,6 +33,9 @@ export interface ReceptionItem {
   /** SKU du produit (display) */
   product_sku: string;
 
+  /** Image principale du produit (URL) */
+  primary_image_url?: string | null;
+
   /** Quantité commandée (total) */
   quantity_ordered: number;
 
@@ -181,6 +184,9 @@ export interface ShipmentItem {
 
   /** SKU du produit (display) */
   product_sku: string;
+
+  /** Image principale du produit (URL) */
+  primary_image_url?: string | null;
 
   /** Quantité commandée (total) */
   quantity_ordered: number;
