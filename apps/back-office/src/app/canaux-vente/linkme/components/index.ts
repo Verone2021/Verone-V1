@@ -11,3 +11,6 @@ export { ProductInfoCard } from './ProductInfoCard';
 export { ProductStatsCard } from './ProductStatsCard';
 export { ProductReadOnlyCard } from './ProductReadOnlyCard';
 export { ProductVariantsCard } from './ProductVariantsCard';
+
+// Composants commandes LinkMe
+export { LinkMeOrderDetailModal } from './LinkMeOrderDetailModal';

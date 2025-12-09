@@ -39,9 +39,11 @@ import {
   TrendingUp,
   CalendarDays,
   Package,
+  Eye,
 } from 'lucide-react';
 
 import { CreateLinkMeOrderModal } from '../components/CreateLinkMeOrderModal';
+import { LinkMeOrderDetailModal } from '../components/LinkMeOrderDetailModal';
 
 // ID du canal LinkMe
 const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
@@ -71,9 +73,14 @@ interface LinkMeOrder {
   created_at: string;
   // Client info
   customer_name: string;
+  customer_address: string | null;
+  customer_postal_code: string | null;
   customer_city: string | null;
+  customer_email: string | null;
+  customer_phone: string | null;
   // Affilié (tracé via selection_items)
   affiliate_name: string | null;
+  affiliate_type: 'enseigne' | 'organisation' | null;
   // Sélection
   selection_name: string | null;
   // Marge affilié totale (somme des marges affilié de chaque produit)
@@ -137,6 +144,8 @@ export default function LinkMeOrdersPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
+  const [selectedOrder, setSelectedOrder] = useState<LinkMeOrder | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
 
   const supabase = createClient();
 
@@ -151,6 +160,12 @@ export default function LinkMeOrdersPage() {
       }
       return next;
     });
+  };
+
+  // Ouvrir le modal de détail
+  const handleViewOrder = (order: LinkMeOrder) => {
+    setSelectedOrder(order);
+    setShowDetailModal(true);
   };
 
   // Fetch commandes LinkMe
@@ -193,22 +208,33 @@ export default function LinkMeOrdersPage() {
         const enrichedOrders: LinkMeOrder[] = await Promise.all(
           (ordersData || []).map(async (order: any) => {
             let customerName = 'Client inconnu';
+            let customerAddress: string | null = null;
+            let customerPostalCode: string | null = null;
             let customerCity: string | null = null;
+            let customerEmail: string | null = null;
+            let customerPhone: string | null = null;
             let affiliateName: string | null = null;
+            let affiliateType: 'enseigne' | 'organisation' | null = null;
             let selectionName: string | null = null;
 
             // Fetch customer info selon type
             if (order.customer_type === 'organization' && order.customer_id) {
               const { data } = await supabase
                 .from('organisations')
-                .select('trade_name, legal_name, city')
+                .select(
+                  'trade_name, legal_name, address_line1, postal_code, city, email, phone'
+                )
                 .eq('id', order.customer_id)
                 .single();
 
               if (data) {
                 customerName =
                   data.trade_name || data.legal_name || 'Organisation';
+                customerAddress = data.address_line1;
+                customerPostalCode = data.postal_code;
                 customerCity = data.city;
+                customerEmail = data.email;
+                customerPhone = data.phone;
               }
             } else if (
               order.customer_type === 'individual' &&
@@ -216,13 +242,19 @@ export default function LinkMeOrdersPage() {
             ) {
               const { data } = await supabase
                 .from('individual_customers')
-                .select('first_name, last_name, city')
+                .select(
+                  'first_name, last_name, address_line1, postal_code, city, email, phone'
+                )
                 .eq('id', order.customer_id)
                 .single();
 
               if (data) {
                 customerName = `${data.first_name} ${data.last_name}`.trim();
+                customerAddress = data.address_line1;
+                customerPostalCode = data.postal_code;
                 customerCity = data.city;
+                customerEmail = data.email;
+                customerPhone = data.phone;
               }
             }
 
@@ -252,15 +284,21 @@ export default function LinkMeOrdersPage() {
                   if (selection) {
                     selectionName = selection.name || null;
 
-                    // Récupérer l'affilié
+                    // Récupérer l'affilié avec son type
                     if (selection.affiliate_id) {
                       const { data: affiliate } = await supabase
                         .from('linkme_affiliates')
-                        .select('display_name')
+                        .select('display_name, enseigne_id, organisation_id')
                         .eq('id', selection.affiliate_id)
                         .single();
 
                       affiliateName = affiliate?.display_name || null;
+                      // Déterminer le type d'affilié
+                      if (affiliate?.enseigne_id) {
+                        affiliateType = 'enseigne';
+                      } else if (affiliate?.organisation_id) {
+                        affiliateType = 'organisation';
+                      }
                     }
                   }
                 }
@@ -369,8 +407,13 @@ export default function LinkMeOrdersPage() {
               customer_id: order.customer_id,
               created_at: order.created_at,
               customer_name: customerName,
+              customer_address: customerAddress,
+              customer_postal_code: customerPostalCode,
               customer_city: customerCity,
+              customer_email: customerEmail,
+              customer_phone: customerPhone,
               affiliate_name: affiliateName,
+              affiliate_type: affiliateType,
               selection_name: selectionName,
               total_affiliate_margin: totalAffiliateMargin,
               items: enrichedItems,
@@ -567,6 +610,7 @@ export default function LinkMeOrdersPage() {
                   <TableHead className="text-right">Total TTC</TableHead>
                   <TableHead className="text-right">Marge Affilié</TableHead>
                   <TableHead>Statut</TableHead>
+                  <TableHead className="w-16 text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -687,12 +731,25 @@ export default function LinkMeOrdersPage() {
                             {statusInfo.label}
                           </Badge>
                         </TableCell>
+                        {/* Actions */}
+                        <TableCell className="text-center">
+                          <button
+                            onClick={e => {
+                              e.stopPropagation();
+                              handleViewOrder(order);
+                            }}
+                            className="p-2 rounded-lg hover:bg-purple-100 transition-colors group"
+                            title="Voir les détails"
+                          >
+                            <Eye className="h-4 w-4 text-gray-500 group-hover:text-purple-600" />
+                          </button>
+                        </TableCell>
                       </TableRow>
 
                       {/* Accordéon - Détails des produits */}
                       {isExpanded && (
                         <TableRow className="bg-gray-50 hover:bg-gray-50">
-                          <TableCell colSpan={9} className="p-0">
+                          <TableCell colSpan={10} className="p-0">
                             <div className="px-8 py-4">
                               <h4 className="text-sm font-medium text-gray-700 mb-3">
                                 Produits ({order.items.length})
@@ -781,6 +838,13 @@ export default function LinkMeOrdersPage() {
       <CreateLinkMeOrderModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
+      />
+
+      {/* Modal détail commande */}
+      <LinkMeOrderDetailModal
+        order={selectedOrder}
+        open={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
       />
     </div>
   );
