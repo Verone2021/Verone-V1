@@ -1,8 +1,9 @@
 'use client';
 
-import { X, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
+
+import { X, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
 
 import { useCart } from './CartProvider';
 
@@ -55,21 +56,21 @@ export function CartDrawer() {
         </div>
 
         {/* Items */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-3">
           {items.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <ShoppingBag className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Votre panier est vide</p>
+            <div className="text-center py-8 text-gray-500">
+              <ShoppingBag className="h-10 w-10 mx-auto mb-3 opacity-50" />
+              <p className="text-sm">Votre panier est vide</p>
             </div>
           ) : (
-            <ul className="space-y-4">
+            <ul className="space-y-3">
               {items.map(item => (
                 <li
                   key={item.id}
-                  className="flex gap-4 p-3 bg-gray-50 rounded-lg"
+                  className="flex gap-3 p-2.5 bg-gray-50 rounded-lg"
                 >
                   {/* Image */}
-                  <div className="relative w-20 h-20 bg-gray-200 rounded-md overflow-hidden flex-shrink-0">
+                  <div className="relative w-16 h-16 bg-gray-200 rounded-md overflow-hidden flex-shrink-0">
                     {item.image_url ? (
                       <Image
                         src={item.image_url}
@@ -79,50 +80,52 @@ export function CartDrawer() {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        <ShoppingBag className="h-8 w-8" />
+                        <ShoppingBag className="h-6 w-6" />
                       </div>
                     )}
                   </div>
 
                   {/* Infos */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-sm line-clamp-2">
+                    <h3 className="font-medium text-xs line-clamp-2">
                       {item.name}
                     </h3>
-                    <p className="text-xs text-gray-500 mt-1">{item.sku}</p>
-                    <p className="text-sm font-semibold mt-2">
+                    <p className="text-[10px] text-gray-500 mt-0.5">
+                      {item.sku}
+                    </p>
+                    <p className="text-xs font-semibold mt-1">
                       {formatPrice(item.selling_price_ht)} HT
                     </p>
 
                     {/* Quantité */}
-                    <div className="flex items-center gap-2 mt-2">
+                    <div className="flex items-center gap-1.5 mt-1.5">
                       <button
                         onClick={() =>
                           updateQuantity(item.id, item.quantity - 1)
                         }
-                        className="p-1 hover:bg-gray-200 rounded"
+                        className="p-0.5 hover:bg-gray-200 rounded"
                         aria-label="Diminuer quantité"
                       >
-                        <Minus className="h-4 w-4" />
+                        <Minus className="h-3 w-3" />
                       </button>
-                      <span className="text-sm font-medium w-8 text-center">
+                      <span className="text-xs font-medium w-6 text-center">
                         {item.quantity}
                       </span>
                       <button
                         onClick={() =>
                           updateQuantity(item.id, item.quantity + 1)
                         }
-                        className="p-1 hover:bg-gray-200 rounded"
+                        className="p-0.5 hover:bg-gray-200 rounded"
                         aria-label="Augmenter quantité"
                       >
-                        <Plus className="h-4 w-4" />
+                        <Plus className="h-3 w-3" />
                       </button>
                       <button
                         onClick={() => removeItem(item.id)}
-                        className="p-1 hover:bg-red-100 rounded text-red-600 ml-auto"
+                        className="p-0.5 hover:bg-red-100 rounded text-red-600 ml-auto"
                         aria-label="Supprimer"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3 w-3" />
                       </button>
                     </div>
                   </div>
@@ -134,9 +137,9 @@ export function CartDrawer() {
 
         {/* Footer avec totaux */}
         {items.length > 0 && (
-          <div className="border-t p-4 space-y-4">
+          <div className="border-t p-3 space-y-3">
             {/* Totaux */}
-            <div className="space-y-2 text-sm">
+            <div className="space-y-1.5 text-xs">
               <div className="flex justify-between">
                 <span className="text-gray-600">Sous-total HT</span>
                 <span>{formatPrice(totalHT)}</span>
@@ -145,7 +148,7 @@ export function CartDrawer() {
                 <span className="text-gray-600">TVA (20%)</span>
                 <span>{formatPrice(totalTVA)}</span>
               </div>
-              <div className="flex justify-between font-semibold text-base pt-2 border-t">
+              <div className="flex justify-between font-semibold text-sm pt-1.5 border-t">
                 <span>Total TTC</span>
                 <span>{formatPrice(totalTTC)}</span>
               </div>
@@ -155,7 +158,7 @@ export function CartDrawer() {
             <Link
               href="/checkout"
               onClick={closeCart}
-              className="block w-full bg-blue-600 text-white text-center py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              className="block w-full bg-blue-600 text-white text-center py-2.5 rounded-lg font-medium text-sm hover:bg-blue-700 transition-colors"
             >
               Commander
             </Link>

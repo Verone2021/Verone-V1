@@ -1,12 +1,20 @@
 'use client';
 
-import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, Trash2, Plus, Minus, ShoppingBag, Package } from 'lucide-react';
+import Link from 'next/link';
+
+import {
+  ArrowLeft,
+  Trash2,
+  Plus,
+  Minus,
+  ShoppingBag,
+  Package,
+} from 'lucide-react';
 
 import { useCart } from '../../components/cart/CartProvider';
 
-const TVA_RATE = 0.20;
+const TVA_RATE = 0.2;
 
 function formatPrice(price: number): string {
   return new Intl.NumberFormat('fr-FR', {
@@ -28,23 +36,22 @@ export default function CartPage() {
     itemCount,
   } = useCart();
 
-  const backLink = affiliateSlug && selectionSlug
-    ? `/${affiliateSlug}/${selectionSlug}`
-    : '/';
+  const backLink =
+    affiliateSlug && selectionSlug ? `/${affiliateSlug}/${selectionSlug}` : '/';
 
   if (items.length === 0) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-16 text-center">
-        <ShoppingBag className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+      <div className="max-w-4xl mx-auto px-4 py-12 text-center">
+        <ShoppingBag className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+        <h1 className="text-xl font-bold text-gray-900 mb-2">
           Votre panier est vide
         </h1>
-        <p className="text-gray-600 mb-8">
+        <p className="text-gray-600 mb-6 text-sm">
           Parcourez nos sélections pour découvrir nos produits.
         </p>
         <Link
           href="/"
-          className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+          className="inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-colors text-sm"
         >
           <ArrowLeft className="h-4 w-4" />
           Découvrir nos sélections
@@ -68,19 +75,19 @@ export default function CartPage() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-8">
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        <h1 className="text-xl font-bold text-gray-900 mb-6">
           Votre panier ({itemCount} {itemCount > 1 ? 'articles' : 'article'})
         </h1>
 
-        <div className="lg:grid lg:grid-cols-12 lg:gap-8">
+        <div className="lg:grid lg:grid-cols-12 lg:gap-6">
           {/* Cart Items */}
           <div className="lg:col-span-8">
             <div className="bg-white rounded-lg border divide-y">
               {items.map(item => (
-                <div key={item.id} className="p-4 flex gap-4">
+                <div key={item.id} className="p-3 flex gap-3">
                   {/* Product Image */}
-                  <div className="relative w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                  <div className="relative w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                     {item.image_url ? (
                       <Image
                         src={item.image_url}
@@ -90,58 +97,60 @@ export default function CartPage() {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        <Package className="h-8 w-8" />
+                        <Package className="h-6 w-6" />
                       </div>
                     )}
                   </div>
 
                   {/* Product Info */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-gray-900 truncate">
+                    <h3 className="font-medium text-gray-900 truncate text-sm">
                       {item.name}
                     </h3>
-                    <p className="text-sm text-gray-500 mt-1">
-                      {item.sku}
-                    </p>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p className="text-xs text-gray-500 mt-0.5">{item.sku}</p>
+                    <p className="text-xs text-gray-600 mt-0.5">
                       {formatPrice(item.selling_price_ht)} HT / unité
                     </p>
 
                     {/* Quantity Controls */}
-                    <div className="flex items-center gap-3 mt-3">
+                    <div className="flex items-center gap-2 mt-2">
                       <div className="flex items-center border rounded-lg">
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          onClick={() =>
+                            updateQuantity(item.id, item.quantity - 1)
+                          }
                           disabled={item.quantity <= 1}
-                          className="p-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="p-1.5 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          <Minus className="h-4 w-4" />
+                          <Minus className="h-3 w-3" />
                         </button>
-                        <span className="w-12 text-center font-medium">
+                        <span className="w-10 text-center font-medium text-sm">
                           {item.quantity}
                         </span>
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="p-2 hover:bg-gray-100"
+                          onClick={() =>
+                            updateQuantity(item.id, item.quantity + 1)
+                          }
+                          className="p-1.5 hover:bg-gray-100"
                         >
-                          <Plus className="h-4 w-4" />
+                          <Plus className="h-3 w-3" />
                         </button>
                       </div>
                       <button
                         onClick={() => removeItem(item.id)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3 w-3" />
                       </button>
                     </div>
                   </div>
 
                   {/* Item Total */}
                   <div className="text-right">
-                    <p className="font-bold text-gray-900">
+                    <p className="font-bold text-gray-900 text-sm">
                       {formatPrice(item.selling_price_ht * item.quantity)}
                     </p>
-                    <p className="text-sm text-gray-500">HT</p>
+                    <p className="text-xs text-gray-500">HT</p>
                   </div>
                 </div>
               ))}
@@ -149,13 +158,13 @@ export default function CartPage() {
           </div>
 
           {/* Order Summary */}
-          <div className="lg:col-span-4 mt-8 lg:mt-0">
-            <div className="bg-white rounded-lg border p-6 sticky top-4">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">
+          <div className="lg:col-span-4 mt-6 lg:mt-0">
+            <div className="bg-white rounded-lg border p-4 sticky top-4">
+              <h2 className="text-base font-bold text-gray-900 mb-3">
                 Récapitulatif
               </h2>
 
-              <div className="space-y-3 text-sm">
+              <div className="space-y-2 text-xs">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Sous-total HT</span>
                   <span className="font-medium">{formatPrice(totalHT)}</span>
@@ -170,8 +179,8 @@ export default function CartPage() {
                 </div>
               </div>
 
-              <div className="border-t mt-4 pt-4">
-                <div className="flex justify-between text-lg font-bold">
+              <div className="border-t mt-3 pt-3">
+                <div className="flex justify-between text-base font-bold">
                   <span>Total TTC</span>
                   <span>{formatPrice(totalTTC)}</span>
                 </div>
@@ -179,12 +188,12 @@ export default function CartPage() {
 
               <Link
                 href="/checkout"
-                className="mt-6 block w-full bg-blue-600 text-white text-center py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                className="mt-4 block w-full bg-blue-600 text-white text-center py-2.5 rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm"
               >
                 Passer la commande
               </Link>
 
-              <p className="text-xs text-gray-500 text-center mt-4">
+              <p className="text-[10px] text-gray-500 text-center mt-3">
                 Paiement sécurisé par Stripe
               </p>
             </div>

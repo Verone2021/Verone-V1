@@ -16,9 +16,10 @@
  * @since 2025-12-04
  */
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
 
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import {
   Search,
@@ -30,6 +31,9 @@ import {
   Plus,
   Filter,
   Sparkles,
+  ArrowLeft,
+  Star,
+  Check,
 } from 'lucide-react';
 
 import { AddToSelectionModal } from '../../components/catalogue/AddToSelectionModal';
@@ -40,6 +44,10 @@ import {
   type LinkMeCatalogProduct,
   type CatalogFilters,
 } from '../../lib/hooks/use-linkme-catalog';
+import {
+  useSelectionProductIds,
+  useUserSelections,
+} from '../../lib/hooks/use-user-selection';
 
 // Rôles autorisés à accéder au catalogue
 const AUTHORIZED_ROLES: LinkMeRole[] = [
@@ -54,9 +62,41 @@ const CAN_ADD_TO_SELECTION_ROLES: LinkMeRole[] = [
   'org_independante',
 ];
 
+// Wrapper avec Suspense pour useSearchParams (Next.js 15 requirement)
 export default function CataloguePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <Loader2 className="h-12 w-12 text-blue-600 animate-spin mx-auto" />
+            <p className="text-gray-600">Chargement du catalogue...</p>
+          </div>
+        </div>
+      }
+    >
+      <CatalogueContent />
+    </Suspense>
+  );
+}
+
+function CatalogueContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, linkMeRole, loading: authLoading } = useAuth();
+
+  // Récupérer le selectionId depuis les query params (si présent)
+  const selectionIdFromUrl = searchParams.get('selection');
+
+  // Récupérer les sélections pour afficher le nom de la sélection cible
+  const { data: selections } = useUserSelections();
+  const targetSelection = selectionIdFromUrl
+    ? selections?.find(s => s.id === selectionIdFromUrl)
+    : null;
+
+  // Récupérer les product_id déjà dans la sélection (pour filtrage)
+  const { data: existingProductIds = [] } =
+    useSelectionProductIds(selectionIdFromUrl);
 
   // Récupérer les produits catégorisés (sur mesure + général)
   const {
@@ -114,15 +154,29 @@ export default function CataloguePage() {
     [searchTerm, selectedCategory]
   );
 
-  // Produits sur mesure filtrés
+  // Produits sur mesure filtrés (+ exclusion des produits déjà dans la sélection)
   const filteredCustomProducts = useMemo(() => {
-    return filterCatalogProducts(customProducts, filters);
-  }, [customProducts, filters]);
+    let products = filterCatalogProducts(customProducts, filters);
+    // Si on est en mode ajout à une sélection, exclure les produits déjà présents
+    if (selectionIdFromUrl && existingProductIds.length > 0) {
+      products = products.filter(
+        p => !existingProductIds.includes(p.product_id)
+      );
+    }
+    return products;
+  }, [customProducts, filters, selectionIdFromUrl, existingProductIds]);
 
-  // Produits généraux filtrés
+  // Produits généraux filtrés (+ exclusion des produits déjà dans la sélection)
   const filteredGeneralProducts = useMemo(() => {
-    return filterCatalogProducts(generalProducts, filters);
-  }, [generalProducts, filters]);
+    let products = filterCatalogProducts(generalProducts, filters);
+    // Si on est en mode ajout à une sélection, exclure les produits déjà présents
+    if (selectionIdFromUrl && existingProductIds.length > 0) {
+      products = products.filter(
+        p => !existingProductIds.includes(p.product_id)
+      );
+    }
+    return products;
+  }, [generalProducts, filters, selectionIdFromUrl, existingProductIds]);
 
   // Total produits filtrés (pour affichage)
   const totalFilteredProducts =
@@ -168,26 +222,61 @@ export default function CataloguePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Bandeau: Mode ajout à une sélection */}
+        {selectionIdFromUrl && targetSelection && (
+          <div className="mb-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100">
+                  <Star className="h-4 w-4 text-amber-600" />
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900 text-sm">
+                    Ajout à :{' '}
+                    <span className="text-amber-700">
+                      {targetSelection.name}
+                    </span>
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    {existingProductIds.length > 0
+                      ? `${existingProductIds.length} produit${existingProductIds.length > 1 ? 's' : ''} déjà dans cette sélection (masqués)`
+                      : 'Sélectionnez des produits à ajouter'}
+                  </p>
+                </div>
+              </div>
+              <Link
+                href={`/ma-selection/${selectionIdFromUrl}/produits`}
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Retour à la sélection
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100">
-              <Package className="h-6 w-6 text-blue-600" />
+        <div className="mb-5">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100">
+              <Package className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-lg font-bold text-gray-900">
                 Catalogue LinkMe
               </h1>
-              <p className="text-gray-600">
-                Découvrez nos produits et ajoutez-les à votre sélection
+              <p className="text-gray-600 text-sm">
+                {selectionIdFromUrl
+                  ? 'Sélectionnez les produits à ajouter'
+                  : 'Découvrez nos produits et ajoutez-les à votre sélection'}
               </p>
             </div>
           </div>
         </div>
 
         {/* Filtres */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 mb-4">
           <div className="flex flex-col md:flex-row gap-4">
             {/* Recherche */}
             <div className="flex-1 relative">
@@ -275,8 +364,8 @@ export default function CataloguePage() {
 
         {/* Aucun produit */}
         {totalFilteredProducts === 0 ? (
-          <div className="text-center py-24 bg-white rounded-xl border border-gray-200">
-            <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+          <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
+            <Package className="h-12 w-12 text-gray-300 mx-auto mb-3" />
             <p className="text-gray-600 font-medium">Aucun produit trouvé</p>
             <p className="text-sm text-gray-500 mt-1">
               Essayez de modifier vos filtres
@@ -286,13 +375,13 @@ export default function CataloguePage() {
           <>
             {/* Section: Produits sur mesure */}
             {filteredCustomProducts.length > 0 && (
-              <div className="mb-8">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
-                    <Sparkles className="h-5 w-5 text-purple-600" />
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100">
+                    <Sparkles className="h-4 w-4 text-purple-600" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-gray-900">
+                    <h2 className="text-base font-semibold text-gray-900">
                       Produits sur mesure
                     </h2>
                     <p className="text-sm text-gray-500">
@@ -305,7 +394,7 @@ export default function CataloguePage() {
                 </div>
 
                 {viewMode === 'grid' ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                     {filteredCustomProducts.map(product => (
                       <ProductCard
                         key={product.id}
@@ -341,12 +430,12 @@ export default function CataloguePage() {
             {/* Section: Catalogue général */}
             {filteredGeneralProducts.length > 0 && (
               <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
-                    <Package className="h-5 w-5 text-blue-600" />
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100">
+                    <Package className="h-4 w-4 text-blue-600" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-gray-900">
+                    <h2 className="text-base font-semibold text-gray-900">
                       Catalogue général
                     </h2>
                     <p className="text-sm text-gray-500">
@@ -357,7 +446,7 @@ export default function CataloguePage() {
                 </div>
 
                 {viewMode === 'grid' ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                     {filteredGeneralProducts.map(product => (
                       <ProductCard
                         key={product.id}
@@ -390,6 +479,7 @@ export default function CataloguePage() {
         isOpen={isAddModalOpen}
         onClose={handleCloseModal}
         product={selectedProduct}
+        preselectedSelectionId={selectionIdFromUrl}
       />
     </div>
   );
@@ -438,7 +528,7 @@ function ProductCard({
   );
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
+    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
       {/* Image */}
       <div className="aspect-square bg-gray-100 relative">
         {product.image_url ? (
@@ -449,70 +539,67 @@ function ProductCard({
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <Package className="h-16 w-16 text-gray-300" />
+            <Package className="h-10 w-10 text-gray-300" />
           </div>
         )}
 
         {/* Badge sur mesure */}
         {showCustomBadge && (
-          <span className="absolute top-2 right-2 bg-purple-500 text-white text-xs font-bold px-2 py-1 rounded flex items-center gap-1">
-            <Sparkles className="h-3 w-3" />
+          <span className="absolute top-1.5 right-1.5 bg-purple-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5">
+            <Sparkles className="h-2.5 w-2.5" />
             Sur mesure
           </span>
         )}
 
         {/* Badge vedette */}
         {product.is_featured && (
-          <span className="absolute top-2 left-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded">
+          <span className="absolute top-1.5 left-1.5 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-1.5 py-0.5 rounded">
             Vedette
           </span>
         )}
       </div>
 
       {/* Contenu */}
-      <div className="p-4">
+      <div className="p-2.5">
         {/* Catégorie */}
         {product.category_name && (
-          <p className="text-xs text-gray-500 mb-1">{product.category_name}</p>
+          <p className="text-[10px] text-gray-500 mb-0.5 truncate">
+            {product.category_name}
+          </p>
         )}
 
         {/* Nom */}
-        <h3 className="font-semibold text-gray-900 line-clamp-2 mb-1">
+        <h3 className="font-medium text-gray-900 line-clamp-2 text-sm mb-0.5 leading-tight">
           {displayTitle}
         </h3>
 
         {/* Référence */}
-        <p className="text-xs text-gray-400 font-mono mb-2">
+        <p className="text-[10px] text-gray-400 font-mono mb-1.5">
           {product.reference}
         </p>
 
         {/* Prix */}
-        <div className="mb-4">
-          <div className="flex items-baseline gap-2">
-            <span className="text-lg font-bold text-gray-900">
+        <div className="mb-2">
+          <div className="flex items-baseline gap-1">
+            <span className="text-sm font-bold text-gray-900">
               {customerPriceHT.toFixed(2)} €
             </span>
-            <span className="text-xs text-gray-500">HT</span>
+            <span className="text-[10px] text-gray-500">HT</span>
           </div>
-          {product.public_price_ht && (
-            <p className="text-xs text-gray-400 mt-1">
-              Prix public : {product.public_price_ht.toFixed(2)} € HT
-            </p>
-          )}
         </div>
 
         {/* Bouton ajouter */}
         <button
           onClick={onAddToSelection}
           disabled={!canAddToSelection}
-          className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+          className={`w-full flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs font-medium transition-colors ${
             canAddToSelection
               ? 'bg-blue-600 text-white hover:bg-blue-700'
               : 'bg-gray-100 text-gray-400 cursor-not-allowed'
           }`}
         >
-          <Plus className="h-4 w-4" />
-          Ajouter à ma sélection
+          <Plus className="h-3 w-3" />
+          Ajouter
         </button>
       </div>
     </div>
@@ -541,9 +628,9 @@ function ProductListItem({
   );
 
   return (
-    <div className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors">
+    <div className="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors">
       {/* Image */}
-      <div className="w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
+      <div className="w-12 h-12 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
         {product.image_url ? (
           <img
             src={product.image_url}
@@ -552,30 +639,30 @@ function ProductListItem({
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <Package className="h-8 w-8 text-gray-300" />
+            <Package className="h-6 w-6 text-gray-300" />
           </div>
         )}
       </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-gray-900 truncate">
+        <div className="flex items-center gap-1.5">
+          <h3 className="font-medium text-gray-900 truncate text-sm">
             {displayTitle}
           </h3>
           {showCustomBadge && (
-            <span className="bg-purple-100 text-purple-700 text-xs font-medium px-2 py-0.5 rounded flex items-center gap-1">
-              <Sparkles className="h-3 w-3" />
+            <span className="bg-purple-100 text-purple-700 text-[10px] font-medium px-1.5 py-0.5 rounded flex items-center gap-0.5">
+              <Sparkles className="h-2.5 w-2.5" />
               Sur mesure
             </span>
           )}
           {product.is_featured && (
-            <span className="bg-yellow-100 text-yellow-700 text-xs font-medium px-2 py-0.5 rounded">
+            <span className="bg-yellow-100 text-yellow-700 text-[10px] font-medium px-1.5 py-0.5 rounded">
               Vedette
             </span>
           )}
         </div>
-        <p className="text-sm text-gray-500">
+        <p className="text-xs text-gray-500">
           {product.category_name && `${product.category_name} • `}
           <span className="font-mono">{product.reference}</span>
         </p>
@@ -583,27 +670,22 @@ function ProductListItem({
 
       {/* Prix */}
       <div className="text-right">
-        <p className="font-bold text-gray-900">
+        <p className="font-bold text-gray-900 text-sm">
           {customerPriceHT.toFixed(2)} € HT
         </p>
-        {product.public_price_ht && (
-          <p className="text-xs text-gray-400">
-            Prix public : {product.public_price_ht.toFixed(2)} €
-          </p>
-        )}
       </div>
 
       {/* Action */}
       <button
         onClick={onAddToSelection}
         disabled={!canAddToSelection}
-        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+        className={`flex items-center gap-1 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
           canAddToSelection
             ? 'bg-blue-600 text-white hover:bg-blue-700'
             : 'bg-gray-100 text-gray-400 cursor-not-allowed'
         }`}
       >
-        <Plus className="h-4 w-4" />
+        <Plus className="h-3 w-3" />
         <span className="hidden lg:inline">Ajouter</span>
       </button>
     </div>

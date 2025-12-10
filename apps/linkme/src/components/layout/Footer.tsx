@@ -5,11 +5,11 @@ export function Footer() {
 
   return (
     <footer className="bg-gray-900 text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Logo & Description */}
           <div>
-            <span className="text-2xl font-bold text-blue-400">LINKME</span>
+            <span className="text-xl font-bold text-blue-400">LINKME</span>
             <p className="mt-4 text-gray-400 text-sm">
               Plateforme d'affiliation pour les professionnels de la décoration
               et du mobilier d'intérieur.
@@ -18,7 +18,7 @@ export function Footer() {
 
           {/* Liens */}
           <div>
-            <h3 className="font-semibold text-lg mb-4">Liens utiles</h3>
+            <h3 className="font-semibold text-base mb-3">Liens utiles</h3>
             <ul className="space-y-2">
               <li>
                 <Link
@@ -43,7 +43,7 @@ export function Footer() {
 
           {/* Contact */}
           <div>
-            <h3 className="font-semibold text-lg mb-4">Contact</h3>
+            <h3 className="font-semibold text-base mb-3">Contact</h3>
             <ul className="space-y-2 text-gray-400 text-sm">
               <li>contact@verone.fr</li>
             </ul>
@@ -51,7 +51,7 @@ export function Footer() {
         </div>
 
         {/* Bottom */}
-        <div className="mt-8 pt-8 border-t border-gray-800 text-center text-gray-400 text-sm">
+        <div className="mt-6 pt-6 border-t border-gray-800 text-center text-gray-400 text-sm">
           <p>&copy; {currentYear} LinkMe by Vérone. Tous droits réservés.</p>
         </div>
       </div>

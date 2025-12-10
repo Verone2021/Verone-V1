@@ -1,0 +1,172 @@
+/**
+ * Types pour les Analytics LinkMe
+ * Page /statistiques - Vue affilié
+ */
+
+// Périodes disponibles pour les analytics
+export type AnalyticsPeriod = 'week' | 'month' | 'quarter' | 'year';
+
+// Données complètes analytics niveau affilié
+export interface AffiliateAnalyticsData {
+  // KPIs principaux
+  totalOrders: number;
+  totalRevenueHT: number;
+  totalCommissionsHT: number;
+  totalCommissionsTTC: number;
+  pendingCommissionsHT: number;
+  pendingCommissionsTTC: number;
+  validatedCommissionsHT: number;
+  validatedCommissionsTTC: number;
+  paidCommissionsHT: number;
+  paidCommissionsTTC: number;
+  averageBasket: number;
+  conversionRate: number;
+  totalViews: number;
+
+  // Données pour graphiques
+  revenueByPeriod: RevenueDataPoint[];
+  commissionsByStatus: CommissionsByStatus;
+
+  // Données détaillées
+  selectionsPerformance: SelectionPerformance[];
+  topProducts: TopProductData[];
+}
+
+// Point de données pour graphique CA
+export interface RevenueDataPoint {
+  date: string;
+  label: string;
+  revenue: number;
+  orders: number;
+}
+
+// Répartition des commissions par statut
+export interface CommissionsByStatus {
+  pending: CommissionStatusData;
+  validated: CommissionStatusData;
+  paid: CommissionStatusData;
+  total: CommissionStatusData;
+}
+
+export interface CommissionStatusData {
+  count: number;
+  amountHT: number;
+  amountTTC: number;
+}
+
+// Performance d'une sélection
+export interface SelectionPerformance {
+  id: string;
+  name: string;
+  slug: string;
+  imageUrl: string | null;
+  productsCount: number;
+  views: number;
+  orders: number;
+  revenue: number;
+  conversionRate: number;
+  publishedAt: string | null;
+  topProducts?: TopProductData[];
+}
+
+// Données produit pour top ventes
+export interface TopProductData {
+  productId: string;
+  productName: string;
+  productSku: string;
+  productImageUrl: string | null;
+  quantitySold: number;
+  revenueHT: number;
+  commissionHT: number;
+  selectionId?: string;
+  selectionName?: string;
+}
+
+// Commission individuelle pour liste
+export interface CommissionItem {
+  id: string;
+  orderNumber: string;
+  orderAmountHT: number;
+  affiliateCommission: number;
+  affiliateCommissionTTC: number;
+  linkmeCommission: number;
+  marginRateApplied: number;
+  status: CommissionStatus;
+  createdAt: string;
+  validatedAt: string | null;
+  paidAt: string | null;
+  selectionName?: string;
+}
+
+export type CommissionStatus = 'pending' | 'validated' | 'paid' | 'cancelled';
+
+// Labels pour les statuts
+export const COMMISSION_STATUS_LABELS: Record<CommissionStatus, string> = {
+  pending: 'En attente',
+  validated: 'Validée',
+  paid: 'Payée',
+  cancelled: 'Annulée',
+};
+
+// Couleurs pour les statuts
+export const COMMISSION_STATUS_COLORS: Record<CommissionStatus, string> = {
+  pending: 'orange',
+  validated: 'blue',
+  paid: 'green',
+  cancelled: 'red',
+};
+
+// Labels périodes
+export const PERIOD_LABELS: Record<AnalyticsPeriod, string> = {
+  week: '7 jours',
+  month: '30 jours',
+  quarter: '90 jours',
+  year: 'Cette année',
+};
+
+// Helper pour calculer la date de début de période
+export function getPeriodStartDate(period: AnalyticsPeriod): Date {
+  const now = new Date();
+  switch (period) {
+    case 'week':
+      return new Date(now.setDate(now.getDate() - 7));
+    case 'month':
+      return new Date(now.setDate(now.getDate() - 30));
+    case 'quarter':
+      return new Date(now.setDate(now.getDate() - 90));
+    case 'year':
+      return new Date(now.getFullYear(), 0, 1);
+    default:
+      return new Date(now.setDate(now.getDate() - 30));
+  }
+}
+
+// Helper pour formater les montants (TOUJOURS avec 2 décimales - règle métier)
+export function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
+// Helper pour formater les pourcentages
+export function formatPercentage(value: number): string {
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'percent',
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(value / 100);
+}
+
+// Helper pour formater les nombres compacts
+export function formatCompactNumber(value: number): string {
+  if (value >= 1000000) {
+    return `${(value / 1000000).toFixed(1)}M`;
+  }
+  if (value >= 1000) {
+    return `${(value / 1000).toFixed(1)}K`;
+  }
+  return value.toString();
+}

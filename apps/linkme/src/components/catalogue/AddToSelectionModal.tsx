@@ -40,6 +40,8 @@ interface AddToSelectionModalProps {
   isOpen: boolean;
   onClose: () => void;
   product: LinkMeCatalogProduct | null;
+  /** ID de sélection pré-sélectionnée (quand on vient de /ma-selection/[id]/produits) */
+  preselectedSelectionId?: string | null;
 }
 
 // Constantes pour calculs marge
@@ -51,6 +53,7 @@ export function AddToSelectionModal({
   isOpen,
   onClose,
   product,
+  preselectedSelectionId,
 }: AddToSelectionModalProps) {
   const { data: affiliate, isLoading: affiliateLoading } = useUserAffiliate();
   const { data: selections, isLoading: selectionsLoading } =
@@ -129,6 +132,17 @@ export function AddToSelectionModal({
       setMarginRate(affiliate?.default_margin_rate || marginLimits.suggested);
     }
   }, [marginLimits.suggested, affiliate]);
+
+  // Pré-sélectionner la sélection si fournie (quand on vient de /ma-selection/[id]/produits)
+  useEffect(() => {
+    if (preselectedSelectionId && isOpen && !selectionsLoading) {
+      // Vérifier que la sélection existe
+      const exists = selections?.some(s => s.id === preselectedSelectionId);
+      if (exists) {
+        setSelectedSelectionId(preselectedSelectionId);
+      }
+    }
+  }, [preselectedSelectionId, isOpen, selections, selectionsLoading]);
 
   // Calculer le gain et le prix final
   const calculations = useMemo(() => {

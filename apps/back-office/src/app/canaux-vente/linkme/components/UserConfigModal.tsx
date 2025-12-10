@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 
 import { cn } from '@verone/utils';
+import { createClient } from '@verone/utils/supabase/client';
 import {
   X,
   User,
@@ -16,6 +17,8 @@ import {
   Loader2,
   AlertTriangle,
   Settings,
+  Wallet,
+  Percent,
 } from 'lucide-react';
 
 import {
@@ -30,7 +33,14 @@ interface UserConfigModalProps {
   onClose: () => void;
 }
 
-type TabType = 'profile' | 'security';
+type TabType = 'profile' | 'security' | 'remuneration';
+
+interface AffiliateData {
+  id: string;
+  default_margin_rate: number;
+  linkme_commission_rate: number;
+  tva_rate: number;
+}
 
 /**
  * Modal unifié de configuration utilisateur LinkMe
@@ -64,6 +74,15 @@ export function UserConfigModal({
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState(false);
 
+  // Remuneration state
+  const [affiliateData, setAffiliateData] = useState<AffiliateData | null>(
+    null
+  );
+  const [tvaRate, setTvaRate] = useState<number>(20);
+  const [isLoadingAffiliate, setIsLoadingAffiliate] = useState(false);
+  const [isSavingTva, setIsSavingTva] = useState(false);
+  const [tvaSuccess, setTvaSuccess] = useState(false);
+
   // Validation
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -79,10 +98,77 @@ export function UserConfigModal({
       setShowPassword(false);
       setPasswordError(null);
       setPasswordSuccess(false);
+      setTvaSuccess(false);
       setErrors({});
       setActiveTab('profile');
+
+      // Charger les données affilié pour l'onglet Rémunération
+      fetchAffiliateData();
     }
   }, [isOpen, user]);
+
+  // Récupérer les données de l'affilié
+  async function fetchAffiliateData() {
+    if (!user.enseigne_id && !user.organisation_id) {
+      setAffiliateData(null);
+      return;
+    }
+
+    setIsLoadingAffiliate(true);
+    const supabase = createClient();
+
+    try {
+      let query = supabase
+        .from('linkme_affiliates')
+        .select('id, default_margin_rate, linkme_commission_rate, tva_rate');
+
+      if (user.enseigne_id) {
+        query = query.eq('enseigne_id', user.enseigne_id);
+      } else if (user.organisation_id) {
+        query = query.eq('organisation_id', user.organisation_id);
+      }
+
+      const { data, error } = await query.single();
+
+      if (error) {
+        console.error('Erreur fetch affiliate:', error);
+        setAffiliateData(null);
+      } else if (data) {
+        setAffiliateData(data as AffiliateData);
+        setTvaRate(data.tva_rate || 20);
+      }
+    } catch (err) {
+      console.error('Erreur fetch affiliate:', err);
+    } finally {
+      setIsLoadingAffiliate(false);
+    }
+  }
+
+  // Sauvegarder le taux TVA
+  async function handleSaveTvaRate() {
+    if (!affiliateData) return;
+
+    setIsSavingTva(true);
+    const supabase = createClient();
+
+    try {
+      const { error } = await supabase
+        .from('linkme_affiliates')
+        .update({ tva_rate: tvaRate })
+        .eq('id', affiliateData.id);
+
+      if (error) throw error;
+
+      setAffiliateData({ ...affiliateData, tva_rate: tvaRate });
+      setTvaSuccess(true);
+      setTimeout(() => setTvaSuccess(false), 2000);
+    } catch (err) {
+      console.error('Erreur save TVA:', err);
+      setErrors({ tva: 'Erreur lors de la sauvegarde' });
+    } finally {
+      setIsSavingTva(false);
+    }
+  }
 
   // Validation profil
   const validateProfile = (): boolean => {
@@ -262,6 +348,18 @@ export function UserConfigModal({
               Profil
             </button>
             <button
+              onClick={() => setActiveTab('remuneration')}
+              className={cn(
+                'flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors',
+                activeTab === 'remuneration'
+                  ? 'text-green-600 border-b-2 border-green-600 bg-green-50/50'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              )}
+            >
+              <Wallet className="h-4 w-4" />
+              Rémunération
+            </button>
+            <button
               onClick={() => setActiveTab('security')}
               className={cn(
                 'flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors',
@@ -406,6 +504,119 @@ export function UserConfigModal({
                 </button>
               </div>
             </form>
+          ) : activeTab === 'remuneration' ? (
+            <div className="p-6 space-y-5">
+              {isLoadingAffiliate ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                </div>
+              ) : !affiliateData ? (
+                <div className="text-center py-8">
+                  <Wallet className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+                  <p className="text-sm text-gray-500">
+                    Aucune donnée de rémunération disponible
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    L&apos;utilisateur n&apos;est pas rattaché à un affilié
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* TVA Rate - Editable */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Taux de TVA applicable
+                    </label>
+                    <p className="text-xs text-gray-500 mb-2">
+                      TVA applicable aux commissions selon l&apos;entité
+                      juridique
+                    </p>
+                    <div className="relative">
+                      <Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <select
+                        value={tvaRate}
+                        onChange={e => setTvaRate(Number(e.target.value))}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 appearance-none bg-white"
+                      >
+                        <option value={0}>0% (Belgique intra-UE, etc.)</option>
+                        <option value={10}>10% (Taux réduit)</option>
+                        <option value={20}>20% (France standard)</option>
+                      </select>
+                    </div>
+                    {errors.tva && (
+                      <p className="mt-1 text-xs text-red-600">{errors.tva}</p>
+                    )}
+                  </div>
+
+                  {/* Margin Rate - Read only */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Taux de marge par défaut
+                    </label>
+                    <div className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600">
+                      {affiliateData.default_margin_rate}%
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">
+                      Modifiable dans les paramètres de l&apos;enseigne
+                    </p>
+                  </div>
+
+                  {/* Commission Rate - Read only */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Taux commission LinkMe
+                    </label>
+                    <div className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600">
+                      {affiliateData.linkme_commission_rate}%
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">
+                      Modifiable dans les paramètres de l&apos;enseigne
+                    </p>
+                  </div>
+
+                  {/* Success Message */}
+                  {tvaSuccess && (
+                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
+                      <Check className="h-4 w-4 text-green-600" />
+                      <p className="text-sm text-green-700">
+                        Taux TVA mis à jour
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      Fermer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSaveTvaRate}
+                      disabled={
+                        isSavingTva || tvaRate === affiliateData.tva_rate
+                      }
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                    >
+                      {isSavingTva ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Sauvegarde...
+                        </>
+                      ) : (
+                        <>
+                          <Check className="h-4 w-4" />
+                          Enregistrer TVA
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           ) : passwordSuccess ? (
             <div className="p-6">
               <div className="flex flex-col items-center justify-center py-8">

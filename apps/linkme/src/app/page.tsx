@@ -47,12 +47,12 @@ export default function HomePage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-blue-600 to-blue-800 text-white py-20">
+      <section className="bg-gradient-to-br from-blue-600 to-blue-800 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold mb-4">
             LinkMe - Votre plateforme de vente partenaire
           </h1>
-          <p className="text-xl text-blue-100 max-w-2xl mx-auto mb-8">
+          <p className="text-base text-blue-100 max-w-2xl mx-auto mb-6">
             Mobilier et décoration d'intérieur haut de gamme. Créez vos
             sélections personnalisées et gagnez des commissions sur vos ventes.
           </p>
@@ -89,10 +89,10 @@ export default function HomePage() {
       </section>
 
       {/* Section Fonctionnalités */}
-      <section className="py-16 bg-white">
+      <section className="py-10 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          <div className="text-center mb-8">
+            <h2 className="text-xl font-bold text-gray-900 mb-3">
               Comment ça fonctionne ?
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
@@ -102,13 +102,13 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Étape 1 */}
             <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Package className="h-8 w-8 text-blue-600" />
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Package className="h-6 w-6 text-blue-600" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              <h3 className="text-base font-semibold text-gray-900 mb-2">
                 1. Parcourez le catalogue
               </h3>
               <p className="text-gray-600">
@@ -119,10 +119,10 @@ export default function HomePage() {
 
             {/* Étape 2 */}
             <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <ShoppingBag className="h-8 w-8 text-green-600" />
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <ShoppingBag className="h-6 w-6 text-green-600" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              <h3 className="text-base font-semibold text-gray-900 mb-2">
                 2. Créez votre sélection
               </h3>
               <p className="text-gray-600">
@@ -133,10 +133,10 @@ export default function HomePage() {
 
             {/* Étape 3 */}
             <div className="text-center">
-              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <TrendingUp className="h-8 w-8 text-purple-600" />
+              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <TrendingUp className="h-6 w-6 text-purple-600" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              <h3 className="text-base font-semibold text-gray-900 mb-2">
                 3. Gagnez des commissions
               </h3>
               <p className="text-gray-600">
@@ -149,12 +149,12 @@ export default function HomePage() {
       </section>
 
       {/* Section Avantages */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-10 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             {/* Texte */}
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">
                 Pourquoi rejoindre LinkMe ?
               </h2>
 
@@ -214,27 +214,27 @@ export default function HomePage() {
             </div>
 
             {/* Image/Stats */}
-            <div className="bg-white rounded-2xl shadow-lg p-8">
-              <div className="grid grid-cols-2 gap-6">
-                <div className="text-center p-4 bg-blue-50 rounded-xl">
-                  <Users className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                  <p className="text-3xl font-bold text-gray-900">150+</p>
+            <div className="bg-white rounded-lg shadow-lg p-5">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-3 bg-blue-50 rounded-lg">
+                  <Users className="h-6 w-6 text-blue-600 mx-auto mb-1.5" />
+                  <p className="text-2xl font-bold text-gray-900">150+</p>
                   <p className="text-sm text-gray-600">Partenaires actifs</p>
                 </div>
-                <div className="text-center p-4 bg-green-50 rounded-xl">
-                  <Package className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                  <p className="text-3xl font-bold text-gray-900">2000+</p>
-                  <p className="text-sm text-gray-600">Produits disponibles</p>
+                <div className="text-center p-3 bg-green-50 rounded-lg">
+                  <Package className="h-6 w-6 text-green-600 mx-auto mb-1.5" />
+                  <p className="text-2xl font-bold text-gray-900">2000+</p>
+                  <p className="text-xs text-gray-600">Produits disponibles</p>
                 </div>
-                <div className="text-center p-4 bg-purple-50 rounded-xl">
-                  <ShoppingBag className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-                  <p className="text-3xl font-bold text-gray-900">10k+</p>
-                  <p className="text-sm text-gray-600">Ventes réalisées</p>
+                <div className="text-center p-3 bg-purple-50 rounded-lg">
+                  <ShoppingBag className="h-6 w-6 text-purple-600 mx-auto mb-1.5" />
+                  <p className="text-2xl font-bold text-gray-900">10k+</p>
+                  <p className="text-xs text-gray-600">Ventes réalisées</p>
                 </div>
-                <div className="text-center p-4 bg-orange-50 rounded-xl">
-                  <TrendingUp className="h-8 w-8 text-orange-600 mx-auto mb-2" />
-                  <p className="text-3xl font-bold text-gray-900">25%</p>
-                  <p className="text-sm text-gray-600">Commission moyenne</p>
+                <div className="text-center p-3 bg-orange-50 rounded-lg">
+                  <TrendingUp className="h-6 w-6 text-orange-600 mx-auto mb-1.5" />
+                  <p className="text-2xl font-bold text-gray-900">25%</p>
+                  <p className="text-xs text-gray-600">Commission moyenne</p>
                 </div>
               </div>
             </div>
@@ -243,12 +243,10 @@ export default function HomePage() {
       </section>
 
       {/* Fournisseurs Partenaires */}
-      <section className="py-16 bg-white">
+      <section className="py-10 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-900">
-              Nos partenaires
-            </h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-lg font-bold text-gray-900">Nos partenaires</h2>
           </div>
 
           {suppliersLoading ? (
@@ -265,10 +263,10 @@ export default function HomePage() {
               {suppliers.map(supplier => (
                 <div
                   key={supplier.id}
-                  className="bg-gray-50 rounded-lg p-4 text-center hover:shadow-md transition-shadow"
+                  className="bg-gray-50 rounded-lg p-3 text-center hover:shadow-md transition-shadow"
                 >
                   {/* Logo */}
-                  <div className="relative w-16 h-16 mx-auto mb-3 bg-white rounded-full overflow-hidden shadow-sm">
+                  <div className="relative w-12 h-12 mx-auto mb-2 bg-white rounded-full overflow-hidden shadow-sm">
                     {supplier.logo_url ? (
                       <Image
                         src={supplier.logo_url}
@@ -278,7 +276,7 @@ export default function HomePage() {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        <Store className="h-8 w-8" />
+                        <Store className="h-6 w-6" />
                       </div>
                     )}
                   </div>
@@ -298,12 +296,12 @@ export default function HomePage() {
       </section>
 
       {/* CTA Final */}
-      <section className="py-16 bg-gradient-to-br from-blue-600 to-blue-800 text-white">
+      <section className="py-10 bg-gradient-to-br from-blue-600 to-blue-800 text-white">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold mb-4">
+          <h2 className="text-xl font-bold mb-3">
             Prêt à développer votre activité ?
           </h2>
-          <p className="text-blue-100 mb-8">
+          <p className="text-blue-100 mb-6">
             Rejoignez LinkMe et commencez à créer vos sélections personnalisées
             dès aujourd'hui.
           </p>
@@ -311,26 +309,26 @@ export default function HomePage() {
           {canAccessCatalog ? (
             <Link
               href="/catalogue"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-colors text-sm"
             >
-              <Package className="h-5 w-5" />
+              <Package className="h-4 w-4" />
               Accéder au catalogue
             </Link>
           ) : user ? (
             <Link
               href="/dashboard"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-colors text-sm"
             >
               Voir mon dashboard
-              <ArrowRight className="h-5 w-5" />
+              <ArrowRight className="h-4 w-4" />
             </Link>
           ) : (
             <Link
               href="/login"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-colors text-sm"
             >
               Commencer maintenant
-              <ArrowRight className="h-5 w-5" />
+              <ArrowRight className="h-4 w-4" />
             </Link>
           )}
         </div>

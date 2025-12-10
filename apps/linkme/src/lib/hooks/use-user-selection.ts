@@ -640,3 +640,70 @@ export function useToggleSelectionPublished() {
     },
   });
 }
+
+/**
+ * Hook: récupère uniquement les product_id d'une sélection (pour filtrage)
+ * Utilisé par le catalogue pour masquer les produits déjà dans la sélection
+ */
+export function useSelectionProductIds(selectionId: string | null) {
+  return useQuery({
+    queryKey: ['selection-product-ids', selectionId],
+    queryFn: async (): Promise<string[]> => {
+      if (!selectionId) return [];
+
+      const { data, error } = await (supabase as any)
+        .from('linkme_selection_items')
+        .select('product_id')
+        .eq('selection_id', selectionId);
+
+      if (error) {
+        console.error('Erreur fetch selection product ids:', error);
+        return [];
+      }
+
+      return (data || []).map(
+        (item: { product_id: string }) => item.product_id
+      );
+    },
+    enabled: !!selectionId,
+    staleTime: 30000,
+  });
+}
+
+/**
+ * Hook: réorganiser les produits d'une sélection (drag & drop)
+ */
+export function useReorderProducts() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: {
+      selectionId: string;
+      orderedItemIds: string[];
+    }) => {
+      // Mettre à jour l'ordre de chaque item
+      const updates = input.orderedItemIds.map((itemId, index) =>
+        (supabase as any)
+          .from('linkme_selection_items')
+          .update({
+            display_order: index,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', itemId)
+      );
+
+      const results = await Promise.all(updates);
+
+      // Vérifier les erreurs
+      const errors = results.filter(r => r.error);
+      if (errors.length > 0) {
+        throw new Error('Erreur lors de la réorganisation');
+      }
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['selection-items', variables.selectionId],
+      });
+    },
+  });
+}

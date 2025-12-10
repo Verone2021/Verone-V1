@@ -15,7 +15,15 @@ import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-import { LogIn, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import {
+  LogIn,
+  Loader2,
+  AlertCircle,
+  Eye,
+  EyeOff,
+  Info,
+  X,
+} from 'lucide-react';
 
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -44,6 +52,21 @@ function LoginContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showTestAccounts, setShowTestAccounts] = useState(false);
+
+  // Comptes de test (DEV ONLY)
+  const TEST_ACCOUNTS = [
+    {
+      email: 'admin@pokawa-test.fr',
+      password: 'TestLinkMe2025',
+      role: 'Enseigne Admin (Pokawa)',
+    },
+    {
+      email: 'test-config-modal@pokawa-test.fr',
+      password: 'TestLinkMe2025',
+      role: 'Org Indépendante',
+    },
+  ];
 
   // URL de redirection après connexion
   const redirectUrl = searchParams.get('redirect') || '/dashboard';
@@ -91,12 +114,64 @@ function LoginContent() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100 px-4">
       <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <Link href="/" className="inline-block">
-            <h1 className="text-3xl font-bold text-blue-600 mb-2">LINKME</h1>
+            <h1 className="text-2xl font-bold text-blue-600 mb-1">LINKME</h1>
           </Link>
-          <p className="text-gray-600">Espace Partenaires & Affiliés</p>
+          <p className="text-gray-600 text-sm">Espace Partenaires & Affiliés</p>
         </div>
+
+        {/* DEV: Bouton comptes de test */}
+        <button
+          type="button"
+          onClick={() => setShowTestAccounts(!showTestAccounts)}
+          className="w-full mb-4 flex items-center justify-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-xs hover:bg-amber-100 transition-colors"
+        >
+          <Info className="h-3.5 w-3.5" />
+          Comptes de test (DEV)
+        </button>
+
+        {/* Panel comptes de test */}
+        {showTestAccounts && (
+          <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-gray-700">
+                Comptes de test
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowTestAccounts(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            <div className="space-y-2">
+              {TEST_ACCOUNTS.map((account, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setEmail(account.email);
+                    setPassword(account.password);
+                    setShowTestAccounts(false);
+                  }}
+                  className="w-full text-left p-2 bg-white border border-gray-100 rounded hover:border-blue-300 hover:bg-blue-50 transition-colors"
+                >
+                  <div className="text-xs font-medium text-gray-900">
+                    {account.role}
+                  </div>
+                  <div className="text-[10px] text-gray-500 font-mono">
+                    {account.email}
+                  </div>
+                  <div className="text-[10px] text-gray-400">
+                    Mot de passe: {account.password}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Erreur */}
         {error && (
