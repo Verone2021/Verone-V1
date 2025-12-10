@@ -3302,6 +3302,7 @@ export type Database = {
           phone: string | null;
           slug: string;
           status: string | null;
+          tva_rate: number | null;
           updated_at: string | null;
           verified_at: string | null;
           verified_by: string | null;
@@ -3322,6 +3323,7 @@ export type Database = {
           phone?: string | null;
           slug: string;
           status?: string | null;
+          tva_rate?: number | null;
           updated_at?: string | null;
           verified_at?: string | null;
           verified_by?: string | null;
@@ -3342,6 +3344,7 @@ export type Database = {
           phone?: string | null;
           slug?: string;
           status?: string | null;
+          tva_rate?: number | null;
           updated_at?: string | null;
           verified_at?: string | null;
           verified_by?: string | null;

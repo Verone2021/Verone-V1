@@ -260,7 +260,14 @@ export default function LinkMeAnalyticsPage() {
         {/* Commissions */}
         <CommissionsStatusCard
           statusData={
-            data?.commissionsByStatus || { pending: 0, validated: 0, paid: 0 }
+            data?.commissionsByStatus || {
+              pendingHT: 0,
+              validatedHT: 0,
+              paidHT: 0,
+              pendingTTC: 0,
+              validatedTTC: 0,
+              paidTTC: 0,
+            }
           }
           pendingCommissions={data?.topPendingCommissions || []}
           isLoading={isLoading}
@@ -318,9 +325,14 @@ export default function LinkMeAnalyticsPage() {
                   {isLoading ? (
                     <Skeleton className="h-8 w-24" />
                   ) : (
-                    <p className="text-2xl font-bold text-green-600">
-                      {formatCurrency(data?.totalPaidCommissions || 0)}
-                    </p>
+                    <>
+                      <p className="text-2xl font-bold text-green-600">
+                        {formatCurrency(data?.totalPaidCommissionsHT || 0)} HT
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {formatCurrency(data?.totalPaidCommissionsTTC || 0)} TTC
+                      </p>
+                    </>
                   )}
                   <p className="text-sm text-gray-500">Commissions versées</p>
                 </div>

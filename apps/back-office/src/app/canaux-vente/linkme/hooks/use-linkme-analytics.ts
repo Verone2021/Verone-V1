@@ -44,9 +44,12 @@ export interface SelectionPerformance {
 }
 
 export interface CommissionsByStatus {
-  pending: number;
-  validated: number;
-  paid: number;
+  pendingHT: number;
+  validatedHT: number;
+  paidHT: number;
+  pendingTTC: number;
+  validatedTTC: number;
+  paidTTC: number;
 }
 
 export interface PendingCommission {
@@ -78,7 +81,8 @@ export interface LinkMeAnalyticsData {
   // KPI secondaires
   totalSelections: number;
   averageBasket: number;
-  totalPaidCommissions: number;
+  totalPaidCommissionsHT: number;
+  totalPaidCommissionsTTC: number;
 }
 
 // ============================================
@@ -177,26 +181,38 @@ export function useLinkMeAnalytics(period: AnalyticsPeriod = 'month') {
       const averageBasket = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
       // ============================================
-      // 3. Commissions par statut (toutes périodes)
+      // 3. Commissions par statut (toutes périodes) - HT ET TTC
       // ============================================
       const { data: allCommissionsData } = await supabase
         .from('linkme_commissions')
-        .select('status, affiliate_commission_ttc');
+        .select('status, affiliate_commission, affiliate_commission_ttc');
 
       const allCommissions = allCommissionsData || [];
       const commissionsByStatus: CommissionsByStatus = {
-        pending: allCommissions
+        // Montants HT (prioritaires)
+        pendingHT: allCommissions
+          .filter(c => c.status === 'pending')
+          .reduce((sum, c) => sum + (c.affiliate_commission || 0), 0),
+        validatedHT: allCommissions
+          .filter(c => c.status === 'validated')
+          .reduce((sum, c) => sum + (c.affiliate_commission || 0), 0),
+        paidHT: allCommissions
+          .filter(c => c.status === 'paid')
+          .reduce((sum, c) => sum + (c.affiliate_commission || 0), 0),
+        // Montants TTC (secondaires)
+        pendingTTC: allCommissions
           .filter(c => c.status === 'pending')
           .reduce((sum, c) => sum + (c.affiliate_commission_ttc || 0), 0),
-        validated: allCommissions
+        validatedTTC: allCommissions
           .filter(c => c.status === 'validated')
           .reduce((sum, c) => sum + (c.affiliate_commission_ttc || 0), 0),
-        paid: allCommissions
+        paidTTC: allCommissions
           .filter(c => c.status === 'paid')
           .reduce((sum, c) => sum + (c.affiliate_commission_ttc || 0), 0),
       };
 
-      const totalPaidCommissions = commissionsByStatus.paid;
+      const totalPaidCommissionsHT = commissionsByStatus.paidHT;
+      const totalPaidCommissionsTTC = commissionsByStatus.paidTTC;
 
       // ============================================
       // 4. Revenue by period (graphique)
@@ -353,7 +369,8 @@ export function useLinkMeAnalytics(period: AnalyticsPeriod = 'month') {
         topPendingCommissions,
         totalSelections,
         averageBasket,
-        totalPaidCommissions,
+        totalPaidCommissionsHT,
+        totalPaidCommissionsTTC,
       });
     } catch (err) {
       console.error('Erreur fetch analytics LinkMe:', err);

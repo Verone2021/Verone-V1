@@ -57,11 +57,16 @@ export function CommissionsStatusCard({
     );
   }
 
-  const total =
-    statusData.pending + statusData.validated + statusData.paid || 1;
-  const pendingPercent = (statusData.pending / total) * 100;
-  const validatedPercent = (statusData.validated / total) * 100;
-  const paidPercent = (statusData.paid / total) * 100;
+  // Calculs basés sur HT (montants principaux)
+  const totalHT =
+    statusData.pendingHT + statusData.validatedHT + statusData.paidHT || 1;
+  const pendingPercent = (statusData.pendingHT / totalHT) * 100;
+  const validatedPercent = (statusData.validatedHT / totalHT) * 100;
+  const paidPercent = (statusData.paidHT / totalHT) * 100;
+
+  // Total TTC pour affichage secondaire
+  const totalTTC =
+    statusData.pendingTTC + statusData.validatedTTC + statusData.paidTTC;
 
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('fr-FR', {
@@ -87,9 +92,14 @@ export function CommissionsStatusCard({
                 <Clock className="h-4 w-4 text-orange-500" />
                 <span className="text-gray-600">En attente</span>
               </div>
-              <span className="font-medium text-orange-600">
-                {formatCurrency(statusData.pending)}
-              </span>
+              <div className="text-right">
+                <span className="font-medium text-orange-600">
+                  {formatCurrency(statusData.pendingHT)} HT
+                </span>
+                <p className="text-xs text-gray-400">
+                  {formatCurrency(statusData.pendingTTC)} TTC
+                </p>
+              </div>
             </div>
             <Progress value={pendingPercent} className="h-2 bg-gray-100" />
           </div>
@@ -101,9 +111,14 @@ export function CommissionsStatusCard({
                 <CheckCircle className="h-4 w-4 text-blue-500" />
                 <span className="text-gray-600">Validées</span>
               </div>
-              <span className="font-medium text-blue-600">
-                {formatCurrency(statusData.validated)}
-              </span>
+              <div className="text-right">
+                <span className="font-medium text-blue-600">
+                  {formatCurrency(statusData.validatedHT)} HT
+                </span>
+                <p className="text-xs text-gray-400">
+                  {formatCurrency(statusData.validatedTTC)} TTC
+                </p>
+              </div>
             </div>
             <Progress value={validatedPercent} className="h-2 bg-gray-100" />
           </div>
@@ -115,9 +130,14 @@ export function CommissionsStatusCard({
                 <Wallet className="h-4 w-4 text-green-500" />
                 <span className="text-gray-600">Payées</span>
               </div>
-              <span className="font-medium text-green-600">
-                {formatCurrency(statusData.paid)}
-              </span>
+              <div className="text-right">
+                <span className="font-medium text-green-600">
+                  {formatCurrency(statusData.paidHT)} HT
+                </span>
+                <p className="text-xs text-gray-400">
+                  {formatCurrency(statusData.paidTTC)} TTC
+                </p>
+              </div>
             </div>
             <Progress value={paidPercent} className="h-2 bg-gray-100" />
           </div>
@@ -126,7 +146,14 @@ export function CommissionsStatusCard({
           <div className="pt-2 border-t">
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-500">Total</span>
-              <span className="text-lg font-bold">{formatCurrency(total)}</span>
+              <div className="text-right">
+                <span className="text-lg font-bold">
+                  {formatCurrency(totalHT)} HT
+                </span>
+                <p className="text-xs text-gray-400">
+                  {formatCurrency(totalTTC)} TTC
+                </p>
+              </div>
             </div>
           </div>
         </CardContent>
