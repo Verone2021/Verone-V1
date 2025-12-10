@@ -1,25 +1,115 @@
 'use client';
 
-import { BarChart3, TrendingUp, Users, ShoppingCart, DollarSign, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import { Badge } from '@verone/ui';
+import { Tabs, TabsList, TabsTrigger } from '@verone/ui';
+import { Skeleton } from '@verone/ui';
+import {
+  BarChart3,
+  TrendingUp,
+  Users,
+  ShoppingCart,
+  DollarSign,
+  Package,
+  ShoppingBag,
+  Wallet,
+} from 'lucide-react';
 
-/**
- * Page Analytics LinkMe
- * Vue d'ensemble des statistiques de la plateforme
- */
-export default function LinkMeAnalyticsPage() {
-  // TODO: Implémenter hooks analytics réels
-  const stats = {
-    totalAffiliates: 45,
-    activeAffiliates: 38,
-    totalSelections: 127,
-    totalOrders: 892,
-    totalRevenue: 156780,
-    totalCommissions: 15678,
-    conversionRate: 3.2,
-    averageOrderValue: 175.65,
+import { LinkMeRevenueChart } from '../components/charts/LinkMeRevenueChart';
+import { TopAffiliatesChart } from '../components/charts/TopAffiliatesChart';
+import { CommissionsStatusCard } from '../components/CommissionsStatusCard';
+import { SelectionsPerformanceTable } from '../components/SelectionsPerformanceTable';
+import {
+  useLinkMeAnalytics,
+  type AnalyticsPeriod,
+} from '../hooks/use-linkme-analytics';
+
+// ============================================
+// TYPES & CONFIG
+// ============================================
+
+const PERIOD_CONFIG: Record<AnalyticsPeriod, { label: string; short: string }> =
+  {
+    week: { label: 'Semaine', short: '7j' },
+    month: { label: 'Mois', short: '30j' },
+    quarter: { label: 'Trimestre', short: '90j' },
+    year: { label: 'Année', short: '365j' },
   };
+
+// ============================================
+// KPI CARD COMPONENT
+// ============================================
+
+interface KpiCardProps {
+  title: string;
+  value: string | number;
+  icon: React.ElementType;
+  iconBgColor: string;
+  iconColor: string;
+  isLoading?: boolean;
+  valueColor?: string;
+}
+
+function KpiCard({
+  title,
+  value,
+  icon: Icon,
+  iconBgColor,
+  iconColor,
+  isLoading,
+  valueColor = 'text-gray-900',
+}: KpiCardProps) {
+  return (
+    <Card>
+      <CardContent className="pt-4">
+        <div className="flex items-center gap-3">
+          <div
+            className={`flex h-10 w-10 items-center justify-center rounded-lg ${iconBgColor}`}
+          >
+            <Icon className={`h-5 w-5 ${iconColor}`} />
+          </div>
+          <div className="min-w-0 flex-1">
+            {isLoading ? (
+              <>
+                <Skeleton className="h-7 w-20 mb-1" />
+                <Skeleton className="h-4 w-24" />
+              </>
+            ) : (
+              <>
+                <p className={`text-2xl font-bold truncate ${valueColor}`}>
+                  {value}
+                </p>
+                <p className="text-sm text-gray-500">{title}</p>
+              </>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ============================================
+// MAIN PAGE
+// ============================================
+
+export default function LinkMeAnalyticsPage() {
+  const [period, setPeriod] = useState<AnalyticsPeriod>('month');
+  const { data, isLoading, error } = useLinkMeAnalytics(period);
+
+  // Format helpers
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+
+  const formatNumber = (num: number) =>
+    new Intl.NumberFormat('fr-FR').format(num);
 
   return (
     <div className="flex flex-col h-full">
@@ -38,128 +128,203 @@ export default function LinkMeAnalyticsPage() {
             </div>
           </div>
 
-          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-            Données en temps réel
-          </Badge>
+          <div className="flex items-center gap-3">
+            {/* Period Tabs */}
+            <Tabs
+              value={period}
+              onValueChange={v => setPeriod(v as AnalyticsPeriod)}
+            >
+              <TabsList className="bg-gray-100">
+                {Object.entries(PERIOD_CONFIG).map(([key, config]) => (
+                  <TabsTrigger
+                    key={key}
+                    value={key}
+                    className="text-xs data-[state=active]:bg-white"
+                  >
+                    {config.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+
+            <Badge
+              variant="outline"
+              className="bg-green-50 text-green-700 border-green-200"
+            >
+              Données en temps réel
+            </Badge>
+          </div>
         </div>
       </div>
 
       {/* Content */}
       <div className="flex-1 p-6 overflow-auto space-y-6">
+        {/* Error State */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+            Erreur lors du chargement des données: {error}
+          </div>
+        )}
+
         {/* KPIs principaux */}
         <div className="grid grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
-                  <Users className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{stats.activeAffiliates}</p>
-                  <p className="text-sm text-gray-500">Affiliés actifs</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
-                  <ShoppingCart className="h-5 w-5 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{stats.totalOrders}</p>
-                  <p className="text-sm text-gray-500">Commandes totales</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
-                  <DollarSign className="h-5 w-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">
-                    {stats.totalRevenue.toLocaleString('fr-FR')} €
-                  </p>
-                  <p className="text-sm text-gray-500">Chiffre d'affaires</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-100">
-                  <TrendingUp className="h-5 w-5 text-yellow-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{stats.conversionRate}%</p>
-                  <p className="text-sm text-gray-500">Taux de conversion</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <KpiCard
+            title="Affiliés actifs"
+            value={formatNumber(data?.activeAffiliates || 0)}
+            icon={Users}
+            iconBgColor="bg-blue-100"
+            iconColor="text-blue-600"
+            isLoading={isLoading}
+          />
+          <KpiCard
+            title="Commandes totales"
+            value={formatNumber(data?.totalOrders || 0)}
+            icon={ShoppingCart}
+            iconBgColor="bg-purple-100"
+            iconColor="text-purple-600"
+            isLoading={isLoading}
+          />
+          <KpiCard
+            title="Chiffre d'affaires"
+            value={formatCurrency(data?.totalRevenue || 0)}
+            icon={DollarSign}
+            iconBgColor="bg-green-100"
+            iconColor="text-green-600"
+            isLoading={isLoading}
+          />
+          <KpiCard
+            title="Taux de conversion"
+            value={`${(data?.conversionRate || 0).toFixed(1)}%`}
+            icon={TrendingUp}
+            iconBgColor="bg-yellow-100"
+            iconColor="text-yellow-600"
+            isLoading={isLoading}
+          />
         </div>
 
-        {/* Graphiques placeholder */}
+        {/* Graphiques */}
         <div className="grid grid-cols-2 gap-6">
           <Card>
-            <CardHeader>
-              <CardTitle>Évolution des ventes</CardTitle>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-semibold">
+                Évolution du chiffre d'affaires
+              </CardTitle>
+              <p className="text-xs text-gray-500">
+                CA sur les {PERIOD_CONFIG[period].short} derniers
+              </p>
             </CardHeader>
             <CardContent>
-              <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-200">
-                <div className="text-center text-gray-500">
-                  <BarChart3 className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>Graphique à implémenter</p>
-                </div>
-              </div>
+              <LinkMeRevenueChart
+                data={data?.revenueByPeriod || []}
+                period={period}
+                isLoading={isLoading}
+              />
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Top Affiliés</CardTitle>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-semibold">
+                Top 10 Affiliés
+              </CardTitle>
+              <p className="text-xs text-gray-500">
+                Classement par chiffre d'affaires
+              </p>
             </CardHeader>
             <CardContent>
-              <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-200">
-                <div className="text-center text-gray-500">
-                  <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>Classement à implémenter</p>
-                </div>
-              </div>
+              <TopAffiliatesChart
+                data={data?.topAffiliates || []}
+                isLoading={isLoading}
+              />
             </CardContent>
           </Card>
         </div>
+
+        {/* Performance Sélections */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-semibold">
+              Performance des sélections
+            </CardTitle>
+            <p className="text-xs text-gray-500">Métriques par mini-boutique</p>
+          </CardHeader>
+          <CardContent>
+            <SelectionsPerformanceTable
+              data={data?.selectionsPerformance || []}
+              isLoading={isLoading}
+              maxRows={5}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Commissions */}
+        <CommissionsStatusCard
+          statusData={
+            data?.commissionsByStatus || { pending: 0, validated: 0, paid: 0 }
+          }
+          pendingCommissions={data?.topPendingCommissions || []}
+          isLoading={isLoading}
+        />
 
         {/* Stats secondaires */}
         <div className="grid grid-cols-3 gap-4">
           <Card>
             <CardContent className="pt-4">
-              <p className="text-sm text-gray-500 mb-1">Sélections créées</p>
-              <p className="text-3xl font-bold">{stats.totalSelections}</p>
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-100">
+                  <Package className="h-4 w-4 text-indigo-600" />
+                </div>
+                <div>
+                  {isLoading ? (
+                    <Skeleton className="h-8 w-16" />
+                  ) : (
+                    <p className="text-2xl font-bold">
+                      {formatNumber(data?.totalSelections || 0)}
+                    </p>
+                  )}
+                  <p className="text-sm text-gray-500">Sélections actives</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="pt-4">
-              <p className="text-sm text-gray-500 mb-1">Panier moyen</p>
-              <p className="text-3xl font-bold">{stats.averageOrderValue.toFixed(2)} €</p>
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-100">
+                  <ShoppingBag className="h-4 w-4 text-orange-600" />
+                </div>
+                <div>
+                  {isLoading ? (
+                    <Skeleton className="h-8 w-20" />
+                  ) : (
+                    <p className="text-2xl font-bold">
+                      {formatCurrency(data?.averageBasket || 0)}
+                    </p>
+                  )}
+                  <p className="text-sm text-gray-500">Panier moyen</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="pt-4">
-              <p className="text-sm text-gray-500 mb-1">Commissions versées</p>
-              <p className="text-3xl font-bold text-green-600">
-                {stats.totalCommissions.toLocaleString('fr-FR')} €
-              </p>
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-100">
+                  <Wallet className="h-4 w-4 text-green-600" />
+                </div>
+                <div>
+                  {isLoading ? (
+                    <Skeleton className="h-8 w-24" />
+                  ) : (
+                    <p className="text-2xl font-bold text-green-600">
+                      {formatCurrency(data?.totalPaidCommissions || 0)}
+                    </p>
+                  )}
+                  <p className="text-sm text-gray-500">Commissions versées</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
