@@ -3446,6 +3446,7 @@ export type Database = {
       linkme_commissions: {
         Row: {
           affiliate_commission: number;
+          affiliate_commission_ttc: number | null;
           affiliate_id: string;
           created_at: string | null;
           id: string;
@@ -3456,17 +3457,20 @@ export type Database = {
           order_amount_ht: number;
           order_id: string;
           order_item_id: string | null;
+          order_number: string | null;
           paid_at: string | null;
           paid_by: string | null;
           payment_method: string | null;
           payment_reference: string | null;
           selection_id: string | null;
           status: string | null;
+          tax_rate: number | null;
           validated_at: string | null;
           validated_by: string | null;
         };
         Insert: {
           affiliate_commission: number;
+          affiliate_commission_ttc?: number | null;
           affiliate_id: string;
           created_at?: string | null;
           id?: string;
@@ -3477,17 +3481,20 @@ export type Database = {
           order_amount_ht: number;
           order_id: string;
           order_item_id?: string | null;
+          order_number?: string | null;
           paid_at?: string | null;
           paid_by?: string | null;
           payment_method?: string | null;
           payment_reference?: string | null;
           selection_id?: string | null;
           status?: string | null;
+          tax_rate?: number | null;
           validated_at?: string | null;
           validated_by?: string | null;
         };
         Update: {
           affiliate_commission?: number;
+          affiliate_commission_ttc?: number | null;
           affiliate_id?: string;
           created_at?: string | null;
           id?: string;
@@ -3498,12 +3505,14 @@ export type Database = {
           order_amount_ht?: number;
           order_id?: string;
           order_item_id?: string | null;
+          order_number?: string | null;
           paid_at?: string | null;
           paid_by?: string | null;
           payment_method?: string | null;
           payment_reference?: string | null;
           selection_id?: string | null;
           status?: string | null;
+          tax_rate?: number | null;
           validated_at?: string | null;
           validated_by?: string | null;
         };
@@ -5853,6 +5862,7 @@ export type Database = {
           quantity: number;
           quantity_shipped: number;
           retrocession_amount: number | null;
+          retrocession_amount_ttc: number | null;
           retrocession_rate: number | null;
           sales_order_id: string;
           tax_rate: number;
@@ -5873,6 +5883,7 @@ export type Database = {
           quantity: number;
           quantity_shipped?: number;
           retrocession_amount?: number | null;
+          retrocession_amount_ttc?: number | null;
           retrocession_rate?: number | null;
           sales_order_id: string;
           tax_rate?: number;
@@ -5893,6 +5904,7 @@ export type Database = {
           quantity?: number;
           quantity_shipped?: number;
           retrocession_amount?: number | null;
+          retrocession_amount_ttc?: number | null;
           retrocession_rate?: number | null;
           sales_order_id?: string;
           tax_rate?: number;
@@ -7713,16 +7725,16 @@ export type Database = {
       };
       calculate_package_price:
         | {
-            Args: { p_package_id: string; p_product_id: string };
-            Returns: number;
-          }
-        | {
             Args: {
               base_price_ht_cents: number;
               base_quantity: number;
               discount_rate?: number;
               unit_price_override_cents?: number;
             };
+            Returns: number;
+          }
+        | {
+            Args: { p_package_id: string; p_product_id: string };
             Returns: number;
           };
       calculate_price_ttc: {
@@ -8214,8 +8226,8 @@ export type Database = {
         Returns: string;
       };
       get_activity_stats:
-        | { Args: { p_days_back?: number; p_user_id: string }; Returns: Json }
-        | { Args: { days_ago?: number }; Returns: Json };
+        | { Args: { days_ago?: number }; Returns: Json }
+        | { Args: { p_days_back?: number; p_user_id: string }; Returns: Json };
       get_applicable_price_lists: {
         Args: {
           p_channel_id?: string;
@@ -8444,15 +8456,18 @@ export type Database = {
       get_linkme_catalog_products_for_affiliate: {
         Args: { p_affiliate_id?: string };
         Returns: {
-          channel_commission_rate: number;
+          assigned_client_id: string;
           custom_description: string;
           custom_selling_points: string[];
           custom_title: string;
           display_order: number;
+          enseigne_id: string;
           id: string;
-          is_active: boolean;
+          is_enabled: boolean;
           is_featured: boolean;
           is_public_showcase: boolean;
+          is_sourced: boolean;
+          linkme_commission_rate: number;
           max_margin_rate: number;
           min_margin_rate: number;
           product_category_name: string;
@@ -9008,12 +9023,10 @@ export type Database = {
         Args: { p_document_id: string; p_transaction_id: string };
         Returns: Json;
       };
-      mark_payment_received:
-        | { Args: { p_amount: number; p_order_id: string }; Returns: undefined }
-        | {
-            Args: { p_amount: number; p_order_id: string; p_user_id?: string };
-            Returns: boolean;
-          };
+      mark_payment_received: {
+        Args: { p_amount: number; p_order_id: string; p_user_id?: string };
+        Returns: undefined;
+      };
       mark_sample_delivered: {
         Args: { p_draft_id: string };
         Returns: {

@@ -17,8 +17,6 @@ import {
   ChevronDown,
   ChevronRight,
   Sliders,
-  CreditCard,
-  FileSpreadsheet,
   Activity,
   Link2,
   FileText,
@@ -92,26 +90,9 @@ const LINKME_NAV: LinkMeNavItem[] = [
     icon: ShoppingCart,
   },
   {
-    title: 'Commissions',
+    title: 'Rémunération',
     href: '/canaux-vente/linkme/commissions',
     icon: DollarSign,
-    children: [
-      {
-        title: 'Suivi',
-        href: '/canaux-vente/linkme/commissions',
-        icon: DollarSign,
-      },
-      {
-        title: 'Paiements',
-        href: '/canaux-vente/linkme/commissions/paiements',
-        icon: CreditCard,
-      },
-      {
-        title: 'Export',
-        href: '/canaux-vente/linkme/commissions/export',
-        icon: FileSpreadsheet,
-      },
-    ],
   },
   {
     title: 'Analytics',
