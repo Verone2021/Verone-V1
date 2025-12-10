@@ -153,71 +153,139 @@ import { ProductThumbnail } from '@verone/products';
 
 ---
 
-## 🚀 WORKFLOW UNIVERSEL 2025
+## 🔄 WORKFLOW AUTONOME P.D.C.A. (OBLIGATOIRE - 2025 Standard)
 
-**Philosophy** : Think → Test → Code → Re-test → Document → Commit
+**DÉFINITION** : Méthode de Deming (Plan-Do-Check-Act) adaptée aux agents IA. L'agent DOIT valider chaque étape avec **PREUVES TECHNIQUES** avant de passer à la suivante.
 
-### Phase 1: THINK (Analyse)
+**RÈGLE ABSOLUE** : Tu es INTERDIT de dire "J'ai vérifié" sans fournir la **PREUVE TECHNIQUE** (logs MCP ou npm) dans ta réponse.
 
-- Décomposer en étapes si >3 actions
-- Consulter documentation AVANT modifier
-- Identifier edge cases (min 3)
+### 📋 PHASE 1 : PLAN (Analyse & Stratégie)
 
-### Phase 2: TEST (Validation AVANT)
+_Avant de toucher au code de production._
+
+**Actions obligatoires** :
+
+1. **Audit existant** : Lire les fichiers concernés (`apps/`, `packages/@verone/`)
+2. **Comprendre le contexte** : Consulter documentation si nécessaire
+3. **Proposer stratégie** : Expliquer l'approche technique au user
+4. **Capturer état initial** (si applicable) :
 
 ```typescript
-// Console Error Checking (RÈGLE SACRÉE)
-mcp__playwright__browser_navigate("http://localhost:3000")
-mcp__playwright__browser_console_messages()
-// Si erreurs → STOP complet
-
-// Build Validation
-npm run build  // Doit passer SANS erreurs
+mcp__playwright__browser_navigate('http://localhost:3000/[page]');
+mcp__playwright__browser_console_messages();
 ```
 
-### Phase 3: CODE (Implémentation)
+**Livrable PLAN** : Description claire du problème + approche proposée + état initial capturé
 
-- Code MINIMAL fonctionnel
-- Types TypeScript stricts (pas de `any`)
-- Migration SQL idempotente (si DB)
+### ⚙️ PHASE 2 : DO (Implémentation)
 
-### Phase 4: RE-TEST (Validation APRÈS)
+_Exécution de la solution._
+
+**Actions obligatoires** :
+
+1. Code MINIMAL pour résoudre le problème identifié
+2. Types TypeScript stricts (jamais de `any`)
+3. Respecter architecture Turborepo (@verone/\*)
+4. Migration SQL idempotente si DB (APRÈS avoir testé le code)
+
+**Livrable DO** : Code modifié/créé
+
+### 🕵️ PHASE 3 : CHECK (Vérification & Contrôle)
+
+_Le moment de vérité - PREUVES OBLIGATOIRES._
+
+**Actions obligatoires** :
+
+1. **Console check** :
 
 ```typescript
-// ORDRE STRICT
-npm run type-check  // = 0 erreurs
-npm run build       // Doit passer
-
-// Console = 0 errors (RÈGLE SACRÉE)
-mcp__playwright__browser_navigate("/feature")
-mcp__playwright__browser_console_messages()
-// 1 erreur = ÉCHEC COMPLET
+mcp__playwright__browser_navigate('http://localhost:3000/[page]');
+mcp__playwright__browser_console_messages();
 ```
 
-### Phase 5: DOCUMENT
+→ **AFFICHER LE RÉSULTAT** dans la réponse
 
-- Sauvegarder décisions clés
-- Mettre à jour documentation si applicable
+2. **Type check** :
 
-### Phase 6: COMMIT (Autorisation OBLIGATOIRE)
+```bash
+npm run type-check
+```
 
-```typescript
-// ⏸️ STOP - DEMANDER AUTORISATION
-"Voulez-vous que je commit et push maintenant ?"
-// ATTENDRE réponse EXPLICITE
+→ **AFFICHER LE RÉSULTAT** (doit être 0 erreurs)
 
-// Si "OUI" → Commit structuré
-git add [files]
-git commit -m "$(cat <<'EOF'
-feat(module): Description concise
+3. **Build check** :
 
-- Detail 1
-- Detail 2
+```bash
+npm run build
+```
 
-🤖 Generated with Claude Code
-Co-Authored-By: Claude <noreply@anthropic.com>
-EOF
-)"
+→ **AFFICHER "Build succeeded"** ou l'erreur
+
+**Livrable CHECK** : Logs prouvant console=0 errors + build=passé
+
+### 🚀 PHASE 4 : ACT (Ajustement ou Validation)
+
+_Décision autonome basée sur CHECK._
+
+**Si CHECK = KO (Échec)** :
+
+- 🛑 **STOP** : Ne PAS demander de commit
+- 🔄 **BOUCLE RÉFLEXION** :
+  1. Analyser l'erreur
+  2. Corriger le code (retour à DO)
+  3. Re-vérifier (retour à CHECK)
+- ⚠️ L'agent DOIT itérer seul **au moins 2 fois** avant de demander de l'aide
+- **Preuve** : Afficher chaque tentative et son résultat
+
+**Si CHECK = OK (Succès)** :
+
+- 💾 **Finalisation** : Créer migrations DB définitives (si nécessaire)
+- 🧹 **Nettoyage** : Supprimer fichiers temporaires
+- ✅ **Résumé** : Présenter au user :
+
+```
+✅ PDCA COMPLET
+
+📋 PLAN : [description du problème]
+⚙️ DO : [fichiers modifiés]
+🕵️ CHECK :
+   - Console errors : 0 (log ci-dessus)
+   - Type-check : PASSÉ
+   - Build : PASSÉ
+
+Voulez-vous que je commit et push maintenant ?
+```
+
+- ⏸️ **ATTENDRE** réponse EXPLICITE avant commit
+
+---
+
+### 📊 Checklist Preuves Techniques (CHAQUE Tâche)
+
+| Phase | Preuve Requise       | Commande                     |
+| ----- | -------------------- | ---------------------------- |
+| PLAN  | État initial capturé | `browser_console_messages()` |
+| CHECK | Console = 0 errors   | `browser_console_messages()` |
+| CHECK | Types valides        | `npm run type-check`         |
+| CHECK | Build passé          | `npm run build`              |
+
+### ⚠️ Comportements INTERDITS
+
+- ❌ Dire "J'ai vérifié" sans log dans la réponse
+- ❌ Passer à ACT(commit) si CHECK a des erreurs
+- ❌ Ignorer les erreurs console "non-bloquantes"
+- ❌ Créer migration DB sans avoir testé le code d'abord
+- ❌ Supposer que "ça devrait marcher" sans preuve
+- ❌ Demander de l'aide avant d'avoir itéré 2 fois en boucle CHECK→DO
+
+### 🔄 Exemple de Boucle Réflexion
+
+```
+[CHECK #1] Console: 1 error "Cannot read property 'x' of undefined"
+→ Analyse : Variable non initialisée ligne 42
+→ [DO] Correction : Ajout de vérification null
+→ [CHECK #2] Console: 0 errors, Type-check: OK, Build: OK
+→ [ACT] Succès ! Présenter résumé au user.
 ```
 
 ---
@@ -667,9 +735,17 @@ path = '/docs/architecture/decisions/0004-pricing-multi-canaux.md';
 
 ---
 
-**Version** : 4.1.0
-**Dernière mise à jour** : 2025-11-19
+**Version** : 4.2.0
+**Dernière mise à jour** : 2025-12-10
 **Mainteneur** : Romeo Dos Santos
+
+**Changelog 4.2.0** (Workflow P.D.C.A. Autonome) :
+
+- ✅ Nouveau workflow P.D.C.A. (Plan-Do-Check-Act) - Méthode de Deming
+- ✅ Preuves techniques OBLIGATOIRES (logs MCP) à chaque phase CHECK
+- ✅ Boucle de réflexion autonome (min 2 itérations avant demande d'aide)
+- ✅ Interdiction de dire "vérifié" sans log dans la réponse
+- ✅ Checklist preuves techniques standardisée
 
 **Changelog 4.1.0** (Finalisation Migration Turborepo) :
 
