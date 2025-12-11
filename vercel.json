@@ -6,7 +6,7 @@
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
   "installCommand": "pnpm install",
-  "outputDirectory": ".next",
+  "outputDirectory": "apps/back-office/.next",
   "headers": [
     {
       "source": "/api/(.*)",
