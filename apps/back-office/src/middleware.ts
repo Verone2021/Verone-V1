@@ -24,7 +24,7 @@
  * - /notifications
  * - /tests-essentiels
  *
- * Dernière mise à jour : 2025-10-23 (Restauration authentification)
+ * Dernière mise à jour : 2025-12-11 (Fix: Migration vers nouvelle API cookies @supabase/ssr)
  */
 
 import type { NextRequest } from 'next/server';
@@ -67,7 +67,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 1. Créer le client Supabase pour vérifier l'authentification
+  // 1. Créer le client Supabase avec la NOUVELLE API cookies (getAll/setAll)
+  // Compatible avec @supabase/ssr ^0.5.0+
   let supabaseResponse = NextResponse.next({
     request,
   });
@@ -77,41 +78,18 @@ export async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value;
+        getAll() {
+          return request.cookies.getAll();
         },
-        set(name: string, value: string, options: any) {
-          request.cookies.set({
-            name,
-            value,
-            ...options,
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => {
+            request.cookies.set(name, value);
           });
           supabaseResponse = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
+            request,
           });
-          supabaseResponse.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-        },
-        remove(name: string, options: any) {
-          request.cookies.set({
-            name,
-            value: '',
-            ...options,
-          });
-          supabaseResponse = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          });
-          supabaseResponse.cookies.set({
-            name,
-            value: '',
-            ...options,
+          cookiesToSet.forEach(({ name, value, options }) => {
+            supabaseResponse.cookies.set(name, value, options);
           });
         },
       },
