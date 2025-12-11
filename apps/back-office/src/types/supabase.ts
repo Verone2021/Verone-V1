@@ -3465,6 +3465,7 @@ export type Database = {
           paid_by: string | null;
           payment_method: string | null;
           payment_reference: string | null;
+          payment_request_id: string | null;
           selection_id: string | null;
           status: string | null;
           tax_rate: number | null;
@@ -3489,6 +3490,7 @@ export type Database = {
           paid_by?: string | null;
           payment_method?: string | null;
           payment_reference?: string | null;
+          payment_request_id?: string | null;
           selection_id?: string | null;
           status?: string | null;
           tax_rate?: number | null;
@@ -3513,6 +3515,7 @@ export type Database = {
           paid_by?: string | null;
           payment_method?: string | null;
           payment_reference?: string | null;
+          payment_request_id?: string | null;
           selection_id?: string | null;
           status?: string | null;
           tax_rate?: number | null;
@@ -3556,6 +3559,13 @@ export type Database = {
             referencedColumns: ['user_id'];
           },
           {
+            foreignKeyName: 'linkme_commissions_payment_request_id_fkey';
+            columns: ['payment_request_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_payment_requests';
+            referencedColumns: ['id'];
+          },
+          {
             foreignKeyName: 'linkme_commissions_selection_id_fkey';
             columns: ['selection_id'];
             isOneToOne: false;
@@ -3572,6 +3582,127 @@ export type Database = {
           {
             foreignKeyName: 'linkme_commissions_validated_by_fkey';
             columns: ['validated_by'];
+            isOneToOne: false;
+            referencedRelation: 'v_users_with_roles';
+            referencedColumns: ['user_id'];
+          },
+        ];
+      };
+      linkme_payment_request_items: {
+        Row: {
+          commission_amount_ttc: number;
+          commission_id: string;
+          created_at: string | null;
+          id: string;
+          payment_request_id: string;
+        };
+        Insert: {
+          commission_amount_ttc: number;
+          commission_id: string;
+          created_at?: string | null;
+          id?: string;
+          payment_request_id: string;
+        };
+        Update: {
+          commission_amount_ttc?: number;
+          commission_id?: string;
+          created_at?: string | null;
+          id?: string;
+          payment_request_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'linkme_payment_request_items_commission_id_fkey';
+            columns: ['commission_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_commissions';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'linkme_payment_request_items_payment_request_id_fkey';
+            columns: ['payment_request_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_payment_requests';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      linkme_payment_requests: {
+        Row: {
+          affiliate_id: string;
+          created_at: string | null;
+          id: string;
+          invoice_file_name: string | null;
+          invoice_file_url: string | null;
+          invoice_received_at: string | null;
+          notes: string | null;
+          paid_at: string | null;
+          paid_by: string | null;
+          payment_proof_url: string | null;
+          payment_reference: string | null;
+          request_number: string;
+          status: string;
+          tax_rate: number | null;
+          total_amount_ht: number;
+          total_amount_ttc: number;
+          updated_at: string | null;
+        };
+        Insert: {
+          affiliate_id: string;
+          created_at?: string | null;
+          id?: string;
+          invoice_file_name?: string | null;
+          invoice_file_url?: string | null;
+          invoice_received_at?: string | null;
+          notes?: string | null;
+          paid_at?: string | null;
+          paid_by?: string | null;
+          payment_proof_url?: string | null;
+          payment_reference?: string | null;
+          request_number: string;
+          status?: string;
+          tax_rate?: number | null;
+          total_amount_ht?: number;
+          total_amount_ttc?: number;
+          updated_at?: string | null;
+        };
+        Update: {
+          affiliate_id?: string;
+          created_at?: string | null;
+          id?: string;
+          invoice_file_name?: string | null;
+          invoice_file_url?: string | null;
+          invoice_received_at?: string | null;
+          notes?: string | null;
+          paid_at?: string | null;
+          paid_by?: string | null;
+          payment_proof_url?: string | null;
+          payment_reference?: string | null;
+          request_number?: string;
+          status?: string;
+          tax_rate?: number | null;
+          total_amount_ht?: number;
+          total_amount_ttc?: number;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'linkme_payment_requests_affiliate_id_fkey';
+            columns: ['affiliate_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_affiliates';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'linkme_payment_requests_paid_by_fkey';
+            columns: ['paid_by'];
+            isOneToOne: false;
+            referencedRelation: 'v_linkme_users';
+            referencedColumns: ['user_id'];
+          },
+          {
+            foreignKeyName: 'linkme_payment_requests_paid_by_fkey';
+            columns: ['paid_by'];
             isOneToOne: false;
             referencedRelation: 'v_users_with_roles';
             referencedColumns: ['user_id'];

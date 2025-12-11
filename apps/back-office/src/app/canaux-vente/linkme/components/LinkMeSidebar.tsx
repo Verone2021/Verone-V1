@@ -16,6 +16,7 @@ import {
   Settings,
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
   Sliders,
   Activity,
   Link2,
@@ -25,8 +26,13 @@ import {
   Building2,
   Store,
   ShoppingCart,
+  Banknote,
+  PanelLeftClose,
+  PanelLeft,
   type LucideIcon,
 } from 'lucide-react';
+
+import { usePaymentRequestsCounts } from '../hooks/use-payment-requests-admin';
 
 interface LinkMeNavItem {
   title: string;
@@ -95,6 +101,11 @@ const LINKME_NAV: LinkMeNavItem[] = [
     icon: DollarSign,
   },
   {
+    title: 'Demandes paiement',
+    href: '/canaux-vente/linkme/demandes-paiement',
+    icon: Banknote,
+  },
+  {
     title: 'Analytics',
     href: '/canaux-vente/linkme/analytics',
     icon: BarChart3,
@@ -144,41 +155,60 @@ interface NavItemProps {
   item: LinkMeNavItem;
   isActive: boolean;
   isChildActive: boolean;
+  isExpanded: boolean;
 }
 
-function NavItemComponent({ item, isActive, isChildActive }: NavItemProps) {
+function NavItemComponent({
+  item,
+  isActive,
+  isChildActive,
+  isExpanded,
+}: NavItemProps) {
   const [isOpen, setIsOpen] = useState(isActive || isChildActive);
   const pathname = usePathname();
   const Icon = item.icon;
   const hasChildren = item.children && item.children.length > 0;
-
-  // Check if this exact path is active (for items without children)
   const isExactActive = pathname === item.href;
 
+  // En mode collapsed, ne pas afficher les children
   if (hasChildren) {
     return (
       <div className="space-y-1">
         <button
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() => isExpanded && setIsOpen(!isOpen)}
           className={cn(
-            'w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+            'w-full flex items-center justify-between rounded-lg text-sm font-medium transition-all duration-200',
+            isExpanded ? 'px-3 py-2' : 'px-2 py-2 justify-center',
             isChildActive
               ? 'bg-black text-white'
               : 'text-gray-700 hover:bg-gray-100'
           )}
+          title={!isExpanded ? item.title : undefined}
         >
-          <div className="flex items-center gap-3">
-            <Icon className="h-4 w-4" />
-            <span>{item.title}</span>
+          <div
+            className={cn('flex items-center', isExpanded ? 'gap-3' : 'gap-0')}
+          >
+            <Icon className="h-4 w-4 flex-shrink-0" />
+            <span
+              className={cn(
+                'whitespace-nowrap transition-all duration-200',
+                isExpanded
+                  ? 'opacity-100 w-auto'
+                  : 'opacity-0 w-0 overflow-hidden'
+              )}
+            >
+              {item.title}
+            </span>
           </div>
-          {isOpen ? (
-            <ChevronDown className="h-4 w-4" />
-          ) : (
-            <ChevronRight className="h-4 w-4" />
-          )}
+          {isExpanded &&
+            (isOpen ? (
+              <ChevronDown className="h-4 w-4 flex-shrink-0" />
+            ) : (
+              <ChevronRight className="h-4 w-4 flex-shrink-0" />
+            ))}
         </button>
 
-        {isOpen && (
+        {isOpen && isExpanded && (
           <div className="ml-4 pl-3 border-l border-gray-200 space-y-1">
             {item.children!.map(child => {
               const ChildIcon = child.icon;
@@ -214,17 +244,31 @@ function NavItemComponent({ item, isActive, isChildActive }: NavItemProps) {
     <Link
       href={item.href}
       className={cn(
-        'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+        'flex items-center rounded-lg text-sm font-medium transition-all duration-200',
+        isExpanded ? 'px-3 py-2 gap-3' : 'px-2 py-2 justify-center',
         isExactActive
           ? 'bg-black text-white'
           : 'text-gray-700 hover:bg-gray-100'
       )}
+      title={!isExpanded ? item.title : undefined}
     >
-      <Icon className="h-4 w-4" />
-      <span>{item.title}</span>
-      {item.badge !== undefined && item.badge > 0 && (
+      <Icon className="h-4 w-4 flex-shrink-0" />
+      <span
+        className={cn(
+          'whitespace-nowrap transition-all duration-200',
+          isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'
+        )}
+      >
+        {item.title}
+      </span>
+      {item.badge !== undefined && item.badge > 0 && isExpanded && (
         <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
           {item.badge}
+        </span>
+      )}
+      {item.badge !== undefined && item.badge > 0 && !isExpanded && (
+        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full">
+          {item.badge > 9 ? '9+' : item.badge}
         </span>
       )}
     </Link>
@@ -232,28 +276,84 @@ function NavItemComponent({ item, isActive, isChildActive }: NavItemProps) {
 }
 
 export function LinkMeSidebar() {
+  const [isExpanded, setIsExpanded] = useState(true);
   const pathname = usePathname();
+  const { data: counts } = usePaymentRequestsCounts();
+
+  // Injecter le badge dynamique pour les demandes de paiement
+  const navWithBadges = LINKME_NAV.map(item => {
+    if (item.href === '/canaux-vente/linkme/demandes-paiement' && counts) {
+      return { ...item, badge: counts.total_pending };
+    }
+    return item;
+  });
 
   return (
-    <aside className="w-64 h-full bg-white border-r border-gray-200 flex flex-col">
-      {/* Header */}
-      <div className="p-4 border-b border-gray-200">
-        <Link
-          href="/canaux-vente/linkme"
-          className="flex items-center gap-2 font-semibold text-lg"
-        >
-          <Link2 className="h-5 w-5 text-blue-600" />
-          <span>LinkMe CMS</span>
-        </Link>
-        <p className="text-xs text-gray-500 mt-1">
-          Gestion de la plateforme d'affiliation
-        </p>
+    <aside
+      className={cn(
+        'h-full bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out',
+        isExpanded ? 'w-64' : 'w-16'
+      )}
+    >
+      {/* Header avec bouton toggle */}
+      <div
+        className={cn(
+          'border-b border-gray-200 transition-all duration-200',
+          isExpanded ? 'p-4' : 'p-2'
+        )}
+      >
+        {isExpanded ? (
+          <div className="flex items-center justify-between">
+            <Link
+              href="/canaux-vente/linkme"
+              className="flex items-center gap-2 text-lg font-semibold"
+            >
+              <Link2 className="h-5 w-5 text-blue-600 flex-shrink-0" />
+              <span className="whitespace-nowrap">LinkMe CMS</span>
+            </Link>
+            {/* Bouton réduire */}
+            <button
+              onClick={() => setIsExpanded(false)}
+              className="p-1.5 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+              title="Réduire"
+            >
+              <PanelLeftClose className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-2">
+            <Link
+              href="/canaux-vente/linkme"
+              className="p-1"
+              title="LinkMe CMS"
+            >
+              <Link2 className="h-6 w-6 text-blue-600" />
+            </Link>
+            {/* Bouton agrandir */}
+            <button
+              onClick={() => setIsExpanded(true)}
+              className="p-1.5 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+              title="Agrandir"
+            >
+              <PanelLeft className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+        {isExpanded && (
+          <p className="text-xs text-gray-500 mt-1">
+            Gestion de la plateforme d&apos;affiliation
+          </p>
+        )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {LINKME_NAV.map(item => {
-          // Check if current path is this item or any of its children
+      <nav
+        className={cn(
+          'flex-1 space-y-1 overflow-y-auto overflow-x-hidden transition-all duration-200',
+          isExpanded ? 'p-4' : 'p-2'
+        )}
+      >
+        {navWithBadges.map(item => {
           const isActive = pathname === item.href;
           const isChildActive =
             item.children?.some(
@@ -262,24 +362,44 @@ export function LinkMeSidebar() {
             ) || pathname.startsWith(item.href + '/');
 
           return (
-            <NavItemComponent
-              key={item.href}
-              item={item}
-              isActive={isActive}
-              isChildActive={isChildActive}
-            />
+            <div key={item.href} className="relative">
+              <NavItemComponent
+                item={item}
+                isActive={isActive}
+                isChildActive={isChildActive}
+                isExpanded={isExpanded}
+              />
+            </div>
           );
         })}
       </nav>
 
       {/* Footer - Back to Channels */}
-      <div className="p-4 border-t border-gray-200">
+      <div
+        className={cn(
+          'border-t border-gray-200 transition-all duration-200',
+          isExpanded ? 'p-4' : 'p-2'
+        )}
+      >
         <Link
           href="/canaux-vente"
-          className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+          className={cn(
+            'flex items-center text-sm text-gray-600 hover:text-gray-900 transition-all duration-200',
+            isExpanded ? 'gap-2' : 'justify-center'
+          )}
+          title={!isExpanded ? 'Retour aux canaux' : undefined}
         >
-          <ChevronRight className="h-4 w-4 rotate-180" />
-          <span>Retour aux canaux</span>
+          <ChevronLeft className="h-4 w-4 flex-shrink-0" />
+          <span
+            className={cn(
+              'whitespace-nowrap transition-all duration-200',
+              isExpanded
+                ? 'opacity-100 w-auto'
+                : 'opacity-0 w-0 overflow-hidden'
+            )}
+          >
+            Retour aux canaux
+          </span>
         </Link>
       </div>
     </aside>

@@ -170,3 +170,109 @@ export function formatCompactNumber(value: number): string {
   }
   return value.toString();
 }
+
+// ============================================================================
+// Types pour les Demandes de Versement (Payment Requests)
+// ============================================================================
+
+export type PaymentRequestStatus =
+  | 'pending'
+  | 'invoice_received'
+  | 'paid'
+  | 'cancelled';
+
+export interface PaymentRequest {
+  id: string;
+  affiliateId: string;
+  requestNumber: string;
+  totalAmountHT: number;
+  totalAmountTTC: number;
+  taxRate: number;
+  status: PaymentRequestStatus;
+  invoiceFileUrl: string | null;
+  invoiceFileName: string | null;
+  invoiceReceivedAt: string | null;
+  paidAt: string | null;
+  paidBy: string | null;
+  paymentReference: string | null;
+  paymentProofUrl: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  // Relations
+  items?: PaymentRequestItem[];
+  commissions?: CommissionItem[];
+}
+
+export interface PaymentRequestItem {
+  id: string;
+  paymentRequestId: string;
+  commissionId: string;
+  commissionAmountTTC: number;
+  createdAt: string;
+}
+
+// Labels statuts demande de versement
+export const PAYMENT_REQUEST_STATUS_LABELS: Record<
+  PaymentRequestStatus,
+  string
+> = {
+  pending: 'En attente de facture',
+  invoice_received: 'Facture reçue',
+  paid: 'Payée',
+  cancelled: 'Annulée',
+};
+
+// Couleurs statuts demande de versement
+export const PAYMENT_REQUEST_STATUS_COLORS: Record<
+  PaymentRequestStatus,
+  string
+> = {
+  pending: 'orange',
+  invoice_received: 'blue',
+  paid: 'green',
+  cancelled: 'red',
+};
+
+// Informations légales Vérone pour factures
+export const VERONE_LEGAL_INFO = {
+  name: 'VERONE SAS',
+  address: '229 Rue Saint-Honoré',
+  postalCode: '75001',
+  city: 'PARIS',
+  siret: '914 588 785 00016',
+  fullAddress: '229 Rue Saint-Honoré, 75001 PARIS',
+};
+
+// Type pour données affilié (facturation)
+export interface AffiliateInvoiceInfo {
+  name: string;
+  email: string;
+  address?: string;
+  siret?: string;
+  tvaNumber?: string;
+  iban?: string;
+  bic?: string;
+}
+
+// Input pour créer une demande de versement
+export interface CreatePaymentRequestInput {
+  commissionIds: string[];
+}
+
+// Helper pour formater date française
+export function formatDateFR(
+  date: string | Date | null,
+  options?: Intl.DateTimeFormatOptions
+): string {
+  if (!date) return '-';
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return dateObj.toLocaleDateString(
+    'fr-FR',
+    options || {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    }
+  );
+}

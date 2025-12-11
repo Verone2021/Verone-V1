@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 import {
   Card,
@@ -10,231 +10,345 @@ import {
   CardTitle,
 } from '@verone/ui';
 import { Skeleton } from '@verone/ui';
-import { createClient } from '@verone/utils/supabase/client';
 import {
-  Users,
-  Layers,
-  ShoppingBag,
   TrendingUp,
-  Clock,
-  CheckCircle,
+  TrendingDown,
+  Minus,
+  Banknote,
+  Users,
+  ShoppingCart,
+  DollarSign,
+  ArrowRight,
+  FileText,
+  UserPlus,
+  CreditCard,
+  Package,
 } from 'lucide-react';
 
-interface DashboardStats {
-  totalAffiliates: number;
-  activeAffiliates: number;
-  pendingAffiliates: number;
-  totalSelections: number;
-  activeSelections: number;
-  totalOrders: number;
-  totalRevenue: number;
-  pendingCommissions: number;
-  paidCommissions: number;
+import {
+  useLinkMeDashboard,
+  useRecentActivity,
+  type RecentActivity,
+} from '../hooks/use-linkme-dashboard';
+
+// ============================================================================
+// Helpers
+// ============================================================================
+
+function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
 }
 
-/**
- * Dashboard Section - KPIs LinkMe
- *
- * Affiche:
- * - Affiliés actifs, en attente, total
- * - Sélections publiées
- * - Commandes via LinkMe
- * - CA généré
- * - Commissions en attente vs payées
- */
+function formatRelativeTime(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMins < 1) return "À l'instant";
+  if (diffMins < 60) return `Il y a ${diffMins}min`;
+  if (diffHours < 24) return `Il y a ${diffHours}h`;
+  if (diffDays < 7) return `Il y a ${diffDays}j`;
+  return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+}
+
+// ============================================================================
+// KPI Card Component
+// ============================================================================
+
+interface KPICardProps {
+  title: string;
+  value: string;
+  subtext: string;
+  growth?: number;
+  icon: React.ReactNode;
+  iconBgColor: string;
+}
+
+function KPICard({
+  title,
+  value,
+  subtext,
+  growth,
+  icon,
+  iconBgColor,
+}: KPICardProps) {
+  const GrowthIcon =
+    growth === undefined
+      ? null
+      : growth > 0
+        ? TrendingUp
+        : growth < 0
+          ? TrendingDown
+          : Minus;
+
+  const growthColor =
+    growth === undefined
+      ? ''
+      : growth > 0
+        ? 'text-emerald-600'
+        : growth < 0
+          ? 'text-red-500'
+          : 'text-gray-500';
+
+  return (
+    <Card className="relative overflow-hidden">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between">
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+              {title}
+            </p>
+            <p className="text-xl font-bold text-gray-900">{value}</p>
+            <div className="flex items-center gap-1.5">
+              {growth !== undefined && GrowthIcon && (
+                <span
+                  className={`flex items-center gap-0.5 text-xs font-medium ${growthColor}`}
+                >
+                  <GrowthIcon className="h-3 w-3" />
+                  {growth > 0 ? '+' : ''}
+                  {growth}%
+                </span>
+              )}
+              <span className="text-xs text-gray-500">{subtext}</span>
+            </div>
+          </div>
+          <div className={`p-2 rounded-lg ${iconBgColor}`}>{icon}</div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ============================================================================
+// Activity Item Component
+// ============================================================================
+
+interface ActivityItemProps {
+  activity: RecentActivity;
+}
+
+function ActivityItem({ activity }: ActivityItemProps) {
+  const iconMap = {
+    order: <ShoppingCart className="h-3 w-3 text-purple-600" />,
+    affiliate: <UserPlus className="h-3 w-3 text-blue-600" />,
+    payment: <CreditCard className="h-3 w-3 text-emerald-600" />,
+    commission: <DollarSign className="h-3 w-3 text-amber-600" />,
+  };
+
+  const bgMap = {
+    order: 'bg-purple-100',
+    affiliate: 'bg-blue-100',
+    payment: 'bg-emerald-100',
+    commission: 'bg-amber-100',
+  };
+
+  return (
+    <div className="flex items-center gap-2 py-2">
+      <div className={`p-1.5 rounded ${bgMap[activity.type]}`}>
+        {iconMap[activity.type]}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-medium text-gray-900 truncate">
+          {activity.title}
+        </p>
+        <p className="text-[10px] text-gray-500 truncate">
+          {activity.description}
+        </p>
+      </div>
+      <div className="text-right shrink-0">
+        {activity.amount !== undefined && (
+          <p className="text-xs font-semibold text-gray-900">
+            {formatCurrency(activity.amount)}
+          </p>
+        )}
+        <p className="text-[10px] text-gray-400">
+          {formatRelativeTime(activity.timestamp)}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Quick Action Button
+// ============================================================================
+
+interface QuickActionProps {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  count?: number;
+}
+
+function QuickAction({ href, icon, label, count }: QuickActionProps) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-2 p-2.5 bg-white rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all group"
+    >
+      <div className="p-1.5 bg-gray-100 rounded group-hover:bg-gray-200 transition-colors">
+        {icon}
+      </div>
+      <div className="flex-1">
+        <p className="text-xs font-medium text-gray-900">{label}</p>
+        {count !== undefined && count > 0 && (
+          <p className="text-[10px] text-gray-500">{count} en attente</p>
+        )}
+      </div>
+      <ArrowRight className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
+    </Link>
+  );
+}
+
+// ============================================================================
+// Main Dashboard Section
+// ============================================================================
+
 export function DashboardSection() {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: kpis, isLoading: kpisLoading } = useLinkMeDashboard();
+  const { data: activities, isLoading: activitiesLoading } =
+    useRecentActivity(5);
 
-  useEffect(() => {
-    async function fetchStats() {
-      const supabase = createClient();
-
-      try {
-        // Fetch affiliates stats
-        const { data: affiliates } = await (supabase as any)
-          .from('linkme_affiliates')
-          .select('id, status');
-
-        const totalAffiliates = affiliates?.length || 0;
-        const activeAffiliates =
-          affiliates?.filter(a => a.status === 'active').length || 0;
-        const pendingAffiliates =
-          affiliates?.filter(a => a.status === 'pending').length || 0;
-
-        // Fetch selections stats
-        const { data: selections } = await (supabase as any)
-          .from('linkme_selections')
-          .select('id, status');
-
-        const totalSelections = selections?.length || 0;
-        const activeSelections =
-          selections?.filter(s => s.status === 'active').length || 0;
-
-        // Fetch commissions stats
-        const { data: commissions } = await (supabase as any)
-          .from('linkme_commissions')
-          .select('id, status, order_amount_ht, affiliate_commission');
-
-        const totalOrders = commissions?.length || 0;
-        const totalRevenue =
-          commissions?.reduce((sum, c) => sum + Number(c.order_amount_ht), 0) ||
-          0;
-        const pendingCommissions =
-          commissions
-            ?.filter(c => c.status === 'pending')
-            .reduce((sum, c) => sum + Number(c.affiliate_commission), 0) || 0;
-        const paidCommissions =
-          commissions
-            ?.filter(c => c.status === 'paid')
-            .reduce((sum, c) => sum + Number(c.affiliate_commission), 0) || 0;
-
-        setStats({
-          totalAffiliates,
-          activeAffiliates,
-          pendingAffiliates,
-          totalSelections,
-          activeSelections,
-          totalOrders,
-          totalRevenue,
-          pendingCommissions,
-          paidCommissions,
-        });
-      } catch (error) {
-        console.error('Error fetching LinkMe stats:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchStats();
-  }, []);
-
-  if (loading) {
+  // Loading state
+  if (kpisLoading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <Card key={i}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-4 w-4" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-8 w-16" />
-              <Skeleton className="h-3 w-32 mt-2" />
-            </CardContent>
-          </Card>
-        ))}
+      <div className="space-y-6">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i}>
+              <CardContent className="p-6">
+                <div className="space-y-3">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-8 w-32" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }
 
-  const kpis = [
-    {
-      title: 'Affiliés Actifs',
-      value: stats?.activeAffiliates || 0,
-      description: `${stats?.totalAffiliates || 0} total`,
-      icon: Users,
-      color: 'text-green-600',
-      bgColor: 'bg-green-100',
-    },
-    {
-      title: 'En Attente Validation',
-      value: stats?.pendingAffiliates || 0,
-      description: 'Demandes à traiter',
-      icon: Clock,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-100',
-    },
-    {
-      title: 'Sélections Actives',
-      value: stats?.activeSelections || 0,
-      description: `${stats?.totalSelections || 0} total`,
-      icon: Layers,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100',
-    },
-    {
-      title: 'Commandes LinkMe',
-      value: stats?.totalOrders || 0,
-      description: 'Toutes commandes',
-      icon: ShoppingBag,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100',
-    },
-    {
-      title: 'CA Généré',
-      value: `${(stats?.totalRevenue || 0).toLocaleString('fr-FR')} €`,
-      description: "Chiffre d'affaires HT",
-      icon: TrendingUp,
-      color: 'text-emerald-600',
-      bgColor: 'bg-emerald-100',
-    },
-    {
-      title: 'Commissions en Attente',
-      value: `${(stats?.pendingCommissions || 0).toLocaleString('fr-FR')} €`,
-      description: 'À valider/payer',
-      icon: Clock,
-      color: 'text-amber-600',
-      bgColor: 'bg-amber-100',
-    },
-    {
-      title: 'Commissions Payées',
-      value: `${(stats?.paidCommissions || 0).toLocaleString('fr-FR')} €`,
-      description: 'Total versé',
-      icon: CheckCircle,
-      color: 'text-green-600',
-      bgColor: 'bg-green-100',
-    },
-  ];
-
   return (
-    <div className="space-y-6">
-      {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {kpis.map((kpi, index) => (
-          <Card key={index}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
-              <div className={`p-2 rounded-full ${kpi.bgColor}`}>
-                <kpi.icon className={`h-4 w-4 ${kpi.color}`} />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{kpi.value}</div>
-              <p className="text-xs text-muted-foreground">{kpi.description}</p>
-            </CardContent>
-          </Card>
-        ))}
+    <div className="space-y-4">
+      {/* 4 KPIs Grid */}
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+        {/* KPI 1: CA Généré */}
+        <KPICard
+          title="CA Généré"
+          value={formatCurrency(kpis?.revenue.current || 0)}
+          subtext="vs mois précédent"
+          growth={kpis?.revenue.growth}
+          icon={<TrendingUp className="h-4 w-4 text-emerald-600" />}
+          iconBgColor="bg-emerald-100"
+        />
+
+        {/* KPI 2: Commissions à payer */}
+        <KPICard
+          title="Commissions à payer"
+          value={formatCurrency(kpis?.pendingCommissions.amount || 0)}
+          subtext={`${kpis?.pendingCommissions.count || 0} demande${(kpis?.pendingCommissions.count || 0) > 1 ? 's' : ''}`}
+          icon={<Banknote className="h-4 w-4 text-amber-600" />}
+          iconBgColor="bg-amber-100"
+        />
+
+        {/* KPI 3: Affiliés actifs */}
+        <KPICard
+          title="Affiliés actifs"
+          value={String(kpis?.affiliates.active || 0)}
+          subtext={`+${kpis?.affiliates.newThisMonth || 0} ce mois`}
+          icon={<Users className="h-4 w-4 text-blue-600" />}
+          iconBgColor="bg-blue-100"
+        />
+
+        {/* KPI 4: Commandes ce mois */}
+        <KPICard
+          title="Commandes ce mois"
+          value={String(kpis?.orders.current || 0)}
+          subtext="vs mois précédent"
+          growth={kpis?.orders.growth}
+          icon={<ShoppingCart className="h-4 w-4 text-purple-600" />}
+          iconBgColor="bg-purple-100"
+        />
       </div>
 
-      {/* Placeholder pour graphiques futurs */}
-      <div className="grid gap-4 md:grid-cols-2">
+      {/* Actions rapides + Activité récente */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        {/* Actions rapides */}
         <Card>
-          <CardHeader>
-            <CardTitle>Évolution des Commandes</CardTitle>
-            <CardDescription>
-              Commandes et commissions sur les 30 derniers jours
+          <CardHeader className="pb-2 pt-3 px-4">
+            <CardTitle className="text-sm">Actions rapides</CardTitle>
+            <CardDescription className="text-xs">
+              Accès direct aux tâches
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="h-[200px] flex items-center justify-center text-muted-foreground">
-              Graphique à venir
-            </div>
+          <CardContent className="space-y-2 px-4 pb-3">
+            <QuickAction
+              href="/canaux-vente/linkme/demandes-paiement"
+              icon={<Banknote className="h-3.5 w-3.5 text-emerald-600" />}
+              label="Demandes de paiement"
+              count={kpis?.pendingCommissions.count}
+            />
+            <QuickAction
+              href="/canaux-vente/linkme/utilisateurs"
+              icon={<Users className="h-3.5 w-3.5 text-blue-600" />}
+              label="Gérer les affiliés"
+            />
+            <QuickAction
+              href="/canaux-vente/linkme/commandes"
+              icon={<Package className="h-3.5 w-3.5 text-purple-600" />}
+              label="Voir les commandes"
+            />
           </CardContent>
         </Card>
 
+        {/* Activité récente */}
         <Card>
-          <CardHeader>
-            <CardTitle>Top Affiliés</CardTitle>
-            <CardDescription>Meilleurs apporteurs ce mois</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[200px] flex items-center justify-center text-muted-foreground">
-              {stats?.totalAffiliates === 0
-                ? 'Aucun affilié pour le moment'
-                : 'Classement à venir'}
+          <CardHeader className="pb-2 pt-3 px-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-sm">Activité récente</CardTitle>
+                <CardDescription className="text-xs">
+                  Dernières actions
+                </CardDescription>
+              </div>
+              <Link
+                href="/canaux-vente/linkme/analytics"
+                className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+              >
+                Voir tout
+                <ArrowRight className="h-2.5 w-2.5" />
+              </Link>
             </div>
+          </CardHeader>
+          <CardContent className="px-4 pb-3">
+            {activitiesLoading ? (
+              <div className="space-y-2">
+                {[1, 2, 3].map(i => (
+                  <Skeleton key={i} className="h-10" />
+                ))}
+              </div>
+            ) : !activities || activities.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-4 text-center">
+                <FileText className="h-6 w-6 text-gray-300 mb-1" />
+                <p className="text-xs text-gray-500">Aucune activité</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {activities.map(activity => (
+                  <ActivityItem key={activity.id} activity={activity} />
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
