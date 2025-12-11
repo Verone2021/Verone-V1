@@ -2,6 +2,10 @@
  * 🔧 Supabase Server - Server Side
  *
  * Configuration server pour middleware et server components
+ *
+ * ⚠️ MIGRATION 2025-12-12: API cookies migrée vers getAll/setAll
+ * Ancienne API get/set/remove deprecated depuis @supabase/ssr v0.5.0+
+ * Ref: https://supabase.com/docs/guides/auth/server-side/nextjs
  */
 
 import { cookies } from 'next/headers';
@@ -19,14 +23,18 @@ export const createServerClient = async () => {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
+        getAll() {
+          return cookieStore.getAll();
         },
-        set(name: string, value: string, options: any) {
-          cookieStore.set({ name, value, ...options });
-        },
-        remove(name: string, options: any) {
-          cookieStore.set({ name, value: '', ...options });
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          } catch {
+            // setAll peut échouer dans Server Components (read-only)
+            // C'est normal - le middleware gère le refresh des sessions
+          }
         },
       },
     }
