@@ -52,20 +52,6 @@
       "destination": "/api/feeds/:path*"
     }
   ],
-  "crons": [
-    {
-      "path": "/api/cron/sync-abby-queue",
-      "schedule": "0 3 * * *"
-    },
-    {
-      "path": "/api/cron/cleanup-abby-data",
-      "schedule": "0 2 * * *"
-    },
-    {
-      "path": "/api/cron/google-merchant-poll",
-      "schedule": "0 6 * * *"
-    }
-  ],
   "cleanUrls": true,
   "trailingSlash": false
 }
