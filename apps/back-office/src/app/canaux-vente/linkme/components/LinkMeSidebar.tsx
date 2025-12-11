@@ -39,6 +39,8 @@ interface LinkMeNavItem {
   href: string;
   icon: LucideIcon;
   badge?: number;
+  disabled?: boolean;
+  disabledLabel?: string;
   children?: LinkMeNavItem[];
 }
 
@@ -124,6 +126,8 @@ const LINKME_NAV: LinkMeNavItem[] = [
         title: 'Rapports',
         href: '/canaux-vente/linkme/analytics/rapports',
         icon: FileText,
+        disabled: true,
+        disabledLabel: 'Bientôt',
       },
     ],
   },
@@ -141,11 +145,15 @@ const LINKME_NAV: LinkMeNavItem[] = [
         title: 'Commissions',
         href: '/canaux-vente/linkme/configuration/commissions',
         icon: DollarSign,
+        disabled: true,
+        disabledLabel: 'Bientôt',
       },
       {
         title: 'Intégrations',
         href: '/canaux-vente/linkme/configuration/integrations',
         icon: Webhook,
+        disabled: true,
+        disabledLabel: 'Bientôt',
       },
     ],
   },
@@ -213,6 +221,26 @@ function NavItemComponent({
             {item.children!.map(child => {
               const ChildIcon = child.icon;
               const isChildExactActive = pathname === child.href;
+
+              // Éléments désactivés (non cliquables, grisés)
+              if (child.disabled) {
+                return (
+                  <div
+                    key={child.href}
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-400 cursor-not-allowed"
+                    title="Fonctionnalité bientôt disponible"
+                  >
+                    <ChildIcon className="h-4 w-4" />
+                    <span>{child.title}</span>
+                    {child.disabledLabel && (
+                      <span className="ml-auto bg-gray-200 text-gray-500 text-[10px] px-1.5 py-0.5 rounded">
+                        {child.disabledLabel}
+                      </span>
+                    )}
+                  </div>
+                );
+              }
+
               return (
                 <Link
                   key={child.href}

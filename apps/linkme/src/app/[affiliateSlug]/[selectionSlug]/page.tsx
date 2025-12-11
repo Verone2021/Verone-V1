@@ -1,12 +1,15 @@
 'use client';
 
-import { use, useEffect } from 'react';
-import Link from 'next/link';
+import { use, useEffect, useRef } from 'react';
+
 import Image from 'next/image';
+import Link from 'next/link';
+
 import { ArrowLeft, Store, Package, ShoppingCart, Plus } from 'lucide-react';
 
-import { useSelectionWithProducts } from '../../../lib/hooks/use-linkme-public';
 import { useCart } from '../../../components/cart/CartProvider';
+import { useSelectionWithProducts } from '../../../lib/hooks/use-linkme-public';
+import { supabase } from '../../../lib/supabase';
 
 interface SelectionPageProps {
   params: Promise<{ affiliateSlug: string; selectionSlug: string }>;
@@ -21,10 +24,11 @@ function formatPrice(price: number): string {
 
 export default function SelectionPage({ params }: SelectionPageProps) {
   const { affiliateSlug, selectionSlug } = use(params);
-  const { data: selection, isLoading, error } = useSelectionWithProducts(
-    affiliateSlug,
-    selectionSlug
-  );
+  const {
+    data: selection,
+    isLoading,
+    error,
+  } = useSelectionWithProducts(affiliateSlug, selectionSlug);
   const { addItem, setAffiliateInfo, setSelectionInfo, openCart } = useCart();
 
   // Set affiliate and selection info for cart attribution
@@ -33,7 +37,34 @@ export default function SelectionPage({ params }: SelectionPageProps) {
       setAffiliateInfo(selection.affiliate_id, affiliateSlug);
       setSelectionInfo(selection.id, selectionSlug);
     }
-  }, [selection, affiliateSlug, selectionSlug, setAffiliateInfo, setSelectionInfo]);
+  }, [
+    selection,
+    affiliateSlug,
+    selectionSlug,
+    setAffiliateInfo,
+    setSelectionInfo,
+  ]);
+
+  // Track selection view (once per page load)
+  const hasTrackedView = useRef(false);
+  useEffect(() => {
+    if (selection?.id && !hasTrackedView.current) {
+      hasTrackedView.current = true;
+      // Call RPC to increment views_count - fire and forget
+      const trackView = async () => {
+        try {
+          await supabase.rpc('track_selection_view', {
+            p_selection_id: selection.id,
+          });
+          // View tracked successfully (silent)
+        } catch (err) {
+          // Log error but don't block user experience
+          console.warn('Failed to track view:', err);
+        }
+      };
+      trackView();
+    }
+  }, [selection?.id]);
 
   const handleAddToCart = (item: NonNullable<typeof selection>['items'][0]) => {
     addItem({

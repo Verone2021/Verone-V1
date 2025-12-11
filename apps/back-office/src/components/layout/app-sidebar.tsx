@@ -287,6 +287,8 @@ function SidebarContent() {
       Ventes: 'interactions',
       Achats: 'commandes',
       Finance: 'finance',
+      Factures: 'factures',
+      Trésorerie: 'tresorerie',
       Organisation: 'contacts',
     };
     return moduleMap[title] || title.toLowerCase();

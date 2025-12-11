@@ -46,6 +46,8 @@ import {
   ArrowRightCircle,
 } from 'lucide-react';
 
+import { PaymentRequestModalAdmin } from '../components/PaymentRequestModalAdmin';
+
 // ============================================
 // TYPES
 // ============================================
@@ -174,6 +176,7 @@ export default function LinkMeCommissionsPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [processing, setProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('payables');
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -280,38 +283,27 @@ export default function LinkMeCommissionsPage() {
   // ACTIONS
   // ============================================
 
-  async function handleRequestPayment(ids: string[]) {
-    const supabase = createClient();
-    setProcessing(true);
-
-    try {
-      const { error } = await supabase
-        .from('linkme_commissions')
-        .update({
-          status: 'requested',
-          validated_at: new Date().toISOString(),
-        })
-        .in('id', ids);
-
-      if (error) throw error;
-
+  // Ouvrir le modal de paiement (au lieu de l'ancienne fonction cassée)
+  function openPaymentModal() {
+    if (selectedIds.length === 0) {
       toast({
-        title: 'Demande envoyée',
-        description: `${ids.length} demande(s) de paiement envoyée(s)`,
-      });
-
-      setSelectedIds([]);
-      fetchData();
-    } catch (error) {
-      console.error('Error requesting payment:', error);
-      toast({
-        title: 'Erreur',
-        description: "Impossible d'envoyer la demande",
+        title: 'Aucune sélection',
+        description: 'Veuillez sélectionner au moins une commission',
         variant: 'destructive',
       });
-    } finally {
-      setProcessing(false);
+      return;
     }
+    setIsPaymentModalOpen(true);
+  }
+
+  // Callback succès après création de la demande
+  function handlePaymentSuccess() {
+    toast({
+      title: 'Demande créée',
+      description: `Demande de paiement créée avec succès`,
+    });
+    setSelectedIds([]);
+    fetchData();
   }
 
   async function handleMarkPaid(ids: string[]) {
@@ -561,11 +553,11 @@ export default function LinkMeCommissionsPage() {
                     </div>
                     {tab === 'payables' && selectedIds.length > 0 && (
                       <ButtonV2
-                        onClick={() => handleRequestPayment(selectedIds)}
+                        onClick={openPaymentModal}
                         disabled={processing}
                       >
                         <Banknote className="h-4 w-4 mr-2" />
-                        Percevoir ({selectedIds.length})
+                        Payer ({selectedIds.length})
                       </ButtonV2>
                     )}
                     {tab === 'en_cours' && selectedIds.length > 0 && (
@@ -758,6 +750,30 @@ export default function LinkMeCommissionsPage() {
           );
         })}
       </Tabs>
+
+      {/* Modal de paiement */}
+      {(() => {
+        // Récupérer les commissions sélectionnées
+        const selectedCommissions = commissions.filter(c =>
+          selectedIds.includes(c.id)
+        );
+        // Déterminer l'affilié (on prend le premier sélectionné)
+        const firstSelected = selectedCommissions[0];
+        const affiliateId = firstSelected?.affiliate_id || '';
+        const affiliateName =
+          firstSelected?.affiliate?.display_name || 'Affilié';
+
+        return (
+          <PaymentRequestModalAdmin
+            isOpen={isPaymentModalOpen}
+            onClose={() => setIsPaymentModalOpen(false)}
+            selectedCommissions={selectedCommissions}
+            affiliateId={affiliateId}
+            affiliateName={affiliateName}
+            onSuccess={handlePaymentSuccess}
+          />
+        );
+      })()}
     </div>
   );
 }

@@ -1,8 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-
-import { ButtonV2 } from '@verone/ui';
 import {
   Card,
   CardContent,
@@ -14,22 +11,9 @@ import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { Separator } from '@verone/ui';
 import { Switch } from '@verone/ui';
-import { Textarea } from '@verone/ui';
-import { useToast } from '@verone/common';
-import {
-  Settings,
-  Percent,
-  Mail,
-  Globe,
-  Bell,
-  Save,
-} from 'lucide-react';
+import { Mail, Globe, AlertCircle } from 'lucide-react';
 
 interface LinkMeConfig {
-  // Commission
-  defaultCommissionRate: number;
-  defaultMaxMarginRate: number;
-
   // Emails
   welcomeEmailEnabled: boolean;
   commissionNotificationEnabled: boolean;
@@ -45,136 +29,37 @@ interface LinkMeConfig {
  * ConfigurationSection - Paramètres LinkMe
  *
  * Fonctionnalités:
- * - Commission LinkMe par défaut (%)
- * - Plafond marge par défaut (%)
- * - Templates emails notifications
- * - Activation/désactivation plateforme
+ * - Templates emails notifications (hooks - bientôt disponible)
+ * - Activation/désactivation plateforme (hooks - bientôt disponible)
+ *
+ * Note: Section "Commissions & Marges" supprimée - Les commissions sont
+ * calculées par produit sur le prix catalogue général, pas globalement.
  */
 export function ConfigurationSection() {
-  const { toast } = useToast();
-  const [saving, setSaving] = useState(false);
-
-  // Config state (in real app, fetch from DB or settings table)
-  const [config, setConfig] = useState<LinkMeConfig>({
-    defaultCommissionRate: 5,
-    defaultMaxMarginRate: 20,
+  // Config state (hooks - non connecté à la DB pour l'instant)
+  // Ces valeurs sont juste pour l'affichage, pas fonctionnelles
+  const config: LinkMeConfig = {
     welcomeEmailEnabled: true,
     commissionNotificationEnabled: true,
     weeklyReportEnabled: false,
     platformEnabled: true,
     registrationOpen: true,
     publicDomain: 'linkme.verone.fr',
-  });
-
-  async function handleSave() {
-    setSaving(true);
-
-    // Simulate save (in real app, save to DB)
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    toast({
-      title: 'Configuration enregistrée',
-      description: 'Les paramètres ont été mis à jour',
-    });
-
-    setSaving(false);
-  }
+  };
 
   return (
     <div className="space-y-6">
-      {/* Commission Settings */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Percent className="h-5 w-5 text-muted-foreground" />
-            <div>
-              <CardTitle>Commissions & Marges</CardTitle>
-              <CardDescription>
-                Paramètres par défaut pour les nouveaux affiliés
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="defaultCommission">
-                Commission LinkMe par défaut (%)
-              </Label>
-              <Input
-                id="defaultCommission"
-                type="number"
-                min="0"
-                max="50"
-                step="0.5"
-                value={config.defaultCommissionRate}
-                onChange={e =>
-                  setConfig({
-                    ...config,
-                    defaultCommissionRate: Number(e.target.value),
-                  })
-                }
-              />
-              <p className="text-xs text-muted-foreground">
-                Pourcentage prélevé par LinkMe sur chaque vente
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="defaultMaxMargin">
-                Plafond marge affilié par défaut (%)
-              </Label>
-              <Input
-                id="defaultMaxMargin"
-                type="number"
-                min="0"
-                max="100"
-                step="1"
-                value={config.defaultMaxMarginRate}
-                onChange={e =>
-                  setConfig({
-                    ...config,
-                    defaultMaxMarginRate: Number(e.target.value),
-                  })
-                }
-              />
-              <p className="text-xs text-muted-foreground">
-                Marge maximum qu'un affilié peut appliquer sur le prix catalogue
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-muted/50 p-4 rounded-lg">
-            <h4 className="font-medium mb-2">Exemple de calcul</h4>
-            <p className="text-sm text-muted-foreground">
-              Pour un produit à <strong>100€ HT</strong> catalogue :
-            </p>
-            <ul className="text-sm text-muted-foreground mt-2 space-y-1">
-              <li>
-                • Prix vente max :{' '}
-                <strong>
-                  {(100 * (1 + config.defaultMaxMarginRate / 100)).toFixed(0)}€
-                  HT
-                </strong>{' '}
-                (marge {config.defaultMaxMarginRate}%)
-              </li>
-              <li>
-                • Commission LinkMe :{' '}
-                <strong>{config.defaultCommissionRate}€</strong> (
-                {config.defaultCommissionRate}% du prix catalogue)
-              </li>
-              <li>
-                • Gain affilié max :{' '}
-                <strong>
-                  {(config.defaultMaxMarginRate - config.defaultCommissionRate).toFixed(
-                    0
-                  )}
-                  €
-                </strong>
-              </li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Bannière d'information */}
+      <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+        <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+        <div className="text-sm text-amber-800">
+          <p className="font-medium">Configuration en cours de développement</p>
+          <p className="text-amber-700 mt-1">
+            Les paramètres ci-dessous sont des hooks non connectés à la base de
+            données. Ils seront activés dans une prochaine version.
+          </p>
+        </div>
+      </div>
 
       {/* Email Notifications */}
       <Card>
@@ -182,14 +67,19 @@ export function ConfigurationSection() {
           <div className="flex items-center gap-2">
             <Mail className="h-5 w-5 text-muted-foreground" />
             <div>
-              <CardTitle>Notifications Email</CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle>Notifications Email</CardTitle>
+                <span className="px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded">
+                  Bientôt
+                </span>
+              </div>
               <CardDescription>
                 Configurez les emails automatiques envoyés aux affiliés
               </CardDescription>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 opacity-60">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>Email de bienvenue</Label>
@@ -197,12 +87,7 @@ export function ConfigurationSection() {
                 Envoyé lors de la validation d'un nouvel affilié
               </p>
             </div>
-            <Switch
-              checked={config.welcomeEmailEnabled}
-              onCheckedChange={checked =>
-                setConfig({ ...config, welcomeEmailEnabled: checked })
-              }
-            />
+            <Switch checked={config.welcomeEmailEnabled} disabled />
           </div>
 
           <Separator />
@@ -214,12 +99,7 @@ export function ConfigurationSection() {
                 Envoyé à chaque nouvelle vente générée
               </p>
             </div>
-            <Switch
-              checked={config.commissionNotificationEnabled}
-              onCheckedChange={checked =>
-                setConfig({ ...config, commissionNotificationEnabled: checked })
-              }
-            />
+            <Switch checked={config.commissionNotificationEnabled} disabled />
           </div>
 
           <Separator />
@@ -231,12 +111,7 @@ export function ConfigurationSection() {
                 Résumé des ventes et commissions de la semaine
               </p>
             </div>
-            <Switch
-              checked={config.weeklyReportEnabled}
-              onCheckedChange={checked =>
-                setConfig({ ...config, weeklyReportEnabled: checked })
-              }
-            />
+            <Switch checked={config.weeklyReportEnabled} disabled />
           </div>
         </CardContent>
       </Card>
@@ -247,14 +122,19 @@ export function ConfigurationSection() {
           <div className="flex items-center gap-2">
             <Globe className="h-5 w-5 text-muted-foreground" />
             <div>
-              <CardTitle>Plateforme</CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle>Plateforme</CardTitle>
+                <span className="px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded">
+                  Bientôt
+                </span>
+              </div>
               <CardDescription>
                 Paramètres généraux de la plateforme LinkMe
               </CardDescription>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 opacity-60">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>Plateforme activée</Label>
@@ -262,12 +142,7 @@ export function ConfigurationSection() {
                 Désactivez pour mettre LinkMe en maintenance
               </p>
             </div>
-            <Switch
-              checked={config.platformEnabled}
-              onCheckedChange={checked =>
-                setConfig({ ...config, platformEnabled: checked })
-              }
-            />
+            <Switch checked={config.platformEnabled} disabled />
           </div>
 
           <Separator />
@@ -279,12 +154,7 @@ export function ConfigurationSection() {
                 Autoriser les nouvelles demandes d'affiliation
               </p>
             </div>
-            <Switch
-              checked={config.registrationOpen}
-              onCheckedChange={checked =>
-                setConfig({ ...config, registrationOpen: checked })
-              }
-            />
+            <Switch checked={config.registrationOpen} disabled />
           </div>
 
           <Separator />
@@ -294,10 +164,9 @@ export function ConfigurationSection() {
             <Input
               id="publicDomain"
               value={config.publicDomain}
-              onChange={e =>
-                setConfig({ ...config, publicDomain: e.target.value })
-              }
               placeholder="linkme.verone.fr"
+              disabled
+              readOnly
             />
             <p className="text-xs text-muted-foreground">
               Domaine où la plateforme LinkMe est accessible
@@ -306,13 +175,7 @@ export function ConfigurationSection() {
         </CardContent>
       </Card>
 
-      {/* Save Button */}
-      <div className="flex justify-end">
-        <ButtonV2 onClick={handleSave} disabled={saving}>
-          <Save className="h-4 w-4 mr-2" />
-          {saving ? 'Enregistrement...' : 'Enregistrer les modifications'}
-        </ButtonV2>
-      </div>
+      {/* Note : Bouton sauvegarde masqué car paramètres non connectés */}
     </div>
   );
 }

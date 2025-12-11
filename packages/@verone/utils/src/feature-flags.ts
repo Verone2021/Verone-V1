@@ -143,6 +143,10 @@ export function getModulePhase(moduleName: string): number {
 export function getModuleDeploymentStatus(
   moduleName: string
 ): 'active' | 'coming-soon' | 'disabled' {
+  // Modules Finance désactivés temporairement (développement ultérieur)
+  const comingSoonModules = ['finance', 'factures', 'tresorerie'];
+  if (comingSoonModules.includes(moduleName)) return 'coming-soon';
+
   const phase = getModulePhase(moduleName);
 
   if (phase === 1 && featureFlags.phase1Enabled) return 'active';

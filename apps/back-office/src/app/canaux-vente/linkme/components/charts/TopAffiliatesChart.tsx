@@ -48,7 +48,8 @@ function CustomTooltip({
             {new Intl.NumberFormat('fr-FR', {
               style: 'currency',
               currency: 'EUR',
-              minimumFractionDigits: 0,
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
             }).format(affiliate.revenue)}
           </span>
         </div>
@@ -62,7 +63,8 @@ function CustomTooltip({
             {new Intl.NumberFormat('fr-FR', {
               style: 'currency',
               currency: 'EUR',
-              minimumFractionDigits: 0,
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
             }).format(affiliate.commissions)}
           </span>
         </div>
