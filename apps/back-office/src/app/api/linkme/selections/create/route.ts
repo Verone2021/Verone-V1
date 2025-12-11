@@ -8,17 +8,19 @@ import { NextResponse } from 'next/server';
 
 import { createClient } from '@supabase/supabase-js';
 
-// Client Admin Supabase (avec service_role key)
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  }
-);
+// Fonction pour créer le client Admin Supabase (lazy initialization)
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    }
+  );
+}
 
 interface ProductInput {
   product_id: string;
@@ -36,6 +38,7 @@ interface CreateSelectionInput {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
     const body: CreateSelectionInput = await request.json();
     const { user_id, name, description, status, products } = body;
 
