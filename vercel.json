@@ -63,7 +63,7 @@
     },
     {
       "path": "/api/cron/google-merchant-poll",
-      "schedule": "0 */4 * * *"
+      "schedule": "0 6 * * *"
     }
   ],
   "cleanUrls": true,
