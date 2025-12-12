@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import type { PostgrestFilterBuilder } from '@supabase/postgrest-js';
-
 import { createClient } from '@verone/utils/supabase/client';
 
 interface QueryOptions {
@@ -11,6 +10,7 @@ interface QueryOptions {
   refetchOnWindowFocus?: boolean;
   staleTime?: number;
   cacheTime?: number;
+  sloThreshold?: number; // Seuil SLO personnalisable (défaut 2000ms)
 }
 
 interface QueryState<T> {
@@ -80,10 +80,11 @@ export function useSupabaseQuery<T = any>(
       const result = await queryFn(supabase);
       const loadTime = performance.now() - startTime;
 
-      // Performance monitoring selon SLO Vérone
-      if (loadTime > 2000) {
+      // Performance monitoring selon SLO Vérone (seuil configurable)
+      const sloLimit = options.sloThreshold ?? 2000;
+      if (loadTime > sloLimit) {
         console.warn(
-          `⚠️ SLO query dépassé: ${queryKey} ${Math.round(loadTime)}ms > 2000ms`
+          `⚠️ SLO query dépassé: ${queryKey} ${Math.round(loadTime)}ms > ${sloLimit}ms`
         );
       }
 

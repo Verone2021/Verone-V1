@@ -139,8 +139,9 @@ export function useUserActivityTracker() {
       return { data: data as unknown as ActivityStats, error: null };
     },
     {
-      staleTime: 15 * 60 * 1000, // 15 minutes (stats changent peu)
-      cacheTime: 30 * 60 * 1000, // 30 minutes
+      staleTime: 60 * 60 * 1000, // 60 minutes (stats changent peu, RPC lente ~2800ms)
+      cacheTime: 90 * 60 * 1000, // 90 minutes
+      sloThreshold: 4000, // Seuil élevé pour RPC PostgreSQL lente
     }
   );
 

@@ -264,6 +264,12 @@ importers:
 
   apps/back-office:
     dependencies:
+      '@supabase/ssr':
+        specifier: ^0.7.0
+        version: 0.7.0(@supabase/supabase-js@2.80.0)
+      '@supabase/supabase-js':
+        specifier: ^2.57.4
+        version: 2.80.0
       '@verone/types':
         specifier: workspace:*
         version: link:../../packages/@verone/types
