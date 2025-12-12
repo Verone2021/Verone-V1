@@ -1,1 +1,1 @@
-Deploy trigger - 2025-12-12 01:11 - Deploy Hook triggered with correct npm run build
+Deploy trigger - 2025-12-12 03:20 - Fix @supabase/ssr dependency for Vercel Edge Runtime
