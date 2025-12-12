@@ -3,16 +3,20 @@
  *
  * POST /api/google-merchant/sync-product/[id]
  * Synchronise un produit individuel avec Google Merchant Center
+ *
+ * SÉCURITÉ: Hard gate + lazy import - Si NEXT_PUBLIC_GOOGLE_MERCHANT_SYNC_ENABLED !== 'true'
+ * la route retourne 503 sans charger les modules Google Merchant
  */
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { getGoogleMerchantClient } from '@verone/integrations/google-merchant/client';
 import { createServerClient } from '@verone/utils/supabase/server';
 
 interface SyncResponse {
   success: boolean;
+  disabled?: boolean;
+  message?: string;
   data?: any;
   error?: string;
   details?: any;
@@ -110,6 +114,23 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<SyncResponse>> {
+  // 🔒 HARD GATE: Si flag désactivé ou absent, skip silencieux
+  if (process.env.NEXT_PUBLIC_GOOGLE_MERCHANT_SYNC_ENABLED !== 'true') {
+    return NextResponse.json(
+      {
+        success: false,
+        disabled: true,
+        message: 'Intégration Google Merchant désactivée',
+      },
+      { status: 503 }
+    );
+  }
+
+  // ✅ LAZY IMPORT: Chargé seulement si flag explicitement 'true'
+  const { getGoogleMerchantClient } = await import(
+    '@verone/integrations/google-merchant/client'
+  );
+
   try {
     const resolvedParams = await params;
     const productId = resolvedParams.id;
@@ -211,6 +232,23 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<SyncResponse>> {
+  // 🔒 HARD GATE: Si flag désactivé ou absent, skip silencieux
+  if (process.env.NEXT_PUBLIC_GOOGLE_MERCHANT_SYNC_ENABLED !== 'true') {
+    return NextResponse.json(
+      {
+        success: false,
+        disabled: true,
+        message: 'Intégration Google Merchant désactivée',
+      },
+      { status: 503 }
+    );
+  }
+
+  // ✅ LAZY IMPORT: Chargé seulement si flag explicitement 'true'
+  const { getGoogleMerchantClient } = await import(
+    '@verone/integrations/google-merchant/client'
+  );
+
   try {
     const resolvedParams = await params;
     const productId = resolvedParams.id;

@@ -3,21 +3,19 @@
  *
  * GET /api/google-merchant/test-connection
  * Teste la connectivité avec l'API Google Merchant Center
+ *
+ * SÉCURITÉ: Hard gate + lazy import - Si NEXT_PUBLIC_GOOGLE_MERCHANT_SYNC_ENABLED !== 'true'
+ * la route retourne 503 sans charger les modules Google Merchant
  */
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { testGoogleMerchantAuth } from '@verone/integrations/google-merchant/auth';
-import {
-  getGoogleMerchantClient,
-  testGoogleMerchantConnection,
-} from '@verone/integrations/google-merchant/client';
-import { GOOGLE_MERCHANT_CONFIG } from '@verone/integrations/google-merchant/config';
 import logger from '@verone/utils/logger';
 
 interface TestConnectionResponse {
   success: boolean;
+  disabled?: boolean;
   data?: {
     authentication: boolean;
     apiConnection: boolean;
@@ -27,6 +25,7 @@ interface TestConnectionResponse {
     details?: any;
   };
   error?: string;
+  message?: string;
   details?: any;
 }
 
@@ -36,6 +35,29 @@ interface TestConnectionResponse {
 export async function GET(
   request: NextRequest
 ): Promise<NextResponse<TestConnectionResponse>> {
+  // 🔒 HARD GATE: Si flag désactivé ou absent, skip silencieux
+  if (process.env.NEXT_PUBLIC_GOOGLE_MERCHANT_SYNC_ENABLED !== 'true') {
+    return NextResponse.json(
+      {
+        success: false,
+        disabled: true,
+        message: 'Intégration Google Merchant désactivée',
+      },
+      { status: 503 }
+    );
+  }
+
+  // ✅ LAZY IMPORT: Chargé seulement si flag explicitement 'true'
+  const { testGoogleMerchantAuth } = await import(
+    '@verone/integrations/google-merchant/auth'
+  );
+  const { getGoogleMerchantClient } = await import(
+    '@verone/integrations/google-merchant/client'
+  );
+  const { GOOGLE_MERCHANT_CONFIG } = await import(
+    '@verone/integrations/google-merchant/config'
+  );
+
   const timer = logger.startTimer();
 
   try {
@@ -184,6 +206,23 @@ export async function GET(
 export async function POST(
   request: NextRequest
 ): Promise<NextResponse<TestConnectionResponse>> {
+  // 🔒 HARD GATE: Si flag désactivé ou absent, skip silencieux
+  if (process.env.NEXT_PUBLIC_GOOGLE_MERCHANT_SYNC_ENABLED !== 'true') {
+    return NextResponse.json(
+      {
+        success: false,
+        disabled: true,
+        message: 'Intégration Google Merchant désactivée',
+      },
+      { status: 503 }
+    );
+  }
+
+  // ✅ LAZY IMPORT: Chargé seulement si flag explicitement 'true'
+  const { getGoogleMerchantClient } = await import(
+    '@verone/integrations/google-merchant/client'
+  );
+
   try {
     logger.info('Extended connection test requested', {
       operation: 'google_merchant_extended_test',

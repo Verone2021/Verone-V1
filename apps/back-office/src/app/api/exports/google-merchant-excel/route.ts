@@ -3,21 +3,21 @@
  *
  * GET /api/exports/google-merchant-excel
  * Génère un fichier Excel conforme au template Google Merchant fourni
+ *
+ * SÉCURITÉ: Hard gate + lazy import - Si NEXT_PUBLIC_GOOGLE_MERCHANT_SYNC_ENABLED !== 'true'
+ * la route retourne 503 sans charger les modules Google Merchant
  */
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import * as XLSX from 'xlsx';
-
-import {
-  prepareExcelData,
-  GOOGLE_MERCHANT_EXCEL_HEADERS,
-} from '@verone/integrations/google-merchant/excel-transformer';
 import { createAdminClient } from '@verone/utils/supabase/server';
+import * as XLSX from 'xlsx';
 
 interface ExportResponse {
   success: boolean;
+  disabled?: boolean;
+  message?: string;
   data?: {
     fileName: string;
     exportedAt: string;
@@ -86,23 +86,25 @@ async function getProductsForExport(supabase: any, filters: any = {}) {
 /**
  * Génère le fichier Excel avec les données produits
  */
-function generateExcelFile(excelData: any[], fileName: string): Buffer {
+function generateExcelFile(
+  excelData: any[],
+  fileName: string,
+  headers: readonly string[]
+): Buffer {
   // 1. Créer le workbook
   const workbook = XLSX.utils.book_new();
 
   // 2. Préparer les données avec headers
   const worksheetData = [
-    [...GOOGLE_MERCHANT_EXCEL_HEADERS], // En-têtes en première ligne (copie mutable)
-    ...excelData.map(row =>
-      GOOGLE_MERCHANT_EXCEL_HEADERS.map(header => row[header] || '')
-    ),
+    [...headers], // En-têtes en première ligne (copie mutable)
+    ...excelData.map(row => headers.map(header => row[header] || '')),
   ];
 
   // 3. Créer la worksheet
   const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
 
   // 4. Définir les largeurs de colonnes
-  const columnWidths = GOOGLE_MERCHANT_EXCEL_HEADERS.map(header => {
+  const columnWidths = headers.map(header => {
     switch (header) {
       case 'title':
       case 'description':
@@ -128,7 +130,7 @@ function generateExcelFile(excelData: any[], fileName: string): Buffer {
   };
 
   // Appliquer le style aux en-têtes (première ligne)
-  GOOGLE_MERCHANT_EXCEL_HEADERS.forEach((_, colIndex) => {
+  headers.forEach((_, colIndex) => {
     const cellAddress = XLSX.utils.encode_cell({ r: 0, c: colIndex });
     if (worksheet[cellAddress]) {
       worksheet[cellAddress].s = headerStyle;
@@ -150,6 +152,23 @@ function generateExcelFile(excelData: any[], fileName: string): Buffer {
  * GET - Exporte les produits en format Excel Google Merchant
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  // 🔒 HARD GATE: Si flag désactivé ou absent, skip silencieux
+  if (process.env.NEXT_PUBLIC_GOOGLE_MERCHANT_SYNC_ENABLED !== 'true') {
+    return NextResponse.json(
+      {
+        success: false,
+        disabled: true,
+        message: 'Intégration Google Merchant désactivée',
+      } satisfies ExportResponse,
+      { status: 503 }
+    );
+  }
+
+  // ✅ LAZY IMPORT: Chargé seulement si flag explicitement 'true'
+  const { prepareExcelData, GOOGLE_MERCHANT_EXCEL_HEADERS } = await import(
+    '@verone/integrations/google-merchant/excel-transformer'
+  );
+
   try {
     const { searchParams } = new URL(request.url);
 
@@ -247,7 +266,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     let excelBuffer;
     try {
-      excelBuffer = generateExcelFile(excelData, fileName);
+      excelBuffer = generateExcelFile(
+        excelData,
+        fileName,
+        GOOGLE_MERCHANT_EXCEL_HEADERS
+      );
       console.log(`[API] Excel file generated: ${fileName}`);
     } catch (error: any) {
       console.error('[API] Error generating Excel file:', error);
@@ -306,6 +329,23 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
  * POST - Export avec configuration avancée
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  // 🔒 HARD GATE: Si flag désactivé ou absent, skip silencieux
+  if (process.env.NEXT_PUBLIC_GOOGLE_MERCHANT_SYNC_ENABLED !== 'true') {
+    return NextResponse.json(
+      {
+        success: false,
+        disabled: true,
+        message: 'Intégration Google Merchant désactivée',
+      } satisfies ExportResponse,
+      { status: 503 }
+    );
+  }
+
+  // ✅ LAZY IMPORT: Chargé seulement si flag explicitement 'true'
+  const { prepareExcelData, GOOGLE_MERCHANT_EXCEL_HEADERS } = await import(
+    '@verone/integrations/google-merchant/excel-transformer'
+  );
+
   try {
     const body = await request.json();
     const { filters = {}, options = {}, productIds = null } = body;
@@ -370,7 +410,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const fileName =
       options.fileName || `google-merchant-export-${Date.now()}.xlsx`;
-    const excelBuffer = generateExcelFile(excelData, fileName);
+    const excelBuffer = generateExcelFile(
+      excelData,
+      fileName,
+      GOOGLE_MERCHANT_EXCEL_HEADERS
+    );
 
     return new NextResponse(new Uint8Array(excelBuffer), {
       status: 200,

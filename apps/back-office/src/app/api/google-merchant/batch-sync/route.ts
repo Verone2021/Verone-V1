@@ -4,6 +4,9 @@
  * POST /api/google-merchant/batch-sync
  * Synchronise tous les produits éligibles avec Google Merchant Center
  *
+ * SÉCURITÉ: Hard gate + lazy import - Si NEXT_PUBLIC_GOOGLE_MERCHANT_SYNC_ENABLED !== 'true'
+ * la route retourne 503 sans charger les modules Google Merchant
+ *
  * Query params:
  * - deleteExisting: boolean - Si true, supprime tous les produits existants avant sync
  */
@@ -11,11 +14,12 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { getGoogleMerchantClient } from '@verone/integrations/google-merchant/client';
 import { createServerClient } from '@verone/utils/supabase/server';
 
 interface BatchSyncResponse {
   success: boolean;
+  disabled?: boolean;
+  message?: string;
   data?: {
     totalProcessed: number;
     successCount: number;
@@ -35,6 +39,23 @@ interface BatchSyncResponse {
 export async function POST(
   request: NextRequest
 ): Promise<NextResponse<BatchSyncResponse>> {
+  // 🔒 HARD GATE: Si flag désactivé ou absent, skip silencieux
+  if (process.env.NEXT_PUBLIC_GOOGLE_MERCHANT_SYNC_ENABLED !== 'true') {
+    return NextResponse.json(
+      {
+        success: false,
+        disabled: true,
+        message: 'Intégration Google Merchant désactivée',
+      },
+      { status: 503 }
+    );
+  }
+
+  // ✅ LAZY IMPORT: Chargé seulement si flag explicitement 'true'
+  const { getGoogleMerchantClient } = await import(
+    '@verone/integrations/google-merchant/client'
+  );
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const deleteExisting = searchParams.get('deleteExisting') === 'true';
