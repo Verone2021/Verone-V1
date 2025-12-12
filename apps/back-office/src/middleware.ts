@@ -24,13 +24,13 @@
  * - /notifications
  * - /tests-essentiels
  *
- * Dernière mise à jour : 2025-12-11 (Fix: Migration vers nouvelle API cookies @supabase/ssr)
+ * Dernière mise à jour : 2025-12-12 (Fix: Edge-safe lazy import + try/catch)
  */
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { createServerClient } from '@supabase/ssr';
+// ⚠️ PAS d'import top-level de @supabase/ssr - lazy import dans middleware()
 
 // Routes protégées nécessitant authentification
 const PROTECTED_ROUTES = [
@@ -56,89 +56,98 @@ const PROTECTED_ROUTES = [
 const PUBLIC_ROUTES = ['/login', '/', '/module-inactive'];
 
 export async function middleware(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
+  try {
+    const pathname = request.nextUrl.pathname;
 
-  // 0. Autoriser assets statiques et API routes
-  if (
-    pathname.startsWith('/_next') ||
-    pathname.startsWith('/api') ||
-    pathname === '/favicon.ico'
-  ) {
-    return NextResponse.next();
-  }
+    // 0. Autoriser assets statiques et API routes
+    if (
+      pathname.startsWith('/_next') ||
+      pathname.startsWith('/api') ||
+      pathname === '/favicon.ico'
+    ) {
+      return NextResponse.next();
+    }
 
-  // 🔒 SÉCURITÉ: Vérifier que les variables d'environnement Supabase existent
-  // Évite MIDDLEWARE_INVOCATION_FAILED si variables manquantes sur Vercel
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    // 🔒 SÉCURITÉ: Vérifier que les variables d'environnement Supabase existent
+    // Évite MIDDLEWARE_INVOCATION_FAILED si variables manquantes sur Vercel
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    console.error('❌ MIDDLEWARE ERROR: Variables Supabase manquantes', {
-      supabaseUrl: !!supabaseUrl,
-      supabaseAnonKey: !!supabaseAnonKey,
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error('[middleware] Variables Supabase manquantes', {
+        hasUrl: !!supabaseUrl,
+        hasKey: !!supabaseAnonKey,
+      });
+      // Continuer sans auth plutôt que crasher
+      return NextResponse.next();
+    }
+
+    // ✅ LAZY IMPORT: Chargé seulement APRÈS guard env (Edge-safe)
+    const { createServerClient } = await import('@supabase/ssr');
+
+    // 1. Créer le client Supabase avec la NOUVELLE API cookies (getAll/setAll)
+    // Compatible avec @supabase/ssr ^0.5.0+
+    let supabaseResponse = NextResponse.next({
+      request,
     });
-    // Continuer sans auth plutôt que crasher
+
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => {
+            request.cookies.set(name, value);
+          });
+          supabaseResponse = NextResponse.next({
+            request,
+          });
+          cookiesToSet.forEach(({ name, value, options }) => {
+            supabaseResponse.cookies.set(name, value, options);
+          });
+        },
+      },
+    });
+
+    // IMPORTANT: Vérifier l'authentification
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+    const isAuthenticated = !error && !!user;
+
+    // 2. Protection authentification : routes protégées nécessitent connexion
+    const isProtectedRoute = PROTECTED_ROUTES.some(route =>
+      pathname.startsWith(route)
+    );
+    if (isProtectedRoute && !isAuthenticated) {
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // 4. Si déjà authentifié sur page login → redirection dashboard
+    if (pathname === '/login' && isAuthenticated) {
+      const redirectUrl =
+        request.nextUrl.searchParams.get('redirect') || '/dashboard';
+      return NextResponse.redirect(new URL(redirectUrl, request.url));
+    }
+
+    // 5. Route racine "/" → rediriger vers login (pas dashboard!)
+    if (pathname === '/') {
+      const url = request.nextUrl.clone();
+      url.pathname = '/login';
+      return NextResponse.redirect(url);
+    }
+
+    // IMPORTANT: Retourner supabaseResponse pour conserver les cookies
+    return supabaseResponse;
+  } catch (err) {
+    // 🛡️ FAILSAFE: En cas d'erreur, log et continue sans bloquer le site
+    console.error('[middleware] Error caught:', err);
     return NextResponse.next();
   }
-
-  // 1. Créer le client Supabase avec la NOUVELLE API cookies (getAll/setAll)
-  // Compatible avec @supabase/ssr ^0.5.0+
-  let supabaseResponse = NextResponse.next({
-    request,
-  });
-
-  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) => {
-          request.cookies.set(name, value);
-        });
-        supabaseResponse = NextResponse.next({
-          request,
-        });
-        cookiesToSet.forEach(({ name, value, options }) => {
-          supabaseResponse.cookies.set(name, value, options);
-        });
-      },
-    },
-  });
-
-  // IMPORTANT: Vérifier l'authentification
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-  const isAuthenticated = !error && !!user;
-
-  // 2. Protection authentification : routes protégées nécessitent connexion
-  const isProtectedRoute = PROTECTED_ROUTES.some(route =>
-    pathname.startsWith(route)
-  );
-  if (isProtectedRoute && !isAuthenticated) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  // 4. Si déjà authentifié sur page login → redirection dashboard
-  if (pathname === '/login' && isAuthenticated) {
-    const redirectUrl =
-      request.nextUrl.searchParams.get('redirect') || '/dashboard';
-    return NextResponse.redirect(new URL(redirectUrl, request.url));
-  }
-
-  // 5. Route racine "/" → rediriger vers login (pas dashboard!)
-  if (pathname === '/') {
-    const url = request.nextUrl.clone();
-    url.pathname = '/login';
-    return NextResponse.redirect(url);
-  }
-
-  // IMPORTANT: Retourner supabaseResponse pour conserver les cookies
-  return supabaseResponse;
 }
 
 // Configuration matcher pour appliquer middleware
