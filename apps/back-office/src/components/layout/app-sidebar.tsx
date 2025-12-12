@@ -295,8 +295,17 @@ function SidebarContent() {
   };
 
   // Nav items (avec count dynamique pour badges)
+  // Filtrer les modules Finance si désactivés
   const navItems = useMemo(() => {
-    return getNavItems(stockAlertsCount);
+    const items = getNavItems(stockAlertsCount);
+
+    // Masquer Finance/Factures/Trésorerie si financeEnabled = false
+    if (!featureFlags.financeEnabled) {
+      const financeModules = ['Finance', 'Factures', 'Trésorerie'];
+      return items.filter(item => !financeModules.includes(item.title));
+    }
+
+    return items;
   }, [stockAlertsCount]);
 
   // Fonction récursive pour rendre les enfants (support multi-niveaux)

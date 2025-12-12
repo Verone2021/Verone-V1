@@ -101,11 +101,11 @@ export const featureFlags: FeatureFlags = {
   googleMerchantSyncEnabled: true, // ✅ Google Merchant activé
   mcpMonitoringEnabled: true, // ✅ Monitoring MCP activé
 
-  // Modules Finance - ACTIVÉS
-  financeEnabled: true, // ✅ Module Finance global
-  facturationEnabled: true, // ✅ Facturation activée
-  tresorerieEnabled: true, // ✅ Trésorerie activée
-  rapprochementEnabled: true, // ✅ Rapprochement bancaire activé
+  // Modules Finance - DÉSACTIVÉS (Phase 3+ - En développement)
+  financeEnabled: false, // ❌ Module Finance global désactivé
+  facturationEnabled: false, // ❌ Facturation désactivée
+  tresorerieEnabled: false, // ❌ Trésorerie désactivée
+  rapprochementEnabled: false, // ❌ Rapprochement bancaire désactivé
 };
 
 /**
