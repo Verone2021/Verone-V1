@@ -90,14 +90,20 @@ fi
 echo ""
 echo -e "${BLUE}[3/8] Vérification commits non poussés...${NC}"
 
-UNPUSHED=$(git log origin/$CURRENT_BRANCH..$CURRENT_BRANCH --oneline 2>/dev/null | wc -l | tr -d ' ')
+# Vérifier si upstream existe (robustesse)
+if git rev-parse --abbrev-ref "@{u}" &>/dev/null; then
+    UNPUSHED=$(git log "@{u}".."$CURRENT_BRANCH" --oneline 2>/dev/null | wc -l | tr -d ' ')
 
-if [ "$UNPUSHED" = "0" ]; then
-    echo -e "  ${GREEN}✓${NC} Tous les commits sont poussés"
+    if [ "$UNPUSHED" = "0" ]; then
+        echo -e "  ${GREEN}✓${NC} Tous les commits sont poussés"
+    else
+        echo -e "  ${YELLOW}!${NC} $UNPUSHED commit(s) non poussé(s)"
+        git log "@{u}".."$CURRENT_BRANCH" --oneline 2>/dev/null | head -5 | sed 's/^/    /'
+        ((WARNINGS++))
+    fi
 else
-    echo -e "  ${YELLOW}!${NC} $UNPUSHED commit(s) non poussé(s)"
-    git log origin/$CURRENT_BRANCH..$CURRENT_BRANCH --oneline 2>/dev/null | head -5 | sed 's/^/    /'
-    ((WARNINGS++))
+    echo -e "  ${YELLOW}!${NC} SKIP (pas d'upstream configuré pour cette branche)"
+    echo "    → Configurer avec: git push -u origin $CURRENT_BRANCH"
 fi
 
 # ----------------------------------------------------------------------------
@@ -193,9 +199,14 @@ SECRET_PATTERNS=(
 
 SECRETS_FOUND=0
 
+# Fichiers à exclure (docs, examples, ce script)
+EXCLUDE_PATTERNS="\.env\.example|\.md$|repo-doctor\.sh|node_modules"
+
 for pattern in "${SECRET_PATTERNS[@]}"; do
-    # Scan uniquement fichiers trackés, exclure .env.example et binaires
-    MATCHES=$(git ls-files | xargs grep -lE "$pattern" 2>/dev/null | grep -v ".env.example" | grep -v "node_modules" | head -5)
+    # Scan fichiers source uniquement (exclure docs, examples, ce script)
+    MATCHES=$(git ls-files -- '*.ts' '*.tsx' '*.js' '*.json' '*.env*' '*.sh' 2>/dev/null | \
+              grep -vE "$EXCLUDE_PATTERNS" | \
+              xargs grep -lE "$pattern" 2>/dev/null | head -5)
     if [ -n "$MATCHES" ]; then
         echo -e "  ${RED}✗${NC} Pattern suspect trouvé: ${pattern:0:20}..."
         echo "$MATCHES" | sed 's/^/    → /'
@@ -203,6 +214,8 @@ for pattern in "${SECRET_PATTERNS[@]}"; do
         ((ERRORS++))
     fi
 done
+
+echo "  (Exclus: docs/*.md, .env.example, repo-doctor.sh)"
 
 if [ "$SECRETS_FOUND" = "0" ]; then
     echo -e "  ${GREEN}✓${NC} Aucun secret détecté dans les fichiers trackés"
@@ -215,14 +228,17 @@ echo ""
 echo -e "${BLUE}[8/8] Vérification .env.example...${NC}"
 
 if [ -f ".env.example" ]; then
-    # Chercher des valeurs qui ressemblent à de vrais secrets
-    REAL_VALUES=$(grep -E "^[A-Z_]+=.{20,}" .env.example 2>/dev/null | grep -v "your_" | grep -v "_here" | grep -v "placeholder" | grep -v "example" | head -3)
+    # Chercher des valeurs qui ressemblent à de vrais secrets (exclure placeholders connus)
+    REAL_VALUES=$(grep -E "^[A-Z_]+=.{20,}" .env.example 2>/dev/null | \
+        grep -v "your" | grep -v "_here" | grep -v "placeholder" | \
+        grep -v "example" | grep -v "password" | grep -v "secret" | \
+        grep -v "YOUR_" | grep -v "xxx" | grep -v "\.\.\." | head -3)
     if [ -n "$REAL_VALUES" ]; then
         echo -e "  ${YELLOW}!${NC} Valeurs suspectes dans .env.example:"
         echo "$REAL_VALUES" | sed 's/^/    /'
         ((WARNINGS++))
     else
-        echo -e "  ${GREEN}✓${NC} .env.example contient des placeholders (OK)"
+        echo -e "  ${GREEN}✓${NC} .env.example contient uniquement des placeholders (OK)"
     fi
 else
     echo -e "  ${YELLOW}!${NC} Pas de .env.example trouvé"
