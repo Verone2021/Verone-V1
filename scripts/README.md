@@ -1,7 +1,7 @@
 # Scripts - Verone Monorepo
 
 **Date** : 2025-12-13
-**Organisation** : Classification par catégorie avec archive historique
+**Organisation** : Classification par catégorie
 
 ---
 
@@ -10,7 +10,6 @@
 ```
 scripts/
 ├── repo-doctor.sh          # Diagnostic principal santé repo
-├── _archive/               # Scripts one-time archivés (par mois)
 ├── maintenance/            # Utilitaires build/cleanup
 ├── monitoring/             # Tests et vérifications runtime
 ├── security/               # RLS, scans sécurité
@@ -111,42 +110,51 @@ Script de diagnostic santé du repository. **READ-ONLY**, aucune modification.
 
 ---
 
-## Archive
+## Scripts One-Time Supprimés
 
-### `/_archive/2025-11` - Scripts One-Time (Novembre 2025)
+Les scripts de migration one-time (Nov 2025) ont été **supprimés de main** pour alléger le repo.
 
+### Récupération
+
+Ces scripts restent disponibles via le tag Git :
+
+```bash
+# Voir les scripts archivés
+git show archive-scripts-2025-11:scripts/
+
+# Récupérer un script spécifique
+git show archive-scripts-2025-11:scripts/apply-migration-individual-customers.mjs > script.mjs
+
+# Récupérer tous les scripts one-time
+git checkout archive-scripts-2025-11 -- scripts/apply-*.mjs scripts/fix-*.sh scripts/step*.mjs
 ```
-⚠️  DO NOT RUN - ARCHIVED ONE-TIME SCRIPTS ⚠️
 
-Ces scripts ont été exécutés une seule fois lors de la migration Turborepo.
-Ils sont conservés UNIQUEMENT pour référence historique.
-Leur exécution sur la base actuelle peut causer des corruptions de données.
-```
+### Scripts Supprimés
 
-Scripts de migration et fixes ponctuels archivés après usage.
-
-**Contenu** :
-
-- Migrations DB ponctuelles (`apply-*.mjs`)
-- Fixes imports Turborepo (`fix-*.sh`)
-- Scripts Google Merchant (`*-google-merchant-*.sql`)
-- Investigations (`investigate-*.mjs`, `check-*.mjs`)
-- Migrations données (`step2-*.mjs`, `step3-*.mjs`)
-
-**Pourquoi archivés ?**
-
-1. Ces scripts ont modifié la DB de manière non-idempotente
-2. Le contexte (schema, données) a changé depuis leur exécution
-3. Les réexécuter causerait des doublons ou erreurs de FK
-
-> **INTERDIT** : Ne jamais exécuter sans validation explicite du mainteneur.
+| Script                                     | Type              | Raison            |
+| ------------------------------------------ | ----------------- | ----------------- |
+| `apply-migration-individual-customers.mjs` | Migration DB      | One-time Nov 2025 |
+| `apply-po-migration.mjs`                   | Migration DB      | One-time Nov 2025 |
+| `check-clients-b2b-b2c.mjs`                | Investigation     | Terminée          |
+| `create-google-merchant-rpcs.sql`          | SQL Setup         | Exécuté           |
+| `create-storage-bucket-logos.ts`           | Setup             | Exécuté           |
+| `fix-broken-verone-imports.sh`             | Fix Turborepo     | Appliqué          |
+| `fix-consultation-function.sql`            | SQL Fix           | Appliqué          |
+| `fix-google-merchant-rpcs-types*.sql`      | SQL Fix           | Appliqué          |
+| `fix-hooks-imports*.sh`                    | Fix Turborepo     | Appliqué          |
+| `fix-obsolete-src-paths.sh`                | Fix Turborepo     | Appliqué          |
+| `investigate-doublon.mjs`                  | Investigation     | Terminée          |
+| `refonte-workflows-cleanup.mjs`            | Migration         | Exécuté           |
+| `restore-missing-components.sh`            | Fix               | Appliqué          |
+| `step2-all-variants.mjs`                   | Migration données | Exécuté           |
+| `step3-movements-vert22.mjs`               | Migration données | Exécuté           |
 
 ---
 
 ## Bonnes Pratiques
 
 1. **Nouveaux scripts** : Placer dans la catégorie appropriée
-2. **Scripts one-time** : Archiver après usage dans `_archive/YYYY-MM/`
+2. **Scripts one-time** : Supprimer après usage, créer tag avant suppression
 3. **Scripts SQL** : Préférer exécution via Supabase SQL Editor (audit trail)
 4. **Scripts critiques** : Toujours tester en local avant production
 5. **Documentation** : Mettre à jour ce README après ajout/modification
