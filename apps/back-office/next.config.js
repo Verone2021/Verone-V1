@@ -35,9 +35,15 @@ const nextConfig = {
     ];
   },
 
-  // Redirections 301 - Migration structure /catalogue → /produits/catalogue, /sourcing → /produits/sourcing
+  // Redirections - Root redirect + Migration structure
   async redirects() {
     return [
+      // 🚀 ROOT REDIRECT: "/" → "/login" (remplace le middleware Edge)
+      {
+        source: '/',
+        destination: '/login',
+        permanent: false, // 307 redirect (temporaire)
+      },
       {
         source: '/catalogue',
         destination: '/produits/catalogue',
