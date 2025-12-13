@@ -38,9 +38,13 @@
 
 ### Status Check
 
-- **Nom** : `Vercel – verone-back-office`
+- **Nom** : `Vercel` (mono-app, voir note ci-dessous)
 - **Requis** : Oui (bloque merge si échec)
 - **Timeout** : ~5 minutes (build Turborepo)
+
+> **Note (2025-12-13)** : Le context est `Vercel` tant qu'une seule app est déployée.
+> Lors du déploiement de linkme/site-internet, passage à contexts multi-app.
+> Voir [docs/governance/GITHUB-RULESETS.md](governance/GITHUB-RULESETS.md) pour les détails.
 
 ---
 
