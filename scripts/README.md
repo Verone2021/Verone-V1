@@ -115,7 +115,15 @@ Script de diagnostic santé du repository. **READ-ONLY**, aucune modification.
 
 ### `/_archive/2025-11` - Scripts One-Time (Novembre 2025)
 
-Scripts de migration et fixes ponctuels archivés après usage. Conservés pour référence historique.
+```
+⚠️  DO NOT RUN - ARCHIVED ONE-TIME SCRIPTS ⚠️
+
+Ces scripts ont été exécutés une seule fois lors de la migration Turborepo.
+Ils sont conservés UNIQUEMENT pour référence historique.
+Leur exécution sur la base actuelle peut causer des corruptions de données.
+```
+
+Scripts de migration et fixes ponctuels archivés après usage.
 
 **Contenu** :
 
@@ -125,7 +133,13 @@ Scripts de migration et fixes ponctuels archivés après usage. Conservés pour 
 - Investigations (`investigate-*.mjs`, `check-*.mjs`)
 - Migrations données (`step2-*.mjs`, `step3-*.mjs`)
 
-> **Ne pas réutiliser** sans analyse préalable - contexte spécifique à la migration Turborepo Nov 2025.
+**Pourquoi archivés ?**
+
+1. Ces scripts ont modifié la DB de manière non-idempotente
+2. Le contexte (schema, données) a changé depuis leur exécution
+3. Les réexécuter causerait des doublons ou erreurs de FK
+
+> **INTERDIT** : Ne jamais exécuter sans validation explicite du mainteneur.
 
 ---
 
