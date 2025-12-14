@@ -43,6 +43,9 @@ jobs:
 
       - name: 🏷️ Create backup tag
         run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
           TIMESTAMP=$(date +%Y%m%d-%H%M%S)
           TAG_NAME="backup-prev-deploy-${TIMESTAMP}"
 
