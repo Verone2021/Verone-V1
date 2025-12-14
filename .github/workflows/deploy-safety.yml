@@ -137,6 +137,8 @@ jobs:
         run: npm run dev &
         env:
           PORT: 3000
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
       - name: ⏳ Wait for dev server
         run: npx wait-on http://localhost:3000 --timeout 60000
@@ -245,6 +247,8 @@ jobs:
         run: npm run build
         env:
           SKIP_ENV_VALIDATION: true
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
   # Job 6: Deploy to Preview (Auto)
   deploy-preview:
