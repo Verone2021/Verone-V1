@@ -15,7 +15,7 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { updateSession } from './src/lib/supabase-server';
+import { updateSession } from '@/lib/supabase-server';
 
 // Routes qui nécessitent une authentification
 const PROTECTED_ROUTES = [
