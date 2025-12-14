@@ -43,6 +43,9 @@ jobs:
 
       - name: 🏷️ Create backup tag
         run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
           TIMESTAMP=$(date +%Y%m%d-%H%M%S)
           TAG_NAME="backup-prev-deploy-${TIMESTAMP}"
 
@@ -76,14 +79,19 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: 📦 Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: pnpm install
 
       - name: 🧪 Run Vitest tests
         run: npm run test:vitest || echo "⚠️ Vitest not configured yet"
@@ -108,14 +116,19 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: 📦 Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: pnpm install
 
       - name: 🎭 Install Playwright browsers
         run: npx playwright install --with-deps chromium
@@ -186,14 +199,19 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: 📦 Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: pnpm install
 
       - name: 📝 Run TypeScript compiler
         run: npm run type-check
@@ -209,14 +227,19 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: 📦 Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: pnpm install
 
       - name: 🏗️ Build Next.js
         run: npm run build
