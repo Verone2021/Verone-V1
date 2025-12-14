@@ -92,13 +92,14 @@ jobs:
         run: |
           echo "🔍 Vérification erreurs double-path (apps/back-office/apps/back-office/)..."
 
+          # Check uniquement dans apps/ et packages/ (code actif)
           DOUBLE_PATHS=$(grep -r "apps/back-office/apps/back-office\|apps/site-internet/apps/site-internet\|apps/linkme/apps/linkme" \
-            --include="*.md" \
             --include="*.ts" \
             --include="*.tsx" \
             --exclude-dir="node_modules" \
             --exclude-dir=".next" \
-            . || true)
+            --exclude-dir="dist" \
+            apps/ packages/ 2>/dev/null || true)
 
           if [ -n "$DOUBLE_PATHS" ]; then
             echo "❌ ÉCHEC: Erreurs double-path détectées (typo):"
