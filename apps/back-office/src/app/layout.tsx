@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import Script from 'next/script';
 
 import { Analytics } from '@vercel/analytics/react';
+import { TooltipProvider } from '@verone/ui';
 import { Toaster } from 'sonner';
 
 import { AuthWrapper } from '../components/layout/auth-wrapper';
@@ -46,13 +47,17 @@ export default function RootLayout({
       <body
         className={`${inter.className} h-full bg-white text-black antialiased`}
       >
-        <ReactQueryProvider>
-          <SupabaseProvider>
-            <AuthWrapper>
-              <ClientOnlyActivityTracker>{children}</ClientOnlyActivityTracker>
-            </AuthWrapper>
-          </SupabaseProvider>
-        </ReactQueryProvider>
+        <TooltipProvider>
+          <ReactQueryProvider>
+            <SupabaseProvider>
+              <AuthWrapper>
+                <ClientOnlyActivityTracker>
+                  {children}
+                </ClientOnlyActivityTracker>
+              </AuthWrapper>
+            </SupabaseProvider>
+          </ReactQueryProvider>
+        </TooltipProvider>
         {/* Toast notifications */}
         <Toaster position="top-right" richColors />
         {/* Vercel Analytics - uniquement en production (détection automatique) */}
