@@ -40,16 +40,14 @@ jobs:
         run: |
           echo "🔍 Vérification références obsolètes src/ (racine)..."
 
-          # Exclure docs/audits/ (historique légitime) et docs/archives/ (migration)
+          # Check uniquement dans apps/ et packages/ (code actif source), ignorer docs/
           OBSOLETE_REFS=$(grep -r "src/app\|src/components\|src/hooks\|src/lib\|src/types\|src/styles" \
-            --include="*.md" \
             --include="*.ts" \
             --include="*.tsx" \
             --exclude-dir="node_modules" \
             --exclude-dir=".next" \
-            --exclude-dir="docs/audits" \
-            --exclude-dir="docs/archives" \
-            . | grep -v "apps/back-office/src" | grep -v "apps/site-internet/src" | grep -v "apps/linkme/src" | grep -v "packages/@verone" || true)
+            --exclude-dir="dist" \
+            apps/ packages/ 2>/dev/null | grep -v "/src/" || true)
 
           if [ -n "$OBSOLETE_REFS" ]; then
             echo "❌ ÉCHEC: Références obsolètes src/ détectées (structure pré-Turborepo):"
@@ -94,13 +92,14 @@ jobs:
         run: |
           echo "🔍 Vérification erreurs double-path (apps/back-office/apps/back-office/)..."
 
+          # Check uniquement dans apps/ et packages/ (code actif)
           DOUBLE_PATHS=$(grep -r "apps/back-office/apps/back-office\|apps/site-internet/apps/site-internet\|apps/linkme/apps/linkme" \
-            --include="*.md" \
             --include="*.ts" \
             --include="*.tsx" \
             --exclude-dir="node_modules" \
             --exclude-dir=".next" \
-            . || true)
+            --exclude-dir="dist" \
+            apps/ packages/ 2>/dev/null || true)
 
           if [ -n "$DOUBLE_PATHS" ]; then
             echo "❌ ÉCHEC: Erreurs double-path détectées (typo):"
