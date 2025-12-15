@@ -328,7 +328,7 @@ Database  : Supabase (PostgreSQL + Auth + RLS)
 Validation: Zod + React Hook Form
 Testing   : Vitest + Playwright + Storybook
 Monorepo  : Turborepo v2.6.0 + pnpm workspaces
-Deploy    : Vercel (auto-deploy production-stable)
+Deploy    : Vercel (auto-deploy main)
 ```
 
 ### ⚡ Commandes Essentielles
@@ -464,14 +464,15 @@ packages/@verone/*/src/
 ### Branch Strategy
 
 ```typescript
-production-stable  → Production Vercel (auto-deploy)
-main              → Staging/Development (tests)
+main              → Production Vercel (auto-deploy)
+production        → Legacy (gelée, lecture seule)
 
 // Workflow
-1. Développement → Commit sur main
-2. Tests validation → PR validation
-3. Merge main → production-stable
-4. Auto-deploy production
+1. Créer branche feature/* depuis main
+2. Développer + commit
+3. Ouvrir PR vers main
+4. Status checks Vercel (automatiques)
+5. Merge → Auto-deploy production
 ```
 
 ---
