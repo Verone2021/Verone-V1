@@ -172,8 +172,7 @@ We cannot fix what we cannot see. We must stop debugging symptoms and start logg
 git add .
 git commit -m "fix(core): [Description du fix]
 
-🤖 Generated with Claude Code
-Co-Authored-By: Claude <noreply@anthropic.com>"
+🤖 Generated with Claude Code"
 ```
 
 **Note** : Le gel est **contextuel à la session**. Une nouvelle conversation = gel automatiquement levé.
