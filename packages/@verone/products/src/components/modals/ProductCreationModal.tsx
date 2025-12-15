@@ -1,33 +1,45 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useTransition } from 'react';
 
-import { Plus, Package, AlertTriangle, RefreshCw } from 'lucide-react';
-
+import { useCatalogue } from '@verone/categories/hooks';
+import { useToast } from '@verone/common/hooks';
 import { ButtonV2 } from '@verone/ui';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@verone/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { Textarea } from '@verone/ui';
 import { formatPrice } from '@verone/utils';
-import { useCatalogue } from '@verone/categories/hooks';
-import { useToast } from '@verone/common/hooks';
+import { Plus, Package, AlertTriangle, RefreshCw, Loader2 } from 'lucide-react';
+
+import { getSubcategoryPrefix } from '../../utils/sku-generator';
 
 interface ProductCreationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  /**
+   * Nom de la sous-catégorie (pour génération SKU au format XXX-0000)
+   */
+  subcategoryName?: string;
+  /**
+   * ID de la sous-catégorie (pour l'associer au produit)
+   */
+  subcategoryId?: string;
+  /**
+   * Callback pour générer le prochain SKU disponible
+   * Appelé avec le nom de la sous-catégorie, retourne le SKU généré
+   */
+  onGenerateSKU?: (subcategoryName: string) => Promise<string | null>;
 }
 
 export function ProductCreationModal({
   isOpen,
   onClose,
   onSuccess,
+  subcategoryName,
+  subcategoryId,
+  onGenerateSKU,
 }: ProductCreationModalProps) {
   const [name, setName] = useState('');
   const [sku, setSku] = useState('');
@@ -36,6 +48,7 @@ export function ProductCreationModal({
   const [minStockLevel, setMinStockLevel] = useState('5');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isGeneratingSKU, startGeneratingSKU] = useTransition();
 
   const { toast } = useToast();
   const { createProduct } = useCatalogue();
@@ -96,6 +109,7 @@ export function ProductCreationModal({
         min_stock: parseInt(minStockLevel),
         stock_real: 0, // Nouveau produit commence avec 0 stock
         category: 'general', // Catégorie par défaut
+        subcategory_id: subcategoryId || null, // Associer à la sous-catégorie si fournie
         status: 'active' as const,
         variant_attributes: {},
         dimensions: {},
@@ -153,9 +167,26 @@ export function ProductCreationModal({
     resetForm();
   };
 
-  // Auto-génération SKU basé sur le nom
+  /**
+   * Génération SKU au format Vérone 2025: XXX-0000
+   * (3 lettres sous-catégorie + 4 chiffres séquentiels)
+   */
   const generateSku = () => {
-    if (name && !sku) {
+    // Si on a un callback et un nom de sous-catégorie, utiliser le nouveau format
+    if (onGenerateSKU && subcategoryName) {
+      startGeneratingSKU(async () => {
+        const newSKU = await onGenerateSKU(subcategoryName);
+        if (newSKU) {
+          setSku(newSKU);
+        }
+      });
+    } else if (subcategoryName) {
+      // Fallback: générer un SKU avec préfixe mais timestamp
+      const prefix = getSubcategoryPrefix(subcategoryName);
+      const fallbackSKU = `${prefix}-${String(Date.now()).slice(-4)}`;
+      setSku(fallbackSKU);
+    } else if (name && !sku) {
+      // Ancien comportement si pas de sous-catégorie
       const generatedSku = name
         .toUpperCase()
         .replace(/[^A-Z0-9\s]/g, '')
@@ -211,11 +242,15 @@ export function ProductCreationModal({
                 id="sku"
                 value={sku}
                 onChange={e => {
-                  setSku(e.target.value);
+                  setSku(e.target.value.toUpperCase());
                   setErrors(prev => ({ ...prev, sku: '' }));
                 }}
-                placeholder="SKU-PRODUIT"
-                className={errors.sku ? 'border-red-500' : ''}
+                placeholder={
+                  subcategoryName
+                    ? `${getSubcategoryPrefix(subcategoryName)}-0001`
+                    : 'SKU-PRODUIT'
+                }
+                className={`font-mono ${errors.sku ? 'border-red-500' : ''}`}
                 required
               />
               <ButtonV2
@@ -223,11 +258,25 @@ export function ProductCreationModal({
                 variant="outline"
                 size="sm"
                 onClick={generateSku}
-                disabled={!name}
+                disabled={isGeneratingSKU || (!name && !subcategoryName)}
+                title={
+                  subcategoryName
+                    ? `Générer SKU pour ${subcategoryName}`
+                    : 'Entrez un nom de produit'
+                }
               >
-                Auto
+                {isGeneratingSKU ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  'Auto'
+                )}
               </ButtonV2>
             </div>
+            <p className="text-xs text-gray-500">
+              {subcategoryName
+                ? `Format: ${getSubcategoryPrefix(subcategoryName)}-0000 (ex: ${getSubcategoryPrefix(subcategoryName)}-0001)`
+                : 'Format recommandé: XXX-0000 (3 lettres sous-catégorie + 4 chiffres)'}
+            </p>
             {errors.sku && (
               <p className="text-sm text-red-600 flex items-center gap-1">
                 <AlertTriangle className="h-3 w-3" />

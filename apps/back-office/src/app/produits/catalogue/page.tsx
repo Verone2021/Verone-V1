@@ -2,51 +2,52 @@
 
 import { useState, useMemo, useEffect } from 'react';
 
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
-// Types locaux
-type FilterOption = { value: string; label: string };
-
 import type { Product } from '@verone/categories';
-import { CategoryHierarchyFilterV2 } from '@verone/categories';
-import { useCatalogue, Category } from '@verone/categories';
+import { useCatalogue } from '@verone/categories';
 import { useFamilies } from '@verone/categories';
 import { useCategories } from '@verone/categories';
 import { useSubcategories } from '@verone/categories';
+import { useOrganisations } from '@verone/organisations';
 import { ProductCardV2 as ProductCard } from '@verone/products';
 import { useProductImages } from '@verone/products';
 import { ViewModeToggle } from '@verone/ui';
 import { ButtonUnified } from '@verone/ui';
 import { Badge } from '@verone/ui';
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from '@verone/ui';
+import {
   CommandPaletteSearch as CommandPalette,
   type SearchItem,
 } from '@verone/ui-business/components/utils/CommandPaletteSearch';
 import { checkSLOCompliance, debounce } from '@verone/utils';
 import { cn } from '@verone/utils';
-import {
-  Search,
-  Filter,
-  Grid,
-  List,
-  Plus,
-  FileText,
-  Package,
-  Zap,
-} from 'lucide-react';
+import { Search, Plus, Package, Zap, X, RotateCcw } from 'lucide-react';
 
-import { FilterCombobox } from '@/components/business/filter-combobox';
+import {
+  CatalogueFilterPanel,
+  type FilterState,
+} from '@/components/catalogue/CatalogueFilterPanel';
 
 // Nouveaux composants UX/UI 2025
 // Interface Produit selon business rules - utilise maintenant celle du hook useCatalogue
 
-// Interface filtres - migration brand → supplier
+// Interface filtres - NOUVEAU: multi-niveaux (Famille > Catégorie > Sous-catégorie)
 interface Filters {
   search: string;
-  status: string[];
-  subcategories: string[]; // Changé de 'category' à 'subcategories'
-  supplier: string[];
+  families: string[]; // ← NOUVEAU
+  categories: string[]; // ← NOUVEAU
+  subcategories: string[];
+  suppliers: string[];
+  statuses: string[];
 }
 
 export default function CataloguePage() {
@@ -56,16 +57,23 @@ export default function CataloguePage() {
   // Hook Supabase pour les données réelles
   const {
     products,
-    categories,
     loading,
     error,
+    total,
     setFilters: setCatalogueFilters,
-    resetFilters,
     loadArchivedProducts,
     archiveProduct,
     unarchiveProduct,
     deleteProduct,
-    stats,
+    // Pagination
+    currentPage,
+    totalPages,
+    hasNextPage,
+    hasPreviousPage,
+    goToPage,
+    nextPage,
+    previousPage,
+    itemsPerPage,
   } = useCatalogue();
 
   // Hooks pour l'arborescence de catégories
@@ -73,17 +81,28 @@ export default function CataloguePage() {
   const { allCategories } = useCategories();
   const { subcategories } = useSubcategories();
 
+  // ✅ NOUVEAU: Hook pour charger TOUS les fournisseurs avec compteurs produits
+  const { organisations: allSuppliers } = useOrganisations({
+    type: 'supplier',
+    is_active: true,
+  });
+
   // État local
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
   const [archivedProducts, setArchivedProducts] = useState<Product[]>([]);
   const [archivedLoading, setArchivedLoading] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  // État local pour la recherche (contrôlé)
+  const [searchInput, setSearchInput] = useState('');
+  // ✅ NOUVEAU: État filtres multi-niveaux
   const [filters, setFilters] = useState<Filters>({
     search: '',
-    status: [],
+    families: [],
+    categories: [],
     subcategories: [],
-    supplier: [],
+    suppliers: [],
+    statuses: [],
   });
 
   // Fonction de recherche debouncée - synchronise avec useCatalogue
@@ -92,15 +111,91 @@ export default function CataloguePage() {
       debounce((searchTerm: string) => {
         const newFilters = { ...filters, search: searchTerm };
         setFilters(newFilters);
-        // Synchronise avec le hook useCatalogue
+        // Synchronise avec le hook useCatalogue (multi-niveaux)
         setCatalogueFilters({
           search: searchTerm,
-          statuses: newFilters.status,
+          families: newFilters.families,
+          categories: newFilters.categories,
           subcategories: newFilters.subcategories,
+          suppliers: newFilters.suppliers,
+          statuses: newFilters.statuses,
         });
       }, 300),
     [filters, setCatalogueFilters]
   );
+
+  // Handler pour la recherche contrôlée (tape sans déclencher)
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchInput(e.target.value);
+  };
+
+  // Handler pour soumettre la recherche (Entrée ou clic bouton)
+  const handleSearchSubmit = () => {
+    const newFilters = { ...filters, search: searchInput };
+    setFilters(newFilters);
+    setCatalogueFilters({
+      search: searchInput,
+      families: newFilters.families,
+      categories: newFilters.categories,
+      subcategories: newFilters.subcategories,
+      suppliers: newFilters.suppliers,
+      statuses: newFilters.statuses,
+    });
+  };
+
+  // Handler pour touche Entrée
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSearchSubmit();
+    }
+  };
+
+  // Handler pour effacer la recherche
+  const handleClearSearch = () => {
+    setSearchInput('');
+    const newFilters = { ...filters, search: '' };
+    setFilters(newFilters);
+    setCatalogueFilters({
+      search: '',
+      families: newFilters.families,
+      categories: newFilters.categories,
+      subcategories: newFilters.subcategories,
+      suppliers: newFilters.suppliers,
+      statuses: newFilters.statuses,
+    });
+  };
+
+  // Handler pour réinitialiser TOUS les filtres
+  const handleResetAllFilters = () => {
+    setSearchInput('');
+    const emptyFilters: Filters = {
+      search: '',
+      families: [],
+      categories: [],
+      subcategories: [],
+      suppliers: [],
+      statuses: [],
+    };
+    setFilters(emptyFilters);
+    setCatalogueFilters({
+      search: '',
+      families: [],
+      categories: [],
+      subcategories: [],
+      suppliers: [],
+      statuses: [],
+    });
+  };
+
+  // Vérifie si des filtres sont actifs
+  const hasActiveFilters =
+    filters.search !== '' ||
+    filters.families.length > 0 ||
+    filters.categories.length > 0 ||
+    filters.subcategories.length > 0 ||
+    filters.suppliers.length > 0 ||
+    filters.statuses.length > 0;
 
   // Fonction pour charger les produits archivés
   const loadArchivedProductsData = async () => {
@@ -151,96 +246,28 @@ export default function CataloguePage() {
     setPaletteOpen(false);
   };
 
-  // Le filtrage est maintenant géré par le hook useCatalogue
+  // Le filtrage est maintenant géré par le hook useCatalogue + CatalogueFilterPanel
 
-  // Extraction des valeurs uniques pour filtres depuis Supabase
-  const availableStatuses = Array.from(
-    new Set(products.map(p => p.product_status))
-  );
-  const availableSuppliers = Array.from(
-    new Set(
-      products
-        .map(p => p.supplier?.trade_name || p.supplier?.legal_name)
-        .filter(Boolean)
-    )
-  );
-
-  // Options pour FilterCombobox (avec labels français)
-  const statusOptions: FilterOption[] = availableStatuses.map(status => {
-    const count = products.filter(p => p.product_status === status).length;
-    const labels: Record<string, string> = {
-      active: '✓ Actif',
-      preorder: '📅 Précommande',
-      discontinued: '⚠ Arrêté',
-      draft: '📝 Brouillon',
-    };
-    return {
-      value: status,
-      label: labels[status] || status,
-      count,
-    };
-  });
-
-  const subcategoryOptions: FilterOption[] = subcategories.map(subcategory => {
-    const count = products.filter(
-      p => p.subcategory_id === subcategory.id
-    ).length;
-    return {
-      value: subcategory.id,
-      label: subcategory.name,
-      count,
-    };
-  });
-
-  const supplierOptions: FilterOption[] = availableSuppliers.map(supplier => {
-    const count = products.filter(
-      p => (p.supplier?.trade_name || p.supplier?.legal_name) === supplier
-    ).length;
-    return {
-      value: supplier || '',
-      label: supplier || '',
-      count,
-    };
-  });
-
-  // Toggle filtre statut - synchronise avec useCatalogue
-  const toggleFilter = (type: keyof Filters, value: string) => {
-    const currentFilter = filters[type];
-    const currentArray = Array.isArray(currentFilter) ? currentFilter : [];
-
-    const newFilters = {
-      ...filters,
-      [type]: currentArray.includes(value)
-        ? currentArray.filter(item => item !== value)
-        : [...currentArray, value],
+  // ✅ NOUVEAU: Handler unifié pour CatalogueFilterPanel
+  const handleFiltersChange = (newFilterState: FilterState) => {
+    const newFilters: Filters = {
+      search: newFilterState.search,
+      families: newFilterState.families,
+      categories: newFilterState.categories,
+      subcategories: newFilterState.subcategories,
+      suppliers: newFilterState.suppliers,
+      statuses: newFilterState.statuses,
     };
     setFilters(newFilters);
 
-    // Synchronise avec le hook useCatalogue
+    // Synchronise avec le hook useCatalogue (multi-niveaux)
     setCatalogueFilters({
       search: newFilters.search,
-      statuses: newFilters.status,
+      families: newFilters.families,
+      categories: newFilters.categories,
       subcategories: newFilters.subcategories,
-    });
-  };
-
-  // Toggle filtre sous-catégorie
-  const handleSubcategoryToggle = (subcategoryId: string) => {
-    const newSubcategories = filters.subcategories.includes(subcategoryId)
-      ? filters.subcategories.filter(id => id !== subcategoryId)
-      : [...filters.subcategories, subcategoryId];
-
-    const newFilters = {
-      ...filters,
-      subcategories: newSubcategories,
-    };
-    setFilters(newFilters);
-
-    // Synchronise avec le hook useCatalogue
-    setCatalogueFilters({
-      search: newFilters.search,
-      statuses: newFilters.status,
-      subcategories: newSubcategories,
+      suppliers: newFilters.suppliers,
+      statuses: newFilters.statuses,
     });
   };
 
@@ -302,13 +329,7 @@ export default function CataloguePage() {
     <div className="space-y-6">
       {/* En-tête avec indicateur performance */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-light text-black">Catalogue Produits</h1>
-          <p className="text-black opacity-70 mt-1">
-            Gestion des produits et collections Vérone ({products.length}{' '}
-            produits)
-          </p>
-        </div>
+        <h1 className="text-3xl font-light text-black">Catalogue Produits</h1>
 
         {/* Actions et indicateur SLO performance */}
         <div className="flex items-center space-x-4">
@@ -350,27 +371,6 @@ export default function CataloguePage() {
 
       {/* Contenu principal catalogue */}
       <div className="space-y-6">
-        {/* Barre de recherche et actions pour produits */}
-        <div className="flex items-center space-x-4">
-          {/* Recherche */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-black opacity-50" />
-            <input
-              type="search"
-              placeholder="Rechercher par nom, SKU, marque..."
-              className="w-full border border-black bg-white py-2 pl-10 pr-4 text-sm text-black placeholder:text-black placeholder:opacity-50 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
-              onChange={e => debouncedSearch(e.target.value)}
-            />
-          </div>
-
-          {/* Toggle vue (nouveau ViewModeToggle) */}
-          <ViewModeToggle
-            value={viewMode}
-            onChange={setViewMode}
-            variant="outline"
-          />
-        </div>
-
         {/* Onglets produits actifs/archivés */}
         <div className="flex border-b border-black">
           <button
@@ -381,7 +381,7 @@ export default function CataloguePage() {
                 : 'text-black opacity-60 hover:opacity-80'
             }`}
           >
-            Produits Actifs ({products.length})
+            Produits Actifs ({total})
           </button>
           <button
             onClick={() => setActiveTab('archived')}
@@ -395,53 +395,88 @@ export default function CataloguePage() {
           </button>
         </div>
 
-        {/* Filtres rapides (nouveaux FilterCombobox) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Filtre par statut */}
-          <FilterCombobox
-            label="Statut"
-            options={statusOptions}
-            selectedValues={filters.status}
-            onSelectionChange={values => {
-              const newFilters = { ...filters, status: values };
-              setFilters(newFilters);
-              setCatalogueFilters({
-                search: newFilters.search,
-                statuses: values,
-                subcategories: newFilters.subcategories,
-              });
+        {/* Filtres horizontaux + Recherche + Toggle vue */}
+        <div className="flex items-start gap-4">
+          {/* Panneau de filtres */}
+          <CatalogueFilterPanel
+            families={families}
+            categories={allCategories.filter(
+              (c): c is typeof c & { family_id: string } => c.family_id !== null
+            )}
+            subcategories={subcategories}
+            products={products}
+            suppliers={allSuppliers}
+            filters={{
+              search: filters.search,
+              families: filters.families,
+              categories: filters.categories,
+              subcategories: filters.subcategories,
+              suppliers: filters.suppliers,
+              statuses: filters.statuses,
             }}
-            placeholder="Rechercher un statut..."
+            onFiltersChange={handleFiltersChange}
+            className="flex-1"
           />
 
-          {/* Filtre par sous-catégories */}
-          <FilterCombobox
-            label="Sous-catégories"
-            options={subcategoryOptions}
-            selectedValues={filters.subcategories}
-            onSelectionChange={values => {
-              const newFilters = { ...filters, subcategories: values };
-              setFilters(newFilters);
-              setCatalogueFilters({
-                search: newFilters.search,
-                statuses: newFilters.status,
-                subcategories: values,
-              });
-            }}
-            placeholder="Rechercher une sous-catégorie..."
-          />
+          {/* Recherche + Actions + Toggle vue alignés à droite */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            {/* Barre de recherche avec boutons */}
+            <div className="flex items-center">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-black opacity-50" />
+                <input
+                  type="text"
+                  placeholder="Rechercher..."
+                  value={searchInput}
+                  onChange={handleSearchChange}
+                  onKeyDown={handleSearchKeyDown}
+                  className={cn(
+                    'w-48 border border-black border-r-0 bg-white py-2 pl-10 text-sm text-black placeholder:text-black placeholder:opacity-50 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2',
+                    searchInput ? 'pr-8' : 'pr-3'
+                  )}
+                />
+                {/* Bouton Effacer la recherche (X) */}
+                {searchInput && (
+                  <button
+                    type="button"
+                    onClick={handleClearSearch}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-black opacity-50 hover:opacity-100 transition-opacity"
+                    title="Effacer la recherche"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={handleSearchSubmit}
+                className="h-[38px] px-3 border border-black bg-black text-white hover:bg-gray-800 transition-colors"
+                title="Rechercher"
+              >
+                <Search className="h-4 w-4" />
+              </button>
+            </div>
 
-          {/* Filtre par fournisseurs */}
-          <FilterCombobox
-            label="Fournisseurs"
-            options={supplierOptions}
-            selectedValues={filters.supplier}
-            onSelectionChange={values => {
-              setFilters({ ...filters, supplier: values });
-              // Note: useCatalogue ne filtre pas encore par supplier
-            }}
-            placeholder="Rechercher un fournisseur..."
-          />
+            {/* Bouton Réinitialiser tous les filtres */}
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={handleResetAllFilters}
+                className="flex items-center gap-1.5 h-[38px] px-3 border border-black bg-white text-black hover:bg-gray-100 transition-colors text-sm"
+                title="Réinitialiser tous les filtres"
+              >
+                <RotateCcw className="h-4 w-4" />
+                <span className="hidden sm:inline">Réinitialiser</span>
+              </button>
+            )}
+
+            {/* Toggle vue */}
+            <ViewModeToggle
+              value={viewMode}
+              onChange={setViewMode}
+              variant="outline"
+            />
+          </div>
         </div>
 
         {/* Résultats */}
@@ -454,14 +489,22 @@ export default function CataloguePage() {
             </div>
           ) : (
             <>
-              {/* Compteur résultats */}
+              {/* Compteur résultats avec pagination */}
               <div className="flex items-center justify-between text-sm text-black opacity-70">
                 <span>
                   {activeTab === 'active'
-                    ? `${products.length} produit${products.length > 1 ? 's' : ''} actif${products.length > 1 ? 's' : ''}`
+                    ? `${total} produit${total > 1 ? 's' : ''} actif${total > 1 ? 's' : ''} - Page ${currentPage} sur ${totalPages}`
                     : `${archivedProducts.length} produit${archivedProducts.length > 1 ? 's' : ''} archivé${archivedProducts.length > 1 ? 's' : ''}`}
                 </span>
-                {filters.search && <span>Recherche: "{filters.search}"</span>}
+                <span className="flex items-center gap-4">
+                  {filters.search && <span>Recherche: "{filters.search}"</span>}
+                  {activeTab === 'active' && totalPages > 1 && (
+                    <span className="text-xs">
+                      Affichage {(currentPage - 1) * itemsPerPage + 1}-
+                      {Math.min(currentPage * itemsPerPage, total)} sur {total}
+                    </span>
+                  )}
+                </span>
               </div>
 
               {/* Grille produits */}
@@ -614,6 +657,112 @@ export default function CataloguePage() {
                   )
                 );
               })()}
+
+              {/* Pagination */}
+              {activeTab === 'active' && totalPages > 1 && (
+                <div className="mt-8 pb-4">
+                  <Pagination>
+                    <PaginationContent>
+                      {/* Bouton Précédent */}
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() => hasPreviousPage && previousPage()}
+                          className={cn(
+                            'cursor-pointer',
+                            !hasPreviousPage && 'pointer-events-none opacity-50'
+                          )}
+                        />
+                      </PaginationItem>
+
+                      {/* Première page */}
+                      {currentPage > 2 && (
+                        <>
+                          <PaginationItem>
+                            <PaginationLink
+                              onClick={() => goToPage(1)}
+                              isActive={currentPage === 1}
+                            >
+                              1
+                            </PaginationLink>
+                          </PaginationItem>
+                          {currentPage > 3 && (
+                            <PaginationItem>
+                              <PaginationEllipsis />
+                            </PaginationItem>
+                          )}
+                        </>
+                      )}
+
+                      {/* Pages autour de la page courante */}
+                      {Array.from(
+                        { length: Math.min(5, totalPages) },
+                        (_, i) => {
+                          let pageNum: number;
+                          if (totalPages <= 5) {
+                            pageNum = i + 1;
+                          } else if (currentPage <= 3) {
+                            pageNum = i + 1;
+                          } else if (currentPage >= totalPages - 2) {
+                            pageNum = totalPages - 4 + i;
+                          } else {
+                            pageNum = currentPage - 2 + i;
+                          }
+
+                          if (pageNum < 1 || pageNum > totalPages) return null;
+                          if (pageNum === 1 && currentPage > 2) return null;
+                          if (
+                            pageNum === totalPages &&
+                            currentPage < totalPages - 1
+                          )
+                            return null;
+
+                          return (
+                            <PaginationItem key={pageNum}>
+                              <PaginationLink
+                                onClick={() => goToPage(pageNum)}
+                                isActive={currentPage === pageNum}
+                                className="cursor-pointer"
+                              >
+                                {pageNum}
+                              </PaginationLink>
+                            </PaginationItem>
+                          );
+                        }
+                      )}
+
+                      {/* Dernière page */}
+                      {currentPage < totalPages - 1 && (
+                        <>
+                          {currentPage < totalPages - 2 && (
+                            <PaginationItem>
+                              <PaginationEllipsis />
+                            </PaginationItem>
+                          )}
+                          <PaginationItem>
+                            <PaginationLink
+                              onClick={() => goToPage(totalPages)}
+                              isActive={currentPage === totalPages}
+                            >
+                              {totalPages}
+                            </PaginationLink>
+                          </PaginationItem>
+                        </>
+                      )}
+
+                      {/* Bouton Suivant */}
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => hasNextPage && nextPage()}
+                          className={cn(
+                            'cursor-pointer',
+                            !hasNextPage && 'pointer-events-none opacity-50'
+                          )}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
             </>
           )}
         </div>

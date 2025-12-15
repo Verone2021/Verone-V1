@@ -85,13 +85,19 @@ export interface Category {
 
 interface CatalogueFilters {
   search?: string;
-  subcategories?: string[]; // Filtre par sous-catégories
+  families?: string[]; // ✅ NOUVEAU: Filtre par familles (niveau 0)
+  categories?: string[]; // ✅ NOUVEAU: Filtre par catégories (niveau 1)
+  subcategories?: string[]; // Filtre par sous-catégories (niveau 2)
   statuses?: string[];
+  suppliers?: string[]; // Filtre par fournisseurs (supplier_id)
   priceMin?: number;
   priceMax?: number;
   limit?: number;
   offset?: number;
+  page?: number; // Page courante (1-indexed)
 }
+
+const ITEMS_PER_PAGE = 50;
 
 interface CatalogueState {
   productGroups: ProductGroup[];
@@ -173,8 +179,53 @@ export const useCatalogue = () => {
     return (data || []) as any;
   };
 
+  // ✅ NOUVEAU: Fonction helper pour résoudre les subcategory_ids depuis families/categories
+  const resolveSubcategoryIds = async (
+    filters: CatalogueFilters
+  ): Promise<string[]> => {
+    const subcategoryIds = new Set<string>();
+
+    // Ajouter les sous-catégories directement sélectionnées
+    if (filters.subcategories?.length) {
+      filters.subcategories.forEach(id => subcategoryIds.add(id));
+    }
+
+    // Si des catégories sont sélectionnées, récupérer leurs sous-catégories
+    if (filters.categories?.length) {
+      const { data: subcats } = await supabase
+        .from('subcategories')
+        .select('id')
+        .in('category_id', filters.categories);
+
+      subcats?.forEach(sub => subcategoryIds.add(sub.id));
+    }
+
+    // Si des familles sont sélectionnées, récupérer toutes les sous-catégories via les catégories
+    if (filters.families?.length) {
+      // D'abord récupérer les catégories de ces familles
+      const { data: cats } = await supabase
+        .from('categories')
+        .select('id')
+        .in('family_id', filters.families);
+
+      if (cats?.length) {
+        const categoryIds = cats.map(c => c.id);
+        const { data: subcats } = await supabase
+          .from('subcategories')
+          .select('id')
+          .in('category_id', categoryIds);
+
+        subcats?.forEach(sub => subcategoryIds.add(sub.id));
+      }
+    }
+
+    return Array.from(subcategoryIds);
+  };
+
   const loadProducts = async (filters: CatalogueFilters = {}) => {
-    let query = supabase.from('products').select(`
+    // ✅ FIX PAGINATION: Utiliser count: 'exact' pour le total réel
+    let query = supabase.from('products').select(
+      `
         id, sku, name, slug,
         stock_status, product_status, condition,
         subcategory_id, supplier_id, brand,
@@ -182,7 +233,9 @@ export const useCatalogue = () => {
         supplier:organisations!supplier_id(id, legal_name, trade_name),
         subcategories!subcategory_id(id, name),
         product_images!left(public_url, is_primary)
-      `);
+      `,
+      { count: 'exact' }
+    );
 
     // IMPORTANT : Exclure les produits archivés par défaut
     query = query.is('archived_at', null);
@@ -201,19 +254,37 @@ export const useCatalogue = () => {
       query = query.in('product_status', filters.statuses as any);
     }
 
-    if (filters.subcategories && filters.subcategories.length > 0) {
-      query = query.in('subcategory_id', filters.subcategories);
+    // ✅ NOUVEAU: Filtre hiérarchique (families → categories → subcategories)
+    const hasHierarchyFilter =
+      (filters.families?.length ?? 0) > 0 ||
+      (filters.categories?.length ?? 0) > 0 ||
+      (filters.subcategories?.length ?? 0) > 0;
+
+    if (hasHierarchyFilter) {
+      const resolvedSubcategoryIds = await resolveSubcategoryIds(filters);
+      if (resolvedSubcategoryIds.length > 0) {
+        query = query.in('subcategory_id', resolvedSubcategoryIds);
+      } else {
+        // Si aucune sous-catégorie résolue mais filtre actif, retourner vide
+        return { products: [], total: 0 };
+      }
     }
 
-    // Pagination - Optimisé pour performance (pagination normale)
-    const limit = filters.limit || 50; // 50 produits par page (vs 500 avant)
-    const offset = filters.offset || 0;
+    // Filtre par fournisseurs
+    if (filters.suppliers && filters.suppliers.length > 0) {
+      query = query.in('supplier_id', filters.suppliers);
+    }
+
+    // Pagination - Calcul basé sur page (1-indexed) ou offset
+    const limit = filters.limit || ITEMS_PER_PAGE;
+    const page = filters.page || 1;
+    const offset = filters.offset ?? (page - 1) * limit;
     query = query.range(offset, offset + limit - 1);
 
     // Tri par défaut
     query = query.order('updated_at', { ascending: false });
 
-    const { data, error } = await query;
+    const { data, error, count } = await query;
 
     if (error) throw error;
 
@@ -229,7 +300,7 @@ export const useCatalogue = () => {
 
     return {
       products: enrichedProducts,
-      total: enrichedProducts.length, // Utiliser length au lieu de count exact
+      total: count || 0, // ✅ Utiliser le count exact de Supabase
     };
   };
 
@@ -258,8 +329,24 @@ export const useCatalogue = () => {
       query = query.in('product_status', filters.statuses as any);
     }
 
-    if (filters.subcategories && filters.subcategories.length > 0) {
-      query = query.in('subcategory_id', filters.subcategories);
+    // ✅ Filtre hiérarchique (families → categories → subcategories)
+    const hasHierarchyFilter =
+      (filters.families?.length ?? 0) > 0 ||
+      (filters.categories?.length ?? 0) > 0 ||
+      (filters.subcategories?.length ?? 0) > 0;
+
+    if (hasHierarchyFilter) {
+      const resolvedSubcategoryIds = await resolveSubcategoryIds(filters);
+      if (resolvedSubcategoryIds.length > 0) {
+        query = query.in('subcategory_id', resolvedSubcategoryIds);
+      } else {
+        return { products: [], total: 0 };
+      }
+    }
+
+    // Filtre par fournisseurs
+    if (filters.suppliers && filters.suppliers.length > 0) {
+      query = query.in('supplier_id', filters.suppliers);
     }
 
     // Pagination - Optimisé
@@ -431,6 +518,33 @@ export const useCatalogue = () => {
     setFiltersState({});
   };
 
+  // ✅ PAGINATION: Calculs de pagination
+  const currentPage = filters.page || 1;
+  const totalPages = Math.ceil(state.total / ITEMS_PER_PAGE);
+  const hasNextPage = currentPage < totalPages;
+  const hasPreviousPage = currentPage > 1;
+
+  const goToPage = useCallback(
+    (page: number) => {
+      if (page >= 1 && page <= totalPages) {
+        setFiltersState(prev => ({ ...prev, page }));
+      }
+    },
+    [totalPages]
+  );
+
+  const nextPage = useCallback(() => {
+    if (hasNextPage) {
+      goToPage(currentPage + 1);
+    }
+  }, [hasNextPage, currentPage, goToPage]);
+
+  const previousPage = useCallback(() => {
+    if (hasPreviousPage) {
+      goToPage(currentPage - 1);
+    }
+  }, [hasPreviousPage, currentPage, goToPage]);
+
   return {
     // État
     ...state,
@@ -447,6 +561,16 @@ export const useCatalogue = () => {
     setFilters,
     resetFilters,
 
+    // ✅ PAGINATION: Exposer état et actions de pagination
+    currentPage,
+    totalPages,
+    hasNextPage,
+    hasPreviousPage,
+    goToPage,
+    nextPage,
+    previousPage,
+    itemsPerPage: ITEMS_PER_PAGE,
+
     // Helpers
     getProductsBySubcategory: (subcategoryId: string) =>
       state.products.filter(p => p.subcategory_id === subcategoryId),
@@ -456,7 +580,7 @@ export const useCatalogue = () => {
     // ✅ FIX 3.3: Stats utiles - MÉMORISÉES pour éviter recalcul à chaque render
     stats: useMemo(
       () => ({
-        totalProducts: state.products.length,
+        totalProducts: state.total, // Utiliser total réel, pas length de page
         inStock: state.products.filter(p => p.stock_status === 'in_stock')
           .length,
         outOfStock: state.products.filter(
@@ -467,7 +591,7 @@ export const useCatalogue = () => {
         comingSoon: state.products.filter(p => p.stock_status === 'coming_soon')
           .length,
       }),
-      [state.products]
+      [state.products, state.total]
     ), // ✅ Recalculer seulement quand products change
   };
 };
