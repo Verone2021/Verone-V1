@@ -1,6 +1,6 @@
 # GitHub Rulesets - Verone Monorepo
 
-**Date** : 2025-12-13
+**Date** : 2025-12-15
 **Repository** : Verone2021/Verone-V1
 
 ---
@@ -18,7 +18,9 @@
 **Règles appliquées** :
 
 - Require pull request before merging (0 approvals minimum)
-- Require status checks: `Vercel`
+- Require status checks:
+  - `Vercel – verone-back-office`
+  - `Vercel – linkme`
 - Block force pushes
 - Block deletions
 
@@ -39,56 +41,42 @@
 
 ## Status Check "Vercel" - État Actuel
 
-### Configuration Mono-App (Décembre 2025)
+### Configuration Multi-App (Décembre 2025)
 
 ```
-Apps déployées : 1 (back-office)
-Status check requis : "Vercel"
+Apps déployées : 2 (back-office, linkme)
+Status checks requis :
+  - "Vercel – verone-back-office"
+  - "Vercel – linkme"
 ```
 
-**Pourquoi `Vercel` et non `Vercel – verone-back-office` ?**
+**Contexte** :
 
-Vercel émet actuellement un seul context de status check : `Vercel`.
-Le nom affiché dans Vercel Dashboard (`verone-back-office`) n'est PAS utilisé comme context Git.
+Depuis le déploiement de LinkMe (PR #16, 2025-12-15), Vercel émet deux contexts distincts :
 
 ```json
 // Status émis par Vercel sur chaque commit
-{ "context": "Vercel", "state": "success" }
+{ "context": "Vercel – verone-back-office", "state": "success" }
+{ "context": "Vercel – linkme", "state": "success" }
 ```
+
+Les deux checks doivent passer pour qu'une PR soit mergeable vers main.
 
 ---
 
-## TODO : Migration Multi-App (Phase E)
+## TODO : Migration site-internet (Phase E - Future)
 
-> **Quand ?** Lors du déploiement de `linkme` et `site-internet` sur Vercel.
+> **Quand ?** Lors du déploiement de `site-internet` sur Vercel.
 
-### Actions Requises
+### État Actuel ✅
 
-1. **Configurer les contexts Vercel par projet** :
-   - Vercel Dashboard → Project Settings → Git → Commit Statuses
-   - Définir un "Status Name" unique par projet :
-     - `verone-back-office` → `Vercel – verone-back-office`
-     - `verone-linkme` → `Vercel – linkme`
-     - `verone-site-internet` → `Vercel – site-internet`
+- [x] `back-office` déployé → Check `Vercel – verone-back-office`
+- [x] `linkme` déployé → Check `Vercel – linkme`
+- [ ] `site-internet` à déployer → Check `Vercel – site-internet`
 
-2. **Mettre à jour le ruleset "Protect main"** :
+### Action Future pour site-internet
 
-   ```json
-   {
-     "type": "required_status_checks",
-     "parameters": {
-       "required_status_checks": [
-         { "context": "Vercel – verone-back-office" },
-         { "context": "Vercel – linkme" },
-         { "context": "Vercel – site-internet" }
-       ]
-     }
-   }
-   ```
-
-3. **Vérifier** : Chaque PR doit passer les 3 checks avant merge.
-
-### Commande de Mise à Jour (Future)
+Ajouter le troisième check au ruleset :
 
 ```bash
 gh api -X PUT repos/Verone2021/Verone-V1/rulesets/11086775 \
@@ -133,7 +121,9 @@ EOF
 | 2025-12-13 | Création ruleset "Protect main" avec `Vercel – verone-back-office` | Claude Code |
 | 2025-12-13 | Fix context: `Vercel – verone-back-office` → `Vercel` (match réel) | Claude Code |
 | 2025-12-13 | Documentation créée                                                | Claude Code |
+| 2025-12-15 | Déploiement LinkMe: ajout check `Vercel – linkme` au ruleset       | Claude Code |
+| 2025-12-15 | Migration config mono-app → multi-app (2 checks requis)            | Claude Code |
 
 ---
 
-**Dernière mise à jour** : 2025-12-13
+**Dernière mise à jour** : 2025-12-15
