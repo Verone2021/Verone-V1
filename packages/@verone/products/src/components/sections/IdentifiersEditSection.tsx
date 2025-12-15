@@ -1,16 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 
-import { Tag, Save, X, RefreshCw } from 'lucide-react';
-
-import { ButtonV2 } from '@verone/ui';
-import { generateSKU } from '@verone/utils/business-rules/naming-rules';
-import { cn } from '@verone/utils';
 import {
   useInlineEdit,
   type EditableSection,
 } from '@verone/common/hooks/use-inline-edit';
+import { ButtonV2 } from '@verone/ui';
+import { cn } from '@verone/utils';
+import { Tag, Save, X, RefreshCw, Loader2 } from 'lucide-react';
 
 interface Product {
   id: string;
@@ -19,19 +17,33 @@ interface Product {
   supplier_reference?: string;
   gtin?: string;
   variant_attributes?: Record<string, any>;
+  subcategory_id?: string | null;
 }
 
 interface IdentifiersEditSectionProps {
   product: Product;
   onUpdate: (updatedProduct: Partial<Product>) => void;
   className?: string;
+  /**
+   * Nom de la sous-catégorie du produit (pour génération SKU)
+   * Format attendu: "Fauteuil", "Table basse", etc.
+   */
+  subcategoryName?: string;
+  /**
+   * Callback pour générer le prochain SKU disponible
+   * Appelé avec le nom de la sous-catégorie, retourne le SKU généré
+   */
+  onGenerateSKU?: (subcategoryName: string) => Promise<string | null>;
 }
 
 export function IdentifiersEditSection({
   product,
   onUpdate,
   className,
+  subcategoryName,
+  onGenerateSKU,
 }: IdentifiersEditSectionProps) {
+  const [isGeneratingSKU, startGeneratingSKU] = useTransition();
   const {
     isEditing,
     isSaving,
@@ -80,19 +92,29 @@ export function IdentifiersEditSection({
     updateEditedData(section, { [field]: value });
   };
 
+  /**
+   * Génère un nouveau SKU au format Vérone 2025: XXX-0000
+   * (3 lettres sous-catégorie + 4 chiffres séquentiels)
+   */
   const generateNewSKU = () => {
     if (!editData) return;
 
-    // Générer un nouveau SKU basé sur les règles métier
-    const familyCode = 'GEN'; // TODO: Récupérer depuis la hiérarchie
-    const productCode = editData.sku.split('-')[1] || 'PROD';
-    const newSKU = generateSKU(
-      familyCode,
-      productCode,
-      product.variant_attributes
-    );
-
-    handleFieldChange('sku', newSKU);
+    // Si on a un callback et un nom de sous-catégorie, utiliser le nouveau format
+    if (onGenerateSKU && subcategoryName) {
+      startGeneratingSKU(async () => {
+        const newSKU = await onGenerateSKU(subcategoryName);
+        if (newSKU) {
+          handleFieldChange('sku', newSKU);
+        }
+      });
+    } else {
+      // Fallback: générer un SKU basique si pas de sous-catégorie
+      console.warn(
+        '⚠️ Génération SKU: sous-catégorie non disponible, utilisation du fallback'
+      );
+      const fallbackSKU = `GEN-${String(Date.now()).slice(-4)}`;
+      handleFieldChange('sku', fallbackSKU);
+    }
   };
 
   const generateSlugFromSKU = () => {
@@ -150,10 +172,20 @@ export function IdentifiersEditSection({
                 variant="outline"
                 size="sm"
                 onClick={generateNewSKU}
+                disabled={isGeneratingSKU || !subcategoryName}
                 className="h-6 text-xs"
+                title={
+                  !subcategoryName
+                    ? 'Sous-catégorie requise pour générer le SKU'
+                    : 'Générer le prochain SKU disponible'
+                }
               >
-                <RefreshCw className="h-3 w-3 mr-1" />
-                Auto
+                {isGeneratingSKU ? (
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                )}
+                {isGeneratingSKU ? 'Génération...' : 'Auto'}
               </ButtonV2>
             </div>
             <input
@@ -163,11 +195,12 @@ export function IdentifiersEditSection({
                 handleFieldChange('sku', e.target.value.toUpperCase())
               }
               className="w-full px-3 py-2 font-mono text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-              placeholder="PRD-001-BLA-CER"
+              placeholder="FAU-0001"
               required
             />
             <div className="text-xs text-gray-500 mt-1">
-              Format recommandé: [FAMILLE]-[PRODUIT]-[COULEUR]-[MATIERE]
+              Format Vérone: [3 lettres sous-catégorie]-[4 chiffres] (ex:
+              FAU-0001)
             </div>
           </div>
 
