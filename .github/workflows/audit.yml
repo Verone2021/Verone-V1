@@ -85,7 +85,7 @@ jobs:
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
-              repo: context.repo.name,
+              repo: context.repo.repo,
               body: `## ❌ Code Audit Failed
 
               Some quality checks failed. Please review the workflow logs and fix the issues.
