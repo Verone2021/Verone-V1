@@ -55,6 +55,9 @@ jobs:
           # Configuration remote - pas de Docker nécessaire
           npx supabase link --project-ref $SUPABASE_PROJECT_REF
 
+      - name: 📁 Ensure reports directory exists
+        run: mkdir -p tools/reports
+
       - name: 🔍 Run Database Audit
         id: audit
         run: |
@@ -84,6 +87,12 @@ jobs:
           script: |
             const fs = require('fs');
             const reportsDir = 'tools/reports';
+
+            // Vérifier que le dossier existe
+            if (!fs.existsSync(reportsDir)) {
+              console.log('Reports directory does not exist - skipping comment');
+              return;
+            }
 
             // Trouver le dernier rapport JSON
             const files = fs.readdirSync(reportsDir).filter(f => f.startsWith('db_audit_') && f.endsWith('.json'));

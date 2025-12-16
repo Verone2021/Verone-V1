@@ -11,6 +11,11 @@ on:
     branches: [main]
     types: [opened, synchronize, ready_for_review]
 
+permissions:
+  pull-requests: write
+  contents: read
+  checks: read
+
 env:
   NODE_VERSION: '18'
   NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}

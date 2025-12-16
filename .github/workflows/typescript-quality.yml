@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main, production-stable, development]
 
+permissions:
+  pull-requests: write
+  contents: read
+
 jobs:
   typescript-check:
     runs-on: ubuntu-latest
