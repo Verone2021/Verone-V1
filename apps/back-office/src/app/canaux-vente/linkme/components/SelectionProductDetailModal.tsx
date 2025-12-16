@@ -109,14 +109,16 @@ export function SelectionProductDetailModal({
     mode === 'edit' ? localCustomPriceHT : item?.base_price_ht || 0;
   const commissionRate = (item?.commission_rate || 0) / 100; // Conversion % → décimal (5.00 → 0.05)
 
-  // Prix de vente avec marge locale
-  // Note: sellingPriceWithMargin = ce que l'affilié gagne (basePrice + sa marge)
-  const sellingPriceWithMargin = basePrice * (1 + localMarginRate);
+  // Prix de vente avec taux de marque
+  // Note: sellingPriceWithMargin = ce que l'affilié gagne (basePrice / (1 - tauxMarque))
+  // Taux de marque: PVHT = PAHT / (1 - taux%)
+  const sellingPriceWithMargin = basePrice / (1 - localMarginRate);
 
-  // FORMULE CORRECTE: P_vente = basePrice × (1 + commission + marge)
-  // La commission LinkMe et la marge affilié s'ADDITIONNENT (pas multiplication!)
+  // FORMULE TAUX DE MARQUE + COMMISSION:
+  // 1. D'abord le taux de marque: PVHT = basePrice / (1 - margeAffilie)
+  // 2. Puis la commission: PrixFinal = PVHT × (1 + commission)
   const finalPriceWithCommission =
-    basePrice * (1 + commissionRate + localMarginRate);
+    (basePrice / (1 - localMarginRate)) * (1 + commissionRate);
 
   // Prix client LinkMe (calculé) = base × (1 + commission)
   const prixClientLinkMe = basePrice * (1 + commissionRate);
@@ -159,9 +161,9 @@ export function SelectionProductDetailModal({
       const marginRateDecimal = localMarginRate;
       const bufferRate = item.buffer_rate || 0.05;
 
-      // Prix final = base × (1 + commission + marge)
+      // Prix final avec taux de marque + commission
       const finalPrice =
-        localCustomPriceHT * (1 + commissionRate + marginRateDecimal);
+        (localCustomPriceHT / (1 - marginRateDecimal)) * (1 + commissionRate);
       // Prix maximum autorisé = prix public × (1 - buffer)
       const maxAllowedPrice = item.public_price_ht * (1 - bufferRate);
 
@@ -503,7 +505,7 @@ export function SelectionProductDetailModal({
 
               <span>Marge affilié ({(localMarginRate * 100).toFixed(1)}%)</span>
               <span className="font-mono text-right">
-                {(basePrice * localMarginRate).toFixed(2)} €
+                {(sellingPriceWithMargin - basePrice).toFixed(2)} €
               </span>
 
               {item?.public_price_ht && (

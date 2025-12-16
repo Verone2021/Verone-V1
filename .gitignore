@@ -86,6 +86,12 @@ next-env.d.ts
 # Playwright MCP Browser screenshots (obsolete)
 .playwright-mcp/
 
+# Audit reports (generated, not source)
+/reports/
+
+# Data exports (sensitive, not source code)
+docs/assets/*.csv
+
 # Serena MCP cache
 .serena/
 

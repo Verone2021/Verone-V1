@@ -90,35 +90,35 @@ export function useLinkMeDashboard() {
       const previousMonth = getMonthBounds(-1);
 
       // ========================================
-      // KPI 1 & 4: Commissions (CA + Orders count)
+      // KPI 1 & 4: CA + Orders count
+      // Utilise la vue linkme_orders_with_margins pour filtrer sur
+      // la vraie date de commande (sales_orders.created_at), pas la date d'insertion
       // ========================================
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: commissionsCurrentMonth } = await (supabase as any)
-        .from('linkme_commissions')
-        .select('id, order_amount_ht, status')
-        .gte('created_at', currentMonth.start)
+      const { data: ordersCurrentMonth } = await (supabase as any)
+        .from('linkme_orders_with_margins')
+        .select('id, total_ht, total_affiliate_margin')
+        .gte('created_at', currentMonth.start) // ✅ Date commande réelle (sales_orders.created_at)
         .lte('created_at', currentMonth.end);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: commissionsPreviousMonth } = await (supabase as any)
-        .from('linkme_commissions')
-        .select('id, order_amount_ht')
+      const { data: ordersPreviousMonth } = await (supabase as any)
+        .from('linkme_orders_with_margins')
+        .select('id, total_ht')
         .gte('created_at', previousMonth.start)
         .lte('created_at', previousMonth.end);
 
-      const currentRevenue = (commissionsCurrentMonth || []).reduce(
-        (sum: number, c: { order_amount_ht: number }) =>
-          sum + Number(c.order_amount_ht || 0),
+      const currentRevenue = (ordersCurrentMonth || []).reduce(
+        (sum: number, o: { total_ht: number }) => sum + Number(o.total_ht || 0),
         0
       );
-      const previousRevenue = (commissionsPreviousMonth || []).reduce(
-        (sum: number, c: { order_amount_ht: number }) =>
-          sum + Number(c.order_amount_ht || 0),
+      const previousRevenue = (ordersPreviousMonth || []).reduce(
+        (sum: number, o: { total_ht: number }) => sum + Number(o.total_ht || 0),
         0
       );
 
-      const currentOrdersCount = (commissionsCurrentMonth || []).length;
-      const previousOrdersCount = (commissionsPreviousMonth || []).length;
+      const currentOrdersCount = (ordersCurrentMonth || []).length;
+      const previousOrdersCount = (ordersPreviousMonth || []).length;
 
       // ========================================
       // KPI 2: Commissions en attente (pending + invoice_received)

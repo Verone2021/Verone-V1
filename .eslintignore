@@ -11,6 +11,8 @@ out
 # Generated files
 *.generated.ts
 src/types/supabase.ts
+next-env.d.ts
+**/next-env.d.ts
 
 # Config files (linting disabled)
 next.config.js
