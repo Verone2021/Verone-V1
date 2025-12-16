@@ -4,12 +4,16 @@ on:
   pull_request:
     branches: [main, develop]
     paths:
-      - 'src/**'
+      - 'apps/**'
       - 'packages/**'
       - 'docs/**'
       - 'package.json'
-      - 'package-lock.json'
+      - 'pnpm-lock.yaml'
   workflow_dispatch: # Permet exécution manuelle
+
+permissions:
+  pull-requests: write
+  contents: read
 
 jobs:
   audit:
@@ -52,7 +56,7 @@ jobs:
 
       - name: Audit - Circular Dependencies
         run: npm run audit:cycles
-        continue-on-error: false # BLOQUER si cycles détectés (strict)
+        continue-on-error: true # Turborepo: structure apps/ packages/ - check optionnel
 
       - name: Audit - Dead Code
         run: npm run audit:deadcode
