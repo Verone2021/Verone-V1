@@ -338,16 +338,15 @@ export function CreateLinkMeOrderModal({
       return;
     }
 
-    // IMPORTANT: Toujours calculer le prix affilié HT
-    // NE PAS utiliser selling_price_ht de la DB (colonne GENERATED avec formule incomplète)
-    // Formule correcte: base × (1 + commission + marge)
-    // - commission_rate: 10% (channel_pricing.channel_commission_rate)
-    // - margin_rate: 15% (marge affilié)
-    // Exemple: 135 × (1 + 0.10 + 0.15) = 135 × 1.25 = 168.75€
+    // IMPORTANT: Calculer le prix affilié HT avec TAUX DE MARQUE
+    // Formule taux de marque: Prix = base / (1 - tauxMarque) × (1 + commission)
+    // - commission_rate: ex 10% (channel_pricing.channel_commission_rate)
+    // - margin_rate: ex 15% (taux de marque affilié)
+    // Exemple: (55.50 / 0.85) × 1.10 = 65.29 × 1.10 = 71.82€
     const commissionRate = (item.commission_rate || 0) / 100;
     const marginRate = item.margin_rate / 100;
     const sellingPrice = roundMoney(
-      item.base_price_ht * (1 + commissionRate + marginRate)
+      (item.base_price_ht / (1 - marginRate)) * (1 + commissionRate)
     );
     const retrocessionRate = marginRate;
 
@@ -1101,11 +1100,12 @@ export function CreateLinkMeOrderModal({
                         c => c.product_id === item.product_id
                       );
                       // margin_rate et commission_rate sont en POURCENTAGE
-                      // Prix affilié = base × (1 + commission + marge) - ADDITION pas multiplication!
+                      // Taux de marque: Prix = base / (1 - tauxMarque) × (1 + commission)
                       const commissionRate = (item.commission_rate || 0) / 100;
                       const marginRate = item.margin_rate / 100;
                       const sellingPrice =
-                        item.base_price_ht * (1 + commissionRate + marginRate);
+                        (item.base_price_ht / (1 - marginRate)) *
+                        (1 + commissionRate);
                       return (
                         <button
                           key={item.id}
@@ -1461,11 +1461,12 @@ export function CreateLinkMeOrderModal({
               ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                   {previewSelection.items.map(item => {
-                    // Prix affilié = base × (1 + commission + marge) - ADDITION pas multiplication!
+                    // Taux de marque: Prix = base / (1 - tauxMarque) × (1 + commission)
                     const commissionRate = (item.commission_rate || 0) / 100;
                     const marginRate = (item.margin_rate || 0) / 100;
                     const sellingPrice =
-                      item.base_price_ht * (1 + commissionRate + marginRate);
+                      (item.base_price_ht / (1 - marginRate)) *
+                      (1 + commissionRate);
                     return (
                       <div
                         key={item.id}

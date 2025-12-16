@@ -441,25 +441,32 @@ export function calculateLinkMeMargins(
 }
 
 /**
- * Calcule le prix de vente final client
+ * Calcule le prix de vente final client avec TAUX DE MARQUE
  *
- * FORMULE: P_vente = basePriceHT × (1 + platformFeeRate + affiliateMarginRate)
+ * FORMULE TAUX DE MARQUE:
+ * 1. Prix avec marge = basePriceHT / (1 - affiliateMarginRate)
+ * 2. Prix final = Prix avec marge × (1 + platformFeeRate)
  *
  * @param basePriceHT Prix de vente catalogue HT
  * @param platformFeeRate Commission LinkMe en décimal (0.05 = 5%)
- * @param affiliateMarginRate Marge affilié en décimal (0.10 = 10%)
+ * @param affiliateMarginRate Taux de marque affilié en décimal (0.15 = 15%)
  * @returns Prix final client HT
  *
  * @example
- * // base=100€, commission=5%, marge affilié=10%
- * calculateFinalClientPrice(100, 0.05, 0.10) // → 115€
+ * // base=55.50€, commission=5%, taux de marque=15%
+ * // Prix avec marge = 55.50 / 0.85 = 65.29€
+ * // Prix final = 65.29 × 1.05 = 68.55€
+ * calculateFinalClientPrice(55.50, 0.05, 0.15) // → 68.55€
  */
 export function calculateFinalClientPrice(
   basePriceHT: number,
   platformFeeRate: number,
   affiliateMarginRate: number
 ): number {
-  return basePriceHT * (1 + platformFeeRate + affiliateMarginRate);
+  // Taux de marque: PVHT = PAHT / (1 - taux%)
+  const priceWithMargin = basePriceHT / (1 - affiliateMarginRate);
+  // Commission appliquée sur le prix avec marge
+  return priceWithMargin * (1 + platformFeeRate);
 }
 
 /**
