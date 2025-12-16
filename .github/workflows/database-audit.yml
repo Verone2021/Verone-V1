@@ -77,6 +77,10 @@ jobs:
           ls -la tools/reports/db_audit_*
           exit 1
 
+      - name: 📁 Ensure reports directory exists
+        if: always()
+        run: mkdir -p tools/reports
+
       - name: 💬 Comment PR with Audit Results
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v7
