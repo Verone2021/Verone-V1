@@ -519,11 +519,14 @@ export default function SelectionDetailPage({
                   // Prix de vente LinkMe Final HT = Prix × (1 + commission)
                   const prixVenteFinalHT =
                     selectionPriceHT * (1 + commissionRate);
-                  // Marge € = Prix Sélection × (margin_rate / 100)
-                  const marginEuros = selectionPriceHT * (marginRate / 100);
-                  // Prix affilié HT = Prix × (1 + commission + marge) - ADDITION pas multiplication!
+                  // Taux de marque: PVHT = PAHT / (1 - taux%)
+                  const sellingPriceWithMargin =
+                    selectionPriceHT / (1 - marginRate / 100);
+                  // Marge € = Prix avec taux de marque - Prix de base
+                  const marginEuros = sellingPriceWithMargin - selectionPriceHT;
+                  // Prix affilié HT = Prix avec taux de marque × (1 + commission)
                   const prixAffilieHT =
-                    selectionPriceHT * (1 + commissionRate + marginRate / 100);
+                    sellingPriceWithMargin * (1 + commissionRate);
                   // Calcul remise si Prix Sélection < Prix Catalogue
                   const hasDiscount =
                     selectionPriceHT < catalogPriceHT && catalogPriceHT > 0;

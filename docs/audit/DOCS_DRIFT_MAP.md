@@ -87,12 +87,12 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 | ---------------------------------- | ----------------------- | ---------------- |
 | `vercel-manual-deployment-only.md` | Contredit DEPLOYMENT.md | 2025-12-15       |
 
-### Mémoires À Archiver
+### Mémoires Archivées (✅ Fait - 2025-12-16)
 
-| Fichier                                   | Raison            | Action     |
-| ----------------------------------------- | ----------------- | ---------- |
-| `vercel-deployment-status-2025-10-20.md`  | Oct 2025, dépassé | 🔴 ARCHIVE |
-| `vercel-deployment-success-2025-10-20.md` | Oct 2025, dépassé | 🔴 ARCHIVE |
+| Fichier                                   | Raison            | Action            |
+| ----------------------------------------- | ----------------- | ----------------- |
+| `vercel-deployment-status-2025-10-20.md`  | Oct 2025, dépassé | ✅ SUPPRIMÉ 12/16 |
+| `vercel-deployment-success-2025-10-20.md` | Oct 2025, dépassé | ✅ SUPPRIMÉ 12/16 |
 
 ---
 
@@ -166,10 +166,10 @@ D docs/ci-cd/README.md
 
 ## CHECKLIST POST-NETTOYAGE
 
-- [ ] `./scripts/repo-audit.sh` retourne 0 findings MAJOR
-- [ ] Aucune mention "production-stable" comme branche active
-- [ ] Aucun Co-Authored-By Claude dans le repo
-- [ ] Toutes mémoires Oct 2025 archivées
+- [x] `./scripts/repo-audit.sh` retourne 0 findings MAJOR ✅ 2025-12-16
+- [x] Aucune mention "production-stable" comme branche active ✅ 2025-12-16
+- [x] Aucun Co-Authored-By Claude dans le repo ✅ 2025-12-16
+- [x] Toutes mémoires Oct 2025 archivées ✅ 2025-12-16 (2 supprimées)
 - [ ] `docs/README.md` existe avec liens vers canons
 
 ---

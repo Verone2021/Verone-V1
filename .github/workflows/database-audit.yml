@@ -55,6 +55,9 @@ jobs:
           # Configuration remote - pas de Docker nécessaire
           npx supabase link --project-ref $SUPABASE_PROJECT_REF
 
+      - name: 📁 Ensure reports directory exists
+        run: mkdir -p tools/reports
+
       - name: 🔍 Run Database Audit
         id: audit
         run: |
