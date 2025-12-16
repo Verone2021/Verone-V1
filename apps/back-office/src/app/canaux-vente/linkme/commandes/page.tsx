@@ -168,256 +168,76 @@ export default function LinkMeOrdersPage() {
     setShowDetailModal(true);
   };
 
-  // Fetch commandes LinkMe
+  // Fetch commandes LinkMe - OPTIMISÉ avec vues PostgreSQL (1-2 requêtes au lieu de 500+)
   useEffect(() => {
     async function fetchLinkMeOrders() {
       setIsLoading(true);
       try {
-        // Fetch orders with channel_id = LinkMe
-        const { data: ordersData, error: ordersError } = await supabase
-          .from('sales_orders')
-          .select(
-            `
-            id,
-            order_number,
-            status,
-            payment_status,
-            total_ht,
-            total_ttc,
-            customer_type,
-            customer_id,
-            created_at,
-            sales_order_items (
-              id,
-              product_id,
-              quantity,
-              unit_price_ht,
-              total_ht,
-              retrocession_rate,
-              retrocession_amount,
-              linkme_selection_item_id
-            )
-          `
-          )
-          .eq('channel_id', LINKME_CHANNEL_ID)
+        // 1. Fetch toutes les commandes avec données enrichies via la vue optimisée
+        // Note: Cast nécessaire car les types Supabase ne sont pas encore régénérés
+        const { data: ordersData, error: ordersError } = await (supabase as any)
+          .from('linkme_orders_with_margins')
+          .select('*')
           .order('created_at', { ascending: false });
 
         if (ordersError) throw ordersError;
 
-        // Enrichir avec les données clients, affilié, sélection et produits
-        const enrichedOrders: LinkMeOrder[] = await Promise.all(
-          (ordersData || []).map(async (order: any) => {
-            let customerName = 'Client inconnu';
-            let customerAddress: string | null = null;
-            let customerPostalCode: string | null = null;
-            let customerCity: string | null = null;
-            let customerEmail: string | null = null;
-            let customerPhone: string | null = null;
-            let affiliateName: string | null = null;
-            let affiliateType: 'enseigne' | 'organisation' | null = null;
-            let selectionName: string | null = null;
+        // 2. Fetch tous les items enrichis en une seule requête
+        const orderIds = (ordersData || []).map((o: any) => o.id);
+        const { data: itemsData, error: itemsError } = await (supabase as any)
+          .from('linkme_order_items_enriched')
+          .select('*')
+          .in('sales_order_id', orderIds);
 
-            // Fetch customer info selon type
-            if (order.customer_type === 'organization' && order.customer_id) {
-              const { data } = await supabase
-                .from('organisations')
-                .select(
-                  'trade_name, legal_name, address_line1, postal_code, city, email, phone'
-                )
-                .eq('id', order.customer_id)
-                .single();
+        if (itemsError) throw itemsError;
 
-              if (data) {
-                customerName =
-                  data.trade_name || data.legal_name || 'Organisation';
-                customerAddress = data.address_line1;
-                customerPostalCode = data.postal_code;
-                customerCity = data.city;
-                customerEmail = data.email;
-                customerPhone = data.phone;
-              }
-            } else if (
-              order.customer_type === 'individual' &&
-              order.customer_id
-            ) {
-              const { data } = await supabase
-                .from('individual_customers')
-                .select(
-                  'first_name, last_name, address_line1, postal_code, city, email, phone'
-                )
-                .eq('id', order.customer_id)
-                .single();
+        // 3. Grouper les items par commande (côté client, très rapide)
+        const itemsByOrderId = (itemsData || []).reduce(
+          (acc: Record<string, OrderItem[]>, item: any) => {
+            const orderId = item.sales_order_id;
+            if (!acc[orderId]) acc[orderId] = [];
+            acc[orderId].push({
+              id: item.id,
+              product_id: item.product_id,
+              product_name: item.product_name || 'Produit inconnu',
+              product_image_url: item.product_image_url,
+              quantity: item.quantity,
+              unit_price_ht: item.base_price_ht || item.unit_price_ht || 0,
+              total_ht: item.total_ht || 0,
+              selling_price_ht: item.selling_price_ht,
+              affiliate_margin: item.affiliate_margin || 0,
+            });
+            return acc;
+          },
+          {}
+        );
 
-              if (data) {
-                customerName = `${data.first_name} ${data.last_name}`.trim();
-                customerAddress = data.address_line1;
-                customerPostalCode = data.postal_code;
-                customerCity = data.city;
-                customerEmail = data.email;
-                customerPhone = data.phone;
-              }
-            }
-
-            // Tracer affilié et sélection via les items
-            const items = order.sales_order_items || [];
-            if (items.length > 0) {
-              const itemWithSelection = items.find(
-                (item: any) => item.linkme_selection_item_id
-              );
-
-              if (itemWithSelection?.linkme_selection_item_id) {
-                // Tracer: linkme_selection_items → linkme_selections
-                const { data: selectionItem } = await supabase
-                  .from('linkme_selection_items')
-                  .select('selection_id')
-                  .eq('id', itemWithSelection.linkme_selection_item_id)
-                  .single();
-
-                if (selectionItem?.selection_id) {
-                  // Récupérer la sélection et l'affilié
-                  const { data: selection } = await supabase
-                    .from('linkme_selections')
-                    .select('name, affiliate_id')
-                    .eq('id', selectionItem.selection_id)
-                    .single();
-
-                  if (selection) {
-                    selectionName = selection.name || null;
-
-                    // Récupérer l'affilié avec son type
-                    if (selection.affiliate_id) {
-                      const { data: affiliate } = await supabase
-                        .from('linkme_affiliates')
-                        .select('display_name, enseigne_id, organisation_id')
-                        .eq('id', selection.affiliate_id)
-                        .single();
-
-                      affiliateName = affiliate?.display_name || null;
-                      // Déterminer le type d'affilié
-                      if (affiliate?.enseigne_id) {
-                        affiliateType = 'enseigne';
-                      } else if (affiliate?.organisation_id) {
-                        affiliateType = 'organisation';
-                      }
-                    }
-                  }
-                }
-              }
-            }
-
-            // Récupérer les données produits et sélection pour les items
-            const enrichedItems: OrderItem[] = await Promise.all(
-              items.map(async (item: any) => {
-                let productName = 'Produit inconnu';
-                let productImageUrl: string | null = null;
-                let sellingPriceHt: number | null = null;
-                let basePriceHt: number = item.unit_price_ht || 0;
-                let marginRate: number = 0;
-
-                // Récupérer nom du produit
-                if (item.product_id) {
-                  const { data: product } = await supabase
-                    .from('products')
-                    .select('name')
-                    .eq('id', item.product_id)
-                    .single();
-
-                  productName = product?.name || 'Produit inconnu';
-
-                  // Récupérer l'image primaire depuis product_images
-                  const { data: primaryImage } = await supabase
-                    .from('product_images')
-                    .select('public_url')
-                    .eq('product_id', item.product_id)
-                    .eq('is_primary', true)
-                    .single();
-
-                  productImageUrl = primaryImage?.public_url || null;
-                }
-
-                // Récupérer les prix depuis linkme_selection_items avec margin_rate
-                // et commission_rate depuis channel_pricing (joint par product_id)
-                if (item.linkme_selection_item_id) {
-                  const { data: selectionItem } = await supabase
-                    .from('linkme_selection_items')
-                    .select('base_price_ht, margin_rate, product_id')
-                    .eq('id', item.linkme_selection_item_id)
-                    .single();
-
-                  if (selectionItem) {
-                    basePriceHt =
-                      selectionItem.base_price_ht || item.unit_price_ht || 0;
-
-                    // Récupérer commission_rate depuis channel_pricing (joint par product_id + channel_id)
-                    let commissionRate = 0;
-                    if (selectionItem.product_id) {
-                      const { data: channelPricing } = await supabase
-                        .from('channel_pricing')
-                        .select('channel_commission_rate')
-                        .eq('product_id', selectionItem.product_id)
-                        .eq('channel_id', LINKME_CHANNEL_ID)
-                        .single();
-
-                      // channel_commission_rate est stocké en pourcentage (10 = 10%)
-                      commissionRate =
-                        (channelPricing?.channel_commission_rate || 0) / 100;
-                    }
-
-                    marginRate = (selectionItem.margin_rate || 0) / 100;
-                    // Prix affilié = base_price × (1 + commission_rate + margin_rate)
-                    // Ex: 135 × (1 + 0.10 + 0.15) = 168.75€
-                    sellingPriceHt =
-                      basePriceHt * (1 + commissionRate + marginRate);
-                  }
-                }
-
-                // Marge affilié = base_price × margin_rate × quantité
-                // Ex: 135 × 0.15 × 1 = 20.25€
-                const affiliateMargin =
-                  basePriceHt * marginRate * item.quantity;
-
-                return {
-                  id: item.id,
-                  product_id: item.product_id,
-                  product_name: productName,
-                  product_image_url: productImageUrl,
-                  quantity: item.quantity,
-                  unit_price_ht: basePriceHt,
-                  total_ht: item.total_ht || 0,
-                  selling_price_ht: sellingPriceHt,
-                  affiliate_margin: affiliateMargin,
-                };
-              })
-            );
-
-            // Calculer marge affilié totale
-            const totalAffiliateMargin = enrichedItems.reduce(
-              (sum, item) => sum + item.affiliate_margin,
-              0
-            );
-
-            return {
-              id: order.id,
-              order_number: order.order_number,
-              status: order.status,
-              payment_status: order.payment_status,
-              total_ht: order.total_ht,
-              total_ttc: order.total_ttc,
-              customer_type: order.customer_type,
-              customer_id: order.customer_id,
-              created_at: order.created_at,
-              customer_name: customerName,
-              customer_address: customerAddress,
-              customer_postal_code: customerPostalCode,
-              customer_city: customerCity,
-              customer_email: customerEmail,
-              customer_phone: customerPhone,
-              affiliate_name: affiliateName,
-              affiliate_type: affiliateType,
-              selection_name: selectionName,
-              total_affiliate_margin: totalAffiliateMargin,
-              items: enrichedItems,
-            };
+        // 4. Mapper les données vers l'interface LinkMeOrder
+        const enrichedOrders: LinkMeOrder[] = (ordersData || []).map(
+          (order: any) => ({
+            id: order.id,
+            order_number: order.order_number,
+            status: order.status,
+            payment_status: order.payment_status,
+            total_ht: order.total_ht || 0,
+            total_ttc: order.total_ttc || 0,
+            customer_type: order.customer_type,
+            customer_id: order.customer_id,
+            created_at: order.created_at,
+            customer_name: order.customer_name || 'Client inconnu',
+            customer_address: order.customer_address,
+            customer_postal_code: order.customer_postal_code,
+            customer_city: order.customer_city,
+            customer_email: order.customer_email,
+            customer_phone: order.customer_phone,
+            affiliate_name: order.affiliate_name,
+            affiliate_type: order.affiliate_type as
+              | 'enseigne'
+              | 'organisation'
+              | null,
+            selection_name: order.selection_name,
+            total_affiliate_margin: order.total_affiliate_margin || 0,
+            items: itemsByOrderId[order.id] || [],
           })
         );
 

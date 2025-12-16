@@ -3,45 +3,71 @@ allowed-tools: Bash(git :*)
 description: Quick commit and push with minimal, clean messages
 ---
 
-You are a git commit automation tool. Create minimal, clean commits for a tidy git history.
+You are a git commit automation tool. Create minimal, clean commits following Conventional Commits.
+
+## INTERDICTIONS ABSOLUES
+
+- **JAMAIS** de `Co-Authored-By:` dans les commits (bloque Vercel)
+- **JAMAIS** de `git push` direct (doit passer par PR via `/pr`)
+- **JAMAIS** de commit sur `main` ou `master` directement
 
 ## Workflow
 
-1. **Stage**: `git add -A` to stage all changes
-2. **Analyze**: `git diff --cached --stat` to see what changed
-3. **Commit**: Generate ONE-LINE message (max 50 chars):
-   - `fix: [what was fixed]`
-   - `feat: [what was added]`
-   - `update: [what was modified]`
-   - `refactor: [what was reorganized]`
-4. **Push**: `git push` immediately
+1. **Vérifier** : `git status` - si rien à commiter → STOP
+2. **Stage** : `git add -A` pour stager les changements
+3. **Analyser** : `git diff --cached --stat` pour voir ce qui change
+4. **Commit** : Générer message Conventional Commits
 
-## Message Rules
+## Types Conventional Commits (SEULS AUTORISÉS)
 
-- **ONE LINE ONLY** - no body, no details
-- **Under 50 characters** - be concise
-- **No periods** - waste of space
-- **Present tense** - "add" not "added"
-- **Lowercase after colon** - `fix: typo` not `fix: Typo`
+| Type        | Usage                                   |
+| ----------- | --------------------------------------- |
+| `feat:`     | Nouvelle fonctionnalité                 |
+| `fix:`      | Correction de bug                       |
+| `chore:`    | Maintenance, config, dépendances        |
+| `docs:`     | Documentation uniquement                |
+| `refactor:` | Refactoring sans changement fonctionnel |
+| `style:`    | Formatage, espaces, ponctuation         |
+| `test:`     | Ajout ou modification de tests          |
+| `perf:`     | Amélioration de performance             |
 
-## Examples
+## Format Message
 
 ```
+type(scope): description concise
+
+Corps optionnel si nécessaire
+
+🤖 Generated with Claude Code
+```
+
+## Règles Message
+
+- **Première ligne** : max 72 caractères
+- **Minuscule** après le deux-points : `fix: typo` pas `fix: Typo`
+- **Présent** : "add" pas "added"
+- **Scope optionnel** : `feat(auth):`, `fix(api):`
+- `🤖 Generated with Claude Code` : AUTORISÉ (optionnel)
+- `Co-Authored-By:` : **INTERDIT** (bloque Vercel)
+
+## Exemples Corrects
+
+```bash
 feat: add user authentication
-fix: resolve memory leak
-update: improve error handling
-refactor: simplify api routes
-docs: update readme
+fix(api): resolve memory leak in cache
+chore: update dependencies
+docs: improve readme installation section
+refactor(orders): simplify validation logic
 ```
 
-## Execution
+## Stop Conditions
 
-- NO interactive commands
-- NO verbose messages
-- NO "Generated with" signatures
-- If no changes, exit silently
-- If push fails, report error only
+- Si `git status` montre rien à commiter → STOP "Rien à commiter"
+- Si erreur lors du commit → STOP et afficher l'erreur
+- Après commit réussi → Afficher hash et dire "Utilise /pr pour créer la PR"
 
-## Priority
+## Ce que cette commande NE FAIT PAS
 
-Speed > Detail. Keep commits atomic and history clean.
+- Ne push pas (utiliser `/pr`)
+- Ne crée pas de branche (utiliser `/pr`)
+- Ne lance pas les checks (le hook pre-commit s'en charge)
