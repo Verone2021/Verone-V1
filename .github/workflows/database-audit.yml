@@ -88,6 +88,12 @@ jobs:
             const fs = require('fs');
             const reportsDir = 'tools/reports';
 
+            // Vérifier que le dossier existe
+            if (!fs.existsSync(reportsDir)) {
+              console.log('Reports directory does not exist - skipping comment');
+              return;
+            }
+
             // Trouver le dernier rapport JSON
             const files = fs.readdirSync(reportsDir).filter(f => f.startsWith('db_audit_') && f.endsWith('.json'));
             if (files.length === 0) {
