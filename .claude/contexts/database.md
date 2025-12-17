@@ -101,11 +101,11 @@ docs/database/
 
 ## 🔄 WORKFLOW AUTOMATISÉ AUDIT DATABASE
 
-```typescript
-// ✅ WORKFLOW OBLIGATOIRE avant toute modification database
-1. mcp__supabase__get_database_schema     // Schema live
+```bash
+# ✅ WORKFLOW OBLIGATOIRE avant toute modification database
+1. psql "${DATABASE_URL}" -c "\dt" # Liste tables
 2. Compare avec docs/database/SCHEMA-REFERENCE.md
-3. mcp__supabase__generate_typescript_types → src/types/supabase.ts
+3. supabase gen types typescript --local > apps/back-office/src/types/supabase.ts
 4. Détection drift (supabase db diff)
 5. Update documentation si drift détecté
 6. CI check sur chaque PR

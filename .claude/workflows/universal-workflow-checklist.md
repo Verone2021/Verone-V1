@@ -39,7 +39,7 @@
 
 #### Analyse & Recherche
 
-- [ ] **Sequential Thinking** : Si tâche >3 étapes → `mcp__sequential-thinking__sequentialthinking`
+- [ ] **Sequential Thinking** : Si tâche >3 étapes → Décomposer en étapes numérotées
 - [ ] **Serena Memory** : Lire contexte existant → `mcp__serena__read_memory("context-previous")`
 - [ ] **Serena Overview** : Fichiers impactés → `mcp__serena__get_symbols_overview(targetFile)`
 - [ ] **Serena Impact** : Références existantes → `mcp__serena__find_referencing_symbols(symbol)`
@@ -74,8 +74,8 @@
 
 #### Database Validation (si applicable)
 
-- [ ] **Query Test** : `mcp__supabase__execute_sql("SELECT * FROM table LIMIT 1")`
-- [ ] **Advisors** : `mcp__supabase__get_advisors("security")` + `get_advisors("performance")`
+- [ ] **Query Test** : `psql "${DATABASE_URL}" -c "SELECT * FROM table LIMIT 1"`
+- [ ] **Advisors** : Utiliser `/db advisors` (commande Claude)
 
 ---
 
@@ -106,7 +106,7 @@
 
 #### Types Update (si DB modifiée)
 
-- [ ] **Generate Types** : `mcp__supabase__generate_typescript_types()`
+- [ ] **Generate Types** : `supabase gen types typescript --local > apps/back-office/src/types/supabase.ts`
 
 ---
 
@@ -138,7 +138,7 @@
 
 - [ ] **Data Verification** : Vérifier données insérées/modifiées correctement
 - [ ] **Constraints** : Tester contraintes fonctionnent (rejettent données invalides)
-- [ ] **Advisors** : `mcp__supabase__get_advisors("performance")` → Vérifier pas de warning
+- [ ] **Advisors** : `/db advisors performance` → Vérifier pas de warning
 
 #### Régression Testing
 

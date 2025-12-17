@@ -9,11 +9,10 @@
   "permissions": {
     "mode": "rules",
     "allow": [
-      "mcp__*",
-      "mcp__serena__*",
-      "mcp__context7__*",
-      "mcp__playwright__*",
-      "mcp__ide__*",
+      "mcp__serena",
+      "mcp__context7",
+      "mcp__playwright",
+      "mcp__ide",
 
       "Read",
       "Read(/Users/romeodossantos/verone-back-office-V1/**)",

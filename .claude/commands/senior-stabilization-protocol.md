@@ -14,20 +14,17 @@ Your goal is NOT to code features. Your goal is to **STOP the bleeding** and **R
 
 ---
 
-## 🛠️ MCP TOOLKIT REQUIS
+## 🛠️ TOOLKIT REQUIS
 
-- **supabase**: Inspection database
-  - `mcp__supabase__execute_sql`: Requêtes SQL inspection
-  - `mcp__supabase__list_tables`: Lister tables
-  - `mcp__supabase__list_migrations`: Vérifier migrations appliquées
-- **serena**: Analyse code
+- **Database** (via psql/Supabase CLI):
+  - `psql "${DATABASE_URL}" -c "SELECT ..."` : Requêtes SQL inspection
+  - `supabase db diff` : Vérifier migrations/drift
+- **serena** (MCP configuré):
   - `mcp__serena__find_symbol`: Trouver symboles/fonctions
   - `mcp__serena__read_memory`: Consulter mémoires projet
-- **playwright**: Validation visuelle
+- **playwright** (MCP configuré):
   - `mcp__playwright__browser_console_messages`: Capturer erreurs console
   - `mcp__playwright__browser_navigate`: Tester pages
-- **sequential-thinking**: Analyse structurée
-  - `mcp__sequential-thinking__sequentialthinking`: Décomposer problème
 
 ---
 
