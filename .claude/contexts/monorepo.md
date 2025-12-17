@@ -1,304 +1,103 @@
 # 🏗️ MONOREPO CONTEXT - Vérone Back Office
 
-**Chargement** : Architecture Turborepo COMPLÉTÉE (Q4 2025) - Référence pour maintenance et évolution
+**Chargement** : Architecture Turborepo Phase 4 COMPLÉTÉE (2025-11-19)
 
 ---
 
-## 🎯 QUAND MIGRER VERS MONOREPO ?
+## 🎯 ARCHITECTURE ACTUELLE
 
-**Après Phase 1 - Critères** :
-
-- ✅ Phase 1 déployée en production stable
-- ✅ Tous modules core validés (auth, catalogue, commandes, stock)
-- ✅ Storybook complet avec tous composants documentés
-- ✅ KPI centralisés en YAML
-- ✅ Zéro erreur console sur tous workflows
-
-**Phase complétée** : ✅ Q4 2025 (Phase 4) - Finalisée 2025-11-19
-
----
-
-## 💡 POURQUOI MONOREPO ?
-
-- **Partage code** : Packages communs (ui, types, kpi, config)
-- **Build optimisé** : Nx/Turborepo - Build uniquement code modifié
-- **Versioning cohérent** : Toutes dépendances alignées
-- **DX améliorée** : Générateurs de code, scripts communs
-- **Scalabilité** : Ajouter apps/services facilement
-
----
-
-## 🏗️ ARCHITECTURE CIBLE
+### 3 Applications
 
 ```
 apps/
-  ├── api/          # Backend NestJS
-  │   ├── src/
-  │   │   ├── modules/
-  │   │   │   ├── auth/
-  │   │   │   ├── catalogue/
-  │   │   │   ├── orders/
-  │   │   │   └── stock/
-  │   │   └── database/
-  │   └── package.json
-  └── web/          # Frontend Next.js
-      ├── app/
-      ├── components/
-      └── package.json
+├── back-office/      # CRM/ERP Complet (Port 3000)
+├── site-internet/    # E-commerce Public (Port 3001)
+└── linkme/           # Commissions Apporteurs (Port 3002)
+```
 
-packages/
-  ├── ui/           # Design system Storybook
-  ├── kpi/          # KPI YAML + hooks
-  ├── types/        # DTO communs API ↔ Web
-  ├── config/       # ESLint, Prettier, TS
-  └── utils/        # Helpers communs
+### 28 Packages @verone/\*
 
-tools/
-  ├── scripts/      # Audit, migration, seeds
-  └── generators/   # Plop templates
-
-docs/             # Documentation (inchangée)
-supabase/         # Migrations DB (inchangée)
+```
+packages/@verone/
+├── admin/            # Administration
+├── categories/       # Catégories produits
+├── channels/         # Canaux de vente
+├── collections/      # Collections
+├── common/           # Code commun
+├── consultations/    # Consultations
+├── customers/        # Clients
+├── dashboard/        # Tableaux de bord
+├── eslint-config/    # Config ESLint
+├── finance/          # Finance
+├── hooks/            # Hooks React partagés
+├── integrations/     # Intégrations externes
+├── kpi/              # KPIs
+├── logistics/        # Logistique
+├── notifications/    # Notifications
+├── orders/           # Commandes
+├── organisations/    # Organisations
+├── prettier-config/  # Config Prettier
+├── products/         # Produits
+├── stock/            # Stock
+├── suppliers/        # Fournisseurs
+├── testing/          # Tests
+├── types/            # Types TypeScript
+├── ui/               # Design System (54 composants)
+├── ui-business/      # Composants métier
+└── utils/            # Utilitaires
 ```
 
 ---
 
-## 🔧 OUTILS MONOREPO
-
-**Choix recommandé** : **Turborepo** (simple, performant)
-
-```bash
-# Installation
-npx create-turbo@latest
-
-# Configuration turbo.json
-{
-  "$schema": "https://turbo.build/schema.json",
-  "pipeline": {
-    "build": {
-      "dependsOn": ["^build"],
-      "outputs": [".next/**", "dist/**"]
-    },
-    "test": {
-      "dependsOn": ["build"],
-      "outputs": []
-    },
-    "lint": {
-      "outputs": []
-    },
-    "dev": {
-      "cache": false,
-      "persistent": true
-    }
-  }
-}
-```
-
-**Alternative** : **Nx** (plus features, plus complexe)
-
----
-
-## 📋 MIGRATION PROGRESSIVE (PAS DE BIG BANG)
-
-### Étape 1 : Créer structure monorepo vide
-
-```bash
-# Initialiser Turborepo
-npx create-turbo@latest verone-monorepo
-
-# Structure créée :
-verone-monorepo/
-├── apps/
-├── packages/
-├── turbo.json
-└── package.json
-```
-
-### Étape 2 : Migrer `packages/ui` (composants + Storybook)
-
-```bash
-# Déplacer composants ui-v2/
-mv src/components/ui-v2 packages/ui/src/components
-
-# Déplacer stories
-mv src/stories packages/ui/stories
-
-# Ajouter package.json
-# packages/ui/package.json
-{
-  "name": "@verone/ui",
-  "version": "1.0.0",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts"
-}
-```
-
-### Étape 3 : Migrer `packages/types`
-
-```typescript
-// packages/types/src/index.ts
-export * from './organisation';
-export * from './product';
-export * from './order';
-// ... tous types DTO communs
-```
-
-### Étape 4 : Créer `apps/web` (Next.js existant)
-
-```bash
-# Déplacer application Next.js
-mv src apps/web/src
-mv app apps/web/app
-
-# Mise à jour imports
-# AVANT : import { Button } from '@/components/ui-v2/button'
-# APRÈS : import { Button } from '@verone/ui'
-```
-
-### Étape 5 : Créer `apps/api` (nouveau NestJS)
-
-```bash
-# Initialiser NestJS
-cd apps/api
-nest new api --skip-git
-
-# Structure modules
-apps/api/src/modules/
-├── auth/
-├── catalogue/
-├── orders/
-└── stock/
-```
-
-### Étape 6 : Migrer API Routes Next.js → NestJS endpoints
-
-**Module par module, avec feature flags** :
-
-```typescript
-// apps/web/.env.local
-USE_NESTJS_API=false  # Phase 1 : Next.js API Routes
-USE_NESTJS_API=true   # Phase 2 : NestJS endpoints
-
-// apps/web/lib/api-client.ts
-const API_BASE = process.env.USE_NESTJS_API
-  ? 'http://localhost:4000/api'  // NestJS
-  : '/api'                        // Next.js API Routes
-```
-
-### Étape 7 : Cleanup ancien code
-
-```bash
-# Supprimer Next.js API Routes après migration complète
-rm -rf apps/web/app/api
-
-# Supprimer composants dupliqués
-rm -rf apps/web/src/components/ui-v2
-```
-
----
-
-## 🚀 COMMANDES MONOREPO
+## 🚀 COMMANDES TURBO
 
 ```bash
 # Dev simultané (tous apps)
-turbo dev
+npm run dev
 
 # Dev spécifique
-turbo dev --filter=@verone/web
-turbo dev --filter=@verone/api
+turbo dev --filter=@verone/back-office
+turbo dev --filter=@verone/linkme
 
 # Build tous packages
-turbo build
+npm run build
 
-# Build sélectif (uniquement modifiés)
-turbo build --filter=[main]
-
-# Tests tous packages
-turbo test
+# Type-check
+npm run type-check
 
 # Lint
-turbo lint
-
-# Format
-turbo format
+npm run lint
 ```
 
 ---
 
-## 📦 EXEMPLE PACKAGE PARTAGÉ
-
-**packages/utils/src/format-currency.ts** :
+## 📦 IMPORTS PACKAGES
 
 ```typescript
-export function formatCurrency(amount: number, currency = 'EUR'): string {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency,
-  }).format(amount);
-}
-```
+// Composants UI
+import { Button, Card, Badge } from '@verone/ui';
 
-**Usage dans web et api** :
+// Composants métier
+import { ProductThumbnail } from '@verone/products';
+import { StockAlertCard } from '@verone/stock';
 
-```typescript
-// apps/web/src/components/price-display.tsx
-import { formatCurrency } from '@verone/utils'
+// Types
+import type { Database } from '@verone/types';
 
-export function PriceDisplay({ amount }: { amount: number }) {
-  return <span>{formatCurrency(amount)}</span>
-}
-
-// apps/api/src/modules/orders/orders.service.ts
-import { formatCurrency } from '@verone/utils'
-
-export class OrdersService {
-  formatOrderTotal(order: Order): string {
-    return formatCurrency(order.total_amount)
-  }
-}
+// Utilitaires
+import { cn, formatPrice } from '@verone/utils';
 ```
 
 ---
 
-## 🎯 BÉNÉFICES MONOREPO
+## 📚 RÉFÉRENCES
 
-**Performance** :
-
-- Build incrémental (uniquement packages modifiés)
-- Cache distribué entre builds
-- Parallélisation tasks
-
-**Qualité** :
-
-- Types partagés (source unique vérité)
-- Lint/format/tests uniformes
-- Composants UI réutilisables garantis
-
-**DX** :
-
-- Hot reload cross-packages
-- Jump-to-definition cross-workspace
-- Refactoring safe (rename propagé)
+- **Audit migration** : `docs/architecture/AUDIT-MIGRATION-TURBOREPO.md`
+- **Checklist** : `docs/architecture/TURBOREPO-FINAL-CHECKLIST.md`
+- **Catalogue composants** : `docs/architecture/COMPOSANTS-CATALOGUE.md`
 
 ---
 
-## 🎯 MIGRATION COMPLÉTÉE
-
-**Q4 2025 (Phase 4)** : ✅ COMPLÉTÉE - Migration Turborepo finalisée
-
-**Post-migration (2025-11-19+)** :
-
-- Monitoring stabilité production (3 apps déployées)
-- Optimisations performance cross-packages
-- Scalabilité apps (intégrer futures apps métier)
-- Éventuels backends spécialisés (API NestJS future Phase 5)
-
----
-
-**Audit détaillé** : `docs/architecture/AUDIT-MIGRATION-TURBOREPO.md` (47 problèmes)
-**Checklist post-migration** : `docs/architecture/TURBOREPO-FINAL-CHECKLIST.md`
-**Archive TODO** : `docs/architecture/MIGRATION-TURBOREPO-TODO.md`
-
-**Dernière mise à jour** : 2025-11-19
-**Statut** : ✅ PHASE 4 COMPLÉTÉE
+**Statut** : ✅ Phase 4 COMPLÉTÉE (2025-11-19)
+**Dernière mise à jour** : 2025-12-17
 **Mainteneur** : Romeo Dos Santos
