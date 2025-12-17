@@ -116,13 +116,47 @@ Configuration optimisee basee sur AIBlueprint + adaptations specifiques Verone.
 
 ## MCP Servers
 
+**Source de verite** : `.mcp.json` (racine du projet)
+
 ```json
-"enabledMcpServers": ["context7", "serena", "playwright"]
+{
+  "mcpServers": {
+    "context7": { "command": "npx", "args": ["-y", "@upstash/context7-mcp@latest"] },
+    "serena": { "command": "uvx", "args": ["--from", "git+https://github.com/oraios/serena", ...] },
+    "playwright": { "command": "npx", "args": ["-y", "@playwright/mcp@latest", "--browser", "chrome"] }
+  }
+}
 ```
 
-- **context7** : Documentation libraries a jour
-- **serena** : Analyse semantique code (find_symbol, memories)
-- **playwright** : Tests E2E, browser automation
+### Serveurs Actifs
+
+| Server         | Usage                   | Outils Principaux                             |
+| -------------- | ----------------------- | --------------------------------------------- |
+| **context7**   | Documentation libraries | resolve_library_id, get_library_docs          |
+| **serena**     | Analyse semantique code | find_symbol, search_for_pattern, memories     |
+| **playwright** | Browser automation      | navigate, screenshot, console_messages, click |
+
+### Permissions (settings.json)
+
+Les permissions MCP utilisent des **wildcards** pour autoriser tous les outils :
+
+```json
+"mcp__*",
+"mcp__serena__*",
+"mcp__context7__*",
+"mcp__playwright__*"
+```
+
+### Playwright - Regles d'Usage
+
+- **INTERDIT** : `browser_snapshot` (genere 10k+ tokens)
+- **UTILISER** : `browser_take_screenshot`, `browser_console_messages`, `browser_evaluate`
+
+### Validation MCP
+
+```bash
+claude mcp list  # Doit afficher : context7: Connected, serena: Connected, playwright: Connected
+```
 
 ---
 
