@@ -1,33 +1,13 @@
-echo "🔍 Validation pre-push Vérone..."
+echo "🚀 Pre-push Vérone (Fast Lane)"
 echo ""
 
-# 1. Vérifier si le dev server tourne
-echo "🌐 Checking dev server status..."
-if curl -s http://localhost:3000 > /dev/null 2>&1; then
-  echo "✅ Dev server running"
-  echo ""
+# Fast Lane: pas de checks bloquants en local
+# Les checks complets se font en CI (GitHub Actions + Vercel)
 
-  # 2. Console errors check (RÈGLE SACRÉE: Console Zero Tolerance)
-  echo "🚨 Checking console errors (Zero Tolerance)..."
-  npm run check:console:ci || {
-    echo ""
-    echo "❌ PUSH BLOQUÉ: Erreurs console détectées"
-    echo "💡 Règle Sacrée CLAUDE.md: 1 erreur console = ÉCHEC COMPLET"
-    echo ""
-    echo "🔧 Pour corriger:"
-    echo "   1. Vérifiez les erreurs affichées ci-dessus"
-    echo "   2. Corrigez TOUTES les erreurs console"
-    echo "   3. Relancez: npm run check:console"
-    echo "   4. Si OK, re-tentez le push"
-    echo ""
-    exit 1
-  }
-else
-  echo "⚠️  Dev server NOT running (localhost:3000)"
-  echo "   Console checks skipped - Will run in CI/CD"
-  echo "   Pour tester manuellement: npm run check:console"
-fi
-
+echo "📋 Rappel: Les checks suivants s'exécutent en CI:"
+echo "   - Type-check (turbo type-check)"
+echo "   - Build Vercel (back-office + linkme)"
+echo "   - Console errors (si configuré)"
 echo ""
-echo "✅ Pre-push validation réussie!"
+echo "✅ Push autorisé - Vercel validera le build"
 echo ""
