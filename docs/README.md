@@ -13,7 +13,7 @@
 | Doc | Description |
 |-----|-------------|
 | [02-Architecture](./current/02-architecture.md) | Structure Turborepo, apps, packages, ou mettre quoi |
-| 03-Database | (A venir) Schema Supabase, triggers, RLS |
+| [03-Database](./current/03-database.md) | Schema Supabase, triggers, RLS |
 | 04-Auth | (A venir) Authentification, roles, permissions |
 | 05-API | (A venir) REST, RPC, webhooks |
 | 06-Business-Rules | (A venir) Regles metier |
