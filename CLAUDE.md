@@ -727,6 +727,55 @@ path = '/docs/architecture/decisions/0004-pricing-multi-canaux.md';
 - `kpi.md` - Métriques business
 - `monorepo.md` - Architecture Turborepo
 
+### 🔌 MCP Source of Truth (IMPORTANT)
+
+**Configuration unique** : `.mcp.json` (racine du projet)
+
+```json
+{
+  "mcpServers": {
+    "context7": { ... },
+    "serena": { ... },
+    "playwright": { "command": "npx", "args": ["-y", "@playwright/mcp@latest", "--browser", "chrome"] }
+  }
+}
+```
+
+**Permissions** : `.claude/settings.json` → `mcp__playwright__*` (wildcard)
+
+**Validation** :
+
+```bash
+claude mcp list  # Doit afficher "playwright: ✓ Connected"
+```
+
+### 🎭 Playwright MCP – Règles d'Usage
+
+**❌ INTERDIT : `browser_snapshot`** (génère 10k+ tokens, tronqué)
+
+**✅ UTILISER À LA PLACE :**
+
+- `browser_take_screenshot` → Vérification visuelle
+- `browser_evaluate` → Extraction données ciblées
+- `browser_console_messages` → Debugging erreurs
+
+**Workflow recommandé** :
+
+```typescript
+// 1. Navigation
+mcp__playwright__browser_navigate(url: "http://localhost:3000/page")
+// 2. Vérification rapide
+mcp__playwright__browser_console_messages({ onlyErrors: true })
+mcp__playwright__browser_take_screenshot()
+// 3. Extraction données (si besoin)
+mcp__playwright__browser_evaluate({ function: "() => document.title" })
+```
+
+**Règles** :
+
+- 📦 Limiter retours à max 20 items
+- 🧹 `/compact` si contexte devient lourd
+
 ---
 
 ## 🇫🇷 LANGUE
@@ -736,9 +785,16 @@ path = '/docs/architecture/decisions/0004-pricing-multi-canaux.md';
 
 ---
 
-**Version** : 4.2.0
-**Dernière mise à jour** : 2025-12-10
+**Version** : 4.2.1
+**Dernière mise à jour** : 2025-12-17
 **Mainteneur** : Romeo Dos Santos
+
+**Changelog 4.2.1** (Stabilisation MCP Playwright) :
+
+- ✅ MCP Source of Truth documentée (`.mcp.json` unique)
+- ✅ Permissions Playwright : wildcard `mcp__playwright__*` (42 tools disponibles)
+- ✅ Règle browser_snapshot interdite, alternatives documentées
+- ✅ Agents corrigés (browser_take_screenshot au lieu de browser_snapshot)
 
 **Changelog 4.2.0** (Workflow P.D.C.A. Autonome) :
 

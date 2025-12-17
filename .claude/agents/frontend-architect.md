@@ -46,7 +46,7 @@ Avant toute action, identifier :
 ## Playwright (MCP) - SAFE MODE uniquement
 
 - `mcp__playwright__browser_navigate`: Navigate to URL
-- `mcp__playwright__browser_snapshot`: Take accessibility snapshot
+- `mcp__playwright__browser_take_screenshot`: Take screenshot for visual validation
 - `mcp__playwright__browser_console_messages`: Check console errors
 - `mcp__playwright__browser_click`: Click elements
 
@@ -96,7 +96,7 @@ pnpm -w turbo run type-check --filter=@verone/back-office
 ```bash
 mcp__playwright__browser_navigate(url: "http://localhost:3000/page")
 mcp__playwright__browser_console_messages(onlyErrors: true)
-mcp__playwright__browser_snapshot()
+mcp__playwright__browser_take_screenshot(filename: "validation-screenshot.png")
 ```
 
 ---

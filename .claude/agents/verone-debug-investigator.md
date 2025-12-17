@@ -89,7 +89,7 @@ mcp__context7__get-library-docs(libraryId: "/vercel/next.js", topic: "error hand
 
 ```bash
 mcp__playwright__browser_navigate(url: "http://localhost:3000/page-probleme")
-mcp__playwright__browser_snapshot()
+mcp__playwright__browser_take_screenshot(filename: "debug-snapshot.png")
 mcp__playwright__browser_click(element: "Bouton test", ref: "btn-123")
 mcp__playwright__browser_console_messages(onlyErrors: true)
 mcp__playwright__browser_take_screenshot(filename: "bug-reproduction.png")
