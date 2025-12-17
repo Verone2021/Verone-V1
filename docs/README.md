@@ -12,17 +12,18 @@
 
 | Doc | Description |
 |-----|-------------|
-| [02-Architecture](./current/02-architecture.md) | Structure Turborepo, apps, packages, ou mettre quoi |
+| [01-Quickstart](./current/01-quickstart.md) | Demarrage rapide nouveaux devs |
+| [02-Architecture](./current/02-architecture.md) | Structure Turborepo, apps, packages |
 | [03-Database](./current/03-database.md) | Schema Supabase, triggers, RLS |
 | [04-Auth](./current/04-auth.md) | Authentification, roles, permissions |
-| 05-API | (A venir) REST, RPC, webhooks |
-| 06-Business-Rules | (A venir) Regles metier |
+| [05-API](./current/05-api.md) | REST, RPC, webhooks |
+| [06-Business-Rules](./current/06-business-rules.md) | Regles metier |
 | [07-Deployment](./current/07-deployment.md) | Vercel, CI/CD |
-| 08-Integrations | (A venir) Google Merchant, Qonto, Abby |
-| 09-Design-System | (A venir) Composants UI |
-| 10-Testing | (A venir) Playwright |
-| 11-Monitoring | (A venir) Observabilite |
-| 12-Security | (A venir) RLS, secrets |
+| [08-Integrations](./current/08-integrations.md) | Google Merchant, Qonto, Abby |
+| [09-Design-System](./current/09-design-system.md) | Composants UI shadcn |
+| [10-Testing](./current/10-testing.md) | Playwright E2E |
+| [11-Monitoring](./current/11-monitoring.md) | Observabilite, logs |
+| [12-Security](./current/12-security.md) | RLS, secrets, RGPD |
 
 **ADRs** : [docs/decisions/](./decisions/) (Architecture Decision Records)
 
