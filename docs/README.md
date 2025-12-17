@@ -17,7 +17,7 @@
 | [04-Auth](./current/04-auth.md) | Authentification, roles, permissions |
 | 05-API | (A venir) REST, RPC, webhooks |
 | 06-Business-Rules | (A venir) Regles metier |
-| 07-Deployment | (A venir) Vercel, CI/CD |
+| [07-Deployment](./current/07-deployment.md) | Vercel, CI/CD |
 | 08-Integrations | (A venir) Google Merchant, Qonto, Abby |
 | 09-Design-System | (A venir) Composants UI |
 | 10-Testing | (A venir) Playwright |
