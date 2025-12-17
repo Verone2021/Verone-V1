@@ -1,28 +1,36 @@
-# Documentation Vérone Back Office
+# Documentation Verone Back Office
 
-**Dernière mise à jour** : 2025-11-19
-**Version** : 3.0 - Réorganisation complète selon best practices 2025
+**Derniere mise a jour** : 2025-12-17
+**Version** : 4.0 - Canonisation documentation
 **Mainteneur** : Romeo Dos Santos
 
 ---
 
-## Bienvenue
+## Documentation Canonique (Source of Truth)
 
-Documentation complète du système **Vérone Back Office**, CRM/ERP modulaire pour la décoration et le mobilier d'intérieur haut de gamme.
+**Commencer ici** - Ces docs sont verifiees et a jour :
 
-**Stack Technique** : Next.js 15 + Supabase + shadcn/ui + React + Tailwind CSS + Turborepo
+| Doc | Description |
+|-----|-------------|
+| [02-Architecture](./current/02-architecture.md) | Structure Turborepo, apps, packages, ou mettre quoi |
+| 03-Database | (A venir) Schema Supabase, triggers, RLS |
+| 04-Auth | (A venir) Authentification, roles, permissions |
+| 05-API | (A venir) REST, RPC, webhooks |
+| 06-Business-Rules | (A venir) Regles metier |
+| 07-Deployment | (A venir) Vercel, CI/CD |
+| 08-Integrations | (A venir) Google Merchant, Qonto, Abby |
+| 09-Design-System | (A venir) Composants UI |
+| 10-Testing | (A venir) Playwright |
+| 11-Monitoring | (A venir) Observabilite |
+| 12-Security | (A venir) RLS, secrets |
 
-**Nouveautés v3.0** :
+**ADRs** : [docs/decisions/](./decisions/) (Architecture Decision Records)
 
-- ✅ Guides réorganisés en 8 catégories thématiques
-- ✅ Structure ADR (Architecture Decision Records)
-- ✅ Documentation gestion projet (sprints, roadmap)
-- ✅ Audits organisés par mois
-- ✅ Workflow classification documentation
+**Archives** : [docs/archives/](./archives/) (Historique, anciennes docs)
 
 ---
 
-## Sections Principales
+## Sections Legacy (en cours de canonisation)
 
 ### 🔐 [Authentification & Autorisations](./auth/README.md)
 
