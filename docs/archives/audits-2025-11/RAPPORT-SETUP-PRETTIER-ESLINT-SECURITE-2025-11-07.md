@@ -20,31 +20,31 @@
 
 ### Métriques
 
-| Métrique | Avant | Après | Delta |
-|----------|-------|-------|-------|
-| **Fichiers formatés** | 0 | 676+ | +676 |
-| **Permissions wildcards** | 7 | 0 | -7 |
-| **Scripts obsolètes** | 9 | 0 (archivés) | -9 |
-| **Logs racine** | 4 | 0 | -4 |
-| **Build status** | ✅ SUCCESS | ✅ SUCCESS | ✅ Maintenu |
+| Métrique                  | Avant      | Après        | Delta       |
+| ------------------------- | ---------- | ------------ | ----------- |
+| **Fichiers formatés**     | 0          | 676+         | +676        |
+| **Permissions wildcards** | 7          | 0            | -7          |
+| **Scripts obsolètes**     | 9          | 0 (archivés) | -9          |
+| **Logs racine**           | 4          | 0            | -4          |
+| **Build status**          | ✅ SUCCESS | ✅ SUCCESS   | ✅ Maintenu |
 
 ### Qualité Code
 
-| Indicateur | Status |
-|------------|--------|
-| **Prettier** | ✅ 676+ fichiers formatés (80 chars, single quotes) |
-| **ESLint** | ✅ Auto-fix exécuté (14min runtime) |
-| **Build** | ✅ SUCCESS (TypeScript errors ignorés temporairement) |
+| Indicateur     | Status                                                    |
+| -------------- | --------------------------------------------------------- |
+| **Prettier**   | ✅ 676+ fichiers formatés (80 chars, single quotes)       |
+| **ESLint**     | ✅ Auto-fix exécuté (14min runtime)                       |
+| **Build**      | ✅ SUCCESS (TypeScript errors ignorés temporairement)     |
 | **Type-check** | ⚠️ 249 erreurs TypeScript (documentées TS_ERRORS_PLAN.md) |
 
 ### Sécurité
 
-| Vulnérabilité | Status |
-|---------------|--------|
-| **Wildcards permissions** | ✅ CORRIGÉ (7 wildcards → 0) |
-| **Operations destructives** | ✅ BLOQUÉ (deny list ajoutée) |
-| **Fichiers sensibles** | ✅ PROTÉGÉ (.env, credentials) |
-| **Git force-push** | ✅ BLOQUÉ |
+| Vulnérabilité               | Status                         |
+| --------------------------- | ------------------------------ |
+| **Wildcards permissions**   | ✅ CORRIGÉ (7 wildcards → 0)   |
+| **Operations destructives** | ✅ BLOQUÉ (deny list ajoutée)  |
+| **Fichiers sensibles**      | ✅ PROTÉGÉ (.env, credentials) |
+| **Git force-push**          | ✅ BLOQUÉ                      |
 
 ---
 
@@ -75,6 +75,7 @@ packages:
 **Package** : `packages/@verone/eslint-config/`
 
 **Configuration stricte** :
+
 - Extends : `next/core-web-vitals`, `@typescript-eslint/recommended`, `storybook/recommended`, `prettier/recommended`
 - Rules strictes :
   - `@typescript-eslint/no-explicit-any: error`
@@ -86,6 +87,7 @@ packages:
 **Package** : `packages/@verone/prettier-config/`
 
 **Configuration** :
+
 ```json
 {
   "semi": true,
@@ -99,19 +101,20 @@ packages:
 
 ### 1.4 Fichiers Modifiés
 
-| Fichier | Modification |
-|---------|--------------|
-| `.eslintrc.json` | Extend `@verone/eslint-config` |
-| `.prettierrc` | Reference `@verone/prettier-config` |
-| `.eslintignore` | Ajout docs/, scripts/, *.config.ts |
-| `.prettierignore` | Ajout node_modules, .next, dist, *.generated.ts |
-| `.lintstagedrc.json` | Ordre : Prettier → ESLint (critique) |
-| `next.config.js` | ESLint validation dirs: ['src', 'app'] |
-| `package.json` | Scripts format, lint, lint:fix |
+| Fichier              | Modification                                     |
+| -------------------- | ------------------------------------------------ |
+| `.eslintrc.json`     | Extend `@verone/eslint-config`                   |
+| `.prettierrc`        | Reference `@verone/prettier-config`              |
+| `.eslintignore`      | Ajout docs/, scripts/, \*.config.ts              |
+| `.prettierignore`    | Ajout node_modules, .next, dist, \*.generated.ts |
+| `.lintstagedrc.json` | Ordre : Prettier → ESLint (critique)             |
+| `next.config.js`     | ESLint validation dirs: ['src', 'app']           |
+| `package.json`       | Scripts format, lint, lint:fix                   |
 
 ### 1.5 Validation Build
 
 **Changement critique** :
+
 - Supprimé : `eslint: { ignoreDuringBuilds: true }`
 - Ajouté temporairement : `typescript: { ignoreBuildErrors: true }`
 - **Raison** : 249 erreurs TypeScript non encore corrigées (voir TS_ERRORS_PLAN.md)
@@ -126,6 +129,7 @@ packages:
 **Fichier** : `.vscode/settings.json`
 
 **Ajouts** :
+
 ```json
 {
   "editor.defaultFormatter": "esbenp.prettier-vscode",
@@ -156,6 +160,7 @@ packages:
 **Résultat** : 676+ fichiers formatés avec succès
 
 **Changements** :
+
 - 80 caractères max par ligne
 - Single quotes
 - Trailing commas ES5
@@ -169,12 +174,14 @@ packages:
 **Résultat** : ✅ SUCCESS (exit code 0)
 
 **Fixes automatiques** :
+
 - Import ordering
 - Spacing
 - Quotes consistency
 - Trailing commas
 
 **Non auto-fixables** (corrections manuelles requises) :
+
 - ❌ Naming conventions (Interfaces sans prefix "I")
 - ❌ `no-explicit-any` (60+ occurrences)
 - ❌ `explicit-function-return-type` (100+ occurrences)
@@ -191,14 +198,14 @@ packages:
 
 **Vulnérabilités identifiées** :
 
-| Permission | Risque | Justification |
-|------------|--------|---------------|
-| `"Bash(*)"` | 🔴 CRITIQUE | Permet TOUTES commandes shell (rm -rf, sudo, etc.) |
-| `"Read(*)"` | 🟡 HIGH | Accès lecture système entier |
-| `"Write(*)"` | 🔴 CRITIQUE | Écriture non restreinte (overwrite fichiers système) |
-| `"Edit(*)"` | 🔴 CRITIQUE | Édition non restreinte |
-| `"MultiEdit(*)"` | 🔴 CRITIQUE | Multi-édition non restreinte |
-| `"*"` | 🔴 CRITIQUE | Wildcard global |
+| Permission       | Risque      | Justification                                        |
+| ---------------- | ----------- | ---------------------------------------------------- |
+| `"Bash(*)"`      | 🔴 CRITIQUE | Permet TOUTES commandes shell (rm -rf, sudo, etc.)   |
+| `"Read(*)"`      | 🟡 HIGH     | Accès lecture système entier                         |
+| `"Write(*)"`     | 🔴 CRITIQUE | Écriture non restreinte (overwrite fichiers système) |
+| `"Edit(*)"`      | 🔴 CRITIQUE | Édition non restreinte                               |
+| `"MultiEdit(*)"` | 🔴 CRITIQUE | Multi-édition non restreinte                         |
+| `"*"`            | 🔴 CRITIQUE | Wildcard global                                      |
 
 **Total vulnérabilités** : 7 permissions dangereuses
 
@@ -209,6 +216,7 @@ packages:
 **Nouvelles permissions** (Phase 1 - Dev Actif) :
 
 #### File Operations (Restreintes au projet)
+
 ```json
 "Read",
 "Read(/Users/romeodossantos/verone-back-office-V1/**)",
@@ -218,6 +226,7 @@ packages:
 ```
 
 #### Build & Dev (Spécifiques)
+
 ```json
 "Bash(npm run dev)",
 "Bash(npm run build)",
@@ -227,6 +236,7 @@ packages:
 ```
 
 #### Git (Lecture + Écriture validée)
+
 ```json
 "Bash(git status)",
 "Bash(git diff)",
@@ -237,12 +247,14 @@ packages:
 ```
 
 #### Database (Lecture SEULEMENT)
+
 ```json
 "Bash(PGPASSWORD=* psql * -c \"SELECT *\")",  // SELECT uniquement
 "Bash(npx supabase db diff)"
 ```
 
 #### Deny List (Interdictions absolues)
+
 ```json
 "Bash(rm -rf *)",
 "Bash(git push --force *)",
@@ -257,12 +269,12 @@ packages:
 
 ### 3.3 Résultats Sécurité
 
-| Métrique | Avant | Après | Amélioration |
-|----------|-------|-------|--------------|
-| Wildcards dangereux | 7 | 0 | -100% |
-| Permissions granulaires | 0 | 173 | +173 |
-| Deny rules | 0 | 17 | +17 |
-| Niveau sécurité | 🔴 FAIBLE | 🟢 BON | ✅ AMÉLIORÉ |
+| Métrique                | Avant     | Après  | Amélioration |
+| ----------------------- | --------- | ------ | ------------ |
+| Wildcards dangereux     | 7         | 0      | -100%        |
+| Permissions granulaires | 0         | 173    | +173         |
+| Deny rules              | 0         | 17     | +17          |
+| Niveau sécurité         | 🔴 FAIBLE | 🟢 BON | ✅ AMÉLIORÉ  |
 
 ---
 
@@ -271,6 +283,7 @@ packages:
 ### 4.1 Suppression Logs Temporaires
 
 **Fichiers supprimés** :
+
 - `dev.log`
 - `build-output.log`
 - `ts-errors-raw.log`
@@ -283,6 +296,7 @@ packages:
 **Dossier** : `scripts/archived/migration-nov6/`
 
 **Scripts archivés** (7 fichiers) :
+
 1. `fix-all-hook-imports.js` - Migration globale hooks
 2. `fix-broken-imports.js` - Correction imports cassés
 3. `fix-hooks-imports.js` - Correction spécifique hooks
@@ -298,6 +312,7 @@ packages:
 ### 4.3 Organisation docs/audits/2025-11/
 
 **Structure créée** :
+
 ```
 docs/audits/2025-11/
 ├── scripts/          # COMMANDES-RECUPERATION-MODAL.sh
@@ -307,10 +322,12 @@ docs/audits/2025-11/
 ```
 
 **Fichiers déplacés** :
+
 - `COMMANDES-RECUPERATION-MODAL.sh` → `scripts/`
 - `create-product-in-group-modal-LATEST.tsx` → `backups/`
 
 **Fichiers renommés** :
+
 - `HISTORIQUE-GIT-CREATE-PRODUCT-MODAL.txt` → `.md`
 - `LIVRAISON-COMPLETE-MODAL.txt` → `.md`
 
@@ -321,6 +338,7 @@ docs/audits/2025-11/
 **Dossier** : `.claude/scripts/archived/migrations-oct8/`
 
 **Scripts archivés** (2 fichiers) :
+
 1. `execute-color-migration.sh` - Migration ajout couleur produits (Oct 2024)
 2. `execute-sql-migration.mjs` - Exécution migrations SQL génériques (Oct 2024)
 
@@ -345,6 +363,7 @@ docs/audits/2025-11/
 **Résultat** : ❌ 249 erreurs TypeScript (attendu)
 
 **Erreurs principales** :
+
 - TS2339 : Property does not exist (122 erreurs - 49%)
 - TS2345 : Argument type not assignable (42 erreurs - 17%)
 - TS2307 : Cannot find module (42 erreurs - 17%)
@@ -361,6 +380,7 @@ docs/audits/2025-11/
 **Résultat** : ✅ SUCCESS
 
 **Configuration** :
+
 ```javascript
 typescript: {
   ignoreBuildErrors: true, // TEMPORARY - Remove after TS errors fixed
@@ -370,6 +390,7 @@ typescript: {
 **ESLint Warnings** : 200+ warnings affichées (non-bloquantes)
 
 **Build output** :
+
 - `.next/server/` créé
 - `.next/static/` créé
 - `app-build-manifest.json` généré
@@ -381,14 +402,14 @@ typescript: {
 
 **Erreurs non auto-fixables restantes** :
 
-| Code ESLint | Count | Exemple |
-|-------------|-------|---------|
-| `@typescript-eslint/naming-convention` | 50+ | Interfaces sans prefix "I" |
-| `@typescript-eslint/no-explicit-any` | 60+ | Usage type `any` |
-| `@typescript-eslint/explicit-function-return-type` | 100+ | Fonctions sans return type |
-| `no-console` | 40+ | console.log non supprimés |
-| `@typescript-eslint/no-floating-promises` | 20+ | Promises non awaited |
-| `@typescript-eslint/prefer-nullish-coalescing` | 30+ | Préférer `??` vs `||` |
+| Code ESLint                                        | Count | Exemple                    |
+| -------------------------------------------------- | ----- | -------------------------- | --- | --- |
+| `@typescript-eslint/naming-convention`             | 50+   | Interfaces sans prefix "I" |
+| `@typescript-eslint/no-explicit-any`               | 60+   | Usage type `any`           |
+| `@typescript-eslint/explicit-function-return-type` | 100+  | Fonctions sans return type |
+| `no-console`                                       | 40+   | console.log non supprimés  |
+| `@typescript-eslint/no-floating-promises`          | 20+   | Promises non awaited       |
+| `@typescript-eslint/prefer-nullish-coalescing`     | 30+   | Préférer `??` vs `         |     | `   |
 
 **Total** : ~300 warnings/errors ESLint à corriger manuellement.
 
@@ -461,31 +482,37 @@ typescript: {
 ### Best Practices 2025
 
 ✅ **eslint-config-prettier** > eslint-plugin-prettier
+
 - Désactiver règles conflictuelles plutôt que run Prettier via ESLint
 - Performance meilleure, moins de conflits
 
 ✅ **Ordre lint-staged critique** : Prettier → ESLint
+
 - Formatter d'abord, puis linter
 - Évite conflits formatting vs linting
 
 ✅ **Monorepo workspace** pour shared configs
+
 - Réutilisable back-office + canaux vente
 - Single source of truth
 
 ### Sécurité
 
 ✅ **Permissions granulaires évolutives**
+
 - Phase 1 (Dev) : Flexible mais sécurisé
 - Phase 2 (Pre-Prod) : Restrictions accrues
 - Phase 3 (Production) : Read-only strict
 
 ✅ **Deny list explicite**
+
 - Bloquer commandes destructives
 - Protection fichiers sensibles
 
 ### Nettoyage
 
 ✅ **Archiver != Supprimer**
+
 - Conserver contexte historique
 - README dans chaque archive
 - Possibilité rollback si nécessaire
@@ -494,23 +521,24 @@ typescript: {
 
 ## 📊 Statistiques Session
 
-| Métrique | Valeur |
-|----------|--------|
-| **Durée totale** | 45 minutes |
-| **Fichiers modifiés** | 15+ |
-| **Fichiers créés** | 8+ (packages, configs, READMEs) |
-| **Fichiers archivés** | 9 scripts |
-| **Fichiers supprimés** | 4 logs |
-| **Permissions sécurisées** | 173 allow + 17 deny |
-| **Code formaté** | 676+ fichiers |
-| **ESLint auto-fix runtime** | 14 minutes |
-| **Build time** | ~2 minutes |
+| Métrique                    | Valeur                          |
+| --------------------------- | ------------------------------- |
+| **Durée totale**            | 45 minutes                      |
+| **Fichiers modifiés**       | 15+                             |
+| **Fichiers créés**          | 8+ (packages, configs, READMEs) |
+| **Fichiers archivés**       | 9 scripts                       |
+| **Fichiers supprimés**      | 4 logs                          |
+| **Permissions sécurisées**  | 173 allow + 17 deny             |
+| **Code formaté**            | 676+ fichiers                   |
+| **ESLint auto-fix runtime** | 14 minutes                      |
+| **Build time**              | ~2 minutes                      |
 
 ---
 
 ## ✅ Checklist Finale
 
 ### Configuration
+
 - [x] Prettier + ESLint installés (Best Practices 2025)
 - [x] Monorepo workspace créé
 - [x] Shared configs packages créés
@@ -518,17 +546,20 @@ typescript: {
 - [x] Pre-commit hooks optimisés
 
 ### Formatage
+
 - [x] 676+ fichiers formatés
 - [x] ESLint auto-fix exécuté (14min)
 - [x] Build SUCCESS maintenu
 
 ### Sécurité
+
 - [x] Backup .claude/settings.json créé
 - [x] Permissions granulaires appliquées
 - [x] 7 wildcards dangereux supprimés
 - [x] 17 deny rules ajoutées
 
 ### Nettoyage
+
 - [x] 4 logs temporaires supprimés
 - [x] 7 scripts migration archivés
 - [x] 2 scripts .claude archivés
@@ -537,6 +568,7 @@ typescript: {
 - [x] READMEs créés (contexte préservé)
 
 ### Validation
+
 - [x] Type-check exécuté (249 erreurs documentées)
 - [x] Build SUCCESS
 - [x] 0 console errors (non testé - à faire)
@@ -548,6 +580,7 @@ typescript: {
 **Priorité 1** : Correction TypeScript errors (249 erreurs)
 
 **Workflow** :
+
 1. Lire `docs/audits/2025-11/TS_ERRORS_PLAN.md`
 2. Commencer FAMILLE 1 : TS2307 (Cannot find module - 42 erreurs P0)
 3. Workflow : Clustering → Correction batch → Tests → Commit
