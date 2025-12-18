@@ -19,6 +19,19 @@ const STATUS_LABELS: Record<string, string> = {
   partially_shipped: 'Expédition partielle',
 };
 
+// Helper: Formater frais de livraison ("Offert" si 0, sinon montant HT)
+function formatShippingCost(cost: number): string {
+  return cost === 0 ? 'Offert' : `${cost.toFixed(2)} €`;
+}
+
+// Interface pour les sous-totaux TVA
+interface TaxSubtotal {
+  rate: number; // Taux de TVA (0.2 = 20%)
+  totalHT: number; // Total HT des items à ce taux
+  totalTVA: number; // Montant TVA (totalHT * rate)
+  totalTTC: number; // Total TTC (totalHT + totalTVA)
+}
+
 export default function VentesPage(): JSX.Element {
   // 1. Récupérer l'affilié connecté
   const { data: affiliate, isLoading: affiliateLoading } = useUserAffiliate();
@@ -132,27 +145,73 @@ export default function VentesPage(): JSX.Element {
                         {new Date(order.created_at).toLocaleDateString()}
                       </div>
                     </div>
-                    <div className="text-right flex-shrink-0 ml-3">
-                      {/* Montants */}
-                      <div className="text-xs text-gray-500 mb-0.5">
-                        Total HT: {order.total_ht.toFixed(2)} €
+                  </div>
+
+                  {/* Totaux commande - Grid responsive */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-gray-50 p-3 rounded-lg">
+                    <div className="text-center">
+                      <div className="text-[10px] text-gray-500">Total HT</div>
+                      <div className="text-sm font-semibold text-gray-900">
+                        {order.total_ht.toFixed(2)} €
                       </div>
-                      <div className="text-sm font-bold text-gray-900 mb-1">
-                        Total TTC: {order.total_ttc.toFixed(2)} €
+                    </div>
+                    <div className="text-center">
+                      <div className="text-[10px] text-gray-500">Total TTC</div>
+                      <div className="text-sm font-bold text-gray-900">
+                        {order.total_ttc.toFixed(2)} €
                       </div>
-                      {/* Commissions */}
+                    </div>
+                    <div className="text-center">
                       <div className="text-[10px] text-gray-500">
-                        Commission HT:{' '}
+                        Commission HT
+                      </div>
+                      <div className="text-sm font-medium text-orange-600">
                         {(order.total_affiliate_margin / 1.2).toFixed(2)} €
                       </div>
-                      <div className="text-xs text-green-600 font-medium">
-                        Commission TTC:{' '}
+                    </div>
+                    <div className="text-center">
+                      <div className="text-[10px] text-gray-500">
+                        Commission TTC
+                      </div>
+                      <div className="text-sm font-bold text-green-600">
                         {order.total_affiliate_margin.toFixed(2)} €
                       </div>
                     </div>
                   </div>
 
-                  <div className="border-t pt-2 ml-6">
+                  {/* Frais de livraison - Si au moins un frais non nul */}
+                  {(order.shipping_cost_ht > 0 ||
+                    order.handling_cost_ht > 0 ||
+                    order.insurance_cost_ht > 0) && (
+                    <div className="grid grid-cols-3 gap-2 bg-blue-50 p-3 rounded-lg mt-2">
+                      <div className="text-center">
+                        <div className="text-[10px] text-gray-600">
+                          Livraison
+                        </div>
+                        <div className="text-xs font-medium text-blue-700">
+                          {formatShippingCost(order.shipping_cost_ht)}
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-[10px] text-gray-600">
+                          Manutention
+                        </div>
+                        <div className="text-xs font-medium text-blue-700">
+                          {formatShippingCost(order.handling_cost_ht)}
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-[10px] text-gray-600">
+                          Assurance
+                        </div>
+                        <div className="text-xs font-medium text-blue-700">
+                          {formatShippingCost(order.insurance_cost_ht)}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="border-t pt-2 ml-6 mt-3">
                     <div className="text-xs text-gray-600">
                       <strong>{order.items_count} produits</strong>
                       {!isExpanded && (
@@ -251,6 +310,62 @@ export default function VentesPage(): JSX.Element {
                         </div>
                       ))}
                     </div>
+
+                    {/* Sous-totaux TVA par taux */}
+                    {(() => {
+                      // Grouper par tax_rate
+                      const taxSubtotals = order.items.reduce(
+                        (acc, item) => {
+                          const rate = item.tax_rate;
+                          if (!acc[rate]) {
+                            acc[rate] = {
+                              rate,
+                              totalHT: 0,
+                              totalTVA: 0,
+                              totalTTC: 0,
+                            };
+                          }
+                          acc[rate].totalHT += item.total_ht;
+                          acc[rate].totalTVA += item.total_ht * rate;
+                          acc[rate].totalTTC += item.total_ht * (1 + rate);
+                          return acc;
+                        },
+                        {} as Record<number, TaxSubtotal>
+                      );
+
+                      const subtotals = Object.values(taxSubtotals).sort(
+                        (a, b) => b.rate - a.rate
+                      );
+
+                      return (
+                        <div className="mt-4 pt-3 border-t border-gray-300">
+                          <h5 className="text-xs font-semibold text-gray-700 mb-2">
+                            Sous-totaux TVA
+                          </h5>
+                          {subtotals.map(sub => (
+                            <div
+                              key={sub.rate}
+                              className="flex justify-between items-center text-xs mb-1"
+                            >
+                              <span className="text-gray-600">
+                                TVA {(sub.rate * 100).toFixed(1)}%
+                              </span>
+                              <div className="flex gap-4">
+                                <span className="text-gray-700">
+                                  Base HT: {sub.totalHT.toFixed(2)} €
+                                </span>
+                                <span className="text-gray-700">
+                                  TVA: {sub.totalTVA.toFixed(2)} €
+                                </span>
+                                <span className="font-semibold text-gray-900">
+                                  TTC: {sub.totalTTC.toFixed(2)} €
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
               </div>

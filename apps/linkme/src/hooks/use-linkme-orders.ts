@@ -45,6 +45,9 @@ export interface LinkMeOrder {
   payment_status: string | null;
   total_ht: number;
   total_ttc: number;
+  shipping_cost_ht: number;
+  handling_cost_ht: number;
+  insurance_cost_ht: number;
   total_affiliate_margin: number;
   customer_name: string;
   customer_type: 'organization' | 'individual';
@@ -111,6 +114,9 @@ export function useLinkMeOrders(affiliateId: string | null) {
             payment_status: order.payment_status,
             total_ht: order.total_ht || 0,
             total_ttc: order.total_ttc || 0,
+            shipping_cost_ht: order.shipping_cost_ht || 0,
+            handling_cost_ht: order.handling_cost_ht || 0,
+            insurance_cost_ht: order.insurance_cost_ht || 0,
             total_affiliate_margin: order.total_affiliate_margin || 0,
             customer_name: order.customer_name || 'Client inconnu',
             customer_type: order.customer_type as 'organization' | 'individual',
