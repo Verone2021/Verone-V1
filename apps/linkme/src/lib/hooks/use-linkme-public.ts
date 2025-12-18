@@ -1,6 +1,9 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import { createClient } from '@verone/utils/supabase/client';
+
+const supabase = createClient();
 
 import type {
   SelectionWithAffiliate,
@@ -8,9 +11,6 @@ import type {
   AffiliateWithSelections,
   LinkMeAffiliate,
 } from '../../types';
-import { createClient } from '../supabase';
-
-const supabase = createClient();
 
 /**
  * Hook: Récupère les sélections vedettes pour la page d'accueil

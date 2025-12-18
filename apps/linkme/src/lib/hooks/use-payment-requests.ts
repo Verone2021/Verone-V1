@@ -7,6 +7,9 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { createClient } from '@verone/utils/supabase/client';
+
+const supabase = createClient();
 
 import { useUserAffiliate } from './use-user-selection';
 import type {
@@ -14,7 +17,6 @@ import type {
   PaymentRequestStatus,
   CommissionItem,
 } from '../../types/analytics';
-import { supabase } from '../supabase';
 
 // ============================================================================
 // Types internes

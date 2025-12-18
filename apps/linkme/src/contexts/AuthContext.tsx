@@ -22,8 +22,10 @@ import {
 
 import type { User, Session } from '@supabase/supabase-js';
 
-// Utiliser le singleton supabase (ne PAS créer une nouvelle instance à chaque render)
-import { supabase } from '../lib/supabase';
+// Client SSR-safe (singleton) - utilise cookies pour la session
+import { createClient } from '@verone/utils/supabase/client';
+
+const supabase = createClient();
 
 // Types
 export type LinkMeRole =
@@ -50,7 +52,7 @@ interface AuthContextType {
   linkMeRole: LinkMeUserRole | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signOut: () => Promise<void>;
+  signOut: (redirectTo?: string) => Promise<void>;
   refreshLinkMeRole: () => Promise<void>;
 }
 
@@ -296,8 +298,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  // Déconnexion
-  const signOut = async () => {
+  // Déconnexion avec redirection optionnelle
+  const signOut = async (redirectTo?: string) => {
+    // Rediriger AVANT de supprimer la session pour éviter les redirections /login
+    if (redirectTo && typeof window !== 'undefined') {
+      window.location.href = redirectTo;
+    }
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);

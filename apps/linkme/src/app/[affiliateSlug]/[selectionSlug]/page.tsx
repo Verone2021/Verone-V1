@@ -5,11 +5,13 @@ import { use, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
+import { createClient } from '@verone/utils/supabase/client';
 import { ArrowLeft, Store, Package, ShoppingCart, Plus } from 'lucide-react';
+
+const supabase = createClient();
 
 import { useCart } from '../../../components/cart/CartProvider';
 import { useSelectionWithProducts } from '../../../lib/hooks/use-linkme-public';
-import { supabase } from '../../../lib/supabase';
 
 interface SelectionPageProps {
   params: Promise<{ affiliateSlug: string; selectionSlug: string }>;

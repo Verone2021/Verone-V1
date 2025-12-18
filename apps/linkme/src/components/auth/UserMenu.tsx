@@ -25,11 +25,7 @@ import {
   ShoppingBag,
 } from 'lucide-react';
 
-import {
-  useAuth,
-  type LinkMeUserRole,
-  type LinkMeRole,
-} from '../../contexts/AuthContext';
+import { useAuth, type LinkMeRole } from '../../contexts/AuthContext';
 
 // Labels des rôles
 const ROLE_LABELS: Record<LinkMeRole, string> = {
@@ -47,11 +43,11 @@ const ROLE_COLORS: Record<LinkMeRole, string> = {
   client: 'bg-green-100 text-green-700',
 };
 
-interface UserMenuProps {
+interface IUserMenuProps {
   className?: string;
 }
 
-export function UserMenu({ className }: UserMenuProps) {
+export function UserMenu({ className }: IUserMenuProps): JSX.Element | null {
   const router = useRouter();
   const { user, linkMeRole, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
@@ -59,7 +55,7 @@ export function UserMenu({ className }: UserMenuProps) {
 
   // Fermer le menu quand on clique en dehors
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
+    function handleClickOutside(event: MouseEvent): void {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
@@ -69,11 +65,9 @@ export function UserMenu({ className }: UserMenuProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Gérer la déconnexion
-  const handleSignOut = async () => {
-    await signOut();
-    router.push('/');
-    router.refresh();
+  // Gérer la déconnexion - redirige vers l'accueil
+  const handleSignOut = async (): Promise<void> => {
+    await signOut('/');
   };
 
   if (!user) return null;
@@ -82,14 +76,14 @@ export function UserMenu({ className }: UserMenuProps) {
   const displayName =
     user.user_metadata?.first_name && user.user_metadata?.last_name
       ? `${user.user_metadata.first_name} ${user.user_metadata.last_name}`
-      : user.email?.split('@')[0] || 'Utilisateur';
+      : (user.email?.split('@')[0] ?? 'Utilisateur');
 
   // Obtenir l'entité associée (enseigne ou organisation)
   const entityName =
-    linkMeRole?.enseigne_name || linkMeRole?.organisation_name || null;
+    linkMeRole?.enseigne_name ?? linkMeRole?.organisation_name ?? null;
 
   return (
-    <div className={`relative ${className || ''}`} ref={menuRef}>
+    <div className={`relative ${className ?? ''}`} ref={menuRef}>
       {/* Bouton principal */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -173,7 +167,7 @@ export function UserMenu({ className }: UserMenuProps) {
                   className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 >
                   <ShoppingBag className="h-4 w-4" />
-                  Mes ventes
+                  Mes commandes
                 </Link>
               </>
             )}
@@ -191,7 +185,7 @@ export function UserMenu({ className }: UserMenuProps) {
           {/* Actions */}
           <div className="border-t border-gray-100 pt-2">
             <button
-              onClick={handleSignOut}
+              onClick={() => void handleSignOut()}
               className="flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left"
             >
               <LogOut className="h-4 w-4" />

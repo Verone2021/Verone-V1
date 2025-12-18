@@ -12,8 +12,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useQuery } from '@tanstack/react-query';
-
-import { supabase } from '../lib/supabase';
+import { createClient } from '@verone/utils/supabase/client';
 
 /**
  * Interface item de commande
@@ -79,6 +78,7 @@ export function useLinkMeOrders(affiliateId: string | null) {
       if (!affiliateId) return [];
 
       // 1. Fetch commandes via RPC
+      const supabase = createClient();
       const { data: ordersData, error: ordersError } = await (
         supabase as any
       ).rpc('get_linkme_orders', { p_affiliate_id: affiliateId });

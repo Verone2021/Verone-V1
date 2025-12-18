@@ -13,6 +13,9 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
+import { createClient } from '@verone/utils/supabase/client';
+
+const supabase = createClient();
 
 import { useUserAffiliate } from './use-user-selection';
 import type {
@@ -24,7 +27,6 @@ import type {
   TopProductData,
 } from '../../types/analytics';
 import { getPeriodStartDate } from '../../types/analytics';
-import { supabase } from '../supabase';
 
 // ============================================
 // HELPERS
@@ -72,7 +74,13 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'month') {
   return useQuery({
     queryKey: ['affiliate-analytics', affiliate?.id, period],
     queryFn: async (): Promise<AffiliateAnalyticsData | null> => {
-      if (!affiliate) return null;
+      if (!affiliate) {
+        console.error('❌ ALERTE KPI: Aucun affilié trouvé');
+        console.error(
+          '   → Vérifier user_app_roles + linkme_affiliates mapping'
+        );
+        return null;
+      }
 
       const periodStart = getPeriodStartDate(period);
       const periodStartISO = periodStart.toISOString();

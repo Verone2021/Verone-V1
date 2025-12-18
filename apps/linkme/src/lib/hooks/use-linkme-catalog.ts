@@ -12,8 +12,9 @@
 import * as React from 'react';
 
 import { useQuery } from '@tanstack/react-query';
+import { createClient } from '@verone/utils/supabase/client';
 
-import { supabase } from '../../lib/supabase';
+const supabase = createClient();
 
 // ID du canal LinkMe dans sales_channels (même que back-office)
 const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';

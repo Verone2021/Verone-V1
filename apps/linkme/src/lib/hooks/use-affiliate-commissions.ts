@@ -10,10 +10,12 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
+import { createClient } from '@verone/utils/supabase/client';
+
+const supabase = createClient();
 
 import { useUserAffiliate } from './use-user-selection';
 import type { CommissionItem, CommissionStatus } from '../../types/analytics';
-import { supabase } from '../supabase';
 
 interface UseAffiliateCommissionsOptions {
   status?: CommissionStatus | 'all';
