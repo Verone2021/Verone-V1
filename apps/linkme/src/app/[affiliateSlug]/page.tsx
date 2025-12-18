@@ -13,7 +13,11 @@ interface AffiliatePageProps {
 
 export default function AffiliatePage({ params }: AffiliatePageProps) {
   const { affiliateSlug } = use(params);
-  const { data: affiliate, isLoading, error } = useAffiliateBySlug(affiliateSlug);
+  const {
+    data: affiliate,
+    isLoading,
+    error,
+  } = useAffiliateBySlug(affiliateSlug);
 
   if (isLoading) {
     return (

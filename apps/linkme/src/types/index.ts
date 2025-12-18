@@ -84,7 +84,10 @@ export interface SelectionWithAffiliate extends LinkMeSelection {
 }
 
 export interface SelectionWithProducts extends LinkMeSelection {
-  affiliate: Pick<LinkMeAffiliate, 'display_name' | 'slug' | 'logo_url' | 'bio'>;
+  affiliate: Pick<
+    LinkMeAffiliate,
+    'display_name' | 'slug' | 'logo_url' | 'bio'
+  >;
   items: SelectionItemWithProduct[];
 }
 
@@ -207,22 +210,31 @@ export interface CommissionFilter {
 // CONSTANTS
 // ============================================
 
-export const TVA_RATE = 0.20; // 20% TVA
+export const TVA_RATE = 0.2; // 20% TVA
 
-export const COMMISSION_STATUS_LABELS: Record<LinkMeCommission['status'], string> = {
+export const COMMISSION_STATUS_LABELS: Record<
+  LinkMeCommission['status'],
+  string
+> = {
   pending: 'En attente',
   validated: 'Validée',
   paid: 'Payée',
   cancelled: 'Annulée',
 };
 
-export const AFFILIATE_STATUS_LABELS: Record<LinkMeAffiliate['status'], string> = {
+export const AFFILIATE_STATUS_LABELS: Record<
+  LinkMeAffiliate['status'],
+  string
+> = {
   pending: 'En attente',
   active: 'Actif',
   suspended: 'Suspendu',
 };
 
-export const SELECTION_STATUS_LABELS: Record<LinkMeSelection['status'], string> = {
+export const SELECTION_STATUS_LABELS: Record<
+  LinkMeSelection['status'],
+  string
+> = {
   draft: 'Brouillon',
   active: 'Active',
   archived: 'Archivée',

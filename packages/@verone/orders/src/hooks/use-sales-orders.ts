@@ -179,6 +179,7 @@ export interface ShipItemData {
 interface SalesOrderFilters {
   customer_id?: string;
   status?: SalesOrderStatus;
+  channel_id?: string; // Filtre par canal de vente (LinkMe, Site Internet, etc.)
   date_from?: string;
   date_to?: string;
   order_number?: string;
@@ -318,6 +319,9 @@ export function useSalesOrders() {
         }
         if (filters?.order_number) {
           query = query.ilike('order_number', `%${filters.order_number}%`);
+        }
+        if (filters?.channel_id) {
+          query = query.eq('channel_id', filters.channel_id);
         }
 
         const { data: ordersData, error } = await query;

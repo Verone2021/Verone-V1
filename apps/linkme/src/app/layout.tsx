@@ -6,9 +6,9 @@ import { Footer } from '../components/layout/Footer';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'LINKME - Plateforme d\'affiliation Vérone',
+  title: "LINKME - Plateforme d'affiliation Vérone",
   description:
-    'Découvrez les sélections de mobilier et décoration d\'intérieur par nos partenaires affiliés.',
+    "Découvrez les sélections de mobilier et décoration d'intérieur par nos partenaires affiliés.",
 };
 
 export default function RootLayout({

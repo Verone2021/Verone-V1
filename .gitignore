@@ -112,3 +112,4 @@ git-status-*.txt
 storybook-static
 .vercel-deploy-trigger-*
 .claude/DIAGNOSTIC-*.md
+.cursor/

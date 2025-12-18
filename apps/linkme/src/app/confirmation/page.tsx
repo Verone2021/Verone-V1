@@ -47,23 +47,23 @@ function ConfirmationContent() {
                   1
                 </span>
                 <span>
-                  Vous allez recevoir un email de confirmation avec les détails de votre commande.
+                  Vous allez recevoir un email de confirmation avec les détails
+                  de votre commande.
                 </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center flex-shrink-0 text-xs">
                   2
                 </span>
-                <span>
-                  Notre équipe prépare votre commande avec soin.
-                </span>
+                <span>Notre équipe prépare votre commande avec soin.</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center flex-shrink-0 text-xs">
                   3
                 </span>
                 <span>
-                  Vous recevrez un email avec le suivi de livraison dès l'expédition.
+                  Vous recevrez un email avec le suivi de livraison dès
+                  l'expédition.
                 </span>
               </li>
             </ul>

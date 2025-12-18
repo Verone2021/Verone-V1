@@ -5,7 +5,7 @@
  *
  * Design épuré avec :
  * - 1 KPI principal (commissions en attente)
- * - 3 actions rapides (Ma sélection, Mes ventes, Mon profil)
+ * - 3 actions rapides (Ma sélection, Mes commandes, Mon profil)
  * - Résumé compact du mois
  *
  * Principes UX appliqués :
@@ -38,7 +38,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useAffiliateAnalytics } from '../../lib/hooks/use-affiliate-analytics';
 import { useUserSelections } from '../../lib/hooks/use-user-selection';
 
-export default function DashboardPage() {
+export default function DashboardPage(): JSX.Element | null {
   const router = useRouter();
   const { user, linkMeRole, loading } = useAuth();
   const { data: analytics, isLoading: analyticsLoading } =
@@ -67,18 +67,18 @@ export default function DashboardPage() {
   }
 
   // Obtenir le prénom
-  const firstName =
-    user.user_metadata?.first_name ||
-    linkMeRole?.enseigne_name ||
-    user.email?.split('@')[0] ||
+  const firstName: string =
+    (user.user_metadata?.first_name as string | undefined) ??
+    linkMeRole?.enseigne_name ??
+    user.email?.split('@')[0] ??
     'vous';
 
   // Données analytics
-  const pendingCommissions = analytics?.pendingCommissionsTTC || 0;
-  const totalRevenue = analytics?.totalRevenueHT || 0;
-  const totalCommissions = analytics?.totalCommissionsTTC || 0;
-  const totalOrders = analytics?.totalOrders || 0;
-  const selectionsCount = selections?.filter(s => s.is_public).length || 0;
+  const pendingCommissions = analytics?.pendingCommissionsTTC ?? 0;
+  const totalRevenue = analytics?.totalRevenueHT ?? 0;
+  const totalCommissions = analytics?.totalCommissionsTTC ?? 0;
+  const totalOrders = analytics?.totalOrders ?? 0;
+  const selectionsCount = selections?.filter(s => s.is_public).length ?? 0;
 
   return (
     <div className="min-h-screen bg-white">
@@ -147,7 +147,7 @@ export default function DashboardPage() {
             </p>
           </Link>
 
-          {/* Mes ventes */}
+          {/* Mes commandes */}
           <Link
             href="/ventes"
             className="group bg-gray-50 hover:bg-gray-100 rounded-lg p-4 transition-colors border border-gray-100 hover:border-gray-200"
@@ -158,7 +158,7 @@ export default function DashboardPage() {
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold text-gray-900 group-hover:text-blue-700 transition-colors">
-                  Mes ventes
+                  Mes commandes
                 </h3>
               </div>
               <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-colors" />

@@ -3,7 +3,12 @@
  * Récupère toutes les métriques pour le dashboard Analytics
  *
  * @param period - Période de filtrage (week, month, quarter, year)
+ * @param dateOptions - Options de date avancées (année, startDate, endDate)
  * @returns Données analytics + états loading/error
+ *
+ * Refonte 2025-12-17:
+ * - Support filtrage par année + période
+ * - Utilisation des dates explicites au lieu de rolling window
  */
 
 'use client';
@@ -17,6 +22,12 @@ import { createClient } from '@verone/utils/supabase/client';
 // ============================================
 
 export type AnalyticsPeriod = 'week' | 'month' | 'quarter' | 'year';
+
+export interface DateOptions {
+  year?: number; // 0 = Tout (pas de filtrage de date)
+  startDate?: Date;
+  endDate?: Date;
+}
 
 export interface RevenueDataPoint {
   date: string;
@@ -123,18 +134,41 @@ function getWeekNumber(date: Date): number {
 // HOOK
 // ============================================
 
-export function useLinkMeAnalytics(period: AnalyticsPeriod = 'month') {
+export function useLinkMeAnalytics(
+  period: AnalyticsPeriod = 'month',
+  dateOptions?: DateOptions
+) {
   const [data, setData] = useState<LinkMeAnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Serialize dateOptions for dependency array
+  const startDateISO = dateOptions?.startDate?.toISOString();
+  const endDateISO = dateOptions?.endDate?.toISOString();
+  const year = dateOptions?.year;
 
   const fetchAnalytics = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     const supabase = createClient();
-    const periodStart = getPeriodStart(period);
-    const periodStartISO = periodStart.toISOString();
+
+    // Si year = 0 (Tout), on ne filtre pas par date
+    const isAllTime = year === 0;
+
+    // Utiliser les dates explicites si fournies, sinon rolling window
+    let periodStartISO: string | null = null;
+    let periodEndISO: string | null = null;
+
+    if (!isAllTime) {
+      if (startDateISO && endDateISO) {
+        periodStartISO = startDateISO;
+        periodEndISO = endDateISO;
+      } else {
+        periodStartISO = getPeriodStart(period).toISOString();
+        periodEndISO = new Date().toISOString();
+      }
+    }
 
     try {
       // ============================================
@@ -149,12 +183,10 @@ export function useLinkMeAnalytics(period: AnalyticsPeriod = 'month') {
       const activeAffiliates = affiliatesData?.length || 0;
 
       // ============================================
-      // 2. Commissions (toutes les métriques)
+      // 2. Commissions (filtrées par période/année OU toutes si isAllTime)
       // ============================================
-      const { data: commissionsData, error: commissionsError } = await supabase
-        .from('linkme_commissions')
-        .select(
-          `
+      let commissionsQuery = supabase.from('linkme_commissions').select(
+        `
           id,
           affiliate_id,
           order_amount_ht,
@@ -165,9 +197,17 @@ export function useLinkMeAnalytics(period: AnalyticsPeriod = 'month') {
           created_at,
           affiliate:linkme_affiliates(display_name)
         `
-        )
-        .gte('created_at', periodStartISO)
-        .order('created_at', { ascending: true });
+      );
+
+      // Appliquer filtres de date seulement si pas "Tout"
+      if (!isAllTime && periodStartISO && periodEndISO) {
+        commissionsQuery = commissionsQuery
+          .gte('created_at', periodStartISO)
+          .lte('created_at', periodEndISO);
+      }
+
+      const { data: commissionsData, error: commissionsError } =
+        await commissionsQuery.order('created_at', { ascending: true });
 
       if (commissionsError) throw commissionsError;
 
@@ -181,32 +221,27 @@ export function useLinkMeAnalytics(period: AnalyticsPeriod = 'month') {
       const averageBasket = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
       // ============================================
-      // 3. Commissions par statut (toutes périodes) - HT ET TTC
+      // 3. Commissions par statut (filtrées aussi par période)
       // ============================================
-      const { data: allCommissionsData } = await supabase
-        .from('linkme_commissions')
-        .select('status, affiliate_commission, affiliate_commission_ttc');
-
-      const allCommissions = allCommissionsData || [];
       const commissionsByStatus: CommissionsByStatus = {
-        // Montants HT (prioritaires)
-        pendingHT: allCommissions
+        // Montants HT
+        pendingHT: commissions
           .filter(c => c.status === 'pending')
           .reduce((sum, c) => sum + (c.affiliate_commission || 0), 0),
-        validatedHT: allCommissions
+        validatedHT: commissions
           .filter(c => c.status === 'validated')
           .reduce((sum, c) => sum + (c.affiliate_commission || 0), 0),
-        paidHT: allCommissions
+        paidHT: commissions
           .filter(c => c.status === 'paid')
           .reduce((sum, c) => sum + (c.affiliate_commission || 0), 0),
-        // Montants TTC (secondaires)
-        pendingTTC: allCommissions
+        // Montants TTC
+        pendingTTC: commissions
           .filter(c => c.status === 'pending')
           .reduce((sum, c) => sum + (c.affiliate_commission_ttc || 0), 0),
-        validatedTTC: allCommissions
+        validatedTTC: commissions
           .filter(c => c.status === 'validated')
           .reduce((sum, c) => sum + (c.affiliate_commission_ttc || 0), 0),
-        paidTTC: allCommissions
+        paidTTC: commissions
           .filter(c => c.status === 'paid')
           .reduce((sum, c) => sum + (c.affiliate_commission_ttc || 0), 0),
       };
@@ -270,9 +305,9 @@ export function useLinkMeAnalytics(period: AnalyticsPeriod = 'month') {
         .slice(0, 10);
 
       // ============================================
-      // 6. Top Commissions en attente
+      // 6. Top Commissions en attente (dans la période)
       // ============================================
-      const topPendingCommissions: PendingCommission[] = allCommissions
+      const topPendingCommissions: PendingCommission[] = commissions
         .filter(c => c.status === 'pending' || c.status === 'validated')
         .sort(
           (a, b) =>
@@ -280,22 +315,17 @@ export function useLinkMeAnalytics(period: AnalyticsPeriod = 'month') {
             (a.affiliate_commission_ttc || 0)
         )
         .slice(0, 5)
-        .map((c, index) => {
-          const commission = commissions.find(
-            cc => cc.id === (c as { id?: string }).id
-          );
-          return {
-            id: String(index),
-            affiliateName:
-              (commission?.affiliate as { display_name: string } | null)
-                ?.display_name || 'Affilié',
-            amount: c.affiliate_commission_ttc || 0,
-            orderNumber: commission?.order_number || '-',
-            date: commission?.created_at
-              ? new Date(commission.created_at).toLocaleDateString('fr-FR')
-              : '-',
-          };
-        });
+        .map((c, index) => ({
+          id: String(index),
+          affiliateName:
+            (c.affiliate as { display_name: string } | null)?.display_name ||
+            'Affilié',
+          amount: c.affiliate_commission_ttc || 0,
+          orderNumber: c.order_number || '-',
+          date: c.created_at
+            ? new Date(c.created_at).toLocaleDateString('fr-FR')
+            : '-',
+        }));
 
       // ============================================
       // 7. Sélections (total + performance)
@@ -378,7 +408,7 @@ export function useLinkMeAnalytics(period: AnalyticsPeriod = 'month') {
     } finally {
       setIsLoading(false);
     }
-  }, [period]);
+  }, [period, startDateISO, endDateISO, year]);
 
   useEffect(() => {
     fetchAnalytics();

@@ -37,7 +37,10 @@ export default function LinkMePage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+            <Badge
+              variant="outline"
+              className="bg-green-50 text-green-700 border-green-200"
+            >
               Plateforme Active
             </Badge>
             <ButtonV2

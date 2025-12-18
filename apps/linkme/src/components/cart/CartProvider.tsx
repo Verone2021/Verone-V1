@@ -11,7 +11,7 @@ import {
 
 import type { CartItem, CartState, CartTotals } from '../../types';
 
-const TVA_RATE = 0.20;
+const TVA_RATE = 0.2;
 
 interface CartContextValue extends CartState, CartTotals {
   addItem: (item: Omit<CartItem, 'quantity'>) => void;
@@ -66,18 +66,19 @@ export function CartProvider({ children }: CartProviderProps) {
   }, []);
 
   // Modifier quantité
-  const updateQuantity = useCallback((itemId: string, quantity: number) => {
-    if (quantity <= 0) {
-      removeItem(itemId);
-      return;
-    }
+  const updateQuantity = useCallback(
+    (itemId: string, quantity: number) => {
+      if (quantity <= 0) {
+        removeItem(itemId);
+        return;
+      }
 
-    setItems(prev =>
-      prev.map(item =>
-        item.id === itemId ? { ...item, quantity } : item
-      )
-    );
-  }, [removeItem]);
+      setItems(prev =>
+        prev.map(item => (item.id === itemId ? { ...item, quantity } : item))
+      );
+    },
+    [removeItem]
+  );
 
   // Vider le panier
   const clearCart = useCallback(() => {
@@ -89,22 +90,16 @@ export function CartProvider({ children }: CartProviderProps) {
   }, []);
 
   // Définir info affilié
-  const setAffiliateInfo = useCallback(
-    (id: string, slug: string) => {
-      setAffiliateId(id);
-      setAffiliateSlug(slug);
-    },
-    []
-  );
+  const setAffiliateInfo = useCallback((id: string, slug: string) => {
+    setAffiliateId(id);
+    setAffiliateSlug(slug);
+  }, []);
 
   // Définir info sélection
-  const setSelectionInfo = useCallback(
-    (id: string, slug: string) => {
-      setSelectionId(id);
-      setSelectionSlug(slug);
-    },
-    []
-  );
+  const setSelectionInfo = useCallback((id: string, slug: string) => {
+    setSelectionId(id);
+    setSelectionSlug(slug);
+  }, []);
 
   // Ouvrir/Fermer panier
   const openCart = useCallback(() => setIsCartOpen(true), []);

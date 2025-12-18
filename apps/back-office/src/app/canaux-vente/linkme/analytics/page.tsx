@@ -1,46 +1,76 @@
 'use client';
 
-import { useState } from 'react';
+/**
+ * Page Analytics LinkMe - Vue d'ensemble
+ *
+ * Refonte 2025-12-17:
+ * - Filtre "Tout" pour voir toutes les données
+ * - Filtre par année + mois (multi-sélection)
+ * - Bouton Actualiser
+ * - KPIs non tronqués
+ *
+ * @module LinkMeAnalyticsPage
+ * @since 2025-12-17
+ */
+
+import { useState, useMemo, useCallback } from 'react';
+
+import Link from 'next/link';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
-import { Badge } from '@verone/ui';
-import { Tabs, TabsList, TabsTrigger } from '@verone/ui';
 import { Skeleton } from '@verone/ui';
+import { Button } from '@verone/ui';
 import {
   BarChart3,
   TrendingUp,
   Users,
   ShoppingCart,
   DollarSign,
-  Package,
   ShoppingBag,
   Wallet,
+  ArrowRight,
+  Clock,
+  CheckCircle,
+  Banknote,
 } from 'lucide-react';
 
 import { LinkMeRevenueChart } from '../components/charts/LinkMeRevenueChart';
 import { TopAffiliatesChart } from '../components/charts/TopAffiliatesChart';
-import { CommissionsStatusCard } from '../components/CommissionsStatusCard';
-import { SelectionsPerformanceTable } from '../components/SelectionsPerformanceTable';
 import {
-  useLinkMeAnalytics,
-  type AnalyticsPeriod,
-} from '../hooks/use-linkme-analytics';
+  AnalyticsDateFilter,
+  getDateRangeForFilters,
+  ALL_YEARS_VALUE,
+  type AnalyticsFilters,
+} from '../components/AnalyticsDateFilter';
+import { useLinkMeAnalytics } from '../hooks/use-linkme-analytics';
 
-// ============================================
-// TYPES & CONFIG
-// ============================================
+// ============================================================================
+// Config
+// ============================================================================
 
-const PERIOD_CONFIG: Record<AnalyticsPeriod, { label: string; short: string }> =
-  {
-    week: { label: 'Semaine', short: '7j' },
-    month: { label: 'Mois', short: '30j' },
-    quarter: { label: 'Trimestre', short: '90j' },
-    year: { label: 'Année', short: '365j' },
-  };
+// Années disponibles (depuis première commande LinkMe: février 2024)
+const AVAILABLE_YEARS = [2024, 2025];
 
-// ============================================
-// KPI CARD COMPONENT
-// ============================================
+// ============================================================================
+// Helpers
+// ============================================================================
+
+function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+function formatNumber(num: number): string {
+  return new Intl.NumberFormat('fr-FR').format(num);
+}
+
+// ============================================================================
+// KPI Card Component (Compact)
+// ============================================================================
 
 interface KpiCardProps {
   title: string;
@@ -63,25 +93,23 @@ function KpiCard({
 }: KpiCardProps) {
   return (
     <Card>
-      <CardContent className="pt-4">
+      <CardContent className="pt-4 pb-4">
         <div className="flex items-center gap-3">
           <div
-            className={`flex h-10 w-10 items-center justify-center rounded-lg ${iconBgColor}`}
+            className={`flex h-10 w-10 items-center justify-center rounded-lg shrink-0 ${iconBgColor}`}
           >
             <Icon className={`h-5 w-5 ${iconColor}`} />
           </div>
           <div className="min-w-0 flex-1">
             {isLoading ? (
               <>
-                <Skeleton className="h-7 w-20 mb-1" />
-                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-6 w-20 mb-1" />
+                <Skeleton className="h-4 w-16" />
               </>
             ) : (
               <>
-                <p className={`text-2xl font-bold truncate ${valueColor}`}>
-                  {value}
-                </p>
-                <p className="text-sm text-gray-500">{title}</p>
+                <p className={`text-xl font-bold ${valueColor}`}>{value}</p>
+                <p className="text-xs text-gray-500">{title}</p>
               </>
             )}
           </div>
@@ -91,25 +119,113 @@ function KpiCard({
   );
 }
 
-// ============================================
-// MAIN PAGE
-// ============================================
+// ============================================================================
+// Commission Status Card (Compact)
+// ============================================================================
+
+interface CommissionStatusProps {
+  pendingHT: number;
+  validatedHT: number;
+  paidHT: number;
+  isLoading: boolean;
+}
+
+function CommissionStatusCard({
+  pendingHT,
+  validatedHT,
+  paidHT,
+  isLoading,
+}: CommissionStatusProps) {
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
+          <Wallet className="h-4 w-4 text-gray-500" />
+          Commissions
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-3 gap-4">
+          {/* En attente */}
+          <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg">
+            <Clock className="h-5 w-5 text-amber-600 shrink-0" />
+            <div>
+              {isLoading ? (
+                <Skeleton className="h-6 w-20" />
+              ) : (
+                <p className="text-lg font-bold text-amber-700">
+                  {formatCurrency(pendingHT)}
+                </p>
+              )}
+              <p className="text-xs text-amber-600">En attente</p>
+            </div>
+          </div>
+
+          {/* Validées */}
+          <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+            <CheckCircle className="h-5 w-5 text-blue-600 shrink-0" />
+            <div>
+              {isLoading ? (
+                <Skeleton className="h-6 w-20" />
+              ) : (
+                <p className="text-lg font-bold text-blue-700">
+                  {formatCurrency(validatedHT)}
+                </p>
+              )}
+              <p className="text-xs text-blue-600">Validées</p>
+            </div>
+          </div>
+
+          {/* Payées */}
+          <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+            <Banknote className="h-5 w-5 text-green-600 shrink-0" />
+            <div>
+              {isLoading ? (
+                <Skeleton className="h-6 w-20" />
+              ) : (
+                <p className="text-lg font-bold text-green-700">
+                  {formatCurrency(paidHT)}
+                </p>
+              )}
+              <p className="text-xs text-green-600">Payées</p>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ============================================================================
+// Main Page
+// ============================================================================
 
 export default function LinkMeAnalyticsPage() {
-  const [period, setPeriod] = useState<AnalyticsPeriod>('month');
-  const { data, isLoading, error } = useLinkMeAnalytics(period);
+  // State for filters - default to "Tout" (year = 0)
+  const [filters, setFilters] = useState<AnalyticsFilters>({
+    year: ALL_YEARS_VALUE,
+    months: [],
+  });
 
-  // Format helpers
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount);
+  // Calculate date range from filters
+  const dateRange = useMemo(() => getDateRangeForFilters(filters), [filters]);
 
-  const formatNumber = (num: number) =>
-    new Intl.NumberFormat('fr-FR').format(num);
+  // Handler for filter changes
+  const handleFiltersChange = useCallback((newFilters: AnalyticsFilters) => {
+    setFilters(newFilters);
+  }, []);
+
+  // Fetch data with new filter system
+  const { data, isLoading, error, refetch } = useLinkMeAnalytics('year', {
+    year: filters.year,
+    startDate: dateRange.startDate || undefined,
+    endDate: dateRange.endDate || undefined,
+  });
+
+  // Handler for refresh button
+  const handleRefresh = useCallback(() => {
+    refetch();
+  }, [refetch]);
 
   return (
     <div className="flex flex-col h-full">
@@ -122,38 +238,29 @@ export default function LinkMeAnalyticsPage() {
             </div>
             <div>
               <h1 className="text-xl font-semibold">Analytics</h1>
-              <p className="text-sm text-gray-500">
-                Vue d'ensemble des performances LinkMe
-              </p>
+              <p className="text-sm text-gray-500">Vue d'ensemble LinkMe</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Period Tabs */}
-            <Tabs
-              value={period}
-              onValueChange={v => setPeriod(v as AnalyticsPeriod)}
-            >
-              <TabsList className="bg-gray-100">
-                {Object.entries(PERIOD_CONFIG).map(([key, config]) => (
-                  <TabsTrigger
-                    key={key}
-                    value={key}
-                    className="text-xs data-[state=active]:bg-white"
-                  >
-                    {config.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
+          {/* Performance Link */}
+          <Link href="/canaux-vente/linkme/analytics/performance">
+            <Button variant="outline" size="sm" className="gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Performance détaillée
+              <ArrowRight className="h-3 w-3" />
+            </Button>
+          </Link>
+        </div>
 
-            <Badge
-              variant="outline"
-              className="bg-green-50 text-green-700 border-green-200"
-            >
-              Données en temps réel
-            </Badge>
-          </div>
+        {/* Filters Row - Below header */}
+        <div className="mt-4">
+          <AnalyticsDateFilter
+            filters={filters}
+            availableYears={AVAILABLE_YEARS}
+            onFiltersChange={handleFiltersChange}
+            onRefresh={handleRefresh}
+            isLoading={isLoading}
+          />
         </div>
       </div>
 
@@ -166,7 +273,7 @@ export default function LinkMeAnalyticsPage() {
           </div>
         )}
 
-        {/* KPIs principaux */}
+        {/* KPIs Row */}
         <div className="grid grid-cols-4 gap-4">
           <KpiCard
             title="Affiliés actifs"
@@ -177,7 +284,7 @@ export default function LinkMeAnalyticsPage() {
             isLoading={isLoading}
           />
           <KpiCard
-            title="Commandes totales"
+            title="Commandes"
             value={formatNumber(data?.totalOrders || 0)}
             icon={ShoppingCart}
             iconBgColor="bg-purple-100"
@@ -185,7 +292,7 @@ export default function LinkMeAnalyticsPage() {
             isLoading={isLoading}
           />
           <KpiCard
-            title="Chiffre d'affaires"
+            title="CA HT"
             value={formatCurrency(data?.totalRevenue || 0)}
             icon={DollarSign}
             iconBgColor="bg-green-100"
@@ -193,30 +300,30 @@ export default function LinkMeAnalyticsPage() {
             isLoading={isLoading}
           />
           <KpiCard
-            title="Taux de conversion"
-            value={`${(data?.conversionRate || 0).toFixed(1)}%`}
-            icon={TrendingUp}
-            iconBgColor="bg-yellow-100"
-            iconColor="text-yellow-600"
+            title="Panier moyen"
+            value={formatCurrency(data?.averageBasket || 0)}
+            icon={ShoppingBag}
+            iconBgColor="bg-orange-100"
+            iconColor="text-orange-600"
             isLoading={isLoading}
           />
         </div>
 
-        {/* Graphiques */}
+        {/* Charts Row */}
         <div className="grid grid-cols-2 gap-6">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-base font-semibold">
-                Évolution du chiffre d'affaires
+                Évolution du CA
               </CardTitle>
               <p className="text-xs text-gray-500">
-                CA sur les {PERIOD_CONFIG[period].short} derniers
+                Chiffre d'affaires sur la période
               </p>
             </CardHeader>
             <CardContent>
               <LinkMeRevenueChart
                 data={data?.revenueByPeriod || []}
-                period={period}
+                period="year"
                 isLoading={isLoading}
               />
             </CardContent>
@@ -225,7 +332,7 @@ export default function LinkMeAnalyticsPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-base font-semibold">
-                Top 10 Affiliés
+                Top Affiliés
               </CardTitle>
               <p className="text-xs text-gray-500">
                 Classement par chiffre d'affaires
@@ -240,106 +347,13 @@ export default function LinkMeAnalyticsPage() {
           </Card>
         </div>
 
-        {/* Performance Sélections */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold">
-              Performance des sélections
-            </CardTitle>
-            <p className="text-xs text-gray-500">Métriques par mini-boutique</p>
-          </CardHeader>
-          <CardContent>
-            <SelectionsPerformanceTable
-              data={data?.selectionsPerformance || []}
-              isLoading={isLoading}
-              maxRows={5}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Commissions */}
-        <CommissionsStatusCard
-          statusData={
-            data?.commissionsByStatus || {
-              pendingHT: 0,
-              validatedHT: 0,
-              paidHT: 0,
-              pendingTTC: 0,
-              validatedTTC: 0,
-              paidTTC: 0,
-            }
-          }
-          pendingCommissions={data?.topPendingCommissions || []}
+        {/* Commissions Status */}
+        <CommissionStatusCard
+          pendingHT={data?.commissionsByStatus?.pendingHT || 0}
+          validatedHT={data?.commissionsByStatus?.validatedHT || 0}
+          paidHT={data?.commissionsByStatus?.paidHT || 0}
           isLoading={isLoading}
         />
-
-        {/* Stats secondaires */}
-        <div className="grid grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-100">
-                  <Package className="h-4 w-4 text-indigo-600" />
-                </div>
-                <div>
-                  {isLoading ? (
-                    <Skeleton className="h-8 w-16" />
-                  ) : (
-                    <p className="text-2xl font-bold">
-                      {formatNumber(data?.totalSelections || 0)}
-                    </p>
-                  )}
-                  <p className="text-sm text-gray-500">Sélections actives</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-100">
-                  <ShoppingBag className="h-4 w-4 text-orange-600" />
-                </div>
-                <div>
-                  {isLoading ? (
-                    <Skeleton className="h-8 w-20" />
-                  ) : (
-                    <p className="text-2xl font-bold">
-                      {formatCurrency(data?.averageBasket || 0)}
-                    </p>
-                  )}
-                  <p className="text-sm text-gray-500">Panier moyen</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-100">
-                  <Wallet className="h-4 w-4 text-green-600" />
-                </div>
-                <div>
-                  {isLoading ? (
-                    <Skeleton className="h-8 w-24" />
-                  ) : (
-                    <>
-                      <p className="text-2xl font-bold text-green-600">
-                        {formatCurrency(data?.totalPaidCommissionsHT || 0)} HT
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {formatCurrency(data?.totalPaidCommissionsTTC || 0)} TTC
-                      </p>
-                    </>
-                  )}
-                  <p className="text-sm text-gray-500">Commissions versées</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </div>
   );

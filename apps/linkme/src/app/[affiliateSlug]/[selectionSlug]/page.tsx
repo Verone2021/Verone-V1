@@ -55,7 +55,8 @@ export default function SelectionPage({ params }: SelectionPageProps) {
       // Call RPC to increment views_count - fire and forget
       const trackView = async () => {
         try {
-          await supabase.rpc('track_selection_view', {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabase.rpc as any)('track_selection_view', {
             p_selection_id: selection.id,
           });
           // View tracked successfully (silent)

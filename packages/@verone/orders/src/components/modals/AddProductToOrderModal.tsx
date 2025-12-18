@@ -19,10 +19,7 @@ import { Label } from '@verone/ui';
 import { Separator } from '@verone/ui';
 import { Textarea } from '@verone/ui';
 import { formatCurrency } from '@verone/utils';
-import type {
-  OrderType,
-  CreateOrderItemData,
-} from '@verone/orders/hooks';
+import type { OrderType, CreateOrderItemData } from '@verone/orders/hooks';
 import type { SelectedProduct } from '@verone/products/components/selectors/UniversalProductSelectorV2';
 import { UniversalProductSelectorV2 } from '@verone/products/components/selectors/UniversalProductSelectorV2';
 

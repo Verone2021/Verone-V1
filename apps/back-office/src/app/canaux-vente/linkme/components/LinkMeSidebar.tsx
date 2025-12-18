@@ -18,7 +18,7 @@ import {
   ChevronRight,
   ChevronLeft,
   Sliders,
-  Activity,
+  TrendingUp,
   Link2,
   FileText,
   Webhook,
@@ -118,9 +118,9 @@ const LINKME_NAV: LinkMeNavItem[] = [
         icon: BarChart3,
       },
       {
-        title: 'Tracking',
-        href: '/canaux-vente/linkme/analytics/tracking',
-        icon: Activity,
+        title: 'Performance',
+        href: '/canaux-vente/linkme/analytics/performance',
+        icon: TrendingUp,
       },
       {
         title: 'Rapports',
