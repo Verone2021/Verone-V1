@@ -19,13 +19,8 @@ const STATUS_LABELS: Record<string, string> = {
   partially_shipped: 'Expédition partielle',
 };
 
-// Helper: Formater frais de livraison ("Offert" si 0, sinon montant HT)
-function formatShippingCost(cost: number): string {
-  return cost === 0 ? 'Offert' : `${cost.toFixed(2)} €`;
-}
-
 // Interface pour les sous-totaux TVA
-interface TaxSubtotal {
+interface ITaxSubtotal {
   rate: number; // Taux de TVA (0.2 = 20%)
   totalHT: number; // Total HT des items à ce taux
   totalTVA: number; // Montant TVA (totalHT * rate)
@@ -119,107 +114,53 @@ export default function VentesPage(): JSX.Element {
                 key={order.id}
                 className="bg-white rounded-lg shadow-sm border overflow-hidden"
               >
-                {/* Header de la commande - cliquable */}
+                {/* Header de la commande - Design Dribbble ultra-moderne */}
                 <div
-                  className="p-4 cursor-pointer hover:bg-gray-50 transition"
+                  className="p-2.5 cursor-pointer hover:bg-gray-50 transition-all duration-150 border-b border-gray-100 last:border-0"
                   onClick={() => toggleOrder(order.id)}
                 >
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        {/* Chevron */}
-                        {isExpanded ? (
-                          <ChevronDown className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                        )}
-                        <h3 className="text-sm font-semibold truncate">
-                          Commande #{order.order_number}
-                        </h3>
-                        <span className="bg-blue-100 text-blue-800 text-[10px] px-1.5 py-0.5 rounded flex-shrink-0">
-                          {STATUS_LABELS[order.status] || order.status}
-                        </span>
-                      </div>
-                      <div className="text-xs text-gray-600 mt-1 ml-6 truncate">
-                        {order.customer_name} •{' '}
-                        {new Date(order.created_at).toLocaleDateString()}
-                      </div>
-                    </div>
-                  </div>
+                  {/* Ligne unique: Tout sur une ligne comme Dribbble */}
+                  <div className="flex items-center gap-3">
+                    {/* Chevron */}
+                    {isExpanded ? (
+                      <ChevronDown className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                    ) : (
+                      <ChevronRight className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                    )}
 
-                  {/* Totaux commande - Grid responsive */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-gray-50 p-3 rounded-lg">
-                    <div className="text-center">
-                      <div className="text-[10px] text-gray-500">Total HT</div>
-                      <div className="text-sm font-semibold text-gray-900">
-                        {order.total_ht.toFixed(2)} €
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-[10px] text-gray-500">Total TTC</div>
-                      <div className="text-sm font-bold text-gray-900">
-                        {order.total_ttc.toFixed(2)} €
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-[10px] text-gray-500">
-                        Commission HT
-                      </div>
-                      <div className="text-sm font-medium text-orange-600">
-                        {(order.total_affiliate_margin / 1.2).toFixed(2)} €
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-[10px] text-gray-500">
-                        Commission TTC
-                      </div>
-                      <div className="text-sm font-bold text-green-600">
-                        {order.total_affiliate_margin.toFixed(2)} €
-                      </div>
-                    </div>
-                  </div>
+                    {/* Order Number */}
+                    <span className="text-xs font-semibold text-gray-900 min-w-[90px]">
+                      #{order.order_number}
+                    </span>
 
-                  {/* Frais de livraison - Si au moins un frais non nul */}
-                  {(order.shipping_cost_ht > 0 ||
-                    order.handling_cost_ht > 0 ||
-                    order.insurance_cost_ht > 0) && (
-                    <div className="grid grid-cols-3 gap-2 bg-blue-50 p-3 rounded-lg mt-2">
-                      <div className="text-center">
-                        <div className="text-[10px] text-gray-600">
-                          Livraison
-                        </div>
-                        <div className="text-xs font-medium text-blue-700">
-                          {formatShippingCost(order.shipping_cost_ht)}
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-[10px] text-gray-600">
-                          Manutention
-                        </div>
-                        <div className="text-xs font-medium text-blue-700">
-                          {formatShippingCost(order.handling_cost_ht)}
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-[10px] text-gray-600">
-                          Assurance
-                        </div>
-                        <div className="text-xs font-medium text-blue-700">
-                          {formatShippingCost(order.insurance_cost_ht)}
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                    {/* Status Badge */}
+                    <span className="bg-blue-50 text-blue-700 text-[10px] font-medium px-2 py-0.5 rounded-full">
+                      {STATUS_LABELS[order.status] || order.status}
+                    </span>
 
-                  <div className="border-t pt-2 ml-6 mt-3">
-                    <div className="text-xs text-gray-600">
-                      <strong>{order.items_count} produits</strong>
-                      {!isExpanded && (
-                        <span className="text-gray-400 ml-2">
-                          (cliquer pour voir le détail)
-                        </span>
-                      )}
+                    {/* Client - petite taille */}
+                    <span className="text-[10px] text-gray-500 truncate flex-1 min-w-0">
+                      {order.customer_name}
+                    </span>
+
+                    {/* Montants alignés à droite */}
+                    <div className="flex items-center gap-2 text-[11px] flex-shrink-0">
+                      <span className="text-gray-600">
+                        {order.total_ttc.toFixed(2)}€
+                      </span>
+                      <span className="text-gray-400">•</span>
+                      <span className="font-semibold text-green-600">
+                        +{order.total_affiliate_margin.toFixed(2)}€
+                      </span>
                     </div>
+
+                    {/* Date compacte */}
+                    <span className="text-[10px] text-gray-400 flex-shrink-0">
+                      {new Date(order.created_at).toLocaleDateString('fr-FR', {
+                        day: '2-digit',
+                        month: 'short',
+                      })}
+                    </span>
                   </div>
                 </div>
 
@@ -317,20 +258,18 @@ export default function VentesPage(): JSX.Element {
                       const taxSubtotals = order.items.reduce(
                         (acc, item) => {
                           const rate = item.tax_rate;
-                          if (!acc[rate]) {
-                            acc[rate] = {
-                              rate,
-                              totalHT: 0,
-                              totalTVA: 0,
-                              totalTTC: 0,
-                            };
-                          }
+                          acc[rate] ??= {
+                            rate,
+                            totalHT: 0,
+                            totalTVA: 0,
+                            totalTTC: 0,
+                          };
                           acc[rate].totalHT += item.total_ht;
                           acc[rate].totalTVA += item.total_ht * rate;
                           acc[rate].totalTTC += item.total_ht * (1 + rate);
                           return acc;
                         },
-                        {} as Record<number, TaxSubtotal>
+                        {} as Record<number, ITaxSubtotal>
                       );
 
                       const subtotals = Object.values(taxSubtotals).sort(
