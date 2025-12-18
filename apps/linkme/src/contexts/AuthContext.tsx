@@ -72,8 +72,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Fonction pour récupérer le rôle LinkMe (ne dépend pas de supabase car c'est un singleton)
   const fetchLinkMeRole = useCallback(
     async (userId: string) => {
+      const DEBUG = process.env.NEXT_PUBLIC_DEBUG_AUTH === '1';
+      if (DEBUG) console.log('[AuthContext] fetchLinkMeRole START', { userId });
+
       try {
         // Utiliser la vue v_linkme_users qui join user_app_roles + user_profiles + enseignes + organisations
+        if (DEBUG) console.log('[AuthContext] Fetching from v_linkme_users...');
         const { data, error } = await (supabase as any)
           .from('v_linkme_users')
           .select('*')
@@ -81,8 +85,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
           .single();
 
         if (error) {
+          // TOUJOURS logger les erreurs (pas de flag DEBUG pour les erreurs)
+          console.error('[AuthContext] v_linkme_users ERROR', {
+            code: error.code,
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+          });
+
           // Si la vue n'existe pas, essayer directement la table user_app_roles
           if (error.code === 'PGRST116' || error.code === '42P01') {
+            if (DEBUG)
+              console.log('[AuthContext] Fallback to user_app_roles table...');
             const { data: roleData, error: roleError } = await (supabase as any)
               .from('user_app_roles')
               .select(
@@ -104,9 +118,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
               .single();
 
             if (roleError || !roleData) {
+              console.error('[AuthContext] user_app_roles FALLBACK ERROR', {
+                code: roleError?.code,
+                message: roleError?.message,
+                status: roleError?.status,
+              });
               setLinkMeRole(null);
               return;
             }
+
+            console.log('[AuthContext] user_app_roles SUCCESS', {
+              roleId: roleData.id,
+              role: roleData.role,
+            });
 
             setLinkMeRole({
               id: roleData.id,
@@ -124,12 +148,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
             });
             return;
           }
-          console.error('Erreur fetch LinkMe role:', error);
+          console.error('[AuthContext] UNHANDLED ERROR', {
+            code: error.code,
+            message: error.message,
+          });
           setLinkMeRole(null);
           return;
         }
 
         if (data) {
+          console.log('[AuthContext] v_linkme_users SUCCESS', {
+            userId: data.user_id,
+            role: data.linkme_role,
+          });
+
           setLinkMeRole({
             id: data.id || data.user_id,
             user_id: data.user_id,
@@ -142,11 +174,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
             organisation_name: data.organisation_name,
           });
         } else {
+          console.warn('[AuthContext] No data returned from v_linkme_users');
           setLinkMeRole(null);
         }
       } catch (err) {
-        console.error('Erreur fetchLinkMeRole:', err);
+        console.error('[AuthContext] fetchLinkMeRole EXCEPTION', err);
         setLinkMeRole(null);
+      } finally {
+        console.log('[AuthContext] fetchLinkMeRole END', {
+          hasLinkMeRole: !!linkMeRole,
+        });
       }
     },
     [] // Pas de dépendance car supabase est un singleton

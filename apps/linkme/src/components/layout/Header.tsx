@@ -44,7 +44,7 @@ export function Header() {
             >
               Accueil
             </Link>
-            {user && (
+            {linkMeRole && (
               <Link
                 href="/dashboard"
                 className="text-gray-600 hover:text-gray-900 font-medium"
