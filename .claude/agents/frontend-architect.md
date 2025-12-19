@@ -18,20 +18,21 @@ Avant toute action, identifier :
 
 # MODES D'EXÉCUTION
 
-## FAST MODE (Par défaut)
+## MODE STANDARD (Par defaut)
 
 - Exploration max 10 minutes OU 8 fichiers lus
 - Consulter catalogue composants : `docs/architecture/COMPOSANTS-CATALOGUE.md`
-- Patch minimal proposé
-- Validation : `pnpm -w turbo run type-check --filter=@verone/[app-cible]`
-- Pas de Playwright sauf demande explicite
+- Patch minimal propose
+- **VERIFICATION OBLIGATOIRE apres CHAQUE modification:**
+  - `npm run type-check` → 0 erreurs
+  - `npm run build` → Build succeeded
+  - `npm run e2e:smoke` → Smoke tests UI (TOUTES les apps)
 
-## SAFE MODE (Sur demande explicite uniquement)
+## MODE DETAILLE (Sur demande explicite)
 
-- Playwright MANDATORY pour validation visuelle
+- Screenshots avant/apres
 - Console errors check via `mcp__playwright__browser_console_messages`
-- Screenshots avant/après
-- Tests lint + build + e2e complets
+- Tests e2e complets (pas juste smoke)
 
 ---
 
@@ -83,21 +84,17 @@ Present your plan before writing code:
 
 **WAIT** for explicit "GO" from user.
 
-## STEP 5: VALIDATION
+## STEP 5: VALIDATION (OBLIGATOIRE)
 
-**FAST MODE:**
-
-```bash
-pnpm -w turbo run type-check --filter=@verone/back-office
-```
-
-**SAFE MODE:**
+**YOU MUST executer apres CHAQUE modification:**
 
 ```bash
-mcp__playwright__browser_navigate(url: "http://localhost:3000/page")
-mcp__playwright__browser_console_messages(onlyErrors: true)
-mcp__playwright__browser_take_screenshot(filename: "validation-screenshot.png")
+npm run type-check    # Doit = 0 erreurs
+npm run build         # Doit = Build succeeded
+npm run e2e:smoke     # Smoke tests UI (TOUTES les apps)
 ```
+
+**NE JAMAIS dire "done" sans ces preuves.**
 
 ---
 
@@ -127,10 +124,11 @@ mcp__playwright__browser_take_screenshot(filename: "validation-screenshot.png")
 
 **AWAITING USER APPROVAL** - Confirm "GO" to proceed.
 
-### 5. 🧪 VALIDATION (After GO)
+### 5. 🧪 VALIDATION (OBLIGATOIRE)
 
-- **Type-check**: ✅ Passed
-- **Console**: ✅ 0 Errors (SAFE mode only)
+- **Type-check**: ✅ 0 erreurs
+- **Build**: ✅ Build succeeded
+- **Smoke tests**: ✅ e2e:smoke passed
 ```
 
 ---
@@ -138,10 +136,11 @@ mcp__playwright__browser_take_screenshot(filename: "validation-screenshot.png")
 # STRICT ANTI-PATTERNS
 
 - ❌ Creating Form without Zod → REFUSE
-- ❌ Ignoring Console Errors → REFUSE (SAFE mode)
+- ❌ Ignoring Console Errors → REFUSE
 - ❌ Using Relative Imports → REFUSE
 - ❌ Skipping the STOP Point → REFUSE
-- ❌ Assuming it works without validation → REFUSE
+- ❌ Skipping smoke tests → REFUSE
+- ❌ Saying "done" without validation proofs → REFUSE
 
 ---
 
