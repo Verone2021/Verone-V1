@@ -11,6 +11,7 @@
  * - Modal de creation specifique LinkMe (CreateLinkMeOrderModal)
  * - Modal d'edition specifique LinkMe (EditLinkMeOrderModal)
  * - Colonnes additionnelles: Affilie, Selection, Marge
+ * - Filtre "En attente de validation" avec badge rouge/vert
  *
  * Les triggers stock sont automatiques et identiques pour tous les canaux.
  */
@@ -19,9 +20,10 @@ import { useState, useEffect, useMemo } from 'react';
 
 import { SalesOrdersTable } from '@verone/orders';
 import type { SalesOrder } from '@verone/orders';
-import { Badge } from '@verone/ui';
+import { Badge, Button } from '@verone/ui';
 import { formatCurrency } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
+import { AlertCircle, CheckCircle2 } from 'lucide-react';
 
 import { updateSalesOrderStatus } from '@/app/actions/sales-orders';
 
@@ -38,12 +40,15 @@ interface LinkMeEnrichedData {
     affiliate_type: 'enseigne' | 'organisation' | null;
     selection_name: string | null;
     total_affiliate_margin: number;
+    pending_admin_validation: boolean;
+    created_by_affiliate_id: string | null;
   };
 }
 
 export default function LinkMeOrdersPage() {
   const [enrichedData, setEnrichedData] = useState<LinkMeEnrichedData>({});
   const [isLoadingEnriched, setIsLoadingEnriched] = useState(true);
+  const [filterPendingValidation, setFilterPendingValidation] = useState(false);
   const supabase = createClient();
 
   // Fetch donnees enrichies LinkMe (affilie, selection, marge)
@@ -70,6 +75,8 @@ export default function LinkMeOrdersPage() {
             affiliate_type: order.affiliate_type || null,
             selection_name: order.selection_name || null,
             total_affiliate_margin: order.total_affiliate_margin || 0,
+            pending_admin_validation: order.pending_admin_validation || false,
+            created_by_affiliate_id: order.created_by_affiliate_id || null,
           };
         });
 
@@ -84,7 +91,13 @@ export default function LinkMeOrdersPage() {
     fetchEnrichedData();
   }, [supabase]);
 
-  // Colonnes additionnelles pour LinkMe
+  // Compter les commandes en attente de validation
+  const pendingValidationCount = useMemo(() => {
+    return Object.values(enrichedData).filter(d => d.pending_admin_validation)
+      .length;
+  }, [enrichedData]);
+
+  // Colonnes additionnelles pour LinkMe (sans colonne Validation - info dans le badge en haut)
   const additionalColumns = useMemo(
     () => [
       {
@@ -182,6 +195,10 @@ export default function LinkMeOrdersPage() {
                       affiliate_type: order.affiliate_type || null,
                       selection_name: order.selection_name || null,
                       total_affiliate_margin: order.total_affiliate_margin || 0,
+                      pending_admin_validation:
+                        order.pending_admin_validation || false,
+                      created_by_affiliate_id:
+                        order.created_by_affiliate_id || null,
                     };
                   });
                   setEnrichedData(enriched);
@@ -201,6 +218,34 @@ export default function LinkMeOrdersPage() {
             }}
           />
         )}
+        renderHeaderRight={() => (
+          <Button
+            variant={filterPendingValidation ? 'default' : 'outline'}
+            onClick={() => setFilterPendingValidation(!filterPendingValidation)}
+            className={`gap-2 ${
+              pendingValidationCount > 0
+                ? filterPendingValidation
+                  ? 'bg-red-600 hover:bg-red-700 text-white'
+                  : 'border-red-300 text-red-700 hover:bg-red-50'
+                : filterPendingValidation
+                  ? 'bg-green-600 hover:bg-green-700 text-white'
+                  : 'border-green-300 text-green-700 hover:bg-green-50'
+            }`}
+          >
+            {pendingValidationCount > 0 ? (
+              <AlertCircle className="h-4 w-4" />
+            ) : (
+              <CheckCircle2 className="h-4 w-4" />
+            )}
+            {pendingValidationCount} en attente
+          </Button>
+        )}
+        customFilter={
+          filterPendingValidation
+            ? (order: SalesOrder) =>
+                !!enrichedData[order.id]?.pending_admin_validation
+            : undefined
+        }
       />
     </div>
   );

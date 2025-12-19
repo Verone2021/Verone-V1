@@ -174,6 +174,12 @@ export interface SalesOrdersTableProps {
     newStatus: SalesOrderStatus,
     userId: string
   ) => Promise<{ success: boolean; error?: string }>;
+
+  /** Render custom element a droite du header (ex: bouton filtre) */
+  renderHeaderRight?: () => React.ReactNode;
+
+  /** Filtre personnalise applique sur les commandes */
+  customFilter?: (order: SalesOrder) => boolean;
 }
 
 const isOrderEditable = (order: SalesOrder, channelId?: string | null) => {
@@ -214,6 +220,8 @@ export function SalesOrdersTable({
   onOrderCreated,
   onOrderUpdated,
   updateStatusAction,
+  renderHeaderRight,
+  customFilter,
 }: SalesOrdersTableProps) {
   const {
     loading,
@@ -377,6 +385,11 @@ export function SalesOrdersTable({
         }
       }
 
+      // Filtre personnalise
+      if (customFilter && !customFilter(order)) {
+        return false;
+      }
+
       return true;
     });
 
@@ -424,6 +437,7 @@ export function SalesOrdersTable({
     searchTerm,
     sortColumn,
     sortDirection,
+    customFilter,
   ]);
 
   // KPI dynamiques calcules sur commandes filtrees
@@ -900,6 +914,7 @@ export function SalesOrdersTable({
                   onSuccess={handleCreateSuccess}
                 />
               )}
+              {renderHeaderRight?.()}
             </div>
           </div>
         </CardHeader>
