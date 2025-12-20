@@ -28,6 +28,8 @@ import {
   ShoppingCart,
   Banknote,
   PanelLeftClose,
+  ClipboardCheck,
+  Warehouse,
   PanelLeft,
   type LucideIcon,
 } from 'lucide-react';
@@ -96,6 +98,16 @@ const LINKME_NAV: LinkMeNavItem[] = [
     title: 'Commandes',
     href: '/canaux-vente/linkme/commandes',
     icon: ShoppingCart,
+  },
+  {
+    title: 'Approbations',
+    href: '/canaux-vente/linkme/approbations',
+    icon: ClipboardCheck,
+  },
+  {
+    title: 'Stockage',
+    href: '/canaux-vente/linkme/stockage',
+    icon: Warehouse,
   },
   {
     title: 'Rémunération',

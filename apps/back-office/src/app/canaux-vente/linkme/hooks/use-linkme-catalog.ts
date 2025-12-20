@@ -78,6 +78,8 @@ export interface LinkMeCatalogProduct {
   assigned_client_name: string | null;
   /** true si produit exclusif à une enseigne ou organisation */
   is_sourced: boolean;
+  /** ID affilié créateur (produit créé par affilié) */
+  created_by_affiliate: string | null;
 }
 
 /**
@@ -151,7 +153,8 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
         subcategory_id,
         supplier_id,
         enseigne_id,
-        assigned_client_id
+        assigned_client_id,
+        created_by_affiliate
       )
     `
     )
@@ -331,6 +334,7 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
           is_sourced: !!(
             cp.products?.enseigne_id || cp.products?.assigned_client_id
           ),
+          created_by_affiliate: cp.products?.created_by_affiliate || null,
         };
       })
       // Filtre: exclure les produits sourcés sans affiliés actifs
