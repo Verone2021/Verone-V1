@@ -50,13 +50,11 @@ export async function middleware(request: NextRequest) {
   );
 
   if (isProtectedRoute) {
-    // Vérifier la présence d'un cookie de session Supabase
+    // Vérifier la présence d'un cookie de session LinkMe spécifique
+    // Utilise 'sb-linkme-auth' au lieu du cookie générique pour isoler les sessions
     const hasSession = request.cookies
       .getAll()
-      .some(
-        cookie =>
-          cookie.name.includes('sb-') && cookie.name.includes('-auth-token')
-      );
+      .some(cookie => cookie.name.startsWith('sb-linkme-auth'));
 
     if (!hasSession) {
       // Rediriger vers login avec URL de retour
@@ -70,10 +68,7 @@ export async function middleware(request: NextRequest) {
   if (pathname === '/login') {
     const hasSession = request.cookies
       .getAll()
-      .some(
-        cookie =>
-          cookie.name.includes('sb-') && cookie.name.includes('-auth-token')
-      );
+      .some(cookie => cookie.name.startsWith('sb-linkme-auth'));
 
     if (hasSession) {
       return NextResponse.redirect(new URL('/dashboard', request.url));

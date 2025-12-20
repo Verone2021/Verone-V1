@@ -162,7 +162,7 @@ export function UserMenu({ className }: IUserMenuProps): JSX.Element | null {
                   Mes commissions
                 </Link>
                 <Link
-                  href="/ventes"
+                  href="/commandes"
                   onClick={() => setIsOpen(false)}
                   className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 >

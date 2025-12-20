@@ -23,9 +23,10 @@ import {
 import type { User, Session } from '@supabase/supabase-js';
 
 // Client SSR-safe (singleton) - utilise cookies pour la session
+// Cookie distinct 'sb-linkme-auth' pour isoler la session de LinkMe
 import { createClient } from '@verone/utils/supabase/client';
 
-const supabase = createClient();
+const supabase = createClient('linkme');
 
 // Types
 export type LinkMeRole =
