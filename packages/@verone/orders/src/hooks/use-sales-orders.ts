@@ -60,6 +60,13 @@ export interface SalesOrder {
   shipped_by?: string;
   delivered_by?: string;
 
+  // 🆕 Info créateur (nom, prénom, email)
+  creator?: {
+    first_name: string;
+    last_name: string;
+    email: string | null;
+  } | null;
+
   confirmed_at?: string;
   shipped_at?: string;
   delivered_at?: string;
@@ -335,6 +342,47 @@ export function useSalesOrders() {
 
         if (error) throw error;
 
+        // 🆕 Récupérer les infos des créateurs (batch pour performance)
+        const uniqueCreatorIds = [
+          ...new Set(
+            (ordersData || [])
+              .map(o => o.created_by)
+              .filter((id): id is string => !!id)
+          ),
+        ];
+        const creatorsMap = new Map<
+          string,
+          { first_name: string; last_name: string; email: string | null }
+        >();
+
+        if (uniqueCreatorIds.length > 0) {
+          // Utiliser user_profiles pour les infos enrichies
+          const { data: profiles } = await supabase
+            .from('user_profiles')
+            .select('user_id, first_name, last_name')
+            .in('user_id', uniqueCreatorIds);
+
+          // Utiliser la RPC get_user_info pour les emails et fallback
+          for (const creatorId of uniqueCreatorIds) {
+            const profile = profiles?.find(p => p.user_id === creatorId);
+            const { data: userInfo } = await (supabase.rpc as any)(
+              'get_user_info',
+              { p_user_id: creatorId }
+            );
+
+            if (userInfo && userInfo.length > 0) {
+              creatorsMap.set(creatorId, {
+                first_name:
+                  profile?.first_name ||
+                  userInfo[0].first_name ||
+                  'Utilisateur',
+                last_name: profile?.last_name || userInfo[0].last_name || '',
+                email: userInfo[0].email || null,
+              });
+            }
+          }
+        }
+
         // Fetch manuel des données clients pour chaque commande (relations polymorphiques)
         const ordersWithCustomers = await Promise.all(
           (ordersData || []).map(async order => {
@@ -375,9 +423,15 @@ export function useSalesOrders() {
                 : null,
             }));
 
+            // 🆕 Ajouter info créateur
+            const creatorInfo = order.created_by
+              ? creatorsMap.get(order.created_by)
+              : null;
+
             return {
               ...order,
               sales_order_items: enrichedItems,
+              creator: creatorInfo || null,
               ...customerData,
             };
           })
@@ -484,9 +538,32 @@ export function useSalesOrders() {
             : null,
         }));
 
+        // 🆕 Récupérer info créateur via RPC
+        let creatorInfo: {
+          first_name: string;
+          last_name: string;
+          email: string | null;
+        } | null = null;
+
+        if (orderData.created_by) {
+          const { data: userInfo } = await (supabase.rpc as any)(
+            'get_user_info',
+            { p_user_id: orderData.created_by }
+          );
+
+          if (userInfo && userInfo.length > 0) {
+            creatorInfo = {
+              first_name: userInfo[0].first_name || 'Utilisateur',
+              last_name: userInfo[0].last_name || '',
+              email: userInfo[0].email || null,
+            };
+          }
+        }
+
         const orderWithCustomer = {
           ...orderData,
           sales_order_items: enrichedItems,
+          creator: creatorInfo,
           ...customerData,
         };
 

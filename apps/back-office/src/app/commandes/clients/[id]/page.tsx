@@ -52,6 +52,9 @@ export default async function OrderDetailPage({
       total_ht,
       total_ttc,
       created_at,
+      created_by,
+      channel_id,
+      sales_channels!left(id, name, code),
       sales_order_items (
         id,
         product_id,
@@ -107,7 +110,28 @@ export default async function OrderDetailPage({
     }
   }
 
-  // 3. Parser adresse
+  // 3. Récupérer info créateur via RPC
+  let creatorName = '';
+  let creatorEmail = '';
+
+  if (order.created_by) {
+    const { data: creatorInfo } = await (supabase.rpc as any)('get_user_info', {
+      p_user_id: order.created_by,
+    });
+
+    if (creatorInfo && creatorInfo.length > 0) {
+      const firstName = creatorInfo[0].first_name || 'Utilisateur';
+      const lastName = creatorInfo[0].last_name || '';
+      creatorName = `${firstName} ${lastName}`.trim();
+      creatorEmail = creatorInfo[0].email || '';
+    }
+  }
+
+  // 4. Récupérer canal de vente
+  const salesChannel = (order as any).sales_channels;
+  const channelName = salesChannel?.name || null;
+
+  // 5. Parser adresse
   const shippingAddr = order.shipping_address as any;
   const addressText =
     typeof shippingAddr === 'string'
@@ -306,6 +330,26 @@ export default async function OrderDetailPage({
                     {new Date(order.created_at).toLocaleDateString('fr-FR')}
                   </span>
                 </div>
+                {creatorName && (
+                  <div>
+                    <span className="text-muted-foreground">Créateur:</span>
+                    <span className="ml-2 font-medium">
+                      {creatorName}
+                      {creatorEmail && (
+                        <span className="text-muted-foreground font-normal">
+                          {' '}
+                          ({creatorEmail})
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                )}
+                {channelName && (
+                  <div>
+                    <span className="text-muted-foreground">Source:</span>
+                    <span className="ml-2 font-medium">{channelName}</span>
+                  </div>
+                )}
               </div>
             </Card>
           </div>
