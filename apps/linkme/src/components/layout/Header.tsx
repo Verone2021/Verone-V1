@@ -9,6 +9,7 @@ import {
   Package,
   Star,
   Building2,
+  PackagePlus,
 } from 'lucide-react';
 
 import { useAuth, type LinkMeRole } from '../../contexts/AuthContext';
@@ -28,6 +29,12 @@ const SELECTION_ROLES: LinkMeRole[] = ['enseigne_admin', 'org_independante'];
 // Rôles autorisés à voir "Mon Réseau" (enseignes uniquement)
 const NETWORK_ROLES: LinkMeRole[] = ['enseigne_admin'];
 
+// Rôles autorisés à créer des produits (affiliés)
+const CREATE_PRODUCT_ROLES: LinkMeRole[] = [
+  'enseigne_admin',
+  'org_independante',
+];
+
 export function Header() {
   const { itemCount, openCart } = useCart();
   const { user, linkMeRole, loading } = useAuth();
@@ -37,6 +44,8 @@ export function Header() {
   const canSeeSelection =
     linkMeRole && SELECTION_ROLES.includes(linkMeRole.role);
   const canSeeNetwork = linkMeRole && NETWORK_ROLES.includes(linkMeRole.role);
+  const canCreateProducts =
+    linkMeRole && CREATE_PRODUCT_ROLES.includes(linkMeRole.role);
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -88,6 +97,15 @@ export function Header() {
               >
                 <Building2 className="h-4 w-4" />
                 Mon Réseau
+              </Link>
+            )}
+            {canCreateProducts && (
+              <Link
+                href="/mes-produits"
+                className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 font-medium"
+              >
+                <PackagePlus className="h-4 w-4" />
+                Mes Produits
               </Link>
             )}
           </nav>

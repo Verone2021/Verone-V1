@@ -23,6 +23,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import {
+  useMonthlyKPIs,
+  formatVariation,
+  getVariationColor,
+} from '@verone/orders/hooks/use-monthly-kpis';
+import {
   Star,
   ShoppingCart,
   User,
@@ -36,13 +41,28 @@ import {
 
 import { useAuth } from '../../contexts/AuthContext';
 import { useAffiliateAnalytics } from '../../lib/hooks/use-affiliate-analytics';
-import { useUserSelections } from '../../lib/hooks/use-user-selection';
+import {
+  useUserAffiliate,
+  useUserSelections,
+} from '../../lib/hooks/use-user-selection';
 
 export default function DashboardPage(): JSX.Element | null {
   const router = useRouter();
   const { user, linkMeRole, loading } = useAuth();
+
+  // Affiliate ID pour les requêtes
+  const { data: affiliate } = useUserAffiliate();
+
+  // KPIs mensuels avec variations (hook partagé - source de vérité)
+  const { data: monthlyKPIs, isLoading: kpisLoading } = useMonthlyKPIs({
+    affiliateId: affiliate?.id,
+    enabled: !!affiliate?.id,
+  });
+
+  // Analytics pour les commissions en attente uniquement (basé sur statut)
   const { data: analytics, isLoading: analyticsLoading } =
-    useAffiliateAnalytics('month');
+    useAffiliateAnalytics('year');
+
   const { data: selections } = useUserSelections();
 
   // Rediriger si non connecté
@@ -73,12 +93,20 @@ export default function DashboardPage(): JSX.Element | null {
     user.email?.split('@')[0] ??
     'vous';
 
-  // Données analytics
+  // Données analytics - commissions en attente (basé sur statut)
   const pendingCommissions = analytics?.pendingCommissionsTTC ?? 0;
-  const totalRevenue = analytics?.totalRevenueHT ?? 0;
-  const totalCommissions = analytics?.totalCommissionsTTC ?? 0;
-  const totalOrders = analytics?.totalOrders ?? 0;
+
+  // Données mensuelles (depuis le hook partagé - vraies dates)
+  const monthlyOrders = monthlyKPIs?.currentMonth.ordersCount ?? 0;
+  const monthlyRevenue = monthlyKPIs?.currentMonth.caHT ?? 0;
+  const monthlyCommissions = monthlyKPIs?.currentMonth.commissionsTTC ?? 0;
+  const ordersVariation = monthlyKPIs?.variations.ordersCount ?? 0;
+
+  // Sélections
   const selectionsCount = selections?.filter(s => s.is_public).length ?? 0;
+
+  // Loading state combiné
+  const isLoading = analyticsLoading || kpisLoading;
 
   return (
     <div className="min-h-screen bg-white">
@@ -104,7 +132,7 @@ export default function DashboardPage(): JSX.Element | null {
                 </span>
               </div>
               <div className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
-                {analyticsLoading ? (
+                {isLoading ? (
                   <span className="text-gray-300">--</span>
                 ) : (
                   `${pendingCommissions.toFixed(2)} €`
@@ -149,7 +177,7 @@ export default function DashboardPage(): JSX.Element | null {
 
           {/* Mes commandes */}
           <Link
-            href="/ventes"
+            href="/commandes"
             className="group bg-gray-50 hover:bg-gray-100 rounded-lg p-4 transition-colors border border-gray-100 hover:border-gray-200"
           >
             <div className="flex items-center gap-2.5 mb-2">
@@ -164,9 +192,14 @@ export default function DashboardPage(): JSX.Element | null {
               <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
             </div>
             <p className="text-sm text-gray-500">
-              {totalOrders > 0
-                ? `${totalOrders} commande${totalOrders > 1 ? 's' : ''} ce mois`
+              {monthlyOrders > 0
+                ? `${monthlyOrders} commande${monthlyOrders > 1 ? 's' : ''} ce mois`
                 : 'Aucune commande ce mois'}
+              {monthlyOrders > 0 && ordersVariation !== 0 && (
+                <span className={`ml-1 ${getVariationColor(ordersVariation)}`}>
+                  ({formatVariation(ordersVariation)})
+                </span>
+              )}
             </p>
           </Link>
 
@@ -201,7 +234,9 @@ export default function DashboardPage(): JSX.Element | null {
             {/* CA */}
             <div className="text-center">
               <div className="text-lg sm:text-xl font-bold text-gray-900">
-                {analyticsLoading ? '--' : `${totalRevenue.toFixed(2)} €`}
+                {isLoading
+                  ? '--'
+                  : `${monthlyRevenue.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €`}
               </div>
               <p className="text-xs text-gray-500 mt-1">
                 Chiffre d'affaires HT
@@ -211,7 +246,9 @@ export default function DashboardPage(): JSX.Element | null {
             {/* Commissions */}
             <div className="text-center">
               <div className="text-lg sm:text-xl font-bold text-gray-900">
-                {analyticsLoading ? '--' : `${totalCommissions.toFixed(2)} €`}
+                {isLoading
+                  ? '--'
+                  : `${monthlyCommissions.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €`}
               </div>
               <p className="text-xs text-gray-500 mt-1">Commissions TTC</p>
             </div>
@@ -219,7 +256,7 @@ export default function DashboardPage(): JSX.Element | null {
             {/* Commandes */}
             <div className="text-center">
               <div className="text-lg sm:text-xl font-bold text-gray-900">
-                {analyticsLoading ? '--' : totalOrders}
+                {isLoading ? '--' : monthlyOrders}
               </div>
               <p className="text-xs text-gray-500 mt-1">Commandes</p>
             </div>

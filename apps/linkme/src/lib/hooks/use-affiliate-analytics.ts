@@ -370,10 +370,14 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'month') {
       // RETURN DATA
       // ============================================
       return {
+        // KPIs de la periode selectionnee
         totalOrders,
         totalRevenueHT,
         totalCommissionsHT,
         totalCommissionsTTC,
+        // KPIs ALL TIME (pour page Commissions)
+        // IMPORTANT: Utiliser les valeurs ALL TIME de commissionsByStatus
+        totalCommissionsTTCAllTime: commissionsByStatus.total.amountTTC,
         pendingCommissionsHT: commissionsByStatus.pending.amountHT,
         pendingCommissionsTTC: commissionsByStatus.pending.amountTTC,
         validatedCommissionsHT: commissionsByStatus.validated.amountHT,
