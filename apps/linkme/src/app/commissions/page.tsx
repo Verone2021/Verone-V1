@@ -118,13 +118,13 @@ export default function CommissionsPage() {
         </div>
       </div>
 
-      {/* KPI Cards */}
+      {/* KPI Cards - Valeurs ALL TIME (source de verite) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <CommissionKPICard
           title="Total TTC"
-          amount={analyticsData?.totalCommissionsTTC || 0}
+          amount={analyticsData?.totalCommissionsTTCAllTime || 0}
           count={analyticsData?.commissionsByStatus?.total.count}
-          subtitle="Toutes périodes"
+          subtitle="Toutes periodes"
           icon={Wallet}
           iconColor="text-purple-600"
           bgGradient="from-purple-50 to-white"

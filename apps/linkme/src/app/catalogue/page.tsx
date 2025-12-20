@@ -34,6 +34,7 @@ import {
   ArrowLeft,
   Star,
   Check,
+  PackagePlus,
 } from 'lucide-react';
 
 import { AddToSelectionModal } from '../../components/catalogue/AddToSelectionModal';
@@ -332,6 +333,17 @@ function CatalogueContent() {
                 <List className="h-4 w-4" />
               </button>
             </div>
+
+            {/* Bouton Mes Produits */}
+            {canAddToSelection && (
+              <Link
+                href="/mes-produits"
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg hover:from-emerald-600 hover:to-teal-600 transition-all shadow-sm font-medium"
+              >
+                <PackagePlus className="h-4 w-4" />
+                Mes Produits
+              </Link>
+            )}
           </div>
 
           {/* Résultats + Reset */}

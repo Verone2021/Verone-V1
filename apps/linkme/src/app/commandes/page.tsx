@@ -17,25 +17,28 @@
 
 import { useState, useMemo } from 'react';
 
+// Import direct du hook pour éviter les exports problématiques
+import {
+  useMonthlyKPIs,
+  formatVariation,
+  getVariationColor,
+} from '@verone/orders/hooks/use-monthly-kpis';
 import {
   Loader2,
   Plus,
   Package,
-  Clock,
-  CheckCircle,
   TrendingUp,
   ShoppingBag,
-  Truck,
   ChevronDown,
   ChevronRight,
   User,
   MapPin,
   Wallet,
+  Calendar,
 } from 'lucide-react';
 
 import { CreateOrderModal } from './components/CreateOrderModal';
 import { useLinkMeOrders } from '../../hooks/use-linkme-orders';
-import { useAffiliateAnalytics } from '../../lib/hooks/use-affiliate-analytics';
 import { useUserAffiliate } from '../../lib/hooks/use-user-selection';
 
 // Mapping des statuts DB → Labels
@@ -67,62 +70,44 @@ export default function CommandesPage(): JSX.Element {
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
 
-  // Data - Commandes
+  // Data - Affilié et ses commandes
   const { data: affiliate, isLoading: affiliateLoading } = useUserAffiliate();
   const {
     data: orders,
     isLoading: ordersLoading,
     error,
-  } = useLinkMeOrders(affiliate?.id ?? null);
+  } = useLinkMeOrders(affiliate?.id ?? null, false); // false = commandes de l'affilié uniquement
 
-  // Data - Analytics pour les statuts des commissions (source de verite)
-  const { data: analyticsData, isLoading: analyticsLoading } =
-    useAffiliateAnalytics('year');
+  // KPIs mensuels avec variations (hook partagé avec le back-office)
+  const { data: monthlyKPIs, isLoading: kpisLoading } = useMonthlyKPIs({
+    affiliateId: affiliate?.id,
+    enabled: !!affiliate?.id,
+  });
 
-  const isLoading = affiliateLoading || ordersLoading || analyticsLoading;
+  const isLoading = affiliateLoading || ordersLoading || kpisLoading;
 
-  // KPIs alignes avec Back-Office (source de verite)
-  const kpis = useMemo(() => {
-    // Valeurs par defaut
+  // KPIs par statut (comptages locaux depuis les commandes)
+  const statusKpis = useMemo(() => {
     const defaults = {
       total: 0,
-      draft: 0, // Brouillon
-      validated: 0, // Validee
-      shipped: 0, // Expediee (shipped + partially_shipped + delivered)
-      cancelled: 0, // Annulee
-      commissionsPending: 0,
-      totalMargin: 0,
+      draft: 0,
+      validated: 0,
+      shipped: 0,
+      cancelled: 0,
     };
 
     if (!orders) return defaults;
 
-    // Comptages par statut - aligne avec Back-Office
-    const total = orders.length;
-    const draft = orders.filter(o => o.status === 'draft').length;
-    const validated = orders.filter(o => o.status === 'validated').length;
-    const shipped = orders.filter(o =>
-      ['shipped', 'partially_shipped', 'delivered'].includes(o.status)
-    ).length;
-    const cancelled = orders.filter(o => o.status === 'cancelled').length;
-    const totalMargin = orders.reduce(
-      (sum, o) => sum + (o.total_affiliate_margin || 0),
-      0
-    );
-
-    // Commissions en attente - depuis analytics
-    const commissionsPending =
-      analyticsData?.commissionsByStatus?.pending?.count || 0;
-
     return {
-      total,
-      draft,
-      validated,
-      shipped,
-      cancelled,
-      commissionsPending,
-      totalMargin,
+      total: orders.length,
+      draft: orders.filter(o => o.status === 'draft').length,
+      validated: orders.filter(o => o.status === 'validated').length,
+      shipped: orders.filter(o =>
+        ['shipped', 'partially_shipped', 'delivered'].includes(o.status)
+      ).length,
+      cancelled: orders.filter(o => o.status === 'cancelled').length,
     };
-  }, [orders, analyticsData]);
+  }, [orders]);
 
   // Filtrer les commandes selon l'onglet actif - aligne avec Back-Office
   const filteredOrders = useMemo(() => {
@@ -170,66 +155,133 @@ export default function CommandesPage(): JSX.Element {
       </div>
 
       <div className="p-6 space-y-6">
-        {/* KPIs Dashboard - Alignes avec Back-Office */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {/* Total commandes */}
+        {/* KPIs Dashboard - Mois en cours avec variations */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {/* Commandes ce mois */}
           <div className="bg-white rounded-xl border p-5 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-blue-100 rounded-lg">
                 <ShoppingBag className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">Total</p>
-                <p className="text-2xl font-bold text-gray-900">{kpis.total}</p>
-                <p className="text-xs text-gray-400">commandes</p>
+                <p className="text-sm text-gray-500">Commandes</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {monthlyKPIs?.currentMonth.ordersCount ?? 0}
+                </p>
+                <p
+                  className={`text-xs ${getVariationColor(monthlyKPIs?.variations.ordersCount ?? 0)}`}
+                >
+                  {formatVariation(monthlyKPIs?.variations.ordersCount ?? 0)} vs
+                  mois dernier
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Expediees (shipped + delivered) */}
+          {/* CA TTC ce mois */}
           <div className="bg-white rounded-xl border p-5 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-green-100 rounded-lg">
-                <Truck className="h-6 w-6 text-green-600" />
+              <div className="p-3 bg-indigo-100 rounded-lg">
+                <TrendingUp className="h-6 w-6 text-indigo-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">Expediees</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {kpis.shipped}
+                <p className="text-sm text-gray-500">CA TTC</p>
+                <p className="text-2xl font-bold text-indigo-600">
+                  {(monthlyKPIs?.currentMonth.caTTC ?? 0).toLocaleString(
+                    'fr-FR',
+                    {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
+                    }
+                  )}{' '}
+                  €
                 </p>
-                <p className="text-xs text-gray-400">commandes</p>
+                <p
+                  className={`text-xs ${getVariationColor(monthlyKPIs?.variations.caTTC ?? 0)}`}
+                >
+                  {formatVariation(monthlyKPIs?.variations.caTTC ?? 0)} vs mois
+                  dernier
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Commissions en attente (client n'a pas paye) */}
+          {/* Panier Moyen */}
           <div className="bg-white rounded-xl border p-5 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-orange-100 rounded-lg">
-                <Clock className="h-6 w-6 text-orange-600" />
+              <div className="p-3 bg-purple-100 rounded-lg">
+                <Package className="h-6 w-6 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">En attente</p>
-                <p className="text-2xl font-bold text-orange-600">
-                  {kpis.commissionsPending}
+                <p className="text-sm text-gray-500">Panier Moyen</p>
+                <p className="text-2xl font-bold text-purple-600">
+                  {(monthlyKPIs?.currentMonth.panierMoyen ?? 0).toLocaleString(
+                    'fr-FR',
+                    {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
+                    }
+                  )}{' '}
+                  €
                 </p>
-                <p className="text-xs text-gray-400">commissions</p>
+                <p
+                  className={`text-xs ${getVariationColor(monthlyKPIs?.variations.panierMoyen ?? 0)}`}
+                >
+                  {formatVariation(monthlyKPIs?.variations.panierMoyen ?? 0)} vs
+                  mois dernier
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Commissions totales */}
+          {/* Commissions ce mois */}
           <div className="bg-white rounded-xl border p-5 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-emerald-100 rounded-lg">
                 <Wallet className="h-6 w-6 text-emerald-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">Commissions HT</p>
+                <p className="text-sm text-gray-500">Commissions</p>
                 <p className="text-2xl font-bold text-emerald-600">
-                  {kpis.totalMargin.toFixed(2)} €
+                  {(
+                    monthlyKPIs?.currentMonth.commissionsHT ?? 0
+                  ).toLocaleString('fr-FR', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                  })}{' '}
+                  €
                 </p>
-                <p className="text-xs text-gray-400">total gagne</p>
+                <p
+                  className={`text-xs ${getVariationColor(monthlyKPIs?.variations.commissionsHT ?? 0)}`}
+                >
+                  {formatVariation(monthlyKPIs?.variations.commissionsHT ?? 0)}{' '}
+                  vs mois dernier
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Total historique */}
+          <div className="bg-white rounded-xl border p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-gray-100 rounded-lg">
+                <Calendar className="h-6 w-6 text-gray-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Total historique</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {monthlyKPIs?.allTime.ordersCount ?? 0}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {(monthlyKPIs?.allTime.commissionsHT ?? 0).toLocaleString(
+                    'fr-FR',
+                    {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
+                    }
+                  )}{' '}
+                  € gagnés
+                </p>
               </div>
             </div>
           </div>
@@ -243,31 +295,31 @@ export default function CommandesPage(): JSX.Element {
                 {
                   id: 'all' as const,
                   label: 'Toutes',
-                  count: kpis.total,
+                  count: statusKpis.total,
                   color: 'blue',
                 },
                 {
                   id: 'draft' as const,
                   label: 'Brouillon',
-                  count: kpis.draft,
+                  count: statusKpis.draft,
                   color: 'orange',
                 },
                 {
                   id: 'validated' as const,
                   label: 'Validée',
-                  count: kpis.validated,
+                  count: statusKpis.validated,
                   color: 'blue',
                 },
                 {
                   id: 'shipped' as const,
                   label: 'Expédiée',
-                  count: kpis.shipped,
+                  count: statusKpis.shipped,
                   color: 'green',
                 },
                 {
                   id: 'cancelled' as const,
                   label: 'Annulée',
-                  count: kpis.cancelled,
+                  count: statusKpis.cancelled,
                   color: 'gray',
                 },
               ].map(tab => {

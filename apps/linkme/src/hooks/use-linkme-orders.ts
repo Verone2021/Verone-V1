@@ -69,19 +69,32 @@ export interface LinkMeOrder {
 }
 
 /**
- * Hook: récupère les commandes LinkMe pour un affilié
+ * Hook: récupère les commandes LinkMe
+ *
+ * @param affiliateId - ID de l'affilié pour filtrer, ou null pour toutes les commandes
+ * @param fetchAll - Si true, récupère toutes les commandes (mode CMS/admin)
+ *
+ * Note: Pour aligner les KPIs avec le back-office, utiliser fetchAll=true
  */
-export function useLinkMeOrders(affiliateId: string | null) {
+export function useLinkMeOrders(
+  affiliateId: string | null,
+  fetchAll: boolean = false
+) {
   return useQuery({
-    queryKey: ['linkme-orders', affiliateId],
+    queryKey: ['linkme-orders', fetchAll ? 'all' : affiliateId],
     queryFn: async (): Promise<LinkMeOrder[]> => {
-      if (!affiliateId) return [];
+      // Mode fetchAll : récupère toutes les commandes (comme le back-office)
+      // Mode normal : filtre par affilié
+      const effectiveAffiliateId = fetchAll ? null : affiliateId;
+
+      // Si pas de fetchAll et pas d'affiliateId, retourner vide
+      if (!fetchAll && !affiliateId) return [];
 
       // 1. Fetch commandes via RPC
       const supabase = createClient();
       const { data: ordersData, error: ordersError } = await (
         supabase as any
-      ).rpc('get_linkme_orders', { p_affiliate_id: affiliateId });
+      ).rpc('get_linkme_orders', { p_affiliate_id: effectiveAffiliateId });
 
       if (ordersError) {
         console.error('Erreur fetch commandes:', ordersError);
@@ -159,7 +172,7 @@ export function useLinkMeOrders(affiliateId: string | null) {
 
       return ordersWithItems;
     },
-    enabled: !!affiliateId,
+    enabled: fetchAll || !!affiliateId,
     staleTime: 30000, // 30 secondes
     refetchOnWindowFocus: true,
   });
