@@ -52,6 +52,7 @@ import {
   RefreshCw,
   Globe,
   Link2,
+  Warehouse,
 } from 'lucide-react';
 
 // Phase 1: use-stock-alerts-count hook désactivé (Phase 2+)
@@ -144,6 +145,11 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
         title: 'Inventaire',
         href: '/stocks/inventaire',
         icon: Package,
+      },
+      {
+        title: 'Stockage',
+        href: '/stocks/stockage',
+        icon: Warehouse,
       },
       {
         title: 'Mouvements de stock',
