@@ -360,7 +360,7 @@ BEGIN
   SELECT
     'organisation'::TEXT AS owner_type,
     o.id AS owner_id,
-    o.name::TEXT AS owner_name,
+    COALESCE(o.trade_name, o.legal_name, 'Inconnu')::TEXT AS owner_name,
     COALESCE(SUM(a.stock_quantity), 0)::BIGINT AS total_units,
     COALESCE(SUM(
       a.stock_quantity * calc_product_volume_m3(p.dimensions)
@@ -379,7 +379,7 @@ BEGIN
     SELECT 1 FROM storage_allocations sa
     WHERE sa.owner_organisation_id = o.id
   )
-  GROUP BY o.id, o.name
+  GROUP BY o.id, o.trade_name, o.legal_name
 
   ORDER BY billable_volume_m3 DESC;
 END;
