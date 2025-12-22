@@ -34,6 +34,9 @@ export interface PendingProduct {
   // Joined data
   enseigne_name?: string;
   affiliate_display_name?: string;
+  // Storage info
+  affiliate_storage_type: 'verone' | 'self';
+  affiliate_stock_quantity: number | null;
 }
 
 /**
@@ -113,6 +116,7 @@ export function usePendingApprovals() {
 
 /**
  * Hook: recupere tous les produits affilies (tous statuts)
+ * Inclut les informations de stockage depuis purchase_order_receptions
  */
 export function useAllAffiliateProducts(
   status?: AffiliateProductApprovalStatus
@@ -141,6 +145,12 @@ export function useAllAffiliateProducts(
           ),
           linkme_affiliates:created_by_affiliate (
             display_name
+          ),
+          purchase_order_receptions (
+            id,
+            quantity_expected,
+            status,
+            reference_type
           )
         `
         )
@@ -158,13 +168,33 @@ export function useAllAffiliateProducts(
         throw error;
       }
 
-      return (data || []).map((product: Record<string, unknown>) => ({
-        ...product,
-        enseigne_name: (product.enseigne as { name?: string })?.name || null,
-        affiliate_display_name:
-          (product.linkme_affiliates as { display_name?: string })
-            ?.display_name || null,
-      })) as PendingProduct[];
+      // Map data and determine storage type from receptions
+      return (data || []).map((product: Record<string, unknown>) => {
+        const receptions =
+          (product.purchase_order_receptions as Array<{
+            id: string;
+            quantity_expected: number;
+            status: string;
+            reference_type: string;
+          }>) || [];
+
+        // Find affiliate reception (indicates storage by Vérone)
+        const affiliateReception = receptions.find(
+          r => r.reference_type === 'affiliate_product'
+        );
+
+        return {
+          ...product,
+          enseigne_name: (product.enseigne as { name?: string })?.name || null,
+          affiliate_display_name:
+            (product.linkme_affiliates as { display_name?: string })
+              ?.display_name || null,
+          // Storage info: if there's an affiliate_product reception, it's stored at Vérone
+          affiliate_storage_type: affiliateReception ? 'verone' : 'self',
+          affiliate_stock_quantity:
+            affiliateReception?.quantity_expected ?? null,
+        };
+      }) as PendingProduct[];
     },
     staleTime: 30000,
   });
@@ -177,7 +207,23 @@ export const COMMISSION_RATES = [5, 10, 15] as const;
 export type CommissionRate = (typeof COMMISSION_RATES)[number];
 
 /**
+ * Résultat de l'approbation d'un produit affilié
+ */
+interface ApprovalResult {
+  success: boolean;
+  product_id: string;
+  product_name: string;
+  status: string;
+  commission_rate: number;
+  reception_id: string | null;
+  reception_status: string | null;
+  stock_quantity_expected: number;
+  message: string;
+}
+
+/**
  * Hook: approuver un produit avec commission obligatoire
+ * Crée une réception en attente si stock_quantity > 0 (le mouvement de stock est créé à la confirmation)
  */
 export function useApproveProduct() {
   const queryClient = useQueryClient();
@@ -189,7 +235,7 @@ export function useApproveProduct() {
     }: {
       productId: string;
       commissionRate: CommissionRate;
-    }): Promise<boolean> => {
+    }): Promise<ApprovalResult> => {
       const supabase = createClient();
 
       const { data, error } = await supabase.rpc('approve_affiliate_product', {
@@ -202,7 +248,7 @@ export function useApproveProduct() {
         throw error;
       }
 
-      return data;
+      return data as unknown as ApprovalResult;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pending-approvals'] });

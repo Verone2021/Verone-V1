@@ -10,6 +10,7 @@ import {
   Star,
   Building2,
   PackagePlus,
+  Warehouse,
 } from 'lucide-react';
 
 import { useAuth, type LinkMeRole } from '../../contexts/AuthContext';
@@ -35,6 +36,9 @@ const CREATE_PRODUCT_ROLES: LinkMeRole[] = [
   'org_independante',
 ];
 
+// Rôles autorisés à voir le stockage
+const STORAGE_ROLES: LinkMeRole[] = ['enseigne_admin', 'org_independante'];
+
 export function Header() {
   const { itemCount, openCart } = useCart();
   const { user, linkMeRole, loading } = useAuth();
@@ -46,6 +50,7 @@ export function Header() {
   const canSeeNetwork = linkMeRole && NETWORK_ROLES.includes(linkMeRole.role);
   const canCreateProducts =
     linkMeRole && CREATE_PRODUCT_ROLES.includes(linkMeRole.role);
+  const canSeeStorage = linkMeRole && STORAGE_ROLES.includes(linkMeRole.role);
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -106,6 +111,15 @@ export function Header() {
               >
                 <PackagePlus className="h-4 w-4" />
                 Mes Produits
+              </Link>
+            )}
+            {canSeeStorage && (
+              <Link
+                href="/stockage"
+                className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 font-medium"
+              >
+                <Warehouse className="h-4 w-4" />
+                Mon Stockage
               </Link>
             )}
           </nav>

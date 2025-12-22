@@ -11,37 +11,125 @@ import type {
   QontoBalance,
   QontoApiResponse,
   QontoConfig,
+  QontoAuthMode,
+  QontoHealthCheckResult,
+  QontoClientInvoice,
+  QontoClientEntity,
+  QontoAttachment,
+  QontoLabel,
+  CreateClientInvoiceParams,
+  CreateClientParams,
+  UploadSupplierInvoiceParams,
+  UploadSupplierInvoicesResult,
 } from './types';
+
+// =====================================================================
+// HELPERS
+// =====================================================================
+
+/**
+ * Génère une clé d'idempotency UUID v4
+ */
+function generateIdempotencyKey(): string {
+  return crypto.randomUUID();
+}
+
+/**
+ * Détermine le mode d'auth à partir des env vars
+ */
+function resolveAuthMode(): QontoAuthMode {
+  const envMode = process.env.QONTO_AUTH_MODE?.toLowerCase();
+  if (envMode === 'api_key') return 'api_key';
+  return 'oauth'; // Défaut OAuth
+}
 
 // =====================================================================
 // CLIENT
 // =====================================================================
 
 export class QontoClient {
-  private config: QontoConfig;
+  private config: Required<
+    Pick<
+      QontoConfig,
+      'authMode' | 'baseUrl' | 'timeout' | 'maxRetries' | 'retryDelay'
+    >
+  > &
+    QontoConfig;
   private baseUrl: string;
+  private authMode: QontoAuthMode;
 
   constructor(config?: Partial<QontoConfig>) {
+    // Déterminer le mode d'auth
+    this.authMode = config?.authMode || resolveAuthMode();
+
     this.config = {
+      authMode: this.authMode,
+      // Credentials API Key
       organizationId:
-        config?.organizationId || process.env.QONTO_ORGANIZATION_ID!,
-      apiKey: config?.apiKey || process.env.QONTO_API_KEY!,
+        config?.organizationId || process.env.QONTO_ORGANIZATION_ID,
+      apiKey: config?.apiKey || process.env.QONTO_API_KEY,
+      // Credentials OAuth
+      accessToken: config?.accessToken || process.env.QONTO_ACCESS_TOKEN,
+      refreshToken: config?.refreshToken || process.env.QONTO_REFRESH_TOKEN,
+      // Endpoint
       baseUrl:
         config?.baseUrl ||
         process.env.QONTO_API_BASE_URL ||
         'https://thirdparty.qonto.com',
+      // Timeouts
       timeout: config?.timeout || 30000,
       maxRetries: config?.maxRetries || 3,
       retryDelay: config?.retryDelay || 1000,
     };
 
-    this.baseUrl = this.config.baseUrl!;
+    this.baseUrl = this.config.baseUrl;
 
-    if (!this.config.organizationId || !this.config.apiKey) {
-      throw new Error(
-        'Qonto credentials missing (QONTO_ORGANIZATION_ID or QONTO_API_KEY)'
-      );
+    // Validation des credentials selon le mode
+    this.validateCredentials();
+  }
+
+  /**
+   * Valide que les credentials nécessaires sont présents
+   */
+  private validateCredentials(): void {
+    if (this.authMode === 'oauth') {
+      if (!this.config.accessToken) {
+        throw new QontoError(
+          'OAuth mode requires QONTO_ACCESS_TOKEN. ' +
+            'Set QONTO_AUTH_MODE=api_key if using API Key authentication.',
+          'AUTH_CONFIG_ERROR',
+          0
+        );
+      }
+    } else {
+      // api_key mode
+      if (!this.config.organizationId || !this.config.apiKey) {
+        throw new QontoError(
+          'API Key mode requires QONTO_ORGANIZATION_ID and QONTO_API_KEY. ' +
+            'Set QONTO_AUTH_MODE=oauth if using OAuth authentication.',
+          'AUTH_CONFIG_ERROR',
+          0
+        );
+      }
     }
+  }
+
+  /**
+   * Construit le header Authorization selon le mode
+   */
+  private getAuthHeader(): string {
+    if (this.authMode === 'oauth') {
+      return `Bearer ${this.config.accessToken}`;
+    }
+    // api_key mode: orgId:apiKey
+    return `${this.config.organizationId}:${this.config.apiKey}`;
+  }
+
+  /**
+   * Retourne le mode d'auth actuel
+   */
+  getAuthMode(): QontoAuthMode {
+    return this.authMode;
   }
 
   // ===================================================================
@@ -65,7 +153,7 @@ export class QontoClient {
         method,
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `${this.config.organizationId}:${this.config.apiKey}`,
+          Authorization: this.getAuthHeader(),
         },
         body: body ? JSON.stringify(body) : undefined,
         signal: controller.signal,
@@ -84,7 +172,7 @@ export class QontoClient {
       const error = this.createErrorFromResponse(response.status, errorData);
 
       // Retry logic
-      if (this.shouldRetry(error) && retryCount < this.config.maxRetries!) {
+      if (this.shouldRetry(error) && retryCount < this.config.maxRetries) {
         const delay = this.calculateRetryDelay(retryCount);
         await this.sleep(delay);
         return this.request<T>(method, endpoint, body, {
@@ -106,7 +194,7 @@ export class QontoClient {
           timeout: this.config.timeout,
         });
 
-        if (retryCount < this.config.maxRetries!) {
+        if (retryCount < this.config.maxRetries) {
           const delay = this.calculateRetryDelay(retryCount);
           await this.sleep(delay);
           return this.request<T>(method, endpoint, body, {
@@ -123,6 +211,135 @@ export class QontoClient {
         'NETWORK_ERROR',
         0
       );
+    }
+  }
+
+  /**
+   * Requête avec header d'idempotency (pour POST/PUT/DELETE)
+   * Doc: https://docs.qonto.com/api-reference/business-api/expense-management/attachments-in-transactions/upload-an-attachment-to-a-transaction
+   */
+  private async requestWithIdempotency<T>(
+    method: 'POST' | 'PUT' | 'DELETE',
+    endpoint: string,
+    body: unknown,
+    idempotencyKey: string
+  ): Promise<T> {
+    const url = `${this.baseUrl}${endpoint}`;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.config.timeout);
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: this.getAuthHeader(),
+          'X-Qonto-Idempotency-Key': idempotencyKey,
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeout);
+
+      if (response.ok) {
+        const data = await response.json();
+        return data as T;
+      }
+
+      const errorData = await response.json().catch(() => ({}));
+      throw this.createErrorFromResponse(response.status, errorData);
+    } catch (err) {
+      clearTimeout(timeout);
+
+      if (err instanceof QontoError) {
+        throw err;
+      }
+
+      if (err instanceof Error && err.name === 'AbortError') {
+        throw new QontoError('Request timeout', 'TIMEOUT', 408, {
+          timeout: this.config.timeout,
+        });
+      }
+
+      throw new QontoError(
+        err instanceof Error ? err.message : 'Network error',
+        'NETWORK_ERROR',
+        0
+      );
+    }
+  }
+
+  // ===================================================================
+  // ORGANIZATION (Health Check)
+  // ===================================================================
+
+  /**
+   * Récupère les informations de l'organisation
+   * Utilisé pour le health check et la validation des credentials
+   */
+  async getOrganization(): Promise<{
+    slug: string;
+    legal_name: string;
+    legal_number: string;
+    legal_share_capital: number;
+    legal_vat_number: string;
+    address: {
+      street: string;
+      zip_code: string;
+      city: string;
+      country_code: string;
+    };
+  }> {
+    const response = await this.request<
+      QontoApiResponse<{
+        organization: {
+          slug: string;
+          legal_name: string;
+          legal_number: string;
+          legal_share_capital: number;
+          legal_vat_number: string;
+          address: {
+            street: string;
+            zip_code: string;
+            city: string;
+            country_code: string;
+          };
+        };
+      }>
+    >('GET', '/v2/organization');
+    return response.organization;
+  }
+
+  /**
+   * Vérifie que les credentials Qonto sont valides
+   * Utilise /v2/bank_accounts (endpoint fiable) au lieu de /v2/organization
+   *
+   * @returns Résultat du health check avec détails
+   */
+  async healthCheck(): Promise<QontoHealthCheckResult> {
+    const timestamp = new Date().toISOString();
+
+    try {
+      // Utiliser bank_accounts car c'est un endpoint fiable et léger
+      const accounts = await this.getBankAccounts();
+
+      return {
+        healthy: true,
+        authMode: this.authMode,
+        timestamp,
+        bankAccountsCount: accounts.length,
+        sampleBankAccountId: accounts[0]?.id,
+      };
+    } catch (error) {
+      // En cas d'erreur, retourner un résultat unhealthy avec détails
+      return {
+        healthy: false,
+        authMode: this.authMode,
+        timestamp,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
     }
   }
 
@@ -252,6 +469,503 @@ export class QontoClient {
   }
 
   // ===================================================================
+  // CLIENT INVOICES (Factures clients)
+  // ===================================================================
+
+  /**
+   * Liste les factures clients
+   * @param params Paramètres de filtrage
+   */
+  async getClientInvoices(params?: {
+    status?: 'draft' | 'unpaid' | 'paid' | 'overdue' | 'cancelled';
+    perPage?: number;
+    currentPage?: number;
+  }): Promise<{
+    client_invoices: QontoClientInvoice[];
+    meta: { total_count: number; current_page: number; total_pages: number };
+  }> {
+    const queryParams = new URLSearchParams();
+
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.perPage)
+      queryParams.append('per_page', params.perPage.toString());
+    if (params?.currentPage)
+      queryParams.append('current_page', params.currentPage.toString());
+
+    const endpoint = `/v2/client_invoices${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+
+    const response = await this.request<
+      QontoApiResponse<{
+        client_invoices: QontoClientInvoice[];
+        meta: {
+          total_count: number;
+          current_page: number;
+          total_pages: number;
+        };
+      }>
+    >('GET', endpoint);
+
+    return {
+      client_invoices: response.client_invoices,
+      meta: response.meta,
+    };
+  }
+
+  /**
+   * Récupère une facture client par ID
+   */
+  async getClientInvoiceById(invoiceId: string): Promise<QontoClientInvoice> {
+    const response = await this.request<
+      QontoApiResponse<{ client_invoice: QontoClientInvoice }>
+    >('GET', `/v2/client_invoices/${invoiceId}`);
+    return response.client_invoice;
+  }
+
+  /**
+   * Crée une nouvelle facture client
+   * Doc: https://docs.qonto.com/api-reference/business-api/expense-management/client-quotes-notes/client-invoices/create-a-client-invoice
+   *
+   * @param params Paramètres de la facture
+   * @param idempotencyKey Clé unique pour éviter les doublons (optionnel, générée si non fournie)
+   */
+  async createClientInvoice(
+    params: CreateClientInvoiceParams,
+    idempotencyKey?: string
+  ): Promise<QontoClientInvoice> {
+    const key = idempotencyKey || generateIdempotencyKey();
+
+    const response = await this.requestWithIdempotency<
+      QontoApiResponse<{ client_invoice: QontoClientInvoice }>
+    >(
+      'POST',
+      '/v2/client_invoices',
+      {
+        client_id: params.clientId,
+        currency: params.currency || 'EUR',
+        issue_date: params.issueDate,
+        due_date: params.dueDate, // Corrigé: était payment_deadline
+        payment_methods: {
+          iban: params.paymentMethods.iban, // OBLIGATOIRE selon doc Qonto
+        },
+        performance_start_date: params.performanceStartDate,
+        performance_end_date: params.performanceEndDate,
+        purchase_order_number: params.purchaseOrderNumber,
+        number: params.number, // Optionnel - Qonto génère si non fourni
+        header: params.header,
+        footer: params.footer,
+        terms_and_conditions: params.termsAndConditions,
+        items: params.items.map(item => ({
+          title: item.title,
+          description: item.description,
+          quantity: item.quantity, // String décimal
+          unit: item.unit || 'unit',
+          unit_price: {
+            // Objet avec value et currency
+            value: item.unitPrice.value,
+            currency: item.unitPrice.currency,
+          },
+          vat_rate: item.vatRate, // String décimal, ex: "0.20"
+        })),
+      },
+      key
+    );
+
+    return response.client_invoice;
+  }
+
+  /**
+   * Met à jour une facture client (brouillon uniquement)
+   */
+  async updateClientInvoice(
+    invoiceId: string,
+    params: Partial<CreateClientInvoiceParams>
+  ): Promise<QontoClientInvoice> {
+    const updateData: Record<string, unknown> = {};
+
+    if (params.clientId) updateData.client_id = params.clientId;
+    if (params.currency) updateData.currency = params.currency;
+    if (params.issueDate) updateData.issue_date = params.issueDate;
+    if (params.dueDate) updateData.due_date = params.dueDate;
+    if (params.paymentMethods)
+      updateData.payment_methods = { iban: params.paymentMethods.iban };
+    if (params.performanceStartDate)
+      updateData.performance_start_date = params.performanceStartDate;
+    if (params.performanceEndDate)
+      updateData.performance_end_date = params.performanceEndDate;
+    if (params.purchaseOrderNumber)
+      updateData.purchase_order_number = params.purchaseOrderNumber;
+    if (params.number) updateData.number = params.number;
+    if (params.header) updateData.header = params.header;
+    if (params.footer) updateData.footer = params.footer;
+    if (params.termsAndConditions)
+      updateData.terms_and_conditions = params.termsAndConditions;
+    if (params.items) {
+      updateData.items = params.items.map(item => ({
+        title: item.title,
+        description: item.description,
+        quantity: item.quantity,
+        unit: item.unit || 'unit',
+        unit_price: {
+          value: item.unitPrice.value,
+          currency: item.unitPrice.currency,
+        },
+        vat_rate: item.vatRate,
+      }));
+    }
+
+    const response = await this.request<
+      QontoApiResponse<{ client_invoice: QontoClientInvoice }>
+    >('PATCH' as any, `/v2/client_invoices/${invoiceId}`, updateData);
+
+    return response.client_invoice;
+  }
+
+  /**
+   * Finalise une facture (draft → unpaid)
+   */
+  async finalizeClientInvoice(invoiceId: string): Promise<QontoClientInvoice> {
+    const response = await this.request<
+      QontoApiResponse<{ client_invoice: QontoClientInvoice }>
+    >('POST', `/v2/client_invoices/${invoiceId}/finalize`);
+    return response.client_invoice;
+  }
+
+  /**
+   * Marque une facture comme payée
+   */
+  async markClientInvoiceAsPaid(
+    invoiceId: string,
+    paidAt?: string
+  ): Promise<QontoClientInvoice> {
+    const response = await this.request<
+      QontoApiResponse<{ client_invoice: QontoClientInvoice }>
+    >('POST', `/v2/client_invoices/${invoiceId}/mark_as_paid`, {
+      paid_at: paidAt || new Date().toISOString().split('T')[0],
+    });
+    return response.client_invoice;
+  }
+
+  /**
+   * Envoie une facture par email
+   */
+  async sendClientInvoiceByEmail(
+    invoiceId: string,
+    emails: string[]
+  ): Promise<void> {
+    await this.request<void>('POST', `/v2/client_invoices/${invoiceId}/send`, {
+      recipient_emails: emails,
+    });
+  }
+
+  /**
+   * Annule une facture
+   */
+  async cancelClientInvoice(invoiceId: string): Promise<QontoClientInvoice> {
+    const response = await this.request<
+      QontoApiResponse<{ client_invoice: QontoClientInvoice }>
+    >('POST', `/v2/client_invoices/${invoiceId}/cancel`);
+    return response.client_invoice;
+  }
+
+  // ===================================================================
+  // CLIENTS (Clients Qonto)
+  // ===================================================================
+
+  /**
+   * Liste les clients
+   */
+  async getClients(params?: {
+    perPage?: number;
+    currentPage?: number;
+  }): Promise<{
+    clients: QontoClientEntity[];
+    meta: { total_count: number };
+  }> {
+    const queryParams = new URLSearchParams();
+
+    if (params?.perPage)
+      queryParams.append('per_page', params.perPage.toString());
+    if (params?.currentPage)
+      queryParams.append('current_page', params.currentPage.toString());
+
+    const endpoint = `/v2/clients${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+
+    const response = await this.request<
+      QontoApiResponse<{
+        clients: QontoClientEntity[];
+        meta: { total_count: number };
+      }>
+    >('GET', endpoint);
+
+    return {
+      clients: response.clients,
+      meta: response.meta,
+    };
+  }
+
+  /**
+   * Récupère un client par ID
+   */
+  async getClientById(clientId: string): Promise<QontoClientEntity> {
+    const response = await this.request<
+      QontoApiResponse<{ client: QontoClientEntity }>
+    >('GET', `/v2/clients/${clientId}`);
+    return response.client;
+  }
+
+  /**
+   * Crée un nouveau client
+   */
+  async createClient(params: CreateClientParams): Promise<QontoClientEntity> {
+    const response = await this.request<
+      QontoApiResponse<{ client: QontoClientEntity }>
+    >('POST', '/v2/clients', {
+      name: params.name,
+      email: params.email,
+      currency: params.currency || 'EUR',
+      vat_number: params.vatNumber,
+      address: params.address
+        ? {
+            street_address: params.address.streetAddress,
+            city: params.address.city,
+            zip_code: params.address.zipCode,
+            country_code: params.address.countryCode,
+          }
+        : undefined,
+      phone: params.phone,
+      locale: params.locale || 'fr',
+    });
+
+    return response.client;
+  }
+
+  /**
+   * Recherche un client par email ou numéro TVA
+   */
+  async findClientByEmail(email: string): Promise<QontoClientEntity | null> {
+    const { clients } = await this.getClients({ perPage: 100 });
+    return clients.find(c => c.email === email) || null;
+  }
+
+  async findClientByVatNumber(
+    vatNumber: string
+  ): Promise<QontoClientEntity | null> {
+    const { clients } = await this.getClients({ perPage: 100 });
+    return clients.find(c => c.vat_number === vatNumber) || null;
+  }
+
+  // ===================================================================
+  // ATTACHMENTS (Pièces jointes)
+  // Doc: https://docs.qonto.com/api-reference/business-api/expense-management/attachments-in-transactions/upload-an-attachment-to-a-transaction
+  // ===================================================================
+
+  /**
+   * Upload une pièce jointe DIRECTEMENT sur une transaction (RECOMMANDÉ)
+   * C'est le flow correct selon la doc Qonto: multipart + idempotency
+   *
+   * @param transactionId ID de la transaction
+   * @param file Fichier (JPEG, PNG ou PDF)
+   * @param filename Nom du fichier
+   * @param idempotencyKey Clé unique pour éviter les doublons
+   */
+  async uploadAttachmentToTransaction(
+    transactionId: string,
+    file: Blob | File,
+    filename: string,
+    idempotencyKey?: string
+  ): Promise<QontoAttachment> {
+    const key = idempotencyKey || generateIdempotencyKey();
+    const formData = new FormData();
+    formData.append('file', file, filename);
+
+    const url = `${this.baseUrl}/v2/transactions/${transactionId}/attachments`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: this.getAuthHeader(),
+        'X-Qonto-Idempotency-Key': key,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw this.createErrorFromResponse(response.status, errorData);
+    }
+
+    const data = await response.json();
+    return data.attachment;
+  }
+
+  /**
+   * Upload une pièce jointe générique (pour external transfers uniquement)
+   * @deprecated Préférer uploadAttachmentToTransaction pour les transactions
+   */
+  async uploadAttachment(
+    file: Blob | File,
+    filename: string,
+    idempotencyKey?: string
+  ): Promise<QontoAttachment> {
+    const key = idempotencyKey || generateIdempotencyKey();
+    const formData = new FormData();
+    formData.append('file', file, filename);
+
+    const url = `${this.baseUrl}/v2/attachments`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: this.getAuthHeader(),
+        'X-Qonto-Idempotency-Key': key,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw this.createErrorFromResponse(response.status, errorData);
+    }
+
+    const data = await response.json();
+    return data.attachment;
+  }
+
+  /**
+   * Récupère l'URL d'une pièce jointe (valide 30 minutes)
+   */
+  async getAttachmentUrl(attachmentId: string): Promise<string> {
+    const response = await this.request<
+      QontoApiResponse<{ attachment: QontoAttachment }>
+    >('GET', `/v2/attachments/${attachmentId}`);
+    return response.attachment.url;
+  }
+
+  /**
+   * Liste les pièces jointes d'une transaction
+   */
+  async getTransactionAttachments(
+    transactionId: string
+  ): Promise<QontoAttachment[]> {
+    const response = await this.request<
+      QontoApiResponse<{ attachments: QontoAttachment[] }>
+    >('GET', `/v2/transactions/${transactionId}/attachments`);
+    return response.attachments;
+  }
+
+  /**
+   * Supprime les pièces jointes d'une transaction
+   */
+  async removeTransactionAttachments(transactionId: string): Promise<void> {
+    await this.request<void>(
+      'DELETE',
+      `/v2/transactions/${transactionId}/attachments`
+    );
+  }
+
+  // ===================================================================
+  // SUPPLIER INVOICES (Factures fournisseurs)
+  // Doc: https://docs.qonto.com/api-reference/business-api/expense-management/supplier-invoices/create-supplier-invoices
+  // ===================================================================
+
+  /**
+   * Upload en masse de factures fournisseurs
+   * Endpoint: POST /v2/supplier_invoices/bulk (multipart/form-data)
+   *
+   * @param invoices Liste des factures à uploader (fichier + idempotency key)
+   * @returns Résultat avec factures créées et erreurs éventuelles
+   */
+  async uploadSupplierInvoicesBulk(
+    invoices: UploadSupplierInvoiceParams[]
+  ): Promise<UploadSupplierInvoicesResult> {
+    const formData = new FormData();
+
+    invoices.forEach((invoice, index) => {
+      // Format Qonto: supplier_invoices[][file] et supplier_invoices[][idempotency_key]
+      formData.append(`supplier_invoices[${index}][file]`, invoice.file);
+      formData.append(
+        `supplier_invoices[${index}][idempotency_key]`,
+        invoice.idempotencyKey
+      );
+    });
+
+    const url = `${this.baseUrl}/v2/supplier_invoices/bulk`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: this.getAuthHeader(),
+      },
+      body: formData,
+    });
+
+    // Note: Cet endpoint retourne toujours 200, vérifier le champ errors
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw this.createErrorFromResponse(response.status, data);
+    }
+
+    return {
+      supplier_invoices: data.supplier_invoices || [],
+      errors: data.errors || [],
+    };
+  }
+
+  /**
+   * Upload d'une seule facture fournisseur (wrapper simplifié)
+   */
+  async uploadSupplierInvoice(
+    file: Blob | File,
+    idempotencyKey?: string
+  ): Promise<UploadSupplierInvoicesResult> {
+    return this.uploadSupplierInvoicesBulk([
+      {
+        file,
+        idempotencyKey: idempotencyKey || generateIdempotencyKey(),
+      },
+    ]);
+  }
+
+  // ===================================================================
+  // LABELS (Étiquettes)
+  // ===================================================================
+
+  /**
+   * Liste les labels de l'organisation
+   */
+  async getLabels(): Promise<QontoLabel[]> {
+    const response = await this.request<
+      QontoApiResponse<{ labels: QontoLabel[] }>
+    >('GET', '/v2/labels');
+    return response.labels;
+  }
+
+  /**
+   * Récupère un label par ID
+   */
+  async getLabelById(labelId: string): Promise<QontoLabel> {
+    const response = await this.request<
+      QontoApiResponse<{ label: QontoLabel }>
+    >('GET', `/v2/labels/${labelId}`);
+    return response.label;
+  }
+
+  /**
+   * Met à jour les labels d'une transaction
+   */
+  async updateTransactionLabels(
+    transactionId: string,
+    labelIds: string[]
+  ): Promise<void> {
+    await this.request<void>(
+      'PUT',
+      `/v2/transactions/${transactionId}/labels`,
+      { label_ids: labelIds }
+    );
+  }
+
+  // ===================================================================
   // HELPERS
   // ===================================================================
 
@@ -311,7 +1025,7 @@ export class QontoClient {
 
   private calculateRetryDelay(retryCount: number): number {
     // Exponential backoff: 1s, 2s, 4s
-    return this.config.retryDelay! * Math.pow(2, retryCount);
+    return this.config.retryDelay * Math.pow(2, retryCount);
   }
 
   private sleep(ms: number): Promise<void> {

@@ -11,18 +11,32 @@
 
 import { useState, useMemo } from 'react';
 
+import Link from 'next/link';
+
 import {
   Button,
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
   Switch,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
   Badge,
+  Input,
+  Label,
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
 } from '@verone/ui';
 import {
   Package,
@@ -39,8 +53,19 @@ import {
   ArrowUp,
   ArrowDown,
   Minus,
+  Plus,
+  Search,
+  Check,
+  ChevronsUpDown,
+  Settings,
 } from 'lucide-react';
 
+import { useLinkMeOwners, type LinkMeOwner } from './hooks/use-linkme-owners';
+import {
+  useProductsForStorage,
+  formatVolumePreview,
+  type ProductForStorage,
+} from './hooks/use-products-for-storage';
 import {
   useGlobalStorageTotals,
   useGlobalStorageOverview,
@@ -48,6 +73,7 @@ import {
   useUpdateAllocationBillable,
   useStorageWeightedAverage,
   useStorageEventsHistory,
+  useCreateStorageAllocation,
   formatVolumeM3,
   getSourceLabel,
   getSourceColor,
@@ -62,10 +88,15 @@ export default function StockagePage() {
   const [ownerTypeFilter, setOwnerTypeFilter] =
     useState<OwnerTypeFilter>('all');
   const [showBillableOnly, setShowBillableOnly] = useState(false);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const { data: totals, isLoading: totalsLoading } = useGlobalStorageTotals();
-  const { data: overview, isLoading: overviewLoading } =
-    useGlobalStorageOverview();
+  const {
+    data: overview,
+    isLoading: overviewLoading,
+    refetch,
+  } = useGlobalStorageOverview();
 
   const isLoading = totalsLoading || overviewLoading;
 
@@ -84,9 +115,18 @@ export default function StockagePage() {
         return false;
       }
 
+      // Search filter
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        const name = (item.owner_name || '').toLowerCase();
+        if (!name.includes(term)) {
+          return false;
+        }
+      }
+
       return true;
     });
-  }, [overview, ownerTypeFilter, showBillableOnly]);
+  }, [overview, ownerTypeFilter, showBillableOnly, searchTerm]);
 
   return (
     <div className="p-6">
@@ -99,6 +139,18 @@ export default function StockagePage() {
           <p className="text-gray-500 mt-1">
             Vue globale du stockage entrepot avec suivi m3 et facturation
           </p>
+        </div>
+        <div className="flex gap-2">
+          <Link href="/canaux-vente/linkme/stockage?tab=tarifs">
+            <Button variant="outline">
+              <Settings className="h-4 w-4 mr-2" />
+              Grille tarifaire
+            </Button>
+          </Link>
+          <Button onClick={() => setShowAddDialog(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nouvelle allocation
+          </Button>
         </div>
       </div>
 
@@ -144,6 +196,17 @@ export default function StockagePage() {
       {/* Filters */}
       <div className="bg-white rounded-xl border p-4 mb-6">
         <div className="flex items-center gap-4 flex-wrap">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Rechercher un owner..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="pl-9 w-64"
+            />
+          </div>
+
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-gray-400" />
             <span className="text-sm font-medium text-gray-700">Filtres:</span>
@@ -304,6 +367,16 @@ export default function StockagePage() {
       <OwnerStorageDetail
         owner={selectedOwner}
         onClose={() => setSelectedOwner(null)}
+      />
+
+      {/* Add Allocation Dialog */}
+      <AddAllocationDialog
+        open={showAddDialog}
+        onClose={() => setShowAddDialog(false)}
+        onSuccess={() => {
+          setShowAddDialog(false);
+          refetch();
+        }}
       />
     </div>
   );
@@ -715,6 +788,289 @@ function OwnerStorageDetail({
               )}
           </TabsContent>
         </Tabs>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function AddAllocationDialog({
+  open,
+  onClose,
+  onSuccess,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const [selectedOwner, setSelectedOwner] = useState<LinkMeOwner | null>(null);
+  const [selectedProduct, setSelectedProduct] =
+    useState<ProductForStorage | null>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [billable, setBillable] = useState(true);
+  const [ownerSearch, setOwnerSearch] = useState('');
+  const [productSearch, setProductSearch] = useState('');
+  const [ownerOpen, setOwnerOpen] = useState(false);
+  const [productOpen, setProductOpen] = useState(false);
+
+  const { data: owners, isLoading: ownersLoading } =
+    useLinkMeOwners(ownerSearch);
+  const { data: products, isLoading: productsLoading } =
+    useProductsForStorage(productSearch);
+  const createAllocation = useCreateStorageAllocation();
+
+  const previewVolume = selectedProduct
+    ? selectedProduct.volume_m3 * quantity
+    : 0;
+
+  const handleSubmit = async () => {
+    if (!selectedOwner || !selectedProduct || quantity <= 0) return;
+
+    try {
+      await createAllocation.mutateAsync({
+        productId: selectedProduct.id,
+        ownerType: selectedOwner.type,
+        ownerId: selectedOwner.id,
+        quantity,
+        billable,
+      });
+      // Reset form
+      setSelectedOwner(null);
+      setSelectedProduct(null);
+      setQuantity(1);
+      setBillable(true);
+      onSuccess();
+    } catch {
+      alert('Erreur lors de la creation');
+    }
+  };
+
+  const handleClose = () => {
+    setSelectedOwner(null);
+    setSelectedProduct(null);
+    setQuantity(1);
+    setBillable(true);
+    setOwnerSearch('');
+    setProductSearch('');
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Plus className="h-5 w-5 text-blue-600" />
+            Nouvelle allocation de stockage
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4 py-4">
+          {/* Owner Selector */}
+          <div className="space-y-2">
+            <Label>Client (Enseigne ou Organisation LinkMe)</Label>
+            <Popover open={ownerOpen} onOpenChange={setOwnerOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={ownerOpen}
+                  className="w-full justify-between"
+                >
+                  {selectedOwner ? (
+                    <span className="flex items-center gap-2">
+                      <Badge
+                        variant={
+                          selectedOwner.type === 'enseigne'
+                            ? 'default'
+                            : 'secondary'
+                        }
+                        className="text-xs"
+                      >
+                        {selectedOwner.type === 'enseigne' ? 'E' : 'O'}
+                      </Badge>
+                      {selectedOwner.name}
+                    </span>
+                  ) : (
+                    'Selectionner un client...'
+                  )}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0" align="start">
+                <Command>
+                  <CommandInput
+                    placeholder="Rechercher..."
+                    value={ownerSearch}
+                    onValueChange={setOwnerSearch}
+                  />
+                  <CommandList>
+                    <CommandEmpty>
+                      {ownersLoading ? 'Chargement...' : 'Aucun client trouve'}
+                    </CommandEmpty>
+                    <CommandGroup>
+                      {(owners || []).map(owner => (
+                        <CommandItem
+                          key={`${owner.type}-${owner.id}`}
+                          value={`${owner.type}-${owner.id}`}
+                          onSelect={() => {
+                            setSelectedOwner(owner);
+                            setOwnerOpen(false);
+                          }}
+                        >
+                          <Check
+                            className={`mr-2 h-4 w-4 ${
+                              selectedOwner?.id === owner.id
+                                ? 'opacity-100'
+                                : 'opacity-0'
+                            }`}
+                          />
+                          <Badge
+                            variant={
+                              owner.type === 'enseigne'
+                                ? 'default'
+                                : 'secondary'
+                            }
+                            className="mr-2 text-xs"
+                          >
+                            {owner.type === 'enseigne' ? 'E' : 'O'}
+                          </Badge>
+                          {owner.name}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {/* Product Selector */}
+          <div className="space-y-2">
+            <Label>Produit</Label>
+            <Popover open={productOpen} onOpenChange={setProductOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={productOpen}
+                  className="w-full justify-between"
+                >
+                  {selectedProduct ? (
+                    <span className="truncate">
+                      {selectedProduct.name} ({selectedProduct.sku})
+                    </span>
+                  ) : (
+                    'Selectionner un produit...'
+                  )}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0" align="start">
+                <Command>
+                  <CommandInput
+                    placeholder="Rechercher par nom ou SKU..."
+                    value={productSearch}
+                    onValueChange={setProductSearch}
+                  />
+                  <CommandList>
+                    <CommandEmpty>
+                      {productsLoading
+                        ? 'Chargement...'
+                        : productSearch.length < 2
+                          ? 'Tapez au moins 2 caracteres'
+                          : 'Aucun produit trouve'}
+                    </CommandEmpty>
+                    <CommandGroup>
+                      {(products || []).map(product => (
+                        <CommandItem
+                          key={product.id}
+                          value={product.id}
+                          onSelect={() => {
+                            setSelectedProduct(product);
+                            setProductOpen(false);
+                          }}
+                        >
+                          <Check
+                            className={`mr-2 h-4 w-4 ${
+                              selectedProduct?.id === product.id
+                                ? 'opacity-100'
+                                : 'opacity-0'
+                            }`}
+                          />
+                          <div className="flex flex-col">
+                            <span>{product.name}</span>
+                            <span className="text-xs text-gray-500">
+                              {product.sku} -{' '}
+                              {formatVolumePreview(product.volume_m3)}/unite
+                            </span>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {/* Quantity */}
+          <div className="space-y-2">
+            <Label>Quantite</Label>
+            <Input
+              type="number"
+              min={1}
+              value={quantity}
+              onChange={e =>
+                setQuantity(Math.max(1, parseInt(e.target.value) || 1))
+              }
+            />
+          </div>
+
+          {/* Billable Toggle */}
+          <div className="flex items-center justify-between">
+            <Label htmlFor="billable-toggle">Facturable</Label>
+            <Switch
+              id="billable-toggle"
+              checked={billable}
+              onCheckedChange={setBillable}
+            />
+          </div>
+
+          {/* Volume Preview */}
+          {selectedProduct && (
+            <div className="bg-blue-50 rounded-lg p-4">
+              <p className="text-sm text-blue-800">
+                <strong>Volume prevu:</strong>{' '}
+                {formatVolumePreview(previewVolume)}
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                {quantity} x {formatVolumePreview(selectedProduct.volume_m3)}
+              </p>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={handleClose}>
+            Annuler
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={
+              !selectedOwner ||
+              !selectedProduct ||
+              quantity <= 0 ||
+              createAllocation.isPending
+            }
+          >
+            {createAllocation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Plus className="h-4 w-4 mr-2" />
+            )}
+            Ajouter
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

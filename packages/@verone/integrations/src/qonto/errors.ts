@@ -6,6 +6,7 @@
 
 export type QontoErrorCode =
   | 'AUTH_ERROR' // 401: Credentials invalides
+  | 'AUTH_CONFIG_ERROR' // 0: Configuration auth manquante/invalide
   | 'PERMISSION_ERROR' // 403: Permissions insuffisantes
   | 'NOT_FOUND' // 404: Ressource introuvable
   | 'VALIDATION_ERROR' // 400: Paramètres invalides
@@ -76,6 +77,8 @@ export class QontoError extends Error {
     switch (this.code) {
       case 'AUTH_ERROR':
         return "Erreur d'authentification Qonto. Vérifiez vos identifiants.";
+      case 'AUTH_CONFIG_ERROR':
+        return "Configuration Qonto manquante. Vérifiez vos variables d'environnement.";
       case 'PERMISSION_ERROR':
         return 'Permissions insuffisantes pour accéder à cette ressource Qonto.';
       case 'NOT_FOUND':

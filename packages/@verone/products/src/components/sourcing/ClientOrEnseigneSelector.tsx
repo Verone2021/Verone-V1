@@ -60,6 +60,10 @@ export function ClientOrEnseigneSelector({
   );
 
   const [selectedEnseigneData, setSelectedEnseigneData] = useState<any>(null);
+  // État local pour stocker le nom sélectionné (évite le bug de timing avec le hook)
+  const [selectedOrganisationName, setSelectedOrganisationName] = useState<
+    string | null
+  >(null);
 
   // Hooks pour récupérer les données
   const {
@@ -67,10 +71,13 @@ export function ClientOrEnseigneSelector({
     loading: enseignesLoading,
     getEnseigneById,
   } = useEnseignes({ is_active: true });
+  // Filtrer uniquement les organisations indépendantes (sans enseigne)
+  // Les organisations appartenant à une enseigne doivent être sélectionnées via l'onglet Enseignes
   const { organisations, loading: organisationsLoading } = useOrganisations({
     type: 'customer',
     customer_type: 'professional',
     is_active: true,
+    exclude_with_enseigne: true, // Exclure les organisations liées à une enseigne
   });
 
   // Charger les détails de l'enseigne sélectionnée
@@ -139,12 +146,15 @@ export function ClientOrEnseigneSelector({
   const handleOrganisationSelect = (
     organisation: (typeof organisations)[0]
   ) => {
+    // Stocker le nom localement pour l'affichage immédiat
+    setSelectedOrganisationName(organisation.name);
     onOrganisationChange(organisation.id, organisation.name);
     onEnseigneChange(null, null, null); // Reset enseigne
     setOpen(false);
   };
 
   const handleReset = () => {
+    setSelectedOrganisationName(null);
     onEnseigneChange(null, null, null);
     onOrganisationChange(null, null);
     setOpen(false);
@@ -153,7 +163,7 @@ export function ClientOrEnseigneSelector({
   // Loading state
   const isLoading = enseignesLoading || organisationsLoading;
 
-  // Display value
+  // Display value - utilise le nom local stocké pour éviter les problèmes de timing
   const displayValue = useMemo(() => {
     if (selectedEnseigne) {
       return (
@@ -163,18 +173,25 @@ export function ClientOrEnseigneSelector({
         </div>
       );
     }
-    if (selectedOrganisation) {
+    // Utiliser le nom stocké localement OU celui trouvé dans la liste
+    const orgName = selectedOrganisationName || selectedOrganisation?.name;
+    if (organisationId && orgName) {
       return (
         <div className="flex items-center gap-2">
           <Building2 className="h-4 w-4 text-muted-foreground" />
-          <span>{selectedOrganisation.name}</span>
+          <span>{orgName}</span>
         </div>
       );
     }
     return (
       <span className="text-muted-foreground">Sélectionner un client...</span>
     );
-  }, [selectedEnseigne, selectedOrganisation]);
+  }, [
+    selectedEnseigne,
+    selectedOrganisation,
+    selectedOrganisationName,
+    organisationId,
+  ]);
 
   return (
     <div className={cn('flex flex-col gap-2', className)}>
@@ -309,7 +326,7 @@ export function ClientOrEnseigneSelector({
       </Popover>
 
       {/* Summary Badge */}
-      {(selectedEnseigne || selectedOrganisation) && (
+      {(selectedEnseigne || organisationId) && (
         <div className="flex items-center gap-2 text-sm">
           {selectedEnseigne && (
             <Badge variant="secondary" className="flex items-center gap-1">
@@ -322,12 +339,14 @@ export function ClientOrEnseigneSelector({
               )}
             </Badge>
           )}
-          {selectedOrganisation && (
-            <Badge variant="secondary" className="flex items-center gap-1">
-              <Building2 className="h-3 w-3" />
-              Organisation : {selectedOrganisation.name}
-            </Badge>
-          )}
+          {organisationId &&
+            (selectedOrganisationName || selectedOrganisation?.name) && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                <Building2 className="h-3 w-3" />
+                Organisation :{' '}
+                {selectedOrganisationName || selectedOrganisation?.name}
+              </Badge>
+            )}
         </div>
       )}
     </div>

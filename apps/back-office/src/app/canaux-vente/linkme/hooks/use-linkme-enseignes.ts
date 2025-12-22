@@ -350,6 +350,7 @@ export function useUpdateEnseigne() {
 
 /**
  * Hook: supprimer une enseigne
+ * PROTECTION: Verifie d'abord si des utilisateurs sont lies via user_app_roles
  */
 export function useDeleteEnseigne() {
   const queryClient = useQueryClient();
@@ -357,6 +358,25 @@ export function useDeleteEnseigne() {
   return useMutation({
     mutationFn: async (enseigneId: string) => {
       const supabase = createClient();
+
+      // PROTECTION: Verifier si des utilisateurs sont lies a cette enseigne
+      const { count: linkedUsersCount, error: checkError } = await supabase
+        .from('user_app_roles')
+        .select('*', { count: 'exact', head: true })
+        .eq('enseigne_id', enseigneId)
+        .eq('is_active', true);
+
+      if (checkError) {
+        console.warn('Erreur verification users lies:', checkError);
+        // Continue si erreur de verification (graceful)
+      } else if (linkedUsersCount && linkedUsersCount > 0) {
+        throw new Error(
+          `Impossible de supprimer cette enseigne : ${linkedUsersCount} utilisateur(s) y sont rattaches. ` +
+            `Veuillez d'abord archiver l'enseigne (is_active = false) ou retirer les utilisateurs.`
+        );
+      }
+
+      // Pas d'utilisateurs lies, on peut supprimer
       const { error } = await (supabase as any)
         .from('enseignes')
         .delete()

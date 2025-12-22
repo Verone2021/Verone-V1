@@ -33,6 +33,8 @@ import {
   Ruler,
   Eye,
   Filter,
+  Warehouse,
+  User,
 } from 'lucide-react';
 
 import {
@@ -252,6 +254,9 @@ export default function ApprobationsPage() {
                   Prix
                 </th>
                 <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+                  Stockage
+                </th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
                   Statut
                 </th>
                 <th className="text-right px-6 py-4 text-sm font-medium text-gray-500">
@@ -302,6 +307,32 @@ export default function ApprobationsPage() {
                         EUR
                       </p>
                     </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    {product.affiliate_storage_type === 'verone' ? (
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-blue-100 rounded">
+                          <Warehouse className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-blue-700">
+                            Chez Verone
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {product.affiliate_stock_quantity} unites
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-gray-100 rounded">
+                          <User className="h-4 w-4 text-gray-500" />
+                        </div>
+                        <p className="text-sm text-gray-600">
+                          Gere par l&apos;affilie
+                        </p>
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-4">
                     <StatusBadge status={product.affiliate_approval_status} />
@@ -573,6 +604,44 @@ export default function ApprobationsPage() {
                     EUR
                   </span>
                 </div>
+              </div>
+
+              {/* Stockage info */}
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-500 flex items-center gap-1 mb-2">
+                  <Warehouse className="h-4 w-4" />
+                  Stockage
+                </p>
+                {selectedProduct.affiliate_storage_type === 'verone' ? (
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-100 rounded">
+                      <Warehouse className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-blue-700">
+                        Stocke chez Verone
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {selectedProduct.affiliate_stock_quantity} unites a
+                        recevoir
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-gray-100 rounded">
+                      <User className="h-5 w-5 text-gray-500" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-700">
+                        Gere par l&apos;affilie
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        Expedition directe par l&apos;affilie
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {selectedProduct.dimensions && (

@@ -98,6 +98,8 @@ export interface OrganisationFilters {
   search?: string;
   country?: string;
   include_archived?: boolean;
+  /** Exclure les organisations qui appartiennent à une enseigne (enseigne_id IS NOT NULL) */
+  exclude_with_enseigne?: boolean;
 }
 
 export interface CreateOrganisationData {
@@ -317,6 +319,11 @@ export function useOrganisations(filters?: OrganisationFilters) {
         query = query.is('archived_at', null);
       }
 
+      // Exclure les organisations qui appartiennent à une enseigne (pour sélecteur sourcing)
+      if (filters?.exclude_with_enseigne) {
+        query = query.is('enseigne_id', null);
+      }
+
       const { data, error: fetchError } = await query;
 
       if (fetchError) {
@@ -383,6 +390,7 @@ export function useOrganisations(filters?: OrganisationFilters) {
     filters?.search,
     filters?.country,
     filters?.include_archived,
+    filters?.exclude_with_enseigne,
   ]);
 
   const createOrganisation = async (
@@ -547,6 +555,24 @@ export function useOrganisations(filters?: OrganisationFilters) {
 
   const deleteOrganisation = async (id: string): Promise<boolean> => {
     try {
+      // PROTECTION: Verifier si des utilisateurs sont lies a cette organisation
+      const { count: linkedUsersCount, error: checkError } = await supabase
+        .from('user_app_roles')
+        .select('*', { count: 'exact', head: true })
+        .eq('organisation_id', id)
+        .eq('is_active', true);
+
+      if (checkError) {
+        console.warn('Erreur verification users lies:', checkError);
+        // Continue si erreur de verification (graceful)
+      } else if (linkedUsersCount && linkedUsersCount > 0) {
+        setError(
+          `Impossible de supprimer : ${linkedUsersCount} utilisateur(s) y sont rattaches. ` +
+            `Veuillez d'abord archiver l'organisation ou retirer les utilisateurs.`
+        );
+        return false;
+      }
+
       const { error } = await supabase
         .from('organisations')
         .delete()

@@ -52,6 +52,7 @@ export interface CreateAffiliateProductInput {
   description?: string;
   affiliate_payout_ht: number;
   store_at_verone?: boolean;
+  stock_quantity?: number;
   dimensions?: {
     length_cm?: number;
     width_cm?: number;
@@ -70,20 +71,48 @@ export interface AffiliateProductPrice {
 }
 
 /**
- * Hook: recupere les produits crees par l'enseigne de l'utilisateur
+ * Hook: recupere les produits crees par l'affilié (enseigne ou org independante)
  */
 export function useAffiliateProducts() {
   const { linkMeRole } = useAuth();
   const enseigneId = linkMeRole?.enseigne_id;
+  const organisationId = linkMeRole?.organisation_id;
+  const isOrgIndependante = linkMeRole?.role === 'org_independante';
 
   return useQuery({
-    queryKey: ['affiliate-products', enseigneId],
+    queryKey: ['affiliate-products', enseigneId, organisationId],
     queryFn: async (): Promise<AffiliateProduct[]> => {
+      const supabase = createClient();
+
+      // Pour org_independante, chercher par organisation_id
+      if (isOrgIndependante && organisationId) {
+        const { data: affiliate } = await (supabase as any)
+          .from('linkme_affiliates')
+          .select('id')
+          .eq('organisation_id', organisationId)
+          .maybeSingle();
+
+        if (!affiliate) return [];
+
+        const { data, error } = await (supabase.from('products') as any)
+          .select(
+            'id, name, sku, description, affiliate_payout_ht, affiliate_commission_rate, affiliate_approval_status, affiliate_rejection_reason, dimensions, created_at, updated_at'
+          )
+          .eq('created_by_affiliate', affiliate.id)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching affiliate products:', error);
+          throw error;
+        }
+
+        return (data || []) as AffiliateProduct[];
+      }
+
+      // Pour enseigne_admin, utiliser la RPC existante
       if (!enseigneId) {
         return [];
       }
-
-      const supabase = createClient();
 
       const { data, error } = await (supabase.rpc as any)(
         'get_affiliate_products_for_enseigne',
@@ -97,7 +126,7 @@ export function useAffiliateProducts() {
 
       return (data || []) as AffiliateProduct[];
     },
-    enabled: !!enseigneId,
+    enabled: !!enseigneId || (isOrgIndependante && !!organisationId),
     staleTime: 30000,
   });
 }
@@ -155,32 +184,65 @@ export function useAffiliateProduct(productId: string | undefined) {
 }
 
 /**
- * Hook: creer un nouveau produit affilie
+ * Hook: creer un nouveau produit affilie (enseigne ou org independante)
  */
 export function useCreateAffiliateProduct() {
   const queryClient = useQueryClient();
-  const { linkMeRole, user } = useAuth();
+  const { linkMeRole } = useAuth();
   const enseigneId = linkMeRole?.enseigne_id;
+  const organisationId = linkMeRole?.organisation_id;
+  const isOrgIndependante = linkMeRole?.role === 'org_independante';
 
   return useMutation({
     mutationFn: async (
       input: CreateAffiliateProductInput
     ): Promise<AffiliateProduct> => {
-      if (!enseigneId) {
-        throw new Error('Enseigne ID required');
-      }
-
       const supabase = createClient();
 
-      // First get the affiliate ID for this enseigne
-      const { data: affiliate, error: affError } = await supabase
-        .from('linkme_affiliates')
-        .select('id')
-        .eq('enseigne_id', enseigneId)
-        .single();
+      let affiliate: { id: string } | null = null;
+      let targetEnseigneId: string | null = null;
 
-      if (affError || !affiliate) {
-        throw new Error('Affiliate not found for this enseigne');
+      // Pour org_independante, chercher l'affiliate par organisation_id
+      if (isOrgIndependante && organisationId) {
+        const { data: affData, error: affError } = await (supabase as any)
+          .from('linkme_affiliates')
+          .select('id, enseigne_id')
+          .eq('organisation_id', organisationId)
+          .maybeSingle();
+
+        if (affError) {
+          console.error('Error fetching affiliate:', affError);
+          throw new Error('Error fetching affiliate');
+        }
+        if (!affData) {
+          throw new Error('Affiliate not found for this organisation');
+        }
+        affiliate = { id: affData.id };
+        targetEnseigneId = affData.enseigne_id; // Can be null for org_independante
+      } else if (enseigneId) {
+        // Pour enseigne_admin
+        const { data: affData, error: affError } = await (supabase as any)
+          .from('linkme_affiliates')
+          .select('id')
+          .eq('enseigne_id', enseigneId)
+          .maybeSingle();
+
+        if (affError) {
+          console.error('Error fetching affiliate:', affError);
+          throw new Error('Error fetching affiliate');
+        }
+        if (!affData) {
+          throw new Error('Affiliate not found for this enseigne');
+        }
+        affiliate = affData;
+        targetEnseigneId = enseigneId;
+      } else {
+        throw new Error('Enseigne ID or Organisation ID required');
+      }
+
+      // Securite TypeScript: affiliate est garanti non-null a ce point
+      if (!affiliate) {
+        throw new Error('Affiliate not found');
       }
 
       // Generate a unique SKU
@@ -190,19 +252,29 @@ export function useCreateAffiliateProduct() {
 
       // Create the product
       // Note: affiliate_commission_rate sera definie par le back-office lors de l'approbation
+      // Note: store_at_verone et stock_quantity ajoutés conditionnellement pour éviter erreur cache PostgREST
+      const insertData: Record<string, unknown> = {
+        name: input.name,
+        sku,
+        description: input.description || null,
+        affiliate_payout_ht: input.affiliate_payout_ht,
+        affiliate_approval_status: 'draft',
+        dimensions: input.dimensions || null,
+        enseigne_id: targetEnseigneId,
+        created_by_affiliate: affiliate.id,
+        product_status: 'draft',
+      };
+
+      // Ajouter store_at_verone seulement si true (évite erreur cache si colonne pas encore visible)
+      if (input.store_at_verone) {
+        insertData.store_at_verone = true;
+        if (input.stock_quantity) {
+          insertData.stock_quantity = input.stock_quantity;
+        }
+      }
+
       const { data, error } = await (supabase.from('products') as any)
-        .insert({
-          name: input.name,
-          sku,
-          description: input.description || null,
-          affiliate_payout_ht: input.affiliate_payout_ht,
-          affiliate_approval_status: 'draft',
-          dimensions: input.dimensions || null,
-          enseigne_id: enseigneId,
-          created_by_affiliate: affiliate.id,
-          product_status: 'draft',
-          // store_at_verone sera gere via affiliate_storage_allocations apres approbation
-        })
+        .insert(insertData)
         .select()
         .single();
 

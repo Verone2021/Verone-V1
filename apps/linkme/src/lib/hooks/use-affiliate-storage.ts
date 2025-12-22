@@ -126,6 +126,101 @@ export function useAffiliateStorageDetails() {
 }
 
 /**
+ * Hook: recupere UNIQUEMENT les allocations facturables
+ * C'est cette vue que l'affilié voit
+ */
+export function useAffiliateBillableStorage() {
+  const { linkMeRole } = useAuth();
+  const enseigneId = linkMeRole?.enseigne_id;
+  const organisationId = linkMeRole?.organisation_id;
+
+  return useQuery({
+    queryKey: ['affiliate-billable-storage', enseigneId, organisationId],
+    queryFn: async (): Promise<StorageAllocation[]> => {
+      if (!enseigneId && !organisationId) {
+        return [];
+      }
+
+      const supabase = createClient();
+
+      const { data, error } = await (supabase.rpc as any)(
+        'get_storage_details',
+        {
+          p_owner_enseigne_id: enseigneId || null,
+          p_owner_organisation_id: organisationId || null,
+        }
+      );
+
+      if (error) {
+        console.error('Error fetching billable storage:', error);
+        throw error;
+      }
+
+      // Filtrer uniquement les produits facturables
+      return ((data || []) as StorageAllocation[]).filter(
+        allocation => allocation.billable_in_storage === true
+      );
+    },
+    enabled: !!(enseigneId || organisationId),
+    staleTime: 60000,
+  });
+}
+
+// Types pour la grille tarifaire
+export interface StoragePricingTier {
+  id: string;
+  min_volume_m3: number;
+  max_volume_m3: number | null;
+  price_per_m3: number;
+  label: string | null;
+}
+
+/**
+ * Hook: recupere la grille tarifaire stockage (lecture seule)
+ */
+export function useStoragePricingTiers() {
+  return useQuery({
+    queryKey: ['storage-pricing-tiers-public'],
+    queryFn: async (): Promise<StoragePricingTier[]> => {
+      const supabase = createClient();
+
+      const { data, error } = await (supabase as any)
+        .from('storage_pricing_tiers')
+        .select('id, min_volume_m3, max_volume_m3, price_per_m3, label')
+        .eq('is_active', true)
+        .order('min_volume_m3', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching pricing tiers:', error);
+        return [];
+      }
+
+      return data || [];
+    },
+    staleTime: 300000, // 5 minutes
+  });
+}
+
+/**
+ * Calcule le prix estime pour un volume donne
+ */
+export function calculateStoragePrice(
+  volumeM3: number,
+  tiers: StoragePricingTier[]
+): number {
+  if (!tiers.length || volumeM3 <= 0) return 0;
+
+  const tier = tiers.find(
+    t =>
+      t.min_volume_m3 <= volumeM3 &&
+      (t.max_volume_m3 === null || t.max_volume_m3 >= volumeM3)
+  );
+
+  if (!tier) return 0;
+  return tier.price_per_m3 * volumeM3;
+}
+
+/**
  * Formatage du volume en m3 avec precision
  */
 export function formatVolume(volumeM3: number): string {
@@ -133,4 +228,14 @@ export function formatVolume(volumeM3: number): string {
   if (volumeM3 < 0.001) return '< 0.001 m³';
   if (volumeM3 < 1) return `${volumeM3.toFixed(3)} m³`;
   return `${volumeM3.toFixed(2)} m³`;
+}
+
+/**
+ * Formatage du prix en euros
+ */
+export function formatPrice(price: number): string {
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'EUR',
+  }).format(price);
 }

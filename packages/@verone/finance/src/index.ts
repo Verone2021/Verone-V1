@@ -10,6 +10,9 @@ export * from './components/kpis';
 // Hooks
 export * from './hooks';
 
+// Services
+export * from './services';
+
 // Utils - Ne PAS exporter ici pour éviter conflits avec hooks
 // Utiliser: import { ... } from '@verone/finance/utils'
 // export * from './utils';
