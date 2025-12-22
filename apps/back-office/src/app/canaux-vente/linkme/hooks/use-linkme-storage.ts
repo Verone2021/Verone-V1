@@ -52,8 +52,9 @@ export function useStorageOverview() {
       const { data, error } = await supabase.rpc('get_all_storage_overview');
 
       if (error) {
-        console.error('Error fetching storage overview:', error);
-        throw error;
+        // Graceful fallback - RPC may not exist yet
+        console.warn('Storage overview not available:', error.message);
+        return [];
       }
 
       // Filter out entries with no storage
@@ -129,8 +130,17 @@ export function useAffiliateStorageDetail(
       );
 
       if (summaryError) {
-        console.error('Error fetching storage summary:', summaryError);
-        throw summaryError;
+        console.warn('Storage summary not available:', summaryError.message);
+        return {
+          summary: {
+            total_units: 0,
+            total_volume_m3: 0,
+            billable_volume_m3: 0,
+            products_count: 0,
+            billable_products_count: 0,
+          },
+          allocations: [],
+        };
       }
 
       // Get details
@@ -144,8 +154,8 @@ export function useAffiliateStorageDetail(
       );
 
       if (detailsError) {
-        console.error('Error fetching storage details:', detailsError);
-        throw detailsError;
+        console.warn('Storage details not available:', detailsError.message);
+        // Continue with summary only
       }
 
       return {
@@ -188,7 +198,7 @@ export function useUpdateAllocationBillable() {
         .eq('id', allocationId);
 
       if (error) {
-        console.error('Error updating allocation:', error);
+        console.warn('Error updating allocation:', error.message);
         throw error;
       }
     },
@@ -240,7 +250,7 @@ export function useCreateStorageAllocation() {
         );
 
       if (error) {
-        console.error('Error creating allocation:', error);
+        console.warn('Error creating allocation:', error.message);
         throw error;
       }
     },
@@ -275,7 +285,7 @@ export function useUpdateStorageQuantity() {
         .eq('id', allocationId);
 
       if (error) {
-        console.error('Error updating quantity:', error);
+        console.warn('Error updating quantity:', error.message);
         throw error;
       }
     },
@@ -294,4 +304,190 @@ export function formatVolumeM3(volumeM3: number | null | undefined): string {
   if (volumeM3 < 0.001) return '< 0.001 m3';
   if (volumeM3 < 1) return `${volumeM3.toFixed(3)} m3`;
   return `${volumeM3.toFixed(2)} m3`;
+}
+
+// ==============================================================
+// GRILLE TARIFAIRE STOCKAGE
+// ==============================================================
+
+export interface StoragePricingTier {
+  id: string;
+  min_volume_m3: number;
+  max_volume_m3: number | null;
+  price_per_m3: number;
+  label: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Hook: recupere la grille tarifaire stockage
+ */
+export function useStoragePricingTiers() {
+  return useQuery({
+    queryKey: ['storage-pricing-tiers'],
+    queryFn: async (): Promise<StoragePricingTier[]> => {
+      const supabase = createClient();
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
+        .from('storage_pricing_tiers')
+        .select('*')
+        .eq('is_active', true)
+        .order('min_volume_m3', { ascending: true });
+
+      if (error) {
+        console.warn('Storage pricing tiers not available:', error.message);
+        return [];
+      }
+
+      return data || [];
+    },
+    staleTime: 300000, // 5 minutes
+  });
+}
+
+/**
+ * Hook: mettre a jour une tranche tarifaire
+ */
+export function useUpdatePricingTier() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      price_per_m3,
+      max_volume_m3,
+      label,
+    }: {
+      id: string;
+      price_per_m3: number;
+      max_volume_m3?: number | null;
+      label?: string;
+    }): Promise<void> => {
+      const supabase = createClient();
+
+      // Construire l'objet de mise à jour
+      const updateData: Record<string, unknown> = { price_per_m3 };
+      if (max_volume_m3 !== undefined) {
+        updateData.max_volume_m3 = max_volume_m3;
+      }
+      if (label !== undefined) {
+        updateData.label = label;
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from('storage_pricing_tiers')
+        .update(updateData)
+        .eq('id', id);
+
+      if (error) {
+        console.warn('Error updating pricing tier:', error.message);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['storage-pricing-tiers'] });
+    },
+  });
+}
+
+/**
+ * Hook: creer une nouvelle tranche tarifaire
+ */
+export function useCreatePricingTier() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      min_volume_m3,
+      max_volume_m3,
+      price_per_m3,
+      label,
+    }: {
+      min_volume_m3: number;
+      max_volume_m3: number | null;
+      price_per_m3: number;
+      label: string;
+    }): Promise<void> => {
+      const supabase = createClient();
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from('storage_pricing_tiers')
+        .insert({
+          min_volume_m3,
+          max_volume_m3,
+          price_per_m3,
+          label,
+          is_active: true,
+        });
+
+      if (error) {
+        console.warn('Error creating pricing tier:', error.message);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['storage-pricing-tiers'] });
+    },
+  });
+}
+
+/**
+ * Hook: supprimer une tranche tarifaire (soft delete)
+ */
+export function useDeletePricingTier() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string): Promise<void> => {
+      const supabase = createClient();
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from('storage_pricing_tiers')
+        .update({ is_active: false })
+        .eq('id', id);
+
+      if (error) {
+        console.warn('Error deleting pricing tier:', error.message);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['storage-pricing-tiers'] });
+    },
+  });
+}
+
+/**
+ * Calcule le prix estime pour un volume donne
+ */
+export function calculateStoragePrice(
+  volumeM3: number,
+  tiers: StoragePricingTier[]
+): number {
+  if (!tiers.length || volumeM3 <= 0) return 0;
+
+  const tier = tiers.find(
+    t =>
+      t.min_volume_m3 <= volumeM3 &&
+      (t.max_volume_m3 === null || t.max_volume_m3 >= volumeM3)
+  );
+
+  if (!tier) return 0;
+  return tier.price_per_m3 * volumeM3;
+}
+
+/**
+ * Formate un prix en euros
+ */
+export function formatPrice(price: number): string {
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'EUR',
+  }).format(price);
 }
