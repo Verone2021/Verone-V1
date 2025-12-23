@@ -1,9 +1,11 @@
 'use client';
 
+import { useState } from 'react';
+
 import { useParams, useRouter } from 'next/navigation';
 
-import { Card, CardContent, Button, Skeleton } from '@verone/ui';
-import { ArrowLeft, AlertCircle, Users } from 'lucide-react';
+import { Card, CardContent, Button, Skeleton, Input, Label } from '@verone/ui';
+import { ArrowLeft, AlertCircle, Users, UserPlus, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
@@ -18,6 +20,7 @@ import {
   useUpdateLinkMeMetadata,
   useToggleLinkMeProductField,
   useLinkMeProductVariants,
+  useUpdateAffiliateCommission,
 } from '../../hooks/use-linkme-catalog';
 import type { LinkMePricingUpdate, LinkMeMetadataUpdate } from '../../types';
 
@@ -45,6 +48,12 @@ export default function LinkMeProductDetailPage() {
   const updatePricing = useUpdateLinkMePricing();
   const updateMetadata = useUpdateLinkMeMetadata();
   const toggleField = useToggleLinkMeProductField();
+  const updateAffiliateCommission = useUpdateAffiliateCommission();
+
+  // État local pour la commission affilié
+  const [editedCommission, setEditedCommission] = useState<number | null>(null);
+  const currentCommission =
+    editedCommission ?? product?.affiliate_commission_rate ?? 15;
 
   // Handlers
   const handleToggle = async (
@@ -78,6 +87,20 @@ export default function LinkMeProductDetailPage() {
       toast.success('Informations enregistrées');
     } catch {
       toast.error('Erreur lors de la sauvegarde des informations');
+    }
+  };
+
+  const handleSaveAffiliateCommission = async () => {
+    if (!product?.product_id || editedCommission === null) return;
+    try {
+      await updateAffiliateCommission.mutateAsync({
+        productId: product.product_id,
+        commissionRate: editedCommission,
+      });
+      toast.success('Commission affilié mise à jour');
+      setEditedCommission(null); // Reset l'état local
+    } catch {
+      toast.error('Erreur lors de la mise à jour de la commission');
     }
   };
 
@@ -168,7 +191,7 @@ export default function LinkMeProductDetailPage() {
       </Card>
 
       {/* Section Produit Sur Mesure (si applicable) */}
-      {product.is_sourced && (
+      {product.is_sourced && !product.created_by_affiliate && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
           <div className="flex items-center gap-2">
             <Users className="h-5 w-5 text-amber-600" />
@@ -182,6 +205,75 @@ export default function LinkMeProductDetailPage() {
               {product.enseigne_name || product.assigned_client_name}
             </span>
           </p>
+        </div>
+      )}
+
+      {/* Section Produit Affilié (si applicable) */}
+      {product.created_by_affiliate && (
+        <div className="bg-violet-50 border border-violet-200 rounded-lg p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5 text-violet-600" />
+              <span className="font-medium text-violet-800">
+                Produit Affilié
+              </span>
+            </div>
+            <span className="text-sm text-violet-600 bg-violet-100 px-2 py-1 rounded">
+              {product.affiliate_name || 'Affilié'}
+            </span>
+          </div>
+
+          {/* Commission Vérone - ÉDITABLE */}
+          <div className="bg-white rounded-lg p-4 space-y-3">
+            <div className="flex items-center gap-4">
+              <Label className="text-sm font-medium text-gray-700">
+                Commission Vérone (%)
+              </Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  value={currentCommission}
+                  onChange={e => setEditedCommission(Number(e.target.value))}
+                  min={0}
+                  max={100}
+                  step={0.5}
+                  className="w-24"
+                />
+                {editedCommission !== null &&
+                  editedCommission !== product.affiliate_commission_rate && (
+                    <Button
+                      size="sm"
+                      onClick={handleSaveAffiliateCommission}
+                      disabled={updateAffiliateCommission.isPending}
+                    >
+                      <Save className="h-4 w-4 mr-1" />
+                      Enregistrer
+                    </Button>
+                  )}
+              </div>
+            </div>
+
+            {/* Simulateur de commission */}
+            <div className="text-sm text-gray-600 bg-gray-50 rounded p-3">
+              <p className="font-medium mb-2">
+                Simulation pour un prix de vente de 1000€ HT :
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className="text-gray-500">Commission Vérone :</span>
+                  <span className="font-semibold text-violet-600 ml-2">
+                    {((1000 * currentCommission) / 100).toFixed(2)}€
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Payout Affilié :</span>
+                  <span className="font-semibold text-green-600 ml-2">
+                    {(1000 * (1 - currentCommission / 100)).toFixed(2)}€
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
