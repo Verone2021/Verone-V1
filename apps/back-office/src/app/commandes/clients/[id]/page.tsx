@@ -13,8 +13,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 // NOTE: ShipmentsSection supprimée - sera recréée ultérieurement
-import { Badge } from '@verone/ui';
-import { Card } from '@verone/ui';
+import { Badge, Button, Card } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/server';
 import {
   ArrowLeft,
@@ -24,6 +23,9 @@ import {
   Mail,
   Phone,
   Building2,
+  CreditCard,
+  CheckCircle,
+  AlertCircle,
 } from 'lucide-react';
 
 import { CopyButton } from './CopyButton';
@@ -46,6 +48,7 @@ export default async function OrderDetailPage({
       id,
       order_number,
       status,
+      payment_status,
       customer_id,
       customer_type,
       shipping_address,
@@ -348,6 +351,68 @@ export default async function OrderDetailPage({
                   <div>
                     <span className="text-muted-foreground">Source:</span>
                     <span className="ml-2 font-medium">{channelName}</span>
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            {/* Section Paiement */}
+            <Card className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <CreditCard className="h-5 w-5 text-muted-foreground" />
+                <h2 className="text-xl font-semibold">Paiement</h2>
+              </div>
+
+              <div className="space-y-3">
+                {/* Statut paiement */}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Statut</span>
+                  {order.payment_status === 'paid' ? (
+                    <Badge
+                      variant="default"
+                      className="bg-green-100 text-green-800 border-green-200"
+                    >
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Payé
+                    </Badge>
+                  ) : order.payment_status === 'partial' ? (
+                    <Badge
+                      variant="secondary"
+                      className="bg-yellow-100 text-yellow-800 border-yellow-200"
+                    >
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      Partiel
+                    </Badge>
+                  ) : (
+                    <Badge
+                      variant="outline"
+                      className="bg-red-50 text-red-700 border-red-200"
+                    >
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      Non payé
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Montant TTC */}
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Montant</span>
+                  <span className="font-medium">
+                    {order.total_ttc?.toFixed(2)} €
+                  </span>
+                </div>
+
+                {/* Bouton Associer un paiement */}
+                {order.payment_status !== 'paid' && (
+                  <div className="pt-2">
+                    <Link
+                      href={`/finance/rapprochement?orderId=${order.id}&amount=${order.total_ttc}`}
+                    >
+                      <Button variant="outline" className="w-full">
+                        <CreditCard className="h-4 w-4 mr-2" />
+                        Associer un paiement
+                      </Button>
+                    </Link>
                   </div>
                 )}
               </div>

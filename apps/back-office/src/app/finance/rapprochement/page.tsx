@@ -1,163 +1,379 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useTransition, useEffect } from 'react';
 
-import { useBankReconciliation } from '@verone/finance';
+import { useSearchParams } from 'next/navigation';
+
+import {
+  useBankReconciliation,
+  type BankTransaction,
+  type OrderWithoutInvoice,
+} from '@verone/finance';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
   Button,
   Badge,
   Input,
   ScrollArea,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  Checkbox,
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  Separator,
 } from '@verone/ui';
 import {
   Money,
-  StatusPill,
   KpiCard,
   KpiGrid,
-  ConfidenceMeter,
   ConfidenceBadge,
   SyncButton,
-  DataTableToolbar,
 } from '@verone/ui-business';
 import { featureFlags } from '@verone/utils/feature-flags';
 import {
-  ArrowLeftRight,
+  ArrowDownLeft,
+  ArrowUpRight,
   Check,
-  X,
   AlertCircle,
   Lock,
-  Link2,
-  Unlink,
-  RefreshCw,
   Search,
-  Filter,
   CheckCircle,
   Clock,
-  TrendingUp,
-  CreditCard,
   FileText,
+  ExternalLink,
+  Eye,
+  Paperclip,
+  Building2,
+  X,
+  RefreshCw,
 } from 'lucide-react';
+import { toast } from 'sonner';
+
+import {
+  matchTransactionToOrder,
+  matchTransactionToMultipleOrders,
+  ignoreTransaction,
+} from '@/app/actions/bank-matching';
 
 // =====================================================================
-// TYPES
+// HELPERS
 // =====================================================================
 
-interface MatchSuggestion {
-  invoice_id: string;
-  invoice_number: string;
-  customer_name: string;
-  invoice_amount: number;
-  confidence: number;
-  match_reason: string;
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return 'Date inconnue';
+  return new Date(dateStr).toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+}
+
+function formatAddress(address: unknown): string | null {
+  if (!address || typeof address !== 'object') return null;
+  const addr = address as Record<string, unknown>;
+  const parts = [
+    addr.street || addr.line1 || addr.address,
+    addr.postal_code || addr.zip,
+    addr.city,
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join(', ') : null;
 }
 
 // =====================================================================
-// COMPOSANT: CARTE TRANSACTION
+// COMPOSANT: LIGNE TRANSACTION (Relevé bancaire style)
 // =====================================================================
 
-function TransactionCard({
+function TransactionRow({
   transaction,
-  suggestions,
-  onMatch,
-  onIgnore,
-  selected,
-  onSelect,
+  onClick,
+  isSelected,
 }: {
-  transaction: {
-    id: string;
-    label?: string | null;
-    amount: number;
-    side: 'credit' | 'debit';
-    settled_at?: string | null;
-    counterparty_name?: string | null;
-    operation_type?: string | null;
-  };
-  suggestions: MatchSuggestion[];
-  onMatch: (transactionId: string, invoiceId: string) => void;
-  onIgnore: (transactionId: string) => void;
-  selected: boolean;
-  onSelect: () => void;
+  transaction: BankTransaction;
+  onClick: () => void;
+  isSelected: boolean;
 }) {
+  const hasAttachments =
+    transaction.attachment_ids && transaction.attachment_ids.length > 0;
   const isCredit = transaction.side === 'credit';
 
   return (
-    <Card
-      className={`cursor-pointer transition-all ${
-        selected ? 'ring-2 ring-primary' : 'hover:border-primary/50'
-      }`}
-      onClick={onSelect}
+    <div
+      onClick={onClick}
+      className={`
+        flex items-center gap-4 p-3 border-b cursor-pointer transition-colors
+        ${isSelected ? 'bg-primary/10 border-primary' : 'hover:bg-muted/50'}
+      `}
     >
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <Badge variant={isCredit ? 'default' : 'secondary'}>
-                {isCredit ? 'Entrée' : 'Sortie'}
-              </Badge>
-              <span className="text-sm text-muted-foreground">
-                {transaction.operation_type || 'Transaction'}
-              </span>
-            </div>
-            <p className="font-medium mt-1 line-clamp-1">
-              {transaction.label || 'Sans libellé'}
-            </p>
-            {transaction.counterparty_name && (
-              <p className="text-sm text-muted-foreground">
-                {transaction.counterparty_name}
-              </p>
-            )}
-            <p className="text-xs text-muted-foreground mt-1">
-              {transaction.settled_at
-                ? new Date(transaction.settled_at).toLocaleDateString('fr-FR')
-                : 'Non réglée'}
-            </p>
-          </div>
-          <div className="text-right">
-            <Money amount={transaction.amount} colorize showPositiveSign bold />
-          </div>
-        </div>
+      {/* Indicateur type */}
+      <div
+        className={`
+          flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center
+          ${isCredit ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}
+        `}
+      >
+        {isCredit ? (
+          <ArrowDownLeft className="h-4 w-4" />
+        ) : (
+          <ArrowUpRight className="h-4 w-4" />
+        )}
+      </div>
 
-        {/* Suggestions de matching */}
+      {/* Date */}
+      <div className="w-24 text-sm text-muted-foreground">
+        {formatDate(transaction.settled_at || transaction.emitted_at)}
+      </div>
+
+      {/* Libellé & Contrepartie */}
+      <div className="flex-1 min-w-0">
+        <p className="font-medium truncate">
+          {transaction.label || transaction.note || 'Sans libellé'}
+        </p>
+        {transaction.counterparty_name && (
+          <p className="text-sm text-muted-foreground truncate">
+            {transaction.counterparty_name}
+          </p>
+        )}
+      </div>
+
+      {/* Badges */}
+      <div className="flex items-center gap-2">
+        {hasAttachments && (
+          <Badge variant="outline" className="gap-1">
+            <Paperclip className="h-3 w-3" />
+          </Badge>
+        )}
+        {transaction.matching_status === 'unmatched' ? (
+          <Badge variant="destructive" className="text-xs">
+            Non rapproché
+          </Badge>
+        ) : (
+          <Badge variant="default" className="text-xs bg-green-600">
+            Rapproché
+          </Badge>
+        )}
+      </div>
+
+      {/* Montant */}
+      <div className="w-28 text-right">
+        <Money
+          amount={
+            isCredit
+              ? Math.abs(transaction.amount)
+              : -Math.abs(transaction.amount)
+          }
+          colorize
+          showPositiveSign
+          bold
+        />
+      </div>
+    </div>
+  );
+}
+
+// =====================================================================
+// COMPOSANT: PANNEAU LATERAL CREDIT (Matcher à commandes)
+// =====================================================================
+
+function CreditSidePanel({
+  transaction,
+  orders,
+  onClose,
+  onMultiMatch,
+  generateSuggestions,
+  preselectedOrderId,
+}: {
+  transaction: BankTransaction;
+  orders: OrderWithoutInvoice[];
+  onClose: () => void;
+  onMultiMatch: (transactionId: string, orderIds: string[]) => Promise<void>;
+  generateSuggestions: (
+    tx: BankTransaction,
+    orders: OrderWithoutInvoice[]
+  ) => Array<{
+    order_id: string;
+    order_number: string;
+    customer_name: string | null;
+    customer_address: string | null;
+    order_amount: number;
+    confidence: number;
+    match_reason: string;
+  }>;
+  preselectedOrderId?: string | null;
+}) {
+  // Initialiser avec la commande présélectionnée si disponible
+  const [selectedOrders, setSelectedOrders] = useState<Set<string>>(
+    () => new Set(preselectedOrderId ? [preselectedOrderId] : [])
+  );
+  const [isPending, startTransition] = useTransition();
+  const [search, setSearch] = useState('');
+
+  const hasAttachments =
+    transaction.attachment_ids && transaction.attachment_ids.length > 0;
+
+  // Générer les suggestions
+  const suggestions = useMemo(
+    () => generateSuggestions(transaction, orders),
+    [transaction, orders, generateSuggestions]
+  );
+
+  // Filtrer les commandes
+  const filteredOrders = useMemo(() => {
+    if (!search) return orders;
+    const s = search.toLowerCase();
+    return orders.filter(
+      o =>
+        o.order_number.toLowerCase().includes(s) ||
+        o.customer_name?.toLowerCase().includes(s)
+    );
+  }, [orders, search]);
+
+  // Trouver le score de confiance pour une commande
+  const getConfidence = (orderId: string): number | null => {
+    const suggestion = suggestions.find(s => s.order_id === orderId);
+    return suggestion?.confidence ?? null;
+  };
+
+  // Toggle sélection
+  const toggleOrder = (orderId: string) => {
+    const newSet = new Set(selectedOrders);
+    if (newSet.has(orderId)) {
+      newSet.delete(orderId);
+    } else {
+      newSet.add(orderId);
+    }
+    setSelectedOrders(newSet);
+  };
+
+  // Valider le matching (multi-match)
+  const handleValidate = () => {
+    if (selectedOrders.size === 0) {
+      toast.warning('Sélectionnez au moins une commande');
+      return;
+    }
+
+    startTransition(async () => {
+      const orderIds = Array.from(selectedOrders);
+      await onMultiMatch(transaction.id, orderIds);
+      onClose();
+    });
+  };
+
+  // Voir le PDF
+  const handleViewPdf = () => {
+    if (hasAttachments && transaction.attachment_ids) {
+      window.open(
+        `/api/qonto/attachments/${transaction.attachment_ids[0]}`,
+        '_blank'
+      );
+    }
+  };
+
+  return (
+    <>
+      <SheetHeader>
+        <SheetTitle className="flex items-center gap-2">
+          <ArrowDownLeft className="h-5 w-5 text-green-600" />
+          Entrée d'argent
+        </SheetTitle>
+      </SheetHeader>
+
+      <div className="space-y-6 mt-6">
+        {/* Infos transaction */}
+        <Card>
+          <CardContent className="pt-4 space-y-3">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm text-muted-foreground">Montant reçu</p>
+                <Money
+                  amount={Math.abs(transaction.amount)}
+                  className="text-2xl font-bold text-green-600"
+                  showPositiveSign
+                />
+              </div>
+              <Badge variant="outline">
+                {transaction.operation_type || 'Virement'}
+              </Badge>
+            </div>
+
+            <Separator />
+
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-muted-foreground">Date</p>
+                <p className="font-medium">
+                  {formatDate(transaction.settled_at || transaction.emitted_at)}
+                </p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">De</p>
+                <p className="font-medium">
+                  {transaction.counterparty_name || 'Inconnu'}
+                </p>
+              </div>
+            </div>
+
+            {transaction.reference && (
+              <div className="text-sm">
+                <p className="text-muted-foreground">Référence</p>
+                <p className="font-medium font-mono">{transaction.reference}</p>
+              </div>
+            )}
+
+            {/* Bouton voir justificatif */}
+            {hasAttachments && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleViewPdf}
+                className="w-full"
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                Voir la pièce jointe
+                <ExternalLink className="h-3 w-3 ml-2" />
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Suggestions automatiques */}
         {suggestions.length > 0 && (
-          <div className="mt-3 pt-3 border-t">
-            <p className="text-xs font-medium text-muted-foreground mb-2">
-              Suggestions ({suggestions.length})
-            </p>
+          <div>
+            <h4 className="font-medium mb-2 flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              Correspondances suggérées
+            </h4>
             <div className="space-y-2">
-              {suggestions.slice(0, 2).map(suggestion => (
+              {suggestions.slice(0, 3).map(s => (
                 <div
-                  key={suggestion.invoice_id}
-                  className="flex items-center justify-between bg-muted/50 rounded p-2"
+                  key={s.order_id}
+                  className={`
+                    p-3 border rounded-lg cursor-pointer transition-colors
+                    ${selectedOrders.has(s.order_id) ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'}
+                  `}
+                  onClick={() => toggleOrder(s.order_id)}
                 >
-                  <div className="flex items-center gap-2">
-                    <ConfidenceBadge score={suggestion.confidence} />
-                    <div>
-                      <p className="text-sm font-medium">
-                        {suggestion.invoice_number}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {suggestion.customer_name}
+                  <div className="flex items-center gap-3">
+                    <Checkbox
+                      checked={selectedOrders.has(s.order_id)}
+                      onCheckedChange={() => toggleOrder(s.order_id)}
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{s.order_number}</span>
+                        <ConfidenceBadge score={s.confidence} />
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {s.customer_name || 'Client inconnu'} • {s.match_reason}
                       </p>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Money amount={suggestion.invoice_amount} size="sm" />
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 w-7 p-0"
-                      onClick={e => {
-                        e.stopPropagation();
-                        onMatch(transaction.id, suggestion.invoice_id);
-                      }}
-                    >
-                      <Check className="h-4 w-4 text-green-600" />
-                    </Button>
+                    <Money amount={s.order_amount} />
                   </div>
                 </div>
               ))}
@@ -165,91 +381,367 @@ function TransactionCard({
           </div>
         )}
 
+        {/* Recherche manuelle */}
+        <div>
+          <h4 className="font-medium mb-2">Toutes les commandes</h4>
+          <div className="relative mb-3">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher par numéro, client..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-8 h-9"
+            />
+          </div>
+
+          <ScrollArea className="h-[250px]">
+            <div className="space-y-1">
+              {filteredOrders.map(order => {
+                const confidence = getConfidence(order.id);
+                return (
+                  <div
+                    key={order.id}
+                    className={`
+                      p-2 border rounded cursor-pointer transition-colors
+                      ${selectedOrders.has(order.id) ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'}
+                    `}
+                    onClick={() => toggleOrder(order.id)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        checked={selectedOrders.has(order.id)}
+                        onCheckedChange={() => toggleOrder(order.id)}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium">
+                            {order.order_number}
+                          </span>
+                          {confidence !== null && (
+                            <ConfidenceBadge score={confidence} />
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {order.customer_name || 'Client inconnu'}
+                        </p>
+                      </div>
+                      <Money amount={order.total_ttc} size="sm" />
+                    </div>
+                  </div>
+                );
+              })}
+              {filteredOrders.length === 0 && (
+                <p className="text-center text-muted-foreground py-4">
+                  Aucune commande trouvée
+                </p>
+              )}
+            </div>
+          </ScrollArea>
+        </div>
+
         {/* Actions */}
-        <div className="flex items-center justify-end gap-2 mt-3 pt-3 border-t">
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={e => {
-              e.stopPropagation();
-              onIgnore(transaction.id);
-            }}
-          >
-            <X className="h-4 w-4 mr-1" />
-            Ignorer
+        <div className="flex gap-2 pt-4 border-t">
+          <Button variant="outline" onClick={onClose} className="flex-1">
+            Annuler
           </Button>
-          <Button size="sm" variant="outline">
-            <Link2 className="h-4 w-4 mr-1" />
-            Matcher
+          <Button
+            onClick={handleValidate}
+            disabled={selectedOrders.size === 0 || isPending}
+            className="flex-1"
+          >
+            {isPending ? (
+              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Check className="h-4 w-4 mr-2" />
+            )}
+            Valider ({selectedOrders.size})
           </Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </>
   );
 }
 
 // =====================================================================
-// COMPOSANT: CARTE FACTURE IMPAYÉE
+// COMPOSANT: PANNEAU LATERAL DEBIT (Fournisseur/Dépense)
 // =====================================================================
 
-function UnpaidInvoiceCard({
-  invoice,
-  selected,
-  onSelect,
-}: {
-  invoice: {
-    id: string;
-    invoice_number: string;
-    customer_name: string;
-    amount_remaining: number;
-    due_date: string;
-    days_overdue: number | null;
-    status: string;
-  };
-  selected: boolean;
-  onSelect: () => void;
-}) {
-  const isOverdue = invoice.days_overdue && invoice.days_overdue > 0;
+type DebitMode = 'select' | 'supplier' | 'expense';
 
-  return (
-    <Card
-      className={`cursor-pointer transition-all ${
-        selected ? 'ring-2 ring-primary' : 'hover:border-primary/50'
-      }`}
-      onClick={onSelect}
-    >
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <FileText className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">{invoice.invoice_number}</span>
-            </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              {invoice.customer_name}
-            </p>
-            <div className="flex items-center gap-2 mt-2">
-              <StatusPill status={invoice.status} size="sm" />
-              {isOverdue && (
-                <Badge variant="destructive" className="text-xs">
-                  {invoice.days_overdue}j de retard
+// Catégories de dépenses courantes
+const EXPENSE_CATEGORIES = [
+  { id: 'bank_fees', label: 'Frais bancaires', icon: '🏦' },
+  { id: 'subscription', label: 'Abonnement', icon: '📅' },
+  { id: 'supplies', label: 'Fournitures', icon: '📦' },
+  { id: 'transport', label: 'Transport', icon: '🚚' },
+  { id: 'marketing', label: 'Marketing', icon: '📢' },
+  { id: 'taxes', label: 'Taxes & impôts', icon: '📋' },
+  { id: 'other', label: 'Autre', icon: '📄' },
+];
+
+function DebitSidePanel({
+  transaction,
+  onClose,
+  onIgnore,
+}: {
+  transaction: BankTransaction;
+  onClose: () => void;
+  onIgnore: (transactionId: string, reason: string) => Promise<void>;
+}) {
+  const [mode, setMode] = useState<DebitMode>('select');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  const hasAttachments =
+    transaction.attachment_ids && transaction.attachment_ids.length > 0;
+
+  const handleViewPdf = () => {
+    if (hasAttachments && transaction.attachment_ids) {
+      window.open(
+        `/api/qonto/attachments/${transaction.attachment_ids[0]}`,
+        '_blank'
+      );
+    }
+  };
+
+  const handleIgnore = () => {
+    startTransition(async () => {
+      const reason = selectedCategory
+        ? `Catégorisé: ${EXPENSE_CATEGORIES.find(c => c.id === selectedCategory)?.label}`
+        : 'Ignoré manuellement';
+      await onIgnore(transaction.id, reason);
+      onClose();
+    });
+  };
+
+  // Mode sélection initiale
+  if (mode === 'select') {
+    return (
+      <>
+        <SheetHeader>
+          <SheetTitle className="flex items-center gap-2">
+            <ArrowUpRight className="h-5 w-5 text-red-600" />
+            Sortie d'argent
+          </SheetTitle>
+        </SheetHeader>
+
+        <div className="space-y-6 mt-6">
+          {/* Infos transaction */}
+          <Card>
+            <CardContent className="pt-4 space-y-3">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-sm text-muted-foreground">Montant payé</p>
+                  <Money
+                    amount={-Math.abs(transaction.amount)}
+                    className="text-2xl font-bold text-red-600"
+                  />
+                </div>
+                <Badge variant="outline">
+                  {transaction.operation_type || 'Virement'}
                 </Badge>
+              </div>
+
+              <Separator />
+
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Date</p>
+                  <p className="font-medium">
+                    {formatDate(
+                      transaction.settled_at || transaction.emitted_at
+                    )}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Vers</p>
+                  <p className="font-medium">
+                    {transaction.counterparty_name || 'Inconnu'}
+                  </p>
+                </div>
+              </div>
+
+              {transaction.reference && (
+                <div className="text-sm">
+                  <p className="text-muted-foreground">Référence</p>
+                  <p className="font-medium font-mono">
+                    {transaction.reference}
+                  </p>
+                </div>
               )}
-            </div>
+
+              {hasAttachments && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleViewPdf}
+                  className="w-full"
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  Voir la pièce jointe
+                  <ExternalLink className="h-3 w-3 ml-2" />
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Options de catégorisation */}
+          <div className="space-y-3">
+            <h4 className="font-medium">Catégoriser cette sortie</h4>
+
+            <Card
+              className="cursor-pointer hover:border-primary transition-colors"
+              onClick={() => setMode('supplier')}
+            >
+              <CardContent className="p-4 flex items-center gap-3">
+                <Building2 className="h-5 w-5 text-muted-foreground" />
+                <div className="flex-1">
+                  <p className="font-medium">Facture fournisseur</p>
+                  <p className="text-sm text-muted-foreground">
+                    Associer à un fournisseur existant
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card
+              className="cursor-pointer hover:border-primary transition-colors"
+              onClick={() => setMode('expense')}
+            >
+              <CardContent className="p-4 flex items-center gap-3">
+                <FileText className="h-5 w-5 text-muted-foreground" />
+                <div className="flex-1">
+                  <p className="font-medium">Dépense simple</p>
+                  <p className="text-sm text-muted-foreground">
+                    Frais bancaires, abonnements, etc.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-          <div className="text-right">
-            <Money
-              amount={invoice.amount_remaining}
-              bold
-              className={isOverdue ? 'text-red-600' : ''}
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Éch. {new Date(invoice.due_date).toLocaleDateString('fr-FR')}
-            </p>
+
+          {/* Actions */}
+          <div className="pt-4 border-t">
+            <Button variant="outline" onClick={onClose} className="w-full">
+              Fermer
+            </Button>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </>
+    );
+  }
+
+  // Mode dépense simple
+  if (mode === 'expense') {
+    return (
+      <>
+        <SheetHeader>
+          <SheetTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5 text-muted-foreground" />
+            Catégoriser la dépense
+          </SheetTitle>
+        </SheetHeader>
+
+        <div className="space-y-6 mt-6">
+          {/* Résumé */}
+          <div className="p-3 bg-muted rounded-lg">
+            <div className="flex justify-between items-center">
+              <span className="text-sm">
+                {transaction.counterparty_name || 'Dépense'}
+              </span>
+              <Money amount={-Math.abs(transaction.amount)} colorize />
+            </div>
+          </div>
+
+          {/* Catégories */}
+          <div className="space-y-2">
+            <h4 className="font-medium text-sm">Choisir une catégorie</h4>
+            <div className="grid grid-cols-2 gap-2">
+              {EXPENSE_CATEGORIES.map(cat => (
+                <div
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`
+                    p-3 border rounded-lg cursor-pointer transition-colors text-center
+                    ${selectedCategory === cat.id ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'}
+                  `}
+                >
+                  <span className="text-xl">{cat.icon}</span>
+                  <p className="text-sm mt-1">{cat.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-2 pt-4 border-t">
+            <Button
+              variant="outline"
+              onClick={() => setMode('select')}
+              className="flex-1"
+            >
+              Retour
+            </Button>
+            <Button
+              onClick={handleIgnore}
+              disabled={!selectedCategory || isPending}
+              className="flex-1"
+            >
+              {isPending ? (
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Check className="h-4 w-4 mr-2" />
+              )}
+              Valider
+            </Button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Mode facture fournisseur
+  return (
+    <>
+      <SheetHeader>
+        <SheetTitle className="flex items-center gap-2">
+          <Building2 className="h-5 w-5 text-muted-foreground" />
+          Facture fournisseur
+        </SheetTitle>
+      </SheetHeader>
+
+      <div className="space-y-6 mt-6">
+        {/* Résumé */}
+        <div className="p-3 bg-muted rounded-lg">
+          <div className="flex justify-between items-center">
+            <span className="text-sm">
+              {transaction.counterparty_name || 'Fournisseur'}
+            </span>
+            <Money amount={-Math.abs(transaction.amount)} colorize />
+          </div>
+        </div>
+
+        <p className="text-sm text-muted-foreground text-center py-8">
+          La gestion des factures fournisseurs est disponible dans
+          <br />
+          <strong>Commandes → Fournisseurs</strong>
+        </p>
+
+        {/* Actions */}
+        <div className="flex gap-2 pt-4 border-t">
+          <Button
+            variant="outline"
+            onClick={() => setMode('select')}
+            className="flex-1"
+          >
+            Retour
+          </Button>
+          <Button variant="outline" onClick={onClose} className="flex-1">
+            Fermer
+          </Button>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -258,82 +750,161 @@ function UnpaidInvoiceCard({
 // =====================================================================
 
 export default function RapprochementPage() {
-  const [selectedTransaction, setSelectedTransaction] = useState<string | null>(
-    null
-  );
-  const [selectedInvoice, setSelectedInvoice] = useState<string | null>(null);
-  const [searchTransactions, setSearchTransactions] = useState('');
-  const [searchInvoices, setSearchInvoices] = useState('');
+  const searchParams = useSearchParams();
+  const preselectedOrderId = searchParams.get('orderId');
+  const preselectedAmount = searchParams.get('amount');
+
+  const [activeTab, setActiveTab] = useState<'credits' | 'debits'>('credits');
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<BankTransaction | null>(null);
+  const [search, setSearch] = useState('');
+  const [showOrderBanner, setShowOrderBanner] = useState(!!preselectedOrderId);
+
+  // Trouver la commande présélectionnée
+  const preselectedOrder = useMemo(() => {
+    if (!preselectedOrderId) return null;
+    return {
+      id: preselectedOrderId,
+      amount: preselectedAmount ? parseFloat(preselectedAmount) : null,
+    };
+  }, [preselectedOrderId, preselectedAmount]);
 
   // Hook de rapprochement bancaire
   const {
-    unmatchedTransactions,
-    unpaidInvoices,
+    creditTransactions,
+    debitTransactions,
+    ordersWithoutInvoice,
     stats,
     loading,
-    matchTransaction,
+    error,
     generateMatchSuggestions,
     refresh,
   } = useBankReconciliation();
 
-  // Générer les suggestions pour chaque transaction
-  const transactionsWithSuggestions = useMemo(() => {
-    return unmatchedTransactions.map(tx => ({
-      ...tx,
-      suggestions: generateMatchSuggestions(tx, unpaidInvoices),
-    }));
-  }, [unmatchedTransactions, unpaidInvoices, generateMatchSuggestions]);
-
   // Filtrer les transactions
-  const filteredTransactions = useMemo(() => {
-    if (!searchTransactions) return transactionsWithSuggestions;
-    const search = searchTransactions.toLowerCase();
-    return transactionsWithSuggestions.filter(
-      tx =>
-        tx.label?.toLowerCase().includes(search) ||
-        tx.counterparty_name?.toLowerCase().includes(search)
-    );
-  }, [transactionsWithSuggestions, searchTransactions]);
+  const filteredCredits = useMemo(() => {
+    let filtered = creditTransactions;
 
-  // Filtrer les factures
-  const filteredInvoices = useMemo(() => {
-    if (!searchInvoices) return unpaidInvoices;
-    const search = searchInvoices.toLowerCase();
-    return unpaidInvoices.filter(
-      inv =>
-        inv.invoice_number.toLowerCase().includes(search) ||
-        inv.customer_name.toLowerCase().includes(search)
-    );
-  }, [unpaidInvoices, searchInvoices]);
-
-  // Handler pour matcher
-  const handleMatch = async (transactionId: string, invoiceId: string) => {
-    const transaction = unmatchedTransactions.find(t => t.id === transactionId);
-    const invoice = unpaidInvoices.find(i => i.id === invoiceId);
-
-    if (transaction && invoice) {
-      const result = await matchTransaction(
-        transactionId,
-        invoiceId,
-        Math.min(Math.abs(transaction.amount), invoice.amount_remaining)
+    // Filtre par recherche
+    if (search) {
+      const s = search.toLowerCase();
+      filtered = filtered.filter(
+        tx =>
+          tx.label?.toLowerCase().includes(s) ||
+          tx.counterparty_name?.toLowerCase().includes(s) ||
+          tx.reference?.toLowerCase().includes(s)
       );
-
-      if (result.success) {
-        setSelectedTransaction(null);
-        setSelectedInvoice(null);
-      }
     }
-  };
 
-  // Handler pour ignorer
-  const handleIgnore = async (transactionId: string) => {
-    // TODO: Implémenter l'ignorance de transaction
-    console.log('Ignorer transaction:', transactionId);
-  };
+    // Si on vient d'une commande, trier par proximité de montant
+    if (preselectedOrder?.amount) {
+      const targetAmount = preselectedOrder.amount;
+      return [...filtered].sort((a, b) => {
+        const diffA = Math.abs(a.amount - targetAmount);
+        const diffB = Math.abs(b.amount - targetAmount);
+        // Priorité aux non-rapprochées avec montant correspondant
+        if (
+          a.matching_status === 'unmatched' &&
+          b.matching_status !== 'unmatched'
+        )
+          return -1;
+        if (
+          a.matching_status !== 'unmatched' &&
+          b.matching_status === 'unmatched'
+        )
+          return 1;
+        return diffA - diffB;
+      });
+    }
+
+    return filtered;
+  }, [creditTransactions, search, preselectedOrder]);
+
+  const filteredDebits = useMemo(() => {
+    if (!search) return debitTransactions;
+    const s = search.toLowerCase();
+    return debitTransactions.filter(
+      tx =>
+        tx.label?.toLowerCase().includes(s) ||
+        tx.counterparty_name?.toLowerCase().includes(s) ||
+        tx.reference?.toLowerCase().includes(s)
+    );
+  }, [debitTransactions, search]);
 
   // Handler sync
   const handleSync = async () => {
-    await refresh();
+    try {
+      const response = await fetch('/api/qonto/sync', { method: 'POST' });
+      const result = await response.json();
+      console.log('[Qonto Sync]', result);
+      if (result.success) {
+        toast.success('Synchronisation terminée', {
+          description: `${result.itemsCreated} nouvelles, ${result.itemsUpdated} mises à jour`,
+        });
+      }
+      await refresh();
+    } catch (err) {
+      console.error('[Qonto Sync] Error:', err);
+      toast.error('Erreur de synchronisation');
+      await refresh();
+    }
+  };
+
+  // Handler match simple (1 transaction → 1 commande)
+  const handleMatch = async (transactionId: string, orderId: string) => {
+    const result = await matchTransactionToOrder(transactionId, orderId);
+    if (result.success) {
+      toast.success('Rapprochement effectué', {
+        description: `Facture créée et paiement enregistré`,
+      });
+      await refresh();
+    } else {
+      toast.error('Erreur de rapprochement', {
+        description: result.error,
+      });
+    }
+  };
+
+  // Handler multi-match (1 transaction → N commandes)
+  const handleMultiMatch = async (
+    transactionId: string,
+    orderIds: string[]
+  ) => {
+    const result = await matchTransactionToMultipleOrders(
+      transactionId,
+      orderIds.map(id => ({ orderId: id }))
+    );
+
+    if (result.success) {
+      toast.success('Rapprochement effectué', {
+        description: `${result.matchedOrders} commande(s) associée(s), ${result.createdDocuments.length} facture(s) créée(s)`,
+      });
+      if (result.errors.length > 0) {
+        toast.warning('Attention', {
+          description: result.errors.join(', '),
+        });
+      }
+      await refresh();
+    } else {
+      toast.error('Erreur de rapprochement', {
+        description: result.errors.join(', ') || 'Erreur inconnue',
+      });
+    }
+  };
+
+  // Handler ignorer (catégoriser comme dépense)
+  const handleIgnore = async (transactionId: string, reason: string) => {
+    const result = await ignoreTransaction(transactionId, reason);
+    if (result.success) {
+      toast.success('Transaction catégorisée', {
+        description: reason,
+      });
+      await refresh();
+    } else {
+      toast.error('Erreur', {
+        description: result.error,
+      });
+    }
   };
 
   // FEATURE FLAG: Finance module disabled for Phase 1
@@ -348,36 +919,16 @@ export default function RapprochementPage() {
                 <CardTitle className="text-orange-900">
                   Module Rapprochement Bancaire - Phase 2
                 </CardTitle>
-                <CardDescription className="text-orange-700">
-                  Ce module sera disponible après le déploiement Phase 1
-                </CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-start gap-2">
-                <AlertCircle className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="font-medium text-orange-900">
-                    Fonctionnalités Phase 2
-                  </p>
-                  <ul className="text-sm text-orange-700 list-disc list-inside mt-1">
-                    <li>
-                      Rapprochement automatique transactions Qonto / factures
-                    </li>
-                    <li>Suggestions intelligentes avec score de confiance</li>
-                    <li>Validation manuelle transactions non rapprochées</li>
-                    <li>Export CSV pour comptabilité</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </CardContent>
         </Card>
       </div>
     );
   }
+
+  const currentTransactions =
+    activeTab === 'credits' ? filteredCredits : filteredDebits;
 
   return (
     <div className="space-y-6">
@@ -386,200 +937,223 @@ export default function RapprochementPage() {
         <div>
           <h1 className="text-2xl font-bold">Rapprochement Bancaire</h1>
           <p className="text-muted-foreground">
-            Associez les transactions bancaires aux factures
+            Relevé bancaire Qonto - Associez les transactions à vos documents
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <SyncButton onSync={handleSync} label="Sync Qonto" showLastSync />
-        </div>
+        <SyncButton onSync={handleSync} label="Sync Qonto" showLastSync />
       </div>
 
-      {/* KPIs */}
-      <KpiGrid columns={4}>
-        <KpiCard
-          title="Non rapprochées"
-          value={stats.total_unmatched}
-          valueType="number"
-          icon={<Unlink className="h-4 w-4" />}
-          description="transactions"
-          variant="warning"
-        />
-        <KpiCard
-          title="Montant en attente"
-          value={stats.total_amount_pending}
-          valueType="money"
-          icon={<Clock className="h-4 w-4" />}
-        />
-        <KpiCard
-          title="Taux auto-match"
-          value={stats.auto_match_rate}
-          valueType="percent"
-          icon={<TrendingUp className="h-4 w-4" />}
-          variant="success"
-        />
-        <KpiCard
-          title="À vérifier manuellement"
-          value={stats.manual_review_count}
-          valueType="number"
-          icon={<AlertCircle className="h-4 w-4" />}
-          variant="danger"
-        />
-      </KpiGrid>
-
-      {/* Split View */}
-      <div className="grid grid-cols-2 gap-6">
-        {/* Colonne Gauche: Transactions */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5" />
-                <CardTitle className="text-lg">
-                  Transactions non rapprochées
-                </CardTitle>
-              </div>
-              <Badge variant="secondary">{filteredTransactions.length}</Badge>
-            </div>
-            <div className="relative mt-2">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Rechercher..."
-                value={searchTransactions}
-                onChange={e => setSearchTransactions(e.target.value)}
-                className="pl-8 h-9"
-              />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[500px] pr-4">
-              {loading ? (
-                <div className="space-y-3">
-                  {[1, 2, 3].map(i => (
-                    <div
-                      key={i}
-                      className="h-32 bg-muted animate-pulse rounded"
-                    />
-                  ))}
-                </div>
-              ) : filteredTransactions.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <CheckCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Toutes les transactions sont rapprochées</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {filteredTransactions.map(tx => (
-                    <TransactionCard
-                      key={tx.id}
-                      transaction={tx}
-                      suggestions={tx.suggestions || []}
-                      onMatch={handleMatch}
-                      onIgnore={handleIgnore}
-                      selected={selectedTransaction === tx.id}
-                      onSelect={() =>
-                        setSelectedTransaction(
-                          selectedTransaction === tx.id ? null : tx.id
-                        )
-                      }
-                    />
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
-          </CardContent>
-        </Card>
-
-        {/* Colonne Droite: Factures impayées */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                <CardTitle className="text-lg">Factures impayées</CardTitle>
-              </div>
-              <Badge variant="secondary">{filteredInvoices.length}</Badge>
-            </div>
-            <div className="relative mt-2">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Rechercher..."
-                value={searchInvoices}
-                onChange={e => setSearchInvoices(e.target.value)}
-                className="pl-8 h-9"
-              />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[500px] pr-4">
-              {loading ? (
-                <div className="space-y-3">
-                  {[1, 2, 3].map(i => (
-                    <div
-                      key={i}
-                      className="h-24 bg-muted animate-pulse rounded"
-                    />
-                  ))}
-                </div>
-              ) : filteredInvoices.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <CheckCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Toutes les factures sont payées</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {filteredInvoices.map(inv => (
-                    <UnpaidInvoiceCard
-                      key={inv.id}
-                      invoice={inv}
-                      selected={selectedInvoice === inv.id}
-                      onSelect={() =>
-                        setSelectedInvoice(
-                          selectedInvoice === inv.id ? null : inv.id
-                        )
-                      }
-                    />
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Action de matching manuel */}
-      {selectedTransaction && selectedInvoice && (
-        <Card className="border-primary">
+      {/* Erreur */}
+      {error && (
+        <Card className="border-red-200 bg-red-50">
           <CardContent className="py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <ArrowLeftRight className="h-5 w-5 text-primary" />
-                <span>
-                  Matcher la transaction avec la facture sélectionnée ?
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setSelectedTransaction(null);
-                    setSelectedInvoice(null);
-                  }}
-                >
-                  Annuler
-                </Button>
-                <Button
-                  onClick={() =>
-                    handleMatch(selectedTransaction, selectedInvoice)
-                  }
-                >
-                  <Check className="h-4 w-4 mr-2" />
-                  Confirmer le rapprochement
-                </Button>
-              </div>
+            <div className="flex items-center gap-2 text-red-700">
+              <AlertCircle className="h-5 w-5" />
+              <p>{error}</p>
             </div>
           </CardContent>
         </Card>
       )}
+
+      {/* KPIs - Transaction focused (best practice) */}
+      <KpiGrid columns={4}>
+        <KpiCard
+          title="Total à rapprocher"
+          value={
+            creditTransactions.filter(t => t.matching_status === 'unmatched')
+              .length +
+            debitTransactions.filter(t => t.matching_status === 'unmatched')
+              .length
+          }
+          valueType="number"
+          icon={<Clock className="h-4 w-4" />}
+          variant="warning"
+        />
+        <KpiCard
+          title="Entrées (crédits)"
+          value={creditTransactions.reduce(
+            (sum, t) =>
+              t.matching_status === 'unmatched'
+                ? sum + Math.abs(t.amount)
+                : sum,
+            0
+          )}
+          valueType="money"
+          icon={<ArrowDownLeft className="h-4 w-4" />}
+          variant="success"
+        />
+        <KpiCard
+          title="Sorties (débits)"
+          value={debitTransactions.reduce(
+            (sum, t) =>
+              t.matching_status === 'unmatched'
+                ? sum + Math.abs(t.amount)
+                : sum,
+            0
+          )}
+          valueType="money"
+          icon={<ArrowUpRight className="h-4 w-4" />}
+          color="danger"
+        />
+        <KpiCard
+          title="Transactions rapprochées"
+          value={
+            creditTransactions.filter(t => t.matching_status !== 'unmatched')
+              .length +
+            debitTransactions.filter(t => t.matching_status !== 'unmatched')
+              .length
+          }
+          valueType="number"
+          icon={<CheckCircle className="h-4 w-4" />}
+        />
+      </KpiGrid>
+
+      {/* Banner quand on vient d'une commande */}
+      {showOrderBanner && preselectedOrder && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="h-5 w-5 text-blue-600" />
+                <div>
+                  <p className="font-medium text-blue-900">
+                    Associer un paiement à une commande
+                  </p>
+                  <p className="text-sm text-blue-700">
+                    Sélectionnez une transaction crédit pour l'associer à la
+                    commande (montant attendu :{' '}
+                    <strong>{preselectedOrder.amount?.toFixed(2)} €</strong>)
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowOrderBanner(false)}
+              >
+                Fermer
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Tabs Entrées / Sorties */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <Tabs
+              value={activeTab}
+              onValueChange={v => {
+                setActiveTab(v as 'credits' | 'debits');
+                setSelectedTransaction(null);
+              }}
+            >
+              <TabsList>
+                <TabsTrigger value="credits" className="gap-2">
+                  <ArrowDownLeft className="h-4 w-4 text-green-600" />
+                  Entrées
+                  <Badge variant="secondary" className="ml-1">
+                    {creditTransactions.length}
+                  </Badge>
+                </TabsTrigger>
+                <TabsTrigger value="debits" className="gap-2">
+                  <ArrowUpRight className="h-4 w-4 text-red-600" />
+                  Sorties
+                  <Badge variant="secondary" className="ml-1">
+                    {debitTransactions.length}
+                  </Badge>
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+
+            <div className="relative w-64">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="pl-8 h-9"
+              />
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-0">
+          {/* En-tête tableau */}
+          <div className="flex items-center gap-4 px-3 py-2 bg-muted/50 text-sm font-medium text-muted-foreground border-b">
+            <div className="w-8" />
+            <div className="w-24">Date</div>
+            <div className="flex-1">Libellé</div>
+            <div className="w-32" />
+            <div className="w-28 text-right">Montant</div>
+          </div>
+
+          {/* Liste des transactions */}
+          <ScrollArea className="h-[500px]">
+            {loading ? (
+              <div className="space-y-0">
+                {[1, 2, 3, 4, 5].map(i => (
+                  <div
+                    key={i}
+                    className="h-16 border-b animate-pulse bg-muted/30"
+                  />
+                ))}
+              </div>
+            ) : currentTransactions.length === 0 ? (
+              <div className="text-center py-16 text-muted-foreground">
+                <CheckCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p className="font-medium">
+                  {activeTab === 'credits'
+                    ? "Aucune entrée d'argent"
+                    : "Aucune sortie d'argent"}
+                </p>
+                <p className="text-sm mt-2">
+                  Cliquez sur "Sync Qonto" pour récupérer les transactions
+                </p>
+              </div>
+            ) : (
+              <div>
+                {currentTransactions.map(tx => (
+                  <TransactionRow
+                    key={tx.id}
+                    transaction={tx}
+                    onClick={() => setSelectedTransaction(tx)}
+                    isSelected={selectedTransaction?.id === tx.id}
+                  />
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+        </CardContent>
+      </Card>
+
+      {/* Sheet latéral pour matching */}
+      <Sheet
+        open={selectedTransaction !== null}
+        onOpenChange={open => {
+          if (!open) setSelectedTransaction(null);
+        }}
+      >
+        <SheetContent className="w-[450px] sm:max-w-[450px]">
+          {selectedTransaction?.side === 'credit' ? (
+            <CreditSidePanel
+              transaction={selectedTransaction}
+              orders={ordersWithoutInvoice}
+              onClose={() => setSelectedTransaction(null)}
+              onMultiMatch={handleMultiMatch}
+              generateSuggestions={generateMatchSuggestions}
+              preselectedOrderId={preselectedOrderId}
+            />
+          ) : selectedTransaction ? (
+            <DebitSidePanel
+              transaction={selectedTransaction}
+              onClose={() => setSelectedTransaction(null)}
+              onIgnore={handleIgnore}
+            />
+          ) : null}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

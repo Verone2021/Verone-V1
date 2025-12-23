@@ -72,6 +72,7 @@ export * from './avatar';
 // OVERLAY COMPONENTS
 // ========================================
 export * from './dialog';
+export * from './sheet';
 export * from './popover';
 export * from './dropdown-menu';
 export * from './tooltip';
