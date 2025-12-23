@@ -36,11 +36,19 @@ function generateIdempotencyKey(): string {
 
 /**
  * Détermine le mode d'auth à partir des env vars
+ * Si QONTO_ORGANIZATION_ID et QONTO_API_KEY sont définis, utilise api_key par défaut
  */
 function resolveAuthMode(): QontoAuthMode {
   const envMode = process.env.QONTO_AUTH_MODE?.toLowerCase();
   if (envMode === 'api_key') return 'api_key';
-  return 'oauth'; // Défaut OAuth
+  if (envMode === 'oauth') return 'oauth';
+
+  // Auto-détection: si orgId + apiKey sont définis, utilise api_key
+  if (process.env.QONTO_ORGANIZATION_ID && process.env.QONTO_API_KEY) {
+    return 'api_key';
+  }
+
+  return 'oauth'; // Défaut OAuth si rien n'est configuré
 }
 
 // =====================================================================
@@ -406,7 +414,7 @@ export class QontoClient {
     if (params?.perPage)
       queryParams.append('per_page', params.perPage.toString());
     if (params?.currentPage)
-      queryParams.append('current_page', params.currentPage.toString());
+      queryParams.append('page', params.currentPage.toString());
 
     const endpoint = `/v2/transactions${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
 
@@ -490,7 +498,7 @@ export class QontoClient {
     if (params?.perPage)
       queryParams.append('per_page', params.perPage.toString());
     if (params?.currentPage)
-      queryParams.append('current_page', params.currentPage.toString());
+      queryParams.append('page', params.currentPage.toString());
 
     const endpoint = `/v2/client_invoices${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
 
@@ -686,7 +694,7 @@ export class QontoClient {
     if (params?.perPage)
       queryParams.append('per_page', params.perPage.toString());
     if (params?.currentPage)
-      queryParams.append('current_page', params.currentPage.toString());
+      queryParams.append('page', params.currentPage.toString());
 
     const endpoint = `/v2/clients${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
 

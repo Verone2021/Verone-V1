@@ -13,7 +13,7 @@ import type {
   QontoTransactionSide,
 } from '@verone/integrations/qonto';
 import { QontoClient } from '@verone/integrations/qonto';
-import { createClient } from '@verone/utils/supabase/client';
+import { createAdminClient } from '@verone/utils/supabase/server';
 
 // =====================================================================
 // TYPES
@@ -91,7 +91,7 @@ export interface LastSyncStatus {
 }
 
 // Type interne pour les données de transaction en DB
-// Note: Supabase utilise undefined et non null pour les champs optionnels
+// Colonnes existantes dans bank_transactions
 interface TransactionDbData {
   transaction_id: string;
   bank_provider: 'qonto' | 'revolut';
@@ -99,26 +99,15 @@ interface TransactionDbData {
   amount: number;
   currency: string;
   side: QontoTransactionSide;
-  // Champs optionnels avec undefined pour compatibilité Supabase
-  amount_cents?: number;
-  local_amount?: number;
-  local_currency?: string;
   operation_type?: string;
   label?: string;
   note?: string;
   reference?: string;
-  category?: string;
   counterparty_name?: string;
   counterparty_iban?: string;
   emitted_at?: string;
   settled_at?: string;
-  status?: string;
-  attachment_ids?: string[];
-  label_ids?: string[];
-  vat_amount?: number;
-  vat_rate?: number;
   raw_data?: Record<string, unknown>;
-  synced_at?: string;
   updated_at?: string;
 }
 
@@ -127,7 +116,7 @@ interface TransactionDbData {
 // =====================================================================
 
 export class QontoSyncService {
-  private supabase = createClient();
+  private supabase = createAdminClient();
   private qontoClient: QontoClient;
 
   constructor(qontoClient?: QontoClient) {
@@ -261,80 +250,107 @@ export class QontoSyncService {
         throw new Error('Aucun compte bancaire trouvé');
       }
 
-      // 4. Sync pagination
+      // 4. Sync pagination - TOUS les comptes bancaires
       let cursor: string | undefined;
-      let currentPage = 0;
       let totalFetched = 0;
       let totalCreated = 0;
       let totalUpdated = 0;
       let totalSkipped = 0;
       let totalFailed = 0;
 
-      const mainAccount = bankAccounts[0]; // Compte principal
+      // Parcourir TOUS les comptes bancaires
+      for (const account of bankAccounts) {
+        let currentPage = 0;
+        // Compteurs par compte pour le logging
+        const accountStats = { fetched: 0, created: 0, updated: 0, skipped: 0 };
 
-      do {
-        // Notifier la progression
-        onProgress?.({
-          currentPage,
-          totalItems: totalFetched,
-          itemsProcessed: totalCreated + totalUpdated + totalSkipped,
-          status: 'fetching',
-        });
+        do {
+          // Notifier la progression
+          onProgress?.({
+            currentPage,
+            totalItems: totalFetched,
+            itemsProcessed: totalCreated + totalUpdated + totalSkipped,
+            status: 'fetching',
+          });
 
-        // Récupérer une page de transactions
-        const response = await this.qontoClient.getTransactions({
-          bankAccountId: mainAccount.id,
-          updatedAtFrom: syncFrom.toISOString(),
-          perPage: pageSize,
-          currentPage: currentPage + 1,
-        });
+          // Récupérer une page de transactions (completed uniquement)
+          const response = await this.qontoClient.getTransactions({
+            bankAccountId: account.id,
+            status: 'completed',
+            updatedAtFrom: syncFrom.toISOString(),
+            perPage: pageSize,
+            currentPage: currentPage + 1,
+          });
 
-        // getTransactions retourne QontoTransactionsResponse
-        const transactions = response.transactions;
-        totalFetched += transactions.length;
+          // getTransactions retourne QontoTransactionsResponse
+          const transactions = response.transactions;
+          totalFetched += transactions.length;
+          accountStats.fetched += transactions.length;
 
-        onProgress?.({
-          currentPage,
-          totalItems: totalFetched,
-          itemsProcessed: totalCreated + totalUpdated + totalSkipped,
-          status: 'processing',
-        });
+          onProgress?.({
+            currentPage,
+            totalItems: totalFetched,
+            itemsProcessed: totalCreated + totalUpdated + totalSkipped,
+            status: 'processing',
+          });
 
-        // Traiter chaque transaction
-        for (const tx of transactions) {
-          try {
-            const result = await this.upsertTransaction(tx, mainAccount.id);
-            if (result === 'created') totalCreated++;
-            else if (result === 'updated') totalUpdated++;
-            else totalSkipped++;
-          } catch (err) {
-            totalFailed++;
-            errors.push({
-              transactionId: tx.transaction_id,
-              code: 'UPSERT_ERROR',
-              message: err instanceof Error ? err.message : 'Erreur inconnue',
-              timestamp: new Date().toISOString(),
-            });
+          // Traiter chaque transaction
+          for (const tx of transactions) {
+            try {
+              const result = await this.upsertTransaction(tx, account.id);
+              if (result === 'created') {
+                totalCreated++;
+                accountStats.created++;
+              } else if (result === 'updated') {
+                totalUpdated++;
+                accountStats.updated++;
+              } else {
+                totalSkipped++;
+                accountStats.skipped++;
+              }
+            } catch (err) {
+              totalFailed++;
+              errors.push({
+                transactionId: tx.transaction_id,
+                code: 'UPSERT_ERROR',
+                message: err instanceof Error ? err.message : 'Erreur inconnue',
+                timestamp: new Date().toISOString(),
+              });
+            }
           }
-        }
 
-        // Préparer la page suivante
-        currentPage++;
+          // Préparer la page suivante
+          currentPage++;
 
-        // Vérifier les limites
-        if (transactions.length < pageSize) {
-          // Dernière page atteinte
-          break;
-        }
-        if (currentPage >= maxPages) {
-          // Limite de pages atteinte
-          break;
-        }
+          // Vérifier les limites
+          if (transactions.length < pageSize) {
+            // Dernière page de ce compte atteinte
+            break;
+          }
+          if (currentPage >= maxPages) {
+            // Limite de pages atteinte pour ce compte
+            break;
+          }
+          if (Date.now() - startTime > timeoutSeconds * 1000) {
+            // Timeout
+            break;
+          }
+        } while (true);
+
+        // Log par compte bancaire (observabilité)
+        console.log(
+          `[Qonto Sync] Account ${account.name} (${account.id.slice(0, 8)}...):`,
+          `fetched=${accountStats.fetched},`,
+          `created=${accountStats.created},`,
+          `updated=${accountStats.updated},`,
+          `skipped=${accountStats.skipped}`
+        );
+
+        // Vérifier timeout global
         if (Date.now() - startTime > timeoutSeconds * 1000) {
-          // Timeout
           break;
         }
-      } while (true);
+      }
 
       // 5. Relâcher le lock avec succès
       const finalStatus: SyncRunStatus =
@@ -438,26 +454,15 @@ export class QontoSyncService {
       amount: tx.amount,
       currency: tx.currency,
       side: tx.side,
-      // Champs optionnels (undefined si non définis)
-      amount_cents: tx.amount_cents,
-      local_amount: tx.local_amount,
-      local_currency: tx.local_currency,
       operation_type: tx.operation_type,
       label: tx.label,
       note: tx.note,
       reference: tx.reference,
-      category: tx.category,
       counterparty_name: tx.counterparty?.name,
       counterparty_iban: tx.counterparty?.iban,
       emitted_at: tx.emitted_at,
       settled_at: tx.settled_at ?? undefined,
-      status: tx.status,
-      attachment_ids: tx.attachment_ids,
-      label_ids: tx.label_ids,
-      vat_amount: tx.vat_amount,
-      vat_rate: tx.vat_rate,
       raw_data: tx as unknown as Record<string, unknown>,
-      synced_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
 

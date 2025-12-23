@@ -10,8 +10,10 @@ export * from './components/kpis';
 // Hooks
 export * from './hooks';
 
-// Services
-export * from './services';
+// Services - NE PAS EXPORTER ICI
+// Les services serveur contiennent du code server-only (next/headers)
+// Utiliser: import { ... } from '@verone/finance/services' dans les API routes uniquement
+// export * from './services';
 
 // Utils - Ne PAS exporter ici pour éviter conflits avec hooks
 // Utiliser: import { ... } from '@verone/finance/utils'

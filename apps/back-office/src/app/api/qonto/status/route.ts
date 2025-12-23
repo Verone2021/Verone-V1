@@ -25,9 +25,8 @@ export async function GET() {
       );
     }
 
-    // 2. Récupérer les comptes bancaires pour avoir l'ID
+    // 2. Récupérer les comptes bancaires
     const bankAccounts = await client.getBankAccounts();
-    const mainAccountId = bankAccounts[0]?.id;
 
     // 3. Récupérer les factures clients
     const { client_invoices, meta: invoicesMeta } =
@@ -35,12 +34,25 @@ export async function GET() {
         perPage: 100,
       });
 
-    // 4. Récupérer les transactions récentes (avec bank_account_id)
-    const { transactions, meta: transactionsMeta } =
-      await client.getTransactions({
-        bankAccountId: mainAccountId,
-        perPage: 100,
-      });
+    // 4. Récupérer les transactions de TOUS les comptes
+    const allTransactions: Awaited<
+      ReturnType<typeof client.getTransactions>
+    >['transactions'] = [];
+    let totalTransactionsCount = 0;
+
+    for (const account of bankAccounts) {
+      const { transactions: accountTransactions, meta } =
+        await client.getTransactions({
+          bankAccountId: account.id,
+          status: 'completed',
+          perPage: 100,
+        });
+      allTransactions.push(...accountTransactions);
+      totalTransactionsCount += meta.total_count;
+    }
+
+    const transactions = allTransactions;
+    const transactionsMeta = { total_count: totalTransactionsCount };
 
     // 4. Résumé des factures par statut
     const invoicesByStatus = {

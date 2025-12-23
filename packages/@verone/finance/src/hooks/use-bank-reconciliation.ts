@@ -156,6 +156,12 @@ export function useBankReconciliation() {
         .eq('matching_status', 'unmatched')
         .order('settled_at', { ascending: false, nullsFirst: false });
 
+      console.log('[Reconciliation] bank_transactions query:', {
+        transactionsCount: transactions?.length ?? 0,
+        error: txError,
+        firstTx: transactions?.[0],
+      });
+
       if (txError) {
         console.error('Error fetching bank_transactions:', txError);
         if (!txError.message.includes('does not exist')) {
