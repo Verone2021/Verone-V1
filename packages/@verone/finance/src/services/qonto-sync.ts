@@ -61,12 +61,22 @@ export interface SyncOptions {
   since?: Date;
   /** Sync complète depuis le début */
   fullSync?: boolean;
-  /** Nombre max de pages à traiter */
+  /**
+   * Scope de synchronisation:
+   * - 'incremental': Sync depuis la dernière sync (défaut)
+   * - 'all': Sync TOUT l'historique depuis fromDate (backfill complet)
+   */
+  syncScope?: 'incremental' | 'all';
+  /** Date de début pour scope=all (défaut: 2022-01-01) */
+  fromDate?: string;
+  /** Nombre max de pages à traiter (défaut: 50, scope=all: 1000) */
   maxPages?: number;
   /** Nombre d'items par page (défaut: 100, max: 100) */
   pageSize?: number;
-  /** Timeout en secondes (défaut: 300) */
+  /** Timeout en secondes (défaut: 300, scope=all: 900) */
   timeoutSeconds?: number;
+  /** Créer automatiquement les expenses pour les débits */
+  autoCreateExpenses?: boolean;
   /** Callback progression */
   onProgress?: (progress: SyncProgress) => void;
 }
@@ -174,16 +184,28 @@ export class QontoSyncService {
 
   /**
    * Sync manuelle des transactions Qonto → Database
+   *
+   * @param options.syncScope - 'incremental' (défaut) ou 'all' pour backfill complet
+   * @param options.fromDate - Date de début pour scope=all (défaut: '2022-01-01')
+   * @param options.autoCreateExpenses - Créer automatiquement les expenses pour débits
    */
   async syncTransactions(options: SyncOptions = {}): Promise<SyncResult> {
     const {
       since,
       fullSync = false,
-      maxPages = 50,
+      syncScope = 'incremental',
+      fromDate = '2022-01-01',
+      maxPages = syncScope === 'all' ? 1000 : 50, // Plus de pages pour backfill
       pageSize = 100,
-      timeoutSeconds = 300,
+      timeoutSeconds = syncScope === 'all' ? 900 : 300, // 15 min pour backfill
+      autoCreateExpenses = true,
       onProgress,
     } = options;
+
+    // Log mode de sync
+    console.log(
+      `[Qonto Sync] Starting sync: scope=${syncScope}, fromDate=${fromDate}, maxPages=${maxPages}`
+    );
 
     const errors: SyncError[] = [];
     let syncRunId: string = '';
@@ -227,9 +249,14 @@ export class QontoSyncService {
       syncRunId = lockData.sync_run_id as string;
       lockToken = lockData.lock_token as string;
 
-      // 2. Déterminer la date de début
-      let syncFrom: Date;
-      if (fullSync) {
+      // 2. Déterminer la date de début selon le mode
+      let syncFrom: Date | null = null; // null = pas de filtre date (scope=all sans limite)
+
+      if (syncScope === 'all') {
+        // Backfill complet depuis fromDate
+        syncFrom = new Date(fromDate);
+        console.log(`[Qonto Sync] Backfill mode: syncing from ${fromDate}`);
+      } else if (fullSync) {
         syncFrom = new Date('2020-01-01');
       } else if (since) {
         syncFrom = since;
@@ -277,7 +304,9 @@ export class QontoSyncService {
           const response = await this.qontoClient.getTransactions({
             bankAccountId: account.id,
             status: 'completed',
-            updatedAtFrom: syncFrom.toISOString(),
+            // Pour scope=all avec fromDate, on utilise updatedAtFrom
+            // Si syncFrom est null (pas de filtre), on ne passe pas le paramètre
+            ...(syncFrom ? { updatedAtFrom: syncFrom.toISOString() } : {}),
             perPage: pageSize,
             currentPage: currentPage + 1,
           });
@@ -373,6 +402,23 @@ export class QontoSyncService {
         p_cursor: cursor || null,
       });
 
+      // 6. Auto-créer les expenses pour les nouvelles transactions débit
+      let expensesCreated = 0;
+      if (autoCreateExpenses && (totalCreated > 0 || totalUpdated > 0)) {
+        try {
+          const { data } = await (this.supabase.rpc as CallableFunction)(
+            'create_expenses_from_debits'
+          );
+          expensesCreated = data || 0;
+          console.log(
+            `[Qonto Sync] Auto-created ${expensesCreated} expenses for debit transactions`
+          );
+        } catch (expenseErr) {
+          console.error('[Qonto Sync] Error creating expenses:', expenseErr);
+          // Ne pas faire échouer la sync pour ça
+        }
+      }
+
       return {
         success: true,
         syncRunId,
@@ -385,7 +431,9 @@ export class QontoSyncService {
         durationMs: Date.now() - startTime,
         errors,
         cursor,
-        message: `Sync terminée: ${totalCreated} créées, ${totalUpdated} mises à jour, ${totalSkipped} ignorées`,
+        message:
+          `Sync terminée: ${totalCreated} créées, ${totalUpdated} mises à jour, ${totalSkipped} ignorées` +
+          (expensesCreated > 0 ? `, ${expensesCreated} expenses créées` : ''),
       };
     } catch (err) {
       // Relâcher le lock en cas d'erreur
