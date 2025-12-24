@@ -8,3 +8,7 @@ export * from './use-bank-reconciliation';
 export * from './use-treasury-stats';
 export * from './use-aging-report';
 export * from './use-pricing';
+export * from './use-expenses';
+export * from './use-counterparties';
+export * from './use-unique-labels';
+export * from './use-matching-rules';
