@@ -174,21 +174,26 @@ export function useExpenses(
   };
 }
 
-// Catégories de dépenses
+// Catégories de dépenses avec emojis
 export const EXPENSE_CATEGORIES = [
-  { id: 'bank_fees', label: 'Frais bancaires' },
-  { id: 'subscription', label: 'Abonnements' },
-  { id: 'supplies', label: 'Fournitures' },
-  { id: 'transport', label: 'Transport/Livraison' },
-  { id: 'marketing', label: 'Marketing/Publicité' },
-  { id: 'taxes', label: 'Taxes & Impôts' },
-  { id: 'insurance', label: 'Assurances' },
-  { id: 'professional_services', label: 'Services professionnels' },
-  { id: 'software', label: 'Logiciels/SaaS' },
-  { id: 'telecom', label: 'Télécom/Internet' },
-  { id: 'rent', label: 'Loyer/Location' },
-  { id: 'purchase_stock', label: 'Achats marchandises' },
-  { id: 'other', label: 'Autre' },
+  { id: 'bank_fees', label: 'Frais bancaires', emoji: '🏦' },
+  { id: 'subscription', label: 'Abonnements', emoji: '📱' },
+  { id: 'supplies', label: 'Fournitures', emoji: '📦' },
+  { id: 'transport', label: 'Transport/Livraison', emoji: '🚚' },
+  { id: 'marketing', label: 'Marketing/Publicité', emoji: '📣' },
+  { id: 'taxes', label: 'Taxes & Impôts', emoji: '🧾' },
+  { id: 'insurance', label: 'Assurances', emoji: '🛡️' },
+  {
+    id: 'professional_services',
+    label: 'Services professionnels',
+    emoji: '👔',
+  },
+  { id: 'software', label: 'Logiciels/SaaS', emoji: '💻' },
+  { id: 'telecom', label: 'Télécom/Internet', emoji: '📡' },
+  { id: 'rent', label: 'Loyer/Location', emoji: '🏢' },
+  { id: 'purchase_stock', label: 'Achats marchandises', emoji: '🛒' },
+  { id: 'other', label: 'Autre', emoji: '📋' },
 ] as const;
 
 export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number]['id'];
+export type ExpenseCategoryItem = (typeof EXPENSE_CATEGORIES)[number];

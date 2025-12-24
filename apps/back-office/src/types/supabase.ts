@@ -2347,74 +2347,6 @@ export type Database = {
           },
         ];
       };
-      counterparties: {
-        Row: {
-          created_at: string | null;
-          display_name: string;
-          id: string;
-          name_normalized: string;
-          siren: string | null;
-          siret: string | null;
-          updated_at: string | null;
-          vat_number: string | null;
-        };
-        Insert: {
-          created_at?: string | null;
-          display_name: string;
-          id?: string;
-          name_normalized: string;
-          siren?: string | null;
-          siret?: string | null;
-          updated_at?: string | null;
-          vat_number?: string | null;
-        };
-        Update: {
-          created_at?: string | null;
-          display_name?: string;
-          id?: string;
-          name_normalized?: string;
-          siren?: string | null;
-          siret?: string | null;
-          updated_at?: string | null;
-          vat_number?: string | null;
-        };
-        Relationships: [];
-      };
-      counterparty_bank_accounts: {
-        Row: {
-          bic: string | null;
-          counterparty_id: string;
-          created_at: string | null;
-          iban: string;
-          id: string;
-          label: string | null;
-        };
-        Insert: {
-          bic?: string | null;
-          counterparty_id: string;
-          created_at?: string | null;
-          iban: string;
-          id?: string;
-          label?: string | null;
-        };
-        Update: {
-          bic?: string | null;
-          counterparty_id?: string;
-          created_at?: string | null;
-          iban?: string;
-          id?: string;
-          label?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'counterparty_bank_accounts_counterparty_id_fkey';
-            columns: ['counterparty_id'];
-            isOneToOne: false;
-            referencedRelation: 'counterparties';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
       customer_group_members: {
         Row: {
           assignment_method: string | null;
@@ -2872,7 +2804,6 @@ export type Database = {
           category: string | null;
           classified_at: string | null;
           classified_by: string | null;
-          counterparty_id: string | null;
           created_at: string | null;
           id: string;
           individual_customer_id: string | null;
@@ -2887,7 +2818,6 @@ export type Database = {
           category?: string | null;
           classified_at?: string | null;
           classified_by?: string | null;
-          counterparty_id?: string | null;
           created_at?: string | null;
           id?: string;
           individual_customer_id?: string | null;
@@ -2902,7 +2832,6 @@ export type Database = {
           category?: string | null;
           classified_at?: string | null;
           classified_by?: string | null;
-          counterparty_id?: string | null;
           created_at?: string | null;
           id?: string;
           individual_customer_id?: string | null;
@@ -2927,20 +2856,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'v_users_with_roles';
             referencedColumns: ['user_id'];
-          },
-          {
-            foreignKeyName: 'expenses_counterparty_id_fkey';
-            columns: ['counterparty_id'];
-            isOneToOne: false;
-            referencedRelation: 'counterparties';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'expenses_individual_customer_id_fkey';
-            columns: ['individual_customer_id'];
-            isOneToOne: false;
-            referencedRelation: 'individual_customers';
-            referencedColumns: ['id'];
           },
           {
             foreignKeyName: 'expenses_organisation_id_fkey';
@@ -5181,7 +5096,6 @@ export type Database = {
           billing_region: string | null;
           certification_labels: string[] | null;
           city: string | null;
-          counterparty_id: string | null;
           country: string | null;
           created_at: string | null;
           created_by: string | null;
@@ -5197,6 +5111,7 @@ export type Database = {
           industry_sector: string | null;
           is_active: boolean | null;
           is_enseigne_parent: boolean;
+          is_service_provider: boolean | null;
           legal_form: string | null;
           legal_name: string;
           linkme_code: string | null;
@@ -5249,7 +5164,6 @@ export type Database = {
           billing_region?: string | null;
           certification_labels?: string[] | null;
           city?: string | null;
-          counterparty_id?: string | null;
           country?: string | null;
           created_at?: string | null;
           created_by?: string | null;
@@ -5265,6 +5179,7 @@ export type Database = {
           industry_sector?: string | null;
           is_active?: boolean | null;
           is_enseigne_parent?: boolean;
+          is_service_provider?: boolean | null;
           legal_form?: string | null;
           legal_name: string;
           linkme_code?: string | null;
@@ -5317,7 +5232,6 @@ export type Database = {
           billing_region?: string | null;
           certification_labels?: string[] | null;
           city?: string | null;
-          counterparty_id?: string | null;
           country?: string | null;
           created_at?: string | null;
           created_by?: string | null;
@@ -5333,6 +5247,7 @@ export type Database = {
           industry_sector?: string | null;
           is_active?: boolean | null;
           is_enseigne_parent?: boolean;
+          is_service_provider?: boolean | null;
           legal_form?: string | null;
           legal_name?: string;
           linkme_code?: string | null;
@@ -5373,13 +5288,6 @@ export type Database = {
           website?: string | null;
         };
         Relationships: [
-          {
-            foreignKeyName: 'organisations_counterparty_id_fkey';
-            columns: ['counterparty_id'];
-            isOneToOne: false;
-            referencedRelation: 'counterparties';
-            referencedColumns: ['id'];
-          },
           {
             foreignKeyName: 'organisations_created_by_fkey';
             columns: ['created_by'];
@@ -9543,13 +9451,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'v_users_with_roles';
             referencedColumns: ['user_id'];
-          },
-          {
-            foreignKeyName: 'expenses_individual_customer_id_fkey';
-            columns: ['individual_customer_id'];
-            isOneToOne: false;
-            referencedRelation: 'individual_customers';
-            referencedColumns: ['id'];
           },
           {
             foreignKeyName: 'expenses_organisation_id_fkey';
