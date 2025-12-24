@@ -10,6 +10,10 @@ import {
   type OrderWithoutInvoice,
 } from '@verone/finance';
 import {
+  InvoiceUploadModal,
+  type TransactionForUpload,
+} from '@verone/finance/components';
+import {
   Card,
   CardContent,
   CardHeader,
@@ -53,6 +57,8 @@ import {
   Building2,
   X,
   RefreshCw,
+  Upload,
+  AlertTriangle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -188,6 +194,7 @@ function CreditSidePanel({
   onMultiMatch,
   generateSuggestions,
   preselectedOrderId,
+  onOpenUploadModal,
 }: {
   transaction: BankTransaction;
   orders: OrderWithoutInvoice[];
@@ -206,6 +213,7 @@ function CreditSidePanel({
     match_reason: string;
   }>;
   preselectedOrderId?: string | null;
+  onOpenUploadModal: () => void;
 }) {
   // Initialiser avec la commande présélectionnée si disponible
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(
@@ -213,6 +221,7 @@ function CreditSidePanel({
   );
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState('');
+  const [showMissingPdfWarning, setShowMissingPdfWarning] = useState(false);
 
   const hasAttachments =
     transaction.attachment_ids && transaction.attachment_ids.length > 0;
@@ -258,6 +267,17 @@ function CreditSidePanel({
       return;
     }
 
+    // Si pas de pièce jointe, afficher avertissement
+    if (!hasAttachments && !showMissingPdfWarning) {
+      setShowMissingPdfWarning(true);
+      return;
+    }
+
+    // Procéder au matching
+    proceedWithMatch();
+  };
+
+  const proceedWithMatch = () => {
     startTransition(async () => {
       const orderIds = Array.from(selectedOrders);
       await onMultiMatch(transaction.id, orderIds);
@@ -438,6 +458,46 @@ function CreditSidePanel({
             </div>
           </ScrollArea>
         </div>
+
+        {/* Avertissement si pas de pièce jointe */}
+        {showMissingPdfWarning && !hasAttachments && (
+          <Card className="border-amber-300 bg-amber-50">
+            <CardContent className="py-4 space-y-3">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-amber-900">
+                    Facture manquante
+                  </p>
+                  <p className="text-sm text-amber-700 mt-1">
+                    Cette transaction n'a pas de pièce jointe. Vous pouvez
+                    uploader une facture maintenant ou rapprocher sans facture.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2 mt-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onOpenUploadModal}
+                  className="flex-1"
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Uploader facture
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={proceedWithMatch}
+                  disabled={isPending}
+                  className="flex-1 text-amber-700"
+                >
+                  Continuer sans facture
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Actions */}
         <div className="flex gap-2 pt-4 border-t">
@@ -759,6 +819,27 @@ export default function RapprochementPage() {
     useState<BankTransaction | null>(null);
   const [search, setSearch] = useState('');
   const [showOrderBanner, setShowOrderBanner] = useState(!!preselectedOrderId);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+
+  // Convertir BankTransaction en TransactionForUpload pour le modal
+  const transactionForUpload: TransactionForUpload | null = useMemo(() => {
+    if (!selectedTransaction) return null;
+    return {
+      id: selectedTransaction.id,
+      transaction_id: selectedTransaction.transaction_id,
+      label: selectedTransaction.label || '',
+      counterparty_name: selectedTransaction.counterparty_name,
+      amount: selectedTransaction.amount,
+      currency: selectedTransaction.currency || 'EUR',
+      emitted_at: selectedTransaction.emitted_at || '',
+      has_attachment: Boolean(
+        selectedTransaction.attachment_ids &&
+          selectedTransaction.attachment_ids.length > 0
+      ),
+      matched_document_id: null,
+      order_number: null,
+    };
+  }, [selectedTransaction]);
 
   // Trouver la commande présélectionnée
   const preselectedOrder = useMemo(() => {
@@ -1144,6 +1225,7 @@ export default function RapprochementPage() {
               onMultiMatch={handleMultiMatch}
               generateSuggestions={generateMatchSuggestions}
               preselectedOrderId={preselectedOrderId}
+              onOpenUploadModal={() => setShowUploadModal(true)}
             />
           ) : selectedTransaction ? (
             <DebitSidePanel
@@ -1154,6 +1236,17 @@ export default function RapprochementPage() {
           ) : null}
         </SheetContent>
       </Sheet>
+
+      {/* Modal upload facture */}
+      <InvoiceUploadModal
+        transaction={transactionForUpload}
+        open={showUploadModal}
+        onOpenChange={setShowUploadModal}
+        onUploadComplete={() => {
+          refresh();
+          setShowUploadModal(false);
+        }}
+      />
     </div>
   );
 }

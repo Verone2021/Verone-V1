@@ -4,9 +4,15 @@ import { useState, useMemo } from 'react';
 
 import {
   useFinancialDocuments,
+  useMissingInvoices,
   type DocumentType,
   type DocumentStatus,
+  type TransactionMissingInvoice,
 } from '@verone/finance';
+import {
+  InvoiceUploadModal,
+  type TransactionForUpload,
+} from '@verone/finance/components';
 import {
   Card,
   CardContent,
@@ -43,15 +49,21 @@ import {
   Clock,
   CheckCircle,
   RefreshCw,
+  Upload,
+  AlertTriangle,
+  Paperclip,
 } from 'lucide-react';
 
 // =====================================================================
 // TYPES
 // =====================================================================
 
-type TabType = 'clients' | 'fournisseurs' | 'depenses';
+type TabType = 'clients' | 'fournisseurs' | 'depenses' | 'manquantes';
 
-const tabToDocumentType: Record<TabType, DocumentType[]> = {
+const tabToDocumentType: Record<
+  Exclude<TabType, 'manquantes'>,
+  DocumentType[]
+> = {
   clients: ['customer_invoice', 'customer_credit_note'],
   fournisseurs: ['supplier_invoice', 'supplier_credit_note'],
   depenses: ['expense'],
@@ -188,6 +200,120 @@ function FacturesTable({
 }
 
 // =====================================================================
+// COMPOSANT: TABLEAU FACTURES MANQUANTES
+// =====================================================================
+
+function MissingInvoicesTable({
+  transactions,
+  loading,
+  onUpload,
+}: {
+  transactions: TransactionMissingInvoice[];
+  loading: boolean;
+  onUpload: (transaction: TransactionMissingInvoice) => void;
+}) {
+  if (loading) {
+    return (
+      <div className="space-y-2">
+        {[1, 2, 3, 4, 5].map(i => (
+          <div key={i} className="h-12 bg-muted animate-pulse rounded" />
+        ))}
+      </div>
+    );
+  }
+
+  if (transactions.length === 0) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        <CheckCircle className="h-12 w-12 mx-auto mb-4 text-green-500 opacity-70" />
+        <p className="font-medium text-foreground">
+          Toutes les transactions ont une facture!
+        </p>
+        <p className="text-sm mt-1">Aucune facture manquante à uploader</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="border rounded-lg overflow-hidden">
+      <table className="w-full">
+        <thead className="bg-muted/50">
+          <tr>
+            <th className="text-left p-3 text-sm font-medium">Transaction</th>
+            <th className="text-left p-3 text-sm font-medium">Contrepartie</th>
+            <th className="text-left p-3 text-sm font-medium">Date</th>
+            <th className="text-left p-3 text-sm font-medium">Commande</th>
+            <th className="text-right p-3 text-sm font-medium">Montant</th>
+            <th className="text-center p-3 text-sm font-medium">Statut</th>
+            <th className="text-right p-3 text-sm font-medium">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {transactions.map(tx => (
+            <tr key={tx.id} className="border-t hover:bg-muted/30">
+              <td className="p-3">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-500" />
+                  <span className="text-sm font-medium truncate max-w-[200px]">
+                    {tx.label || 'Sans libellé'}
+                  </span>
+                </div>
+              </td>
+              <td className="p-3">
+                <span className="text-sm">{tx.counterparty_name ?? '-'}</span>
+              </td>
+              <td className="p-3 text-sm">
+                {tx.emitted_at
+                  ? new Date(tx.emitted_at).toLocaleDateString('fr-FR')
+                  : '-'}
+              </td>
+              <td className="p-3">
+                {tx.order_number ? (
+                  <Badge variant="outline">{tx.order_number}</Badge>
+                ) : (
+                  <span className="text-muted-foreground text-sm">-</span>
+                )}
+              </td>
+              <td className="p-3 text-right">
+                <Money
+                  amount={Math.abs(tx.amount)}
+                  size="sm"
+                  className="text-green-600 font-medium"
+                />
+              </td>
+              <td className="p-3 text-center">
+                {tx.upload_status === 'pending' ? (
+                  <Badge variant="secondary">En attente</Badge>
+                ) : tx.upload_status === 'uploading' ? (
+                  <Badge variant="secondary" className="animate-pulse">
+                    Upload...
+                  </Badge>
+                ) : (
+                  <Badge variant="destructive" className="gap-1">
+                    <Paperclip className="h-3 w-3" />
+                    Manquante
+                  </Badge>
+                )}
+              </td>
+              <td className="p-3 text-right">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onUpload(tx)}
+                >
+                  <Upload className="h-4 w-4 mr-1" />
+                  Uploader
+                </Button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// =====================================================================
 // PAGE COMPONENT
 // =====================================================================
 
@@ -195,17 +321,67 @@ export default function FacturesPage() {
   const [activeTab, setActiveTab] = useState<TabType>('clients');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [selectedMissingTx, setSelectedMissingTx] =
+    useState<TransactionMissingInvoice | null>(null);
 
-  // Récupérer les documents financiers
+  // Récupérer les documents financiers (sauf pour l'onglet manquantes)
   const { documents, loading, error, stats, refresh } = useFinancialDocuments({
-    document_type: tabToDocumentType[activeTab],
+    document_type:
+      activeTab !== 'manquantes' ? tabToDocumentType[activeTab] : undefined,
     status:
       statusFilter !== 'all' ? (statusFilter as DocumentStatus) : undefined,
     search: search || undefined,
   });
 
+  // Récupérer les transactions sans facture
+  const {
+    transactions: missingInvoices,
+    loading: loadingMissing,
+    error: errorMissing,
+    refresh: refreshMissing,
+    count: missingCount,
+  } = useMissingInvoices();
+
+  // Convertir TransactionMissingInvoice en TransactionForUpload
+  const transactionForUpload: TransactionForUpload | null = useMemo(() => {
+    if (!selectedMissingTx) return null;
+    return {
+      id: selectedMissingTx.id,
+      transaction_id: selectedMissingTx.transaction_id,
+      label: selectedMissingTx.label,
+      counterparty_name: selectedMissingTx.counterparty_name,
+      amount: selectedMissingTx.amount,
+      currency: selectedMissingTx.currency,
+      emitted_at: selectedMissingTx.emitted_at,
+      has_attachment: selectedMissingTx.has_attachment,
+      matched_document_id: selectedMissingTx.matched_document_id,
+      order_number: selectedMissingTx.order_number,
+    };
+  }, [selectedMissingTx]);
+
+  // Handler pour ouvrir le modal d'upload
+  const handleOpenUpload = (tx: TransactionMissingInvoice): void => {
+    setSelectedMissingTx(tx);
+    setShowUploadModal(true);
+  };
+
   // Calculer les KPIs
   const kpis = useMemo(() => {
+    if (activeTab === 'manquantes') {
+      return {
+        totalFacture: 0,
+        totalPaye: 0,
+        enAttente: missingCount,
+        montantEnAttente: missingInvoices.reduce(
+          (sum, tx) => sum + Math.abs(tx.amount),
+          0
+        ),
+        enRetard: 0,
+        montantEnRetard: 0,
+      };
+    }
+
     const filtered = documents.filter(d =>
       tabToDocumentType[activeTab].includes(d.document_type)
     );
@@ -237,7 +413,7 @@ export default function FacturesPage() {
         0
       ),
     };
-  }, [documents, activeTab]);
+  }, [documents, activeTab, missingCount, missingInvoices]);
 
   // Handler pour voir une facture
   const handleView = (id: string) => {
@@ -246,9 +422,23 @@ export default function FacturesPage() {
 
   // Handler sync Qonto
   const handleSync = async () => {
-    // TODO: Implémenter la sync Qonto
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    refresh();
+    try {
+      const response = await fetch('/api/qonto/sync', {
+        method: 'POST',
+      });
+      const result = await response.json();
+
+      if (!result.success) {
+        console.error('[Qonto Sync] Failed:', result.message);
+      } else {
+        console.log('[Qonto Sync] Success:', result);
+      }
+
+      refresh();
+    } catch (error) {
+      console.error('[Qonto Sync] Error:', error);
+      refresh();
+    }
   };
 
   // FEATURE FLAG: Finance module disabled for Phase 1
@@ -387,6 +577,15 @@ export default function FacturesPage() {
               {documents.filter(d => d.document_type === 'expense').length}
             </Badge>
           </TabsTrigger>
+          <TabsTrigger value="manquantes">
+            <AlertTriangle className="h-4 w-4 mr-1 text-amber-500" />
+            Factures manquantes
+            {missingCount > 0 && (
+              <Badge variant="destructive" className="ml-2">
+                {missingCount}
+              </Badge>
+            )}
+          </TabsTrigger>
         </TabsList>
 
         {/* Toolbar */}
@@ -460,6 +659,40 @@ export default function FacturesPage() {
             onView={handleView}
           />
         </TabsContent>
+
+        <TabsContent value="manquantes" className="mt-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-amber-500" />
+                    Transactions sans facture
+                  </CardTitle>
+                  <CardDescription>
+                    Ces transactions ont été rapprochées mais n'ont pas de pièce
+                    jointe dans Qonto. Uploadez les factures manquantes.
+                  </CardDescription>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void refreshMissing()}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Rafraîchir
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <MissingInvoicesTable
+                transactions={missingInvoices}
+                loading={loadingMissing}
+                onUpload={handleOpenUpload}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Error state */}
@@ -473,6 +706,30 @@ export default function FacturesPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Error state for missing invoices */}
+      {errorMissing && activeTab === 'manquantes' && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-red-700">
+              <AlertCircle className="h-5 w-5" />
+              <p>{errorMissing}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Modal upload facture */}
+      <InvoiceUploadModal
+        transaction={transactionForUpload}
+        open={showUploadModal}
+        onOpenChange={setShowUploadModal}
+        onUploadComplete={() => {
+          void refreshMissing();
+          setShowUploadModal(false);
+          setSelectedMissingTx(null);
+        }}
+      />
     </div>
   );
 }

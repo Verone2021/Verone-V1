@@ -12,3 +12,4 @@ export * from './use-expenses';
 export * from './use-counterparties';
 export * from './use-unique-labels';
 export * from './use-matching-rules';
+export * from './use-missing-invoices';
