@@ -176,6 +176,8 @@ export default function LinkMeOrdersPage() {
         allowCancel
         allowDelete
         allowEdit
+        enablePagination
+        defaultItemsPerPage={10}
         additionalColumns={additionalColumns}
         updateStatusAction={updateSalesOrderStatus}
         renderCreateModal={({ open, onClose, onSuccess }) => (

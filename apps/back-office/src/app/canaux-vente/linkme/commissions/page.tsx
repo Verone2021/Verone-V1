@@ -236,7 +236,7 @@ export default function LinkMeCommissionsPage() {
           return commissionStatus === 'pending';
         case 'payables':
           // Commission prête pour demande de paiement (client a payé)
-          return commissionStatus === 'validated';
+          return commissionStatus === 'payable';
         case 'en_cours':
           // Demande de paiement en cours
           return commissionStatus === 'requested';

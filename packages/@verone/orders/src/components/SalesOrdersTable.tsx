@@ -105,6 +105,23 @@ const statusColors: Record<SalesOrderStatus, string> = {
   cancelled: 'bg-red-100 text-red-800',
 };
 
+// Labels et couleurs statut paiement
+const paymentStatusLabels: Record<string, string> = {
+  pending: 'En attente',
+  partial: 'Partiel',
+  paid: 'Paye',
+  refunded: 'Rembourse',
+  overdue: 'En retard',
+};
+
+const paymentStatusColors: Record<string, string> = {
+  pending: 'bg-orange-100 text-orange-800',
+  partial: 'bg-yellow-100 text-yellow-800',
+  paid: 'bg-green-100 text-green-800',
+  refunded: 'bg-gray-100 text-gray-800',
+  overdue: 'bg-red-100 text-red-800',
+};
+
 type SortColumn = 'date' | 'client' | 'amount' | null;
 type SortDirection = 'asc' | 'desc';
 
@@ -180,6 +197,12 @@ export interface SalesOrdersTableProps {
 
   /** Filtre personnalise applique sur les commandes */
   customFilter?: (order: SalesOrder) => boolean;
+
+  /** Activer la pagination */
+  enablePagination?: boolean;
+
+  /** Nombre d'items par page par defaut (10 ou 20) */
+  defaultItemsPerPage?: 10 | 20;
 }
 
 const isOrderEditable = (order: SalesOrder, channelId?: string | null) => {
@@ -222,6 +245,8 @@ export function SalesOrdersTable({
   updateStatusAction,
   renderHeaderRight,
   customFilter,
+  enablePagination = false,
+  defaultItemsPerPage = 10,
 }: SalesOrdersTableProps) {
   const {
     loading,
@@ -250,6 +275,12 @@ export function SalesOrdersTable({
   // Etats tri
   const [sortColumn, setSortColumn] = useState<SortColumn>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  // Etats pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState<10 | 20>(
+    defaultItemsPerPage
+  );
 
   // Etats modals
   const [selectedOrder, setSelectedOrder] = useState<SalesOrder | null>(null);
@@ -493,6 +524,22 @@ export function SalesOrdersTable({
 
     return statsData;
   }, [filteredOrders]);
+
+  // Pagination: calcul des commandes a afficher
+  const totalPages = enablePagination
+    ? Math.ceil(filteredOrders.length / itemsPerPage)
+    : 1;
+  const paginatedOrders = enablePagination
+    ? filteredOrders.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+      )
+    : filteredOrders;
+
+  // Reset page quand les filtres changent
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, customerTypeFilter, periodFilter, searchTerm, customFilter]);
 
   // Compteurs par onglet
   const tabCounts = useMemo(() => {
@@ -1034,6 +1081,7 @@ export function SalesOrdersTable({
                       </span>
                     </TableHead>
                     <TableHead>Statut</TableHead>
+                    <TableHead>Paiement</TableHead>
                     <TableHead className="w-20 text-center">Articles</TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-gray-50"
@@ -1062,7 +1110,7 @@ export function SalesOrdersTable({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredOrders.map(order => {
+                  {paginatedOrders.map(order => {
                     const customerName =
                       order.customer_type === 'organization'
                         ? order.organisations?.trade_name ||
@@ -1123,6 +1171,21 @@ export function SalesOrdersTable({
                                 </Badge>
                               )}
                             </div>
+                          </TableCell>
+                          <TableCell>
+                            {order.payment_status ? (
+                              <Badge
+                                className={
+                                  paymentStatusColors[order.payment_status] ||
+                                  'bg-gray-100 text-gray-800'
+                                }
+                              >
+                                {paymentStatusLabels[order.payment_status] ||
+                                  order.payment_status}
+                              </Badge>
+                            ) : (
+                              <span className="text-gray-400 text-sm">-</span>
+                            )}
                           </TableCell>
                           <TableCell className="text-center">
                             <span className="font-medium">{items.length}</span>
@@ -1332,6 +1395,66 @@ export function SalesOrdersTable({
                   })}
                 </TableBody>
               </Table>
+            </div>
+          )}
+
+          {/* Pagination controls */}
+          {enablePagination && filteredOrders.length > 0 && (
+            <div className="flex items-center justify-between mt-4 pt-4 border-t">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Afficher</span>
+                <div className="flex gap-1">
+                  <ButtonUnified
+                    variant={itemsPerPage === 10 ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      setItemsPerPage(10);
+                      setCurrentPage(1);
+                    }}
+                  >
+                    10
+                  </ButtonUnified>
+                  <ButtonUnified
+                    variant={itemsPerPage === 20 ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      setItemsPerPage(20);
+                      setCurrentPage(1);
+                    }}
+                  >
+                    20
+                  </ButtonUnified>
+                </div>
+                <span className="text-sm text-gray-600">par page</span>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-gray-600">
+                  {(currentPage - 1) * itemsPerPage + 1}-
+                  {Math.min(currentPage * itemsPerPage, filteredOrders.length)}{' '}
+                  sur {filteredOrders.length}
+                </span>
+                <div className="flex gap-1">
+                  <ButtonUnified
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Precedent
+                  </ButtonUnified>
+                  <ButtonUnified
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage(p => Math.min(totalPages, p + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                  >
+                    Suivant
+                  </ButtonUnified>
+                </div>
+              </div>
             </div>
           )}
         </CardContent>
