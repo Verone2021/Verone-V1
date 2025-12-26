@@ -148,20 +148,24 @@ function TransactionRow({
         )}
       </div>
 
-      {/* Badges */}
+      {/* Badges - Approche Pennylane: pièce jointe = justifié */}
       <div className="flex items-center gap-2">
-        {hasAttachments && (
-          <Badge variant="outline" className="gap-1">
+        {hasAttachments ? (
+          <Badge
+            variant="default"
+            className="text-xs bg-emerald-600 hover:bg-emerald-700 gap-1"
+          >
             <Paperclip className="h-3 w-3" />
+            Justifie
           </Badge>
-        )}
-        {transaction.matching_status === 'unmatched' ? (
-          <Badge variant="destructive" className="text-xs">
-            Non rapproché
+        ) : transaction.matching_status === 'unmatched' ? (
+          <Badge variant="warning" className="text-xs gap-1">
+            <Clock className="h-3 w-3" />A justifier
           </Badge>
         ) : (
-          <Badge variant="default" className="text-xs bg-green-600">
-            Rapproché
+          <Badge variant="default" className="text-xs bg-blue-600 gap-1">
+            <Check className="h-3 w-3" />
+            Rapproche
           </Badge>
         )}
       </div>
@@ -1036,38 +1040,59 @@ export default function RapprochementPage() {
         </Card>
       )}
 
-      {/* KPIs - Transaction focused (best practice) */}
+      {/* KPIs - Approche Pennylane: pièce jointe = justifié */}
       <KpiGrid columns={4}>
         <KpiCard
-          title="Total à rapprocher"
+          title="A justifier"
           value={
-            creditTransactions.filter(t => t.matching_status === 'unmatched')
-              .length +
-            debitTransactions.filter(t => t.matching_status === 'unmatched')
-              .length
+            creditTransactions.filter(
+              t =>
+                t.matching_status === 'unmatched' &&
+                (!t.attachment_ids || t.attachment_ids.length === 0)
+            ).length +
+            debitTransactions.filter(
+              t =>
+                t.matching_status === 'unmatched' &&
+                (!t.attachment_ids || t.attachment_ids.length === 0)
+            ).length
           }
           valueType="number"
           icon={<Clock className="h-4 w-4" />}
           variant="warning"
         />
         <KpiCard
-          title="Entrées (crédits)"
+          title="Justifies (avec PDF)"
+          value={
+            creditTransactions.filter(
+              t => t.attachment_ids && t.attachment_ids.length > 0
+            ).length +
+            debitTransactions.filter(
+              t => t.attachment_ids && t.attachment_ids.length > 0
+            ).length
+          }
+          valueType="number"
+          icon={<Paperclip className="h-4 w-4" />}
+          variant="success"
+        />
+        <KpiCard
+          title="Entrees non justifiees"
           value={creditTransactions.reduce(
             (sum, t) =>
-              t.matching_status === 'unmatched'
+              t.matching_status === 'unmatched' &&
+              (!t.attachment_ids || t.attachment_ids.length === 0)
                 ? sum + Math.abs(t.amount)
                 : sum,
             0
           )}
           valueType="money"
           icon={<ArrowDownLeft className="h-4 w-4" />}
-          variant="success"
         />
         <KpiCard
-          title="Sorties (débits)"
+          title="Sorties non justifiees"
           value={debitTransactions.reduce(
             (sum, t) =>
-              t.matching_status === 'unmatched'
+              t.matching_status === 'unmatched' &&
+              (!t.attachment_ids || t.attachment_ids.length === 0)
                 ? sum + Math.abs(t.amount)
                 : sum,
             0
@@ -1075,17 +1100,6 @@ export default function RapprochementPage() {
           valueType="money"
           icon={<ArrowUpRight className="h-4 w-4" />}
           color="danger"
-        />
-        <KpiCard
-          title="Transactions rapprochées"
-          value={
-            creditTransactions.filter(t => t.matching_status !== 'unmatched')
-              .length +
-            debitTransactions.filter(t => t.matching_status !== 'unmatched')
-              .length
-          }
-          valueType="number"
-          icon={<CheckCircle className="h-4 w-4" />}
         />
       </KpiGrid>
 

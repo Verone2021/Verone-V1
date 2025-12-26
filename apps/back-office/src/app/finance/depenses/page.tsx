@@ -15,7 +15,13 @@ import {
   type Expense,
   type ExpenseFilters,
 } from '@verone/finance/hooks';
-import { Badge, Button, Input, KPICardUnified } from '@verone/ui';
+import {
+  Badge,
+  Button,
+  Input,
+  KPICardUnified,
+  TabsNavigation,
+} from '@verone/ui';
 import {
   AlertCircle,
   CheckCircle2,
@@ -169,6 +175,47 @@ export default function DepensesPage() {
     (_, i) => currentYear - i
   );
 
+  // Onglets de statut avec compteurs
+  const statusTabs = [
+    {
+      id: 'all',
+      label: 'Toutes',
+      icon: <FileText size={16} />,
+      badge: stats.total,
+    },
+    {
+      id: 'unclassified',
+      label: 'Non classées',
+      icon: <Clock size={16} />,
+      badge: stats.unclassified,
+    },
+    {
+      id: 'classified',
+      label: 'Classées',
+      icon: <CheckCircle2 size={16} />,
+      badge: stats.classified,
+    },
+    {
+      id: 'needs_review',
+      label: 'À revoir',
+      icon: <AlertCircle size={16} />,
+      badge: stats.needsReview,
+    },
+    {
+      id: 'ignored',
+      label: 'Ignorées',
+      icon: <XCircle size={16} />,
+      badge: stats.ignored,
+    },
+  ];
+
+  const handleStatusTabChange = (tabId: string) => {
+    setFilters(prev => ({
+      ...prev,
+      status: tabId as ExpenseFilters['status'],
+    }));
+  };
+
   // Handlers
   const handleSearch = () => {
     setFilters(prev => ({ ...prev, search: searchValue }));
@@ -294,6 +341,14 @@ export default function DepensesPage() {
           />
         </div>
 
+        {/* Onglets de statut */}
+        <TabsNavigation
+          tabs={statusTabs}
+          defaultTab={filters.status || 'all'}
+          onTabChange={handleStatusTabChange}
+          className="bg-white rounded-xl border border-slate-200 px-4"
+        />
+
         {/* Filtres */}
         <div className="bg-white rounded-xl border border-slate-200 p-4">
           <div className="flex flex-wrap items-center gap-4">
@@ -331,24 +386,6 @@ export default function DepensesPage() {
                   {year}
                 </option>
               ))}
-            </select>
-
-            {/* Filtre statut */}
-            <select
-              className="px-3 py-2 border border-slate-200 rounded-lg text-sm"
-              value={filters.status || 'all'}
-              onChange={e =>
-                setFilters(prev => ({
-                  ...prev,
-                  status: e.target.value as ExpenseFilters['status'],
-                }))
-              }
-            >
-              <option value="all">Tous les statuts</option>
-              <option value="unclassified">Non classées</option>
-              <option value="classified">Classées</option>
-              <option value="needs_review">À revoir</option>
-              <option value="ignored">Ignorées</option>
             </select>
 
             {/* Filtre catégorie */}

@@ -8,6 +8,7 @@ import { useParams } from 'next/navigation';
 import { AddressEditSection } from '@verone/common';
 import { ContactEditSection } from '@verone/customers';
 import { ContactsManagementSection } from '@verone/customers';
+import { OrganisationTransactionsSection } from '@verone/finance/components';
 import { OrganisationPurchaseOrdersSection } from '@verone/orders';
 import { OrganisationLogoCard } from '@verone/organisations';
 import { OrganisationStatsCard } from '@verone/organisations';
@@ -43,6 +44,7 @@ import {
   FileText,
   Store,
   Sparkles,
+  Wallet,
 } from 'lucide-react';
 
 // Interface pour les canaux de vente de l'organisation
@@ -147,6 +149,13 @@ export default function SupplierDetailPage() {
       badge: counts.products.toString(),
       disabled: !isModuleDeployed('products'),
       disabledBadge: getModulePhase('products'),
+    },
+    {
+      id: 'transactions',
+      label: 'Transactions',
+      icon: <Wallet className="h-4 w-4" />,
+      disabled: !isModuleDeployed('finance'),
+      disabledBadge: getModulePhase('finance'),
     },
   ];
 
@@ -411,6 +420,13 @@ export default function SupplierDetailPage() {
             organisationName={getOrganisationDisplayName(supplier)}
             organisationType="supplier"
             onUpdate={() => handleSupplierUpdate({})}
+          />
+        </TabContent>
+
+        <TabContent activeTab={activeTab} tabId="transactions">
+          <OrganisationTransactionsSection
+            organisationId={supplier.id}
+            organisationName={getOrganisationDisplayName(supplier)}
           />
         </TabContent>
       </div>
