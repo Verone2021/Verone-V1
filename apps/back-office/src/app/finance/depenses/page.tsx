@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 
 import Link from 'next/link';
 
 import { useToast } from '@verone/common/hooks';
 import {
-  OrganisationLinkingModal,
+  QuickClassificationModal,
   SupplierCell,
   ExpenseDonutChart,
   MonthlyFlowChart,
@@ -18,6 +18,7 @@ import {
   useTreasuryStats,
   type Expense,
   type ExpenseFilters,
+  type ExpenseBreakdown,
 } from '@verone/finance/hooks';
 import {
   Badge,
@@ -26,6 +27,7 @@ import {
   KPICardUnified,
   TabsNavigation,
 } from '@verone/ui';
+import { createClient } from '@verone/utils/supabase/client';
 import {
   AlertCircle,
   CheckCircle2,
@@ -225,6 +227,86 @@ export default function DepensesPage() {
     (_, i) => currentYear - i
   );
 
+  // État pour le filtre d'année du graphique Dépenses par Catégorie
+  const [chartYear, setChartYear] = useState<number | null>(null);
+  const [chartExpenseBreakdown, setChartExpenseBreakdown] = useState<
+    ExpenseBreakdown[]
+  >([]);
+  const [chartLoading, setChartLoading] = useState(false);
+
+  // Charger les données du graphique filtrées par année
+  const supabase = createClient();
+
+  const fetchChartData = useCallback(async () => {
+    setChartLoading(true);
+    try {
+      // Construire les dates de filtre
+      let startDate: string | undefined;
+      let endDate: string | undefined;
+
+      if (chartYear) {
+        startDate = `${chartYear}-01-01`;
+        endDate = `${chartYear}-12-31`;
+      }
+
+      // Requête pour les dépenses par catégorie
+      let query = supabase
+        .from('v_expenses_with_details')
+        .select('category, amount')
+        .eq('side', 'debit');
+
+      if (startDate && endDate) {
+        query = query.gte('emitted_at', startDate).lte('emitted_at', endDate);
+      }
+
+      const { data, error: queryError } = await query;
+
+      if (queryError) {
+        console.warn('Error fetching chart data:', queryError);
+        return;
+      }
+
+      // Agréger par catégorie
+      const categoryData: Record<string, { total: number; count: number }> = {};
+      let totalExpenses = 0;
+
+      (data || []).forEach(
+        (exp: { category: string | null; amount: number | null }) => {
+          const cat = exp.category || 'other';
+          const amount = exp.amount ?? 0;
+          if (!categoryData[cat]) {
+            categoryData[cat] = { total: 0, count: 0 };
+          }
+          categoryData[cat].total += Math.abs(amount);
+          categoryData[cat].count += 1;
+          totalExpenses += Math.abs(amount);
+        }
+      );
+
+      const breakdownArray: ExpenseBreakdown[] = Object.entries(categoryData)
+        .map(([name, catData]) => ({
+          category_name: name,
+          category_code: name,
+          total_amount: catData.total,
+          count: catData.count,
+          percentage:
+            totalExpenses > 0 ? (catData.total / totalExpenses) * 100 : 0,
+        }))
+        .sort((a, b) => b.total_amount - a.total_amount);
+
+      setChartExpenseBreakdown(breakdownArray);
+    } catch (err) {
+      console.error('Error fetching chart data:', err);
+    } finally {
+      setChartLoading(false);
+    }
+  }, [chartYear, supabase]);
+
+  // Charger les données du graphique au montage et quand l'année change
+  useEffect(() => {
+    fetchChartData();
+  }, [fetchChartData]);
+
   // Onglets de statut avec compteurs
   const statusTabs = [
     {
@@ -375,8 +457,11 @@ export default function DepensesPage() {
         {/* Dashboard Graphiques */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <ExpenseDonutChart
-            data={expenseBreakdown}
-            isLoading={dashboardLoading}
+            data={chartExpenseBreakdown}
+            isLoading={chartLoading}
+            selectedYear={chartYear}
+            availableYears={years}
+            onYearChange={setChartYear}
           />
           <MonthlyFlowChart data={evolution} isLoading={dashboardLoading} />
         </div>
@@ -560,8 +645,8 @@ export default function DepensesPage() {
         )}
       </div>
 
-      {/* Modal de classement - Utilise OrganisationLinkingModal (workflow unifié) */}
-      <OrganisationLinkingModal
+      {/* Modal de classement V2 - QuickClassificationModal avec design moderne */}
+      <QuickClassificationModal
         open={classifyModalOpen}
         onOpenChange={setClassifyModalOpen}
         label={
@@ -569,8 +654,11 @@ export default function DepensesPage() {
           selectedExpense?.transaction_counterparty_name ||
           ''
         }
-        transactionCount={1}
-        totalAmount={selectedExpense?.amount || 0}
+        amount={selectedExpense?.amount || 0}
+        transactionId={selectedExpense?.transaction_id}
+        counterpartyName={
+          selectedExpense?.transaction_counterparty_name || undefined
+        }
         onSuccess={handleClassifySuccess}
       />
     </div>

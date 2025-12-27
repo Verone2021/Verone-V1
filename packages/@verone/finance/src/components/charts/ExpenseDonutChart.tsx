@@ -12,6 +12,9 @@ import type { ExpenseBreakdown } from '../../hooks/use-treasury-stats';
 interface ExpenseDonutChartProps {
   data: ExpenseBreakdown[];
   isLoading?: boolean;
+  selectedYear?: number | null;
+  availableYears?: number[];
+  onYearChange?: (year: number | null) => void;
 }
 
 // Type local pour Recharts avec index signature
@@ -39,6 +42,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   rent: '#a855f7', // purple
   purchase_stock: '#eab308', // yellow
   other: '#64748b', // slate
+  _aggregated_other: '#64748b', // slate (pour les catégories regroupées)
 };
 
 // Couleurs par défaut si catégorie inconnue
@@ -86,9 +90,11 @@ function CustomTooltip({
   if (!active || !payload?.length) return null;
 
   const data = payload[0].payload;
+  // Nettoie le nom de catégorie pour le tooltip aussi
+  const cleanName = data.category_name.replace(/^Compte\s+/i, '');
   return (
     <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-lg">
-      <p className="text-sm font-medium text-slate-900">{data.category_name}</p>
+      <p className="text-sm font-medium text-slate-900">{cleanName}</p>
       <p className="text-lg font-bold text-slate-900">
         {formatCurrency(data.total_amount)}
       </p>
@@ -97,7 +103,18 @@ function CustomTooltip({
   );
 }
 
-export function ExpenseDonutChart({ data, isLoading }: ExpenseDonutChartProps) {
+// Nettoie le nom de catégorie (enlève "Compte " au début)
+function cleanCategoryName(name: string): string {
+  return name.replace(/^Compte\s+/i, '');
+}
+
+export function ExpenseDonutChart({
+  data,
+  isLoading,
+  selectedYear,
+  availableYears,
+  onYearChange,
+}: ExpenseDonutChartProps) {
   // Trier par montant décroissant et prendre les top 6 + "Autres"
   const sortedData = [...data].sort((a, b) => b.total_amount - a.total_amount);
   const topCategories: ChartDataItem[] = sortedData.slice(0, 6).map(item => ({
@@ -111,7 +128,7 @@ export function ExpenseDonutChart({ data, isLoading }: ExpenseDonutChartProps) {
           ...topCategories,
           {
             category_name: 'Autres',
-            category_code: 'other',
+            category_code: '_aggregated_other',
             total_amount: otherCategories.reduce(
               (sum, c) => sum + c.total_amount,
               0
@@ -160,10 +177,32 @@ export function ExpenseDonutChart({ data, isLoading }: ExpenseDonutChartProps) {
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-6">
-      <h3 className="text-lg font-semibold text-slate-900">
-        Dépenses par Catégorie
-      </h3>
-      <p className="text-sm text-slate-500">Ce mois</p>
+      <div className="flex items-center justify-between mb-2">
+        <div>
+          <h3 className="text-lg font-semibold text-slate-900">
+            Dépenses par Catégorie
+          </h3>
+          <p className="text-sm text-slate-500">
+            {selectedYear ? `Année ${selectedYear}` : 'Toutes les données'}
+          </p>
+        </div>
+        {onYearChange && availableYears && availableYears.length > 0 && (
+          <select
+            value={selectedYear ?? ''}
+            onChange={e =>
+              onYearChange(e.target.value ? parseInt(e.target.value) : null)
+            }
+            className="px-3 py-1.5 border border-slate-200 rounded-lg text-sm bg-white"
+          >
+            <option value="">Toutes</option>
+            {availableYears.map(year => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
 
       <div className="mt-4 flex items-center gap-4">
         {/* Donut Chart */}
@@ -215,10 +254,15 @@ export function ExpenseDonutChart({ data, isLoading }: ExpenseDonutChartProps) {
                     backgroundColor: getColor(item.category_code, index),
                   }}
                 />
-                <span className="text-slate-600">{item.category_name}</span>
+                <span
+                  className="text-slate-600 truncate max-w-[120px]"
+                  title={item.category_name}
+                >
+                  {cleanCategoryName(item.category_name)}
+                </span>
               </div>
-              <span className="font-medium text-slate-900">
-                {item.percentage.toFixed(0)}%
+              <span className="font-medium text-slate-900 whitespace-nowrap ml-2">
+                {formatCurrency(item.total_amount)}
               </span>
             </div>
           ))}

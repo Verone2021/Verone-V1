@@ -3,10 +3,12 @@
 export * from './ClassificationModal';
 export * from './ExpenseClassificationModal';
 export * from './HierarchicalCategorySelector';
+export * from './QuickClassificationModal';
 export * from './InvoiceUploadModal';
 export * from './CategoryCardGrid';
 export * from './OrganisationLinkingModal';
 export * from './OrganisationTransactionsSection';
+export * from './RapprochementModal';
 export * from './SimpleExpenseModal';
 export * from './SupplierCell';
 
