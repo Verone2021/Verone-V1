@@ -15,3 +15,5 @@ export * from './use-matching-rules';
 export * from './use-missing-invoices';
 export * from './use-bank-transaction-stats';
 export * from './use-organisation-transactions';
+export * from './use-auto-classification';
+export * from './use-pcg-categories';

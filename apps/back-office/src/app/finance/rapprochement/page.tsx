@@ -11,8 +11,10 @@ import {
 } from '@verone/finance';
 import {
   InvoiceUploadModal,
+  SupplierCell,
   type TransactionForUpload,
 } from '@verone/finance/components';
+import { useAutoClassification } from '@verone/finance/hooks';
 import {
   Card,
   CardContent,
@@ -100,10 +102,19 @@ function TransactionRow({
   transaction,
   onClick,
   isSelected,
+  onLink,
+  suggestion,
 }: {
   transaction: BankTransaction;
   onClick: () => void;
   isSelected: boolean;
+  onLink: () => void;
+  suggestion?: {
+    organisationId: string | null;
+    organisationName: string | null;
+    category: string | null;
+    confidence: 'high' | 'medium' | 'none';
+  };
 }) {
   const hasAttachments =
     transaction.attachment_ids && transaction.attachment_ids.length > 0;
@@ -141,11 +152,19 @@ function TransactionRow({
         <p className="font-medium truncate">
           {transaction.label || transaction.note || 'Sans libellé'}
         </p>
-        {transaction.counterparty_name && (
-          <p className="text-sm text-muted-foreground truncate">
-            {transaction.counterparty_name}
-          </p>
-        )}
+        <div className="text-sm text-muted-foreground truncate">
+          <SupplierCell
+            counterpartyName={transaction.counterparty_name}
+            label={transaction.label}
+            transactionId={transaction.id}
+            onLink={onLink}
+            suggestedOrganisationId={suggestion?.organisationId}
+            suggestedOrganisationName={suggestion?.organisationName}
+            suggestedCategory={suggestion?.category}
+            confidence={suggestion?.confidence}
+            showCategory
+          />
+        </div>
       </div>
 
       {/* Badges - Approche Pennylane: pièce jointe = justifié */}
@@ -199,6 +218,8 @@ function CreditSidePanel({
   generateSuggestions,
   preselectedOrderId,
   onOpenUploadModal,
+  onLink,
+  suggestion,
 }: {
   transaction: BankTransaction;
   orders: OrderWithoutInvoice[];
@@ -218,6 +239,13 @@ function CreditSidePanel({
   }>;
   preselectedOrderId?: string | null;
   onOpenUploadModal: () => void;
+  onLink: () => void;
+  suggestion?: {
+    organisationId: string | null;
+    organisationName: string | null;
+    category: string | null;
+    confidence: 'high' | 'medium' | 'none';
+  };
 }) {
   // Initialiser avec la commande présélectionnée si disponible
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(
@@ -337,9 +365,19 @@ function CreditSidePanel({
               </div>
               <div>
                 <p className="text-muted-foreground">De</p>
-                <p className="font-medium">
-                  {transaction.counterparty_name || 'Inconnu'}
-                </p>
+                <div className="font-medium">
+                  <SupplierCell
+                    counterpartyName={transaction.counterparty_name}
+                    label={transaction.label}
+                    transactionId={transaction.id}
+                    onLink={onLink}
+                    suggestedOrganisationId={suggestion?.organisationId}
+                    suggestedOrganisationName={suggestion?.organisationName}
+                    suggestedCategory={suggestion?.category}
+                    confidence={suggestion?.confidence}
+                    showCategory
+                  />
+                </div>
               </div>
             </div>
 
@@ -527,37 +565,90 @@ function CreditSidePanel({
 }
 
 // =====================================================================
-// COMPOSANT: PANNEAU LATERAL DEBIT (Fournisseur/Dépense)
+// COMPOSANT: PANNEAU LATERAL DEBIT (Catégorisation directe PCG)
+// Interface simplifiée style Abby/Pennylane
 // =====================================================================
 
-type DebitMode = 'select' | 'supplier' | 'expense';
+// Catégories PCG les plus courantes pour les dépenses
+// Conforme au Plan Comptable Général français
+const PCG_EXPENSE_CATEGORIES = [
+  { code: '627', label: 'Frais bancaires', icon: '🏦' },
+  { code: '651', label: 'Abonnements/SaaS', icon: '📅' },
+  { code: '606', label: 'Fournitures', icon: '📦' },
+  { code: '624', label: 'Transports', icon: '🚚' },
+  { code: '623', label: 'Marketing/Pub', icon: '📢' },
+  { code: '635', label: 'Taxes & impôts', icon: '📋' },
+  { code: '625', label: 'Repas/Déplacements', icon: '🍽️' },
+  { code: '626', label: 'Télécoms', icon: '📱' },
+  { code: '658', label: 'Autre', icon: '📄' },
+];
 
-// Catégories de dépenses courantes
-const EXPENSE_CATEGORIES = [
-  { id: 'bank_fees', label: 'Frais bancaires', icon: '🏦' },
-  { id: 'subscription', label: 'Abonnement', icon: '📅' },
-  { id: 'supplies', label: 'Fournitures', icon: '📦' },
-  { id: 'transport', label: 'Transport', icon: '🚚' },
-  { id: 'marketing', label: 'Marketing', icon: '📢' },
-  { id: 'taxes', label: 'Taxes & impôts', icon: '📋' },
-  { id: 'other', label: 'Autre', icon: '📄' },
+// Taux de TVA disponibles (conformes à la réglementation française)
+const TVA_RATES = [
+  { value: 20, label: '20%', desc: 'Taux normal' },
+  { value: 10, label: '10%', desc: 'Intermédiaire' },
+  { value: 5.5, label: '5,5%', desc: 'Réduit' },
+  { value: 0, label: '0%', desc: 'Exonéré' },
+];
+
+// Modes de paiement
+const PAYMENT_METHODS = [
+  { value: 'virement', label: 'Virement', icon: '🏦' },
+  { value: 'cb', label: 'Carte', icon: '💳' },
+  { value: 'prelevement', label: 'Prélèvement', icon: '📤' },
+  { value: 'cheque', label: 'Chèque', icon: '📝' },
 ];
 
 function DebitSidePanel({
   transaction,
   onClose,
   onIgnore,
+  onOpenUploadModal,
+  onLink,
+  suggestion,
 }: {
   transaction: BankTransaction;
   onClose: () => void;
   onIgnore: (transactionId: string, reason: string) => Promise<void>;
+  onOpenUploadModal?: () => void;
+  onLink: () => void;
+  suggestion?: {
+    organisationId: string | null;
+    organisationName: string | null;
+    category: string | null;
+    confidence: 'high' | 'medium' | 'none';
+  };
 }) {
-  const [mode, setMode] = useState<DebitMode>('select');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedTva, setSelectedTva] = useState<number | null>(20);
+  const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
+  const [showOrgSearch, setShowOrgSearch] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const hasAttachments =
     transaction.attachment_ids && transaction.attachment_ids.length > 0;
+
+  // Détection automatique du mode de paiement à partir du libellé
+  useEffect(() => {
+    const label = (transaction.label || '').toLowerCase();
+    if (label.includes('virement') || label.includes('vir ')) {
+      setSelectedPayment('virement');
+    } else if (
+      label.includes('carte') ||
+      label.includes('cb ') ||
+      label.includes('visa')
+    ) {
+      setSelectedPayment('cb');
+    } else if (
+      label.includes('prelevement') ||
+      label.includes('prlv') ||
+      label.includes('sepa')
+    ) {
+      setSelectedPayment('prelevement');
+    } else if (label.includes('cheque') || label.includes('chq')) {
+      setSelectedPayment('cheque');
+    }
+  }, [transaction.label]);
 
   const handleViewPdf = () => {
     if (hasAttachments && transaction.attachment_ids) {
@@ -568,240 +659,235 @@ function DebitSidePanel({
     }
   };
 
-  const handleIgnore = () => {
+  const handleSubmit = () => {
+    if (!selectedCategory) return;
+
     startTransition(async () => {
-      const reason = selectedCategory
-        ? `Catégorisé: ${EXPENSE_CATEGORIES.find(c => c.id === selectedCategory)?.label}`
-        : 'Ignoré manuellement';
+      const category = PCG_EXPENSE_CATEGORIES.find(
+        c => c.code === selectedCategory
+      );
+      const tvaLabel = selectedTva !== null ? ` (TVA ${selectedTva}%)` : '';
+      const reason = `PCG ${selectedCategory}: ${category?.label || 'Non classé'}${tvaLabel}`;
       await onIgnore(transaction.id, reason);
       onClose();
     });
   };
 
-  // Mode sélection initiale
-  if (mode === 'select') {
-    return (
-      <>
-        <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
-            <ArrowUpRight className="h-5 w-5 text-red-600" />
-            Sortie d'argent
-          </SheetTitle>
-        </SheetHeader>
+  // Calcul HT/TVA
+  const ttc = Math.abs(transaction.amount);
+  const tvaRate = selectedTva || 0;
+  const ht = Math.round((ttc / (1 + tvaRate / 100)) * 100) / 100;
+  const tvaAmount = Math.round((ttc - ht) * 100) / 100;
 
-        <div className="space-y-6 mt-6">
-          {/* Infos transaction */}
-          <Card>
-            <CardContent className="pt-4 space-y-3">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-sm text-muted-foreground">Montant payé</p>
-                  <Money
-                    amount={-Math.abs(transaction.amount)}
-                    className="text-2xl font-bold text-red-600"
-                  />
-                </div>
-                <Badge variant="outline">
-                  {transaction.operation_type || 'Virement'}
-                </Badge>
-              </div>
-
-              <Separator />
-
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-muted-foreground">Date</p>
-                  <p className="font-medium">
-                    {formatDate(
-                      transaction.settled_at || transaction.emitted_at
-                    )}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Vers</p>
-                  <p className="font-medium">
-                    {transaction.counterparty_name || 'Inconnu'}
-                  </p>
-                </div>
-              </div>
-
-              {transaction.reference && (
-                <div className="text-sm">
-                  <p className="text-muted-foreground">Référence</p>
-                  <p className="font-medium font-mono">
-                    {transaction.reference}
-                  </p>
-                </div>
-              )}
-
-              {hasAttachments && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleViewPdf}
-                  className="w-full"
-                >
-                  <Eye className="h-4 w-4 mr-2" />
-                  Voir la pièce jointe
-                  <ExternalLink className="h-3 w-3 ml-2" />
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Options de catégorisation */}
-          <div className="space-y-3">
-            <h4 className="font-medium">Catégoriser cette sortie</h4>
-
-            <Card
-              className="cursor-pointer hover:border-primary transition-colors"
-              onClick={() => setMode('supplier')}
-            >
-              <CardContent className="p-4 flex items-center gap-3">
-                <Building2 className="h-5 w-5 text-muted-foreground" />
-                <div className="flex-1">
-                  <p className="font-medium">Facture fournisseur</p>
-                  <p className="text-sm text-muted-foreground">
-                    Associer à un fournisseur existant
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card
-              className="cursor-pointer hover:border-primary transition-colors"
-              onClick={() => setMode('expense')}
-            >
-              <CardContent className="p-4 flex items-center gap-3">
-                <FileText className="h-5 w-5 text-muted-foreground" />
-                <div className="flex-1">
-                  <p className="font-medium">Dépense simple</p>
-                  <p className="text-sm text-muted-foreground">
-                    Frais bancaires, abonnements, etc.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Actions */}
-          <div className="pt-4 border-t">
-            <Button variant="outline" onClick={onClose} className="w-full">
-              Fermer
-            </Button>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  // Mode dépense simple
-  if (mode === 'expense') {
-    return (
-      <>
-        <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-muted-foreground" />
-            Catégoriser la dépense
-          </SheetTitle>
-        </SheetHeader>
-
-        <div className="space-y-6 mt-6">
-          {/* Résumé */}
-          <div className="p-3 bg-muted rounded-lg">
-            <div className="flex justify-between items-center">
-              <span className="text-sm">
-                {transaction.counterparty_name || 'Dépense'}
-              </span>
-              <Money amount={-Math.abs(transaction.amount)} colorize />
-            </div>
-          </div>
-
-          {/* Catégories */}
-          <div className="space-y-2">
-            <h4 className="font-medium text-sm">Choisir une catégorie</h4>
-            <div className="grid grid-cols-2 gap-2">
-              {EXPENSE_CATEGORIES.map(cat => (
-                <div
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={`
-                    p-3 border rounded-lg cursor-pointer transition-colors text-center
-                    ${selectedCategory === cat.id ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'}
-                  `}
-                >
-                  <span className="text-xl">{cat.icon}</span>
-                  <p className="text-sm mt-1">{cat.label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-2 pt-4 border-t">
-            <Button
-              variant="outline"
-              onClick={() => setMode('select')}
-              className="flex-1"
-            >
-              Retour
-            </Button>
-            <Button
-              onClick={handleIgnore}
-              disabled={!selectedCategory || isPending}
-              className="flex-1"
-            >
-              {isPending ? (
-                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Check className="h-4 w-4 mr-2" />
-              )}
-              Valider
-            </Button>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  // Mode facture fournisseur
   return (
     <>
       <SheetHeader>
         <SheetTitle className="flex items-center gap-2">
-          <Building2 className="h-5 w-5 text-muted-foreground" />
-          Facture fournisseur
+          <ArrowUpRight className="h-5 w-5 text-red-600" />
+          Catégoriser la dépense
         </SheetTitle>
       </SheetHeader>
 
-      <div className="space-y-6 mt-6">
-        {/* Résumé */}
-        <div className="p-3 bg-muted rounded-lg">
-          <div className="flex justify-between items-center">
-            <span className="text-sm">
-              {transaction.counterparty_name || 'Fournisseur'}
+      <div className="space-y-5 mt-6">
+        {/* Résumé transaction */}
+        <Card>
+          <CardContent className="pt-4 space-y-3">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm text-muted-foreground">Montant TTC</p>
+                <Money
+                  amount={-Math.abs(transaction.amount)}
+                  className="text-2xl font-bold text-red-600"
+                />
+              </div>
+              <Badge variant="outline">
+                {transaction.operation_type || 'Virement'}
+              </Badge>
+            </div>
+
+            <Separator />
+
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-muted-foreground">Date</p>
+                <p className="font-medium">
+                  {formatDate(transaction.settled_at || transaction.emitted_at)}
+                </p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Libellé</p>
+                <div className="font-medium truncate">
+                  <SupplierCell
+                    counterpartyName={transaction.counterparty_name}
+                    label={transaction.label}
+                    transactionId={transaction.id}
+                    onLink={onLink}
+                    suggestedOrganisationId={suggestion?.organisationId}
+                    suggestedOrganisationName={suggestion?.organisationName}
+                    suggestedCategory={suggestion?.category}
+                    confidence={suggestion?.confidence}
+                    showCategory
+                  />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Section 1: Catégorie PCG (obligatoire) */}
+        <div>
+          <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-white text-xs">
+              1
             </span>
-            <Money amount={-Math.abs(transaction.amount)} colorize />
+            Catégorie comptable
+            <span className="text-red-500">*</span>
+          </h4>
+          <div className="grid grid-cols-3 gap-2">
+            {PCG_EXPENSE_CATEGORIES.map(cat => (
+              <div
+                key={cat.code}
+                onClick={() => setSelectedCategory(cat.code)}
+                className={`
+                  p-2 border rounded-lg cursor-pointer transition-colors text-center
+                  ${selectedCategory === cat.code ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'hover:bg-muted/50'}
+                `}
+              >
+                <span className="text-lg">{cat.icon}</span>
+                <p className="text-xs mt-1 font-medium">{cat.label}</p>
+                <p className="text-[10px] text-muted-foreground">{cat.code}</p>
+              </div>
+            ))}
           </div>
         </div>
 
-        <p className="text-sm text-muted-foreground text-center py-8">
-          La gestion des factures fournisseurs est disponible dans
-          <br />
-          <strong>Commandes → Fournisseurs</strong>
-        </p>
+        {/* Section 2: TVA */}
+        <div>
+          <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-white text-xs">
+              2
+            </span>
+            Taux de TVA
+          </h4>
+          <div className="grid grid-cols-4 gap-2">
+            {TVA_RATES.map(rate => (
+              <div
+                key={rate.value}
+                onClick={() => setSelectedTva(rate.value)}
+                className={`
+                  p-2 border rounded-lg cursor-pointer transition-colors text-center
+                  ${selectedTva === rate.value ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'hover:bg-muted/50'}
+                `}
+              >
+                <p className="font-medium text-sm">{rate.label}</p>
+                <p className="text-[10px] text-muted-foreground">{rate.desc}</p>
+              </div>
+            ))}
+          </div>
+          {/* Affichage HT/TVA calculés */}
+          {selectedTva !== null && selectedTva > 0 && (
+            <div className="mt-2 p-2 bg-muted rounded-lg text-xs grid grid-cols-2 gap-2">
+              <div>
+                <span className="text-muted-foreground">Montant HT: </span>
+                <span className="font-medium">{ht.toFixed(2)} €</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">TVA: </span>
+                <span className="font-medium">{tvaAmount.toFixed(2)} €</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Section 3: Mode de paiement */}
+        <div>
+          <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-white text-xs">
+              3
+            </span>
+            Mode de paiement
+          </h4>
+          <div className="grid grid-cols-4 gap-2">
+            {PAYMENT_METHODS.map(method => (
+              <div
+                key={method.value}
+                onClick={() => setSelectedPayment(method.value)}
+                className={`
+                  p-2 border rounded-lg cursor-pointer transition-colors text-center
+                  ${selectedPayment === method.value ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'hover:bg-muted/50'}
+                `}
+              >
+                <span className="text-lg">{method.icon}</span>
+                <p className="text-xs mt-1">{method.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Section 4: Organisation (facultatif) */}
+        <div className="border-t pt-4">
+          <button
+            type="button"
+            onClick={() => setShowOrgSearch(!showOrgSearch)}
+            className="flex w-full items-center justify-between text-sm text-muted-foreground hover:text-foreground"
+          >
+            <span className="flex items-center gap-2">
+              <Building2 className="h-4 w-4" />
+              Lier à une organisation (facultatif)
+            </span>
+            <span className="text-xs">{showOrgSearch ? '−' : '+'}</span>
+          </button>
+          {showOrgSearch && (
+            <div className="mt-2 p-3 bg-muted/50 rounded-lg">
+              <p className="text-xs text-muted-foreground">
+                La liaison à une organisation sera disponible prochainement.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Justificatif */}
+        <div className="border-t pt-4">
+          {hasAttachments ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleViewPdf}
+              className="w-full gap-2"
+            >
+              <Eye className="h-4 w-4" />
+              Voir la pièce jointe
+              <ExternalLink className="h-3 w-3" />
+            </Button>
+          ) : onOpenUploadModal ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onOpenUploadModal}
+              className="w-full gap-2"
+            >
+              <Upload className="h-4 w-4" />
+              Ajouter un justificatif
+            </Button>
+          ) : null}
+        </div>
 
         {/* Actions */}
         <div className="flex gap-2 pt-4 border-t">
+          <Button variant="outline" onClick={onClose} className="flex-1">
+            Annuler
+          </Button>
           <Button
-            variant="outline"
-            onClick={() => setMode('select')}
+            onClick={handleSubmit}
+            disabled={!selectedCategory || isPending}
             className="flex-1"
           >
-            Retour
-          </Button>
-          <Button variant="outline" onClick={onClose} className="flex-1">
-            Fermer
+            {isPending ? (
+              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Check className="h-4 w-4 mr-2" />
+            )}
+            Valider
           </Button>
         </div>
       </div>
@@ -818,7 +904,9 @@ export default function RapprochementPage() {
   const preselectedOrderId = searchParams.get('orderId');
   const preselectedAmount = searchParams.get('amount');
 
-  const [activeTab, setActiveTab] = useState<'credits' | 'debits'>('credits');
+  const [activeTab, setActiveTab] = useState<'a_justifier' | 'justifies'>(
+    'a_justifier'
+  );
   const [selectedTransaction, setSelectedTransaction] =
     useState<BankTransaction | null>(null);
   const [search, setSearch] = useState('');
@@ -866,9 +954,40 @@ export default function RapprochementPage() {
     refresh,
   } = useBankReconciliation();
 
-  // Filtrer les transactions
-  const filteredCredits = useMemo(() => {
-    let filtered = creditTransactions;
+  // Combiner toutes les transactions pour le nouveau système d'onglets
+  const allTransactions = useMemo(() => {
+    return [...creditTransactions, ...debitTransactions];
+  }, [creditTransactions, debitTransactions]);
+
+  // Auto-classification: appliquer les règles de matching
+  const { transactionsWithSuggestions } = useAutoClassification(
+    allTransactions as (BankTransaction & Record<string, unknown>)[]
+  );
+
+  // Map pour accès rapide aux suggestions par ID
+  const suggestionsMap = useMemo(() => {
+    const map = new Map<
+      string,
+      (typeof transactionsWithSuggestions)[0]['suggestion']
+    >();
+    transactionsWithSuggestions.forEach(({ original, suggestion }) => {
+      const tx = original as BankTransaction;
+      map.set(tx.id, suggestion);
+    });
+    return map;
+  }, [transactionsWithSuggestions]);
+
+  // Helper: Vérifier si une transaction est de 2025
+  const isTransaction2025 = (tx: BankTransaction): boolean => {
+    const date = tx.settled_at || tx.emitted_at || '';
+    return date.startsWith('2025');
+  };
+
+  // Filtrer les transactions selon l'onglet actif (approche Pennylane)
+  // RÈGLE MÉTIER: Seules les transactions 2025 sans pièce jointe sont "À justifier"
+  // Les transactions 2023-2024 sont automatiquement considérées comme justifiées
+  const filteredTransactions = useMemo(() => {
+    let filtered = allTransactions;
 
     // Filtre par recherche
     if (search) {
@@ -881,40 +1000,83 @@ export default function RapprochementPage() {
       );
     }
 
-    // Si on vient d'une commande, trier par proximité de montant
-    if (preselectedOrder?.amount) {
-      const targetAmount = preselectedOrder.amount;
-      return [...filtered].sort((a, b) => {
-        const diffA = Math.abs(a.amount - targetAmount);
-        const diffB = Math.abs(b.amount - targetAmount);
-        // Priorité aux non-rapprochées avec montant correspondant
-        if (
-          a.matching_status === 'unmatched' &&
-          b.matching_status !== 'unmatched'
-        )
-          return -1;
-        if (
-          a.matching_status !== 'unmatched' &&
-          b.matching_status === 'unmatched'
-        )
-          return 1;
-        return diffA - diffB;
+    // Filtre par onglet (logique Pennylane + règle 2025)
+    if (activeTab === 'a_justifier') {
+      // À justifier : transactions 2025 UNIQUEMENT, sans justificatif, non marquées facultatif
+      filtered = filtered.filter(tx => {
+        const hasAttachment = tx.attachment_ids && tx.attachment_ids.length > 0;
+        const isOptional = (tx as any).justification_optional === true;
+        const is2025 = isTransaction2025(tx);
+        // Seules les transactions 2025 sans pièce jointe sont à justifier
+        return is2025 && !hasAttachment && !isOptional;
+      });
+    } else if (activeTab === 'justifies') {
+      // Justifiés : a un justificatif OU marqué facultatif OU transaction avant 2025
+      filtered = filtered.filter(tx => {
+        const hasAttachment = tx.attachment_ids && tx.attachment_ids.length > 0;
+        const isOptional = (tx as any).justification_optional === true;
+        const is2025 = isTransaction2025(tx);
+        // Justifié si : pièce jointe OU facultatif OU année < 2025
+        return hasAttachment || isOptional || !is2025;
       });
     }
 
-    return filtered;
-  }, [creditTransactions, search, preselectedOrder]);
+    // Trier par date décroissante
+    return filtered.sort((a, b) => {
+      const dateA = a.settled_at || a.emitted_at || '';
+      const dateB = b.settled_at || b.emitted_at || '';
+      return dateB.localeCompare(dateA);
+    });
+  }, [allTransactions, search, activeTab]);
 
-  const filteredDebits = useMemo(() => {
-    if (!search) return debitTransactions;
-    const s = search.toLowerCase();
-    return debitTransactions.filter(
-      tx =>
-        tx.label?.toLowerCase().includes(s) ||
-        tx.counterparty_name?.toLowerCase().includes(s) ||
-        tx.reference?.toLowerCase().includes(s)
-    );
-  }, [debitTransactions, search]);
+  // Compteurs pour les badges des onglets
+  // RÈGLE MÉTIER: Seules les transactions 2025 sans pièce jointe sont "À justifier"
+  // Les transactions 2023-2024 sont automatiquement considérées comme justifiées
+  const counts = useMemo(() => {
+    let aJustifier = 0;
+    let justifies = 0;
+
+    allTransactions.forEach(tx => {
+      const hasAttachment = tx.attachment_ids && tx.attachment_ids.length > 0;
+      const isOptional = (tx as any).justification_optional === true;
+      const is2025 = isTransaction2025(tx);
+
+      // À justifier : 2025 uniquement + pas de pièce jointe + pas facultatif
+      // Justifié : a une pièce jointe OU facultatif OU avant 2025
+      if (is2025 && !hasAttachment && !isOptional) {
+        aJustifier++;
+      } else {
+        justifies++;
+      }
+    });
+
+    return { aJustifier, justifies, total: allTransactions.length };
+  }, [allTransactions]);
+
+  // Montants pour les KPIs
+  // RÈGLE MÉTIER: Seules les transactions 2025 sans pièce jointe sont "À justifier"
+  // Les transactions 2023-2024 sont automatiquement considérées comme justifiées
+  const amounts = useMemo(() => {
+    let aJustifierAmount = 0;
+    let justifiesAmount = 0;
+
+    allTransactions.forEach(tx => {
+      const hasAttachment = tx.attachment_ids && tx.attachment_ids.length > 0;
+      const isOptional = (tx as any).justification_optional === true;
+      const is2025 = isTransaction2025(tx);
+      const amount = Math.abs(tx.amount);
+
+      // À justifier : 2025 uniquement + pas de pièce jointe + pas facultatif
+      // Justifié : a une pièce jointe OU facultatif OU avant 2025
+      if (is2025 && !hasAttachment && !isOptional) {
+        aJustifierAmount += amount;
+      } else {
+        justifiesAmount += amount;
+      }
+    });
+
+    return { aJustifier: aJustifierAmount, justifies: justifiesAmount };
+  }, [allTransactions]);
 
   // Handler sync
   const handleSync = async () => {
@@ -1012,8 +1174,8 @@ export default function RapprochementPage() {
     );
   }
 
-  const currentTransactions =
-    activeTab === 'credits' ? filteredCredits : filteredDebits;
+  // Utiliser les transactions filtrées par le nouvel onglet
+  const currentTransactions = filteredTransactions;
 
   return (
     <div className="space-y-6">
@@ -1040,66 +1202,34 @@ export default function RapprochementPage() {
         </Card>
       )}
 
-      {/* KPIs - Approche Pennylane: pièce jointe = justifié */}
+      {/* KPIs dynamiques - Approche Pennylane */}
       <KpiGrid columns={4}>
         <KpiCard
-          title="A justifier"
-          value={
-            creditTransactions.filter(
-              t =>
-                t.matching_status === 'unmatched' &&
-                (!t.attachment_ids || t.attachment_ids.length === 0)
-            ).length +
-            debitTransactions.filter(
-              t =>
-                t.matching_status === 'unmatched' &&
-                (!t.attachment_ids || t.attachment_ids.length === 0)
-            ).length
-          }
+          title="À justifier"
+          value={counts.aJustifier}
           valueType="number"
           icon={<Clock className="h-4 w-4" />}
           variant="warning"
         />
         <KpiCard
-          title="Justifies (avec PDF)"
-          value={
-            creditTransactions.filter(
-              t => t.attachment_ids && t.attachment_ids.length > 0
-            ).length +
-            debitTransactions.filter(
-              t => t.attachment_ids && t.attachment_ids.length > 0
-            ).length
-          }
+          title="Justifiés"
+          value={counts.justifies}
           valueType="number"
           icon={<Paperclip className="h-4 w-4" />}
           variant="success"
         />
         <KpiCard
-          title="Entrees non justifiees"
-          value={creditTransactions.reduce(
-            (sum, t) =>
-              t.matching_status === 'unmatched' &&
-              (!t.attachment_ids || t.attachment_ids.length === 0)
-                ? sum + Math.abs(t.amount)
-                : sum,
-            0
-          )}
+          title="Montant à justifier"
+          value={amounts.aJustifier}
           valueType="money"
-          icon={<ArrowDownLeft className="h-4 w-4" />}
+          icon={<AlertCircle className="h-4 w-4" />}
+          color="danger"
         />
         <KpiCard
-          title="Sorties non justifiees"
-          value={debitTransactions.reduce(
-            (sum, t) =>
-              t.matching_status === 'unmatched' &&
-              (!t.attachment_ids || t.attachment_ids.length === 0)
-                ? sum + Math.abs(t.amount)
-                : sum,
-            0
-          )}
+          title="Montant justifié"
+          value={amounts.justifies}
           valueType="money"
-          icon={<ArrowUpRight className="h-4 w-4" />}
-          color="danger"
+          icon={<CheckCircle className="h-4 w-4" />}
         />
       </KpiGrid>
 
@@ -1133,30 +1263,29 @@ export default function RapprochementPage() {
         </Card>
       )}
 
-      {/* Tabs Entrées / Sorties */}
+      {/* Tabs À justifier / Justifiés (approche Pennylane) */}
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <Tabs
               value={activeTab}
               onValueChange={v => {
-                setActiveTab(v as 'credits' | 'debits');
+                setActiveTab(v as 'a_justifier' | 'justifies');
                 setSelectedTransaction(null);
               }}
             >
               <TabsList>
-                <TabsTrigger value="credits" className="gap-2">
-                  <ArrowDownLeft className="h-4 w-4 text-green-600" />
-                  Entrées
-                  <Badge variant="secondary" className="ml-1">
-                    {creditTransactions.length}
+                <TabsTrigger value="a_justifier" className="gap-2">
+                  <Clock className="h-4 w-4 text-amber-600" />À justifier
+                  <Badge variant="warning" className="ml-1">
+                    {counts.aJustifier}
                   </Badge>
                 </TabsTrigger>
-                <TabsTrigger value="debits" className="gap-2">
-                  <ArrowUpRight className="h-4 w-4 text-red-600" />
-                  Sorties
-                  <Badge variant="secondary" className="ml-1">
-                    {debitTransactions.length}
+                <TabsTrigger value="justifies" className="gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  Justifiés
+                  <Badge variant="default" className="ml-1 bg-green-600">
+                    {counts.justifies}
                   </Badge>
                 </TabsTrigger>
               </TabsList>
@@ -1199,12 +1328,14 @@ export default function RapprochementPage() {
               <div className="text-center py-16 text-muted-foreground">
                 <CheckCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p className="font-medium">
-                  {activeTab === 'credits'
-                    ? "Aucune entrée d'argent"
-                    : "Aucune sortie d'argent"}
+                  {activeTab === 'a_justifier'
+                    ? 'Toutes les transactions sont justifiées !'
+                    : 'Aucune transaction justifiée'}
                 </p>
                 <p className="text-sm mt-2">
-                  Cliquez sur "Sync Qonto" pour récupérer les transactions
+                  {activeTab === 'a_justifier'
+                    ? 'Félicitations, votre comptabilité est à jour.'
+                    : 'Ajoutez des justificatifs à vos transactions.'}
                 </p>
               </div>
             ) : (
@@ -1215,6 +1346,8 @@ export default function RapprochementPage() {
                     transaction={tx}
                     onClick={() => setSelectedTransaction(tx)}
                     isSelected={selectedTransaction?.id === tx.id}
+                    onLink={() => refresh()}
+                    suggestion={suggestionsMap.get(tx.id)}
                   />
                 ))}
               </div>
@@ -1240,12 +1373,17 @@ export default function RapprochementPage() {
               generateSuggestions={generateMatchSuggestions}
               preselectedOrderId={preselectedOrderId}
               onOpenUploadModal={() => setShowUploadModal(true)}
+              onLink={() => refresh()}
+              suggestion={suggestionsMap.get(selectedTransaction.id)}
             />
           ) : selectedTransaction ? (
             <DebitSidePanel
               transaction={selectedTransaction}
               onClose={() => setSelectedTransaction(null)}
               onIgnore={handleIgnore}
+              onOpenUploadModal={() => setShowUploadModal(true)}
+              onLink={() => refresh()}
+              suggestion={suggestionsMap.get(selectedTransaction.id)}
             />
           ) : null}
         </SheetContent>

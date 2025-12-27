@@ -712,8 +712,12 @@ export type Database = {
       bank_transactions: {
         Row: {
           amount: number;
+          amount_ht: number | null;
+          amount_vat: number | null;
+          attachment_ids: string[] | null;
           bank_account_id: string;
           bank_provider: Database['public']['Enums']['bank_provider'];
+          category_pcg: string | null;
           confidence_score: number | null;
           counterparty_iban: string | null;
           counterparty_name: string | null;
@@ -726,19 +730,26 @@ export type Database = {
           match_reason: string | null;
           matched_document_id: string | null;
           matching_status: Database['public']['Enums']['matching_status'];
+          nature: string | null;
           note: string | null;
           operation_type: string | null;
+          payment_method: string | null;
           raw_data: Json;
           reference: string | null;
           settled_at: string | null;
           side: Database['public']['Enums']['transaction_side'];
           transaction_id: string;
           updated_at: string;
+          vat_rate: number | null;
         };
         Insert: {
           amount: number;
+          amount_ht?: number | null;
+          amount_vat?: number | null;
+          attachment_ids?: string[] | null;
           bank_account_id: string;
           bank_provider: Database['public']['Enums']['bank_provider'];
+          category_pcg?: string | null;
           confidence_score?: number | null;
           counterparty_iban?: string | null;
           counterparty_name?: string | null;
@@ -751,19 +762,26 @@ export type Database = {
           match_reason?: string | null;
           matched_document_id?: string | null;
           matching_status?: Database['public']['Enums']['matching_status'];
+          nature?: string | null;
           note?: string | null;
           operation_type?: string | null;
+          payment_method?: string | null;
           raw_data: Json;
           reference?: string | null;
           settled_at?: string | null;
           side: Database['public']['Enums']['transaction_side'];
           transaction_id: string;
           updated_at?: string;
+          vat_rate?: number | null;
         };
         Update: {
           amount?: number;
+          amount_ht?: number | null;
+          amount_vat?: number | null;
+          attachment_ids?: string[] | null;
           bank_account_id?: string;
           bank_provider?: Database['public']['Enums']['bank_provider'];
+          category_pcg?: string | null;
           confidence_score?: number | null;
           counterparty_iban?: string | null;
           counterparty_name?: string | null;
@@ -776,14 +794,17 @@ export type Database = {
           match_reason?: string | null;
           matched_document_id?: string | null;
           matching_status?: Database['public']['Enums']['matching_status'];
+          nature?: string | null;
           note?: string | null;
           operation_type?: string | null;
+          payment_method?: string | null;
           raw_data?: Json;
           reference?: string | null;
           settled_at?: string | null;
           side?: Database['public']['Enums']['transaction_side'];
           transaction_id?: string;
           updated_at?: string;
+          vat_rate?: number | null;
         };
         Relationships: [
           {

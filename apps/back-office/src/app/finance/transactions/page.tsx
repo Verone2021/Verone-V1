@@ -1,0 +1,845 @@
+'use client';
+
+import { useState, useMemo } from 'react';
+
+import Link from 'next/link';
+
+import { useBankReconciliation, type BankTransaction } from '@verone/finance';
+import {
+  ClassificationModal,
+  InvoiceUploadModal,
+  SupplierCell,
+  type TransactionForUpload,
+} from '@verone/finance/components';
+import { useExpenses, useAutoClassification } from '@verone/finance/hooks';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  Button,
+  Badge,
+  Input,
+  ScrollArea,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  Separator,
+  KPICardUnified,
+} from '@verone/ui';
+import { SyncButton } from '@verone/ui-business';
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  Check,
+  AlertCircle,
+  Search,
+  Clock,
+  FileText,
+  ExternalLink,
+  Eye,
+  Paperclip,
+  Building2,
+  Settings,
+  Tag,
+  Upload,
+  RefreshCw,
+  CheckCircle2,
+  XCircle,
+} from 'lucide-react';
+import { toast } from 'sonner';
+
+// =====================================================================
+// HELPERS
+// =====================================================================
+
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return 'Date inconnue';
+  return new Date(dateStr).toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+}
+
+function formatAmount(amount: number): string {
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'EUR',
+  }).format(amount);
+}
+
+// =====================================================================
+// BADGE ORGANISATION (Best practice Pennylane/Qonto)
+// =====================================================================
+
+function OrganisationBadge({ transaction }: { transaction: BankTransaction }) {
+  // TODO: Récupérer l'organisation liée depuis la transaction
+  // Pour l'instant, simuler le statut basé sur matching_status
+  const hasOrganisation =
+    transaction.matching_status === 'manual_matched' ||
+    transaction.matching_status === 'auto_matched';
+  const isIgnored = transaction.matching_status === 'ignored';
+
+  if (hasOrganisation) {
+    return (
+      <Badge
+        variant="default"
+        className="gap-1 bg-emerald-600 hover:bg-emerald-700"
+      >
+        <Building2 className="h-3 w-3" />
+        Lié
+      </Badge>
+    );
+  }
+
+  if (isIgnored) {
+    return (
+      <Badge variant="secondary" className="gap-1">
+        <XCircle className="h-3 w-3" />
+        Ignoré
+      </Badge>
+    );
+  }
+
+  return (
+    <Badge variant="warning" className="gap-1">
+      <Clock className="h-3 w-3" />À classifier
+    </Badge>
+  );
+}
+
+// =====================================================================
+// COMPOSANT: LIGNE TRANSACTION UNIFIÉE
+// =====================================================================
+
+function TransactionRow({
+  transaction,
+  onClick,
+  isSelected,
+  onLink,
+  suggestion,
+}: {
+  transaction: BankTransaction;
+  onClick: () => void;
+  isSelected: boolean;
+  onLink: () => void;
+  suggestion?: {
+    organisationId: string | null;
+    organisationName: string | null;
+    category: string | null;
+    confidence: 'high' | 'medium' | 'none';
+  };
+}) {
+  const hasAttachments =
+    transaction.attachment_ids && transaction.attachment_ids.length > 0;
+  const isCredit = transaction.side === 'credit';
+
+  return (
+    <div
+      onClick={onClick}
+      className={`
+        flex items-center gap-4 p-3 border-b cursor-pointer transition-colors
+        ${isSelected ? 'bg-primary/10 border-primary' : 'hover:bg-muted/50'}
+      `}
+    >
+      {/* Indicateur type */}
+      <div
+        className={`
+          flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center
+          ${isCredit ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}
+        `}
+      >
+        {isCredit ? (
+          <ArrowDownLeft className="h-4 w-4" />
+        ) : (
+          <ArrowUpRight className="h-4 w-4" />
+        )}
+      </div>
+
+      {/* Date */}
+      <div className="w-24 text-sm text-muted-foreground">
+        {formatDate(transaction.settled_at || transaction.emitted_at)}
+      </div>
+
+      {/* Libellé & Contrepartie */}
+      <div className="flex-1 min-w-0">
+        <p className="font-medium truncate">
+          {transaction.label || transaction.note || 'Sans libellé'}
+        </p>
+        <div className="text-sm text-muted-foreground truncate">
+          <SupplierCell
+            counterpartyName={transaction.counterparty_name}
+            label={transaction.label}
+            transactionId={transaction.id}
+            onLink={onLink}
+            suggestedOrganisationId={suggestion?.organisationId}
+            suggestedOrganisationName={suggestion?.organisationName}
+            suggestedCategory={suggestion?.category}
+            confidence={suggestion?.confidence}
+            showCategory
+          />
+        </div>
+      </div>
+
+      {/* Badge Organisation */}
+      <div className="w-28">
+        <OrganisationBadge transaction={transaction} />
+      </div>
+
+      {/* Badge pièce jointe */}
+      <div className="w-24 flex justify-center">
+        {hasAttachments ? (
+          <Badge
+            variant="default"
+            className="text-xs bg-blue-600 hover:bg-blue-700 gap-1"
+          >
+            <Paperclip className="h-3 w-3" />
+            PDF
+          </Badge>
+        ) : (
+          <span className="text-slate-300">—</span>
+        )}
+      </div>
+
+      {/* Montant */}
+      <div className="w-28 text-right">
+        <span
+          className={`font-semibold ${isCredit ? 'text-green-600' : 'text-red-600'}`}
+        >
+          {isCredit ? '+' : ''}
+          {formatAmount(
+            isCredit
+              ? Math.abs(transaction.amount)
+              : -Math.abs(transaction.amount)
+          )}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// =====================================================================
+// COMPOSANT: PANNEAU DÉTAIL TRANSACTION
+// =====================================================================
+
+function TransactionDetailPanel({
+  transaction,
+  onClose,
+  onOpenClassifyModal,
+  onOpenUploadModal,
+  onLink,
+  suggestion,
+}: {
+  transaction: BankTransaction;
+  onClose: () => void;
+  onOpenClassifyModal: () => void;
+  onOpenUploadModal: () => void;
+  onLink: () => void;
+  suggestion?: {
+    organisationId: string | null;
+    organisationName: string | null;
+    category: string | null;
+    confidence: 'high' | 'medium' | 'none';
+  };
+}) {
+  const hasAttachments =
+    transaction.attachment_ids && transaction.attachment_ids.length > 0;
+  const isCredit = transaction.side === 'credit';
+
+  // TODO: Récupérer l'organisation liée
+  const hasOrganisation =
+    transaction.matching_status === 'manual_matched' ||
+    transaction.matching_status === 'auto_matched';
+
+  const handleViewPdf = () => {
+    if (hasAttachments && transaction.attachment_ids) {
+      window.open(
+        `/api/qonto/attachments/${transaction.attachment_ids[0]}`,
+        '_blank'
+      );
+    }
+  };
+
+  return (
+    <>
+      <SheetHeader>
+        <SheetTitle className="flex items-center gap-2">
+          {isCredit ? (
+            <ArrowDownLeft className="h-5 w-5 text-green-600" />
+          ) : (
+            <ArrowUpRight className="h-5 w-5 text-red-600" />
+          )}
+          Détail de la transaction
+        </SheetTitle>
+      </SheetHeader>
+
+      <div className="space-y-6 mt-6">
+        {/* Montant principal */}
+        <div className="text-center py-4">
+          <p className="text-4xl font-bold">
+            <span className={isCredit ? 'text-green-600' : 'text-red-600'}>
+              {isCredit ? '+' : ''}
+              {formatAmount(
+                isCredit
+                  ? Math.abs(transaction.amount)
+                  : -Math.abs(transaction.amount)
+              )}
+            </span>
+          </p>
+          <p className="text-muted-foreground mt-1">
+            {formatDate(transaction.settled_at || transaction.emitted_at)}
+          </p>
+        </div>
+
+        {/* Infos transaction */}
+        <Card>
+          <CardContent className="pt-4 space-y-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Libellé</p>
+              <p className="font-medium">
+                {transaction.label || transaction.note || 'Sans libellé'}
+              </p>
+            </div>
+
+            <Separator />
+
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-muted-foreground">Contrepartie</p>
+                <div className="font-medium">
+                  <SupplierCell
+                    counterpartyName={transaction.counterparty_name}
+                    label={transaction.label}
+                    transactionId={transaction.id}
+                    onLink={onLink}
+                    suggestedOrganisationId={suggestion?.organisationId}
+                    suggestedOrganisationName={suggestion?.organisationName}
+                    suggestedCategory={suggestion?.category}
+                    confidence={suggestion?.confidence}
+                    showCategory
+                  />
+                </div>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Type</p>
+                <p className="font-medium">
+                  {transaction.operation_type || 'Virement'}
+                </p>
+              </div>
+            </div>
+
+            {transaction.reference && (
+              <>
+                <Separator />
+                <div className="text-sm">
+                  <p className="text-muted-foreground">Référence</p>
+                  <p className="font-medium font-mono text-xs">
+                    {transaction.reference}
+                  </p>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Section Classification */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <Tag className="h-4 w-4" />
+              Classification
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {hasOrganisation ? (
+              <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg">
+                <div className="h-10 w-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                  <Building2 className="h-5 w-5 text-emerald-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-emerald-900">
+                    Organisation liée
+                  </p>
+                  <p className="text-sm text-emerald-700">
+                    {/* TODO: Afficher le nom de l'organisation */}
+                    Fournisseur / Client associé
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onOpenClassifyModal}
+                >
+                  Modifier
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={onOpenClassifyModal}
+              >
+                <Building2 className="h-4 w-4" />
+                Classifier cette transaction
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Section Justificatif */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <Paperclip className="h-4 w-4" />
+              Justificatif
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {hasAttachments ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+                  <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <FileText className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-blue-900">
+                      Pièce jointe disponible
+                    </p>
+                    <p className="text-sm text-blue-700">
+                      Document attaché depuis Qonto
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleViewPdf}
+                    className="flex-1"
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    Voir
+                    <ExternalLink className="h-3 w-3 ml-2" />
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={onOpenUploadModal}
+              >
+                <Upload className="h-4 w-4" />
+                Uploader un justificatif
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Actions */}
+        <div className="pt-4 border-t">
+          <Button variant="outline" onClick={onClose} className="w-full">
+            Fermer
+          </Button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// =====================================================================
+// PAGE COMPONENT
+// =====================================================================
+
+type TabFilter = 'all' | 'credits' | 'debits' | 'unclassified';
+
+export default function TransactionsPage() {
+  const [activeTab, setActiveTab] = useState<TabFilter>('all');
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<BankTransaction | null>(null);
+  const [search, setSearch] = useState('');
+  const [showClassifyModal, setShowClassifyModal] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+
+  // Hook de transactions bancaires
+  const { creditTransactions, debitTransactions, loading, error, refresh } =
+    useBankReconciliation();
+
+  // Hook dépenses pour les stats
+  const { stats: expenseStats } = useExpenses({ status: 'all' });
+
+  // Toutes les transactions combinées
+  const allTransactions = useMemo(() => {
+    return [...creditTransactions, ...debitTransactions].sort((a, b) => {
+      const dateA = new Date(a.emitted_at || '').getTime();
+      const dateB = new Date(b.emitted_at || '').getTime();
+      return dateB - dateA;
+    });
+  }, [creditTransactions, debitTransactions]);
+
+  // Auto-classification: appliquer les règles de matching
+  const { transactionsWithSuggestions } = useAutoClassification(
+    allTransactions as (BankTransaction & Record<string, unknown>)[]
+  );
+
+  // Map pour accès rapide aux suggestions par ID
+  const suggestionsMap = useMemo(() => {
+    const map = new Map<
+      string,
+      (typeof transactionsWithSuggestions)[0]['suggestion']
+    >();
+    transactionsWithSuggestions.forEach(({ original, suggestion }) => {
+      const tx = original as BankTransaction;
+      map.set(tx.id, suggestion);
+    });
+    return map;
+  }, [transactionsWithSuggestions]);
+
+  // Filtrer selon l'onglet actif
+  const filteredTransactions = useMemo(() => {
+    let filtered = allTransactions;
+
+    // Filtre par onglet
+    switch (activeTab) {
+      case 'credits':
+        filtered = creditTransactions;
+        break;
+      case 'debits':
+        filtered = debitTransactions;
+        break;
+      case 'unclassified':
+        filtered = allTransactions.filter(
+          tx => tx.matching_status === 'unmatched'
+        );
+        break;
+    }
+
+    // Filtre par recherche
+    if (search) {
+      const s = search.toLowerCase();
+      filtered = filtered.filter(
+        tx =>
+          tx.label?.toLowerCase().includes(s) ||
+          tx.counterparty_name?.toLowerCase().includes(s) ||
+          tx.reference?.toLowerCase().includes(s)
+      );
+    }
+
+    return filtered;
+  }, [
+    allTransactions,
+    creditTransactions,
+    debitTransactions,
+    activeTab,
+    search,
+  ]);
+
+  // Stats
+  const stats = useMemo(() => {
+    const unclassified = allTransactions.filter(
+      tx => tx.matching_status === 'unmatched'
+    );
+    const classified = allTransactions.filter(
+      tx =>
+        tx.matching_status === 'manual_matched' ||
+        tx.matching_status === 'auto_matched'
+    );
+    const withAttachment = allTransactions.filter(
+      tx => tx.attachment_ids && tx.attachment_ids.length > 0
+    );
+
+    return {
+      total: allTransactions.length,
+      unclassified: unclassified.length,
+      classified: classified.length,
+      withAttachment: withAttachment.length,
+      credits: creditTransactions.length,
+      debits: debitTransactions.length,
+    };
+  }, [allTransactions, creditTransactions, debitTransactions]);
+
+  // Convertir pour le modal upload
+  const transactionForUpload: TransactionForUpload | null = useMemo(() => {
+    if (!selectedTransaction) return null;
+    return {
+      id: selectedTransaction.id,
+      transaction_id: selectedTransaction.transaction_id,
+      label: selectedTransaction.label || '',
+      counterparty_name: selectedTransaction.counterparty_name,
+      amount: selectedTransaction.amount,
+      currency: selectedTransaction.currency || 'EUR',
+      emitted_at: selectedTransaction.emitted_at || '',
+      has_attachment: Boolean(
+        selectedTransaction.attachment_ids &&
+          selectedTransaction.attachment_ids.length > 0
+      ),
+      matched_document_id: null,
+      order_number: null,
+    };
+  }, [selectedTransaction]);
+
+  // Handler sync
+  const handleSync = async () => {
+    try {
+      const response = await fetch('/api/qonto/sync', { method: 'POST' });
+      const result = await response.json();
+      if (result.success) {
+        toast.success('Synchronisation terminée', {
+          description: `${result.itemsCreated} nouvelles, ${result.itemsUpdated} mises à jour`,
+        });
+      }
+      await refresh();
+    } catch (err) {
+      console.error('[Qonto Sync] Error:', err);
+      toast.error('Erreur de synchronisation');
+      await refresh();
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      {/* Header */}
+      <div className="bg-white border-b border-slate-200 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-slate-900">
+              Transactions Bancaires
+            </h1>
+            <p className="text-sm text-slate-600">
+              Gérez et classifiez vos transactions Qonto
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link href="/finance/depenses/regles">
+              <Button variant="outline">
+                <Settings className="h-4 w-4 mr-2" />
+                Règles auto
+              </Button>
+            </Link>
+            <SyncButton onSync={handleSync} label="Sync Qonto" showLastSync />
+          </div>
+        </div>
+      </div>
+
+      <div className="p-6 space-y-6">
+        {/* Erreur */}
+        {error && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="py-4">
+              <div className="flex items-center gap-2 text-red-700">
+                <AlertCircle className="h-5 w-5" />
+                <p>{error}</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* KPIs */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <KPICardUnified
+            variant="elegant"
+            title="Total"
+            value={stats.total}
+            icon={FileText}
+          />
+          <KPICardUnified
+            variant="elegant"
+            title="À classifier"
+            value={stats.unclassified}
+            icon={Clock}
+            onClick={() => setActiveTab('unclassified')}
+          />
+          <KPICardUnified
+            variant="elegant"
+            title="Classées"
+            value={stats.classified}
+            icon={CheckCircle2}
+          />
+          <KPICardUnified
+            variant="elegant"
+            title="Avec justificatif"
+            value={stats.withAttachment}
+            icon={Paperclip}
+          />
+          <KPICardUnified
+            variant="elegant"
+            title="Entrées"
+            value={stats.credits}
+            icon={ArrowDownLeft}
+            onClick={() => setActiveTab('credits')}
+          />
+        </div>
+
+        {/* Tabs et Recherche */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <Tabs
+                value={activeTab}
+                onValueChange={v => {
+                  setActiveTab(v as TabFilter);
+                  setSelectedTransaction(null);
+                }}
+              >
+                <TabsList>
+                  <TabsTrigger value="all" className="gap-2">
+                    <FileText className="h-4 w-4" />
+                    Toutes
+                    <Badge variant="secondary" className="ml-1">
+                      {stats.total}
+                    </Badge>
+                  </TabsTrigger>
+                  <TabsTrigger value="credits" className="gap-2">
+                    <ArrowDownLeft className="h-4 w-4 text-green-600" />
+                    Entrées
+                    <Badge variant="secondary" className="ml-1">
+                      {stats.credits}
+                    </Badge>
+                  </TabsTrigger>
+                  <TabsTrigger value="debits" className="gap-2">
+                    <ArrowUpRight className="h-4 w-4 text-red-600" />
+                    Sorties
+                    <Badge variant="secondary" className="ml-1">
+                      {stats.debits}
+                    </Badge>
+                  </TabsTrigger>
+                  <TabsTrigger value="unclassified" className="gap-2">
+                    <Clock className="h-4 w-4 text-amber-600" />À classifier
+                    <Badge variant="warning" className="ml-1">
+                      {stats.unclassified}
+                    </Badge>
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+
+              <div className="relative w-64">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Rechercher..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="pl-8 h-9"
+                />
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent className="p-0">
+            {/* En-tête tableau */}
+            <div className="flex items-center gap-4 px-3 py-2 bg-muted/50 text-sm font-medium text-muted-foreground border-b">
+              <div className="w-8" />
+              <div className="w-24">Date</div>
+              <div className="flex-1">Libellé</div>
+              <div className="w-28">Organisation</div>
+              <div className="w-24 text-center">Justif.</div>
+              <div className="w-28 text-right">Montant</div>
+            </div>
+
+            {/* Liste des transactions */}
+            <ScrollArea className="h-[500px]">
+              {loading ? (
+                <div className="space-y-0">
+                  {[1, 2, 3, 4, 5].map(i => (
+                    <div
+                      key={i}
+                      className="h-16 border-b animate-pulse bg-muted/30"
+                    />
+                  ))}
+                </div>
+              ) : filteredTransactions.length === 0 ? (
+                <div className="text-center py-16 text-muted-foreground">
+                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="font-medium">Aucune transaction trouvée</p>
+                  <p className="text-sm mt-2">
+                    {search
+                      ? 'Modifiez votre recherche'
+                      : 'Cliquez sur "Sync Qonto" pour récupérer les transactions'}
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  {filteredTransactions.map(tx => (
+                    <TransactionRow
+                      key={tx.id}
+                      transaction={tx}
+                      onClick={() => setSelectedTransaction(tx)}
+                      isSelected={selectedTransaction?.id === tx.id}
+                      onLink={() => refresh()}
+                      suggestion={suggestionsMap.get(tx.id)}
+                    />
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </CardContent>
+        </Card>
+
+        {/* Footer */}
+        {filteredTransactions.length > 0 && (
+          <div className="text-sm text-slate-500 text-center">
+            Affichage de {filteredTransactions.length} transaction(s)
+          </div>
+        )}
+      </div>
+
+      {/* Sheet latéral détail */}
+      <Sheet
+        open={selectedTransaction !== null}
+        onOpenChange={open => {
+          if (!open) setSelectedTransaction(null);
+        }}
+      >
+        <SheetContent className="w-[450px] sm:max-w-[450px]">
+          {selectedTransaction && (
+            <TransactionDetailPanel
+              transaction={selectedTransaction}
+              onClose={() => setSelectedTransaction(null)}
+              onOpenClassifyModal={() => setShowClassifyModal(true)}
+              onOpenUploadModal={() => setShowUploadModal(true)}
+              onLink={() => refresh()}
+              suggestion={suggestionsMap.get(selectedTransaction.id)}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {/* Modal classification - avec TVA, mode de paiement, organisation optionnelle */}
+      <ClassificationModal
+        open={showClassifyModal}
+        onOpenChange={setShowClassifyModal}
+        label={
+          selectedTransaction?.label ||
+          selectedTransaction?.counterparty_name ||
+          ''
+        }
+        amount={selectedTransaction?.amount || 0}
+        transactionId={selectedTransaction?.id}
+        onSuccess={() => {
+          toast.success('Transaction classifiée');
+          refresh();
+          setShowClassifyModal(false);
+        }}
+        onUploadClick={() => {
+          setShowClassifyModal(false);
+          setShowUploadModal(true);
+        }}
+      />
+
+      {/* Modal upload facture */}
+      <InvoiceUploadModal
+        transaction={transactionForUpload}
+        open={showUploadModal}
+        onOpenChange={setShowUploadModal}
+        onUploadComplete={() => {
+          toast.success('Justificatif uploadé');
+          refresh();
+          setShowUploadModal(false);
+        }}
+      />
+    </div>
+  );
+}

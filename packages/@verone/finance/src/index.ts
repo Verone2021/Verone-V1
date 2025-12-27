@@ -11,7 +11,19 @@ export * from './components/kpis';
 export * from './hooks';
 
 // Lib - PCG Categories (Plan Comptable Général)
-export * from './lib/pcg-categories';
+// Note: getPcgCategory pour lookup statique, usePcgCategories pour données BDD
+// Export sélectif pour éviter conflit avec hook PcgCategory
+export {
+  getPcgCategory,
+  getPcgParentClass,
+  getPcgChildren,
+  PCG_CLASSES,
+  PCG_ACCOUNTS,
+  PCG_SUBACCOUNTS,
+  ALL_PCG_CATEGORIES,
+  PCG_MAP,
+  PCG_SUGGESTED_CATEGORIES,
+} from './lib/pcg-categories';
 
 // Lib - TVA (French VAT)
 export * from './lib/tva';

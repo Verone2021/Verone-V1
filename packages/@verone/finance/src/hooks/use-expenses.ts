@@ -48,6 +48,8 @@ export interface Expense {
 export interface ExpenseFilters {
   status?: 'unclassified' | 'classified' | 'needs_review' | 'ignored' | 'all';
   year?: number;
+  /** Année minimum (filtre >= minYear) - pour exclure transactions avant 2025 */
+  minYear?: number;
   category?: string;
   hasAttachment?: boolean;
   search?: string;
@@ -111,6 +113,10 @@ export function useExpenses(
         const startDate = `${filters.year}-01-01`;
         const endDate = `${filters.year}-12-31`;
         query = query.gte('emitted_at', startDate).lte('emitted_at', endDate);
+      } else if (filters.minYear) {
+        // Filtrer uniquement les transactions à partir de l'année minimum
+        const startDate = `${filters.minYear}-01-01`;
+        query = query.gte('emitted_at', startDate);
       }
 
       if (filters.category) {

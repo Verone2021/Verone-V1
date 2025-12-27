@@ -1,8 +1,13 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 
-import { useExpenses, type Expense } from '@verone/finance/hooks';
+import { SupplierCell } from '@verone/finance/components';
+import {
+  useExpenses,
+  useAutoClassification,
+  type Expense,
+} from '@verone/finance/hooks';
 import { Badge, Button, Input, KPICardUnified } from '@verone/ui';
 import {
   AlertCircle,
@@ -52,12 +57,20 @@ function AttachmentUploadCell({
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Extraire l'ID Qonto de la transaction
-    const rawData = expense.raw_data as { id?: string };
-    const qontoTransactionId = rawData.id || expense.transaction_id;
+    // Extraire l'ID Qonto de la transaction depuis raw_data uniquement
+    // L'ID Qonto est stocké dans raw_data.id ou raw_data.external_id
+    const rawData = expense.raw_data as {
+      id?: string;
+      external_id?: string;
+      transaction_id?: string;
+    };
+    const qontoTransactionId =
+      rawData.id || rawData.external_id || rawData.transaction_id;
 
     if (!qontoTransactionId) {
-      toast.error('ID transaction Qonto introuvable');
+      toast.error(
+        "Cette transaction n'a pas d'ID Qonto. L'upload de justificatif n'est possible que pour les transactions synchronisées depuis Qonto."
+      );
       return;
     }
 
@@ -157,9 +170,16 @@ function AttachmentUploadCell({
 function TransactionRow({
   expense,
   onUploadSuccess,
+  suggestion,
 }: {
   expense: Expense;
   onUploadSuccess: () => void;
+  suggestion?: {
+    organisationId: string | null;
+    organisationName: string | null;
+    category: string | null;
+    confidence: 'high' | 'medium' | 'none';
+  };
 }) {
   return (
     <tr className="border-b border-slate-100 hover:bg-slate-50">
@@ -171,9 +191,11 @@ function TransactionRow({
           <p className="text-sm font-medium text-slate-900 truncate">
             {expense.label}
           </p>
-          <p className="text-xs text-slate-500 truncate">
-            {expense.transaction_counterparty_name || 'Inconnu'}
-          </p>
+          {expense.transaction_counterparty_name && (
+            <p className="text-xs text-slate-500 truncate">
+              {expense.transaction_counterparty_name}
+            </p>
+          )}
         </div>
       </td>
       <td className="px-4 py-3 text-right">
@@ -184,8 +206,20 @@ function TransactionRow({
           {formatAmount(expense.amount)}
         </span>
       </td>
-      <td className="px-4 py-3 text-sm text-slate-600">
-        {expense.counterparty_display_name || expense.organisation_name || '-'}
+      <td className="px-4 py-3 text-sm">
+        <SupplierCell
+          counterpartyName={expense.transaction_counterparty_name}
+          label={expense.label}
+          organisationId={expense.organisation_id}
+          organisationName={expense.organisation_name}
+          transactionId={expense.id}
+          onLink={() => onUploadSuccess()}
+          suggestedOrganisationId={suggestion?.organisationId}
+          suggestedOrganisationName={suggestion?.organisationName}
+          suggestedCategory={suggestion?.category}
+          confidence={suggestion?.confidence}
+          showCategory
+        />
       </td>
       <td className="px-4 py-3">
         <AttachmentUploadCell
@@ -203,12 +237,44 @@ export default function JustificatifsPage() {
   const [yearFilter, setYearFilter] = useState<number | undefined>(undefined);
 
   // Utiliser useExpenses pour récupérer toutes les dépenses
-  const { expenses, stats, isLoading, error, refetch } = useExpenses({
-    status: 'all',
-    hasAttachment: showWithAttachment ? undefined : false,
-    year: yearFilter,
-    search: searchValue || undefined,
-  });
+  // minYear: 2025 = on ignore les transactions avant 2025 pour les justificatifs
+  const { expenses, stats, isLoading, error, refetch, setFilters } =
+    useExpenses({
+      status: 'all',
+      hasAttachment: false, // Par défaut: sans justificatif
+      minYear: 2025, // Ignorer transactions avant 2025
+    });
+
+  // Mettre à jour les filtres quand les states changent
+  useEffect(() => {
+    setFilters({
+      status: 'all',
+      hasAttachment: showWithAttachment ? undefined : false,
+      year: yearFilter,
+      // Si une année spécifique est sélectionnée, on ne met pas minYear
+      // Sinon on filtre à partir de 2025 par défaut
+      minYear: yearFilter ? undefined : 2025,
+      search: searchValue || undefined,
+    });
+  }, [searchValue, yearFilter, showWithAttachment, setFilters]);
+
+  // Auto-classification: appliquer les règles de matching
+  const { transactionsWithSuggestions } = useAutoClassification(
+    expenses as (Expense & Record<string, unknown>)[]
+  );
+
+  // Map pour accès rapide aux suggestions par ID
+  const suggestionsMap = useMemo(() => {
+    const map = new Map<
+      string,
+      (typeof transactionsWithSuggestions)[0]['suggestion']
+    >();
+    transactionsWithSuggestions.forEach(({ original, suggestion }) => {
+      const exp = original as Expense;
+      map.set(exp.id, suggestion);
+    });
+    return map;
+  }, [transactionsWithSuggestions]);
 
   // Stats spécifiques justificatifs
   const withAttachment = expenses.filter(e => e.has_attachment).length;
@@ -217,12 +283,12 @@ export default function JustificatifsPage() {
     .filter(e => !e.has_attachment)
     .reduce((sum, e) => sum + Math.abs(e.amount), 0);
 
-  // Années disponibles
+  // Années disponibles (à partir de 2025)
   const currentYear = new Date().getFullYear();
   const years = Array.from(
-    { length: currentYear - 2021 },
+    { length: currentYear - 2024 }, // À partir de 2025
     (_, i) => currentYear - i
-  );
+  ).filter(y => y >= 2025); // Sécurité: uniquement 2025+
 
   const handleSearch = () => {
     // La recherche est appliquée via le state
@@ -414,6 +480,7 @@ export default function JustificatifsPage() {
                       key={expense.id}
                       expense={expense}
                       onUploadSuccess={refetch}
+                      suggestion={suggestionsMap.get(expense.id)}
                     />
                   ))}
                 </tbody>

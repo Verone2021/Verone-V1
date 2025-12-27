@@ -30,8 +30,16 @@ export interface BankTransaction {
   matched_document_id: string | null;
   confidence_score: number | null;
   raw_data: Record<string, unknown>;
-  // Extraction depuis raw_data
+  // Champs comptabilité PCG
+  category_pcg: string | null;
+  vat_rate: number | null;
+  payment_method: string | null;
+  amount_ht: number | null;
+  amount_vat: number | null;
+  nature: string | null;
+  // Pièces jointes
   attachment_ids: string[] | null;
+  has_attachment: boolean | null;
 }
 
 export interface OrderWithoutInvoice {
@@ -149,11 +157,16 @@ export function useBankReconciliation() {
       setLoading(true);
       setError(null);
 
-      // 1. Fetch ALL unmatched bank transactions (crédits ET débits)
+      // 1. Fetch ALL bank transactions (tous les statuts pour affichage par onglet)
       const { data: transactions, error: txError } = await supabase
         .from('bank_transactions')
         .select('*')
-        .eq('matching_status', 'unmatched')
+        .in('matching_status', [
+          'unmatched',
+          'manual_matched',
+          'auto_matched',
+          'ignored',
+        ])
         .order('settled_at', { ascending: false, nullsFirst: false });
 
       console.log('[Reconciliation] bank_transactions query:', {

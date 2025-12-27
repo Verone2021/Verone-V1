@@ -1,17 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 import Link from 'next/link';
 
 import { useToast } from '@verone/common/hooks';
 import {
-  ExpenseClassificationModal,
-  type ClassificationData,
+  OrganisationLinkingModal,
+  SupplierCell,
+  ExpenseDonutChart,
+  MonthlyFlowChart,
 } from '@verone/finance/components';
 import {
   EXPENSE_CATEGORIES,
   useExpenses,
+  useAutoClassification,
+  useTreasuryStats,
   type Expense,
   type ExpenseFilters,
 } from '@verone/finance/hooks';
@@ -90,10 +94,19 @@ function ExpenseRow({
   expense,
   onClassify,
   onViewAttachment,
+  onLink,
+  suggestion,
 }: {
   expense: Expense;
   onClassify: (expense: Expense) => void;
   onViewAttachment: (expense: Expense) => void;
+  onLink: () => void;
+  suggestion?: {
+    organisationId: string | null;
+    organisationName: string | null;
+    category: string | null;
+    confidence: 'high' | 'medium' | 'none';
+  };
 }) {
   const categoryLabel =
     EXPENSE_CATEGORIES.find(c => c.id === expense.category)?.label ||
@@ -109,9 +122,21 @@ function ExpenseRow({
           <p className="text-sm font-medium text-slate-900 truncate">
             {expense.label}
           </p>
-          <p className="text-xs text-slate-500 truncate">
-            {expense.transaction_counterparty_name || 'Inconnu'}
-          </p>
+          <div className="text-xs text-slate-500 truncate">
+            <SupplierCell
+              counterpartyName={expense.transaction_counterparty_name}
+              label={expense.label}
+              organisationId={expense.organisation_id}
+              organisationName={expense.organisation_name}
+              transactionId={expense.id}
+              onLink={onLink}
+              suggestedOrganisationId={suggestion?.organisationId}
+              suggestedOrganisationName={suggestion?.organisationName}
+              suggestedCategory={suggestion?.category}
+              confidence={suggestion?.confidence}
+              showCategory
+            />
+          </div>
         </div>
       </td>
       <td className="px-4 py-3 text-right">
@@ -163,6 +188,31 @@ export default function DepensesPage() {
   const [searchValue, setSearchValue] = useState('');
   const { expenses, stats, isLoading, error, refetch } = useExpenses(filters);
   const { toast } = useToast();
+
+  // Dashboard stats pour les graphiques
+  const {
+    evolution,
+    expenseBreakdown,
+    loading: dashboardLoading,
+  } = useTreasuryStats();
+
+  // Auto-classification: appliquer les règles de matching
+  const { transactionsWithSuggestions } = useAutoClassification(
+    expenses as (Expense & Record<string, unknown>)[]
+  );
+
+  // Map pour accès rapide aux suggestions par ID
+  const suggestionsMap = useMemo(() => {
+    const map = new Map<
+      string,
+      (typeof transactionsWithSuggestions)[0]['suggestion']
+    >();
+    transactionsWithSuggestions.forEach(({ original, suggestion }) => {
+      const exp = original as Expense;
+      map.set(exp.id, suggestion);
+    });
+    return map;
+  }, [transactionsWithSuggestions]);
 
   // État du modal de classement
   const [classifyModalOpen, setClassifyModalOpen] = useState(false);
@@ -226,32 +276,13 @@ export default function DepensesPage() {
     setClassifyModalOpen(true);
   };
 
-  const handleClassifySubmit = async (data: ClassificationData) => {
-    try {
-      const response = await fetch('/api/expenses/classify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erreur lors du classement');
-      }
-
-      const result = await response.json();
-
-      toast({
-        title: 'Dépense classée',
-        description: result.message,
-      });
-
-      // Rafraîchir la liste
-      await refetch();
-    } catch (error) {
-      console.error('[DepensesPage] Classification error:', error);
-      throw error;
-    }
+  const handleClassifySuccess = async () => {
+    toast({
+      title: 'Dépense classée',
+      description: 'La règle a été créée et appliquée avec succès.',
+    });
+    // Rafraîchir la liste
+    await refetch();
   };
 
   const handleViewAttachment = (expense: Expense) => {
@@ -339,6 +370,15 @@ export default function DepensesPage() {
             value={formatAmount(stats.totalAmount)}
             icon={FileText}
           />
+        </div>
+
+        {/* Dashboard Graphiques */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ExpenseDonutChart
+            data={expenseBreakdown}
+            isLoading={dashboardLoading}
+          />
+          <MonthlyFlowChart data={evolution} isLoading={dashboardLoading} />
         </div>
 
         {/* Onglets de statut */}
@@ -502,6 +542,8 @@ export default function DepensesPage() {
                       expense={expense}
                       onClassify={handleClassify}
                       onViewAttachment={handleViewAttachment}
+                      onLink={() => refetch()}
+                      suggestion={suggestionsMap.get(expense.id)}
                     />
                   ))}
                 </tbody>
@@ -518,12 +560,18 @@ export default function DepensesPage() {
         )}
       </div>
 
-      {/* Modal de classement */}
-      <ExpenseClassificationModal
-        expense={selectedExpense}
+      {/* Modal de classement - Utilise OrganisationLinkingModal (workflow unifié) */}
+      <OrganisationLinkingModal
         open={classifyModalOpen}
         onOpenChange={setClassifyModalOpen}
-        onClassify={handleClassifySubmit}
+        label={
+          selectedExpense?.label ||
+          selectedExpense?.transaction_counterparty_name ||
+          ''
+        }
+        transactionCount={1}
+        totalAmount={selectedExpense?.amount || 0}
+        onSuccess={handleClassifySuccess}
       />
     </div>
   );

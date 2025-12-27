@@ -18,6 +18,7 @@ import {
   formatBankPaymentMethod,
   detectBankPaymentMethod,
 } from '@verone/finance';
+import { SupplierCellReadOnly } from '@verone/finance/components';
 import {
   Card,
   CardContent,
@@ -155,9 +156,12 @@ function RecettesTable({ transactions }: { transactions: BankTransaction[] }) {
                 {tx.reference || '-'}
               </div>
               <div className="col-span-3">
-                <p className="font-medium truncate text-sm">
-                  {tx.counterparty_name || 'Client inconnu'}
-                </p>
+                <div className="font-medium truncate text-sm">
+                  <SupplierCellReadOnly
+                    counterpartyName={tx.counterparty_name}
+                    label={tx.label}
+                  />
+                </div>
                 <p className="text-xs text-muted-foreground truncate">
                   {tx.label}
                 </p>
@@ -232,9 +236,12 @@ function AchatsTable({ transactions }: { transactions: BankTransaction[] }) {
                 {formatDate(tx.settled_at || tx.emitted_at)}
               </div>
               <div className="col-span-3">
-                <p className="font-medium truncate text-sm">
-                  {tx.counterparty_name || 'Fournisseur inconnu'}
-                </p>
+                <div className="font-medium truncate text-sm">
+                  <SupplierCellReadOnly
+                    counterpartyName={tx.counterparty_name}
+                    label={tx.label}
+                  />
+                </div>
                 <p className="text-xs text-muted-foreground truncate">
                   {tx.label}
                 </p>
@@ -620,6 +627,9 @@ function CompteResultatTab({
         if (classes[classCode] !== undefined) {
           classes[classCode] += Math.abs(tx.amount);
         }
+      } else {
+        // Par défaut, classer les dépenses non catégorisées en Achats (60)
+        classes['60'] += Math.abs(tx.amount);
       }
     });
 

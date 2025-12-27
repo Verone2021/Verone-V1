@@ -1,14 +1,17 @@
 /**
  * Hook pour la gestion des counterparties (identités uniques)
  *
- * Récupère et crée des counterparties avec leurs comptes bancaires.
+ * NOTE: La table counterparties est DEPRECATED.
+ * Ce hook retourne maintenant des données vides pour éviter les erreurs.
+ * Utiliser OrganisationLinkingModal à la place pour lier des organisations.
  */
 
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
-import { createClient } from '@verone/utils/supabase/client';
+// Table counterparties deprecated - ce hook est désactivé
+const COUNTERPARTIES_DEPRECATED = true;
 
 export interface Counterparty {
   id: string;
@@ -54,173 +57,52 @@ export interface UseCounterpartiesReturn {
 }
 
 export function useCounterparties(): UseCounterpartiesReturn {
-  const [counterparties, setCounterparties] = useState<Counterparty[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [counterparties] = useState<Counterparty[]>([]);
+  const [isLoading] = useState(false);
+  const [error] = useState<string | null>(null);
 
+  // Table deprecated - retourne toujours vide
   const fetchCounterparties = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const supabase = createClient();
-
-      const { data, error: fetchError } = await (
-        supabase as { from: CallableFunction }
-      )
-        .from('counterparties')
-        .select('*')
-        .order('display_name', { ascending: true })
-        .limit(500);
-
-      if (fetchError) {
-        throw new Error(fetchError.message);
-      }
-
-      setCounterparties((data || []) as Counterparty[]);
-    } catch (err) {
-      console.error('[useCounterparties] Error:', err);
-      setError(err instanceof Error ? err.message : 'Erreur inconnue');
-    } finally {
-      setIsLoading(false);
+    if (COUNTERPARTIES_DEPRECATED) {
+      console.warn(
+        '[useCounterparties] Table deprecated - use OrganisationLinkingModal instead'
+      );
+      return;
     }
   }, []);
 
-  const search = useCallback(async (query: string): Promise<Counterparty[]> => {
-    if (!query || query.length < 2) {
+  const search = useCallback(
+    async (_query: string): Promise<Counterparty[]> => {
+      if (COUNTERPARTIES_DEPRECATED) {
+        return [];
+      }
       return [];
-    }
-
-    try {
-      const supabase = createClient();
-
-      const { data, error: searchError } = await (
-        supabase as { from: CallableFunction }
-      )
-        .from('counterparties')
-        .select('*')
-        .or(`display_name.ilike.%${query}%,name_normalized.ilike.%${query}%`)
-        .order('display_name', { ascending: true })
-        .limit(20);
-
-      if (searchError) {
-        throw new Error(searchError.message);
-      }
-
-      return (data || []) as Counterparty[];
-    } catch (err) {
-      console.error('[useCounterparties] Search error:', err);
-      return [];
-    }
-  }, []);
-
-  const create = useCallback(
-    async (data: CreateCounterpartyData): Promise<Counterparty | null> => {
-      try {
-        const supabase = createClient();
-
-        // Créer la counterparty
-        const { data: newCounterparty, error: createError } = await (
-          supabase as { from: CallableFunction }
-        )
-          .from('counterparties')
-          .insert({
-            display_name: data.display_name,
-            name_normalized: data.display_name.toLowerCase().trim(),
-            vat_number: data.vat_number || null,
-            siren: data.siren || null,
-          })
-          .select()
-          .single();
-
-        if (createError) {
-          throw new Error(createError.message);
-        }
-
-        const counterparty = newCounterparty as Counterparty;
-
-        // Si un IBAN est fourni, créer le compte bancaire
-        if (data.iban) {
-          const { error: bankError } = await (
-            supabase as { from: CallableFunction }
-          )
-            .from('counterparty_bank_accounts')
-            .insert({
-              counterparty_id: counterparty.id,
-              iban: data.iban.replace(/\s/g, '').toUpperCase(),
-              bic: data.bic || null,
-              label: 'Compte principal',
-            });
-
-          if (bankError) {
-            console.error(
-              '[useCounterparties] Error creating bank account:',
-              bankError
-            );
-            // On ne fait pas échouer la création de counterparty
-          }
-        }
-
-        // Rafraîchir la liste
-        await fetchCounterparties();
-
-        return counterparty;
-      } catch (err) {
-        console.error('[useCounterparties] Create error:', err);
-        throw err;
-      }
-    },
-    [fetchCounterparties]
-  );
-
-  const getWithBankAccounts = useCallback(
-    async (id: string): Promise<CounterpartyWithBankAccounts | null> => {
-      try {
-        const supabase = createClient();
-
-        // Récupérer la counterparty
-        const { data: counterparty, error: counterpartyError } = await (
-          supabase as { from: CallableFunction }
-        )
-          .from('counterparties')
-          .select('*')
-          .eq('id', id)
-          .single();
-
-        if (counterpartyError) {
-          throw new Error(counterpartyError.message);
-        }
-
-        // Récupérer les comptes bancaires
-        const { data: bankAccounts, error: bankError } = await (
-          supabase as { from: CallableFunction }
-        )
-          .from('counterparty_bank_accounts')
-          .select('*')
-          .eq('counterparty_id', id);
-
-        if (bankError) {
-          console.error(
-            '[useCounterparties] Error fetching bank accounts:',
-            bankError
-          );
-        }
-
-        return {
-          ...(counterparty as Counterparty),
-          bank_accounts: (bankAccounts || []) as CounterpartyBankAccount[],
-        };
-      } catch (err) {
-        console.error('[useCounterparties] GetWithBankAccounts error:', err);
-        return null;
-      }
     },
     []
   );
 
-  useEffect(() => {
-    fetchCounterparties();
-  }, [fetchCounterparties]);
+  const create = useCallback(
+    async (_data: CreateCounterpartyData): Promise<Counterparty | null> => {
+      if (COUNTERPARTIES_DEPRECATED) {
+        console.warn(
+          '[useCounterparties] Table deprecated - use OrganisationLinkingModal instead'
+        );
+        return null;
+      }
+      return null;
+    },
+    []
+  );
+
+  const getWithBankAccounts = useCallback(
+    async (_id: string): Promise<CounterpartyWithBankAccounts | null> => {
+      if (COUNTERPARTIES_DEPRECATED) {
+        return null;
+      }
+      return null;
+    },
+    []
+  );
 
   return {
     counterparties,

@@ -104,6 +104,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // 6. Mettre à jour bank_transactions raw_data avec l'attachment
+    // Note: has_attachment est une colonne GENERATED qui se recalcule automatiquement
     const { data: txData } = await supabase
       .from('bank_transactions')
       .select('raw_data')
@@ -121,7 +122,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       await supabase
         .from('bank_transactions')
-        .update({ raw_data: updatedRawData })
+        .update({
+          raw_data: updatedRawData,
+          // has_attachment se recalcule automatiquement via GENERATED column
+        })
         .eq('transaction_id', transactionId);
     }
 

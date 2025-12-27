@@ -166,7 +166,7 @@ export default function ReglesPage() {
                 Règles de Classification
               </h1>
               <p className="text-sm text-slate-600">
-                Associez vos libellés à des tiers pour classifier
+                Associez vos libellés à des organisations pour classifier
                 automatiquement vos dépenses
               </p>
             </div>
@@ -202,7 +202,7 @@ export default function ReglesPage() {
                 <Badge variant="secondary">{labels.length}</Badge>
               </CardTitle>
               <CardDescription>
-                Cliquez sur "Lier" pour associer un libellé à un tiers
+                Cliquez sur "Lier" pour associer un libellé à une organisation
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -246,7 +246,7 @@ export default function ReglesPage() {
                         }
                       >
                         <LinkIcon size={14} className="mr-1" />
-                        Lier à un tiers
+                        Lier
                       </Button>
                     </div>
                   ))}
@@ -278,7 +278,8 @@ export default function ReglesPage() {
                   <AlertCircle className="mx-auto h-12 w-12 text-slate-300" />
                   <p className="mt-2 text-slate-600">Aucune règle créée</p>
                   <p className="text-sm text-slate-500">
-                    Liez des libellés à des tiers depuis la colonne de gauche
+                    Liez des libellés à des organisations depuis la colonne de
+                    gauche
                   </p>
                 </div>
               ) : (

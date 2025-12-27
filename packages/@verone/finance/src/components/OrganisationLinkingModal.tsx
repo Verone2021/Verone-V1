@@ -6,17 +6,8 @@ import { cn } from '@verone/ui';
 import { Badge } from '@verone/ui/components/ui/badge';
 import { Button } from '@verone/ui/components/ui/button';
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@verone/ui/components/ui/command';
-import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@verone/ui/components/ui/dialog';
@@ -27,19 +18,18 @@ import {
   Package,
   Settings,
   Check,
-  Search,
   Plus,
   ArrowLeft,
   ArrowRight,
   Loader2,
+  Building2,
+  Sparkles,
+  Search,
 } from 'lucide-react';
 
 import { CategoryCardGrid, suggestCategory } from './CategoryCardGrid';
-import {
-  EXPENSE_CATEGORIES,
-  type ExpenseCategory,
-} from '../hooks/use-expenses';
 import { useMatchingRules } from '../hooks/use-matching-rules';
+import { PCG_SUGGESTED_CATEGORIES } from '../lib/pcg-categories';
 
 // Types
 interface Organisation {
@@ -61,49 +51,134 @@ interface OrganisationLinkingModalProps {
 type Step = 'who' | 'type' | 'category' | 'confirm';
 type ProviderType = 'goods' | 'services';
 
-// Step indicator component
+// Modern Step Indicator with glassmorphism and animations
 function StepIndicator({ currentStep }: { currentStep: Step }) {
-  const steps: { key: Step; label: string }[] = [
-    { key: 'who', label: 'Tiers' },
-    { key: 'type', label: 'Type' },
-    { key: 'category', label: 'Catégorie' },
-    { key: 'confirm', label: 'Confirmer' },
+  const steps: { key: Step; label: string; icon: string }[] = [
+    { key: 'who', label: 'Organisation', icon: '🏢' },
+    { key: 'type', label: 'Type', icon: '🏷️' },
+    { key: 'category', label: 'Catégorie', icon: '📊' },
+    { key: 'confirm', label: 'Confirmer', icon: '✅' },
   ];
 
   const currentIndex = steps.findIndex(s => s.key === currentStep);
 
   return (
-    <div className="flex items-center justify-center gap-2 px-4 py-3">
-      {steps.map((step, index) => (
-        <div key={step.key} className="flex items-center gap-2">
-          <div
-            className={cn(
-              'flex h-7 w-7 items-center justify-center rounded-full text-xs font-medium transition-colors',
-              index < currentIndex
-                ? 'bg-green-500 text-white'
-                : index === currentIndex
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-slate-200 text-slate-500'
-            )}
-          >
-            {index < currentIndex ? <Check size={14} /> : index + 1}
-          </div>
-          <span
-            className={cn(
-              'hidden text-sm sm:inline',
-              index === currentIndex
-                ? 'font-medium text-slate-900'
-                : 'text-slate-500'
-            )}
-          >
-            {step.label}
-          </span>
-          {index < steps.length - 1 && (
-            <div className="h-px w-4 bg-slate-300 sm:w-8" />
+    <div className="relative mx-auto w-full max-w-md px-4 py-4">
+      {/* Background track */}
+      <div className="absolute left-8 right-8 top-1/2 h-1 -translate-y-1/2 rounded-full bg-slate-100" />
+
+      {/* Progress bar */}
+      <div
+        className="absolute left-8 top-1/2 h-1 -translate-y-1/2 rounded-full bg-gradient-to-r from-blue-500 to-blue-400 transition-all duration-500 ease-out"
+        style={{
+          width: `calc(${(currentIndex / (steps.length - 1)) * 100}% - 32px)`,
+        }}
+      />
+
+      <div className="relative flex items-center justify-between">
+        {steps.map((step, index) => {
+          const isCompleted = index < currentIndex;
+          const isCurrent = index === currentIndex;
+          const isPending = index > currentIndex;
+
+          return (
+            <div key={step.key} className="flex flex-col items-center gap-1.5">
+              <div
+                className={cn(
+                  'relative flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition-all duration-300',
+                  isCompleted &&
+                    'bg-green-500 text-white shadow-lg shadow-green-500/30',
+                  isCurrent &&
+                    'bg-blue-500 text-white shadow-lg shadow-blue-500/40 ring-4 ring-blue-100 scale-110',
+                  isPending &&
+                    'bg-white text-slate-400 border-2 border-slate-200'
+                )}
+              >
+                {isCompleted ? (
+                  <Check
+                    size={18}
+                    className="animate-in zoom-in duration-200"
+                  />
+                ) : (
+                  <span className="text-base">{step.icon}</span>
+                )}
+              </div>
+              <span
+                className={cn(
+                  'text-xs font-medium transition-colors duration-300',
+                  isCurrent
+                    ? 'text-blue-600'
+                    : isCompleted
+                      ? 'text-green-600'
+                      : 'text-slate-400'
+                )}
+              >
+                {step.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// Organisation card component for search results
+function OrganisationCard({
+  org,
+  isSelected,
+  onSelect,
+}: {
+  org: Organisation;
+  isSelected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={cn(
+        'group flex w-full items-center gap-3 rounded-xl border-2 p-3 text-left transition-all duration-200',
+        'hover:shadow-md hover:scale-[1.02]',
+        isSelected
+          ? 'border-blue-500 bg-blue-50 shadow-md shadow-blue-500/10'
+          : 'border-slate-200 bg-white hover:border-slate-300'
+      )}
+    >
+      <div
+        className={cn(
+          'flex h-10 w-10 items-center justify-center rounded-lg transition-colors',
+          isSelected
+            ? 'bg-blue-500 text-white'
+            : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200'
+        )}
+      >
+        <Building2 size={20} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="truncate font-medium text-slate-900">
+          {org.legal_name}
+        </div>
+        <div className="flex items-center gap-1.5 text-xs text-slate-500">
+          {org.is_service_provider ? (
+            <>
+              <Settings size={12} className="text-blue-500" />
+              <span>Prestataire de services</span>
+            </>
+          ) : (
+            <>
+              <Package size={12} className="text-amber-500" />
+              <span>Fournisseur de biens</span>
+            </>
           )}
         </div>
-      ))}
-    </div>
+      </div>
+      {isSelected && (
+        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500">
+          <Check size={14} className="text-white" />
+        </div>
+      )}
+    </button>
   );
 }
 
@@ -123,7 +198,7 @@ export function OrganisationLinkingModal({
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [newOrgName, setNewOrgName] = useState(label);
   const [providerType, setProviderType] = useState<ProviderType | null>(null);
-  const [category, setCategory] = useState<ExpenseCategory | null>(null);
+  const [category, setCategory] = useState<string | null>(null);
   const [createRule, setCreateRule] = useState(true);
   const [applyToHistory, setApplyToHistory] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -133,6 +208,13 @@ export function OrganisationLinkingModal({
 
   // Suggestion de catégorie basée sur le label
   const suggestedCategory = suggestCategory(label);
+
+  // Format currency
+  const formatAmount = (amount: number) =>
+    new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+    }).format(Math.abs(amount));
 
   // Reset state when modal opens
   useEffect(() => {
@@ -149,9 +231,10 @@ export function OrganisationLinkingModal({
     }
   }, [open, label, suggestedCategory]);
 
-  // Fetch organisations based on search
+  // Fetch organisations based on search - starts immediately
   const searchOrganisations = useCallback(async (query: string) => {
-    if (!query || query.length < 2) {
+    // Start search immediately (no minimum characters)
+    if (!query || query.trim().length === 0) {
       setOrganisations([]);
       return;
     }
@@ -165,23 +248,25 @@ export function OrganisationLinkingModal({
         .or(`legal_name.ilike.%${query}%,trade_name.ilike.%${query}%`)
         .eq('type', 'supplier')
         .is('archived_at', null)
-        .limit(10);
+        .order('legal_name')
+        .limit(8);
 
       if (error) throw error;
       setOrganisations((data || []) as Organisation[]);
-    } catch (err) {
-      console.error('[OrganisationLinkingModal] Search error:', err);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erreur inconnue';
+      console.error('[OrganisationLinkingModal] Search error:', message);
       setOrganisations([]);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // Debounced search
+  // Debounced search (reduced to 200ms for responsiveness)
   useEffect(() => {
     const timer = setTimeout(() => {
       searchOrganisations(searchQuery);
-    }, 300);
+    }, 200);
     return () => clearTimeout(timer);
   }, [searchQuery, searchOrganisations]);
 
@@ -315,108 +400,174 @@ export function OrganisationLinkingModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Associer à un tiers</DialogTitle>
-          <DialogDescription>
-            Libellé : <strong>{label}</strong>
-            {transactionCount > 0 && (
-              <span className="ml-2 text-slate-500">
-                ({transactionCount} transaction{transactionCount > 1 ? 's' : ''}{' '}
-                • {totalAmount.toFixed(2)} €)
-              </span>
-            )}
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="max-w-2xl overflow-hidden p-0">
+        {/* Header with gradient background */}
+        <div className="border-b bg-gradient-to-br from-slate-50 to-white px-6 pt-6 pb-2">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500 shadow-lg shadow-blue-500/30">
+                <Building2 size={18} className="text-white" />
+              </div>
+              Associer à une organisation
+            </DialogTitle>
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              <Badge
+                variant="secondary"
+                className="gap-1 bg-slate-100 px-2.5 py-1 text-slate-700"
+              >
+                <span className="font-mono text-xs">{label}</span>
+              </Badge>
+              {transactionCount > 0 && (
+                <span className="text-slate-500">
+                  • {transactionCount} transaction
+                  {transactionCount > 1 ? 's' : ''} •{' '}
+                  {formatAmount(totalAmount)}
+                </span>
+              )}
+            </div>
+          </DialogHeader>
 
-        <StepIndicator currentStep={step} />
+          <StepIndicator currentStep={step} />
+        </div>
 
-        <div className="min-h-[280px] py-4">
+        {/* Content area with fixed height for smooth transitions */}
+        <div className="min-h-[380px] overflow-y-auto px-6 py-6">
           {/* Step 1: Who */}
           {step === 'who' && (
-            <div className="space-y-4">
+            <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
               <div>
-                <Label className="mb-2 block">
-                  Rechercher ou créer un tiers
+                <Label className="mb-2 flex items-center gap-2 text-base font-semibold">
+                  <Search size={16} className="text-slate-400" />
+                  Rechercher une organisation
                 </Label>
-                <Command className="rounded-lg border">
-                  <CommandInput
-                    placeholder="Rechercher..."
+                <div className="relative">
+                  <Input
+                    placeholder="Tapez pour rechercher..."
                     value={searchQuery}
-                    onValueChange={setSearchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="h-12 pl-4 pr-10 text-base"
                   />
-                  <CommandList className="max-h-48">
-                    {isLoading && (
-                      <div className="flex items-center justify-center py-4">
-                        <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+                  {isLoading && (
+                    <Loader2 className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 animate-spin text-slate-400" />
+                  )}
+                </div>
+              </div>
+
+              {/* Search results */}
+              {organisations.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-sm text-slate-500">
+                    {organisations.length} résultat
+                    {organisations.length > 1 ? 's' : ''} trouvé
+                    {organisations.length > 1 ? 's' : ''}
+                  </Label>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {organisations.map(org => (
+                      <OrganisationCard
+                        key={org.id}
+                        org={org}
+                        isSelected={selectedOrg?.id === org.id}
+                        onSelect={() => {
+                          setSelectedOrg(org);
+                          setIsCreatingNew(false);
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* No results state */}
+              {!isLoading &&
+                searchQuery.length > 0 &&
+                organisations.length === 0 && (
+                  <div className="rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 py-8 text-center">
+                    <div className="text-4xl">🔍</div>
+                    <p className="mt-2 font-medium text-slate-600">
+                      Aucune organisation trouvée
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Créez cette organisation ci-dessous
+                    </p>
+                  </div>
+                )}
+
+              {/* Afficher la création SEULEMENT si pas de résultats ET pas d'org sélectionnée */}
+              {!selectedOrg &&
+                organisations.length === 0 &&
+                searchQuery.length > 0 && (
+                  <>
+                    {/* Divider */}
+                    <div className="relative py-2">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t border-slate-200" />
                       </div>
-                    )}
-                    {!isLoading &&
-                      organisations.length === 0 &&
-                      searchQuery.length >= 2 && (
-                        <CommandEmpty>Aucun résultat</CommandEmpty>
+                      <div className="relative flex justify-center">
+                        <span className="bg-white px-3 text-sm font-medium text-slate-400">
+                          ou créer une nouvelle
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Create new button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsCreatingNew(true);
+                        setSelectedOrg(null);
+                      }}
+                      className={cn(
+                        'group flex w-full items-center gap-3 rounded-xl border-2 p-4 text-left transition-all duration-200',
+                        'hover:shadow-md',
+                        isCreatingNew
+                          ? 'border-green-500 bg-green-50 shadow-md shadow-green-500/10'
+                          : 'border-dashed border-slate-300 bg-white hover:border-green-400 hover:bg-green-50/50'
                       )}
-                    <CommandGroup>
-                      {organisations.map(org => (
-                        <CommandItem
-                          key={org.id}
-                          onSelect={() => {
-                            setSelectedOrg(org);
-                            setIsCreatingNew(false);
-                          }}
-                          className={cn(
-                            'cursor-pointer',
-                            selectedOrg?.id === org.id && 'bg-blue-50'
-                          )}
-                        >
-                          <div className="flex flex-1 items-center justify-between">
-                            <span>{org.legal_name}</span>
-                            <Badge variant="outline" className="text-xs">
-                              {org.is_service_provider
-                                ? '🔧 Prestataire'
-                                : '📦 Fournisseur'}
-                            </Badge>
-                          </div>
-                          {selectedOrg?.id === org.id && (
-                            <Check className="ml-2 h-4 w-4 text-blue-500" />
-                          )}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </div>
+                    >
+                      <div
+                        className={cn(
+                          'flex h-10 w-10 items-center justify-center rounded-lg transition-colors',
+                          isCreatingNew
+                            ? 'bg-green-500 text-white'
+                            : 'bg-slate-100 text-slate-500 group-hover:bg-green-100 group-hover:text-green-600'
+                        )}
+                      >
+                        <Plus size={20} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium text-slate-900">
+                          Créer l&apos;organisation
+                        </div>
+                        <div className="text-sm text-slate-500">
+                          &quot;{searchQuery || label}&quot; sera ajoutée comme
+                          fournisseur
+                        </div>
+                      </div>
+                      {isCreatingNew && (
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500">
+                          <Check size={14} className="text-white" />
+                        </div>
+                      )}
+                    </button>
+                  </>
+                )}
 
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-2 text-slate-500">ou</span>
-                </div>
-              </div>
-
-              <Button
-                variant={isCreatingNew ? 'default' : 'outline'}
-                className="w-full"
-                onClick={() => {
-                  setIsCreatingNew(true);
-                  setSelectedOrg(null);
-                }}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Créer "{searchQuery || label}" comme nouveau tiers
-              </Button>
-
+              {/* New org name input */}
               {isCreatingNew && (
-                <div>
-                  <Label htmlFor="newOrgName">Nom du tiers</Label>
+                <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                  <Label
+                    htmlFor="newOrgName"
+                    className="mb-1.5 block text-sm font-medium"
+                  >
+                    Nom de l&apos;organisation
+                  </Label>
                   <Input
                     id="newOrgName"
                     value={newOrgName}
                     onChange={e => setNewOrgName(e.target.value)}
-                    placeholder="Nom de l'organisation"
-                    className="mt-1"
+                    placeholder="Nom légal de l'organisation"
+                    className="h-11"
+                    autoFocus
                   />
                 </div>
               )}
@@ -425,58 +576,127 @@ export function OrganisationLinkingModal({
 
           {/* Step 2: Type */}
           {step === 'type' && (
-            <div className="space-y-4">
-              <Label>Quel type de tiers ?</Label>
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+              <div className="text-center">
+                <h3 className="text-lg font-semibold text-slate-900">
+                  Quel type d&apos;organisation ?
+                </h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  Cette information aide à mieux catégoriser vos dépenses
+                </p>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                {/* Goods supplier */}
                 <button
                   type="button"
                   onClick={() => setProviderType('goods')}
                   className={cn(
-                    'flex flex-col items-center gap-3 rounded-xl border-2 p-6 transition-all hover:bg-slate-50',
+                    'group relative flex flex-col items-center gap-4 rounded-2xl border-2 p-6 transition-all duration-200',
+                    'hover:shadow-lg hover:scale-[1.02]',
                     providerType === 'goods'
-                      ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
-                      : 'border-slate-200'
+                      ? 'border-amber-500 bg-amber-50 shadow-lg shadow-amber-500/20'
+                      : 'border-slate-200 bg-white hover:border-amber-300'
                   )}
                 >
-                  <Package className="h-10 w-10 text-amber-600" />
+                  <div
+                    className={cn(
+                      'flex h-16 w-16 items-center justify-center rounded-2xl transition-all',
+                      providerType === 'goods'
+                        ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30'
+                        : 'bg-amber-100 text-amber-600 group-hover:bg-amber-200'
+                    )}
+                  >
+                    <Package size={32} />
+                  </div>
                   <div className="text-center">
-                    <div className="font-medium">Fournisseur de biens</div>
-                    <div className="mt-1 text-xs text-slate-500">
-                      Produits, marchandises, équipements
+                    <div className="text-lg font-semibold text-slate-900">
+                      Fournisseur de biens
+                    </div>
+                    <div className="mt-2 text-sm text-slate-500">
+                      Produits physiques, marchandises, équipements, matériaux
                     </div>
                   </div>
+                  <div className="mt-2 flex flex-wrap justify-center gap-1.5">
+                    <Badge variant="outline" className="text-xs">
+                      IKEA
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      Leroy Merlin
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      Amazon
+                    </Badge>
+                  </div>
+                  {providerType === 'goods' && (
+                    <div className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-amber-500 shadow-lg">
+                      <Check size={16} className="text-white" />
+                    </div>
+                  )}
                 </button>
 
+                {/* Service provider */}
                 <button
                   type="button"
                   onClick={() => setProviderType('services')}
                   className={cn(
-                    'flex flex-col items-center gap-3 rounded-xl border-2 p-6 transition-all hover:bg-slate-50',
+                    'group relative flex flex-col items-center gap-4 rounded-2xl border-2 p-6 transition-all duration-200',
+                    'hover:shadow-lg hover:scale-[1.02]',
                     providerType === 'services'
-                      ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
-                      : 'border-slate-200'
+                      ? 'border-blue-500 bg-blue-50 shadow-lg shadow-blue-500/20'
+                      : 'border-slate-200 bg-white hover:border-blue-300'
                   )}
                 >
-                  <Settings className="h-10 w-10 text-blue-600" />
+                  <div
+                    className={cn(
+                      'flex h-16 w-16 items-center justify-center rounded-2xl transition-all',
+                      providerType === 'services'
+                        ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
+                        : 'bg-blue-100 text-blue-600 group-hover:bg-blue-200'
+                    )}
+                  >
+                    <Settings size={32} />
+                  </div>
                   <div className="text-center">
-                    <div className="font-medium">Prestataire de services</div>
-                    <div className="mt-1 text-xs text-slate-500">
-                      Abonnements, télécom, SaaS, conseil
+                    <div className="text-lg font-semibold text-slate-900">
+                      Prestataire de services
+                    </div>
+                    <div className="mt-2 text-sm text-slate-500">
+                      Abonnements, télécom, SaaS, conseil, assurances
                     </div>
                   </div>
+                  <div className="mt-2 flex flex-wrap justify-center gap-1.5">
+                    <Badge variant="outline" className="text-xs">
+                      Free
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      OVH
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      Vercel
+                    </Badge>
+                  </div>
+                  {providerType === 'services' && (
+                    <div className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-blue-500 shadow-lg">
+                      <Check size={16} className="text-white" />
+                    </div>
+                  )}
                 </button>
               </div>
-              <p className="text-center text-xs text-slate-500">
-                Ex: IKEA, Leroy Merlin = Fournisseur | Free, OVH,
-                Expert-comptable = Prestataire
-              </p>
             </div>
           )}
 
           {/* Step 3: Category */}
           {step === 'category' && (
-            <div className="space-y-4">
-              <Label>Catégorie comptable</Label>
+            <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+              <div className="text-center">
+                <h3 className="text-lg font-semibold text-slate-900">
+                  Catégorie comptable
+                </h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  Sélectionnez la catégorie pour classifier cette dépense
+                </p>
+              </div>
               <CategoryCardGrid
                 value={category}
                 onChange={setCategory}
@@ -487,80 +707,146 @@ export function OrganisationLinkingModal({
 
           {/* Step 4: Confirm */}
           {step === 'confirm' && (
-            <div className="space-y-4">
-              <div className="rounded-lg border bg-slate-50 p-4">
-                <h4 className="mb-3 font-medium">Résumé</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Libellé :</span>
-                    <span className="font-medium">{label}</span>
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+              <div className="text-center">
+                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-green-400 to-green-500 shadow-lg shadow-green-500/30">
+                  <Sparkles size={28} className="text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  Prêt à classifier !
+                </h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  Vérifiez les informations ci-dessous
+                </p>
+              </div>
+
+              {/* Summary card */}
+              <div className="rounded-xl border bg-gradient-to-br from-slate-50 to-white p-5 shadow-sm">
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <span className="text-sm font-medium text-slate-500">
+                        Libellé
+                      </span>
+                      <div className="mt-0.5 font-mono text-sm text-slate-900">
+                        {label}
+                      </div>
+                    </div>
+                    <Badge variant="secondary" className="shrink-0">
+                      {transactionCount} transaction
+                      {transactionCount > 1 ? 's' : ''}
+                    </Badge>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Tiers :</span>
-                    <span className="font-medium">
-                      {selectedOrg?.legal_name || newOrgName}
-                      <Badge variant="outline" className="ml-2 text-xs">
-                        {providerType === 'services'
-                          ? '🔧 Prestataire'
-                          : '📦 Fournisseur'}
-                      </Badge>
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Catégorie :</span>
-                    <span className="font-medium">
-                      {category && (
-                        <>
-                          {
-                            EXPENSE_CATEGORIES.find(c => c.id === category)
-                              ?.emoji
-                          }{' '}
-                          {
-                            EXPENSE_CATEGORIES.find(c => c.id === category)
-                              ?.label
-                          }
-                        </>
+
+                  <div className="h-px bg-slate-200" />
+
+                  <div className="flex items-center gap-4">
+                    <div
+                      className={cn(
+                        'flex h-11 w-11 items-center justify-center rounded-xl',
+                        providerType === 'services'
+                          ? 'bg-blue-100 text-blue-600'
+                          : 'bg-amber-100 text-amber-600'
                       )}
-                    </span>
+                    >
+                      {providerType === 'services' ? (
+                        <Settings size={22} />
+                      ) : (
+                        <Package size={22} />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-slate-500">
+                        Organisation
+                      </div>
+                      <div className="font-semibold text-slate-900">
+                        {selectedOrg?.legal_name || newOrgName}
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        {providerType === 'services'
+                          ? 'Prestataire de services'
+                          : 'Fournisseur de biens'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="h-px bg-slate-200" />
+
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-2xl">
+                      📊
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-slate-500">
+                        Catégorie comptable
+                      </div>
+                      <div className="font-semibold text-slate-900">
+                        {category && (
+                          <>
+                            {PCG_SUGGESTED_CATEGORIES.find(
+                              c => c.code === category
+                            )?.label || category}
+                            <span className="ml-2 text-xs text-slate-400">
+                              ({category})
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
+              {/* Options */}
               <div className="space-y-3">
-                <label className="flex cursor-pointer items-start gap-3 rounded-lg border p-3 hover:bg-slate-50">
+                <label
+                  className={cn(
+                    'flex cursor-pointer items-start gap-4 rounded-xl border-2 p-4 transition-all',
+                    createRule
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                  )}
+                >
                   <input
                     type="checkbox"
                     checked={createRule}
                     onChange={e => setCreateRule(e.target.checked)}
-                    className="mt-0.5"
+                    className="mt-0.5 h-5 w-5 rounded border-slate-300 text-blue-500 focus:ring-blue-500"
                   />
                   <div>
-                    <div className="font-medium">
+                    <div className="font-medium text-slate-900">
                       Créer une règle automatique
                     </div>
-                    <div className="text-xs text-slate-500">
-                      Les futures transactions "{label}" seront classées
-                      automatiquement.
+                    <div className="mt-0.5 text-sm text-slate-500">
+                      Les futures transactions &quot;{label}&quot; seront
+                      classées automatiquement
                     </div>
                   </div>
                 </label>
 
                 {createRule && (
-                  <label className="flex cursor-pointer items-start gap-3 rounded-lg border p-3 hover:bg-slate-50">
+                  <label
+                    className={cn(
+                      'ml-6 flex cursor-pointer items-start gap-4 rounded-xl border-2 p-4 transition-all animate-in fade-in slide-in-from-top-2',
+                      applyToHistory
+                        ? 'border-green-500 bg-green-50'
+                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                    )}
+                  >
                     <input
                       type="checkbox"
                       checked={applyToHistory}
                       onChange={e => setApplyToHistory(e.target.checked)}
-                      className="mt-0.5"
+                      className="mt-0.5 h-5 w-5 rounded border-slate-300 text-green-500 focus:ring-green-500"
                     />
                     <div>
-                      <div className="font-medium">
+                      <div className="font-medium text-slate-900">
                         Appliquer aux transactions existantes
                       </div>
-                      <div className="text-xs text-slate-500">
+                      <div className="mt-0.5 text-sm text-slate-500">
                         {transactionCount > 0
-                          ? `${transactionCount} transaction${transactionCount > 1 ? 's' : ''} sera${transactionCount > 1 ? 'ont' : ''} classée${transactionCount > 1 ? 's' : ''} immédiatement.`
-                          : 'Classer les transactions existantes avec ce libellé.'}
+                          ? `${transactionCount} transaction${transactionCount > 1 ? 's' : ''} sera${transactionCount > 1 ? 'ont' : ''} classée${transactionCount > 1 ? 's' : ''} immédiatement`
+                          : 'Classer les transactions existantes avec ce libellé'}
                       </div>
                     </div>
                   </label>
@@ -570,15 +856,24 @@ export function OrganisationLinkingModal({
           )}
         </div>
 
-        {/* Navigation */}
-        <div className="flex justify-between border-t pt-4">
+        {/* Footer navigation */}
+        <div className="flex justify-between border-t bg-slate-50/50 px-6 py-4">
           {step !== 'who' ? (
-            <Button variant="outline" onClick={goBack} disabled={isSubmitting}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
+            <Button
+              variant="outline"
+              onClick={goBack}
+              disabled={isSubmitting}
+              className="gap-2"
+            >
+              <ArrowLeft size={16} />
               Retour
             </Button>
           ) : (
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              variant="ghost"
+              onClick={() => onOpenChange(false)}
+              className="text-slate-500 hover:text-slate-900"
+            >
               Annuler
             </Button>
           )}
@@ -587,23 +882,24 @@ export function OrganisationLinkingModal({
             <Button
               onClick={handleSubmit}
               disabled={isSubmitting || !canGoNext()}
+              className="gap-2 bg-gradient-to-r from-green-500 to-green-600 shadow-lg shadow-green-500/30 hover:from-green-600 hover:to-green-700"
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 size={16} className="animate-spin" />
                   Enregistrement...
                 </>
               ) : (
                 <>
-                  <Check className="mr-2 h-4 w-4" />
+                  <Check size={16} />
                   Confirmer et classer
                 </>
               )}
             </Button>
           ) : (
-            <Button onClick={goNext} disabled={!canGoNext()}>
+            <Button onClick={goNext} disabled={!canGoNext()} className="gap-2">
               Suivant
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <ArrowRight size={16} />
             </Button>
           )}
         </div>

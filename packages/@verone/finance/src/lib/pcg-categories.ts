@@ -1,11 +1,21 @@
 /**
- * Plan Comptable Général (PCG) - Catégories Comptables
- * Conforme au PCG français 2025 - Classe 6 (Charges)
+ * Plan Comptable Général (PCG) - Catégories Comptables COMPLET
+ * Conforme au PCG français 2025 - Classes 1 à 8
+ *
+ * Classes du PCG:
+ * - Classe 1: Comptes de capitaux
+ * - Classe 2: Comptes d'immobilisations
+ * - Classe 3: Comptes de stocks et en-cours
+ * - Classe 4: Comptes de tiers
+ * - Classe 5: Comptes financiers
+ * - Classe 6: Comptes de charges
+ * - Classe 7: Comptes de produits
+ * - Classe 8: Comptes spéciaux
  *
  * Sources:
  * - ANC PCG 2025: https://www.anc.gouv.fr
- * - Indy: https://www.indy.fr/guide/tenue-comptable/plan-comptable/compte-classe-six/
- * - Pennylane: https://www.pennylane.com/fr/fiches-pratiques/plan-comptable/classe-6---comptes-de-charges
+ * - Indy: https://www.indy.fr/guide/tenue-comptable/plan-comptable/
+ * - Pennylane: https://www.pennylane.com/fr/fiches-pratiques/plan-comptable/
  */
 
 export interface PcgCategory {
@@ -22,6 +32,205 @@ export interface PcgCategory {
  * Utilisées pour le regroupement dans les graphiques
  */
 export const PCG_CLASSES: PcgCategory[] = [
+  // ============================================================
+  // CLASSE 1 - COMPTES DE CAPITAUX
+  // ============================================================
+  {
+    code: '10',
+    label: 'Capital et réserves',
+    parentCode: null,
+    level: 1,
+    description: 'Capital social, réserves légales et statutaires',
+    icon: '🏛️',
+  },
+  {
+    code: '11',
+    label: 'Report à nouveau',
+    parentCode: null,
+    level: 1,
+    description: 'Bénéfices ou pertes reportés',
+    icon: '📊',
+  },
+  {
+    code: '12',
+    label: "Résultat de l'exercice",
+    parentCode: null,
+    level: 1,
+    description: "Bénéfice ou perte de l'exercice",
+    icon: '📈',
+  },
+  {
+    code: '16',
+    label: 'Emprunts et dettes',
+    parentCode: null,
+    level: 1,
+    description: 'Emprunts bancaires, dettes financières',
+    icon: '🏦',
+  },
+
+  // ============================================================
+  // CLASSE 2 - COMPTES D'IMMOBILISATIONS
+  // ============================================================
+  {
+    code: '20',
+    label: 'Immobilisations incorporelles',
+    parentCode: null,
+    level: 1,
+    description: 'Brevets, licences, fonds de commerce, logiciels',
+    icon: '💡',
+  },
+  {
+    code: '21',
+    label: 'Immobilisations corporelles',
+    parentCode: null,
+    level: 1,
+    description: 'Terrains, constructions, matériel, véhicules',
+    icon: '🏗️',
+  },
+  {
+    code: '26',
+    label: 'Participations',
+    parentCode: null,
+    level: 1,
+    description: 'Participations dans des sociétés',
+    icon: '🤝',
+  },
+  {
+    code: '28',
+    label: 'Amortissements des immobilisations',
+    parentCode: null,
+    level: 1,
+    description: 'Amortissements cumulés',
+    icon: '📉',
+  },
+
+  // ============================================================
+  // CLASSE 3 - COMPTES DE STOCKS
+  // ============================================================
+  {
+    code: '31',
+    label: 'Matières premières',
+    parentCode: null,
+    level: 1,
+    description: 'Stocks de matières premières',
+    icon: '🧱',
+  },
+  {
+    code: '32',
+    label: 'Autres approvisionnements',
+    parentCode: null,
+    level: 1,
+    description: 'Fournitures, emballages stockés',
+    icon: '📦',
+  },
+  {
+    code: '35',
+    label: 'Stocks de produits',
+    parentCode: null,
+    level: 1,
+    description: 'Produits finis et en-cours',
+    icon: '🏭',
+  },
+  {
+    code: '37',
+    label: 'Stocks de marchandises',
+    parentCode: null,
+    level: 1,
+    description: 'Marchandises destinées à la revente',
+    icon: '🛍️',
+  },
+
+  // ============================================================
+  // CLASSE 4 - COMPTES DE TIERS
+  // ============================================================
+  {
+    code: '40',
+    label: 'Fournisseurs',
+    parentCode: null,
+    level: 1,
+    description: 'Dettes envers les fournisseurs',
+    icon: '🚚',
+  },
+  {
+    code: '41',
+    label: 'Clients',
+    parentCode: null,
+    level: 1,
+    description: 'Créances clients',
+    icon: '👤',
+  },
+  {
+    code: '42',
+    label: 'Personnel',
+    parentCode: null,
+    level: 1,
+    description: 'Dettes et créances envers le personnel',
+    icon: '👥',
+  },
+  {
+    code: '43',
+    label: 'Sécurité sociale et organismes sociaux',
+    parentCode: null,
+    level: 1,
+    description: 'Cotisations URSSAF, retraite, etc.',
+    icon: '🏥',
+  },
+  {
+    code: '44',
+    label: 'État et collectivités',
+    parentCode: null,
+    level: 1,
+    description: 'TVA, impôts, taxes diverses',
+    icon: '🏛️',
+  },
+  {
+    code: '45',
+    label: 'Groupe et associés',
+    parentCode: null,
+    level: 1,
+    description: 'Comptes courants associés',
+    icon: '🤝',
+  },
+  {
+    code: '46',
+    label: 'Débiteurs et créditeurs divers',
+    parentCode: null,
+    level: 1,
+    description: 'Autres créances et dettes',
+    icon: '📋',
+  },
+
+  // ============================================================
+  // CLASSE 5 - COMPTES FINANCIERS
+  // ============================================================
+  {
+    code: '51',
+    label: 'Banques',
+    parentCode: null,
+    level: 1,
+    description: 'Comptes bancaires',
+    icon: '🏦',
+  },
+  {
+    code: '53',
+    label: 'Caisse',
+    parentCode: null,
+    level: 1,
+    description: 'Espèces en caisse',
+    icon: '💵',
+  },
+  {
+    code: '58',
+    label: 'Virements internes',
+    parentCode: null,
+    level: 1,
+    description: 'Transferts entre comptes',
+    icon: '🔄',
+  },
+
+  // ============================================================
+  // CLASSE 6 - COMPTES DE CHARGES
+  // ============================================================
   {
     code: '60',
     label: 'Achats',
@@ -85,6 +294,110 @@ export const PCG_CLASSES: PcgCategory[] = [
     level: 1,
     description: 'Charges hors exploitation courante',
     icon: '⚠️',
+  },
+  {
+    code: '68',
+    label: 'Dotations aux amortissements et provisions',
+    parentCode: null,
+    level: 1,
+    description: 'Amortissements, dépréciations, provisions',
+    icon: '📉',
+  },
+  {
+    code: '69',
+    label: 'Participation et impôts sur les bénéfices',
+    parentCode: null,
+    level: 1,
+    description: 'Participation des salariés, IS',
+    icon: '🧾',
+  },
+
+  // ============================================================
+  // CLASSE 7 - COMPTES DE PRODUITS
+  // ============================================================
+  {
+    code: '70',
+    label: 'Ventes de produits et services',
+    parentCode: null,
+    level: 1,
+    description: "Chiffre d'affaires principal",
+    icon: '💰',
+  },
+  {
+    code: '71',
+    label: 'Production stockée',
+    parentCode: null,
+    level: 1,
+    description: 'Variation des stocks de produits',
+    icon: '📦',
+  },
+  {
+    code: '72',
+    label: 'Production immobilisée',
+    parentCode: null,
+    level: 1,
+    description: "Travaux faits par l'entreprise pour elle-même",
+    icon: '🏗️',
+  },
+  {
+    code: '74',
+    label: "Subventions d'exploitation",
+    parentCode: null,
+    level: 1,
+    description: 'Aides et subventions reçues',
+    icon: '🏛️',
+  },
+  {
+    code: '75',
+    label: 'Autres produits de gestion',
+    parentCode: null,
+    level: 1,
+    description: 'Redevances, revenus divers',
+    icon: '📊',
+  },
+  {
+    code: '76',
+    label: 'Produits financiers',
+    parentCode: null,
+    level: 1,
+    description: 'Intérêts, dividendes, gains de change',
+    icon: '📈',
+  },
+  {
+    code: '77',
+    label: 'Produits exceptionnels',
+    parentCode: null,
+    level: 1,
+    description: 'Plus-values de cession, autres produits',
+    icon: '⭐',
+  },
+  {
+    code: '78',
+    label: 'Reprises sur amortissements et provisions',
+    parentCode: null,
+    level: 1,
+    description: 'Reprises de provisions, dépréciations',
+    icon: '📈',
+  },
+  {
+    code: '79',
+    label: 'Transferts de charges',
+    parentCode: null,
+    level: 1,
+    description: "Charges transférées à d'autres comptes",
+    icon: '🔄',
+  },
+
+  // ============================================================
+  // CLASSE 8 - COMPTES SPÉCIAUX (si nécessaire)
+  // ============================================================
+  {
+    code: '80',
+    label: 'Engagements hors bilan',
+    parentCode: null,
+    level: 1,
+    description: 'Engagements donnés et reçus',
+    icon: '📝',
   },
 ];
 
@@ -317,6 +630,344 @@ export const PCG_ACCOUNTS: PcgCategory[] = [
     parentCode: '67',
     level: 2,
     description: 'Pénalités, amendes, dons',
+  },
+  {
+    code: '675',
+    label: 'Valeurs comptables cessions',
+    parentCode: '67',
+    level: 2,
+    description: 'Valeur comptable des éléments cédés',
+  },
+
+  // Classe 68 - Dotations aux amortissements et provisions
+  {
+    code: '681',
+    label: 'Dotations aux amortissements',
+    parentCode: '68',
+    level: 2,
+    description: 'Dotations aux amortissements exploitation',
+  },
+  {
+    code: '686',
+    label: 'Dotations aux provisions financières',
+    parentCode: '68',
+    level: 2,
+    description: 'Provisions pour risques financiers',
+  },
+
+  // Classe 69 - Impôts sur les bénéfices
+  {
+    code: '695',
+    label: 'Impôt sur les bénéfices',
+    parentCode: '69',
+    level: 2,
+    description: 'IS (Impôt sur les Sociétés)',
+  },
+
+  // ============================================================
+  // CLASSE 4 - COMPTES DE TIERS (niveau 2)
+  // ============================================================
+  {
+    code: '401',
+    label: 'Fournisseurs - Comptes',
+    parentCode: '40',
+    level: 2,
+    description: 'Fournisseurs ordinaires',
+  },
+  {
+    code: '403',
+    label: 'Fournisseurs - Effets à payer',
+    parentCode: '40',
+    level: 2,
+    description: 'Lettres de change à payer',
+  },
+  {
+    code: '404',
+    label: "Fournisseurs d'immobilisations",
+    parentCode: '40',
+    level: 2,
+    description: "Achats d'équipements et immobilisations",
+  },
+  {
+    code: '408',
+    label: 'Fournisseurs - Factures non parvenues',
+    parentCode: '40',
+    level: 2,
+    description: 'Factures en attente de réception',
+  },
+  {
+    code: '411',
+    label: 'Clients - Comptes',
+    parentCode: '41',
+    level: 2,
+    description: 'Créances clients ordinaires',
+  },
+  {
+    code: '413',
+    label: 'Clients - Effets à recevoir',
+    parentCode: '41',
+    level: 2,
+    description: 'Lettres de change à recevoir',
+  },
+  {
+    code: '416',
+    label: 'Clients douteux ou litigieux',
+    parentCode: '41',
+    level: 2,
+    description: 'Créances douteuses',
+  },
+  {
+    code: '418',
+    label: 'Clients - Produits non encore facturés',
+    parentCode: '41',
+    level: 2,
+    description: 'Produits à facturer',
+  },
+  {
+    code: '421',
+    label: 'Personnel - Rémunérations dues',
+    parentCode: '42',
+    level: 2,
+    description: 'Salaires nets à payer',
+  },
+  {
+    code: '425',
+    label: 'Personnel - Avances et acomptes',
+    parentCode: '42',
+    level: 2,
+    description: 'Avances sur salaires',
+  },
+  {
+    code: '431',
+    label: 'Sécurité sociale',
+    parentCode: '43',
+    level: 2,
+    description: 'Cotisations URSSAF',
+  },
+  {
+    code: '437',
+    label: 'Autres organismes sociaux',
+    parentCode: '43',
+    level: 2,
+    description: 'Retraites, prévoyance, mutuelle',
+  },
+  {
+    code: '4411',
+    label: 'TVA due/État',
+    parentCode: '44',
+    level: 2,
+    description: "TVA à payer à l'État",
+  },
+  {
+    code: '44566',
+    label: 'TVA déductible sur achats',
+    parentCode: '44',
+    level: 2,
+    description: 'TVA récupérable',
+  },
+  {
+    code: '44567',
+    label: 'TVA déductible sur immobilisations',
+    parentCode: '44',
+    level: 2,
+    description: "TVA sur acquisitions d'immobilisations",
+  },
+  {
+    code: '44571',
+    label: 'TVA collectée',
+    parentCode: '44',
+    level: 2,
+    description: 'TVA facturée aux clients',
+  },
+  {
+    code: '455',
+    label: 'Associés - Comptes courants',
+    parentCode: '45',
+    level: 2,
+    description: 'Apports en compte courant',
+  },
+  {
+    code: '467',
+    label: 'Autres comptes débiteurs/créditeurs',
+    parentCode: '46',
+    level: 2,
+    description: 'Créances et dettes diverses',
+  },
+
+  // ============================================================
+  // CLASSE 5 - COMPTES FINANCIERS (niveau 2)
+  // ============================================================
+  {
+    code: '512',
+    label: 'Banque - Compte courant',
+    parentCode: '51',
+    level: 2,
+    description: 'Compte courant bancaire principal',
+  },
+  {
+    code: '514',
+    label: 'Chèques à encaisser',
+    parentCode: '51',
+    level: 2,
+    description: "Chèques en attente d'encaissement",
+  },
+  {
+    code: '517',
+    label: 'Autres organismes financiers',
+    parentCode: '51',
+    level: 2,
+    description: "Comptes dans d'autres établissements",
+  },
+  {
+    code: '531',
+    label: 'Caisse siège social',
+    parentCode: '53',
+    level: 2,
+    description: 'Caisse principale',
+  },
+  {
+    code: '580',
+    label: 'Virements internes',
+    parentCode: '58',
+    level: 2,
+    description: "Transferts entre comptes de l'entreprise",
+  },
+
+  // ============================================================
+  // CLASSE 7 - COMPTES DE PRODUITS (niveau 2)
+  // ============================================================
+  {
+    code: '701',
+    label: 'Ventes de produits finis',
+    parentCode: '70',
+    level: 2,
+    description: 'Ventes de biens fabriqués',
+  },
+  {
+    code: '706',
+    label: 'Prestations de services',
+    parentCode: '70',
+    level: 2,
+    description: 'Facturation de services',
+  },
+  {
+    code: '707',
+    label: 'Ventes de marchandises',
+    parentCode: '70',
+    level: 2,
+    description: "Revente en l'état",
+  },
+  {
+    code: '708',
+    label: 'Produits des activités annexes',
+    parentCode: '70',
+    level: 2,
+    description: 'Commissions, ports facturés',
+  },
+  {
+    code: '709',
+    label: 'Rabais, remises et ristournes accordés',
+    parentCode: '70',
+    level: 2,
+    description: 'Réductions accordées aux clients',
+  },
+  {
+    code: '713',
+    label: 'Variation des stocks de produits',
+    parentCode: '71',
+    level: 2,
+    description: 'Écart de stock produits finis',
+  },
+  {
+    code: '721',
+    label: 'Immobilisations incorporelles',
+    parentCode: '72',
+    level: 2,
+    description: 'Production immobilisée incorporelle',
+  },
+  {
+    code: '722',
+    label: 'Immobilisations corporelles',
+    parentCode: '72',
+    level: 2,
+    description: 'Production immobilisée corporelle',
+  },
+  {
+    code: '741',
+    label: "Subventions d'exploitation",
+    parentCode: '74',
+    level: 2,
+    description: "Aides reçues pour l'exploitation",
+  },
+  {
+    code: '751',
+    label: 'Redevances perçues',
+    parentCode: '75',
+    level: 2,
+    description: 'Redevances sur brevets, licences',
+  },
+  {
+    code: '758',
+    label: 'Produits divers de gestion',
+    parentCode: '75',
+    level: 2,
+    description: 'Autres produits de gestion courante',
+  },
+  {
+    code: '761',
+    label: 'Produits de participations',
+    parentCode: '76',
+    level: 2,
+    description: 'Dividendes reçus',
+  },
+  {
+    code: '764',
+    label: 'Revenus des valeurs mobilières',
+    parentCode: '76',
+    level: 2,
+    description: 'Intérêts sur placements',
+  },
+  {
+    code: '766',
+    label: 'Gains de change',
+    parentCode: '76',
+    level: 2,
+    description: 'Gains sur opérations en devises',
+  },
+  {
+    code: '768',
+    label: 'Autres produits financiers',
+    parentCode: '76',
+    level: 2,
+    description: 'Produits financiers divers',
+  },
+  {
+    code: '771',
+    label: 'Produits exceptionnels de gestion',
+    parentCode: '77',
+    level: 2,
+    description: 'Pénalités perçues, autres',
+  },
+  {
+    code: '775',
+    label: "Produits de cessions d'éléments d'actif",
+    parentCode: '77',
+    level: 2,
+    description: 'Prix de vente des immobilisations cédées',
+  },
+  {
+    code: '781',
+    label: 'Reprises sur amortissements exploitation',
+    parentCode: '78',
+    level: 2,
+    description: "Reprises de provisions d'exploitation",
+  },
+  {
+    code: '791',
+    label: "Transferts de charges d'exploitation",
+    parentCode: '79',
+    level: 2,
+    description: 'Charges transférées',
   },
 ];
 
