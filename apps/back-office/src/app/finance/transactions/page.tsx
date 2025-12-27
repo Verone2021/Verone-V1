@@ -6,12 +6,21 @@ import Link from 'next/link';
 
 import { useBankReconciliation, type BankTransaction } from '@verone/finance';
 import {
-  ClassificationModal,
+  RapprochementModal,
   InvoiceUploadModal,
   SupplierCell,
+  QuickClassificationModal,
+  OrganisationLinkingModal,
   type TransactionForUpload,
 } from '@verone/finance/components';
-import { useExpenses, useAutoClassification } from '@verone/finance/hooks';
+import {
+  useExpenses,
+  useAutoClassification,
+  useUnifiedTransactions,
+  useTransactionActions,
+  type UnifiedTransaction,
+  type UnifiedStatus,
+} from '@verone/finance/hooks';
 import {
   Card,
   CardContent,
@@ -51,6 +60,8 @@ import {
   XCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
+
+import { useFinanceV2 } from '@/lib/feature-flags';
 
 // =====================================================================
 // HELPERS
@@ -229,14 +240,14 @@ function TransactionRow({
 function TransactionDetailPanel({
   transaction,
   onClose,
-  onOpenClassifyModal,
+  onOpenRapprochementModal,
   onOpenUploadModal,
   onLink,
   suggestion,
 }: {
   transaction: BankTransaction;
   onClose: () => void;
-  onOpenClassifyModal: () => void;
+  onOpenRapprochementModal: () => void;
   onOpenUploadModal: () => void;
   onLink: () => void;
   suggestion?: {
@@ -249,11 +260,6 @@ function TransactionDetailPanel({
   const hasAttachments =
     transaction.attachment_ids && transaction.attachment_ids.length > 0;
   const isCredit = transaction.side === 'credit';
-
-  // TODO: Récupérer l'organisation liée
-  const hasOrganisation =
-    transaction.matching_status === 'manual_matched' ||
-    transaction.matching_status === 'auto_matched';
 
   const handleViewPdf = () => {
     if (hasAttachments && transaction.attachment_ids) {
@@ -346,33 +352,32 @@ function TransactionDetailPanel({
           </CardContent>
         </Card>
 
-        {/* Section Classification */}
+        {/* Section Rapprochement */}
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2 text-sm font-medium">
               <Tag className="h-4 w-4" />
-              Classification
+              Rapprochement
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
-            {hasOrganisation ? (
+            {transaction.matched_document_id ? (
               <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg">
                 <div className="h-10 w-10 rounded-lg bg-emerald-100 flex items-center justify-center">
-                  <Building2 className="h-5 w-5 text-emerald-600" />
+                  <FileText className="h-5 w-5 text-emerald-600" />
                 </div>
                 <div className="flex-1">
                   <p className="font-medium text-emerald-900">
-                    Organisation liée
+                    Document rapproché
                   </p>
                   <p className="text-sm text-emerald-700">
-                    {/* TODO: Afficher le nom de l'organisation */}
-                    Fournisseur / Client associé
+                    Cette transaction est liée à un document
                   </p>
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={onOpenClassifyModal}
+                  onClick={onOpenRapprochementModal}
                 >
                   Modifier
                 </Button>
@@ -381,10 +386,10 @@ function TransactionDetailPanel({
               <Button
                 variant="outline"
                 className="w-full gap-2"
-                onClick={onOpenClassifyModal}
+                onClick={onOpenRapprochementModal}
               >
-                <Building2 className="h-4 w-4" />
-                Classifier cette transaction
+                <FileText className="h-4 w-4" />
+                Rapprocher (document/commande)
               </Button>
             )}
           </CardContent>
@@ -457,12 +462,16 @@ function TransactionDetailPanel({
 
 type TabFilter = 'all' | 'credits' | 'debits' | 'unclassified';
 
-export default function TransactionsPage() {
+// =====================================================================
+// PAGE LEGACY (V1)
+// =====================================================================
+
+function TransactionsPageLegacy() {
   const [activeTab, setActiveTab] = useState<TabFilter>('all');
   const [selectedTransaction, setSelectedTransaction] =
     useState<BankTransaction | null>(null);
   const [search, setSearch] = useState('');
-  const [showClassifyModal, setShowClassifyModal] = useState(false);
+  const [showRapprochementModal, setShowRapprochementModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
 
   // Hook de transactions bancaires
@@ -607,10 +616,10 @@ export default function TransactionsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-slate-900">
-              Transactions Bancaires
+              Rapprochement Bancaire
             </h1>
             <p className="text-sm text-slate-600">
-              Gérez et classifiez vos transactions Qonto
+              Liez vos transactions Qonto à des documents ou commandes
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -798,7 +807,7 @@ export default function TransactionsPage() {
             <TransactionDetailPanel
               transaction={selectedTransaction}
               onClose={() => setSelectedTransaction(null)}
-              onOpenClassifyModal={() => setShowClassifyModal(true)}
+              onOpenRapprochementModal={() => setShowRapprochementModal(true)}
               onOpenUploadModal={() => setShowUploadModal(true)}
               onLink={() => refresh()}
               suggestion={suggestionsMap.get(selectedTransaction.id)}
@@ -807,25 +816,22 @@ export default function TransactionsPage() {
         </SheetContent>
       </Sheet>
 
-      {/* Modal classification - avec TVA, mode de paiement, organisation optionnelle */}
-      <ClassificationModal
-        open={showClassifyModal}
-        onOpenChange={setShowClassifyModal}
+      {/* Modal rapprochement - lier à un document ou une commande */}
+      <RapprochementModal
+        open={showRapprochementModal}
+        onOpenChange={setShowRapprochementModal}
+        transactionId={selectedTransaction?.id}
         label={
           selectedTransaction?.label ||
           selectedTransaction?.counterparty_name ||
           ''
         }
         amount={selectedTransaction?.amount || 0}
-        transactionId={selectedTransaction?.id}
+        counterpartyName={selectedTransaction?.counterparty_name}
         onSuccess={() => {
-          toast.success('Transaction classifiée');
+          toast.success('Transaction rapprochée');
           refresh();
-          setShowClassifyModal(false);
-        }}
-        onUploadClick={() => {
-          setShowClassifyModal(false);
-          setShowUploadModal(true);
+          setShowRapprochementModal(false);
         }}
       />
 
@@ -842,4 +848,718 @@ export default function TransactionsPage() {
       />
     </div>
   );
+}
+
+// =====================================================================
+// PAGE V2 (FINANCE V2 - Unified)
+// =====================================================================
+
+type TabFilterV2 =
+  | 'all'
+  | 'to_process'
+  | 'classified'
+  | 'matched'
+  | 'cca'
+  | 'ignored';
+
+function TransactionsPageV2() {
+  const [activeTab, setActiveTab] = useState<TabFilterV2>('all');
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<UnifiedTransaction | null>(null);
+  const [search, setSearch] = useState('');
+
+  // Modals state
+  const [showRapprochementModal, setShowRapprochementModal] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showClassificationModal, setShowClassificationModal] = useState(false);
+  const [showOrganisationModal, setShowOrganisationModal] = useState(false);
+
+  // Unified hook
+  const { transactions, stats, isLoading, error, refresh, setFilters } =
+    useUnifiedTransactions({
+      filters: {
+        status: activeTab === 'all' ? 'all' : activeTab,
+        search: search || undefined,
+      },
+      limit: 100,
+    });
+
+  // Actions
+  const { classify, linkOrganisation, ignore, markCCA } =
+    useTransactionActions();
+
+  // Handle tab change
+  const handleTabChange = (tab: TabFilterV2) => {
+    setActiveTab(tab);
+    setSelectedTransaction(null);
+    setFilters({
+      status: tab === 'all' ? 'all' : tab,
+      search: search || undefined,
+    });
+  };
+
+  // Handle search
+  const handleSearch = (value: string) => {
+    setSearch(value);
+    setFilters({
+      status: activeTab === 'all' ? 'all' : activeTab,
+      search: value || undefined,
+    });
+  };
+
+  // Sync handler
+  const handleSync = async () => {
+    try {
+      const response = await fetch('/api/qonto/sync', { method: 'POST' });
+      const result = await response.json();
+      if (result.success) {
+        toast.success('Synchronisation terminee', {
+          description: `${result.itemsCreated} nouvelles, ${result.itemsUpdated} mises a jour`,
+        });
+      }
+      await refresh();
+    } catch (err) {
+      console.error('[Qonto Sync] Error:', err);
+      toast.error('Erreur de synchronisation');
+      await refresh();
+    }
+  };
+
+  // Classification handler
+  const handleClassify = async (categoryPcg: string) => {
+    if (!selectedTransaction) return;
+    const result = await classify(selectedTransaction.id, categoryPcg);
+    if (result.success) {
+      toast.success('Transaction classee');
+      await refresh();
+      setShowClassificationModal(false);
+    } else {
+      toast.error(result.error || 'Erreur');
+    }
+  };
+
+  // Link organisation handler
+  const handleLinkOrganisation = async (organisationId: string) => {
+    if (!selectedTransaction) return;
+    const result = await linkOrganisation(
+      selectedTransaction.id,
+      organisationId
+    );
+    if (result.success) {
+      toast.success('Organisation liee');
+      await refresh();
+      setShowOrganisationModal(false);
+    } else {
+      toast.error(result.error || 'Erreur');
+    }
+  };
+
+  // Ignore handler
+  const handleIgnore = async () => {
+    if (!selectedTransaction) return;
+    const result = await ignore(selectedTransaction.id);
+    if (result.success) {
+      toast.success('Transaction ignoree');
+      await refresh();
+      setSelectedTransaction(null);
+    } else {
+      toast.error(result.error || 'Erreur');
+    }
+  };
+
+  // CCA handler
+  const handleMarkCCA = async () => {
+    if (!selectedTransaction) return;
+    const result = await markCCA(selectedTransaction.id);
+    if (result.success) {
+      toast.success('Marque comme Compte Courant Associe (455)');
+      await refresh();
+      setSelectedTransaction(null);
+    } else {
+      toast.error(result.error || 'Erreur');
+    }
+  };
+
+  // Convert for upload modal
+  const transactionForUpload: TransactionForUpload | null = useMemo(() => {
+    if (!selectedTransaction) return null;
+    return {
+      id: selectedTransaction.id,
+      transaction_id: selectedTransaction.transaction_id,
+      label: selectedTransaction.label || '',
+      counterparty_name: selectedTransaction.counterparty_name,
+      amount: selectedTransaction.amount,
+      currency: 'EUR',
+      emitted_at: selectedTransaction.emitted_at || '',
+      has_attachment: selectedTransaction.has_attachment,
+      matched_document_id: selectedTransaction.matched_document_id,
+      order_number: null,
+    };
+  }, [selectedTransaction]);
+
+  // Progress percentage
+  const progressPercent = stats
+    ? Math.round(
+        ((stats.total_count - stats.to_process_count) / stats.total_count) * 100
+      ) || 0
+    : 0;
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      {/* Banner v2 beta */}
+      <div className="bg-blue-600 text-white px-4 py-2 text-sm flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="bg-white/20 text-white">
+            BETA
+          </Badge>
+          <span>Finance v2 - Nouvelle interface unifiee</span>
+        </div>
+        <Link
+          href="/finance/transactions?v1=true"
+          className="text-white/80 hover:text-white underline text-xs"
+        >
+          Revenir a l&apos;ancienne version
+        </Link>
+      </div>
+
+      {/* Header */}
+      <div className="bg-white border-b border-slate-200 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-slate-900">Transactions</h1>
+            <div className="flex items-center gap-3 mt-1">
+              <p className="text-sm text-slate-600">
+                {progressPercent}% traite
+              </p>
+              <div className="w-32 h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-green-500 transition-all"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link href="/finance/depenses/regles">
+              <Button variant="outline">
+                <Settings className="h-4 w-4 mr-2" />
+                Regles
+              </Button>
+            </Link>
+            <SyncButton onSync={handleSync} label="Sync Qonto" showLastSync />
+          </div>
+        </div>
+      </div>
+
+      <div className="p-6 space-y-6">
+        {/* Error */}
+        {error && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="py-4">
+              <div className="flex items-center gap-2 text-red-700">
+                <AlertCircle className="h-5 w-5" />
+                <p>{error.message}</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* KPIs */}
+        {stats && (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <KPICardUnified
+              variant="elegant"
+              title="A traiter"
+              value={stats.to_process_count}
+              icon={Clock}
+              onClick={() => handleTabChange('to_process')}
+            />
+            <KPICardUnified
+              variant="elegant"
+              title="Classees"
+              value={stats.classified_count}
+              icon={Tag}
+              onClick={() => handleTabChange('classified')}
+            />
+            <KPICardUnified
+              variant="elegant"
+              title="Rapprochees"
+              value={stats.matched_count}
+              icon={CheckCircle2}
+              onClick={() => handleTabChange('matched')}
+            />
+            <KPICardUnified
+              variant="elegant"
+              title="CCA"
+              value={stats.cca_count}
+              icon={Building2}
+              onClick={() => handleTabChange('cca')}
+            />
+            <KPICardUnified
+              variant="elegant"
+              title="Avec justif"
+              value={stats.with_attachment_count}
+              icon={Paperclip}
+            />
+            <KPICardUnified
+              variant="elegant"
+              title="Ignorees"
+              value={stats.ignored_count}
+              icon={XCircle}
+              onClick={() => handleTabChange('ignored')}
+            />
+          </div>
+        )}
+
+        {/* Tabs et Recherche */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <Tabs
+                value={activeTab}
+                onValueChange={v => handleTabChange(v as TabFilterV2)}
+              >
+                <TabsList>
+                  <TabsTrigger value="all" className="gap-2">
+                    Toutes
+                    <Badge variant="secondary" className="ml-1">
+                      {stats?.total_count || 0}
+                    </Badge>
+                  </TabsTrigger>
+                  <TabsTrigger value="to_process" className="gap-2">
+                    <Clock className="h-4 w-4 text-amber-600" />A traiter
+                    <Badge variant="warning" className="ml-1">
+                      {stats?.to_process_count || 0}
+                    </Badge>
+                  </TabsTrigger>
+                  <TabsTrigger value="classified" className="gap-2">
+                    <Tag className="h-4 w-4 text-blue-600" />
+                    Classees
+                  </TabsTrigger>
+                  <TabsTrigger value="matched" className="gap-2">
+                    <Check className="h-4 w-4 text-green-600" />
+                    Rapprochees
+                  </TabsTrigger>
+                  <TabsTrigger value="cca" className="gap-2">
+                    <Building2 className="h-4 w-4 text-purple-600" />
+                    CCA
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+
+              <div className="relative w-64">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Rechercher..."
+                  value={search}
+                  onChange={e => handleSearch(e.target.value)}
+                  className="pl-8 h-9"
+                />
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent className="p-0">
+            {/* Header tableau */}
+            <div className="flex items-center gap-4 px-3 py-2 bg-muted/50 text-sm font-medium text-muted-foreground border-b">
+              <div className="w-8" />
+              <div className="w-24">Date</div>
+              <div className="flex-1">Libelle</div>
+              <div className="w-24">PCG</div>
+              <div className="w-32">Organisation</div>
+              <div className="w-20 text-center">Justif</div>
+              <div className="w-28 text-right">Montant</div>
+            </div>
+
+            {/* Liste des transactions */}
+            <ScrollArea className="h-[500px]">
+              {isLoading ? (
+                <div className="space-y-0">
+                  {[1, 2, 3, 4, 5].map(i => (
+                    <div
+                      key={i}
+                      className="h-16 border-b animate-pulse bg-muted/30"
+                    />
+                  ))}
+                </div>
+              ) : transactions.length === 0 ? (
+                <div className="text-center py-16 text-muted-foreground">
+                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="font-medium">Aucune transaction trouvee</p>
+                </div>
+              ) : (
+                <div>
+                  {transactions.map(tx => (
+                    <div
+                      key={tx.id}
+                      data-testid={`tx-row-${tx.id}`}
+                      onClick={() => setSelectedTransaction(tx)}
+                      className={`
+                        flex items-center gap-4 p-3 border-b cursor-pointer transition-colors
+                        ${selectedTransaction?.id === tx.id ? 'bg-primary/10 border-primary' : 'hover:bg-muted/50'}
+                        ${tx.unified_status === 'ignored' ? 'opacity-50' : ''}
+                      `}
+                    >
+                      {/* Type */}
+                      <div
+                        className={`
+                        flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center
+                        ${tx.side === 'credit' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}
+                      `}
+                      >
+                        {tx.side === 'credit' ? (
+                          <ArrowDownLeft className="h-4 w-4" />
+                        ) : (
+                          <ArrowUpRight className="h-4 w-4" />
+                        )}
+                      </div>
+
+                      {/* Date */}
+                      <div className="w-24 text-sm text-muted-foreground">
+                        {formatDate(tx.settled_at || tx.emitted_at)}
+                      </div>
+
+                      {/* Libelle */}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">
+                          {tx.label || 'Sans libelle'}
+                        </p>
+                        <p className="text-sm text-muted-foreground truncate">
+                          {tx.counterparty_name || '-'}
+                        </p>
+                      </div>
+
+                      {/* PCG */}
+                      <div className="w-24">
+                        {tx.category_pcg ? (
+                          <Badge variant="secondary" className="text-xs">
+                            {tx.category_pcg}
+                          </Badge>
+                        ) : (
+                          <span className="text-slate-300">-</span>
+                        )}
+                      </div>
+
+                      {/* Organisation */}
+                      <div className="w-32 truncate text-sm">
+                        {tx.organisation_name ? (
+                          <span className="text-blue-600">
+                            {tx.organisation_name}
+                          </span>
+                        ) : (
+                          <span className="text-slate-300">-</span>
+                        )}
+                      </div>
+
+                      {/* Justificatif */}
+                      <div className="w-20 flex justify-center">
+                        {tx.has_attachment ? (
+                          <Badge
+                            variant="default"
+                            className="text-xs bg-blue-600 gap-1"
+                          >
+                            <Paperclip className="h-3 w-3" />
+                          </Badge>
+                        ) : (
+                          <span className="text-slate-300">-</span>
+                        )}
+                      </div>
+
+                      {/* Montant */}
+                      <div className="w-28 text-right">
+                        <span
+                          className={`font-semibold ${tx.side === 'credit' ? 'text-green-600' : 'text-red-600'}`}
+                        >
+                          {tx.side === 'credit' ? '+' : ''}
+                          {formatAmount(
+                            tx.side === 'credit'
+                              ? Math.abs(tx.amount)
+                              : -Math.abs(tx.amount)
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Side Panel */}
+      <Sheet
+        open={selectedTransaction !== null}
+        onOpenChange={open => {
+          if (!open) setSelectedTransaction(null);
+        }}
+      >
+        <SheetContent
+          className="w-[450px] sm:max-w-[450px]"
+          data-testid="tx-side-panel"
+        >
+          {selectedTransaction && (
+            <>
+              <SheetHeader>
+                <SheetTitle className="flex items-center gap-2">
+                  {selectedTransaction.side === 'credit' ? (
+                    <ArrowDownLeft className="h-5 w-5 text-green-600" />
+                  ) : (
+                    <ArrowUpRight className="h-5 w-5 text-red-600" />
+                  )}
+                  Detail transaction
+                </SheetTitle>
+              </SheetHeader>
+
+              <div className="space-y-6 mt-6">
+                {/* Montant */}
+                <div className="text-center py-4">
+                  <p
+                    className={`text-4xl font-bold ${selectedTransaction.side === 'credit' ? 'text-green-600' : 'text-red-600'}`}
+                  >
+                    {selectedTransaction.side === 'credit' ? '+' : ''}
+                    {formatAmount(
+                      selectedTransaction.side === 'credit'
+                        ? Math.abs(selectedTransaction.amount)
+                        : -Math.abs(selectedTransaction.amount)
+                    )}
+                  </p>
+                  <p className="text-muted-foreground mt-1">
+                    {formatDate(
+                      selectedTransaction.settled_at ||
+                        selectedTransaction.emitted_at
+                    )}
+                  </p>
+
+                  {/* Status badge */}
+                  <div className="mt-2">
+                    {selectedTransaction.unified_status === 'to_process' && (
+                      <Badge variant="warning">A traiter</Badge>
+                    )}
+                    {selectedTransaction.unified_status === 'classified' && (
+                      <Badge variant="secondary">Classee</Badge>
+                    )}
+                    {selectedTransaction.unified_status === 'matched' && (
+                      <Badge variant="default" className="bg-green-600">
+                        Rapprochee
+                      </Badge>
+                    )}
+                    {selectedTransaction.unified_status === 'ignored' && (
+                      <Badge variant="secondary">Ignoree</Badge>
+                    )}
+                    {selectedTransaction.unified_status === 'cca' && (
+                      <Badge variant="default" className="bg-purple-600">
+                        CCA 455
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                {/* Info */}
+                <Card>
+                  <CardContent className="pt-4 space-y-3 text-sm">
+                    <div>
+                      <p className="text-muted-foreground">Libelle</p>
+                      <p className="font-medium">
+                        {selectedTransaction.label || '-'}
+                      </p>
+                    </div>
+                    <Separator />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-muted-foreground">Contrepartie</p>
+                        <p className="font-medium">
+                          {selectedTransaction.counterparty_name || '-'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Type</p>
+                        <p className="font-medium">
+                          {selectedTransaction.operation_type || 'Virement'}
+                        </p>
+                      </div>
+                    </div>
+                    {selectedTransaction.category_pcg && (
+                      <>
+                        <Separator />
+                        <div>
+                          <p className="text-muted-foreground">Categorie PCG</p>
+                          <p className="font-medium">
+                            {selectedTransaction.category_pcg}
+                          </p>
+                        </div>
+                      </>
+                    )}
+                    {selectedTransaction.organisation_name && (
+                      <>
+                        <Separator />
+                        <div>
+                          <p className="text-muted-foreground">Organisation</p>
+                          <p className="font-medium text-blue-600">
+                            {selectedTransaction.organisation_name}
+                          </p>
+                        </div>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Actions - 3 coeur */}
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Actions
+                  </p>
+
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start gap-2"
+                    onClick={() => setShowClassificationModal(true)}
+                    data-testid="btn-classify-pcg"
+                  >
+                    <Tag className="h-4 w-4" />
+                    Classer PCG
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start gap-2"
+                    onClick={() => setShowOrganisationModal(true)}
+                    data-testid="btn-link-org"
+                  >
+                    <Building2 className="h-4 w-4" />
+                    Lier organisation
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start gap-2"
+                    onClick={() => setShowUploadModal(true)}
+                    data-testid="btn-upload-attachment"
+                  >
+                    <Upload className="h-4 w-4" />
+                    Deposer justificatif
+                  </Button>
+
+                  <Separator className="my-3" />
+
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start gap-2"
+                    onClick={() => setShowRapprochementModal(true)}
+                  >
+                    <FileText className="h-4 w-4" />
+                    Rapprocher commande
+                  </Button>
+
+                  {selectedTransaction.side === 'debit' &&
+                    selectedTransaction.unified_status !== 'cca' && (
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start gap-2"
+                        onClick={handleMarkCCA}
+                      >
+                        <Building2 className="h-4 w-4 text-purple-600" />
+                        Compte courant associe
+                      </Button>
+                    )}
+
+                  {selectedTransaction.unified_status !== 'ignored' && (
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start gap-2 text-muted-foreground"
+                      onClick={handleIgnore}
+                    >
+                      <XCircle className="h-4 w-4" />
+                      Ignorer
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {/* Modal Classification PCG */}
+      <QuickClassificationModal
+        open={showClassificationModal}
+        onOpenChange={setShowClassificationModal}
+        label={
+          selectedTransaction?.label ||
+          selectedTransaction?.counterparty_name ||
+          ''
+        }
+        amount={selectedTransaction?.amount}
+        transactionId={selectedTransaction?.id}
+        counterpartyName={selectedTransaction?.counterparty_name || undefined}
+        onSuccess={refresh}
+      />
+
+      {/* Modal Organisation */}
+      <OrganisationLinkingModal
+        open={showOrganisationModal}
+        onOpenChange={setShowOrganisationModal}
+        label={
+          selectedTransaction?.counterparty_name ||
+          selectedTransaction?.label ||
+          ''
+        }
+        transactionCount={1}
+        totalAmount={selectedTransaction?.amount}
+        onSuccess={refresh}
+      />
+
+      {/* Modal Rapprochement */}
+      <RapprochementModal
+        open={showRapprochementModal}
+        onOpenChange={setShowRapprochementModal}
+        transactionId={selectedTransaction?.id}
+        label={
+          selectedTransaction?.label ||
+          selectedTransaction?.counterparty_name ||
+          ''
+        }
+        amount={selectedTransaction?.amount || 0}
+        counterpartyName={selectedTransaction?.counterparty_name}
+        onSuccess={() => {
+          toast.success('Transaction rapprochee');
+          refresh();
+          setShowRapprochementModal(false);
+        }}
+      />
+
+      {/* Modal Upload */}
+      <InvoiceUploadModal
+        transaction={transactionForUpload}
+        open={showUploadModal}
+        onOpenChange={setShowUploadModal}
+        onUploadComplete={() => {
+          toast.success('Justificatif uploade');
+          refresh();
+          setShowUploadModal(false);
+        }}
+      />
+    </div>
+  );
+}
+
+// =====================================================================
+// EXPORT - Switch based on feature flag
+// =====================================================================
+
+export default function TransactionsPage() {
+  const isV2 = useFinanceV2();
+
+  // Allow override via query param for testing
+  if (typeof window !== 'undefined') {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('v1') === 'true') {
+      return <TransactionsPageLegacy />;
+    }
+    if (params.get('v2') === 'true') {
+      return <TransactionsPageV2 />;
+    }
+  }
+
+  return isV2 ? <TransactionsPageV2 /> : <TransactionsPageLegacy />;
 }

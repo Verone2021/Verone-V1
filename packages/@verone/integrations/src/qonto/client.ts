@@ -36,17 +36,33 @@ function generateIdempotencyKey(): string {
 
 /**
  * Détermine le mode d'auth à partir des env vars
- * Si QONTO_ORGANIZATION_ID et QONTO_API_KEY sont définis, utilise api_key par défaut
+ * GUARDRAIL: Si les deux modes sont configurés simultanément → throw
  */
 function resolveAuthMode(): QontoAuthMode {
+  const hasOAuthToken = !!process.env.QONTO_ACCESS_TOKEN;
+  const hasApiKey =
+    !!process.env.QONTO_ORGANIZATION_ID && !!process.env.QONTO_API_KEY;
   const envMode = process.env.QONTO_AUTH_MODE?.toLowerCase();
+
+  // GUARDRAIL: Détecter conflit de configuration
+  if (hasOAuthToken && hasApiKey && !envMode) {
+    throw new QontoError(
+      'AUTH CONFLICT: Both OAuth (QONTO_ACCESS_TOKEN) and API Key ' +
+        '(QONTO_ORGANIZATION_ID + QONTO_API_KEY) are configured. ' +
+        'Set QONTO_AUTH_MODE=oauth OR QONTO_AUTH_MODE=api_key explicitly, ' +
+        'or remove one set of credentials. Recommended: use OAuth only.',
+      'AUTH_CONFIG_CONFLICT',
+      0
+    );
+  }
+
+  // Mode explicite
   if (envMode === 'api_key') return 'api_key';
   if (envMode === 'oauth') return 'oauth';
 
-  // Auto-détection: si orgId + apiKey sont définis, utilise api_key
-  if (process.env.QONTO_ORGANIZATION_ID && process.env.QONTO_API_KEY) {
-    return 'api_key';
-  }
+  // Auto-détection (un seul mode configuré)
+  if (hasOAuthToken) return 'oauth';
+  if (hasApiKey) return 'api_key';
 
   return 'oauth'; // Défaut OAuth si rien n'est configuré
 }

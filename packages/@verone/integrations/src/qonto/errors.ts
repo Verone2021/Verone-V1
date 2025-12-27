@@ -7,6 +7,7 @@
 export type QontoErrorCode =
   | 'AUTH_ERROR' // 401: Credentials invalides
   | 'AUTH_CONFIG_ERROR' // 0: Configuration auth manquante/invalide
+  | 'AUTH_CONFIG_CONFLICT' // 0: Conflit OAuth + API Key simultanes
   | 'PERMISSION_ERROR' // 403: Permissions insuffisantes
   | 'NOT_FOUND' // 404: Ressource introuvable
   | 'VALIDATION_ERROR' // 400: Paramètres invalides

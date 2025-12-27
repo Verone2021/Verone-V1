@@ -47,6 +47,7 @@ import {
   Receipt,
   ArrowLeft,
   Zap,
+  Settings,
 } from 'lucide-react';
 
 import { useMatchingRules } from '../hooks/use-matching-rules';
@@ -224,8 +225,66 @@ export function QuickClassificationModal({
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createRule, setCreateRule] = useState(true);
+  const [providerType, setProviderType] = useState<'goods' | 'services'>(
+    'services'
+  );
+
+  // Organisation linking (optional)
+  const [linkOrganisation, setLinkOrganisation] = useState(false);
+  const [selectedOrganisation, setSelectedOrganisation] = useState<{
+    id: string;
+    legal_name: string;
+  } | null>(null);
+  const [orgSearchQuery, setOrgSearchQuery] = useState('');
+  const [organisations, setOrganisations] = useState<
+    Array<{ id: string; legal_name: string; is_service_provider: boolean }>
+  >([]);
+  const [isSearchingOrg, setIsSearchingOrg] = useState(false);
 
   const { create: createMatchingRule, applyOne } = useMatchingRules();
+
+  // Recherche d'organisations
+  const searchOrganisations = useCallback(async (query: string) => {
+    if (!query || query.trim().length < 2) {
+      setOrganisations([]);
+      return;
+    }
+
+    setIsSearchingOrg(true);
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('organisations')
+        .select('id, legal_name, is_service_provider')
+        .or(`legal_name.ilike.%${query}%,trade_name.ilike.%${query}%`)
+        .eq('type', 'supplier')
+        .is('archived_at', null)
+        .order('legal_name')
+        .limit(5);
+
+      if (error) throw error;
+      setOrganisations(
+        (data ?? []) as Array<{
+          id: string;
+          legal_name: string;
+          is_service_provider: boolean;
+        }>
+      );
+    } catch {
+      setOrganisations([]);
+    } finally {
+      setIsSearchingOrg(false);
+    }
+  }, []);
+
+  // Debounced org search
+  useEffect(() => {
+    if (!linkOrganisation) return;
+    const timer = setTimeout(() => {
+      void searchOrganisations(orgSearchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [orgSearchQuery, linkOrganisation, searchOrganisations]);
 
   // Calculs TVA
   const htAmount = useMemo(
@@ -304,9 +363,10 @@ export function QuickClassificationModal({
         const newRule = await createMatchingRule({
           match_type: 'label_contains',
           match_value: label,
-          organisation_id: null,
+          organisation_id: selectedOrganisation?.id ?? null,
           default_category: selectedCategory,
-          default_role_type: 'supplier',
+          default_role_type:
+            providerType === 'services' ? 'partner' : 'supplier',
           priority: 100,
         });
 
@@ -326,7 +386,10 @@ export function QuickClassificationModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+      <DialogContent
+        className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0"
+        data-testid="modal-classify-pcg"
+      >
         {/* Header */}
         <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-slate-50 to-blue-50">
           <div className="flex items-center justify-between">
@@ -607,6 +670,87 @@ export function QuickClassificationModal({
                 </div>
               </div>
 
+              {/* Type de fournisseur */}
+              <div>
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">
+                  Type de fournisseur
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setProviderType('goods')}
+                    className={cn(
+                      'flex items-center gap-3 rounded-xl border-2 p-4 transition-all',
+                      providerType === 'goods'
+                        ? 'border-amber-500 bg-amber-50 ring-2 ring-amber-200'
+                        : 'border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        'flex h-10 w-10 items-center justify-center rounded-lg',
+                        providerType === 'goods'
+                          ? 'bg-amber-100 text-amber-600'
+                          : 'bg-slate-100 text-slate-500'
+                      )}
+                    >
+                      <Package className="h-5 w-5" />
+                    </div>
+                    <div className="text-left">
+                      <div
+                        className={cn(
+                          'font-semibold',
+                          providerType === 'goods'
+                            ? 'text-amber-900'
+                            : 'text-slate-700'
+                        )}
+                      >
+                        Fournisseur de biens
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        Marchandises, produits
+                      </div>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setProviderType('services')}
+                    className={cn(
+                      'flex items-center gap-3 rounded-xl border-2 p-4 transition-all',
+                      providerType === 'services'
+                        ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
+                        : 'border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        'flex h-10 w-10 items-center justify-center rounded-lg',
+                        providerType === 'services'
+                          ? 'bg-blue-100 text-blue-600'
+                          : 'bg-slate-100 text-slate-500'
+                      )}
+                    >
+                      <Settings className="h-5 w-5" />
+                    </div>
+                    <div className="text-left">
+                      <div
+                        className={cn(
+                          'font-semibold',
+                          providerType === 'services'
+                            ? 'text-blue-900'
+                            : 'text-slate-700'
+                        )}
+                      >
+                        Prestataire de services
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        SaaS, conseil, abonnements
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
               {/* Créer règle automatique */}
               <label className="flex cursor-pointer items-center gap-4 rounded-xl border-2 p-5 transition-all hover:bg-slate-50 hover:border-slate-300">
                 <input
@@ -626,6 +770,89 @@ export function QuickClassificationModal({
                 </div>
                 <Zap className="h-5 w-5 text-amber-500" />
               </label>
+
+              {/* Associer à une organisation (optionnel) */}
+              {createRule && (
+                <div className="space-y-3 pl-4 border-l-2 border-slate-200">
+                  <label className="flex cursor-pointer items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={linkOrganisation}
+                      onChange={e => {
+                        setLinkOrganisation(e.target.checked);
+                        if (!e.target.checked) {
+                          setSelectedOrganisation(null);
+                          setOrgSearchQuery('');
+                        }
+                      }}
+                      className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm font-medium text-slate-700">
+                      Associer à une organisation existante
+                    </span>
+                  </label>
+
+                  {linkOrganisation && (
+                    <div className="space-y-2">
+                      {selectedOrganisation ? (
+                        <div className="flex items-center justify-between rounded-lg border-2 border-green-300 bg-green-50 p-3">
+                          <div className="flex items-center gap-2">
+                            <Building2 className="h-4 w-4 text-green-600" />
+                            <span className="font-medium text-green-900">
+                              {selectedOrganisation.legal_name}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedOrganisation(null)}
+                            className="text-green-600 hover:text-green-800"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                            <Input
+                              placeholder="Rechercher une organisation..."
+                              value={orgSearchQuery}
+                              onChange={e => setOrgSearchQuery(e.target.value)}
+                              className="h-10 pl-9 text-sm"
+                            />
+                            {isSearchingOrg && (
+                              <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-slate-400" />
+                            )}
+                          </div>
+
+                          {organisations.length > 0 && (
+                            <div className="space-y-1">
+                              {organisations.map(org => (
+                                <button
+                                  key={org.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedOrganisation({
+                                      id: org.id,
+                                      legal_name: org.legal_name,
+                                    });
+                                    setOrgSearchQuery('');
+                                    setOrganisations([]);
+                                  }}
+                                  className="flex w-full items-center gap-2 rounded-lg border border-slate-200 p-2 text-left text-sm hover:bg-slate-50"
+                                >
+                                  <Building2 className="h-4 w-4 text-slate-400" />
+                                  <span>{org.legal_name}</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
