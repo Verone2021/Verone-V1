@@ -1600,6 +1600,7 @@ function TransactionsPageV2() {
         transactionCount={1}
         totalAmount={selectedTransaction?.amount}
         onSuccess={refresh}
+        transactionSide={selectedTransaction?.side}
       />
 
       {/* Modal Rapprochement */}

@@ -243,8 +243,15 @@ export function OrganisationLinkingModal({
 
         setSearchResults(results);
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Erreur inconnue';
-        console.error('[OrganisationLinkingModal] Search error:', message);
+        // Log détaillé pour debug
+        if (err instanceof Error) {
+          console.error(
+            '[OrganisationLinkingModal] Search error:',
+            err.message
+          );
+        } else {
+          console.error('[OrganisationLinkingModal] Search error:', err);
+        }
         setSearchResults([]);
       } finally {
         setIsLoading(false);

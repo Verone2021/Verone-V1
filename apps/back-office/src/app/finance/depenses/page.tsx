@@ -5,6 +5,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 
 import { useToast } from '@verone/common/hooks';
+import { getPcgCategory, PCG_SUGGESTED_CATEGORIES } from '@verone/finance';
 import {
   QuickClassificationModal,
   SupplierCell,
@@ -12,10 +13,10 @@ import {
   MonthlyFlowChart,
 } from '@verone/finance/components';
 import {
-  EXPENSE_CATEGORIES,
   useExpenses,
   useAutoClassification,
   useTreasuryStats,
+  useMatchingRules,
   type Expense,
   type ExpenseFilters,
   type ExpenseBreakdown,
@@ -23,6 +24,7 @@ import {
 import {
   Badge,
   Button,
+  cn,
   Input,
   KPICardUnified,
   TabsNavigation,
@@ -33,6 +35,7 @@ import {
   CheckCircle2,
   Clock,
   Download,
+  Edit2,
   Eye,
   FileText,
   Filter,
@@ -97,25 +100,37 @@ function ExpenseRow({
   onClassify,
   onViewAttachment,
   onLink,
+  onConfirmSuggestion,
   suggestion,
 }: {
   expense: Expense;
   onClassify: (expense: Expense) => void;
   onViewAttachment: (expense: Expense) => void;
   onLink: () => void;
+  onConfirmSuggestion?: (ruleId: string, organisationId: string) => void;
   suggestion?: {
+    matchedRule?: { id: string } | null;
     organisationId: string | null;
     organisationName: string | null;
     category: string | null;
     confidence: 'high' | 'medium' | 'none';
   };
 }) {
-  const categoryLabel =
-    EXPENSE_CATEGORIES.find(c => c.id === expense.category)?.label ||
-    expense.category;
+  // PCG uniquement - plus d'ancien système
+  const pcgCategory = getPcgCategory(expense.category ?? '');
+  const categoryLabel = pcgCategory?.label ?? null;
+
+  // Déterminer si la dépense est classée
+  const isClassified =
+    expense.status === 'classified' || expense.category !== null;
 
   return (
-    <tr className="border-b border-slate-100 hover:bg-slate-50">
+    <tr
+      className={cn(
+        'border-b border-slate-100 hover:bg-slate-50',
+        isClassified && 'bg-green-50/30'
+      )}
+    >
       <td className="px-4 py-3 text-sm text-slate-600">
         {formatDate(expense.emitted_at)}
       </td>
@@ -132,6 +147,17 @@ function ExpenseRow({
               organisationName={expense.organisation_name}
               transactionId={expense.id}
               onLink={onLink}
+              onConfirm={
+                suggestion?.matchedRule?.id &&
+                suggestion?.organisationId &&
+                onConfirmSuggestion
+                  ? () =>
+                      onConfirmSuggestion(
+                        suggestion.matchedRule!.id,
+                        suggestion.organisationId!
+                      )
+                  : undefined
+              }
               suggestedOrganisationId={suggestion?.organisationId}
               suggestedOrganisationName={suggestion?.organisationName}
               suggestedCategory={suggestion?.category}
@@ -169,15 +195,27 @@ function ExpenseRow({
         )}
       </td>
       <td className="px-4 py-3">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onClassify(expense)}
-          className="gap-1"
-        >
-          <FileText size={14} />
-          Classer
-        </Button>
+        {isClassified ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onClassify(expense)}
+            className="gap-1 text-slate-500"
+          >
+            <Edit2 size={14} />
+            Modifier
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onClassify(expense)}
+            className="gap-1"
+          >
+            <FileText size={14} />
+            Classer
+          </Button>
+        )}
       </td>
     </tr>
   );
@@ -203,6 +241,9 @@ export default function DepensesPage() {
     expenses as (Expense & Record<string, unknown>)[]
   );
 
+  // Hook pour les règles de matching (pour confirmer les suggestions)
+  const { update: updateMatchingRule } = useMatchingRules();
+
   // Map pour accès rapide aux suggestions par ID
   const suggestionsMap = useMemo(() => {
     const map = new Map<
@@ -215,6 +256,30 @@ export default function DepensesPage() {
     });
     return map;
   }, [transactionsWithSuggestions]);
+
+  // Handler pour confirmer une suggestion d'organisation
+  const handleConfirmSuggestion = useCallback(
+    async (ruleId: string, organisationId: string) => {
+      try {
+        await updateMatchingRule(ruleId, {
+          organisation_id: organisationId,
+        });
+        toast({
+          title: 'Organisation liée',
+          description: 'La suggestion a été confirmée avec succès.',
+        });
+        await refetch();
+      } catch (err) {
+        console.error('Error confirming suggestion:', err);
+        toast({
+          title: 'Erreur',
+          description: 'Impossible de confirmer la suggestion.',
+          variant: 'destructive',
+        });
+      }
+    },
+    [updateMatchingRule, toast, refetch]
+  );
 
   // État du modal de classement
   const [classifyModalOpen, setClassifyModalOpen] = useState(false);
@@ -513,7 +578,7 @@ export default function DepensesPage() {
               ))}
             </select>
 
-            {/* Filtre catégorie */}
+            {/* Filtre catégorie PCG */}
             <select
               className="px-3 py-2 border border-slate-200 rounded-lg text-sm"
               value={filters.category || ''}
@@ -525,9 +590,9 @@ export default function DepensesPage() {
               }
             >
               <option value="">Toutes catégories</option>
-              {EXPENSE_CATEGORIES.map(cat => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.label}
+              {PCG_SUGGESTED_CATEGORIES.map(cat => (
+                <option key={cat.code} value={cat.code}>
+                  {cat.code} - {cat.label}
                 </option>
               ))}
             </select>
@@ -628,6 +693,7 @@ export default function DepensesPage() {
                       onClassify={handleClassify}
                       onViewAttachment={handleViewAttachment}
                       onLink={() => refetch()}
+                      onConfirmSuggestion={handleConfirmSuggestion}
                       suggestion={suggestionsMap.get(expense.id)}
                     />
                   ))}

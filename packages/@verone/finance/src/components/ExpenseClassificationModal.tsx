@@ -44,11 +44,8 @@ import {
   type Counterparty,
   type CreateCounterpartyData,
 } from '../hooks/use-counterparties';
-import {
-  EXPENSE_CATEGORIES,
-  type Expense,
-  type ExpenseCategory,
-} from '../hooks/use-expenses';
+import { type Expense } from '../hooks/use-expenses';
+import { PCG_SUGGESTED_CATEGORIES } from '../lib/pcg-categories';
 
 // Types de rôles possibles (valeurs alignées avec contrainte DB)
 const ROLE_TYPES = {
@@ -70,7 +67,7 @@ export interface ClassificationData {
   counterpartyId: string | null;
   newCounterparty?: CreateCounterpartyData;
   roleType: RoleType;
-  category: ExpenseCategory;
+  category: string; // Code PCG (ex: '627', '651')
   notes?: string;
   createRule: boolean;
   applyToHistory: boolean;
@@ -116,7 +113,7 @@ export function ExpenseClassificationModal({
   const [newCounterpartyName, setNewCounterpartyName] = useState('');
   const [newCounterpartyIban, setNewCounterpartyIban] = useState('');
   const [roleType, setRoleType] = useState<RoleType | ''>('');
-  const [category, setCategory] = useState<ExpenseCategory | ''>('');
+  const [category, setCategory] = useState<string>('');
   const [notes, setNotes] = useState('');
   const [createRule, setCreateRule] = useState(false);
   const [applyToHistory, setApplyToHistory] = useState(false);
@@ -499,15 +496,15 @@ export function ExpenseClassificationModal({
             </Label>
             <Select
               value={category}
-              onValueChange={value => setCategory(value as ExpenseCategory)}
+              onValueChange={value => setCategory(value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Sélectionner une catégorie..." />
               </SelectTrigger>
               <SelectContent>
-                {EXPENSE_CATEGORIES.map(cat => (
-                  <SelectItem key={cat.id} value={cat.id}>
-                    {cat.label}
+                {PCG_SUGGESTED_CATEGORIES.map(cat => (
+                  <SelectItem key={cat.code} value={cat.code}>
+                    {cat.code} - {cat.label}
                   </SelectItem>
                 ))}
               </SelectContent>

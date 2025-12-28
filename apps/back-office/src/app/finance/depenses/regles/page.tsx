@@ -5,12 +5,9 @@ import { useState } from 'react';
 import Link from 'next/link';
 
 import { useToast } from '@verone/common/hooks';
+import { getPcgCategory } from '@verone/finance';
 import { OrganisationLinkingModal } from '@verone/finance/components';
-import {
-  useUniqueLabels,
-  useMatchingRules,
-  EXPENSE_CATEGORIES,
-} from '@verone/finance/hooks';
+import { useUniqueLabels, useMatchingRules } from '@verone/finance/hooks';
 import {
   Badge,
   Button,
@@ -285,8 +282,8 @@ export default function ReglesPage() {
               ) : (
                 <div className="max-h-[600px] space-y-3 overflow-y-auto">
                   {rules.map(rule => {
-                    const categoryInfo = EXPENSE_CATEGORIES.find(
-                      c => c.id === rule.default_category
+                    const pcgCategory = getPcgCategory(
+                      rule.default_category ?? ''
                     );
                     return (
                       <div
@@ -310,8 +307,9 @@ export default function ReglesPage() {
                             </div>
                             <div className="mt-1 flex items-center gap-2">
                               <Badge variant="outline" className="text-xs">
-                                {categoryInfo?.emoji}{' '}
-                                {categoryInfo?.label || rule.default_category}
+                                {pcgCategory?.label ||
+                                  rule.default_category ||
+                                  '-'}
                               </Badge>
                               <Badge
                                 variant={rule.enabled ? 'default' : 'secondary'}
