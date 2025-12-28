@@ -674,14 +674,27 @@ export function useOrganisations(filters?: OrganisationFilters) {
 
   const hardDeleteOrganisation = async (id: string): Promise<boolean> => {
     try {
-      // Allow direct deletion regardless of archive status
-      const { error } = await supabase
-        .from('organisations')
-        .delete()
-        .eq('id', id);
+      // Use RPC to safely delete/archive organisation
+      // This handles unlinking transactions and disabling rules
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).rpc(
+        'delete_organisation_safe',
+        { p_org_id: id }
+      );
 
       if (error) {
-        setError(error.message);
+        setError(error.message || String(error));
+        return false;
+      }
+
+      const result = data as {
+        success?: boolean;
+        error?: string;
+        action?: string;
+      } | null;
+
+      if (!result?.success) {
+        setError(result?.error || 'Erreur lors de la suppression');
         return false;
       }
 
