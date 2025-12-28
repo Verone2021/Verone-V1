@@ -714,35 +714,32 @@ export function useTransactionActions(): TransactionActions {
   const toggleIgnore = useCallback(
     async (transactionId: string, shouldIgnore: boolean, reason?: string) => {
       try {
-        // Cast to bypass TypeScript strict typing for RPC not yet in generated types
-        const rpc = supabase.rpc as unknown as (
-          fn: string,
-          args?: Record<string, unknown>
-        ) => Promise<{ data: unknown; error: { message: string } | null }>;
-
-        const args: Record<string, unknown> = {
-          p_tx_id: transactionId,
-          p_ignore: shouldIgnore,
-          p_reason: reason || null,
-        };
-
-        const response = await rpc('toggle_ignore_transaction', args);
-        const data = response.data as { success?: boolean } | null;
-        const error = response.error;
+        // Use standard Supabase RPC call pattern with type assertion
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data, error } = await (supabase as any).rpc(
+          'toggle_ignore_transaction',
+          {
+            p_tx_id: transactionId,
+            p_ignore: shouldIgnore,
+            p_reason: reason || null,
+          }
+        );
 
         if (error) {
           // Check for fiscal year lock error
-          if (error.message?.includes('clôturée')) {
+          const errorMsg = error.message || String(error);
+          if (errorMsg.includes('clôturée')) {
             return {
               success: false,
-              error: error.message,
+              error: errorMsg,
               isLocked: true,
             };
           }
-          throw new Error(error.message);
+          throw new Error(errorMsg);
         }
 
-        return { success: data?.success ?? true };
+        const result = data as { success?: boolean } | null;
+        return { success: result?.success ?? true };
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : 'Unknown error';

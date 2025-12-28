@@ -58,18 +58,16 @@ export default function FinanceResetPage() {
     setResult(null);
 
     try {
-      // Typed RPC wrapper for ungenerated types
-      const rpc = supabase.rpc as unknown as (
-        fn: string,
-        args?: Record<string, unknown>
-      ) => Promise<{ data: unknown; error: { message: string } | null }>;
+      // Use standard Supabase RPC call pattern
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).rpc(
+        'reset_finance_auto_data',
+        { p_dry_run: true }
+      );
 
-      const args: Record<string, unknown> = { p_dry_run: true };
-      const response = await rpc('reset_finance_auto_data', args);
+      if (error) throw new Error(error.message || String(error));
 
-      if (response.error) throw new Error(response.error.message);
-
-      const result = response.data as {
+      const result = data as {
         dry_run?: boolean;
         preview?: ResetPreview;
       } | null;
@@ -112,25 +110,23 @@ export default function FinanceResetPage() {
     setError(null);
 
     try {
-      // Typed RPC wrapper for ungenerated types
-      const rpc = supabase.rpc as unknown as (
-        fn: string,
-        args?: Record<string, unknown>
-      ) => Promise<{ data: unknown; error: { message: string } | null }>;
+      // Use standard Supabase RPC call pattern
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).rpc(
+        'reset_finance_auto_data',
+        { p_dry_run: false }
+      );
 
-      const args: Record<string, unknown> = { p_dry_run: false };
-      const response = await rpc('reset_finance_auto_data', args);
+      if (error) throw new Error(error.message || String(error));
 
-      if (response.error) throw new Error(response.error.message);
-
-      const data = response.data as {
+      const result = data as {
         dry_run?: boolean;
         success?: boolean;
         result?: ResetResult;
       } | null;
 
-      if (data?.result) {
-        setResult(data.result);
+      if (result?.result) {
+        setResult(result.result);
         setPreview(null);
         toast.success('Reset effectue avec succes');
       }
