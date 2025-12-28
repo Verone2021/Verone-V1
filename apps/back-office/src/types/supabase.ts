@@ -720,7 +720,10 @@ export type Database = {
           category_pcg: string | null;
           confidence_score: number | null;
           counterparty_iban: string | null;
+          counterparty_individual_customer_id: string | null;
           counterparty_name: string | null;
+          counterparty_organisation_id: string | null;
+          counterparty_type: string | null;
           created_at: string;
           currency: string;
           emitted_at: string;
@@ -752,7 +755,10 @@ export type Database = {
           category_pcg?: string | null;
           confidence_score?: number | null;
           counterparty_iban?: string | null;
+          counterparty_individual_customer_id?: string | null;
           counterparty_name?: string | null;
+          counterparty_organisation_id?: string | null;
+          counterparty_type?: string | null;
           created_at?: string;
           currency?: string;
           emitted_at: string;
@@ -784,7 +790,10 @@ export type Database = {
           category_pcg?: string | null;
           confidence_score?: number | null;
           counterparty_iban?: string | null;
+          counterparty_individual_customer_id?: string | null;
           counterparty_name?: string | null;
+          counterparty_organisation_id?: string | null;
+          counterparty_type?: string | null;
           created_at?: string;
           currency?: string;
           emitted_at?: string;
@@ -4798,6 +4807,7 @@ export type Database = {
       };
       matching_rules: {
         Row: {
+          counterparty_type: string | null;
           created_at: string | null;
           created_by: string | null;
           default_category: string | null;
@@ -4805,12 +4815,14 @@ export type Database = {
           display_label: string | null;
           enabled: boolean;
           id: string;
+          individual_customer_id: string | null;
           match_type: string;
           match_value: string;
           organisation_id: string | null;
           priority: number;
         };
         Insert: {
+          counterparty_type?: string | null;
           created_at?: string | null;
           created_by?: string | null;
           default_category?: string | null;
@@ -4818,12 +4830,14 @@ export type Database = {
           display_label?: string | null;
           enabled?: boolean;
           id?: string;
+          individual_customer_id?: string | null;
           match_type: string;
           match_value: string;
           organisation_id?: string | null;
           priority?: number;
         };
         Update: {
+          counterparty_type?: string | null;
           created_at?: string | null;
           created_by?: string | null;
           default_category?: string | null;
@@ -4831,6 +4845,7 @@ export type Database = {
           display_label?: string | null;
           enabled?: boolean;
           id?: string;
+          individual_customer_id?: string | null;
           match_type?: string;
           match_value?: string;
           organisation_id?: string | null;

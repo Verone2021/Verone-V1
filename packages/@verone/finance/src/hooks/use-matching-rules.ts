@@ -36,6 +36,10 @@ export interface CreateRuleData {
   display_label?: string;
   /** Organisation liée (facultatif) */
   organisation_id?: string | null;
+  /** Client particulier lié (facultatif - pour B2C) */
+  individual_customer_id?: string | null;
+  /** Type de contrepartie: 'organisation' ou 'individual' */
+  counterparty_type?: 'organisation' | 'individual' | null;
   /** Catégorie PCG (facultatif - peut être défini plus tard) */
   default_category?: string | null;
   default_role_type: 'supplier' | 'customer' | 'partner' | 'internal';
@@ -102,11 +106,13 @@ export function useMatchingRules(): UseMatchingRulesReturn {
           .insert({
             match_type: data.match_type,
             match_value: data.match_value,
-            display_label: data.display_label || data.match_value,
-            organisation_id: data.organisation_id,
-            default_category: data.default_category,
+            display_label: data.display_label ?? data.match_value,
+            organisation_id: data.organisation_id ?? null,
+            individual_customer_id: data.individual_customer_id ?? null,
+            counterparty_type: data.counterparty_type ?? null,
+            default_category: data.default_category ?? null,
             default_role_type: data.default_role_type,
-            priority: data.priority || 100,
+            priority: data.priority ?? 100,
             enabled: true,
           })
           .select()

@@ -25,6 +25,8 @@ import {
   Info,
   AlertCircle,
   X,
+  User,
+  Briefcase,
 } from 'lucide-react';
 
 import { useMatchingRules } from '../hooks/use-matching-rules';
@@ -38,11 +40,20 @@ interface IOrganisation {
   is_service_provider: boolean;
 }
 
+interface IIndividualCustomer {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+}
+
 interface IExistingRule {
   id: string;
   match_value: string;
   default_category: string | null;
   organisation_id: string | null;
+  individual_customer_id?: string | null;
+  counterparty_type?: string | null;
 }
 
 interface IOrganisationLinkingModalProps {
@@ -52,9 +63,22 @@ interface IOrganisationLinkingModalProps {
   transactionCount?: number;
   totalAmount?: number;
   onSuccess?: () => void;
+  /** Transaction side determines which counterparty types to show */
+  transactionSide?: 'credit' | 'debit';
 }
 
-type ProviderType = 'supplier' | 'partner';
+// Counterparty types
+// For debit: supplier (fournisseur de biens) or partner (prestataire de services)
+// For credit: individual (client particulier B2C) or customer_pro (client professionnel B2B)
+type CounterpartyType = 'supplier' | 'partner' | 'individual' | 'customer_pro';
+
+// Unified counterparty (can be organisation OR individual customer)
+interface ISelectedCounterparty {
+  id: string;
+  name: string;
+  type: CounterpartyType;
+  isOrganisation: boolean;
+}
 
 export function OrganisationLinkingModal({
   open,
@@ -63,17 +87,27 @@ export function OrganisationLinkingModal({
   transactionCount = 0,
   totalAmount = 0,
   onSuccess,
+  transactionSide = 'debit',
 }: IOrganisationLinkingModalProps): React.JSX.Element {
-  // State simplifié - PAS de steps, PAS de catégorie
+  const isCredit = transactionSide === 'credit';
+
+  // State
   const [searchQuery, setSearchQuery] = useState<string>(label);
-  const [organisations, setOrganisations] = useState<IOrganisation[]>([]);
-  const [selectedOrg, setSelectedOrg] = useState<IOrganisation | null>(null);
+  const [searchResults, setSearchResults] = useState<ISelectedCounterparty[]>(
+    []
+  );
+  const [selectedCounterparty, setSelectedCounterparty] =
+    useState<ISelectedCounterparty | null>(null);
   const [isCreatingNew, setIsCreatingNew] = useState<boolean>(false);
-  const [newOrgName, setNewOrgName] = useState<string>(label);
-  const [providerType, setProviderType] = useState<ProviderType>('partner');
+  const [newName, setNewName] = useState<string>(label);
+  const [newEmail, setNewEmail] = useState<string>('');
+  const [counterpartyType, setCounterpartyType] = useState<CounterpartyType>(
+    isCredit ? 'customer_pro' : 'partner'
+  );
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [applyToHistory, setApplyToHistory] = useState<boolean>(true);
+  const [existingRule, setExistingRule] = useState<IExistingRule | null>(null);
 
   const {
     rules,
@@ -81,9 +115,6 @@ export function OrganisationLinkingModal({
     update: updateMatchingRule,
     applyOne,
   } = useMatchingRules();
-
-  // État pour règle existante détectée
-  const [existingRule, setExistingRule] = useState<IExistingRule | null>(null);
 
   // Format currency
   const formatAmount = (amount: number): string =>
@@ -96,16 +127,18 @@ export function OrganisationLinkingModal({
   useEffect(() => {
     if (open) {
       setSearchQuery(label);
-      setSelectedOrg(null);
+      setSearchResults([]);
+      setSelectedCounterparty(null);
       setIsCreatingNew(false);
-      setNewOrgName(label);
-      setProviderType('partner');
+      setNewName(label);
+      setNewEmail('');
+      setCounterpartyType(isCredit ? 'customer_pro' : 'partner');
       setApplyToHistory(true);
       setExistingRule(null);
     }
-  }, [open, label]);
+  }, [open, label, isCredit]);
 
-  // Détecter les règles existantes pour ce libellé
+  // Detect existing rules for this label
   useEffect(() => {
     if (!open || !label || rules.length === 0) return;
 
@@ -121,133 +154,262 @@ export function OrganisationLinkingModal({
         match_value: matchingRule.match_value,
         default_category: matchingRule.default_category,
         organisation_id: matchingRule.organisation_id,
+        individual_customer_id: (matchingRule as any).individual_customer_id,
+        counterparty_type: (matchingRule as any).counterparty_type,
       });
     } else {
       setExistingRule(null);
     }
   }, [open, label, rules]);
 
-  // Fetch organisations based on search
-  const searchOrganisations = useCallback(
+  // Search based on counterparty type
+  const searchCounterparties = useCallback(
     async (query: string): Promise<void> => {
       if (!query || query.trim().length === 0) {
-        setOrganisations([]);
+        setSearchResults([]);
         return;
       }
 
       setIsLoading(true);
       try {
         const supabase = createClient();
-        const { data, error } = await supabase
-          .from('organisations')
-          .select('id, legal_name, type, is_service_provider')
-          .or(`legal_name.ilike.%${query}%,trade_name.ilike.%${query}%`)
-          .eq('type', 'supplier')
-          .is('archived_at', null)
-          .order('legal_name')
-          .limit(8);
+        const results: ISelectedCounterparty[] = [];
 
-        if (error) throw error;
-        setOrganisations((data ?? []) as IOrganisation[]);
+        if (counterpartyType === 'individual') {
+          // Search in individual_customers table
+          const { data, error } = await supabase
+            .from('individual_customers')
+            .select('id, first_name, last_name, email')
+            .or(
+              `first_name.ilike.%${query}%,last_name.ilike.%${query}%,email.ilike.%${query}%`
+            )
+            .eq('is_active', true)
+            .order('first_name')
+            .limit(8);
+
+          if (error) throw error;
+
+          results.push(
+            ...(data ?? []).map((c: IIndividualCustomer) => ({
+              id: c.id,
+              name: `${c.first_name} ${c.last_name}`,
+              type: 'individual' as CounterpartyType,
+              isOrganisation: false,
+            }))
+          );
+        } else {
+          // Search in organisations table
+          let orgType: 'customer' | 'supplier';
+          let isServiceProvider: boolean | null = null;
+
+          if (counterpartyType === 'customer_pro') {
+            orgType = 'customer';
+          } else if (counterpartyType === 'supplier') {
+            orgType = 'supplier';
+            isServiceProvider = false;
+          } else {
+            // partner
+            orgType = 'supplier';
+            isServiceProvider = true;
+          }
+
+          let orgQuery = supabase
+            .from('organisations')
+            .select('id, legal_name, type, is_service_provider')
+            .or(`legal_name.ilike.%${query}%,trade_name.ilike.%${query}%`)
+            .eq('type', orgType)
+            .is('archived_at', null)
+            .order('legal_name')
+            .limit(8);
+
+          // For suppliers, also filter by is_service_provider
+          if (isServiceProvider !== null) {
+            orgQuery = orgQuery.eq('is_service_provider', isServiceProvider);
+          }
+
+          const { data, error } = await orgQuery;
+
+          if (error) throw error;
+
+          results.push(
+            ...(data ?? []).map(org => ({
+              id: org.id,
+              name: org.legal_name,
+              type: counterpartyType,
+              isOrganisation: true,
+            }))
+          );
+        }
+
+        setSearchResults(results);
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Erreur inconnue';
         console.error('[OrganisationLinkingModal] Search error:', message);
-        setOrganisations([]);
+        setSearchResults([]);
       } finally {
         setIsLoading(false);
       }
     },
-    []
+    [counterpartyType]
   );
 
   // Debounced search
   useEffect(() => {
     const timer = setTimeout(() => {
-      void searchOrganisations(searchQuery);
+      void searchCounterparties(searchQuery);
     }, 200);
     return () => clearTimeout(timer);
-  }, [searchQuery, searchOrganisations]);
+  }, [searchQuery, searchCounterparties]);
 
-  // Auto-select if exact match found
+  // Re-search when counterparty type changes
   useEffect(() => {
-    if (!open || selectedOrg || organisations.length === 0) return;
-
-    // Chercher une correspondance exacte (case insensitive)
-    const exactMatch = organisations.find(
-      org => org.legal_name.toLowerCase() === label.toLowerCase()
-    );
-
-    if (exactMatch) {
-      setSelectedOrg(exactMatch);
-      setProviderType(exactMatch.is_service_provider ? 'partner' : 'supplier');
+    if (searchQuery) {
+      void searchCounterparties(searchQuery);
     }
-  }, [open, organisations, label, selectedOrg]);
+    // Also reset selection when type changes
+    setSelectedCounterparty(null);
+    setIsCreatingNew(false);
+  }, [counterpartyType]);
 
-  // Handle organisation creation
-  const handleCreateOrganisation = async (): Promise<IOrganisation | null> => {
-    if (!newOrgName.trim()) return null;
+  // Handle counterparty creation
+  const handleCreateCounterparty =
+    async (): Promise<ISelectedCounterparty | null> => {
+      if (!newName.trim()) return null;
 
-    try {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from('organisations')
-        .insert({
-          legal_name: newOrgName.trim(),
-          type: 'supplier',
-          is_service_provider: providerType === 'partner',
-          is_active: true,
-        })
-        .select('id, legal_name, type, is_service_provider')
-        .single();
+      try {
+        const supabase = createClient();
 
-      if (error) throw error;
-      return data as IOrganisation;
-    } catch (err) {
-      console.error('[OrganisationLinkingModal] Create org error:', err);
-      return null;
-    }
-  };
+        if (counterpartyType === 'individual') {
+          // Create in individual_customers
+          // Parse name into first/last
+          const nameParts = newName.trim().split(' ');
+          const firstName = nameParts[0] || newName.trim();
+          const lastName = nameParts.slice(1).join(' ') || '';
 
-  // Handle final submission - SIMPLIFIÉ
+          // Email is required for individual_customers
+          const email =
+            newEmail.trim() ||
+            `${firstName.toLowerCase()}.${lastName.toLowerCase() || 'client'}@placeholder.com`;
+
+          const { data, error } = await supabase
+            .from('individual_customers')
+            .insert({
+              first_name: firstName,
+              last_name: lastName || firstName,
+              email: email,
+              is_active: true,
+            })
+            .select('id, first_name, last_name')
+            .single();
+
+          if (error) throw error;
+
+          return {
+            id: data.id,
+            name: `${data.first_name} ${data.last_name}`,
+            type: 'individual',
+            isOrganisation: false,
+          };
+        } else {
+          // Create in organisations
+          let orgType: 'customer' | 'supplier';
+          let isServiceProvider: boolean;
+
+          if (counterpartyType === 'customer_pro') {
+            orgType = 'customer';
+            isServiceProvider = false;
+          } else if (counterpartyType === 'supplier') {
+            orgType = 'supplier';
+            isServiceProvider = false;
+          } else {
+            // partner
+            orgType = 'supplier';
+            isServiceProvider = true;
+          }
+
+          const { data, error } = await supabase
+            .from('organisations')
+            .insert({
+              legal_name: newName.trim(),
+              type: orgType,
+              is_service_provider: isServiceProvider,
+              is_active: true,
+              source: 'transaction_linking' as const,
+            })
+            .select('id, legal_name, type, is_service_provider')
+            .single();
+
+          if (error) throw error;
+
+          return {
+            id: data.id,
+            name: data.legal_name,
+            type: counterpartyType,
+            isOrganisation: true,
+          };
+        }
+      } catch (err) {
+        console.error('[OrganisationLinkingModal] Create error:', err);
+        return null;
+      }
+    };
+
+  // Handle final submission
   const handleSubmit = async (): Promise<void> => {
     setIsSubmitting(true);
     try {
-      let orgToUse: IOrganisation | null = selectedOrg;
+      let counterpartyToUse: ISelectedCounterparty | null =
+        selectedCounterparty;
 
-      // Create new organisation if needed
-      if (isCreatingNew && !selectedOrg) {
-        orgToUse = await handleCreateOrganisation();
-        if (!orgToUse) {
-          throw new Error("Erreur lors de la création de l'organisation");
+      // Create new counterparty if needed
+      if (isCreatingNew && !selectedCounterparty) {
+        counterpartyToUse = await handleCreateCounterparty();
+        if (!counterpartyToUse) {
+          throw new Error('Erreur lors de la création');
         }
       }
 
-      if (!orgToUse) {
-        throw new Error('Aucune organisation sélectionnée');
+      if (!counterpartyToUse) {
+        throw new Error('Aucune contrepartie sélectionnée');
       }
 
       let ruleId: string | null = null;
 
+      // Determine counterparty_type and IDs for the rule
+      const isIndividual = counterpartyToUse.type === 'individual';
+      const dbCounterpartyType = isIndividual ? 'individual' : 'organisation';
+
+      // Map CounterpartyType to matching rule role type
+      const ruleRoleType =
+        counterpartyToUse.type === 'customer_pro'
+          ? 'customer'
+          : counterpartyToUse.type === 'individual'
+            ? 'customer'
+            : counterpartyToUse.type; // supplier or partner
+
       if (existingRule) {
-        // UPDATE - garder la catégorie existante, juste ajouter org + type
+        // UPDATE existing rule
         const success = await updateMatchingRule(existingRule.id, {
-          organisation_id: orgToUse.id,
-          default_role_type: providerType,
-          // PAS de default_category - on garde l'existante !
-        });
+          organisation_id: isIndividual ? null : counterpartyToUse.id,
+          individual_customer_id: isIndividual ? counterpartyToUse.id : null,
+          counterparty_type: dbCounterpartyType,
+          default_role_type: ruleRoleType,
+        } as any);
         if (success) {
           ruleId = existingRule.id;
         }
       } else {
-        // CREATE nouvelle règle SANS catégorie (sera classé plus tard)
+        // CREATE new rule
         const newRule = await createMatchingRule({
           match_type: 'label_contains',
           match_value: label,
-          organisation_id: orgToUse.id,
-          default_category: null, // Pas de catégorie
-          default_role_type: providerType,
+          organisation_id: isIndividual ? null : counterpartyToUse.id,
+          individual_customer_id: isIndividual ? counterpartyToUse.id : null,
+          counterparty_type: dbCounterpartyType,
+          default_category: null,
+          default_role_type: ruleRoleType,
           priority: 100,
-        });
+        } as any);
         if (newRule) {
           ruleId = newRule.id;
         }
@@ -268,7 +430,10 @@ export function OrganisationLinkingModal({
   };
 
   const canSubmit = Boolean(
-    selectedOrg ?? (isCreatingNew && newOrgName.trim())
+    selectedCounterparty ??
+      (isCreatingNew &&
+        newName.trim() &&
+        (counterpartyType !== 'individual' || newEmail.trim()))
   );
 
   // Get category label
@@ -276,6 +441,24 @@ export function OrganisationLinkingModal({
     ? (getPcgCategory(existingRule.default_category)?.label ??
       existingRule.default_category)
     : null;
+
+  // Get icon and label for selected counterparty type
+  const getTypeInfo = (type: CounterpartyType) => {
+    switch (type) {
+      case 'individual':
+        return { icon: User, label: 'Client particulier', color: 'green' };
+      case 'customer_pro':
+        return {
+          icon: Briefcase,
+          label: 'Client professionnel',
+          color: 'blue',
+        };
+      case 'supplier':
+        return { icon: Package, label: 'Fournisseur', color: 'amber' };
+      case 'partner':
+        return { icon: Settings, label: 'Prestataire', color: 'blue' };
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -290,7 +473,7 @@ export function OrganisationLinkingModal({
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500 shadow-lg shadow-blue-500/30">
                 <Building2 size={18} className="text-white" />
               </div>
-              Associer à une organisation
+              {isCredit ? 'Associer à un client' : 'Associer à un fournisseur'}
             </DialogTitle>
             <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
               <Badge
@@ -345,36 +528,164 @@ export function OrganisationLinkingModal({
           )}
         </div>
 
-        {/* Content - TOUT EN UNE PAGE */}
+        {/* Content */}
         <div className="space-y-6 px-6 py-6">
-          {/* 1. Organisation */}
+          {/* 1. Type selection - FIRST */}
+          <div className="space-y-3">
+            <Label className="text-base font-semibold">Type</Label>
+            <div className="grid grid-cols-2 gap-3">
+              {isCredit ? (
+                <>
+                  {/* CREDIT: Client particulier (B2C) / Client professionnel (B2B) */}
+                  <button
+                    type="button"
+                    onClick={() => setCounterpartyType('individual')}
+                    className={cn(
+                      'flex items-center gap-3 rounded-xl border-2 p-3 transition-all',
+                      counterpartyType === 'individual'
+                        ? 'border-green-500 bg-green-50'
+                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        'flex h-10 w-10 items-center justify-center rounded-lg',
+                        counterpartyType === 'individual'
+                          ? 'bg-green-500 text-white'
+                          : 'bg-slate-100 text-slate-500'
+                      )}
+                    >
+                      <User size={20} />
+                    </div>
+                    <div className="text-left">
+                      <div className="font-medium text-sm">Client</div>
+                      <div className="text-xs text-slate-500">
+                        particulier (B2C)
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setCounterpartyType('customer_pro')}
+                    className={cn(
+                      'flex items-center gap-3 rounded-xl border-2 p-3 transition-all',
+                      counterpartyType === 'customer_pro'
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        'flex h-10 w-10 items-center justify-center rounded-lg',
+                        counterpartyType === 'customer_pro'
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-slate-100 text-slate-500'
+                      )}
+                    >
+                      <Briefcase size={20} />
+                    </div>
+                    <div className="text-left">
+                      <div className="font-medium text-sm">Client</div>
+                      <div className="text-xs text-slate-500">
+                        professionnel (B2B)
+                      </div>
+                    </div>
+                  </button>
+                </>
+              ) : (
+                <>
+                  {/* DEBIT: Fournisseur / Prestataire */}
+                  <button
+                    type="button"
+                    onClick={() => setCounterpartyType('supplier')}
+                    className={cn(
+                      'flex items-center gap-3 rounded-xl border-2 p-3 transition-all',
+                      counterpartyType === 'supplier'
+                        ? 'border-amber-500 bg-amber-50'
+                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        'flex h-10 w-10 items-center justify-center rounded-lg',
+                        counterpartyType === 'supplier'
+                          ? 'bg-amber-500 text-white'
+                          : 'bg-slate-100 text-slate-500'
+                      )}
+                    >
+                      <Package size={20} />
+                    </div>
+                    <div className="text-left">
+                      <div className="font-medium text-sm">Fournisseur</div>
+                      <div className="text-xs text-slate-500">de biens</div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setCounterpartyType('partner')}
+                    className={cn(
+                      'flex items-center gap-3 rounded-xl border-2 p-3 transition-all',
+                      counterpartyType === 'partner'
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        'flex h-10 w-10 items-center justify-center rounded-lg',
+                        counterpartyType === 'partner'
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-slate-100 text-slate-500'
+                      )}
+                    >
+                      <Settings size={20} />
+                    </div>
+                    <div className="text-left">
+                      <div className="font-medium text-sm">Prestataire</div>
+                      <div className="text-xs text-slate-500">de services</div>
+                    </div>
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* 2. Search / Selection */}
           <div className="space-y-3">
             <Label className="flex items-center gap-2 text-base font-semibold">
               <Search size={16} className="text-slate-400" />
-              Organisation
+              {counterpartyType === 'individual'
+                ? 'Client particulier'
+                : counterpartyType === 'customer_pro'
+                  ? 'Organisation cliente'
+                  : 'Organisation'}
             </Label>
 
-            {/* Selected org display */}
-            {selectedOrg && (
+            {/* Selected counterparty display */}
+            {selectedCounterparty && (
               <div className="flex items-center justify-between rounded-xl border-2 border-blue-500 bg-blue-50 p-3">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500 text-white">
-                    <Building2 size={20} />
+                    {selectedCounterparty.isOrganisation ? (
+                      <Building2 size={20} />
+                    ) : (
+                      <User size={20} />
+                    )}
                   </div>
                   <div>
                     <div className="font-medium text-slate-900">
-                      {selectedOrg.legal_name}
+                      {selectedCounterparty.name}
                     </div>
                     <div className="text-xs text-slate-500">
-                      {selectedOrg.is_service_provider
-                        ? 'Prestataire de services'
-                        : 'Fournisseur de biens'}
+                      {getTypeInfo(selectedCounterparty.type).label}
                     </div>
                   </div>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setSelectedOrg(null)}
+                  onClick={() => setSelectedCounterparty(null)}
                   className="rounded-full p-1 hover:bg-blue-100"
                 >
                   <X size={16} className="text-blue-600" />
@@ -382,12 +693,16 @@ export function OrganisationLinkingModal({
               </div>
             )}
 
-            {/* Search input - hidden when org selected */}
-            {!selectedOrg && (
+            {/* Search input - hidden when selected */}
+            {!selectedCounterparty && (
               <>
                 <div className="relative">
                   <Input
-                    placeholder="Rechercher une organisation..."
+                    placeholder={
+                      counterpartyType === 'individual'
+                        ? 'Rechercher un client particulier...'
+                        : 'Rechercher une organisation...'
+                    }
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     className="h-11 pl-4 pr-10"
@@ -398,31 +713,29 @@ export function OrganisationLinkingModal({
                 </div>
 
                 {/* Search results */}
-                {organisations.length > 0 && (
+                {searchResults.length > 0 && (
                   <div className="max-h-40 space-y-1 overflow-y-auto">
-                    {organisations.map(org => (
+                    {searchResults.map(result => (
                       <button
-                        key={org.id}
+                        key={result.id}
                         type="button"
                         onClick={() => {
-                          setSelectedOrg(org);
+                          setSelectedCounterparty(result);
                           setIsCreatingNew(false);
-                          // Auto-set provider type based on org
-                          setProviderType(
-                            org.is_service_provider ? 'partner' : 'supplier'
-                          );
                         }}
                         className="flex w-full items-center gap-3 rounded-lg border border-slate-200 p-2 text-left hover:bg-slate-50"
                       >
-                        <Building2 size={16} className="text-slate-400" />
+                        {result.isOrganisation ? (
+                          <Building2 size={16} className="text-slate-400" />
+                        ) : (
+                          <User size={16} className="text-slate-400" />
+                        )}
                         <div className="flex-1">
                           <div className="text-sm font-medium">
-                            {org.legal_name}
+                            {result.name}
                           </div>
                           <div className="text-xs text-slate-500">
-                            {org.is_service_provider
-                              ? 'Prestataire'
-                              : 'Fournisseur'}
+                            {getTypeInfo(result.type).label}
                           </div>
                         </div>
                       </button>
@@ -433,11 +746,11 @@ export function OrganisationLinkingModal({
                 {/* No results / Create new */}
                 {!isLoading &&
                   searchQuery.length > 0 &&
-                  organisations.length === 0 && (
+                  searchResults.length === 0 && (
                     <div className="space-y-3">
                       <div className="rounded-lg border-2 border-dashed border-slate-200 bg-slate-50/50 py-4 text-center">
                         <p className="text-sm text-slate-500">
-                          Aucune organisation trouvée
+                          Aucun résultat trouvé
                         </p>
                       </div>
 
@@ -445,7 +758,7 @@ export function OrganisationLinkingModal({
                         type="button"
                         onClick={() => {
                           setIsCreatingNew(true);
-                          setNewOrgName(searchQuery);
+                          setNewName(searchQuery);
                         }}
                         className={cn(
                           'flex w-full items-center gap-3 rounded-xl border-2 p-3 text-left transition-all',
@@ -469,7 +782,9 @@ export function OrganisationLinkingModal({
                             Créer &quot;{searchQuery}&quot;
                           </div>
                           <div className="text-xs text-slate-500">
-                            Nouvelle organisation
+                            {counterpartyType === 'individual'
+                              ? 'Nouveau client particulier'
+                              : 'Nouvelle organisation'}
                           </div>
                         </div>
                         {isCreatingNew && (
@@ -479,76 +794,33 @@ export function OrganisationLinkingModal({
                     </div>
                   )}
 
-                {/* New org name input */}
+                {/* New counterparty form */}
                 {isCreatingNew && (
-                  <Input
-                    value={newOrgName}
-                    onChange={e => setNewOrgName(e.target.value)}
-                    placeholder="Nom de l'organisation"
-                    className="h-11"
-                    autoFocus
-                  />
+                  <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                    <Input
+                      value={newName}
+                      onChange={e => setNewName(e.target.value)}
+                      placeholder={
+                        counterpartyType === 'individual'
+                          ? 'Prénom Nom'
+                          : "Nom de l'organisation"
+                      }
+                      className="h-11"
+                      autoFocus
+                    />
+                    {counterpartyType === 'individual' && (
+                      <Input
+                        type="email"
+                        value={newEmail}
+                        onChange={e => setNewEmail(e.target.value)}
+                        placeholder="Email (obligatoire)"
+                        className="h-11"
+                      />
+                    )}
+                  </div>
                 )}
               </>
             )}
-          </div>
-
-          {/* 2. Type - toujours visible */}
-          <div className="space-y-3">
-            <Label className="text-base font-semibold">Type</Label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setProviderType('supplier')}
-                className={cn(
-                  'flex items-center gap-3 rounded-xl border-2 p-3 transition-all',
-                  providerType === 'supplier'
-                    ? 'border-amber-500 bg-amber-50'
-                    : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                )}
-              >
-                <div
-                  className={cn(
-                    'flex h-10 w-10 items-center justify-center rounded-lg',
-                    providerType === 'supplier'
-                      ? 'bg-amber-500 text-white'
-                      : 'bg-slate-100 text-slate-500'
-                  )}
-                >
-                  <Package size={20} />
-                </div>
-                <div className="text-left">
-                  <div className="font-medium text-sm">Fournisseur</div>
-                  <div className="text-xs text-slate-500">de biens</div>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setProviderType('partner')}
-                className={cn(
-                  'flex items-center gap-3 rounded-xl border-2 p-3 transition-all',
-                  providerType === 'partner'
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                )}
-              >
-                <div
-                  className={cn(
-                    'flex h-10 w-10 items-center justify-center rounded-lg',
-                    providerType === 'partner'
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-slate-100 text-slate-500'
-                  )}
-                >
-                  <Settings size={20} />
-                </div>
-                <div className="text-left">
-                  <div className="font-medium text-sm">Prestataire</div>
-                  <div className="text-xs text-slate-500">de services</div>
-                </div>
-              </button>
-            </div>
           </div>
 
           {/* 3. Apply to history */}
