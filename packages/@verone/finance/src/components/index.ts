@@ -1,16 +1,14 @@
 // Finance components exports
 
-export * from './ClassificationModal';
-export * from './ExpenseClassificationModal';
-export * from './HierarchicalCategorySelector';
+// Modals principaux (unifiés)
 export * from './QuickClassificationModal';
-export * from './InvoiceUploadModal';
-export * from './CategoryCardGrid';
 export * from './OrganisationLinkingModal';
-export * from './OrganisationTransactionsSection';
+export * from './InvoiceUploadModal';
 export * from './RapprochementModal';
-export * from './SimpleExpenseModal';
+
+// Composants UI
 export * from './SupplierCell';
+export * from './OrganisationTransactionsSection';
 
 // Charts (Recharts-based)
 export * from './charts';

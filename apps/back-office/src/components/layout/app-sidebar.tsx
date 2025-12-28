@@ -57,7 +57,6 @@ import {
   LayoutDashboard,
   ArrowLeftRight,
   BookOpenCheck,
-  Paperclip,
 } from 'lucide-react';
 
 // Phase 1: use-stock-alerts-count hook désactivé (Phase 2+)
@@ -238,24 +237,14 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
         icon: ArrowLeftRight,
       },
       {
-        title: 'Livres comptables',
-        href: '/finance/livres',
-        icon: BookOpenCheck,
-      },
-      {
-        title: 'Justificatifs',
-        href: '/finance/justificatifs',
-        icon: Paperclip,
-      },
-      {
         title: 'Dépenses',
         href: '/finance/depenses',
         icon: Banknote,
       },
       {
-        title: 'Rapprochement',
-        href: '/finance/rapprochement',
-        icon: CheckCircle,
+        title: 'Livres comptables',
+        href: '/finance/livres',
+        icon: BookOpenCheck,
       },
     ],
   },

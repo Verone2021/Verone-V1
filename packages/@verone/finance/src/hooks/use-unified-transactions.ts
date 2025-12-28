@@ -365,7 +365,10 @@ export function useUnifiedTransactions(
               counterparty_organisation_id: null, // TODO: add when column exists
               organisation_name: null,
               organisation_roles: [],
-              has_attachment: tx.has_attachment || false,
+              // has_attachment: true if has_attachment flag OR attachment_ids not empty
+              has_attachment:
+                tx.has_attachment === true ||
+                (tx.attachment_ids?.length ?? 0) > 0,
               attachment_count: tx.attachment_ids?.length || 0,
               attachment_ids: tx.attachment_ids,
               justification_optional: null,
@@ -449,10 +452,12 @@ export function useUnifiedTransactions(
         .select('*', { count: 'exact', head: true })
         .eq('category_pcg', '455');
 
+      // Count transactions with attachments: either has_attachment=true OR attachment_ids not empty
+      // This aligns with legacy v1 logic that checks attachment_ids.length > 0
       const { count: withAttachment } = await supabase
         .from('bank_transactions')
         .select('*', { count: 'exact', head: true })
-        .eq('has_attachment', true);
+        .or('has_attachment.eq.true,attachment_ids.neq.{}');
 
       setStats({
         total_count: total || 0,

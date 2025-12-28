@@ -61,7 +61,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { useFinanceV2 } from '@/lib/feature-flags';
+// Feature flag removed - v2 is now the only version
 
 // =====================================================================
 // HELPERS
@@ -1006,22 +1006,6 @@ function TransactionsPageV2() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Banner v2 beta */}
-      <div className="bg-blue-600 text-white px-4 py-2 text-sm flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Badge variant="secondary" className="bg-white/20 text-white">
-            BETA
-          </Badge>
-          <span>Finance v2 - Nouvelle interface unifiee</span>
-        </div>
-        <Link
-          href="/finance/transactions?v1=true"
-          className="text-white/80 hover:text-white underline text-xs"
-        >
-          Revenir a l&apos;ancienne version
-        </Link>
-      </div>
-
       {/* Header */}
       <div className="bg-white border-b border-slate-200 px-6 py-4">
         <div className="flex items-center justify-between">
@@ -1544,22 +1528,9 @@ function TransactionsPageV2() {
 }
 
 // =====================================================================
-// EXPORT - Switch based on feature flag
+// EXPORT - Version unifiée (v2 only)
 // =====================================================================
 
 export default function TransactionsPage() {
-  const isV2 = useFinanceV2();
-
-  // Allow override via query param for testing
-  if (typeof window !== 'undefined') {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('v1') === 'true') {
-      return <TransactionsPageLegacy />;
-    }
-    if (params.get('v2') === 'true') {
-      return <TransactionsPageV2 />;
-    }
-  }
-
-  return isV2 ? <TransactionsPageV2 /> : <TransactionsPageLegacy />;
+  return <TransactionsPageV2 />;
 }
