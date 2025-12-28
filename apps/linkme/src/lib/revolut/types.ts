@@ -52,7 +52,13 @@ export type RevolutOrderState =
 
 export interface RevolutPayment {
   id: string;
-  state: 'pending' | 'processing' | 'authorised' | 'captured' | 'failed' | 'cancelled';
+  state:
+    | 'pending'
+    | 'processing'
+    | 'authorised'
+    | 'captured'
+    | 'failed'
+    | 'cancelled';
   created_at: string;
   updated_at: string;
   amount: {

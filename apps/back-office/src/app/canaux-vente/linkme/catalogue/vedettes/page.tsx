@@ -71,13 +71,18 @@ export default function VedettesPage() {
             <div>
               <h1 className="text-xl font-semibold">Produits Vedettes</h1>
               <p className="text-sm text-gray-500">
-                {featuredProducts.length} produit{featuredProducts.length > 1 ? 's' : ''} mis en avant sur le site
+                {featuredProducts.length} produit
+                {featuredProducts.length > 1 ? 's' : ''} mis en avant sur le
+                site
               </p>
             </div>
           </div>
 
           <Link href="/canaux-vente/linkme/catalogue">
-            <Badge variant="outline" className="cursor-pointer hover:bg-gray-50">
+            <Badge
+              variant="outline"
+              className="cursor-pointer hover:bg-gray-50"
+            >
               <Package className="h-3.5 w-3.5 mr-1" />
               Voir tout le catalogue
             </Badge>
@@ -199,7 +204,9 @@ export default function VedettesPage() {
                         onClick={() => handleRemoveFromFeatured(product)}
                         className="text-yellow-600 hover:text-yellow-700 hover:bg-yellow-100"
                       />
-                      <Link href={`/canaux-vente/linkme/catalogue/${product.id}`}>
+                      <Link
+                        href={`/canaux-vente/linkme/catalogue/${product.id}`}
+                      >
                         <IconButton
                           variant="outline"
                           size="sm"

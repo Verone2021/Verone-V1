@@ -18,9 +18,9 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { createClient } from '@verone/utils/supabase/client';
 
 import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../lib/supabase';
 
 /**
  * Interface affilié
@@ -98,14 +98,22 @@ export function useUserAffiliate() {
       linkMeRole?.organisation_id,
     ],
     queryFn: async (): Promise<UserAffiliate | null> => {
-      if (!user || !linkMeRole) return null;
+      if (!user || !linkMeRole) {
+        console.error('❌ useUserAffiliate: user ou linkMeRole manquant');
+        console.error('   user:', user?.id, user?.email);
+        console.error('   linkMeRole:', linkMeRole);
+        return null;
+      }
 
       // Construire la requête selon le rôle
+      const supabase = createClient();
       let query = (supabase as any).from('linkme_affiliates').select('*');
+      let queryDescription = '';
 
       // Chercher par enseigne_id pour enseigne_admin
       if (linkMeRole.role === 'enseigne_admin' && linkMeRole.enseigne_id) {
         query = query.eq('enseigne_id', linkMeRole.enseigne_id);
+        queryDescription = `enseigne_id = ${linkMeRole.enseigne_id}`;
       }
       // Chercher par organisation_id pour org_independante
       else if (
@@ -113,20 +121,38 @@ export function useUserAffiliate() {
         linkMeRole.organisation_id
       ) {
         query = query.eq('organisation_id', linkMeRole.organisation_id);
+        queryDescription = `organisation_id = ${linkMeRole.organisation_id}`;
       }
       // Chercher par user_id en fallback
       else {
         query = query.eq('user_id', user.id);
+        queryDescription = `user_id = ${user.id}`;
       }
+
+      // eslint-disable-next-line no-console
+      console.log(
+        `🔍 useUserAffiliate: Recherche affiliate (${queryDescription})`
+      );
 
       const { data, error } = await query.maybeSingle();
 
       if (error) {
-        console.error('Erreur fetch affiliate:', error);
+        console.error('❌ Erreur fetch affiliate:', error);
         return null;
       }
 
-      if (!data) return null;
+      if (!data) {
+        console.error(
+          `❌ Aucun affiliate trouvé dans linkme_affiliates pour ${queryDescription}`
+        );
+        console.error(
+          '   → Vérifier que la table linkme_affiliates a une entrée correspondante'
+        );
+        return null;
+      }
+
+      // eslint-disable-next-line no-console
+      console.log('✅ Affiliate trouvé:', data.id, data.display_name);
 
       return {
         id: data.id,
@@ -161,6 +187,7 @@ export function useUserSelections() {
     queryFn: async (): Promise<UserSelection[]> => {
       if (!affiliate) return [];
 
+      const supabase = createClient();
       const { data, error } = await (supabase as any)
         .from('linkme_selections')
         .select('*')
@@ -207,6 +234,7 @@ export function useSelectionItems(selectionId: string | null) {
 
       // Utilise la syntaxe alias "product:products(...)" au lieu de "products!inner(...)"
       // car cette dernière échoue silencieusement avec linkme_selection_items
+      const supabase = createClient();
       const { data, error } = await (supabase as any)
         .from('linkme_selection_items')
         .select(
@@ -240,7 +268,7 @@ export function useSelectionItems(selectionId: string | null) {
       let imageMap = new Map<string, string>();
 
       if (productIds.length > 0) {
-        const { data: images } = await (supabase as any)
+        const { data: images } = await supabase
           .from('product_images')
           .select('product_id, public_url')
           .in('product_id', productIds)
@@ -284,6 +312,8 @@ export function useCreateSelection() {
       if (!affiliate) {
         throw new Error('Aucun compte affilié trouvé');
       }
+
+      const supabase = createClient();
 
       // Générer un slug unique
       const baseSlug = input.name
@@ -337,6 +367,8 @@ export function useAddToSelection() {
         throw new Error('Aucun compte affilié trouvé');
       }
 
+      const supabase = createClient();
+
       // Récupérer les infos du produit depuis channel_pricing
       const { data: catalogProduct, error: cpError } = await (supabase as any)
         .from('channel_pricing')
@@ -375,7 +407,7 @@ export function useAddToSelection() {
       const sellingPriceHt = basePriceHt * (1 + marginRate / 100);
 
       // Récupérer le prochain display_order
-      const { data: existingItems } = await (supabase as any)
+      const { data: existingItems } = await supabase
         .from('linkme_selection_items')
         .select('display_order')
         .eq('selection_id', input.selectionId)
@@ -441,6 +473,8 @@ export function useAddToSelectionWithMargin() {
         throw new Error('Aucun compte affilié trouvé');
       }
 
+      const supabase = createClient();
+
       // Récupérer les infos du produit depuis channel_pricing
       const { data: catalogProduct, error: cpError } = await (supabase as any)
         .from('channel_pricing')
@@ -490,7 +524,7 @@ export function useAddToSelectionWithMargin() {
         basePriceHt * (1 + commissionRate / 100 + input.marginRate / 100);
 
       // Récupérer le prochain display_order
-      const { data: existingItems } = await (supabase as any)
+      const { data: existingItems } = await supabase
         .from('linkme_selection_items')
         .select('display_order')
         .eq('selection_id', input.selectionId)
@@ -544,6 +578,7 @@ export function useRemoveFromSelection() {
 
   return useMutation({
     mutationFn: async (input: { itemId: string; selectionId: string }) => {
+      const supabase = createClient();
       const { error } = await (supabase as any)
         .from('linkme_selection_items')
         .delete()
@@ -586,6 +621,7 @@ export function useUpdateItemMargin() {
       selectionId: string;
       marginRate: number;
     }) => {
+      const supabase = createClient();
       // Récupérer le prix de base actuel
       const { data: item, error: fetchError } = await (supabase as any)
         .from('linkme_selection_items')
@@ -624,6 +660,7 @@ export function useToggleSelectionPublished() {
 
   return useMutation({
     mutationFn: async (input: { selectionId: string; isPublic: boolean }) => {
+      const supabase = createClient();
       const updateData: any = {
         is_public: input.isPublic,
         status: input.isPublic ? 'active' : 'draft',
@@ -657,6 +694,7 @@ export function useSelectionProductIds(selectionId: string | null) {
     queryFn: async (): Promise<string[]> => {
       if (!selectionId) return [];
 
+      const supabase = createClient();
       const { data, error } = await (supabase as any)
         .from('linkme_selection_items')
         .select('product_id')
@@ -687,6 +725,7 @@ export function useReorderProducts() {
       selectionId: string;
       orderedItemIds: string[];
     }) => {
+      const supabase = createClient();
       // Mettre à jour l'ordre de chaque item
       const updates = input.orderedItemIds.map((itemId, index) =>
         (supabase as any)

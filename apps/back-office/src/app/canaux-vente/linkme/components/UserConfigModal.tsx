@@ -18,7 +18,6 @@ import {
   AlertTriangle,
   Settings,
   Wallet,
-  Percent,
 } from 'lucide-react';
 
 import {
@@ -39,7 +38,6 @@ interface AffiliateData {
   id: string;
   default_margin_rate: number;
   linkme_commission_rate: number;
-  tva_rate: number;
 }
 
 /**
@@ -78,10 +76,7 @@ export function UserConfigModal({
   const [affiliateData, setAffiliateData] = useState<AffiliateData | null>(
     null
   );
-  const [tvaRate, setTvaRate] = useState<number>(20);
   const [isLoadingAffiliate, setIsLoadingAffiliate] = useState(false);
-  const [isSavingTva, setIsSavingTva] = useState(false);
-  const [tvaSuccess, setTvaSuccess] = useState(false);
 
   // Validation
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -98,7 +93,6 @@ export function UserConfigModal({
       setShowPassword(false);
       setPasswordError(null);
       setPasswordSuccess(false);
-      setTvaSuccess(false);
       setErrors({});
       setActiveTab('profile');
 
@@ -120,7 +114,7 @@ export function UserConfigModal({
     try {
       let query = supabase
         .from('linkme_affiliates')
-        .select('id, default_margin_rate, linkme_commission_rate, tva_rate');
+        .select('id, default_margin_rate, linkme_commission_rate');
 
       if (user.enseigne_id) {
         query = query.eq('enseigne_id', user.enseigne_id);
@@ -135,38 +129,11 @@ export function UserConfigModal({
         setAffiliateData(null);
       } else if (data) {
         setAffiliateData(data as AffiliateData);
-        setTvaRate(data.tva_rate || 20);
       }
     } catch (err) {
       console.error('Erreur fetch affiliate:', err);
     } finally {
       setIsLoadingAffiliate(false);
-    }
-  }
-
-  // Sauvegarder le taux TVA
-  async function handleSaveTvaRate() {
-    if (!affiliateData) return;
-
-    setIsSavingTva(true);
-    const supabase = createClient();
-
-    try {
-      const { error } = await supabase
-        .from('linkme_affiliates')
-        .update({ tva_rate: tvaRate })
-        .eq('id', affiliateData.id);
-
-      if (error) throw error;
-
-      setAffiliateData({ ...affiliateData, tva_rate: tvaRate });
-      setTvaSuccess(true);
-      setTimeout(() => setTvaSuccess(false), 2000);
-    } catch (err) {
-      console.error('Erreur save TVA:', err);
-      setErrors({ tva: 'Erreur lors de la sauvegarde' });
-    } finally {
-      setIsSavingTva(false);
     }
   }
 
@@ -522,32 +489,6 @@ export function UserConfigModal({
                 </div>
               ) : (
                 <>
-                  {/* TVA Rate - Editable */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Taux de TVA applicable
-                    </label>
-                    <p className="text-xs text-gray-500 mb-2">
-                      TVA applicable aux commissions selon l&apos;entité
-                      juridique
-                    </p>
-                    <div className="relative">
-                      <Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <select
-                        value={tvaRate}
-                        onChange={e => setTvaRate(Number(e.target.value))}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 appearance-none bg-white"
-                      >
-                        <option value={0}>0% (Belgique intra-UE, etc.)</option>
-                        <option value={10}>10% (Taux réduit)</option>
-                        <option value={20}>20% (France standard)</option>
-                      </select>
-                    </div>
-                    {errors.tva && (
-                      <p className="mt-1 text-xs text-red-600">{errors.tva}</p>
-                    )}
-                  </div>
-
                   {/* Margin Rate - Read only */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -574,16 +515,6 @@ export function UserConfigModal({
                     </p>
                   </div>
 
-                  {/* Success Message */}
-                  {tvaSuccess && (
-                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-600" />
-                      <p className="text-sm text-green-700">
-                        Taux TVA mis à jour
-                      </p>
-                    </div>
-                  )}
-
                   {/* Actions */}
                   <div className="flex gap-3 pt-2">
                     <button
@@ -592,26 +523,6 @@ export function UserConfigModal({
                       className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                     >
                       Fermer
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleSaveTvaRate}
-                      disabled={
-                        isSavingTva || tvaRate === affiliateData.tva_rate
-                      }
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-                    >
-                      {isSavingTva ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Sauvegarde...
-                        </>
-                      ) : (
-                        <>
-                          <Check className="h-4 w-4" />
-                          Enregistrer TVA
-                        </>
-                      )}
                     </button>
                   </div>
                 </>

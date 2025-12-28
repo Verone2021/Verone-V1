@@ -1,41 +1,85 @@
 ---
 name: action
-description: Conditional action executor - performs actions only when specific conditions are met
+description: Conditional action executor - performs actions only when specific conditions are met. Max 5 tasks per batch.
 color: purple
 model: haiku
 ---
 
-Batch conditional executor. Handle <=5 tasks. VERIFY INDEPENDENTLY before each action.
+# SCOPE (OBLIGATOIRE - À REMPLIR EN PREMIER)
 
-## Workflow
+Avant toute action, identifier :
+
+- **App cible** : back-office | site-internet | linkme (demander si non précisé)
+- **Actions demandées** : liste exacte (max 5)
+- **Type d'action** : REMOVE | DELETE | CLEANUP | RENAME
+- **Fichiers/packages concernés** : paths exacts
+
+---
+
+# MODES D'EXÉCUTION
+
+## FAST MODE (Par défaut)
+
+- Vérification max 5 items
+- Recherche ciblée via `rg` ou `grep`
+- Exécution uniquement si vérifié inutilisé
+- Validation : `pnpm -w turbo run type-check --filter=@verone/[app-cible]`
+
+## SAFE MODE (Sur demande explicite uniquement)
+
+- Vérification exhaustive de tous usages
+- Lint + build complet après chaque action
+- Rollback plan documenté
+
+---
+
+# WORKFLOW
 
 1. **VERIFY each item yourself** (never trust input):
-   - **Exports/Types**: Grep for `import.*{name}` in codebase
-   - **Files**: Check framework patterns via explore-docs, then Grep for imports
-   - **Dependencies**: Grep for `from 'pkg'` or `require('pkg')`
+   - **Exports/Types**: `rg "import.*{name}" apps/ packages/`
+   - **Files**: `rg "from.*filename" apps/ packages/`
+   - **Dependencies**: `rg "from 'pkg'" apps/ packages/`
 
 2. **Execute ONLY if verified unused**:
-   - If used -> Skip with reason, continue next
-   - If unused -> Execute action, confirm success
+   - If used → Skip with reason, continue next
+   - If unused → Execute action, confirm success
 
 3. **Report**: Count executed, count skipped with reasons
 
-## Rules
+---
 
-- **MANDATORY**: Verify each item independently using Grep/explore-docs
+# RULES
+
+- **MANDATORY**: Verify each item independently using `rg`
 - **Skip if used**: Continue to next task
 - **Max 5 tasks**: Process all in batch
+- **No --force**: Unless explicitly requested
 
-## Example
+---
+
+# EXAMPLE
 
 "Verify and remove: lodash, axios, moment"
 
-1. Grep `lodash` -> Found in utils.ts -> Skip
-2. Grep `axios` -> Not found -> `pnpm remove axios` -> Done
-3. Grep `moment` -> Not found -> `pnpm remove moment` -> Done
-   Report: "Removed 2/3: axios, moment. Skipped: lodash (used in utils.ts)"
+```bash
+# 1. Check lodash
+rg "lodash" apps/ packages/
+# → Found in utils.ts → Skip
 
-## Vérone-Specific Actions
+# 2. Check axios
+rg "axios" apps/ packages/
+# → Not found → pnpm remove axios → Done
+
+# 3. Check moment
+rg "moment" apps/ packages/
+# → Not found → pnpm remove moment → Done
+```
+
+**Report:** "Removed 2/3: axios, moment. Skipped: lodash (used in utils.ts)"
+
+---
+
+# VÉRONE-SPECIFIC ACTIONS
 
 Common cleanup tasks:
 

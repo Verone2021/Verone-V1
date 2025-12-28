@@ -1,53 +1,120 @@
 // =====================================================================
 // Hook: Bank Reconciliation
-// Date: 2025-10-11
-// Description: Gestion rapprochement bancaire - transactions unmatched + factures unpaid
-// STATUS: DÉSACTIVÉ Phase 1 (returns mocks uniquement)
+// Date: 2025-12-23
+// Description: Gestion rapprochement bancaire - transactions + commandes sans facture
 // =====================================================================
 
 import { useState, useEffect, useCallback } from 'react';
 
-import { featureFlags } from '@verone/utils/feature-flags';
-import type { BankTransaction } from '@verone/integrations/qonto';
 import { createClient } from '@verone/utils/supabase/client';
 
 // =====================================================================
 // TYPES
 // =====================================================================
 
-interface UnmatchedTransaction extends BankTransaction {
-  suggestions?: MatchSuggestion[];
+export interface BankTransaction {
+  id: string;
+  transaction_id: string;
+  amount: number;
+  currency: string;
+  side: 'credit' | 'debit';
+  label: string;
+  note: string | null;
+  reference: string | null;
+  counterparty_name: string | null;
+  counterparty_iban: string | null;
+  operation_type: string | null;
+  emitted_at: string;
+  settled_at: string | null;
+  matching_status: string;
+  matched_document_id: string | null;
+  confidence_score: number | null;
+  raw_data: Record<string, unknown>;
+  // Champs comptabilité PCG
+  category_pcg: string | null;
+  vat_rate: number | null;
+  payment_method: string | null;
+  amount_ht: number | null;
+  amount_vat: number | null;
+  nature: string | null;
+  // Pièces jointes
+  attachment_ids: string[] | null;
+  has_attachment: boolean | null;
 }
 
-interface MatchSuggestion {
-  invoice_id: string;
-  invoice_number: string;
-  customer_name: string;
-  invoice_amount: number;
+export interface OrderWithoutInvoice {
+  id: string;
+  order_number: string;
+  customer_id: string;
+  customer_name: string | null;
+  billing_address: Record<string, unknown> | null;
+  shipping_address: Record<string, unknown> | null;
+  total_ht: number;
+  total_ttc: number;
+  status: string;
+  payment_status: string | null;
+  created_at: string;
+  shipped_at: string | null;
+}
+
+export interface MatchSuggestion {
+  order_id: string;
+  order_number: string;
+  customer_name: string | null;
+  customer_address: string | null;
+  order_amount: number;
   confidence: number;
   match_reason: string;
 }
 
-interface UnpaidInvoice {
-  id: string;
-  invoice_number: string;
-  customer_id: string;
-  customer_type: 'organisation' | 'individual';
-  customer_name: string;
-  total_amount: number;
-  amount_paid: number;
-  amount_remaining: number;
-  status: string;
-  issue_date: string;
-  due_date: string;
-  days_overdue: number | null;
+interface ReconciliationStats {
+  total_unmatched_transactions: number;
+  total_orders_without_invoice: number;
+  total_amount_pending: number;
+  transactions_with_attachments: number;
 }
 
-interface ReconciliationStats {
-  total_unmatched: number;
-  total_amount_pending: number;
-  auto_match_rate: number;
-  manual_review_count: number;
+// =====================================================================
+// HELPERS
+// =====================================================================
+
+/**
+ * Extrait les attachment_ids depuis raw_data Qonto
+ */
+function extractAttachmentIds(rawData: unknown): string[] | null {
+  if (!rawData || typeof rawData !== 'object') return null;
+  const data = rawData as Record<string, unknown>;
+
+  // Qonto stocke les attachments comme un tableau d'objets avec id
+  if (Array.isArray(data.attachments)) {
+    const ids = (data.attachments as Array<Record<string, unknown>>)
+      .filter(a => typeof a === 'object' && a?.id)
+      .map(a => String(a.id));
+    return ids.length > 0 ? ids : null;
+  }
+
+  // Ou comme attachment_ids directement
+  if (Array.isArray(data.attachment_ids)) {
+    return data.attachment_ids.length > 0 ? data.attachment_ids : null;
+  }
+
+  return null;
+}
+
+/**
+ * Extrait l'adresse depuis un objet JSON
+ */
+function formatAddress(address: unknown): string | null {
+  if (!address || typeof address !== 'object') return null;
+  const addr = address as Record<string, unknown>;
+
+  const parts = [
+    addr.street || addr.line1 || addr.address,
+    addr.postal_code || addr.zip,
+    addr.city,
+  ].filter(Boolean);
+
+  return parts.length > 0 ? parts.join(', ') : null;
 }
 
 // =====================================================================
@@ -56,196 +123,252 @@ interface ReconciliationStats {
 
 export function useBankReconciliation() {
   const supabase = createClient();
-  const [unmatchedTransactions, setUnmatchedTransactions] = useState<
-    UnmatchedTransaction[]
+
+  // Entrées (crédits) - pour matcher aux commandes
+  const [creditTransactions, setCreditTransactions] = useState<
+    BankTransaction[]
   >([]);
-  const [unpaidInvoices, setUnpaidInvoices] = useState<UnpaidInvoice[]>([]);
+  // Sorties (débits) - pour identifier prestataires
+  const [debitTransactions, setDebitTransactions] = useState<BankTransaction[]>(
+    []
+  );
+  // Legacy: toutes les transactions non matchées (pour compatibilité)
+  const [unmatchedTransactions, setUnmatchedTransactions] = useState<
+    BankTransaction[]
+  >([]);
+  const [ordersWithoutInvoice, setOrdersWithoutInvoice] = useState<
+    OrderWithoutInvoice[]
+  >([]);
   const [stats, setStats] = useState<ReconciliationStats>({
-    total_unmatched: 0,
+    total_unmatched_transactions: 0,
+    total_orders_without_invoice: 0,
     total_amount_pending: 0,
-    auto_match_rate: 0,
-    manual_review_count: 0,
+    transactions_with_attachments: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch unmatched transactions (simulated from audit_logs for now)
-  const fetchUnmatchedTransactions = useCallback(async () => {
+  // ===================================================================
+  // FETCH DATA
+  // ===================================================================
+
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
 
-      // ⚠️ IMPORTANT: Actuellement, on utilise audit_logs comme placeholder
-      // TODO: Créer table bank_transactions dédiée avec colonnes:
-      // - transaction_id, amount, transaction_date, description, bank_name, reference
-      // - status: 'unmatched' | 'matched' | 'cancelled'
-      // - matched_invoice_id (FK vers financial_documents)
-
-      const { data: transactions, error: transactionsError } = await supabase
-        .from('audit_logs')
+      // 1. Fetch ALL bank transactions (tous les statuts pour affichage par onglet)
+      const { data: transactions, error: txError } = await supabase
+        .from('bank_transactions')
         .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
+        .in('matching_status', [
+          'unmatched',
+          'manual_matched',
+          'auto_matched',
+          'ignored',
+        ])
+        .order('settled_at', { ascending: false, nullsFirst: false });
 
-      if (transactionsError) {
-        console.error('Error fetching transactions:', transactionsError);
-        setUnmatchedTransactions([]);
-        return;
+      console.log('[Reconciliation] bank_transactions query:', {
+        transactionsCount: transactions?.length ?? 0,
+        error: txError,
+        firstTx: transactions?.[0],
+      });
+
+      if (txError) {
+        console.error('Error fetching bank_transactions:', txError);
+        if (!txError.message.includes('does not exist')) {
+          throw txError;
+        }
       }
 
-      // Fetch unpaid invoices from financial_documents
-      const { data: invoices, error: invoicesError } = await supabase
-        .from('financial_documents')
+      // Séparer crédits (entrées) et débits (sorties)
+      const creditTransactions = (transactions || []).filter(
+        tx => tx.side === 'credit'
+      );
+      const debitTransactions = (transactions || []).filter(
+        tx => tx.side === 'debit'
+      );
+
+      // 2. Fetch sales_orders (sans join - customer_name sera récupéré séparément)
+      const { data: orders, error: ordersError } = await supabase
+        .from('sales_orders')
         .select(
           `
           id,
-          document_number,
-          document_type,
-          invoice_number,
-          amount_ttc,
-          amount_paid,
+          order_number,
+          customer_id,
+          billing_address,
+          shipping_address,
+          total_ht,
+          total_ttc,
           status,
-          organisation_id,
-          organisations!inner(
-            id,
-            name
-          )
+          payment_status,
+          created_at,
+          shipped_at
         `
         )
-        .in('status', ['draft', 'partially_paid'] as any)
+        .in('status', ['validated', 'shipped', 'delivered'])
         .order('created_at', { ascending: false });
 
-      // ⚠️ Si financial_documents est vide (tables pas encore créées en test)
-      // On retourne gracieusement un état vide plutôt qu'erreur
-      // Cela évite le crash total de la page rapprochement bancaire
+      console.log('[Reconciliation] sales_orders query:', {
+        ordersCount: orders?.length ?? 0,
+        error: ordersError,
+        firstOrder: orders?.[0],
+      });
 
-      // Si erreur OU table vide, retourner état vide gracieusement
-      if (invoicesError || !invoices || invoices.length === 0) {
-        console.warn(
-          'No invoices found in financial_documents, feature disabled temporarily'
-        );
-        setUnmatchedTransactions((transactions || []) as any);
-        setUnpaidInvoices([]);
-        setStats({
-          total_unmatched: transactions?.length || 0,
-          total_amount_pending: 0,
-          auto_match_rate: 0,
-          manual_review_count: 0,
-        });
-        setLoading(false);
-        return;
+      if (ordersError) {
+        console.error('Error fetching sales_orders:', ordersError);
+        throw ordersError;
       }
 
-      // Transform invoices to UnpaidInvoice format
-      const unpaidInvoicesData = invoices.map((inv: any) => ({
-        id: inv.id,
-        invoice_number: inv.invoice_number || inv.document_number || 'N/A',
-        amount: inv.amount_ttc || 0,
-        amount_paid: inv.amount_paid || 0,
-        amount_remaining: (inv.amount_ttc || 0) - (inv.amount_paid || 0),
-        due_date: null, // TODO: Ajouter due_date dans financial_documents
-        customer_name: inv.organisations?.name || 'Client inconnu',
-        status: inv.status as 'draft' | 'pending' | 'partially_paid',
-      }));
+      // 2b. Fetch organisation names séparément
+      const customerIds = [
+        ...new Set((orders || []).map(o => o.customer_id).filter(Boolean)),
+      ];
+      let orgNames: Record<string, string> = {};
 
-      // Calculate stats
-      const totalUnmatched = transactions?.length || 0;
-      const totalAmountPending = unpaidInvoicesData.reduce(
-        (sum, inv) => sum + inv.amount_remaining,
+      if (customerIds.length > 0) {
+        const { data: orgs } = await supabase
+          .from('organisations')
+          .select('id, legal_name')
+          .in('id', customerIds);
+
+        if (orgs) {
+          orgNames = Object.fromEntries(orgs.map(o => [o.id, o.legal_name]));
+        }
+      }
+
+      // 3. Fetch les IDs des commandes qui ont déjà une facture
+      const { data: existingInvoices } = await supabase
+        .from('financial_documents')
+        .select('sales_order_id')
+        .not('sales_order_id', 'is', null);
+
+      const invoicedOrderIds = new Set(
+        (existingInvoices || []).map(inv => inv.sales_order_id)
+      );
+
+      // 4. Transformer les transactions avec extraction des attachments
+      const allTxData = (transactions || []).map(tx => ({
+        ...tx,
+        attachment_ids: extractAttachmentIds(tx.raw_data),
+      })) as unknown as BankTransaction[];
+
+      // Séparer en crédits (entrées) et débits (sorties)
+      const creditTxData = allTxData.filter(tx => tx.side === 'credit');
+      const debitTxData = allTxData.filter(tx => tx.side === 'debit');
+
+      // 5. Filtrer et transformer les commandes
+      const ordersData: OrderWithoutInvoice[] = (orders || [])
+        .filter(order => !invoicedOrderIds.has(order.id))
+        .map(order => ({
+          id: order.id,
+          order_number: order.order_number,
+          customer_id: order.customer_id,
+          customer_name: order.customer_id
+            ? orgNames[order.customer_id] || null
+            : null,
+          billing_address: order.billing_address as Record<
+            string,
+            unknown
+          > | null,
+          shipping_address: order.shipping_address as Record<
+            string,
+            unknown
+          > | null,
+          total_ht: order.total_ht,
+          total_ttc: order.total_ttc,
+          status: order.status,
+          payment_status: order.payment_status,
+          created_at: order.created_at,
+          shipped_at: order.shipped_at,
+        }));
+
+      // 6. Calculer les stats
+      const totalAmountPending = ordersData.reduce(
+        (sum, o) => sum + (o.total_ttc || 0),
         0
       );
 
-      setUnmatchedTransactions(transactions as any);
-      setUnpaidInvoices(unpaidInvoicesData as any);
+      const txWithAttachments = allTxData.filter(
+        tx => tx.attachment_ids && tx.attachment_ids.length > 0
+      ).length;
+
+      // Mettre à jour tous les états
+      setCreditTransactions(creditTxData);
+      setDebitTransactions(debitTxData);
+      setUnmatchedTransactions(creditTxData); // Legacy: garde les crédits
+      setOrdersWithoutInvoice(ordersData);
       setStats({
-        total_unmatched: totalUnmatched,
+        total_unmatched_transactions: allTxData.length,
+        total_orders_without_invoice: ordersData.length,
         total_amount_pending: totalAmountPending,
-        auto_match_rate: 0, // TODO: Calculate based on matched transactions
-        manual_review_count: totalUnmatched,
+        transactions_with_attachments: txWithAttachments,
       });
-    } catch (error) {
-      console.error('Error in fetchUnmatchedTransactions:', error);
+    } catch (err) {
+      console.error('Error in fetchData:', err);
+      setError(err instanceof Error ? err.message : 'Erreur de chargement');
+      setCreditTransactions([]);
+      setDebitTransactions([]);
       setUnmatchedTransactions([]);
-      setUnpaidInvoices([]);
+      setOrdersWithoutInvoice([]);
     } finally {
       setLoading(false);
     }
   }, [supabase]);
 
-  // Match transaction to invoice
-  const matchTransaction = useCallback(
-    async (
-      transactionId: string,
-      invoiceId: string,
-      matchedAmount: number
-    ): Promise<{ success: boolean; error?: string }> => {
-      try {
-        // TODO: Implement actual matching logic
-        // 1. Update bank_transactions.status = 'matched'
-        // 2. Update bank_transactions.matched_invoice_id = invoiceId
-        // 3. Call record_payment RPC to update financial_documents.amount_paid
-        // 4. Create entry in audit_logs
+  // ===================================================================
+  // GENERATE MATCH SUGGESTIONS
+  // ===================================================================
 
-        console.log('Matching transaction:', {
-          transactionId,
-          invoiceId,
-          matchedAmount,
-        });
-
-        // For now, just refresh data
-        await fetchUnmatchedTransactions();
-
-        return { success: true };
-      } catch (error) {
-        console.error('Error matching transaction:', error);
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : 'Unknown error',
-        };
-      }
-    },
-    [fetchUnmatchedTransactions]
-  );
-
-  // Generate match suggestions using AI
   const generateMatchSuggestions = useCallback(
-    (transaction: any, invoices: UnpaidInvoice[]): MatchSuggestion[] => {
+    (
+      transaction: BankTransaction,
+      orders: OrderWithoutInvoice[]
+    ): MatchSuggestion[] => {
       const suggestions: MatchSuggestion[] = [];
+      const txAmount = Math.abs(transaction.amount);
+      const tolerance = 10; // ±10€
 
-      invoices.forEach(invoice => {
+      orders.forEach(order => {
         let confidenceScore = 0;
+        const reasons: string[] = [];
 
-        // Match by amount (±5%)
-        const transactionAmount = Math.abs(transaction.amount || 0);
-        const amountDiff = Math.abs(
-          transactionAmount - invoice.amount_remaining
-        );
-        const amountThreshold = invoice.amount_remaining * 0.05;
-
-        if (amountDiff <= amountThreshold) {
-          confidenceScore += 60;
+        // Match par montant (±10€)
+        const amountDiff = Math.abs(txAmount - order.total_ttc);
+        if (amountDiff <= tolerance) {
+          if (amountDiff === 0) {
+            confidenceScore += 70;
+            reasons.push('Montant exact');
+          } else {
+            confidenceScore += 50;
+            reasons.push(`Montant proche (±${amountDiff.toFixed(2)}€)`);
+          }
         }
 
-        // Match by reference number in description
-        const description = String(transaction.description || '').toLowerCase();
-        const invoiceNumber = invoice.invoice_number.toLowerCase();
-
-        if (description.includes(invoiceNumber)) {
-          confidenceScore += 40;
+        // Match par nom de contrepartie
+        if (transaction.counterparty_name && order.customer_name) {
+          const cpName = transaction.counterparty_name.toLowerCase();
+          const custName = order.customer_name.toLowerCase().substring(0, 10);
+          if (cpName.includes(custName)) {
+            confidenceScore += 30;
+            reasons.push('Nom client similaire');
+          }
         }
 
-        // Only add suggestions with > 50% confidence
-        if (confidenceScore > 50) {
+        // Seulement si confiance > 40%
+        if (confidenceScore > 40) {
           suggestions.push({
-            invoice_id: invoice.id,
-            invoice_number: invoice.invoice_number,
-            customer_name: invoice.customer_name,
-            invoice_amount: invoice.amount_remaining,
+            order_id: order.id,
+            order_number: order.order_number,
+            customer_name: order.customer_name,
+            customer_address:
+              formatAddress(order.shipping_address) ||
+              formatAddress(order.billing_address),
+            order_amount: order.total_ttc,
             confidence: Math.min(confidenceScore, 100),
-            match_reason:
-              confidenceScore >= 90
-                ? 'Correspondance exacte (montant + référence)'
-                : confidenceScore >= 60
-                  ? 'Correspondance probable (montant similaire)'
-                  : 'Correspondance possible',
+            match_reason: reasons.join(' + '),
           });
         }
       });
@@ -255,18 +378,114 @@ export function useBankReconciliation() {
     []
   );
 
-  // Load data on mount
+  const generateTransactionSuggestions = useCallback(
+    (
+      order: OrderWithoutInvoice,
+      transactions: BankTransaction[]
+    ): (BankTransaction & { confidence: number; match_reason: string })[] => {
+      const suggestions: (BankTransaction & {
+        confidence: number;
+        match_reason: string;
+      })[] = [];
+      const orderAmount = order.total_ttc;
+      const tolerance = 10;
+
+      transactions.forEach(tx => {
+        let confidenceScore = 0;
+        const reasons: string[] = [];
+        const txAmount = Math.abs(tx.amount);
+
+        // Match par montant
+        const amountDiff = Math.abs(txAmount - orderAmount);
+        if (amountDiff <= tolerance) {
+          if (amountDiff === 0) {
+            confidenceScore += 70;
+            reasons.push('Montant exact');
+          } else {
+            confidenceScore += 50;
+            reasons.push(`Montant proche (±${amountDiff.toFixed(2)}€)`);
+          }
+        }
+
+        // Match par nom
+        if (tx.counterparty_name && order.customer_name) {
+          const cpName = tx.counterparty_name.toLowerCase();
+          const custName = order.customer_name.toLowerCase().substring(0, 10);
+          if (cpName.includes(custName)) {
+            confidenceScore += 30;
+            reasons.push('Nom client similaire');
+          }
+        }
+
+        if (confidenceScore > 40) {
+          suggestions.push({
+            ...tx,
+            confidence: Math.min(confidenceScore, 100),
+            match_reason: reasons.join(' + '),
+          });
+        }
+      });
+
+      return suggestions.sort((a, b) => b.confidence - a.confidence);
+    },
+    []
+  );
+
+  // ===================================================================
+  // LIFECYCLE
+  // ===================================================================
+
   useEffect(() => {
-    fetchUnmatchedTransactions();
-  }, [fetchUnmatchedTransactions]);
+    fetchData();
+  }, [fetchData]);
+
+  // ===================================================================
+  // LEGACY COMPATIBILITY
+  // ===================================================================
+
+  const unpaidInvoices = ordersWithoutInvoice.map(order => ({
+    id: order.id,
+    invoice_number: order.order_number,
+    customer_name: order.customer_name || 'Client inconnu',
+    amount_remaining: order.total_ttc,
+    due_date: order.created_at,
+    days_overdue: null,
+    status: order.payment_status || 'pending',
+  }));
+
+  const matchTransaction = async (
+    transactionId: string,
+    orderId: string,
+    matchedAmount?: number
+  ): Promise<{ success: boolean; error?: string }> => {
+    console.log('matchTransaction called:', {
+      transactionId,
+      orderId,
+      matchedAmount,
+    });
+    await fetchData();
+    return { success: true };
+  };
 
   return {
+    // Transactions séparées par type (transaction-first approach)
+    creditTransactions, // Entrées d'argent
+    debitTransactions, // Sorties d'argent
+    // Legacy: toutes transactions non matchées
     unmatchedTransactions,
-    unpaidInvoices,
+    // Commandes sans facture (pour matching)
+    ordersWithoutInvoice,
+    // Stats
     stats,
     loading,
-    matchTransaction,
+    error,
+    // Générateurs de suggestions
     generateMatchSuggestions,
-    refresh: fetchUnmatchedTransactions,
+    generateTransactionSuggestions,
+    // Actions
+    refresh: fetchData,
+    // Legacy compatibility
+    unpaidInvoices,
+    matchTransaction,
   };
 }

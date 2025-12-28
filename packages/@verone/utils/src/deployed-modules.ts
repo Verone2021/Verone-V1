@@ -29,6 +29,7 @@ export const DEPLOYED_MODULES = {
   purchase_orders: true, // Commandes fournisseurs
   products: true, // ✅ ACTIVÉ - Catalogue produits
   invoices: true, // ✅ ACTIVÉ - Facturation
+  finance: true, // ✅ ACTIVÉ - Module Finance (Trésorerie, Dépenses, Transactions)
 
   // 🚧 Phase 2 - En développement
   sales_orders: true, // ✅ ACTIVÉ - Commandes clients
@@ -56,6 +57,8 @@ export function getModulePhase(module: DeployedModule): string {
     // Phase 1
     contacts: 'Déployé',
     purchase_orders: 'Déployé',
+    invoices: 'Déployé',
+    finance: 'Déployé',
 
     // Phase 2
     sales_orders: 'Déployé',
@@ -63,7 +66,6 @@ export function getModulePhase(module: DeployedModule): string {
     stock: 'Phase 2',
 
     // Phase 3
-    invoices: 'Phase 3',
     analytics: 'Phase 3',
     feeds: 'Phase 3',
   };

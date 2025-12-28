@@ -1,8 +1,15 @@
-# 💼 NAVIGATION FINANCE - BEST PRACTICES ERP/CRM 2025
+# DEPRECATED - NAVIGATION FINANCE - BEST PRACTICES ERP/CRM 2025
+
+> **DEPRECATED**: Ce document est obsolete. La structure menu a 6 entrees
+> a ete remplacee par une architecture simplifiee (2-3 entrees).
+> Voir [docs/finance/README_FINANCE.md](../finance/README_FINANCE.md) pour la documentation actuelle.
+> Date depreciation: 2025-12-27
+
+---
 
 **Date** : 2025-10-11
 **Sources** : Odoo, Salesforce, Oracle ERP, NetSuite, SAP
-**Objectif** : Structure optimale sidebar Finance pour Vérone Back Office
+**Objectif** : Structure optimale sidebar Finance pour Verone Back Office (OBSOLETE)
 
 ---
 
