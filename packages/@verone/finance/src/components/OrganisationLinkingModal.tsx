@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { cn } from '@verone/ui';
 import { Badge } from '@verone/ui/components/ui/badge';
@@ -109,6 +109,9 @@ export function OrganisationLinkingModal({
   const [applyToHistory, setApplyToHistory] = useState<boolean>(true);
   const [existingRule, setExistingRule] = useState<IExistingRule | null>(null);
 
+  // AbortController for cancelling in-flight requests
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   const {
     rules,
     create: createMatchingRule,
@@ -164,8 +167,9 @@ export function OrganisationLinkingModal({
 
   // Search based on counterparty type
   const searchCounterparties = useCallback(
-    async (query: string): Promise<void> => {
-      if (!query || query.trim().length === 0) {
+    async (query: string, signal?: AbortSignal): Promise<void> => {
+      // Guard: skip if query is empty or too short
+      if (!query || query.trim().length < 2) {
         setSearchResults([]);
         return;
       }
@@ -185,7 +189,8 @@ export function OrganisationLinkingModal({
             )
             .eq('is_active', true)
             .order('first_name')
-            .limit(8);
+            .limit(8)
+            .abortSignal(signal as AbortSignal);
 
           if (error) throw error;
 
@@ -227,7 +232,9 @@ export function OrganisationLinkingModal({
             orgQuery = orgQuery.eq('is_service_provider', isServiceProvider);
           }
 
-          const { data, error } = await orgQuery;
+          const { data, error } = await orgQuery.abortSignal(
+            signal as AbortSignal
+          );
 
           if (error) throw error;
 
@@ -243,14 +250,17 @@ export function OrganisationLinkingModal({
 
         setSearchResults(results);
       } catch (err: unknown) {
-        // Log détaillé pour debug
-        if (err instanceof Error) {
-          console.error(
-            '[OrganisationLinkingModal] Search error:',
-            err.message
+        // Silently ignore AbortError (request was cancelled intentionally)
+        if (err instanceof Error && err.name === 'AbortError') {
+          return;
+        }
+        // For network errors, use warn instead of error to avoid Next.js dev overlay
+        // These are expected errors (connectivity issues, etc.)
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(
+            '[OrganisationLinkingModal] Search failed (network):',
+            err instanceof Error ? err.message : 'Unknown error'
           );
-        } else {
-          console.error('[OrganisationLinkingModal] Search error:', err);
         }
         setSearchResults([]);
       } finally {
@@ -260,23 +270,50 @@ export function OrganisationLinkingModal({
     [counterpartyType]
   );
 
-  // Debounced search
+  // Debounced search - ONLY when modal is open
   useEffect(() => {
-    const timer = setTimeout(() => {
-      void searchCounterparties(searchQuery);
-    }, 200);
-    return () => clearTimeout(timer);
-  }, [searchQuery, searchCounterparties]);
+    // Guard: don't search if modal is closed
+    if (!open) {
+      return;
+    }
 
-  // Re-search when counterparty type changes
+    // Cancel any previous request
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = new AbortController();
+
+    const timer = setTimeout(() => {
+      void searchCounterparties(
+        searchQuery,
+        abortControllerRef.current?.signal
+      );
+    }, 300);
+
+    return () => {
+      clearTimeout(timer);
+      abortControllerRef.current?.abort();
+    };
+  }, [open, searchQuery, searchCounterparties]);
+
+  // Re-search when counterparty type changes - ONLY when modal is open
   useEffect(() => {
-    if (searchQuery) {
-      void searchCounterparties(searchQuery);
+    // Guard: don't search if modal is closed
+    if (!open) {
+      return;
+    }
+
+    if (searchQuery && searchQuery.trim().length >= 2) {
+      // Cancel previous and start new search
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = new AbortController();
+      void searchCounterparties(
+        searchQuery,
+        abortControllerRef.current?.signal
+      );
     }
     // Also reset selection when type changes
     setSelectedCounterparty(null);
     setIsCreatingNew(false);
-  }, [counterpartyType]);
+  }, [open, counterpartyType, searchQuery, searchCounterparties]);
 
   // Handle counterparty creation
   const handleCreateCounterparty =
@@ -356,7 +393,11 @@ export function OrganisationLinkingModal({
           };
         }
       } catch (err) {
-        console.error('[OrganisationLinkingModal] Create error:', err);
+        // Use warn to avoid Next.js dev overlay for network errors
+        console.warn(
+          '[OrganisationLinkingModal] Create failed:',
+          err instanceof Error ? err.message : err
+        );
         return null;
       }
     };
@@ -430,7 +471,11 @@ export function OrganisationLinkingModal({
       onSuccess?.();
       onOpenChange(false);
     } catch (err) {
-      console.error('[OrganisationLinkingModal] Submit error:', err);
+      // Use warn to avoid Next.js dev overlay for network errors
+      console.warn(
+        '[OrganisationLinkingModal] Submit failed:',
+        err instanceof Error ? err.message : err
+      );
     } finally {
       setIsSubmitting(false);
     }
