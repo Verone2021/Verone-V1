@@ -452,12 +452,17 @@ export function useUnifiedTransactions(
         .select('*', { count: 'exact', head: true })
         .eq('category_pcg', '455');
 
-      // Count transactions with attachments: either has_attachment=true OR attachment_ids not empty
-      // This aligns with legacy v1 logic that checks attachment_ids.length > 0
-      const { count: withAttachment } = await supabase
+      // Count transactions with attachments: fetch has_attachment and attachment_ids, count client-side
+      // PostgREST doesn't support array length checks, so we count after fetching
+      const { data: attachmentData } = await supabase
         .from('bank_transactions')
-        .select('*', { count: 'exact', head: true })
-        .or('has_attachment.eq.true,attachment_ids.neq.{}');
+        .select('id, has_attachment, attachment_ids');
+
+      const withAttachmentCount = (attachmentData || []).filter(
+        tx =>
+          tx.has_attachment === true ||
+          (tx.attachment_ids && tx.attachment_ids.length > 0)
+      ).length;
 
       setStats({
         total_count: total || 0,
@@ -467,8 +472,8 @@ export function useUnifiedTransactions(
         ignored_count: ignored || 0,
         cca_count: cca || 0,
         partial_count: 0, // TODO
-        with_attachment_count: withAttachment || 0,
-        without_attachment_count: (total || 0) - (withAttachment || 0),
+        with_attachment_count: withAttachmentCount,
+        without_attachment_count: (total || 0) - withAttachmentCount,
         total_amount: 0, // TODO: sum
         to_process_amount: 0,
         debit_amount: 0,
