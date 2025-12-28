@@ -18,7 +18,7 @@ import {
   ChevronRight,
   ChevronLeft,
   Sliders,
-  Activity,
+  TrendingUp,
   Link2,
   FileText,
   Webhook,
@@ -28,6 +28,8 @@ import {
   ShoppingCart,
   Banknote,
   PanelLeftClose,
+  ClipboardCheck,
+  Warehouse,
   PanelLeft,
   type LucideIcon,
 } from 'lucide-react';
@@ -98,6 +100,16 @@ const LINKME_NAV: LinkMeNavItem[] = [
     icon: ShoppingCart,
   },
   {
+    title: 'Approbations',
+    href: '/canaux-vente/linkme/approbations',
+    icon: ClipboardCheck,
+  },
+  {
+    title: 'Stockage',
+    href: '/canaux-vente/linkme/stockage',
+    icon: Warehouse,
+  },
+  {
     title: 'Rémunération',
     href: '/canaux-vente/linkme/commissions',
     icon: DollarSign,
@@ -118,9 +130,9 @@ const LINKME_NAV: LinkMeNavItem[] = [
         icon: BarChart3,
       },
       {
-        title: 'Tracking',
-        href: '/canaux-vente/linkme/analytics/tracking',
-        icon: Activity,
+        title: 'Performance',
+        href: '/canaux-vente/linkme/analytics/performance',
+        icon: TrendingUp,
       },
       {
         title: 'Rapports',

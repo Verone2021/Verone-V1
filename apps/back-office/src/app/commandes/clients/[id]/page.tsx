@@ -13,8 +13,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 // NOTE: ShipmentsSection supprimée - sera recréée ultérieurement
-import { Badge } from '@verone/ui';
-import { Card } from '@verone/ui';
+import { Badge, Button, Card } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/server';
 import {
   ArrowLeft,
@@ -24,6 +23,9 @@ import {
   Mail,
   Phone,
   Building2,
+  CreditCard,
+  CheckCircle,
+  AlertCircle,
 } from 'lucide-react';
 
 import { CopyButton } from './CopyButton';
@@ -46,12 +48,16 @@ export default async function OrderDetailPage({
       id,
       order_number,
       status,
+      payment_status,
       customer_id,
       customer_type,
       shipping_address,
       total_ht,
       total_ttc,
       created_at,
+      created_by,
+      channel_id,
+      sales_channels!left(id, name, code),
       sales_order_items (
         id,
         product_id,
@@ -107,7 +113,28 @@ export default async function OrderDetailPage({
     }
   }
 
-  // 3. Parser adresse
+  // 3. Récupérer info créateur via RPC
+  let creatorName = '';
+  let creatorEmail = '';
+
+  if (order.created_by) {
+    const { data: creatorInfo } = await (supabase.rpc as any)('get_user_info', {
+      p_user_id: order.created_by,
+    });
+
+    if (creatorInfo && creatorInfo.length > 0) {
+      const firstName = creatorInfo[0].first_name || 'Utilisateur';
+      const lastName = creatorInfo[0].last_name || '';
+      creatorName = `${firstName} ${lastName}`.trim();
+      creatorEmail = creatorInfo[0].email || '';
+    }
+  }
+
+  // 4. Récupérer canal de vente
+  const salesChannel = (order as any).sales_channels;
+  const channelName = salesChannel?.name || null;
+
+  // 5. Parser adresse
   const shippingAddr = order.shipping_address as any;
   const addressText =
     typeof shippingAddr === 'string'
@@ -306,6 +333,88 @@ export default async function OrderDetailPage({
                     {new Date(order.created_at).toLocaleDateString('fr-FR')}
                   </span>
                 </div>
+                {creatorName && (
+                  <div>
+                    <span className="text-muted-foreground">Créateur:</span>
+                    <span className="ml-2 font-medium">
+                      {creatorName}
+                      {creatorEmail && (
+                        <span className="text-muted-foreground font-normal">
+                          {' '}
+                          ({creatorEmail})
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                )}
+                {channelName && (
+                  <div>
+                    <span className="text-muted-foreground">Source:</span>
+                    <span className="ml-2 font-medium">{channelName}</span>
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            {/* Section Paiement */}
+            <Card className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <CreditCard className="h-5 w-5 text-muted-foreground" />
+                <h2 className="text-xl font-semibold">Paiement</h2>
+              </div>
+
+              <div className="space-y-3">
+                {/* Statut paiement */}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Statut</span>
+                  {order.payment_status === 'paid' ? (
+                    <Badge
+                      variant="default"
+                      className="bg-green-100 text-green-800 border-green-200"
+                    >
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Payé
+                    </Badge>
+                  ) : order.payment_status === 'partial' ? (
+                    <Badge
+                      variant="secondary"
+                      className="bg-yellow-100 text-yellow-800 border-yellow-200"
+                    >
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      Partiel
+                    </Badge>
+                  ) : (
+                    <Badge
+                      variant="outline"
+                      className="bg-red-50 text-red-700 border-red-200"
+                    >
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      Non payé
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Montant TTC */}
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Montant</span>
+                  <span className="font-medium">
+                    {order.total_ttc?.toFixed(2)} €
+                  </span>
+                </div>
+
+                {/* Bouton Associer un paiement */}
+                {order.payment_status !== 'paid' && (
+                  <div className="pt-2">
+                    <Link
+                      href={`/finance/rapprochement?orderId=${order.id}&amount=${order.total_ttc}`}
+                    >
+                      <Button variant="outline" className="w-full">
+                        <CreditCard className="h-4 w-4 mr-2" />
+                        Associer un paiement
+                      </Button>
+                    </Link>
+                  </div>
+                )}
               </div>
             </Card>
           </div>

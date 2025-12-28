@@ -19,7 +19,11 @@
 
 import React, { useState, useEffect } from 'react';
 
-import { PurchaseOrderReceptionModal } from '@verone/orders';
+import {
+  PurchaseOrderReceptionModal,
+  AffiliateReceptionModal,
+  type AffiliateReception,
+} from '@verone/orders';
 import { usePurchaseReceptions } from '@verone/orders';
 import { ProductThumbnail } from '@verone/products';
 import { Badge } from '@verone/ui';
@@ -61,6 +65,8 @@ import {
   Eye,
   ChevronDown,
   ChevronRight,
+  Users,
+  Building2,
 } from 'lucide-react';
 
 export default function ReceptionsPage() {
@@ -71,6 +77,7 @@ export default function ReceptionsPage() {
     loadPurchaseOrdersReadyForReception,
     loadReceptionHistory,
     loadCancellationHistory,
+    loadAffiliateProductReceptions,
   } = usePurchaseReceptions();
 
   const [stats, setStats] = useState<any>(null);
@@ -82,10 +89,20 @@ export default function ReceptionsPage() {
   const [cancellationHistory, setCancellationHistory] = useState<any[]>([]);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
 
+  // Réceptions affiliés
+  const [affiliateReceptions, setAffiliateReceptions] = useState<any[]>([]);
+  const [affiliateHistory, setAffiliateHistory] = useState<any[]>([]);
+  const [selectedAffiliateReception, setSelectedAffiliateReception] =
+    useState<AffiliateReception | null>(null);
+
   const [activeTab, setActiveTab] = useState<string>('to-receive');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [urgencyFilter, setUrgencyFilter] = useState<string>('all');
+  // Filtre source: tous, fournisseurs (PO) ou affiliés
+  const [sourceFilter, setSourceFilter] = useState<
+    'all' | 'suppliers' | 'affiliates'
+  >('all');
 
   const [historySearchTerm, setHistorySearchTerm] = useState('');
 
@@ -126,9 +143,12 @@ export default function ReceptionsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Charger liste POs à recevoir
+  // Charger liste POs à recevoir (fournisseurs) - aussi quand 'all'
   useEffect(() => {
-    if (activeTab === 'to-receive') {
+    if (
+      activeTab === 'to-receive' &&
+      (sourceFilter === 'suppliers' || sourceFilter === 'all')
+    ) {
       const filters: any = {};
 
       if (statusFilter !== 'all') {
@@ -148,9 +168,22 @@ export default function ReceptionsPage() {
       loadPurchaseOrdersReadyForReception(filters).then(setOrders);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter, searchTerm, urgencyFilter, activeTab]);
+  }, [statusFilter, searchTerm, urgencyFilter, activeTab, sourceFilter]);
 
-  // Charger historique POs reçus
+  // Charger réceptions affiliés - aussi quand 'all'
+  useEffect(() => {
+    if (
+      activeTab === 'to-receive' &&
+      (sourceFilter === 'affiliates' || sourceFilter === 'all')
+    ) {
+      loadAffiliateProductReceptions({ search: searchTerm }).then(
+        setAffiliateReceptions
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, activeTab, sourceFilter]);
+
+  // Charger historique POs reçus + affiliés
   useEffect(() => {
     if (activeTab === 'history') {
       const filters: any = {
@@ -161,7 +194,14 @@ export default function ReceptionsPage() {
         filters.search = historySearchTerm;
       }
 
+      // Charger historique POs fournisseurs
       loadPurchaseOrdersReadyForReception(filters).then(setHistoryOrders);
+
+      // Charger historique réceptions affiliés (completed/cancelled)
+      loadAffiliateProductReceptions({
+        status: 'completed',
+        search: historySearchTerm,
+      }).then(setAffiliateHistory);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [historySearchTerm, activeTab]);
@@ -189,6 +229,14 @@ export default function ReceptionsPage() {
     setReceptionHistory(history || []);
     setCancellationHistory(cancellations || []);
     setShowHistoryModal(true);
+  };
+
+  // Handler pour succès réception affilié (appelé par le modal)
+  const handleAffiliateReceptionSuccess = () => {
+    // Recharger la liste et stats
+    loadAffiliateProductReceptions().then(setAffiliateReceptions);
+    loadReceptionStats().then(setStats);
+    setSelectedAffiliateReception(null);
   };
 
   return (
@@ -304,6 +352,39 @@ export default function ReceptionsPage() {
 
         {/* TAB 1: À RECEVOIR */}
         <TabsContent value="to-receive" className="space-y-4 mt-6">
+          {/* Sélecteur Source: Toutes / Fournisseurs / Affiliés */}
+          <div className="flex gap-2">
+            <ButtonV2
+              variant={sourceFilter === 'all' ? 'default' : 'outline'}
+              onClick={() => setSourceFilter('all')}
+              className="flex items-center gap-2"
+            >
+              <Package className="h-4 w-4" />
+              Toutes
+            </ButtonV2>
+            <ButtonV2
+              variant={sourceFilter === 'suppliers' ? 'default' : 'outline'}
+              onClick={() => setSourceFilter('suppliers')}
+              className="flex items-center gap-2"
+            >
+              <Building2 className="h-4 w-4" />
+              Commandes
+            </ButtonV2>
+            <ButtonV2
+              variant={sourceFilter === 'affiliates' ? 'default' : 'outline'}
+              onClick={() => setSourceFilter('affiliates')}
+              className="flex items-center gap-2"
+            >
+              <Users className="h-4 w-4" />
+              Affilies
+              {affiliateReceptions.length > 0 && (
+                <Badge className="ml-1 bg-purple-500">
+                  {affiliateReceptions.length}
+                </Badge>
+              )}
+            </ButtonV2>
+          </div>
+
           {/* Filtres */}
           <Card>
             <CardHeader>
@@ -318,279 +399,406 @@ export default function ReceptionsPage() {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                     <Input
-                      placeholder="Rechercher par numéro de commande ou fournisseur..."
+                      placeholder={
+                        sourceFilter === 'suppliers'
+                          ? 'Rechercher par numéro de commande ou fournisseur...'
+                          : 'Rechercher par produit ou affilié...'
+                      }
                       value={searchTerm}
                       onChange={e => setSearchTerm(e.target.value)}
                       className="pl-10"
                     />
                   </div>
                 </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full lg:w-48">
-                    <SelectValue placeholder="Statut" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tous les statuts</SelectItem>
-                    <SelectItem value="validated">Validée</SelectItem>
-                    <SelectItem value="partially_received">
-                      Partielle
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={urgencyFilter} onValueChange={setUrgencyFilter}>
-                  <SelectTrigger className="w-full lg:w-48">
-                    <SelectValue placeholder="Urgence" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Toutes</SelectItem>
-                    <SelectItem value="urgent">Urgent (&lt; 3j)</SelectItem>
-                    <SelectItem value="overdue">En retard</SelectItem>
-                  </SelectContent>
-                </Select>
+                {(sourceFilter === 'suppliers' || sourceFilter === 'all') && (
+                  <>
+                    <Select
+                      value={statusFilter}
+                      onValueChange={setStatusFilter}
+                    >
+                      <SelectTrigger className="w-full lg:w-48">
+                        <SelectValue placeholder="Statut" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tous les statuts</SelectItem>
+                        <SelectItem value="validated">Validee</SelectItem>
+                        <SelectItem value="partially_received">
+                          Partielle
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={urgencyFilter}
+                      onValueChange={setUrgencyFilter}
+                    >
+                      <SelectTrigger className="w-full lg:w-48">
+                        <SelectValue placeholder="Urgence" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Toutes</SelectItem>
+                        <SelectItem value="urgent">Urgent (&lt; 3j)</SelectItem>
+                        <SelectItem value="overdue">En retard</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>
 
-          {/* Liste des commandes à recevoir */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Commandes à recevoir</CardTitle>
-              <CardDescription>
-                {orders.length} commande(s) trouvée(s)
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="flex justify-center py-8">
-                  <div className="text-gray-500">Chargement...</div>
-                </div>
-              ) : error ? (
-                <div className="text-center py-8 text-red-600">
-                  Erreur: {error}
-                </div>
-              ) : orders.length === 0 ? (
-                <div className="text-center py-8">
-                  <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                  <p className="text-gray-500">Aucune commande à recevoir</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-8" />
-                        <TableHead>N° Commande</TableHead>
-                        <TableHead>Fournisseur</TableHead>
-                        <TableHead>Statut</TableHead>
-                        <TableHead>Date livraison</TableHead>
-                        <TableHead>Progression</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {orders.map(order => {
-                        // Calculer progression
-                        const totalItems =
-                          order.purchase_order_items?.reduce(
-                            (sum: number, item: any) => sum + item.quantity,
-                            0
-                          ) || 0;
-                        const receivedItems =
-                          order.purchase_order_items?.reduce(
-                            (sum: number, item: any) =>
-                              sum + (item.quantity_received || 0),
-                            0
-                          ) || 0;
-                        const progressPercent =
-                          totalItems > 0
-                            ? Math.round((receivedItems / totalItems) * 100)
-                            : 0;
+          {/* Liste des commandes fournisseurs à recevoir */}
+          {(sourceFilter === 'suppliers' || sourceFilter === 'all') && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Commandes fournisseurs à recevoir</CardTitle>
+                <CardDescription>
+                  {orders.length} commande(s) trouvée(s)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="text-gray-500">Chargement...</div>
+                  </div>
+                ) : error ? (
+                  <div className="text-center py-8 text-red-600">
+                    Erreur: {error}
+                  </div>
+                ) : orders.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                    <p className="text-gray-500">Aucune commande à recevoir</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-8" />
+                          <TableHead>N° Commande</TableHead>
+                          <TableHead>Fournisseur</TableHead>
+                          <TableHead>Statut</TableHead>
+                          <TableHead>Date livraison</TableHead>
+                          <TableHead>Progression</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {orders.map(order => {
+                          // Calculer progression
+                          const totalItems =
+                            order.purchase_order_items?.reduce(
+                              (sum: number, item: any) => sum + item.quantity,
+                              0
+                            ) || 0;
+                          const receivedItems =
+                            order.purchase_order_items?.reduce(
+                              (sum: number, item: any) =>
+                                sum + (item.quantity_received || 0),
+                              0
+                            ) || 0;
+                          const progressPercent =
+                            totalItems > 0
+                              ? Math.round((receivedItems / totalItems) * 100)
+                              : 0;
 
-                        // Urgence
-                        const deliveryDate = order.expected_delivery_date
-                          ? new Date(order.expected_delivery_date)
-                          : null;
-                        const today = new Date();
-                        today.setHours(0, 0, 0, 0);
-                        const isOverdue = deliveryDate && deliveryDate < today;
-                        const daysUntil = deliveryDate
-                          ? Math.ceil(
-                              (deliveryDate.getTime() - today.getTime()) /
-                                (1000 * 60 * 60 * 24)
-                            )
-                          : null;
-                        const isUrgent =
-                          daysUntil !== null &&
-                          daysUntil <= 3 &&
-                          daysUntil >= 0;
+                          // Urgence
+                          const deliveryDate = order.expected_delivery_date
+                            ? new Date(order.expected_delivery_date)
+                            : null;
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const isOverdue =
+                            deliveryDate && deliveryDate < today;
+                          const daysUntil = deliveryDate
+                            ? Math.ceil(
+                                (deliveryDate.getTime() - today.getTime()) /
+                                  (1000 * 60 * 60 * 24)
+                              )
+                            : null;
+                          const isUrgent =
+                            daysUntil !== null &&
+                            daysUntil <= 3 &&
+                            daysUntil >= 0;
 
-                        const isExpanded = expandedRows.has(order.id);
+                          const isExpanded = expandedRows.has(order.id);
 
-                        return (
-                          <React.Fragment key={order.id}>
-                            <TableRow
-                              className="cursor-pointer hover:bg-gray-50"
-                              onClick={() => toggleRowExpansion(order.id)}
-                            >
-                              <TableCell className="w-8">
-                                {isExpanded ? (
-                                  <ChevronDown className="h-4 w-4 text-gray-500" />
-                                ) : (
-                                  <ChevronRight className="h-4 w-4 text-gray-500" />
-                                )}
-                              </TableCell>
-                              <TableCell className="font-medium">
-                                {order.po_number}
-                                {isOverdue && (
+                          return (
+                            <React.Fragment key={order.id}>
+                              <TableRow
+                                className="cursor-pointer hover:bg-gray-50"
+                                onClick={() => toggleRowExpansion(order.id)}
+                              >
+                                <TableCell className="w-8">
+                                  {isExpanded ? (
+                                    <ChevronDown className="h-4 w-4 text-gray-500" />
+                                  ) : (
+                                    <ChevronRight className="h-4 w-4 text-gray-500" />
+                                  )}
+                                </TableCell>
+                                <TableCell className="font-medium">
+                                  {order.po_number}
+                                  {isOverdue && (
+                                    <Badge
+                                      variant="destructive"
+                                      className="ml-2 text-xs"
+                                    >
+                                      En retard
+                                    </Badge>
+                                  )}
+                                  {isUrgent && !isOverdue && (
+                                    <Badge className="ml-2 text-xs bg-verone-warning">
+                                      Urgent
+                                    </Badge>
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  {order.supplier_name || 'Fournisseur inconnu'}
+                                </TableCell>
+                                <TableCell>
                                   <Badge
-                                    variant="destructive"
-                                    className="ml-2 text-xs"
+                                    className={
+                                      order.status === 'validated'
+                                        ? 'bg-blue-100 text-blue-800'
+                                        : 'bg-amber-500 text-white'
+                                    }
                                   >
-                                    En retard
+                                    {order.status === 'validated'
+                                      ? 'Validée'
+                                      : 'Partielle'}
                                   </Badge>
-                                )}
-                                {isUrgent && !isOverdue && (
-                                  <Badge className="ml-2 text-xs bg-verone-warning">
-                                    Urgent
-                                  </Badge>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {order.supplier_name || 'Fournisseur inconnu'}
-                              </TableCell>
-                              <TableCell>
-                                <Badge
-                                  className={
-                                    order.status === 'validated'
-                                      ? 'bg-blue-100 text-blue-800'
-                                      : 'bg-amber-500 text-white'
-                                  }
-                                >
-                                  {order.status === 'validated'
-                                    ? 'Validée'
-                                    : 'Partielle'}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                {order.expected_delivery_date
-                                  ? formatDate(order.expected_delivery_date)
-                                  : 'Non définie'}
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-2">
-                                  <div className="flex-1 bg-gray-200 rounded-full h-2">
-                                    <div
-                                      className="bg-green-500 h-2 rounded-full transition-all"
-                                      style={{ width: `${progressPercent}%` }}
-                                    />
-                                  </div>
-                                  <span className="text-sm text-gray-600 w-12 text-right">
-                                    {progressPercent}%
-                                  </span>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <ButtonV2
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={e => {
-                                    e.stopPropagation();
-                                    handleOpenReception(order);
-                                  }}
-                                >
-                                  <Truck className="h-4 w-4 mr-2" />
-                                  Recevoir
-                                </ButtonV2>
-                              </TableCell>
-                            </TableRow>
-                            {/* Ligne expandable avec détails produits */}
-                            {isExpanded && (
-                              <TableRow key={`${order.id}-details`}>
-                                <TableCell
-                                  colSpan={7}
-                                  className="bg-gray-50 p-0"
-                                >
-                                  <div className="p-4">
-                                    <h4 className="font-medium text-sm mb-3 text-gray-700">
-                                      Produits de la commande (
-                                      {order.purchase_order_items?.length || 0})
-                                    </h4>
-                                    <div className="space-y-2">
-                                      {order.purchase_order_items?.map(
-                                        (item: any, itemIndex: number) => (
-                                          <div
-                                            key={
-                                              item.id ||
-                                              `item-${order.id}-${itemIndex}`
-                                            }
-                                            className="flex items-center gap-4 p-2 bg-white rounded-lg border"
-                                          >
-                                            <ProductThumbnail
-                                              src={
-                                                item.products?.product_images?.find(
-                                                  (img: any) => img.is_primary
-                                                )?.public_url ||
-                                                item.products
-                                                  ?.product_images?.[0]
-                                                  ?.public_url
-                                              }
-                                              alt={
-                                                item.products?.name || 'Produit'
-                                              }
-                                              size="sm"
-                                            />
-                                            <div className="flex-1 min-w-0">
-                                              <p className="font-medium text-sm truncate">
-                                                {item.products?.name ||
-                                                  'Produit inconnu'}
-                                              </p>
-                                              <p className="text-xs text-gray-500 font-mono">
-                                                SKU:{' '}
-                                                {item.products?.sku || 'N/A'}
-                                              </p>
-                                            </div>
-                                            <div className="text-right">
-                                              <p className="text-sm font-medium">
-                                                {item.quantity_received || 0} /{' '}
-                                                {item.quantity} reçu(s)
-                                              </p>
-                                              <p className="text-xs text-gray-500">
-                                                Stock actuel:{' '}
-                                                {item.products?.stock_real ??
-                                                  '-'}
-                                              </p>
-                                            </div>
-                                            <div className="text-right">
-                                              <p className="text-sm font-medium">
-                                                {formatCurrency(
-                                                  (item.unit_price_ht || 0) *
-                                                    item.quantity
-                                                )}
-                                              </p>
-                                              <p className="text-xs text-gray-500">
-                                                {formatCurrency(
-                                                  item.unit_price_ht || 0
-                                                )}{' '}
-                                                /u
-                                              </p>
-                                            </div>
-                                          </div>
-                                        )
-                                      )}
+                                </TableCell>
+                                <TableCell>
+                                  {order.expected_delivery_date
+                                    ? formatDate(order.expected_delivery_date)
+                                    : 'Non définie'}
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    <div className="flex-1 bg-gray-200 rounded-full h-2">
+                                      <div
+                                        className="bg-green-500 h-2 rounded-full transition-all"
+                                        style={{ width: `${progressPercent}%` }}
+                                      />
                                     </div>
+                                    <span className="text-sm text-gray-600 w-12 text-right">
+                                      {progressPercent}%
+                                    </span>
                                   </div>
                                 </TableCell>
+                                <TableCell>
+                                  <ButtonV2
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={e => {
+                                      e.stopPropagation();
+                                      handleOpenReception(order);
+                                    }}
+                                  >
+                                    <Truck className="h-4 w-4 mr-2" />
+                                    Recevoir
+                                  </ButtonV2>
+                                </TableCell>
                               </TableRow>
-                            )}
-                          </React.Fragment>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                              {/* Ligne expandable avec détails produits */}
+                              {isExpanded && (
+                                <TableRow key={`${order.id}-details`}>
+                                  <TableCell
+                                    colSpan={7}
+                                    className="bg-gray-50 p-0"
+                                  >
+                                    <div className="p-4">
+                                      <h4 className="font-medium text-sm mb-3 text-gray-700">
+                                        Produits de la commande (
+                                        {order.purchase_order_items?.length ||
+                                          0}
+                                        )
+                                      </h4>
+                                      <div className="space-y-2">
+                                        {order.purchase_order_items?.map(
+                                          (item: any, itemIndex: number) => (
+                                            <div
+                                              key={
+                                                item.id ||
+                                                `item-${order.id}-${itemIndex}`
+                                              }
+                                              className="flex items-center gap-4 p-2 bg-white rounded-lg border"
+                                            >
+                                              <ProductThumbnail
+                                                src={
+                                                  item.products?.product_images?.find(
+                                                    (img: any) => img.is_primary
+                                                  )?.public_url ||
+                                                  item.products
+                                                    ?.product_images?.[0]
+                                                    ?.public_url
+                                                }
+                                                alt={
+                                                  item.products?.name ||
+                                                  'Produit'
+                                                }
+                                                size="sm"
+                                              />
+                                              <div className="flex-1 min-w-0">
+                                                <p className="font-medium text-sm truncate">
+                                                  {item.products?.name ||
+                                                    'Produit inconnu'}
+                                                </p>
+                                                <p className="text-xs text-gray-500 font-mono">
+                                                  SKU:{' '}
+                                                  {item.products?.sku || 'N/A'}
+                                                </p>
+                                              </div>
+                                              <div className="text-right">
+                                                <p className="text-sm font-medium">
+                                                  {item.quantity_received || 0}{' '}
+                                                  / {item.quantity} reçu(s)
+                                                </p>
+                                                <p className="text-xs text-gray-500">
+                                                  Stock actuel:{' '}
+                                                  {item.products?.stock_real ??
+                                                    '-'}
+                                                </p>
+                                              </div>
+                                              <div className="text-right">
+                                                <p className="text-sm font-medium">
+                                                  {formatCurrency(
+                                                    (item.unit_price_ht || 0) *
+                                                      item.quantity
+                                                  )}
+                                                </p>
+                                                <p className="text-xs text-gray-500">
+                                                  {formatCurrency(
+                                                    item.unit_price_ht || 0
+                                                  )}{' '}
+                                                  /u
+                                                </p>
+                                              </div>
+                                            </div>
+                                          )
+                                        )}
+                                      </div>
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                            </React.Fragment>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Liste des réceptions affiliés */}
+          {(sourceFilter === 'affiliates' || sourceFilter === 'all') && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-purple-500" />
+                  Réceptions produits affiliés
+                </CardTitle>
+                <CardDescription>
+                  {affiliateReceptions.length} réception(s) en attente
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="text-gray-500">Chargement...</div>
+                  </div>
+                ) : affiliateReceptions.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                    <p className="text-gray-500">
+                      Aucune réception affilié en attente
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Produit</TableHead>
+                          <TableHead>Affilié</TableHead>
+                          <TableHead>Enseigne</TableHead>
+                          <TableHead>Quantité attendue</TableHead>
+                          <TableHead>Statut</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {affiliateReceptions.map(reception => (
+                          <TableRow key={reception.id}>
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <ProductThumbnail
+                                  src={reception.product_image_url}
+                                  alt={reception.product_name}
+                                  size="sm"
+                                />
+                                <div>
+                                  <p className="font-medium">
+                                    {reception.product_name}
+                                  </p>
+                                  <p className="text-xs text-gray-500 font-mono">
+                                    {reception.product_sku}
+                                  </p>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>{reception.affiliate_name}</TableCell>
+                            <TableCell>{reception.enseigne_name}</TableCell>
+                            <TableCell className="font-medium">
+                              {reception.quantity_expected} unité(s)
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                className={
+                                  reception.status === 'pending'
+                                    ? 'bg-amber-100 text-amber-800'
+                                    : 'bg-blue-100 text-blue-800'
+                                }
+                              >
+                                {reception.status === 'pending'
+                                  ? 'En attente'
+                                  : 'Partielle'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <ButtonV2
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedAffiliateReception(reception);
+                                }}
+                              >
+                                <Truck className="h-4 w-4 mr-2" />
+                                Recevoir
+                              </ButtonV2>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Modal réception affilié */}
+          {selectedAffiliateReception && (
+            <AffiliateReceptionModal
+              reception={selectedAffiliateReception}
+              open={!!selectedAffiliateReception}
+              onClose={() => setSelectedAffiliateReception(null)}
+              onSuccess={handleAffiliateReceptionSuccess}
+            />
+          )}
         </TabsContent>
 
         {/* TAB 2: HISTORIQUE */}
@@ -813,6 +1021,95 @@ export default function ReceptionsPage() {
                           </React.Fragment>
                         );
                       })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Historique réceptions affiliés */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-purple-500" />
+                Historique réceptions affiliés
+              </CardTitle>
+              <CardDescription>
+                {affiliateHistory.length} réception(s) complétée(s)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <div className="text-gray-500">Chargement...</div>
+                </div>
+              ) : affiliateHistory.length === 0 ? (
+                <div className="text-center py-8">
+                  <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                  <p className="text-gray-500">
+                    Aucune réception affilié dans l'historique
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Produit</TableHead>
+                        <TableHead>Affilié</TableHead>
+                        <TableHead>Enseigne</TableHead>
+                        <TableHead>Quantité reçue</TableHead>
+                        <TableHead>Statut</TableHead>
+                        <TableHead>Date réception</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {affiliateHistory.map(reception => (
+                        <TableRow key={reception.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <ProductThumbnail
+                                src={reception.product_image_url}
+                                alt={reception.product_name}
+                                size="sm"
+                              />
+                              <div>
+                                <p className="font-medium">
+                                  {reception.product_name}
+                                </p>
+                                <p className="text-xs text-gray-500 font-mono">
+                                  {reception.product_sku}
+                                </p>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{reception.affiliate_name}</TableCell>
+                          <TableCell>{reception.enseigne_name}</TableCell>
+                          <TableCell className="font-medium">
+                            {reception.quantity_received || 0} /{' '}
+                            {reception.quantity_expected} unité(s)
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              className={
+                                reception.status === 'completed'
+                                  ? 'bg-green-500 text-white'
+                                  : 'bg-gray-500 text-white'
+                              }
+                            >
+                              {reception.status === 'completed'
+                                ? 'Complétée'
+                                : 'Annulée'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {reception.received_at
+                              ? formatDate(reception.received_at)
+                              : '-'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
                     </TableBody>
                   </Table>
                 </div>

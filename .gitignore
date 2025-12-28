@@ -80,6 +80,8 @@ next-env.d.ts
 
 # Claude Code specific
 .claude/scratch/
+.claude/reports/**
+**/sessions.jsonl
 
 # Husky
 .husky/_
@@ -112,3 +114,4 @@ git-status-*.txt
 storybook-static
 .vercel-deploy-trigger-*
 .claude/DIAGNOSTIC-*.md
+.cursor/

@@ -121,11 +121,11 @@ const enriched = data.map(p => ({
 **Usage** :
 
 ```typescript
-import { ButtonV2 } from '@/components/ui/button'
+import { Button } from '@verone/ui'
 
-<ButtonV2 variant="primary" size="md" icon={Plus}>
+<Button variant="default" size="default" icon={Plus}>
   Nouveau Produit
-</ButtonV2>
+</Button>
 ```
 
 ### InputV2
@@ -146,15 +146,14 @@ import { ButtonV2 } from '@/components/ui/button'
 **Usage** :
 
 ```typescript
-import { KPICard } from '@/components/ui-v2/kpi-card'
+import { KpiCardUnified } from '@verone/ui'
 
-<KPICard
+<KpiCardUnified
   title="Chiffre d'affaires"
   value="124 500 €"
-  trend={+12.5}
-  period="vs mois dernier"
+  trend={{ value: 12.5, isPositive: true }}
+  subtitle="vs mois dernier"
   icon={TrendingUp}
-  variant="success"
 />
 ```
 
@@ -162,12 +161,11 @@ import { KPICard } from '@/components/ui-v2/kpi-card'
 
 ## 🎨 COMPOSANT PATTERN
 
-**Template minimal** :
+**Template minimal (Phase 4 Turborepo)** :
 
 ```typescript
-// src/components/ui-v2/new-component.tsx
-import { cn } from '@/lib/utils'
-import { spacing, colors } from '@/lib/design-system'
+// packages/@verone/ui/src/components/new-component.tsx
+import { cn } from '@verone/utils'
 
 interface NewComponentProps {
   variant?: 'default' | 'accent'
@@ -208,15 +206,14 @@ export function NewComponent({
 
 ---
 
-## 📚 DOCUMENTATION RÉFÉRENCES
+## 📚 DOCUMENTATION RÉFÉRENCES (Phase 4 Turborepo)
 
-- **Design tokens** : `src/lib/design-system/tokens.ts`
-- **Thème V2** : `src/lib/theme-v2.ts`
-- **Composants** : `src/components/ui-v2/`
-- **Stories** : `src/stories/`
-- **Figma** : [Lien vers maquettes si disponible]
+- **Design tokens** : `packages/@verone/ui/src/design-system/tokens.ts`
+- **Composants UI** : `packages/@verone/ui/src/components/`
+- **Stories** : `packages/@verone/ui/src/stories/`
+- **Catalogue complet** : `docs/architecture/COMPOSANTS-CATALOGUE.md`
 
 ---
 
-**Dernière mise à jour** : 2025-10-23
+**Dernière mise à jour** : 2025-12-17
 **Mainteneur** : Romeo Dos Santos
