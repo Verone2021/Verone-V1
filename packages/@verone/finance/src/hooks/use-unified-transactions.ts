@@ -156,6 +156,7 @@ function buildFilters(filters: UnifiedFilters) {
 interface UseUnifiedTransactionsOptions {
   filters?: UnifiedFilters;
   limit?: number;
+  pageSize?: 10 | 20;
   autoRefresh?: boolean;
   refreshInterval?: number;
 }
@@ -173,6 +174,14 @@ interface UseUnifiedTransactionsResult {
   // Pagination
   hasMore: boolean;
   loadMore: () => Promise<void>;
+  totalCount: number;
+  currentPage: number;
+  totalPages: number;
+  pageSize: number;
+  setPageSize: (size: 10 | 20) => void;
+  goToPage: (page: number) => void;
+  nextPage: () => void;
+  prevPage: () => void;
 
   // Actions
   refresh: () => Promise<void>;
@@ -203,6 +212,7 @@ export function useUnifiedTransactions(
   const {
     filters: initialFilters = {},
     limit = DEFAULT_LIMIT,
+    pageSize: initialPageSize = 20,
     autoRefresh = false,
     refreshInterval = 30000,
   } = options;
@@ -215,19 +225,26 @@ export function useUnifiedTransactions(
   const [error, setError] = useState<Error | null>(null);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
+  const [pageSize, setPageSizeState] = useState<10 | 20>(initialPageSize);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const supabase = useMemo(() => createClient(), []);
 
+  // Calculated values
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+
   // Fetch transactions
   const fetchTransactions = useCallback(
-    async (append = false) => {
+    async (append = false, targetPage?: number) => {
       try {
         if (!append) {
           setIsLoading(true);
-          setOffset(0);
         }
 
-        const currentOffset = append ? offset : 0;
+        // Calculate offset based on page or current state
+        const page = targetPage ?? currentPage;
+        const currentOffset = append ? offset : (page - 1) * pageSize;
 
         // Build query - utilise bank_transactions directement
         // Note: Les types Supabase ne sont pas à jour, on utilise any pour les champs manquants
@@ -266,7 +283,7 @@ export function useUnifiedTransactions(
           )
           .order('settled_at', { ascending: false, nullsFirst: false })
           .order('emitted_at', { ascending: false })
-          .range(currentOffset, currentOffset + limit - 1);
+          .range(currentOffset, currentOffset + pageSize - 1);
 
         // Apply filters
         if (filters.side && filters.side !== 'all') {
@@ -401,6 +418,11 @@ export function useUnifiedTransactions(
           setTransactions(transformed);
         }
 
+        // Store total count for pagination
+        if (count !== null) {
+          setTotalCount(count);
+        }
+
         setOffset(currentOffset + transformed.length);
         setHasMore(count ? currentOffset + transformed.length < count : false);
         setError(null);
@@ -411,7 +433,7 @@ export function useUnifiedTransactions(
         setIsRefreshing(false);
       }
     },
-    [supabase, filters, limit, offset]
+    [supabase, filters, pageSize, offset, currentPage]
   );
 
   // Fetch stats
@@ -490,17 +512,46 @@ export function useUnifiedTransactions(
     await Promise.all([fetchTransactions(false), fetchStats()]);
   }, [fetchTransactions, fetchStats]);
 
-  // Load more
+  // Load more (for infinite scroll - legacy)
   const loadMore = useCallback(async () => {
     if (!hasMore || isLoading) return;
     await fetchTransactions(true);
   }, [fetchTransactions, hasMore, isLoading]);
 
-  // Initial load
+  // Pagination functions
+  const goToPage = useCallback(
+    async (page: number) => {
+      if (page < 1 || page > totalPages || isLoading) return;
+      setCurrentPage(page);
+      await fetchTransactions(false, page);
+    },
+    [fetchTransactions, totalPages, isLoading]
+  );
+
+  const nextPage = useCallback(async () => {
+    if (currentPage < totalPages) {
+      await goToPage(currentPage + 1);
+    }
+  }, [currentPage, totalPages, goToPage]);
+
+  const prevPage = useCallback(async () => {
+    if (currentPage > 1) {
+      await goToPage(currentPage - 1);
+    }
+  }, [currentPage, goToPage]);
+
+  const setPageSize = useCallback(async (size: 10 | 20) => {
+    setPageSizeState(size);
+    setCurrentPage(1);
+    // Refetch will happen via useEffect dependency
+  }, []);
+
+  // Initial load and when filters/pageSize change
   useEffect(() => {
-    fetchTransactions(false);
+    setCurrentPage(1);
+    fetchTransactions(false, 1);
     fetchStats();
-  }, [filters]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [filters, pageSize]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto refresh
   useEffect(() => {
@@ -518,6 +569,14 @@ export function useUnifiedTransactions(
     error,
     hasMore,
     loadMore,
+    totalCount,
+    currentPage,
+    totalPages,
+    pageSize,
+    setPageSize,
+    goToPage,
+    nextPage,
+    prevPage,
     refresh,
     setFilters,
   };
@@ -540,6 +599,14 @@ interface TransactionActions {
     transactionId: string,
     reason?: string
   ) => Promise<{ success: boolean; error?: string }>;
+  unignore: (
+    transactionId: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  toggleIgnore: (
+    transactionId: string,
+    shouldIgnore: boolean,
+    reason?: string
+  ) => Promise<{ success: boolean; error?: string; isLocked?: boolean }>;
   markCCA: (
     transactionId: string
   ) => Promise<{ success: boolean; error?: string }>;
@@ -618,6 +685,84 @@ export function useTransactionActions(): TransactionActions {
     [supabase]
   );
 
+  const unignore = useCallback(
+    async (transactionId: string) => {
+      try {
+        const { error } = await supabase
+          .from('bank_transactions')
+          .update({
+            matching_status: 'unmatched',
+            match_reason: null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', transactionId);
+
+        if (error) throw error;
+        return { success: true };
+      } catch (err) {
+        return {
+          success: false,
+          error: err instanceof Error ? err.message : 'Unknown error',
+        };
+      }
+    },
+    [supabase]
+  );
+
+  // Toggle ignore using RPC (with fiscal year lock check)
+  // Uses RPC to ensure fiscal lock is enforced server-side
+  const toggleIgnore = useCallback(
+    async (transactionId: string, shouldIgnore: boolean, reason?: string) => {
+      try {
+        // Cast to bypass TypeScript strict typing for RPC not yet in generated types
+        const rpc = supabase.rpc as unknown as (
+          fn: string,
+          args?: Record<string, unknown>
+        ) => Promise<{ data: unknown; error: { message: string } | null }>;
+
+        const args: Record<string, unknown> = {
+          p_tx_id: transactionId,
+          p_ignore: shouldIgnore,
+          p_reason: reason || null,
+        };
+
+        const response = await rpc('toggle_ignore_transaction', args);
+        const data = response.data as { success?: boolean } | null;
+        const error = response.error;
+
+        if (error) {
+          // Check for fiscal year lock error
+          if (error.message?.includes('clôturée')) {
+            return {
+              success: false,
+              error: error.message,
+              isLocked: true,
+            };
+          }
+          throw new Error(error.message);
+        }
+
+        return { success: data?.success ?? true };
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : 'Unknown error';
+        // Check for fiscal year lock error
+        if (errorMessage.includes('clôturée')) {
+          return {
+            success: false,
+            error: errorMessage,
+            isLocked: true,
+          };
+        }
+        return {
+          success: false,
+          error: errorMessage,
+        };
+      }
+    },
+    [supabase]
+  );
+
   const markCCA = useCallback(
     async (transactionId: string) => {
       try {
@@ -645,6 +790,8 @@ export function useTransactionActions(): TransactionActions {
     classify,
     linkOrganisation,
     ignore,
+    unignore,
+    toggleIgnore,
     markCCA,
   };
 }

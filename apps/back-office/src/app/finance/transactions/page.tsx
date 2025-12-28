@@ -38,6 +38,11 @@ import {
   SheetTitle,
   Separator,
   KPICardUnified,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@verone/ui';
 import { SyncButton } from '@verone/ui-business';
 import {
@@ -58,6 +63,8 @@ import {
   RefreshCw,
   CheckCircle2,
   XCircle,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -874,19 +881,38 @@ function TransactionsPageV2() {
   const [showClassificationModal, setShowClassificationModal] = useState(false);
   const [showOrganisationModal, setShowOrganisationModal] = useState(false);
 
-  // Unified hook
-  const { transactions, stats, isLoading, error, refresh, setFilters } =
-    useUnifiedTransactions({
-      filters: {
-        status: activeTab === 'all' ? 'all' : activeTab,
-        search: search || undefined,
-      },
-      limit: 100,
-    });
+  // Unified hook with pagination
+  const {
+    transactions,
+    stats,
+    isLoading,
+    error,
+    refresh,
+    setFilters,
+    totalCount,
+    currentPage,
+    totalPages,
+    pageSize,
+    setPageSize,
+    nextPage,
+    prevPage,
+  } = useUnifiedTransactions({
+    filters: {
+      status: activeTab === 'all' ? 'all' : activeTab,
+      search: search || undefined,
+    },
+    pageSize: 20,
+  });
 
   // Actions
-  const { classify, linkOrganisation, ignore, markCCA } =
-    useTransactionActions();
+  const {
+    classify,
+    linkOrganisation,
+    ignore,
+    unignore,
+    toggleIgnore,
+    markCCA,
+  } = useTransactionActions();
 
   // Handle tab change
   const handleTabChange = (tab: TabFilterV2) => {
@@ -954,18 +980,31 @@ function TransactionsPageV2() {
     }
   };
 
-  // Ignore handler
-  const handleIgnore = async () => {
+  // Toggle Ignore handler (supports both ignore and unignore)
+  const handleToggleIgnore = async (shouldIgnore: boolean) => {
     if (!selectedTransaction) return;
-    const result = await ignore(selectedTransaction.id);
+    const result = await toggleIgnore(selectedTransaction.id, shouldIgnore);
     if (result.success) {
-      toast.success('Transaction ignoree');
+      toast.success(
+        shouldIgnore ? 'Transaction ignorée' : 'Transaction restaurée'
+      );
       await refresh();
       setSelectedTransaction(null);
     } else {
-      toast.error(result.error || 'Erreur');
+      // Check for fiscal year lock
+      if (result.isLocked) {
+        toast.warning('Année clôturée', {
+          description: 'Cette transaction ne peut pas être modifiée.',
+        });
+      } else {
+        toast.error(result.error || 'Erreur');
+      }
     }
   };
+
+  // Legacy ignore handler (for backward compatibility)
+  const handleIgnore = async () => handleToggleIgnore(true);
+  const handleUnignore = async () => handleToggleIgnore(false);
 
   // CCA handler
   const handleMarkCCA = async () => {
@@ -1156,7 +1195,7 @@ function TransactionsPageV2() {
             </div>
 
             {/* Liste des transactions */}
-            <ScrollArea className="h-[500px]">
+            <div>
               {isLoading ? (
                 <div className="space-y-0">
                   {[1, 2, 3, 4, 5].map(i => (
@@ -1266,7 +1305,68 @@ function TransactionsPageV2() {
                   ))}
                 </div>
               )}
-            </ScrollArea>
+            </div>
+
+            {/* Pagination */}
+            {!isLoading && transactions.length > 0 && (
+              <div className="flex items-center justify-between border-t px-4 py-3">
+                {/* Page size selector */}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">
+                    Afficher
+                  </span>
+                  <Select
+                    value={String(pageSize)}
+                    onValueChange={v => setPageSize(Number(v) as 10 | 20)}
+                  >
+                    <SelectTrigger className="w-[70px] h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <span className="text-sm text-muted-foreground">
+                    par page
+                  </span>
+                </div>
+
+                {/* Page info */}
+                <span className="text-sm text-muted-foreground">
+                  {(currentPage - 1) * pageSize + 1}-
+                  {Math.min(currentPage * pageSize, totalCount)} sur{' '}
+                  {totalCount}
+                </span>
+
+                {/* Navigation */}
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={prevPage}
+                    disabled={currentPage <= 1 || isLoading}
+                    className="gap-1"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Précédent
+                  </Button>
+                  <span className="text-sm text-muted-foreground px-2">
+                    Page {currentPage} / {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={nextPage}
+                    disabled={currentPage >= totalPages || isLoading}
+                    className="gap-1"
+                  >
+                    Suivant
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -1447,7 +1547,16 @@ function TransactionsPageV2() {
                       </Button>
                     )}
 
-                  {selectedTransaction.unified_status !== 'ignored' && (
+                  {selectedTransaction.unified_status === 'ignored' ? (
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start gap-2 text-green-600 hover:text-green-700"
+                      onClick={handleUnignore}
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      Annuler l'ignoré
+                    </Button>
+                  ) : (
                     <Button
                       variant="ghost"
                       className="w-full justify-start gap-2 text-muted-foreground"
