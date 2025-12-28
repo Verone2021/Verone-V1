@@ -34,9 +34,10 @@ export interface CreateRuleData {
   match_type: 'label_contains' | 'label_exact';
   match_value: string;
   display_label?: string;
-  /** Organisation liée (facultatif - seule la catégorie PCG est requise) */
+  /** Organisation liée (facultatif) */
   organisation_id?: string | null;
-  default_category: string;
+  /** Catégorie PCG (facultatif - peut être défini plus tard) */
+  default_category?: string | null;
   default_role_type: 'supplier' | 'customer' | 'partner' | 'internal';
   priority?: number;
 }

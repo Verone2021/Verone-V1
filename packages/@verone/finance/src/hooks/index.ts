@@ -17,3 +17,4 @@ export * from './use-bank-transaction-stats';
 export * from './use-organisation-transactions';
 export * from './use-auto-classification';
 export * from './use-pcg-categories';
+export * from './use-unified-transactions';
