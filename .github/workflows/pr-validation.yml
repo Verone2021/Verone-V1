@@ -10,6 +10,21 @@ on:
   pull_request:
     branches: [main]
     types: [opened, synchronize, ready_for_review]
+    paths:
+      # Back-Office app
+      - 'apps/back-office/**'
+      # Shared packages (affect both apps)
+      - 'packages/**'
+      # Root config files
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'turbo.json'
+      - 'tsconfig.json'
+      # Workflows themselves
+      - '.github/workflows/pr-validation.yml'
+      - '.github/workflows/deploy-production.yml'
+      # Supabase (shared database)
+      - 'supabase/**'
 
 permissions:
   pull-requests: write
