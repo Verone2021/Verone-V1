@@ -98,9 +98,11 @@ export default function PartnersPage() {
   };
 
   // Utiliser useMemo pour stabiliser l'objet filters et éviter la boucle infinie
+  // Prestataires = type supplier avec is_service_provider = true
   const filters = useMemo(
     () => ({
-      type: 'partner' as const,
+      type: 'supplier' as const,
+      is_service_provider: true, // Prestataires uniquement
       is_active: true,
       search: searchQuery || undefined,
     }),
