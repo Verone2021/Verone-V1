@@ -8,11 +8,13 @@ export type AnalyticsPeriod = 'week' | 'month' | 'quarter' | 'year';
 
 // Données complètes analytics niveau affilié
 export interface AffiliateAnalyticsData {
-  // KPIs principaux
+  // KPIs principaux (periode selectionnee)
   totalOrders: number;
   totalRevenueHT: number;
   totalCommissionsHT: number;
   totalCommissionsTTC: number;
+  // KPI ALL TIME - source de verite pour page Commissions
+  totalCommissionsTTCAllTime: number;
   pendingCommissionsHT: number;
   pendingCommissionsTTC: number;
   validatedCommissionsHT: number;

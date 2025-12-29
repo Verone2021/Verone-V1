@@ -4,16 +4,16 @@ import { useState, useEffect, useRef } from 'react';
 
 import Image from 'next/image';
 
-import { Edit, Upload, Trash2, RotateCw, Eye, Camera } from 'lucide-react';
-
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { cn } from '@verone/utils';
-import { useConsultationImages } from '@verone/consultations/hooks';
-import { ConsultationImageViewerModal } from '@verone/consultations/components/images/ConsultationImageViewerModal';
-import { ConsultationPhotosModal } from '@verone/consultations/components/modals/ConsultationPhotosModal';
+import { Upload, Trash2, RotateCw, Eye, Camera } from 'lucide-react';
 
-interface ConsultationImageGalleryProps {
+import { ConsultationImageViewerModal } from './ConsultationImageViewerModal';
+import { useConsultationImages } from '../../hooks';
+import { ConsultationPhotosModal } from '../modals/ConsultationPhotosModal';
+
+interface IConsultationImageGalleryProps {
   consultationId: string;
   consultationTitle: string;
   consultationStatus: 'en_attente' | 'en_cours' | 'terminee' | 'annulee';
@@ -36,9 +36,9 @@ export function ConsultationImageGallery({
   consultationStatus,
   fallbackImage = '/placeholder-consultation.svg',
   className,
-  compact = true,
+  compact: _compact = true,
   allowEdit = false,
-}: ConsultationImageGalleryProps) {
+}: IConsultationImageGalleryProps): JSX.Element {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showImageViewer, setShowImageViewer] = useState(false);
   const [showPhotosModal, setShowPhotosModal] = useState(false);
@@ -58,7 +58,7 @@ export function ConsultationImageGallery({
     deleteImage,
     setPrimaryImage,
     hasImages,
-    galleryImages,
+    galleryImages: _galleryImages,
     stats,
   } = useConsultationImages({
     consultationId,
@@ -77,16 +77,19 @@ export function ConsultationImageGallery({
 
   // Image principale optimisée
   const displayImage = hasImages
-    ? images[selectedImageIndex] || primaryImage
+    ? (images[selectedImageIndex] ?? primaryImage)
     : null;
 
-  const mainImageSrc = displayImage?.public_url || fallbackImage;
+  const mainImageSrc = displayImage?.public_url ?? fallbackImage;
 
-  const handleImageSelect = (index: number) => {
+  const handleImageSelect = (index: number): void => {
     setSelectedImageIndex(index);
   };
 
-  const handleSetPrimary = async (imageId: string, index: number) => {
+  const handleSetPrimary = async (
+    imageId: string,
+    index: number
+  ): Promise<void> => {
     if (!allowEdit) return;
 
     try {
@@ -97,7 +100,7 @@ export function ConsultationImageGallery({
     }
   };
 
-  const handleDeleteImage = async (imageId: string) => {
+  const handleDeleteImage = async (imageId: string): Promise<void> => {
     if (!allowEdit) return;
 
     if (
@@ -119,7 +122,7 @@ export function ConsultationImageGallery({
 
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  ): Promise<void> => {
     if (!allowEdit) return;
 
     const files = event.target.files;
@@ -178,11 +181,11 @@ export function ConsultationImageGallery({
           <Badge
             className={cn(
               'text-xs',
-              statusConfig[consultationStatus]?.className ||
+              statusConfig[consultationStatus]?.className ??
                 'bg-gray-600 text-white'
             )}
           >
-            {statusConfig[consultationStatus]?.label || '⚪ Statut inconnu'}
+            {statusConfig[consultationStatus]?.label ?? '⚪ Statut inconnu'}
           </Badge>
         </div>
 
@@ -203,7 +206,7 @@ export function ConsultationImageGallery({
                 size="sm"
                 variant="secondary"
                 className="text-xs"
-                onClick={() => setShowImageViewer(true)}
+                onClick={(): void => setShowImageViewer(true)}
               >
                 <Eye className="h-3 w-3 mr-1" />
                 Voir
@@ -214,10 +217,11 @@ export function ConsultationImageGallery({
                 size="sm"
                 variant="secondary"
                 className="text-xs"
-                onClick={() =>
-                  displayImage &&
-                  handleSetPrimary(displayImage.id, selectedImageIndex)
-                }
+                onClick={(): void => {
+                  if (displayImage) {
+                    void handleSetPrimary(displayImage.id, selectedImageIndex);
+                  }
+                }}
               >
                 ★ Principal
               </ButtonV2>
@@ -228,7 +232,7 @@ export function ConsultationImageGallery({
                 variant="secondary"
                 className="text-xs"
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={(): void => fileInputRef.current?.click()}
               >
                 <Camera className="h-3 w-3 mr-1" />
                 Ajouter
@@ -244,7 +248,7 @@ export function ConsultationImageGallery({
           {images.slice(0, 8).map((image, index) => (
             <button
               key={image.id}
-              onClick={() => handleImageSelect(index)}
+              onClick={(): void => handleImageSelect(index)}
               className={cn(
                 'relative w-[48px] h-[48px] overflow-hidden border transition-all rounded group',
                 selectedImageIndex === index
@@ -253,8 +257,8 @@ export function ConsultationImageGallery({
               )}
             >
               <Image
-                src={image.public_url || fallbackImage}
-                alt={image.alt_text || `Vue ${index + 1}`}
+                src={image.public_url ?? fallbackImage}
+                alt={image.alt_text ?? `Vue ${index + 1}`}
                 fill
                 className="object-cover transition-transform group-hover:scale-110"
                 sizes="48px"
@@ -271,9 +275,9 @@ export function ConsultationImageGallery({
               {allowEdit && (
                 <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center opacity-0 hover:opacity-100">
                   <button
-                    onClick={e => {
+                    onClick={(e): void => {
                       e.stopPropagation();
-                      handleDeleteImage(image.id);
+                      void handleDeleteImage(image.id);
                     }}
                     className="text-white hover:text-red-300"
                   >
@@ -304,7 +308,7 @@ export function ConsultationImageGallery({
               size="sm"
               className="mt-1"
               type="button"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={(): void => fileInputRef.current?.click()}
             >
               <Upload className="h-3 w-3 mr-1" />
               Ajouter des photos
@@ -320,7 +324,9 @@ export function ConsultationImageGallery({
           type="file"
           multiple
           accept="image/*"
-          onChange={handleFileUpload}
+          onChange={(e): void => {
+            void handleFileUpload(e);
+          }}
           className="hidden"
         />
       )}
@@ -332,7 +338,7 @@ export function ConsultationImageGallery({
             variant="outline"
             size="sm"
             className="w-full text-xs"
-            onClick={() => setShowPhotosModal(true)}
+            onClick={(): void => setShowPhotosModal(true)}
           >
             <Camera className="h-3 w-3 mr-1" />
             Gérer les photos
@@ -341,7 +347,9 @@ export function ConsultationImageGallery({
             variant="outline"
             size="sm"
             className="w-full text-xs"
-            onClick={fetchImages}
+            onClick={(): void => {
+              void fetchImages();
+            }}
           >
             <RotateCw className="h-3 w-3 mr-1" />
             Actualiser
@@ -373,8 +381,8 @@ export function ConsultationImageGallery({
       {/* Modal de visualisation des images */}
       <ConsultationImageViewerModal
         isOpen={showImageViewer}
-        onClose={() => setShowImageViewer(false)}
-        images={images as any}
+        onClose={(): void => setShowImageViewer(false)}
+        images={images}
         initialImageIndex={selectedImageIndex}
         consultationTitle={consultationTitle}
         allowEdit={allowEdit}
@@ -386,10 +394,12 @@ export function ConsultationImageGallery({
       {allowEdit && (
         <ConsultationPhotosModal
           isOpen={showPhotosModal}
-          onClose={() => setShowPhotosModal(false)}
+          onClose={(): void => setShowPhotosModal(false)}
           consultationId={consultationId}
           consultationTitle={consultationTitle}
-          onImagesUpdated={fetchImages}
+          onImagesUpdated={(): void => {
+            void fetchImages();
+          }}
         />
       )}
     </div>

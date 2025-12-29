@@ -145,7 +145,7 @@ const statusConfig = {
     icon: Clock,
   },
   validated: {
-    label: 'Validée',
+    label: 'Payable',
     variant: 'default' as const,
     icon: CheckCircle,
   },
@@ -228,24 +228,20 @@ export default function LinkMeCommissionsPage() {
 
   function getCommissionsByTab(tab: TabType): Commission[] {
     return commissions.filter(c => {
-      const paymentStatus = c.sales_order?.payment_status || 'pending';
       const commissionStatus = c.status || 'pending';
 
       switch (tab) {
         case 'en_attente':
-          // Client n'a pas payé
-          return paymentStatus !== 'paid' && commissionStatus === 'pending';
+          // Client n'a pas payé, commission en attente
+          return commissionStatus === 'pending';
         case 'payables':
-          // Client a payé, commission pas encore demandée/payée
-          return (
-            paymentStatus === 'paid' &&
-            (commissionStatus === 'pending' || commissionStatus === 'validated')
-          );
+          // Commission prête pour demande de paiement (client a payé)
+          return commissionStatus === 'payable';
         case 'en_cours':
           // Demande de paiement en cours
           return commissionStatus === 'requested';
         case 'payees':
-          // Commissions payées
+          // Commissions payées à l'affilié
           return commissionStatus === 'paid';
         default:
           return false;
@@ -356,6 +352,7 @@ export default function LinkMeCommissionsPage() {
       'N° Commande',
       'Affilié',
       'Type',
+      'Paiement Client',
       'Total HT',
       'Commission HT',
       'Commission TTC',
@@ -367,6 +364,7 @@ export default function LinkMeCommissionsPage() {
       c.order_number || c.sales_order?.order_number || '-',
       c.affiliate?.display_name || 'N/A',
       c.affiliate?.enseigne_id ? 'Enseigne' : 'Organisation',
+      c.sales_order?.payment_status === 'paid' ? 'Payé' : 'En attente',
       c.order_amount_ht.toFixed(2),
       c.affiliate_commission.toFixed(2),
       (c.affiliate_commission_ttc || c.affiliate_commission * 1.2).toFixed(2),
@@ -646,6 +644,7 @@ export default function LinkMeCommissionsPage() {
                           <TableHead>N° Commande</TableHead>
                           <TableHead>Affilié</TableHead>
                           <TableHead>Type</TableHead>
+                          <TableHead>Paiement</TableHead>
                           <TableHead className="text-right">Total HT</TableHead>
                           <TableHead className="text-right">
                             Total TTC
@@ -712,6 +711,27 @@ export default function LinkMeCommissionsPage() {
                                   }
                                 >
                                   {affiliateType}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant={
+                                    commission.sales_order?.payment_status ===
+                                    'paid'
+                                      ? 'default'
+                                      : 'outline'
+                                  }
+                                  className={
+                                    commission.sales_order?.payment_status ===
+                                    'paid'
+                                      ? 'bg-green-100 text-green-700 border-green-200'
+                                      : 'bg-orange-50 text-orange-600 border-orange-200'
+                                  }
+                                >
+                                  {commission.sales_order?.payment_status ===
+                                  'paid'
+                                    ? 'Payé'
+                                    : 'En attente'}
                                 </Badge>
                               </TableCell>
                               <TableCell className="text-right">

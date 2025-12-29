@@ -23,13 +23,10 @@ import {
   Building2,
   MapPin,
   Package,
-  Mail,
-  Phone,
   ShoppingBag,
   Eye,
   ShoppingCart,
   ChevronRight,
-  Globe,
   FileText,
   Users,
 } from 'lucide-react';
@@ -141,16 +138,20 @@ function useEnseigneSelections(enseigneId: string | null) {
 interface EnseigneProduct {
   id: string;
   name: string;
+  sku: string | null;
   supplier_reference: string | null;
   primary_image_url: string | null;
   created_at: string | null;
+  created_by_affiliate: string | null;
 }
 
 /**
- * Hook pour récupérer les produits sourcés pour une enseigne
+ * Hook pour récupérer les produits pour une enseigne
+ * Sépare produits sur mesure (Vérone) et produits affiliés
  */
 function useEnseigneProducts(enseigneId: string | null) {
-  const [products, setProducts] = useState<EnseigneProduct[]>([]);
+  const [surMesure, setSurMesure] = useState<EnseigneProduct[]>([]);
+  const [affilies, setAffilies] = useState<EnseigneProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -163,60 +164,50 @@ function useEnseigneProducts(enseigneId: string | null) {
       setLoading(true);
       const supabase = createClient();
 
-      // Query products with primary image from product_images table
+      // Query ALL products for this enseigne with created_by_affiliate to distinguish
       const { data, error } = await supabase
         .from('products')
         .select(
           `
           id,
           name,
+          sku,
           supplier_reference,
           created_at,
+          created_by_affiliate,
           product_images!left(public_url, is_primary)
         `
         )
         .eq('enseigne_id', enseigneId)
         .is('archived_at', null)
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(100);
 
       if (error) {
-        // If join fails (no images), try without images
-        const { data: dataNoImg, error: errorNoImg } = await supabase
-          .from('products')
-          .select('id, name, supplier_reference, created_at')
-          .eq('enseigne_id', enseigneId)
-          .is('archived_at', null)
-          .order('created_at', { ascending: false })
-          .limit(50);
-
-        if (errorNoImg) {
-          console.error('Erreur chargement produits enseigne:', errorNoImg);
-          setProducts([]);
-        } else {
-          setProducts(
-            (dataNoImg || []).map(p => ({
-              ...p,
-              primary_image_url: null,
-            }))
-          );
-        }
+        console.error('Erreur chargement produits enseigne:', error);
+        setSurMesure([]);
+        setAffilies([]);
       } else {
-        // Transform data to flatten public_url - filter for is_primary
-        setProducts(
-          (data || []).map((p: any) => {
-            const primaryImg = (p.product_images || []).find(
-              (img: any) => img.is_primary
-            );
-            return {
-              id: p.id,
-              name: p.name,
-              supplier_reference: p.supplier_reference,
-              created_at: p.created_at,
-              primary_image_url: primaryImg?.public_url || null,
-            };
-          })
-        );
+        // Transform and separate products
+        const allProducts = (data || []).map((p: any) => {
+          const primaryImg = (p.product_images || []).find(
+            (img: any) => img.is_primary
+          );
+          return {
+            id: p.id,
+            name: p.name,
+            sku: p.sku,
+            supplier_reference: p.supplier_reference,
+            created_at: p.created_at,
+            created_by_affiliate: p.created_by_affiliate,
+            primary_image_url: primaryImg?.public_url || null,
+          };
+        });
+
+        // Produits sur mesure = créés par Vérone (pas d'affiliate)
+        setSurMesure(allProducts.filter(p => !p.created_by_affiliate));
+        // Produits affiliés = créés par l'affilié lui-même
+        setAffilies(allProducts.filter(p => p.created_by_affiliate));
       }
       setLoading(false);
     };
@@ -224,7 +215,7 @@ function useEnseigneProducts(enseigneId: string | null) {
     fetchProducts();
   }, [enseigneId]);
 
-  return { products, loading };
+  return { surMesure, affilies, loading };
 }
 
 /**
@@ -243,7 +234,11 @@ export default function EnseigneDetailPage() {
     error: enseigneError,
   } = useEnseigne(id);
   const { stats, loading: statsLoading } = useEnseigneStats(id);
-  const { products, loading: productsLoading } = useEnseigneProducts(id);
+  const {
+    surMesure,
+    affilies,
+    loading: productsLoading,
+  } = useEnseigneProducts(id);
   const { selections, loading: selectionsLoading } = useEnseigneSelections(id);
 
   // État onglet actif
@@ -296,7 +291,7 @@ export default function EnseigneDetailPage() {
           </TabsTrigger>
           <TabsTrigger value="products" variant="underline">
             <Package className="h-4 w-4 mr-2" />
-            Produits sourcés ({products.length})
+            Produits ({surMesure.length + affilies.length})
           </TabsTrigger>
           <TabsTrigger value="selections" variant="underline">
             <ShoppingBag className="h-4 w-4 mr-2" />
@@ -439,16 +434,13 @@ export default function EnseigneDetailPage() {
           />
         </TabsContent>
 
-        {/* Onglet Produits sourcés */}
+        {/* Onglet Produits avec sous-onglets */}
         <TabsContent value="products" className="mt-6">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center">
                 <Package className="h-5 w-5 mr-2 text-blue-500" />
-                Produits sourcés pour {enseigne.name}
-                <span className="ml-2 text-sm font-normal text-gray-500">
-                  ({products.length} produit{products.length > 1 ? 's' : ''})
-                </span>
+                Produits pour {enseigne.name}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -456,37 +448,89 @@ export default function EnseigneDetailPage() {
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
                 </div>
-              ) : products.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-8">
-                  Aucun produit sourcé pour cette enseigne
-                </p>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                  {products.map(product => (
-                    <div
-                      key={product.id}
-                      className="group cursor-pointer"
-                      onClick={() =>
-                        router.push(`/catalogue/produits/${product.id}`)
-                      }
-                    >
-                      <ProductThumbnail
-                        src={product.primary_image_url}
-                        alt={product.name}
-                        size="lg"
-                        className="group-hover:ring-2 ring-blue-500 transition-all"
-                      />
-                      <p className="mt-2 text-xs font-medium truncate">
-                        {product.name}
+                <Tabs defaultValue="sur-mesure" className="w-full">
+                  <TabsList className="mb-4">
+                    <TabsTrigger value="sur-mesure">
+                      Produits sur mesure ({surMesure.length})
+                    </TabsTrigger>
+                    <TabsTrigger value="affilies">
+                      Produits affiliés ({affilies.length})
+                    </TabsTrigger>
+                  </TabsList>
+
+                  {/* Sous-onglet: Produits sur mesure (créés par Vérone) */}
+                  <TabsContent value="sur-mesure">
+                    {surMesure.length === 0 ? (
+                      <p className="text-sm text-gray-500 text-center py-8">
+                        Aucun produit sur mesure pour cette enseigne
                       </p>
-                      {product.supplier_reference && (
-                        <p className="text-xs text-gray-500 truncate">
-                          {product.supplier_reference}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                    ) : (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        {surMesure.map(product => (
+                          <div
+                            key={product.id}
+                            className="group cursor-pointer"
+                            onClick={() =>
+                              router.push(`/catalogue/produits/${product.id}`)
+                            }
+                          >
+                            <ProductThumbnail
+                              src={product.primary_image_url}
+                              alt={product.name}
+                              size="lg"
+                              className="group-hover:ring-2 ring-blue-500 transition-all"
+                            />
+                            <p className="mt-2 text-xs font-medium truncate">
+                              {product.name}
+                            </p>
+                            {product.supplier_reference && (
+                              <p className="text-xs text-gray-500 truncate">
+                                {product.supplier_reference}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  {/* Sous-onglet: Produits affiliés (créés par l'affilié) */}
+                  <TabsContent value="affilies">
+                    {affilies.length === 0 ? (
+                      <p className="text-sm text-gray-500 text-center py-8">
+                        Aucun produit créé par l&apos;affilié
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        {affilies.map(product => (
+                          <div
+                            key={product.id}
+                            className="group cursor-pointer"
+                            onClick={() =>
+                              router.push(`/catalogue/produits/${product.id}`)
+                            }
+                          >
+                            <ProductThumbnail
+                              src={product.primary_image_url}
+                              alt={product.name}
+                              size="lg"
+                              className="group-hover:ring-2 ring-purple-500 transition-all"
+                            />
+                            <p className="mt-2 text-xs font-medium truncate">
+                              {product.name}
+                            </p>
+                            {product.sku && (
+                              <p className="text-xs text-gray-500 truncate">
+                                {product.sku}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
               )}
             </CardContent>
           </Card>

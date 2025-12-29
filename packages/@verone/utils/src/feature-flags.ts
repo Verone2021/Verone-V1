@@ -101,11 +101,11 @@ export const featureFlags: FeatureFlags = {
   googleMerchantSyncEnabled: true, // ✅ Google Merchant activé
   mcpMonitoringEnabled: true, // ✅ Monitoring MCP activé
 
-  // Modules Finance - DÉSACTIVÉS (Phase 3+ - En développement)
-  financeEnabled: false, // ❌ Module Finance global désactivé
-  facturationEnabled: false, // ❌ Facturation désactivée
-  tresorerieEnabled: false, // ❌ Trésorerie désactivée
-  rapprochementEnabled: false, // ❌ Rapprochement bancaire désactivé
+  // Modules Finance - ACTIVÉS (Phase 3+ - Tests Qonto)
+  financeEnabled: true, // ✅ Module Finance global activé (2025-12-23)
+  facturationEnabled: true, // ✅ Facturation activée
+  tresorerieEnabled: true, // ✅ Trésorerie activée
+  rapprochementEnabled: true, // ✅ Rapprochement bancaire activé
 };
 
 /**
@@ -143,9 +143,10 @@ export function getModulePhase(moduleName: string): number {
 export function getModuleDeploymentStatus(
   moduleName: string
 ): 'active' | 'coming-soon' | 'disabled' {
-  // Modules Finance désactivés temporairement (développement ultérieur)
-  const comingSoonModules = ['finance', 'factures', 'tresorerie'];
-  if (comingSoonModules.includes(moduleName)) return 'coming-soon';
+  // Modules Finance activés (2025-12-23)
+  const financeModules = ['finance', 'factures', 'tresorerie', 'rapprochement'];
+  if (financeModules.includes(moduleName) && featureFlags.financeEnabled)
+    return 'active';
 
   const phase = getModulePhase(moduleName);
 

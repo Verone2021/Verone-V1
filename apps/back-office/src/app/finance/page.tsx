@@ -2,12 +2,13 @@
 
 /**
  * Route: /finance
- * Description: Page d'entrée module Finance - Redirige vers module-inactive si désactivé
- * Status: Module Finance DÉSACTIVÉ (Phase 3+)
+ * Description: Dashboard Finance - Vue d'ensemble trésorerie et dépenses
+ * Design: Haute qualité inspiré Qonto/Pennylane/Stripe
  */
 
 import { redirect } from 'next/navigation';
 
+import { FinanceDashboard } from '@verone/finance/components';
 import { featureFlags } from '@verone/utils/feature-flags';
 
 export default function FinancePage() {
@@ -16,6 +17,5 @@ export default function FinancePage() {
     redirect('/module-inactive?module=finance');
   }
 
-  // Si activé, rediriger vers la sous-page principale
-  redirect('/finance/rapprochement');
+  return <FinanceDashboard />;
 }

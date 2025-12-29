@@ -8,6 +8,7 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { AddressEditSection } from '@verone/common';
 import { ContactEditSection } from '@verone/customers';
 import { ContactsManagementSection } from '@verone/customers';
+import { OrganisationTransactionsSection } from '@verone/finance/components';
 import {
   OrganisationSalesOrdersSection,
   CustomerSamplesSection,
@@ -49,6 +50,7 @@ import {
   FlaskConical,
   Store,
   Sparkles,
+  Wallet,
 } from 'lucide-react';
 
 // Interface pour les produits du client
@@ -225,6 +227,13 @@ export default function CustomerDetailPage() {
           },
         ]
       : []),
+    {
+      id: 'transactions',
+      label: 'Transactions',
+      icon: <Wallet className="h-4 w-4" />,
+      disabled: !isModuleDeployed('finance'),
+      disabledBadge: getModulePhase('finance'),
+    },
   ];
 
   if (loading) {
@@ -611,6 +620,13 @@ export default function CustomerDetailPage() {
             />
           </TabContent>
         )}
+
+        <TabContent activeTab={activeTab} tabId="transactions">
+          <OrganisationTransactionsSection
+            organisationId={customer.id}
+            organisationName={getOrganisationDisplayName(customer)}
+          />
+        </TabContent>
       </div>
     </div>
   );

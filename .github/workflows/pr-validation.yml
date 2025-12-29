@@ -176,7 +176,7 @@ jobs:
       - name: 🔐 Security & Dependency Audit
         run: |
           echo "🔐 SECURITY AUDIT"
-          npm audit --audit-level high || echo "⚠️ Security warnings"
+          pnpm audit --audit-level high || echo "⚠️ Security warnings (non-blocking)"
           echo "✅ Security audit completed"
 
       - name: 📋 Deploy Check Summary

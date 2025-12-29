@@ -3,20 +3,20 @@
  * Description: Statistiques trésorerie en temps réel avec prévisions
  *
  * Features:
+ * - Solde bancaire Qonto en temps réel (multi-comptes)
  * - KPIs AR (Accounts Receivable) + AP (Accounts Payable)
- * - Prévisions 30/60/90 jours
+ * - Prévisions 30/60/90 jours basées sur burn rate
  * - Évolution historique
- * - Répartition dépenses par catégorie
+ * - Runway calculé automatiquement
  *
- * STATUS: DÉSACTIVÉ Phase 1 (returns mocks uniquement)
+ * STATUS: ACTIVÉ - Données réelles Qonto + Supabase
  */
 
 import { useState, useEffect } from 'react';
 
-import { toast } from 'react-hot-toast';
-
 import { featureFlags } from '@verone/utils/feature-flags';
 import { createClient } from '@verone/utils/supabase/client';
+import { toast } from 'react-hot-toast';
 
 // =====================================================================
 // TYPES
@@ -62,6 +62,37 @@ export interface TreasuryForecast {
   projected_balance: number;
 }
 
+// Types pour les comptes bancaires Qonto
+export interface BankAccountBalance {
+  id: string;
+  name: string;
+  iban: string;
+  ibanMasked: string;
+  balance: number;
+  authorizedBalance: number;
+  currency: string;
+  status: 'active' | 'closed';
+  updatedAt: string;
+}
+
+export interface BankBalanceData {
+  success: boolean;
+  accounts: BankAccountBalance[];
+  totalBalance: number;
+  totalAuthorizedBalance: number;
+  currency: string;
+  lastUpdated: string;
+  error?: string;
+}
+
+// Métriques calculées
+export interface TreasuryMetrics {
+  burnRate: number; // Dépenses moyennes mensuelles
+  runwayMonths: number; // Mois avant épuisement
+  cashFlowNet: number; // Entrées - Sorties du mois
+  cashFlowVariation: number; // % variation vs mois précédent
+}
+
 // =====================================================================
 // HOOK
 // =====================================================================
@@ -75,7 +106,14 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
   const [forecasts, setForecasts] = useState<TreasuryForecast[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [bankBalance, setBankBalance] = useState<number | null>(null);
+
+  // Nouveaux states pour les comptes bancaires
+  const [bankData, setBankData] = useState<BankBalanceData | null>(null);
+  const [metrics, setMetrics] = useState<TreasuryMetrics | null>(null);
+  const [bankLoading, setBankLoading] = useState(true);
+
+  // Legacy: bankBalance pour compatibilité
+  const bankBalance = bankData?.totalBalance ?? null;
 
   const supabase = createClient();
 
@@ -89,66 +127,234 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
   // HOOKS: useEffect placés AVANT early return (React Rules)
   // ===================================================================
 
-  // Auto-fetch stats when dates change
+  // Auto-fetch stats when dates change - on initial load only
   useEffect(() => {
     if (!featureFlags.financeEnabled) return;
-    // fetchStats() will be defined below
-    const fetchData = async () => {
+    // Will call fetchStats after it's defined (via refresh())
+    // For now, just trigger a re-render when dates change
+  }, [defaultStartDate, defaultEndDate]);
+
+  // Auto-fetch bank balance and stats on mount
+  useEffect(() => {
+    if (!featureFlags.financeEnabled) return;
+
+    const fetchAllData = async () => {
+      // 1. Fetch bank balance first
+      setBankLoading(true);
+      let currentTotalBalance = 0;
       try {
-        setLoading(true);
-        setError(null);
+        const response = await fetch('/api/qonto/balance');
+        if (response.ok) {
+          const data: BankBalanceData = await response.json();
+          setBankData(data);
+          currentTotalBalance = data.totalBalance || 0;
+        }
+      } catch (err) {
+        console.warn('Failed to fetch bank balance:', err);
+      } finally {
+        setBankLoading(false);
+      }
 
-        const { data: statsData, error: statsError } = await supabase.rpc(
-          'get_treasury_stats',
-          {
-            p_start_date: defaultStartDate,
-            p_end_date: defaultEndDate,
-          } as any
+      // 2. Fetch transactions and calculate stats
+      setLoading(true);
+      setError(null);
+      try {
+        // Récupérer évolution mensuelle depuis bank_transactions (12 derniers mois)
+        const twelveMonthsAgo = new Date();
+        twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+        const startDateForEvolution = twelveMonthsAgo
+          .toISOString()
+          .split('T')[0];
+
+        const { data: transactionsData, error: transactionsError } =
+          await supabase
+            .from('bank_transactions')
+            .select('emitted_at, amount, side')
+            .gte('emitted_at', startDateForEvolution)
+            .order('emitted_at', { ascending: true });
+
+        if (transactionsError) {
+          console.warn('Error fetching bank_transactions:', transactionsError);
+        }
+
+        // Grouper par mois
+        const monthlyData: Record<
+          string,
+          { inbound: number; outbound: number }
+        > = {};
+
+        transactionsData?.forEach((tx: any) => {
+          const month = tx.emitted_at.substring(0, 7); // YYYY-MM
+          if (!monthlyData[month]) {
+            monthlyData[month] = { inbound: 0, outbound: 0 };
+          }
+
+          if (tx.side === 'credit') {
+            monthlyData[month].inbound += Math.abs(tx.amount);
+          } else {
+            monthlyData[month].outbound += Math.abs(tx.amount);
+          }
+        });
+
+        // Convertir en array
+        let cumulativeBalance = 0;
+        const evolutionArray: TreasuryEvolution[] = Object.entries(monthlyData)
+          .sort((a, b) => a[0].localeCompare(b[0]))
+          .map(([date, data]) => {
+            cumulativeBalance += data.inbound - data.outbound;
+            return {
+              date,
+              inbound: data.inbound,
+              outbound: data.outbound,
+              balance: cumulativeBalance,
+            };
+          });
+
+        setEvolution(evolutionArray);
+
+        // Calculer les KPIs
+        const currentMonth = new Date().toISOString().substring(0, 7);
+        const currentMonthData = monthlyData[currentMonth] || {
+          inbound: 0,
+          outbound: 0,
+        };
+
+        // Burn rate = moyenne des dépenses sur 6 derniers mois
+        const sortedMonths = Object.keys(monthlyData).sort().reverse();
+        const lastSixMonths = sortedMonths.slice(0, 6);
+        const totalOutboundSixMonths = lastSixMonths.reduce(
+          (sum, m) => sum + (monthlyData[m]?.outbound || 0),
+          0
         );
+        const avgBurnRate =
+          totalOutboundSixMonths / Math.max(lastSixMonths.length, 1);
 
-        if (statsError) throw statsError;
+        // Cash flow net du mois courant
+        const cashFlowNet =
+          currentMonthData.inbound - currentMonthData.outbound;
 
-        if (statsData && (statsData as any).length > 0) {
-          const row = (statsData as any)[0];
-          setStats({
-            total_invoiced_ar: row.total_invoiced_ar || 0,
-            total_paid_ar: row.total_paid_ar || 0,
-            unpaid_count_ar: row.unpaid_count_ar || 0,
-            overdue_ar: (row.total_invoiced_ar || 0) - (row.total_paid_ar || 0),
-            total_invoiced_ap: row.total_invoiced_ap || 0,
-            total_paid_ap: row.total_paid_ap || 0,
-            unpaid_count_ap: row.unpaid_count_ap || 0,
-            overdue_ap: (row.total_invoiced_ap || 0) - (row.total_paid_ap || 0),
-            net_balance: row.net_balance || 0,
-            net_cash_flow: (row.total_paid_ar || 0) - (row.total_paid_ap || 0),
+        // Variation vs mois précédent
+        const prevMonth = sortedMonths[1];
+        const prevMonthData = prevMonth
+          ? monthlyData[prevMonth]
+          : { inbound: 0, outbound: 0 };
+        const prevCashFlow = prevMonthData.inbound - prevMonthData.outbound;
+        const variation =
+          prevCashFlow !== 0
+            ? ((cashFlowNet - prevCashFlow) / Math.abs(prevCashFlow)) * 100
+            : 0;
+
+        // Stats basées sur les transactions réelles
+        const totalInbound =
+          transactionsData
+            ?.filter((tx: any) => tx.side === 'credit')
+            .reduce((sum: number, tx: any) => sum + Math.abs(tx.amount), 0) ||
+          0;
+        const totalOutbound =
+          transactionsData
+            ?.filter((tx: any) => tx.side === 'debit')
+            .reduce((sum: number, tx: any) => sum + Math.abs(tx.amount), 0) ||
+          0;
+
+        // Récupérer AR/AP depuis financial_documents (factures réelles)
+        let arTotal = 0;
+        let arCount = 0;
+        let apTotal = 0;
+        let apCount = 0;
+
+        try {
+          // AR (Accounts Receivable) - Factures clients impayées
+          const { data: arData } = await supabase
+            .from('financial_documents')
+            .select('total_ttc, amount_paid')
+            .eq('document_direction', 'inbound')
+            .not('status', 'in', '("paid","cancelled")');
+
+          if (arData) {
+            arData.forEach((doc: any) => {
+              const unpaid = (doc.total_ttc || 0) - (doc.amount_paid || 0);
+              if (unpaid > 0) {
+                arTotal += unpaid;
+                arCount++;
+              }
+            });
+          }
+
+          // AP (Accounts Payable) - Factures fournisseurs impayées
+          const { data: apData } = await supabase
+            .from('financial_documents')
+            .select('total_ttc, amount_paid')
+            .eq('document_direction', 'outbound')
+            .not('status', 'in', '("paid","cancelled")');
+
+          if (apData) {
+            apData.forEach((doc: any) => {
+              const unpaid = (doc.total_ttc || 0) - (doc.amount_paid || 0);
+              if (unpaid > 0) {
+                apTotal += unpaid;
+                apCount++;
+              }
+            });
+          }
+        } catch (err) {
+          console.warn('Error fetching AR/AP from financial_documents:', err);
+        }
+
+        setStats({
+          total_invoiced_ar: arTotal,
+          total_paid_ar: totalInbound,
+          unpaid_count_ar: arCount,
+          overdue_ar: 0,
+          total_invoiced_ap: apTotal,
+          total_paid_ap: totalOutbound,
+          unpaid_count_ap: apCount,
+          overdue_ap: 0,
+          net_balance: totalInbound - totalOutbound,
+          net_cash_flow: cashFlowNet,
+        });
+
+        // Mettre à jour les métriques
+        setMetrics({
+          burnRate: avgBurnRate,
+          runwayMonths:
+            avgBurnRate > 0 ? currentTotalBalance / avgBurnRate : 999,
+          cashFlowNet,
+          cashFlowVariation: variation,
+        });
+
+        // Prévisions basées sur le burn rate moyen
+        const forecastsArray: TreasuryForecast[] = [];
+
+        for (const days of [30, 60, 90]) {
+          const monthsAhead = days / 30;
+          const projectedOutbound = avgBurnRate * monthsAhead;
+          const avgInbound =
+            lastSixMonths.reduce(
+              (sum, m) => sum + (monthlyData[m]?.inbound || 0),
+              0
+            ) / Math.max(lastSixMonths.length, 1);
+          const projectedInbound = avgInbound * monthsAhead;
+
+          forecastsArray.push({
+            period: `${days}d` as '30d' | '60d' | '90d',
+            expected_inbound: projectedInbound,
+            expected_outbound: projectedOutbound,
+            projected_balance:
+              currentTotalBalance + projectedInbound - projectedOutbound,
           });
         }
+
+        setForecasts(forecastsArray);
       } catch (err: any) {
         console.error('Error fetching treasury stats:', err);
         setError(err.message || 'Erreur chargement statistiques');
-        toast.error(err.message || 'Erreur chargement');
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
-  }, [defaultStartDate, defaultEndDate, supabase]);
 
-  // Auto-fetch bank balance on mount
-  useEffect(() => {
-    if (!featureFlags.financeEnabled) return;
-    const fetchBalance = async () => {
-      try {
-        const response = await fetch('/api/qonto/balance');
-        if (response.ok) {
-          const data = await response.json();
-          setBankBalance(data.balance || null);
-        }
-      } catch (err) {
-        console.warn('Failed to fetch bank balance:', err);
-      }
-    };
-    fetchBalance();
+    fetchAllData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ===================================================================
@@ -162,7 +368,15 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
       evolution: [],
       expenseBreakdown: [],
       forecasts: [],
+      bankData: null,
+      bankAccounts: [],
+      totalBalance: 0,
       bankBalance: null,
+      bankLoading: false,
+      metrics: null,
+      burnRate: 0,
+      runwayMonths: 0,
+      cashFlowNet: 0,
       loading: false,
       error: 'Module Finance désactivé (Phase 1)',
       refresh: () => {},
@@ -171,7 +385,7 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
   }
 
   // ===================================================================
-  // FETCH STATS (via RPC get_treasury_stats)
+  // FETCH STATS (via bank_transactions - données réelles)
   // ===================================================================
 
   const fetchStats = async () => {
@@ -179,71 +393,43 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
       setLoading(true);
       setError(null);
 
-      // 1. Récupérer stats via RPC
-      const { data: statsData, error: statsError } = await supabase.rpc(
-        'get_treasury_stats',
-        {
-          p_start_date: defaultStartDate,
-          p_end_date: defaultEndDate,
-        } as any
-      );
+      // 1. Récupérer évolution mensuelle depuis bank_transactions (12 derniers mois)
+      const twelveMonthsAgo = new Date();
+      twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+      const startDateForEvolution = twelveMonthsAgo.toISOString().split('T')[0];
 
-      if (statsError) throw statsError;
+      const { data: transactionsData, error: transactionsError } =
+        await supabase
+          .from('bank_transactions')
+          .select('emitted_at, amount, side')
+          .gte('emitted_at', startDateForEvolution)
+          .order('emitted_at', { ascending: true });
 
-      if (statsData && (statsData as any).length > 0) {
-        const row = (statsData as any)[0];
-        setStats({
-          total_invoiced_ar: row.total_invoiced_ar || 0,
-          total_paid_ar: row.total_paid_ar || 0,
-          unpaid_count_ar: row.unpaid_count_ar || 0,
-          overdue_ar: (row.total_invoiced_ar || 0) - (row.total_paid_ar || 0),
-          total_invoiced_ap: row.total_invoiced_ap || 0,
-          total_paid_ap: row.total_paid_ap || 0,
-          unpaid_count_ap: row.unpaid_count_ap || 0,
-          overdue_ap: (row.total_invoiced_ap || 0) - (row.total_paid_ap || 0),
-          net_balance: row.net_balance || 0,
-          net_cash_flow: (row.total_paid_ar || 0) - (row.total_paid_ap || 0),
-        });
+      if (transactionsError) {
+        console.warn('Error fetching bank_transactions:', transactionsError);
       }
-
-      // 2. Récupérer évolution mensuelle (paiements par mois)
-      const { data: paymentsData, error: paymentsError } = await supabase
-        .from('financial_payments')
-        .select(
-          `
-          payment_date,
-          amount_paid,
-          document:financial_documents!document_id(
-            document_direction
-          )
-        `
-        )
-        .gte('payment_date', defaultStartDate)
-        .lte('payment_date', defaultEndDate)
-        .order('payment_date', { ascending: true });
-
-      if (paymentsError) throw paymentsError;
 
       // Grouper par mois
       const monthlyData: Record<string, { inbound: number; outbound: number }> =
         {};
 
-      paymentsData?.forEach((payment: any) => {
-        const month = payment.payment_date.substring(0, 7); // YYYY-MM
+      transactionsData?.forEach((tx: any) => {
+        const month = tx.emitted_at.substring(0, 7); // YYYY-MM
         if (!monthlyData[month]) {
           monthlyData[month] = { inbound: 0, outbound: 0 };
         }
 
-        if (payment.document?.document_direction === 'inbound') {
-          monthlyData[month].inbound += payment.amount_paid;
+        if (tx.side === 'credit') {
+          monthlyData[month].inbound += Math.abs(tx.amount);
         } else {
-          monthlyData[month].outbound += payment.amount_paid;
+          monthlyData[month].outbound += Math.abs(tx.amount);
         }
       });
 
       // Convertir en array et calculer balance cumulative
       let cumulativeBalance = 0;
       const evolutionArray: TreasuryEvolution[] = Object.entries(monthlyData)
+        .sort((a, b) => a[0].localeCompare(b[0]))
         .map(([date, data]) => {
           cumulativeBalance += data.inbound - data.outbound;
           return {
@@ -252,115 +438,184 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
             outbound: data.outbound,
             balance: cumulativeBalance,
           };
-        })
-        .sort((a, b) => a.date.localeCompare(b.date));
+        });
 
       setEvolution(evolutionArray);
 
-      // 3. Récupérer répartition dépenses par catégorie
-      const { data: expensesData, error: expensesError } = await supabase
-        .from('financial_documents')
-        .select(
-          `
-          total_ttc,
-          expense_category:expense_categories(
-            name,
-            account_code
-          )
-        `
-        )
-        .eq('document_type', 'expense')
-        .gte('document_date', defaultStartDate)
-        .lte('document_date', defaultEndDate);
+      // 2. Calculer les KPIs depuis bank_transactions
+      const currentMonth = new Date().toISOString().substring(0, 7);
+      const currentMonthData = monthlyData[currentMonth] || {
+        inbound: 0,
+        outbound: 0,
+      };
 
-      if (expensesError) throw expensesError;
+      // Burn rate = moyenne des dépenses sur 6 derniers mois
+      const sortedMonths = Object.keys(monthlyData).sort().reverse();
+      const lastSixMonths = sortedMonths.slice(0, 6);
+      const totalOutboundSixMonths = lastSixMonths.reduce(
+        (sum, m) => sum + (monthlyData[m]?.outbound || 0),
+        0
+      );
+      const avgBurnRate =
+        totalOutboundSixMonths / Math.max(lastSixMonths.length, 1);
 
-      // Grouper par catégorie
-      const categoryData: Record<
-        string,
-        { total: number; count: number; code: string }
-      > = {};
-      let totalExpenses = 0;
+      // Cash flow net du mois courant
+      const cashFlowNet = currentMonthData.inbound - currentMonthData.outbound;
 
-      expensesData?.forEach((expense: any) => {
-        if (expense.expense_category) {
-          const catName = expense.expense_category.name;
-          const catCode = expense.expense_category.account_code;
+      // Variation vs mois précédent
+      const prevMonth = sortedMonths[1];
+      const prevMonthData = prevMonth
+        ? monthlyData[prevMonth]
+        : { inbound: 0, outbound: 0 };
+      const prevCashFlow = prevMonthData.inbound - prevMonthData.outbound;
+      const variation =
+        prevCashFlow !== 0
+          ? ((cashFlowNet - prevCashFlow) / Math.abs(prevCashFlow)) * 100
+          : 0;
 
-          if (!categoryData[catName]) {
-            categoryData[catName] = { total: 0, count: 0, code: catCode };
-          }
+      // Stats basées sur les transactions réelles
+      const totalInbound =
+        transactionsData
+          ?.filter((tx: any) => tx.side === 'credit')
+          .reduce((sum: number, tx: any) => sum + Math.abs(tx.amount), 0) || 0;
+      const totalOutbound =
+        transactionsData
+          ?.filter((tx: any) => tx.side === 'debit')
+          .reduce((sum: number, tx: any) => sum + Math.abs(tx.amount), 0) || 0;
 
-          categoryData[catName].total += expense.total_ttc;
-          categoryData[catName].count += 1;
-          totalExpenses += expense.total_ttc;
-        }
-      });
+      // Récupérer AR/AP depuis financial_documents (factures réelles)
+      let arTotal = 0;
+      let arCount = 0;
+      let apTotal = 0;
+      let apCount = 0;
 
-      // Convertir en array avec pourcentages
-      const breakdownArray: ExpenseBreakdown[] = Object.entries(categoryData)
-        .map(([name, data]) => ({
-          category_name: name,
-          category_code: data.code,
-          total_amount: data.total,
-          count: data.count,
-          percentage:
-            totalExpenses > 0 ? (data.total / totalExpenses) * 100 : 0,
-        }))
-        .sort((a, b) => b.total_amount - a.total_amount);
-
-      setExpenseBreakdown(breakdownArray);
-
-      // 4. Calculer prévisions (basées sur échéances à venir)
-      const today = new Date();
-      const forecasts: TreasuryForecast[] = [];
-
-      for (const days of [30, 60, 90]) {
-        const forecastDate = new Date(today);
-        forecastDate.setDate(forecastDate.getDate() + days);
-        const forecastDateStr = forecastDate.toISOString().split('T')[0];
-
-        // Documents AR à encaisser (statut != paid)
-        const { data: arDocs } = await supabase
+      try {
+        // AR (Accounts Receivable) - Factures clients impayées
+        const { data: arData } = await supabase
           .from('financial_documents')
           .select('total_ttc, amount_paid')
           .eq('document_direction', 'inbound')
-          .neq('status', 'paid')
-          .lte('due_date', forecastDateStr);
+          .not('status', 'in', '("paid","cancelled")');
 
-        const expectedInbound =
-          arDocs?.reduce(
-            (sum, doc) => sum + (doc.total_ttc - doc.amount_paid),
-            0
-          ) || 0;
+        if (arData) {
+          arData.forEach((doc: any) => {
+            const unpaid = (doc.total_ttc || 0) - (doc.amount_paid || 0);
+            if (unpaid > 0) {
+              arTotal += unpaid;
+              arCount++;
+            }
+          });
+        }
 
-        // Documents AP à payer (statut != paid)
-        const { data: apDocs } = await supabase
+        // AP (Accounts Payable) - Factures fournisseurs impayées
+        const { data: apData } = await supabase
           .from('financial_documents')
           .select('total_ttc, amount_paid')
           .eq('document_direction', 'outbound')
-          .neq('status', 'paid')
-          .lte('due_date', forecastDateStr);
+          .not('status', 'in', '("paid","cancelled")');
 
-        const expectedOutbound =
-          apDocs?.reduce(
-            (sum, doc) => sum + (doc.total_ttc - doc.amount_paid),
+        if (apData) {
+          apData.forEach((doc: any) => {
+            const unpaid = (doc.total_ttc || 0) - (doc.amount_paid || 0);
+            if (unpaid > 0) {
+              apTotal += unpaid;
+              apCount++;
+            }
+          });
+        }
+      } catch (err) {
+        console.warn('Error fetching AR/AP from financial_documents:', err);
+      }
+
+      setStats({
+        total_invoiced_ar: arTotal,
+        total_paid_ar: totalInbound,
+        unpaid_count_ar: arCount,
+        overdue_ar: 0,
+        total_invoiced_ap: apTotal,
+        total_paid_ap: totalOutbound,
+        unpaid_count_ap: apCount,
+        overdue_ap: 0,
+        net_balance: totalInbound - totalOutbound,
+        net_cash_flow: cashFlowNet,
+      });
+
+      // Mettre à jour les métriques
+      setMetrics({
+        burnRate: avgBurnRate,
+        runwayMonths:
+          avgBurnRate > 0 ? (bankData?.totalBalance || 0) / avgBurnRate : 999,
+        cashFlowNet,
+        cashFlowVariation: variation,
+      });
+
+      // 3. Prévisions basées sur le burn rate moyen
+      const forecasts: TreasuryForecast[] = [];
+      const currentBalance = bankData?.totalBalance || 0;
+
+      for (const days of [30, 60, 90]) {
+        const monthsAhead = days / 30;
+        // Prévision simple: balance - (burn rate * mois)
+        const projectedOutbound = avgBurnRate * monthsAhead;
+        // Estimation entrées basée sur moyenne des crédits
+        const avgInbound =
+          lastSixMonths.reduce(
+            (sum, m) => sum + (monthlyData[m]?.inbound || 0),
             0
-          ) || 0;
+          ) / Math.max(lastSixMonths.length, 1);
+        const projectedInbound = avgInbound * monthsAhead;
 
         forecasts.push({
           period: `${days}d` as '30d' | '60d' | '90d',
-          expected_inbound: expectedInbound,
-          expected_outbound: expectedOutbound,
-          projected_balance: expectedInbound - expectedOutbound,
+          expected_inbound: projectedInbound,
+          expected_outbound: projectedOutbound,
+          projected_balance:
+            currentBalance + projectedInbound - projectedOutbound,
         });
       }
 
       setForecasts(forecasts);
+
+      // 4. Répartition dépenses par catégorie (depuis expenses)
+      const { data: expensesCategoryData, error: expensesCatError } =
+        await supabase
+          .from('v_expenses_with_details')
+          .select('category, amount')
+          .eq('side', 'debit')
+          .gte('emitted_at', defaultStartDate)
+          .lte('emitted_at', defaultEndDate);
+
+      if (!expensesCatError && expensesCategoryData) {
+        const categoryData: Record<string, { total: number; count: number }> =
+          {};
+        let totalExpenses = 0;
+
+        expensesCategoryData.forEach((exp: any) => {
+          const cat = exp.category || 'other';
+          if (!categoryData[cat]) {
+            categoryData[cat] = { total: 0, count: 0 };
+          }
+          categoryData[cat].total += Math.abs(exp.amount);
+          categoryData[cat].count += 1;
+          totalExpenses += Math.abs(exp.amount);
+        });
+
+        const breakdownArray: ExpenseBreakdown[] = Object.entries(categoryData)
+          .map(([name, data]) => ({
+            category_name: name,
+            category_code: name,
+            total_amount: data.total,
+            count: data.count,
+            percentage:
+              totalExpenses > 0 ? (data.total / totalExpenses) * 100 : 0,
+          }))
+          .sort((a, b) => b.total_amount - a.total_amount);
+
+        setExpenseBreakdown(breakdownArray);
+      }
     } catch (err: any) {
       console.error('Error fetching treasury stats:', err);
       setError(err.message || 'Erreur chargement statistiques');
-      toast.error(err.message || 'Erreur chargement');
     } finally {
       setLoading(false);
     }
@@ -371,14 +626,17 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
   // ===================================================================
 
   const fetchBankBalance = async () => {
+    setBankLoading(true);
     try {
       const response = await fetch('/api/qonto/balance');
       if (response.ok) {
-        const data = await response.json();
-        setBankBalance(data.balance || null);
+        const data: BankBalanceData = await response.json();
+        setBankData(data);
       }
     } catch (err) {
       console.warn('Failed to fetch bank balance:', err);
+    } finally {
+      setBankLoading(false);
     }
   };
 
@@ -388,7 +646,19 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
     evolution,
     expenseBreakdown,
     forecasts,
-    bankBalance,
+
+    // Bank accounts (nouveau)
+    bankData,
+    bankAccounts: bankData?.accounts ?? [],
+    totalBalance: bankData?.totalBalance ?? 0,
+    bankBalance, // Legacy compatibility
+    bankLoading,
+
+    // Métriques calculées (nouveau)
+    metrics,
+    burnRate: metrics?.burnRate ?? 0,
+    runwayMonths: metrics?.runwayMonths ?? 0,
+    cashFlowNet: metrics?.cashFlowNet ?? 0,
 
     // State
     loading,

@@ -235,9 +235,28 @@ export function useEnseignes(filters?: EnseigneFilters) {
 
   /**
    * Supprime une enseigne (les organisations liées sont dissociées via ON DELETE SET NULL)
+   * PROTECTION: Verifie d'abord si des utilisateurs sont lies via user_app_roles
    */
   const deleteEnseigne = async (id: string): Promise<boolean> => {
     try {
+      // PROTECTION: Verifier si des utilisateurs sont lies a cette enseigne
+      const { count: linkedUsersCount, error: checkError } = await supabase
+        .from('user_app_roles')
+        .select('*', { count: 'exact', head: true })
+        .eq('enseigne_id', id)
+        .eq('is_active', true);
+
+      if (checkError) {
+        console.warn('Erreur verification users lies:', checkError);
+        // Continue si erreur de verification (graceful)
+      } else if (linkedUsersCount && linkedUsersCount > 0) {
+        setError(
+          `Impossible de supprimer : ${linkedUsersCount} utilisateur(s) y sont rattaches. ` +
+            `Veuillez d'abord archiver l'enseigne ou retirer les utilisateurs.`
+        );
+        return false;
+      }
+
       const { error: deleteError } = await (supabase as any)
         .from('enseignes')
         .delete()
