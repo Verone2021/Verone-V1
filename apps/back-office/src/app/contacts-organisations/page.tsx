@@ -4,11 +4,10 @@ import React from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { useOrganisations } from '@verone/organisations';
 import { ButtonV2 } from '@verone/ui';
 import { KPICardUnified } from '@verone/ui';
 import { Building2, Truck, Settings, Phone, TrendingUp } from 'lucide-react';
-
-import { useOrganisations } from '@verone/organisations';
 
 interface OrganisationStats {
   totalOrganisations: number;
@@ -30,14 +29,20 @@ export default function ContactsOrganisationsPage() {
 
   const stats: OrganisationStats = {
     totalOrganisations: organisationsOnly.length,
-    suppliers: organisations.filter(o => o.type === 'supplier').length,
+    // Fournisseurs = type supplier ET pas prestataire
+    suppliers: organisations.filter(
+      o => o.type === 'supplier' && !o.is_service_provider
+    ).length,
     // Si customer_type n'existe pas, on considère tous les customers comme professionnels par défaut
     customersProfessional: organisations.filter(
       o =>
         o.type === 'customer' &&
         (!o.customer_type || o.customer_type === 'professional')
     ).length,
-    partners: organisations.filter(o => o.type === 'partner').length,
+    // Prestataires = type supplier ET is_service_provider = true
+    partners: organisations.filter(
+      o => o.type === 'supplier' && o.is_service_provider === true
+    ).length,
   };
 
   if (loading) {
