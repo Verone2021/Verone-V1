@@ -56,6 +56,7 @@ type CustomerType = 'organization' | 'individual';
 
 interface CartItem extends LinkMeOrderItemInput {
   id: string;
+  tax_rate: number; // TVA par ligne (0.20 = 20%)
 }
 
 /**
@@ -87,8 +88,11 @@ export function CreateLinkMeOrderModal({
   // Panier
   const [cart, setCart] = useState<CartItem[]>([]);
 
-  // Taux TVA (par défaut 20%)
-  const [taxRate, setTaxRate] = useState<number>(0.2);
+  // Frais additionnels
+  const [shippingCostHt, setShippingCostHt] = useState<number>(0);
+  const [handlingCostHt, setHandlingCostHt] = useState<number>(0);
+  const [insuranceCostHt, setInsuranceCostHt] = useState<number>(0);
+  const [fraisTaxRate, setFraisTaxRate] = useState<number>(0.2); // TVA frais (defaut 20%)
 
   // Recherche produits (Section 5)
   const [productSearchQuery, setProductSearchQuery] = useState('');
@@ -294,32 +298,44 @@ export function CreateLinkMeOrderModal({
     }
   };
 
-  // Totaux panier avec précision à 2 décimales
+  // Totaux panier avec TVA par ligne
   const cartTotals = useMemo(() => {
     // Helper pour arrondir les montants monétaires
     const roundMoney = (value: number): number => Math.round(value * 100) / 100;
 
-    let totalHt = 0;
+    let productsHt = 0;
+    let totalTva = 0;
     let totalRetrocession = 0;
 
     for (const item of cart) {
-      const lineTotal = roundMoney(item.quantity * item.unit_price_ht);
-      totalHt = roundMoney(totalHt + lineTotal);
-      // Commission calculée sur base_price_ht (135€), pas sur unit_price_ht (168.75€)
-      // Formule: base_price × margin_rate = 135 × 0.15 = 20.25€
+      const lineHt = roundMoney(item.quantity * item.unit_price_ht);
+      const lineTva = roundMoney(lineHt * (item.tax_rate || 0.2));
+      productsHt = roundMoney(productsHt + lineHt);
+      totalTva = roundMoney(totalTva + lineTva);
+      // Commission calculee sur base_price_ht (135EUR), pas sur unit_price_ht (168.75EUR)
       totalRetrocession = roundMoney(
         totalRetrocession +
           item.quantity * item.base_price_ht * item.retrocession_rate
       );
     }
 
+    // Frais additionnels avec TVA configurable
+    const totalFrais = roundMoney(
+      shippingCostHt + handlingCostHt + insuranceCostHt
+    );
+    const totalHt = roundMoney(productsHt + totalFrais);
+    const totalTvaFrais = roundMoney(totalFrais * fraisTaxRate);
+    const totalTtc = roundMoney(totalHt + totalTva + totalTvaFrais);
+
     return {
+      productsHt,
+      totalFrais,
       totalHt,
-      totalTtc: roundMoney(totalHt * (1 + taxRate)),
+      totalTva: roundMoney(totalTva + totalTvaFrais),
+      totalTtc,
       totalRetrocession,
-      taxRate,
     };
-  }, [cart, taxRate]);
+  }, [cart, shippingCostHt, handlingCostHt, insuranceCostHt, fraisTaxRate]);
 
   // Ajouter produit au panier
   const addProductFromSelection = (item: SelectionItem) => {
@@ -357,6 +373,7 @@ export function CreateLinkMeOrderModal({
       sku: item.product?.sku || '',
       quantity: 1,
       unit_price_ht: sellingPrice,
+      tax_rate: 0.2, // TVA 20% par defaut
       base_price_ht: item.base_price_ht, // Prix de base pour calcul commission
       retrocession_rate: retrocessionRate,
       linkme_selection_item_id: item.id,
@@ -408,12 +425,17 @@ export function CreateLinkMeOrderModal({
         sku: item.sku,
         quantity: item.quantity,
         unit_price_ht: item.unit_price_ht,
+        tax_rate: item.tax_rate || 0.2, // TVA par ligne
         base_price_ht: item.base_price_ht,
         retrocession_rate: item.retrocession_rate,
         linkme_selection_item_id: item.linkme_selection_item_id,
       })),
-      tax_rate: taxRate,
       internal_notes: internalNotes || undefined,
+      // Frais additionnels
+      shipping_cost_ht: shippingCostHt || 0,
+      handling_cost_ht: handlingCostHt || 0,
+      insurance_cost_ht: insuranceCostHt || 0,
+      frais_tax_rate: fraisTaxRate,
     };
 
     try {
@@ -992,36 +1014,114 @@ export function CreateLinkMeOrderModal({
               </div>
             )}
 
-            {/* Section 4 ter: Taux de TVA */}
-            {selectedCustomer && (
+            {/* Section 4 ter: Frais additionnels */}
+            {selectedSelectionId && (
               <div className="space-y-3">
                 <label className="block text-sm font-medium text-gray-700">
-                  Taux de TVA
+                  Frais additionnels (HT)
                 </label>
-                <div className="grid grid-cols-4 gap-2">
-                  {[
-                    { value: 0.2, label: '20%', desc: 'Standard' },
-                    { value: 0.1, label: '10%', desc: 'Intermédiaire' },
-                    { value: 0.055, label: '5,5%', desc: 'Réduit' },
-                    { value: 0, label: '0%', desc: 'Exonéré' },
-                  ].map(opt => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setTaxRate(opt.value)}
-                      className={cn(
-                        'p-3 rounded-lg border-2 transition-all text-center',
-                        taxRate === opt.value
-                          ? 'border-purple-500 bg-purple-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      )}
-                    >
-                      <span className="block text-lg font-semibold">
-                        {opt.label}
+                <div className="grid grid-cols-3 gap-3">
+                  {/* Livraison */}
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">
+                      Livraison
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={shippingCostHt || ''}
+                        onChange={e =>
+                          setShippingCostHt(
+                            e.target.value ? parseFloat(e.target.value) : 0
+                          )
+                        }
+                        placeholder="0.00"
+                        className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
+                        EUR
                       </span>
-                      <span className="text-xs text-gray-500">{opt.desc}</span>
-                    </button>
-                  ))}
+                    </div>
+                  </div>
+
+                  {/* Manutention */}
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">
+                      Manutention
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={handlingCostHt || ''}
+                        onChange={e =>
+                          setHandlingCostHt(
+                            e.target.value ? parseFloat(e.target.value) : 0
+                          )
+                        }
+                        placeholder="0.00"
+                        className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
+                        EUR
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Assurance */}
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">
+                      Assurance
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={insuranceCostHt || ''}
+                        onChange={e =>
+                          setInsuranceCostHt(
+                            e.target.value ? parseFloat(e.target.value) : 0
+                          )
+                        }
+                        placeholder="0.00"
+                        className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
+                        EUR
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <label className="block text-xs text-gray-500 mb-2">
+                    Taux de TVA sur les frais
+                  </label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { value: 0.2, label: '20%' },
+                      { value: 0.1, label: '10%' },
+                      { value: 0.055, label: '5,5%' },
+                      { value: 0, label: '0%' },
+                    ].map(opt => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setFraisTaxRate(opt.value)}
+                        className={cn(
+                          'px-3 py-1.5 rounded-lg border text-sm transition-all',
+                          fraisTaxRate === opt.value
+                            ? 'border-purple-500 bg-purple-50 text-purple-700 font-medium'
+                            : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                        )}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
@@ -1225,13 +1325,8 @@ export function CreateLinkMeOrderModal({
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">
-                      TVA ({(taxRate * 100).toFixed(taxRate === 0.055 ? 1 : 0)}
-                      %)
-                    </span>
-                    <span>
-                      {(cartTotals.totalTtc - cartTotals.totalHt).toFixed(2)}€
-                    </span>
+                    <span className="text-gray-600">TVA</span>
+                    <span>{cartTotals.totalTva.toFixed(2)}€</span>
                   </div>
                   <div className="flex justify-between text-sm font-medium">
                     <span>Total TTC</span>
@@ -1335,7 +1430,7 @@ export function CreateLinkMeOrderModal({
                       </span>
                     </div>
                     <span className="text-xs text-slate-500">
-                      TVA {(taxRate * 100).toFixed(taxRate === 0.055 ? 1 : 0)}%
+                      TVA par ligne
                     </span>
                   </div>
 
@@ -1365,14 +1460,8 @@ export function CreateLinkMeOrderModal({
                       <span>{cartTotals.totalHt.toFixed(2)}€</span>
                     </div>
                     <div className="flex justify-between text-sm text-slate-600">
-                      <span>
-                        TVA (
-                        {(taxRate * 100).toFixed(taxRate === 0.055 ? 1 : 0)}
-                        %)
-                      </span>
-                      <span>
-                        {(cartTotals.totalTtc - cartTotals.totalHt).toFixed(2)}€
-                      </span>
+                      <span>TVA</span>
+                      <span>{cartTotals.totalTva.toFixed(2)}€</span>
                     </div>
                     <div className="flex justify-between text-base font-semibold text-slate-900 pt-2 border-t">
                       <span>Total TTC</span>

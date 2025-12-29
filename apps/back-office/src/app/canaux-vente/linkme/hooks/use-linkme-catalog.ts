@@ -78,6 +78,8 @@ export interface LinkMeCatalogProduct {
   assigned_client_name: string | null;
   /** true si produit exclusif à une enseigne ou organisation */
   is_sourced: boolean;
+  /** ID affilié créateur (produit créé par affilié) */
+  created_by_affiliate: string | null;
 }
 
 /**
@@ -151,7 +153,8 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
         subcategory_id,
         supplier_id,
         enseigne_id,
-        assigned_client_id
+        assigned_client_id,
+        created_by_affiliate
       )
     `
     )
@@ -331,6 +334,7 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
           is_sourced: !!(
             cp.products?.enseigne_id || cp.products?.assigned_client_id
           ),
+          created_by_affiliate: cp.products?.created_by_affiliate || null,
         };
       })
       // Filtre: exclure les produits sourcés sans affiliés actifs
@@ -874,7 +878,10 @@ async function fetchLinkMeProductDetail(
         dimensions,
         suitable_rooms,
         description,
-        selling_points
+        selling_points,
+        created_by_affiliate,
+        affiliate_commission_rate,
+        affiliate_approval_status
       )
     `
     )
@@ -948,6 +955,17 @@ async function fetchLinkMeProductDetail(
       assignedOrg?.trade_name || assignedOrg?.legal_name || null;
   }
 
+  // Récupérer le nom de l'affilié créateur (produit affilié)
+  let affiliateName: string | null = null;
+  if (product.created_by_affiliate) {
+    const { data: affiliate } = await supabase
+      .from('linkme_affiliates')
+      .select('display_name')
+      .eq('id', product.created_by_affiliate)
+      .single();
+    affiliateName = affiliate?.display_name || null;
+  }
+
   // Calcul du prix minimum de vente: (cost_price + eco_tax) * (1 + margin/100)
   const costPrice = product.cost_price || 0;
   const ecoTax = product.eco_tax_default || 0;
@@ -993,6 +1011,11 @@ async function fetchLinkMeProductDetail(
     assigned_client_id: product.assigned_client_id || null,
     assigned_client_name: assignedClientName,
     is_sourced: !!(product.enseigne_id || product.assigned_client_id),
+    // Produits affiliés
+    created_by_affiliate: product.created_by_affiliate || null,
+    affiliate_name: affiliateName,
+    affiliate_commission_rate: product.affiliate_commission_rate ?? null,
+    affiliate_approval_status: product.affiliate_approval_status ?? null,
     subcategory_id: product.subcategory_id,
     supplier_id: product.supplier_id,
     weight_kg: product.weight || null,
@@ -1087,6 +1110,37 @@ export function useUpdateLinkMeMetadata() {
       queryClient.invalidateQueries({
         queryKey: ['linkme-product-detail', variables.catalogProductId],
       });
+      queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
+    },
+  });
+}
+
+/**
+ * Hook: mettre à jour la commission affilié (table products)
+ * Pour les produits affiliés, la commission est stockée dans products.affiliate_commission_rate
+ */
+export function useUpdateAffiliateCommission() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      productId,
+      commissionRate,
+    }: {
+      productId: string;
+      commissionRate: number;
+    }) => {
+      const supabase = getSupabaseClient();
+      const { error } = await supabase
+        .from('products')
+        .update({ affiliate_commission_rate: commissionRate })
+        .eq('id', productId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      // Invalider le cache pour rafraîchir les données
+      queryClient.invalidateQueries({ queryKey: ['linkme-product-detail'] });
       queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
     },
   });

@@ -98,6 +98,21 @@ export interface LinkMeProductDetail {
   /** true si produit exclusif à une enseigne ou organisation */
   is_sourced: boolean;
 
+  // === PRODUITS AFFILIÉS ===
+  /** ID affilié créateur (produit créé par affilié) */
+  created_by_affiliate: string | null;
+  /** Nom de l'affilié créateur */
+  affiliate_name: string | null;
+  /** Commission Vérone sur ce produit affilié (%) - depuis products.affiliate_commission_rate */
+  affiliate_commission_rate: number | null;
+  /** Statut d'approbation du produit affilié */
+  affiliate_approval_status:
+    | 'draft'
+    | 'pending_approval'
+    | 'approved'
+    | 'rejected'
+    | null;
+
   // === INFORMATIONS PRODUIT SUPPLÉMENTAIRES (READ-ONLY) ===
   /** ID sous-catégorie */
   subcategory_id: string | null;

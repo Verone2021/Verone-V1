@@ -1,0 +1,252 @@
+name: 📚 Docs Governance
+
+# Déclenché sur:
+# - Pull requests modifiant docs/
+# - Manuel (workflow_dispatch)
+# - Hebdomadaire (dimanche 06:00 UTC)
+
+on:
+  pull_request:
+    paths:
+      - 'docs/**'
+  workflow_dispatch:
+    inputs:
+      auto_archive:
+        description: 'Create PR for auto-archiving stale docs'
+        required: false
+        default: 'false'
+        type: boolean
+  schedule:
+    - cron: '0 6 * * 0' # Dimanche 06:00 UTC
+
+jobs:
+  lint:
+    name: Lint Markdown
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📝 Lint Markdown files
+        uses: DavidAnson/markdownlint-cli2-action@v19
+        with:
+          globs: 'docs/**/*.md'
+          config: '.markdownlint.json'
+        continue-on-error: true
+
+  triage:
+    name: Docs Triage Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      has_candidates: ${{ steps.audit.outputs.has_candidates }}
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Full history for git dates
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 📁 Ensure reports directory exists
+        run: mkdir -p reports
+
+      - name: 🔍 Run Docs Audit v4.1
+        id: audit
+        run: |
+          bash tools/scripts/docs-audit-v4.sh
+
+          # Find the latest JSON report
+          REPORT=$(ls -t reports/docs-audit-v4-*.json 2>/dev/null | head -1)
+
+          if [ -z "$REPORT" ]; then
+            echo "No report generated"
+            echo "has_candidates=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "report_path=$REPORT" >> $GITHUB_OUTPUT
+
+          # Check if there are candidates for action
+          DELETE_COUNT=$(jq '.stats.by_action.DELETE_CANDIDATE // 0' "$REPORT")
+          ARCHIVE_COUNT=$(jq '.stats.by_action.ARCHIVE // 0' "$REPORT")
+          MERGE_COUNT=$(jq '.stats.by_action.MERGE // 0' "$REPORT")
+
+          echo "DELETE_CANDIDATE: $DELETE_COUNT"
+          echo "ARCHIVE: $ARCHIVE_COUNT"
+          echo "MERGE: $MERGE_COUNT"
+
+          if [ "$DELETE_COUNT" -gt 0 ] || [ "$ARCHIVE_COUNT" -gt 0 ]; then
+            echo "has_candidates=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_candidates=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 📊 Upload Audit Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-triage-report
+          path: |
+            reports/docs-audit-v4-*.md
+            reports/docs-audit-v4-*.json
+          retention-days: 30
+
+      - name: 💬 Comment PR with Audit Summary
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const reportsDir = 'reports';
+
+            if (!fs.existsSync(reportsDir)) {
+              console.log('Reports directory does not exist');
+              return;
+            }
+
+            const files = fs.readdirSync(reportsDir).filter(f => f.startsWith('docs-audit-v4-') && f.endsWith('.json'));
+            if (files.length === 0) {
+              console.log('No audit report found');
+              return;
+            }
+
+            const latestReport = files.sort().reverse()[0];
+            const report = JSON.parse(fs.readFileSync(`${reportsDir}/${latestReport}`, 'utf-8'));
+
+            const stats = report.stats;
+            const byAction = stats.by_action || {};
+
+            const keepCount = byAction.KEEP || 0;
+            const mergeCount = byAction.MERGE || 0;
+            const archiveCount = byAction.ARCHIVE || 0;
+            const deleteCount = byAction.DELETE_CANDIDATE || 0;
+
+            const hasIssues = mergeCount > 0 || archiveCount > 0 || deleteCount > 0;
+            const status = hasIssues ? '⚠️' : '✅';
+
+            const comment = `## ${status} Docs Governance Report
+
+**Summary:**
+- 📄 Total docs: **${stats.files}**
+- ✅ KEEP: **${keepCount}**
+- 🔀 MERGE: **${mergeCount}**
+- 📦 ARCHIVE: **${archiveCount}**
+- 🗑️ DELETE_CANDIDATE: **${deleteCount}**
+
+**Duplicates:**
+- Exact duplicates: ${stats.exact_duplicate_groups} groups
+- Near-duplicates: ${stats.near_duplicate_pairs} pairs
+
+---
+
+📊 **Full Report:** Download artifact \`docs-triage-report\` from this workflow run.
+
+${hasIssues ? '⚠️ **Attention:** Some docs may need cleanup. Review the report for details.' : '✅ Documentation is in good shape!'}
+`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+  auto-archive:
+    name: Auto-Archive Stale Docs
+    runs-on: ubuntu-latest
+    needs: triage
+    if: |
+      (github.event_name == 'schedule') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.auto_archive == 'true')
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 📁 Ensure reports directory exists
+        run: mkdir -p reports
+
+      - name: 🔍 Run Docs Audit
+        run: bash tools/scripts/docs-audit-v4.sh
+
+      - name: 📦 Apply Archive Actions
+        id: apply
+        run: |
+          REPORT=$(ls -t reports/docs-audit-v4-*.json 2>/dev/null | head -1)
+
+          if [ -z "$REPORT" ]; then
+            echo "No report found"
+            echo "changes_made=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Check if there are candidates
+          ARCHIVE_COUNT=$(jq '.stats.by_action.ARCHIVE // 0' "$REPORT")
+          DELETE_COUNT=$(jq '.stats.by_action.DELETE_CANDIDATE // 0' "$REPORT")
+
+          if [ "$ARCHIVE_COUNT" -eq 0 ] && [ "$DELETE_COUNT" -eq 0 ]; then
+            echo "No files to archive"
+            echo "changes_made=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Apply changes (archive only, not delete)
+          python3 tools/scripts/docs-audit-apply.py \
+            --report "$REPORT" \
+            --mode archive \
+            --apply \
+            --actions "ARCHIVE,DELETE_CANDIDATE"
+
+          # Check if any files were actually moved
+          if git status --porcelain | grep -q .; then
+            echo "changes_made=true" >> $GITHUB_OUTPUT
+          else
+            echo "changes_made=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 📝 Create Pull Request
+        if: steps.apply.outputs.changes_made == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore(docs): auto-archive stale documentation'
+          title: '[Auto] Archive Stale Documentation'
+          body: |
+            ## 📚 Automated Documentation Cleanup
+
+            This PR was automatically generated by the **docs-governance** workflow.
+
+            ### What happened?
+            - Stale, unreferenced, or duplicate documentation files were detected
+            - Files were moved to `docs/archives/stale-YYYY-MM/`
+            - No files were permanently deleted
+
+            ### Review checklist
+            - [ ] Verify archived files are truly obsolete
+            - [ ] Check if any content should be merged into `docs/current/`
+            - [ ] Ensure no critical documentation was archived by mistake
+
+            ---
+
+            📊 See workflow run for full triage report.
+          branch: chore/docs-auto-archive
+          delete-branch: true
+          labels: |
+            documentation
+            automated

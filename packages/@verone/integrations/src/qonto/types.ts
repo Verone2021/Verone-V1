@@ -8,13 +8,47 @@
 // CONFIGURATION
 // =====================================================================
 
+/**
+ * Mode d'authentification Qonto
+ * - oauth: Authorization: Bearer <access_token> (recommandé pour Business API)
+ * - api_key: Authorization: <orgId>:<apiKey> (legacy thirdparty)
+ */
+export type QontoAuthMode = 'oauth' | 'api_key';
+
+/**
+ * Configuration du client Qonto
+ */
 export interface QontoConfig {
-  organizationId: string;
-  apiKey: string;
-  baseUrl?: string;
+  // Mode d'authentification (défaut: oauth)
+  authMode?: QontoAuthMode;
+
+  // Pour mode api_key
+  organizationId?: string;
+  apiKey?: string;
+
+  // Pour mode oauth
+  accessToken?: string;
+  refreshToken?: string;
+
+  // Endpoints
+  baseUrl?: string; // https://thirdparty.qonto.com (v2 ajouté automatiquement)
+
+  // Timeouts et retry
   timeout?: number;
   maxRetries?: number;
   retryDelay?: number;
+}
+
+/**
+ * Résultat du health check Qonto
+ */
+export interface QontoHealthCheckResult {
+  healthy: boolean;
+  authMode: QontoAuthMode;
+  timestamp: string;
+  bankAccountsCount?: number;
+  sampleBankAccountId?: string;
+  error?: string;
 }
 
 // =====================================================================
@@ -208,4 +242,232 @@ export interface AutoMatchResult {
   invoice_number?: string;
   amount_difference?: number;
   match_reason?: string;
+}
+
+// =====================================================================
+// CLIENT INVOICES (Factures clients Qonto)
+// =====================================================================
+
+export type QontoInvoiceStatus =
+  | 'draft'
+  | 'unpaid'
+  | 'paid'
+  | 'overdue'
+  | 'cancelled';
+
+export interface QontoInvoiceItem {
+  id?: string;
+  title: string;
+  description?: string;
+  quantity: number;
+  unit: string;
+  unit_price: number;
+  vat_rate: number;
+  total_amount?: number;
+  total_amount_cents?: number;
+}
+
+export interface QontoClientInvoice {
+  id: string;
+  invoice_number: string;
+  status: QontoInvoiceStatus;
+  currency: string;
+
+  // Client
+  client_id: string;
+  client?: QontoClient;
+
+  // Dates
+  issue_date: string;
+  payment_deadline: string;
+  performance_start_date?: string;
+  performance_end_date?: string;
+  paid_at?: string;
+
+  // Montants
+  total_amount: number;
+  total_amount_cents: number;
+  total_vat_amount: number;
+  total_vat_amount_cents: number;
+  subtotal_amount: number;
+  subtotal_amount_cents: number;
+
+  // Items
+  items: QontoInvoiceItem[];
+
+  // Références
+  purchase_order_number?: string;
+
+  // PDF
+  pdf_url?: string;
+  public_url?: string;
+
+  // Metadata
+  created_at: string;
+  updated_at: string;
+  finalized_at?: string;
+  cancelled_at?: string;
+}
+
+// =====================================================================
+// CLIENTS (Clients Qonto)
+// =====================================================================
+
+export interface QontoClientAddress {
+  street_address?: string;
+  city?: string;
+  zip_code?: string;
+  country_code?: string;
+}
+
+export interface QontoClientEntity {
+  id: string;
+  name: string;
+  email?: string;
+  currency: string;
+  vat_number?: string;
+  address?: QontoClientAddress;
+  phone?: string;
+  locale: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Alias pour compatibilité
+export type QontoClient = QontoClientEntity;
+
+// =====================================================================
+// LABELS (Étiquettes Qonto)
+// =====================================================================
+
+export interface QontoLabel {
+  id: string;
+  name: string;
+  color: string;
+  parent_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// =====================================================================
+// PARAMS DE CRÉATION
+// =====================================================================
+
+/**
+ * Payment methods pour les factures clients
+ * Selon doc Qonto: objet avec IBAN obligatoire
+ */
+export interface QontoPaymentMethods {
+  iban: string; // IBAN Qonto valide (2 lettres + 25 chiffres)
+}
+
+/**
+ * Paramètres pour créer une facture client
+ * Doc: https://docs.qonto.com/api-reference/business-api/expense-management/client-quotes-notes/client-invoices/create-a-client-invoice
+ */
+export interface CreateClientInvoiceParams {
+  clientId: string;
+  currency?: string; // Défaut: EUR (seule devise supportée)
+  issueDate: string; // YYYY-MM-DD - Date d'émission
+  dueDate: string; // YYYY-MM-DD - Date d'échéance (anciennement paymentDeadline)
+  paymentMethods: QontoPaymentMethods; // OBLIGATOIRE - Objet avec IBAN
+  performanceStartDate?: string; // YYYY-MM-DD
+  performanceEndDate?: string; // YYYY-MM-DD
+  purchaseOrderNumber?: string;
+  number?: string; // Optionnel - Qonto génère si non fourni (max 40 chars)
+  header?: string;
+  footer?: string;
+  termsAndConditions?: string;
+  items: CreateInvoiceItemParams[];
+}
+
+/**
+ * Prix avec devise (format Qonto)
+ */
+export interface QontoAmount {
+  value: string; // Décimal en string, ex: "150.00"
+  currency: string; // ISO 4217, ex: "EUR"
+}
+
+/**
+ * Paramètres pour un item de facture
+ */
+export interface CreateInvoiceItemParams {
+  title: string; // Max 40 chars
+  description?: string;
+  quantity: string; // Décimal en string, ex: "2.5"
+  unit?: string; // Ex: "hour", "piece", "kg"
+  unitPrice: QontoAmount; // Prix unitaire HT avec devise
+  vatRate: string; // Décimal en string, ex: "0.20" pour 20%
+}
+
+// =====================================================================
+// SUPPLIER INVOICES (Factures fournisseurs)
+// =====================================================================
+
+/**
+ * Paramètres pour upload bulk de factures fournisseurs
+ * Doc: https://docs.qonto.com/api-reference/business-api/expense-management/supplier-invoices/create-supplier-invoices
+ */
+export interface UploadSupplierInvoiceParams {
+  file: Blob | File;
+  idempotencyKey: string; // UUID unique pour éviter doublons
+}
+
+/**
+ * Résultat d'un upload de facture fournisseur
+ */
+export interface QontoSupplierInvoice {
+  id: string;
+  invoice_number?: string;
+  supplier_name?: string;
+  total_amount?: QontoAmount;
+  status: 'to_review' | 'to_pay' | 'paid' | 'canceled';
+}
+
+/**
+ * Résultat du bulk upload de factures fournisseurs
+ */
+export interface UploadSupplierInvoicesResult {
+  supplier_invoices: QontoSupplierInvoice[];
+  errors: Array<{
+    idempotency_key?: string;
+    message: string;
+    details?: unknown;
+  }>;
+}
+
+export interface CreateClientParams {
+  name: string;
+  email?: string;
+  currency?: string;
+  vatNumber?: string;
+  address?: {
+    streetAddress?: string;
+    city?: string;
+    zipCode?: string;
+    countryCode?: string;
+  };
+  phone?: string;
+  locale?: string;
+}
+
+// =====================================================================
+// SYNC RESULTS (Résultats de synchronisation)
+// =====================================================================
+
+export interface QontoSyncResult {
+  success: boolean;
+  syncType: 'transactions' | 'invoices' | 'clients' | 'attachments';
+  syncDirection: 'pull' | 'push';
+  itemsProcessed: number;
+  itemsCreated: number;
+  itemsUpdated: number;
+  itemsFailed: number;
+  errors?: Array<{
+    item_id?: string;
+    error: string;
+    details?: unknown;
+  }>;
+  syncedAt: Date;
 }

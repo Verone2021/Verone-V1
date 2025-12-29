@@ -621,11 +621,13 @@ export function SalesOrderFormModal({
 
   // Ajouter un produit au panier LinkMe
   const addLinkMeProduct = (item: SelectionItem) => {
-    // Calculer le prix affilié HT: base_price × (1 + commission_rate + margin_rate)
-    // Exemple: 135 × (1 + 0.10 + 0.15) = 135 × 1.25 = 168.75€
+    // Calculer le prix affilie HT avec TAUX DE MARQUE
+    // Formule: base_price / (1 - marginRate) × (1 + commissionRate)
+    // Exemple: 100 / (1 - 0.15) × (1 + 0.10) = 117.65 × 1.10 = 129.41EUR
     const commissionRate = (item.commission_rate || 0) / 100;
     const marginRate = (item.margin_rate || 0) / 100;
-    const sellingPrice = item.base_price_ht * (1 + commissionRate + marginRate);
+    const sellingPrice =
+      (item.base_price_ht / (1 - marginRate)) * (1 + commissionRate);
 
     const newItem: LinkMeCartItem = {
       id: `${item.product_id}-${Date.now()}`,
@@ -1448,16 +1450,15 @@ export function SalesOrderFormModal({
                       ) : (
                         <div className="grid gap-3 max-h-80 overflow-y-auto pr-2">
                           {(linkmeSelectionDetail?.items || []).map(item => {
-                            // Prix affilié = base_price × (1 + commission_rate + margin_rate)
+                            // Prix affilie avec TAUX DE MARQUE
+                            // Formule: base_price / (1 - marginRate) × (1 + commissionRate)
                             // commission_rate et margin_rate sont en POURCENTAGE (10 = 10%)
-                            // IMPORTANT: Toujours recalculer le prix (ne pas utiliser selling_price_ht qui peut être obsolète)
-                            // Exemple: 135 × (1 + 0.10 + 0.15) = 168.75€
                             const commissionRate =
                               (item.commission_rate || 0) / 100;
                             const marginRate = (item.margin_rate || 0) / 100;
                             const sellingPrice =
-                              item.base_price_ht *
-                              (1 + commissionRate + marginRate);
+                              (item.base_price_ht / (1 - marginRate)) *
+                              (1 + commissionRate);
                             const marginPercent = (
                               item.margin_rate || 0
                             ).toFixed(0);
@@ -2268,13 +2269,14 @@ export function SalesOrderFormModal({
               ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                   {previewSelection.items.map(item => {
-                    // Prix affilié = base_price × (1 + commission_rate + margin_rate)
+                    // Prix affilie avec TAUX DE MARQUE
+                    // Formule: base_price / (1 - marginRate) × (1 + commissionRate)
                     // commission_rate et margin_rate sont en POURCENTAGE (10 = 10%)
-                    // IMPORTANT: Toujours recalculer le prix (ne pas utiliser selling_price_ht qui peut être obsolète)
                     const commissionRate = (item.commission_rate || 0) / 100;
                     const marginRate = (item.margin_rate || 0) / 100;
                     const sellingPrice =
-                      item.base_price_ht * (1 + commissionRate + marginRate);
+                      (item.base_price_ht / (1 - marginRate)) *
+                      (1 + commissionRate);
                     return (
                       <div
                         key={item.id}

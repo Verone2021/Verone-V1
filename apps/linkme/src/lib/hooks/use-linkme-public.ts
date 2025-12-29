@@ -1,6 +1,9 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import { createClient } from '@verone/utils/supabase/client';
+
+const supabase = createClient();
 
 import type {
   SelectionWithAffiliate,
@@ -8,9 +11,6 @@ import type {
   AffiliateWithSelections,
   LinkMeAffiliate,
 } from '../../types';
-import { createClient } from '../supabase';
-
-const supabase = createClient();
 
 /**
  * Hook: Récupère les sélections vedettes pour la page d'accueil
@@ -112,7 +112,8 @@ export function useAffiliateBySlug(slug: string) {
 
       return {
         ...(affiliate as unknown as LinkMeAffiliate),
-        selections: selections || [],
+        selections: (selections ||
+          []) as unknown as AffiliateWithSelections['selections'],
         selections_count: selections?.length || 0,
       };
     },
@@ -229,7 +230,8 @@ export function useSelectionWithProducts(
  */
 export function useIncrementSelectionViews() {
   return async (selectionId: string) => {
-    const { error } = await supabase.rpc('increment_selection_views', {
+    // Cast as any car RPC non typée dans les types générés
+    const { error } = await (supabase as any).rpc('increment_selection_views', {
       p_selection_id: selectionId,
     });
 
@@ -308,9 +310,13 @@ export function useVisibleSuppliers() {
         return [];
       }
 
-      // Récupérer les supplier_id uniques
+      // Récupérer les supplier_id uniques (filtrer les nulls)
       const supplierIds = [
-        ...new Set(products.map(p => p.supplier_id).filter(Boolean)),
+        ...new Set(
+          products
+            .map(p => p.supplier_id)
+            .filter((id): id is string => id !== null)
+        ),
       ];
 
       if (supplierIds.length === 0) {

@@ -44,15 +44,26 @@ jobs:
         with:
           version: latest
 
+      - name: 🗄️ Check Supabase Secrets
+        id: check-secrets
+        run: |
+          if [ -z "${{ secrets.SUPABASE_ACCESS_TOKEN }}" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "::warning::SUPABASE_ACCESS_TOKEN secret not configured. Skipping DB audit."
+            echo "Required secrets: SUPABASE_ACCESS_TOKEN, DATABASE_URL"
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: 🗄️ Connect to Supabase Remote
+        if: steps.check-secrets.outputs.skip != 'true'
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_REF: aorroydfjsrygmosnzrl
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           echo "Connecting to remote Supabase project: $SUPABASE_PROJECT_REF"
-          echo "✅ Using production database (eu-west-3)"
-          # Configuration remote - pas de Docker nécessaire
+          echo "Using production database (eu-west-3)"
           npx supabase link --project-ref $SUPABASE_PROJECT_REF
 
       - name: 📁 Ensure reports directory exists
@@ -60,9 +71,16 @@ jobs:
 
       - name: 🔍 Run Database Audit
         id: audit
+        if: steps.check-secrets.outputs.skip != 'true'
         run: |
           node tools/scripts/audit-database.js --ci --report=both
         continue-on-error: true
+
+      - name: Skip Database Audit
+        if: steps.check-secrets.outputs.skip == 'true'
+        run: |
+          echo "::notice::Database audit skipped - secrets not configured"
+          echo "To enable: add SUPABASE_ACCESS_TOKEN and DATABASE_URL secrets"
 
       - name: 📊 Upload Audit Reports
         if: always()

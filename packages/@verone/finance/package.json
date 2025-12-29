@@ -32,6 +32,11 @@
       "import": "./src/hooks/index.ts",
       "require": "./src/hooks/index.ts"
     },
+    "./components": {
+      "types": "./src/components/index.ts",
+      "import": "./src/components/index.ts",
+      "require": "./src/components/index.ts"
+    },
     "./components/*": {
       "types": "./src/components/*/index.ts",
       "import": "./src/components/*/index.ts",
@@ -41,6 +46,11 @@
       "types": "./src/utils/index.ts",
       "import": "./src/utils/index.ts",
       "require": "./src/utils/index.ts"
+    },
+    "./services": {
+      "types": "./src/services/index.ts",
+      "import": "./src/services/index.ts",
+      "require": "./src/services/index.ts"
     }
   }
 }
