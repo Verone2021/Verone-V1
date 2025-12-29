@@ -58,6 +58,10 @@ interface OrderHeader {
   payment_terms?: string | null;
   tax_rate?: number;
   eco_tax_vat_rate?: number | null;
+  // 🆕 Info créateur
+  creator_name?: string;
+  creator_email?: string;
+  channel_name?: string;
 }
 
 const statusLabels: Record<string, string> = {
@@ -224,7 +228,7 @@ export function UniversalOrderDetailsModal({
           const { data: order, error: orderError } = (await supabase
             .from('sales_orders')
             .select(
-              'id, order_number, status, created_at, expected_delivery_date, total_ttc, customer_id, customer_type, billing_address, shipping_address, payment_terms, tax_rate, eco_tax_vat_rate'
+              'id, order_number, status, created_at, expected_delivery_date, total_ttc, customer_id, customer_type, billing_address, shipping_address, payment_terms, tax_rate, eco_tax_vat_rate, created_by, channel_id, sales_channels!left(id, name, code)'
             )
             .eq('id', orderId)
             .single()) as any;
@@ -256,6 +260,27 @@ export function UniversalOrderDetailsModal({
               : 'Particulier inconnu';
           }
 
+          // 🆕 Récupérer info créateur via RPC
+          let creatorName = '';
+          let creatorEmail = '';
+
+          if (order.created_by) {
+            const { data: creatorInfo } = await (supabase.rpc as any)(
+              'get_user_info',
+              { p_user_id: order.created_by }
+            );
+
+            if (creatorInfo && creatorInfo.length > 0) {
+              const firstName = creatorInfo[0].first_name || 'Utilisateur';
+              const lastName = creatorInfo[0].last_name || '';
+              creatorName = `${firstName} ${lastName}`.trim();
+              creatorEmail = creatorInfo[0].email || '';
+            }
+          }
+
+          // 🆕 Récupérer canal de vente
+          const channelName = order.sales_channels?.name || '';
+
           setOrderHeader({
             id: order.id,
             order_number: order.order_number,
@@ -273,6 +298,9 @@ export function UniversalOrderDetailsModal({
             payment_terms: order.payment_terms,
             tax_rate: order.tax_rate,
             eco_tax_vat_rate: order.eco_tax_vat_rate,
+            creator_name: creatorName,
+            creator_email: creatorEmail,
+            channel_name: channelName,
           });
         } else if (orderType === 'purchase') {
           // Récupérer Purchase Order SANS items
@@ -501,6 +529,38 @@ export function UniversalOrderDetailsModal({
                         </p>
                       </div>
                     </div>
+                    {orderHeader.creator_name && (
+                      <div className="flex items-start gap-3">
+                        <User className="h-5 w-5 text-gray-400 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">
+                            Créateur
+                          </p>
+                          <p className="text-sm text-gray-900">
+                            {orderHeader.creator_name}
+                            {orderHeader.creator_email && (
+                              <span className="text-gray-500">
+                                {' '}
+                                ({orderHeader.creator_email})
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {orderHeader.channel_name && (
+                      <div className="flex items-start gap-3">
+                        <ShoppingCart className="h-5 w-5 text-gray-400 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">
+                            Source
+                          </p>
+                          <p className="text-sm text-gray-900">
+                            {orderHeader.channel_name}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

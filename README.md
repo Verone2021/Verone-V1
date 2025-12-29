@@ -1,399 +1,308 @@
-# 🏢 Vérone Back Office
+# Verone
 
-**CRM/ERP modulaire** pour décoration et mobilier d'intérieur haut de gamme.
-
-[![Next.js](https://img.shields.io/badge/Next.js-15.2-black?style=flat&logo=next.js)](https://nextjs.org/)
-[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL_15-green?style=flat&logo=supabase)](https://supabase.com/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
-[![Vercel](https://img.shields.io/badge/Deployed_on-Vercel-black?style=flat&logo=vercel)](https://vercel.com/)
+Monorepo CRM/ERP pour decoration et mobilier d'interieur haut de gamme.
 
 ---
 
-## 🚀 Quick Start
+## Architecture Overview
+
+```mermaid
+graph TB
+    subgraph Apps["Applications Next.js 15"]
+        BO["Back-Office<br/>:3000"]
+        LM["LinkMe<br/>:3002"]
+        SI["Site Internet<br/>:3001"]
+    end
+
+    subgraph Packages["26 Packages @verone"]
+        CORE["Core: types, utils, ui, hooks"]
+        BIZ["Business: products, orders, stock, customers"]
+        INT["Integrations: Google, Qonto, Abby"]
+    end
+
+    subgraph Supabase["Supabase PostgreSQL"]
+        DB[("74 Tables")]
+        AUTH["Auth + RLS"]
+    end
+
+    BO --> CORE
+    LM --> CORE
+    SI --> CORE
+    CORE --> BIZ
+    BIZ --> DB
+    BIZ --> AUTH
+    INT --> DB
+```
+
+### Repo Map
+
+```
+verone-back-office/
+├── apps/                       # 3 applications Next.js 15
+│   ├── back-office/            # CRM/ERP (port 3000)
+│   ├── linkme/                 # Affiliation (port 3002)
+│   └── site-internet/          # E-commerce B2C (port 3001)
+├── packages/@verone/           # 26 packages partages
+│   ├── types/                  # Types TypeScript + Supabase
+│   ├── ui/                     # 54 composants shadcn/ui
+│   ├── utils/                  # Helpers (logger, excel, upload)
+│   ├── products/               # Gestion produits
+│   ├── orders/                 # Commandes
+│   ├── stock/                  # Stock & alertes
+│   └── ...                     # +20 autres packages
+├── supabase/
+│   └── migrations/             # 74 migrations SQL
+├── docs/
+│   ├── current/                # 12 docs canoniques
+│   └── business-rules/         # 93 dossiers regles metier
+├── tests/                      # E2E Playwright
+└── .github/workflows/          # 8 pipelines CI/CD
+```
+
+---
+
+## Applications
+
+| App | Port | Public | Description | Routes Principales |
+|-----|------|--------|-------------|-------------------|
+| **back-office** | 3000 | Admin, Gestionnaires | CRM/ERP central - pilotage de l'activite | `/dashboard`, `/produits/catalogue`, `/commandes`, `/stocks`, `/finance` |
+| **linkme** | 3002 | Affilies, Partenaires | Plateforme commissions & selections | `/dashboard`, `/ma-selection`, `/commissions`, `/statistiques` |
+| **site-internet** | 3001 | Clients B2C | E-commerce luxury mobilier | `/catalogue`, `/produit/[id]`, `/panier`, `/checkout` |
+
+### Details par Application
+
+**Back-Office** (CRM/ERP)
+- 28 modules metier : produits, commandes, stocks, finance, contacts
+- 4 canaux de vente : LinkMe, Site Internet, Google Merchant, Prix clients
+- Integrations : Google Merchant, Qonto, Revolut, Analytics
+
+**LinkMe** (Affiliation)
+- Dashboard affilie avec KPIs
+- Gestion selections produits (drag & drop)
+- Suivi commissions et demandes de paiement
+- Analytics performance (Tremor charts)
+
+**Site Internet** (E-commerce)
+- Design luxury (Playfair Display + Inter)
+- Catalogue produits avec variantes
+- Panier et checkout
+- Animations Framer Motion
+
+---
+
+## Data Layer (Supabase)
+
+### Tables Principales
+
+| Domaine | Tables | Description |
+|---------|--------|-------------|
+| **Produits** | `products`, `categories`, `collections`, `product_images` | Catalogue et organisation |
+| **Commandes** | `sales_orders`, `purchase_orders`, `sample_orders` | Ventes et achats |
+| **Stock** | `stock_movements`, `stock_alert_tracking`, `stock_reservations` | Gestion inventaire |
+| **Clients** | `individual_customers`, `contacts`, `customer_groups` | CRM |
+| **Finance** | `invoices`, `payments`, `bank_transactions` | Comptabilite |
+| **LinkMe** | `linkme_affiliates`, `linkme_commissions`, `linkme_selections` | Affiliation |
+| **Auth** | `user_app_roles`, `user_profiles`, `user_sessions` | Utilisateurs |
+
+### Authentification & RLS
+
+**Table centrale** : `user_app_roles`
+- Un utilisateur peut avoir un role par app (back-office, linkme, site-internet)
+- Roles back-office : `admin`, `manager`, `user`
+- Roles linkme : `enseigne_admin`, `organisation_admin`, `client`
+- RLS policies actives sur toutes les tables sensibles
+
+---
+
+## Getting Started
 
 ### Prerequisites
 
-- **Node.js** 18+ ([Download](https://nodejs.org/))
-- **Supabase** account ([Sign up](https://supabase.com/))
-- **Vercel** account (optional, for deployment)
+```
+node >= 20
+pnpm >= 10.13.1
+```
 
 ### Installation
 
 ```bash
-# Cloner le repository
-git clone https://github.com/Verone2021/Verone-V1.git
-cd Verone-V1
+# Clone
+git clone <repo-url>
+cd verone-back-office
 
-# Installer les dépendances
-npm install
+# Install dependencies
+pnpm install
 
-# Configurer les variables d'environnement
+# Configure environment
 cp .env.example .env.local
+# Editer .env.local avec vos credentials Supabase
+```
 
-# Configurer Supabase credentials dans .env.local
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+### Development
 
-# Lancer le serveur de développement
+```bash
+# Toutes les apps
 npm run dev
+
+# App specifique
+npm run dev --filter=back-office
+npm run dev --filter=linkme
+npm run dev --filter=site-internet
 ```
 
-Ouvrir [http://localhost:3000](http://localhost:3000) dans votre navigateur.
-
-### Configuration Database
+### Build & Validation
 
 ```bash
-# Appliquer les migrations Supabase
-supabase db push
-
-# Générer les types TypeScript
-supabase gen types typescript --local > apps/back-office/src/types/supabase.ts
+npm run build        # Build production
+npm run type-check   # Validation TypeScript
+npm run lint:fix     # Auto-fix ESLint
 ```
 
 ---
 
-## 📊 Tech Stack
+## Scripts & Commands
 
-### Frontend
+### Developpement
 
-- **Framework** : [Next.js 15](https://nextjs.org/) (App Router, React Server Components)
-- **UI Library** : [shadcn/ui](https://ui.shadcn.com/) + [Radix UI](https://www.radix-ui.com/)
-- **Styling** : [Tailwind CSS](https://tailwindcss.com/)
-- **State Management** : React Hooks + Server Actions
-- **Forms** : [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/)
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Demarre toutes les apps en mode dev |
+| `npm run build` | Build production |
+| `npm run type-check` | Validation TypeScript |
+| `npm run lint:fix` | Correction automatique ESLint |
 
-### Backend
+### Tests
 
-- **Database** : [Supabase](https://supabase.com/) (PostgreSQL 15)
-- **Auth** : Supabase Auth (JWT, RLS policies)
-- **Storage** : Supabase Storage (images, documents)
-- **Real-time** : Supabase Realtime (subscriptions)
+| Script | Description |
+|--------|-------------|
+| `npm run test:e2e` | Tests Playwright E2E |
+| `npm run test:e2e:critical` | Tests critiques uniquement |
+| `npm run test:e2e:headed` | Tests avec UI visible |
+| `npm run playwright:show-report` | Afficher rapport tests |
 
-### Testing & Quality
+### Audits Qualite
 
-- **Unit Tests** : [Vitest](https://vitest.dev/)
-- **E2E Tests** : [Playwright](https://playwright.dev/)
-- **Component Docs** : [Storybook](https://storybook.js.org/)
-- **Type Safety** : [TypeScript](https://www.typescriptlang.org/) (strict mode)
-- **Linting** : [ESLint](https://eslint.org/)
+| Script | Description |
+|--------|-------------|
+| `npm run audit:all` | Tous les audits |
+| `npm run audit:duplicates` | Code duplique (jscpd) |
+| `npm run audit:cycles` | Cycles dependencies (madge) |
+| `npm run audit:deadcode` | Code mort (knip) |
 
-### Deployment
+### Validations
 
-- **Hosting** : [Vercel](https://vercel.com/) (auto-deploy `production-stable` branch)
-- **CI/CD** : GitHub Actions (PR validation, tests, audits)
-- **Analytics** : Vercel Analytics
-
----
-
-## 🎯 Project Status
-
-### ✅ Phase 4 : Multi-Frontends Turborepo (Production)
-
-**Date** : 2025-11-08
-**État** : ✅ **Production multi-apps** avec monorepo Turborepo
-
-**3 Applications Déployées** :
-
-#### 1. **back-office** (Port 3000) - CRM/ERP Complet
-
-- 🔐 **Authentification** (`/login`, `/profile`) - Auth Supabase + RLS policies
-- 📊 **Dashboard** (`/dashboard`) - KPIs temps réel, métriques, notifications
-- 🏢 **Organisations & Contacts** (`/contacts-organisations`)
-  - Customers (B2B + B2C)
-  - Suppliers (fournisseurs)
-  - Partners (apporteurs d'affaires)
-  - Contacts (liés organisations)
-- 📦 **Produits** (`/produits`)
-  - Catalogue produits (31 routes)
-  - Sourcing & fournisseurs
-  - Variantes & packages
-  - Images & caractéristiques
-- 📊 **Stocks** (`/stocks`)
-  - Mouvements (entrées, sorties, backorders)
-  - Alertes intelligentes (seuils dynamiques)
-  - Inventaire & réceptions
-  - Expéditions
-- 🛒 **Commandes** (`/commandes`)
-  - Clients (B2B, B2C)
-  - Fournisseurs (approvisionnement)
-  - Expéditions & tracking
-- 💰 **Finance** (`/finance`, `/factures`, `/tresorerie`)
-  - Rapprochement bancaire automatique
-  - Trésorerie & prévisions
-  - Factures clients/fournisseurs
-- 🌐 **Canaux Vente** (`/canaux-vente`)
-  - Google Merchant Center (feeds XML)
-  - Prix clients multi-canal
-  - Intégrations externes
-- ⚙️ **Administration** (`/admin`)
-  - Users management (4 rôles)
-  - Activity tracking (RGPD-compliant)
-
-#### 2. **site-internet** (Port 3001) - E-commerce Public
-
-- 🛍️ **Catalogue produits** avec filtres avancés
-- 📦 **Pages produits** détaillées (images, specs, prix)
-- 🛒 **Panier & Checkout** sécurisé
-- 👤 **Compte client** (commandes, favoris)
-
-#### 3. **linkme** (Port 3002) - Commissions Apporteurs
-
-- 💼 **Suivi ventes** apportées par vendeur
-- 💰 **Calcul commissions** automatique
-- 📊 **Statistiques performances** détaillées
-
-**Architecture Turborepo** :
-
-- 🏗️ **25 packages** @verone/\* partagés (monorepo)
-- 🎨 **86 composants** React documentés (54 UI + 32 Products)
-- 📦 **3 apps** déployées (back-office, site-internet, linkme)
-- 🗄️ **78 tables** database (schema stable)
-- 🔧 **158 triggers** automatiques
-- 🛡️ **239 RLS policies** sécurité
-- 📝 **157 migrations** SQL
-
-**Packages @verone/\* Partagés** :
-
-- `@verone/ui` (54 composants Design System)
-- `@verone/products` (32 composants produits)
-- `@verone/orders`, `@verone/stock`, `@verone/customers`
-- `@verone/categories`, `@verone/collections`, `@verone/channels`
-- `@verone/dashboard`, `@verone/notifications`, `@verone/admin`
-- `@verone/types`, `@verone/utils`, `@verone/testing`
-- Plus 12 autres packages métiers
-
----
-
-### 📅 Roadmap Future (Q1-Q2 2026)
-
-**Modules Planifiés** :
-
-- 📊 **Analytics Avancées** - Business Intelligence, prédictions stock IA
-- 🤖 **Automatisations** - Workflows automatiques, triggers complexes
-- 📱 **Apps Mobiles** - React Native (iOS/Android) pour vendeurs terrain
-- 🔌 **APIs Publiques** - REST API + GraphQL pour intégrations partenaires
-- 🌍 **Multi-langues** - i18n (FR/EN/ES) pour marchés internationaux
-- 🎨 **White-Label** - Customisation marque pour clients B2B
-
-**Documentation Turborepo** : [`CLAUDE.md`](./CLAUDE.md) § Architecture Turborepo
-
----
-
-## 📚 Documentation
-
-### 📖 Documentation Exhaustive
-
-Le projet dispose d'une documentation complète dans le dossier [`/docs`](./docs/) :
-
-- **[Auth](./docs/auth/)** - Rôles, permissions, RLS policies
-- **[Database](./docs/database/)** - Schema (78 tables), triggers (158), functions (254)
-- **[Metrics](./docs/metrics/)** - KPI, calculs, documentation YAML
-- **[Workflows](./docs/workflows/)** - Business workflows détaillés
-- **[CI/CD](./docs/ci-cd/)** - Déploiement, rollback, validation
-- **[Business Rules](./docs/business-rules/)** - 93 dossiers règles métier (19 modules)
-
-### 🤖 Instructions Claude Code
-
-**[CLAUDE.md](./CLAUDE.md)** - Instructions complètes pour Claude Code :
-
-- Workflow Universel 2025 (Think → Test → Code → Re-test → Document → Commit)
-- Post-Production Workflows (smoke tests, health checks, canary deployments)
-- MCP Agents usage (Serena, Supabase, Playwright)
-- TypeScript Fixes workflow (clustering + batch corrections)
-- Branch Strategy (production-stable vs main)
-
-### 🎨 Design System
-
-**Design System V2** : [`apps/back-office/src/components/ui-v2/`](./apps/back-office/src/components/ui-v2/)
-
-- 270 composants React modulaires
-- shadcn/ui + Radix UI foundation
-- Storybook documentation (à venir)
-- Dark mode support
-
----
-
-## ⚡ Commandes Essentielles
-
-### Développement
-
-```bash
-npm run dev              # Next.js dev server (localhost:3000)
-npm run build            # Production build
-npm run start            # Production server
-npm run lint             # ESLint
-npm run type-check       # TypeScript check
-```
-
-### Testing
-
-```bash
-npm run test             # Unit tests (Vitest)
-npm run test:e2e         # E2E tests (Playwright)
-npm run test:critical    # Tests critiques (20 tests - 5min)
-npm run test:all         # Suite complète (677 tests - 45min)
-```
-
-### Audit & Quality
-
-```bash
-npm run audit:all        # Tous audits (duplicates, cycles, deadcode, spelling)
-npm run audit:duplicates # Code duplication (jscpd)
-npm run audit:cycles     # Circular dependencies (madge)
-npm run audit:deadcode   # Dead code detection (knip)
-npm run audit:spelling   # Spell checking (cspell)
-```
+| Script | Description |
+|--------|-------------|
+| `npm run validate:all` | Toutes les validations |
+| `npm run validate:types` | Alignement types DB |
+| `npm run validate:hooks` | Hooks dupliques |
+| `npm run check:console` | Erreurs console |
 
 ### Database
 
+| Script | Description |
+|--------|-------------|
+| `npm run generate:types` | Regenerer types Supabase |
+
+---
+
+## Documentation
+
+Documentation complete dans [`docs/`](./docs/README.md)
+
+### Documentation Canonique ([`docs/current/`](./docs/current/))
+
+| # | Fichier | Contenu |
+|---|---------|---------|
+| 01 | [quickstart.md](./docs/current/01-quickstart.md) | Demarrage rapide |
+| 02 | [architecture.md](./docs/current/02-architecture.md) | Turborepo, apps, packages |
+| 03 | [database.md](./docs/current/03-database.md) | Supabase, triggers, migrations |
+| 04 | [auth.md](./docs/current/04-auth.md) | Roles, permissions, RLS |
+| 05 | [api.md](./docs/current/05-api.md) | REST, RPC, webhooks |
+| 06 | [business-rules.md](./docs/current/06-business-rules.md) | Regles metier |
+| 07 | [deployment.md](./docs/current/07-deployment.md) | Vercel, CI/CD |
+| 08 | [integrations.md](./docs/current/08-integrations.md) | Google, Qonto, Abby |
+| 09 | [design-system.md](./docs/current/09-design-system.md) | Composants shadcn |
+| 10 | [testing.md](./docs/current/10-testing.md) | Playwright E2E |
+| 11 | [monitoring.md](./docs/current/11-monitoring.md) | Observabilite |
+| 12 | [security.md](./docs/current/12-security.md) | RLS, secrets, RGPD |
+
+---
+
+## Security
+
+- **Secrets** : Variables d'environnement Vercel (jamais en code)
+- **`.env`** : Gitignored, ne jamais commit
+- **RLS** : Row Level Security actif sur tables sensibles
+- **RGPD** : Conformite documentee dans [`docs/legal/`](./docs/legal/)
+
+---
+
+## CI/CD
+
+8 workflows GitHub Actions dans [`.github/workflows/`](./.github/workflows/)
+
+| Workflow | Trigger | Description |
+|----------|---------|-------------|
+| `deploy-production.yml` | Push main | Deploy Vercel + tests E2E |
+| `pr-validation.yml` | PR main | Validation TypeScript, lint, tests critiques |
+| `typescript-quality.yml` | Push/PR | Check TypeScript (limite 1000 errors) |
+
+### Pipeline Production
+
+```
+Push main → Quality Gates → E2E Tests → Security Scan → Deploy Staging → Deploy Production
+```
+
+---
+
+## Contributing
+
+### Workflow Git
+
 ```bash
-supabase db push         # Appliquer migrations
-supabase gen types typescript --local > apps/back-office/src/types/supabase.ts
-supabase db reset        # Reset database (dev only)
+# 1. Creer branche
+git checkout -b feature/ma-feature
+
+# 2. Developper
+# ...
+
+# 3. Valider
+npm run build      # Doit passer
+npm run type-check # Doit passer
+
+# 4. Commit (avec autorisation)
+git add .
+git commit -m "feat: description"
+
+# 5. Push & PR
+git push -u origin feature/ma-feature
+# Creer PR vers main
 ```
 
----
+### Regles
 
-## 🎯 Success Metrics (SLOs)
-
-Le projet maintient des standards de qualité stricts :
-
-- ✅ **Zero Console Errors** - Tolérance zéro (validation automatique PR)
-- ✅ **Performance** - Dashboard <2s LCP, Pages <3s
-- ✅ **Build Time** - <20s production build
-- ✅ **Test Coverage** - >80% nouveaux modules
-- ✅ **Type Safety** - TypeScript strict mode, 0 `any`
-
-**Monitoring** : Vercel Analytics + Lighthouse CI (à implémenter)
+- **Build obligatoire** avant commit
+- **PR review** requise pour merge
+- **Auto-deploy** sur merge vers main
 
 ---
 
-## 🤝 Contributing
+## Tech Stack
 
-### Workflow Développement
-
-1. **Créer une branche** : `git checkout -b feature/nom-feature`
-2. **Suivre Workflow Universel** : Voir [CLAUDE.md](./CLAUDE.md) § Workflow Universel 2025
-3. **Tests** : Valider `npm run test:critical` passe (console = 0 errors)
-4. **Build** : Valider `npm run build` passe
-5. **Pull Request** : Créer PR vers `main`
-6. **Validation** : PR validation automatique (15min) via GitHub Actions
-7. **Merge** : Après review + tests OK
-8. **Deploy** : Auto-deploy Vercel après merge `main` → `production-stable`
-
-### Standards Code
-
-- **Language** : Français (messages, docs, commit messages) | English (code, variables)
-- **Commit Format** : Conventional Commits (`feat:`, `fix:`, `docs:`, etc.)
-- **TypeScript** : Strict mode, pas de `any`
-- **Testing** : Tests critiques AVANT commit
-
-**Détails** : [CLAUDE.md](./CLAUDE.md) § Git Workflow + Post-Production Workflows
+| Categorie | Technologies |
+|-----------|--------------|
+| **Framework** | Next.js 15.5.7, React 18.3.1, TypeScript 5.3.3 |
+| **UI** | shadcn/ui, Radix UI, Tailwind CSS 3.4.1 |
+| **Database** | Supabase (PostgreSQL), @supabase/ssr |
+| **Validation** | Zod 4.1.12, React Hook Form |
+| **State** | TanStack Query 5.20.1, SWR 2.3.6 |
+| **Monorepo** | Turborepo 2.6.0, pnpm 10.13.1 |
+| **Testing** | Playwright 1.55.0 |
+| **Deploy** | Vercel (auto-deploy main) |
 
 ---
 
-## 🏗️ Architecture
+**Proprietary** - Verone 2025. Tous droits reserves.
 
-### Structure Repository
-
-```
-verone-back-office-V1/
-├── apps/                    # Applications Turborepo (3 apps)
-│   ├── back-office/         # CRM/ERP complet (port 3000)
-│   │   ├── src/app/         # Next.js App Router (71 routes)
-│   │   ├── src/components/  # React components
-│   │   │   ├── ui/          # shadcn/ui base
-│   │   │   └── ui-v2/       # Design System V2
-│   │   ├── src/hooks/       # Custom hooks
-│   │   ├── src/lib/         # Utils, Supabase client
-│   │   └── src/types/       # TypeScript types
-│   ├── site-internet/       # E-commerce public (port 3001)
-│   └── linkme/              # Commissions vendeurs (port 3002)
-├── packages/                # 25 packages @verone/* partagés
-│   └── @verone/
-│       ├── ui/              # 54 composants Design System
-│       ├── products/        # 32 composants produits
-│       ├── orders/          # Composants commandes
-│       ├── stock/           # Composants stock
-│       ├── customers/       # Composants clients
-│       ├── categories/      # Composants catégories
-│       ├── types/           # Types partagés
-│       ├── utils/           # Utils partagés
-│       └── ... (17 autres packages)
-├── docs/                    # Documentation exhaustive
-│   ├── auth/
-│   ├── database/            # 78 tables, 158 triggers, 239 RLS policies
-│   ├── metrics/             # KPI documentation
-│   ├── workflows/
-│   ├── ci-cd/
-│   └── business-rules/      # 93 dossiers (19 modules)
-├── .claude/
-│   ├── contexts/            # Contextes spécialisés
-│   └── commands/            # Custom slash commands
-├── supabase/migrations/     # Database migrations (157 fichiers)
-├── scripts/                 # Automation scripts
-└── .github/workflows/       # CI/CD GitHub Actions
-```
-
-### Database Schema
-
-**PostgreSQL 15** via Supabase :
-
-- **78 tables** - Architecture relationnelle normalisée
-- **158 triggers** - Automation (stock, pricing, audit trails)
-- **239 RLS policies** - Row-Level Security (auth granulaire)
-- **254 functions** - Business logic database-side
-
-**Documentation** : [`docs/database/SCHEMA-REFERENCE.md`](./docs/database/SCHEMA-REFERENCE.md)
-
----
-
-## 📄 License
-
-**Proprietary** - Vérone © 2025
-
-Ce projet est la propriété exclusive de Vérone. Tous droits réservés.
-Reproduction, distribution ou utilisation interdite sans autorisation écrite.
-
----
-
-## 📞 Contact & Support
-
-**Mainteneur** : Romeo Dos Santos
-**Email** : [contact@verone.fr](mailto:contact@verone.fr)
-**Website** : [https://verone.fr](https://verone.fr)
-
-### Issues & Bugs
-
-Pour signaler un bug ou demander une feature :
-
-1. Vérifier [Issues existants](https://github.com/Verone2021/Verone-V1/issues)
-2. Créer nouvel issue avec template approprié
-3. Inclure :
-   - Description claire du problème
-   - Steps to reproduce (si bug)
-   - Screenshots (si UI)
-   - Console errors (si applicable)
-
-### Documentation Additionnelle
-
-- **Quick Start Guide** : [`docs/guides/quickstart.md`](./docs/guides/quickstart.md)
-- **Troubleshooting** : [`docs/guides/troubleshooting.md`](./docs/guides/troubleshooting.md)
-- **API Reference** : [`docs/api/README.md`](./docs/api/README.md)
-
----
-
-**Version** : 3.1.0 (Phase 1 Production)
-**Dernière mise à jour** : 2025-10-30
-**Status** : ✅ Production-ready
-
----
-
-<div align="center">
-
-**Built with ❤️ by Vérone Team**
-
-[Documentation](./docs/) • [CLAUDE.md](./CLAUDE.md) • [Changelog](./CHANGELOG.md)
-
-</div>
+*Version 5.0.0 - Commit: 0f65bef1 - 2025-12-17*

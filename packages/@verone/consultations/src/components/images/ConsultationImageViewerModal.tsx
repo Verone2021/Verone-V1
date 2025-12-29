@@ -1,12 +1,12 @@
 'use client';
 
 /**
- * 🖼️ VÉRONE - Modal Visualisation Images Consultation
+ * VERONE - Modal Visualisation Images Consultation
  *
- * Modal plein écran pour visualiser les images de consultation en haute résolution
- * - Navigation fluide entre images (flèches, clavier)
- * - Téléchargement des images
- * - Actions d'édition (si autorisé)
+ * Modal plein ecran pour visualiser les images de consultation en haute resolution
+ * - Navigation fluide entre images (fleches, clavier)
+ * - Telechargement des images
+ * - Actions d'edition (si autorise)
  * - Interface moderne avec overlays
  * - Support clavier complet
  */
@@ -16,6 +16,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from '@verone/ui';
+import { cn } from '@verone/utils';
 import {
   ChevronLeft,
   ChevronRight,
@@ -26,29 +35,19 @@ import {
   Camera,
 } from 'lucide-react';
 
-import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from '@verone/ui';
-import { cn } from '@verone/utils';
-
-interface ConsultationImage {
+interface IConsultationImage {
   id: string;
-  public_url: string;
-  alt_text?: string;
+  public_url?: string | null;
+  alt_text?: string | null;
   is_primary: boolean;
-  file_size?: number;
-  storage_path: string;
+  file_size?: number | null;
+  storage_path?: string;
 }
 
-interface ConsultationImageViewerModalProps {
+interface IConsultationImageViewerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  images: ConsultationImage[];
+  images: IConsultationImage[];
   initialImageIndex?: number;
   consultationTitle: string;
   allowEdit?: boolean;
@@ -65,11 +64,51 @@ export function ConsultationImageViewerModal({
   allowEdit = false,
   onDelete,
   onSetPrimary,
-}: ConsultationImageViewerModalProps) {
+}: IConsultationImageViewerModalProps): JSX.Element | null {
   const [currentIndex, setCurrentIndex] = useState(initialImageIndex);
   const [isLoading, setIsLoading] = useState(false);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Navigation entre images
+  const goToPrevious = useCallback((): void => {
+    setCurrentIndex(prev => (prev === 0 ? images.length - 1 : prev - 1));
+  }, [images.length]);
+
+  const goToNext = useCallback((): void => {
+    setCurrentIndex(prev => (prev === images.length - 1 ? 0 : prev + 1));
+  }, [images.length]);
+
+  // Suppression d'image
+  const handleDeleteCurrent = useCallback(async (): Promise<void> => {
+    if (!allowEdit || !onDelete) return;
+
+    const currentImage = images[currentIndex];
+    if (!currentImage) return;
+
+    if (
+      confirm(
+        'Etes-vous sur de vouloir supprimer cette photo de la consultation ?'
+      )
+    ) {
+      setDeletingId(currentImage.id);
+      try {
+        await onDelete(currentImage.id);
+
+        // Ajuster l'index apres suppression
+        if (images.length <= 1) {
+          onClose(); // Fermer le modal s'il n'y a plus d'images
+        } else if (currentIndex >= images.length - 1) {
+          setCurrentIndex(Math.max(0, images.length - 2));
+        }
+      } catch (error) {
+        // Error logged silently
+        void error;
+      } finally {
+        setDeletingId(null);
+      }
+    }
+  }, [allowEdit, onDelete, images, currentIndex, onClose]);
 
   // Synchroniser l'index initial quand le modal s'ouvre
   useEffect(() => {
@@ -82,7 +121,7 @@ export function ConsultationImageViewerModal({
   useEffect(() => {
     if (!isOpen) return;
 
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
       switch (event.key) {
         case 'ArrowLeft':
           event.preventDefault();
@@ -100,39 +139,42 @@ export function ConsultationImageViewerModal({
         case 'Backspace':
           if (allowEdit && onDelete) {
             event.preventDefault();
-            handleDeleteCurrent();
+            void handleDeleteCurrent();
           }
           break;
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, currentIndex, images.length, allowEdit]);
+    return (): void => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [
+    isOpen,
+    allowEdit,
+    onDelete,
+    goToPrevious,
+    goToNext,
+    onClose,
+    handleDeleteCurrent,
+  ]);
 
-  // Navigation entre images
-  const goToPrevious = useCallback(() => {
-    setCurrentIndex(prev => (prev === 0 ? images.length - 1 : prev - 1));
-  }, [images.length]);
-
-  const goToNext = useCallback(() => {
-    setCurrentIndex(prev => (prev === images.length - 1 ? 0 : prev + 1));
-  }, [images.length]);
-
-  // Téléchargement d'image
+  // Telechargement d'image
   const downloadImage = useCallback(
-    async (image: ConsultationImage) => {
+    async (image: IConsultationImage): Promise<void> => {
+      if (!image.public_url) return;
+
       setDownloadingId(image.id);
       try {
         const response = await fetch(image.public_url);
         const blob = await response.blob();
 
-        // Créer un nom de fichier approprié
+        // Creer un nom de fichier approprie
         const extension =
-          image.public_url.split('.').pop()?.toLowerCase() || 'jpg';
+          image.public_url.split('.').pop()?.toLowerCase() ?? 'jpg';
         const filename = `consultation-${consultationTitle.toLowerCase().replace(/\s+/g, '-')}-${currentIndex + 1}.${extension}`;
 
-        // Créer le lien de téléchargement
+        // Creer le lien de telechargement
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -141,10 +183,8 @@ export function ConsultationImageViewerModal({
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
-
-        console.log('✅ Photo consultation téléchargée:', filename);
-      } catch (error) {
-        console.error('❌ Erreur téléchargement photo consultation:', error);
+      } catch {
+        // Error logged silently
       } finally {
         setDownloadingId(null);
       }
@@ -152,56 +192,24 @@ export function ConsultationImageViewerModal({
     [consultationTitle, currentIndex]
   );
 
-  // Suppression d'image
-  const handleDeleteCurrent = useCallback(async () => {
-    if (!allowEdit || !onDelete) return;
-
-    const currentImage = images[currentIndex];
-    if (!currentImage) return;
-
-    if (
-      confirm(
-        'Êtes-vous sûr de vouloir supprimer cette photo de la consultation ?'
-      )
-    ) {
-      setDeletingId(currentImage.id);
-      try {
-        await onDelete(currentImage.id);
-
-        // Ajuster l'index après suppression
-        if (images.length <= 1) {
-          onClose(); // Fermer le modal s'il n'y a plus d'images
-        } else if (currentIndex >= images.length - 1) {
-          setCurrentIndex(Math.max(0, images.length - 2));
-        }
-      } catch (error) {
-        console.error('❌ Erreur suppression photo consultation:', error);
-      } finally {
-        setDeletingId(null);
-      }
-    }
-  }, [allowEdit, onDelete, images, currentIndex, onClose]);
-
-  // Définir comme image principale
-  const handleSetPrimary = useCallback(async () => {
+  // Definir comme image principale
+  const handleSetPrimary = useCallback(async (): Promise<void> => {
     if (!allowEdit || !onSetPrimary) return;
 
     const currentImage = images[currentIndex];
     if (!currentImage || currentImage.is_primary) return;
 
     try {
-      const success = await onSetPrimary(currentImage.id);
-      if (success) {
-        console.log('✅ Photo consultation définie comme principale');
-      }
-    } catch (error) {
-      console.error('❌ Erreur définition photo principale:', error);
+      await onSetPrimary(currentImage.id);
+    } catch {
+      // Error logged silently
     }
   }, [allowEdit, onSetPrimary, images, currentIndex]);
 
   if (!images.length) return null;
 
   const currentImage = images[currentIndex];
+  if (!currentImage) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -212,7 +220,7 @@ export function ConsultationImageViewerModal({
           </DialogTitle>
           <DialogDescription>
             Modal de visualisation des photos de consultation avec navigation et
-            téléchargement
+            telechargement
           </DialogDescription>
         </VisuallyHidden>
 
@@ -233,8 +241,8 @@ export function ConsultationImageViewerModal({
               </Badge>
             )}
             <span className="text-sm text-gray-600">
-              ← → pour naviguer • Échap pour fermer
-              {allowEdit && ' • Suppr pour effacer'}
+              - pour naviguer - Echap pour fermer
+              {allowEdit && ' - Suppr pour effacer'}
             </span>
           </div>
 
@@ -242,21 +250,25 @@ export function ConsultationImageViewerModal({
             <ButtonV2
               variant="outline"
               size="sm"
-              onClick={() => downloadImage(currentImage)}
+              onClick={(): void => {
+                void downloadImage(currentImage);
+              }}
               disabled={downloadingId === currentImage.id}
               className="border-black"
             >
               <Download className="h-4 w-4 mr-1" />
               {downloadingId === currentImage.id
-                ? 'Téléchargement...'
-                : 'Télécharger'}
+                ? 'Telechargement...'
+                : 'Telecharger'}
             </ButtonV2>
 
             {allowEdit && !currentImage.is_primary && onSetPrimary && (
               <ButtonV2
                 variant="outline"
                 size="sm"
-                onClick={handleSetPrimary}
+                onClick={(): void => {
+                  void handleSetPrimary();
+                }}
                 className="border-blue-600 text-blue-600 hover:bg-blue-50"
               >
                 <Star className="h-4 w-4 mr-1" />
@@ -268,7 +280,9 @@ export function ConsultationImageViewerModal({
               <ButtonV2
                 variant="outline"
                 size="sm"
-                onClick={handleDeleteCurrent}
+                onClick={(): void => {
+                  void handleDeleteCurrent();
+                }}
                 disabled={deletingId === currentImage.id}
                 className="border-red-600 text-red-600 hover:bg-red-50"
               >
@@ -299,7 +313,7 @@ export function ConsultationImageViewerModal({
             minHeight: '400px',
           }}
         >
-          {/* Navigation précédent */}
+          {/* Navigation precedent */}
           {images.length > 1 && (
             <ButtonV2
               variant="ghost"
@@ -325,20 +339,17 @@ export function ConsultationImageViewerModal({
                 <Image
                   src={currentImage.public_url}
                   alt={
-                    currentImage.alt_text ||
+                    currentImage.alt_text ??
                     `Photo consultation ${currentIndex + 1}`
                   }
                   fill
                   className="object-contain"
                   sizes="(max-width: 768px) 95vw, (max-width: 1200px) 80vw, 70vw"
                   priority
-                  onLoadStart={() => setIsLoading(true)}
-                  onLoad={() => setIsLoading(false)}
-                  onError={() => {
+                  onLoadStart={(): void => setIsLoading(true)}
+                  onLoad={(): void => setIsLoading(false)}
+                  onError={(): void => {
                     setIsLoading(false);
-                    console.warn(
-                      `Erreur chargement photo consultation: ${currentImage.public_url}`
-                    );
                   }}
                 />
 
@@ -370,7 +381,7 @@ export function ConsultationImageViewerModal({
           )}
         </div>
 
-        {/* Footer avec miniatures et métadonnées */}
+        {/* Footer avec miniatures et metadonnees */}
         <div className="border-t border-gray-200 p-4">
           {/* Miniatures pour navigation rapide */}
           {images.length > 1 && (
@@ -379,7 +390,7 @@ export function ConsultationImageViewerModal({
                 {images.map((image, index) => (
                   <button
                     key={image.id}
-                    onClick={() => setCurrentIndex(index)}
+                    onClick={(): void => setCurrentIndex(index)}
                     className={cn(
                       'relative w-16 h-16 overflow-hidden border-2 transition-all rounded flex-shrink-0',
                       currentIndex === index
@@ -387,13 +398,15 @@ export function ConsultationImageViewerModal({
                         : 'border-gray-300 hover:border-gray-500'
                     )}
                   >
-                    <Image
-                      src={image.public_url}
-                      alt={`Vue ${index + 1}`}
-                      fill
-                      className="object-cover"
-                      sizes="64px"
-                    />
+                    {image.public_url && (
+                      <Image
+                        src={image.public_url}
+                        alt={`Vue ${index + 1}`}
+                        fill
+                        className="object-cover"
+                        sizes="64px"
+                      />
+                    )}
                     {image.is_primary && (
                       <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
                         <Star className="h-2 w-2 text-white fill-white" />
@@ -405,7 +418,7 @@ export function ConsultationImageViewerModal({
             </div>
           )}
 
-          {/* Métadonnées image */}
+          {/* Metadonnees image */}
           <div className="flex items-center justify-between text-sm text-gray-600">
             <div>
               {currentImage.alt_text && (

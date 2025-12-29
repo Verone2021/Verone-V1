@@ -52,6 +52,11 @@ import {
   RefreshCw,
   Globe,
   Link2,
+  Warehouse,
+  Calculator,
+  LayoutDashboard,
+  ArrowLeftRight,
+  BookOpenCheck,
 } from 'lucide-react';
 
 // Phase 1: use-stock-alerts-count hook désactivé (Phase 2+)
@@ -146,6 +151,11 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
         icon: Package,
       },
       {
+        title: 'Stockage',
+        href: '/stocks/stockage',
+        icon: Warehouse,
+      },
+      {
         title: 'Mouvements de stock',
         href: '/stocks/mouvements',
         icon: RefreshCw,
@@ -212,19 +222,29 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
     ],
   },
   {
-    title: 'Finance',
+    title: 'Comptabilité',
     href: '/finance',
-    icon: Wallet,
+    icon: Calculator,
     children: [
+      {
+        title: 'Tableau de bord',
+        href: '/finance',
+        icon: LayoutDashboard,
+      },
+      {
+        title: 'Transactions',
+        href: '/finance/transactions',
+        icon: ArrowLeftRight,
+      },
       {
         title: 'Dépenses',
         href: '/finance/depenses',
         icon: Banknote,
       },
       {
-        title: 'Rapprochement',
-        href: '/finance/rapprochement',
-        icon: CheckCircle,
+        title: 'Livres comptables',
+        href: '/finance/livres',
+        icon: BookOpenCheck,
       },
     ],
   },
@@ -286,6 +306,7 @@ function SidebarContent() {
       Sourcing: 'sourcing',
       Ventes: 'interactions',
       Achats: 'commandes',
+      Comptabilité: 'finance',
       Finance: 'finance',
       Factures: 'factures',
       Trésorerie: 'tresorerie',
@@ -299,9 +320,9 @@ function SidebarContent() {
   const navItems = useMemo(() => {
     const items = getNavItems(stockAlertsCount);
 
-    // Masquer Finance/Factures/Trésorerie si financeEnabled = false
+    // Masquer Comptabilité/Factures/Trésorerie si financeEnabled = false
     if (!featureFlags.financeEnabled) {
-      const financeModules = ['Finance', 'Factures', 'Trésorerie'];
+      const financeModules = ['Comptabilité', 'Factures', 'Trésorerie'];
       return items.filter(item => !financeModules.includes(item.title));
     }
 

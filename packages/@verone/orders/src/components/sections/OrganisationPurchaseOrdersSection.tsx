@@ -21,10 +21,7 @@ import {
   CardDescription,
 } from '@verone/ui';
 import { formatCurrency, formatDate } from '@verone/utils';
-import {
-  usePurchaseOrders,
-  type PurchaseOrder,
-} from '@verone/orders/hooks';
+import { usePurchaseOrders, type PurchaseOrder } from '@verone/orders/hooks';
 
 interface OrganisationPurchaseOrdersSectionProps {
   organisationId: string;

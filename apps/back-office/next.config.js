@@ -64,6 +64,17 @@ const nextConfig = {
         destination: '/produits/sourcing/:path*',
         permanent: true, // 301 redirect
       },
+      // Finance: Pages obsolètes → Page unifiée Transactions
+      {
+        source: '/finance/justificatifs',
+        destination: '/finance/transactions',
+        permanent: true, // 308 redirect (permanent)
+      },
+      {
+        source: '/finance/rapprochement',
+        destination: '/finance/transactions',
+        permanent: true, // 308 redirect (permanent)
+      },
     ];
   },
 

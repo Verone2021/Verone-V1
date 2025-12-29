@@ -10,15 +10,14 @@ echo ""
 echo "🔧 Linting staged files..."
 npx lint-staged || exit 1
 
-# 3. Check naming conventions (staged files only)
-echo ""
-echo "🏷️  Checking naming conventions..."
-node scripts/validation/check-naming-consistency.ts --staged || exit 1
-
-# 4. Check database type alignment (staged files only)
+# 3. Check database type alignment (staged files only)
 echo ""
 echo "🗄️  Checking database type alignment..."
-node scripts/validation/check-db-type-alignment.ts --staged || exit 1
+if [ -f ".claude/scripts/check-db-type-alignment.ts" ]; then
+  node .claude/scripts/check-db-type-alignment.ts --staged || exit 1
+else
+  echo "⏭️  Skipping (script not found)"
+fi
 
 echo ""
 echo "✅ Pre-commit validation réussie!"

@@ -10,6 +10,10 @@ export { CloseOrderModal } from './CloseOrderModal';
 export { CancelRemainderModal } from './CancelRemainderModal';
 export { SalesOrderShipmentModal } from './SalesOrderShipmentModal';
 export {
+  AffiliateReceptionModal,
+  type AffiliateReception,
+} from './AffiliateReceptionModal';
+export {
   CustomerSelector,
   type UnifiedCustomer,
   type CustomerType,

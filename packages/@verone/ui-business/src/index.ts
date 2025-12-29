@@ -13,6 +13,7 @@ export * from './components/validation';
 export * from './components/inputs';
 export * from './components/selectors';
 export * from './components/utils';
+export * from './components/finance';
 
 // Hooks
 export * from './hooks';

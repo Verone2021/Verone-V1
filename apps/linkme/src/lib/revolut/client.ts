@@ -22,8 +22,11 @@ const API_URLS: Record<RevolutEnvironment, string> = {
  */
 export function getRevolutConfig(): RevolutConfig {
   const apiKey = process.env.REVOLUT_API_KEY;
-  const publicKey = process.env.REVOLUT_PUBLIC_KEY || process.env.NEXT_PUBLIC_REVOLUT_PUBLIC_KEY;
-  const environment = (process.env.REVOLUT_ENVIRONMENT || 'sandbox') as RevolutEnvironment;
+  const publicKey =
+    process.env.REVOLUT_PUBLIC_KEY ||
+    process.env.NEXT_PUBLIC_REVOLUT_PUBLIC_KEY;
+  const environment = (process.env.REVOLUT_ENVIRONMENT ||
+    'sandbox') as RevolutEnvironment;
   const webhookSecret = process.env.REVOLUT_WEBHOOK_SECRET;
   const merchantId = process.env.REVOLUT_MERCHANT_ID;
 
@@ -32,7 +35,9 @@ export function getRevolutConfig(): RevolutConfig {
   }
 
   if (!publicKey) {
-    throw new Error('REVOLUT_PUBLIC_KEY or NEXT_PUBLIC_REVOLUT_PUBLIC_KEY is not configured');
+    throw new Error(
+      'REVOLUT_PUBLIC_KEY or NEXT_PUBLIC_REVOLUT_PUBLIC_KEY is not configured'
+    );
   }
 
   return {
@@ -59,7 +64,7 @@ export async function createRevolutOrder(
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${config.apiKey}`,
-        'Accept': 'application/json',
+        Accept: 'application/json',
       },
       body: JSON.stringify({
         amount: request.amount,
@@ -81,7 +86,9 @@ export async function createRevolutOrder(
       });
       return {
         success: false,
-        error: errorData.message || `API error: ${response.status} ${response.statusText}`,
+        error:
+          errorData.message ||
+          `API error: ${response.status} ${response.statusText}`,
       };
     }
 
@@ -104,7 +111,9 @@ export async function createRevolutOrder(
 /**
  * Récupère une commande Revolut par son ID
  */
-export async function getRevolutOrder(orderId: string): Promise<RevolutOrder | null> {
+export async function getRevolutOrder(
+  orderId: string
+): Promise<RevolutOrder | null> {
   try {
     const config = getRevolutConfig();
     const baseUrl = API_URLS[config.environment].replace('/orders', '');
@@ -113,12 +122,16 @@ export async function getRevolutOrder(orderId: string): Promise<RevolutOrder | n
       method: 'GET',
       headers: {
         Authorization: `Bearer ${config.apiKey}`,
-        'Accept': 'application/json',
+        Accept: 'application/json',
       },
     });
 
     if (!response.ok) {
-      console.error('Failed to get Revolut order:', response.status, response.statusText);
+      console.error(
+        'Failed to get Revolut order:',
+        response.status,
+        response.statusText
+      );
       return null;
     }
 
@@ -141,7 +154,7 @@ export async function cancelRevolutOrder(orderId: string): Promise<boolean> {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${config.apiKey}`,
-        'Accept': 'application/json',
+        Accept: 'application/json',
       },
     });
 
@@ -170,7 +183,7 @@ export async function refundRevolutOrder(
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${config.apiKey}`,
-        'Accept': 'application/json',
+        Accept: 'application/json',
       },
       body: JSON.stringify({
         amount,
