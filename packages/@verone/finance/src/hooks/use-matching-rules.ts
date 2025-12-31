@@ -19,6 +19,8 @@ export interface MatchingRule {
   match_value: string;
   display_label: string | null;
   organisation_id: string | null;
+  individual_customer_id: string | null;
+  counterparty_type: 'organisation' | 'individual' | null;
   default_category: string | null;
   default_role_type: 'supplier' | 'customer' | 'partner' | 'internal' | null;
   created_at: string;
@@ -28,6 +30,36 @@ export interface MatchingRule {
   organisation_type: string | null;
   // Computed
   matched_expenses_count: number;
+}
+
+/**
+ * Résultat de la prévisualisation d'application de règle
+ * Retourné par preview_apply_matching_rule
+ */
+export interface PreviewMatchResult {
+  normalized_label_group: string;
+  sample_labels: string[];
+  transaction_count: number;
+  total_amount: number;
+  first_seen: string;
+  last_seen: string;
+  counterparty_hint: string | null;
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+  confidence_score: number;
+  reasons: string[];
+  sample_transaction_ids: string[];
+  /** Nombre de transactions déjà appliquées avec la bonne catégorie */
+  already_applied_count: number;
+  /** Nombre de transactions à appliquer ou mettre à jour */
+  pending_count: number;
+}
+
+/**
+ * Résultat de confirmation d'application de règle
+ */
+export interface ConfirmApplyResult {
+  nb_updated: number;
+  updated_ids: string[];
 }
 
 export interface CreateRuleData {
@@ -57,7 +89,15 @@ export interface UseMatchingRulesReturn {
   ) => Promise<boolean>;
   remove: (id: string) => Promise<boolean>;
   applyAll: () => Promise<{ rulesApplied: number; expensesClassified: number }>;
+  /** @deprecated Use previewApply + confirmApply instead */
   applyOne: (ruleId: string) => Promise<number>;
+  /** Preview which transactions will be affected - READ ONLY */
+  previewApply: (ruleId: string) => Promise<PreviewMatchResult[]>;
+  /** Confirm application with selected normalized labels */
+  confirmApply: (
+    ruleId: string,
+    selectedNormalizedLabels: string[]
+  ) => Promise<ConfirmApplyResult>;
   refetch: () => Promise<void>;
 }
 
@@ -99,6 +139,49 @@ export function useMatchingRules(): UseMatchingRulesReturn {
       try {
         const supabase = createClient();
 
+        // 1. Vérifier si une règle existe déjà avec le même match_type/match_value
+        const { data: existingRule } = await (
+          supabase as { from: CallableFunction }
+        )
+          .from('matching_rules')
+          .select('id')
+          .eq('match_type', data.match_type)
+          .eq('match_value', data.match_value)
+          .maybeSingle();
+
+        const ruleData = {
+          display_label: data.display_label ?? data.match_value,
+          organisation_id: data.organisation_id ?? null,
+          individual_customer_id: data.individual_customer_id ?? null,
+          counterparty_type: data.counterparty_type ?? null,
+          default_category: data.default_category ?? null,
+          default_role_type: data.default_role_type,
+          priority: data.priority ?? 100,
+          enabled: true,
+        };
+
+        if (existingRule) {
+          // 2. UPDATE si la règle existe déjà
+          const { data: updatedRule, error: updateError } = await (
+            supabase as { from: CallableFunction }
+          )
+            .from('matching_rules')
+            .update(ruleData)
+            .eq('id', existingRule.id)
+            .select()
+            .single();
+
+          if (updateError) {
+            throw new Error(updateError.message);
+          }
+
+          // Rafraîchir la liste
+          await fetchRules();
+
+          return updatedRule as MatchingRule;
+        }
+
+        // 3. INSERT si la règle n'existe pas
         const { data: newRule, error: createError } = await (
           supabase as { from: CallableFunction }
         )
@@ -106,14 +189,7 @@ export function useMatchingRules(): UseMatchingRulesReturn {
           .insert({
             match_type: data.match_type,
             match_value: data.match_value,
-            display_label: data.display_label ?? data.match_value,
-            organisation_id: data.organisation_id ?? null,
-            individual_customer_id: data.individual_customer_id ?? null,
-            counterparty_type: data.counterparty_type ?? null,
-            default_category: data.default_category ?? null,
-            default_role_type: data.default_role_type,
-            priority: data.priority ?? 100,
-            enabled: true,
+            ...ruleData,
           })
           .select()
           .single();
@@ -142,15 +218,23 @@ export function useMatchingRules(): UseMatchingRulesReturn {
       try {
         const supabase = createClient();
 
-        const { error: updateError } = await (
+        const { data: updated, error: updateError } = await (
           supabase as { from: CallableFunction }
         )
           .from('matching_rules')
           .update(data)
-          .eq('id', id);
+          .eq('id', id)
+          .select()
+          .single();
 
         if (updateError) {
           throw new Error(updateError.message);
+        }
+
+        if (!updated) {
+          throw new Error(
+            'Impossible de modifier cette règle. Permissions insuffisantes.'
+          );
         }
 
         // Rafraîchir la liste
@@ -222,25 +306,82 @@ export function useMatchingRules(): UseMatchingRulesReturn {
     }
   }, []);
 
+  /**
+   * @deprecated Use previewApply + confirmApply instead
+   */
   const applyOne = useCallback(async (ruleId: string): Promise<number> => {
-    try {
-      const supabase = createClient();
-
-      // Appeler la RPC apply_matching_rule
-      const { data, error: rpcError } = await (
-        supabase.rpc as CallableFunction
-      )('apply_matching_rule', { p_rule_id: ruleId });
-
-      if (rpcError) {
-        throw new Error(rpcError.message);
-      }
-
-      return data || 0;
-    } catch (err) {
-      console.error('[useMatchingRules] ApplyOne error:', err);
-      throw err;
-    }
+    console.warn(
+      '[useMatchingRules] applyOne is deprecated. Use previewApply + confirmApply instead.'
+    );
+    // L'ancienne RPC a été supprimée - cette méthode ne fonctionne plus
+    throw new Error(
+      'applyOne is deprecated. Use previewApply + confirmApply workflow.'
+    );
   }, []);
+
+  /**
+   * Prévisualise les transactions qui seront affectées par l'application de la règle
+   * NE MODIFIE RIEN - Lecture seule
+   */
+  const previewApply = useCallback(
+    async (ruleId: string): Promise<PreviewMatchResult[]> => {
+      try {
+        const supabase = createClient();
+
+        const { data, error: rpcError } = await (
+          supabase.rpc as CallableFunction
+        )('preview_apply_matching_rule', { p_rule_id: ruleId });
+
+        if (rpcError) {
+          throw new Error(rpcError.message);
+        }
+
+        return (data || []) as PreviewMatchResult[];
+      } catch (err) {
+        console.error('[useMatchingRules] previewApply error:', err);
+        throw err;
+      }
+    },
+    []
+  );
+
+  /**
+   * Confirme l'application de la règle avec les labels normalisés sélectionnés
+   * SEULE PORTE D'ENTRÉE pour modifier les transactions
+   */
+  const confirmApply = useCallback(
+    async (
+      ruleId: string,
+      selectedNormalizedLabels: string[]
+    ): Promise<ConfirmApplyResult> => {
+      try {
+        const supabase = createClient();
+
+        const { data, error: rpcError } = await (
+          supabase.rpc as CallableFunction
+        )('apply_matching_rule_confirm', {
+          p_rule_id: ruleId,
+          p_selected_normalized_labels: selectedNormalizedLabels,
+        });
+
+        if (rpcError) {
+          throw new Error(rpcError.message);
+        }
+
+        // La fonction retourne un tableau avec une seule ligne
+        const result = Array.isArray(data) && data.length > 0 ? data[0] : data;
+
+        return {
+          nb_updated: result?.nb_updated || 0,
+          updated_ids: result?.updated_ids || [],
+        };
+      } catch (err) {
+        console.error('[useMatchingRules] confirmApply error:', err);
+        throw err;
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     fetchRules();
@@ -255,6 +396,8 @@ export function useMatchingRules(): UseMatchingRulesReturn {
     remove,
     applyAll,
     applyOne,
+    previewApply,
+    confirmApply,
     refetch: fetchRules,
   };
 }
