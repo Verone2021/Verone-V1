@@ -8,6 +8,7 @@ import { useToast } from '@verone/common/hooks';
 import { getPcgCategory, PCG_SUGGESTED_CATEGORIES } from '@verone/finance';
 import {
   QuickClassificationModal,
+  RuleModal,
   SupplierCell,
   ExpenseDonutChart,
   MonthlyFlowChart,
@@ -100,6 +101,7 @@ function ExpenseRow({
   onClassify,
   onViewAttachment,
   onLink,
+  onViewRule,
   onConfirmSuggestion,
   suggestion,
 }: {
@@ -107,6 +109,7 @@ function ExpenseRow({
   onClassify: (expense: Expense) => void;
   onViewAttachment: (expense: Expense) => void;
   onLink: () => void;
+  onViewRule?: (ruleId: string) => void; // SLICE 3: Voir/modifier la règle
   onConfirmSuggestion?: (ruleId: string, organisationId: string) => void;
   suggestion?: {
     matchedRule?: { id: string } | null;
@@ -114,6 +117,7 @@ function ExpenseRow({
     organisationName: string | null;
     category: string | null;
     confidence: 'high' | 'medium' | 'none';
+    matchType?: 'exact' | 'similar' | 'none';
   };
 }) {
   // PCG uniquement - plus d'ancien système
@@ -123,6 +127,9 @@ function ExpenseRow({
   // Déterminer si la dépense est classée
   const isClassified =
     expense.status === 'classified' || expense.category !== null;
+
+  // SLICE 3: Verrouillage si une règle est appliquée
+  const isLockedByRule = Boolean(expense.applied_rule_id);
 
   return (
     <tr
@@ -162,7 +169,7 @@ function ExpenseRow({
               suggestedOrganisationName={suggestion?.organisationName}
               suggestedCategory={suggestion?.category}
               confidence={suggestion?.confidence}
-              showCategory
+              matchType={suggestion?.matchType}
             />
           </div>
         </div>
@@ -176,46 +183,72 @@ function ExpenseRow({
         <StatusBadge status={expense.status} />
       </td>
       <td className="px-4 py-3 text-sm text-slate-600">
-        {expense.counterparty_display_name || expense.organisation_name || '-'}
-      </td>
-      <td className="px-4 py-3 text-sm text-slate-600">
         {categoryLabel || '-'}
       </td>
-      <td className="px-4 py-3 text-center">
-        {expense.has_attachment ? (
-          <button
-            onClick={() => onViewAttachment(expense)}
-            className="text-blue-600 hover:text-blue-800"
-            title="Voir pièce jointe"
-          >
-            <Paperclip size={16} />
-          </button>
-        ) : (
-          <span className="text-slate-300">-</span>
-        )}
-      </td>
+      {/* Actions (incluant le bouton pièce jointe) */}
       <td className="px-4 py-3">
-        {isClassified ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onClassify(expense)}
-            className="gap-1 text-slate-500"
-          >
-            <Edit2 size={14} />
-            Modifier
-          </Button>
-        ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onClassify(expense)}
-            className="gap-1"
-          >
-            <FileText size={14} />
-            Classer
-          </Button>
-        )}
+        <div className="flex items-center gap-1">
+          {/* Bouton justificatif - toujours visible si pièce jointe existe */}
+          {expense.has_attachment && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onViewAttachment(expense)}
+              className="text-blue-600 hover:text-blue-800 px-2"
+              title="Voir pièce jointe Qonto"
+            >
+              <Eye size={14} />
+            </Button>
+          )}
+
+          {/* Actions de classification */}
+          {isLockedByRule ? (
+            <>
+              {/* Modification individuelle - même avec règle */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onClassify(expense)}
+                className="gap-1 text-slate-600 hover:text-slate-800"
+                title="Modifier cette ligne uniquement"
+              >
+                <Edit2 size={14} />
+              </Button>
+              {/* Modification de la règle */}
+              {onViewRule && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onViewRule(expense.applied_rule_id!)}
+                  className="gap-1 text-blue-600 hover:text-blue-800"
+                  title={`Règle: ${expense.rule_display_label || expense.rule_match_value}`}
+                >
+                  <Settings size={14} />
+                </Button>
+              )}
+            </>
+          ) : isClassified ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onClassify(expense)}
+              className="gap-1 text-slate-500"
+            >
+              <Edit2 size={14} />
+              Modifier
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onClassify(expense)}
+              className="gap-1"
+            >
+              <FileText size={14} />
+              Classer
+            </Button>
+          )}
+        </div>
       </td>
     </tr>
   );
@@ -241,8 +274,14 @@ export default function DepensesPage() {
     expenses as (Expense & Record<string, unknown>)[]
   );
 
-  // Hook pour les règles de matching (pour confirmer les suggestions)
-  const { update: updateMatchingRule } = useMatchingRules();
+  // SLICE 3: Hook pour les règles de matching
+  const {
+    rules,
+    update: updateMatchingRule,
+    previewApply,
+    confirmApply,
+    refetch: refetchRules,
+  } = useMatchingRules();
 
   // Map pour accès rapide aux suggestions par ID
   const suggestionsMap = useMemo(() => {
@@ -284,6 +323,28 @@ export default function DepensesPage() {
   // État du modal de classement
   const [classifyModalOpen, setClassifyModalOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
+
+  // SLICE 3: État du RuleModal pour voir/modifier une règle
+  const [ruleModalOpen, setRuleModalOpen] = useState(false);
+  const [selectedRuleId, setSelectedRuleId] = useState<string | null>(null);
+
+  // SLICE 3: Trouver la règle sélectionnée
+  const selectedRule = useMemo(
+    () => rules.find(r => r.id === selectedRuleId) || null,
+    [rules, selectedRuleId]
+  );
+
+  // SLICE 3: Ouvrir le modal de règle
+  const handleViewRule = useCallback((ruleId: string) => {
+    setSelectedRuleId(ruleId);
+    setRuleModalOpen(true);
+  }, []);
+
+  // SLICE 3: Callback après modification de règle
+  const handleRuleSuccess = useCallback(async () => {
+    await refetchRules();
+    await refetch();
+  }, [refetchRules, refetch]);
 
   // Années disponibles (2022 à aujourd'hui)
   const currentYear = new Date().getFullYear();
@@ -550,7 +611,7 @@ export default function DepensesPage() {
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
                 />
                 <Input
-                  placeholder="Rechercher par libellé ou fournisseur..."
+                  placeholder="Rechercher par libellé..."
                   className="pl-9"
                   value={searchValue}
                   onChange={e => setSearchValue(e.target.value)}
@@ -672,13 +733,7 @@ export default function DepensesPage() {
                       Statut
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      Fournisseur
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                       Catégorie
-                    </th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      <Paperclip size={14} className="inline" />
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                       Actions
@@ -693,6 +748,7 @@ export default function DepensesPage() {
                       onClassify={handleClassify}
                       onViewAttachment={handleViewAttachment}
                       onLink={() => refetch()}
+                      onViewRule={handleViewRule}
                       onConfirmSuggestion={handleConfirmSuggestion}
                       suggestion={suggestionsMap.get(expense.id)}
                     />
@@ -725,7 +781,24 @@ export default function DepensesPage() {
         counterpartyName={
           selectedExpense?.transaction_counterparty_name || undefined
         }
+        currentCategory={selectedExpense?.category || undefined}
+        existingRuleId={
+          selectedExpense
+            ? suggestionsMap.get(selectedExpense.id)?.matchedRule?.id
+            : undefined
+        }
         onSuccess={handleClassifySuccess}
+      />
+
+      {/* SLICE 3: Modal pour voir/modifier une règle */}
+      <RuleModal
+        open={ruleModalOpen}
+        onOpenChange={setRuleModalOpen}
+        rule={selectedRule}
+        onUpdate={updateMatchingRule}
+        previewApply={previewApply}
+        confirmApply={confirmApply}
+        onSuccess={handleRuleSuccess}
       />
     </div>
   );
