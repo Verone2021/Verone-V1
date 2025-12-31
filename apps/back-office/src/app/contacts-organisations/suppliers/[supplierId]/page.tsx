@@ -119,6 +119,7 @@ export default function SupplierDetailPage() {
   };
 
   // Configuration des onglets avec compteurs du hook + modules déployés
+  // Note: Commandes et Produits masqués pour les prestataires (is_service_provider = true)
   const tabs = [
     {
       id: 'contacts',
@@ -127,14 +128,19 @@ export default function SupplierDetailPage() {
       badge: counts.contacts.toString(),
       disabled: !isModuleDeployed('contacts'),
     },
-    {
-      id: 'orders',
-      label: 'Commandes',
-      icon: <ShoppingCart className="h-4 w-4" />,
-      badge: counts.orders.toString(),
-      disabled: !isModuleDeployed('purchase_orders'),
-      disabledBadge: getModulePhase('purchase_orders'),
-    },
+    // Commandes - uniquement pour les fournisseurs (pas les prestataires)
+    ...(!supplier?.is_service_provider
+      ? [
+          {
+            id: 'orders',
+            label: 'Commandes',
+            icon: <ShoppingCart className="h-4 w-4" />,
+            badge: counts.orders.toString(),
+            disabled: !isModuleDeployed('purchase_orders'),
+            disabledBadge: getModulePhase('purchase_orders'),
+          },
+        ]
+      : []),
     {
       id: 'invoices',
       label: 'Factures',
@@ -142,14 +148,19 @@ export default function SupplierDetailPage() {
       disabled: !isModuleDeployed('invoices'),
       disabledBadge: getModulePhase('invoices'),
     },
-    {
-      id: 'products',
-      label: 'Produits',
-      icon: <Package className="h-4 w-4" />,
-      badge: counts.products.toString(),
-      disabled: !isModuleDeployed('products'),
-      disabledBadge: getModulePhase('products'),
-    },
+    // Produits - uniquement pour les fournisseurs (pas les prestataires)
+    ...(!supplier?.is_service_provider
+      ? [
+          {
+            id: 'products',
+            label: 'Produits',
+            icon: <Package className="h-4 w-4" />,
+            badge: counts.products.toString(),
+            disabled: !isModuleDeployed('products'),
+            disabledBadge: getModulePhase('products'),
+          },
+        ]
+      : []),
     {
       id: 'transactions',
       label: 'Transactions',
@@ -256,8 +267,7 @@ export default function SupplierDetailPage() {
             </div>
           </div>
           <p className="text-sm text-gray-600">
-            Fournisseur •{' '}
-            {supplier.supplier_segment && `${supplier.supplier_segment} • `}ID:{' '}
+            {supplier.is_service_provider ? 'Prestataire' : 'Fournisseur'} • ID:{' '}
             {supplier.id.slice(0, 8)}
           </p>
         </div>
