@@ -55,6 +55,18 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
+interface DocumentItem {
+  id: string;
+  description: string;
+  quantity: number;
+  unit_price_ht: number;
+  total_ht: number;
+  tva_rate: number;
+  tva_amount: number;
+  total_ttc: number;
+  sort_order: number;
+}
+
 // =====================================================================
 // COMPOSANT PRINCIPAL
 // =====================================================================
@@ -62,6 +74,7 @@ interface PageProps {
 export default function ExpenseDetailPage(props: PageProps) {
   const params = use(props.params);
   const [document, setDocument] = useState<FinancialDocument | null>(null);
+  const [documentItems, setDocumentItems] = useState<DocumentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
 
@@ -75,7 +88,7 @@ export default function ExpenseDetailPage(props: PageProps) {
     refresh: refreshPayments,
   } = useFinancialPayments(isCreateMode ? '' : params.id);
 
-  // Fetch document
+  // Fetch document and items
   const fetchDocument = async () => {
     // Si mode création, on ne charge rien
     if (isCreateMode) {
@@ -86,13 +99,13 @@ export default function ExpenseDetailPage(props: PageProps) {
     try {
       setLoading(true);
 
+      // Fetch document avec partner
       const { data, error } = await supabase
         .from('financial_documents')
         .select(
           `
           *,
-          partner:organisations!partner_id(id, legal_name, trade_name, type),
-          expense_category:expense_categories(id, name, account_code, description)
+          partner:organisations!partner_id(id, legal_name, trade_name, type)
         `
         )
         .eq('id', params.id)
@@ -101,6 +114,18 @@ export default function ExpenseDetailPage(props: PageProps) {
       if (error) throw error;
 
       setDocument(data as unknown as FinancialDocument);
+
+      // Fetch items (lignes TVA)
+      // Note: utilise financial_document_lines (table existante)
+      const { data: items, error: itemsError } = await (supabase as any)
+        .from('financial_document_lines')
+        .select('*')
+        .eq('document_id', params.id)
+        .order('sort_order', { ascending: true });
+
+      if (!itemsError && items) {
+        setDocumentItems(items as DocumentItem[]);
+      }
     } catch (error) {
       console.error('Fetch document error:', error);
     } finally {
@@ -260,13 +285,9 @@ export default function ExpenseDetailPage(props: PageProps) {
               <Tag className="h-5 w-5 text-gray-400" />
               <div>
                 <p className="font-medium">
-                  {document.expense_category?.name || 'N/A'}
+                  {/* Catégorie extraite de la description [PCG xxx] */}
+                  {document.description?.match(/\[([^\]]+)\]/)?.[1] || 'N/A'}
                 </p>
-                {document.expense_category?.account_code && (
-                  <p className="text-xs text-gray-500">
-                    {document.expense_category.account_code}
-                  </p>
-                )}
               </div>
             </div>
           </CardContent>
@@ -344,9 +365,56 @@ export default function ExpenseDetailPage(props: PageProps) {
       {/* Montants */}
       <Card>
         <CardHeader>
-          <CardTitle>Montants</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Montants</CardTitle>
+            {documentItems.length > 1 && (
+              <Badge variant="outline" className="text-blue-600">
+                TVA ventilée ({documentItems.length} lignes)
+              </Badge>
+            )}
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
+          {/* Lignes TVA détaillées (si multi-taux) */}
+          {documentItems.length > 1 && (
+            <div className="rounded-lg border bg-slate-50 p-4">
+              <p className="text-sm font-medium text-slate-600 mb-3">
+                Ventilation TVA
+              </p>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Description</TableHead>
+                    <TableHead className="text-right">HT</TableHead>
+                    <TableHead className="text-center">Taux</TableHead>
+                    <TableHead className="text-right">TVA</TableHead>
+                    <TableHead className="text-right">TTC</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {documentItems.map(item => (
+                    <TableRow key={item.id}>
+                      <TableCell>{item.description}</TableCell>
+                      <TableCell className="text-right">
+                        {item.total_ht.toFixed(2)} €
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="outline">{item.tva_rate}%</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {item.tva_amount.toFixed(2)} €
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {item.total_ttc.toFixed(2)} €
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+
+          {/* Totaux */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
             <div>
               <p className="text-sm text-gray-500 mb-1">Total HT</p>
@@ -360,6 +428,11 @@ export default function ExpenseDetailPage(props: PageProps) {
               <p className="text-2xl font-bold">
                 {document.tva_amount.toFixed(2)} €
               </p>
+              {documentItems.length === 1 && documentItems[0]?.tva_rate && (
+                <Badge variant="outline" className="mt-1">
+                  {documentItems[0].tva_rate}%
+                </Badge>
+              )}
             </div>
 
             <div>

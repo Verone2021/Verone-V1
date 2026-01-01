@@ -67,6 +67,12 @@ export interface UnifiedTransaction {
   match_reason: string | null;
   matched_order_ids: string[] | null;
 
+  // SLICE 5: Règle appliquée (verrouillage UI)
+  applied_rule_id: string | null;
+  rule_match_value: string | null;
+  rule_display_label: string | null;
+  rule_allow_multiple_categories: boolean | null;
+
   // Statut unifie
   unified_status: UnifiedStatus;
 
@@ -74,6 +80,12 @@ export interface UnifiedTransaction {
   vat_rate: number | null;
   amount_ht: number | null;
   amount_vat: number | null;
+  vat_breakdown: Array<{
+    description: string;
+    amount_ht: number;
+    tva_rate: number;
+    tva_amount: number;
+  }> | null;
   payment_method: string | null;
   nature: string | null;
 
@@ -234,7 +246,7 @@ export function useUnifiedTransactions(
   // Calculated values
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
-  // Fetch transactions
+  // Fetch transactions from v_transactions_unified (source de vérité enrichie)
   const fetchTransactions = useCallback(
     async (append = false, targetPage?: number) => {
       try {
@@ -246,46 +258,17 @@ export function useUnifiedTransactions(
         const page = targetPage ?? currentPage;
         const currentOffset = append ? offset : (page - 1) * pageSize;
 
-        // Build query - utilise bank_transactions directement
-        // Note: Les types Supabase ne sont pas à jour, on utilise any pour les champs manquants
-        let query = supabase
-          .from('bank_transactions')
-          .select(
-            `
-            id,
-            transaction_id,
-            emitted_at,
-            settled_at,
-            label,
-            amount,
-            side,
-            operation_type,
-            counterparty_name,
-            counterparty_iban,
-            reference,
-            category_pcg,
-            has_attachment,
-            attachment_ids,
-            matching_status,
-            matched_document_id,
-            confidence_score,
-            match_reason,
-            vat_rate,
-            amount_ht,
-            amount_vat,
-            payment_method,
-            nature,
-            raw_data,
-            created_at,
-            updated_at
-          `,
-            { count: 'exact' }
-          )
+        // Utiliser la vue enrichie v_transactions_unified
+        // Elle inclut: organisation_name, rule_display_label, unified_status, etc.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let query = (supabase as any)
+          .from('v_transactions_unified')
+          .select('*', { count: 'exact' })
           .order('settled_at', { ascending: false, nullsFirst: false })
           .order('emitted_at', { ascending: false })
           .range(currentOffset, currentOffset + pageSize - 1);
 
-        // Apply filters
+        // Apply filters - simplifiés grâce à la vue
         if (filters.side && filters.side !== 'all') {
           query = query.eq('side', filters.side);
         }
@@ -293,7 +276,7 @@ export function useUnifiedTransactions(
         if (filters.hasAttachment === true) {
           query = query.eq('has_attachment', true);
         } else if (filters.hasAttachment === false) {
-          query = query.or('has_attachment.is.null,has_attachment.eq.false');
+          query = query.eq('has_attachment', false);
         }
 
         if (filters.organisationId) {
@@ -303,113 +286,86 @@ export function useUnifiedTransactions(
           );
         }
 
+        // Recherche: inclut organisation_name et rule_display_label
         if (filters.search) {
           query = query.or(
-            `label.ilike.%${filters.search}%,counterparty_name.ilike.%${filters.search}%,reference.ilike.%${filters.search}%`
+            `label.ilike.%${filters.search}%,counterparty_name.ilike.%${filters.search}%,reference.ilike.%${filters.search}%,organisation_name.ilike.%${filters.search}%`
           );
         }
 
-        // Apply status filter (computed unified_status)
+        // Filtre par année/mois
+        if (filters.year) {
+          query = query.eq('year', filters.year);
+        }
+        if (filters.month) {
+          query = query.eq('month', filters.month);
+        }
+
+        // Filtre par statut (utilise unified_status de la vue)
         if (filters.status && filters.status !== 'all') {
-          switch (filters.status) {
-            case 'to_process':
-              query = query
-                .is('category_pcg', null)
-                .is('counterparty_organisation_id', null)
-                .neq('matching_status', 'ignored')
-                .is('matched_document_id', null);
-              break;
-            case 'classified':
-              query = query
-                .or(
-                  'category_pcg.not.is.null,counterparty_organisation_id.not.is.null'
-                )
-                .is('matched_document_id', null)
-                .neq('category_pcg', '455');
-              break;
-            case 'matched':
-              query = query.not('matched_document_id', 'is', null);
-              break;
-            case 'ignored':
-              query = query.eq('matching_status', 'ignored');
-              break;
-            case 'cca':
-              query = query.eq('category_pcg', '455');
-              break;
-          }
+          query = query.eq('unified_status', filters.status);
         }
 
         const { data, error: fetchError, count } = await query;
 
         if (fetchError) throw fetchError;
 
-        // Transform data to UnifiedTransaction format
+        // Mapping simplifié - la vue fournit déjà tous les champs enrichis
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const transformed: UnifiedTransaction[] = (data || []).map(
-          (tx: any) => {
-            const date = tx.settled_at || tx.emitted_at;
-
-            // Compute unified_status
-            let unified_status: UnifiedStatus = 'to_process';
-            if (tx.category_pcg === '455') {
-              unified_status = 'cca';
-            } else if (tx.matching_status === 'ignored') {
-              unified_status = 'ignored';
-            } else if (tx.matched_document_id) {
-              unified_status = 'matched';
-            } else if (tx.matching_status === 'partial_matched') {
-              unified_status = 'partial';
-            } else if (tx.category_pcg) {
-              unified_status = 'classified';
-            }
-
-            return {
-              id: tx.id,
-              transaction_id: tx.transaction_id,
-              emitted_at: tx.emitted_at,
-              settled_at: tx.settled_at,
-              label: tx.label || '',
-              amount: tx.amount,
-              side: tx.side as TransactionSide,
-              operation_type: tx.operation_type,
-              bank_status: 'completed',
-              counterparty_name: tx.counterparty_name,
-              counterparty_iban: tx.counterparty_iban,
-              reference: tx.reference,
-              category_pcg: tx.category_pcg,
-              category_pcg_label: null,
-              category_pcg_group: null,
-              counterparty_organisation_id: null, // TODO: add when column exists
-              organisation_name: null,
-              organisation_roles: [],
-              // has_attachment: true if has_attachment flag OR attachment_ids not empty
-              has_attachment:
-                tx.has_attachment === true ||
-                (tx.attachment_ids?.length ?? 0) > 0,
-              attachment_count: tx.attachment_ids?.length || 0,
-              attachment_ids: tx.attachment_ids,
-              justification_optional: null,
-              matching_status: tx.matching_status,
-              matched_document_id: tx.matched_document_id,
-              matched_document_number: null,
-              matched_document_type: null,
-              matched_at: null,
-              confidence_score: tx.confidence_score,
-              match_reason: tx.match_reason,
-              matched_order_ids: null,
-              unified_status,
-              vat_rate: tx.vat_rate,
-              amount_ht: tx.amount_ht,
-              amount_vat: tx.amount_vat,
-              payment_method: tx.payment_method,
-              nature: tx.nature,
-              year: new Date(date).getFullYear(),
-              month: new Date(date).getMonth() + 1,
-              raw_data: tx.raw_data || {},
-              created_at: tx.created_at,
-              updated_at: tx.updated_at,
-            };
-          }
+          (tx: any) => ({
+            id: tx.id,
+            transaction_id: tx.transaction_id,
+            emitted_at: tx.emitted_at,
+            settled_at: tx.settled_at,
+            label: tx.label || '',
+            amount: tx.amount,
+            side: tx.side as TransactionSide,
+            operation_type: tx.operation_type,
+            bank_status: 'completed',
+            counterparty_name: tx.counterparty_name,
+            counterparty_iban: tx.counterparty_iban,
+            reference: tx.reference,
+            category_pcg: tx.category_pcg,
+            category_pcg_label: null,
+            category_pcg_group: null,
+            // Enrichissements depuis la vue
+            counterparty_organisation_id: tx.counterparty_organisation_id,
+            organisation_name: tx.organisation_name,
+            organisation_roles: [],
+            has_attachment: tx.has_attachment || false,
+            attachment_count: tx.attachment_count || 0,
+            attachment_ids: tx.attachment_ids,
+            justification_optional: tx.justification_optional,
+            matching_status: tx.matching_status,
+            matched_document_id: tx.matched_document_id,
+            matched_document_number: tx.matched_document_number,
+            matched_document_type: tx.matched_document_type,
+            matched_at: null,
+            confidence_score: tx.confidence_score,
+            match_reason: tx.match_reason,
+            matched_order_ids: null,
+            // Règle appliquée (depuis la vue)
+            applied_rule_id: tx.applied_rule_id,
+            rule_match_value: tx.rule_match_value,
+            rule_display_label: tx.rule_display_label,
+            rule_allow_multiple_categories: tx.rule_allow_multiple_categories,
+            // Statut unifié (calculé par la vue)
+            unified_status: tx.unified_status as UnifiedStatus,
+            // TVA
+            vat_rate: tx.vat_rate,
+            amount_ht: tx.amount_ht,
+            amount_vat: tx.amount_vat,
+            vat_breakdown: tx.vat_breakdown,
+            payment_method: tx.payment_method,
+            nature: tx.nature,
+            // Période (calculée par la vue)
+            year: tx.year,
+            month: tx.month,
+            raw_data: tx.raw_data || {},
+            created_at: tx.created_at,
+            updated_at: tx.updated_at,
+          })
         );
 
         if (append) {
@@ -436,55 +392,51 @@ export function useUnifiedTransactions(
     [supabase, filters, pageSize, offset, currentPage]
   );
 
-  // Fetch stats
+  // Fetch stats depuis v_transactions_unified
   const fetchStats = useCallback(async () => {
     try {
-      // Count stats (no 'status' column - all synced transactions are settled)
-      const { count: total } = await supabase
-        .from('bank_transactions')
-        .select('*', { count: 'exact', head: true });
+      // Utiliser la vue pour compter par unified_status
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const viewQuery = supabase as any;
 
-      const { count: toProcess } = await supabase
-        .from('bank_transactions')
-        .select('*', { count: 'exact', head: true })
-        .is('category_pcg', null)
-        .is('counterparty_organisation_id', null)
-        .neq('matching_status', 'ignored')
-        .is('matched_document_id', null);
-
-      const { count: classified } = await supabase
-        .from('bank_transactions')
-        .select('*', { count: 'exact', head: true })
-        .or('category_pcg.not.is.null,counterparty_organisation_id.not.is.null')
-        .is('matched_document_id', null)
-        .neq('category_pcg', '455');
-
-      const { count: matched } = await supabase
-        .from('bank_transactions')
-        .select('*', { count: 'exact', head: true })
-        .not('matched_document_id', 'is', null);
-
-      const { count: ignored } = await supabase
-        .from('bank_transactions')
-        .select('*', { count: 'exact', head: true })
-        .eq('matching_status', 'ignored');
-
-      const { count: cca } = await supabase
-        .from('bank_transactions')
-        .select('*', { count: 'exact', head: true })
-        .eq('category_pcg', '455');
-
-      // Count transactions with attachments: fetch has_attachment and attachment_ids, count client-side
-      // PostgREST doesn't support array length checks, so we count after fetching
-      const { data: attachmentData } = await supabase
-        .from('bank_transactions')
-        .select('id, has_attachment, attachment_ids');
-
-      const withAttachmentCount = (attachmentData || []).filter(
-        tx =>
-          tx.has_attachment === true ||
-          (tx.attachment_ids && tx.attachment_ids.length > 0)
-      ).length;
+      // Compter par statut depuis la vue
+      const [
+        { count: total },
+        { count: toProcess },
+        { count: classified },
+        { count: matched },
+        { count: ignored },
+        { count: cca },
+        { count: withAttachment },
+      ] = await Promise.all([
+        viewQuery
+          .from('v_transactions_unified')
+          .select('*', { count: 'exact', head: true }),
+        viewQuery
+          .from('v_transactions_unified')
+          .select('*', { count: 'exact', head: true })
+          .eq('unified_status', 'to_process'),
+        viewQuery
+          .from('v_transactions_unified')
+          .select('*', { count: 'exact', head: true })
+          .eq('unified_status', 'classified'),
+        viewQuery
+          .from('v_transactions_unified')
+          .select('*', { count: 'exact', head: true })
+          .eq('unified_status', 'matched'),
+        viewQuery
+          .from('v_transactions_unified')
+          .select('*', { count: 'exact', head: true })
+          .eq('unified_status', 'ignored'),
+        viewQuery
+          .from('v_transactions_unified')
+          .select('*', { count: 'exact', head: true })
+          .eq('unified_status', 'cca'),
+        viewQuery
+          .from('v_transactions_unified')
+          .select('*', { count: 'exact', head: true })
+          .eq('has_attachment', true),
+      ]);
 
       setStats({
         total_count: total || 0,
@@ -493,10 +445,10 @@ export function useUnifiedTransactions(
         matched_count: matched || 0,
         ignored_count: ignored || 0,
         cca_count: cca || 0,
-        partial_count: 0, // TODO
-        with_attachment_count: withAttachmentCount,
-        without_attachment_count: (total || 0) - withAttachmentCount,
-        total_amount: 0, // TODO: sum
+        partial_count: 0,
+        with_attachment_count: withAttachment || 0,
+        without_attachment_count: (total || 0) - (withAttachment || 0),
+        total_amount: 0,
         to_process_amount: 0,
         debit_amount: 0,
         credit_amount: 0,

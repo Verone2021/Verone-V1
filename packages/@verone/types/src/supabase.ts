@@ -714,18 +714,26 @@ export type Database = {
           amount: number;
           amount_ht: number | null;
           amount_vat: number | null;
+          applied_rule_id: string | null;
           attachment_ids: string[] | null;
           bank_account_id: string;
           bank_provider: Database['public']['Enums']['bank_provider'];
           category_pcg: string | null;
           confidence_score: number | null;
           counterparty_iban: string | null;
+          counterparty_individual_customer_id: string | null;
           counterparty_name: string | null;
+          counterparty_organisation_id: string | null;
+          counterparty_type: string | null;
           created_at: string;
           currency: string;
           emitted_at: string;
           has_attachment: boolean | null;
           id: string;
+          ignore_reason: string | null;
+          ignored_at: string | null;
+          ignored_by: string | null;
+          justification_optional: boolean | null;
           label: string;
           match_reason: string | null;
           matched_document_id: string | null;
@@ -740,24 +748,33 @@ export type Database = {
           side: Database['public']['Enums']['transaction_side'];
           transaction_id: string;
           updated_at: string;
+          vat_breakdown: Json | null;
           vat_rate: number | null;
         };
         Insert: {
           amount: number;
           amount_ht?: number | null;
           amount_vat?: number | null;
+          applied_rule_id?: string | null;
           attachment_ids?: string[] | null;
           bank_account_id: string;
           bank_provider: Database['public']['Enums']['bank_provider'];
           category_pcg?: string | null;
           confidence_score?: number | null;
           counterparty_iban?: string | null;
+          counterparty_individual_customer_id?: string | null;
           counterparty_name?: string | null;
+          counterparty_organisation_id?: string | null;
+          counterparty_type?: string | null;
           created_at?: string;
           currency?: string;
           emitted_at: string;
           has_attachment?: boolean | null;
           id?: string;
+          ignore_reason?: string | null;
+          ignored_at?: string | null;
+          ignored_by?: string | null;
+          justification_optional?: boolean | null;
           label: string;
           match_reason?: string | null;
           matched_document_id?: string | null;
@@ -772,24 +789,33 @@ export type Database = {
           side: Database['public']['Enums']['transaction_side'];
           transaction_id: string;
           updated_at?: string;
+          vat_breakdown?: Json | null;
           vat_rate?: number | null;
         };
         Update: {
           amount?: number;
           amount_ht?: number | null;
           amount_vat?: number | null;
+          applied_rule_id?: string | null;
           attachment_ids?: string[] | null;
           bank_account_id?: string;
           bank_provider?: Database['public']['Enums']['bank_provider'];
           category_pcg?: string | null;
           confidence_score?: number | null;
           counterparty_iban?: string | null;
+          counterparty_individual_customer_id?: string | null;
           counterparty_name?: string | null;
+          counterparty_organisation_id?: string | null;
+          counterparty_type?: string | null;
           created_at?: string;
           currency?: string;
           emitted_at?: string;
           has_attachment?: boolean | null;
           id?: string;
+          ignore_reason?: string | null;
+          ignored_at?: string | null;
+          ignored_by?: string | null;
+          justification_optional?: boolean | null;
           label?: string;
           match_reason?: string | null;
           matched_document_id?: string | null;
@@ -804,9 +830,38 @@ export type Database = {
           side?: Database['public']['Enums']['transaction_side'];
           transaction_id?: string;
           updated_at?: string;
+          vat_breakdown?: Json | null;
           vat_rate?: number | null;
         };
         Relationships: [
+          {
+            foreignKeyName: 'bank_transactions_applied_rule_id_fkey';
+            columns: ['applied_rule_id'];
+            isOneToOne: false;
+            referencedRelation: 'matching_rules';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'bank_transactions_applied_rule_id_fkey';
+            columns: ['applied_rule_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_matching_rules_with_org';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'bank_transactions_counterparty_individual_customer_id_fkey';
+            columns: ['counterparty_individual_customer_id'];
+            isOneToOne: false;
+            referencedRelation: 'individual_customers';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'bank_transactions_counterparty_organisation_id_fkey';
+            columns: ['counterparty_organisation_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'bank_transactions_matched_document_id_fkey';
             columns: ['matched_document_id'];
@@ -827,6 +882,109 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'v_transactions_missing_invoice';
             referencedColumns: ['financial_document_id'];
+          },
+        ];
+      };
+      bank_transactions_enrichment_audit: {
+        Row: {
+          action: string;
+          after_json: Json;
+          before_json: Json;
+          changed_at: string;
+          changed_by: string | null;
+          fields_changed: string[];
+          id: string;
+          reason: string | null;
+          source: string | null;
+          transaction_id: string;
+        };
+        Insert: {
+          action: string;
+          after_json?: Json;
+          before_json?: Json;
+          changed_at?: string;
+          changed_by?: string | null;
+          fields_changed?: string[];
+          id?: string;
+          reason?: string | null;
+          source?: string | null;
+          transaction_id: string;
+        };
+        Update: {
+          action?: string;
+          after_json?: Json;
+          before_json?: Json;
+          changed_at?: string;
+          changed_by?: string | null;
+          fields_changed?: string[];
+          id?: string;
+          reason?: string | null;
+          source?: string | null;
+          transaction_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'bank_transactions_enrichment_audit_changed_by_fkey';
+            columns: ['changed_by'];
+            isOneToOne: false;
+            referencedRelation: 'v_linkme_users';
+            referencedColumns: ['user_id'];
+          },
+          {
+            foreignKeyName: 'bank_transactions_enrichment_audit_changed_by_fkey';
+            columns: ['changed_by'];
+            isOneToOne: false;
+            referencedRelation: 'v_users_with_roles';
+            referencedColumns: ['user_id'];
+          },
+          {
+            foreignKeyName: 'bank_transactions_enrichment_audit_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'bank_transactions';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'bank_transactions_enrichment_audit_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'expenses';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'bank_transactions_enrichment_audit_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'expenses';
+            referencedColumns: ['transaction_id'];
+          },
+          {
+            foreignKeyName: 'bank_transactions_enrichment_audit_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_expenses_with_details';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'bank_transactions_enrichment_audit_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_expenses_with_details';
+            referencedColumns: ['transaction_id'];
+          },
+          {
+            foreignKeyName: 'bank_transactions_enrichment_audit_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_transactions_missing_invoice';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'bank_transactions_enrichment_audit_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_transactions_unified';
+            referencedColumns: ['id'];
           },
         ];
       };
@@ -2759,68 +2917,7 @@ export type Database = {
           },
         ];
       };
-      expense_categories: {
-        Row: {
-          account_code: string | null;
-          created_at: string;
-          created_by: string | null;
-          description: string | null;
-          display_order: number;
-          id: string;
-          is_active: boolean;
-          name: string;
-          parent_category_id: string | null;
-          updated_at: string;
-        };
-        Insert: {
-          account_code?: string | null;
-          created_at?: string;
-          created_by?: string | null;
-          description?: string | null;
-          display_order?: number;
-          id?: string;
-          is_active?: boolean;
-          name: string;
-          parent_category_id?: string | null;
-          updated_at?: string;
-        };
-        Update: {
-          account_code?: string | null;
-          created_at?: string;
-          created_by?: string | null;
-          description?: string | null;
-          display_order?: number;
-          id?: string;
-          is_active?: boolean;
-          name?: string;
-          parent_category_id?: string | null;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'expense_categories_created_by_fkey';
-            columns: ['created_by'];
-            isOneToOne: false;
-            referencedRelation: 'v_linkme_users';
-            referencedColumns: ['user_id'];
-          },
-          {
-            foreignKeyName: 'expense_categories_created_by_fkey';
-            columns: ['created_by'];
-            isOneToOne: false;
-            referencedRelation: 'v_users_with_roles';
-            referencedColumns: ['user_id'];
-          },
-          {
-            foreignKeyName: 'expense_categories_parent_category_id_fkey';
-            columns: ['parent_category_id'];
-            isOneToOne: false;
-            referencedRelation: 'expense_categories';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
-      expenses: {
+      expenses_backup: {
         Row: {
           category: string | null;
           classified_at: string | null;
@@ -2830,6 +2927,7 @@ export type Database = {
           individual_customer_id: string | null;
           notes: string | null;
           organisation_id: string | null;
+          pcg_code: string | null;
           role_type: string | null;
           status: string;
           transaction_id: string;
@@ -2844,6 +2942,7 @@ export type Database = {
           individual_customer_id?: string | null;
           notes?: string | null;
           organisation_id?: string | null;
+          pcg_code?: string | null;
           role_type?: string | null;
           status?: string;
           transaction_id: string;
@@ -2858,6 +2957,7 @@ export type Database = {
           individual_customer_id?: string | null;
           notes?: string | null;
           organisation_id?: string | null;
+          pcg_code?: string | null;
           role_type?: string | null;
           status?: string;
           transaction_id?: string;
@@ -2886,6 +2986,20 @@ export type Database = {
             referencedColumns: ['id'];
           },
           {
+            foreignKeyName: 'expenses_pcg_code_fkey';
+            columns: ['pcg_code'];
+            isOneToOne: false;
+            referencedRelation: 'pcg_categories';
+            referencedColumns: ['code'];
+          },
+          {
+            foreignKeyName: 'expenses_pcg_code_fkey';
+            columns: ['pcg_code'];
+            isOneToOne: false;
+            referencedRelation: 'v_pcg_categories_tree';
+            referencedColumns: ['code'];
+          },
+          {
             foreignKeyName: 'expenses_transaction_id_fkey';
             columns: ['transaction_id'];
             isOneToOne: true;
@@ -2896,7 +3010,42 @@ export type Database = {
             foreignKeyName: 'expenses_transaction_id_fkey';
             columns: ['transaction_id'];
             isOneToOne: true;
+            referencedRelation: 'expenses';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'expenses_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: true;
+            referencedRelation: 'expenses';
+            referencedColumns: ['transaction_id'];
+          },
+          {
+            foreignKeyName: 'expenses_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: true;
+            referencedRelation: 'v_expenses_with_details';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'expenses_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: true;
+            referencedRelation: 'v_expenses_with_details';
+            referencedColumns: ['transaction_id'];
+          },
+          {
+            foreignKeyName: 'expenses_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: true;
             referencedRelation: 'v_transactions_missing_invoice';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'expenses_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: true;
+            referencedRelation: 'v_transactions_unified';
             referencedColumns: ['id'];
           },
         ];
@@ -3175,45 +3324,78 @@ export type Database = {
           },
         ];
       };
+      finance_settings: {
+        Row: {
+          closed_fiscal_year: number | null;
+          id: string;
+          updated_at: string | null;
+          updated_by: string | null;
+        };
+        Insert: {
+          closed_fiscal_year?: number | null;
+          id?: string;
+          updated_at?: string | null;
+          updated_by?: string | null;
+        };
+        Update: {
+          closed_fiscal_year?: number | null;
+          id?: string;
+          updated_at?: string | null;
+          updated_by?: string | null;
+        };
+        Relationships: [];
+      };
       financial_document_lines: {
         Row: {
           created_at: string;
           description: string;
           document_id: string;
-          expense_category_id: string | null;
           id: string;
           line_number: number;
+          pcg_code: string | null;
           product_id: string | null;
           quantity: number;
+          sort_order: number | null;
           total_ht: number;
+          total_ttc: number | null;
+          tva_amount: number | null;
           tva_rate: number;
           unit_price_ht: number;
+          updated_at: string | null;
         };
         Insert: {
           created_at?: string;
           description: string;
           document_id: string;
-          expense_category_id?: string | null;
           id?: string;
           line_number: number;
+          pcg_code?: string | null;
           product_id?: string | null;
           quantity: number;
+          sort_order?: number | null;
           total_ht: number;
+          total_ttc?: number | null;
+          tva_amount?: number | null;
           tva_rate: number;
           unit_price_ht: number;
+          updated_at?: string | null;
         };
         Update: {
           created_at?: string;
           description?: string;
           document_id?: string;
-          expense_category_id?: string | null;
           id?: string;
           line_number?: number;
+          pcg_code?: string | null;
           product_id?: string | null;
           quantity?: number;
+          sort_order?: number | null;
           total_ht?: number;
+          total_ttc?: number | null;
+          tva_amount?: number | null;
           tva_rate?: number;
           unit_price_ht?: number;
+          updated_at?: string | null;
         };
         Relationships: [
           {
@@ -3236,13 +3418,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'v_transactions_missing_invoice';
             referencedColumns: ['financial_document_id'];
-          },
-          {
-            foreignKeyName: 'financial_document_lines_expense_category_id_fkey';
-            columns: ['expense_category_id'];
-            isOneToOne: false;
-            referencedRelation: 'expense_categories';
-            referencedColumns: ['id'];
           },
           {
             foreignKeyName: 'financial_document_lines_product_id_fkey';
@@ -3290,13 +3465,13 @@ export type Database = {
           document_number: string;
           document_type: Database['public']['Enums']['document_type'];
           due_date: string | null;
-          expense_category_id: string | null;
           id: string;
           invoice_source: string | null;
           last_synced_from_abby_at: string | null;
           notes: string | null;
           partner_id: string;
           partner_type: string;
+          pcg_code: string | null;
           purchase_order_id: string | null;
           qonto_attachment_id: string | null;
           sales_order_id: string | null;
@@ -3328,13 +3503,13 @@ export type Database = {
           document_number: string;
           document_type: Database['public']['Enums']['document_type'];
           due_date?: string | null;
-          expense_category_id?: string | null;
           id?: string;
           invoice_source?: string | null;
           last_synced_from_abby_at?: string | null;
           notes?: string | null;
           partner_id: string;
           partner_type: string;
+          pcg_code?: string | null;
           purchase_order_id?: string | null;
           qonto_attachment_id?: string | null;
           sales_order_id?: string | null;
@@ -3366,13 +3541,13 @@ export type Database = {
           document_number?: string;
           document_type?: Database['public']['Enums']['document_type'];
           due_date?: string | null;
-          expense_category_id?: string | null;
           id?: string;
           invoice_source?: string | null;
           last_synced_from_abby_at?: string | null;
           notes?: string | null;
           partner_id?: string;
           partner_type?: string;
+          pcg_code?: string | null;
           purchase_order_id?: string | null;
           qonto_attachment_id?: string | null;
           sales_order_id?: string | null;
@@ -3403,13 +3578,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'v_users_with_roles';
             referencedColumns: ['user_id'];
-          },
-          {
-            foreignKeyName: 'financial_documents_expense_category_id_fkey';
-            columns: ['expense_category_id'];
-            isOneToOne: false;
-            referencedRelation: 'expense_categories';
-            referencedColumns: ['id'];
           },
           {
             foreignKeyName: 'financial_documents_partner_id_fkey';
@@ -3474,6 +3642,13 @@ export type Database = {
             referencedRelation: 'v_users_with_roles';
             referencedColumns: ['user_id'];
           },
+          {
+            foreignKeyName: 'fk_partner';
+            columns: ['partner_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
+            referencedColumns: ['id'];
+          },
         ];
       };
       financial_payments: {
@@ -3531,7 +3706,42 @@ export type Database = {
             foreignKeyName: 'financial_payments_bank_transaction_id_fkey';
             columns: ['bank_transaction_id'];
             isOneToOne: false;
+            referencedRelation: 'expenses';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'financial_payments_bank_transaction_id_fkey';
+            columns: ['bank_transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'expenses';
+            referencedColumns: ['transaction_id'];
+          },
+          {
+            foreignKeyName: 'financial_payments_bank_transaction_id_fkey';
+            columns: ['bank_transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_expenses_with_details';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'financial_payments_bank_transaction_id_fkey';
+            columns: ['bank_transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_expenses_with_details';
+            referencedColumns: ['transaction_id'];
+          },
+          {
+            foreignKeyName: 'financial_payments_bank_transaction_id_fkey';
+            columns: ['bank_transaction_id'];
+            isOneToOne: false;
             referencedRelation: 'v_transactions_missing_invoice';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'financial_payments_bank_transaction_id_fkey';
+            columns: ['bank_transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_transactions_unified';
             referencedColumns: ['id'];
           },
           {
@@ -4798,39 +5008,54 @@ export type Database = {
       };
       matching_rules: {
         Row: {
+          allow_multiple_categories: boolean | null;
+          counterparty_type: string | null;
           created_at: string | null;
           created_by: string | null;
           default_category: string | null;
           default_role_type: string | null;
+          disabled_at: string | null;
           display_label: string | null;
           enabled: boolean;
           id: string;
+          individual_customer_id: string | null;
+          is_active: boolean | null;
           match_type: string;
           match_value: string;
           organisation_id: string | null;
           priority: number;
         };
         Insert: {
+          allow_multiple_categories?: boolean | null;
+          counterparty_type?: string | null;
           created_at?: string | null;
           created_by?: string | null;
           default_category?: string | null;
           default_role_type?: string | null;
+          disabled_at?: string | null;
           display_label?: string | null;
           enabled?: boolean;
           id?: string;
+          individual_customer_id?: string | null;
+          is_active?: boolean | null;
           match_type: string;
           match_value: string;
           organisation_id?: string | null;
           priority?: number;
         };
         Update: {
+          allow_multiple_categories?: boolean | null;
+          counterparty_type?: string | null;
           created_at?: string | null;
           created_by?: string | null;
           default_category?: string | null;
           default_role_type?: string | null;
+          disabled_at?: string | null;
           display_label?: string | null;
           enabled?: boolean;
           id?: string;
+          individual_customer_id?: string | null;
+          is_active?: boolean | null;
           match_type?: string;
           match_value?: string;
           organisation_id?: string | null;
@@ -4850,6 +5075,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'v_users_with_roles';
             referencedColumns: ['user_id'];
+          },
+          {
+            foreignKeyName: 'matching_rules_individual_customer_id_fkey';
+            columns: ['individual_customer_id'];
+            isOneToOne: false;
+            referencedRelation: 'individual_customers';
+            referencedColumns: ['id'];
           },
           {
             foreignKeyName: 'matching_rules_organisation_id_fkey';
@@ -5159,6 +5391,7 @@ export type Database = {
           shipping_region: string | null;
           siren: string | null;
           siret: string | null;
+          source: string | null;
           source_affiliate_id: string | null;
           source_type:
             | Database['public']['Enums']['customer_source_type']
@@ -5227,6 +5460,7 @@ export type Database = {
           shipping_region?: string | null;
           siren?: string | null;
           siret?: string | null;
+          source?: string | null;
           source_affiliate_id?: string | null;
           source_type?:
             | Database['public']['Enums']['customer_source_type']
@@ -5295,6 +5529,7 @@ export type Database = {
           shipping_region?: string | null;
           siren?: string | null;
           siret?: string | null;
+          source?: string | null;
           source_affiliate_id?: string | null;
           source_type?:
             | Database['public']['Enums']['customer_source_type']
@@ -5352,6 +5587,213 @@ export type Database = {
             referencedColumns: ['id'];
           },
         ];
+      };
+      organisations_backup_20251227: {
+        Row: {
+          abby_customer_id: string | null;
+          address_line1: string | null;
+          address_line2: string | null;
+          archived_at: string | null;
+          billing_address_line1: string | null;
+          billing_address_line2: string | null;
+          billing_city: string | null;
+          billing_country: string | null;
+          billing_postal_code: string | null;
+          billing_region: string | null;
+          certification_labels: string[] | null;
+          city: string | null;
+          country: string | null;
+          created_at: string | null;
+          created_by: string | null;
+          currency: string | null;
+          customer_type: string | null;
+          default_channel_id: string | null;
+          delivery_time_days: number | null;
+          email: string | null;
+          enseigne_id: string | null;
+          has_different_shipping_address: boolean | null;
+          has_different_trade_name: boolean | null;
+          id: string | null;
+          industry_sector: string | null;
+          is_active: boolean | null;
+          is_enseigne_parent: boolean | null;
+          is_service_provider: boolean | null;
+          legal_form: string | null;
+          legal_name: string | null;
+          linkme_code: string | null;
+          logo_url: string | null;
+          minimum_order_amount: number | null;
+          notes: string | null;
+          payment_terms: string | null;
+          payment_terms_notes: string | null;
+          payment_terms_type:
+            | Database['public']['Enums']['payment_terms_type']
+            | null;
+          phone: string | null;
+          postal_code: string | null;
+          preferred_supplier: boolean | null;
+          prepayment_required: boolean | null;
+          rating: number | null;
+          region: string | null;
+          secondary_email: string | null;
+          shipping_address_line1: string | null;
+          shipping_address_line2: string | null;
+          shipping_city: string | null;
+          shipping_country: string | null;
+          shipping_postal_code: string | null;
+          shipping_region: string | null;
+          siren: string | null;
+          siret: string | null;
+          source_affiliate_id: string | null;
+          source_type:
+            | Database['public']['Enums']['customer_source_type']
+            | null;
+          supplier_segment:
+            | Database['public']['Enums']['supplier_segment_type']
+            | null;
+          trade_name: string | null;
+          type: Database['public']['Enums']['organisation_type'] | null;
+          updated_at: string | null;
+          vat_number: string | null;
+          website: string | null;
+        };
+        Insert: {
+          abby_customer_id?: string | null;
+          address_line1?: string | null;
+          address_line2?: string | null;
+          archived_at?: string | null;
+          billing_address_line1?: string | null;
+          billing_address_line2?: string | null;
+          billing_city?: string | null;
+          billing_country?: string | null;
+          billing_postal_code?: string | null;
+          billing_region?: string | null;
+          certification_labels?: string[] | null;
+          city?: string | null;
+          country?: string | null;
+          created_at?: string | null;
+          created_by?: string | null;
+          currency?: string | null;
+          customer_type?: string | null;
+          default_channel_id?: string | null;
+          delivery_time_days?: number | null;
+          email?: string | null;
+          enseigne_id?: string | null;
+          has_different_shipping_address?: boolean | null;
+          has_different_trade_name?: boolean | null;
+          id?: string | null;
+          industry_sector?: string | null;
+          is_active?: boolean | null;
+          is_enseigne_parent?: boolean | null;
+          is_service_provider?: boolean | null;
+          legal_form?: string | null;
+          legal_name?: string | null;
+          linkme_code?: string | null;
+          logo_url?: string | null;
+          minimum_order_amount?: number | null;
+          notes?: string | null;
+          payment_terms?: string | null;
+          payment_terms_notes?: string | null;
+          payment_terms_type?:
+            | Database['public']['Enums']['payment_terms_type']
+            | null;
+          phone?: string | null;
+          postal_code?: string | null;
+          preferred_supplier?: boolean | null;
+          prepayment_required?: boolean | null;
+          rating?: number | null;
+          region?: string | null;
+          secondary_email?: string | null;
+          shipping_address_line1?: string | null;
+          shipping_address_line2?: string | null;
+          shipping_city?: string | null;
+          shipping_country?: string | null;
+          shipping_postal_code?: string | null;
+          shipping_region?: string | null;
+          siren?: string | null;
+          siret?: string | null;
+          source_affiliate_id?: string | null;
+          source_type?:
+            | Database['public']['Enums']['customer_source_type']
+            | null;
+          supplier_segment?:
+            | Database['public']['Enums']['supplier_segment_type']
+            | null;
+          trade_name?: string | null;
+          type?: Database['public']['Enums']['organisation_type'] | null;
+          updated_at?: string | null;
+          vat_number?: string | null;
+          website?: string | null;
+        };
+        Update: {
+          abby_customer_id?: string | null;
+          address_line1?: string | null;
+          address_line2?: string | null;
+          archived_at?: string | null;
+          billing_address_line1?: string | null;
+          billing_address_line2?: string | null;
+          billing_city?: string | null;
+          billing_country?: string | null;
+          billing_postal_code?: string | null;
+          billing_region?: string | null;
+          certification_labels?: string[] | null;
+          city?: string | null;
+          country?: string | null;
+          created_at?: string | null;
+          created_by?: string | null;
+          currency?: string | null;
+          customer_type?: string | null;
+          default_channel_id?: string | null;
+          delivery_time_days?: number | null;
+          email?: string | null;
+          enseigne_id?: string | null;
+          has_different_shipping_address?: boolean | null;
+          has_different_trade_name?: boolean | null;
+          id?: string | null;
+          industry_sector?: string | null;
+          is_active?: boolean | null;
+          is_enseigne_parent?: boolean | null;
+          is_service_provider?: boolean | null;
+          legal_form?: string | null;
+          legal_name?: string | null;
+          linkme_code?: string | null;
+          logo_url?: string | null;
+          minimum_order_amount?: number | null;
+          notes?: string | null;
+          payment_terms?: string | null;
+          payment_terms_notes?: string | null;
+          payment_terms_type?:
+            | Database['public']['Enums']['payment_terms_type']
+            | null;
+          phone?: string | null;
+          postal_code?: string | null;
+          preferred_supplier?: boolean | null;
+          prepayment_required?: boolean | null;
+          rating?: number | null;
+          region?: string | null;
+          secondary_email?: string | null;
+          shipping_address_line1?: string | null;
+          shipping_address_line2?: string | null;
+          shipping_city?: string | null;
+          shipping_country?: string | null;
+          shipping_postal_code?: string | null;
+          shipping_region?: string | null;
+          siren?: string | null;
+          siret?: string | null;
+          source_affiliate_id?: string | null;
+          source_type?:
+            | Database['public']['Enums']['customer_source_type']
+            | null;
+          supplier_segment?:
+            | Database['public']['Enums']['supplier_segment_type']
+            | null;
+          trade_name?: string | null;
+          type?: Database['public']['Enums']['organisation_type'] | null;
+          updated_at?: string | null;
+          vat_number?: string | null;
+          website?: string | null;
+        };
+        Relationships: [];
       };
       payments: {
         Row: {
@@ -5416,6 +5858,45 @@ export type Database = {
             referencedColumns: ['id'];
           },
         ];
+      };
+      pcg_categories: {
+        Row: {
+          code: string;
+          created_at: string | null;
+          description: string | null;
+          display_order: number | null;
+          id: string;
+          is_active: boolean | null;
+          label: string;
+          level: number;
+          parent_code: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          code: string;
+          created_at?: string | null;
+          description?: string | null;
+          display_order?: number | null;
+          id?: string;
+          is_active?: boolean | null;
+          label: string;
+          level?: number;
+          parent_code?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          code?: string;
+          created_at?: string | null;
+          description?: string | null;
+          display_order?: number | null;
+          id?: string;
+          is_active?: boolean | null;
+          label?: string;
+          level?: number;
+          parent_code?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
       };
       price_list_history: {
         Row: {
@@ -8442,6 +8923,175 @@ export type Database = {
         };
         Relationships: [];
       };
+      transaction_document_links: {
+        Row: {
+          allocated_amount: number | null;
+          created_at: string | null;
+          created_by: string | null;
+          document_id: string | null;
+          id: string;
+          link_type: string;
+          notes: string | null;
+          purchase_order_id: string | null;
+          sales_order_id: string | null;
+          transaction_id: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          allocated_amount?: number | null;
+          created_at?: string | null;
+          created_by?: string | null;
+          document_id?: string | null;
+          id?: string;
+          link_type?: string;
+          notes?: string | null;
+          purchase_order_id?: string | null;
+          sales_order_id?: string | null;
+          transaction_id: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          allocated_amount?: number | null;
+          created_at?: string | null;
+          created_by?: string | null;
+          document_id?: string | null;
+          id?: string;
+          link_type?: string;
+          notes?: string | null;
+          purchase_order_id?: string | null;
+          sales_order_id?: string | null;
+          transaction_id?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'transaction_document_links_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'v_linkme_users';
+            referencedColumns: ['user_id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'v_users_with_roles';
+            referencedColumns: ['user_id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_document_id_fkey';
+            columns: ['document_id'];
+            isOneToOne: false;
+            referencedRelation: 'financial_documents';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_document_id_fkey';
+            columns: ['document_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_pending_invoice_uploads';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_document_id_fkey';
+            columns: ['document_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_transactions_missing_invoice';
+            referencedColumns: ['financial_document_id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_purchase_order_id_fkey';
+            columns: ['purchase_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'purchase_orders';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_sales_order_id_fkey';
+            columns: ['sales_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'affiliate_pending_orders';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_sales_order_id_fkey';
+            columns: ['sales_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_orders_enriched';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_sales_order_id_fkey';
+            columns: ['sales_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_orders_with_margins';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_sales_order_id_fkey';
+            columns: ['sales_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'sales_orders';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_sales_order_id_fkey';
+            columns: ['sales_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_transactions_missing_invoice';
+            referencedColumns: ['sales_order_id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'bank_transactions';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'expenses';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'expenses';
+            referencedColumns: ['transaction_id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_expenses_with_details';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_expenses_with_details';
+            referencedColumns: ['transaction_id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_transactions_missing_invoice';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_transactions_unified';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       user_activity_logs: {
         Row: {
           action: string;
@@ -9129,6 +9779,127 @@ export type Database = {
           },
         ];
       };
+      expenses: {
+        Row: {
+          amount: number | null;
+          amount_ht: number | null;
+          amount_vat: number | null;
+          applied_rule_id: string | null;
+          category: string | null;
+          category_pcg: string | null;
+          classified_at: string | null;
+          classified_by: string | null;
+          counterparty_iban: string | null;
+          counterparty_id: string | null;
+          counterparty_name: string | null;
+          created_at: string | null;
+          currency: string | null;
+          emitted_at: string | null;
+          id: string | null;
+          label: string | null;
+          matching_status:
+            | Database['public']['Enums']['matching_status']
+            | null;
+          notes: string | null;
+          organisation_id: string | null;
+          raw_data: Json | null;
+          role_type: string | null;
+          settled_at: string | null;
+          side: Database['public']['Enums']['transaction_side'] | null;
+          status: string | null;
+          transaction_id: string | null;
+          updated_at: string | null;
+          vat_breakdown: Json | null;
+          vat_rate: number | null;
+        };
+        Insert: {
+          amount?: number | null;
+          amount_ht?: number | null;
+          amount_vat?: number | null;
+          applied_rule_id?: string | null;
+          category?: string | null;
+          category_pcg?: string | null;
+          classified_at?: never;
+          classified_by?: never;
+          counterparty_iban?: string | null;
+          counterparty_id?: never;
+          counterparty_name?: string | null;
+          created_at?: string | null;
+          currency?: string | null;
+          emitted_at?: string | null;
+          id?: string | null;
+          label?: string | null;
+          matching_status?:
+            | Database['public']['Enums']['matching_status']
+            | null;
+          notes?: never;
+          organisation_id?: string | null;
+          raw_data?: Json | null;
+          role_type?: never;
+          settled_at?: string | null;
+          side?: Database['public']['Enums']['transaction_side'] | null;
+          status?: never;
+          transaction_id?: string | null;
+          updated_at?: string | null;
+          vat_breakdown?: Json | null;
+          vat_rate?: number | null;
+        };
+        Update: {
+          amount?: number | null;
+          amount_ht?: number | null;
+          amount_vat?: number | null;
+          applied_rule_id?: string | null;
+          category?: string | null;
+          category_pcg?: string | null;
+          classified_at?: never;
+          classified_by?: never;
+          counterparty_iban?: string | null;
+          counterparty_id?: never;
+          counterparty_name?: string | null;
+          created_at?: string | null;
+          currency?: string | null;
+          emitted_at?: string | null;
+          id?: string | null;
+          label?: string | null;
+          matching_status?:
+            | Database['public']['Enums']['matching_status']
+            | null;
+          notes?: never;
+          organisation_id?: string | null;
+          raw_data?: Json | null;
+          role_type?: never;
+          settled_at?: string | null;
+          side?: Database['public']['Enums']['transaction_side'] | null;
+          status?: never;
+          transaction_id?: string | null;
+          updated_at?: string | null;
+          vat_breakdown?: Json | null;
+          vat_rate?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'bank_transactions_applied_rule_id_fkey';
+            columns: ['applied_rule_id'];
+            isOneToOne: false;
+            referencedRelation: 'matching_rules';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'bank_transactions_applied_rule_id_fkey';
+            columns: ['applied_rule_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_matching_rules_with_org';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'bank_transactions_counterparty_organisation_id_fkey';
+            columns: ['organisation_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       google_merchant_stats: {
         Row: {
           approved_products: number | null;
@@ -9429,19 +10200,25 @@ export type Database = {
       v_expenses_with_details: {
         Row: {
           amount: number | null;
+          amount_ht: number | null;
+          amount_vat: number | null;
+          applied_rule_id: string | null;
           category: string | null;
+          category_pcg: string | null;
           classified_at: string | null;
           classified_by: string | null;
+          counterparty_display_name: string | null;
+          counterparty_id: string | null;
+          counterparty_name_normalized: string | null;
           created_at: string | null;
           currency: string | null;
-          customer_first_name: string | null;
-          customer_full_name: string | null;
-          customer_last_name: string | null;
           emitted_at: string | null;
           has_attachment: boolean | null;
           id: string | null;
-          individual_customer_id: string | null;
           label: string | null;
+          matching_status:
+            | Database['public']['Enums']['matching_status']
+            | null;
           notes: string | null;
           organisation_id: string | null;
           organisation_name: string | null;
@@ -9450,6 +10227,9 @@ export type Database = {
             | null;
           raw_data: Json | null;
           role_type: string | null;
+          rule_allow_multiple_categories: boolean | null;
+          rule_display_label: string | null;
+          rule_match_value: string | null;
           settled_at: string | null;
           side: Database['public']['Enums']['transaction_side'] | null;
           status: string | null;
@@ -9457,41 +10237,29 @@ export type Database = {
           transaction_iban: string | null;
           transaction_id: string | null;
           updated_at: string | null;
+          vat_breakdown: Json | null;
+          vat_rate: number | null;
         };
         Relationships: [
           {
-            foreignKeyName: 'expenses_classified_by_fkey';
-            columns: ['classified_by'];
+            foreignKeyName: 'bank_transactions_applied_rule_id_fkey';
+            columns: ['applied_rule_id'];
             isOneToOne: false;
-            referencedRelation: 'v_linkme_users';
-            referencedColumns: ['user_id'];
+            referencedRelation: 'matching_rules';
+            referencedColumns: ['id'];
           },
           {
-            foreignKeyName: 'expenses_classified_by_fkey';
-            columns: ['classified_by'];
+            foreignKeyName: 'bank_transactions_applied_rule_id_fkey';
+            columns: ['applied_rule_id'];
             isOneToOne: false;
-            referencedRelation: 'v_users_with_roles';
-            referencedColumns: ['user_id'];
+            referencedRelation: 'v_matching_rules_with_org';
+            referencedColumns: ['id'];
           },
           {
-            foreignKeyName: 'expenses_organisation_id_fkey';
+            foreignKeyName: 'bank_transactions_counterparty_organisation_id_fkey';
             columns: ['organisation_id'];
             isOneToOne: false;
             referencedRelation: 'organisations';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'expenses_transaction_id_fkey';
-            columns: ['transaction_id'];
-            isOneToOne: true;
-            referencedRelation: 'bank_transactions';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'expenses_transaction_id_fkey';
-            columns: ['transaction_id'];
-            isOneToOne: true;
-            referencedRelation: 'v_transactions_missing_invoice';
             referencedColumns: ['id'];
           },
         ];
@@ -9542,6 +10310,8 @@ export type Database = {
       };
       v_matching_rules_with_org: {
         Row: {
+          allow_multiple_categories: boolean | null;
+          counterparty_type: string | null;
           created_at: string | null;
           created_by: string | null;
           default_category: string | null;
@@ -9549,6 +10319,7 @@ export type Database = {
           display_label: string | null;
           enabled: boolean | null;
           id: string | null;
+          individual_customer_id: string | null;
           match_type: string | null;
           match_value: string | null;
           matched_expenses_count: number | null;
@@ -9575,6 +10346,13 @@ export type Database = {
             referencedColumns: ['user_id'];
           },
           {
+            foreignKeyName: 'matching_rules_individual_customer_id_fkey';
+            columns: ['individual_customer_id'];
+            isOneToOne: false;
+            referencedRelation: 'individual_customers';
+            referencedColumns: ['id'];
+          },
+          {
             foreignKeyName: 'matching_rules_organisation_id_fkey';
             columns: ['organisation_id'];
             isOneToOne: false;
@@ -9582,6 +10360,21 @@ export type Database = {
             referencedColumns: ['id'];
           },
         ];
+      };
+      v_pcg_categories_tree: {
+        Row: {
+          code: string | null;
+          description: string | null;
+          display_order: number | null;
+          full_path: string | null;
+          id: string | null;
+          is_active: boolean | null;
+          label: string | null;
+          level: number | null;
+          parent_code: string | null;
+          parent_label: string | null;
+        };
+        Relationships: [];
       };
       v_pending_invoice_uploads: {
         Row: {
@@ -9619,6 +10412,157 @@ export type Database = {
           },
         ];
       };
+      v_transaction_documents: {
+        Row: {
+          allocated_amount: number | null;
+          created_at: string | null;
+          document_amount: number | null;
+          document_date: string | null;
+          document_id: string | null;
+          document_number: string | null;
+          document_status:
+            | Database['public']['Enums']['document_status']
+            | null;
+          document_type: Database['public']['Enums']['document_type'] | null;
+          link_id: string | null;
+          link_type: string | null;
+          notes: string | null;
+          organisation_name: string | null;
+          purchase_order_amount: number | null;
+          purchase_order_id: string | null;
+          purchase_order_number: string | null;
+          purchase_order_status:
+            | Database['public']['Enums']['purchase_order_status']
+            | null;
+          sales_order_amount: number | null;
+          sales_order_id: string | null;
+          sales_order_number: string | null;
+          sales_order_status:
+            | Database['public']['Enums']['sales_order_status']
+            | null;
+          transaction_amount: number | null;
+          transaction_date: string | null;
+          transaction_id: string | null;
+          transaction_label: string | null;
+          transaction_side:
+            | Database['public']['Enums']['transaction_side']
+            | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'transaction_document_links_document_id_fkey';
+            columns: ['document_id'];
+            isOneToOne: false;
+            referencedRelation: 'financial_documents';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_document_id_fkey';
+            columns: ['document_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_pending_invoice_uploads';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_document_id_fkey';
+            columns: ['document_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_transactions_missing_invoice';
+            referencedColumns: ['financial_document_id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_purchase_order_id_fkey';
+            columns: ['purchase_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'purchase_orders';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_sales_order_id_fkey';
+            columns: ['sales_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'affiliate_pending_orders';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_sales_order_id_fkey';
+            columns: ['sales_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_orders_enriched';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_sales_order_id_fkey';
+            columns: ['sales_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_orders_with_margins';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_sales_order_id_fkey';
+            columns: ['sales_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'sales_orders';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_sales_order_id_fkey';
+            columns: ['sales_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_transactions_missing_invoice';
+            referencedColumns: ['sales_order_id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'bank_transactions';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'expenses';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'expenses';
+            referencedColumns: ['transaction_id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_expenses_with_details';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_expenses_with_details';
+            referencedColumns: ['transaction_id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_transactions_missing_invoice';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_transactions_unified';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       v_transactions_missing_invoice: {
         Row: {
           amount: number | null;
@@ -9645,6 +10589,79 @@ export type Database = {
           upload_status: string | null;
         };
         Relationships: [
+          {
+            foreignKeyName: 'bank_transactions_matched_document_id_fkey';
+            columns: ['matched_document_id'];
+            isOneToOne: false;
+            referencedRelation: 'financial_documents';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'bank_transactions_matched_document_id_fkey';
+            columns: ['matched_document_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_pending_invoice_uploads';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'bank_transactions_matched_document_id_fkey';
+            columns: ['matched_document_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_transactions_missing_invoice';
+            referencedColumns: ['financial_document_id'];
+          },
+        ];
+      };
+      v_transactions_unified: {
+        Row: {
+          amount: number | null;
+          amount_ht: number | null;
+          amount_vat: number | null;
+          attachment_count: number | null;
+          attachment_ids: string[] | null;
+          category_pcg: string | null;
+          confidence_score: number | null;
+          counterparty_iban: string | null;
+          counterparty_name: string | null;
+          counterparty_organisation_id: string | null;
+          created_at: string | null;
+          emitted_at: string | null;
+          has_attachment: boolean | null;
+          id: string | null;
+          justification_optional: boolean | null;
+          label: string | null;
+          match_reason: string | null;
+          matched_document_id: string | null;
+          matched_document_number: string | null;
+          matched_document_type:
+            | Database['public']['Enums']['document_type']
+            | null;
+          matching_status:
+            | Database['public']['Enums']['matching_status']
+            | null;
+          month: number | null;
+          nature: string | null;
+          operation_type: string | null;
+          organisation_name: string | null;
+          payment_method: string | null;
+          raw_data: Json | null;
+          reference: string | null;
+          settled_at: string | null;
+          side: Database['public']['Enums']['transaction_side'] | null;
+          transaction_id: string | null;
+          unified_status: string | null;
+          updated_at: string | null;
+          vat_rate: number | null;
+          year: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'bank_transactions_counterparty_organisation_id_fkey';
+            columns: ['counterparty_organisation_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'bank_transactions_matched_document_id_fkey';
             columns: ['matched_document_id'];
@@ -9760,7 +10777,13 @@ export type Database = {
           rules_applied: number;
         }[];
       };
-      apply_matching_rule: { Args: { p_rule_id: string }; Returns: number };
+      apply_matching_rule_confirm: {
+        Args: { p_rule_id: string; p_selected_normalized_labels: string[] };
+        Returns: {
+          nb_updated: number;
+          updated_ids: string[];
+        }[];
+      };
       apply_matching_rule_to_history: {
         Args: { rule_id: string };
         Returns: number;
@@ -9997,6 +11020,10 @@ export type Database = {
         Args: { p_selection_id: string };
         Returns: boolean;
       };
+      check_transaction_not_locked: {
+        Args: { p_transaction_id: string };
+        Returns: undefined;
+      };
       classify_error_with_ai:
         | {
             Args: {
@@ -10014,6 +11041,7 @@ export type Database = {
             };
             Returns: Json;
           };
+      cleanup_auto_suppliers: { Args: { p_dry_run?: boolean }; Returns: Json };
       cleanup_expired_sync_locks: { Args: never; Returns: number };
       cleanup_expired_webhook_events: { Args: never; Returns: number };
       cleanup_old_mcp_tasks: { Args: { days_old?: number }; Returns: number };
@@ -10091,13 +11119,13 @@ export type Database = {
           document_number: string;
           document_type: Database['public']['Enums']['document_type'];
           due_date: string | null;
-          expense_category_id: string | null;
           id: string;
           invoice_source: string | null;
           last_synced_from_abby_at: string | null;
           notes: string | null;
           partner_id: string;
           partner_type: string;
+          pcg_code: string | null;
           purchase_order_id: string | null;
           qonto_attachment_id: string | null;
           sales_order_id: string | null;
@@ -10134,64 +11162,6 @@ export type Database = {
         };
         Returns: string;
       };
-      create_expense: {
-        Args: {
-          p_amount_ht: number;
-          p_amount_ttc: number;
-          p_description: string;
-          p_expense_category_id: string;
-          p_expense_date: string;
-          p_notes?: string;
-          p_supplier_id: string;
-          p_tva_amount: number;
-          p_uploaded_file_url?: string;
-        };
-        Returns: {
-          abby_invoice_id: string | null;
-          abby_invoice_number: string | null;
-          abby_pdf_url: string | null;
-          abby_public_url: string | null;
-          amount_paid: number;
-          created_at: string;
-          created_by: string;
-          deleted_at: string | null;
-          description: string | null;
-          document_date: string;
-          document_direction: Database['public']['Enums']['document_direction'];
-          document_number: string;
-          document_type: Database['public']['Enums']['document_type'];
-          due_date: string | null;
-          expense_category_id: string | null;
-          id: string;
-          invoice_source: string | null;
-          last_synced_from_abby_at: string | null;
-          notes: string | null;
-          partner_id: string;
-          partner_type: string;
-          purchase_order_id: string | null;
-          qonto_attachment_id: string | null;
-          sales_order_id: string | null;
-          status: Database['public']['Enums']['document_status'];
-          sync_errors: Json | null;
-          synced_to_abby_at: string | null;
-          total_ht: number;
-          total_ttc: number;
-          tva_amount: number;
-          updated_at: string;
-          upload_status: string | null;
-          uploaded_at: string | null;
-          uploaded_by: string | null;
-          uploaded_file_name: string | null;
-          uploaded_file_url: string | null;
-        };
-        SetofOptions: {
-          from: '*';
-          to: 'financial_documents';
-          isOneToOne: true;
-          isSetofReturn: false;
-        };
-      };
-      create_expenses_from_debits: { Args: never; Returns: number };
       create_manual_stock_movement: {
         Args: {
           p_movement_type: string;
@@ -10341,13 +11311,13 @@ export type Database = {
           document_number: string;
           document_type: Database['public']['Enums']['document_type'];
           due_date: string | null;
-          expense_category_id: string | null;
           id: string;
           invoice_source: string | null;
           last_synced_from_abby_at: string | null;
           notes: string | null;
           partner_id: string;
           partner_type: string;
+          pcg_code: string | null;
           purchase_order_id: string | null;
           qonto_attachment_id: string | null;
           sales_order_id: string | null;
@@ -10385,6 +11355,7 @@ export type Database = {
         Args: { p_selection_id: string };
         Returns: undefined;
       };
+      delete_organisation_safe: { Args: { p_org_id: string }; Returns: Json };
       detect_orphaned_stock: {
         Args: never;
         Returns: {
@@ -10696,6 +11667,7 @@ export type Database = {
         };
         Returns: Json;
       };
+      get_finance_settings: { Args: never; Returns: Json };
       get_global_storage_overview: {
         Args: never;
         Returns: {
@@ -10964,6 +11936,17 @@ export type Database = {
       get_organisation_display_name: {
         Args: { org: Database['public']['Tables']['organisations']['Row'] };
         Returns: string;
+      };
+      get_pcg_category_totals: {
+        Args: { p_end_date?: string; p_start_date?: string };
+        Returns: {
+          code: string;
+          label: string;
+          level: number;
+          parent_code: string;
+          total_amount: number;
+          transaction_count: number;
+        }[];
       };
       get_pending_approvals_count: { Args: never; Returns: number };
       get_primary_contact: {
@@ -11366,11 +12349,58 @@ export type Database = {
         }[];
       };
       get_test_progress_summary: { Args: never; Returns: Json };
+      get_transaction_history: {
+        Args: { p_transaction_id: string };
+        Returns: {
+          action: string;
+          after_json: Json;
+          audit_id: string;
+          before_json: Json;
+          changed_at: string;
+          changed_by: string;
+          fields_changed: string[];
+          reason: string;
+        }[];
+      };
+      get_transaction_links: {
+        Args: { p_transaction_id: string };
+        Returns: {
+          allocated_amount: number;
+          document_amount: number;
+          document_id: string;
+          document_number: string;
+          link_id: string;
+          link_type: string;
+          organisation_name: string;
+          purchase_order_id: string;
+          purchase_order_number: string;
+          sales_order_id: string;
+          sales_order_number: string;
+        }[];
+      };
       get_transactions_by_year: {
         Args: never;
         Returns: {
           count: number;
           year: string;
+        }[];
+      };
+      get_transactions_stats: {
+        Args: { p_month?: number; p_year?: number };
+        Returns: {
+          cca_count: number;
+          classified_count: number;
+          credit_amount: number;
+          debit_amount: number;
+          ignored_count: number;
+          matched_count: number;
+          partial_count: number;
+          to_process_amount: number;
+          to_process_count: number;
+          total_amount: number;
+          total_count: number;
+          with_attachment_count: number;
+          without_attachment_count: number;
         }[];
       };
       get_treasury_stats: {
@@ -11487,6 +12517,22 @@ export type Database = {
       is_owner: { Args: never; Returns: boolean };
       is_staff_user: { Args: never; Returns: boolean };
       is_tester_or_admin: { Args: never; Returns: boolean };
+      is_transaction_locked: { Args: { p_tx_date: string }; Returns: boolean };
+      is_transaction_locked_by_id: {
+        Args: { p_transaction_id: string };
+        Returns: boolean;
+      };
+      link_transaction_to_document: {
+        Args: {
+          p_allocated_amount?: number;
+          p_document_id?: string;
+          p_notes?: string;
+          p_purchase_order_id?: string;
+          p_sales_order_id?: string;
+          p_transaction_id: string;
+        };
+        Returns: string;
+      };
       lock_section_when_complete: {
         Args: { force_lock?: boolean; section_name_param: string };
         Returns: Json;
@@ -11505,6 +12551,18 @@ export type Database = {
       log_auth_event: {
         Args: { p_details?: Json; p_event_type: string; p_success: boolean };
         Returns: undefined;
+      };
+      log_transaction_enrichment: {
+        Args: {
+          p_action: string;
+          p_after: Json;
+          p_before: Json;
+          p_fields: string[];
+          p_reason?: string;
+          p_source?: string;
+          p_transaction_id: string;
+        };
+        Returns: string;
       };
       lookup_customer_by_code: {
         Args: { p_code: string };
@@ -11553,11 +12611,11 @@ export type Database = {
             Args: { p_order_id: string; p_user_id?: string };
             Returns: boolean;
           };
-      match_expenses_by_iban: { Args: never; Returns: number };
       normalize_for_sku: {
         Args: { max_length?: number; text_input: string };
         Returns: string;
       };
+      normalize_label: { Args: { input_text: string }; Returns: string };
       normalize_name: { Args: { input_name: string }; Returns: string };
       poll_google_merchant_statuses: {
         Args: { product_ids: string[]; statuses_data: Json };
@@ -11566,6 +12624,16 @@ export type Database = {
           success: boolean;
           updated_count: number;
         }[];
+      };
+      preview_apply_matching_rule: {
+        Args: { p_new_category?: string; p_rule_id: string };
+        Returns: Database['public']['CompositeTypes']['preview_match_result'][];
+        SetofOptions: {
+          from: '*';
+          to: 'preview_match_result';
+          isOneToOne: false;
+          isSetofReturn: true;
+        };
       };
       process_shipment_stock: {
         Args: {
@@ -11670,6 +12738,7 @@ export type Database = {
           success: boolean;
         }[];
       };
+      reset_finance_auto_data: { Args: { p_dry_run?: boolean }; Returns: Json };
       reset_po_sequence_to_max: { Args: never; Returns: number };
       reset_so_sequence_to_max: { Args: never; Returns: number };
       reset_stuck_mcp_tasks: {
@@ -11741,6 +12810,67 @@ export type Database = {
           name: string;
         }[];
       };
+      search_transactions: {
+        Args: {
+          p_has_attachment?: boolean;
+          p_limit?: number;
+          p_month?: number;
+          p_offset?: number;
+          p_organisation_id?: string;
+          p_search?: string;
+          p_side?: string;
+          p_status?: string;
+          p_year?: number;
+        };
+        Returns: {
+          amount: number | null;
+          amount_ht: number | null;
+          amount_vat: number | null;
+          attachment_count: number | null;
+          attachment_ids: string[] | null;
+          category_pcg: string | null;
+          confidence_score: number | null;
+          counterparty_iban: string | null;
+          counterparty_name: string | null;
+          counterparty_organisation_id: string | null;
+          created_at: string | null;
+          emitted_at: string | null;
+          has_attachment: boolean | null;
+          id: string | null;
+          justification_optional: boolean | null;
+          label: string | null;
+          match_reason: string | null;
+          matched_document_id: string | null;
+          matched_document_number: string | null;
+          matched_document_type:
+            | Database['public']['Enums']['document_type']
+            | null;
+          matching_status:
+            | Database['public']['Enums']['matching_status']
+            | null;
+          month: number | null;
+          nature: string | null;
+          operation_type: string | null;
+          organisation_name: string | null;
+          payment_method: string | null;
+          raw_data: Json | null;
+          reference: string | null;
+          settled_at: string | null;
+          side: Database['public']['Enums']['transaction_side'] | null;
+          transaction_id: string | null;
+          unified_status: string | null;
+          updated_at: string | null;
+          vat_rate: number | null;
+          year: number | null;
+        }[];
+        SetofOptions: {
+          from: '*';
+          to: 'v_transactions_unified';
+          isOneToOne: false;
+          isSetofReturn: true;
+        };
+      };
+      set_closed_fiscal_year: { Args: { p_year: number }; Returns: Json };
       set_current_user_id: { Args: { user_id: string }; Returns: undefined };
       show_limit: { Args: never; Returns: number };
       show_trgm: { Args: { '': string }; Returns: string[] };
@@ -11776,6 +12906,10 @@ export type Database = {
           success: boolean;
         }[];
       };
+      toggle_ignore_transaction: {
+        Args: { p_ignore: boolean; p_reason?: string; p_tx_id: string };
+        Returns: Json;
+      };
       track_selection_view: {
         Args: { p_selection_id: string };
         Returns: undefined;
@@ -11787,6 +12921,10 @@ export type Database = {
           product_id: string;
           success: boolean;
         }[];
+      };
+      unlink_transaction_document: {
+        Args: { p_link_id: string };
+        Returns: boolean;
       };
       unmatch_transaction: {
         Args: { p_transaction_id: string };
@@ -12097,7 +13235,11 @@ export type Database = {
         | 'preferred'
         | 'approved'
         | 'commodity'
-        | 'artisan';
+        | 'artisan'
+        | 'goods_supplier'
+        | 'service_provider'
+        | 'logistics'
+        | 'government';
       sync_run_status:
         | 'pending'
         | 'running'
@@ -12123,7 +13265,21 @@ export type Database = {
       user_type: 'staff' | 'supplier' | 'customer' | 'partner';
     };
     CompositeTypes: {
-      [_ in never]: never;
+      preview_match_result: {
+        normalized_label_group: string | null;
+        sample_labels: string[] | null;
+        transaction_count: number | null;
+        total_amount: number | null;
+        first_seen: string | null;
+        last_seen: string | null;
+        counterparty_hint: string | null;
+        confidence: string | null;
+        confidence_score: number | null;
+        reasons: string[] | null;
+        sample_transaction_ids: string[] | null;
+        already_applied_count: number | null;
+        pending_count: number | null;
+      };
     };
   };
 };
@@ -12434,6 +13590,10 @@ export const Constants = {
         'approved',
         'commodity',
         'artisan',
+        'goods_supplier',
+        'service_provider',
+        'logistics',
+        'government',
       ],
       sync_run_status: [
         'pending',

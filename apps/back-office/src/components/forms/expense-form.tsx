@@ -12,6 +12,7 @@ import { useState, useEffect } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { PCG_SUGGESTED_CATEGORIES } from '@verone/finance';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import { ImageUploadZone } from '@verone/ui';
@@ -24,11 +25,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
+import { Switch } from '@verone/ui';
 import { Textarea } from '@verone/ui';
+import { createClient } from '@verone/utils/supabase/client';
 import { format } from 'date-fns';
 import { Loader2, Save, AlertCircle } from 'lucide-react';
-
-import { createClient } from '@verone/utils/supabase/client';
 
 // =====================================================================
 // TYPES
@@ -40,14 +41,8 @@ interface Organisation {
   type: string;
 }
 
-interface ExpenseCategory {
-  id: string;
-  name: string;
-  account_code: string | null;
-}
-
 interface ExpenseFormData {
-  expense_category_id: string;
+  pcg_code: string; // Code PCG au lieu de expense_category_id
   partner_id: string;
   document_number: string;
   document_date: string;
@@ -58,6 +53,10 @@ interface ExpenseFormData {
   description: string;
   notes: string;
   uploaded_file_url?: string;
+  // Ventilation TVA multi-taux
+  isVentilated: boolean;
+  vatLine10Ht: number; // Montant HT à 10%
+  vatLine20Ht: number; // Montant HT à 20%
 }
 
 interface ExpenseFormProps {
@@ -86,7 +85,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
 
   // États formulaire
   const [formData, setFormData] = useState<ExpenseFormData>({
-    expense_category_id: '',
+    pcg_code: '',
     partner_id: '',
     document_number: '',
     document_date: format(new Date(), 'yyyy-MM-dd'),
@@ -97,31 +96,24 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
     description: '',
     notes: '',
     uploaded_file_url: '',
+    // Ventilation TVA
+    isVentilated: false,
+    vatLine10Ht: 0,
+    vatLine20Ht: 0,
   });
 
   // États UI
-  const [categories, setCategories] = useState<ExpenseCategory[]>([]);
   const [suppliers, setSuppliers] = useState<Organisation[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasUploadedFile, setHasUploadedFile] = useState(false);
 
-  // Charger catégories et fournisseurs
+  // Charger fournisseurs (catégories via constante PCG_SUGGESTED_CATEGORIES)
   useEffect(() => {
     async function fetchData() {
       try {
         setLoadingData(true);
-
-        // Catégories dépenses
-        const { data: categoriesData, error: categoriesError } = await supabase
-          .from('expense_categories')
-          .select('id, name, account_code')
-          .eq('is_active', true)
-          .order('name');
-
-        if (categoriesError) throw categoriesError;
-        setCategories((categoriesData as any) || []);
 
         // Fournisseurs (organisations type supplier)
         const { data: suppliersData, error: suppliersError } = await supabase
@@ -134,7 +126,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
         setSuppliers((suppliersData as any) || []);
       } catch (err) {
         console.error('Erreur chargement données:', err);
-        setError('Impossible de charger les catégories et fournisseurs');
+        setError('Impossible de charger les fournisseurs');
       } finally {
         setLoadingData(false);
       }
@@ -175,19 +167,42 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
 
   // Calcul automatique TVA et TTC
   useEffect(() => {
-    const tvaAmount = (formData.total_ht * formData.tva_rate) / 100;
-    const totalTtc = formData.total_ht + tvaAmount;
+    if (formData.isVentilated) {
+      // Mode ventilé: calcul depuis les lignes
+      const vat10 = (formData.vatLine10Ht * 10) / 100;
+      const vat20 = (formData.vatLine20Ht * 20) / 100;
+      const totalHt = formData.vatLine10Ht + formData.vatLine20Ht;
+      const tvaAmount = vat10 + vat20;
+      const totalTtc = totalHt + tvaAmount;
 
-    setFormData(prev => ({
-      ...prev,
-      tva_amount: parseFloat(tvaAmount.toFixed(2)),
-      total_ttc: parseFloat(totalTtc.toFixed(2)),
-    }));
-  }, [formData.total_ht, formData.tva_rate]);
+      setFormData(prev => ({
+        ...prev,
+        total_ht: parseFloat(totalHt.toFixed(2)),
+        tva_amount: parseFloat(tvaAmount.toFixed(2)),
+        total_ttc: parseFloat(totalTtc.toFixed(2)),
+      }));
+    } else {
+      // Mode simple: calcul classique
+      const tvaAmount = (formData.total_ht * formData.tva_rate) / 100;
+      const totalTtc = formData.total_ht + tvaAmount;
+
+      setFormData(prev => ({
+        ...prev,
+        tva_amount: parseFloat(tvaAmount.toFixed(2)),
+        total_ttc: parseFloat(totalTtc.toFixed(2)),
+      }));
+    }
+  }, [
+    formData.total_ht,
+    formData.tva_rate,
+    formData.isVentilated,
+    formData.vatLine10Ht,
+    formData.vatLine20Ht,
+  ]);
 
   // Validation formulaire
   const validateForm = (): boolean => {
-    if (!formData.expense_category_id) {
+    if (!formData.pcg_code) {
       setError('Veuillez sélectionner une catégorie de dépense');
       return false;
     }
@@ -202,9 +217,20 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
       return false;
     }
 
-    if (formData.total_ht <= 0) {
-      setError('Le montant HT doit être supérieur à 0');
-      return false;
+    if (formData.isVentilated) {
+      // Mode ventilé: vérifier qu'au moins une ligne a un montant
+      if (formData.vatLine10Ht <= 0 && formData.vatLine20Ht <= 0) {
+        setError(
+          'En mode ventilé, au moins un montant HT doit être supérieur à 0'
+        );
+        return false;
+      }
+    } else {
+      // Mode simple
+      if (formData.total_ht <= 0) {
+        setError('Le montant HT doit être supérieur à 0');
+        return false;
+      }
     }
 
     if (!formData.description.trim()) {
@@ -230,26 +256,112 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
     setLoading(true);
 
     try {
-      // Insérer financial_document
-      const { error: insertError } = await supabase
+      // Trouver le label de la catégorie PCG sélectionnée
+      const selectedCategory = PCG_SUGGESTED_CATEGORIES.find(
+        cat => cat.code === formData.pcg_code
+      );
+      const categoryLabel = selectedCategory
+        ? `${selectedCategory.code} - ${selectedCategory.label}`
+        : formData.pcg_code;
+
+      // Insérer financial_document (sans expense_category_id obsolète)
+      const { data: insertedDoc, error: insertError } = await supabase
         .from('financial_documents')
         .insert({
           document_type: 'expense',
+          document_direction: 'outbound',
           document_number: formData.document_number,
           partner_id: formData.partner_id,
-          expense_category_id: formData.expense_category_id,
+          partner_type: 'supplier',
           document_date: formData.document_date,
           total_ht: formData.total_ht,
           tva_amount: formData.tva_amount,
           total_ttc: formData.total_ttc,
           amount_paid: 0,
           status: 'draft',
-          description: formData.description,
+          description: `[${categoryLabel}] ${formData.description}`,
           notes: formData.notes,
           uploaded_file_url: formData.uploaded_file_url,
-        } as any);
+        } as any)
+        .select('id')
+        .single();
 
       if (insertError) throw insertError;
+
+      // Créer les lignes TVA dans financial_document_items (source de vérité)
+      if (insertedDoc?.id) {
+        // Construire les items TVA
+        const items: Array<{
+          document_id: string;
+          description: string;
+          quantity: number;
+          unit_price_ht: number;
+          total_ht: number;
+          tva_rate: number;
+          tva_amount: number;
+          total_ttc: number;
+          sort_order: number;
+        }> = [];
+
+        if (formData.isVentilated) {
+          // Mode ventilé: 2 lignes (10% et 20%)
+          if (formData.vatLine10Ht > 0) {
+            items.push({
+              document_id: insertedDoc.id,
+              description: 'Ligne TVA 10%',
+              quantity: 1,
+              unit_price_ht: formData.vatLine10Ht,
+              total_ht: formData.vatLine10Ht,
+              tva_rate: 10,
+              tva_amount: parseFloat(
+                ((formData.vatLine10Ht * 10) / 100).toFixed(2)
+              ),
+              total_ttc: parseFloat((formData.vatLine10Ht * 1.1).toFixed(2)),
+              sort_order: 0,
+            });
+          }
+          if (formData.vatLine20Ht > 0) {
+            items.push({
+              document_id: insertedDoc.id,
+              description: 'Ligne TVA 20%',
+              quantity: 1,
+              unit_price_ht: formData.vatLine20Ht,
+              total_ht: formData.vatLine20Ht,
+              tva_rate: 20,
+              tva_amount: parseFloat(
+                ((formData.vatLine20Ht * 20) / 100).toFixed(2)
+              ),
+              total_ttc: parseFloat((formData.vatLine20Ht * 1.2).toFixed(2)),
+              sort_order: 1,
+            });
+          }
+        } else {
+          // Mode simple: 1 ligne avec le taux sélectionné
+          items.push({
+            document_id: insertedDoc.id,
+            description: formData.description,
+            quantity: 1,
+            unit_price_ht: formData.total_ht,
+            total_ht: formData.total_ht,
+            tva_rate: formData.tva_rate,
+            tva_amount: formData.tva_amount,
+            total_ttc: formData.total_ttc,
+            sort_order: 0,
+          });
+        }
+
+        if (items.length > 0) {
+          // Note: utilise financial_document_lines (table existante)
+          const { error: itemsError } = await (supabase as any)
+            .from('financial_document_lines')
+            .insert(items);
+
+          if (itemsError) {
+            console.error('Erreur création lignes TVA:', itemsError);
+            // Ne pas bloquer si erreur sur les items (document créé)
+          }
+        }
+      }
 
       // Succès
       if (onSuccess) {
@@ -299,36 +411,29 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
             </p>
           </div>
 
-          {/* Catégorie */}
+          {/* Catégorie PCG */}
           <div className="space-y-2">
             <Label htmlFor="category">
               Catégorie <span className="text-red-500">*</span>
             </Label>
-            {loadingData ? (
-              <div className="flex items-center gap-2 p-3 border rounded-md">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm text-gray-500">Chargement...</span>
-              </div>
-            ) : (
-              <Select
-                value={formData.expense_category_id}
-                onValueChange={value =>
-                  setFormData({ ...formData, expense_category_id: value })
-                }
-                disabled={loading}
-              >
-                <SelectTrigger id="category">
-                  <SelectValue placeholder="Sélectionner une catégorie" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map(cat => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.name} {cat.account_code && `(${cat.account_code})`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
+            <Select
+              value={formData.pcg_code}
+              onValueChange={value =>
+                setFormData({ ...formData, pcg_code: value })
+              }
+              disabled={loading}
+            >
+              <SelectTrigger id="category">
+                <SelectValue placeholder="Sélectionner une catégorie" />
+              </SelectTrigger>
+              <SelectContent>
+                {PCG_SUGGESTED_CATEGORIES.map(cat => (
+                  <SelectItem key={cat.code} value={cat.code}>
+                    {cat.code} - {cat.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Fournisseur */}
@@ -380,70 +485,156 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
             />
           </div>
 
-          {/* Montants */}
-          <div className="grid grid-cols-2 gap-4">
-            {/* Total HT */}
-            <div className="space-y-2">
-              <Label htmlFor="total_ht">
-                Montant HT <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="total_ht"
-                type="number"
-                step="0.01"
-                min="0.01"
-                value={formData.total_ht}
-                onChange={e =>
-                  setFormData({
-                    ...formData,
-                    total_ht: parseFloat(e.target.value) || 0,
-                  })
-                }
-                disabled={loading}
-                required
-              />
-            </div>
+          {/* Montants - Mode simple */}
+          {!formData.isVentilated && (
+            <div className="grid grid-cols-2 gap-4">
+              {/* Total HT */}
+              <div className="space-y-2">
+                <Label htmlFor="total_ht">
+                  Montant HT <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="total_ht"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  value={formData.total_ht}
+                  onChange={e =>
+                    setFormData({
+                      ...formData,
+                      total_ht: parseFloat(e.target.value) || 0,
+                    })
+                  }
+                  disabled={loading}
+                  required
+                />
+              </div>
 
-            {/* Taux TVA */}
-            <div className="space-y-2">
-              <Label htmlFor="tva_rate">
-                Taux TVA <span className="text-red-500">*</span>
-              </Label>
-              <Select
-                value={formData.tva_rate.toString()}
-                onValueChange={value =>
-                  setFormData({ ...formData, tva_rate: parseFloat(value) })
-                }
-                disabled={loading}
-              >
-                <SelectTrigger id="tva_rate">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TVA_RATES.map(rate => (
-                    <SelectItem key={rate.value} value={rate.value.toString()}>
-                      {rate.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {/* Taux TVA */}
+              <div className="space-y-2">
+                <Label htmlFor="tva_rate">
+                  Taux TVA <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={formData.tva_rate.toString()}
+                  onValueChange={value =>
+                    setFormData({ ...formData, tva_rate: parseFloat(value) })
+                  }
+                  disabled={loading}
+                >
+                  <SelectTrigger id="tva_rate">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TVA_RATES.map(rate => (
+                      <SelectItem
+                        key={rate.value}
+                        value={rate.value.toString()}
+                      >
+                        {rate.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+          )}
+
+          {/* Toggle ventilation TVA */}
+          <div className="flex items-center justify-between p-4 border rounded-md bg-slate-50">
+            <div>
+              <Label htmlFor="isVentilated" className="font-medium">
+                Ventiler TVA (plusieurs taux)
+              </Label>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Ex: restaurant avec TVA 10% (repas) + 20% (alcool)
+              </p>
+            </div>
+            <Switch
+              id="isVentilated"
+              checked={formData.isVentilated}
+              onCheckedChange={checked =>
+                setFormData({ ...formData, isVentilated: checked })
+              }
+              disabled={loading}
+            />
           </div>
+
+          {/* Ventilation TVA multi-taux */}
+          {formData.isVentilated && (
+            <div className="space-y-4 p-4 border-2 border-dashed border-blue-200 rounded-md bg-blue-50">
+              <p className="text-sm font-medium text-blue-800">
+                Répartissez le montant HT par taux de TVA
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="vatLine10Ht">Montant HT à 10%</Label>
+                  <Input
+                    id="vatLine10Ht"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.vatLine10Ht || ''}
+                    onChange={e =>
+                      setFormData({
+                        ...formData,
+                        vatLine10Ht: parseFloat(e.target.value) || 0,
+                      })
+                    }
+                    disabled={loading}
+                    placeholder="0.00"
+                  />
+                  <p className="text-xs text-gray-500">
+                    TVA: {((formData.vatLine10Ht * 10) / 100).toFixed(2)} €
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="vatLine20Ht">Montant HT à 20%</Label>
+                  <Input
+                    id="vatLine20Ht"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.vatLine20Ht || ''}
+                    onChange={e =>
+                      setFormData({
+                        ...formData,
+                        vatLine20Ht: parseFloat(e.target.value) || 0,
+                      })
+                    }
+                    disabled={loading}
+                    placeholder="0.00"
+                  />
+                  <p className="text-xs text-gray-500">
+                    TVA: {((formData.vatLine20Ht * 20) / 100).toFixed(2)} €
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Montants calculés */}
           <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-md">
+            <div>
+              <p className="text-sm text-gray-500 mb-1">
+                {formData.isVentilated ? 'Total HT' : 'Montant HT'}
+              </p>
+              <p className="text-lg font-bold">
+                {formData.total_ht.toFixed(2)} €
+              </p>
+            </div>
             <div>
               <p className="text-sm text-gray-500 mb-1">Montant TVA</p>
               <p className="text-lg font-bold">
                 {formData.tva_amount.toFixed(2)} €
               </p>
             </div>
-            <div>
-              <p className="text-sm text-gray-500 mb-1">Total TTC</p>
-              <p className="text-lg font-bold text-primary">
-                {formData.total_ttc.toFixed(2)} €
-              </p>
-            </div>
+          </div>
+          <div className="p-4 bg-primary/10 rounded-md">
+            <p className="text-sm text-gray-500 mb-1">Total TTC</p>
+            <p className="text-2xl font-bold text-primary">
+              {formData.total_ttc.toFixed(2)} €
+            </p>
           </div>
 
           {/* Description */}
