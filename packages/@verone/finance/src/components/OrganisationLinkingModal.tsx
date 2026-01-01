@@ -106,7 +106,8 @@ export function OrganisationLinkingModal({
   );
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [applyToHistory, setApplyToHistory] = useState<boolean>(true);
+  // SLICE 2: Par défaut, on ne crée plus de règle automatiquement
+  const [createRule, setCreateRule] = useState<boolean>(false);
   const [existingRule, setExistingRule] = useState<IExistingRule | null>(null);
 
   // AbortController for cancelling in-flight requests
@@ -116,7 +117,6 @@ export function OrganisationLinkingModal({
     rules,
     create: createMatchingRule,
     update: updateMatchingRule,
-    applyOne,
   } = useMatchingRules();
 
   // Format currency
@@ -136,7 +136,8 @@ export function OrganisationLinkingModal({
       setNewName(label);
       setNewEmail('');
       setCounterpartyType(isCredit ? 'customer_pro' : 'partner');
-      setApplyToHistory(true);
+      // SLICE 2: createRule décochée par défaut (sauf si règle existante)
+      setCreateRule(false);
       setExistingRule(null);
     }
   }, [open, label, isCredit]);
@@ -204,21 +205,12 @@ export function OrganisationLinkingModal({
           );
         } else {
           // Search in organisations table
-          let orgType: 'customer' | 'supplier';
-          let isServiceProvider: boolean | null = null;
+          // AMÉLIORATION: Recherche universelle - ne pas filtrer par is_service_provider
+          // pour permettre de trouver toutes les organisations existantes
+          const orgType: 'customer' | 'supplier' =
+            counterpartyType === 'customer_pro' ? 'customer' : 'supplier';
 
-          if (counterpartyType === 'customer_pro') {
-            orgType = 'customer';
-          } else if (counterpartyType === 'supplier') {
-            orgType = 'supplier';
-            isServiceProvider = false;
-          } else {
-            // partner
-            orgType = 'supplier';
-            isServiceProvider = true;
-          }
-
-          let orgQuery = supabase
+          const orgQuery = supabase
             .from('organisations')
             .select('id, legal_name, type, is_service_provider')
             .or(`legal_name.ilike.%${query}%,trade_name.ilike.%${query}%`)
@@ -227,10 +219,7 @@ export function OrganisationLinkingModal({
             .order('legal_name')
             .limit(8);
 
-          // For suppliers, also filter by is_service_provider
-          if (isServiceProvider !== null) {
-            orgQuery = orgQuery.eq('is_service_provider', isServiceProvider);
-          }
+          // NE PAS filtrer par is_service_provider - on veut trouver toutes les organisations
 
           const { data, error } = await orgQuery.abortSignal(
             signal as AbortSignal
@@ -238,11 +227,15 @@ export function OrganisationLinkingModal({
 
           if (error) throw error;
 
+          // Mapper le type réel de l'organisation (pas celui sélectionné)
           results.push(
             ...(data ?? []).map(org => ({
               id: org.id,
               name: org.legal_name,
-              type: counterpartyType,
+              // Utiliser le type RÉEL de l'organisation, pas celui sélectionné dans les boutons
+              type: org.is_service_provider
+                ? ('partner' as CounterpartyType)
+                : ('supplier' as CounterpartyType),
               isOrganisation: true,
             }))
           );
@@ -403,6 +396,7 @@ export function OrganisationLinkingModal({
     };
 
   // Handle final submission
+  // SLICE 2: Simplifié - ne crée une règle que si createRule est true
   const handleSubmit = async (): Promise<void> => {
     setIsSubmitting(true);
     try {
@@ -421,57 +415,63 @@ export function OrganisationLinkingModal({
         throw new Error('Aucune contrepartie sélectionnée');
       }
 
-      let ruleId: string | null = null;
-
-      // Determine counterparty_type and IDs for the rule
+      const supabase = createClient();
       const isIndividual = counterpartyToUse.type === 'individual';
-      const dbCounterpartyType = isIndividual ? 'individual' : 'organisation';
 
-      // Map CounterpartyType to matching rule role type
-      const ruleRoleType =
-        counterpartyToUse.type === 'customer_pro'
-          ? 'customer'
-          : counterpartyToUse.type === 'individual'
-            ? 'customer'
-            : counterpartyToUse.type; // supplier or partner
+      // SLICE 2: Mise à jour directe des transactions correspondant au label
+      // Sans créer de règle (sauf si createRule est coché)
+      const { error: updateError } = await supabase
+        .from('bank_transactions')
+        .update({
+          counterparty_organisation_id: isIndividual
+            ? null
+            : counterpartyToUse.id,
+          updated_at: new Date().toISOString(),
+        })
+        .ilike('counterparty_name', `%${label}%`);
 
-      if (existingRule) {
-        // UPDATE existing rule
-        const success = await updateMatchingRule(existingRule.id, {
-          organisation_id: isIndividual ? null : counterpartyToUse.id,
-          individual_customer_id: isIndividual ? counterpartyToUse.id : null,
-          counterparty_type: dbCounterpartyType,
-          default_role_type: ruleRoleType,
-        } as any);
-        if (success) {
-          ruleId = existingRule.id;
-        }
-      } else {
-        // CREATE new rule
-        const newRule = await createMatchingRule({
-          match_type: 'label_contains',
-          match_value: label,
-          organisation_id: isIndividual ? null : counterpartyToUse.id,
-          individual_customer_id: isIndividual ? counterpartyToUse.id : null,
-          counterparty_type: dbCounterpartyType,
-          default_category: null,
-          default_role_type: ruleRoleType,
-          priority: 100,
-        } as any);
-        if (newRule) {
-          ruleId = newRule.id;
-        }
+      if (updateError) {
+        throw new Error(updateError.message);
       }
 
-      // Apply to history if requested
-      if (applyToHistory && ruleId) {
-        await applyOne(ruleId);
+      // SLICE 2: Créer/mettre à jour une règle SEULEMENT si demandé explicitement
+      if (createRule) {
+        const dbCounterpartyType = isIndividual ? 'individual' : 'organisation';
+        const ruleRoleType =
+          counterpartyToUse.type === 'customer_pro'
+            ? 'customer'
+            : counterpartyToUse.type === 'individual'
+              ? 'customer'
+              : counterpartyToUse.type;
+
+        if (existingRule) {
+          // UPDATE existing rule (même label)
+          await updateMatchingRule(existingRule.id, {
+            organisation_id: isIndividual ? null : counterpartyToUse.id,
+            individual_customer_id: isIndividual ? counterpartyToUse.id : null,
+            counterparty_type: dbCounterpartyType,
+            default_role_type: ruleRoleType,
+          } as any);
+        } else {
+          // CREATE new rule
+          // Note: Une organisation peut avoir PLUSIEURS règles (avec différents libellés)
+          // La contrainte DB est sur (match_type, match_value), pas sur organisation_id
+          await createMatchingRule({
+            match_type: 'label_contains',
+            match_value: label,
+            organisation_id: isIndividual ? null : counterpartyToUse.id,
+            individual_customer_id: isIndividual ? counterpartyToUse.id : null,
+            counterparty_type: dbCounterpartyType,
+            default_category: null,
+            default_role_type: ruleRoleType,
+            priority: 100,
+          } as any);
+        }
       }
 
       onSuccess?.();
       onOpenChange(false);
     } catch (err) {
-      // Use warn to avoid Next.js dev overlay for network errors
       console.warn(
         '[OrganisationLinkingModal] Submit failed:',
         err instanceof Error ? err.message : err
@@ -544,8 +544,24 @@ export function OrganisationLinkingModal({
             </div>
           </DialogHeader>
 
-          {/* Banner règle existante */}
-          {existingRule && (
+          {/* SLICE 6: Banner bloquant si organisation gérée par règle */}
+          {existingRule?.organisation_id ? (
+            <div className="mt-4 flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-3">
+              <AlertCircle
+                size={18}
+                className="mt-0.5 shrink-0 text-amber-600"
+              />
+              <div className="text-sm">
+                <p className="font-medium text-amber-900">
+                  Organisation verrouillée par règle
+                </p>
+                <p className="mt-0.5 text-amber-700">
+                  Cette transaction est gérée automatiquement. Pour modifier
+                  l&apos;organisation, modifiez la règle depuis la page Règles.
+                </p>
+              </div>
+            </div>
+          ) : existingRule ? (
             <div className="mt-4 flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3">
               <Info size={18} className="mt-0.5 shrink-0 text-blue-600" />
               <div className="text-sm">
@@ -554,26 +570,18 @@ export function OrganisationLinkingModal({
                 </p>
                 <p className="mt-0.5 text-blue-700">
                   {categoryLabel
-                    ? `Catégorie: ${categoryLabel} (sera conservée)`
+                    ? `Catégorie: ${categoryLabel}`
                     : 'Sans catégorie'}
                 </p>
               </div>
             </div>
-          )}
-
-          {/* Banner pas de règle */}
-          {!existingRule && (
-            <div className="mt-4 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
-              <AlertCircle
-                size={18}
-                className="mt-0.5 shrink-0 text-amber-600"
-              />
+          ) : (
+            <div className="mt-4 flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <Info size={18} className="mt-0.5 shrink-0 text-slate-500" />
               <div className="text-sm">
-                <p className="font-medium text-amber-900">
-                  Aucune règle existante
-                </p>
-                <p className="mt-0.5 text-amber-700">
-                  Une nouvelle règle sera créée (sans catégorie)
+                <p className="font-medium text-slate-700">Liaison directe</p>
+                <p className="mt-0.5 text-slate-500">
+                  Les transactions existantes seront liées à l&apos;organisation
                 </p>
               </div>
             </div>
@@ -582,127 +590,132 @@ export function OrganisationLinkingModal({
 
         {/* Content */}
         <div className="space-y-6 px-6 py-6">
-          {/* 1. Type selection - FIRST */}
-          <div className="space-y-3">
-            <Label className="text-base font-semibold">Type</Label>
-            <div className="grid grid-cols-2 gap-3">
-              {isCredit ? (
-                <>
-                  {/* CREDIT: Client particulier (B2C) / Client professionnel (B2B) */}
-                  <button
-                    type="button"
-                    onClick={() => setCounterpartyType('individual')}
-                    className={cn(
-                      'flex items-center gap-3 rounded-xl border-2 p-3 transition-all',
-                      counterpartyType === 'individual'
-                        ? 'border-green-500 bg-green-50'
-                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                    )}
-                  >
-                    <div
+          {/* 1. Type selection - MASQUÉ si organisation existante sélectionnée */}
+          {/* Les boutons Type ne servent que pour la CRÉATION d'une nouvelle organisation */}
+          {!selectedCounterparty && (
+            <div className="space-y-3">
+              <Label className="text-base font-semibold">Type</Label>
+              <div className="grid grid-cols-2 gap-3">
+                {isCredit ? (
+                  <>
+                    {/* CREDIT: Client particulier (B2C) / Client professionnel (B2B) */}
+                    <button
+                      type="button"
+                      onClick={() => setCounterpartyType('individual')}
                       className={cn(
-                        'flex h-10 w-10 items-center justify-center rounded-lg',
+                        'flex items-center gap-3 rounded-xl border-2 p-3 transition-all',
                         counterpartyType === 'individual'
-                          ? 'bg-green-500 text-white'
-                          : 'bg-slate-100 text-slate-500'
+                          ? 'border-green-500 bg-green-50'
+                          : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                       )}
                     >
-                      <User size={20} />
-                    </div>
-                    <div className="text-left">
-                      <div className="font-medium text-sm">Client</div>
-                      <div className="text-xs text-slate-500">
-                        particulier (B2C)
+                      <div
+                        className={cn(
+                          'flex h-10 w-10 items-center justify-center rounded-lg',
+                          counterpartyType === 'individual'
+                            ? 'bg-green-500 text-white'
+                            : 'bg-slate-100 text-slate-500'
+                        )}
+                      >
+                        <User size={20} />
                       </div>
-                    </div>
-                  </button>
+                      <div className="text-left">
+                        <div className="font-medium text-sm">Client</div>
+                        <div className="text-xs text-slate-500">
+                          particulier (B2C)
+                        </div>
+                      </div>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setCounterpartyType('customer_pro')}
-                    className={cn(
-                      'flex items-center gap-3 rounded-xl border-2 p-3 transition-all',
-                      counterpartyType === 'customer_pro'
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                    )}
-                  >
-                    <div
+                    <button
+                      type="button"
+                      onClick={() => setCounterpartyType('customer_pro')}
                       className={cn(
-                        'flex h-10 w-10 items-center justify-center rounded-lg',
+                        'flex items-center gap-3 rounded-xl border-2 p-3 transition-all',
                         counterpartyType === 'customer_pro'
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-slate-100 text-slate-500'
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                       )}
                     >
-                      <Briefcase size={20} />
-                    </div>
-                    <div className="text-left">
-                      <div className="font-medium text-sm">Client</div>
-                      <div className="text-xs text-slate-500">
-                        professionnel (B2B)
+                      <div
+                        className={cn(
+                          'flex h-10 w-10 items-center justify-center rounded-lg',
+                          counterpartyType === 'customer_pro'
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-slate-100 text-slate-500'
+                        )}
+                      >
+                        <Briefcase size={20} />
                       </div>
-                    </div>
-                  </button>
-                </>
-              ) : (
-                <>
-                  {/* DEBIT: Fournisseur / Prestataire */}
-                  <button
-                    type="button"
-                    onClick={() => setCounterpartyType('supplier')}
-                    className={cn(
-                      'flex items-center gap-3 rounded-xl border-2 p-3 transition-all',
-                      counterpartyType === 'supplier'
-                        ? 'border-amber-500 bg-amber-50'
-                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                    )}
-                  >
-                    <div
+                      <div className="text-left">
+                        <div className="font-medium text-sm">Client</div>
+                        <div className="text-xs text-slate-500">
+                          professionnel (B2B)
+                        </div>
+                      </div>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {/* DEBIT: Fournisseur / Prestataire */}
+                    <button
+                      type="button"
+                      onClick={() => setCounterpartyType('supplier')}
                       className={cn(
-                        'flex h-10 w-10 items-center justify-center rounded-lg',
+                        'flex items-center gap-3 rounded-xl border-2 p-3 transition-all',
                         counterpartyType === 'supplier'
-                          ? 'bg-amber-500 text-white'
-                          : 'bg-slate-100 text-slate-500'
+                          ? 'border-amber-500 bg-amber-50'
+                          : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                       )}
                     >
-                      <Package size={20} />
-                    </div>
-                    <div className="text-left">
-                      <div className="font-medium text-sm">Fournisseur</div>
-                      <div className="text-xs text-slate-500">de biens</div>
-                    </div>
-                  </button>
+                      <div
+                        className={cn(
+                          'flex h-10 w-10 items-center justify-center rounded-lg',
+                          counterpartyType === 'supplier'
+                            ? 'bg-amber-500 text-white'
+                            : 'bg-slate-100 text-slate-500'
+                        )}
+                      >
+                        <Package size={20} />
+                      </div>
+                      <div className="text-left">
+                        <div className="font-medium text-sm">Fournisseur</div>
+                        <div className="text-xs text-slate-500">de biens</div>
+                      </div>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setCounterpartyType('partner')}
-                    className={cn(
-                      'flex items-center gap-3 rounded-xl border-2 p-3 transition-all',
-                      counterpartyType === 'partner'
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                    )}
-                  >
-                    <div
+                    <button
+                      type="button"
+                      onClick={() => setCounterpartyType('partner')}
                       className={cn(
-                        'flex h-10 w-10 items-center justify-center rounded-lg',
+                        'flex items-center gap-3 rounded-xl border-2 p-3 transition-all',
                         counterpartyType === 'partner'
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-slate-100 text-slate-500'
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                       )}
                     >
-                      <Settings size={20} />
-                    </div>
-                    <div className="text-left">
-                      <div className="font-medium text-sm">Prestataire</div>
-                      <div className="text-xs text-slate-500">de services</div>
-                    </div>
-                  </button>
-                </>
-              )}
+                      <div
+                        className={cn(
+                          'flex h-10 w-10 items-center justify-center rounded-lg',
+                          counterpartyType === 'partner'
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-slate-100 text-slate-500'
+                        )}
+                      >
+                        <Settings size={20} />
+                      </div>
+                      <div className="text-left">
+                        <div className="font-medium text-sm">Prestataire</div>
+                        <div className="text-xs text-slate-500">
+                          de services
+                        </div>
+                      </div>
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* 2. Search / Selection */}
           <div className="space-y-3">
@@ -875,32 +888,30 @@ export function OrganisationLinkingModal({
             )}
           </div>
 
-          {/* 3. Apply to history */}
+          {/* 3. SLICE 2: Créer une règle (optionnel, décoché par défaut) */}
           <label
             className={cn(
               'flex cursor-pointer items-center gap-3 rounded-xl border-2 p-3 transition-all',
-              applyToHistory
-                ? 'border-green-500 bg-green-50'
+              createRule
+                ? 'border-amber-500 bg-amber-50'
                 : 'border-slate-200 hover:bg-slate-50'
             )}
           >
             <input
               type="checkbox"
-              checked={applyToHistory}
-              onChange={e => setApplyToHistory(e.target.checked)}
-              className="h-4 w-4 rounded border-slate-300 text-green-500"
+              checked={createRule}
+              onChange={e => setCreateRule(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 text-amber-500"
             />
             <div className="flex-1">
-              <div className="text-sm font-medium">
-                Appliquer aux transactions existantes
+              <div className="text-sm font-medium flex items-center gap-2">
+                <Settings size={14} className="text-amber-500" />
+                Créer une règle automatique
               </div>
-              {transactionCount > 0 && (
-                <div className="text-xs text-slate-500">
-                  {transactionCount} transaction
-                  {transactionCount > 1 ? 's' : ''} concernée
-                  {transactionCount > 1 ? 's' : ''}
-                </div>
-              )}
+              <div className="text-xs text-slate-500">
+                Les futures transactions avec ce libellé seront automatiquement
+                liées
+              </div>
             </div>
           </label>
         </div>
@@ -917,8 +928,17 @@ export function OrganisationLinkingModal({
 
           <Button
             onClick={() => void handleSubmit()}
-            disabled={isSubmitting || !canSubmit}
+            disabled={
+              isSubmitting ||
+              !canSubmit ||
+              Boolean(existingRule?.organisation_id)
+            }
             className="gap-2 bg-blue-500 hover:bg-blue-600"
+            title={
+              existingRule?.organisation_id
+                ? 'Organisation verrouillée par règle'
+                : undefined
+            }
           >
             {isSubmitting ? (
               <>

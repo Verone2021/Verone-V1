@@ -11,6 +11,17 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
 
+/**
+ * Item de ventilation TVA multi-taux
+ * Ex: restaurant avec 10% sur nourriture et 20% sur alcool
+ */
+export interface VatBreakdownItem {
+  /** Taux TVA (10, 20, etc.) */
+  tva_rate: number;
+  /** Pourcentage du montant total à ce taux (ex: 50 pour 50%) */
+  percent: number;
+}
+
 export interface MatchingRule {
   id: string;
   priority: number;
@@ -23,6 +34,21 @@ export interface MatchingRule {
   counterparty_type: 'organisation' | 'individual' | null;
   default_category: string | null;
   default_role_type: 'supplier' | 'customer' | 'partner' | 'internal' | null;
+  /**
+   * Si TRUE, les transactions peuvent avoir des catégories différentes.
+   * Si FALSE (défaut), la catégorie est verrouillée par la règle.
+   */
+  allow_multiple_categories: boolean;
+  /**
+   * Taux TVA par défaut (0, 5.5, 10, 20).
+   * NULL si vat_breakdown est utilisé pour multi-taux.
+   */
+  default_vat_rate: number | null;
+  /**
+   * Ventilation TVA multi-taux.
+   * Ex: [{tva_rate: 10, percent: 50}, {tva_rate: 20, percent: 50}]
+   */
+  vat_breakdown: VatBreakdownItem[] | null;
   created_at: string;
   created_by: string | null;
   // Joined from organisation
@@ -76,6 +102,12 @@ export interface CreateRuleData {
   default_category?: string | null;
   default_role_type: 'supplier' | 'customer' | 'partner' | 'internal';
   priority?: number;
+  /** Si TRUE, permet de modifier la catégorie individuellement par transaction */
+  allow_multiple_categories?: boolean;
+  /** Taux TVA par défaut (0, 5.5, 10, 20). NULL pour multi-taux. */
+  default_vat_rate?: number | null;
+  /** Ventilation TVA multi-taux. Ex: [{tva_rate: 10, percent: 50}, {tva_rate: 20, percent: 50}] */
+  vat_breakdown?: VatBreakdownItem[] | null;
 }
 
 export interface UseMatchingRulesReturn {
@@ -92,7 +124,11 @@ export interface UseMatchingRulesReturn {
   /** @deprecated Use previewApply + confirmApply instead */
   applyOne: (ruleId: string) => Promise<number>;
   /** Preview which transactions will be affected - READ ONLY */
-  previewApply: (ruleId: string) => Promise<PreviewMatchResult[]>;
+  previewApply: (
+    ruleId: string,
+    newCategory?: string,
+    newVatRate?: number | null
+  ) => Promise<PreviewMatchResult[]>;
   /** Confirm application with selected normalized labels */
   confirmApply: (
     ruleId: string,
@@ -157,6 +193,9 @@ export function useMatchingRules(): UseMatchingRulesReturn {
           default_category: data.default_category ?? null,
           default_role_type: data.default_role_type,
           priority: data.priority ?? 100,
+          allow_multiple_categories: data.allow_multiple_categories ?? false,
+          default_vat_rate: data.default_vat_rate ?? null,
+          vat_breakdown: data.vat_breakdown ?? null,
           enabled: true,
         };
 
@@ -218,14 +257,55 @@ export function useMatchingRules(): UseMatchingRulesReturn {
       try {
         const supabase = createClient();
 
+        // FIX: Nettoyer les données (undefined → null pour Supabase)
+        // Supabase ignore les champs undefined, donc on doit les convertir en null
+        const cleanData: Record<string, unknown> = {};
+
+        console.log('[useMatchingRules] update() called with:', { id, data });
+
+        if (data.display_label !== undefined)
+          cleanData.display_label = data.display_label ?? null;
+        if (data.organisation_id !== undefined)
+          cleanData.organisation_id = data.organisation_id ?? null;
+        if (data.individual_customer_id !== undefined)
+          cleanData.individual_customer_id =
+            data.individual_customer_id ?? null;
+        if (data.counterparty_type !== undefined)
+          cleanData.counterparty_type = data.counterparty_type ?? null;
+        if (data.default_category !== undefined)
+          cleanData.default_category = data.default_category ?? null;
+        if (data.default_role_type !== undefined)
+          cleanData.default_role_type = data.default_role_type ?? null;
+        if (data.priority !== undefined)
+          cleanData.priority = data.priority ?? 100;
+        if (data.allow_multiple_categories !== undefined)
+          cleanData.allow_multiple_categories =
+            data.allow_multiple_categories ?? false;
+        if (data.enabled !== undefined) cleanData.enabled = data.enabled;
+        if (data.match_type !== undefined)
+          cleanData.match_type = data.match_type;
+        if (data.match_value !== undefined)
+          cleanData.match_value = data.match_value;
+        if (data.default_vat_rate !== undefined)
+          cleanData.default_vat_rate = data.default_vat_rate ?? null;
+        if (data.vat_breakdown !== undefined)
+          cleanData.vat_breakdown = data.vat_breakdown ?? null;
+
+        console.log('[useMatchingRules] cleanData to send:', cleanData);
+
         const { data: updated, error: updateError } = await (
           supabase as { from: CallableFunction }
         )
           .from('matching_rules')
-          .update(data)
+          .update(cleanData)
           .eq('id', id)
           .select()
           .single();
+
+        console.log('[useMatchingRules] update response:', {
+          updated,
+          updateError,
+        });
 
         if (updateError) {
           throw new Error(updateError.message);
@@ -322,15 +402,26 @@ export function useMatchingRules(): UseMatchingRulesReturn {
   /**
    * Prévisualise les transactions qui seront affectées par l'application de la règle
    * NE MODIFIE RIEN - Lecture seule
+   * @param ruleId - ID de la règle
+   * @param newCategory - Optionnel: nouvelle catégorie pour simuler avant sauvegarde
+   * @param newVatRate - Optionnel: nouveau taux TVA pour voir combien seront mis à jour
    */
   const previewApply = useCallback(
-    async (ruleId: string): Promise<PreviewMatchResult[]> => {
+    async (
+      ruleId: string,
+      newCategory?: string,
+      newVatRate?: number | null
+    ): Promise<PreviewMatchResult[]> => {
       try {
         const supabase = createClient();
 
         const { data, error: rpcError } = await (
           supabase.rpc as CallableFunction
-        )('preview_apply_matching_rule', { p_rule_id: ruleId });
+        )('preview_apply_matching_rule', {
+          p_rule_id: ruleId,
+          p_new_category: newCategory ?? null,
+          p_new_vat_rate: newVatRate ?? null,
+        });
 
         if (rpcError) {
           throw new Error(rpcError.message);

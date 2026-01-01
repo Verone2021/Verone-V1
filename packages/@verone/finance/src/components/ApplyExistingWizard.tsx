@@ -46,7 +46,12 @@ export interface ApplyExistingWizardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   rule: MatchingRule;
-  previewApply: (ruleId: string) => Promise<PreviewMatchResult[]>;
+  /** Nouvelle catégorie à prévisualiser (optionnel - si différente de celle en base) */
+  newCategory?: string;
+  previewApply: (
+    ruleId: string,
+    newCategory?: string
+  ) => Promise<PreviewMatchResult[]>;
   confirmApply: (
     ruleId: string,
     selectedNormalizedLabels: string[]
@@ -83,6 +88,7 @@ export function ApplyExistingWizard({
   open,
   onOpenChange,
   rule,
+  newCategory,
   previewApply,
   confirmApply,
   onSuccess,
@@ -109,7 +115,8 @@ export function ApplyExistingWizard({
       setSelectedLabels(new Set());
       setResult(null);
 
-      previewApply(rule.id)
+      // Passer la nouvelle catégorie pour simuler l'impact avant sauvegarde
+      previewApply(rule.id, newCategory)
         .then(results => {
           setPreviewResults(results);
           // Pre-select HIGH confidence groups
@@ -125,7 +132,7 @@ export function ApplyExistingWizard({
           setStep('preview');
         });
     }
-  }, [open, rule, previewApply]);
+  }, [open, rule, newCategory, previewApply]);
 
   // Toggle selection
   const toggleLabel = useCallback((label: string) => {

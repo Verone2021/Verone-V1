@@ -1,13 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 import { useToast } from '@verone/common/hooks';
 import { getPcgCategory } from '@verone/finance';
-import { OrganisationLinkingModal } from '@verone/finance/components';
-import { useUniqueLabels, useMatchingRules } from '@verone/finance/hooks';
+import {
+  OrganisationLinkingModal,
+  QuickClassificationModal,
+  RuleModal,
+} from '@verone/finance/components';
+import {
+  useUniqueLabels,
+  useMatchingRules,
+  type MatchingRule,
+} from '@verone/finance/hooks';
 import {
   Badge,
   Button,
@@ -16,6 +25,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  Input,
 } from '@verone/ui';
 import {
   AlertCircle,
@@ -26,7 +36,9 @@ import {
   Loader2,
   Play,
   RefreshCw,
+  Search,
   Settings,
+  Tag,
   Trash2,
   Zap,
   Link as LinkIcon,
@@ -42,6 +54,14 @@ function formatAmount(amount: number): string {
 
 export default function ReglesPage() {
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Pré-remplissage depuis classification (query params)
+  const createFromClassification = searchParams.get('create') === 'true';
+  const prefillLabel = searchParams.get('label') || '';
+  const prefillCategory = searchParams.get('category') || '';
+  const prefillTva = searchParams.get('tva') || '';
 
   // Hooks de données
   const {
@@ -55,10 +75,12 @@ export default function ReglesPage() {
     remove: deleteRule,
     update: updateRule,
     applyAll,
+    previewApply,
+    confirmApply,
     refetch: refetchRules,
   } = useMatchingRules();
 
-  // État du modal
+  // État du modal de liaison
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedLabel, setSelectedLabel] = useState<{
     label: string;
@@ -66,7 +88,53 @@ export default function ReglesPage() {
     totalAmount: number;
   } | null>(null);
 
-  // Ouvrir le modal pour lier un libellé
+  // État du modal d'édition de règle
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingRule, setEditingRule] = useState<MatchingRule | null>(null);
+
+  // État du modal de classification (catégorie seule, sans organisation)
+  const [classifyModalOpen, setClassifyModalOpen] = useState(false);
+  const [classifyLabel, setClassifyLabel] = useState<{
+    label: string;
+    transactionCount: number;
+    totalAmount: number;
+  } | null>(null);
+
+  // État des recherches
+  const [labelsSearch, setLabelsSearch] = useState('');
+  const [rulesSearch, setRulesSearch] = useState('');
+
+  // Filtrage des libellés non classés
+  const filteredLabels = labels.filter(label =>
+    label.label.toLowerCase().includes(labelsSearch.toLowerCase())
+  );
+
+  // Filtrage des règles actives
+  const filteredRules = rules.filter(
+    rule =>
+      rule.match_value.toLowerCase().includes(rulesSearch.toLowerCase()) ||
+      (rule.organisation_name &&
+        rule.organisation_name
+          .toLowerCase()
+          .includes(rulesSearch.toLowerCase()))
+  );
+
+  // Auto-ouvrir le modal si on vient de la classification
+  useEffect(() => {
+    if (createFromClassification && prefillLabel) {
+      setSelectedLabel({
+        label: prefillLabel,
+        transactionCount: 0,
+        totalAmount: 0,
+      });
+      setModalOpen(true);
+
+      // Nettoyer l'URL après ouverture du modal
+      router.replace('/finance/depenses/regles', { scroll: false });
+    }
+  }, [createFromClassification, prefillLabel, router]);
+
+  // Ouvrir le modal pour lier un libellé (organisation)
   const handleLinkLabel = (
     label: string,
     transactionCount: number,
@@ -74,6 +142,25 @@ export default function ReglesPage() {
   ) => {
     setSelectedLabel({ label, transactionCount, totalAmount });
     setModalOpen(true);
+  };
+
+  // Ouvrir le modal pour classifier un libellé (catégorie seule)
+  const handleClassifyLabel = (
+    label: string,
+    transactionCount: number,
+    totalAmount: number
+  ) => {
+    setClassifyLabel({ label, transactionCount, totalAmount });
+    setClassifyModalOpen(true);
+  };
+
+  // Succès de la classification
+  const handleClassifySuccess = async () => {
+    toast({
+      title: 'Catégorie appliquée',
+      description: 'Le libellé a été classifié et la règle créée.',
+    });
+    await Promise.all([refetchLabels(), refetchRules()]);
   };
 
   // Succès de la liaison
@@ -144,6 +231,42 @@ export default function ReglesPage() {
     }
   };
 
+  // Ouvrir le modal d'édition d'une règle
+  const handleEditRule = (rule: MatchingRule) => {
+    setEditingRule(rule);
+    setEditModalOpen(true);
+  };
+
+  // Sauvegarder les modifications d'une règle
+  const handleSaveRule = async (
+    ruleId: string,
+    data: {
+      organisation_id?: string | null;
+      default_category?: string | null;
+      enabled?: boolean;
+    }
+  ): Promise<boolean> => {
+    try {
+      await updateRule(ruleId, data);
+      toast({
+        title: 'Règle modifiée',
+        description: 'Les modifications ont été enregistrées.',
+      });
+      await refetchRules();
+      return true;
+    } catch (error) {
+      toast({
+        title: 'Erreur',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Erreur lors de la modification',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
   const isLoading = labelsLoading || rulesLoading;
 
   return (
@@ -201,6 +324,20 @@ export default function ReglesPage() {
               <CardDescription>
                 Cliquez sur "Lier" pour associer un libellé à une organisation
               </CardDescription>
+              {labels.length > 0 && (
+                <div className="relative mt-2">
+                  <Search
+                    size={16}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  />
+                  <Input
+                    placeholder="Rechercher un libellé..."
+                    value={labelsSearch}
+                    onChange={e => setLabelsSearch(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+              )}
             </CardHeader>
             <CardContent>
               {labelsLoading ? (
@@ -215,9 +352,16 @@ export default function ReglesPage() {
                     Toutes les dépenses sont classées !
                   </p>
                 </div>
+              ) : filteredLabels.length === 0 ? (
+                <div className="py-8 text-center">
+                  <Search className="mx-auto h-12 w-12 text-slate-300" />
+                  <p className="mt-2 text-slate-600">
+                    Aucun libellé trouvé pour "{labelsSearch}"
+                  </p>
+                </div>
               ) : (
                 <div className="max-h-[600px] space-y-2 overflow-y-auto">
-                  {labels.map(label => (
+                  {filteredLabels.map(label => (
                     <div
                       key={label.label}
                       className="flex items-center justify-between rounded-lg bg-slate-50 p-3 transition-colors hover:bg-slate-100"
@@ -231,20 +375,38 @@ export default function ReglesPage() {
                           {formatAmount(label.total_amount)}
                         </p>
                       </div>
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() =>
-                          handleLinkLabel(
-                            label.label,
-                            label.transaction_count,
-                            label.total_amount
-                          )
-                        }
-                      >
-                        <LinkIcon size={14} className="mr-1" />
-                        Lier
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            handleClassifyLabel(
+                              label.label,
+                              label.transaction_count,
+                              label.total_amount
+                            )
+                          }
+                          title="Classifier (catégorie seule)"
+                        >
+                          <Tag size={14} className="mr-1" />
+                          Classer
+                        </Button>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() =>
+                            handleLinkLabel(
+                              label.label,
+                              label.transaction_count,
+                              label.total_amount
+                            )
+                          }
+                          title="Lier à une organisation"
+                        >
+                          <LinkIcon size={14} className="mr-1" />
+                          Lier
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -263,6 +425,20 @@ export default function ReglesPage() {
               <CardDescription>
                 Règles qui classifient automatiquement les dépenses
               </CardDescription>
+              {rules.length > 0 && (
+                <div className="relative mt-2">
+                  <Search
+                    size={16}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  />
+                  <Input
+                    placeholder="Rechercher une règle..."
+                    value={rulesSearch}
+                    onChange={e => setRulesSearch(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+              )}
             </CardHeader>
             <CardContent>
               {rulesLoading ? (
@@ -279,20 +455,28 @@ export default function ReglesPage() {
                     gauche
                   </p>
                 </div>
+              ) : filteredRules.length === 0 ? (
+                <div className="py-8 text-center">
+                  <Search className="mx-auto h-12 w-12 text-slate-300" />
+                  <p className="mt-2 text-slate-600">
+                    Aucune règle trouvée pour "{rulesSearch}"
+                  </p>
+                </div>
               ) : (
                 <div className="max-h-[600px] space-y-3 overflow-y-auto">
-                  {rules.map(rule => {
+                  {filteredRules.map(rule => {
                     const pcgCategory = getPcgCategory(
                       rule.default_category ?? ''
                     );
                     return (
                       <div
                         key={rule.id}
-                        className={`rounded-lg border p-3 ${
+                        className={`rounded-lg border p-3 cursor-pointer transition-all hover:shadow-md ${
                           rule.enabled
-                            ? 'border-slate-200 bg-white'
-                            : 'border-slate-100 bg-slate-50 opacity-60'
+                            ? 'border-slate-200 bg-white hover:border-blue-300'
+                            : 'border-slate-100 bg-slate-50 opacity-60 hover:opacity-80'
                         }`}
+                        onClick={() => handleEditRule(rule)}
                       >
                         <div className="flex items-start justify-between">
                           <div className="min-w-0 flex-1">
@@ -323,9 +507,10 @@ export default function ReglesPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() =>
-                                handleToggleRule(rule.id, rule.enabled)
-                              }
+                              onClick={e => {
+                                e.stopPropagation();
+                                handleToggleRule(rule.id, rule.enabled);
+                              }}
                               title={rule.enabled ? 'Désactiver' : 'Activer'}
                             >
                               {rule.enabled ? (
@@ -337,7 +522,10 @@ export default function ReglesPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleDeleteRule(rule.id)}
+                              onClick={e => {
+                                e.stopPropagation();
+                                handleDeleteRule(rule.id);
+                              }}
                               className="text-red-500 hover:text-red-700"
                             >
                               <Trash2 size={14} />
@@ -363,6 +551,33 @@ export default function ReglesPage() {
           transactionCount={selectedLabel.transactionCount}
           totalAmount={selectedLabel.totalAmount}
           onSuccess={handleLinkSuccess}
+        />
+      )}
+
+      {/* Modal d'édition de règle */}
+      <RuleModal
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        rule={editingRule}
+        onUpdate={updateRule}
+        previewApply={previewApply}
+        confirmApply={confirmApply}
+        onSuccess={() => {
+          setEditingRule(null);
+          refetchRules();
+        }}
+      />
+
+      {/* Modal de classification (catégorie seule, sans organisation) */}
+      {classifyLabel && (
+        <QuickClassificationModal
+          open={classifyModalOpen}
+          onOpenChange={setClassifyModalOpen}
+          label={classifyLabel.label}
+          amount={classifyLabel.totalAmount}
+          transactionCount={classifyLabel.transactionCount}
+          onSuccess={handleClassifySuccess}
+          confirmApply={confirmApply}
         />
       )}
     </div>

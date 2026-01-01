@@ -111,7 +111,7 @@ export function useOrganisationTransactions(
           raw_data
         `
         )
-        .eq('organisation_id', organisationId)
+        .eq('counterparty_organisation_id', organisationId)
         .order('emitted_at', { ascending: false });
 
       if (fetchError) {

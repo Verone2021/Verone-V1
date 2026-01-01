@@ -130,6 +130,8 @@ function ExpenseRow({
 
   // SLICE 3: Verrouillage si une règle est appliquée
   const isLockedByRule = Boolean(expense.applied_rule_id);
+  // Peut-on modifier individuellement malgré la règle ?
+  const canModifyIndividually = expense.rule_allow_multiple_categories === true;
 
   return (
     <tr
@@ -175,9 +177,33 @@ function ExpenseRow({
         </div>
       </td>
       <td className="px-4 py-3 text-right">
-        <span className="text-sm font-semibold text-red-600">
-          -{formatAmount(expense.amount)}
-        </span>
+        <div className="flex flex-col items-end gap-0.5">
+          <div className="flex items-center justify-end gap-1">
+            {expense.has_attachment && (
+              <span title="Justificatif disponible">
+                <Paperclip size={12} className="text-blue-500" />
+              </span>
+            )}
+            <span className="text-sm font-semibold text-red-600">
+              -{formatAmount(expense.amount)}
+            </span>
+          </div>
+          {/* Indicateur ventilation TVA */}
+          {expense.vat_breakdown &&
+          Array.isArray(expense.vat_breakdown) &&
+          expense.vat_breakdown.length > 0 ? (
+            <span
+              className="text-[10px] px-1.5 py-0.5 rounded bg-orange-100 text-orange-700"
+              title={`TVA ventilée: ${expense.vat_breakdown.length} lignes`}
+            >
+              TVA ventilée ({expense.vat_breakdown.length})
+            </span>
+          ) : expense.vat_rate ? (
+            <span className="text-[10px] text-slate-400">
+              TVA {expense.vat_rate}%
+            </span>
+          ) : null}
+        </div>
       </td>
       <td className="px-4 py-3">
         <StatusBadge status={expense.status} />
@@ -204,16 +230,18 @@ function ExpenseRow({
           {/* Actions de classification */}
           {isLockedByRule ? (
             <>
-              {/* Modification individuelle - même avec règle */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onClassify(expense)}
-                className="gap-1 text-slate-600 hover:text-slate-800"
-                title="Modifier cette ligne uniquement"
-              >
-                <Edit2 size={14} />
-              </Button>
+              {/* Modification individuelle - seulement si allow_multiple_categories */}
+              {canModifyIndividually && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onClassify(expense)}
+                  className="gap-1 text-slate-600 hover:text-slate-800"
+                  title="Modifier cette ligne uniquement"
+                >
+                  <Edit2 size={14} />
+                </Button>
+              )}
               {/* Modification de la règle */}
               {onViewRule && (
                 <Button
@@ -255,11 +283,24 @@ function ExpenseRow({
 }
 
 export default function DepensesPage() {
-  const [filters, setFilters] = useState<ExpenseFilters>({
-    status: 'all',
-  });
   const [searchValue, setSearchValue] = useState('');
-  const { expenses, stats, isLoading, error, refetch } = useExpenses(filters);
+  // Utiliser les filtres du hook (pas un état local séparé)
+  const { expenses, stats, isLoading, error, refetch, filters, setFilters } =
+    useExpenses({ status: 'all' });
+
+  // Debounce: Recherche automatique après 400ms de pause de frappe
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setFilters(prev => {
+        const newSearch = searchValue.trim() || undefined;
+        // Ne mettre à jour que si la valeur a réellement changé
+        if (prev.search === newSearch) return prev;
+        return { ...prev, search: newSearch };
+      });
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [searchValue]);
   const { toast } = useToast();
 
   // Dashboard stats pour les graphiques
@@ -410,9 +451,9 @@ export default function DepensesPage() {
       );
 
       const breakdownArray: ExpenseBreakdown[] = Object.entries(categoryData)
-        .map(([name, catData]) => ({
-          category_name: name,
-          category_code: name,
+        .map(([code, catData]) => ({
+          category_name: getPcgCategory(code)?.label || code,
+          category_code: code,
           total_amount: catData.total,
           count: catData.count,
           percentage:
@@ -495,11 +536,18 @@ export default function DepensesPage() {
 
   const handleViewAttachment = (expense: Expense) => {
     // Extraire l'ID de l'attachment depuis raw_data
-    const rawData = expense.raw_data as { attachments?: Array<{ id: string }> };
-    const attachmentId = rawData.attachments?.[0]?.id;
+    // Qonto utilise "attachment_ids" (tableau d'UUIDs)
+    const rawData = expense.raw_data as { attachment_ids?: string[] };
+    const attachmentId = rawData.attachment_ids?.[0];
 
     if (attachmentId) {
       window.open(`/api/qonto/attachments/${attachmentId}`, '_blank');
+    } else {
+      toast({
+        title: 'Aucune pièce jointe',
+        description: "Cette transaction n'a pas de justificatif attaché.",
+        variant: 'destructive',
+      });
     }
   };
 
@@ -611,7 +659,7 @@ export default function DepensesPage() {
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
                 />
                 <Input
-                  placeholder="Rechercher par libellé..."
+                  placeholder="Rechercher par libellé ou organisation..."
                   className="pl-9"
                   value={searchValue}
                   onChange={e => setSearchValue(e.target.value)}

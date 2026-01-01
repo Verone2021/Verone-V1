@@ -4,15 +4,21 @@ import { useState, useMemo } from 'react';
 
 import Link from 'next/link';
 
-import { useBankReconciliation, type BankTransaction } from '@verone/finance';
+import {
+  useBankReconciliation,
+  type BankTransaction,
+  getPcgCategory,
+} from '@verone/finance';
 import {
   RapprochementModal,
   InvoiceUploadModal,
   SupplierCell,
   QuickClassificationModal,
   OrganisationLinkingModal,
+  RuleModal,
   type TransactionForUpload,
 } from '@verone/finance/components';
+import { useMatchingRules, type MatchingRule } from '@verone/finance/hooks';
 import {
   useExpenses,
   useAutoClassification,
@@ -65,6 +71,7 @@ import {
   XCircle,
   ChevronLeft,
   ChevronRight,
+  Lock,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -150,6 +157,7 @@ function TransactionRow({
     organisationName: string | null;
     category: string | null;
     confidence: 'high' | 'medium' | 'none';
+    matchType?: 'exact' | 'similar' | 'none';
   };
 }) {
   const hasAttachments =
@@ -198,6 +206,7 @@ function TransactionRow({
             suggestedOrganisationName={suggestion?.organisationName}
             suggestedCategory={suggestion?.category}
             confidence={suggestion?.confidence}
+            matchType={suggestion?.matchType}
             showCategory
           />
         </div>
@@ -262,6 +271,7 @@ function TransactionDetailPanel({
     organisationName: string | null;
     category: string | null;
     confidence: 'high' | 'medium' | 'none';
+    matchType?: 'exact' | 'similar' | 'none';
   };
 }) {
   const hasAttachments =
@@ -333,6 +343,7 @@ function TransactionDetailPanel({
                     suggestedOrganisationName={suggestion?.organisationName}
                     suggestedCategory={suggestion?.category}
                     confidence={suggestion?.confidence}
+                    matchType={suggestion?.matchType}
                     showCategory
                   />
                 </div>
@@ -880,6 +891,17 @@ function TransactionsPageV2() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showClassificationModal, setShowClassificationModal] = useState(false);
   const [showOrganisationModal, setShowOrganisationModal] = useState(false);
+  const [showRuleModal, setShowRuleModal] = useState(false);
+  const [editingRule, setEditingRule] = useState<MatchingRule | null>(null);
+
+  // Hook pour les règles (preview/confirm workflow)
+  const {
+    rules,
+    update: updateRule,
+    refetch: refetchRules,
+    previewApply,
+    confirmApply,
+  } = useMatchingRules();
 
   // Unified hook with pagination
   const {
@@ -903,6 +925,24 @@ function TransactionsPageV2() {
     },
     pageSize: 20,
   });
+
+  // Auto-classification: obtenir les règles de matching associées
+  const { transactionsWithSuggestions } = useAutoClassification(
+    transactions as (UnifiedTransaction & Record<string, unknown>)[]
+  );
+
+  // Map pour accès rapide aux suggestions (avec ruleId)
+  const suggestionsMap = useMemo(() => {
+    const map = new Map<
+      string,
+      (typeof transactionsWithSuggestions)[0]['suggestion']
+    >();
+    transactionsWithSuggestions.forEach(({ original, suggestion }) => {
+      const tx = original as UnifiedTransaction;
+      map.set(tx.id, suggestion);
+    });
+    return map;
+  }, [transactionsWithSuggestions]);
 
   // Actions
   const {
@@ -1018,6 +1058,23 @@ function TransactionsPageV2() {
       toast.error(result.error || 'Erreur');
     }
   };
+
+  // SLICE 5: Voir/Modifier la règle qui verrouille cette transaction
+  const handleViewRule = () => {
+    if (!selectedTransaction?.applied_rule_id) return;
+
+    // Trouver la règle dans la liste
+    const rule = rules.find(r => r.id === selectedTransaction.applied_rule_id);
+    if (rule) {
+      setEditingRule(rule);
+      setShowRuleModal(true);
+    } else {
+      toast.error('Règle non trouvée');
+    }
+  };
+
+  // Vérifier si la transaction est verrouillée par une règle
+  const isLockedByRule = Boolean(selectedTransaction?.applied_rule_id);
 
   // Convert for upload modal
   const transactionForUpload: TransactionForUpload | null = useMemo(() => {
@@ -1187,10 +1244,9 @@ function TransactionsPageV2() {
             <div className="flex items-center gap-4 px-3 py-2 bg-muted/50 text-sm font-medium text-muted-foreground border-b">
               <div className="w-8" />
               <div className="w-24">Date</div>
-              <div className="flex-1">Libelle</div>
-              <div className="w-24">PCG</div>
-              <div className="w-32">Organisation</div>
-              <div className="w-20 text-center">Justif</div>
+              <div className="flex-1">Libellé</div>
+              <div className="w-32">Catégorie</div>
+              <div className="w-24 text-center">Justif.</div>
               <div className="w-28 text-right">Montant</div>
             </div>
 
@@ -1242,47 +1298,56 @@ function TransactionsPageV2() {
                         {formatDate(tx.settled_at || tx.emitted_at)}
                       </div>
 
-                      {/* Libelle */}
+                      {/* Libellé + Organisation en bleu */}
                       <div className="flex-1 min-w-0">
                         <p className="font-medium truncate">
-                          {tx.label || 'Sans libelle'}
+                          {tx.label || 'Sans libellé'}
                         </p>
-                        <p className="text-sm text-muted-foreground truncate">
-                          {tx.counterparty_name || '-'}
-                        </p>
-                      </div>
-
-                      {/* PCG */}
-                      <div className="w-24">
-                        {tx.category_pcg ? (
-                          <Badge variant="secondary" className="text-xs">
-                            {tx.category_pcg}
-                          </Badge>
-                        ) : (
-                          <span className="text-slate-300">-</span>
-                        )}
-                      </div>
-
-                      {/* Organisation */}
-                      <div className="w-32 truncate text-sm">
-                        {tx.organisation_name ? (
-                          <span className="text-blue-600">
-                            {tx.organisation_name}
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="text-muted-foreground truncate">
+                            {tx.counterparty_name || '-'}
                           </span>
+                          {tx.organisation_name && (
+                            <span className="text-blue-600 truncate">
+                              • {tx.organisation_name}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Catégorie (nom) */}
+                      <div className="w-32 text-sm text-slate-600 truncate">
+                        {tx.category_pcg ? (
+                          getPcgCategory(tx.category_pcg)?.label ||
+                          tx.category_pcg
                         ) : (
                           <span className="text-slate-300">-</span>
                         )}
                       </div>
 
-                      {/* Justificatif */}
-                      <div className="w-20 flex justify-center">
+                      {/* Justificatif cliquable */}
+                      <div className="w-24 flex justify-center">
                         {tx.has_attachment ? (
-                          <Badge
-                            variant="default"
-                            className="text-xs bg-blue-600 gap-1"
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={e => {
+                              e.stopPropagation();
+                              const attachmentId = (
+                                tx.raw_data as { attachment_ids?: string[] }
+                              )?.attachment_ids?.[0];
+                              if (attachmentId) {
+                                window.open(
+                                  `/api/qonto/attachments/${attachmentId}`,
+                                  '_blank'
+                                );
+                              }
+                            }}
+                            className="text-blue-600 hover:text-blue-800 h-8 w-8 p-0"
+                            title="Voir justificatif"
                           >
-                            <Paperclip className="h-3 w-3" />
-                          </Badge>
+                            <Paperclip className="h-4 w-4" />
+                          </Button>
                         ) : (
                           <span className="text-slate-300">-</span>
                         )}
@@ -1494,25 +1559,52 @@ function TransactionsPageV2() {
                     Actions
                   </p>
 
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start gap-2"
-                    onClick={() => setShowClassificationModal(true)}
-                    data-testid="btn-classify-pcg"
-                  >
-                    <Tag className="h-4 w-4" />
-                    Classer PCG
-                  </Button>
+                  {/* SLICE 5: Si verrouillé par règle, afficher bouton "Voir la règle" */}
+                  {isLockedByRule ? (
+                    <>
+                      <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg mb-2">
+                        <div className="flex items-center gap-2 text-amber-700">
+                          <Lock className="h-4 w-4" />
+                          <span className="text-sm font-medium">
+                            Verrouillé par règle
+                          </span>
+                        </div>
+                        <p className="text-xs text-amber-600 mt-1">
+                          Cette transaction est gérée automatiquement.
+                        </p>
+                      </div>
+                      <Button
+                        variant="default"
+                        className="w-full justify-start gap-2"
+                        onClick={handleViewRule}
+                      >
+                        <Settings className="h-4 w-4" />
+                        Voir / Modifier la règle
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start gap-2"
+                        onClick={() => setShowClassificationModal(true)}
+                        data-testid="btn-classify-pcg"
+                      >
+                        <Tag className="h-4 w-4" />
+                        Classer PCG
+                      </Button>
 
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start gap-2"
-                    onClick={() => setShowOrganisationModal(true)}
-                    data-testid="btn-link-org"
-                  >
-                    <Building2 className="h-4 w-4" />
-                    Lier organisation
-                  </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start gap-2"
+                        onClick={() => setShowOrganisationModal(true)}
+                        data-testid="btn-link-org"
+                      >
+                        <Building2 className="h-4 w-4" />
+                        Lier organisation
+                      </Button>
+                    </>
+                  )}
 
                   <Button
                     variant="outline"
@@ -1536,7 +1628,8 @@ function TransactionsPageV2() {
                   </Button>
 
                   {selectedTransaction.side === 'debit' &&
-                    selectedTransaction.unified_status !== 'cca' && (
+                    selectedTransaction.unified_status !== 'cca' &&
+                    !isLockedByRule && (
                       <Button
                         variant="outline"
                         className="w-full justify-start gap-2"
@@ -1585,6 +1678,12 @@ function TransactionsPageV2() {
         amount={selectedTransaction?.amount}
         transactionId={selectedTransaction?.id}
         counterpartyName={selectedTransaction?.counterparty_name || undefined}
+        currentCategory={selectedTransaction?.category_pcg || undefined}
+        existingRuleId={
+          selectedTransaction
+            ? suggestionsMap.get(selectedTransaction.id)?.matchedRule?.id
+            : undefined
+        }
         onSuccess={refresh}
       />
 
@@ -1631,6 +1730,21 @@ function TransactionsPageV2() {
           toast.success('Justificatif uploade');
           refresh();
           setShowUploadModal(false);
+        }}
+      />
+
+      {/* SLICE 5: Modal Règle (voir/modifier) */}
+      <RuleModal
+        open={showRuleModal}
+        onOpenChange={setShowRuleModal}
+        rule={editingRule}
+        onUpdate={updateRule}
+        previewApply={previewApply}
+        confirmApply={confirmApply}
+        onSuccess={() => {
+          setEditingRule(null);
+          refetchRules();
+          refresh();
         }}
       />
     </div>
