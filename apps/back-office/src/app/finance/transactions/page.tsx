@@ -8,6 +8,7 @@ import {
   useBankReconciliation,
   type BankTransaction,
   getPcgCategory,
+  getPcgColor,
 } from '@verone/finance';
 import {
   RapprochementModal,
@@ -1244,9 +1245,9 @@ function TransactionsPageV2() {
             <div className="flex items-center gap-4 px-3 py-2 bg-muted/50 text-sm font-medium text-muted-foreground border-b">
               <div className="w-8" />
               <div className="w-24">Date</div>
-              <div className="flex-1">Libellé</div>
-              <div className="w-32">Catégorie</div>
-              <div className="w-24 text-center">Justif.</div>
+              <div className="flex-1 min-w-0">Libellé</div>
+              <div className="w-40">Catégorie</div>
+              <div className="w-16 text-center">Justif.</div>
               <div className="w-28 text-right">Montant</div>
             </div>
 
@@ -1315,22 +1316,30 @@ function TransactionsPageV2() {
                         </div>
                       </div>
 
-                      {/* Catégorie (nom) */}
-                      <div className="w-32 text-sm text-slate-600 truncate">
+                      {/* Catégorie avec badge couleur */}
+                      <div className="w-40 flex items-center gap-2 text-sm text-slate-600">
                         {tx.category_pcg ? (
-                          getPcgCategory(tx.category_pcg)?.label ||
-                          tx.category_pcg
+                          <>
+                            <span
+                              className="w-2 h-2 rounded-full flex-shrink-0"
+                              style={{
+                                backgroundColor: getPcgColor(tx.category_pcg),
+                              }}
+                            />
+                            <span className="truncate">
+                              {getPcgCategory(tx.category_pcg)?.label ||
+                                tx.category_pcg}
+                            </span>
+                          </>
                         ) : (
                           <span className="text-slate-300">-</span>
                         )}
                       </div>
 
                       {/* Justificatif cliquable */}
-                      <div className="w-24 flex justify-center">
+                      <div className="w-16 flex justify-center">
                         {tx.has_attachment ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
+                          <button
                             onClick={e => {
                               e.stopPropagation();
                               const attachmentId = (
@@ -1343,11 +1352,11 @@ function TransactionsPageV2() {
                                 );
                               }
                             }}
-                            className="text-blue-600 hover:text-blue-800 h-8 w-8 p-0"
-                            title="Voir justificatif"
+                            className="p-1.5 rounded hover:bg-blue-50 transition-colors"
+                            title="Voir le justificatif"
                           >
-                            <Paperclip className="h-4 w-4" />
-                          </Button>
+                            <Paperclip className="h-4 w-4 text-blue-500" />
+                          </button>
                         ) : (
                           <span className="text-slate-300">-</span>
                         )}

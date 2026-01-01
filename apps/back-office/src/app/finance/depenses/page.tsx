@@ -5,7 +5,11 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 
 import { useToast } from '@verone/common/hooks';
-import { getPcgCategory, PCG_SUGGESTED_CATEGORIES } from '@verone/finance';
+import {
+  getPcgCategory,
+  getPcgColor,
+  PCG_SUGGESTED_CATEGORIES,
+} from '@verone/finance';
 import {
   QuickClassificationModal,
   RuleModal,
@@ -209,7 +213,19 @@ function ExpenseRow({
         <StatusBadge status={expense.status} />
       </td>
       <td className="px-4 py-3 text-sm text-slate-600">
-        {categoryLabel || '-'}
+        {expense.category ? (
+          <div className="flex items-center gap-2">
+            <span
+              className="w-2 h-2 rounded-full flex-shrink-0"
+              style={{ backgroundColor: getPcgColor(expense.category) }}
+            />
+            <span className="truncate">
+              {categoryLabel || expense.category}
+            </span>
+          </div>
+        ) : (
+          <span className="text-slate-300">-</span>
+        )}
       </td>
       {/* Actions (incluant le bouton pièce jointe) */}
       <td className="px-4 py-3">
