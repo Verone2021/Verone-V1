@@ -1242,13 +1242,13 @@ function TransactionsPageV2() {
 
           <CardContent className="p-0">
             {/* Header tableau */}
-            <div className="flex items-center gap-4 px-3 py-2 bg-muted/50 text-sm font-medium text-muted-foreground border-b">
+            <div className="flex items-center gap-3 px-3 py-2 bg-muted/50 text-sm font-medium text-muted-foreground border-b">
               <div className="w-8" />
-              <div className="w-24">Date</div>
+              <div className="w-20">Date</div>
               <div className="flex-1 min-w-0">Libellé</div>
-              <div className="w-40">Catégorie</div>
-              <div className="w-16 text-center">Justif.</div>
-              <div className="w-28 text-right">Montant</div>
+              <div className="w-44">Catégorie</div>
+              <div className="w-36">Justificatif</div>
+              <div className="w-24 text-right">Montant</div>
             </div>
 
             {/* Liste des transactions */}
@@ -1275,7 +1275,7 @@ function TransactionsPageV2() {
                       data-testid={`tx-row-${tx.id}`}
                       onClick={() => setSelectedTransaction(tx)}
                       className={`
-                        flex items-center gap-4 p-3 border-b cursor-pointer transition-colors
+                        flex items-center gap-3 p-3 border-b cursor-pointer transition-colors
                         ${selectedTransaction?.id === tx.id ? 'bg-primary/10 border-primary' : 'hover:bg-muted/50'}
                         ${tx.unified_status === 'ignored' ? 'opacity-50' : ''}
                       `}
@@ -1295,7 +1295,7 @@ function TransactionsPageV2() {
                       </div>
 
                       {/* Date */}
-                      <div className="w-24 text-sm text-muted-foreground">
+                      <div className="w-20 text-sm text-muted-foreground">
                         {formatDate(tx.settled_at || tx.emitted_at)}
                       </div>
 
@@ -1316,8 +1316,8 @@ function TransactionsPageV2() {
                         </div>
                       </div>
 
-                      {/* Catégorie avec badge couleur */}
-                      <div className="w-40 flex items-center gap-2 text-sm text-slate-600">
+                      {/* Catégorie avec badge couleur + code PCG */}
+                      <div className="w-44 flex items-center gap-2 text-sm">
                         {tx.category_pcg ? (
                           <>
                             <span
@@ -1326,44 +1326,64 @@ function TransactionsPageV2() {
                                 backgroundColor: getPcgColor(tx.category_pcg),
                               }}
                             />
-                            <span className="truncate">
-                              {getPcgCategory(tx.category_pcg)?.label ||
-                                tx.category_pcg}
-                            </span>
+                            <div className="min-w-0">
+                              <p className="text-slate-700 truncate">
+                                {getPcgCategory(tx.category_pcg)?.label ||
+                                  tx.category_pcg}
+                              </p>
+                              <p className="text-xs text-slate-400">
+                                {tx.category_pcg}
+                              </p>
+                            </div>
                           </>
                         ) : (
                           <span className="text-slate-300">-</span>
                         )}
                       </div>
 
-                      {/* Justificatif cliquable */}
-                      <div className="w-16 flex justify-center">
+                      {/* Justificatif avec icône + nom fichier */}
+                      <div className="w-36">
                         {tx.has_attachment ? (
-                          <button
-                            onClick={e => {
-                              e.stopPropagation();
-                              const attachmentId = (
-                                tx.raw_data as { attachment_ids?: string[] }
-                              )?.attachment_ids?.[0];
-                              if (attachmentId) {
-                                window.open(
-                                  `/api/qonto/attachments/${attachmentId}`,
-                                  '_blank'
-                                );
-                              }
-                            }}
-                            className="p-1.5 rounded hover:bg-blue-50 transition-colors"
-                            title="Voir le justificatif"
-                          >
-                            <Paperclip className="h-4 w-4 text-blue-500" />
-                          </button>
+                          (() => {
+                            const rawData = tx.raw_data as {
+                              attachment_ids?: string[];
+                              attachments?: Array<{
+                                id?: string;
+                                file_name?: string;
+                              }>;
+                            };
+                            const attachmentId = rawData?.attachment_ids?.[0];
+                            const fileName =
+                              rawData?.attachments?.[0]?.file_name ||
+                              'Justificatif';
+                            return (
+                              <button
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  if (attachmentId) {
+                                    window.open(
+                                      `/api/qonto/attachments/${attachmentId}`,
+                                      '_blank'
+                                    );
+                                  }
+                                }}
+                                className="flex items-center gap-1.5 text-blue-500 hover:text-blue-700 transition-colors max-w-full"
+                                title={`Voir: ${fileName}`}
+                              >
+                                <Paperclip className="h-3.5 w-3.5 flex-shrink-0" />
+                                <span className="text-xs truncate">
+                                  {fileName}
+                                </span>
+                              </button>
+                            );
+                          })()
                         ) : (
                           <span className="text-slate-300">-</span>
                         )}
                       </div>
 
                       {/* Montant */}
-                      <div className="w-28 text-right">
+                      <div className="w-24 text-right">
                         <span
                           className={`font-semibold ${tx.side === 'credit' ? 'text-green-600' : 'text-red-600'}`}
                         >
