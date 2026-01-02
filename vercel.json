@@ -3,6 +3,7 @@
   "name": "verone-back-office",
   "alias": ["verone-backoffice.vercel.app"],
   "framework": "nextjs",
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- apps/back-office packages supabase package.json pnpm-lock.yaml turbo.json && exit 1 || exit 0",
   "buildCommand": "turbo run build --filter=@verone/back-office",
   "devCommand": "npm run dev",
   "installCommand": "pnpm install",
