@@ -78,11 +78,31 @@ const nextConfig = {
     ];
   },
 
-  // Monorepo transpilation - transpile workspace packages
+  // Monorepo transpilation - transpile ALL @verone/* workspace packages
   transpilePackages: [
-    '@verone/database',
-    '@verone/shared-ui',
-    '@verone/business-logic',
+    '@verone/admin',
+    '@verone/categories',
+    '@verone/channels',
+    '@verone/collections',
+    '@verone/common',
+    '@verone/consultations',
+    '@verone/customers',
+    '@verone/dashboard',
+    '@verone/finance',
+    '@verone/hooks',
+    '@verone/integrations',
+    '@verone/kpi',
+    '@verone/logistics',
+    '@verone/notifications',
+    '@verone/orders',
+    '@verone/organisations',
+    '@verone/products',
+    '@verone/stock',
+    '@verone/suppliers',
+    '@verone/types',
+    '@verone/ui',
+    '@verone/ui-business',
+    '@verone/utils',
   ],
 
   // Performance optimizations

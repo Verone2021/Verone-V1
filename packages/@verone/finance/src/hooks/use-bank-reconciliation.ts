@@ -357,6 +357,35 @@ export function useBankReconciliation() {
           }
         }
 
+        // SLICE 7: Match par date (±7 jours = +20, ±14 jours = +10)
+        const txDate = new Date(transaction.emitted_at);
+        const orderDate = order.shipped_at
+          ? new Date(order.shipped_at)
+          : new Date(order.created_at);
+        const daysDiff = Math.abs(
+          (txDate.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24)
+        );
+        if (daysDiff <= 7) {
+          confidenceScore += 20;
+          reasons.push('Date proche (≤7j)');
+        } else if (daysDiff <= 14) {
+          confidenceScore += 10;
+          reasons.push('Date proche (≤14j)');
+        }
+
+        // SLICE 7: Bonus statut commande
+        if (['shipped', 'delivered'].includes(order.status)) {
+          confidenceScore += 15;
+          reasons.push('Commande livrée');
+        }
+        if (
+          order.payment_status === 'unpaid' ||
+          order.payment_status === null
+        ) {
+          confidenceScore += 10;
+          reasons.push('Non payée');
+        }
+
         // Seulement si confiance > 40%
         if (confidenceScore > 40) {
           suggestions.push({
@@ -415,6 +444,35 @@ export function useBankReconciliation() {
             confidenceScore += 30;
             reasons.push('Nom client similaire');
           }
+        }
+
+        // SLICE 7: Match par date
+        const txDate = new Date(tx.emitted_at);
+        const orderDate = order.shipped_at
+          ? new Date(order.shipped_at)
+          : new Date(order.created_at);
+        const daysDiff = Math.abs(
+          (txDate.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24)
+        );
+        if (daysDiff <= 7) {
+          confidenceScore += 20;
+          reasons.push('Date proche (≤7j)');
+        } else if (daysDiff <= 14) {
+          confidenceScore += 10;
+          reasons.push('Date proche (≤14j)');
+        }
+
+        // SLICE 7: Bonus statut
+        if (['shipped', 'delivered'].includes(order.status)) {
+          confidenceScore += 15;
+          reasons.push('Commande livrée');
+        }
+        if (
+          order.payment_status === 'unpaid' ||
+          order.payment_status === null
+        ) {
+          confidenceScore += 10;
+          reasons.push('Non payée');
         }
 
         if (confidenceScore > 40) {
