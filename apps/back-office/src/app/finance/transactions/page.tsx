@@ -1341,31 +1341,39 @@ function TransactionsPageV2() {
                         )}
                       </div>
 
-                      {/* Justificatif avec icône + nom fichier */}
+                      {/* Justificatif avec icône + nom fichier OU bouton Upload */}
                       <div className="w-36">
-                        {tx.has_attachment ? (
-                          (() => {
-                            const rawData = tx.raw_data as {
-                              attachment_ids?: string[];
-                              attachments?: Array<{
-                                id?: string;
-                                file_name?: string;
-                              }>;
-                            };
-                            const attachmentId = rawData?.attachment_ids?.[0];
-                            const fileName =
-                              rawData?.attachments?.[0]?.file_name ||
-                              'Justificatif';
+                        {(() => {
+                          const rawData = tx.raw_data as {
+                            attachment_ids?: string[];
+                            attachments?: Array<{
+                              id?: string;
+                              file_name?: string;
+                            }>;
+                          };
+
+                          // Vérifier si pièce jointe existe (attachments OU attachment_ids)
+                          const hasAttachment =
+                            (rawData?.attachments?.length ?? 0) > 0 ||
+                            (rawData?.attachment_ids?.length ?? 0) > 0;
+
+                          const attachmentId =
+                            rawData?.attachment_ids?.[0] ||
+                            rawData?.attachments?.[0]?.id;
+                          const fileName =
+                            rawData?.attachments?.[0]?.file_name ||
+                            'Justificatif';
+
+                          if (hasAttachment && attachmentId) {
+                            // AVEC pièce jointe : Icône + nom cliquable
                             return (
                               <button
                                 onClick={e => {
                                   e.stopPropagation();
-                                  if (attachmentId) {
-                                    window.open(
-                                      `/api/qonto/attachments/${attachmentId}`,
-                                      '_blank'
-                                    );
-                                  }
+                                  window.open(
+                                    `/api/qonto/attachments/${attachmentId}`,
+                                    '_blank'
+                                  );
                                 }}
                                 className="flex items-center gap-1.5 text-blue-500 hover:text-blue-700 transition-colors max-w-full"
                                 title={`Voir: ${fileName}`}
@@ -1376,10 +1384,24 @@ function TransactionsPageV2() {
                                 </span>
                               </button>
                             );
-                          })()
-                        ) : (
-                          <span className="text-slate-300">-</span>
-                        )}
+                          } else {
+                            // SANS pièce jointe : Bouton Upload
+                            return (
+                              <button
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  setSelectedTransaction(tx);
+                                  setShowUploadModal(true);
+                                }}
+                                className="flex items-center gap-1.5 text-slate-400 hover:text-blue-500 transition-colors"
+                                title="Déposer un justificatif"
+                              >
+                                <Upload className="h-3.5 w-3.5 flex-shrink-0" />
+                                <span className="text-xs">Upload</span>
+                              </button>
+                            );
+                          }
+                        })()}
                       </div>
 
                       {/* Montant */}
@@ -1582,28 +1604,28 @@ function TransactionsPageV2() {
                   </CardContent>
                 </Card>
 
-                {/* Actions - 3 coeur */}
+                {/* Actions simplifiées - Transactions = Justificatifs + Rapprochement */}
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-muted-foreground">
                     Actions
                   </p>
 
-                  {/* SLICE 5: Si verrouillé par règle, afficher bouton "Voir la règle" */}
-                  {isLockedByRule ? (
+                  {/* Si verrouillé par règle, afficher le lien vers la règle */}
+                  {isLockedByRule && (
                     <>
                       <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg mb-2">
                         <div className="flex items-center gap-2 text-amber-700">
                           <Lock className="h-4 w-4" />
                           <span className="text-sm font-medium">
-                            Verrouillé par règle
+                            Géré par règle
                           </span>
                         </div>
                         <p className="text-xs text-amber-600 mt-1">
-                          Cette transaction est gérée automatiquement.
+                          Modifier via les règles ou la page Dépenses.
                         </p>
                       </div>
                       <Button
-                        variant="default"
+                        variant="outline"
                         className="w-full justify-start gap-2"
                         onClick={handleViewRule}
                       >
@@ -1611,18 +1633,24 @@ function TransactionsPageV2() {
                         Voir / Modifier la règle
                       </Button>
                     </>
-                  ) : (
-                    <>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start gap-2"
-                        onClick={() => setShowClassificationModal(true)}
-                        data-testid="btn-classify-pcg"
-                      >
-                        <Tag className="h-4 w-4" />
-                        Classer PCG
-                      </Button>
+                  )}
 
+                  {/* Classer PCG - UNIQUEMENT si pas de règle ET pas de catégorie */}
+                  {!isLockedByRule && !selectedTransaction.category_pcg && (
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start gap-2"
+                      onClick={() => setShowClassificationModal(true)}
+                      data-testid="btn-classify-pcg"
+                    >
+                      <Tag className="h-4 w-4" />
+                      Classer PCG
+                    </Button>
+                  )}
+
+                  {/* Lier organisation - UNIQUEMENT si pas de règle ET pas d'organisation liée */}
+                  {!isLockedByRule &&
+                    !selectedTransaction.organisation_name && (
                       <Button
                         variant="outline"
                         className="w-full justify-start gap-2"
@@ -1632,9 +1660,9 @@ function TransactionsPageV2() {
                         <Building2 className="h-4 w-4" />
                         Lier organisation
                       </Button>
-                    </>
-                  )}
+                    )}
 
+                  {/* Actions principales : Justificatif + Rapprochement */}
                   <Button
                     variant="outline"
                     className="w-full justify-start gap-2"
@@ -1642,10 +1670,8 @@ function TransactionsPageV2() {
                     data-testid="btn-upload-attachment"
                   >
                     <Upload className="h-4 w-4" />
-                    Deposer justificatif
+                    Déposer justificatif
                   </Button>
-
-                  <Separator className="my-3" />
 
                   <Button
                     variant="outline"
@@ -1656,19 +1682,9 @@ function TransactionsPageV2() {
                     Rapprocher commande
                   </Button>
 
-                  {selectedTransaction.side === 'debit' &&
-                    selectedTransaction.unified_status !== 'cca' &&
-                    !isLockedByRule && (
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start gap-2"
-                        onClick={handleMarkCCA}
-                      >
-                        <Building2 className="h-4 w-4 text-purple-600" />
-                        Compte courant associe
-                      </Button>
-                    )}
+                  <Separator className="my-3" />
 
+                  {/* Ignorer - toujours disponible */}
                   {selectedTransaction.unified_status === 'ignored' ? (
                     <Button
                       variant="outline"

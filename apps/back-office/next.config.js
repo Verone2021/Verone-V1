@@ -80,6 +80,7 @@ const nextConfig = {
 
   // Monorepo transpilation - transpile workspace packages
   transpilePackages: [
+    '@verone/ui',
     '@verone/database',
     '@verone/shared-ui',
     '@verone/business-logic',
