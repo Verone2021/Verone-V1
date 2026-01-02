@@ -6,8 +6,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { useLocalStorage } from '@verone/hooks';
-import { Badge } from '@verone/ui';
 import {
+  Badge,
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
