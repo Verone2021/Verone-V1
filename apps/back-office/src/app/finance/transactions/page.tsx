@@ -1784,8 +1784,6 @@ function TransactionsPageV2() {
         onOpenChange={setShowRuleModal}
         rule={editingRule}
         onUpdate={updateRule}
-        previewApply={previewApply}
-        confirmApply={confirmApply}
         onSuccess={() => {
           setEditingRule(null);
           refetchRules();

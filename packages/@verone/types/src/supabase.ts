@@ -2526,6 +2526,67 @@ export type Database = {
           },
         ];
       };
+      counterparty_bank_accounts: {
+        Row: {
+          account_holder_name: string | null;
+          bank_name: string | null;
+          bic: string | null;
+          created_at: string | null;
+          created_by: string | null;
+          iban: string;
+          id: string;
+          is_primary: boolean | null;
+          organisation_id: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          account_holder_name?: string | null;
+          bank_name?: string | null;
+          bic?: string | null;
+          created_at?: string | null;
+          created_by?: string | null;
+          iban: string;
+          id?: string;
+          is_primary?: boolean | null;
+          organisation_id: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          account_holder_name?: string | null;
+          bank_name?: string | null;
+          bic?: string | null;
+          created_at?: string | null;
+          created_by?: string | null;
+          iban?: string;
+          id?: string;
+          is_primary?: boolean | null;
+          organisation_id?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'counterparty_bank_accounts_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'v_linkme_users';
+            referencedColumns: ['user_id'];
+          },
+          {
+            foreignKeyName: 'counterparty_bank_accounts_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'v_users_with_roles';
+            referencedColumns: ['user_id'];
+          },
+          {
+            foreignKeyName: 'counterparty_bank_accounts_organisation_id_fkey';
+            columns: ['organisation_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       customer_group_members: {
         Row: {
           assignment_method: string | null;
@@ -5014,16 +5075,19 @@ export type Database = {
           created_by: string | null;
           default_category: string | null;
           default_role_type: string | null;
+          default_vat_rate: number | null;
           disabled_at: string | null;
           display_label: string | null;
           enabled: boolean;
           id: string;
           individual_customer_id: string | null;
           is_active: boolean | null;
+          match_patterns: string[] | null;
           match_type: string;
           match_value: string;
           organisation_id: string | null;
           priority: number;
+          vat_breakdown: Json | null;
         };
         Insert: {
           allow_multiple_categories?: boolean | null;
@@ -5032,16 +5096,19 @@ export type Database = {
           created_by?: string | null;
           default_category?: string | null;
           default_role_type?: string | null;
+          default_vat_rate?: number | null;
           disabled_at?: string | null;
           display_label?: string | null;
           enabled?: boolean;
           id?: string;
           individual_customer_id?: string | null;
           is_active?: boolean | null;
+          match_patterns?: string[] | null;
           match_type: string;
           match_value: string;
           organisation_id?: string | null;
           priority?: number;
+          vat_breakdown?: Json | null;
         };
         Update: {
           allow_multiple_categories?: boolean | null;
@@ -5050,16 +5117,19 @@ export type Database = {
           created_by?: string | null;
           default_category?: string | null;
           default_role_type?: string | null;
+          default_vat_rate?: number | null;
           disabled_at?: string | null;
           display_label?: string | null;
           enabled?: boolean;
           id?: string;
           individual_customer_id?: string | null;
           is_active?: boolean | null;
+          match_patterns?: string[] | null;
           match_type?: string;
           match_value?: string;
           organisation_id?: string | null;
           priority?: number;
+          vat_breakdown?: Json | null;
         };
         Relationships: [
           {
@@ -10316,10 +10386,14 @@ export type Database = {
           created_by: string | null;
           default_category: string | null;
           default_role_type: string | null;
+          default_vat_rate: number | null;
+          disabled_at: string | null;
           display_label: string | null;
           enabled: boolean | null;
           id: string | null;
           individual_customer_id: string | null;
+          is_active: boolean | null;
+          match_patterns: string[] | null;
           match_type: string | null;
           match_value: string | null;
           matched_expenses_count: number | null;
@@ -10329,6 +10403,7 @@ export type Database = {
             | Database['public']['Enums']['organisation_type']
             | null;
           priority: number | null;
+          vat_breakdown: Json | null;
         };
         Relationships: [
           {
@@ -10617,6 +10692,7 @@ export type Database = {
           amount: number | null;
           amount_ht: number | null;
           amount_vat: number | null;
+          applied_rule_id: string | null;
           attachment_count: number | null;
           attachment_ids: string[] | null;
           category_pcg: string | null;
@@ -10646,15 +10722,33 @@ export type Database = {
           payment_method: string | null;
           raw_data: Json | null;
           reference: string | null;
+          rule_allow_multiple_categories: boolean | null;
+          rule_display_label: string | null;
+          rule_match_value: string | null;
           settled_at: string | null;
           side: Database['public']['Enums']['transaction_side'] | null;
           transaction_id: string | null;
           unified_status: string | null;
           updated_at: string | null;
+          vat_breakdown: Json | null;
           vat_rate: number | null;
           year: number | null;
         };
         Relationships: [
+          {
+            foreignKeyName: 'bank_transactions_applied_rule_id_fkey';
+            columns: ['applied_rule_id'];
+            isOneToOne: false;
+            referencedRelation: 'matching_rules';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'bank_transactions_applied_rule_id_fkey';
+            columns: ['applied_rule_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_matching_rules_with_org';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'bank_transactions_counterparty_organisation_id_fkey';
             columns: ['counterparty_organisation_id'];
@@ -10788,6 +10882,17 @@ export type Database = {
         Args: { rule_id: string };
         Returns: number;
       };
+      apply_multi_vat_breakdown: {
+        Args: { p_amount_ttc: number; p_rule_breakdown: Json };
+        Returns: Json;
+      };
+      apply_rule_to_all_matching: {
+        Args: { p_rule_id: string };
+        Returns: {
+          message: string;
+          nb_updated: number;
+        }[];
+      };
       approve_affiliate_product: {
         Args: { p_commission_rate?: number; p_product_id: string };
         Returns: Json;
@@ -10801,6 +10906,7 @@ export type Database = {
         }[];
       };
       auto_cancel_unpaid_orders: { Args: never; Returns: undefined };
+      auto_classify_all_unmatched: { Args: never; Returns: Json };
       auto_lock_section_if_complete: {
         Args: { section_name_param: string };
         Returns: boolean;
@@ -10825,6 +10931,13 @@ export type Database = {
             };
             Returns: Json;
           };
+      auto_register_counterparty_ibans: {
+        Args: never;
+        Returns: {
+          ibans: string[];
+          inserted_count: number;
+        }[];
+      };
       batch_add_google_merchant_products: {
         Args: { merchant_id: string; product_ids: string[] };
         Returns: {
@@ -10833,6 +10946,10 @@ export type Database = {
           product_id: string;
           success: boolean;
         }[];
+      };
+      build_single_vat_breakdown: {
+        Args: { p_amount_ttc: number; p_vat_rate: number };
+        Returns: Json;
       };
       calc_product_volume_m3: { Args: { p_dimensions: Json }; Returns: number };
       calculate_affiliate_product_price: {
@@ -10974,6 +11091,13 @@ export type Database = {
         Returns: Database['public']['Enums']['stock_status_type'];
       };
       calculate_storage_price: { Args: { volume_m3: number }; Returns: number };
+      calculate_vat_from_ttc: {
+        Args: { p_amount_ttc: number; p_vat_rate: number };
+        Returns: {
+          amount_ht: number;
+          amount_vat: number;
+        }[];
+      };
       cancel_affiliate_remainder: {
         Args: { p_reason?: string; p_reception_id: string };
         Returns: Json;
@@ -12625,16 +12749,40 @@ export type Database = {
           updated_count: number;
         }[];
       };
-      preview_apply_matching_rule: {
-        Args: { p_new_category?: string; p_rule_id: string };
-        Returns: Database['public']['CompositeTypes']['preview_match_result'][];
-        SetofOptions: {
-          from: '*';
-          to: 'preview_match_result';
-          isOneToOne: false;
-          isSetofReturn: true;
-        };
+      populate_counterparty_ibans_from_history: {
+        Args: never;
+        Returns: {
+          iban: string;
+          organisation_id: string;
+          organisation_name: string;
+          transaction_count: number;
+        }[];
       };
+      preview_apply_matching_rule:
+        | {
+            Args: { p_new_category?: string; p_rule_id: string };
+            Returns: Database['public']['CompositeTypes']['preview_match_result'][];
+            SetofOptions: {
+              from: '*';
+              to: 'preview_match_result';
+              isOneToOne: false;
+              isSetofReturn: true;
+            };
+          }
+        | {
+            Args: {
+              p_new_category?: string;
+              p_new_vat_rate?: number;
+              p_rule_id: string;
+            };
+            Returns: Database['public']['CompositeTypes']['preview_match_result'][];
+            SetofOptions: {
+              from: '*';
+              to: 'preview_match_result';
+              isOneToOne: false;
+              isSetofReturn: true;
+            };
+          };
       process_shipment_stock: {
         Args: {
           p_performed_by_user_id?: string;
@@ -12801,6 +12949,16 @@ export type Database = {
           isSetofReturn: true;
         };
       };
+      search_organisations_unaccent: {
+        Args: { p_query: string; p_type?: string };
+        Returns: {
+          id: string;
+          is_service_provider: boolean;
+          legal_name: string;
+          trade_name: string;
+          type: string;
+        }[];
+      };
       search_product_colors: {
         Args: { search_query: string };
         Returns: {
@@ -12809,66 +12967,6 @@ export type Database = {
           is_predefined: boolean;
           name: string;
         }[];
-      };
-      search_transactions: {
-        Args: {
-          p_has_attachment?: boolean;
-          p_limit?: number;
-          p_month?: number;
-          p_offset?: number;
-          p_organisation_id?: string;
-          p_search?: string;
-          p_side?: string;
-          p_status?: string;
-          p_year?: number;
-        };
-        Returns: {
-          amount: number | null;
-          amount_ht: number | null;
-          amount_vat: number | null;
-          attachment_count: number | null;
-          attachment_ids: string[] | null;
-          category_pcg: string | null;
-          confidence_score: number | null;
-          counterparty_iban: string | null;
-          counterparty_name: string | null;
-          counterparty_organisation_id: string | null;
-          created_at: string | null;
-          emitted_at: string | null;
-          has_attachment: boolean | null;
-          id: string | null;
-          justification_optional: boolean | null;
-          label: string | null;
-          match_reason: string | null;
-          matched_document_id: string | null;
-          matched_document_number: string | null;
-          matched_document_type:
-            | Database['public']['Enums']['document_type']
-            | null;
-          matching_status:
-            | Database['public']['Enums']['matching_status']
-            | null;
-          month: number | null;
-          nature: string | null;
-          operation_type: string | null;
-          organisation_name: string | null;
-          payment_method: string | null;
-          raw_data: Json | null;
-          reference: string | null;
-          settled_at: string | null;
-          side: Database['public']['Enums']['transaction_side'] | null;
-          transaction_id: string | null;
-          unified_status: string | null;
-          updated_at: string | null;
-          vat_rate: number | null;
-          year: number | null;
-        }[];
-        SetofOptions: {
-          from: '*';
-          to: 'v_transactions_unified';
-          isOneToOne: false;
-          isSetofReturn: true;
-        };
       };
       set_closed_fiscal_year: { Args: { p_year: number }; Returns: Json };
       set_current_user_id: { Args: { user_id: string }; Returns: undefined };
@@ -12922,6 +13020,7 @@ export type Database = {
           success: boolean;
         }[];
       };
+      unaccent: { Args: { '': string }; Returns: string };
       unlink_transaction_document: {
         Args: { p_link_id: string };
         Returns: boolean;

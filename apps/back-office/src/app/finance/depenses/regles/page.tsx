@@ -560,8 +560,6 @@ export default function ReglesPage() {
         onOpenChange={setEditModalOpen}
         rule={editingRule}
         onUpdate={updateRule}
-        previewApply={previewApply}
-        confirmApply={confirmApply}
         onSuccess={() => {
           setEditingRule(null);
           refetchRules();
@@ -577,7 +575,6 @@ export default function ReglesPage() {
           amount={classifyLabel.totalAmount}
           transactionCount={classifyLabel.transactionCount}
           onSuccess={handleClassifySuccess}
-          confirmApply={confirmApply}
         />
       )}
     </div>

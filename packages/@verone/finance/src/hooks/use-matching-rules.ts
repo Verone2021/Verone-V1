@@ -28,6 +28,8 @@ export interface MatchingRule {
   enabled: boolean;
   match_type: 'label_contains' | 'label_exact';
   match_value: string;
+  /** Tableau de patterns alternatifs. Ex: ["AMÉRICO", "AMERICO"] */
+  match_patterns: string[] | null;
   display_label: string | null;
   organisation_id: string | null;
   individual_customer_id: string | null;
@@ -91,6 +93,8 @@ export interface ConfirmApplyResult {
 export interface CreateRuleData {
   match_type: 'label_contains' | 'label_exact';
   match_value: string;
+  /** Patterns alternatifs (facultatif). Si non fourni, match_value est utilisé. */
+  match_patterns?: string[] | null;
   display_label?: string;
   /** Organisation liée (facultatif) */
   organisation_id?: string | null;
@@ -134,6 +138,8 @@ export interface UseMatchingRulesReturn {
     ruleId: string,
     selectedNormalizedLabels: string[]
   ) => Promise<ConfirmApplyResult>;
+  /** Auto-classify all unmatched transactions using active rules */
+  autoClassifyAll: () => Promise<number>;
   refetch: () => Promise<void>;
 }
 
@@ -196,6 +202,8 @@ export function useMatchingRules(): UseMatchingRulesReturn {
           allow_multiple_categories: data.allow_multiple_categories ?? false,
           default_vat_rate: data.default_vat_rate ?? null,
           vat_breakdown: data.vat_breakdown ?? null,
+          // Multi-patterns: si non fourni, utiliser [match_value]
+          match_patterns: data.match_patterns ?? [data.match_value],
           enabled: true,
         };
 
@@ -290,6 +298,8 @@ export function useMatchingRules(): UseMatchingRulesReturn {
           cleanData.default_vat_rate = data.default_vat_rate ?? null;
         if (data.vat_breakdown !== undefined)
           cleanData.vat_breakdown = data.vat_breakdown ?? null;
+        if (data.match_patterns !== undefined)
+          cleanData.match_patterns = data.match_patterns ?? null;
 
         console.log('[useMatchingRules] cleanData to send:', cleanData);
 
@@ -478,6 +488,39 @@ export function useMatchingRules(): UseMatchingRulesReturn {
     fetchRules();
   }, [fetchRules]);
 
+  /**
+   * Applique automatiquement toutes les règles actives aux transactions non classées.
+   * Utile pour rattraper les transactions qui n'ont pas été classées automatiquement.
+   * @returns Le nombre de transactions classées
+   */
+  const autoClassifyAll = useCallback(async (): Promise<number> => {
+    try {
+      const supabase = createClient();
+
+      const { data, error: rpcError } = await supabase.rpc(
+        'auto_classify_all_unmatched'
+      );
+
+      if (rpcError) {
+        console.error('[useMatchingRules] autoClassifyAll error:', rpcError);
+        throw new Error(rpcError.message);
+      }
+
+      const result = data as {
+        success: boolean;
+        classified_count: number;
+        message: string;
+      };
+
+      console.log('[useMatchingRules] autoClassifyAll result:', result);
+
+      return result.classified_count;
+    } catch (err) {
+      console.error('[useMatchingRules] autoClassifyAll error:', err);
+      throw err;
+    }
+  }, []);
+
   return {
     rules,
     isLoading,
@@ -489,6 +532,7 @@ export function useMatchingRules(): UseMatchingRulesReturn {
     applyOne,
     previewApply,
     confirmApply,
+    autoClassifyAll,
     refetch: fetchRules,
   };
 }

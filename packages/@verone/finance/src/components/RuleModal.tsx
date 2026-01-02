@@ -41,9 +41,7 @@ import {
   Settings,
   X,
   FileText,
-  Zap,
   Tag,
-  PlayCircle,
   Coffee,
   Monitor,
   CreditCard,
@@ -63,13 +61,17 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { ApplyExistingWizard } from './ApplyExistingWizard';
 import type {
   MatchingRule,
   CreateRuleData,
-  PreviewMatchResult,
   VatBreakdownItem,
 } from '../hooks/use-matching-rules';
+
+// Type pour le résultat de l'application de règle
+interface ApplyRuleResult {
+  nb_updated: number;
+  message: string;
+}
 import {
   ALL_PCG_CATEGORIES,
   type PcgCategory,
@@ -250,17 +252,9 @@ export interface RuleModalProps {
       allow_multiple_categories?: boolean;
       default_vat_rate?: number | null;
       vat_breakdown?: VatBreakdownItem[] | null;
+      match_patterns?: string[] | null;
     }
   ) => Promise<boolean>;
-  /** @deprecated Use previewApply + confirmApply instead */
-  onApply?: (ruleId: string) => Promise<number>;
-  /** Preview apply - read only */
-  previewApply?: (ruleId: string) => Promise<PreviewMatchResult[]>;
-  /** Confirm apply with selected labels */
-  confirmApply?: (
-    ruleId: string,
-    selectedNormalizedLabels: string[]
-  ) => Promise<{ nb_updated: number; updated_ids: string[] }>;
   onSuccess?: () => void;
 }
 
@@ -272,9 +266,6 @@ export function RuleModal({
   initialCategory,
   onCreate,
   onUpdate,
-  onApply,
-  previewApply,
-  confirmApply,
   onSuccess,
 }: RuleModalProps) {
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -283,11 +274,9 @@ export function RuleModal({
   // State - Commun
   const [enabled, setEnabled] = useState(true);
   const [matchValue, setMatchValue] = useState('');
+  const [matchPatterns, setMatchPatterns] = useState<string[]>([]);
+  const [newPatternInput, setNewPatternInput] = useState('');
   const [allowMultipleCategories, setAllowMultipleCategories] = useState(false);
-
-  // State - Wizard ApplyExisting
-  const [showApplyWizard, setShowApplyWizard] = useState(false);
-  const [createdRule, setCreatedRule] = useState<MatchingRule | null>(null);
 
   // State - Catégorie
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -321,14 +310,14 @@ export function RuleModal({
   // Initialiser les valeurs
   useEffect(() => {
     if (open) {
-      // Reset wizard state
-      setShowApplyWizard(false);
-      setCreatedRule(null);
+      setNewPatternInput('');
 
       if (rule) {
         // Mode édition
         setEnabled(rule.enabled);
         setMatchValue(rule.match_value);
+        // Multi-patterns: charger depuis match_patterns ou fallback sur match_value
+        setMatchPatterns(rule.match_patterns ?? [rule.match_value]);
         setAllowMultipleCategories(rule.allow_multiple_categories ?? false);
         setSelectedCategory(rule.default_category);
         const catInfo = rule.default_category
@@ -355,7 +344,10 @@ export function RuleModal({
           setVatPercent20(line20?.percent ?? 50);
         } else {
           setIsVatVentile(false);
-          setSelectedVatRate(rule.default_vat_rate);
+          // FIX: Convertir en number car la DB retourne un string ("20.00")
+          setSelectedVatRate(
+            rule.default_vat_rate != null ? Number(rule.default_vat_rate) : null
+          );
           setVatPercent10(50);
           setVatPercent20(50);
         }
@@ -363,6 +355,7 @@ export function RuleModal({
         // Mode création
         setEnabled(true);
         setMatchValue(initialLabel || '');
+        setMatchPatterns(initialLabel ? [initialLabel] : []);
         setAllowMultipleCategories(false);
         setSelectedCategory(initialCategory || null);
         const catInfo = initialCategory
@@ -399,7 +392,7 @@ export function RuleModal({
         ).slice(0, 8)
       : [];
 
-  // Recherche d'organisations
+  // Recherche d'organisations - utilise RPC unaccent pour trouver "AMÉRICO" avec "americo"
   const searchOrganisations = useCallback(
     async (query: string, signal?: AbortSignal) => {
       if (!query || query.trim().length < 2) {
@@ -410,14 +403,10 @@ export function RuleModal({
       setIsSearchingOrg(true);
       try {
         const supabase = createClient();
-        let queryBuilder = supabase
-          .from('organisations')
-          .select('id, legal_name, trade_name, type, is_service_provider')
-          .or(`legal_name.ilike.%${query}%,trade_name.ilike.%${query}%`)
-          .eq('type', 'supplier')
-          .is('archived_at', null)
-          .order('legal_name')
-          .limit(8);
+        let queryBuilder = supabase.rpc('search_organisations_unaccent', {
+          p_query: query,
+          p_type: 'supplier',
+        });
 
         if (signal) {
           queryBuilder = queryBuilder.abortSignal(signal);
@@ -426,7 +415,12 @@ export function RuleModal({
         const { data, error } = await queryBuilder;
 
         if (error) throw error;
-        setOrgSearchResults((data ?? []) as FoundOrganisation[]);
+        setOrgSearchResults(
+          ((data ?? []) as FoundOrganisation[]).map(org => ({
+            ...org,
+            trade_name: (org as { trade_name?: string }).trade_name || null,
+          }))
+        );
       } catch (err) {
         if ((err as Error).name !== 'AbortError') {
           console.error('[RuleModal] Org search error:', err);
@@ -465,7 +459,7 @@ export function RuleModal({
     setShowCategorySearch(false);
   }, []);
 
-  // Soumettre
+  // Soumettre et auto-sync
   const handleSubmit = async () => {
     if (!matchValue.trim()) {
       toast.error('Le pattern de matching est requis');
@@ -473,9 +467,11 @@ export function RuleModal({
     }
 
     setIsSubmitting(true);
+    const supabase = createClient();
+
     try {
       if (isEditMode && rule && onUpdate) {
-        // Mode édition - mettre à jour la règle uniquement
+        // Mode édition - mettre à jour la règle + auto-sync
         // Construire les données TVA
         let vatData: {
           default_vat_rate: number | null;
@@ -501,18 +497,32 @@ export function RuleModal({
           default_category: selectedCategory,
           enabled,
           allow_multiple_categories: allowMultipleCategories,
+          match_patterns: matchPatterns.length > 0 ? matchPatterns : null,
           ...vatData,
         };
-        console.log('[RuleModal] handleSubmit - Sending update:', {
-          ruleId: rule.id,
-          currentRuleCategory: rule.default_category,
-          selectedCategory,
-          updateData,
-        });
+
         const success = await onUpdate(rule.id, updateData);
 
         if (success) {
-          toast.success('Règle mise à jour');
+          // Auto-sync: appliquer la règle à toutes les transactions correspondantes
+          const { data: applyResult, error: applyError } = (await supabase.rpc(
+            'apply_rule_to_all_matching',
+            { p_rule_id: rule.id }
+          )) as { data: ApplyRuleResult[] | null; error: unknown };
+
+          if (applyError) {
+            console.error('[RuleModal] Apply error:', applyError);
+            toast.success('Règle sauvegardée (sync partielle)');
+          } else {
+            const result = applyResult?.[0];
+            if (result && result.nb_updated > 0) {
+              toast.success(
+                `Règle sauvegardée. ${result.nb_updated} transaction(s) mise(s) à jour.`
+              );
+            } else {
+              toast.success('Règle sauvegardée');
+            }
+          }
           onSuccess?.();
           onOpenChange(false);
         }
@@ -545,6 +555,8 @@ export function RuleModal({
         const newRule = await onCreate({
           match_type: 'label_contains',
           match_value: matchValue.trim(),
+          match_patterns:
+            matchPatterns.length > 0 ? matchPatterns : [matchValue.trim()],
           display_label: matchValue.trim(),
           organisation_id: selectedOrg?.id ?? null,
           default_category: selectedCategory,
@@ -555,16 +567,27 @@ export function RuleModal({
         });
 
         if (newRule) {
-          toast.success('Règle créée');
-          // Stocker la règle créée pour le wizard
-          setCreatedRule(newRule);
-          // Proposer d'ouvrir le wizard si les callbacks sont disponibles
-          if (previewApply && confirmApply) {
-            setShowApplyWizard(true);
+          // Auto-sync: appliquer la règle à toutes les transactions correspondantes
+          const { data: applyResult, error: applyError } = (await supabase.rpc(
+            'apply_rule_to_all_matching',
+            { p_rule_id: newRule.id }
+          )) as { data: ApplyRuleResult[] | null; error: unknown };
+
+          if (applyError) {
+            console.error('[RuleModal] Apply error:', applyError);
+            toast.success('Règle créée (sync partielle)');
           } else {
-            onSuccess?.();
-            onOpenChange(false);
+            const result = applyResult?.[0];
+            if (result && result.nb_updated > 0) {
+              toast.success(
+                `Règle créée. ${result.nb_updated} transaction(s) mise(s) à jour.`
+              );
+            } else {
+              toast.success('Règle créée');
+            }
           }
+          onSuccess?.();
+          onOpenChange(false);
         }
       }
     } catch (err) {
@@ -575,18 +598,18 @@ export function RuleModal({
     }
   };
 
-  // Ouvrir le wizard pour une règle existante (édition)
-  const handleOpenApplyWizard = () => {
-    if (rule && previewApply && confirmApply) {
-      setShowApplyWizard(true);
+  // Ajouter un nouveau pattern
+  const handleAddPattern = () => {
+    const trimmed = newPatternInput.trim();
+    if (trimmed && !matchPatterns.includes(trimmed)) {
+      setMatchPatterns([...matchPatterns, trimmed]);
+      setNewPatternInput('');
     }
   };
 
-  // Callback après succès du wizard
-  const handleWizardSuccess = () => {
-    onSuccess?.();
-    setShowApplyWizard(false);
-    onOpenChange(false);
+  // Supprimer un pattern
+  const handleRemovePattern = (patternToRemove: string) => {
+    setMatchPatterns(matchPatterns.filter(p => p !== patternToRemove));
   };
 
   return (
@@ -620,20 +643,67 @@ export function RuleModal({
           </div>
         </DialogHeader>
 
-        {/* Body */}
-        <div className="p-6 space-y-5">
+        {/* Body - avec scroll */}
+        <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
           {/* Pattern de matching - modifiable uniquement en création */}
           <div className="space-y-2">
             <Label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
               <Tag className="h-4 w-4 text-slate-500" />
-              Pattern de matching
+              {isEditMode ? 'Patterns de matching' : 'Pattern de matching'}
             </Label>
             {isEditMode ? (
-              <div className="rounded-lg border bg-slate-50 p-3">
-                <span className="font-mono text-sm text-slate-700">
-                  {matchValue}
-                </span>
-              </div>
+              <>
+                {/* Liste des patterns existants */}
+                <div className="space-y-2">
+                  {matchPatterns.map((pattern, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between rounded-lg border bg-slate-50 p-2"
+                    >
+                      <span className="font-mono text-sm text-slate-700">
+                        {pattern}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemovePattern(pattern)}
+                        className="h-7 w-7 p-0 text-slate-400 hover:text-red-500 hover:bg-red-50"
+                        disabled={matchPatterns.length <= 1}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                {/* Ajouter un pattern */}
+                <div className="flex gap-2">
+                  <Input
+                    value={newPatternInput}
+                    onChange={e => setNewPatternInput(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddPattern();
+                      }
+                    }}
+                    placeholder="Ajouter un libellé alternatif..."
+                    className="font-mono text-sm"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAddPattern}
+                    disabled={!newPatternInput.trim()}
+                    className="shrink-0"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-slate-500">
+                  Ajoutez des variantes du libellé (ex: &quot;AMÉRICO&quot;,
+                  &quot;AMERICO&quot;)
+                </p>
+              </>
             ) : (
               <Input
                 value={matchValue}
@@ -642,10 +712,12 @@ export function RuleModal({
                 className="font-mono"
               />
             )}
-            <p className="text-xs text-slate-500">
-              Les transactions contenant ce texte seront automatiquement
-              classées
-            </p>
+            {!isEditMode && (
+              <p className="text-xs text-slate-500">
+                Les transactions contenant ce texte seront automatiquement
+                classées
+              </p>
+            )}
           </div>
 
           {/* Statut Enabled */}
@@ -1079,33 +1151,6 @@ export function RuleModal({
               </div>
             )}
           </div>
-
-          {/* Appliquer aux existants - Mode édition uniquement */}
-          {isEditMode && rule && previewApply && confirmApply && (
-            <div className="rounded-lg border-2 border-dashed border-amber-200 bg-amber-50 p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-sm font-medium flex items-center gap-2 text-amber-800">
-                    <Zap className="h-4 w-4 text-amber-500" />
-                    Appliquer aux transactions existantes
-                  </div>
-                  <p className="text-xs text-amber-600 mt-0.5">
-                    {rule.matched_expenses_count} transaction(s)
-                    correspondante(s)
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleOpenApplyWizard}
-                  className="border-amber-300 bg-white hover:bg-amber-100"
-                >
-                  <PlayCircle className="h-4 w-4 mr-1" />
-                  Prévisualiser
-                </Button>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Footer */}
@@ -1141,19 +1186,6 @@ export function RuleModal({
           </Button>
         </div>
       </DialogContent>
-
-      {/* Wizard ApplyExisting */}
-      {(rule || createdRule) && previewApply && confirmApply && (
-        <ApplyExistingWizard
-          open={showApplyWizard}
-          onOpenChange={setShowApplyWizard}
-          rule={(rule || createdRule)!}
-          newCategory={selectedCategory || undefined}
-          previewApply={previewApply}
-          confirmApply={confirmApply}
-          onSuccess={handleWizardSuccess}
-        />
-      )}
     </Dialog>
   );
 }

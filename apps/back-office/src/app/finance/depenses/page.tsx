@@ -144,12 +144,12 @@ function ExpenseRow({
         isClassified && 'bg-green-50/30'
       )}
     >
-      <td className="px-4 py-3 text-sm text-slate-600">
+      <td className="px-3 py-2 text-xs text-slate-600">
         {formatDate(expense.emitted_at)}
       </td>
-      <td className="px-4 py-3">
+      <td className="px-3 py-2">
         <div className="max-w-xs">
-          <p className="text-sm font-medium text-slate-900 truncate">
+          <p className="text-xs font-medium text-slate-900 truncate">
             {expense.label}
           </p>
           <div className="text-xs text-slate-500 truncate">
@@ -180,39 +180,45 @@ function ExpenseRow({
           </div>
         </div>
       </td>
-      <td className="px-4 py-3 text-right">
-        <div className="flex flex-col items-end gap-0.5">
-          <div className="flex items-center justify-end gap-1">
-            {expense.has_attachment && (
-              <span title="Justificatif disponible">
-                <Paperclip size={12} className="text-blue-500" />
-              </span>
-            )}
-            <span className="text-sm font-semibold text-red-600">
-              -{formatAmount(expense.amount)}
+      <td className="px-3 py-2 text-right">
+        <div className="flex items-center justify-end gap-1">
+          {expense.has_attachment && (
+            <span title="Justificatif disponible">
+              <Paperclip size={12} className="text-blue-500" />
             </span>
-          </div>
-          {/* Indicateur ventilation TVA */}
-          {expense.vat_breakdown &&
-          Array.isArray(expense.vat_breakdown) &&
-          expense.vat_breakdown.length > 0 ? (
-            <span
-              className="text-[10px] px-1.5 py-0.5 rounded bg-orange-100 text-orange-700"
-              title={`TVA ventilée: ${expense.vat_breakdown.length} lignes`}
-            >
-              TVA ventilée ({expense.vat_breakdown.length})
-            </span>
-          ) : expense.vat_rate ? (
-            <span className="text-[10px] text-slate-400">
-              TVA {expense.vat_rate}%
-            </span>
-          ) : null}
+          )}
+          <span className="text-xs font-semibold text-red-600">
+            -{formatAmount(expense.amount)}
+          </span>
         </div>
       </td>
-      <td className="px-4 py-3">
+      {/* Colonne TVA - affiche les taux réels */}
+      <td className="px-3 py-2 text-xs text-slate-600">
+        {expense.vat_breakdown &&
+        Array.isArray(expense.vat_breakdown) &&
+        expense.vat_breakdown.length > 0 ? (
+          <span className="text-orange-600 font-medium">
+            {[
+              ...new Set(
+                expense.vat_breakdown.map(
+                  (v: { tva_rate: number }) => v.tva_rate
+                )
+              ),
+            ]
+              .sort((a, b) => a - b)
+              .map(rate => `${rate}%`)
+              .join(' + ')}
+          </span>
+        ) : expense.vat_rate != null ? (
+          <span>{expense.vat_rate}%</span>
+        ) : (
+          <span className="text-slate-300">-</span>
+        )}
+      </td>
+      <td className="px-3 py-2">
         <StatusBadge status={expense.status} />
       </td>
-      <td className="px-4 py-3 text-sm text-slate-600">
+      <td className="px-3 py-2 text-xs text-slate-600">
         {expense.category ? (
           <div className="flex items-center gap-2">
             <span
@@ -228,7 +234,7 @@ function ExpenseRow({
         )}
       </td>
       {/* Actions (incluant le bouton pièce jointe) */}
-      <td className="px-4 py-3">
+      <td className="px-3 py-2">
         <div className="flex items-center gap-1">
           {/* Bouton justificatif - toujours visible si pièce jointe existe */}
           {expense.has_attachment && (
@@ -337,8 +343,28 @@ export default function DepensesPage() {
     update: updateMatchingRule,
     previewApply,
     confirmApply,
+    autoClassifyAll,
     refetch: refetchRules,
   } = useMatchingRules();
+
+  // Auto-classification au chargement de la page
+  useEffect(() => {
+    const runAutoClassify = async () => {
+      try {
+        const count = await autoClassifyAll();
+        if (count > 0) {
+          console.log(
+            `[DepensesPage] ${count} transaction(s) classée(s) automatiquement`
+          );
+          // Rafraîchir la liste des dépenses si des transactions ont été classées
+          await refetch();
+        }
+      } catch (err) {
+        console.error('[DepensesPage] Auto-classify error:', err);
+      }
+    };
+    runAutoClassify();
+  }, [autoClassifyAll, refetch]);
 
   // Map pour accès rapide aux suggestions par ID
   const suggestionsMap = useMemo(() => {
@@ -784,22 +810,25 @@ export default function DepensesPage() {
               <table className="w-full">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200">
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                       Date
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                       Libellé
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
                       Montant
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      TVA
+                    </th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                       Statut
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                       Catégorie
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
@@ -860,8 +889,6 @@ export default function DepensesPage() {
         onOpenChange={setRuleModalOpen}
         rule={selectedRule}
         onUpdate={updateMatchingRule}
-        previewApply={previewApply}
-        confirmApply={confirmApply}
         onSuccess={handleRuleSuccess}
       />
     </div>

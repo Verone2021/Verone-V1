@@ -50,6 +50,7 @@ interface IIndividualCustomer {
 interface IExistingRule {
   id: string;
   match_value: string;
+  match_patterns: string[] | null;
   default_category: string | null;
   organisation_id: string | null;
   individual_customer_id?: string | null;
@@ -156,6 +157,7 @@ export function OrganisationLinkingModal({
       setExistingRule({
         id: matchingRule.id,
         match_value: matchingRule.match_value,
+        match_patterns: matchingRule.match_patterns ?? null,
         default_category: matchingRule.default_category,
         organisation_id: matchingRule.organisation_id,
         individual_customer_id: (matchingRule as any).individual_customer_id,
@@ -204,40 +206,38 @@ export function OrganisationLinkingModal({
             }))
           );
         } else {
-          // Search in organisations table
-          // AMÉLIORATION: Recherche universelle - ne pas filtrer par is_service_provider
-          // pour permettre de trouver toutes les organisations existantes
+          // Search in organisations table using unaccent RPC
+          // Permet de trouver "AMÉRICO" en cherchant "americo"
           const orgType: 'customer' | 'supplier' =
             counterpartyType === 'customer_pro' ? 'customer' : 'supplier';
 
-          const orgQuery = supabase
-            .from('organisations')
-            .select('id, legal_name, type, is_service_provider')
-            .or(`legal_name.ilike.%${query}%,trade_name.ilike.%${query}%`)
-            .eq('type', orgType)
-            .is('archived_at', null)
-            .order('legal_name')
-            .limit(8);
-
-          // NE PAS filtrer par is_service_provider - on veut trouver toutes les organisations
-
-          const { data, error } = await orgQuery.abortSignal(
-            signal as AbortSignal
-          );
+          const { data, error } = await supabase
+            .rpc('search_organisations_unaccent', {
+              p_query: query,
+              p_type: orgType,
+            })
+            .abortSignal(signal as AbortSignal);
 
           if (error) throw error;
 
-          // Mapper le type réel de l'organisation (pas celui sélectionné)
+          // Mapper les résultats (le type est retourné par la RPC)
           results.push(
-            ...(data ?? []).map(org => ({
-              id: org.id,
-              name: org.legal_name,
-              // Utiliser le type RÉEL de l'organisation, pas celui sélectionné dans les boutons
-              type: org.is_service_provider
-                ? ('partner' as CounterpartyType)
-                : ('supplier' as CounterpartyType),
-              isOrganisation: true,
-            }))
+            ...(data ?? []).map(
+              (org: {
+                id: string;
+                legal_name: string;
+                type: string;
+                is_service_provider: boolean;
+              }) => ({
+                id: org.id,
+                name: org.legal_name,
+                // Utiliser le type RÉEL de l'organisation, pas celui sélectionné dans les boutons
+                type: org.is_service_provider
+                  ? ('partner' as CounterpartyType)
+                  : ('supplier' as CounterpartyType),
+                isOrganisation: true,
+              })
+            )
           );
         }
 
@@ -396,7 +396,7 @@ export function OrganisationLinkingModal({
     };
 
   // Handle final submission
-  // SLICE 2: Simplifié - ne crée une règle que si createRule est true
+  // AUTO-PATTERN: Si l'organisation a déjà une règle → ajoute le label aux patterns
   const handleSubmit = async (): Promise<void> => {
     setIsSubmitting(true);
     try {
@@ -418,8 +418,7 @@ export function OrganisationLinkingModal({
       const supabase = createClient();
       const isIndividual = counterpartyToUse.type === 'individual';
 
-      // SLICE 2: Mise à jour directe des transactions correspondant au label
-      // Sans créer de règle (sauf si createRule est coché)
+      // Mise à jour directe des transactions correspondant au label
       const { error: updateError } = await supabase
         .from('bank_transactions')
         .update({
@@ -434,8 +433,36 @@ export function OrganisationLinkingModal({
         throw new Error(updateError.message);
       }
 
-      // SLICE 2: Créer/mettre à jour une règle SEULEMENT si demandé explicitement
-      if (createRule) {
+      // AUTO-PATTERN: Chercher si cette organisation a déjà une règle
+      const orgRuleFromOrg = !isIndividual
+        ? rules.find(r => r.organisation_id === counterpartyToUse.id)
+        : null;
+
+      if (orgRuleFromOrg) {
+        // L'organisation a déjà une règle → ajouter ce label aux patterns
+        const currentPatterns = orgRuleFromOrg.match_patterns ?? [
+          orgRuleFromOrg.match_value,
+        ];
+        const normalizedLabel = label.trim();
+
+        // Vérifier si le pattern n'existe pas déjà (case-insensitive)
+        const patternExists = currentPatterns.some(
+          p => p.toLowerCase() === normalizedLabel.toLowerCase()
+        );
+
+        if (!patternExists) {
+          const newPatterns = [...currentPatterns, normalizedLabel];
+          await updateMatchingRule(orgRuleFromOrg.id, {
+            match_patterns: newPatterns,
+          } as any);
+
+          // Auto-sync: appliquer la règle aux transactions
+          await supabase.rpc('apply_rule_to_all_matching', {
+            p_rule_id: orgRuleFromOrg.id,
+          });
+        }
+      } else if (createRule) {
+        // Pas de règle existante → créer une nouvelle règle si demandé
         const dbCounterpartyType = isIndividual ? 'individual' : 'organisation';
         const ruleRoleType =
           counterpartyToUse.type === 'customer_pro'
@@ -454,11 +481,10 @@ export function OrganisationLinkingModal({
           } as any);
         } else {
           // CREATE new rule
-          // Note: Une organisation peut avoir PLUSIEURS règles (avec différents libellés)
-          // La contrainte DB est sur (match_type, match_value), pas sur organisation_id
           await createMatchingRule({
             match_type: 'label_contains',
             match_value: label,
+            match_patterns: [label],
             organisation_id: isIndividual ? null : counterpartyToUse.id,
             individual_customer_id: isIndividual ? counterpartyToUse.id : null,
             counterparty_type: dbCounterpartyType,
