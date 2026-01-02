@@ -1,19 +1,16 @@
 'use client';
 
 /**
- * RapprochementModal - Modal pour le rapprochement bancaire multi-docs
+ * RapprochementModal - Modal pour le rapprochement bancaire
  *
- * SLICE 4: Support many-to-many entre transactions et documents/commandes.
- *
- * Features:
- * - Lier une transaction à plusieurs documents
- * - Lier une transaction à plusieurs commandes
- * - Paiements partiels avec montants alloués
- * - Affichage des liens existants
- * - Suppression de liens individuels
+ * Permet de lier une transaction bancaire à un document ou une commande.
+ * Propose automatiquement des suggestions basées sur:
+ * - Montant similaire (tolérance 5%)
+ * - Date proche (±30 jours)
+ * - Organisation/client correspondant
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import {
   Dialog,
@@ -29,21 +26,18 @@ import {
   TabsTrigger,
   TabsContent,
   ScrollArea,
-  Separator,
 } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
 import {
   FileText,
-  Upload,
-  Link2,
   Check,
   Search,
   Building2,
   Package,
   RefreshCw,
-  Trash2,
   Plus,
-  AlertCircle,
+  Sparkles,
+  ArrowRight,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -73,23 +67,14 @@ interface SalesOrder {
   id: string;
   order_number: string;
   total_ht: number;
+  total_ttc: number;
   customer_name?: string;
+  organisation_id?: string;
   created_at: string;
   status: string;
-}
-
-interface TransactionLink {
-  link_id: string;
-  link_type: string;
-  document_id: string | null;
-  document_number: string | null;
-  document_amount: number | null;
-  sales_order_id: string | null;
-  sales_order_number: string | null;
-  purchase_order_id: string | null;
-  purchase_order_number: string | null;
-  allocated_amount: number | null;
-  organisation_name: string | null;
+  // Score de matching (calculé côté client)
+  matchScore?: number;
+  matchReasons?: string[];
 }
 
 function formatAmount(amount: number): string {
@@ -107,6 +92,76 @@ function formatDate(dateString: string): string {
   });
 }
 
+/**
+ * Calcule un score de matching entre une transaction et une commande
+ * Score de 0 à 100, plus c'est élevé meilleur est le match
+ */
+function calculateMatchScore(
+  transactionAmount: number,
+  transactionDate: string | undefined,
+  transactionOrgId: string | undefined,
+  order: {
+    total_ttc: number;
+    created_at: string;
+    organisation_id?: string;
+    customer_name?: string;
+  },
+  counterpartyName?: string | null
+): { score: number; reasons: string[] } {
+  let score = 0;
+  const reasons: string[] = [];
+  const absAmount = Math.abs(transactionAmount);
+
+  // 1. Matching par montant (max 50 points)
+  const amountDiff = Math.abs(absAmount - order.total_ttc);
+  const amountTolerance = absAmount * 0.05; // 5% de tolérance
+
+  if (amountDiff === 0) {
+    score += 50;
+    reasons.push('Montant exact');
+  } else if (amountDiff <= amountTolerance) {
+    score += 40;
+    reasons.push('Montant proche (±5%)');
+  } else if (amountDiff <= absAmount * 0.1) {
+    score += 20;
+    reasons.push('Montant similaire (±10%)');
+  }
+
+  // 2. Matching par date (max 30 points)
+  if (transactionDate) {
+    const txDate = new Date(transactionDate);
+    const orderDate = new Date(order.created_at);
+    const daysDiff = Math.abs(
+      (txDate.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    if (daysDiff <= 3) {
+      score += 30;
+      reasons.push('Date très proche');
+    } else if (daysDiff <= 7) {
+      score += 25;
+      reasons.push('Date proche (±7j)');
+    } else if (daysDiff <= 30) {
+      score += 15;
+      reasons.push('Date dans le mois');
+    }
+  }
+
+  // 3. Matching par organisation (max 20 points)
+  if (transactionOrgId && order.organisation_id === transactionOrgId) {
+    score += 20;
+    reasons.push('Même organisation');
+  } else if (
+    counterpartyName &&
+    order.customer_name?.toLowerCase().includes(counterpartyName.toLowerCase())
+  ) {
+    score += 15;
+    reasons.push('Nom client similaire');
+  }
+
+  return { score, reasons };
+}
+
 export function RapprochementModal({
   open,
   onOpenChange,
@@ -118,13 +173,11 @@ export function RapprochementModal({
   organisationId,
   onSuccess,
 }: RapprochementModalProps) {
-  const [activeTab, setActiveTab] = useState<'links' | 'documents' | 'orders'>(
-    'links'
-  );
+  // Simplification: 2 onglets seulement (Documents, Commandes)
+  const [activeTab, setActiveTab] = useState<'documents' | 'orders'>('orders');
   const [searchQuery, setSearchQuery] = useState('');
   const [documents, setDocuments] = useState<FinancialDocument[]>([]);
   const [orders, setOrders] = useState<SalesOrder[]>([]);
-  const [existingLinks, setExistingLinks] = useState<TransactionLink[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLinking, setIsLinking] = useState(false);
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(
@@ -132,41 +185,27 @@ export function RapprochementModal({
   );
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [allocatedAmount, setAllocatedAmount] = useState<string>('');
+  const [transactionDate, setTransactionDate] = useState<string | undefined>();
 
-  // Calculer le montant restant à allouer
-  const allocatedTotal = existingLinks.reduce(
-    (sum, link) => sum + (link.allocated_amount || 0),
-    0
-  );
-  const remainingAmount = Math.abs(amount) - allocatedTotal;
-
-  // Charger les liens existants
-  const fetchExistingLinks = useCallback(async () => {
-    if (!transactionId) return;
-
-    try {
-      const supabase = createClient();
-      const { data, error } = await (supabase.rpc as CallableFunction)(
-        'get_transaction_links',
-        { p_transaction_id: transactionId }
-      );
-
-      if (error) {
-        console.error('[RapprochementModal] Error fetching links:', error);
-        return;
-      }
-
-      setExistingLinks((data || []) as TransactionLink[]);
-    } catch (err) {
-      console.error('[RapprochementModal] Error:', err);
-    }
-  }, [transactionId]);
+  const remainingAmount = Math.abs(amount);
 
   // Charger les documents et commandes disponibles
   const fetchAvailableItems = useCallback(async () => {
     setIsLoading(true);
     try {
       const supabase = createClient();
+
+      // Récupérer la date de la transaction pour le scoring
+      if (transactionId) {
+        const { data: txData } = await supabase
+          .from('bank_transactions')
+          .select('emitted_at')
+          .eq('id', transactionId)
+          .single();
+        if (txData) {
+          setTransactionDate(txData.emitted_at);
+        }
+      }
 
       // Récupérer les documents non payés ou partiellement payés
       const { data: docs, error: docsError } = await supabase
@@ -211,7 +250,8 @@ export function RapprochementModal({
         );
       }
 
-      // Récupérer les commandes validées/livrées
+      // Récupérer les commandes validées/livrées avec plus de détails
+      // Note: customer_id peut pointer vers organisations ou individual_customers selon customer_type
       const { data: ordersData, error: ordersError } = await supabase
         .from('sales_orders')
         .select(
@@ -219,8 +259,11 @@ export function RapprochementModal({
           id,
           order_number,
           total_ht,
+          total_ttc,
           created_at,
-          status
+          status,
+          customer_id,
+          customer_type
         `
         )
         .in('status', ['validated', 'delivered', 'shipped'])
@@ -232,17 +275,44 @@ export function RapprochementModal({
           id: string;
           order_number: string;
           total_ht: number;
+          total_ttc: number;
           created_at: string;
           status: string;
+          customer_id: string;
+          customer_type: string;
         };
+
+        // Récupérer les noms des organisations pour les commandes B2B
+        const orgOrders = (ordersData as OrderRow[]).filter(
+          o => o.customer_type === 'organisation'
+        );
+        const orgIds = orgOrders.map(o => o.customer_id);
+
+        let orgNames: Record<string, string> = {};
+        if (orgIds.length > 0) {
+          const { data: orgs } = await supabase
+            .from('organisations')
+            .select('id, legal_name')
+            .in('id', orgIds);
+          if (orgs) {
+            orgNames = Object.fromEntries(orgs.map(o => [o.id, o.legal_name]));
+          }
+        }
+
         setOrders(
           (ordersData as OrderRow[]).map(o => ({
             id: o.id,
             order_number: o.order_number,
             total_ht: o.total_ht,
+            total_ttc: o.total_ttc || o.total_ht * 1.2, // Fallback si pas de TTC
             created_at: o.created_at,
             status: o.status,
-            customer_name: undefined,
+            organisation_id:
+              o.customer_type === 'organisation' ? o.customer_id : undefined,
+            customer_name:
+              o.customer_type === 'organisation'
+                ? orgNames[o.customer_id]
+                : 'Client particulier',
           }))
         );
       }
@@ -251,35 +321,57 @@ export function RapprochementModal({
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [transactionId]);
+
+  // Calculer les scores de matching pour les commandes
+  const ordersWithScores = useMemo(() => {
+    return orders
+      .map(order => {
+        const { score, reasons } = calculateMatchScore(
+          amount,
+          transactionDate,
+          organisationId || undefined,
+          order,
+          counterpartyName
+        );
+        return {
+          ...order,
+          matchScore: score,
+          matchReasons: reasons,
+        };
+      })
+      .sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+  }, [orders, amount, transactionDate, organisationId, counterpartyName]);
+
+  // Top suggestions (score >= 40)
+  const suggestions = useMemo(() => {
+    return ordersWithScores.filter(o => (o.matchScore || 0) >= 40).slice(0, 3);
+  }, [ordersWithScores]);
 
   // Charger les données au mount
   useEffect(() => {
     if (!open) return;
 
-    fetchExistingLinks();
     fetchAvailableItems();
 
     // Reset des sélections
     setSelectedDocumentId(null);
     setSelectedOrderId(null);
     setAllocatedAmount('');
-  }, [open, fetchExistingLinks, fetchAvailableItems]);
+  }, [open, fetchAvailableItems]);
 
   // Filtrer les documents
   const filteredDocuments = documents.filter(
     d =>
-      !existingLinks.some(link => link.document_id === d.id) &&
-      (d.document_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        d.partner_name?.toLowerCase().includes(searchQuery.toLowerCase()))
+      d.document_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      d.partner_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Filtrer les commandes
-  const filteredOrders = orders.filter(
+  // Filtrer les commandes (avec scores)
+  const filteredOrders = ordersWithScores.filter(
     o =>
-      !existingLinks.some(link => link.sales_order_id === o.id) &&
-      (o.order_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        o.customer_name?.toLowerCase().includes(searchQuery.toLowerCase()))
+      o.order_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      o.customer_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Lier à un document
@@ -307,8 +399,8 @@ export function RapprochementModal({
       toast.success('Document lié');
       setSelectedDocumentId(null);
       setAllocatedAmount('');
-      await fetchExistingLinks();
-      setActiveTab('links');
+      onSuccess?.();
+      onOpenChange(false);
     } catch (err) {
       console.error('[RapprochementModal] Link error:', err);
       toast.error('Erreur lors du rapprochement');
@@ -342,8 +434,8 @@ export function RapprochementModal({
       toast.success('Commande liée');
       setSelectedOrderId(null);
       setAllocatedAmount('');
-      await fetchExistingLinks();
-      setActiveTab('links');
+      onSuccess?.();
+      onOpenChange(false);
     } catch (err) {
       console.error('[RapprochementModal] Link order error:', err);
       toast.error('Erreur lors du rapprochement');
@@ -352,30 +444,11 @@ export function RapprochementModal({
     }
   };
 
-  // Supprimer un lien
-  const handleUnlink = async (linkId: string) => {
-    try {
-      const supabase = createClient();
-
-      const { error } = await (supabase.rpc as CallableFunction)(
-        'unlink_transaction_document',
-        { p_link_id: linkId }
-      );
-
-      if (error) throw error;
-
-      toast.success('Lien supprimé');
-      await fetchExistingLinks();
-    } catch (err) {
-      console.error('[RapprochementModal] Unlink error:', err);
-      toast.error('Erreur lors de la suppression');
-    }
-  };
-
-  // Terminer et fermer
-  const handleFinish = () => {
-    onSuccess?.();
-    onOpenChange(false);
+  // Lier directement via suggestion (raccourci)
+  const handleQuickLink = async (orderId: string) => {
+    setSelectedOrderId(orderId);
+    // Le montant par défaut est le montant restant de la transaction
+    setAllocatedAmount(String(remainingAmount.toFixed(2)));
   };
 
   return (
@@ -383,11 +456,11 @@ export function RapprochementModal({
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Link2 className="h-5 w-5 text-blue-600" />
-            Rapprochement Bancaire
+            <Package className="h-5 w-5 text-blue-600" />
+            Rapprocher Commande
           </DialogTitle>
           <DialogDescription>
-            Liez cette transaction à un ou plusieurs documents/commandes
+            Liez cette transaction à une commande ou un document
           </DialogDescription>
         </DialogHeader>
 
@@ -407,43 +480,8 @@ export function RapprochementModal({
                 {amount < 0 ? '' : '+'}
                 {formatAmount(amount)}
               </span>
-              {existingLinks.length > 0 && (
-                <p className="text-sm text-slate-500">
-                  Alloué: {formatAmount(allocatedTotal)}
-                </p>
-              )}
             </div>
           </div>
-
-          {/* Barre de progression allocation */}
-          {existingLinks.length > 0 && (
-            <div className="pt-2">
-              <div className="flex justify-between text-xs text-slate-600 mb-1">
-                <span>Allocation</span>
-                <span>
-                  {Math.round((allocatedTotal / Math.abs(amount)) * 100)}%
-                </span>
-              </div>
-              <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                <div
-                  className={`h-full transition-all ${
-                    allocatedTotal >= Math.abs(amount)
-                      ? 'bg-green-500'
-                      : 'bg-blue-500'
-                  }`}
-                  style={{
-                    width: `${Math.min(100, (allocatedTotal / Math.abs(amount)) * 100)}%`,
-                  }}
-                />
-              </div>
-              {remainingAmount > 0 && (
-                <p className="text-xs text-amber-600 mt-1">
-                  <AlertCircle className="inline h-3 w-3 mr-1" />
-                  Reste à allouer: {formatAmount(remainingAmount)}
-                </p>
-              )}
-            </div>
-          )}
 
           {/* Organisation liée */}
           {organisationName && (
@@ -459,95 +497,78 @@ export function RapprochementModal({
           )}
         </div>
 
+        {/* Suggestions automatiques */}
+        {suggestions.length > 0 && !selectedOrderId && (
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="h-4 w-4 text-amber-600" />
+              <span className="text-sm font-medium text-amber-800">
+                Suggestions de rapprochement
+              </span>
+            </div>
+            <div className="space-y-2">
+              {suggestions.map(order => (
+                <button
+                  key={order.id}
+                  onClick={() => handleQuickLink(order.id)}
+                  className="w-full flex items-center justify-between p-2 bg-white rounded border border-amber-200 hover:border-amber-400 transition-colors text-left"
+                >
+                  <div className="flex items-center gap-2">
+                    <Package className="h-4 w-4 text-slate-500" />
+                    <div>
+                      <span className="font-medium text-sm">
+                        #{order.order_number}
+                      </span>
+                      {order.customer_name && (
+                        <span className="text-xs text-slate-500 ml-2">
+                          {order.customer_name}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold">
+                      {formatAmount(order.total_ttc)}
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className={`text-xs ${
+                        (order.matchScore || 0) >= 60
+                          ? 'border-green-500 text-green-700'
+                          : 'border-amber-500 text-amber-700'
+                      }`}
+                    >
+                      {order.matchScore}%
+                    </Badge>
+                    <ArrowRight className="h-4 w-4 text-slate-400" />
+                  </div>
+                </button>
+              ))}
+            </div>
+            {suggestions[0]?.matchReasons && (
+              <p className="text-xs text-amber-600 mt-2">
+                Critères: {suggestions[0].matchReasons.join(', ')}
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Tabs */}
         <Tabs
           value={activeTab}
-          onValueChange={v =>
-            setActiveTab(v as 'links' | 'documents' | 'orders')
-          }
+          onValueChange={v => setActiveTab(v as 'documents' | 'orders')}
           className="flex-1 flex flex-col min-h-0"
         >
-          <TabsList className="grid grid-cols-3 w-full">
-            <TabsTrigger value="links" className="gap-2">
-              <Link2 className="h-4 w-4" />
-              Liens ({existingLinks.length})
+          <TabsList className="grid grid-cols-2 w-full">
+            <TabsTrigger value="orders" className="gap-2">
+              <Package className="h-4 w-4" />
+              Commandes
             </TabsTrigger>
             <TabsTrigger value="documents" className="gap-2">
               <FileText className="h-4 w-4" />
               Documents
             </TabsTrigger>
-            <TabsTrigger value="orders" className="gap-2">
-              <Package className="h-4 w-4" />
-              Commandes
-            </TabsTrigger>
           </TabsList>
-
-          {/* Tab: Liens existants */}
-          <TabsContent value="links" className="flex-1 min-h-0 mt-4">
-            {existingLinks.length === 0 ? (
-              <div className="text-center py-8 text-slate-500">
-                <Link2 className="h-10 w-10 mx-auto mb-2 opacity-50" />
-                <p>Aucun document lié</p>
-                <p className="text-sm mt-1">
-                  Utilisez les onglets Documents ou Commandes pour en ajouter
-                </p>
-              </div>
-            ) : (
-              <ScrollArea className="h-[280px]">
-                <div className="space-y-2">
-                  {existingLinks.map(link => (
-                    <div
-                      key={link.link_id}
-                      className="flex items-center justify-between p-3 bg-emerald-50 rounded-lg border border-emerald-200"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center">
-                          {link.link_type === 'document' ? (
-                            <FileText className="h-4 w-4 text-emerald-600" />
-                          ) : (
-                            <Package className="h-4 w-4 text-emerald-600" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-medium text-sm">
-                            {link.document_number ||
-                              link.sales_order_number ||
-                              link.purchase_order_number ||
-                              'Document'}
-                          </p>
-                          <p className="text-xs text-slate-600">
-                            {link.organisation_name || link.link_type}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="font-semibold text-sm">
-                          {link.allocated_amount
-                            ? formatAmount(link.allocated_amount)
-                            : '-'}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleUnlink(link.link_id)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            )}
-
-            <div className="pt-4 border-t mt-4">
-              <Button className="w-full" onClick={handleFinish}>
-                <Check className="h-4 w-4 mr-2" />
-                Terminer
-              </Button>
-            </div>
-          </TabsContent>
 
           {/* Tab: Documents */}
           <TabsContent value="documents" className="flex-1 min-h-0 mt-4">
@@ -692,6 +713,7 @@ export function RapprochementModal({
                       className={`
                         p-3 rounded-lg border cursor-pointer transition-colors
                         ${selectedOrderId === order.id ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'}
+                        ${(order.matchScore || 0) >= 40 ? 'border-l-4 border-l-amber-400' : ''}
                       `}
                     >
                       <div className="flex items-center justify-between">
@@ -699,6 +721,10 @@ export function RapprochementModal({
                           {selectedOrderId === order.id ? (
                             <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
                               <Check className="h-4 w-4 text-blue-600" />
+                            </div>
+                          ) : (order.matchScore || 0) >= 40 ? (
+                            <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center">
+                              <Sparkles className="h-4 w-4 text-amber-600" />
                             </div>
                           ) : (
                             <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center">
@@ -713,15 +739,34 @@ export function RapprochementModal({
                               {order.customer_name || 'Client'} -{' '}
                               {formatDate(order.created_at)}
                             </p>
+                            {order.matchReasons &&
+                              order.matchReasons.length > 0 && (
+                                <p className="text-xs text-amber-600 mt-0.5">
+                                  {order.matchReasons.join(' • ')}
+                                </p>
+                              )}
                           </div>
                         </div>
-                        <div className="text-right">
-                          <span className="font-semibold text-sm">
-                            {formatAmount(order.total_ht)}
-                          </span>
-                          <Badge variant="outline" className="ml-2 text-xs">
-                            {order.status}
-                          </Badge>
+                        <div className="text-right flex items-center gap-2">
+                          <div>
+                            <span className="font-semibold text-sm">
+                              {formatAmount(order.total_ttc)}
+                            </span>
+                            {(order.matchScore || 0) > 0 && (
+                              <Badge
+                                variant="outline"
+                                className={`ml-2 text-xs ${
+                                  (order.matchScore || 0) >= 60
+                                    ? 'border-green-500 text-green-700'
+                                    : (order.matchScore || 0) >= 40
+                                      ? 'border-amber-500 text-amber-700'
+                                      : 'border-slate-300 text-slate-500'
+                                }`}
+                              >
+                                {order.matchScore}%
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
