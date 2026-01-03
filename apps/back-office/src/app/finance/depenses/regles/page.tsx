@@ -26,6 +26,10 @@ import {
   CardHeader,
   CardTitle,
   Input,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
 } from '@verone/ui';
 import {
   AlertCircle,
@@ -34,7 +38,6 @@ import {
   Check,
   FileText,
   Loader2,
-  Play,
   RefreshCw,
   Search,
   Settings,
@@ -104,13 +107,18 @@ export default function ReglesPage() {
   const [labelsSearch, setLabelsSearch] = useState('');
   const [rulesSearch, setRulesSearch] = useState('');
 
+  // État des onglets règles (complètes/incomplètes)
+  const [rulesTab, setRulesTab] = useState<'complete' | 'incomplete'>(
+    'incomplete'
+  );
+
   // Filtrage des libellés non classés
   const filteredLabels = labels.filter(label =>
     label.label.toLowerCase().includes(labelsSearch.toLowerCase())
   );
 
-  // Filtrage des règles actives
-  const filteredRules = rules.filter(
+  // Filtrage des règles actives par recherche
+  const searchFilteredRules = rules.filter(
     rule =>
       rule.match_value.toLowerCase().includes(rulesSearch.toLowerCase()) ||
       (rule.organisation_name &&
@@ -118,6 +126,19 @@ export default function ReglesPage() {
           .toLowerCase()
           .includes(rulesSearch.toLowerCase()))
   );
+
+  // Séparation règles complètes / incomplètes
+  // Incomplète = pas de catégorie OU 0 éléments classés
+  const completeRules = searchFilteredRules.filter(
+    rule => rule.default_category && rule.matched_expenses_count > 0
+  );
+  const incompleteRules = searchFilteredRules.filter(
+    rule => !rule.default_category || rule.matched_expenses_count === 0
+  );
+
+  // Règles affichées selon l'onglet sélectionné
+  const filteredRules =
+    rulesTab === 'complete' ? completeRules : incompleteRules;
 
   // Auto-ouvrir le modal si on vient de la classification
   useEffect(() => {
@@ -210,22 +231,6 @@ export default function ReglesPage() {
           error instanceof Error
             ? error.message
             : 'Erreur lors de la suppression',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  // Toggle enabled
-  const handleToggleRule = async (ruleId: string, enabled: boolean) => {
-    try {
-      await updateRule(ruleId, { enabled: !enabled });
-    } catch (error) {
-      toast({
-        title: 'Erreur',
-        description:
-          error instanceof Error
-            ? error.message
-            : 'Erreur lors de la mise à jour',
         variant: 'destructive',
       });
     }
@@ -426,18 +431,48 @@ export default function ReglesPage() {
                 Règles qui classifient automatiquement les dépenses
               </CardDescription>
               {rules.length > 0 && (
-                <div className="relative mt-2">
-                  <Search
-                    size={16}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
-                  <Input
-                    placeholder="Rechercher une règle..."
-                    value={rulesSearch}
-                    onChange={e => setRulesSearch(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
+                <>
+                  <Tabs
+                    value={rulesTab}
+                    onValueChange={v =>
+                      setRulesTab(v as 'complete' | 'incomplete')
+                    }
+                    className="mt-3"
+                  >
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="incomplete" className="text-sm">
+                        À compléter
+                        <Badge
+                          variant="secondary"
+                          className="ml-2 bg-amber-100 text-amber-700"
+                        >
+                          {incompleteRules.length}
+                        </Badge>
+                      </TabsTrigger>
+                      <TabsTrigger value="complete" className="text-sm">
+                        Complètes
+                        <Badge
+                          variant="secondary"
+                          className="ml-2 bg-green-100 text-green-700"
+                        >
+                          {completeRules.length}
+                        </Badge>
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                  <div className="relative mt-2">
+                    <Search
+                      size={16}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    />
+                    <Input
+                      placeholder="Rechercher une règle..."
+                      value={rulesSearch}
+                      onChange={e => setRulesSearch(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                </>
               )}
             </CardHeader>
             <CardContent>
@@ -457,10 +492,31 @@ export default function ReglesPage() {
                 </div>
               ) : filteredRules.length === 0 ? (
                 <div className="py-8 text-center">
-                  <Search className="mx-auto h-12 w-12 text-slate-300" />
-                  <p className="mt-2 text-slate-600">
-                    Aucune règle trouvée pour "{rulesSearch}"
-                  </p>
+                  {rulesSearch ? (
+                    <>
+                      <Search className="mx-auto h-12 w-12 text-slate-300" />
+                      <p className="mt-2 text-slate-600">
+                        Aucune règle trouvée pour "{rulesSearch}"
+                      </p>
+                    </>
+                  ) : rulesTab === 'incomplete' ? (
+                    <>
+                      <Check className="mx-auto h-12 w-12 text-green-500" />
+                      <p className="mt-2 text-slate-600">
+                        Toutes les règles sont complètes !
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="mx-auto h-12 w-12 text-slate-300" />
+                      <p className="mt-2 text-slate-600">
+                        Aucune règle complète
+                      </p>
+                      <p className="text-sm text-slate-500">
+                        Complétez les règles dans l'onglet "À compléter"
+                      </p>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="max-h-[600px] space-y-3 overflow-y-auto">
@@ -468,14 +524,12 @@ export default function ReglesPage() {
                     const pcgCategory = getPcgCategory(
                       rule.default_category ?? ''
                     );
+                    const missingCategory = !rule.default_category;
+                    const noMatches = rule.matched_expenses_count === 0;
                     return (
                       <div
                         key={rule.id}
-                        className={`rounded-lg border p-3 cursor-pointer transition-all hover:shadow-md ${
-                          rule.enabled
-                            ? 'border-slate-200 bg-white hover:border-blue-300'
-                            : 'border-slate-100 bg-slate-50 opacity-60 hover:opacity-80'
-                        }`}
+                        className="rounded-lg border border-slate-200 bg-white p-3 cursor-pointer transition-all hover:shadow-md hover:border-blue-300"
                         onClick={() => handleEditRule(rule)}
                       >
                         <div className="flex items-start justify-between">
@@ -489,48 +543,36 @@ export default function ReglesPage() {
                                 {rule.organisation_name || 'Non assigné'}
                               </span>
                             </div>
-                            <div className="mt-1 flex items-center gap-2">
-                              <Badge variant="outline" className="text-xs">
-                                {pcgCategory?.label ||
-                                  rule.default_category ||
-                                  '-'}
+                            <div className="mt-1 flex flex-wrap items-center gap-2">
+                              <Badge
+                                variant="outline"
+                                className={`text-xs ${missingCategory ? 'border-amber-300 bg-amber-50 text-amber-700' : ''}`}
+                              >
+                                {missingCategory
+                                  ? '⚠️ Catégorie manquante'
+                                  : pcgCategory?.label || rule.default_category}
                               </Badge>
                               <Badge
-                                variant={rule.enabled ? 'default' : 'secondary'}
-                                className="text-xs"
+                                variant="default"
+                                className={`text-xs ${noMatches ? 'bg-amber-100 text-amber-700' : ''}`}
                               >
-                                {rule.matched_expenses_count} classée(s)
+                                {noMatches
+                                  ? '⚠️ 0 classée'
+                                  : `${rule.matched_expenses_count} classée(s)`}
                               </Badge>
                             </div>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={e => {
-                                e.stopPropagation();
-                                handleToggleRule(rule.id, rule.enabled);
-                              }}
-                              title={rule.enabled ? 'Désactiver' : 'Activer'}
-                            >
-                              {rule.enabled ? (
-                                <Check size={14} className="text-green-600" />
-                              ) : (
-                                <Play size={14} className="text-slate-400" />
-                              )}
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={e => {
-                                e.stopPropagation();
-                                handleDeleteRule(rule.id);
-                              }}
-                              className="text-red-500 hover:text-red-700"
-                            >
-                              <Trash2 size={14} />
-                            </Button>
-                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={e => {
+                              e.stopPropagation();
+                              handleDeleteRule(rule.id);
+                            }}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <Trash2 size={14} />
+                          </Button>
                         </div>
                       </div>
                     );
@@ -560,6 +602,8 @@ export default function ReglesPage() {
         onOpenChange={setEditModalOpen}
         rule={editingRule}
         onUpdate={updateRule}
+        previewApply={previewApply}
+        confirmApply={confirmApply}
         onSuccess={() => {
           setEditingRule(null);
           refetchRules();

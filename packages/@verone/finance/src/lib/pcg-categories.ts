@@ -1145,6 +1145,18 @@ export const PCG_SUGGESTED_CATEGORIES: PcgCategory[] = [
 ].filter(Boolean);
 
 /**
+ * Catégories suggérées pour les REVENUS (Classe 7)
+ * Utilisées pour les entrées d'argent (paiements clients, etc.)
+ */
+export const PCG_SUGGESTED_INCOME_CATEGORIES: PcgCategory[] = [
+  PCG_MAP.get('706')!, // Prestations de services (services clients)
+  PCG_MAP.get('707')!, // Ventes de marchandises (mobilier)
+  PCG_MAP.get('708')!, // Produits des activités annexes
+  PCG_MAP.get('758')!, // Produits divers de gestion (remboursements)
+  PCG_MAP.get('768')!, // Autres produits financiers (intérêts, gains)
+].filter(Boolean);
+
+/**
  * Mapping ancien système -> PCG
  * Pour la migration des anciennes catégories
  */

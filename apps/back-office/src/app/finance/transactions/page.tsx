@@ -25,6 +25,7 @@ import {
   useAutoClassification,
   useUnifiedTransactions,
   useTransactionActions,
+  useUnreconciledOrders,
   type UnifiedTransaction,
   type UnifiedStatus,
 } from '@verone/finance/hooks';
@@ -73,6 +74,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Lock,
+  FileX,
+  CheckCircle,
+  ShoppingCart,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -895,6 +899,10 @@ function TransactionsPageV2() {
   const [showRuleModal, setShowRuleModal] = useState(false);
   const [editingRule, setEditingRule] = useState<MatchingRule | null>(null);
 
+  // Transaction pour upload (séparée de selectedTransaction pour ne pas ouvrir le panneau latéral)
+  const [uploadTransaction, setUploadTransaction] =
+    useState<UnifiedTransaction | null>(null);
+
   // Hook pour les règles (preview/confirm workflow)
   const {
     rules,
@@ -954,6 +962,9 @@ function TransactionsPageV2() {
     toggleIgnore,
     markCCA,
   } = useTransactionActions();
+
+  // Commandes non rapprochées (pour KPI)
+  const { count: unreconciledOrdersCount } = useUnreconciledOrders();
 
   // Handle tab change
   const handleTabChange = (tab: TabFilterV2) => {
@@ -1078,21 +1089,23 @@ function TransactionsPageV2() {
   const isLockedByRule = Boolean(selectedTransaction?.applied_rule_id);
 
   // Convert for upload modal
+  // Utilise uploadTransaction (depuis le bouton liste) ou selectedTransaction (depuis le panneau)
   const transactionForUpload: TransactionForUpload | null = useMemo(() => {
-    if (!selectedTransaction) return null;
+    const tx = uploadTransaction || selectedTransaction;
+    if (!tx) return null;
     return {
-      id: selectedTransaction.id,
-      transaction_id: selectedTransaction.transaction_id,
-      label: selectedTransaction.label || '',
-      counterparty_name: selectedTransaction.counterparty_name,
-      amount: selectedTransaction.amount,
+      id: tx.id,
+      transaction_id: tx.transaction_id,
+      label: tx.label || '',
+      counterparty_name: tx.counterparty_name,
+      amount: tx.amount,
       currency: 'EUR',
-      emitted_at: selectedTransaction.emitted_at || '',
-      has_attachment: selectedTransaction.has_attachment,
-      matched_document_id: selectedTransaction.matched_document_id,
+      emitted_at: tx.emitted_at || '',
+      has_attachment: tx.has_attachment,
+      matched_document_id: tx.matched_document_id,
       order_number: null,
     };
-  }, [selectedTransaction]);
+  }, [uploadTransaction, selectedTransaction]);
 
   // Progress percentage
   const progressPercent = stats
@@ -1157,10 +1170,10 @@ function TransactionsPageV2() {
             />
             <KPICardUnified
               variant="elegant"
-              title="Classees"
-              value={stats.classified_count}
-              icon={Tag}
-              onClick={() => handleTabChange('classified')}
+              title="Commandes à rapprocher"
+              value={unreconciledOrdersCount}
+              icon={ShoppingCart}
+              description="Commandes sans transaction liée"
             />
             <KPICardUnified
               variant="elegant"
@@ -1212,10 +1225,6 @@ function TransactionsPageV2() {
                     <Badge variant="warning" className="ml-1">
                       {stats?.to_process_count || 0}
                     </Badge>
-                  </TabsTrigger>
-                  <TabsTrigger value="classified" className="gap-2">
-                    <Tag className="h-4 w-4 text-blue-600" />
-                    Classees
                   </TabsTrigger>
                   <TabsTrigger value="matched" className="gap-2">
                     <Check className="h-4 w-4 text-green-600" />
@@ -1385,12 +1394,12 @@ function TransactionsPageV2() {
                               </button>
                             );
                           } else {
-                            // SANS pièce jointe : Bouton Upload
+                            // SANS pièce jointe : Bouton Upload (ouvre modal directement)
                             return (
                               <button
                                 onClick={e => {
                                   e.stopPropagation();
-                                  setSelectedTransaction(tx);
+                                  setUploadTransaction(tx);
                                   setShowUploadModal(true);
                                 }}
                                 className="flex items-center gap-1.5 text-slate-400 hover:text-blue-500 transition-colors"
@@ -1583,10 +1592,26 @@ function TransactionsPageV2() {
                       <>
                         <Separator />
                         <div>
-                          <p className="text-muted-foreground">Categorie PCG</p>
-                          <p className="font-medium">
-                            {selectedTransaction.category_pcg}
+                          <p className="text-muted-foreground text-xs">
+                            Catégorie comptable
                           </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span
+                              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                              style={{
+                                backgroundColor: getPcgColor(
+                                  selectedTransaction.category_pcg
+                                ),
+                              }}
+                            />
+                            <span className="font-medium">
+                              {getPcgCategory(selectedTransaction.category_pcg)
+                                ?.label || selectedTransaction.category_pcg}
+                            </span>
+                            <Badge variant="outline" className="text-xs">
+                              {selectedTransaction.category_pcg}
+                            </Badge>
+                          </div>
                         </div>
                       </>
                     )}
@@ -1601,6 +1626,161 @@ function TransactionsPageV2() {
                         </div>
                       </>
                     )}
+
+                    {/* Section TVA */}
+                    {selectedTransaction.amount !== null && (
+                      <>
+                        <Separator />
+                        <div className="space-y-2">
+                          <p className="text-muted-foreground text-xs">
+                            Montants TVA
+                          </p>
+                          {selectedTransaction.vat_breakdown &&
+                          selectedTransaction.vat_breakdown.length > 0 ? (
+                            <div className="space-y-2">
+                              {selectedTransaction.vat_breakdown.map(
+                                (item, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="flex justify-between items-center text-sm"
+                                  >
+                                    <span className="text-muted-foreground">
+                                      {item.description ||
+                                        `TVA ${item.tva_rate}%`}
+                                    </span>
+                                    <div className="text-right">
+                                      <span className="font-medium">
+                                        {formatAmount(item.amount_ht)} HT
+                                      </span>
+                                      <span className="text-muted-foreground ml-2">
+                                        ({formatAmount(item.tva_amount)} TVA)
+                                      </span>
+                                    </div>
+                                  </div>
+                                )
+                              )}
+                              <Separator />
+                              <div className="flex justify-between font-medium">
+                                <span>Total TTC</span>
+                                <span>
+                                  {formatAmount(
+                                    Math.abs(selectedTransaction.amount)
+                                  )}
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="space-y-1">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">
+                                  HT
+                                </span>
+                                <span className="font-medium">
+                                  {selectedTransaction.amount_ht
+                                    ? formatAmount(
+                                        selectedTransaction.amount_ht
+                                      )
+                                    : '-'}
+                                </span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">
+                                  TVA{' '}
+                                  {selectedTransaction.vat_rate
+                                    ? `(${selectedTransaction.vat_rate}%)`
+                                    : ''}
+                                </span>
+                                <span>
+                                  {selectedTransaction.amount_vat
+                                    ? formatAmount(
+                                        selectedTransaction.amount_vat
+                                      )
+                                    : '-'}
+                                </span>
+                              </div>
+                              <Separator />
+                              <div className="flex justify-between font-medium">
+                                <span>TTC</span>
+                                <span>
+                                  {formatAmount(
+                                    Math.abs(selectedTransaction.amount)
+                                  )}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+
+                    {/* Section Pièces jointes */}
+                    <Separator />
+                    <div className="space-y-2">
+                      <p className="text-muted-foreground text-xs">
+                        Justificatif
+                      </p>
+                      {(() => {
+                        // Source de vérité UNIQUE : attachment_ids
+                        const attachmentIds =
+                          selectedTransaction.attachment_ids || [];
+                        const attachments = attachmentIds.map((id, idx) => ({
+                          id,
+                          file_name: `Pièce jointe ${idx + 1}`,
+                        }));
+                        const hasAttachment = attachments.length > 0;
+
+                        if (hasAttachment && attachments.length > 0) {
+                          return (
+                            <div className="space-y-1">
+                              {attachments.map((att, idx) => (
+                                <button
+                                  key={att.id || idx}
+                                  onClick={() =>
+                                    window.open(
+                                      `/api/qonto/attachments/${att.id}`,
+                                      '_blank'
+                                    )
+                                  }
+                                  className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 hover:underline w-full text-left"
+                                >
+                                  <Paperclip className="h-3.5 w-3.5" />
+                                  <span className="truncate">
+                                    {att.file_name || `Pièce jointe ${idx + 1}`}
+                                  </span>
+                                  <ExternalLink className="h-3 w-3 ml-auto" />
+                                </button>
+                              ))}
+                              <div className="flex items-center gap-1 text-xs text-green-600 mt-1">
+                                <CheckCircle className="h-3.5 w-3.5" />
+                                <span>
+                                  {attachments.length} justificatif(s) déposé(s)
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        } else if (selectedTransaction.justification_optional) {
+                          return (
+                            <div className="flex items-center gap-2 text-sm text-slate-500">
+                              <FileX className="h-4 w-4" />
+                              <span>Non requis</span>
+                            </div>
+                          );
+                        } else {
+                          return (
+                            <button
+                              onClick={() => {
+                                setUploadTransaction(selectedTransaction);
+                                setShowUploadModal(true);
+                              }}
+                              className="flex items-center gap-2 text-sm text-amber-600 hover:text-amber-800"
+                            >
+                              <AlertCircle className="h-4 w-4" />
+                              <span>Manquant - Cliquer pour déposer</span>
+                            </button>
+                          );
+                        }
+                      })()}
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -1662,17 +1842,8 @@ function TransactionsPageV2() {
                       </Button>
                     )}
 
-                  {/* Actions principales : Justificatif + Rapprochement */}
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start gap-2"
-                    onClick={() => setShowUploadModal(true)}
-                    data-testid="btn-upload-attachment"
-                  >
-                    <Upload className="h-4 w-4" />
-                    Déposer justificatif
-                  </Button>
-
+                  {/* Actions principales : Rapprochement uniquement */}
+                  {/* Note: Upload justificatif se fait via le bouton dans la liste */}
                   <Button
                     variant="outline"
                     className="w-full justify-start gap-2"
@@ -1770,11 +1941,15 @@ function TransactionsPageV2() {
       <InvoiceUploadModal
         transaction={transactionForUpload}
         open={showUploadModal}
-        onOpenChange={setShowUploadModal}
+        onOpenChange={open => {
+          setShowUploadModal(open);
+          if (!open) setUploadTransaction(null);
+        }}
         onUploadComplete={() => {
-          toast.success('Justificatif uploade');
+          toast.success('Justificatif uploadé');
           refresh();
           setShowUploadModal(false);
+          setUploadTransaction(null);
         }}
       />
 
@@ -1784,6 +1959,8 @@ function TransactionsPageV2() {
         onOpenChange={setShowRuleModal}
         rule={editingRule}
         onUpdate={updateRule}
+        previewApply={previewApply}
+        confirmApply={confirmApply}
         onSuccess={() => {
           setEditingRule(null);
           refetchRules();

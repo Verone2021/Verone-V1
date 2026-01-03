@@ -78,7 +78,7 @@ const nextConfig = {
     ];
   },
 
-  // Monorepo transpilation - transpile ALL @verone/* workspace packages
+  // Monorepo transpilation - transpile ALL workspace packages
   transpilePackages: [
     '@verone/admin',
     '@verone/categories',

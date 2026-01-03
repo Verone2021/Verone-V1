@@ -5,6 +5,8 @@
 
 'use client';
 
+import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
+import { Skeleton } from '@verone/ui';
 import {
   TrendingUp,
   TrendingDown,
@@ -15,9 +17,7 @@ import {
   DollarSign,
 } from 'lucide-react';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
-import { Skeleton } from '@verone/ui';
-import type { TreasuryStats } from '@verone/finance/hooks';
+import type { TreasuryStats } from '../../hooks/use-treasury-stats';
 
 // =====================================================================
 // TYPES

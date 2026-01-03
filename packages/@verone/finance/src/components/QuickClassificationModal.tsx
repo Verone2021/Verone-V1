@@ -533,6 +533,54 @@ export function QuickClassificationModal({
           await confirmApply(ruleIdForApply, [label]);
         }
       }
+      // 4. Mode sans règle: classifier directement toutes les transactions avec ce label
+      // Utilisé quand l'utilisateur décoche "Créer une règle automatique"
+      else if (!isModificationMode && !createRule && label && !transactionId) {
+        // Mise à jour directe de toutes les transactions avec ce label
+        const updateData: Record<string, unknown> = isVentilationMode
+          ? {
+              category_pcg: selectedCategory,
+              vat_rate: null,
+              vat_breakdown: vatLines
+                .filter(l => l.amount_ht > 0)
+                .map(l => ({
+                  description: l.description || `Ligne ${l.tva_rate}%`,
+                  amount_ht: l.amount_ht,
+                  tva_rate: l.tva_rate,
+                  tva_amount: calculateVAT(
+                    calculateTTC(l.amount_ht, l.tva_rate),
+                    l.tva_rate
+                  ),
+                })),
+              matching_status: 'manual_matched',
+            }
+          : {
+              category_pcg: selectedCategory,
+              vat_rate: tvaRate,
+              vat_breakdown: null,
+              matching_status: 'manual_matched',
+            };
+
+        // Mettre à jour toutes les transactions avec ce label (insensible à la casse)
+        const { error: bulkUpdateError } = await supabase
+          .from('bank_transactions')
+          .update(updateData)
+          .ilike('label', label);
+
+        if (bulkUpdateError) {
+          console.error(
+            '[QuickClassificationModal] Bulk update failed:',
+            bulkUpdateError
+          );
+          toast.error(`Erreur: ${bulkUpdateError.message}`);
+          setIsSubmitting(false);
+          return;
+        }
+
+        toast.success(
+          `Transactions classifiées avec la catégorie ${selectedCategory}`
+        );
+      }
 
       onSuccess?.();
       onOpenChange(false);

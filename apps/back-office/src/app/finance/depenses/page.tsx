@@ -16,12 +16,14 @@ import {
   SupplierCell,
   ExpenseDonutChart,
   MonthlyFlowChart,
+  OrganisationLinkingModal,
 } from '@verone/finance/components';
 import {
   useExpenses,
   useAutoClassification,
   useTreasuryStats,
   useMatchingRules,
+  useUniqueLabels,
   type Expense,
   type ExpenseFilters,
   type ExpenseBreakdown,
@@ -38,16 +40,20 @@ import { createClient } from '@verone/utils/supabase/client';
 import {
   AlertCircle,
   CheckCircle2,
+  ChevronDown,
+  ChevronRight,
   Clock,
   Download,
   Edit2,
   Eye,
   FileText,
   Filter,
+  Link as LinkIcon,
   Paperclip,
   RefreshCw,
   Search,
   Settings,
+  Tag,
   XCircle,
 } from 'lucide-react';
 
@@ -347,6 +353,24 @@ export default function DepensesPage() {
     refetch: refetchRules,
   } = useMatchingRules();
 
+  // Hook pour les libellés groupés (onglet "Non classées")
+  const {
+    labels: uniqueLabels,
+    isLoading: labelsLoading,
+    refetch: refetchLabels,
+  } = useUniqueLabels();
+
+  // État pour le libellé étendu (voir les transactions détaillées)
+  const [expandedLabel, setExpandedLabel] = useState<string | null>(null);
+
+  // État pour le modal de liaison d'organisation
+  const [linkModalOpen, setLinkModalOpen] = useState(false);
+  const [selectedLabelForLink, setSelectedLabelForLink] = useState<{
+    label: string;
+    transactionCount: number;
+    totalAmount: number;
+  } | null>(null);
+
   // Auto-classification au chargement de la page
   useEffect(() => {
     const runAutoClassify = async () => {
@@ -516,7 +540,7 @@ export default function DepensesPage() {
     fetchChartData();
   }, [fetchChartData]);
 
-  // Onglets de statut avec compteurs
+  // Onglets de statut avec compteurs (simplifié: 3 onglets)
   const statusTabs = [
     {
       id: 'all',
@@ -535,18 +559,6 @@ export default function DepensesPage() {
       label: 'Classées',
       icon: <CheckCircle2 size={16} />,
       badge: stats.classified,
-    },
-    {
-      id: 'needs_review',
-      label: 'À revoir',
-      icon: <AlertCircle size={16} />,
-      badge: stats.needsReview,
-    },
-    {
-      id: 'ignored',
-      label: 'Ignorées',
-      icon: <XCircle size={16} />,
-      badge: stats.ignored,
     },
   ];
 
@@ -572,8 +584,8 @@ export default function DepensesPage() {
       title: 'Dépense classée',
       description: 'La règle a été créée et appliquée avec succès.',
     });
-    // Rafraîchir la liste
-    await refetch();
+    // Rafraîchir les listes (dépenses ET libellés groupés)
+    await Promise.all([refetch(), refetchLabels()]);
   };
 
   const handleViewAttachment = (expense: Expense) => {
@@ -592,6 +604,58 @@ export default function DepensesPage() {
       });
     }
   };
+
+  // Handler pour ouvrir le modal de liaison depuis un libellé groupé
+  const handleLinkLabel = (
+    label: string,
+    transactionCount: number,
+    totalAmount: number
+  ) => {
+    setSelectedLabelForLink({ label, transactionCount, totalAmount });
+    setLinkModalOpen(true);
+  };
+
+  // Handler pour classifier un libellé depuis la vue groupée
+  const handleClassifyLabel = (
+    label: string,
+    transactionCount: number,
+    totalAmount: number
+  ) => {
+    // On crée un "faux" expense pour réutiliser le modal existant
+    setSelectedExpense({
+      id: '',
+      transaction_id: '', // Pas de transaction_id = mode label
+      label,
+      amount: totalAmount,
+      status: 'unclassified',
+      emitted_at: new Date().toISOString(),
+    } as Expense);
+    setClassifyModalOpen(true);
+  };
+
+  // Succès de la liaison depuis la vue groupée
+  const handleLinkSuccess = async () => {
+    toast({
+      title: 'Tiers associé',
+      description: 'Le libellé a été associé avec succès.',
+    });
+    await Promise.all([refetch(), refetchLabels()]);
+  };
+
+  // Toggle l'expansion d'un libellé
+  const handleToggleLabel = (label: string) => {
+    setExpandedLabel(prev => (prev === label ? null : label));
+  };
+
+  // Filtrer les transactions par libellé pour l'expansion
+  const getExpensesByLabel = useCallback(
+    (label: string) => {
+      return expenses.filter(
+        e => e.label === label && (e.status === 'unclassified' || !e.category)
+      );
+    },
+    [expenses]
+  );
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -778,7 +842,7 @@ export default function DepensesPage() {
           </div>
         </div>
 
-        {/* Tableau */}
+        {/* Contenu principal - Vue groupée OU tableau selon l'onglet */}
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           {error ? (
             <div className="p-8 text-center">
@@ -792,6 +856,167 @@ export default function DepensesPage() {
                 Réessayer
               </Button>
             </div>
+          ) : filters.status === 'unclassified' ? (
+            /* VUE GROUPÉE PAR LIBELLÉ pour "Non classées" */
+            labelsLoading ? (
+              <div className="p-8 text-center">
+                <RefreshCw className="mx-auto h-12 w-12 text-blue-500 animate-spin mb-4" />
+                <p className="text-slate-600">Chargement des libellés...</p>
+              </div>
+            ) : uniqueLabels.length === 0 ? (
+              <div className="p-8 text-center">
+                <CheckCircle2 className="mx-auto h-12 w-12 text-green-500 mb-4" />
+                <p className="text-slate-600">
+                  Toutes les dépenses sont classées !
+                </p>
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {uniqueLabels.map(labelItem => {
+                  const isExpanded = expandedLabel === labelItem.label;
+                  const labelExpenses = isExpanded
+                    ? getExpensesByLabel(labelItem.label)
+                    : [];
+
+                  return (
+                    <div key={labelItem.label}>
+                      {/* En-tête du libellé groupé */}
+                      <div
+                        className="flex items-center justify-between p-4 hover:bg-slate-50 cursor-pointer"
+                        onClick={() => handleToggleLabel(labelItem.label)}
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <button
+                            type="button"
+                            className="p-1 hover:bg-slate-200 rounded"
+                          >
+                            {isExpanded ? (
+                              <ChevronDown
+                                size={18}
+                                className="text-slate-500"
+                              />
+                            ) : (
+                              <ChevronRight
+                                size={18}
+                                className="text-slate-500"
+                              />
+                            )}
+                          </button>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-slate-900 truncate">
+                              {labelItem.label}
+                            </p>
+                            <p className="text-sm text-slate-500">
+                              {labelItem.transaction_count} transaction(s) •{' '}
+                              {formatAmount(labelItem.total_amount)}
+                            </p>
+                          </div>
+                        </div>
+                        <div
+                          className="flex items-center gap-2"
+                          onClick={e => e.stopPropagation()}
+                        >
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              handleClassifyLabel(
+                                labelItem.label,
+                                labelItem.transaction_count,
+                                labelItem.total_amount
+                              )
+                            }
+                          >
+                            <Tag size={14} className="mr-1" />
+                            Classer
+                          </Button>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() =>
+                              handleLinkLabel(
+                                labelItem.label,
+                                labelItem.transaction_count,
+                                labelItem.total_amount
+                              )
+                            }
+                          >
+                            <LinkIcon size={14} className="mr-1" />
+                            Lier
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Transactions détaillées (si étendu) */}
+                      {isExpanded && labelExpenses.length > 0 && (
+                        <div className="bg-slate-50 border-t border-slate-100">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="bg-slate-100">
+                                <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">
+                                  Date
+                                </th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">
+                                  Détail
+                                </th>
+                                <th className="px-4 py-2 text-right text-xs font-medium text-slate-500 uppercase">
+                                  Montant
+                                </th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">
+                                  Actions
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {labelExpenses.map(expense => (
+                                <tr
+                                  key={expense.id}
+                                  className="border-t border-slate-100 hover:bg-slate-100"
+                                >
+                                  <td className="px-4 py-2 text-sm text-slate-600">
+                                    {formatDate(expense.emitted_at)}
+                                  </td>
+                                  <td className="px-4 py-2 text-sm text-slate-700">
+                                    {expense.transaction_counterparty_name ||
+                                      expense.label}
+                                  </td>
+                                  <td className="px-4 py-2 text-sm text-right font-medium text-red-600">
+                                    -{formatAmount(expense.amount)}
+                                  </td>
+                                  <td className="px-4 py-2">
+                                    <div className="flex items-center gap-1">
+                                      {expense.has_attachment && (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() =>
+                                            handleViewAttachment(expense)
+                                          }
+                                          className="text-blue-600"
+                                        >
+                                          <Eye size={14} />
+                                        </Button>
+                                      )}
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleClassify(expense)}
+                                      >
+                                        <Edit2 size={14} />
+                                      </Button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )
           ) : isLoading ? (
             <div className="p-8 text-center">
               <RefreshCw className="mx-auto h-12 w-12 text-blue-500 animate-spin mb-4" />
@@ -806,6 +1031,7 @@ export default function DepensesPage() {
               </p>
             </div>
           ) : (
+            /* TABLEAU CLASSIQUE pour les autres onglets */
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -889,8 +1115,22 @@ export default function DepensesPage() {
         onOpenChange={setRuleModalOpen}
         rule={selectedRule}
         onUpdate={updateMatchingRule}
+        previewApply={previewApply}
+        confirmApply={confirmApply}
         onSuccess={handleRuleSuccess}
       />
+
+      {/* Modal de liaison d'organisation (depuis la vue groupée) */}
+      {selectedLabelForLink && (
+        <OrganisationLinkingModal
+          open={linkModalOpen}
+          onOpenChange={setLinkModalOpen}
+          label={selectedLabelForLink.label}
+          transactionCount={selectedLabelForLink.transactionCount}
+          totalAmount={selectedLabelForLink.totalAmount}
+          onSuccess={handleLinkSuccess}
+        />
+      )}
     </div>
   );
 }

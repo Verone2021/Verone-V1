@@ -61,21 +61,17 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { ApplyExistingWizard } from './ApplyExistingWizard';
 import type {
   MatchingRule,
   CreateRuleData,
+  PreviewMatchResult,
   VatBreakdownItem,
 } from '../hooks/use-matching-rules';
-
-// Type pour le résultat de l'application de règle
-interface ApplyRuleResult {
-  nb_updated: number;
-  message: string;
-}
 import {
   ALL_PCG_CATEGORIES,
-  type PcgCategory,
   getPcgCategory,
+  type PcgCategory,
 } from '../lib/pcg-categories';
 
 // Type pour les organisations trouvées
@@ -255,6 +251,17 @@ export interface RuleModalProps {
       match_patterns?: string[] | null;
     }
   ) => Promise<boolean>;
+  /** Preview apply - affiche les transactions qui seront modifiées */
+  previewApply?: (
+    ruleId: string,
+    newCategory?: string,
+    newVatRate?: number | null
+  ) => Promise<PreviewMatchResult[]>;
+  /** Confirm apply - applique aux labels sélectionnés */
+  confirmApply?: (
+    ruleId: string,
+    selectedNormalizedLabels: string[]
+  ) => Promise<{ nb_updated: number; updated_ids: string[] }>;
   onSuccess?: () => void;
 }
 
@@ -266,6 +273,8 @@ export function RuleModal({
   initialCategory,
   onCreate,
   onUpdate,
+  previewApply,
+  confirmApply,
   onSuccess,
 }: RuleModalProps) {
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -276,6 +285,10 @@ export function RuleModal({
   const [matchValue, setMatchValue] = useState('');
   const [matchPatterns, setMatchPatterns] = useState<string[]>([]);
   const [newPatternInput, setNewPatternInput] = useState('');
+
+  // State - Wizard ApplyExisting
+  const [showApplyWizard, setShowApplyWizard] = useState(false);
+  const [createdRule, setCreatedRule] = useState<MatchingRule | null>(null);
   const [allowMultipleCategories, setAllowMultipleCategories] = useState(false);
 
   // State - Catégorie
@@ -299,17 +312,17 @@ export function RuleModal({
   const [isSearchingOrg, setIsSearchingOrg] = useState(false);
   const [showOrgSearch, setShowOrgSearch] = useState(false);
 
-  // State - TVA
+  // State - TVA (taux simple uniquement, ventilation disponible dans QuickClassificationModal)
   const [selectedVatRate, setSelectedVatRate] = useState<number | null>(null);
-  const [isVatVentile, setIsVatVentile] = useState(false);
-  const [vatPercent10, setVatPercent10] = useState(50);
-  const [vatPercent20, setVatPercent20] = useState(50);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Initialiser les valeurs
   useEffect(() => {
     if (open) {
+      // Reset wizard state
+      setShowApplyWizard(false);
+      setCreatedRule(null);
       setNewPatternInput('');
 
       if (rule) {
@@ -329,28 +342,11 @@ export function RuleModal({
             ? { id: rule.organisation_id, name: rule.organisation_name }
             : null
         );
-        // TVA - édition
-        if (rule.vat_breakdown && rule.vat_breakdown.length > 0) {
-          setIsVatVentile(true);
-          setSelectedVatRate(null);
-          // Récupérer les pourcentages si disponibles
-          const line10 = rule.vat_breakdown.find(
-            (v: VatBreakdownItem) => v.tva_rate === 10
-          );
-          const line20 = rule.vat_breakdown.find(
-            (v: VatBreakdownItem) => v.tva_rate === 20
-          );
-          setVatPercent10(line10?.percent ?? 50);
-          setVatPercent20(line20?.percent ?? 50);
-        } else {
-          setIsVatVentile(false);
-          // FIX: Convertir en number car la DB retourne un string ("20.00")
-          setSelectedVatRate(
-            rule.default_vat_rate != null ? Number(rule.default_vat_rate) : null
-          );
-          setVatPercent10(50);
-          setVatPercent20(50);
-        }
+        // TVA - édition (taux simple uniquement)
+        // FIX: Convertir en number car la DB retourne un string ("20.00")
+        setSelectedVatRate(
+          rule.default_vat_rate != null ? Number(rule.default_vat_rate) : 20
+        );
       } else {
         // Mode création
         setEnabled(true);
@@ -365,9 +361,6 @@ export function RuleModal({
         setSelectedOrg(null);
         // TVA - création (défaut 20%)
         setSelectedVatRate(20);
-        setIsVatVentile(false);
-        setVatPercent10(50);
-        setVatPercent20(50);
       }
       setCategorySearchQuery('');
       setOrgSearchQuery('');
@@ -467,30 +460,15 @@ export function RuleModal({
     }
 
     setIsSubmitting(true);
-    const supabase = createClient();
 
     try {
       if (isEditMode && rule && onUpdate) {
         // Mode édition - mettre à jour la règle + auto-sync
-        // Construire les données TVA
-        let vatData: {
-          default_vat_rate: number | null;
-          vat_breakdown: VatBreakdownItem[] | null;
+        // TVA simple uniquement (ventilation disponible dans QuickClassificationModal)
+        const vatData = {
+          default_vat_rate: selectedVatRate,
+          vat_breakdown: null,
         };
-        if (isVatVentile) {
-          vatData = {
-            default_vat_rate: null,
-            vat_breakdown: [
-              { tva_rate: 10, percent: vatPercent10 },
-              { tva_rate: 20, percent: vatPercent20 },
-            ],
-          };
-        } else {
-          vatData = {
-            default_vat_rate: selectedVatRate,
-            vat_breakdown: null,
-          };
-        }
 
         const updateData = {
           organisation_id: selectedOrg?.id ?? null,
@@ -504,27 +482,14 @@ export function RuleModal({
         const success = await onUpdate(rule.id, updateData);
 
         if (success) {
-          // Auto-sync: appliquer la règle à toutes les transactions correspondantes
-          const { data: applyResult, error: applyError } = (await supabase.rpc(
-            'apply_rule_to_all_matching',
-            { p_rule_id: rule.id }
-          )) as { data: ApplyRuleResult[] | null; error: unknown };
-
-          if (applyError) {
-            console.error('[RuleModal] Apply error:', applyError);
-            toast.success('Règle sauvegardée (sync partielle)');
+          toast.success('Règle sauvegardée');
+          // Ouvrir le wizard pour synchroniser les transactions si les callbacks sont disponibles
+          if (previewApply && confirmApply) {
+            setShowApplyWizard(true);
           } else {
-            const result = applyResult?.[0];
-            if (result && result.nb_updated > 0) {
-              toast.success(
-                `Règle sauvegardée. ${result.nb_updated} transaction(s) mise(s) à jour.`
-              );
-            } else {
-              toast.success('Règle sauvegardée');
-            }
+            onSuccess?.();
+            onOpenChange(false);
           }
-          onSuccess?.();
-          onOpenChange(false);
         }
       } else if (onCreate) {
         // Mode création
@@ -532,25 +497,11 @@ export function RuleModal({
           ? 'partner'
           : 'supplier';
 
-        // Construire les données TVA
-        let vatData: {
-          default_vat_rate: number | null;
-          vat_breakdown: VatBreakdownItem[] | null;
+        // TVA simple uniquement (ventilation disponible dans QuickClassificationModal)
+        const vatData = {
+          default_vat_rate: selectedVatRate,
+          vat_breakdown: null,
         };
-        if (isVatVentile) {
-          vatData = {
-            default_vat_rate: null,
-            vat_breakdown: [
-              { tva_rate: 10, percent: vatPercent10 },
-              { tva_rate: 20, percent: vatPercent20 },
-            ],
-          };
-        } else {
-          vatData = {
-            default_vat_rate: selectedVatRate,
-            vat_breakdown: null,
-          };
-        }
 
         const newRule = await onCreate({
           match_type: 'label_contains',
@@ -567,27 +518,16 @@ export function RuleModal({
         });
 
         if (newRule) {
-          // Auto-sync: appliquer la règle à toutes les transactions correspondantes
-          const { data: applyResult, error: applyError } = (await supabase.rpc(
-            'apply_rule_to_all_matching',
-            { p_rule_id: newRule.id }
-          )) as { data: ApplyRuleResult[] | null; error: unknown };
-
-          if (applyError) {
-            console.error('[RuleModal] Apply error:', applyError);
-            toast.success('Règle créée (sync partielle)');
+          toast.success('Règle créée');
+          // Stocker la règle créée pour le wizard
+          setCreatedRule(newRule);
+          // Ouvrir le wizard pour synchroniser les transactions si les callbacks sont disponibles
+          if (previewApply && confirmApply) {
+            setShowApplyWizard(true);
           } else {
-            const result = applyResult?.[0];
-            if (result && result.nb_updated > 0) {
-              toast.success(
-                `Règle créée. ${result.nb_updated} transaction(s) mise(s) à jour.`
-              );
-            } else {
-              toast.success('Règle créée');
-            }
+            onSuccess?.();
+            onOpenChange(false);
           }
-          onSuccess?.();
-          onOpenChange(false);
         }
       }
     } catch (err) {
@@ -610,6 +550,13 @@ export function RuleModal({
   // Supprimer un pattern
   const handleRemovePattern = (patternToRemove: string) => {
     setMatchPatterns(matchPatterns.filter(p => p !== patternToRemove));
+  };
+
+  // Callback après succès du wizard
+  const handleWizardSuccess = () => {
+    onSuccess?.();
+    setShowApplyWizard(false);
+    onOpenChange(false);
   };
 
   return (
@@ -1047,109 +994,36 @@ export function RuleModal({
               Taux TVA
             </h3>
 
-            {/* Toggle TVA ventilée */}
-            <div className="flex items-center justify-between rounded-lg border p-3 bg-slate-50">
-              <div>
-                <span className="font-medium text-sm text-slate-900">
-                  TVA ventilée (multi-taux)
-                </span>
-                <p className="text-xs text-slate-500">
-                  Ex: Restaurant avec 10% + 20%
-                </p>
-              </div>
-              <Switch
-                checked={isVatVentile}
-                onCheckedChange={checked => {
-                  setIsVatVentile(checked);
-                  if (checked) {
-                    setSelectedVatRate(null);
-                  } else {
-                    setSelectedVatRate(20);
-                  }
-                }}
-              />
-            </div>
-
-            {isVatVentile ? (
-              /* Mode ventilé: 10% + 20% */
-              <div className="space-y-3 rounded-lg border-2 border-blue-200 bg-blue-50 p-4">
-                <div className="text-xs font-medium text-blue-700 mb-2">
-                  Répartition du montant HT
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-xs text-slate-600">TVA 10%</Label>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Input
-                        type="number"
-                        min={0}
-                        max={100}
-                        value={vatPercent10}
-                        onChange={e => {
-                          const val = Number(e.target.value);
-                          setVatPercent10(val);
-                          setVatPercent20(100 - val);
-                        }}
-                        className="w-20 text-center"
-                      />
-                      <span className="text-sm text-slate-500">%</span>
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-slate-600">TVA 20%</Label>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Input
-                        type="number"
-                        min={0}
-                        max={100}
-                        value={vatPercent20}
-                        onChange={e => {
-                          const val = Number(e.target.value);
-                          setVatPercent20(val);
-                          setVatPercent10(100 - val);
-                        }}
-                        className="w-20 text-center"
-                      />
-                      <span className="text-sm text-slate-500">%</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="text-xs text-blue-600 mt-2">
-                  Total: {vatPercent10 + vatPercent20}%
-                  {vatPercent10 + vatPercent20 !== 100 && (
-                    <span className="text-red-500 ml-2">(doit être 100%)</span>
+            {/* Taux TVA simples (ventilation disponible dans QuickClassificationModal) */}
+            <div className="grid grid-cols-4 gap-2">
+              {[0, 5.5, 10, 20].map(rate => (
+                <button
+                  key={rate}
+                  type="button"
+                  onClick={() => setSelectedVatRate(rate)}
+                  className={cn(
+                    'flex flex-col items-center justify-center rounded-lg border-2 p-3 transition-all hover:scale-[1.02]',
+                    selectedVatRate === rate
+                      ? 'border-green-500 bg-green-50 text-green-700'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
                   )}
-                </div>
-              </div>
-            ) : (
-              /* Mode taux unique */
-              <div className="grid grid-cols-4 gap-2">
-                {[0, 5.5, 10, 20].map(rate => (
-                  <button
-                    key={rate}
-                    type="button"
-                    onClick={() => setSelectedVatRate(rate)}
-                    className={cn(
-                      'flex flex-col items-center justify-center rounded-lg border-2 p-3 transition-all hover:scale-[1.02]',
-                      selectedVatRate === rate
-                        ? 'border-green-500 bg-green-50 text-green-700'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
-                    )}
-                  >
-                    <span className="text-lg font-bold">{rate}%</span>
-                    <span className="text-[10px] text-slate-500">
-                      {rate === 0
-                        ? 'Exonéré'
-                        : rate === 5.5
-                          ? 'Réduit'
-                          : rate === 10
-                            ? 'Interméd.'
-                            : 'Normal'}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
+                >
+                  <span className="text-lg font-bold">{rate}%</span>
+                  <span className="text-[10px] text-slate-500">
+                    {rate === 0
+                      ? 'Exonéré'
+                      : rate === 5.5
+                        ? 'Réduit'
+                        : rate === 10
+                          ? 'Interméd.'
+                          : 'Normal'}
+                  </span>
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              TVA ventilée disponible lors de la classification manuelle
+            </p>
           </div>
         </div>
 
@@ -1186,6 +1060,19 @@ export function RuleModal({
           </Button>
         </div>
       </DialogContent>
+
+      {/* Wizard ApplyExisting */}
+      {(rule || createdRule) && previewApply && confirmApply && (
+        <ApplyExistingWizard
+          open={showApplyWizard}
+          onOpenChange={setShowApplyWizard}
+          rule={(rule || createdRule)!}
+          newCategory={selectedCategory || undefined}
+          previewApply={previewApply}
+          confirmApply={confirmApply}
+          onSuccess={handleWizardSuccess}
+        />
+      )}
     </Dialog>
   );
 }
