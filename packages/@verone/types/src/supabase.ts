@@ -750,6 +750,7 @@ export type Database = {
           updated_at: string;
           vat_breakdown: Json | null;
           vat_rate: number | null;
+          vat_source: string | null;
         };
         Insert: {
           amount: number;
@@ -791,6 +792,7 @@ export type Database = {
           updated_at?: string;
           vat_breakdown?: Json | null;
           vat_rate?: number | null;
+          vat_source?: string | null;
         };
         Update: {
           amount?: number;
@@ -832,6 +834,7 @@ export type Database = {
           updated_at?: string;
           vat_breakdown?: Json | null;
           vat_rate?: number | null;
+          vat_source?: string | null;
         };
         Relationships: [
           {
@@ -5070,12 +5073,12 @@ export type Database = {
       matching_rules: {
         Row: {
           allow_multiple_categories: boolean | null;
+          applies_to_side: Database['public']['Enums']['transaction_side_filter'];
           counterparty_type: string | null;
           created_at: string | null;
           created_by: string | null;
           default_category: string | null;
           default_role_type: string | null;
-          default_vat_rate: number | null;
           disabled_at: string | null;
           display_label: string | null;
           enabled: boolean;
@@ -5087,16 +5090,15 @@ export type Database = {
           match_value: string;
           organisation_id: string | null;
           priority: number;
-          vat_breakdown: Json | null;
         };
         Insert: {
           allow_multiple_categories?: boolean | null;
+          applies_to_side?: Database['public']['Enums']['transaction_side_filter'];
           counterparty_type?: string | null;
           created_at?: string | null;
           created_by?: string | null;
           default_category?: string | null;
           default_role_type?: string | null;
-          default_vat_rate?: number | null;
           disabled_at?: string | null;
           display_label?: string | null;
           enabled?: boolean;
@@ -5108,16 +5110,15 @@ export type Database = {
           match_value: string;
           organisation_id?: string | null;
           priority?: number;
-          vat_breakdown?: Json | null;
         };
         Update: {
           allow_multiple_categories?: boolean | null;
+          applies_to_side?: Database['public']['Enums']['transaction_side_filter'];
           counterparty_type?: string | null;
           created_at?: string | null;
           created_by?: string | null;
           default_category?: string | null;
           default_role_type?: string | null;
-          default_vat_rate?: number | null;
           disabled_at?: string | null;
           display_label?: string | null;
           enabled?: boolean;
@@ -5129,7 +5130,6 @@ export type Database = {
           match_value?: string;
           organisation_id?: string | null;
           priority?: number;
-          vat_breakdown?: Json | null;
         };
         Relationships: [
           {
@@ -10286,9 +10286,6 @@ export type Database = {
           has_attachment: boolean | null;
           id: string | null;
           label: string | null;
-          matching_status:
-            | Database['public']['Enums']['matching_status']
-            | null;
           notes: string | null;
           organisation_id: string | null;
           organisation_name: string | null;
@@ -10297,7 +10294,6 @@ export type Database = {
             | null;
           raw_data: Json | null;
           role_type: string | null;
-          rule_allow_multiple_categories: boolean | null;
           rule_display_label: string | null;
           rule_match_value: string | null;
           settled_at: string | null;
@@ -10309,6 +10305,7 @@ export type Database = {
           updated_at: string | null;
           vat_breakdown: Json | null;
           vat_rate: number | null;
+          vat_source: string | null;
         };
         Relationships: [
           {
@@ -10381,52 +10378,28 @@ export type Database = {
       v_matching_rules_with_org: {
         Row: {
           allow_multiple_categories: boolean | null;
+          applies_to_side:
+            | Database['public']['Enums']['transaction_side_filter']
+            | null;
+          category_label: string | null;
           counterparty_type: string | null;
           created_at: string | null;
-          created_by: string | null;
           default_category: string | null;
           default_role_type: string | null;
-          default_vat_rate: number | null;
-          disabled_at: string | null;
           display_label: string | null;
-          enabled: boolean | null;
           id: string | null;
-          individual_customer_id: string | null;
           is_active: boolean | null;
           match_patterns: string[] | null;
           match_type: string | null;
           match_value: string | null;
-          matched_expenses_count: number | null;
           organisation_id: string | null;
           organisation_name: string | null;
           organisation_type:
             | Database['public']['Enums']['organisation_type']
             | null;
           priority: number | null;
-          vat_breakdown: Json | null;
         };
         Relationships: [
-          {
-            foreignKeyName: 'matching_rules_created_by_fkey';
-            columns: ['created_by'];
-            isOneToOne: false;
-            referencedRelation: 'v_linkme_users';
-            referencedColumns: ['user_id'];
-          },
-          {
-            foreignKeyName: 'matching_rules_created_by_fkey';
-            columns: ['created_by'];
-            isOneToOne: false;
-            referencedRelation: 'v_users_with_roles';
-            referencedColumns: ['user_id'];
-          },
-          {
-            foreignKeyName: 'matching_rules_individual_customer_id_fkey';
-            columns: ['individual_customer_id'];
-            isOneToOne: false;
-            referencedRelation: 'individual_customers';
-            referencedColumns: ['id'];
-          },
           {
             foreignKeyName: 'matching_rules_organisation_id_fkey';
             columns: ['organisation_id'];
@@ -10884,6 +10857,10 @@ export type Database = {
       };
       apply_multi_vat_breakdown: {
         Args: { p_amount_ttc: number; p_rule_breakdown: Json };
+        Returns: Json;
+      };
+      apply_rule_simple: {
+        Args: { p_rule_id: string; p_selected_labels: string[] };
         Returns: Json;
       };
       apply_rule_to_all_matching: {
@@ -13354,6 +13331,7 @@ export type Database = {
         | 'full';
       test_status_enum: 'pending' | 'passed' | 'failed' | 'warning';
       transaction_side: 'credit' | 'debit';
+      transaction_side_filter: 'debit' | 'credit' | 'both';
       user_role_type:
         | 'owner'
         | 'admin'
@@ -13711,6 +13689,7 @@ export const Constants = {
       ],
       test_status_enum: ['pending', 'passed', 'failed', 'warning'],
       transaction_side: ['credit', 'debit'],
+      transaction_side_filter: ['debit', 'credit', 'both'],
       user_role_type: [
         'owner',
         'admin',

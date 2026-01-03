@@ -18,6 +18,7 @@ export {
   getPcgParentClass,
   getPcgChildren,
   getPcgColor,
+  getPcgCategoriesByType,
   PCG_CLASSES,
   PCG_ACCOUNTS,
   PCG_SUBACCOUNTS,

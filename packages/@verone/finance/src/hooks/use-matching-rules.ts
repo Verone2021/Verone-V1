@@ -41,16 +41,7 @@ export interface MatchingRule {
    * Si FALSE (défaut), la catégorie est verrouillée par la règle.
    */
   allow_multiple_categories: boolean;
-  /**
-   * Taux TVA par défaut (0, 5.5, 10, 20).
-   * NULL si vat_breakdown est utilisé pour multi-taux.
-   */
-  default_vat_rate: number | null;
-  /**
-   * Ventilation TVA multi-taux.
-   * Ex: [{tva_rate: 10, percent: 50}, {tva_rate: 20, percent: 50}]
-   */
-  vat_breakdown: VatBreakdownItem[] | null;
+  // TVA retirée des règles - vient de Qonto OCR ou saisie manuelle
   created_at: string;
   created_by: string | null;
   // Joined from organisation
@@ -108,10 +99,7 @@ export interface CreateRuleData {
   priority?: number;
   /** Si TRUE, permet de modifier la catégorie individuellement par transaction */
   allow_multiple_categories?: boolean;
-  /** Taux TVA par défaut (0, 5.5, 10, 20). NULL pour multi-taux. */
-  default_vat_rate?: number | null;
-  /** Ventilation TVA multi-taux. Ex: [{tva_rate: 10, percent: 50}, {tva_rate: 20, percent: 50}] */
-  vat_breakdown?: VatBreakdownItem[] | null;
+  // TVA retirée des règles - vient de Qonto OCR ou saisie manuelle
 }
 
 export interface UseMatchingRulesReturn {
@@ -130,8 +118,7 @@ export interface UseMatchingRulesReturn {
   /** Preview which transactions will be affected - READ ONLY */
   previewApply: (
     ruleId: string,
-    newCategory?: string,
-    newVatRate?: number | null
+    newCategory?: string
   ) => Promise<PreviewMatchResult[]>;
   /** Confirm application with selected normalized labels */
   confirmApply: (
@@ -200,8 +187,7 @@ export function useMatchingRules(): UseMatchingRulesReturn {
           default_role_type: data.default_role_type,
           priority: data.priority ?? 100,
           allow_multiple_categories: data.allow_multiple_categories ?? false,
-          default_vat_rate: data.default_vat_rate ?? null,
-          vat_breakdown: data.vat_breakdown ?? null,
+          // TVA retirée des règles - vient de Qonto OCR ou saisie manuelle
           // Multi-patterns: si non fourni, utiliser [match_value]
           match_patterns: data.match_patterns ?? [data.match_value],
           enabled: true,
@@ -294,10 +280,7 @@ export function useMatchingRules(): UseMatchingRulesReturn {
           cleanData.match_type = data.match_type;
         if (data.match_value !== undefined)
           cleanData.match_value = data.match_value;
-        if (data.default_vat_rate !== undefined)
-          cleanData.default_vat_rate = data.default_vat_rate ?? null;
-        if (data.vat_breakdown !== undefined)
-          cleanData.vat_breakdown = data.vat_breakdown ?? null;
+        // TVA retirée des règles - vient de Qonto OCR ou saisie manuelle
         if (data.match_patterns !== undefined)
           cleanData.match_patterns = data.match_patterns ?? null;
 
@@ -414,13 +397,11 @@ export function useMatchingRules(): UseMatchingRulesReturn {
    * NE MODIFIE RIEN - Lecture seule
    * @param ruleId - ID de la règle
    * @param newCategory - Optionnel: nouvelle catégorie pour simuler avant sauvegarde
-   * @param newVatRate - Optionnel: nouveau taux TVA pour voir combien seront mis à jour
    */
   const previewApply = useCallback(
     async (
       ruleId: string,
-      newCategory?: string,
-      newVatRate?: number | null
+      newCategory?: string
     ): Promise<PreviewMatchResult[]> => {
       try {
         const supabase = createClient();
@@ -430,7 +411,7 @@ export function useMatchingRules(): UseMatchingRulesReturn {
         )('preview_apply_matching_rule', {
           p_rule_id: ruleId,
           p_new_category: newCategory ?? null,
-          p_new_vat_rate: newVatRate ?? null,
+          // TVA retirée des règles
         });
 
         if (rpcError) {

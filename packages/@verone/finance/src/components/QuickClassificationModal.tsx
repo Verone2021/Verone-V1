@@ -38,6 +38,7 @@ import {
   Search,
   ChevronRight,
   X,
+  XCircle,
   Sparkles,
   CreditCard,
   Building2,
@@ -60,7 +61,12 @@ import {
 import { toast } from 'sonner';
 
 import { useMatchingRules } from '../hooks/use-matching-rules';
-import { ALL_PCG_CATEGORIES, type PcgCategory } from '../lib/pcg-categories';
+import {
+  ALL_PCG_CATEGORIES,
+  PCG_SUGGESTED_CATEGORIES,
+  PCG_SUGGESTED_INCOME_CATEGORIES,
+  type PcgCategory,
+} from '../lib/pcg-categories';
 import {
   TVA_RATES,
   calculateHT,
@@ -220,6 +226,60 @@ const MORE_CATEGORIES = [
   },
 ];
 
+// Catégories populaires pour les ENTRÉES (classe 7)
+const POPULAR_INCOME_CATEGORIES = [
+  {
+    code: '706',
+    label: 'Prestations Services',
+    description: 'Services clients, conseil',
+    icon: Users,
+    color:
+      'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200',
+    iconColor: 'text-emerald-600',
+  },
+  {
+    code: '707',
+    label: 'Ventes Marchandises',
+    description: 'Mobilier, produits',
+    icon: Package,
+    color: 'bg-teal-100 text-teal-700 border-teal-200 hover:bg-teal-200',
+    iconColor: 'text-teal-600',
+  },
+  {
+    code: '708',
+    label: 'Activités Annexes',
+    description: 'Revenus secondaires',
+    icon: Sparkles,
+    color: 'bg-cyan-100 text-cyan-700 border-cyan-200 hover:bg-cyan-200',
+    iconColor: 'text-cyan-600',
+  },
+  {
+    code: '758',
+    label: 'Produits Divers',
+    description: 'Remboursements, divers',
+    icon: Receipt,
+    color: 'bg-sky-100 text-sky-700 border-sky-200 hover:bg-sky-200',
+    iconColor: 'text-sky-600',
+  },
+  {
+    code: '768',
+    label: 'Produits Financiers',
+    description: 'Intérêts, dividendes',
+    icon: CreditCard,
+    color: 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200',
+    iconColor: 'text-blue-600',
+  },
+  {
+    code: '74',
+    label: 'Subventions',
+    description: "Aides, subventions d'exploitation",
+    icon: Building2,
+    color:
+      'bg-indigo-100 text-indigo-700 border-indigo-200 hover:bg-indigo-200',
+    iconColor: 'text-indigo-600',
+  },
+];
+
 export interface QuickClassificationModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -239,6 +299,19 @@ export interface QuickClassificationModalProps {
     ruleId: string,
     selectedNormalizedLabels: string[]
   ) => Promise<{ nb_updated: number; updated_ids: string[] }>;
+  /** Type de transaction: debit (dépense) ou credit (entrée). Détermine les catégories PCG affichées */
+  transactionSide?: 'debit' | 'credit';
+  /** Taux TVA actuel (de Qonto OCR ou manuel) */
+  currentVatRate?: number | null;
+  /** Source de la TVA: 'qonto_ocr' si détecté par Qonto, 'manual' si saisi manuellement */
+  currentVatSource?: 'qonto_ocr' | 'manual' | null;
+  /** Ventilation TVA multi-taux (si présent) */
+  currentVatBreakdown?: Array<{
+    description: string;
+    amount_ht: number;
+    tva_rate: number;
+    tva_amount: number;
+  }> | null;
 }
 
 export function QuickClassificationModal({
@@ -253,6 +326,10 @@ export function QuickClassificationModal({
   onSuccess,
   transactionCount,
   confirmApply,
+  transactionSide = 'debit',
+  currentVatRate,
+  currentVatSource,
+  currentVatBreakdown,
 }: QuickClassificationModalProps) {
   // Hooks
   const {
@@ -274,7 +351,42 @@ export function QuickClassificationModal({
     if (!currentCategory) return null;
     return ALL_PCG_CATEGORIES.find(c => c.code === currentCategory) || null;
   }, [currentCategory]);
-  const [tvaRate, setTvaRate] = useState<TvaRate>(20);
+
+  // Catégories populaires selon le type de transaction
+  const popularCategories = useMemo(
+    () =>
+      transactionSide === 'credit'
+        ? POPULAR_INCOME_CATEGORIES
+        : POPULAR_CATEGORIES,
+    [transactionSide]
+  );
+
+  // Catégories "plus" selon le type de transaction
+  const moreCategories = useMemo(
+    () => (transactionSide === 'credit' ? [] : MORE_CATEGORIES),
+    [transactionSide]
+  );
+
+  // Catégories PCG suggérées pour la recherche selon le side
+  const suggestedCategories = useMemo(
+    () =>
+      transactionSide === 'credit'
+        ? PCG_SUGGESTED_INCOME_CATEGORIES
+        : PCG_SUGGESTED_CATEGORIES,
+    [transactionSide]
+  );
+
+  // Libellés pour l'UI selon le type de transaction
+  const isIncome = transactionSide === 'credit';
+
+  // Initialiser TVA avec les données existantes (Qonto OCR ou manuel)
+  const initialVatRate =
+    currentVatRate !== null &&
+    currentVatRate !== undefined &&
+    [0, 5.5, 10, 20].includes(currentVatRate)
+      ? (currentVatRate as TvaRate)
+      : 20;
+  const [tvaRate, setTvaRate] = useState<TvaRate>(initialVatRate);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -291,11 +403,26 @@ export function QuickClassificationModal({
   const [applyToExisting, setApplyToExisting] = useState(true);
 
   // State - Ventilation TVA multi-taux
-  const [isVentilationMode, setIsVentilationMode] = useState(false);
-  const [vatLines, setVatLines] = useState<VatLine[]>([
-    { id: '1', description: '', amount_ht: 0, tva_rate: 10 },
-    { id: '2', description: '', amount_ht: 0, tva_rate: 20 },
-  ]);
+  // Si currentVatBreakdown existe, on active le mode ventilation et on pré-remplit
+  const hasVatBreakdown = currentVatBreakdown && currentVatBreakdown.length > 0;
+  const [isVentilationMode, setIsVentilationMode] = useState(
+    hasVatBreakdown || false
+  );
+  const [vatLines, setVatLines] = useState<VatLine[]>(
+    hasVatBreakdown
+      ? currentVatBreakdown.map((line, idx) => ({
+          id: String(idx + 1),
+          description: line.description || `Ligne ${idx + 1}`,
+          amount_ht: line.amount_ht || 0,
+          tva_rate: ([0, 5.5, 10, 20].includes(line.tva_rate)
+            ? line.tva_rate
+            : 20) as TvaRate,
+        }))
+      : [
+          { id: '1', description: '', amount_ht: 0, tva_rate: 10 },
+          { id: '2', description: '', amount_ht: 0, tva_rate: 20 },
+        ]
+  );
 
   // Calculs TVA
   const htAmount = useMemo(
@@ -379,18 +506,26 @@ export function QuickClassificationModal({
     }
   }, [open, label, rules]);
 
-  // Recherche dans les catégories PCG
+  // Recherche dans les catégories PCG - priorise les catégories du bon side
   const searchResults = useMemo(() => {
     if (!searchQuery || searchQuery.length < 2) return [];
 
     const query = searchQuery.toLowerCase();
-    return ALL_PCG_CATEGORIES.filter(
-      cat =>
-        cat.label.toLowerCase().includes(query) ||
-        cat.code.includes(query) ||
-        cat.description?.toLowerCase().includes(query)
-    ).slice(0, 12);
-  }, [searchQuery]);
+    const matchFilter = (cat: PcgCategory) =>
+      cat.label.toLowerCase().includes(query) ||
+      cat.code.includes(query) ||
+      cat.description?.toLowerCase().includes(query);
+
+    // D'abord chercher dans les catégories suggérées pour ce side
+    const suggestedMatches = suggestedCategories.filter(matchFilter);
+    // Puis dans toutes les catégories si besoin
+    const allMatches = ALL_PCG_CATEGORIES.filter(matchFilter);
+    // Dédupliquer et prioriser les suggérées
+    const seenCodes = new Set(suggestedMatches.map(c => c.code));
+    const otherMatches = allMatches.filter(c => !seenCodes.has(c.code));
+
+    return [...suggestedMatches, ...otherMatches].slice(0, 12);
+  }, [searchQuery, suggestedCategories]);
 
   // Sélectionner une catégorie
   const handleSelectCategory = useCallback((code: string) => {
@@ -458,62 +593,25 @@ export function QuickClassificationModal({
 
       // 2. Mode modification: mettre à jour la règle existante si la catégorie a changé
       if (existingRuleId && selectedCategory !== currentCategory) {
-        // Construire les données TVA pour la règle
-        const ruleVatData = isVentilationMode
-          ? {
-              default_vat_rate: null,
-              vat_breakdown: vatLines
-                .filter(l => l.amount_ht > 0)
-                .map(l => ({
-                  tva_rate: l.tva_rate,
-                  percent: Math.round(
-                    (l.amount_ht / ventilationTotals.totalHT) * 100
-                  ),
-                })),
-            }
-          : {
-              default_vat_rate: tvaRate,
-              vat_breakdown: null,
-            };
-
+        // TVA retirée des règles - vient de Qonto OCR ou saisie manuelle par transaction
         await updateMatchingRule(existingRuleId, {
           default_category: selectedCategory,
-          ...ruleVatData,
         });
       }
-      // 3. Mode création: créer ou mettre à jour la règle automatique (catégorie + TVA)
+      // 3. Mode création: créer ou mettre à jour la règle automatique (catégorie seulement)
       // Note: L'organisation est gérée via OrganisationLinkingModal (page Règles → "Lier")
-      // L'automatisation fusionne automatiquement les deux dans une seule règle
+      // TVA retirée des règles - vient de Qonto OCR ou saisie manuelle par transaction
       else if (!isModificationMode && createRule && label) {
         let ruleIdForApply: string | null = null;
 
-        // Construire les données TVA pour la règle
-        const ruleVatData = isVentilationMode
-          ? {
-              default_vat_rate: null,
-              vat_breakdown: vatLines
-                .filter(l => l.amount_ht > 0)
-                .map(l => ({
-                  tva_rate: l.tva_rate,
-                  percent: Math.round(
-                    (l.amount_ht / ventilationTotals.totalHT) * 100
-                  ),
-                })),
-            }
-          : {
-              default_vat_rate: tvaRate,
-              vat_breakdown: null,
-            };
-
         if (existingRuleForLabel) {
-          // UPDATE règle existante avec la catégorie et TVA (fusion automatique)
+          // UPDATE règle existante avec la catégorie seulement
           await updateMatchingRule(existingRuleForLabel.id, {
             default_category: selectedCategory,
-            ...ruleVatData,
           });
           ruleIdForApply = existingRuleForLabel.id;
         } else {
-          // CREATE nouvelle règle (catégorie + TVA)
+          // CREATE nouvelle règle (catégorie seulement, pas de TVA)
           const newRule = await createMatchingRule({
             match_type: 'label_contains',
             match_value: label,
@@ -523,7 +621,6 @@ export function QuickClassificationModal({
             default_category: selectedCategory,
             default_role_type: 'supplier',
             priority: 100,
-            ...ruleVatData,
           });
           ruleIdForApply = newRule?.id ?? null;
         }
@@ -598,15 +695,32 @@ export function QuickClassificationModal({
         data-testid="modal-classify-pcg"
       >
         {/* Header */}
-        <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-slate-50 to-blue-50">
+        <DialogHeader
+          className={cn(
+            'px-6 py-4 border-b bg-gradient-to-r',
+            isIncome
+              ? 'from-emerald-50 to-green-50'
+              : 'from-slate-50 to-blue-50'
+          )}
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 shadow-sm">
-                <Receipt className="h-6 w-6 text-blue-600" />
+              <div
+                className={cn(
+                  'flex h-12 w-12 items-center justify-center rounded-xl shadow-sm',
+                  isIncome ? 'bg-emerald-100' : 'bg-blue-100'
+                )}
+              >
+                <Receipt
+                  className={cn(
+                    'h-6 w-6',
+                    isIncome ? 'text-emerald-600' : 'text-blue-600'
+                  )}
+                />
               </div>
               <div>
                 <DialogTitle className="text-xl font-semibold text-slate-900">
-                  Classifier la dépense
+                  {isIncome ? "Classifier l'entrée" : 'Classifier la dépense'}
                 </DialogTitle>
                 <p className="text-sm text-slate-600 mt-0.5 max-w-md truncate">
                   {counterpartyName || label}
@@ -614,8 +728,14 @@ export function QuickClassificationModal({
               </div>
             </div>
             <div className="text-right bg-white rounded-xl px-4 py-2 shadow-sm border">
-              <div className="text-2xl font-bold text-red-600">
-                -{formatAmount(Math.abs(amount))}
+              <div
+                className={cn(
+                  'text-2xl font-bold',
+                  isIncome ? 'text-emerald-600' : 'text-red-600'
+                )}
+              >
+                {isIncome ? '+' : '-'}
+                {formatAmount(Math.abs(amount))}
               </div>
               <div className="text-xs text-slate-500">Montant TTC</div>
             </div>
@@ -820,10 +940,12 @@ export function QuickClassificationModal({
                 <>
                   <h3 className="text-sm font-semibold text-slate-600 mb-4 flex items-center gap-2">
                     <Sparkles className="h-4 w-4 text-amber-500" />
-                    Catégories populaires
+                    {isIncome
+                      ? 'Catégories revenus populaires'
+                      : 'Catégories populaires'}
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-                    {POPULAR_CATEGORIES.map(cat => {
+                    {popularCategories.map(cat => {
                       const IconComponent = cat.icon;
                       return (
                         <button
@@ -849,8 +971,8 @@ export function QuickClassificationModal({
                     })}
                   </div>
 
-                  {/* Plus de catégories */}
-                  {!showAllCategories ? (
+                  {/* Plus de catégories - seulement pour les dépenses */}
+                  {moreCategories.length > 0 && !showAllCategories && (
                     <button
                       type="button"
                       onClick={() => setShowAllCategories(true)}
@@ -859,7 +981,8 @@ export function QuickClassificationModal({
                       Voir plus de catégories
                       <ChevronRight className="h-4 w-4" />
                     </button>
-                  ) : (
+                  )}
+                  {moreCategories.length > 0 && showAllCategories && (
                     <>
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="text-sm font-semibold text-slate-600">
@@ -875,7 +998,7 @@ export function QuickClassificationModal({
                         </button>
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        {MORE_CATEGORIES.map(cat => {
+                        {moreCategories.map(cat => {
                           const IconComponent = cat.icon;
                           return (
                             <button
@@ -911,9 +1034,20 @@ export function QuickClassificationModal({
           {selectedCategory && (
             <div className="space-y-5">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-slate-700">
-                  Taux de TVA applicable
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-slate-700">
+                    Taux de TVA applicable
+                  </h3>
+                  {currentVatSource === 'qonto_ocr' && (
+                    <Badge
+                      variant="secondary"
+                      className="bg-emerald-100 text-emerald-700 text-xs"
+                    >
+                      <Zap size={12} className="mr-1" />
+                      Qonto OCR
+                    </Badge>
+                  )}
+                </div>
                 {/* Toggle ventilation */}
                 <label className="flex items-center gap-2 cursor-pointer">
                   <Switch
@@ -991,12 +1125,13 @@ export function QuickClassificationModal({
               {isVentilationMode && (
                 <div className="space-y-4">
                   {/* En-têtes */}
-                  <div className="grid grid-cols-12 gap-2 text-xs font-medium text-slate-500 px-1">
+                  <div className="grid grid-cols-13 gap-2 text-xs font-medium text-slate-500 px-1">
                     <div className="col-span-4">Description</div>
                     <div className="col-span-2 text-right">Montant HT</div>
                     <div className="col-span-2 text-center">Taux</div>
                     <div className="col-span-2 text-right">TVA</div>
                     <div className="col-span-2 text-right">TTC</div>
+                    <div className="col-span-1" />
                   </div>
 
                   {/* Lignes de ventilation */}
@@ -1009,7 +1144,7 @@ export function QuickClassificationModal({
                     return (
                       <div
                         key={line.id}
-                        className="grid grid-cols-12 gap-2 items-center"
+                        className="grid grid-cols-13 gap-2 items-center"
                       >
                         <div className="col-span-4">
                           <Input
@@ -1076,6 +1211,23 @@ export function QuickClassificationModal({
                         </div>
                         <div className="col-span-2 text-right text-sm font-semibold">
                           {formatAmount(lineTTC)}
+                        </div>
+                        <div className="col-span-1 flex justify-center">
+                          {vatLines.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setVatLines(
+                                  vatLines.filter((_, i) => i !== index)
+                                );
+                              }}
+                              className="h-8 w-8 p-0 text-slate-400 hover:text-red-500"
+                            >
+                              <XCircle size={16} />
+                            </Button>
+                          )}
                         </div>
                       </div>
                     );

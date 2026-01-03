@@ -241,7 +241,7 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
         icon: ArrowLeftRight,
       },
       {
-        title: 'Dépenses',
+        title: 'Catégorisation',
         href: '/finance/depenses',
         icon: Banknote,
       },

@@ -57,7 +57,6 @@ import {
   ChevronRight,
   ArrowLeft,
   Sparkles,
-  Percent,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -66,7 +65,6 @@ import type {
   MatchingRule,
   CreateRuleData,
   PreviewMatchResult,
-  VatBreakdownItem,
 } from '../hooks/use-matching-rules';
 import {
   ALL_PCG_CATEGORIES,
@@ -246,16 +244,14 @@ export interface RuleModalProps {
       default_category?: string | null;
       enabled?: boolean;
       allow_multiple_categories?: boolean;
-      default_vat_rate?: number | null;
-      vat_breakdown?: VatBreakdownItem[] | null;
+      // TVA retirée des règles - vient de Qonto OCR ou saisie manuelle
       match_patterns?: string[] | null;
     }
   ) => Promise<boolean>;
   /** Preview apply - affiche les transactions qui seront modifiées */
   previewApply?: (
     ruleId: string,
-    newCategory?: string,
-    newVatRate?: number | null
+    newCategory?: string
   ) => Promise<PreviewMatchResult[]>;
   /** Confirm apply - applique aux labels sélectionnés */
   confirmApply?: (
@@ -312,8 +308,8 @@ export function RuleModal({
   const [isSearchingOrg, setIsSearchingOrg] = useState(false);
   const [showOrgSearch, setShowOrgSearch] = useState(false);
 
-  // State - TVA (taux simple uniquement, ventilation disponible dans QuickClassificationModal)
-  const [selectedVatRate, setSelectedVatRate] = useState<number | null>(null);
+  // TVA retirée - désormais gérée automatiquement par Qonto OCR
+  // Saisie manuelle possible directement sur la transaction (pas dans les règles)
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -342,11 +338,7 @@ export function RuleModal({
             ? { id: rule.organisation_id, name: rule.organisation_name }
             : null
         );
-        // TVA - édition (taux simple uniquement)
-        // FIX: Convertir en number car la DB retourne un string ("20.00")
-        setSelectedVatRate(
-          rule.default_vat_rate != null ? Number(rule.default_vat_rate) : 20
-        );
+        // TVA retirée - gérée par Qonto OCR
       } else {
         // Mode création
         setEnabled(true);
@@ -359,8 +351,7 @@ export function RuleModal({
           : null;
         setSelectedCategoryInfo(catInfo ?? null);
         setSelectedOrg(null);
-        // TVA - création (défaut 20%)
-        setSelectedVatRate(20);
+        // TVA retirée - gérée par Qonto OCR
       }
       setCategorySearchQuery('');
       setOrgSearchQuery('');
@@ -464,19 +455,13 @@ export function RuleModal({
     try {
       if (isEditMode && rule && onUpdate) {
         // Mode édition - mettre à jour la règle + auto-sync
-        // TVA simple uniquement (ventilation disponible dans QuickClassificationModal)
-        const vatData = {
-          default_vat_rate: selectedVatRate,
-          vat_breakdown: null,
-        };
-
+        // TVA gérée automatiquement par Qonto OCR (plus de default_vat_rate)
         const updateData = {
           organisation_id: selectedOrg?.id ?? null,
           default_category: selectedCategory,
           enabled,
           allow_multiple_categories: allowMultipleCategories,
           match_patterns: matchPatterns.length > 0 ? matchPatterns : null,
-          ...vatData,
         };
 
         const success = await onUpdate(rule.id, updateData);
@@ -497,12 +482,7 @@ export function RuleModal({
           ? 'partner'
           : 'supplier';
 
-        // TVA simple uniquement (ventilation disponible dans QuickClassificationModal)
-        const vatData = {
-          default_vat_rate: selectedVatRate,
-          vat_breakdown: null,
-        };
-
+        // TVA gérée automatiquement par Qonto OCR (plus de default_vat_rate)
         const newRule = await onCreate({
           match_type: 'label_contains',
           match_value: matchValue.trim(),
@@ -514,7 +494,6 @@ export function RuleModal({
           default_role_type: roleType,
           priority: 100,
           allow_multiple_categories: allowMultipleCategories,
-          ...vatData,
         });
 
         if (newRule) {
@@ -987,44 +966,8 @@ export function RuleModal({
             )}
           </div>
 
-          {/* Taux TVA */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-              <Percent className="h-4 w-4 text-slate-500" />
-              Taux TVA
-            </h3>
-
-            {/* Taux TVA simples (ventilation disponible dans QuickClassificationModal) */}
-            <div className="grid grid-cols-4 gap-2">
-              {[0, 5.5, 10, 20].map(rate => (
-                <button
-                  key={rate}
-                  type="button"
-                  onClick={() => setSelectedVatRate(rate)}
-                  className={cn(
-                    'flex flex-col items-center justify-center rounded-lg border-2 p-3 transition-all hover:scale-[1.02]',
-                    selectedVatRate === rate
-                      ? 'border-green-500 bg-green-50 text-green-700'
-                      : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
-                  )}
-                >
-                  <span className="text-lg font-bold">{rate}%</span>
-                  <span className="text-[10px] text-slate-500">
-                    {rate === 0
-                      ? 'Exonéré'
-                      : rate === 5.5
-                        ? 'Réduit'
-                        : rate === 10
-                          ? 'Interméd.'
-                          : 'Normal'}
-                  </span>
-                </button>
-              ))}
-            </div>
-            <p className="text-xs text-slate-500 mt-1">
-              TVA ventilée disponible lors de la classification manuelle
-            </p>
-          </div>
+          {/* TVA retirée - gérée automatiquement par Qonto OCR */}
+          {/* Saisie manuelle possible directement sur la transaction */}
         </div>
 
         {/* Footer */}

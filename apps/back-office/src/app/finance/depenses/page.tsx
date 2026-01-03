@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useToast } from '@verone/common/hooks';
 import {
   getPcgCategory,
+  getPcgCategoriesByType,
   getPcgColor,
   PCG_SUGGESTED_CATEGORIES,
 } from '@verone/finance';
@@ -39,6 +40,8 @@ import {
 import { createClient } from '@verone/utils/supabase/client';
 import {
   AlertCircle,
+  ArrowDownLeft,
+  ArrowUpRight,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
@@ -50,6 +53,7 @@ import {
   Filter,
   Link as LinkIcon,
   Paperclip,
+  Percent,
   RefreshCw,
   Search,
   Settings,
@@ -102,6 +106,63 @@ function StatusBadge({ status }: { status: Expense['status'] }) {
       <Icon size={12} />
       {label}
     </Badge>
+  );
+}
+
+// Indicateur de complétude - affiche ce qui manque sur la transaction
+function CompletenessIndicator({ expense }: { expense: Expense }) {
+  const missingItems: { key: string; label: string; icon: typeof Tag }[] = [];
+
+  // Catégorie manquante
+  if (!expense.category) {
+    missingItems.push({ key: 'category', label: 'Catégorie', icon: Tag });
+  }
+
+  // TVA manquante (seulement si catégorisé)
+  if (
+    expense.category &&
+    expense.vat_rate == null &&
+    (!expense.vat_breakdown ||
+      !Array.isArray(expense.vat_breakdown) ||
+      expense.vat_breakdown.length === 0)
+  ) {
+    missingItems.push({ key: 'vat', label: 'TVA', icon: Percent });
+  }
+
+  // Justificatif manquant
+  if (!expense.has_attachment) {
+    missingItems.push({
+      key: 'attachment',
+      label: 'Justificatif',
+      icon: Paperclip,
+    });
+  }
+
+  if (missingItems.length === 0) {
+    return (
+      <Badge
+        variant="default"
+        className="gap-1 text-xs bg-green-100 text-green-700"
+      >
+        <CheckCircle2 size={10} />
+        Complet
+      </Badge>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {missingItems.map(item => (
+        <Badge
+          key={item.key}
+          variant="outline"
+          className="gap-1 text-xs px-1.5 border-orange-300 bg-orange-50 text-orange-700"
+        >
+          <item.icon size={10} />
+          {item.label}
+        </Badge>
+      ))}
+    </div>
   );
 }
 
@@ -193,33 +254,20 @@ function ExpenseRow({
               <Paperclip size={12} className="text-blue-500" />
             </span>
           )}
-          <span className="text-xs font-semibold text-red-600">
-            -{formatAmount(expense.amount)}
+          <span
+            className={cn(
+              'text-xs font-semibold',
+              expense.side === 'credit' ? 'text-green-600' : 'text-red-600'
+            )}
+          >
+            {expense.side === 'credit' ? '+' : '-'}
+            {formatAmount(expense.amount)}
           </span>
         </div>
       </td>
-      {/* Colonne TVA - affiche les taux réels */}
-      <td className="px-3 py-2 text-xs text-slate-600">
-        {expense.vat_breakdown &&
-        Array.isArray(expense.vat_breakdown) &&
-        expense.vat_breakdown.length > 0 ? (
-          <span className="text-orange-600 font-medium">
-            {[
-              ...new Set(
-                expense.vat_breakdown.map(
-                  (v: { tva_rate: number }) => v.tva_rate
-                )
-              ),
-            ]
-              .sort((a, b) => a - b)
-              .map(rate => `${rate}%`)
-              .join(' + ')}
-          </span>
-        ) : expense.vat_rate != null ? (
-          <span>{expense.vat_rate}%</span>
-        ) : (
-          <span className="text-slate-300">-</span>
-        )}
+      {/* Colonne Complétude - affiche ce qui manque */}
+      <td className="px-3 py-2">
+        <CompletenessIndicator expense={expense} />
       </td>
       <td className="px-3 py-2">
         <StatusBadge status={expense.status} />
@@ -663,11 +711,9 @@ export default function DepensesPage() {
       <div className="bg-white border-b border-slate-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-slate-900">
-              Gestion des Dépenses
-            </h1>
+            <h1 className="text-xl font-bold text-slate-900">Catégorisation</h1>
             <p className="text-sm text-slate-600">
-              Classez et catégorisez vos dépenses bancaires
+              Classez vos transactions bancaires (dépenses et revenus)
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -701,7 +747,7 @@ export default function DepensesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <KPICardUnified
             variant="elegant"
-            title="Total Dépenses"
+            title="Total Transactions"
             value={stats.total}
             icon={FileText}
           />
@@ -774,6 +820,23 @@ export default function DepensesPage() {
               </div>
             </div>
 
+            {/* Filtre Dépenses/Entrées */}
+            <select
+              className="px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium"
+              value={filters.side || 'all'}
+              onChange={e =>
+                setFilters(prev => ({
+                  ...prev,
+                  side: e.target.value as 'debit' | 'credit' | 'all',
+                  category: undefined, // Reset category when changing side
+                }))
+              }
+            >
+              <option value="all">📊 Toutes transactions</option>
+              <option value="debit">📤 Dépenses (sorties)</option>
+              <option value="credit">📥 Entrées (recettes)</option>
+            </select>
+
             {/* Filtre année */}
             <select
               className="px-3 py-2 border border-slate-200 rounded-lg text-sm"
@@ -793,7 +856,7 @@ export default function DepensesPage() {
               ))}
             </select>
 
-            {/* Filtre catégorie PCG */}
+            {/* Filtre catégorie PCG (adapté selon le side) */}
             <select
               className="px-3 py-2 border border-slate-200 rounded-lg text-sm"
               value={filters.category || ''}
@@ -805,7 +868,7 @@ export default function DepensesPage() {
               }
             >
               <option value="">Toutes catégories</option>
-              {PCG_SUGGESTED_CATEGORIES.map(cat => (
+              {getPcgCategoriesByType(filters.side || 'all').map(cat => (
                 <option key={cat.code} value={cat.code}>
                   {cat.code} - {cat.label}
                 </option>
@@ -832,7 +895,7 @@ export default function DepensesPage() {
               variant="ghost"
               size="sm"
               onClick={() => {
-                setFilters({ status: 'all' });
+                setFilters({ status: 'all', side: 'all' });
                 setSearchValue('');
               }}
             >
@@ -1020,12 +1083,12 @@ export default function DepensesPage() {
           ) : isLoading ? (
             <div className="p-8 text-center">
               <RefreshCw className="mx-auto h-12 w-12 text-blue-500 animate-spin mb-4" />
-              <p className="text-slate-600">Chargement des dépenses...</p>
+              <p className="text-slate-600">Chargement des transactions...</p>
             </div>
           ) : expenses.length === 0 ? (
             <div className="p-8 text-center">
               <FileText className="mx-auto h-12 w-12 text-slate-300 mb-4" />
-              <p className="text-slate-600">Aucune dépense trouvée</p>
+              <p className="text-slate-600">Aucune transaction trouvée</p>
               <p className="text-sm text-slate-500 mt-1">
                 Modifiez vos filtres ou lancez une synchronisation Qonto
               </p>
@@ -1046,7 +1109,7 @@ export default function DepensesPage() {
                       Montant
                     </th>
                     <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      TVA
+                      À compléter
                     </th>
                     <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                       Statut
@@ -1106,6 +1169,11 @@ export default function DepensesPage() {
             ? suggestionsMap.get(selectedExpense.id)?.matchedRule?.id
             : undefined
         }
+        transactionSide={selectedExpense?.side || 'debit'}
+        // TVA Qonto OCR - pré-remplit le formulaire si disponible
+        currentVatRate={selectedExpense?.vat_rate ?? undefined}
+        currentVatSource={selectedExpense?.vat_source ?? undefined}
+        currentVatBreakdown={selectedExpense?.vat_breakdown ?? undefined}
         onSuccess={handleClassifySuccess}
       />
 

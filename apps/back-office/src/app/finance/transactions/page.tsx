@@ -885,8 +885,11 @@ type TabFilterV2 =
   | 'cca'
   | 'ignored';
 
+type SideFilter = 'all' | 'credit' | 'debit';
+
 function TransactionsPageV2() {
   const [activeTab, setActiveTab] = useState<TabFilterV2>('all');
+  const [sideFilter, setSideFilter] = useState<SideFilter>('all');
   const [selectedTransaction, setSelectedTransaction] =
     useState<UnifiedTransaction | null>(null);
   const [search, setSearch] = useState('');
@@ -930,6 +933,7 @@ function TransactionsPageV2() {
   } = useUnifiedTransactions({
     filters: {
       status: activeTab === 'all' ? 'all' : activeTab,
+      side: sideFilter === 'all' ? 'all' : sideFilter,
       search: search || undefined,
     },
     pageSize: 20,
@@ -972,6 +976,18 @@ function TransactionsPageV2() {
     setSelectedTransaction(null);
     setFilters({
       status: tab === 'all' ? 'all' : tab,
+      side: sideFilter === 'all' ? 'all' : sideFilter,
+      search: search || undefined,
+    });
+  };
+
+  // Handle side filter change
+  const handleSideChange = (side: SideFilter) => {
+    setSideFilter(side);
+    setSelectedTransaction(null);
+    setFilters({
+      status: activeTab === 'all' ? 'all' : activeTab,
+      side: side === 'all' ? 'all' : side,
       search: search || undefined,
     });
   };
@@ -981,6 +997,7 @@ function TransactionsPageV2() {
     setSearch(value);
     setFilters({
       status: activeTab === 'all' ? 'all' : activeTab,
+      side: sideFilter === 'all' ? 'all' : sideFilter,
       search: value || undefined,
     });
   };
@@ -1237,14 +1254,47 @@ function TransactionsPageV2() {
                 </TabsList>
               </Tabs>
 
-              <div className="relative w-64">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Rechercher..."
-                  value={search}
-                  onChange={e => handleSearch(e.target.value)}
-                  className="pl-8 h-9"
-                />
+              <div className="flex items-center gap-3">
+                {/* Filtre Entrées/Sorties */}
+                <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
+                  <Button
+                    variant={sideFilter === 'all' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    onClick={() => handleSideChange('all')}
+                    className="h-7 px-3 text-xs"
+                  >
+                    Toutes
+                  </Button>
+                  <Button
+                    variant={sideFilter === 'credit' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    onClick={() => handleSideChange('credit')}
+                    className="h-7 px-3 text-xs gap-1"
+                  >
+                    <ArrowDownLeft className="h-3 w-3 text-green-600" />
+                    Entrées
+                  </Button>
+                  <Button
+                    variant={sideFilter === 'debit' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    onClick={() => handleSideChange('debit')}
+                    className="h-7 px-3 text-xs gap-1"
+                  >
+                    <ArrowUpRight className="h-3 w-3 text-red-600" />
+                    Sorties
+                  </Button>
+                </div>
+
+                {/* Recherche */}
+                <div className="relative w-64">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Rechercher..."
+                    value={search}
+                    onChange={e => handleSearch(e.target.value)}
+                    className="pl-8 h-9"
+                  />
+                </div>
               </div>
             </div>
           </CardHeader>
@@ -1683,20 +1733,107 @@ function TransactionsPageV2() {
                                     : '-'}
                                 </span>
                               </div>
-                              <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">
-                                  TVA{' '}
-                                  {selectedTransaction.vat_rate
-                                    ? `(${selectedTransaction.vat_rate}%)`
-                                    : ''}
-                                </span>
-                                <span>
-                                  {selectedTransaction.amount_vat
-                                    ? formatAmount(
-                                        selectedTransaction.amount_vat
-                                      )
-                                    : '-'}
-                                </span>
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between text-sm">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-muted-foreground">
+                                      TVA
+                                    </span>
+                                    {/* Badge origine TVA */}
+                                    {(
+                                      selectedTransaction as unknown as {
+                                        vat_source?: string;
+                                      }
+                                    ).vat_source === 'qonto_ocr' ? (
+                                      <Badge
+                                        variant="secondary"
+                                        className="bg-green-100 text-green-700 text-[10px] px-1.5"
+                                      >
+                                        Qonto OCR
+                                      </Badge>
+                                    ) : (
+                                        selectedTransaction as unknown as {
+                                          vat_source?: string;
+                                        }
+                                      ).vat_source === 'manual' ? (
+                                      <Badge
+                                        variant="secondary"
+                                        className="bg-blue-100 text-blue-700 text-[10px] px-1.5"
+                                      >
+                                        Manuel
+                                      </Badge>
+                                    ) : selectedTransaction.vat_rate ? (
+                                      <Badge
+                                        variant="secondary"
+                                        className="bg-gray-100 text-gray-600 text-[10px] px-1.5"
+                                      >
+                                        Règle
+                                      </Badge>
+                                    ) : null}
+                                  </div>
+                                  <span>
+                                    {selectedTransaction.amount_vat
+                                      ? formatAmount(
+                                          selectedTransaction.amount_vat
+                                        )
+                                      : '-'}
+                                  </span>
+                                </div>
+                                {/* Sélecteur de taux TVA */}
+                                <Select
+                                  value={
+                                    selectedTransaction.vat_rate?.toString() ||
+                                    'none'
+                                  }
+                                  onValueChange={async value => {
+                                    const newRate =
+                                      value === 'none'
+                                        ? null
+                                        : parseFloat(value);
+                                    try {
+                                      const res = await fetch(
+                                        '/api/transactions/update-vat',
+                                        {
+                                          method: 'POST',
+                                          headers: {
+                                            'Content-Type': 'application/json',
+                                          },
+                                          body: JSON.stringify({
+                                            transaction_id:
+                                              selectedTransaction.id,
+                                            vat_rate: newRate,
+                                          }),
+                                        }
+                                      );
+                                      if (res.ok) {
+                                        refresh();
+                                      }
+                                    } catch (err) {
+                                      console.error('[TVA update] Error:', err);
+                                    }
+                                  }}
+                                >
+                                  <SelectTrigger className="h-7 text-xs">
+                                    <SelectValue placeholder="Sélectionner TVA" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="none">
+                                      Non défini
+                                    </SelectItem>
+                                    <SelectItem value="0">
+                                      0% Exonéré
+                                    </SelectItem>
+                                    <SelectItem value="5.5">
+                                      5.5% Réduit
+                                    </SelectItem>
+                                    <SelectItem value="10">
+                                      10% Intermédiaire
+                                    </SelectItem>
+                                    <SelectItem value="20">
+                                      20% Normal
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
                               </div>
                               <Separator />
                               <div className="flex justify-between font-medium">
@@ -1828,9 +1965,13 @@ function TransactionsPageV2() {
                     </Button>
                   )}
 
-                  {/* Lier organisation - UNIQUEMENT si pas de règle ET pas d'organisation liée */}
+                  {/* Lier organisation - UNIQUEMENT si:
+                      - Pas de règle
+                      - Pas d'organisation liée
+                      - Transaction DEBIT (sorties) - pour les crédits, on passe par les commandes */}
                   {!isLockedByRule &&
-                    !selectedTransaction.organisation_name && (
+                    !selectedTransaction.organisation_name &&
+                    selectedTransaction.side === 'debit' && (
                       <Button
                         variant="outline"
                         className="w-full justify-start gap-2"

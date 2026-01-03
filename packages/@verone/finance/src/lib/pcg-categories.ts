@@ -1358,3 +1358,22 @@ export function getPcgColor(code: string | null): string {
 
   return PCG_TO_CATEGORY_COLOR['default'];
 }
+
+/**
+ * Obtenir les catégories suggérées selon le type de transaction
+ * - 'debit' (sortie d'argent) → Classe 6 (Charges)
+ * - 'credit' (entrée d'argent) → Classe 7 (Produits)
+ * - 'all' → Toutes les catégories
+ */
+export function getPcgCategoriesByType(
+  type: 'debit' | 'credit' | 'all'
+): PcgCategory[] {
+  switch (type) {
+    case 'debit':
+      return PCG_SUGGESTED_CATEGORIES;
+    case 'credit':
+      return PCG_SUGGESTED_INCOME_CATEGORIES;
+    case 'all':
+      return [...PCG_SUGGESTED_CATEGORIES, ...PCG_SUGGESTED_INCOME_CATEGORIES];
+  }
+}

@@ -114,7 +114,13 @@ function calculateMatchScore(
 
   // 1. Matching par montant (max 50 points)
   const amountDiff = Math.abs(absAmount - order.total_ttc);
-  const amountTolerance = absAmount * 0.05; // 5% de tolérance
+  // FIX: Tolérance hybride - le plus généreux entre 5% ou 10€
+  const amountTolerancePercent = absAmount * 0.05;
+  const amountToleranceFixed = 10; // 10€ minimum
+  const amountTolerance = Math.max(
+    amountTolerancePercent,
+    amountToleranceFixed
+  );
 
   if (amountDiff === 0) {
     score += 50;
@@ -270,6 +276,13 @@ export function RapprochementModal({
         .order('created_at', { ascending: false })
         .limit(100);
 
+      // DEBUG: Log pour identifier le problème de rapprochement
+      console.log('[RapprochementModal] sales_orders query result:', {
+        dataLength: ordersData?.length,
+        error: ordersError,
+        firstOrder: ordersData?.[0],
+      });
+
       if (!ordersError && ordersData) {
         type OrderRow = {
           id: string;
@@ -303,8 +316,9 @@ export function RapprochementModal({
           (ordersData as OrderRow[]).map(o => ({
             id: o.id,
             order_number: o.order_number,
-            total_ht: o.total_ht,
-            total_ttc: o.total_ttc || o.total_ht * 1.2, // Fallback si pas de TTC
+            total_ht: Number(o.total_ht) || 0,
+            // FIX: Forcer conversion en number (Supabase peut retourner string pour numeric)
+            total_ttc: Number(o.total_ttc) || Number(o.total_ht) * 1.2, // Fallback si pas de TTC
             created_at: o.created_at,
             status: o.status,
             organisation_id:
@@ -325,7 +339,7 @@ export function RapprochementModal({
 
   // Calculer les scores de matching pour les commandes
   const ordersWithScores = useMemo(() => {
-    return orders
+    const result = orders
       .map(order => {
         const { score, reasons } = calculateMatchScore(
           amount,
@@ -341,6 +355,22 @@ export function RapprochementModal({
         };
       })
       .sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+
+    // DEBUG: Log des scores calculés
+    if (result.length > 0) {
+      console.log('[RapprochementModal] Scoring results:', {
+        transactionAmount: amount,
+        ordersCount: result.length,
+        topMatches: result.slice(0, 3).map(o => ({
+          order: o.order_number,
+          ttc: o.total_ttc,
+          score: o.matchScore,
+          reasons: o.matchReasons,
+        })),
+      });
+    }
+
+    return result;
   }, [orders, amount, transactionDate, organisationId, counterpartyName]);
 
   // Top suggestions (score >= 40)

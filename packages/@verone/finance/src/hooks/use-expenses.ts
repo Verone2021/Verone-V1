@@ -55,6 +55,8 @@ export interface Expense {
   vat_rate: number | null;
   amount_ht: number | null;
   amount_vat: number | null;
+  /** Source de la TVA: 'qonto_ocr' si détecté par Qonto, 'manual' si saisi manuellement */
+  vat_source: 'qonto_ocr' | 'manual' | null;
   /** Ventilation TVA multi-taux (ex: restaurant 10% + 20%) */
   vat_breakdown: Array<{
     description: string;
@@ -66,6 +68,8 @@ export interface Expense {
 
 export interface ExpenseFilters {
   status?: 'unclassified' | 'classified' | 'needs_review' | 'ignored' | 'all';
+  /** Filtrer par type de transaction: debit (dépenses), credit (entrées), all */
+  side?: 'debit' | 'credit' | 'all';
   year?: number;
   /** Année minimum (filtre >= minYear) - pour exclure transactions avant 2025 */
   minYear?: number;
@@ -126,6 +130,11 @@ export function useExpenses(
       // Appliquer les filtres
       if (filters.status && filters.status !== 'all') {
         query = query.eq('status', filters.status);
+      }
+
+      // Filtre par type de transaction (debit = dépenses, credit = entrées)
+      if (filters.side && filters.side !== 'all') {
+        query = query.eq('side', filters.side);
       }
 
       if (filters.year) {
