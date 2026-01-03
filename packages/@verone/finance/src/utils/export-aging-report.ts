@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-import type { AgingReportData } from '@verone/finance';
+import type { AgingReportData } from '../hooks/use-aging-report';
 
 // =============================================
 // EXPORT PDF - Template Professionnel Vérone
@@ -114,16 +114,18 @@ export function exportAgingReportToPDF(report: AgingReportData) {
   autoTable(doc, {
     startY: yPos,
     head: [['Produit', 'SKU', 'Âge (j)', 'Stock', 'Valeur', 'Tranche']],
-    body: report.top_oldest.map((product: AgingReportData['top_oldest'][number]) => [
-      product.name.length > 30
-        ? product.name.substring(0, 27) + '...'
-        : product.name,
-      product.sku,
-      product.age_days.toString(),
-      product.stock_quantity.toString(),
-      `${product.value.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €`,
-      product.bucket,
-    ]),
+    body: report.top_oldest.map(
+      (product: AgingReportData['top_oldest'][number]) => [
+        product.name.length > 30
+          ? product.name.substring(0, 27) + '...'
+          : product.name,
+        product.sku,
+        product.age_days.toString(),
+        product.stock_quantity.toString(),
+        `${product.value.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €`,
+        product.bucket,
+      ]
+    ),
     theme: 'grid',
     headStyles: {
       fillColor: [0, 0, 0],
@@ -235,18 +237,20 @@ export async function exportAgingReportToExcel(report: AgingReportData) {
       'Tranche',
       'Dernier Mouvement',
     ],
-    ...report.top_oldest.map((product: AgingReportData['top_oldest'][number]) => [
-      product.name,
-      product.sku,
-      product.age_days,
-      product.stock_quantity,
-      `${product.cost_price.toLocaleString('fr-FR')} €`,
-      `${product.value.toLocaleString('fr-FR')} €`,
-      product.bucket,
-      product.last_movement_date
-        ? new Date(product.last_movement_date).toLocaleDateString('fr-FR')
-        : 'Jamais',
-    ]),
+    ...report.top_oldest.map(
+      (product: AgingReportData['top_oldest'][number]) => [
+        product.name,
+        product.sku,
+        product.age_days,
+        product.stock_quantity,
+        `${product.cost_price.toLocaleString('fr-FR')} €`,
+        `${product.value.toLocaleString('fr-FR')} €`,
+        product.bucket,
+        product.last_movement_date
+          ? new Date(product.last_movement_date).toLocaleDateString('fr-FR')
+          : 'Jamais',
+      ]
+    ),
   ];
 
   const wsProducts = XLSX.utils.aoa_to_sheet(productsData);
@@ -286,19 +290,20 @@ export function exportAgingReportToCSV(report: AgingReportData) {
     'Dernier Mouvement',
   ].join(',');
 
-  const rows = report.top_oldest.map((product: AgingReportData['top_oldest'][number]) =>
-    [
-      `"${product.name.replace(/"/g, '""')}"`,
-      product.sku,
-      product.age_days,
-      product.stock_quantity,
-      product.cost_price.toFixed(2),
-      product.value.toFixed(2),
-      product.bucket,
-      product.last_movement_date
-        ? new Date(product.last_movement_date).toLocaleDateString('fr-FR')
-        : 'Jamais',
-    ].join(',')
+  const rows = report.top_oldest.map(
+    (product: AgingReportData['top_oldest'][number]) =>
+      [
+        `"${product.name.replace(/"/g, '""')}"`,
+        product.sku,
+        product.age_days,
+        product.stock_quantity,
+        product.cost_price.toFixed(2),
+        product.value.toFixed(2),
+        product.bucket,
+        product.last_movement_date
+          ? new Date(product.last_movement_date).toLocaleDateString('fr-FR')
+          : 'Jamais',
+      ].join(',')
   );
 
   const csv = [headers, ...rows].join('\n');

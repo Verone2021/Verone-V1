@@ -18,6 +18,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { QontoClient } from '@verone/integrations/qonto';
+import type { Json } from '@verone/types/supabase';
 import { createServerClient } from '@verone/utils/supabase/server';
 
 export const runtime = 'nodejs';
@@ -78,18 +79,55 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // 4. Upload vers Qonto
+    // 4. Vérifier que la transaction existe et récupérer raw_data pour mise à jour ultérieure
+    const { data: txData, error: txError } = await supabase
+      .from('bank_transactions')
+      .select('id, raw_data')
+      .eq('transaction_id', transactionId)
+      .single();
+
+    if (txError || !txData) {
+      return NextResponse.json(
+        { error: 'Transaction non trouvée dans la base de données' },
+        { status: 404 }
+      );
+    }
+
+    // L'API Qonto attend le UUID "id" (pas "transaction_id")
+    // Voir documentation: POST /v2/transactions/{id}/attachments où {id} = UUID
+    // Le UUID est stocké dans raw_data.id lors de la sync
+    const rawDataForUUID = txData.raw_data as {
+      id?: string;
+      transaction_id?: string;
+    } | null;
+    const qontoUUID = rawDataForUUID?.id;
+
+    if (!qontoUUID) {
+      console.error('[Qonto Upload] UUID manquant dans raw_data:', {
+        transactionId,
+        rawDataKeys: rawDataForUUID ? Object.keys(rawDataForUUID) : 'null',
+      });
+      return NextResponse.json(
+        {
+          error:
+            'UUID Qonto manquant - la transaction doit être resynchronisée',
+        },
+        { status: 500 }
+      );
+    }
+
+    // 5. Upload vers Qonto avec le UUID (pas transaction_id)
     const qontoClient = new QontoClient();
     const idempotencyKey: string = crypto.randomUUID();
 
     const attachment = await qontoClient.uploadAttachmentToTransaction(
-      transactionId,
+      qontoUUID,
       file,
       file.name || 'facture.pdf',
       idempotencyKey
     );
 
-    // 5. Mettre à jour financial_documents avec les nouvelles colonnes
+    // 6. Mettre à jour financial_documents avec les nouvelles colonnes
     if (documentId) {
       await supabase
         .from('financial_documents')
@@ -103,31 +141,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         .eq('id', documentId);
     }
 
-    // 6. Mettre à jour bank_transactions raw_data avec l'attachment
+    // 7. Mettre à jour UNIQUEMENT attachment_ids (source de vérité unique)
     // Note: has_attachment est une colonne GENERATED qui se recalcule automatiquement
-    const { data: txData } = await supabase
+    const txDataWithIds = txData as { attachment_ids?: string[] };
+    const existingIds = txDataWithIds.attachment_ids || [];
+
+    await supabase
       .from('bank_transactions')
-      .select('raw_data')
-      .eq('transaction_id', transactionId)
-      .single();
-
-    if (txData) {
-      type Json = Record<string, unknown>;
-      const rawData = (txData.raw_data ?? {}) as Json;
-      const existingAttachments = (rawData.attachments as unknown[]) ?? [];
-      const updatedRawData = {
-        ...rawData,
-        attachments: [...existingAttachments, { id: attachment.id }],
-      } as typeof txData.raw_data;
-
-      await supabase
-        .from('bank_transactions')
-        .update({
-          raw_data: updatedRawData,
-          // has_attachment se recalcule automatiquement via GENERATED column
-        })
-        .eq('transaction_id', transactionId);
-    }
+      .update({
+        attachment_ids: [...existingIds, attachment.id],
+      })
+      .eq('transaction_id', transactionId);
 
     return NextResponse.json({
       success: true,

@@ -13,10 +13,9 @@
 
 import { useState, useEffect } from 'react';
 
-import { toast } from 'react-hot-toast';
-
 import { featureFlags } from '@verone/utils/feature-flags';
 import { createClient } from '@verone/utils/supabase/client';
+import { toast } from 'react-hot-toast';
 
 // =====================================================================
 // TYPES
@@ -65,7 +64,6 @@ export interface FinancialDocument {
   // Relations
   sales_order_id: string | null;
   purchase_order_id: string | null;
-  expense_category_id: string | null;
 
   // Metadata
   description: string | null;
@@ -80,11 +78,6 @@ export interface FinancialDocument {
     legal_name: string;
     trade_name: string | null;
     type: 'supplier' | 'customer' | 'partner' | 'internal' | null;
-  };
-  expense_category?: {
-    id: string;
-    name: string;
-    account_code: string;
   };
 }
 
@@ -127,8 +120,7 @@ export function useFinancialDocuments(filters?: FinancialDocumentFilters) {
           .select(
             `
             *,
-            partner:organisations!partner_id(id, legal_name, trade_name, type),
-            expense_category:expense_categories(id, name, account_code)
+            partner:organisations!partner_id(id, legal_name, trade_name, type)
           `
           )
           .is('deleted_at', null)
@@ -208,8 +200,7 @@ export function useFinancialDocuments(filters?: FinancialDocumentFilters) {
         .select(
           `
           *,
-          partner:organisations!partner_id(id, legal_name, trade_name, type),
-          expense_category:expense_categories(id, name, account_code)
+          partner:organisations!partner_id(id, legal_name, trade_name, type)
         `
         )
         .is('deleted_at', null)
@@ -341,10 +332,11 @@ export function useFinancialDocuments(filters?: FinancialDocumentFilters) {
     }
   };
 
-  // Créer dépense
+  // Créer dépense (DEPRECATED - utiliser expense-form.tsx avec codes PCG)
+  // Cette fonction utilise une RPC obsolète qui dépend de expense_categories
   const createExpense = async (params: {
     supplier_id: string;
-    expense_category_id: string;
+    pcg_code: string; // Code PCG au lieu de expense_category_id
     description: string;
     amount_ht: number;
     amount_ttc: number;
@@ -353,23 +345,27 @@ export function useFinancialDocuments(filters?: FinancialDocumentFilters) {
     uploaded_file_url?: string;
     notes?: string;
   }) => {
+    // TODO: Migrer vers insertion directe avec code PCG
+    // Pour l'instant, on insère directement sans passer par la RPC obsolète
     try {
-      const { data, error: rpcError } = await (supabase as any).rpc(
-        'create_expense',
-        {
-          p_supplier_id: params.supplier_id,
-          p_expense_category_id: params.expense_category_id,
-          p_description: params.description,
-          p_amount_ht: params.amount_ht,
-          p_amount_ttc: params.amount_ttc,
-          p_tva_amount: params.tva_amount,
-          p_expense_date: params.expense_date,
-          p_uploaded_file_url: params.uploaded_file_url || null,
-          p_notes: params.notes || null,
-        }
-      );
+      const { data, error: insertError } = await supabase
+        .from('financial_documents')
+        .insert({
+          document_type: 'expense',
+          partner_id: params.supplier_id,
+          description: `[PCG ${params.pcg_code}] ${params.description}`,
+          total_ht: params.amount_ht,
+          total_ttc: params.amount_ttc,
+          tva_amount: params.tva_amount,
+          document_date: params.expense_date,
+          uploaded_file_url: params.uploaded_file_url || null,
+          notes: params.notes || null,
+          status: 'draft',
+        } as any)
+        .select()
+        .single();
 
-      if (rpcError) throw rpcError;
+      if (insertError) throw insertError;
 
       toast.success('Dépense créée avec succès');
       await fetchDocuments();

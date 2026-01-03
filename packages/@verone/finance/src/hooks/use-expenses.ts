@@ -7,6 +7,7 @@
 
 'use client';
 
+import type { Dispatch, SetStateAction } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
@@ -34,6 +35,7 @@ export interface Expense {
   side: 'debit' | 'credit';
   emitted_at: string;
   settled_at: string | null;
+  category_pcg: string | null;
   raw_data: Record<string, unknown>;
   // Counterparty details
   counterparty_display_name: string | null;
@@ -43,6 +45,23 @@ export interface Expense {
   organisation_type: string | null;
   // Computed
   has_attachment: boolean;
+  // SLICE 3: Règle appliquée (pour verrouillage UI)
+  applied_rule_id: string | null;
+  rule_match_value: string | null;
+  rule_display_label: string | null;
+  /** Si TRUE, la catégorie peut être modifiée individuellement malgré la règle */
+  rule_allow_multiple_categories: boolean | null;
+  // Colonnes TVA
+  vat_rate: number | null;
+  amount_ht: number | null;
+  amount_vat: number | null;
+  /** Ventilation TVA multi-taux (ex: restaurant 10% + 20%) */
+  vat_breakdown: Array<{
+    description: string;
+    amount_ht: number;
+    tva_rate: number;
+    tva_amount: number;
+  }> | null;
 }
 
 export interface ExpenseFilters {
@@ -71,7 +90,7 @@ export interface UseExpensesReturn {
   error: string | null;
   refetch: () => Promise<void>;
   filters: ExpenseFilters;
-  setFilters: (filters: ExpenseFilters) => void;
+  setFilters: Dispatch<SetStateAction<ExpenseFilters>>;
 }
 
 export function useExpenses(
@@ -128,8 +147,9 @@ export function useExpenses(
       }
 
       if (filters.search) {
+        // Recherche dans: libellé, nom contrepartie bancaire, ET nom organisation liée
         query = query.or(
-          `label.ilike.%${filters.search}%,transaction_counterparty_name.ilike.%${filters.search}%`
+          `label.ilike.%${filters.search}%,transaction_counterparty_name.ilike.%${filters.search}%,organisation_name.ilike.%${filters.search}%`
         );
       }
 
@@ -180,26 +200,5 @@ export function useExpenses(
   };
 }
 
-// Catégories de dépenses avec emojis
-export const EXPENSE_CATEGORIES = [
-  { id: 'bank_fees', label: 'Frais bancaires', emoji: '🏦' },
-  { id: 'subscription', label: 'Abonnements', emoji: '📱' },
-  { id: 'supplies', label: 'Fournitures', emoji: '📦' },
-  { id: 'transport', label: 'Transport/Livraison', emoji: '🚚' },
-  { id: 'marketing', label: 'Marketing/Publicité', emoji: '📣' },
-  { id: 'taxes', label: 'Taxes & Impôts', emoji: '🧾' },
-  { id: 'insurance', label: 'Assurances', emoji: '🛡️' },
-  {
-    id: 'professional_services',
-    label: 'Services professionnels',
-    emoji: '👔',
-  },
-  { id: 'software', label: 'Logiciels/SaaS', emoji: '💻' },
-  { id: 'telecom', label: 'Télécom/Internet', emoji: '📡' },
-  { id: 'rent', label: 'Loyer/Location', emoji: '🏢' },
-  { id: 'purchase_stock', label: 'Achats marchandises', emoji: '🛒' },
-  { id: 'other', label: 'Autre', emoji: '📋' },
-] as const;
-
-export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number]['id'];
-export type ExpenseCategoryItem = (typeof EXPENSE_CATEGORIES)[number];
+// Note: Les catégories sont maintenant gérées via pcg-categories.ts
+// Utiliser getPcgCategory() et PCG_SUGGESTED_CATEGORIES pour les catégories

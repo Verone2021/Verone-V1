@@ -17,6 +17,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
 import { useToast } from '@verone/common';
+import { RapprochementFromOrderModal } from '@verone/finance/components';
 import { ProductThumbnail } from '@verone/products';
 import {
   AlertDialog,
@@ -75,6 +76,7 @@ import {
   Truck,
   ChevronDown,
   ExternalLink,
+  Link2,
 } from 'lucide-react';
 
 import type { SalesOrder, SalesOrderStatus } from '../hooks/use-sales-orders';
@@ -293,6 +295,10 @@ export function SalesOrdersTable({
   const [showValidateConfirmation, setShowValidateConfirmation] =
     useState(false);
   const [orderToValidate, setOrderToValidate] = useState<string | null>(null);
+  const [showLinkTransactionModal, setShowLinkTransactionModal] =
+    useState(false);
+  const [selectedOrderForLink, setSelectedOrderForLink] =
+    useState<SalesOrder | null>(null);
 
   // Etat pour les lignes expandees (chevron)
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -850,6 +856,17 @@ export function SalesOrdersTable({
     onOrderUpdated?.();
   };
 
+  const handleLinkTransactionSuccess = () => {
+    toast({
+      title: 'Commande liee',
+      description: 'La transaction a ete liee a la commande.',
+    });
+    const filters = channelId ? { channel_id: channelId } : undefined;
+    fetchOrders(filters);
+    setShowLinkTransactionModal(false);
+    setSelectedOrderForLink(null);
+  };
+
   return (
     <div className="space-y-6">
       {/* Statistiques KPI */}
@@ -1333,6 +1350,22 @@ export function SalesOrdersTable({
                                 />
                               )}
 
+                              {/* Lier transaction */}
+                              {(order.status === 'validated' ||
+                                order.status === 'shipped' ||
+                                order.status === 'delivered') && (
+                                <IconButton
+                                  icon={Link2}
+                                  variant="outline"
+                                  size="sm"
+                                  label="Lier transaction"
+                                  onClick={() => {
+                                    setSelectedOrderForLink(order);
+                                    setShowLinkTransactionModal(true);
+                                  }}
+                                />
+                              )}
+
                               {/* Imprimer PDF */}
                               <IconButton
                                 icon={FileText}
@@ -1545,6 +1578,27 @@ export function SalesOrdersTable({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Modal Rapprochement Transaction */}
+      <RapprochementFromOrderModal
+        open={showLinkTransactionModal}
+        onOpenChange={setShowLinkTransactionModal}
+        order={
+          selectedOrderForLink
+            ? {
+                id: selectedOrderForLink.id,
+                order_number: selectedOrderForLink.order_number,
+                customer_name:
+                  selectedOrderForLink.organisations?.legal_name ||
+                  `${selectedOrderForLink.individual_customers?.first_name} ${selectedOrderForLink.individual_customers?.last_name}`,
+                total_ttc: selectedOrderForLink.total_ttc,
+                created_at: selectedOrderForLink.created_at,
+                shipped_at: selectedOrderForLink.shipped_at,
+              }
+            : null
+        }
+        onSuccess={handleLinkTransactionSuccess}
+      />
     </div>
   );
 }
