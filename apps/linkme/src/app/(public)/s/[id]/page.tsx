@@ -15,7 +15,10 @@ import {
   Building2,
   Loader2,
   X,
+  Store,
 } from 'lucide-react';
+
+import { EnseigneStepper } from '@/components/checkout';
 
 const supabase = createClient();
 
@@ -87,6 +90,10 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
     order_number?: string;
     error?: string;
   } | null>(null);
+  const [isEnseigneStepperOpen, setIsEnseigneStepperOpen] = useState(false);
+  const [enseigneOrderNumber, setEnseigneOrderNumber] = useState<string | null>(
+    null
+  );
 
   // Track view
   const hasTrackedView = useRef(false);
@@ -318,7 +325,19 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
           {selection.description && (
             <p className="text-white/80 max-w-2xl">{selection.description}</p>
           )}
-          <p className="text-white/60 mt-2">{items.length} produits</p>
+          <div className="flex items-center gap-4 mt-3">
+            <p className="text-white/60">{items.length} produits</p>
+            {/* Bouton Commander Enseigne */}
+            {cartCount > 0 && (
+              <button
+                onClick={() => setIsEnseigneStepperOpen(true)}
+                className="flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors border border-white/30"
+              >
+                <Store className="h-4 w-4" />
+                Commander pour une enseigne
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -430,6 +449,65 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
           </div>
         )}
       </div>
+
+      {/* Enseigne Stepper (Slide-over) */}
+      {isEnseigneStepperOpen && (
+        <div className="fixed inset-0 z-50">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setIsEnseigneStepperOpen(false)}
+          />
+
+          {/* Panel */}
+          <div className="absolute right-0 top-0 bottom-0 w-full max-w-lg bg-white shadow-xl">
+            {enseigneOrderNumber ? (
+              /* Success State */
+              <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                  <Check className="h-8 w-8 text-green-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  Commande envoyee !
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Votre commande <strong>{enseigneOrderNumber}</strong> a ete
+                  recue.
+                </p>
+                <p className="text-sm text-gray-500 mb-8">
+                  Elle sera validee par notre equipe sous 24h.
+                </p>
+                <button
+                  onClick={() => {
+                    setEnseigneOrderNumber(null);
+                    setIsEnseigneStepperOpen(false);
+                    setCart([]);
+                  }}
+                  className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+                >
+                  Fermer
+                </button>
+              </div>
+            ) : (
+              <EnseigneStepper
+                affiliateId={selection.affiliate_id}
+                selectionId={selection.id}
+                cart={cart.map(item => ({
+                  id: item.id,
+                  product_id: item.product_id,
+                  product_name: item.product_name,
+                  selling_price_ttc: item.selling_price_ttc,
+                  quantity: item.quantity,
+                }))}
+                onClose={() => setIsEnseigneStepperOpen(false)}
+                onSuccess={orderNumber => {
+                  setEnseigneOrderNumber(orderNumber);
+                }}
+              />
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Order Panel (Slide-over) */}
       {isOrderPanelOpen && (
