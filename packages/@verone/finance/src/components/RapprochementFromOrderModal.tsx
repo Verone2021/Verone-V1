@@ -30,7 +30,17 @@ import {
 } from '@verone/ui';
 import { formatCurrency } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
-import { Search, Link2, Check, Loader2, AlertCircle } from 'lucide-react';
+import {
+  Search,
+  Link2,
+  Check,
+  Loader2,
+  AlertCircle,
+  Package,
+  Sparkles,
+  Calendar,
+  ArrowRight,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 
 // =====================================================================
@@ -65,98 +75,128 @@ interface CreditTransaction {
 }
 
 interface TransactionSuggestion extends CreditTransaction {
-  confidence: number;
+  matchPriority: string;
   matchReasons: string[];
+  sortOrder: number;
 }
 
 // =====================================================================
-// SCORING ALGORITHM
+// SCORING ALGORITHM (aligné sur RapprochementModal)
 // =====================================================================
 
-function calculateConfidence(
+/**
+ * Calcule la pertinence d'un match entre commande et transaction
+ *
+ * Approche Pennylane: montant STRICTEMENT identique = match suggéré
+ * - Montant exact = critère PRINCIPAL
+ * - Référence (LINK-XXXXXX dans le label) = bonus de pertinence
+ * - Date = FILTRE uniquement (>1 an = exclu)
+ */
+function calculateMatch(
   order: OrderForLink,
   transaction: CreditTransaction
-): { confidence: number; reasons: string[] } {
-  let score = 0;
+): { priority: string; reasons: string[]; sortOrder: number } {
   const reasons: string[] = [];
 
   const orderAmount = order.total_ttc;
   const txAmount = Math.abs(transaction.amount);
-  const tolerance = 10; // ±10€
-
-  // 1. Amount matching
   const amountDiff = Math.abs(txAmount - orderAmount);
-  if (amountDiff === 0) {
-    score += 70;
-    reasons.push('Montant exact');
-  } else if (amountDiff <= tolerance) {
-    score += 50;
-    reasons.push(`Montant proche (±${amountDiff.toFixed(2)}€)`);
-  } else if (amountDiff <= 50) {
-    score += 20;
-    reasons.push(`Montant similaire`);
-  }
 
-  // 2. Customer name matching
-  if (order.customer_name && transaction.counterparty_name) {
-    const orderName = order.customer_name.toLowerCase();
-    const txName = transaction.counterparty_name.toLowerCase();
-    if (
-      txName.includes(orderName.substring(0, 10)) ||
-      orderName.includes(txName.substring(0, 10))
-    ) {
-      score += 30;
-      reasons.push('Nom client similaire');
-    }
-  }
-
-  // 3. Date matching
+  // FILTRE DATE: >1 an = exclu
   const orderDate = order.shipped_at
     ? new Date(order.shipped_at)
     : new Date(order.created_at);
   const txDate = new Date(transaction.settled_at || transaction.emitted_at);
-  const daysDiff = Math.abs(
-    (txDate.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24)
-  );
+  const yearsDiff = Math.abs(txDate.getFullYear() - orderDate.getFullYear());
 
-  if (daysDiff <= 3) {
-    score += 25;
-    reasons.push('Date très proche (≤3j)');
-  } else if (daysDiff <= 7) {
-    score += 20;
-    reasons.push('Date proche (≤7j)');
-  } else if (daysDiff <= 14) {
-    score += 10;
-    reasons.push('Date proche (≤14j)');
+  if (yearsDiff > 1) {
+    return {
+      priority: 'excluded',
+      reasons: ['Date trop ancienne'],
+      sortOrder: 999,
+    };
   }
 
-  return {
-    confidence: Math.min(score, 100),
-    reasons,
-  };
+  // Vérifier si la référence de commande est dans le label
+  const searchText = (transaction.label || '').toUpperCase();
+  const hasReference = searchText.includes(order.order_number.toUpperCase());
+
+  if (hasReference) {
+    reasons.push('Référence trouvée');
+  }
+
+  // MONTANT - critère principal
+  if (amountDiff === 0) {
+    reasons.unshift('Montant exact');
+    return {
+      priority: hasReference ? 'exact+ref' : 'exact',
+      reasons,
+      sortOrder: hasReference ? 1 : 2,
+    };
+  } else if (amountDiff <= 1) {
+    reasons.unshift('≈ 1€');
+    return {
+      priority: hasReference ? 'close+ref' : 'close',
+      reasons,
+      sortOrder: hasReference ? 3 : 4,
+    };
+  } else if (amountDiff <= orderAmount * 0.02) {
+    reasons.unshift('±2%');
+    return {
+      priority: hasReference ? 'similar+ref' : 'similar',
+      reasons,
+      sortOrder: hasReference ? 5 : 6,
+    };
+  }
+
+  return { priority: 'none', reasons: [], sortOrder: 100 };
 }
 
-function getConfidenceBadge(confidence: number) {
-  if (confidence >= 90) {
-    return {
-      color: 'bg-green-100 text-green-800 border-green-300',
-      label: 'Très probable',
-    };
-  } else if (confidence >= 70) {
-    return {
-      color: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-      label: 'Probable',
-    };
-  } else if (confidence >= 50) {
-    return {
-      color: 'bg-orange-100 text-orange-800 border-orange-300',
-      label: 'Possible',
-    };
-  } else {
-    return {
-      color: 'bg-gray-100 text-gray-600 border-gray-300',
-      label: 'Faible',
-    };
+/**
+ * Retourne le label et la couleur pour une priorité de match
+ */
+function getMatchLabel(priority: string): {
+  label: string;
+  color: string;
+} {
+  switch (priority) {
+    case 'exact+ref':
+      return {
+        label: 'Match parfait',
+        color: 'bg-green-100 text-green-800 border-green-300',
+      };
+    case 'exact':
+      return {
+        label: 'Montant exact',
+        color: 'bg-green-100 text-green-800 border-green-300',
+      };
+    case 'close+ref':
+      return {
+        label: '≈ 1€ + Réf',
+        color: 'bg-green-100 text-green-800 border-green-300',
+      };
+    case 'close':
+      return {
+        label: '≈ 1€',
+        color: 'bg-amber-100 text-amber-800 border-amber-300',
+      };
+    case 'similar+ref':
+      return {
+        label: '±2% + Réf',
+        color: 'bg-amber-100 text-amber-800 border-amber-300',
+      };
+    case 'similar':
+      return {
+        label: '±2%',
+        color: 'bg-amber-100 text-amber-800 border-amber-300',
+      };
+    case 'excluded':
+      return {
+        label: 'Date trop ancienne',
+        color: 'bg-red-100 text-red-800 border-red-300',
+      };
+    default:
+      return { label: '', color: 'bg-gray-100 text-gray-600 border-gray-300' };
   }
 }
 
@@ -213,21 +253,27 @@ export function RapprochementFromOrderModal({
     }
   }, [open, order, fetchTransactions]);
 
-  // Calculate suggestions with confidence scores
+  // Calculate suggestions with match priority
   const suggestions = useMemo(() => {
     if (!order || transactions.length === 0) return [];
 
-    const withScores: TransactionSuggestion[] = transactions.map(tx => {
-      const { confidence, reasons } = calculateConfidence(order, tx);
-      return {
-        ...tx,
-        confidence,
-        matchReasons: reasons,
-      };
-    });
+    const withScores: TransactionSuggestion[] = transactions
+      .map(tx => {
+        const { priority, reasons, sortOrder } = calculateMatch(order, tx);
+        return {
+          ...tx,
+          matchPriority: priority,
+          matchReasons: reasons,
+          sortOrder,
+        };
+      })
+      // Exclure les transactions sans match et celles trop anciennes
+      .filter(
+        tx => tx.matchPriority !== 'none' && tx.matchPriority !== 'excluded'
+      );
 
-    // Sort by confidence descending
-    return withScores.sort((a, b) => b.confidence - a.confidence);
+    // Sort by sortOrder ascending (meilleurs matchs en premier)
+    return withScores.sort((a, b) => a.sortOrder - b.sortOrder);
   }, [order, transactions]);
 
   // Filter by search query
@@ -283,12 +329,16 @@ export function RapprochementFromOrderModal({
 
   if (!order) return null;
 
+  // Séparer les meilleures suggestions (3 max) du reste
+  const topSuggestions = filteredSuggestions.slice(0, 3);
+  const restSuggestions = filteredSuggestions.slice(3);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh]">
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Link2 className="h-5 w-5" />
+            <Package className="h-5 w-5 text-blue-600" />
             Lier à une transaction
           </DialogTitle>
           <DialogDescription>
@@ -297,32 +347,97 @@ export function RapprochementFromOrderModal({
         </DialogHeader>
 
         {/* Order info */}
-        <div className="bg-slate-50 rounded-lg p-4 space-y-2">
+        <div className="p-4 bg-slate-50 rounded-lg space-y-2">
           <div className="flex justify-between items-start">
-            <div>
-              <p className="font-medium">Commande {order.order_number}</p>
+            <div className="space-y-1">
+              <p className="font-medium text-slate-900">
+                Commande #{order.order_number}
+              </p>
               {order.customer_name && (
-                <p className="text-sm text-muted-foreground">
-                  {order.customer_name}
-                </p>
+                <p className="text-sm text-slate-500">{order.customer_name}</p>
               )}
+              <p className="text-sm text-slate-500 flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                {new Date(order.created_at).toLocaleDateString('fr-FR')}
+                {order.shipped_at &&
+                  ` • Expédiée ${new Date(order.shipped_at).toLocaleDateString('fr-FR')}`}
+              </p>
             </div>
-            <Badge variant="outline" className="text-lg font-semibold">
+            <span className="text-lg font-bold text-green-600">
               {formatCurrency(order.total_ttc)}
-            </Badge>
+            </span>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Créée le {new Date(order.created_at).toLocaleDateString('fr-FR')}
-            {order.shipped_at &&
-              ` • Expédiée le ${new Date(order.shipped_at).toLocaleDateString('fr-FR')}`}
-          </p>
         </div>
 
-        <Separator />
+        {/* Suggestions automatiques (zone ambrée comme RapprochementModal) */}
+        {topSuggestions.length > 0 && (
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="h-4 w-4 text-amber-600" />
+              <span className="text-sm font-medium text-amber-800">
+                Suggestions de rapprochement
+              </span>
+            </div>
+            <div className="space-y-2">
+              {topSuggestions.map(tx => {
+                const badge = getMatchLabel(tx.matchPriority);
+                const isGreen =
+                  tx.matchPriority === 'exact+ref' ||
+                  tx.matchPriority === 'exact' ||
+                  tx.matchPriority === 'close+ref';
+                return (
+                  <button
+                    key={tx.id}
+                    onClick={() => handleLink(tx.id)}
+                    disabled={isLinking}
+                    className="w-full flex items-center justify-between p-2 bg-white rounded border border-amber-200 hover:border-amber-400 transition-colors text-left disabled:opacity-50"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`h-8 w-8 rounded-full flex items-center justify-center ${isGreen ? 'bg-green-100' : 'bg-amber-100'}`}
+                      >
+                        <Sparkles
+                          className={`h-4 w-4 ${isGreen ? 'text-green-600' : 'text-amber-600'}`}
+                        />
+                      </div>
+                      <div>
+                        <span className="font-medium text-sm truncate block max-w-[250px]">
+                          {tx.label}
+                        </span>
+                        <span className="text-xs text-slate-500">
+                          {new Date(
+                            tx.settled_at || tx.emitted_at
+                          ).toLocaleDateString('fr-FR')}
+                          {tx.counterparty_name && ` • ${tx.counterparty_name}`}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-green-600">
+                        +{formatCurrency(Math.abs(tx.amount))}
+                      </span>
+                      <Badge
+                        variant="outline"
+                        className={`text-xs ${
+                          isGreen
+                            ? 'border-green-500 text-green-700 bg-green-50'
+                            : 'border-amber-500 text-amber-700 bg-amber-50'
+                        }`}
+                      >
+                        {badge.label}
+                      </Badge>
+                      <ArrowRight className="h-4 w-4 text-slate-400" />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
             placeholder="Rechercher une transaction..."
             value={searchQuery}
@@ -339,89 +454,90 @@ export function RapprochementFromOrderModal({
           </div>
         )}
 
-        {/* Transactions list */}
-        <ScrollArea className="h-[350px] pr-4">
+        {/* Autres transactions (si plus de 3) */}
+        <ScrollArea className="h-[220px] flex-1">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
             </div>
-          ) : filteredSuggestions.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+          ) : restSuggestions.length === 0 && topSuggestions.length === 0 ? (
+            <div className="text-center py-8 text-slate-500">
+              <Package className="h-10 w-10 mx-auto mb-2 opacity-50" />
               <p>Aucune transaction disponible</p>
               <p className="text-xs mt-1">
                 Les transactions crédit non rapprochées apparaîtront ici
               </p>
             </div>
-          ) : (
+          ) : restSuggestions.length > 0 ? (
             <div className="space-y-2">
-              {filteredSuggestions.map(tx => {
-                const badge = getConfidenceBadge(tx.confidence);
+              {restSuggestions.map(tx => {
+                const badge = getMatchLabel(tx.matchPriority);
+                const isGreen =
+                  tx.matchPriority === 'exact+ref' ||
+                  tx.matchPriority === 'exact' ||
+                  tx.matchPriority === 'close+ref';
                 return (
                   <div
                     key={tx.id}
-                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 transition-colors"
+                    className={`p-3 rounded-lg border cursor-pointer transition-colors hover:border-slate-300
+                      ${isGreen ? 'border-l-4 border-l-green-400' : ''}
+                    `}
+                    onClick={() => handleLink(tx.id)}
                   >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium truncate">{tx.label}</p>
-                        {tx.confidence > 0 && (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`h-8 w-8 rounded-full flex items-center justify-center ${isGreen ? 'bg-green-100' : 'bg-amber-100'}`}
+                        >
+                          <Sparkles
+                            className={`h-4 w-4 ${isGreen ? 'text-green-600' : 'text-amber-600'}`}
+                          />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">{tx.label}</p>
+                          <p className="text-xs text-slate-500">
+                            {new Date(
+                              tx.settled_at || tx.emitted_at
+                            ).toLocaleDateString('fr-FR')}
+                            {tx.counterparty_name &&
+                              ` • ${tx.counterparty_name}`}
+                          </p>
+                          {tx.matchReasons.length > 0 && (
+                            <p className="text-xs text-green-600 mt-0.5">
+                              {tx.matchReasons.join(' • ')}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right flex items-center gap-2">
+                        <span className="font-semibold text-sm text-green-600">
+                          +{formatCurrency(Math.abs(tx.amount))}
+                        </span>
+                        {badge.label && (
                           <Badge
                             variant="outline"
-                            className={`text-xs ${badge.color}`}
+                            className={`text-xs ${
+                              isGreen
+                                ? 'border-green-500 text-green-700 bg-green-50'
+                                : 'border-amber-500 text-amber-700 bg-amber-50'
+                            }`}
                           >
-                            {tx.confidence}%
+                            {badge.label}
                           </Badge>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span>
-                          {new Date(
-                            tx.settled_at || tx.emitted_at
-                          ).toLocaleDateString('fr-FR')}
-                        </span>
-                        {tx.counterparty_name && (
-                          <>
-                            <span>•</span>
-                            <span className="truncate">
-                              {tx.counterparty_name}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                      {tx.matchReasons.length > 0 && (
-                        <p className="text-xs text-green-600 mt-1">
-                          {tx.matchReasons.join(' • ')}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-3 ml-4">
-                      <span className="font-semibold text-green-600 whitespace-nowrap">
-                        +{formatCurrency(Math.abs(tx.amount))}
-                      </span>
-                      <Button
-                        size="sm"
-                        onClick={() => handleLink(tx.id)}
-                        disabled={isLinking}
-                      >
-                        {isLinking ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Check className="h-4 w-4" />
-                        )}
-                        Lier
-                      </Button>
                     </div>
                   </div>
                 );
               })}
             </div>
-          )}
+          ) : null}
         </ScrollArea>
 
         {/* Footer info */}
-        <div className="text-xs text-muted-foreground text-center pt-2 border-t">
-          {filteredSuggestions.length} transaction(s) disponible(s) • Triées par
-          probabilité de correspondance
+        <div className="text-xs text-slate-500 text-center pt-2 border-t">
+          {filteredSuggestions.length} transaction(s) correspondante(s) • Triées
+          par pertinence
         </div>
       </DialogContent>
     </Dialog>

@@ -53,6 +53,7 @@ import {
   SelectValue,
 } from '@verone/ui';
 import { SyncButton } from '@verone/ui-business';
+import { createClient } from '@verone/utils/supabase/client';
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -77,6 +78,7 @@ import {
   FileX,
   CheckCircle,
   ShoppingCart,
+  Zap,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -906,6 +908,9 @@ function TransactionsPageV2() {
   const [uploadTransaction, setUploadTransaction] =
     useState<UnifiedTransaction | null>(null);
 
+  // Auto-categorization state
+  const [isAutoCategorizing, setIsAutoCategorizing] = useState(false);
+
   // Hook pour les règles (preview/confirm workflow)
   const {
     rules,
@@ -1017,6 +1022,50 @@ function TransactionsPageV2() {
       console.error('[Qonto Sync] Error:', err);
       toast.error('Erreur de synchronisation');
       await refresh();
+    }
+  };
+
+  // Auto-categorize credit transactions as 707 (Ventes de marchandises)
+  // Note: Les transactions spéciales (Romeo, AFFECT BUILDING, etc.) sont déjà catégorisées
+  // avec leurs codes PCG appropriés (455, 101, 645, etc.) donc elles ne seront pas touchées
+  const handleAutoCategorizeCredits = async () => {
+    setIsAutoCategorizing(true);
+    try {
+      const supabase = createClient();
+
+      // Récupérer les transactions crédit non catégorisées
+      // Celles déjà catégorisées (y compris les cas spéciaux) ne sont pas touchées
+      const { data: txs, error: fetchError } = await supabase
+        .from('bank_transactions')
+        .select('id')
+        .eq('side', 'credit')
+        .is('category_pcg', null);
+
+      if (fetchError) throw fetchError;
+
+      const eligibleIds = txs?.map(t => t.id) || [];
+
+      if (eligibleIds.length === 0) {
+        toast.info('Aucune transaction à catégoriser');
+        setIsAutoCategorizing(false);
+        return;
+      }
+
+      // Mettre à jour en batch
+      const { error: updateError } = await supabase
+        .from('bank_transactions')
+        .update({ category_pcg: '707' })
+        .in('id', eligibleIds);
+
+      if (updateError) throw updateError;
+
+      toast.success(`${eligibleIds.length} transactions catégorisées en 707`);
+      refresh();
+    } catch (err) {
+      toast.error('Erreur lors de la catégorisation');
+      console.error('[AutoCategorize] Error:', err);
+    } finally {
+      setIsAutoCategorizing(false);
     }
   };
 
@@ -1151,6 +1200,16 @@ function TransactionsPageV2() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleAutoCategorizeCredits}
+              disabled={isAutoCategorizing}
+              title="Catégoriser toutes les entrées non classées en 707 (Ventes)"
+            >
+              <Zap className="h-4 w-4 mr-2" />
+              {isAutoCategorizing ? 'En cours...' : 'Entrées → 707'}
+            </Button>
             <Link href="/finance/depenses/regles">
               <Button variant="outline">
                 <Settings className="h-4 w-4 mr-2" />
@@ -1623,6 +1682,43 @@ function TransactionsPageV2() {
                         {selectedTransaction.label || '-'}
                       </p>
                     </div>
+                    {(() => {
+                      const rawData = selectedTransaction.raw_data as Record<
+                        string,
+                        unknown
+                      > | null;
+                      const reference =
+                        rawData && typeof rawData.reference === 'string'
+                          ? rawData.reference
+                          : null;
+                      const note =
+                        rawData && typeof rawData.note === 'string'
+                          ? rawData.note
+                          : null;
+                      if (!reference && !note) return null;
+                      return (
+                        <>
+                          {reference && (
+                            <div className="mt-2">
+                              <p className="text-muted-foreground text-xs">
+                                Référence
+                              </p>
+                              <p className="font-medium text-sm">{reference}</p>
+                            </div>
+                          )}
+                          {note && (
+                            <div className="mt-2">
+                              <p className="text-muted-foreground text-xs">
+                                Note
+                              </p>
+                              <p className="font-medium text-sm text-blue-600">
+                                {note}
+                              </p>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                     <Separator />
                     <div className="grid grid-cols-2 gap-4">
                       <div>

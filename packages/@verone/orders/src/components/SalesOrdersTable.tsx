@@ -273,6 +273,9 @@ export function SalesOrdersTable({
   const [periodFilter, setPeriodFilter] = useState<
     'all' | 'month' | 'quarter' | 'year'
   >('all');
+  const [matchingFilter, setMatchingFilter] = useState<
+    'all' | 'matched' | 'unmatched'
+  >('all');
 
   // Etats tri
   const [sortColumn, setSortColumn] = useState<SortColumn>(null);
@@ -422,6 +425,16 @@ export function SalesOrdersTable({
         }
       }
 
+      // Filtre rapprochement bancaire
+      if (matchingFilter !== 'all') {
+        if (matchingFilter === 'matched' && !order.is_matched) {
+          return false;
+        }
+        if (matchingFilter === 'unmatched' && order.is_matched) {
+          return false;
+        }
+      }
+
       // Filtre personnalise
       if (customFilter && !customFilter(order)) {
         return false;
@@ -471,6 +484,7 @@ export function SalesOrdersTable({
     activeTab,
     customerTypeFilter,
     periodFilter,
+    matchingFilter,
     searchTerm,
     sortColumn,
     sortDirection,
@@ -1060,6 +1074,23 @@ export function SalesOrdersTable({
                 </SelectContent>
               </Select>
             )}
+
+            {/* Filtre rapprochement bancaire */}
+            <Select
+              value={matchingFilter}
+              onValueChange={(value: 'all' | 'matched' | 'unmatched') =>
+                setMatchingFilter(value)
+              }
+            >
+              <SelectTrigger className="w-full lg:w-52">
+                <SelectValue placeholder="Rapprochement" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous</SelectItem>
+                <SelectItem value="matched">Rapprochees</SelectItem>
+                <SelectItem value="unmatched">Non rapprochees</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
@@ -1350,30 +1381,34 @@ export function SalesOrdersTable({
                                 />
                               )}
 
-                              {/* Lier transaction */}
+                              {/* Lier transaction / Rapprochée */}
                               {(order.status === 'validated' ||
                                 order.status === 'shipped' ||
                                 order.status === 'delivered') && (
-                                <IconButton
-                                  icon={Link2}
-                                  variant="outline"
-                                  size="sm"
-                                  label="Lier transaction"
-                                  onClick={() => {
-                                    setSelectedOrderForLink(order);
-                                    setShowLinkTransactionModal(true);
-                                  }}
-                                />
+                                <>
+                                  {order.is_matched ? (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs bg-green-50 text-green-700 border-green-300 cursor-help"
+                                      title={`Rapprochée: ${order.matched_transaction_label || 'Transaction'} (${formatCurrency(Math.abs(order.matched_transaction_amount || 0))})`}
+                                    >
+                                      <Link2 className="h-3 w-3 mr-1 text-green-600" />
+                                      Rapprochée
+                                    </Badge>
+                                  ) : (
+                                    <IconButton
+                                      icon={Link2}
+                                      variant="outline"
+                                      size="sm"
+                                      label="Lier transaction"
+                                      onClick={() => {
+                                        setSelectedOrderForLink(order);
+                                        setShowLinkTransactionModal(true);
+                                      }}
+                                    />
+                                  )}
+                                </>
                               )}
-
-                              {/* Imprimer PDF */}
-                              <IconButton
-                                icon={FileText}
-                                variant="outline"
-                                size="sm"
-                                label="Imprimer PDF"
-                                onClick={() => handlePrintPDF(order)}
-                              />
                             </div>
                           </TableCell>
                         </TableRow>
