@@ -25,7 +25,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 
-import { ProductImageGallery } from '@verone/products';
+import { ProductImageGallery } from '../images/ProductImageGallery';
 
 interface ProductViewProps {
   product: any;

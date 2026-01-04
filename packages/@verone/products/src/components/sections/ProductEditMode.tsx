@@ -31,10 +31,10 @@ import {
   BarChart3,
 } from 'lucide-react';
 
-import { ProductImageGallery } from '@verone/products';
-import { ProductCharacteristicsModal } from '@verone/products/components/modals/ProductCharacteristicsModal';
-import { ProductDescriptionsModal } from '@verone/products/components/modals/ProductDescriptionsModal';
-import { ProductImagesModal } from '@verone/products/components/modals/ProductImagesModal';
+import { ProductImageGallery } from '../images/ProductImageGallery';
+import { ProductCharacteristicsModal } from '../modals/ProductCharacteristicsModal';
+import { ProductDescriptionsModal } from '../modals/ProductDescriptionsModal';
+import { ProductImagesModal } from '../modals/ProductImagesModal';
 
 interface ProductEditModeProps {
   product: any;

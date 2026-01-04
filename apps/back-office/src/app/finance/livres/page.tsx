@@ -12,6 +12,11 @@
 
 import { useState, useMemo } from 'react';
 
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@radix-ui/react-collapsible';
 import { useBankReconciliation, type BankTransaction } from '@verone/finance';
 import {
   getPcgCategory,
@@ -36,9 +41,6 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
   Alert,
   AlertDescription,
 } from '@verone/ui';

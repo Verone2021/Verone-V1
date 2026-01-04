@@ -131,6 +131,14 @@ export interface QontoTransaction {
   vat_amount?: number;
   vat_amount_cents?: number;
   vat_rate?: number;
+  /** Détails TVA multi-taux (si OCR Qonto activé) */
+  vat_details?: {
+    status?: 'computed' | 'not_computed' | 'pending';
+    items?: Array<{
+      rate: number;
+      amount_cents: number;
+    }>;
+  };
   initiator_id?: string;
   label_ids?: string[];
   attachment_ids?: string[];
