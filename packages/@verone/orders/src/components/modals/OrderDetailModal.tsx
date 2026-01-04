@@ -1,7 +1,10 @@
 'use client';
 
+import { useState } from 'react';
+
 import { useRouter } from 'next/navigation';
 
+import { InvoiceCreateFromOrderModal } from '@verone/finance/components';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
@@ -26,6 +29,7 @@ import {
   FileText,
   Store,
   ExternalLink,
+  Link2,
 } from 'lucide-react';
 
 // NOTE: SalesOrderShipmentModal supprimé - sera recréé ultérieurement
@@ -94,6 +98,7 @@ export function OrderDetailModal({
   // NOTE: showShippingModal supprimé - modal sera recréé ultérieurement
   const { markAsPaid } = useSalesOrders();
   const router = useRouter();
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
 
   if (!order) return null;
 
@@ -469,6 +474,81 @@ export function OrderDetailModal({
                 </CardContent>
               </Card>
 
+              {/* Card Rapprochement Bancaire */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Link2 className="h-3 w-3" />
+                    Rapprochement
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {order.is_matched ? (
+                    <div className="bg-green-50 p-3 rounded border border-green-200 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Link2 className="h-3 w-3 text-green-600" />
+                        <p className="text-sm font-medium text-green-800">
+                          Transaction liée
+                        </p>
+                      </div>
+                      <p className="text-xs text-gray-700">
+                        {order.matched_transaction_label || 'Transaction'}
+                      </p>
+                      <p className="text-sm font-bold text-green-700">
+                        {formatCurrency(
+                          Math.abs(order.matched_transaction_amount || 0)
+                        )}
+                      </p>
+                      {order.matched_transaction_emitted_at && (
+                        <p className="text-xs text-gray-600">
+                          Payé le{' '}
+                          {formatDate(order.matched_transaction_emitted_at)}
+                        </p>
+                      )}
+                      {order.matched_transaction_attachment_ids?.[0] && (
+                        <a
+                          href={`https://app.qonto.com/transactions/${order.matched_transaction_id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          Voir sur Qonto
+                        </a>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-center text-xs text-gray-500 py-2">
+                      Non rapprochée
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Card Facturation */}
+              {!readOnly &&
+                order.status !== 'draft' &&
+                order.status !== 'cancelled' && (
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <FileText className="h-3 w-3" />
+                        Facturation
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ButtonV2
+                        size="sm"
+                        className="w-full"
+                        onClick={() => setShowInvoiceModal(true)}
+                      >
+                        <FileText className="h-3 w-3 mr-1" />
+                        Générer facture
+                      </ButtonV2>
+                    </CardContent>
+                  </Card>
+                )}
+
               {/* Card Expédition (comme Réception dans PurchaseOrderDetailModal) */}
               <Card>
                 <CardHeader className="pb-3">
@@ -595,6 +675,31 @@ export function OrderDetailModal({
       </Dialog>
 
       {/* NOTE: Modal Gestion Expédition supprimé - sera recréé ultérieurement */}
+
+      {/* Modal Création Facture */}
+      <InvoiceCreateFromOrderModal
+        order={
+          order
+            ? {
+                id: order.id,
+                order_number: order.order_number,
+                total_ht: order.total_ht,
+                total_ttc: order.total_ttc,
+                tax_rate: order.tax_rate,
+                currency: order.currency,
+                payment_terms: order.payment_terms || 'net_30',
+                organisations: order.organisations,
+                individual_customers: order.individual_customers,
+                sales_order_items: order.sales_order_items,
+              }
+            : null
+        }
+        open={showInvoiceModal}
+        onOpenChange={setShowInvoiceModal}
+        onSuccess={() => {
+          onUpdate?.();
+        }}
+      />
     </>
   );
 }

@@ -813,12 +813,87 @@ export class QontoClient {
       body: formData,
     });
 
+    // Log response details for debugging
+    console.log('[QontoClient] uploadAttachmentToTransaction response:', {
+      status: response.status,
+      statusText: response.statusText,
+      headers: Object.fromEntries(response.headers.entries()),
+    });
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw this.createErrorFromResponse(response.status, errorData);
     }
 
-    const data = await response.json();
+    // Handle 204 No Content or empty response - fetch real attachment ID
+    const responseText = await response.text();
+    console.log('[QontoClient] Response body:', responseText);
+
+    const needsAttachmentFetch =
+      response.status === 204 ||
+      !responseText ||
+      responseText.trim() === '' ||
+      responseText.trim() === '{}';
+
+    if (needsAttachmentFetch) {
+      console.warn(
+        '[QontoClient] Upload succeeded but no attachment ID in response. Fetching real ID...'
+      );
+
+      // Fetch the transaction attachments to get the real ID
+      try {
+        const attachments = await this.getTransactionAttachments(transactionId);
+
+        if (attachments.length > 0) {
+          // Return the latest attachment (the one we just uploaded)
+          const latestAttachment = attachments[attachments.length - 1];
+          console.log(
+            '[QontoClient] Found real attachment ID:',
+            latestAttachment.id
+          );
+          return latestAttachment;
+        }
+
+        // No attachments found - this shouldn't happen after successful upload
+        throw new QontoError(
+          'Upload réussi mais aucun attachment trouvé sur la transaction Qonto',
+          'NOT_FOUND',
+          200
+        );
+      } catch (fetchError) {
+        // If it's already a QontoError, rethrow it
+        if (fetchError instanceof QontoError) {
+          throw fetchError;
+        }
+        console.error(
+          '[QontoClient] Failed to fetch attachment after upload:',
+          fetchError
+        );
+        throw new QontoError(
+          "Upload réussi mais impossible de récupérer l'ID de l'attachment",
+          'UNKNOWN_ERROR',
+          200,
+          { originalError: fetchError }
+        );
+      }
+    }
+
+    const data = JSON.parse(responseText);
+
+    // Validate response structure - Qonto should return { attachment: { id, ... } }
+    if (!data.attachment) {
+      console.error(
+        '[QontoClient] uploadAttachmentToTransaction: unexpected response:',
+        JSON.stringify(data, null, 2)
+      );
+      throw new QontoError(
+        `Réponse API Qonto inattendue: pas de champ 'attachment'`,
+        'VALIDATION_ERROR',
+        response.status,
+        data
+      );
+    }
+
     return data.attachment;
   }
 
@@ -884,6 +959,21 @@ export class QontoClient {
     await this.request<void>(
       'DELETE',
       `/v2/transactions/${transactionId}/attachments`
+    );
+  }
+
+  /**
+   * Remove a single attachment from a transaction
+   * @param transactionId - Qonto transaction UUID
+   * @param attachmentId - Qonto attachment UUID
+   */
+  async removeSingleAttachment(
+    transactionId: string,
+    attachmentId: string
+  ): Promise<void> {
+    await this.request<void>(
+      'DELETE',
+      `/v2/transactions/${transactionId}/attachments/${attachmentId}`
     );
   }
 

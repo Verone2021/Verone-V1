@@ -35,12 +35,12 @@ import {
   useAgingReport,
   AGING_BUCKETS,
   type AgingReportData,
-} from '@verone/finance/hooks';
+} from '../../hooks/use-aging-report';
 import {
   exportAgingReportToPDF,
   exportAgingReportToExcel,
   exportAgingReportToCSV,
-} from '@verone/finance/utils';
+} from '../../utils/export-aging-report';
 
 interface AgingReportViewProps {
   dateFrom?: string;

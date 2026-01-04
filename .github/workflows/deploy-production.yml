@@ -3,8 +3,36 @@ name: 🚀 Production Deployment - Vérone Back Office
 on:
   push:
     branches: [main, production-stable]
+    paths:
+      # Back-Office app
+      - 'apps/back-office/**'
+      # Shared packages (affect both apps)
+      - 'packages/**'
+      # Root config files
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'turbo.json'
+      - 'tsconfig.json'
+      # Workflows themselves
+      - '.github/workflows/deploy-production.yml'
+      # Supabase (shared database)
+      - 'supabase/**'
   pull_request:
     branches: [main, production-stable]
+    paths:
+      # Back-Office app
+      - 'apps/back-office/**'
+      # Shared packages (affect both apps)
+      - 'packages/**'
+      # Root config files
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'turbo.json'
+      - 'tsconfig.json'
+      # Workflows themselves
+      - '.github/workflows/deploy-production.yml'
+      # Supabase (shared database)
+      - 'supabase/**'
 
 env:
   NODE_VERSION: '20'

@@ -1,0 +1,79 @@
+# 🔗 LINKME VALIDATION WORKFLOW
+#
+# Workflow dédié pour l'app LinkMe (commissions)
+# Séparé du Back-Office pour éviter les déploiements croisés
+
+name: 🔗 LinkMe Validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      # LinkMe app uniquement
+      - 'apps/linkme/**'
+      # Shared packages (peuvent affecter LinkMe)
+      - 'packages/**'
+      # Root config files
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'turbo.json'
+      - 'tsconfig.json'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/linkme/**'
+      - 'packages/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'turbo.json'
+      - 'tsconfig.json'
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  linkme-build:
+    name: 🔗 LinkMe Build & Validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.13.1
+
+      - name: ⚡ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: 📦 Install dependencies
+        run: pnpm install
+
+      - name: 🔧 TypeScript check (LinkMe)
+        run: pnpm turbo run type-check --filter=@verone/linkme
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+
+      - name: 🏗️ Build LinkMe
+        run: pnpm turbo run build --filter=@verone/linkme
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+      - name: ✅ LinkMe Validation Complete
+        run: |
+          echo "✅ LinkMe build successful"
+          echo "📦 App: @verone/linkme"
+          echo "🌐 Vercel: linkme.vercel.app"
+
+# Note: Le déploiement Vercel est géré par Vercel Git Integration
+# Ce workflow valide uniquement la build avant merge
