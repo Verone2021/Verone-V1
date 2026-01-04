@@ -26,6 +26,7 @@ export interface PurchaseOrder {
   po_number: string;
   supplier_id: string;
   status: PurchaseOrderStatus;
+  payment_status_v2?: 'pending' | 'paid' | null;
   currency: string;
   tax_rate: number;
   eco_tax_total: number;

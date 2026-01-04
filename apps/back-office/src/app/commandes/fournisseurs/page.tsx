@@ -919,6 +919,7 @@ export default function PurchaseOrdersPage() {
                       Fournisseur {renderSortIcon('supplier')}
                     </TableHead>
                     <TableHead>Statut</TableHead>
+                    <TableHead>Rapproché</TableHead>
                     <TableHead className="w-20 text-center">Articles</TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-gray-50"
@@ -980,6 +981,18 @@ export default function PurchaseOrdersPage() {
                                 </Badge>
                               )}
                             </div>
+                          </TableCell>
+                          {/* Colonne Rapproché */}
+                          <TableCell>
+                            {(order as any).payment_status_v2 === 'paid' ? (
+                              <Badge className="bg-green-100 text-green-800">
+                                Rapproché
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-orange-100 text-orange-800">
+                                Non rapproché
+                              </Badge>
+                            )}
                           </TableCell>
                           {/* Colonne Articles */}
                           <TableCell className="text-center">
