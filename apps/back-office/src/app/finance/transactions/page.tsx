@@ -81,6 +81,7 @@ import {
   ShoppingCart,
   Zap,
   Trash2,
+  Percent,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -104,6 +105,65 @@ function formatAmount(amount: number): string {
     style: 'currency',
     currency: 'EUR',
   }).format(amount);
+}
+
+// =====================================================================
+// INDICATEUR ÉLÉMENTS MANQUANTS (Pattern dépenses)
+// =====================================================================
+
+function TransactionCompletenessIndicator({ tx }: { tx: UnifiedTransaction }) {
+  const missingItems: { key: string; label: string; icon: typeof Tag }[] = [];
+
+  // Catégorie manquante
+  if (!tx.category_pcg) {
+    missingItems.push({ key: 'category', label: 'Catégorie', icon: Tag });
+  }
+
+  // Justificatif manquant (sauf si facultatif)
+  const hasAttachment = (tx.attachment_ids?.length ?? 0) > 0;
+  if (!hasAttachment && !tx.justification_optional) {
+    missingItems.push({
+      key: 'attachment',
+      label: 'Justificatif',
+      icon: Paperclip,
+    });
+  }
+
+  // TVA manquante (seulement si catégorisé et pas de TVA)
+  if (
+    tx.category_pcg &&
+    tx.vat_rate == null &&
+    (!tx.vat_breakdown || tx.vat_breakdown.length === 0)
+  ) {
+    missingItems.push({ key: 'vat', label: 'TVA', icon: Percent });
+  }
+
+  if (missingItems.length === 0) {
+    return (
+      <Badge
+        variant="default"
+        className="gap-1 text-xs bg-green-100 text-green-700"
+      >
+        <CheckCircle2 size={10} />
+        Complet
+      </Badge>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {missingItems.map(item => (
+        <Badge
+          key={item.key}
+          variant="outline"
+          className="gap-1 text-xs px-1.5 border-orange-300 bg-orange-50 text-orange-700"
+        >
+          <item.icon size={10} />
+          {item.label}
+        </Badge>
+      ))}
+    </div>
+  );
 }
 
 // =====================================================================
@@ -1387,6 +1447,7 @@ function TransactionsPageV2() {
               <div className="w-20">Date</div>
               <div className="flex-1 min-w-0">Libellé</div>
               <div className="w-44">Catégorie</div>
+              <div className="w-32">À compléter</div>
               <div className="w-36">Justificatif</div>
               <div className="w-24 text-right">Montant</div>
             </div>
@@ -1479,6 +1540,11 @@ function TransactionsPageV2() {
                         ) : (
                           <span className="text-slate-300">-</span>
                         )}
+                      </div>
+
+                      {/* Colonne À compléter - Badges éléments manquants */}
+                      <div className="w-32">
+                        <TransactionCompletenessIndicator tx={tx} />
                       </div>
 
                       {/* Justificatif: PJ présente / Facultatif (vert) / Upload (rouge) */}
