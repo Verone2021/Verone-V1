@@ -79,6 +79,7 @@ import {
   CheckCircle,
   ShoppingCart,
   Zap,
+  Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -1462,25 +1463,13 @@ function TransactionsPageV2() {
                       {/* Justificatif avec icône + nom fichier OU bouton Upload */}
                       <div className="w-36">
                         {(() => {
-                          const rawData = tx.raw_data as {
-                            attachment_ids?: string[];
-                            attachments?: Array<{
-                              id?: string;
-                              file_name?: string;
-                            }>;
-                          };
-
-                          // Vérifier si pièce jointe existe (attachments OU attachment_ids)
+                          // SOURCE UNIQUE: tx.attachment_ids (colonne directe)
+                          // NE PAS utiliser raw_data (désynchronisé après DELETE)
                           const hasAttachment =
-                            (rawData?.attachments?.length ?? 0) > 0 ||
-                            (rawData?.attachment_ids?.length ?? 0) > 0;
+                            (tx.attachment_ids?.length ?? 0) > 0;
 
-                          const attachmentId =
-                            rawData?.attachment_ids?.[0] ||
-                            rawData?.attachments?.[0]?.id;
-                          const fileName =
-                            rawData?.attachments?.[0]?.file_name ||
-                            'Justificatif';
+                          const attachmentId = tx.attachment_ids?.[0];
+                          const fileName = 'Justificatif';
 
                           if (hasAttachment && attachmentId) {
                             // AVEC pièce jointe : Icône + nom cliquable
@@ -1613,27 +1602,27 @@ function TransactionsPageV2() {
         }}
       >
         <SheetContent
-          className="w-[450px] sm:max-w-[450px]"
+          className="w-[360px] sm:max-w-[360px]"
           data-testid="tx-side-panel"
         >
           {selectedTransaction && (
             <>
               <SheetHeader>
-                <SheetTitle className="flex items-center gap-2">
+                <SheetTitle className="flex items-center gap-1 text-sm">
                   {selectedTransaction.side === 'credit' ? (
-                    <ArrowDownLeft className="h-5 w-5 text-green-600" />
+                    <ArrowDownLeft className="h-3 w-3 text-green-600" />
                   ) : (
-                    <ArrowUpRight className="h-5 w-5 text-red-600" />
+                    <ArrowUpRight className="h-3 w-3 text-red-600" />
                   )}
                   Detail transaction
                 </SheetTitle>
               </SheetHeader>
 
-              <div className="space-y-6 mt-6">
+              <div className="space-y-1.5 mt-1.5">
                 {/* Montant */}
-                <div className="text-center py-4">
+                <div className="text-center py-0.5">
                   <p
-                    className={`text-4xl font-bold ${selectedTransaction.side === 'credit' ? 'text-green-600' : 'text-red-600'}`}
+                    className={`text-lg font-bold ${selectedTransaction.side === 'credit' ? 'text-green-600' : 'text-red-600'}`}
                   >
                     {selectedTransaction.side === 'credit' ? '+' : ''}
                     {formatAmount(
@@ -1642,7 +1631,7 @@ function TransactionsPageV2() {
                         : -Math.abs(selectedTransaction.amount)
                     )}
                   </p>
-                  <p className="text-muted-foreground mt-1">
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     {formatDate(
                       selectedTransaction.settled_at ||
                         selectedTransaction.emitted_at
@@ -1650,7 +1639,7 @@ function TransactionsPageV2() {
                   </p>
 
                   {/* Status badge */}
-                  <div className="mt-2">
+                  <div className="mt-0.5">
                     {selectedTransaction.unified_status === 'to_process' && (
                       <Badge variant="warning">A traiter</Badge>
                     )}
@@ -1675,10 +1664,10 @@ function TransactionsPageV2() {
 
                 {/* Info */}
                 <Card>
-                  <CardContent className="pt-4 space-y-3 text-sm">
+                  <CardContent className="pt-1 pb-1 space-y-1 text-xs">
                     <div>
-                      <p className="text-muted-foreground">Libelle</p>
-                      <p className="font-medium">
+                      <p className="text-xs text-muted-foreground">Libelle</p>
+                      <p className="text-xs font-medium">
                         {selectedTransaction.label || '-'}
                       </p>
                     </div>
@@ -1699,19 +1688,19 @@ function TransactionsPageV2() {
                       return (
                         <>
                           {reference && (
-                            <div className="mt-2">
-                              <p className="text-muted-foreground text-xs">
+                            <div className="mt-1">
+                              <p className="text-muted-foreground text-[10px]">
                                 Référence
                               </p>
-                              <p className="font-medium text-sm">{reference}</p>
+                              <p className="font-medium text-xs">{reference}</p>
                             </div>
                           )}
                           {note && (
-                            <div className="mt-2">
-                              <p className="text-muted-foreground text-xs">
+                            <div className="mt-1">
+                              <p className="text-muted-foreground text-[10px]">
                                 Note
                               </p>
-                              <p className="font-medium text-sm text-blue-600">
+                              <p className="font-medium text-xs text-blue-600">
                                 {note}
                               </p>
                             </div>
@@ -1719,42 +1708,44 @@ function TransactionsPageV2() {
                         </>
                       );
                     })()}
-                    <Separator />
-                    <div className="grid grid-cols-2 gap-4">
+                    <Separator className="my-0.5" />
+                    <div className="grid grid-cols-2 gap-1.5">
                       <div>
-                        <p className="text-muted-foreground">Contrepartie</p>
-                        <p className="font-medium">
+                        <p className="text-xs text-muted-foreground">
+                          Contrepartie
+                        </p>
+                        <p className="text-xs font-medium">
                           {selectedTransaction.counterparty_name || '-'}
                         </p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Type</p>
-                        <p className="font-medium">
+                        <p className="text-xs text-muted-foreground">Type</p>
+                        <p className="text-xs font-medium">
                           {selectedTransaction.operation_type || 'Virement'}
                         </p>
                       </div>
                     </div>
                     {selectedTransaction.category_pcg && (
                       <>
-                        <Separator />
+                        <Separator className="my-0.5" />
                         <div>
-                          <p className="text-muted-foreground text-xs">
+                          <p className="text-muted-foreground text-[10px]">
                             Catégorie comptable
                           </p>
-                          <div className="flex items-center gap-2 mt-1">
+                          <div className="flex items-center gap-2 mt-0.5">
                             <span
-                              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                              className="w-2 h-2 rounded-full flex-shrink-0"
                               style={{
                                 backgroundColor: getPcgColor(
                                   selectedTransaction.category_pcg
                                 ),
                               }}
                             />
-                            <span className="font-medium">
+                            <span className="text-xs font-medium">
                               {getPcgCategory(selectedTransaction.category_pcg)
                                 ?.label || selectedTransaction.category_pcg}
                             </span>
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="text-[10px]">
                               {selectedTransaction.category_pcg}
                             </Badge>
                           </div>
@@ -1763,10 +1754,12 @@ function TransactionsPageV2() {
                     )}
                     {selectedTransaction.organisation_name && (
                       <>
-                        <Separator />
+                        <Separator className="my-0.5" />
                         <div>
-                          <p className="text-muted-foreground">Organisation</p>
-                          <p className="font-medium text-blue-600">
+                          <p className="text-xs text-muted-foreground">
+                            Organisation
+                          </p>
+                          <p className="text-xs font-medium text-blue-600">
                             {selectedTransaction.organisation_name}
                           </p>
                         </div>
@@ -1776,19 +1769,19 @@ function TransactionsPageV2() {
                     {/* Section TVA */}
                     {selectedTransaction.amount !== null && (
                       <>
-                        <Separator />
-                        <div className="space-y-2">
-                          <p className="text-muted-foreground text-xs">
+                        <Separator className="my-0.5" />
+                        <div className="space-y-0.5">
+                          <p className="text-muted-foreground text-[10px]">
                             Montants TVA
                           </p>
                           {selectedTransaction.vat_breakdown &&
                           selectedTransaction.vat_breakdown.length > 0 ? (
-                            <div className="space-y-2">
+                            <div className="space-y-0.5">
                               {selectedTransaction.vat_breakdown.map(
                                 (item, idx) => (
                                   <div
                                     key={idx}
-                                    className="flex justify-between items-center text-sm"
+                                    className="flex justify-between items-center text-xs"
                                   >
                                     <span className="text-muted-foreground">
                                       {item.description ||
@@ -1816,26 +1809,26 @@ function TransactionsPageV2() {
                               </div>
                             </div>
                           ) : (
-                            <div className="space-y-1">
-                              <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">
-                                  HT
-                                </span>
-                                <span className="font-medium">
-                                  {selectedTransaction.amount_ht
-                                    ? formatAmount(
-                                        selectedTransaction.amount_ht
-                                      )
-                                    : '-'}
-                                </span>
-                              </div>
-                              <div className="space-y-2">
-                                <div className="flex items-center justify-between text-sm">
-                                  <div className="flex items-center gap-2">
+                            <div className="space-y-0.5">
+                              {/* HT / TVA / TTC sur une ligne */}
+                              <div className="flex justify-between text-[10px] gap-2">
+                                <div className="flex flex-col items-center">
+                                  <span className="text-muted-foreground">
+                                    HT
+                                  </span>
+                                  <span className="font-medium">
+                                    {selectedTransaction.amount_ht
+                                      ? formatAmount(
+                                          selectedTransaction.amount_ht
+                                        )
+                                      : '-'}
+                                  </span>
+                                </div>
+                                <div className="flex flex-col items-center">
+                                  <div className="flex items-center gap-1">
                                     <span className="text-muted-foreground">
                                       TVA
                                     </span>
-                                    {/* Badge origine TVA */}
                                     {(
                                       selectedTransaction as unknown as {
                                         vat_source?: string;
@@ -1843,9 +1836,9 @@ function TransactionsPageV2() {
                                     ).vat_source === 'qonto_ocr' ? (
                                       <Badge
                                         variant="secondary"
-                                        className="bg-green-100 text-green-700 text-[10px] px-1.5"
+                                        className="bg-green-100 text-green-700 text-[8px] px-0.5 py-0"
                                       >
-                                        Qonto OCR
+                                        OCR
                                       </Badge>
                                     ) : (
                                         selectedTransaction as unknown as {
@@ -1854,20 +1847,20 @@ function TransactionsPageV2() {
                                       ).vat_source === 'manual' ? (
                                       <Badge
                                         variant="secondary"
-                                        className="bg-blue-100 text-blue-700 text-[10px] px-1.5"
+                                        className="bg-blue-100 text-blue-700 text-[8px] px-0.5 py-0"
                                       >
-                                        Manuel
+                                        Man
                                       </Badge>
                                     ) : selectedTransaction.vat_rate ? (
                                       <Badge
                                         variant="secondary"
-                                        className="bg-gray-100 text-gray-600 text-[10px] px-1.5"
+                                        className="bg-gray-100 text-gray-600 text-[8px] px-0.5 py-0"
                                       >
                                         Règle
                                       </Badge>
                                     ) : null}
                                   </div>
-                                  <span>
+                                  <span className="font-medium">
                                     {selectedTransaction.amount_vat
                                       ? formatAmount(
                                           selectedTransaction.amount_vat
@@ -1875,71 +1868,60 @@ function TransactionsPageV2() {
                                       : '-'}
                                   </span>
                                 </div>
-                                {/* Sélecteur de taux TVA */}
-                                <Select
-                                  value={
-                                    selectedTransaction.vat_rate?.toString() ||
-                                    'none'
-                                  }
-                                  onValueChange={async value => {
-                                    const newRate =
-                                      value === 'none'
-                                        ? null
-                                        : parseFloat(value);
-                                    try {
-                                      const res = await fetch(
-                                        '/api/transactions/update-vat',
-                                        {
-                                          method: 'POST',
-                                          headers: {
-                                            'Content-Type': 'application/json',
-                                          },
-                                          body: JSON.stringify({
-                                            transaction_id:
-                                              selectedTransaction.id,
-                                            vat_rate: newRate,
-                                          }),
-                                        }
-                                      );
-                                      if (res.ok) {
-                                        refresh();
+                                <div className="flex flex-col items-center">
+                                  <span className="text-muted-foreground">
+                                    TTC
+                                  </span>
+                                  <span className="font-semibold">
+                                    {formatAmount(
+                                      Math.abs(selectedTransaction.amount)
+                                    )}
+                                  </span>
+                                </div>
+                              </div>
+                              {/* Sélecteur TVA compact */}
+                              <Select
+                                value={
+                                  selectedTransaction.vat_rate?.toString() ||
+                                  'none'
+                                }
+                                onValueChange={async value => {
+                                  const newRate =
+                                    value === 'none' ? null : parseFloat(value);
+                                  try {
+                                    const res = await fetch(
+                                      '/api/transactions/update-vat',
+                                      {
+                                        method: 'POST',
+                                        headers: {
+                                          'Content-Type': 'application/json',
+                                        },
+                                        body: JSON.stringify({
+                                          transaction_id:
+                                            selectedTransaction.id,
+                                          vat_rate: newRate,
+                                        }),
                                       }
-                                    } catch (err) {
-                                      console.error('[TVA update] Error:', err);
-                                    }
-                                  }}
-                                >
-                                  <SelectTrigger className="h-7 text-xs">
-                                    <SelectValue placeholder="Sélectionner TVA" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="none">
-                                      Non défini
-                                    </SelectItem>
-                                    <SelectItem value="0">
-                                      0% Exonéré
-                                    </SelectItem>
-                                    <SelectItem value="5.5">
-                                      5.5% Réduit
-                                    </SelectItem>
-                                    <SelectItem value="10">
-                                      10% Intermédiaire
-                                    </SelectItem>
-                                    <SelectItem value="20">
-                                      20% Normal
-                                    </SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <Separator />
-                              <div className="flex justify-between font-medium">
-                                <span>TTC</span>
-                                <span>
-                                  {formatAmount(
-                                    Math.abs(selectedTransaction.amount)
-                                  )}
-                                </span>
-                              </div>
+                                    );
+                                    if (res.ok) refresh();
+                                  } catch (err) {
+                                    console.error('[TVA update] Error:', err);
+                                  }
+                                }}
+                              >
+                                <SelectTrigger className="h-5 text-[9px]">
+                                  <SelectValue placeholder="Taux TVA" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="none">
+                                    Non défini
+                                  </SelectItem>
+                                  <SelectItem value="0">0%</SelectItem>
+                                  <SelectItem value="5.5">5.5%</SelectItem>
+                                  <SelectItem value="10">10%</SelectItem>
+                                  <SelectItem value="20">20%</SelectItem>
+                                </SelectContent>
+                              </Select>
                             </div>
                           )}
                         </div>
@@ -1947,9 +1929,9 @@ function TransactionsPageV2() {
                     )}
 
                     {/* Section Pièces jointes */}
-                    <Separator />
-                    <div className="space-y-2">
-                      <p className="text-muted-foreground text-xs">
+                    <Separator className="my-0.5" />
+                    <div className="space-y-0.5">
+                      <p className="text-muted-foreground text-[10px]">
                         Justificatif
                       </p>
                       {(() => {
@@ -1963,28 +1945,79 @@ function TransactionsPageV2() {
                         const hasAttachment = attachments.length > 0;
 
                         if (hasAttachment && attachments.length > 0) {
+                          const handleDeleteAttachment = async (
+                            attachmentId: string
+                          ) => {
+                            if (
+                              !confirm(
+                                'Supprimer ce justificatif ? Cette action est irréversible.'
+                              )
+                            ) {
+                              return;
+                            }
+                            try {
+                              const res = await fetch(
+                                `/api/qonto/attachments/${attachmentId}?transactionId=${selectedTransaction.id}`,
+                                { method: 'DELETE' }
+                              );
+                              if (!res.ok) {
+                                const err = await res.json();
+                                throw new Error(
+                                  err.error || 'Erreur lors de la suppression'
+                                );
+                              }
+                              toast.success('Justificatif supprimé');
+                              // Fermer et rouvrir le panel pour rafraîchir
+                              setSelectedTransaction(null);
+                              // Petit délai pour permettre le re-fetch
+                              setTimeout(() => {
+                                window.location.reload();
+                              }, 500);
+                            } catch (err) {
+                              toast.error(
+                                err instanceof Error
+                                  ? err.message
+                                  : 'Erreur lors de la suppression'
+                              );
+                            }
+                          };
+
                           return (
-                            <div className="space-y-1">
+                            <div className="space-y-0.5">
                               {attachments.map((att, idx) => (
-                                <button
+                                <div
                                   key={att.id || idx}
-                                  onClick={() =>
-                                    window.open(
-                                      `/api/qonto/attachments/${att.id}`,
-                                      '_blank'
-                                    )
-                                  }
-                                  className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 hover:underline w-full text-left"
+                                  className="flex items-center gap-1.5 group"
                                 >
-                                  <Paperclip className="h-3.5 w-3.5" />
-                                  <span className="truncate">
-                                    {att.file_name || `Pièce jointe ${idx + 1}`}
-                                  </span>
-                                  <ExternalLink className="h-3 w-3 ml-auto" />
-                                </button>
+                                  <button
+                                    onClick={() =>
+                                      window.open(
+                                        `/api/qonto/attachments/${att.id}`,
+                                        '_blank'
+                                      )
+                                    }
+                                    className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 hover:underline flex-1 text-left"
+                                  >
+                                    <Paperclip className="h-3 w-3 flex-shrink-0" />
+                                    <span className="truncate">
+                                      {att.file_name ||
+                                        `Pièce jointe ${idx + 1}`}
+                                    </span>
+                                    <ExternalLink className="h-2.5 w-2.5" />
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      handleDeleteAttachment(att.id)
+                                    }
+                                    className="opacity-0 group-hover:opacity-100 p-0.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-opacity"
+                                    title="Supprimer ce justificatif"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                </div>
                               ))}
-                              <div className="flex items-center gap-1 text-xs text-green-600 mt-1">
-                                <CheckCircle className="h-3.5 w-3.5" />
+                              <div className="flex items-center gap-1 text-[10px] text-green-600 mt-0.5">
+                                <CheckCircle className="h-3 w-3" />
                                 <span>
                                   {attachments.length} justificatif(s) déposé(s)
                                 </span>
@@ -1993,8 +2026,8 @@ function TransactionsPageV2() {
                           );
                         } else if (selectedTransaction.justification_optional) {
                           return (
-                            <div className="flex items-center gap-2 text-sm text-slate-500">
-                              <FileX className="h-4 w-4" />
+                            <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                              <FileX className="h-3 w-3" />
                               <span>Non requis</span>
                             </div>
                           );
@@ -2005,9 +2038,9 @@ function TransactionsPageV2() {
                                 setUploadTransaction(selectedTransaction);
                                 setShowUploadModal(true);
                               }}
-                              className="flex items-center gap-2 text-sm text-amber-600 hover:text-amber-800"
+                              className="flex items-center gap-1.5 text-xs text-amber-600 hover:text-amber-800"
                             >
-                              <AlertCircle className="h-4 w-4" />
+                              <AlertCircle className="h-3 w-3" />
                               <span>Manquant - Cliquer pour déposer</span>
                             </button>
                           );
@@ -2018,31 +2051,31 @@ function TransactionsPageV2() {
                 </Card>
 
                 {/* Actions simplifiées - Transactions = Justificatifs + Rapprochement */}
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-medium text-muted-foreground">
                     Actions
                   </p>
 
                   {/* Si verrouillé par règle, afficher le lien vers la règle */}
                   {isLockedByRule && (
                     <>
-                      <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg mb-2">
-                        <div className="flex items-center gap-2 text-amber-700">
-                          <Lock className="h-4 w-4" />
-                          <span className="text-sm font-medium">
+                      <div className="p-1 bg-amber-50 border border-amber-200 rounded-lg mb-0.5">
+                        <div className="flex items-center gap-1.5 text-amber-700">
+                          <Lock className="h-3 w-3" />
+                          <span className="text-[10px] font-medium">
                             Géré par règle
                           </span>
                         </div>
-                        <p className="text-xs text-amber-600 mt-1">
+                        <p className="text-[9px] text-amber-600 mt-0">
                           Modifier via les règles ou la page Dépenses.
                         </p>
                       </div>
                       <Button
                         variant="outline"
-                        className="w-full justify-start gap-2"
+                        className="w-full justify-start gap-1.5 h-7 text-xs"
                         onClick={handleViewRule}
                       >
-                        <Settings className="h-4 w-4" />
+                        <Settings className="h-3 w-3" />
                         Voir / Modifier la règle
                       </Button>
                     </>
@@ -2052,11 +2085,11 @@ function TransactionsPageV2() {
                   {!isLockedByRule && !selectedTransaction.category_pcg && (
                     <Button
                       variant="outline"
-                      className="w-full justify-start gap-2"
+                      className="w-full justify-start gap-1.5 h-7 text-xs"
                       onClick={() => setShowClassificationModal(true)}
                       data-testid="btn-classify-pcg"
                     >
-                      <Tag className="h-4 w-4" />
+                      <Tag className="h-3 w-3" />
                       Classer PCG
                     </Button>
                   )}
@@ -2070,11 +2103,11 @@ function TransactionsPageV2() {
                     selectedTransaction.side === 'debit' && (
                       <Button
                         variant="outline"
-                        className="w-full justify-start gap-2"
+                        className="w-full justify-start gap-1.5 h-7 text-xs"
                         onClick={() => setShowOrganisationModal(true)}
                         data-testid="btn-link-org"
                       >
-                        <Building2 className="h-4 w-4" />
+                        <Building2 className="h-3 w-3" />
                         Lier organisation
                       </Button>
                     )}
@@ -2083,32 +2116,32 @@ function TransactionsPageV2() {
                   {/* Note: Upload justificatif se fait via le bouton dans la liste */}
                   <Button
                     variant="outline"
-                    className="w-full justify-start gap-2"
+                    className="w-full justify-start gap-1.5 h-7 text-xs"
                     onClick={() => setShowRapprochementModal(true)}
                   >
-                    <FileText className="h-4 w-4" />
+                    <FileText className="h-3 w-3" />
                     Rapprocher commande
                   </Button>
 
-                  <Separator className="my-3" />
+                  <Separator className="my-0.5" />
 
                   {/* Ignorer - toujours disponible */}
                   {selectedTransaction.unified_status === 'ignored' ? (
                     <Button
                       variant="outline"
-                      className="w-full justify-start gap-2 text-green-600 hover:text-green-700"
+                      className="w-full justify-start gap-1.5 h-7 text-xs text-green-600 hover:text-green-700"
                       onClick={handleUnignore}
                     >
-                      <RefreshCw className="h-4 w-4" />
+                      <RefreshCw className="h-3 w-3" />
                       Annuler l'ignoré
                     </Button>
                   ) : (
                     <Button
                       variant="ghost"
-                      className="w-full justify-start gap-2 text-muted-foreground"
+                      className="w-full justify-start gap-1.5 h-7 text-xs text-muted-foreground"
                       onClick={handleIgnore}
                     >
-                      <XCircle className="h-4 w-4" />
+                      <XCircle className="h-3 w-3" />
                       Ignorer
                     </Button>
                   )}

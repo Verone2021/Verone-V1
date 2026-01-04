@@ -118,6 +118,8 @@ interface TransactionDbData {
   emitted_at?: string;
   settled_at?: string;
   raw_data?: Record<string, unknown>;
+  // Pièces jointes - source unique
+  attachment_ids?: string[] | null;
   updated_at?: string;
   // TVA Qonto OCR
   vat_rate?: number | null;
@@ -537,6 +539,8 @@ export class QontoSyncService {
       emitted_at: tx.emitted_at,
       settled_at: tx.settled_at ?? undefined,
       raw_data: tx as unknown as Record<string, unknown>,
+      // Pièces jointes - SOURCE UNIQUE pour la colonne attachment_ids
+      attachment_ids: tx.attachment_ids || null,
       updated_at: new Date().toISOString(),
       // TVA Qonto OCR - stocker uniquement si valide (pas -1)
       // Si Qonto retourne une TVA simple, on EFFACE vat_breakdown pour éviter les conflits

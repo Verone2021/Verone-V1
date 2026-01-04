@@ -962,6 +962,21 @@ export class QontoClient {
     );
   }
 
+  /**
+   * Remove a single attachment from a transaction
+   * @param transactionId - Qonto transaction UUID
+   * @param attachmentId - Qonto attachment UUID
+   */
+  async removeSingleAttachment(
+    transactionId: string,
+    attachmentId: string
+  ): Promise<void> {
+    await this.request<void>(
+      'DELETE',
+      `/v2/transactions/${transactionId}/attachments/${attachmentId}`
+    );
+  }
+
   // ===================================================================
   // SUPPLIER INVOICES (Factures fournisseurs)
   // Doc: https://docs.qonto.com/api-reference/business-api/expense-management/supplier-invoices/create-supplier-invoices
