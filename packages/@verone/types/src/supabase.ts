@@ -7835,6 +7835,7 @@ export type Database = {
           paid_amount: number | null;
           paid_at: string | null;
           payment_status: string | null;
+          payment_status_v2: string | null;
           payment_terms: string | null;
           payment_terms_notes: string | null;
           payment_terms_type:
@@ -7888,6 +7889,7 @@ export type Database = {
           paid_amount?: number | null;
           paid_at?: string | null;
           payment_status?: string | null;
+          payment_status_v2?: string | null;
           payment_terms?: string | null;
           payment_terms_notes?: string | null;
           payment_terms_type?:
@@ -7941,6 +7943,7 @@ export type Database = {
           paid_amount?: number | null;
           paid_at?: string | null;
           payment_status?: string | null;
+          payment_status_v2?: string | null;
           payment_terms?: string | null;
           payment_terms_notes?: string | null;
           payment_terms_type?:
@@ -10294,6 +10297,7 @@ export type Database = {
             | null;
           raw_data: Json | null;
           role_type: string | null;
+          rule_allow_multiple_categories: boolean | null;
           rule_display_label: string | null;
           rule_match_value: string | null;
           settled_at: string | null;
@@ -10387,11 +10391,13 @@ export type Database = {
           default_category: string | null;
           default_role_type: string | null;
           display_label: string | null;
+          enabled: boolean | null;
           id: string | null;
           is_active: boolean | null;
           match_patterns: string[] | null;
           match_type: string | null;
           match_value: string | null;
+          matched_expenses_count: number | null;
           organisation_id: string | null;
           organisation_name: string | null;
           organisation_type:
