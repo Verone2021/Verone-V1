@@ -6,8 +6,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { useLocalStorage } from '@verone/hooks';
-import { Badge } from '@verone/ui';
 import {
+  Badge,
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
@@ -19,7 +19,6 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from '@verone/ui';
-import { InactiveModuleWrapper, PhaseIndicator } from '@verone/ui';
 import { cn } from '@verone/utils';
 import {
   featureFlags,
@@ -58,6 +57,11 @@ import {
   ArrowLeftRight,
   BookOpenCheck,
 } from 'lucide-react';
+
+import {
+  InactiveModuleWrapper,
+  PhaseIndicator,
+} from '@/components/ui/phase-indicator';
 
 // Phase 1: use-stock-alerts-count hook désactivé (Phase 2+)
 // import { useStockAlertsCount } from '@verone/stock'
@@ -237,7 +241,7 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
         icon: ArrowLeftRight,
       },
       {
-        title: 'Dépenses',
+        title: 'Catégorisation',
         href: '/finance/depenses',
         icon: Banknote,
       },

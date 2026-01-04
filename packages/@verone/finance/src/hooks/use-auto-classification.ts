@@ -30,6 +30,13 @@ export interface TransactionWithSuggestions<T> {
     displayLabel: string | null;
     /** Confiance de la suggestion (high si règle exacte, medium si contains) */
     confidence: 'high' | 'medium' | 'none';
+    /**
+     * Type de match:
+     * - 'exact': label normalisé = pattern normalisé (appliqué d'office - BLEU)
+     * - 'similar': label contient pattern mais pas identique (suggéré - ORANGE)
+     * - 'none': aucun match
+     */
+    matchType: 'exact' | 'similar' | 'none';
   };
 }
 
@@ -44,23 +51,69 @@ export interface UseAutoClassificationOptions {
 }
 
 /**
+ * Normalise un label (version simplifiée côté client)
+ * Doit correspondre à la fonction normalize_label SQL côté serveur
+ */
+function normalizeLabel(input: string | null | undefined): string {
+  if (!input) return '';
+
+  let result = input.toLowerCase();
+
+  // Retirer les accents
+  result = result.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  // Ponctuation → espaces
+  result = result.replace(/[^a-z0-9 ]/g, ' ');
+
+  // Espaces multiples → 1 espace
+  result = result.replace(/\s+/g, ' ');
+
+  // Trim
+  return result.trim();
+}
+
+/**
  * Vérifie si un label correspond à une règle de matching
+ * Retourne le type de match: 'exact', 'similar', ou 'none'
+ */
+function getMatchType(
+  label: string | null | undefined,
+  rule: MatchingRule
+): 'exact' | 'similar' | 'none' {
+  if (!label || !rule.enabled) return 'none';
+
+  const normalizedLabel = normalizeLabel(label);
+  const normalizedMatch = normalizeLabel(rule.match_value);
+
+  if (!normalizedLabel || !normalizedMatch) return 'none';
+
+  // Match exact: label normalisé = pattern normalisé
+  if (normalizedLabel === normalizedMatch) {
+    return 'exact';
+  }
+
+  // Pour label_exact rules: pas de match similar
+  if (rule.match_type === 'label_exact') {
+    return 'none';
+  }
+
+  // Pour label_contains: match similar si label contient pattern
+  if (normalizedLabel.includes(normalizedMatch)) {
+    return 'similar';
+  }
+
+  return 'none';
+}
+
+/**
+ * @deprecated Use getMatchType instead
+ * Vérifie si un label correspond à une règle de matching (compatibilité)
  */
 function matchRule(
   label: string | null | undefined,
   rule: MatchingRule
 ): boolean {
-  if (!label || !rule.enabled) return false;
-
-  const normalizedLabel = label.toLowerCase().trim();
-  const normalizedMatch = rule.match_value.toLowerCase().trim();
-
-  if (rule.match_type === 'label_exact') {
-    return normalizedLabel === normalizedMatch;
-  }
-
-  // label_contains
-  return normalizedLabel.includes(normalizedMatch);
+  return getMatchType(label, rule) !== 'none';
 }
 
 /**
@@ -114,6 +167,7 @@ export function useAutoClassification<
           roleType: null,
           displayLabel: null,
           confidence: 'none' as const,
+          matchType: 'none' as const,
         },
       }));
     }
@@ -124,23 +178,39 @@ export function useAutoClassification<
     return transactions.map(tx => {
       const label = tx[labelField] as string | null | undefined;
 
-      // Chercher la première règle qui matche
-      const matchedRule = sortedRules.find(rule => matchRule(label, rule));
+      // Chercher la première règle qui matche et son type de match
+      let bestMatchRule: MatchingRule | null = null;
+      let bestMatchType: 'exact' | 'similar' | 'none' = 'none';
 
-      if (matchedRule) {
+      for (const rule of sortedRules) {
+        const matchType = getMatchType(label, rule);
+        if (matchType === 'exact') {
+          // Match exact trouvé - pas besoin de chercher plus
+          bestMatchRule = rule;
+          bestMatchType = 'exact';
+          break;
+        } else if (matchType === 'similar' && bestMatchType === 'none') {
+          // Premier match similar - continuer à chercher un exact
+          bestMatchRule = rule;
+          bestMatchType = 'similar';
+        }
+      }
+
+      if (bestMatchRule) {
         return {
           original: tx,
           suggestion: {
-            matchedRule,
-            organisationId: matchedRule.organisation_id,
-            organisationName: matchedRule.organisation_name,
-            category: matchedRule.default_category,
-            roleType: matchedRule.default_role_type,
-            displayLabel: matchedRule.display_label,
+            matchedRule: bestMatchRule,
+            organisationId: bestMatchRule.organisation_id,
+            organisationName: bestMatchRule.organisation_name,
+            category: bestMatchRule.default_category,
+            roleType: bestMatchRule.default_role_type,
+            displayLabel: bestMatchRule.display_label,
             confidence:
-              matchedRule.match_type === 'label_exact'
+              bestMatchType === 'exact'
                 ? ('high' as const)
                 : ('medium' as const),
+            matchType: bestMatchType,
           },
         };
       }
@@ -155,6 +225,7 @@ export function useAutoClassification<
           roleType: null,
           displayLabel: null,
           confidence: 'none' as const,
+          matchType: 'none' as const,
         },
       };
     });
@@ -184,21 +255,38 @@ export function getSuggestionForLabel(
       roleType: null,
       displayLabel: null,
       confidence: 'none',
+      matchType: 'none',
     };
   }
 
   const sortedRules = [...rules].sort((a, b) => a.priority - b.priority);
-  const matchedRule = sortedRules.find(rule => matchRule(label, rule));
 
-  if (matchedRule) {
+  // Chercher le meilleur match
+  let bestMatchRule: MatchingRule | null = null;
+  let bestMatchType: 'exact' | 'similar' | 'none' = 'none';
+
+  for (const rule of sortedRules) {
+    const matchType = getMatchType(label, rule);
+    if (matchType === 'exact') {
+      bestMatchRule = rule;
+      bestMatchType = 'exact';
+      break;
+    } else if (matchType === 'similar' && bestMatchType === 'none') {
+      bestMatchRule = rule;
+      bestMatchType = 'similar';
+    }
+  }
+
+  if (bestMatchRule) {
     return {
-      matchedRule,
-      organisationId: matchedRule.organisation_id,
-      organisationName: matchedRule.organisation_name,
-      category: matchedRule.default_category,
-      roleType: matchedRule.default_role_type,
-      displayLabel: matchedRule.display_label,
-      confidence: matchedRule.match_type === 'label_exact' ? 'high' : 'medium',
+      matchedRule: bestMatchRule,
+      organisationId: bestMatchRule.organisation_id,
+      organisationName: bestMatchRule.organisation_name,
+      category: bestMatchRule.default_category,
+      roleType: bestMatchRule.default_role_type,
+      displayLabel: bestMatchRule.display_label,
+      confidence: bestMatchType === 'exact' ? 'high' : 'medium',
+      matchType: bestMatchType,
     };
   }
 
@@ -210,5 +298,6 @@ export function getSuggestionForLabel(
     roleType: null,
     displayLabel: null,
     confidence: 'none',
+    matchType: 'none',
   };
 }

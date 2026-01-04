@@ -13,17 +13,7 @@
 import { useState } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@verone/ui';
-import { CalendarIcon, Loader2 } from 'lucide-react';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
+import { Popover, PopoverContent, PopoverTrigger } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Calendar } from '@verone/ui';
 import {
@@ -45,8 +35,16 @@ import {
 } from '@verone/ui';
 import { Textarea } from '@verone/ui';
 import { cn } from '@verone/utils';
-import { useFinancialPayments } from '@verone/finance/hooks';
-import type { PaymentMethod } from '@verone/finance/hooks';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { CalendarIcon, Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+
+import {
+  useFinancialPayments,
+  type PaymentMethod,
+} from '../../hooks/use-financial-payments';
 
 // =====================================================================
 // SCHEMA VALIDATION

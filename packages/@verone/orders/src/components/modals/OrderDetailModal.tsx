@@ -26,6 +26,7 @@ import {
   FileText,
   Store,
   ExternalLink,
+  Link2,
 } from 'lucide-react';
 
 // NOTE: SalesOrderShipmentModal supprimé - sera recréé ultérieurement
@@ -465,6 +466,57 @@ export function OrderDetailModal({
                       <CreditCard className="h-3 w-3 mr-1" />
                       Marquer comme payé
                     </ButtonV2>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Card Rapprochement Bancaire */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Link2 className="h-3 w-3" />
+                    Rapprochement
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {order.is_matched ? (
+                    <div className="bg-green-50 p-3 rounded border border-green-200 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Link2 className="h-3 w-3 text-green-600" />
+                        <p className="text-sm font-medium text-green-800">
+                          Transaction liée
+                        </p>
+                      </div>
+                      <p className="text-xs text-gray-700">
+                        {order.matched_transaction_label || 'Transaction'}
+                      </p>
+                      <p className="text-sm font-bold text-green-700">
+                        {formatCurrency(
+                          Math.abs(order.matched_transaction_amount || 0)
+                        )}
+                      </p>
+                      {order.matched_transaction_emitted_at && (
+                        <p className="text-xs text-gray-600">
+                          Payé le{' '}
+                          {formatDate(order.matched_transaction_emitted_at)}
+                        </p>
+                      )}
+                      {order.matched_transaction_attachment_ids?.[0] && (
+                        <a
+                          href={`https://app.qonto.com/transactions/${order.matched_transaction_id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          Voir sur Qonto
+                        </a>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-center text-xs text-gray-500 py-2">
+                      Non rapprochée
+                    </p>
                   )}
                 </CardContent>
               </Card>
