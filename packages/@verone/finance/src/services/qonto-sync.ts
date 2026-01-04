@@ -119,6 +119,16 @@ interface TransactionDbData {
   settled_at?: string;
   raw_data?: Record<string, unknown>;
   updated_at?: string;
+  // TVA Qonto OCR
+  vat_rate?: number | null;
+  vat_amount?: number | null;
+  vat_source?: 'qonto_ocr' | 'manual' | null;
+  vat_breakdown?: Array<{
+    description: string;
+    amount_ht: number;
+    tva_rate: number;
+    tva_amount: number;
+  }> | null;
 }
 
 // =====================================================================
@@ -495,6 +505,22 @@ export class QontoSyncService {
       .eq('transaction_id', tx.transaction_id)
       .single();
 
+    // Extraire vat_details de Qonto si disponible (OCR multi-TVA)
+    let vat_breakdown: TransactionDbData['vat_breakdown'] = null;
+    if (tx.vat_details?.items && tx.vat_details.items.length > 0) {
+      vat_breakdown = tx.vat_details.items.map((item, idx) => ({
+        description: `Ligne ${idx + 1}`,
+        amount_ht: 0, // Qonto ne fournit pas le HT
+        tva_rate: item.rate,
+        tva_amount: item.amount_cents / 100,
+      }));
+    }
+
+    // Déterminer la source de la TVA
+    // vat_rate = -1 signifie que Qonto n'a pas pu analyser (pas de justificatif ou OCR échoué)
+    const hasQontoVat =
+      tx.vat_rate !== undefined && tx.vat_rate !== null && tx.vat_rate !== -1;
+
     const transactionData: TransactionDbData = {
       transaction_id: tx.transaction_id,
       bank_provider: 'qonto',
@@ -512,6 +538,12 @@ export class QontoSyncService {
       settled_at: tx.settled_at ?? undefined,
       raw_data: tx as unknown as Record<string, unknown>,
       updated_at: new Date().toISOString(),
+      // TVA Qonto OCR - stocker uniquement si valide (pas -1)
+      // Si Qonto retourne une TVA simple, on EFFACE vat_breakdown pour éviter les conflits
+      vat_rate: hasQontoVat ? tx.vat_rate : null,
+      vat_amount: hasQontoVat ? tx.vat_amount : null,
+      vat_source: hasQontoVat ? 'qonto_ocr' : null,
+      vat_breakdown: hasQontoVat ? null : vat_breakdown,
     };
 
     if (existing) {

@@ -5,18 +5,26 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 
 import { useToast } from '@verone/common/hooks';
-import { getPcgCategory, PCG_SUGGESTED_CATEGORIES } from '@verone/finance';
+import {
+  getPcgCategory,
+  getPcgCategoriesByType,
+  getPcgColor,
+  PCG_SUGGESTED_CATEGORIES,
+} from '@verone/finance';
 import {
   QuickClassificationModal,
+  RuleModal,
   SupplierCell,
   ExpenseDonutChart,
   MonthlyFlowChart,
+  OrganisationLinkingModal,
 } from '@verone/finance/components';
 import {
   useExpenses,
   useAutoClassification,
   useTreasuryStats,
   useMatchingRules,
+  useUniqueLabels,
   type Expense,
   type ExpenseFilters,
   type ExpenseBreakdown,
@@ -32,17 +40,24 @@ import {
 import { createClient } from '@verone/utils/supabase/client';
 import {
   AlertCircle,
+  ArrowDownLeft,
+  ArrowUpRight,
   CheckCircle2,
+  ChevronDown,
+  ChevronRight,
   Clock,
   Download,
   Edit2,
   Eye,
   FileText,
   Filter,
+  Link as LinkIcon,
   Paperclip,
+  Percent,
   RefreshCw,
   Search,
   Settings,
+  Tag,
   XCircle,
 } from 'lucide-react';
 
@@ -94,12 +109,70 @@ function StatusBadge({ status }: { status: Expense['status'] }) {
   );
 }
 
+// Indicateur de complétude - affiche ce qui manque sur la transaction
+function CompletenessIndicator({ expense }: { expense: Expense }) {
+  const missingItems: { key: string; label: string; icon: typeof Tag }[] = [];
+
+  // Catégorie manquante
+  if (!expense.category) {
+    missingItems.push({ key: 'category', label: 'Catégorie', icon: Tag });
+  }
+
+  // TVA manquante (seulement si catégorisé)
+  if (
+    expense.category &&
+    expense.vat_rate == null &&
+    (!expense.vat_breakdown ||
+      !Array.isArray(expense.vat_breakdown) ||
+      expense.vat_breakdown.length === 0)
+  ) {
+    missingItems.push({ key: 'vat', label: 'TVA', icon: Percent });
+  }
+
+  // Justificatif manquant
+  if (!expense.has_attachment) {
+    missingItems.push({
+      key: 'attachment',
+      label: 'Justificatif',
+      icon: Paperclip,
+    });
+  }
+
+  if (missingItems.length === 0) {
+    return (
+      <Badge
+        variant="default"
+        className="gap-1 text-xs bg-green-100 text-green-700"
+      >
+        <CheckCircle2 size={10} />
+        Complet
+      </Badge>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {missingItems.map(item => (
+        <Badge
+          key={item.key}
+          variant="outline"
+          className="gap-1 text-xs px-1.5 border-orange-300 bg-orange-50 text-orange-700"
+        >
+          <item.icon size={10} />
+          {item.label}
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
 // Ligne de dépense
 function ExpenseRow({
   expense,
   onClassify,
   onViewAttachment,
   onLink,
+  onViewRule,
   onConfirmSuggestion,
   suggestion,
 }: {
@@ -107,6 +180,7 @@ function ExpenseRow({
   onClassify: (expense: Expense) => void;
   onViewAttachment: (expense: Expense) => void;
   onLink: () => void;
+  onViewRule?: (ruleId: string) => void; // SLICE 3: Voir/modifier la règle
   onConfirmSuggestion?: (ruleId: string, organisationId: string) => void;
   suggestion?: {
     matchedRule?: { id: string } | null;
@@ -114,6 +188,7 @@ function ExpenseRow({
     organisationName: string | null;
     category: string | null;
     confidence: 'high' | 'medium' | 'none';
+    matchType?: 'exact' | 'similar' | 'none';
   };
 }) {
   // PCG uniquement - plus d'ancien système
@@ -124,6 +199,11 @@ function ExpenseRow({
   const isClassified =
     expense.status === 'classified' || expense.category !== null;
 
+  // SLICE 3: Verrouillage si une règle est appliquée
+  const isLockedByRule = Boolean(expense.applied_rule_id);
+  // Peut-on modifier individuellement malgré la règle ?
+  const canModifyIndividually = expense.rule_allow_multiple_categories === true;
+
   return (
     <tr
       className={cn(
@@ -131,12 +211,12 @@ function ExpenseRow({
         isClassified && 'bg-green-50/30'
       )}
     >
-      <td className="px-4 py-3 text-sm text-slate-600">
+      <td className="px-3 py-2 text-xs text-slate-600">
         {formatDate(expense.emitted_at)}
       </td>
-      <td className="px-4 py-3">
+      <td className="px-3 py-2">
         <div className="max-w-xs">
-          <p className="text-sm font-medium text-slate-900 truncate">
+          <p className="text-xs font-medium text-slate-900 truncate">
             {expense.label}
           </p>
           <div className="text-xs text-slate-500 truncate">
@@ -162,71 +242,141 @@ function ExpenseRow({
               suggestedOrganisationName={suggestion?.organisationName}
               suggestedCategory={suggestion?.category}
               confidence={suggestion?.confidence}
-              showCategory
+              matchType={suggestion?.matchType}
             />
           </div>
         </div>
       </td>
-      <td className="px-4 py-3 text-right">
-        <span className="text-sm font-semibold text-red-600">
-          -{formatAmount(expense.amount)}
-        </span>
+      <td className="px-3 py-2 text-right">
+        <div className="flex items-center justify-end gap-1">
+          {expense.has_attachment && (
+            <span title="Justificatif disponible">
+              <Paperclip size={12} className="text-blue-500" />
+            </span>
+          )}
+          <span
+            className={cn(
+              'text-xs font-semibold',
+              expense.side === 'credit' ? 'text-green-600' : 'text-red-600'
+            )}
+          >
+            {expense.side === 'credit' ? '+' : '-'}
+            {formatAmount(expense.amount)}
+          </span>
+        </div>
       </td>
-      <td className="px-4 py-3">
+      {/* Colonne Complétude - affiche ce qui manque */}
+      <td className="px-3 py-2">
+        <CompletenessIndicator expense={expense} />
+      </td>
+      <td className="px-3 py-2">
         <StatusBadge status={expense.status} />
       </td>
-      <td className="px-4 py-3 text-sm text-slate-600">
-        {expense.counterparty_display_name || expense.organisation_name || '-'}
-      </td>
-      <td className="px-4 py-3 text-sm text-slate-600">
-        {categoryLabel || '-'}
-      </td>
-      <td className="px-4 py-3 text-center">
-        {expense.has_attachment ? (
-          <button
-            onClick={() => onViewAttachment(expense)}
-            className="text-blue-600 hover:text-blue-800"
-            title="Voir pièce jointe"
-          >
-            <Paperclip size={16} />
-          </button>
+      <td className="px-3 py-2 text-xs text-slate-600">
+        {expense.category ? (
+          <div className="flex items-center gap-2">
+            <span
+              className="w-2 h-2 rounded-full flex-shrink-0"
+              style={{ backgroundColor: getPcgColor(expense.category) }}
+            />
+            <span className="truncate">
+              {categoryLabel || expense.category}
+            </span>
+          </div>
         ) : (
           <span className="text-slate-300">-</span>
         )}
       </td>
-      <td className="px-4 py-3">
-        {isClassified ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onClassify(expense)}
-            className="gap-1 text-slate-500"
-          >
-            <Edit2 size={14} />
-            Modifier
-          </Button>
-        ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onClassify(expense)}
-            className="gap-1"
-          >
-            <FileText size={14} />
-            Classer
-          </Button>
-        )}
+      {/* Actions (incluant le bouton pièce jointe) */}
+      <td className="px-3 py-2">
+        <div className="flex items-center gap-1">
+          {/* Bouton justificatif - toujours visible si pièce jointe existe */}
+          {expense.has_attachment && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onViewAttachment(expense)}
+              className="text-blue-600 hover:text-blue-800 px-2"
+              title="Voir pièce jointe Qonto"
+            >
+              <Eye size={14} />
+            </Button>
+          )}
+
+          {/* Actions de classification */}
+          {isLockedByRule ? (
+            <>
+              {/* Modification individuelle - seulement si allow_multiple_categories */}
+              {canModifyIndividually && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onClassify(expense)}
+                  className="gap-1 text-slate-600 hover:text-slate-800"
+                  title="Modifier cette ligne uniquement"
+                >
+                  <Edit2 size={14} />
+                </Button>
+              )}
+              {/* Modification de la règle */}
+              {onViewRule && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onViewRule(expense.applied_rule_id!)}
+                  className="gap-1 text-blue-600 hover:text-blue-800"
+                  title={`Règle: ${expense.rule_display_label || expense.rule_match_value}`}
+                >
+                  <Settings size={14} />
+                </Button>
+              )}
+            </>
+          ) : isClassified ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onClassify(expense)}
+              className="gap-1 text-slate-500"
+            >
+              <Edit2 size={14} />
+              Modifier
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onClassify(expense)}
+              className="gap-1"
+            >
+              <FileText size={14} />
+              Classer
+            </Button>
+          )}
+        </div>
       </td>
     </tr>
   );
 }
 
 export default function DepensesPage() {
-  const [filters, setFilters] = useState<ExpenseFilters>({
-    status: 'all',
-  });
   const [searchValue, setSearchValue] = useState('');
-  const { expenses, stats, isLoading, error, refetch } = useExpenses(filters);
+  // Utiliser les filtres du hook (pas un état local séparé)
+  const { expenses, stats, isLoading, error, refetch, filters, setFilters } =
+    useExpenses({ status: 'all' });
+
+  // Debounce: Recherche automatique après 400ms de pause de frappe
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setFilters(prev => {
+        const newSearch = searchValue.trim() || undefined;
+        // Ne mettre à jour que si la valeur a réellement changé
+        if (prev.search === newSearch) return prev;
+        return { ...prev, search: newSearch };
+      });
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [searchValue]);
   const { toast } = useToast();
 
   // Dashboard stats pour les graphiques
@@ -241,8 +391,52 @@ export default function DepensesPage() {
     expenses as (Expense & Record<string, unknown>)[]
   );
 
-  // Hook pour les règles de matching (pour confirmer les suggestions)
-  const { update: updateMatchingRule } = useMatchingRules();
+  // SLICE 3: Hook pour les règles de matching
+  const {
+    rules,
+    update: updateMatchingRule,
+    previewApply,
+    confirmApply,
+    autoClassifyAll,
+    refetch: refetchRules,
+  } = useMatchingRules();
+
+  // Hook pour les libellés groupés (onglet "Non classées")
+  const {
+    labels: uniqueLabels,
+    isLoading: labelsLoading,
+    refetch: refetchLabels,
+  } = useUniqueLabels();
+
+  // État pour le libellé étendu (voir les transactions détaillées)
+  const [expandedLabel, setExpandedLabel] = useState<string | null>(null);
+
+  // État pour le modal de liaison d'organisation
+  const [linkModalOpen, setLinkModalOpen] = useState(false);
+  const [selectedLabelForLink, setSelectedLabelForLink] = useState<{
+    label: string;
+    transactionCount: number;
+    totalAmount: number;
+  } | null>(null);
+
+  // Auto-classification au chargement de la page
+  useEffect(() => {
+    const runAutoClassify = async () => {
+      try {
+        const count = await autoClassifyAll();
+        if (count > 0) {
+          console.log(
+            `[DepensesPage] ${count} transaction(s) classée(s) automatiquement`
+          );
+          // Rafraîchir la liste des dépenses si des transactions ont été classées
+          await refetch();
+        }
+      } catch (err) {
+        console.error('[DepensesPage] Auto-classify error:', err);
+      }
+    };
+    runAutoClassify();
+  }, [autoClassifyAll, refetch]);
 
   // Map pour accès rapide aux suggestions par ID
   const suggestionsMap = useMemo(() => {
@@ -284,6 +478,28 @@ export default function DepensesPage() {
   // État du modal de classement
   const [classifyModalOpen, setClassifyModalOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
+
+  // SLICE 3: État du RuleModal pour voir/modifier une règle
+  const [ruleModalOpen, setRuleModalOpen] = useState(false);
+  const [selectedRuleId, setSelectedRuleId] = useState<string | null>(null);
+
+  // SLICE 3: Trouver la règle sélectionnée
+  const selectedRule = useMemo(
+    () => rules.find(r => r.id === selectedRuleId) || null,
+    [rules, selectedRuleId]
+  );
+
+  // SLICE 3: Ouvrir le modal de règle
+  const handleViewRule = useCallback((ruleId: string) => {
+    setSelectedRuleId(ruleId);
+    setRuleModalOpen(true);
+  }, []);
+
+  // SLICE 3: Callback après modification de règle
+  const handleRuleSuccess = useCallback(async () => {
+    await refetchRules();
+    await refetch();
+  }, [refetchRules, refetch]);
 
   // Années disponibles (2022 à aujourd'hui)
   const currentYear = new Date().getFullYear();
@@ -349,9 +565,9 @@ export default function DepensesPage() {
       );
 
       const breakdownArray: ExpenseBreakdown[] = Object.entries(categoryData)
-        .map(([name, catData]) => ({
-          category_name: name,
-          category_code: name,
+        .map(([code, catData]) => ({
+          category_name: getPcgCategory(code)?.label || code,
+          category_code: code,
           total_amount: catData.total,
           count: catData.count,
           percentage:
@@ -372,7 +588,7 @@ export default function DepensesPage() {
     fetchChartData();
   }, [fetchChartData]);
 
-  // Onglets de statut avec compteurs
+  // Onglets de statut avec compteurs (simplifié: 3 onglets)
   const statusTabs = [
     {
       id: 'all',
@@ -391,18 +607,6 @@ export default function DepensesPage() {
       label: 'Classées',
       icon: <CheckCircle2 size={16} />,
       badge: stats.classified,
-    },
-    {
-      id: 'needs_review',
-      label: 'À revoir',
-      icon: <AlertCircle size={16} />,
-      badge: stats.needsReview,
-    },
-    {
-      id: 'ignored',
-      label: 'Ignorées',
-      icon: <XCircle size={16} />,
-      badge: stats.ignored,
     },
   ];
 
@@ -428,19 +632,78 @@ export default function DepensesPage() {
       title: 'Dépense classée',
       description: 'La règle a été créée et appliquée avec succès.',
     });
-    // Rafraîchir la liste
-    await refetch();
+    // Rafraîchir les listes (dépenses ET libellés groupés)
+    await Promise.all([refetch(), refetchLabels()]);
   };
 
   const handleViewAttachment = (expense: Expense) => {
     // Extraire l'ID de l'attachment depuis raw_data
-    const rawData = expense.raw_data as { attachments?: Array<{ id: string }> };
-    const attachmentId = rawData.attachments?.[0]?.id;
+    // Qonto utilise "attachment_ids" (tableau d'UUIDs)
+    const rawData = expense.raw_data as { attachment_ids?: string[] };
+    const attachmentId = rawData.attachment_ids?.[0];
 
     if (attachmentId) {
       window.open(`/api/qonto/attachments/${attachmentId}`, '_blank');
+    } else {
+      toast({
+        title: 'Aucune pièce jointe',
+        description: "Cette transaction n'a pas de justificatif attaché.",
+        variant: 'destructive',
+      });
     }
   };
+
+  // Handler pour ouvrir le modal de liaison depuis un libellé groupé
+  const handleLinkLabel = (
+    label: string,
+    transactionCount: number,
+    totalAmount: number
+  ) => {
+    setSelectedLabelForLink({ label, transactionCount, totalAmount });
+    setLinkModalOpen(true);
+  };
+
+  // Handler pour classifier un libellé depuis la vue groupée
+  const handleClassifyLabel = (
+    label: string,
+    transactionCount: number,
+    totalAmount: number
+  ) => {
+    // On crée un "faux" expense pour réutiliser le modal existant
+    setSelectedExpense({
+      id: '',
+      transaction_id: '', // Pas de transaction_id = mode label
+      label,
+      amount: totalAmount,
+      status: 'unclassified',
+      emitted_at: new Date().toISOString(),
+    } as Expense);
+    setClassifyModalOpen(true);
+  };
+
+  // Succès de la liaison depuis la vue groupée
+  const handleLinkSuccess = async () => {
+    toast({
+      title: 'Tiers associé',
+      description: 'Le libellé a été associé avec succès.',
+    });
+    await Promise.all([refetch(), refetchLabels()]);
+  };
+
+  // Toggle l'expansion d'un libellé
+  const handleToggleLabel = (label: string) => {
+    setExpandedLabel(prev => (prev === label ? null : label));
+  };
+
+  // Filtrer les transactions par libellé pour l'expansion
+  const getExpensesByLabel = useCallback(
+    (label: string) => {
+      return expenses.filter(
+        e => e.label === label && (e.status === 'unclassified' || !e.category)
+      );
+    },
+    [expenses]
+  );
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -448,11 +711,9 @@ export default function DepensesPage() {
       <div className="bg-white border-b border-slate-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-slate-900">
-              Gestion des Dépenses
-            </h1>
+            <h1 className="text-xl font-bold text-slate-900">Catégorisation</h1>
             <p className="text-sm text-slate-600">
-              Classez et catégorisez vos dépenses bancaires
+              Classez vos transactions bancaires (dépenses et revenus)
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -486,7 +747,7 @@ export default function DepensesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <KPICardUnified
             variant="elegant"
-            title="Total Dépenses"
+            title="Total Transactions"
             value={stats.total}
             icon={FileText}
           />
@@ -550,7 +811,7 @@ export default function DepensesPage() {
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
                 />
                 <Input
-                  placeholder="Rechercher par libellé ou fournisseur..."
+                  placeholder="Rechercher par libellé ou organisation..."
                   className="pl-9"
                   value={searchValue}
                   onChange={e => setSearchValue(e.target.value)}
@@ -558,6 +819,23 @@ export default function DepensesPage() {
                 />
               </div>
             </div>
+
+            {/* Filtre Dépenses/Entrées */}
+            <select
+              className="px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium"
+              value={filters.side || 'all'}
+              onChange={e =>
+                setFilters(prev => ({
+                  ...prev,
+                  side: e.target.value as 'debit' | 'credit' | 'all',
+                  category: undefined, // Reset category when changing side
+                }))
+              }
+            >
+              <option value="all">📊 Toutes transactions</option>
+              <option value="debit">📤 Dépenses (sorties)</option>
+              <option value="credit">📥 Entrées (recettes)</option>
+            </select>
 
             {/* Filtre année */}
             <select
@@ -578,7 +856,7 @@ export default function DepensesPage() {
               ))}
             </select>
 
-            {/* Filtre catégorie PCG */}
+            {/* Filtre catégorie PCG (adapté selon le side) */}
             <select
               className="px-3 py-2 border border-slate-200 rounded-lg text-sm"
               value={filters.category || ''}
@@ -590,7 +868,7 @@ export default function DepensesPage() {
               }
             >
               <option value="">Toutes catégories</option>
-              {PCG_SUGGESTED_CATEGORIES.map(cat => (
+              {getPcgCategoriesByType(filters.side || 'all').map(cat => (
                 <option key={cat.code} value={cat.code}>
                   {cat.code} - {cat.label}
                 </option>
@@ -617,7 +895,7 @@ export default function DepensesPage() {
               variant="ghost"
               size="sm"
               onClick={() => {
-                setFilters({ status: 'all' });
+                setFilters({ status: 'all', side: 'all' });
                 setSearchValue('');
               }}
             >
@@ -627,7 +905,7 @@ export default function DepensesPage() {
           </div>
         </div>
 
-        {/* Tableau */}
+        {/* Contenu principal - Vue groupée OU tableau selon l'onglet */}
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           {error ? (
             <div className="p-8 text-center">
@@ -641,46 +919,205 @@ export default function DepensesPage() {
                 Réessayer
               </Button>
             </div>
+          ) : filters.status === 'unclassified' ? (
+            /* VUE GROUPÉE PAR LIBELLÉ pour "Non classées" */
+            labelsLoading ? (
+              <div className="p-8 text-center">
+                <RefreshCw className="mx-auto h-12 w-12 text-blue-500 animate-spin mb-4" />
+                <p className="text-slate-600">Chargement des libellés...</p>
+              </div>
+            ) : uniqueLabels.length === 0 ? (
+              <div className="p-8 text-center">
+                <CheckCircle2 className="mx-auto h-12 w-12 text-green-500 mb-4" />
+                <p className="text-slate-600">
+                  Toutes les dépenses sont classées !
+                </p>
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {uniqueLabels.map(labelItem => {
+                  const isExpanded = expandedLabel === labelItem.label;
+                  const labelExpenses = isExpanded
+                    ? getExpensesByLabel(labelItem.label)
+                    : [];
+
+                  return (
+                    <div key={labelItem.label}>
+                      {/* En-tête du libellé groupé */}
+                      <div
+                        className="flex items-center justify-between p-4 hover:bg-slate-50 cursor-pointer"
+                        onClick={() => handleToggleLabel(labelItem.label)}
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <button
+                            type="button"
+                            className="p-1 hover:bg-slate-200 rounded"
+                          >
+                            {isExpanded ? (
+                              <ChevronDown
+                                size={18}
+                                className="text-slate-500"
+                              />
+                            ) : (
+                              <ChevronRight
+                                size={18}
+                                className="text-slate-500"
+                              />
+                            )}
+                          </button>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-slate-900 truncate">
+                              {labelItem.label}
+                            </p>
+                            <p className="text-sm text-slate-500">
+                              {labelItem.transaction_count} transaction(s) •{' '}
+                              {formatAmount(labelItem.total_amount)}
+                            </p>
+                          </div>
+                        </div>
+                        <div
+                          className="flex items-center gap-2"
+                          onClick={e => e.stopPropagation()}
+                        >
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              handleClassifyLabel(
+                                labelItem.label,
+                                labelItem.transaction_count,
+                                labelItem.total_amount
+                              )
+                            }
+                          >
+                            <Tag size={14} className="mr-1" />
+                            Classer
+                          </Button>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() =>
+                              handleLinkLabel(
+                                labelItem.label,
+                                labelItem.transaction_count,
+                                labelItem.total_amount
+                              )
+                            }
+                          >
+                            <LinkIcon size={14} className="mr-1" />
+                            Lier
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Transactions détaillées (si étendu) */}
+                      {isExpanded && labelExpenses.length > 0 && (
+                        <div className="bg-slate-50 border-t border-slate-100">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="bg-slate-100">
+                                <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">
+                                  Date
+                                </th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">
+                                  Détail
+                                </th>
+                                <th className="px-4 py-2 text-right text-xs font-medium text-slate-500 uppercase">
+                                  Montant
+                                </th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">
+                                  Actions
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {labelExpenses.map(expense => (
+                                <tr
+                                  key={expense.id}
+                                  className="border-t border-slate-100 hover:bg-slate-100"
+                                >
+                                  <td className="px-4 py-2 text-sm text-slate-600">
+                                    {formatDate(expense.emitted_at)}
+                                  </td>
+                                  <td className="px-4 py-2 text-sm text-slate-700">
+                                    {expense.transaction_counterparty_name ||
+                                      expense.label}
+                                  </td>
+                                  <td className="px-4 py-2 text-sm text-right font-medium text-red-600">
+                                    -{formatAmount(expense.amount)}
+                                  </td>
+                                  <td className="px-4 py-2">
+                                    <div className="flex items-center gap-1">
+                                      {expense.has_attachment && (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() =>
+                                            handleViewAttachment(expense)
+                                          }
+                                          className="text-blue-600"
+                                        >
+                                          <Eye size={14} />
+                                        </Button>
+                                      )}
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleClassify(expense)}
+                                      >
+                                        <Edit2 size={14} />
+                                      </Button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )
           ) : isLoading ? (
             <div className="p-8 text-center">
               <RefreshCw className="mx-auto h-12 w-12 text-blue-500 animate-spin mb-4" />
-              <p className="text-slate-600">Chargement des dépenses...</p>
+              <p className="text-slate-600">Chargement des transactions...</p>
             </div>
           ) : expenses.length === 0 ? (
             <div className="p-8 text-center">
               <FileText className="mx-auto h-12 w-12 text-slate-300 mb-4" />
-              <p className="text-slate-600">Aucune dépense trouvée</p>
+              <p className="text-slate-600">Aucune transaction trouvée</p>
               <p className="text-sm text-slate-500 mt-1">
                 Modifiez vos filtres ou lancez une synchronisation Qonto
               </p>
             </div>
           ) : (
+            /* TABLEAU CLASSIQUE pour les autres onglets */
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200">
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                       Date
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                       Libellé
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
                       Montant
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      À compléter
+                    </th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                       Statut
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      Fournisseur
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                       Catégorie
                     </th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      <Paperclip size={14} className="inline" />
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
@@ -693,6 +1130,7 @@ export default function DepensesPage() {
                       onClassify={handleClassify}
                       onViewAttachment={handleViewAttachment}
                       onLink={() => refetch()}
+                      onViewRule={handleViewRule}
                       onConfirmSuggestion={handleConfirmSuggestion}
                       suggestion={suggestionsMap.get(expense.id)}
                     />
@@ -725,8 +1163,42 @@ export default function DepensesPage() {
         counterpartyName={
           selectedExpense?.transaction_counterparty_name || undefined
         }
+        currentCategory={selectedExpense?.category || undefined}
+        existingRuleId={
+          selectedExpense
+            ? suggestionsMap.get(selectedExpense.id)?.matchedRule?.id
+            : undefined
+        }
+        transactionSide={selectedExpense?.side || 'debit'}
+        // TVA Qonto OCR - pré-remplit le formulaire si disponible
+        currentVatRate={selectedExpense?.vat_rate ?? undefined}
+        currentVatSource={selectedExpense?.vat_source ?? undefined}
+        currentVatBreakdown={selectedExpense?.vat_breakdown ?? undefined}
         onSuccess={handleClassifySuccess}
       />
+
+      {/* SLICE 3: Modal pour voir/modifier une règle */}
+      <RuleModal
+        open={ruleModalOpen}
+        onOpenChange={setRuleModalOpen}
+        rule={selectedRule}
+        onUpdate={updateMatchingRule}
+        previewApply={previewApply}
+        confirmApply={confirmApply}
+        onSuccess={handleRuleSuccess}
+      />
+
+      {/* Modal de liaison d'organisation (depuis la vue groupée) */}
+      {selectedLabelForLink && (
+        <OrganisationLinkingModal
+          open={linkModalOpen}
+          onOpenChange={setLinkModalOpen}
+          label={selectedLabelForLink.label}
+          transactionCount={selectedLabelForLink.transactionCount}
+          totalAmount={selectedLabelForLink.totalAmount}
+          onSuccess={handleLinkSuccess}
+        />
+      )}
     </div>
   );
 }

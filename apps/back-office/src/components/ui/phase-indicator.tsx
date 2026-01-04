@@ -1,26 +1,20 @@
 /**
- * 🚀 Phase Indicator Component - Déploiement Progressif
+ * Phase Indicator Component - Deploiement Progressif
  *
  * Composant pour afficher les indicateurs de phase pour les modules inactifs
  * Phase 1: Modules actifs
- * Phase 2+: Modules "Bientôt disponible" avec indicateurs visuels
- *
- * DISABLED: Dépend de @/lib/feature-flags non disponible dans package @verone/ui
- * TODO: Déplacer vers app principale
+ * Phase 2+: Modules "Bientot disponible" avec indicateurs visuels
  */
 
-// @ts-nocheck - DISABLED COMPONENT
+import { Badge } from '@verone/ui';
 import { cn } from '@verone/utils';
-import { Lock, Clock, Zap } from 'lucide-react';
-
 import {
   getModulePhase,
   getModuleDeploymentStatus,
   PHASE_LABELS,
   PHASE_COLORS,
 } from '@verone/utils/feature-flags';
-
-import { Badge } from './badge';
+import { Lock, Clock, Zap } from 'lucide-react';
 
 interface PhaseIndicatorProps {
   moduleName: string;
@@ -58,7 +52,7 @@ export function PhaseIndicator({
     if (phase > 0) {
       return PHASE_LABELS[phase as keyof typeof PHASE_LABELS];
     }
-    return 'Bientôt disponible';
+    return 'Bientot disponible';
   };
 
   const colorClass = PHASE_COLORS[status] || PHASE_COLORS['coming-soon'];
@@ -97,7 +91,7 @@ export function PhaseIndicator({
 }
 
 /**
- * Composant pour wrapper les modules inactifs avec indicateur et désactivation
+ * Composant pour wrapper les modules inactifs avec indicateur et desactivation
  */
 interface InactiveModuleWrapperProps {
   moduleName: string;
@@ -121,7 +115,7 @@ export function InactiveModuleWrapper({
 
   return (
     <div className={cn('relative opacity-60 cursor-not-allowed', className)}>
-      {/* Overlay pour désactiver l'interaction */}
+      {/* Overlay pour desactiver l'interaction */}
       <div className="absolute inset-0 z-10 bg-transparent" />
 
       {/* Contenu original */}
@@ -141,7 +135,7 @@ export function InactiveModuleWrapper({
         <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 hover:opacity-100 transition-opacity duration-200 z-30 whitespace-nowrap">
           {phase > 0
             ? `Disponible en ${PHASE_LABELS[phase as keyof typeof PHASE_LABELS]}`
-            : 'Bientôt disponible'}
+            : 'Bientot disponible'}
         </div>
       )}
     </div>
