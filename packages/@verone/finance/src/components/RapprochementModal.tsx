@@ -77,6 +77,20 @@ interface SalesOrder {
   matchReasons?: string[];
 }
 
+interface PurchaseOrder {
+  id: string;
+  po_number: string;
+  total_ht: number;
+  total_ttc: number;
+  supplier_name?: string;
+  supplier_id?: string;
+  created_at: string;
+  status: string;
+  // Score de matching (calculé côté client)
+  matchScore?: number;
+  matchReasons?: string[];
+}
+
 function formatAmount(amount: number): string {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
@@ -179,19 +193,28 @@ export function RapprochementModal({
   organisationId,
   onSuccess,
 }: RapprochementModalProps) {
-  // Simplification: 2 onglets seulement (Documents, Commandes)
-  const [activeTab, setActiveTab] = useState<'documents' | 'orders'>('orders');
+  // 3 onglets: Commandes Clients, Commandes Fournisseurs, Documents
+  const [activeTab, setActiveTab] = useState<
+    'orders' | 'purchase_orders' | 'documents'
+  >('orders');
   const [searchQuery, setSearchQuery] = useState('');
   const [documents, setDocuments] = useState<FinancialDocument[]>([]);
   const [orders, setOrders] = useState<SalesOrder[]>([]);
+  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLinking, setIsLinking] = useState(false);
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(
     null
   );
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [selectedPurchaseOrderId, setSelectedPurchaseOrderId] = useState<
+    string | null
+  >(null);
   const [allocatedAmount, setAllocatedAmount] = useState<string>('');
   const [transactionDate, setTransactionDate] = useState<string | undefined>();
+  const [transactionSide, setTransactionSide] = useState<
+    'credit' | 'debit' | undefined
+  >();
 
   const remainingAmount = Math.abs(amount);
 
@@ -201,15 +224,16 @@ export function RapprochementModal({
     try {
       const supabase = createClient();
 
-      // Récupérer la date de la transaction pour le scoring
+      // Récupérer la date et le côté (credit/debit) de la transaction pour le scoring
       if (transactionId) {
         const { data: txData } = await supabase
           .from('bank_transactions')
-          .select('emitted_at')
+          .select('emitted_at, side')
           .eq('id', transactionId)
           .single();
         if (txData) {
           setTransactionDate(txData.emitted_at);
+          setTransactionSide(txData.side);
         }
       }
 
@@ -330,6 +354,51 @@ export function RapprochementModal({
           }))
         );
       }
+
+      // Récupérer les commandes fournisseurs validées
+      const { data: poData, error: poError } = await supabase
+        .from('purchase_orders')
+        .select(
+          `
+          id,
+          po_number,
+          total_ht,
+          total_ttc,
+          created_at,
+          status,
+          supplier_id,
+          organisations!supplier_id(legal_name)
+        `
+        )
+        .in('status', ['validated', 'partially_received', 'received'])
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (!poError && poData) {
+        type PORow = {
+          id: string;
+          po_number: string;
+          total_ht: number;
+          total_ttc: number;
+          created_at: string;
+          status: string;
+          supplier_id: string;
+          organisations: { legal_name: string } | null;
+        };
+
+        setPurchaseOrders(
+          (poData as PORow[]).map(po => ({
+            id: po.id,
+            po_number: po.po_number,
+            total_ht: Number(po.total_ht) || 0,
+            total_ttc: Number(po.total_ttc) || Number(po.total_ht) * 1.2,
+            created_at: po.created_at,
+            status: po.status,
+            supplier_id: po.supplier_id,
+            supplier_name: po.organisations?.legal_name,
+          }))
+        );
+      }
     } catch (err) {
       console.error('[RapprochementModal] Error loading data:', err);
     } finally {
@@ -373,10 +442,44 @@ export function RapprochementModal({
     return result;
   }, [orders, amount, transactionDate, organisationId, counterpartyName]);
 
-  // Top suggestions (score >= 40)
+  // Top suggestions pour commandes clients (score >= 40)
   const suggestions = useMemo(() => {
     return ordersWithScores.filter(o => (o.matchScore || 0) >= 40).slice(0, 3);
   }, [ordersWithScores]);
+
+  // Calculer les scores de matching pour les commandes fournisseurs
+  const purchaseOrdersWithScores = useMemo(() => {
+    const result = purchaseOrders
+      .map(po => {
+        const { score, reasons } = calculateMatchScore(
+          amount,
+          transactionDate,
+          undefined, // Pas d'organisation liée pour les dépenses
+          {
+            total_ttc: po.total_ttc,
+            created_at: po.created_at,
+            organisation_id: po.supplier_id,
+            customer_name: po.supplier_name,
+          },
+          counterpartyName
+        );
+        return {
+          ...po,
+          matchScore: score,
+          matchReasons: reasons,
+        };
+      })
+      .sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+
+    return result;
+  }, [purchaseOrders, amount, transactionDate, counterpartyName]);
+
+  // Top suggestions pour commandes fournisseurs (score >= 40)
+  const purchaseOrderSuggestions = useMemo(() => {
+    return purchaseOrdersWithScores
+      .filter(o => (o.matchScore || 0) >= 40)
+      .slice(0, 3);
+  }, [purchaseOrdersWithScores]);
 
   // Charger les données au mount
   useEffect(() => {
@@ -387,7 +490,16 @@ export function RapprochementModal({
     // Reset des sélections
     setSelectedDocumentId(null);
     setSelectedOrderId(null);
+    setSelectedPurchaseOrderId(null);
     setAllocatedAmount('');
+
+    // Onglet par défaut selon le type de transaction
+    // Débit = dépense = commandes fournisseurs, Crédit = recette = commandes clients
+    if (amount < 0) {
+      setActiveTab('purchase_orders');
+    } else {
+      setActiveTab('orders');
+    }
   }, [open, fetchAvailableItems]);
 
   // Filtrer les documents
@@ -397,11 +509,18 @@ export function RapprochementModal({
       d.partner_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Filtrer les commandes (avec scores)
+  // Filtrer les commandes clients (avec scores)
   const filteredOrders = ordersWithScores.filter(
     o =>
       o.order_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
       o.customer_name?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Filtrer les commandes fournisseurs (avec scores)
+  const filteredPurchaseOrders = purchaseOrdersWithScores.filter(
+    po =>
+      po.po_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      po.supplier_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Lier à un document
@@ -474,10 +593,51 @@ export function RapprochementModal({
     }
   };
 
-  // Lier directement via suggestion (raccourci)
+  // Lier à une commande fournisseur
+  const handleLinkPurchaseOrder = async () => {
+    if (!transactionId || !selectedPurchaseOrderId) return;
+
+    setIsLinking(true);
+    try {
+      const supabase = createClient();
+      const amountToAllocate = allocatedAmount
+        ? parseFloat(allocatedAmount)
+        : remainingAmount;
+
+      const { error } = await (supabase.rpc as CallableFunction)(
+        'link_transaction_to_document',
+        {
+          p_transaction_id: transactionId,
+          p_purchase_order_id: selectedPurchaseOrderId,
+          p_allocated_amount: amountToAllocate,
+        }
+      );
+
+      if (error) throw error;
+
+      toast.success('Commande fournisseur liée');
+      setSelectedPurchaseOrderId(null);
+      setAllocatedAmount('');
+      onSuccess?.();
+      onOpenChange(false);
+    } catch (err) {
+      console.error('[RapprochementModal] Link purchase order error:', err);
+      toast.error('Erreur lors du rapprochement');
+    } finally {
+      setIsLinking(false);
+    }
+  };
+
+  // Lier directement via suggestion (raccourci) - commandes clients
   const handleQuickLink = async (orderId: string) => {
     setSelectedOrderId(orderId);
     // Le montant par défaut est le montant restant de la transaction
+    setAllocatedAmount(String(remainingAmount.toFixed(2)));
+  };
+
+  // Lier directement via suggestion (raccourci) - commandes fournisseurs
+  const handleQuickLinkPurchaseOrder = async (purchaseOrderId: string) => {
+    setSelectedPurchaseOrderId(purchaseOrderId);
     setAllocatedAmount(String(remainingAmount.toFixed(2)));
   };
 
@@ -586,16 +746,22 @@ export function RapprochementModal({
         {/* Tabs */}
         <Tabs
           value={activeTab}
-          onValueChange={v => setActiveTab(v as 'documents' | 'orders')}
+          onValueChange={v =>
+            setActiveTab(v as 'orders' | 'purchase_orders' | 'documents')
+          }
           className="flex-1 flex flex-col min-h-0"
         >
-          <TabsList className="grid grid-cols-2 w-full">
-            <TabsTrigger value="orders" className="gap-2">
-              <Package className="h-4 w-4" />
-              Commandes
+          <TabsList className="grid grid-cols-3 w-full">
+            <TabsTrigger value="orders" className="gap-1 text-xs px-2">
+              <Package className="h-3 w-3" />
+              Clients
             </TabsTrigger>
-            <TabsTrigger value="documents" className="gap-2">
-              <FileText className="h-4 w-4" />
+            <TabsTrigger value="purchase_orders" className="gap-1 text-xs px-2">
+              <Building2 className="h-3 w-3" />
+              Fournisseurs
+            </TabsTrigger>
+            <TabsTrigger value="documents" className="gap-1 text-xs px-2">
+              <FileText className="h-3 w-3" />
               Documents
             </TabsTrigger>
           </TabsList>
@@ -834,6 +1000,183 @@ export function RapprochementModal({
                     <>
                       <Plus className="h-4 w-4 mr-2" />
                       Ajouter cette commande
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Tab: Commandes Fournisseurs */}
+          <TabsContent value="purchase_orders" className="flex-1 min-h-0 mt-4">
+            {/* Recherche */}
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                placeholder="Rechercher par numéro, fournisseur..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
+            {/* Suggestions pour commandes fournisseurs */}
+            {purchaseOrderSuggestions.length > 0 &&
+              !selectedPurchaseOrderId && (
+                <div className="p-3 mb-4 bg-orange-50 border border-orange-200 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkles className="h-4 w-4 text-orange-600" />
+                    <span className="text-sm font-medium text-orange-800">
+                      Suggestions
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {purchaseOrderSuggestions.map(po => (
+                      <button
+                        key={po.id}
+                        onClick={() => handleQuickLinkPurchaseOrder(po.id)}
+                        className="w-full flex items-center justify-between p-2 bg-white rounded border border-orange-200 hover:border-orange-400 transition-colors text-left"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-4 w-4 text-slate-500" />
+                          <div>
+                            <span className="font-medium text-sm">
+                              #{po.po_number}
+                            </span>
+                            {po.supplier_name && (
+                              <span className="text-xs text-slate-500 ml-2">
+                                {po.supplier_name}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold">
+                            {formatAmount(po.total_ttc)}
+                          </span>
+                          <Badge
+                            variant="outline"
+                            className={`text-xs ${(po.matchScore || 0) >= 60 ? 'border-green-500 text-green-700' : 'border-orange-500 text-orange-700'}`}
+                          >
+                            {po.matchScore}%
+                          </Badge>
+                          <ArrowRight className="h-4 w-4 text-slate-400" />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+            <ScrollArea className="h-[180px]">
+              {isLoading ? (
+                <div className="flex items-center justify-center h-32">
+                  <RefreshCw className="h-6 w-6 animate-spin text-slate-400" />
+                </div>
+              ) : filteredPurchaseOrders.length === 0 ? (
+                <div className="text-center py-8 text-slate-500">
+                  <Building2 className="h-10 w-10 mx-auto mb-2 opacity-50" />
+                  <p>Aucune commande fournisseur trouvée</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {filteredPurchaseOrders.map(po => (
+                    <div
+                      key={po.id}
+                      onClick={() => setSelectedPurchaseOrderId(po.id)}
+                      className={`
+                        p-3 rounded-lg border cursor-pointer transition-colors
+                        ${selectedPurchaseOrderId === po.id ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'}
+                        ${(po.matchScore || 0) >= 40 ? 'border-l-4 border-l-orange-400' : ''}
+                      `}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          {selectedPurchaseOrderId === po.id ? (
+                            <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                              <Check className="h-4 w-4 text-blue-600" />
+                            </div>
+                          ) : (po.matchScore || 0) >= 40 ? (
+                            <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center">
+                              <Sparkles className="h-4 w-4 text-orange-600" />
+                            </div>
+                          ) : (
+                            <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center">
+                              <Building2 className="h-4 w-4 text-slate-500" />
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-medium text-sm">
+                              #{po.po_number}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              {po.supplier_name || 'Fournisseur'} -{' '}
+                              {formatDate(po.created_at)}
+                            </p>
+                            {po.matchReasons && po.matchReasons.length > 0 && (
+                              <p className="text-xs text-orange-600 mt-0.5">
+                                {po.matchReasons.join(' • ')}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right flex items-center gap-2">
+                          <div>
+                            <span className="font-semibold text-sm">
+                              {formatAmount(po.total_ttc)}
+                            </span>
+                            {(po.matchScore || 0) > 0 && (
+                              <Badge
+                                variant="outline"
+                                className={`ml-2 text-xs ${
+                                  (po.matchScore || 0) >= 60
+                                    ? 'border-green-500 text-green-700'
+                                    : (po.matchScore || 0) >= 40
+                                      ? 'border-orange-500 text-orange-700'
+                                      : 'border-slate-300 text-slate-500'
+                                }`}
+                              >
+                                {po.matchScore}%
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+
+            {selectedPurchaseOrderId && (
+              <div className="pt-4 border-t mt-4 space-y-3">
+                <div>
+                  <label className="text-sm text-slate-600">
+                    Montant à allouer (€)
+                  </label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder={String(remainingAmount.toFixed(2))}
+                    value={allocatedAmount}
+                    onChange={e => setAllocatedAmount(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <Button
+                  className="w-full"
+                  onClick={handleLinkPurchaseOrder}
+                  disabled={isLinking}
+                >
+                  {isLinking ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Liaison...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Ajouter cette commande fournisseur
                     </>
                   )}
                 </Button>

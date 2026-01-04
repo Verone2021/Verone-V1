@@ -1,7 +1,10 @@
 'use client';
 
+import { useState } from 'react';
+
 import { useRouter } from 'next/navigation';
 
+import { InvoiceCreateFromOrderModal } from '@verone/finance/components';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
@@ -95,6 +98,7 @@ export function OrderDetailModal({
   // NOTE: showShippingModal supprimé - modal sera recréé ultérieurement
   const { markAsPaid } = useSalesOrders();
   const router = useRouter();
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
 
   if (!order) return null;
 
@@ -521,6 +525,30 @@ export function OrderDetailModal({
                 </CardContent>
               </Card>
 
+              {/* Card Facturation */}
+              {!readOnly &&
+                order.status !== 'draft' &&
+                order.status !== 'cancelled' && (
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <FileText className="h-3 w-3" />
+                        Facturation
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ButtonV2
+                        size="sm"
+                        className="w-full"
+                        onClick={() => setShowInvoiceModal(true)}
+                      >
+                        <FileText className="h-3 w-3 mr-1" />
+                        Générer facture
+                      </ButtonV2>
+                    </CardContent>
+                  </Card>
+                )}
+
               {/* Card Expédition (comme Réception dans PurchaseOrderDetailModal) */}
               <Card>
                 <CardHeader className="pb-3">
@@ -647,6 +675,31 @@ export function OrderDetailModal({
       </Dialog>
 
       {/* NOTE: Modal Gestion Expédition supprimé - sera recréé ultérieurement */}
+
+      {/* Modal Création Facture */}
+      <InvoiceCreateFromOrderModal
+        order={
+          order
+            ? {
+                id: order.id,
+                order_number: order.order_number,
+                total_ht: order.total_ht,
+                total_ttc: order.total_ttc,
+                tax_rate: order.tax_rate,
+                currency: order.currency,
+                payment_terms: order.payment_terms || 'net_30',
+                organisations: order.organisations,
+                individual_customers: order.individual_customers,
+                sales_order_items: order.sales_order_items,
+              }
+            : null
+        }
+        open={showInvoiceModal}
+        onOpenChange={setShowInvoiceModal}
+        onSuccess={() => {
+          onUpdate?.();
+        }}
+      />
     </>
   );
 }
