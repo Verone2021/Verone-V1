@@ -78,6 +78,14 @@ export interface SalesOrder {
   created_at: string;
   updated_at: string;
 
+  // 🆕 Rapprochement bancaire (jointure transaction_document_links)
+  is_matched?: boolean;
+  matched_transaction_id?: string | null;
+  matched_transaction_label?: string | null;
+  matched_transaction_amount?: number | null;
+  matched_transaction_emitted_at?: string | null; // Date de paiement
+  matched_transaction_attachment_ids?: string[] | null; // Pour lien Qonto
+
   // Relations jointes (polymorphiques selon customer_type)
   organisations?: {
     id: string;
@@ -342,6 +350,52 @@ export function useSalesOrders() {
 
         if (error) throw error;
 
+        // 🆕 Récupérer les rapprochements bancaires (batch pour performance)
+        const orderIds = (ordersData || []).map(o => o.id);
+        const matchedOrdersMap = new Map<
+          string,
+          {
+            transaction_id: string;
+            label: string;
+            amount: number;
+            emitted_at: string | null;
+            attachment_ids: string[] | null;
+          }
+        >();
+
+        if (orderIds.length > 0) {
+          const { data: links } = await supabase
+            .from('transaction_document_links')
+            .select(
+              `
+              sales_order_id,
+              transaction_id,
+              bank_transactions!inner (
+                id,
+                label,
+                amount,
+                emitted_at,
+                attachment_ids
+              )
+            `
+            )
+            .in('sales_order_id', orderIds)
+            .eq('link_type', 'sales_order');
+
+          for (const link of links || []) {
+            if (link.sales_order_id && link.bank_transactions) {
+              const bt = link.bank_transactions as any;
+              matchedOrdersMap.set(link.sales_order_id, {
+                transaction_id: bt.id,
+                label: bt.label || '',
+                amount: bt.amount || 0,
+                emitted_at: bt.emitted_at || null,
+                attachment_ids: bt.attachment_ids || null,
+              });
+            }
+          }
+        }
+
         // 🆕 Récupérer les infos des créateurs (batch pour performance)
         const uniqueCreatorIds = [
           ...new Set(
@@ -428,10 +482,21 @@ export function useSalesOrders() {
               ? creatorsMap.get(order.created_by)
               : null;
 
+            // 🆕 Ajouter info rapprochement bancaire
+            const matchInfo = matchedOrdersMap.get(order.id);
+
             return {
               ...order,
               sales_order_items: enrichedItems,
               creator: creatorInfo || null,
+              // 🆕 Rapprochement
+              is_matched: !!matchInfo,
+              matched_transaction_id: matchInfo?.transaction_id || null,
+              matched_transaction_label: matchInfo?.label || null,
+              matched_transaction_amount: matchInfo?.amount || null,
+              matched_transaction_emitted_at: matchInfo?.emitted_at || null,
+              matched_transaction_attachment_ids:
+                matchInfo?.attachment_ids || null,
               ...customerData,
             };
           })
@@ -560,10 +625,55 @@ export function useSalesOrders() {
           }
         }
 
+        // 🆕 Récupérer info rapprochement bancaire
+        let matchInfo: {
+          transaction_id: string;
+          label: string;
+          amount: number;
+          emitted_at: string | null;
+          attachment_ids: string[] | null;
+        } | null = null;
+
+        const { data: linkData } = await supabase
+          .from('transaction_document_links')
+          .select(
+            `
+            transaction_id,
+            bank_transactions!inner (
+              id,
+              label,
+              amount,
+              emitted_at,
+              attachment_ids
+            )
+          `
+          )
+          .eq('sales_order_id', orderId)
+          .eq('link_type', 'sales_order')
+          .maybeSingle();
+
+        if (linkData?.bank_transactions) {
+          const bt = linkData.bank_transactions as any;
+          matchInfo = {
+            transaction_id: bt.id,
+            label: bt.label || '',
+            amount: bt.amount || 0,
+            emitted_at: bt.emitted_at || null,
+            attachment_ids: bt.attachment_ids || null,
+          };
+        }
+
         const orderWithCustomer = {
           ...orderData,
           sales_order_items: enrichedItems,
           creator: creatorInfo,
+          // 🆕 Rapprochement
+          is_matched: !!matchInfo,
+          matched_transaction_id: matchInfo?.transaction_id || null,
+          matched_transaction_label: matchInfo?.label || null,
+          matched_transaction_amount: matchInfo?.amount || null,
+          matched_transaction_emitted_at: matchInfo?.emitted_at || null,
+          matched_transaction_attachment_ids: matchInfo?.attachment_ids || null,
           ...customerData,
         };
 

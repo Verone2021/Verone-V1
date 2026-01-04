@@ -2,16 +2,7 @@
 
 import { useEffect } from 'react';
 
-import {
-  AlertCircle,
-  TrendingUp,
-  BarChart3,
-  Euro,
-  FileText,
-  Download,
-  Package,
-} from 'lucide-react';
-
+import { useToast } from '@verone/common/hooks';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -30,12 +21,21 @@ import {
   TableHeader,
   TableRow,
 } from '@verone/ui';
-import { useToast } from '@verone/common/hooks';
+import {
+  AlertCircle,
+  TrendingUp,
+  BarChart3,
+  Euro,
+  FileText,
+  Download,
+  Package,
+} from 'lucide-react';
+
 import {
   useABCAnalysis,
   ABC_CLASSES,
   type ABCReportData,
-} from '@verone/finance/hooks';
+} from '../../hooks/use-abc-analysis';
 
 interface ABCAnalysisViewProps {
   // Future : dateFrom, dateTo si on veut filtrer par période
