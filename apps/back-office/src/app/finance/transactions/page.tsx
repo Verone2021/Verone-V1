@@ -76,6 +76,7 @@ import {
   ChevronRight,
   Lock,
   FileX,
+  FileCheck,
   CheckCircle,
   ShoppingCart,
   Zap,
@@ -1125,6 +1126,26 @@ function TransactionsPageV2() {
   const handleIgnore = async () => handleToggleIgnore(true);
   const handleUnignore = async () => handleToggleIgnore(false);
 
+  // Toggle justification optional (remplace "Ignorer")
+  const handleToggleJustificationOptional = async (optional: boolean) => {
+    if (!selectedTransaction) return;
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('bank_transactions')
+        .update({ justification_optional: optional })
+        .eq('id', selectedTransaction.id);
+
+      if (error) throw error;
+      toast.success(
+        optional ? 'Justificatif marqué facultatif' : 'Justificatif requis'
+      );
+      await refresh();
+    } catch (err) {
+      toast.error('Erreur lors de la mise à jour');
+    }
+  };
+
   // CCA handler
   const handleMarkCCA = async () => {
     if (!selectedTransaction) return;
@@ -1460,19 +1481,16 @@ function TransactionsPageV2() {
                         )}
                       </div>
 
-                      {/* Justificatif avec icône + nom fichier OU bouton Upload */}
+                      {/* Justificatif: PJ présente / Facultatif (vert) / Upload (rouge) */}
                       <div className="w-36">
                         {(() => {
                           // SOURCE UNIQUE: tx.attachment_ids (colonne directe)
-                          // NE PAS utiliser raw_data (désynchronisé après DELETE)
                           const hasAttachment =
                             (tx.attachment_ids?.length ?? 0) > 0;
-
                           const attachmentId = tx.attachment_ids?.[0];
-                          const fileName = 'Justificatif';
 
                           if (hasAttachment && attachmentId) {
-                            // AVEC pièce jointe : Icône + nom cliquable
+                            // AVEC pièce jointe : Icône + nom cliquable (bleu)
                             return (
                               <button
                                 onClick={e => {
@@ -1483,16 +1501,24 @@ function TransactionsPageV2() {
                                   );
                                 }}
                                 className="flex items-center gap-1.5 text-blue-500 hover:text-blue-700 transition-colors max-w-full"
-                                title={`Voir: ${fileName}`}
+                                title="Voir le justificatif"
                               >
                                 <Paperclip className="h-3.5 w-3.5 flex-shrink-0" />
                                 <span className="text-xs truncate">
-                                  {fileName}
+                                  Justificatif
                                 </span>
                               </button>
                             );
+                          } else if (tx.justification_optional) {
+                            // Justificatif facultatif : Texte vert (pas d'upload)
+                            return (
+                              <span className="flex items-center gap-1.5 text-green-600">
+                                <FileCheck className="h-3.5 w-3.5 flex-shrink-0" />
+                                <span className="text-xs">Facultatif</span>
+                              </span>
+                            );
                           } else {
-                            // SANS pièce jointe : Bouton Upload (ouvre modal directement)
+                            // SANS pièce jointe + requis : Upload en rouge
                             return (
                               <button
                                 onClick={e => {
@@ -1500,8 +1526,8 @@ function TransactionsPageV2() {
                                   setUploadTransaction(tx);
                                   setShowUploadModal(true);
                                 }}
-                                className="flex items-center gap-1.5 text-slate-400 hover:text-blue-500 transition-colors"
-                                title="Déposer un justificatif"
+                                className="flex items-center gap-1.5 text-red-500 hover:text-red-700 transition-colors"
+                                title="Déposer un justificatif (requis)"
                               >
                                 <Upload className="h-3.5 w-3.5 flex-shrink-0" />
                                 <span className="text-xs">Upload</span>
@@ -2125,24 +2151,24 @@ function TransactionsPageV2() {
 
                   <Separator className="my-0.5" />
 
-                  {/* Ignorer - toujours disponible */}
-                  {selectedTransaction.unified_status === 'ignored' ? (
+                  {/* Justificatif facultatif/requis */}
+                  {selectedTransaction.justification_optional ? (
                     <Button
                       variant="outline"
                       className="w-full justify-start gap-1.5 h-7 text-xs text-green-600 hover:text-green-700"
-                      onClick={handleUnignore}
+                      onClick={() => handleToggleJustificationOptional(false)}
                     >
-                      <RefreshCw className="h-3 w-3" />
-                      Annuler l'ignoré
+                      <FileCheck className="h-3 w-3" />
+                      Justificatif requis
                     </Button>
                   ) : (
                     <Button
                       variant="ghost"
                       className="w-full justify-start gap-1.5 h-7 text-xs text-muted-foreground"
-                      onClick={handleIgnore}
+                      onClick={() => handleToggleJustificationOptional(true)}
                     >
-                      <XCircle className="h-3 w-3" />
-                      Ignorer
+                      <FileX className="h-3 w-3" />
+                      Justificatif facultatif
                     </Button>
                   )}
                 </div>
