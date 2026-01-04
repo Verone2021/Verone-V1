@@ -17,12 +17,16 @@ export {
   getPcgCategory,
   getPcgParentClass,
   getPcgChildren,
+  getPcgColor,
+  getPcgCategoriesByType,
   PCG_CLASSES,
   PCG_ACCOUNTS,
   PCG_SUBACCOUNTS,
   ALL_PCG_CATEGORIES,
   PCG_MAP,
   PCG_SUGGESTED_CATEGORIES,
+  PCG_SUGGESTED_INCOME_CATEGORIES,
+  PCG_TO_CATEGORY_COLOR,
 } from './lib/pcg-categories';
 
 // Lib - TVA (French VAT)

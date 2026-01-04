@@ -60,6 +60,7 @@ export interface Organisation {
   // Classification business
   industry_sector: string | null;
   supplier_segment: string | null;
+  is_service_provider: boolean | null; // true = prestataire, false = fournisseur de biens
 
   // Informations commerciales
   payment_terms: string | null;
@@ -95,6 +96,8 @@ export interface OrganisationFilters {
   type?: 'supplier' | 'customer' | 'partner' | 'internal';
   customer_type?: 'professional' | 'individual' | 'all';
   is_active?: boolean;
+  /** Filtre prestataire (true) vs fournisseur (false) pour type=supplier */
+  is_service_provider?: boolean;
   search?: string;
   country?: string;
   include_archived?: boolean;
@@ -280,6 +283,19 @@ export function useOrganisations(filters?: OrganisationFilters) {
       // Apply filters
       if (filters?.type) {
         query = query.eq('type', filters.type);
+      }
+
+      // Filtre is_service_provider (prestataire vs fournisseur)
+      if (filters?.is_service_provider !== undefined) {
+        if (filters.is_service_provider === true) {
+          // Prestataires: is_service_provider = true
+          query = query.eq('is_service_provider', true);
+        } else {
+          // Fournisseurs: is_service_provider = false OU NULL
+          query = query.or(
+            'is_service_provider.eq.false,is_service_provider.is.null'
+          );
+        }
       }
 
       if (filters?.is_active !== undefined) {
@@ -810,6 +826,7 @@ export function useOrganisation(id: string) {
             legal_form,
             industry_sector,
             supplier_segment,
+            is_service_provider,
             payment_terms,
             delivery_time_days,
             minimum_order_amount,
