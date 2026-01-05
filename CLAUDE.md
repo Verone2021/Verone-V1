@@ -102,3 +102,5 @@ feature/*  → Branches de developpement
 
 _Version 6.0.0 - 2025-12-19_
 _Structure Anthropic Best Practices_
+
+<!-- Trigger deploy 2026-01-05 -->
