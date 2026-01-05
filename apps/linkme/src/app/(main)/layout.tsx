@@ -1,3 +1,4 @@
+// Deploy: 2026-01-05
 import type { Metadata } from 'next';
 
 import { Footer } from '../../components/layout/Footer';
