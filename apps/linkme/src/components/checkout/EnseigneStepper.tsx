@@ -14,6 +14,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 
+import { useEnseigneOrganisations } from '@/lib/hooks/use-enseigne-organisations';
 import { useSubmitEnseigneOrder } from '@/lib/hooks/use-submit-enseigne-order';
 
 // =====================================================================
@@ -132,6 +133,10 @@ export function EnseigneStepper({
 
   // Hook de soumission
   const { submitOrder, isSubmitting } = useSubmitEnseigneOrder();
+
+  // Hook pour charger les organisations de l'enseigne
+  const { data: organisations = [], isLoading: isLoadingOrganisations } =
+    useEnseigneOrganisations(affiliateId);
 
   // Calcul du total
   const cartTotal = cart.reduce(
@@ -318,6 +323,8 @@ export function EnseigneStepper({
             errors={errors}
             updateData={updateData}
             affiliateId={affiliateId}
+            organisations={organisations}
+            isLoadingOrganisations={isLoadingOrganisations}
           />
         )}
         {currentStep === 2 && (
@@ -401,9 +408,22 @@ interface Step1Props {
   errors: Record<string, string>;
   updateData: (updates: Partial<EnseigneStepperData>) => void;
   affiliateId: string;
+  organisations: Array<{
+    id: string;
+    legal_name: string;
+    trade_name: string | null;
+    city: string | null;
+  }>;
+  isLoadingOrganisations: boolean;
 }
 
-function Step1Demandeur({ data, errors, updateData }: Step1Props) {
+function Step1Demandeur({
+  data,
+  errors,
+  updateData,
+  organisations,
+  isLoadingOrganisations,
+}: Step1Props) {
   return (
     <div className="space-y-6">
       {/* Type de demandeur */}
@@ -614,21 +634,37 @@ function Step1Demandeur({ data, errors, updateData }: Step1Props) {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Selectionner un restaurant
             </label>
-            {/* TODO: Charger les organisations depuis l'affilié */}
-            <select
-              value={data.existingOrganisationId || ''}
-              onChange={e =>
-                updateData({ existingOrganisationId: e.target.value || null })
-              }
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                errors.existingOrganisationId
-                  ? 'border-red-500'
-                  : 'border-gray-300'
-              }`}
-            >
-              <option value="">-- Choisir un restaurant --</option>
-              {/* Les options seront chargees dynamiquement */}
-            </select>
+            {isLoadingOrganisations ? (
+              <div className="flex items-center gap-2 py-2 text-gray-500">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm">Chargement des restaurants...</span>
+              </div>
+            ) : organisations.length === 0 ? (
+              <p className="text-sm text-amber-600 py-2">
+                Aucun restaurant disponible. Veuillez creer un nouveau
+                restaurant.
+              </p>
+            ) : (
+              <select
+                value={data.existingOrganisationId || ''}
+                onChange={e =>
+                  updateData({ existingOrganisationId: e.target.value || null })
+                }
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                  errors.existingOrganisationId
+                    ? 'border-red-500'
+                    : 'border-gray-300'
+                }`}
+              >
+                <option value="">-- Choisir un restaurant --</option>
+                {organisations.map(org => (
+                  <option key={org.id} value={org.id}>
+                    {org.trade_name || org.legal_name}
+                    {org.city ? ` (${org.city})` : ''}
+                  </option>
+                ))}
+              </select>
+            )}
             {errors.existingOrganisationId && (
               <p className="mt-1 text-xs text-red-600">
                 {errors.existingOrganisationId}

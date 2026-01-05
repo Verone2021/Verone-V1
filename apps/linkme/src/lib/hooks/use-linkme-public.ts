@@ -32,7 +32,7 @@ export function useFeaturedSelections() {
         `
         )
         .eq('status', 'active')
-        .eq('is_public', true)
+        .not('published_at', 'is', null)
         .order('created_at', { ascending: false })
         .limit(8);
 
@@ -96,13 +96,13 @@ export function useAffiliateBySlug(slug: string) {
         throw affiliateError;
       }
 
-      // Récupérer ses sélections publiques
+      // Récupérer ses sélections publiques (published_at NOT NULL)
       const { data: selections, error: selectionsError } = await supabase
         .from('linkme_selections')
         .select('*')
         .eq('affiliate_id', affiliate.id)
         .eq('status', 'active')
-        .eq('is_public', true)
+        .not('published_at', 'is', null)
         .order('created_at', { ascending: false });
 
       if (selectionsError) {

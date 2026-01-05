@@ -33,15 +33,28 @@ export interface LinkMeSelection {
   slug: string;
   description: string | null;
   image_url: string | null;
+  /**
+   * @deprecated Utiliser published_at !== null à la place
+   * Gardé pour compatibilité, dérivé de published_at
+   */
   is_public: boolean;
-  share_token: string;
-  status: 'draft' | 'active' | 'archived';
+  share_token: string | null;
   products_count: number;
   views_count: number;
   orders_count: number;
+  /** Timestamp de publication. null = brouillon, non-null = publié */
   published_at: string | null;
+  /** Timestamp d'archivage. null = actif, non-null = archivé */
+  archived_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+/**
+ * Helper: détermine si une sélection est publiée
+ */
+export function isSelectionPublished(selection: LinkMeSelection): boolean {
+  return selection.published_at !== null && selection.archived_at === null;
 }
 
 export interface LinkMeSelectionItem {
@@ -231,11 +244,12 @@ export const AFFILIATE_STATUS_LABELS: Record<
   suspended: 'Suspendu',
 };
 
-export const SELECTION_STATUS_LABELS: Record<
-  LinkMeSelection['status'],
-  string
-> = {
-  draft: 'Brouillon',
-  active: 'Active',
-  archived: 'Archivée',
-};
+/**
+ * Labels pour l'état de publication d'une sélection
+ * Basé sur published_at et archived_at
+ */
+export function getSelectionStatusLabel(selection: LinkMeSelection): string {
+  if (selection.archived_at) return 'Archivée';
+  if (selection.published_at) return 'Publiée';
+  return 'Brouillon';
+}

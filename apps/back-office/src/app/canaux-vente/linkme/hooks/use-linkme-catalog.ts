@@ -61,6 +61,8 @@ export interface LinkMeCatalogProduct {
   product_image_url: string | null;
   product_stock_real: number;
   product_is_active: boolean;
+  /** Statut reel du produit (source de verite) */
+  product_status: 'active' | 'preorder' | 'discontinued' | 'draft';
   // Hiérarchie de catégorisation
   subcategory_id: string | null;
   subcategory_name: string | null;
@@ -315,6 +317,7 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
           product_image_url: imageMap.get(cp.product_id) || null,
           product_stock_real: cp.products?.stock_real ?? 0,
           product_is_active: cp.products?.product_status === 'active',
+          product_status: cp.products?.product_status || 'draft',
           // Hiérarchie de catégorisation
           subcategory_id: hierarchy?.subcategory_id || null,
           subcategory_name: hierarchy?.subcategory_name || null,

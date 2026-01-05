@@ -492,6 +492,7 @@ export default function SelectionDetailPage({
                 <TableRow>
                   <TableHead className="w-16">Image</TableHead>
                   <TableHead>Produit</TableHead>
+                  <TableHead className="text-center w-20">Stock</TableHead>
                   <TableHead className="text-right">Catalogue HT</TableHead>
                   <TableHead className="text-right">
                     Prix vente LinkMe HT
@@ -560,6 +561,25 @@ export default function SelectionDetailPage({
                             {item.product?.sku}
                           </p>
                         </div>
+                      </TableCell>
+                      {/* Stock reel (source de verite) */}
+                      <TableCell className="text-center">
+                        {(() => {
+                          const stock = item.product?.stock_real ?? 0;
+                          let badgeClass = '';
+                          if (stock > 10) {
+                            badgeClass = 'bg-green-100 text-green-700';
+                          } else if (stock > 0) {
+                            badgeClass = 'bg-orange-100 text-orange-700';
+                          } else {
+                            badgeClass = 'bg-red-100 text-red-700';
+                          }
+                          return (
+                            <Badge variant="outline" className={badgeClass}>
+                              {stock}
+                            </Badge>
+                          );
+                        })()}
                       </TableCell>
                       {/* Prix Catalogue HT */}
                       <TableCell className="text-right font-mono text-muted-foreground">

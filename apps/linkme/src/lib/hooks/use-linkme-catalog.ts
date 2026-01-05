@@ -123,35 +123,48 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
     .map((cp: any) => cp.products?.supplier_id)
     .filter(Boolean);
 
-  // Fetch images primaires
-  const { data: images } = await (supabase as any)
-    .from('product_images')
-    .select('product_id, public_url')
-    .in('product_id', productIds)
-    .eq('is_primary', true);
+  // Fetch parallele: images, sous-categories, fournisseurs
+  const [imagesResult, subcategoriesResult, suppliersResult] =
+    await Promise.all([
+      // Images primaires
+      (supabase as any)
+        .from('product_images')
+        .select('product_id, public_url')
+        .in('product_id', productIds)
+        .eq('is_primary', true),
 
-  const imageMap = new Map(
-    (images || []).map((img: any) => [img.product_id, img.public_url])
-  );
-
-  // Fetch sous-catégories avec hiérarchie
-  const { data: subcategories } = await (supabase as any)
-    .from('subcategories')
-    .select(
-      `
-      id,
-      name,
-      category:categories!inner(
+      // Sous-catégories avec hiérarchie
+      (supabase as any)
+        .from('subcategories')
+        .select(
+          `
         id,
         name,
-        family:families!inner(
+        category:categories!inner(
           id,
-          name
+          name,
+          family:families!inner(
+            id,
+            name
+          )
         )
-      )
-    `
-    )
-    .in('id', subcategoryIds);
+      `
+        )
+        .in('id', subcategoryIds),
+
+      // Fournisseurs
+      (supabase as any)
+        .from('organisations')
+        .select('id, legal_name, trade_name')
+        .in('id', supplierIds),
+    ]);
+
+  const imageMap = new Map(
+    (imagesResult.data || []).map((img: any) => [
+      img.product_id,
+      img.public_url,
+    ])
+  );
 
   interface CategoryData {
     subcategory_name: string;
@@ -160,7 +173,7 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
   }
 
   const categoryMap = new Map<string, CategoryData>();
-  (subcategories || []).forEach((sc: any) => {
+  (subcategoriesResult.data || []).forEach((sc: any) => {
     categoryMap.set(sc.id, {
       subcategory_name: sc.name || '',
       category_name: sc.category?.name || '',
@@ -168,14 +181,11 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
     });
   });
 
-  // Fetch fournisseurs
-  const { data: suppliers } = await (supabase as any)
-    .from('organisations')
-    .select('id, legal_name, trade_name')
-    .in('id', supplierIds);
-
   const supplierMap = new Map(
-    (suppliers || []).map((s: any) => [s.id, s.trade_name || s.legal_name])
+    (suppliersResult.data || []).map((s: any) => [
+      s.id,
+      s.trade_name || s.legal_name,
+    ])
   );
 
   // Mapper les données
@@ -233,7 +243,7 @@ export function useLinkMeCatalogProducts() {
     queryKey: ['linkme-catalog-products'],
     queryFn: fetchCatalogProducts,
     staleTime: 30000,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
   });
 }
 

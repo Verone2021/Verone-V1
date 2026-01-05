@@ -56,6 +56,14 @@ import {
   TableRow,
 } from '@verone/ui';
 import { Tabs, TabsList, TabsTrigger } from '@verone/ui';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@verone/ui';
 import { cn, formatCurrency, formatDate } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import {
@@ -77,6 +85,11 @@ import {
   ChevronDown,
   ExternalLink,
   Link2,
+  Banknote,
+  CreditCard,
+  Building2,
+  Receipt,
+  CheckSquare,
 } from 'lucide-react';
 
 import type { SalesOrder, SalesOrderStatus } from '../hooks/use-sales-orders';
@@ -253,11 +266,12 @@ export function SalesOrdersTable({
   const {
     loading,
     orders,
-    stats,
+    stats: _stats,
     fetchOrders,
     fetchStats,
     updateStatus,
     deleteOrder,
+    markAsManuallyPaid,
   } = useSalesOrders();
 
   const { toast } = useToast();
@@ -1130,7 +1144,7 @@ export function SalesOrdersTable({
                     </TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead>Paiement</TableHead>
-                    <TableHead>Rapproché</TableHead>
+                    <TableHead>Paiement V2</TableHead>
                     <TableHead className="w-20 text-center">Articles</TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-gray-50"
@@ -1237,15 +1251,102 @@ export function SalesOrdersTable({
                             )}
                           </TableCell>
                           <TableCell>
-                            {order.payment_status_v2 === 'paid' ? (
-                              <Badge className="bg-green-100 text-green-800">
-                                Rapproché
-                              </Badge>
-                            ) : (
-                              <Badge className="bg-orange-100 text-orange-800">
-                                Non rapproché
-                              </Badge>
-                            )}
+                            <div className="flex items-center gap-2">
+                              {order.payment_status_v2 === 'paid' ? (
+                                <Badge className="bg-green-100 text-green-800">
+                                  Payé
+                                  {order.manual_payment_type && (
+                                    <span className="ml-1 opacity-70">
+                                      (manuel)
+                                    </span>
+                                  )}
+                                </Badge>
+                              ) : (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <button className="flex items-center gap-1 cursor-pointer">
+                                      <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-200 transition-colors">
+                                        En attente
+                                        <ChevronDown className="h-3 w-3 ml-1" />
+                                      </Badge>
+                                    </button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="start">
+                                    <DropdownMenuLabel>
+                                      Marquer comme payé
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        void markAsManuallyPaid(
+                                          order.id,
+                                          'cash'
+                                        )
+                                      }
+                                    >
+                                      <Banknote className="h-4 w-4 mr-2" />
+                                      Espèces
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        void markAsManuallyPaid(
+                                          order.id,
+                                          'check'
+                                        )
+                                      }
+                                    >
+                                      <Receipt className="h-4 w-4 mr-2" />
+                                      Chèque
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        void markAsManuallyPaid(
+                                          order.id,
+                                          'transfer_other'
+                                        )
+                                      }
+                                    >
+                                      <Building2 className="h-4 w-4 mr-2" />
+                                      Virement autre banque
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        void markAsManuallyPaid(
+                                          order.id,
+                                          'card'
+                                        )
+                                      }
+                                    >
+                                      <CreditCard className="h-4 w-4 mr-2" />
+                                      Carte bancaire
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        void markAsManuallyPaid(
+                                          order.id,
+                                          'compensation'
+                                        )
+                                      }
+                                    >
+                                      <CheckSquare className="h-4 w-4 mr-2" />
+                                      Compensation
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        void markAsManuallyPaid(
+                                          order.id,
+                                          'verified_bubble'
+                                        )
+                                      }
+                                    >
+                                      <CheckCircle className="h-4 w-4 mr-2" />
+                                      Vérifié Bubble
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell className="text-center">
                             <span className="font-medium">{items.length}</span>

@@ -45,6 +45,8 @@ export interface Expense {
   organisation_type: string | null;
   // Computed
   has_attachment: boolean;
+  /** Si true, le justificatif n'est pas requis (petites dépenses) */
+  justification_optional: boolean;
   // SLICE 3: Règle appliquée (pour verrouillage UI)
   applied_rule_id: string | null;
   rule_match_value: string | null;

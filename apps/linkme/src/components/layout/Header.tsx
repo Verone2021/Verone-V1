@@ -41,7 +41,7 @@ const STORAGE_ROLES: LinkMeRole[] = ['enseigne_admin', 'org_independante'];
 
 export function Header() {
   const { itemCount, openCart } = useCart();
-  const { user, linkMeRole, loading } = useAuth();
+  const { user, linkMeRole, initializing, loading } = useAuth();
 
   // Vérifier les droits
   const canSeeCatalog = linkMeRole && CATALOG_ROLES.includes(linkMeRole.role);
@@ -141,7 +141,10 @@ export function Header() {
             </button>
 
             {/* Auth */}
-            {loading ? (
+            {initializing ? (
+              // Placeholder pendant l'initialisation (evite le saut de layout)
+              <div className="w-[100px]" />
+            ) : loading ? (
               <div className="p-2">
                 <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
               </div>
