@@ -231,7 +231,52 @@ export function useSubmitEnseigneOrder(): UseSubmitEnseigneOrderReturn {
         }
 
         // ---------------------------------------------------------------
-        // 6. Succes
+        // 6. Envoyer notification email au back-office
+        // ---------------------------------------------------------------
+        try {
+          let organisationName: string | null = null;
+          if (!data.isNewRestaurant && data.existingOrganisationId) {
+            const { data: orgData } = await supabase
+              .from('organisations')
+              .select('trade_name, legal_name')
+              .eq('id', data.existingOrganisationId)
+              .single();
+            organisationName =
+              orgData?.trade_name || orgData?.legal_name || null;
+          } else if (data.isNewRestaurant) {
+            organisationName =
+              data.newOrganisation.tradeName ||
+              data.newOrganisation.legalName ||
+              null;
+          }
+          const { data: selectionData } = await supabase
+            .from('linkme_selections')
+            .select('name, linkme_affiliates(name)')
+            .eq('id', selectionId)
+            .single();
+          await fetch('/api/emails/notify-enseigne-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              orderNumber,
+              orderId,
+              requesterName: data.requesterName,
+              requesterEmail: data.requesterEmail,
+              requesterType: data.requesterType,
+              organisationName,
+              isNewRestaurant: data.isNewRestaurant,
+              totalTtc: totalTtc,
+              source: 'client',
+              affiliateName: (selectionData?.linkme_affiliates as any)?.name,
+              selectionName: selectionData?.name,
+            }),
+          });
+        } catch (emailError) {
+          console.error('Erreur envoi notification email:', emailError);
+        }
+
+        // ---------------------------------------------------------------
+        // 7. Succes
         // ---------------------------------------------------------------
         return {
           success: true,
