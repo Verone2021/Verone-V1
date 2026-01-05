@@ -281,22 +281,6 @@ async function fetchSelectionById(
   } as SelectionDetail;
 }
 
-/**
- * Récupère les produits du catalogue LinkMe éligibles pour ajout
- */
-async function fetchCatalogProducts() {
-  const { data, error } = await supabase.rpc(
-    'get_linkme_catalog_products_for_affiliate'
-  );
-
-  if (error) {
-    console.error('Error fetching catalog products:', error);
-    throw error;
-  }
-
-  return data || [];
-}
-
 // ============================================================================
 // Hooks
 // ============================================================================
@@ -313,16 +297,8 @@ export function useLinkMeSelection(selectionId: string | null) {
   });
 }
 
-/**
- * Hook: Récupérer les produits du catalogue LinkMe
- */
-export function useLinkMeCatalogProducts() {
-  return useQuery({
-    queryKey: ['linkme-catalog-products'],
-    queryFn: fetchCatalogProducts,
-    staleTime: 60000, // 1 minute
-  });
-}
+// NOTE: useLinkMeCatalogProducts est maintenant dans use-linkme-catalog.ts
+// Il utilise channel_pricing (source de vérité) au lieu du RPC obsolète
 
 /**
  * Hook: Mettre à jour une sélection
