@@ -44,6 +44,13 @@ npm run e2e:smoke    # Si UI modifiee (obligatoire)
 
 ### 5. Commiter
 
+**AVANT tout commit/push, VERIFIER la branche :**
+
+```bash
+git branch --show-current   # Doit correspondre a la session
+git status --porcelain      # Voir fichiers modifies
+```
+
 - DEMANDER autorisation explicite
 - Utiliser `/commit` pour messages propres
 

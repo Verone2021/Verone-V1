@@ -222,6 +222,43 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
         title: 'LinkMe',
         href: '/canaux-vente/linkme',
         icon: Link2,
+        children: [
+          {
+            title: 'Dashboard',
+            href: '/canaux-vente/linkme',
+            icon: LayoutDashboard,
+          },
+          {
+            title: 'Enseignes',
+            href: '/canaux-vente/linkme/enseignes',
+            icon: Building2,
+          },
+          {
+            title: 'Sélections',
+            href: '/canaux-vente/linkme/selections',
+            icon: Layers,
+          },
+          {
+            title: 'Commandes',
+            href: '/canaux-vente/linkme/commandes',
+            icon: ShoppingBag,
+          },
+          {
+            title: 'À traiter',
+            href: '/canaux-vente/linkme/commandes/a-traiter',
+            icon: CheckCircle,
+          },
+          {
+            title: 'Catalogue',
+            href: '/canaux-vente/linkme/catalogue',
+            icon: BookOpen,
+          },
+          {
+            title: 'Commissions',
+            href: '/canaux-vente/linkme/commissions',
+            icon: Wallet,
+          },
+        ],
       },
     ],
   },
