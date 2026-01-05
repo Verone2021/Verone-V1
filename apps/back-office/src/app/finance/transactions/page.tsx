@@ -958,6 +958,14 @@ function TransactionsPageV2() {
     useState<UnifiedTransaction | null>(null);
   const [search, setSearch] = useState('');
 
+  // Filtre année (par défaut année courante)
+  const currentYear = new Date().getFullYear();
+  const years = Array.from(
+    { length: currentYear - 2021 },
+    (_, i) => currentYear - i
+  );
+  const [yearFilter, setYearFilter] = useState<number>(currentYear);
+
   // Modals state
   const [showRapprochementModal, setShowRapprochementModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -1002,6 +1010,7 @@ function TransactionsPageV2() {
       status: activeTab === 'all' ? 'all' : activeTab,
       side: sideFilter === 'all' ? 'all' : sideFilter,
       search: search || undefined,
+      year: yearFilter,
     },
     pageSize: 20,
   });
@@ -1045,6 +1054,7 @@ function TransactionsPageV2() {
       status: tab === 'all' ? 'all' : tab,
       side: sideFilter === 'all' ? 'all' : sideFilter,
       search: search || undefined,
+      year: yearFilter,
     });
   };
 
@@ -1056,6 +1066,19 @@ function TransactionsPageV2() {
       status: activeTab === 'all' ? 'all' : activeTab,
       side: side === 'all' ? 'all' : side,
       search: search || undefined,
+      year: yearFilter,
+    });
+  };
+
+  // Handle year filter change
+  const handleYearChange = (year: number) => {
+    setYearFilter(year);
+    setSelectedTransaction(null);
+    setFilters({
+      status: activeTab === 'all' ? 'all' : activeTab,
+      side: sideFilter === 'all' ? 'all' : sideFilter,
+      search: search || undefined,
+      year,
     });
   };
 
@@ -1066,6 +1089,7 @@ function TransactionsPageV2() {
       status: activeTab === 'all' ? 'all' : activeTab,
       side: sideFilter === 'all' ? 'all' : sideFilter,
       search: value || undefined,
+      year: yearFilter,
     });
   };
 
@@ -1425,6 +1449,23 @@ function TransactionsPageV2() {
                     Sorties
                   </Button>
                 </div>
+
+                {/* Filtre Année */}
+                <Select
+                  value={yearFilter.toString()}
+                  onValueChange={val => handleYearChange(parseInt(val))}
+                >
+                  <SelectTrigger className="w-24 h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {years.map(year => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
                 {/* Recherche */}
                 <div className="relative w-64">

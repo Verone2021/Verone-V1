@@ -129,8 +129,8 @@ function CompletenessIndicator({ expense }: { expense: Expense }) {
     missingItems.push({ key: 'vat', label: 'TVA', icon: Percent });
   }
 
-  // Justificatif manquant
-  if (!expense.has_attachment) {
+  // Justificatif manquant (sauf si facultatif)
+  if (!expense.has_attachment && !expense.justification_optional) {
     missingItems.push({
       key: 'attachment',
       label: 'Justificatif',
