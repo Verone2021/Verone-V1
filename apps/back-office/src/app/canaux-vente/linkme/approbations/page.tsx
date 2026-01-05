@@ -1,17 +1,23 @@
 'use client';
 
 /**
- * Page Approbations Produits - Back-Office LinkMe
+ * Page Approbations LinkMe - Back-Office
  *
- * Queue de validation des produits crees par les affilies
+ * 3 onglets de validation:
+ * - Commandes: pending_admin_validation = true
+ * - Produits: affiliate_approval_status = 'pending_approval'
+ * - Organisations: approval_status = 'pending_validation'
  *
  * @module ApprobationsPage
- * @since 2025-12-20
+ * @since 2026-01-05
  */
 
 import { useState } from 'react';
 
+import Link from 'next/link';
+
 import {
+  Badge,
   Button,
   Dialog,
   DialogContent,
@@ -19,6 +25,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
   Textarea,
 } from '@verone/ui';
 import {
@@ -35,8 +45,28 @@ import {
   Filter,
   Warehouse,
   User,
+  ShoppingCart,
+  Building2,
+  ExternalLink,
+  Mail,
+  Phone,
+  MapPin,
 } from 'lucide-react';
 
+import {
+  usePendingOrders,
+  usePendingOrdersCount,
+  useApproveOrder,
+  useRejectOrder,
+  type PendingOrder,
+} from '../hooks/use-linkme-order-actions';
+import {
+  usePendingOrganisations,
+  usePendingOrganisationsCount,
+  useApproveOrganisation,
+  useRejectOrganisation,
+  type PendingOrganisation,
+} from '../hooks/use-organisation-approvals';
 import {
   usePendingApprovals,
   usePendingApprovalsCount,
@@ -48,6 +78,302 @@ import {
   type AffiliateProductApprovalStatus,
   type CommissionRate,
 } from '../hooks/use-product-approvals';
+
+// ============================================================================
+// MAIN PAGE COMPONENT
+// ============================================================================
+
+export default function ApprobationsPage() {
+  const { data: pendingOrdersCount = 0 } = usePendingOrdersCount();
+  const { data: pendingProductsCount = 0 } = usePendingApprovalsCount();
+  const { data: pendingOrgsCount = 0 } = usePendingOrganisationsCount();
+
+  const totalPending =
+    pendingOrdersCount + pendingProductsCount + pendingOrgsCount;
+
+  return (
+    <div className="p-6">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Approbations</h1>
+          <p className="text-gray-500 mt-1">
+            Validez les commandes, produits et organisations
+          </p>
+        </div>
+        {totalPending > 0 && (
+          <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 rounded-lg">
+            <Clock className="h-5 w-5 text-amber-600" />
+            <span className="font-semibold text-amber-700">
+              {totalPending} en attente
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Tabs */}
+      <Tabs defaultValue="commandes" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsTrigger value="commandes" className="flex items-center gap-2">
+            <ShoppingCart className="h-4 w-4" />
+            Commandes
+            {pendingOrdersCount > 0 && (
+              <Badge variant="destructive" className="ml-1">
+                {pendingOrdersCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="produits" className="flex items-center gap-2">
+            <Package className="h-4 w-4" />
+            Produits
+            {pendingProductsCount > 0 && (
+              <Badge variant="destructive" className="ml-1">
+                {pendingProductsCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger
+            value="organisations"
+            className="flex items-center gap-2"
+          >
+            <Building2 className="h-4 w-4" />
+            Organisations
+            {pendingOrgsCount > 0 && (
+              <Badge variant="destructive" className="ml-1">
+                {pendingOrgsCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="commandes">
+          <CommandesTab />
+        </TabsContent>
+
+        <TabsContent value="produits">
+          <ProduitsTab />
+        </TabsContent>
+
+        <TabsContent value="organisations">
+          <OrganisationsTab />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+// ============================================================================
+// TAB: COMMANDES
+// ============================================================================
+
+function CommandesTab() {
+  const { data: orders, isLoading, refetch } = usePendingOrders();
+  const approveOrder = useApproveOrder();
+  const rejectOrder = useRejectOrder();
+
+  const [selectedOrder, setSelectedOrder] = useState<PendingOrder | null>(null);
+  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+
+  const handleApprove = async (order: PendingOrder) => {
+    try {
+      await approveOrder.mutateAsync({ orderId: order.id });
+      refetch();
+    } catch {
+      alert("Erreur lors de l'approbation");
+    }
+  };
+
+  const handleRejectClick = (order: PendingOrder) => {
+    setSelectedOrder(order);
+    setRejectReason('');
+    setIsRejectDialogOpen(true);
+  };
+
+  const handleRejectConfirm = async () => {
+    if (!selectedOrder || !rejectReason.trim()) return;
+
+    try {
+      await rejectOrder.mutateAsync({
+        orderId: selectedOrder.id,
+        reason: rejectReason.trim(),
+      });
+      setIsRejectDialogOpen(false);
+      setSelectedOrder(null);
+      refetch();
+    } catch {
+      alert('Erreur lors du rejet');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!orders || orders.length === 0) {
+    return (
+      <div className="bg-white rounded-xl p-12 text-center border">
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <CheckCircle className="h-8 w-8 text-green-600" />
+        </div>
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">
+          Aucune commande en attente
+        </h2>
+        <p className="text-gray-500">Toutes les commandes ont ete traitees</p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="bg-white rounded-xl border overflow-hidden">
+        <table className="w-full">
+          <thead className="bg-gray-50 border-b">
+            <tr>
+              <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+                Commande
+              </th>
+              <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+                Demandeur
+              </th>
+              <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+                Organisation
+              </th>
+              <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+                Montant
+              </th>
+              <th className="text-right px-6 py-4 text-sm font-medium text-gray-500">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {orders.map(order => (
+              <tr key={order.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4">
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      {order.order_number}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {new Date(order.created_at).toLocaleDateString('fr-FR')}
+                    </p>
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <div>
+                    <p className="text-gray-900">
+                      {order.requester_name || '-'}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {order.requester_email || '-'}
+                    </p>
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <div>
+                    <p className="text-gray-900">
+                      {order.organisation_name || '-'}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {order.enseigne_name || '-'}
+                    </p>
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <p className="font-semibold text-gray-900">
+                    {order.total_ttc.toFixed(2)} EUR
+                  </p>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex items-center justify-end gap-2">
+                    <Link
+                      href={`/canaux-vente/linkme/commandes/${order.id}`}
+                      className="p-2 text-gray-500 hover:text-gray-700"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Link>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRejectClick(order)}
+                      className="text-red-600 border-red-200 hover:bg-red-50"
+                    >
+                      <XCircle className="h-4 w-4 mr-1" />
+                      Rejeter
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => handleApprove(order)}
+                      disabled={approveOrder.isPending}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      {approveOrder.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      ) : (
+                        <CheckCircle className="h-4 w-4 mr-1" />
+                      )}
+                      Approuver
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Reject Dialog */}
+      <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <XCircle className="h-5 w-5 text-red-500" />
+              Rejeter la commande
+            </DialogTitle>
+            <DialogDescription>
+              Indiquez le motif du rejet. Le demandeur sera notifie.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Textarea
+              value={rejectReason}
+              onChange={e => setRejectReason(e.target.value)}
+              placeholder="Motif du rejet..."
+              rows={4}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsRejectDialogOpen(false)}
+            >
+              Annuler
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleRejectConfirm}
+              disabled={!rejectReason.trim() || rejectOrder.isPending}
+            >
+              {rejectOrder.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              Confirmer le rejet
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+// ============================================================================
+// TAB: PRODUITS
+// ============================================================================
 
 // Status filter options
 const STATUS_OPTIONS: {
@@ -77,7 +403,7 @@ const STATUS_OPTIONS: {
   },
 ];
 
-export default function ApprobationsPage() {
+function ProduitsTab() {
   const [selectedStatus, setSelectedStatus] = useState<
     AffiliateProductApprovalStatus | 'all'
   >('pending_approval');
@@ -93,7 +419,6 @@ export default function ApprobationsPage() {
   const [selectedCommission, setSelectedCommission] =
     useState<CommissionRate>(5);
 
-  const { data: pendingCount } = usePendingApprovalsCount();
   const {
     data: products,
     isLoading,
@@ -157,38 +482,15 @@ export default function ApprobationsPage() {
   };
 
   // Fonctions de calcul commission (modele affilies: commission DEDUITE)
-  // Prix client = payout (fixe, ne change jamais)
-  // Commission Verone en EUR
   const getCommissionAmount = (payout: number, commission: number) => {
     return payout * (commission / 100);
   };
-  // Ce que l'affilie recoit (apres deduction commission)
   const getAffiliateEarning = (payout: number, commission: number) => {
     return payout - getCommissionAmount(payout, commission);
   };
 
   return (
-    <div className="p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Approbations Produits
-          </h1>
-          <p className="text-gray-500 mt-1">
-            Validez les produits crees par les affilies
-          </p>
-        </div>
-        {pendingCount && pendingCount > 0 && (
-          <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 rounded-lg">
-            <Clock className="h-5 w-5 text-amber-600" />
-            <span className="font-semibold text-amber-700">
-              {pendingCount} en attente
-            </span>
-          </div>
-        )}
-      </div>
-
+    <>
       {/* Status Filter */}
       <div className="flex items-center gap-2 mb-6">
         <Filter className="h-4 w-4 text-gray-400" />
@@ -293,14 +595,6 @@ export default function ApprobationsPage() {
                       <p className="text-xs text-gray-500">
                         Commission: {product.affiliate_commission_rate || 0}% ={' '}
                         {getCommissionAmount(
-                          product.affiliate_payout_ht || 0,
-                          product.affiliate_commission_rate || 0
-                        ).toFixed(2)}{' '}
-                        EUR
-                      </p>
-                      <p className="text-xs text-green-600 font-medium">
-                        Affilie recoit:{' '}
-                        {getAffiliateEarning(
                           product.affiliate_payout_ht || 0,
                           product.affiliate_commission_rate || 0
                         ).toFixed(2)}{' '}
@@ -676,7 +970,7 @@ export default function ApprobationsPage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
 
@@ -713,5 +1007,306 @@ function StatusBadge({ status }: { status: AffiliateProductApprovalStatus }) {
       <Icon className="h-3.5 w-3.5" />
       {config.label}
     </span>
+  );
+}
+
+// ============================================================================
+// TAB: ORGANISATIONS
+// ============================================================================
+
+function OrganisationsTab() {
+  const { data: organisations, isLoading, refetch } = usePendingOrganisations();
+  const approveOrg = useApproveOrganisation();
+  const rejectOrg = useRejectOrganisation();
+
+  const [selectedOrg, setSelectedOrg] = useState<PendingOrganisation | null>(
+    null
+  );
+  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+  const handleApprove = async (org: PendingOrganisation) => {
+    try {
+      await approveOrg.mutateAsync({ organisationId: org.id });
+      refetch();
+    } catch {
+      alert("Erreur lors de l'approbation");
+    }
+  };
+
+  const handleRejectClick = (org: PendingOrganisation) => {
+    setSelectedOrg(org);
+    setRejectReason('');
+    setIsRejectDialogOpen(true);
+  };
+
+  const handleRejectConfirm = async () => {
+    if (!selectedOrg || !rejectReason.trim()) return;
+
+    try {
+      await rejectOrg.mutateAsync({
+        organisationId: selectedOrg.id,
+        reason: rejectReason.trim(),
+      });
+      setIsRejectDialogOpen(false);
+      setSelectedOrg(null);
+      refetch();
+    } catch {
+      alert('Erreur lors du rejet');
+    }
+  };
+
+  const handleViewDetails = (org: PendingOrganisation) => {
+    setSelectedOrg(org);
+    setIsDetailOpen(true);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!organisations || organisations.length === 0) {
+    return (
+      <div className="bg-white rounded-xl p-12 text-center border">
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <CheckCircle className="h-8 w-8 text-green-600" />
+        </div>
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">
+          Aucune organisation en attente
+        </h2>
+        <p className="text-gray-500">
+          Toutes les organisations ont ete validees
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="bg-white rounded-xl border overflow-hidden">
+        <table className="w-full">
+          <thead className="bg-gray-50 border-b">
+            <tr>
+              <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+                Organisation
+              </th>
+              <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+                Enseigne
+              </th>
+              <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+                Contact
+              </th>
+              <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+                Localisation
+              </th>
+              <th className="text-right px-6 py-4 text-sm font-medium text-gray-500">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {organisations.map(org => (
+              <tr key={org.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4">
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      {org.trade_name || org.legal_name}
+                    </p>
+                    {org.trade_name && (
+                      <p className="text-sm text-gray-500">{org.legal_name}</p>
+                    )}
+                    {org.siret && (
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        SIRET: {org.siret}
+                      </p>
+                    )}
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <p className="text-gray-900">{org.enseigne_name || '-'}</p>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="space-y-1">
+                    {org.email && (
+                      <div className="flex items-center gap-1 text-sm text-gray-600">
+                        <Mail className="h-3 w-3" />
+                        {org.email}
+                      </div>
+                    )}
+                    {org.phone && (
+                      <div className="flex items-center gap-1 text-sm text-gray-600">
+                        <Phone className="h-3 w-3" />
+                        {org.phone}
+                      </div>
+                    )}
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-1 text-sm text-gray-600">
+                    <MapPin className="h-3 w-3" />
+                    {org.city || '-'}
+                    {org.postal_code && ` (${org.postal_code})`}
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex items-center justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleViewDetails(org)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRejectClick(org)}
+                      className="text-red-600 border-red-200 hover:bg-red-50"
+                    >
+                      <XCircle className="h-4 w-4 mr-1" />
+                      Rejeter
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => handleApprove(org)}
+                      disabled={approveOrg.isPending}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      {approveOrg.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      ) : (
+                        <CheckCircle className="h-4 w-4 mr-1" />
+                      )}
+                      Approuver
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Detail Dialog */}
+      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Details de l&apos;organisation</DialogTitle>
+          </DialogHeader>
+          {selectedOrg && (
+            <div className="space-y-4">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  {selectedOrg.trade_name || selectedOrg.legal_name}
+                </h3>
+                {selectedOrg.trade_name && (
+                  <p className="text-sm text-gray-600">
+                    Raison sociale: {selectedOrg.legal_name}
+                  </p>
+                )}
+                {selectedOrg.siret && (
+                  <p className="text-sm text-gray-600">
+                    SIRET: {selectedOrg.siret}
+                  </p>
+                )}
+              </div>
+
+              {selectedOrg.enseigne_name && (
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Enseigne</p>
+                  <p className="font-medium">{selectedOrg.enseigne_name}</p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Email</p>
+                  <p className="font-medium">{selectedOrg.email || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Telephone</p>
+                  <p className="font-medium">{selectedOrg.phone || '-'}</p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Adresse</p>
+                <div className="text-gray-700">
+                  {selectedOrg.address_line1 && (
+                    <p>{selectedOrg.address_line1}</p>
+                  )}
+                  {selectedOrg.address_line2 && (
+                    <p>{selectedOrg.address_line2}</p>
+                  )}
+                  <p>
+                    {selectedOrg.postal_code} {selectedOrg.city}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Cree le</p>
+                <p className="font-medium">
+                  {new Date(selectedOrg.created_at).toLocaleDateString(
+                    'fr-FR',
+                    {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    }
+                  )}
+                </p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Dialog */}
+      <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <XCircle className="h-5 w-5 text-red-500" />
+              Rejeter l&apos;organisation
+            </DialogTitle>
+            <DialogDescription>Indiquez le motif du rejet.</DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Textarea
+              value={rejectReason}
+              onChange={e => setRejectReason(e.target.value)}
+              placeholder="Motif du rejet..."
+              rows={4}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsRejectDialogOpen(false)}
+            >
+              Annuler
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleRejectConfirm}
+              disabled={!rejectReason.trim() || rejectOrg.isPending}
+            >
+              {rejectOrg.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              Confirmer le rejet
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

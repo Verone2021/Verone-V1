@@ -11,7 +11,7 @@
 
 'use client';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
 
 // ============================================
@@ -363,6 +363,135 @@ export function useRejectOrder() {
       queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
       queryClient.invalidateQueries({ queryKey: ['linkme-orders-to-process'] });
       queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['pending-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['pending-orders-count'] });
     },
+  });
+}
+
+// ============================================
+// PENDING ORDERS FOR APPROBATIONS
+// ============================================
+
+export interface PendingOrder {
+  id: string;
+  order_number: string;
+  status: string;
+  total_ht: number;
+  total_ttc: number;
+  created_at: string;
+  // LinkMe details
+  requester_name: string | null;
+  requester_email: string | null;
+  requester_type: string | null;
+  // Organisation
+  organisation_name: string | null;
+  enseigne_name: string | null;
+}
+
+/**
+ * Hook: compte le nombre de commandes en attente de validation
+ */
+export function usePendingOrdersCount() {
+  return useQuery({
+    queryKey: ['pending-orders-count'],
+    queryFn: async (): Promise<number> => {
+      const supabase = createClient();
+
+      const { count, error } = await supabase
+        .from('sales_orders')
+        .select('*', { count: 'exact', head: true })
+        .eq('pending_admin_validation', true);
+
+      if (error) {
+        console.error('Error fetching pending orders count:', error);
+        throw error;
+      }
+
+      return count || 0;
+    },
+    staleTime: 30000,
+    refetchInterval: 60000,
+  });
+}
+
+/**
+ * Hook: récupère les commandes en attente de validation
+ */
+export function usePendingOrders() {
+  return useQuery({
+    queryKey: ['pending-orders'],
+    queryFn: async (): Promise<PendingOrder[]> => {
+      const supabase = createClient();
+
+      // Fetch orders with pending_admin_validation = true
+      const { data: orders, error } = await supabase
+        .from('sales_orders')
+        .select(
+          `
+          id,
+          order_number,
+          status,
+          total_ht,
+          total_ttc,
+          created_at,
+          customer_id,
+          customer_type
+        `
+        )
+        .eq('pending_admin_validation', true)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching pending orders:', error);
+        throw error;
+      }
+
+      // Enrich with LinkMe details and organisation names
+      const enrichedOrders: PendingOrder[] = [];
+
+      for (const order of orders || []) {
+        // Get LinkMe details
+        const { data: linkmeDetails } = await supabase
+          .from('sales_order_linkme_details')
+          .select('requester_name, requester_email, requester_type')
+          .eq('sales_order_id', order.id)
+          .single();
+
+        // Get organisation name if customer_type = 'organization'
+        let organisationName: string | null = null;
+        let enseigneName: string | null = null;
+
+        if (order.customer_type === 'organization' && order.customer_id) {
+          const { data: org } = await supabase
+            .from('organisations')
+            .select('trade_name, legal_name, enseigne:enseigne_id(name)')
+            .eq('id', order.customer_id)
+            .single();
+
+          if (org) {
+            organisationName = org.trade_name || org.legal_name;
+            enseigneName = (org.enseigne as any)?.name || null;
+          }
+        }
+
+        enrichedOrders.push({
+          id: order.id,
+          order_number: order.order_number,
+          status: order.status,
+          total_ht: order.total_ht,
+          total_ttc: order.total_ttc,
+          created_at: order.created_at,
+          requester_name: linkmeDetails?.requester_name || null,
+          requester_email: linkmeDetails?.requester_email || null,
+          requester_type: linkmeDetails?.requester_type || null,
+          organisation_name: organisationName,
+          enseigne_name: enseigneName,
+        });
+      }
+
+      return enrichedOrders;
+    },
+    staleTime: 30000,
   });
 }
