@@ -1130,6 +1130,7 @@ export function SalesOrdersTable({
                     </TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead>Paiement</TableHead>
+                    <TableHead>Rapproché</TableHead>
                     <TableHead className="w-20 text-center">Articles</TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-gray-50"
@@ -1233,6 +1234,17 @@ export function SalesOrdersTable({
                               </Badge>
                             ) : (
                               <span className="text-gray-400 text-sm">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {order.payment_status_v2 === 'paid' ? (
+                              <Badge className="bg-green-100 text-green-800">
+                                Rapproché
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-orange-100 text-orange-800">
+                                Non rapproché
+                              </Badge>
                             )}
                           </TableCell>
                           <TableCell className="text-center">

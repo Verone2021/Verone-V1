@@ -34,6 +34,7 @@ export interface SalesOrder {
   customer_type: 'organization' | 'individual';
   status: SalesOrderStatus;
   payment_status?: PaymentStatus;
+  payment_status_v2?: 'pending' | 'paid' | null; // Statut calculé via rapprochement bancaire
   currency: string;
   tax_rate: number;
   eco_tax_total: number;
