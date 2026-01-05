@@ -1,3 +1,10 @@
+# Protection branche main (evite commit direct)
+BRANCH=$(git branch --show-current)
+if [ "$BRANCH" = "main" ]; then
+  echo "❌ Commit direct sur main interdit. Creez une branche feature/*"
+  exit 1
+fi
+
 echo "🔍 Validation pre-commit Vérone..."
 echo ""
 
