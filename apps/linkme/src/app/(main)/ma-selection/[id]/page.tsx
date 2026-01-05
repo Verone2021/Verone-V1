@@ -98,6 +98,9 @@ export default function SelectionDetailPage() {
     }
   }, [user, linkMeRole, authLoading, router]);
 
+  // Helper: vérifier si la sélection est publiée (basé sur published_at)
+  const isPublished = !!selection?.published_at;
+
   // Handler toggle publié
   const handleTogglePublished = async () => {
     if (!selection) return;
@@ -105,10 +108,10 @@ export default function SelectionDetailPage() {
     try {
       await togglePublishedMutation.mutateAsync({
         selectionId: selection.id,
-        isPublic: !selection.is_public,
+        isPublic: !isPublished,
       });
       toast.success(
-        selection.is_public ? 'Sélection dépubliée' : 'Sélection publiée'
+        isPublished ? 'Sélection dépubliée' : 'Sélection publiée !'
       );
     } catch (error: any) {
       toast.error(error.message || 'Erreur lors de la mise à jour');
@@ -169,11 +172,8 @@ export default function SelectionDetailPage() {
     );
   }
 
-  // URL publique
-  const publicUrl =
-    selection.is_public && affiliate
-      ? `${window.location.origin}/${affiliate.slug}/${selection.slug}`
-      : null;
+  // URL publique (utilise /s/[id] comme format canonique)
+  const publicUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/s/${selection.id}`;
 
   // Top 3 produits (basé sur display_order pour l'instant)
   const topProducts = items?.slice(0, 3) || [];
@@ -226,12 +226,12 @@ export default function SelectionDetailPage() {
             <div className="absolute top-2 right-2">
               <span
                 className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                  selection.is_public
+                  isPublished
                     ? 'bg-green-100 text-green-700'
                     : 'bg-gray-100 text-gray-600'
                 }`}
               >
-                {selection.is_public ? (
+                {isPublished ? (
                   <>
                     <Globe className="h-3 w-3" />
                     Publiée
@@ -421,19 +421,19 @@ export default function SelectionDetailPage() {
               onClick={handleTogglePublished}
               disabled={togglePublishedMutation.isPending}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-colors text-sm ${
-                selection.is_public
+                isPublished
                   ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   : 'bg-green-600 text-white hover:bg-green-700'
               }`}
             >
               {togglePublishedMutation.isPending ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : selection.is_public ? (
+              ) : isPublished ? (
                 <Lock className="h-3.5 w-3.5" />
               ) : (
                 <Globe className="h-3.5 w-3.5" />
               )}
-              {selection.is_public ? 'Dépublier' : 'Publier'}
+              {isPublished ? 'Dépublier' : 'Publier'}
             </button>
 
             {/* Prévisualiser */}
@@ -451,7 +451,7 @@ export default function SelectionDetailPage() {
             {/* Partager */}
             <button
               onClick={handleCopyLink}
-              disabled={!selection.is_public}
+              disabled={!isPublished}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
             >
               <Share2 className="h-3.5 w-3.5" />

@@ -46,7 +46,8 @@ interface Selection {
   description: string | null;
   image_url: string | null;
   affiliate_id: string;
-  is_public: boolean;
+  /** Timestamp de publication. null = non publié */
+  published_at: string | null;
   created_at: string;
 }
 
