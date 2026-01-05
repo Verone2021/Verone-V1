@@ -27,6 +27,14 @@ export type PaymentStatus =
   | 'refunded'
   | 'overdue';
 
+export type ManualPaymentType =
+  | 'cash'
+  | 'check'
+  | 'transfer_other'
+  | 'card'
+  | 'compensation'
+  | 'verified_bubble';
+
 export interface SalesOrder {
   id: string;
   order_number: string;
@@ -35,6 +43,12 @@ export interface SalesOrder {
   status: SalesOrderStatus;
   payment_status?: PaymentStatus;
   payment_status_v2?: 'pending' | 'paid' | null; // Statut calculé via rapprochement bancaire
+  // 🆕 Paiement manuel
+  manual_payment_type?: ManualPaymentType | null;
+  manual_payment_date?: string | null;
+  manual_payment_reference?: string | null;
+  manual_payment_note?: string | null;
+  manual_payment_by?: string | null;
   currency: string;
   tax_rate: number;
   eco_tax_total: number;
@@ -905,6 +919,68 @@ export function useSalesOrders() {
     [supabase, toast, fetchOrders, currentOrder, fetchOrder]
   );
 
+  // Marquer comme payé manuellement
+  const markAsManuallyPaid = useCallback(
+    async (
+      orderId: string,
+      paymentType: ManualPaymentType,
+      options?: {
+        reference?: string;
+        note?: string;
+        date?: Date;
+      }
+    ) => {
+      setLoading(true);
+      try {
+        // Type assertion car les colonnes manual_payment_* sont nouvelles
+        // et pas encore dans les types Supabase générés
+        const { error } = await supabase
+          .from('sales_orders')
+          .update({
+            manual_payment_type: paymentType,
+            manual_payment_date:
+              options?.date?.toISOString() ?? new Date().toISOString(),
+            manual_payment_reference: options?.reference ?? null,
+            manual_payment_note: options?.note ?? null,
+          } as Record<string, unknown>)
+          .eq('id', orderId);
+
+        if (error) throw error;
+
+        const paymentLabels: Record<ManualPaymentType, string> = {
+          cash: 'Espèces',
+          check: 'Chèque',
+          transfer_other: 'Virement autre banque',
+          card: 'Carte bancaire',
+          compensation: 'Compensation',
+          verified_bubble: 'Vérifié Bubble',
+        };
+
+        toast({
+          title: 'Paiement manuel enregistré',
+          description: `Type: ${paymentLabels[paymentType]}`,
+        });
+
+        await fetchOrders();
+        if (currentOrder?.id === orderId) {
+          await fetchOrder(orderId);
+        }
+      } catch (error: any) {
+        console.error('Erreur lors du paiement manuel:', error);
+        toast({
+          title: 'Erreur',
+          description:
+            error.message || "Impossible d'enregistrer le paiement manuel",
+          variant: 'destructive',
+        });
+        throw error;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [supabase, toast, fetchOrders, currentOrder, fetchOrder]
+  );
+
   // Marquer la sortie entrepôt
   const markWarehouseExit = useCallback(
     async (orderId: string) => {
@@ -1754,6 +1830,7 @@ export function useSalesOrders() {
     shipItems,
     deleteOrder,
     markAsPaid,
+    markAsManuallyPaid,
     markWarehouseExit,
 
     // Utilitaires
