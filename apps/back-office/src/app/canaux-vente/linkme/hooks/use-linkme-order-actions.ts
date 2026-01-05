@@ -171,7 +171,37 @@ async function approveOrder(
     throw new Error(`Erreur mise à jour commande: ${orderError.message}`);
   }
 
-  // TODO Phase 3: Envoyer email au contact Étape 2 avec lien tokenisé
+  // 6. Récupérer les infos et envoyer email
+  const { data: orderData } = await supabase
+    .from('sales_orders')
+    .select(
+      'order_number, total_ttc, organisations!sales_orders_customer_id_fkey(trade_name, legal_name)'
+    )
+    .eq('id', input.orderId)
+    .single();
+  const ownerName = details.owner_contact_same_as_requester
+    ? details.requester_name
+    : details.owner_name || details.requester_name;
+  const organisationName =
+    (orderData?.organisations as any)?.trade_name ||
+    (orderData?.organisations as any)?.legal_name ||
+    null;
+  try {
+    await fetch('/api/emails/linkme-order-approved', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderNumber: orderData?.order_number,
+        ownerEmail,
+        ownerName,
+        step4Token,
+        organisationName,
+        totalTtc: orderData?.total_ttc || 0,
+      }),
+    });
+  } catch (emailError) {
+    console.error('Erreur envoi email approbation:', emailError);
+  }
 
   return {
     success: true,
@@ -182,7 +212,7 @@ async function approveOrder(
 
 /**
  * Demande des compléments d'information
- * - TODO: Envoyer email au demandeur avec le message
+ * - Envoie email au demandeur avec le message
  * - Log l'action
  */
 async function requestInfo(
