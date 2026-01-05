@@ -51,7 +51,8 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   linkMeRole: LinkMeUserRole | null;
-  loading: boolean;
+  initializing: boolean; // Verification initiale de session (silencieux)
+  loading: boolean; // Action explicite en cours (connexion/deconnexion)
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: (redirectTo?: string) => Promise<void>;
   refreshLinkMeRole: () => Promise<void>;
@@ -67,7 +68,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [linkMeRole, setLinkMeRole] = useState<LinkMeUserRole | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [initializing, setInitializing] = useState(true); // Verification initiale
+  const [loading, setLoading] = useState(false); // Actions explicites
 
   // Ref pour éviter les appels multiples lors de l'initialisation
   const initializedRef = useRef(false);
@@ -184,9 +186,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.error('[AuthContext] fetchLinkMeRole EXCEPTION', err);
         setLinkMeRole(null);
       } finally {
-        console.log('[AuthContext] fetchLinkMeRole END', {
-          hasLinkMeRole: !!linkMeRole,
-        });
+        console.log('[AuthContext] fetchLinkMeRole END');
       }
     },
     [] // Pas de dépendance car supabase est un singleton
@@ -221,7 +221,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       } catch (error) {
         console.error('Erreur initialisation session:', error);
       } finally {
-        setLoading(false);
+        setInitializing(false);
       }
     };
 
@@ -299,22 +299,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  // Déconnexion avec redirection optionnelle
+  // Déconnexion avec redirection
   const signOut = async (redirectTo?: string) => {
-    // Rediriger AVANT de supprimer la session pour éviter les redirections /login
-    if (redirectTo && typeof window !== 'undefined') {
-      window.location.href = redirectTo;
-    }
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
     setLinkMeRole(null);
+    // Toujours rediriger vers login apres deconnexion pour eviter la reconnexion auto
+    if (typeof window !== 'undefined') {
+      window.location.href = redirectTo || '/login';
+    }
   };
 
   const value: AuthContextType = {
     user,
     session,
     linkMeRole,
+    initializing,
     loading,
     signIn,
     signOut,
