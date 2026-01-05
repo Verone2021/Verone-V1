@@ -43,6 +43,72 @@ import {
 import { usePendingApprovalsCount } from '../hooks/use-product-approvals';
 import { calculateSimpleCompleteness } from '../types';
 
+// Labels et styles pour product_status (source de verite)
+const PRODUCT_STATUS_CONFIG = {
+  active: {
+    label: 'Actif',
+    className: 'bg-green-100 text-green-700 border-green-300',
+  },
+  preorder: {
+    label: 'Precommande',
+    className: 'bg-blue-100 text-blue-700 border-blue-300',
+  },
+  discontinued: {
+    label: 'Arrete',
+    className: 'bg-red-100 text-red-700 border-red-300',
+  },
+  draft: {
+    label: 'Brouillon',
+    className: 'bg-gray-100 text-gray-600 border-gray-300',
+  },
+} as const;
+
+// Composant badge statut produit
+function ProductStatusBadge({
+  status,
+}: {
+  status: 'active' | 'preorder' | 'discontinued' | 'draft';
+}) {
+  const config = PRODUCT_STATUS_CONFIG[status] || PRODUCT_STATUS_CONFIG.draft;
+  return (
+    <Badge variant="outline" className={`text-xs ${config.className}`}>
+      {config.label}
+    </Badge>
+  );
+}
+
+// Composant badge stock
+function StockBadge({ stock }: { stock: number }) {
+  if (stock > 10) {
+    return (
+      <Badge
+        variant="outline"
+        className="text-xs bg-green-50 text-green-700 border-green-200"
+      >
+        {stock} en stock
+      </Badge>
+    );
+  } else if (stock > 0) {
+    return (
+      <Badge
+        variant="outline"
+        className="text-xs bg-orange-50 text-orange-700 border-orange-200"
+      >
+        {stock} restant
+      </Badge>
+    );
+  } else {
+    return (
+      <Badge
+        variant="outline"
+        className="text-xs bg-red-50 text-red-700 border-red-200"
+      >
+        Rupture
+      </Badge>
+    );
+  }
+}
+
 /**
  * Page Catalogue LinkMe
  *
@@ -618,15 +684,8 @@ export default function LinkMeCataloguePage() {
                               Vedette
                             </Badge>
                           )}
-                          {product.is_enabled ? (
-                            <Badge variant="success" className="text-xs">
-                              Actif
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary" className="text-xs">
-                              Inactif
-                            </Badge>
-                          )}
+                          <ProductStatusBadge status={product.product_status} />
+                          <StockBadge stock={product.product_stock_real} />
                         </div>
                         {/* Badge produit sourcé avec enseigne/organisation */}
                         {product.is_sourced && (
@@ -731,7 +790,7 @@ export default function LinkMeCataloguePage() {
 
                       {/* Info produit */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="font-semibold text-xs text-black truncate">
                             {product.product_name}
                           </h3>
@@ -743,15 +802,8 @@ export default function LinkMeCataloguePage() {
                               Vedette
                             </Badge>
                           )}
-                          {product.is_enabled ? (
-                            <Badge variant="success" className="text-xs">
-                              Actif
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary" className="text-xs">
-                              Inactif
-                            </Badge>
-                          )}
+                          <ProductStatusBadge status={product.product_status} />
+                          <StockBadge stock={product.product_stock_real} />
                         </div>
                         <div className="flex items-center gap-2">
                           <p className="text-xs text-gray-500 font-mono">
@@ -909,15 +961,8 @@ export default function LinkMeCataloguePage() {
                               Vedette
                             </Badge>
                           )}
-                          {product.is_enabled ? (
-                            <Badge variant="success" className="text-xs">
-                              Actif
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary" className="text-xs">
-                              Inactif
-                            </Badge>
-                          )}
+                          <ProductStatusBadge status={product.product_status} />
+                          <StockBadge stock={product.product_stock_real} />
                         </div>
                         {/* Badge produit sur mesure avec enseigne/organisation */}
                         <div className="mt-1">
@@ -1020,7 +1065,7 @@ export default function LinkMeCataloguePage() {
 
                       {/* Info produit */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="font-semibold text-xs text-black truncate">
                             {product.product_name}
                           </h3>
@@ -1032,15 +1077,8 @@ export default function LinkMeCataloguePage() {
                               Vedette
                             </Badge>
                           )}
-                          {product.is_enabled ? (
-                            <Badge variant="success" className="text-xs">
-                              Actif
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary" className="text-xs">
-                              Inactif
-                            </Badge>
-                          )}
+                          <ProductStatusBadge status={product.product_status} />
+                          <StockBadge stock={product.product_stock_real} />
                         </div>
                         <div className="flex items-center gap-2">
                           <p className="text-xs text-gray-500 font-mono">
@@ -1194,15 +1232,8 @@ export default function LinkMeCataloguePage() {
                             Vedette
                           </Badge>
                         )}
-                        {product.is_enabled ? (
-                          <Badge variant="success" className="text-xs">
-                            Actif
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary" className="text-xs">
-                            Inactif
-                          </Badge>
-                        )}
+                        <ProductStatusBadge status={product.product_status} />
+                        <StockBadge stock={product.product_stock_real} />
                       </div>
                       {/* Badge produit affilié */}
                       <div className="mt-1">
@@ -1301,7 +1332,7 @@ export default function LinkMeCataloguePage() {
 
                     {/* Info produit */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-semibold text-xs text-black truncate">
                           {product.product_name}
                         </h3>
@@ -1313,15 +1344,8 @@ export default function LinkMeCataloguePage() {
                             Vedette
                           </Badge>
                         )}
-                        {product.is_enabled ? (
-                          <Badge variant="success" className="text-xs">
-                            Actif
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary" className="text-xs">
-                            Inactif
-                          </Badge>
-                        )}
+                        <ProductStatusBadge status={product.product_status} />
+                        <StockBadge stock={product.product_stock_real} />
                       </div>
                       <div className="flex items-center gap-2">
                         <p className="text-xs text-gray-500 font-mono">

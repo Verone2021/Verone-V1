@@ -86,47 +86,66 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'month') {
       const periodStartISO = periodStart.toISOString();
 
       // ============================================
-      // 1. Commissions de l'affilié (période)
+      // 1-3. Requetes paralleles (commissions periode, all time, selections)
       // ============================================
-      const { data: commissionsData, error: commissionsError } = await supabase
-        .from('linkme_commissions')
-        .select(
-          `
-          id,
-          order_id,
-          selection_id,
-          order_number,
-          order_amount_ht,
-          affiliate_commission,
-          affiliate_commission_ttc,
-          linkme_commission,
-          margin_rate_applied,
-          status,
-          created_at,
-          validated_at,
-          paid_at
-        `
-        )
-        .eq('affiliate_id', affiliate.id)
-        .gte('created_at', periodStartISO)
-        .order('created_at', { ascending: true });
+      const [commissionsResult, allCommissionsResult, selectionsResult] =
+        await Promise.all([
+          // 1. Commissions de l'affilié (période)
+          supabase
+            .from('linkme_commissions')
+            .select(
+              `
+              id,
+              order_id,
+              selection_id,
+              order_number,
+              order_amount_ht,
+              affiliate_commission,
+              affiliate_commission_ttc,
+              linkme_commission,
+              margin_rate_applied,
+              status,
+              created_at,
+              validated_at,
+              paid_at
+            `
+            )
+            .eq('affiliate_id', affiliate.id)
+            .gte('created_at', periodStartISO)
+            .order('created_at', { ascending: true }),
 
-      if (commissionsError) {
-        console.error('Erreur fetch commissions:', commissionsError);
-        throw commissionsError;
+          // 2. Commissions ALL TIME (pour status)
+          supabase
+            .from('linkme_commissions')
+            .select('status, affiliate_commission, affiliate_commission_ttc')
+            .eq('affiliate_id', affiliate.id),
+
+          // 3. Sélections de l'affilié
+          supabase
+            .from('linkme_selections')
+            .select(
+              `
+              id,
+              name,
+              slug,
+              image_url,
+              products_count,
+              views_count,
+              orders_count,
+              total_revenue,
+              published_at
+            `
+            )
+            .eq('affiliate_id', affiliate.id),
+        ]);
+
+      if (commissionsResult.error) {
+        console.error('Erreur fetch commissions:', commissionsResult.error);
+        throw commissionsResult.error;
       }
 
-      const commissions = commissionsData || [];
-
-      // ============================================
-      // 2. Commissions ALL TIME (pour status)
-      // ============================================
-      const { data: allCommissionsData } = await supabase
-        .from('linkme_commissions')
-        .select('status, affiliate_commission, affiliate_commission_ttc')
-        .eq('affiliate_id', affiliate.id);
-
-      const allCommissions = allCommissionsData || [];
+      const commissions = commissionsResult.data || [];
+      const allCommissions = allCommissionsResult.data || [];
 
       // Calculs par statut
       const commissionsByStatus: CommissionsByStatus = {
@@ -188,32 +207,13 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'month') {
       );
       const averageBasket = totalOrders > 0 ? totalRevenueHT / totalOrders : 0;
 
-      // ============================================
-      // 4. Sélections de l'affilié
-      // ============================================
-      const { data: selectionsData, error: selectionsError } = await supabase
-        .from('linkme_selections')
-        .select(
-          `
-          id,
-          name,
-          slug,
-          image_url,
-          products_count,
-          views_count,
-          orders_count,
-          total_revenue,
-          published_at
-        `
-        )
-        .eq('affiliate_id', affiliate.id);
-
-      if (selectionsError) {
-        console.error('Erreur fetch selections:', selectionsError);
-        throw selectionsError;
+      // Selections deja recuperees dans Promise.all
+      if (selectionsResult.error) {
+        console.error('Erreur fetch selections:', selectionsResult.error);
+        throw selectionsResult.error;
       }
 
-      const selections = selectionsData || [];
+      const selections = selectionsResult.data || [];
 
       // Performance par sélection
       const selectionsPerformance: SelectionPerformance[] = selections.map(
@@ -328,24 +328,31 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'month') {
         const productIds = Array.from(productMap.keys());
 
         if (productIds.length > 0) {
-          const { data: productsData } = await supabase
-            .from('products')
-            .select('id, name, sku')
-            .in('id', productIds);
-
-          // Récupérer les images
-          const { data: imagesData } = await supabase
-            .from('product_images')
-            .select('product_id, public_url')
-            .in('product_id', productIds)
-            .eq('is_primary', true);
+          // Requetes paralleles pour products et images
+          const [productsResult, imagesResult] = await Promise.all([
+            supabase
+              .from('products')
+              .select('id, name, sku')
+              .in('id', productIds),
+            supabase
+              .from('product_images')
+              .select('product_id, public_url')
+              .in('product_id', productIds)
+              .eq('is_primary', true),
+          ]);
 
           const imageMap = new Map(
-            (imagesData || []).map(img => [img.product_id, img.public_url])
+            (imagesResult.data || []).map(img => [
+              img.product_id,
+              img.public_url,
+            ])
           );
 
           const productsInfo = new Map(
-            (productsData || []).map(p => [p.id, { name: p.name, sku: p.sku }])
+            (productsResult.data || []).map(p => [
+              p.id,
+              { name: p.name, sku: p.sku },
+            ])
           );
 
           topProducts = Array.from(productMap.entries())

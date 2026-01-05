@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
 import { useToast } from '@verone/common';
+import { RapprochementFromOrderModal } from '@verone/finance';
 import type { PurchaseOrder, PurchaseOrderStatus } from '@verone/orders';
 import { PurchaseOrderFormModal } from '@verone/orders';
 import { PurchaseOrderReceptionModal } from '@verone/orders';
@@ -53,6 +54,14 @@ import {
   TableRow,
 } from '@verone/ui';
 import { Tabs, TabsList, TabsTrigger } from '@verone/ui';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@verone/ui';
 import { formatCurrency, formatDate } from '@verone/utils';
 import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
@@ -73,6 +82,12 @@ import {
   ChevronDown,
   XCircle,
   PackageCheck,
+  Banknote,
+  Receipt,
+  Building2,
+  CreditCard,
+  CheckSquare,
+  Link2,
 } from 'lucide-react';
 
 import { updatePurchaseOrderStatus } from '@/app/actions/purchase-orders';
@@ -107,6 +122,7 @@ export default function PurchaseOrdersPage() {
     fetchStats,
     updateStatus,
     deleteOrder,
+    markAsManuallyPaid,
   } = usePurchaseOrders();
 
   const { organisations: suppliers } = useOrganisations({ type: 'supplier' });
@@ -169,6 +185,11 @@ export default function PurchaseOrdersPage() {
       quantity_remaining: number;
     }>
   >([]);
+
+  // État pour modal rapprochement bancaire
+  const [showRapprochementModal, setShowRapprochementModal] = useState(false);
+  const [rapprochementOrder, setRapprochementOrder] =
+    useState<PurchaseOrder | null>(null);
 
   const toggleRow = (orderId: string) => {
     setExpandedRows(prev => {
@@ -919,7 +940,7 @@ export default function PurchaseOrdersPage() {
                       Fournisseur {renderSortIcon('supplier')}
                     </TableHead>
                     <TableHead>Statut</TableHead>
-                    <TableHead>Rapproché</TableHead>
+                    <TableHead>Paiement V2</TableHead>
                     <TableHead className="w-20 text-center">Articles</TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-gray-50"
@@ -982,17 +1003,104 @@ export default function PurchaseOrdersPage() {
                               )}
                             </div>
                           </TableCell>
-                          {/* Colonne Rapproché */}
+                          {/* Colonne Paiement V2 */}
                           <TableCell>
-                            {(order as any).payment_status_v2 === 'paid' ? (
-                              <Badge className="bg-green-100 text-green-800">
-                                Rapproché
-                              </Badge>
-                            ) : (
-                              <Badge className="bg-orange-100 text-orange-800">
-                                Non rapproché
-                              </Badge>
-                            )}
+                            <div className="flex items-center gap-2">
+                              {(order as any).payment_status_v2 === 'paid' ? (
+                                <Badge className="bg-green-100 text-green-800">
+                                  Payé
+                                  {(order as any).manual_payment_type && (
+                                    <span className="ml-1 opacity-70">
+                                      (manuel)
+                                    </span>
+                                  )}
+                                </Badge>
+                              ) : (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <button className="flex items-center gap-1 cursor-pointer">
+                                      <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-200 transition-colors">
+                                        En attente
+                                        <ChevronDown className="h-3 w-3 ml-1" />
+                                      </Badge>
+                                    </button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="start">
+                                    <DropdownMenuLabel>
+                                      Marquer comme payé
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        void markAsManuallyPaid(
+                                          order.id,
+                                          'cash'
+                                        )
+                                      }
+                                    >
+                                      <Banknote className="h-4 w-4 mr-2" />
+                                      Espèces
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        void markAsManuallyPaid(
+                                          order.id,
+                                          'check'
+                                        )
+                                      }
+                                    >
+                                      <Receipt className="h-4 w-4 mr-2" />
+                                      Chèque
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        void markAsManuallyPaid(
+                                          order.id,
+                                          'transfer_other'
+                                        )
+                                      }
+                                    >
+                                      <Building2 className="h-4 w-4 mr-2" />
+                                      Virement autre banque
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        void markAsManuallyPaid(
+                                          order.id,
+                                          'card'
+                                        )
+                                      }
+                                    >
+                                      <CreditCard className="h-4 w-4 mr-2" />
+                                      Carte bancaire
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        void markAsManuallyPaid(
+                                          order.id,
+                                          'compensation'
+                                        )
+                                      }
+                                    >
+                                      <CheckSquare className="h-4 w-4 mr-2" />
+                                      Compensation
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        void markAsManuallyPaid(
+                                          order.id,
+                                          'verified_bubble'
+                                        )
+                                      }
+                                    >
+                                      <CheckCircle className="h-4 w-4 mr-2" />
+                                      Vérifié Bubble
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              )}
+                            </div>
                           </TableCell>
                           {/* Colonne Articles */}
                           <TableCell className="text-center">
@@ -1107,6 +1215,35 @@ export default function PurchaseOrdersPage() {
                                   label="Supprimer"
                                   onClick={() => handleDelete(order.id)}
                                 />
+                              )}
+
+                              {/* Lier transaction / Rapprochée */}
+                              {(order.status === 'validated' ||
+                                order.status === 'partially_received' ||
+                                order.status === 'received') && (
+                                <>
+                                  {(order as any).is_matched ? (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs bg-green-50 text-green-700 border-green-300 cursor-help"
+                                      title={`Rapprochée: ${(order as any).matched_transaction_label || 'Transaction'} (${formatCurrency(Math.abs((order as any).matched_transaction_amount || 0))})`}
+                                    >
+                                      <Link2 className="h-3 w-3 mr-1 text-green-600" />
+                                      Rapprochée
+                                    </Badge>
+                                  ) : (
+                                    <IconButton
+                                      icon={Link2}
+                                      variant="outline"
+                                      size="sm"
+                                      label="Lier à une transaction"
+                                      onClick={() => {
+                                        setRapprochementOrder(order);
+                                        setShowRapprochementModal(true);
+                                      }}
+                                    />
+                                  )}
+                                </>
                               )}
                             </div>
                           </TableCell>
@@ -1323,6 +1460,30 @@ export default function PurchaseOrdersPage() {
             setShowCancelRemainderModal(false);
             setCancelRemainderOrder(null);
             setCancelRemainderItems([]);
+          }}
+        />
+      )}
+
+      {/* Modal Rapprochement Bancaire */}
+      {rapprochementOrder && (
+        <RapprochementFromOrderModal
+          open={showRapprochementModal}
+          onOpenChange={setShowRapprochementModal}
+          order={{
+            id: rapprochementOrder.id,
+            order_number: rapprochementOrder.po_number,
+            customer_name:
+              rapprochementOrder.organisations?.trade_name ||
+              rapprochementOrder.organisations?.legal_name ||
+              null,
+            total_ttc: rapprochementOrder.total_ttc,
+            created_at: rapprochementOrder.created_at,
+          }}
+          orderType="purchase_order"
+          onSuccess={() => {
+            fetchOrders();
+            setShowRapprochementModal(false);
+            setRapprochementOrder(null);
           }}
         />
       )}

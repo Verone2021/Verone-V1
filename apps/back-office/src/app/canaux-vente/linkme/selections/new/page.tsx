@@ -40,7 +40,10 @@ import {
   Check,
 } from 'lucide-react';
 
-import { useLinkMeCatalogProducts } from '../../hooks/use-linkme-selections';
+import {
+  useLinkMeCatalogProducts,
+  type LinkMeCatalogProduct,
+} from '../../hooks/use-linkme-catalog';
 import {
   useLinkMeUsers,
   type LinkMeUser,
@@ -71,24 +74,9 @@ interface SelectedProduct {
   suggested_margin_rate: number;
 }
 
-interface CatalogProduct {
-  id: string;
-  product_id: string;
-  product_name: string;
-  product_reference: string;
-  product_price_ht: number;
-  product_image_url: string | null;
-  channel_commission_rate: number | null;
-  min_margin_rate: number | null;
-  max_margin_rate: number | null;
-  suggested_margin_rate: number | null;
-  is_active: boolean;
-  is_featured: boolean;
-  // Champs pour filtrage par organisation/enseigne
-  enseigne_id: string | null;
-  assigned_client_id: string | null;
-  is_sourced: boolean;
-}
+// CatalogProduct type imported from use-linkme-catalog.ts as LinkMeCatalogProduct
+// Type alias for backward compatibility
+type CatalogProduct = LinkMeCatalogProduct;
 
 // ============================================================================
 // Constants
@@ -320,8 +308,7 @@ export default function NewSelectionPage() {
   // Filtered catalog products - filtrage par organisation/enseigne + recherche
   const filteredCatalog = useMemo(() => {
     if (!catalogProducts) return [];
-    // Cast via unknown car le type généré par Supabase peut différer
-    const products = catalogProducts as unknown as CatalogProduct[];
+    const products = catalogProducts;
 
     // RÈGLE 1: Si aucun utilisateur sélectionné, ne rien afficher
     if (!selectedUser) return [];

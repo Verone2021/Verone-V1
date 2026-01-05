@@ -124,7 +124,7 @@ export default function MaSelectionPage() {
     selections?.reduce((sum, s) => sum + s.orders_count, 0) || 0;
   const totalViews =
     selections?.reduce((sum, s) => sum + s.views_count, 0) || 0;
-  const publishedCount = selections?.filter(s => s.is_public).length || 0;
+  const publishedCount = selections?.filter(s => !!s.published_at).length || 0;
 
   // Top 5 produits (depuis analytics)
   const topProducts = analytics?.topProducts?.slice(0, 5) || [];
@@ -335,12 +335,12 @@ function SelectionCard({ selection, affiliate }: SelectionCardProps) {
         <div className="absolute top-1.5 right-1.5">
           <span
             className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
-              selection.is_public
+              selection.published_at
                 ? 'bg-green-100 text-green-700'
                 : 'bg-gray-100 text-gray-600'
             }`}
           >
-            {selection.is_public ? (
+            {selection.published_at ? (
               <>
                 <Globe className="h-2.5 w-2.5" />
                 Publiée

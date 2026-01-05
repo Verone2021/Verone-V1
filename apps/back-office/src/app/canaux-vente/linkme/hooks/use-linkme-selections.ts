@@ -27,6 +27,8 @@ export interface SelectionItem {
     sku: string;
     cost_price: number | null;
     product_status: string;
+    /** Stock reel (source de verite) */
+    stock_real?: number | null;
     /** Description du produit (pour modal détail) */
     description?: string | null;
     /** Arguments de vente (pour modal détail) */
@@ -156,7 +158,7 @@ async function fetchSelectionById(
       `
       *,
       product:products(
-        id, name, sku, cost_price, product_status,
+        id, name, sku, cost_price, product_status, stock_real,
         description, selling_points, weight, dimensions,
         subcategory_id,
         subcategory:subcategories(id, name),
@@ -250,6 +252,7 @@ async function fetchSelectionById(
             sku: rawProduct.sku,
             cost_price: rawProduct.cost_price,
             product_status: rawProduct.product_status,
+            stock_real: rawProduct.stock_real ?? null,
             description: rawProduct.description,
             selling_points: rawProduct.selling_points,
             weight_kg: rawProduct.weight,
@@ -281,22 +284,6 @@ async function fetchSelectionById(
   } as SelectionDetail;
 }
 
-/**
- * Récupère les produits du catalogue LinkMe éligibles pour ajout
- */
-async function fetchCatalogProducts() {
-  const { data, error } = await supabase.rpc(
-    'get_linkme_catalog_products_for_affiliate'
-  );
-
-  if (error) {
-    console.error('Error fetching catalog products:', error);
-    throw error;
-  }
-
-  return data || [];
-}
-
 // ============================================================================
 // Hooks
 // ============================================================================
@@ -313,16 +300,8 @@ export function useLinkMeSelection(selectionId: string | null) {
   });
 }
 
-/**
- * Hook: Récupérer les produits du catalogue LinkMe
- */
-export function useLinkMeCatalogProducts() {
-  return useQuery({
-    queryKey: ['linkme-catalog-products'],
-    queryFn: fetchCatalogProducts,
-    staleTime: 60000, // 1 minute
-  });
-}
+// NOTE: useLinkMeCatalogProducts est maintenant dans use-linkme-catalog.ts
+// Il utilise channel_pricing (source de vérité) au lieu du RPC obsolète
 
 /**
  * Hook: Mettre à jour une sélection

@@ -102,8 +102,8 @@ export default function DashboardPage(): JSX.Element | null {
   const monthlyCommissions = monthlyKPIs?.currentMonth.commissionsTTC ?? 0;
   const ordersVariation = monthlyKPIs?.variations.ordersCount ?? 0;
 
-  // Sélections
-  const selectionsCount = selections?.filter(s => s.is_public).length ?? 0;
+  // Sélections (published_at !== null = publiée)
+  const selectionsCount = selections?.filter(s => !!s.published_at).length ?? 0;
 
   // Loading state combiné
   const isLoading = analyticsLoading || kpisLoading;

@@ -44,6 +44,7 @@ export interface UserAffiliate {
 
 /**
  * Interface sélection
+ * Note: is_public est dérivé de published_at (published_at !== null = publié)
  */
 export interface UserSelection {
   id: string;
@@ -52,13 +53,13 @@ export interface UserSelection {
   slug: string;
   description: string | null;
   image_url: string | null;
+  /** @deprecated Utiliser published_at !== null à la place */
   is_public: boolean;
   share_token: string | null;
   products_count: number;
   views_count: number;
   orders_count: number;
   total_revenue: number;
-  status: string;
   published_at: string | null;
   created_at: string;
   updated_at: string;
@@ -206,13 +207,13 @@ export function useUserSelections() {
         slug: s.slug,
         description: s.description,
         image_url: s.image_url,
-        is_public: s.is_public ?? false,
+        // is_public est dérivé de published_at (colonne is_public supprimée en DB)
+        is_public: s.published_at !== null,
         share_token: s.share_token,
         products_count: s.products_count || 0,
-        views_count: s.views_count || 0,
+        views_count: s.views_count || s.view_count || 0,
         orders_count: s.orders_count || 0,
         total_revenue: s.total_revenue || 0,
-        status: s.status || 'draft',
         published_at: s.published_at,
         created_at: s.created_at,
         updated_at: s.updated_at,
@@ -331,8 +332,8 @@ export function useCreateSelection() {
           name: input.name,
           slug: uniqueSlug,
           description: input.description || null,
-          is_public: false,
-          status: 'draft',
+          // published_at = null signifie brouillon (non publié)
+          published_at: null,
           products_count: 0,
           views_count: 0,
           orders_count: 0,
@@ -654,6 +655,9 @@ export function useUpdateItemMargin() {
 
 /**
  * Hook: publier/dépublier une sélection
+ * Utilise published_at (timestamp) au lieu de is_public (boolean supprimé)
+ * - published_at = timestamp → sélection publiée
+ * - published_at = null → sélection en brouillon
  */
 export function useToggleSelectionPublished() {
   const queryClient = useQueryClient();
@@ -661,15 +665,12 @@ export function useToggleSelectionPublished() {
   return useMutation({
     mutationFn: async (input: { selectionId: string; isPublic: boolean }) => {
       const supabase = createClient();
-      const updateData: any = {
-        is_public: input.isPublic,
-        status: input.isPublic ? 'active' : 'draft',
+
+      // Publier = définir published_at, Dépublier = mettre à null
+      const updateData = {
+        published_at: input.isPublic ? new Date().toISOString() : null,
         updated_at: new Date().toISOString(),
       };
-
-      if (input.isPublic) {
-        updateData.published_at = new Date().toISOString();
-      }
 
       const { error } = await (supabase as any)
         .from('linkme_selections')
