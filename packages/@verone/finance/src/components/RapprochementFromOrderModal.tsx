@@ -61,6 +61,8 @@ interface RapprochementFromOrderModalProps {
   onOpenChange: (open: boolean) => void;
   order: OrderForLink | null;
   onSuccess?: () => void;
+  /** Type de commande: sales_order (défaut) ou purchase_order */
+  orderType?: 'sales_order' | 'purchase_order';
 }
 
 interface CreditTransaction {
@@ -209,6 +211,7 @@ export function RapprochementFromOrderModal({
   onOpenChange,
   order,
   onSuccess,
+  orderType = 'sales_order',
 }: RapprochementFromOrderModalProps) {
   const [transactions, setTransactions] = useState<CreditTransaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -218,7 +221,7 @@ export function RapprochementFromOrderModal({
 
   const supabase = createClient();
 
-  // Fetch available credit transactions
+  // Fetch available transactions (credit for sales, debit for purchases)
   const fetchTransactions = useCallback(async () => {
     if (!order) return;
 
@@ -226,12 +229,16 @@ export function RapprochementFromOrderModal({
     setError(null);
 
     try {
+      // Sales orders = entrées (credit), Purchase orders = sorties (debit)
+      const transactionSide =
+        orderType === 'purchase_order' ? 'debit' : 'credit';
+
       const { data, error: fetchError } = await supabase
         .from('v_transactions_unified')
         .select(
           'id, transaction_id, label, amount, counterparty_name, emitted_at, settled_at, unified_status'
         )
-        .eq('side', 'credit')
+        .eq('side', transactionSide)
         .in('unified_status', ['to_process', 'classified'])
         .order('settled_at', { ascending: false, nullsFirst: false })
         .limit(100);
@@ -245,7 +252,7 @@ export function RapprochementFromOrderModal({
     } finally {
       setIsLoading(false);
     }
-  }, [order, supabase]);
+  }, [order, supabase, orderType]);
 
   useEffect(() => {
     if (open && order) {
@@ -296,14 +303,25 @@ export function RapprochementFromOrderModal({
     setIsLinking(true);
 
     try {
+      // Build insert data based on order type
+      const insertData =
+        orderType === 'purchase_order'
+          ? {
+              transaction_id: transactionId,
+              purchase_order_id: order.id,
+              link_type: 'purchase_order',
+              allocated_amount: order.total_ttc,
+            }
+          : {
+              transaction_id: transactionId,
+              sales_order_id: order.id,
+              link_type: 'sales_order',
+              allocated_amount: order.total_ttc,
+            };
+
       const { error: linkError } = await supabase
         .from('transaction_document_links')
-        .insert({
-          transaction_id: transactionId,
-          sales_order_id: order.id,
-          link_type: 'sales_order',
-          allocated_amount: order.total_ttc,
-        });
+        .insert(insertData);
 
       if (linkError) throw linkError;
 

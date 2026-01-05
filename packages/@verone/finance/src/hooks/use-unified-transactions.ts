@@ -392,14 +392,36 @@ export function useUnifiedTransactions(
     [supabase, filters, pageSize, offset, currentPage]
   );
 
-  // Fetch stats depuis v_transactions_unified
+  // Fetch stats depuis v_transactions_unified (avec filtres appliqués)
   const fetchStats = useCallback(async () => {
     try {
-      // Utiliser la vue pour compter par unified_status
+      // Helper pour créer une requête avec les filtres appliqués
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const viewQuery = supabase as any;
+      const createFilteredQuery = () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let query = (supabase as any)
+          .from('v_transactions_unified')
+          .select('*', { count: 'exact', head: true });
 
-      // Compter par statut depuis la vue
+        // Appliquer filtre année
+        if (filters.year) {
+          query = query.eq('year', filters.year);
+        }
+
+        // Appliquer filtre side (entrées/sorties)
+        if (filters.side && filters.side !== 'all') {
+          query = query.eq('side', filters.side);
+        }
+
+        // Appliquer filtre recherche
+        if (filters.search) {
+          query = query.ilike('label', `%${filters.search}%`);
+        }
+
+        return query;
+      };
+
+      // Compter par statut depuis la vue avec les filtres
       const [
         { count: total },
         { count: toProcess },
@@ -409,33 +431,13 @@ export function useUnifiedTransactions(
         { count: cca },
         { count: withAttachment },
       ] = await Promise.all([
-        viewQuery
-          .from('v_transactions_unified')
-          .select('*', { count: 'exact', head: true }),
-        viewQuery
-          .from('v_transactions_unified')
-          .select('*', { count: 'exact', head: true })
-          .eq('unified_status', 'to_process'),
-        viewQuery
-          .from('v_transactions_unified')
-          .select('*', { count: 'exact', head: true })
-          .eq('unified_status', 'classified'),
-        viewQuery
-          .from('v_transactions_unified')
-          .select('*', { count: 'exact', head: true })
-          .eq('unified_status', 'matched'),
-        viewQuery
-          .from('v_transactions_unified')
-          .select('*', { count: 'exact', head: true })
-          .eq('unified_status', 'ignored'),
-        viewQuery
-          .from('v_transactions_unified')
-          .select('*', { count: 'exact', head: true })
-          .eq('unified_status', 'cca'),
-        viewQuery
-          .from('v_transactions_unified')
-          .select('*', { count: 'exact', head: true })
-          .eq('has_attachment', true),
+        createFilteredQuery(),
+        createFilteredQuery().eq('unified_status', 'to_process'),
+        createFilteredQuery().eq('unified_status', 'classified'),
+        createFilteredQuery().eq('unified_status', 'matched'),
+        createFilteredQuery().eq('unified_status', 'ignored'),
+        createFilteredQuery().eq('unified_status', 'cca'),
+        createFilteredQuery().eq('has_attachment', true),
       ]);
 
       setStats({
@@ -456,7 +458,7 @@ export function useUnifiedTransactions(
     } catch (err) {
       console.error('Failed to fetch stats:', err);
     }
-  }, [supabase]);
+  }, [supabase, filters]);
 
   // Refresh
   const refresh = useCallback(async () => {

@@ -1418,68 +1418,52 @@ function TransactionsPageV2() {
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
+            </div>
+          </CardHeader>
 
-              <div className="flex items-center gap-3">
-                {/* Filtre Entrées/Sorties */}
-                <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
-                  <Button
-                    variant={sideFilter === 'all' ? 'secondary' : 'ghost'}
-                    size="sm"
-                    onClick={() => handleSideChange('all')}
-                    className="h-7 px-3 text-xs"
-                  >
-                    Toutes
-                  </Button>
-                  <Button
-                    variant={sideFilter === 'credit' ? 'secondary' : 'ghost'}
-                    size="sm"
-                    onClick={() => handleSideChange('credit')}
-                    className="h-7 px-3 text-xs gap-1"
-                  >
-                    <ArrowDownLeft className="h-3 w-3 text-green-600" />
-                    Entrées
-                  </Button>
-                  <Button
-                    variant={sideFilter === 'debit' ? 'secondary' : 'ghost'}
-                    size="sm"
-                    onClick={() => handleSideChange('debit')}
-                    className="h-7 px-3 text-xs gap-1"
-                  >
-                    <ArrowUpRight className="h-3 w-3 text-red-600" />
-                    Sorties
-                  </Button>
-                </div>
-
-                {/* Filtre Année */}
-                <Select
-                  value={yearFilter.toString()}
-                  onValueChange={val => handleYearChange(parseInt(val))}
-                >
-                  <SelectTrigger className="w-24 h-9">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {years.map(year => (
-                      <SelectItem key={year} value={year.toString()}>
-                        {year}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                {/* Recherche */}
-                <div className="relative w-64">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          {/* Filtres */}
+          <div className="px-6 pb-4">
+            <div className="flex flex-wrap items-center gap-4">
+              {/* Recherche */}
+              <div className="flex-1 min-w-[200px] max-w-md">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Rechercher..."
+                    placeholder="Rechercher par libellé..."
+                    className="pl-9"
                     value={search}
                     onChange={e => handleSearch(e.target.value)}
-                    className="pl-8 h-9"
                   />
                 </div>
               </div>
+
+              {/* Filtre Entrées/Sorties */}
+              <select
+                className="px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium"
+                value={sideFilter}
+                onChange={e =>
+                  handleSideChange(e.target.value as 'all' | 'credit' | 'debit')
+                }
+              >
+                <option value="all">📊 Toutes transactions</option>
+                <option value="debit">📤 Sorties (dépenses)</option>
+                <option value="credit">📥 Entrées (recettes)</option>
+              </select>
+
+              {/* Filtre Année */}
+              <select
+                className="px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                value={yearFilter}
+                onChange={e => handleYearChange(parseInt(e.target.value))}
+              >
+                {years.map(year => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
             </div>
-          </CardHeader>
+          </div>
 
           <CardContent className="p-0">
             {/* Header tableau */}

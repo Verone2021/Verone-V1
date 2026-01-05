@@ -21,12 +21,33 @@ export type PurchaseOrderStatus =
   | 'received'
   | 'cancelled';
 
+// Type local (le type exporté est dans use-sales-orders.ts)
+type ManualPaymentType =
+  | 'cash'
+  | 'check'
+  | 'transfer_other'
+  | 'card'
+  | 'compensation'
+  | 'verified_bubble';
+
 export interface PurchaseOrder {
   id: string;
   po_number: string;
   supplier_id: string;
   status: PurchaseOrderStatus;
   payment_status_v2?: 'pending' | 'paid' | null;
+  // 🆕 Paiement manuel
+  manual_payment_type?: ManualPaymentType | null;
+  manual_payment_date?: string | null;
+  manual_payment_reference?: string | null;
+  manual_payment_note?: string | null;
+  manual_payment_by?: string | null;
+  // 🆕 Transaction liée (enrichissement)
+  is_matched?: boolean;
+  matched_transaction_id?: string | null;
+  matched_transaction_label?: string | null;
+  matched_transaction_amount?: number | null;
+  matched_transaction_emitted_at?: string | null;
   currency: string;
   tax_rate: number;
   eco_tax_total: number;
@@ -181,6 +202,12 @@ export function usePurchaseOrders() {
           po_number,
           supplier_id,
           status,
+          payment_status_v2,
+          manual_payment_type,
+          manual_payment_date,
+          manual_payment_reference,
+          manual_payment_note,
+          manual_payment_by,
           currency,
           tax_rate,
           total_ht,
@@ -271,22 +298,77 @@ export function usePurchaseOrders() {
 
         if (error) throw error;
 
-        // Enrichir les produits avec primary_image_url (BR-TECH-002)
-        const enrichedOrders = (data || []).map(order => ({
-          ...order,
-          purchase_order_items: (order.purchase_order_items || []).map(
-            item => ({
-              ...item,
-              products: item.products
-                ? {
-                    ...item.products,
-                    primary_image_url:
-                      item.products.product_images?.[0]?.public_url || null,
-                  }
-                : null,
-            })
-          ),
-        }));
+        // Cast as any car les types Supabase ne sont pas à jour (colonnes payment_status_v2, manual_payment_*)
+        const ordersData = (data || []) as any[];
+
+        // 🆕 Récupérer les transactions liées (rapprochement bancaire)
+        const orderIds = ordersData.map(o => o.id);
+        const matchedOrdersMap = new Map<
+          string,
+          {
+            transaction_id: string;
+            label: string;
+            amount: number;
+            emitted_at: string | null;
+          }
+        >();
+
+        if (orderIds.length > 0) {
+          const { data: links } = await supabase
+            .from('transaction_document_links')
+            .select(
+              `
+              purchase_order_id,
+              transaction_id,
+              bank_transactions!inner (
+                id,
+                label,
+                amount,
+                emitted_at
+              )
+            `
+            )
+            .in('purchase_order_id', orderIds)
+            .eq('link_type', 'purchase_order');
+
+          for (const link of links || []) {
+            if (link.purchase_order_id && link.bank_transactions) {
+              const bt = link.bank_transactions as any;
+              matchedOrdersMap.set(link.purchase_order_id, {
+                transaction_id: bt.id,
+                label: bt.label || '',
+                amount: bt.amount || 0,
+                emitted_at: bt.emitted_at || null,
+              });
+            }
+          }
+        }
+
+        // Enrichir les produits avec primary_image_url (BR-TECH-002) + rapprochement
+        const enrichedOrders = ordersData.map(order => {
+          const matchInfo = matchedOrdersMap.get(order.id);
+          return {
+            ...order,
+            // 🆕 Rapprochement bancaire
+            is_matched: !!matchInfo,
+            matched_transaction_id: matchInfo?.transaction_id || null,
+            matched_transaction_label: matchInfo?.label || null,
+            matched_transaction_amount: matchInfo?.amount || null,
+            matched_transaction_emitted_at: matchInfo?.emitted_at || null,
+            purchase_order_items: (order.purchase_order_items || []).map(
+              item => ({
+                ...item,
+                products: item.products
+                  ? {
+                      ...item.products,
+                      primary_image_url:
+                        item.products.product_images?.[0]?.public_url || null,
+                    }
+                  : null,
+              })
+            ),
+          };
+        });
 
         setOrders(enrichedOrders as any);
       } catch (error) {
@@ -825,6 +907,68 @@ export function usePurchaseOrders() {
     [updateStatus]
   );
 
+  // Marquer comme payé manuellement (aligné avec sales orders)
+  const markAsManuallyPaid = useCallback(
+    async (
+      orderId: string,
+      paymentType: ManualPaymentType,
+      options?: {
+        reference?: string;
+        note?: string;
+        date?: Date;
+      }
+    ) => {
+      setLoading(true);
+      try {
+        // Type assertion car les colonnes manual_payment_* sont nouvelles
+        // et pas encore dans les types Supabase générés
+        const { error } = await supabase
+          .from('purchase_orders')
+          .update({
+            manual_payment_type: paymentType,
+            manual_payment_date:
+              options?.date?.toISOString() ?? new Date().toISOString(),
+            manual_payment_reference: options?.reference ?? null,
+            manual_payment_note: options?.note ?? null,
+          } as Record<string, unknown>)
+          .eq('id', orderId);
+
+        if (error) throw error;
+
+        const paymentLabels: Record<ManualPaymentType, string> = {
+          cash: 'Espèces',
+          check: 'Chèque',
+          transfer_other: 'Virement autre banque',
+          card: 'Carte bancaire',
+          compensation: 'Compensation',
+          verified_bubble: 'Vérifié Bubble',
+        };
+
+        toast({
+          title: 'Paiement manuel enregistré',
+          description: `Type: ${paymentLabels[paymentType]}`,
+        });
+
+        await fetchOrders();
+        if (currentOrder?.id === orderId) {
+          await fetchOrder(orderId);
+        }
+      } catch (error: any) {
+        console.error('Erreur lors du paiement manuel:', error);
+        toast({
+          title: 'Erreur',
+          description:
+            error.message || "Impossible d'enregistrer le paiement manuel",
+          variant: 'destructive',
+        });
+        throw error;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [supabase, toast, fetchOrders, currentOrder, fetchOrder]
+  );
+
   return {
     // État
     loading,
@@ -843,6 +987,7 @@ export function usePurchaseOrders() {
     deleteOrder,
     confirmOrder,
     markAsReceived,
+    markAsManuallyPaid,
 
     // Utilitaires
     getStockWithForecasted,
