@@ -1,3 +1,4 @@
+// Deploy: 2026-01-05
 import './globals.css';
 import { Inter } from 'next/font/google';
 import Script from 'next/script';
