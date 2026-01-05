@@ -58,18 +58,14 @@ import {
   usePendingOrdersCount,
   useApproveOrder,
   useRejectOrder,
-  useAllLinkMeOrders,
   type PendingOrder,
-  type LinkMeOrderStatus,
 } from '../hooks/use-linkme-order-actions';
 import {
   usePendingOrganisations,
   usePendingOrganisationsCount,
-  useAllOrganisationsWithApproval,
   useApproveOrganisation,
   useRejectOrganisation,
   type PendingOrganisation,
-  type OrganisationApprovalStatus,
 } from '../hooks/use-organisation-approvals';
 import {
   usePendingApprovals,
@@ -170,42 +166,8 @@ export default function ApprobationsPage() {
 // TAB: COMMANDES
 // ============================================================================
 
-// Status filter options for orders
-const ORDER_STATUS_OPTIONS: {
-  value: LinkMeOrderStatus;
-  label: string;
-  icon: React.ElementType;
-  color: string;
-}[] = [
-  { value: 'all', label: 'Tous', icon: ShoppingCart, color: 'text-gray-600' },
-  {
-    value: 'pending',
-    label: 'En attente',
-    icon: Clock,
-    color: 'text-amber-600',
-  },
-  {
-    value: 'validated',
-    label: 'Validees',
-    icon: CheckCircle,
-    color: 'text-green-600',
-  },
-  {
-    value: 'cancelled',
-    label: 'Annulees',
-    icon: XCircle,
-    color: 'text-red-600',
-  },
-];
-
 function CommandesTab() {
-  const [selectedStatus, setSelectedStatus] =
-    useState<LinkMeOrderStatus>('pending');
-  const {
-    data: orders,
-    isLoading,
-    refetch,
-  } = useAllLinkMeOrders(selectedStatus);
+  const { data: orders, isLoading, refetch } = usePendingOrders();
   const approveOrder = useApproveOrder();
   const rejectOrder = useRejectOrder();
 
@@ -244,166 +206,126 @@ function CommandesTab() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!orders || orders.length === 0) {
+    return (
+      <div className="bg-white rounded-xl p-12 text-center border">
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <CheckCircle className="h-8 w-8 text-green-600" />
+        </div>
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">
+          Aucune commande en attente
+        </h2>
+        <p className="text-gray-500">Toutes les commandes ont ete traitees</p>
+      </div>
+    );
+  }
+
   return (
     <>
-      {/* Status Filter */}
-      <div className="flex items-center gap-2 mb-6">
-        <Filter className="h-4 w-4 text-gray-400" />
-        <div className="flex gap-1 p-1 bg-gray-100 rounded-lg">
-          {ORDER_STATUS_OPTIONS.map(option => {
-            const Icon = option.icon;
-            const isActive = selectedStatus === option.value;
-            return (
-              <button
-                key={option.value}
-                onClick={() => setSelectedStatus(option.value)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors ${
-                  isActive
-                    ? 'bg-white shadow-sm font-medium'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <Icon className={`h-4 w-4 ${option.color}`} />
-                {option.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Loading */}
-      {isLoading && (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
-        </div>
-      )}
-
-      {/* Empty State */}
-      {!isLoading && (!orders || orders.length === 0) && (
-        <div className="bg-white rounded-xl p-12 text-center border">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <ShoppingCart className="h-8 w-8 text-gray-400" />
-          </div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">
-            Aucune commande
-          </h2>
-          <p className="text-gray-500">
-            {selectedStatus === 'pending'
-              ? 'Aucune commande en attente de validation'
-              : 'Aucune commande trouvee'}
-          </p>
-        </div>
-      )}
-
-      {/* Orders Table */}
-      {!isLoading && orders && orders.length > 0 && (
-        <div className="bg-white rounded-xl border overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
-                  Commande
-                </th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
-                  Demandeur
-                </th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
-                  Organisation
-                </th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
-                  Montant
-                </th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
-                  Statut
-                </th>
-                <th className="text-right px-6 py-4 text-sm font-medium text-gray-500">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {orders.map(order => (
-                <tr key={order.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        {order.order_number}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {new Date(order.created_at).toLocaleDateString('fr-FR')}
-                      </p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div>
-                      <p className="text-gray-900">
-                        {order.requester_name || '-'}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {order.requester_email || '-'}
-                      </p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div>
-                      <p className="text-gray-900">
-                        {order.organisation_name || '-'}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {order.enseigne_name || '-'}
-                      </p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className="font-semibold text-gray-900">
-                      {order.total_ttc.toFixed(2)} EUR
+      <div className="bg-white rounded-xl border overflow-hidden">
+        <table className="w-full">
+          <thead className="bg-gray-50 border-b">
+            <tr>
+              <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+                Commande
+              </th>
+              <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+                Demandeur
+              </th>
+              <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+                Organisation
+              </th>
+              <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+                Montant
+              </th>
+              <th className="text-right px-6 py-4 text-sm font-medium text-gray-500">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {orders.map(order => (
+              <tr key={order.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4">
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      {order.order_number}
                     </p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <OrderStatusBadge status={order.status} />
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-end gap-2">
-                      <Link
-                        href={`/canaux-vente/linkme/commandes/${order.id}`}
-                        className="p-2 text-gray-500 hover:text-gray-700"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Link>
-                      {order.status === 'pending_validation' && (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRejectClick(order)}
-                            className="text-red-600 border-red-200 hover:bg-red-50"
-                          >
-                            <XCircle className="h-4 w-4 mr-1" />
-                            Rejeter
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => handleApprove(order)}
-                            disabled={approveOrder.isPending}
-                            className="bg-green-600 hover:bg-green-700"
-                          >
-                            {approveOrder.isPending ? (
-                              <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                            ) : (
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                            )}
-                            Approuver
-                          </Button>
-                        </>
+                    <p className="text-sm text-gray-500">
+                      {new Date(order.created_at).toLocaleDateString('fr-FR')}
+                    </p>
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <div>
+                    <p className="text-gray-900">
+                      {order.requester_name || '-'}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {order.requester_email || '-'}
+                    </p>
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <div>
+                    <p className="text-gray-900">
+                      {order.organisation_name || '-'}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {order.enseigne_name || '-'}
+                    </p>
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <p className="font-semibold text-gray-900">
+                    {order.total_ttc.toFixed(2)} EUR
+                  </p>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex items-center justify-end gap-2">
+                    <Link
+                      href={`/canaux-vente/linkme/commandes/${order.id}`}
+                      className="p-2 text-gray-500 hover:text-gray-700"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Link>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRejectClick(order)}
+                      className="text-red-600 border-red-200 hover:bg-red-50"
+                    >
+                      <XCircle className="h-4 w-4 mr-1" />
+                      Rejeter
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => handleApprove(order)}
+                      disabled={approveOrder.isPending}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      {approveOrder.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      ) : (
+                        <CheckCircle className="h-4 w-4 mr-1" />
                       )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+                      Approuver
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {/* Reject Dialog */}
       <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
@@ -446,46 +368,6 @@ function CommandesTab() {
         </DialogContent>
       </Dialog>
     </>
-  );
-}
-
-function OrderStatusBadge({ status }: { status: string }) {
-  const config: Record<
-    string,
-    { label: string; icon: React.ElementType; color: string }
-  > = {
-    pending_validation: {
-      label: 'En attente',
-      icon: Clock,
-      color: 'text-amber-600 bg-amber-50',
-    },
-    validated: {
-      label: 'Validee',
-      icon: CheckCircle,
-      color: 'text-green-600 bg-green-50',
-    },
-    cancelled: {
-      label: 'Annulee',
-      icon: XCircle,
-      color: 'text-red-600 bg-red-50',
-    },
-    draft: {
-      label: 'Brouillon',
-      icon: AlertCircle,
-      color: 'text-gray-600 bg-gray-100',
-    },
-  };
-
-  const statusConfig = config[status] || config.draft;
-  const Icon = statusConfig.icon;
-
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig.color}`}
-    >
-      <Icon className="h-3.5 w-3.5" />
-      {statusConfig.label}
-    </span>
   );
 }
 
@@ -1132,45 +1014,8 @@ function StatusBadge({ status }: { status: AffiliateProductApprovalStatus }) {
 // TAB: ORGANISATIONS
 // ============================================================================
 
-// Status filter options for organisations
-const ORG_STATUS_OPTIONS: {
-  value: OrganisationApprovalStatus | 'all';
-  label: string;
-  icon: React.ElementType;
-  color: string;
-}[] = [
-  { value: 'all', label: 'Tous', icon: Building2, color: 'text-gray-600' },
-  {
-    value: 'pending_validation',
-    label: 'En attente',
-    icon: Clock,
-    color: 'text-amber-600',
-  },
-  {
-    value: 'approved',
-    label: 'Approuvees',
-    icon: CheckCircle,
-    color: 'text-green-600',
-  },
-  {
-    value: 'rejected',
-    label: 'Rejetees',
-    icon: XCircle,
-    color: 'text-red-600',
-  },
-];
-
 function OrganisationsTab() {
-  const [selectedStatus, setSelectedStatus] = useState<
-    OrganisationApprovalStatus | 'all'
-  >('pending_validation');
-  const {
-    data: organisations,
-    isLoading,
-    refetch,
-  } = useAllOrganisationsWithApproval(
-    selectedStatus === 'all' ? undefined : selectedStatus
-  );
+  const { data: organisations, isLoading, refetch } = usePendingOrganisations();
   const approveOrg = useApproveOrganisation();
   const rejectOrg = useRejectOrganisation();
 
@@ -1217,165 +1062,135 @@ function OrganisationsTab() {
     setIsDetailOpen(true);
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!organisations || organisations.length === 0) {
+    return (
+      <div className="bg-white rounded-xl p-12 text-center border">
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <CheckCircle className="h-8 w-8 text-green-600" />
+        </div>
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">
+          Aucune organisation en attente
+        </h2>
+        <p className="text-gray-500">
+          Toutes les organisations ont ete validees
+        </p>
+      </div>
+    );
+  }
+
   return (
     <>
-      {/* Status Filter */}
-      <div className="flex items-center gap-2 mb-6">
-        <Filter className="h-4 w-4 text-gray-400" />
-        <div className="flex gap-1 p-1 bg-gray-100 rounded-lg">
-          {ORG_STATUS_OPTIONS.map(option => {
-            const Icon = option.icon;
-            const isActive = selectedStatus === option.value;
-            return (
-              <button
-                key={option.value}
-                onClick={() => setSelectedStatus(option.value)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors ${
-                  isActive
-                    ? 'bg-white shadow-sm font-medium'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <Icon className={`h-4 w-4 ${option.color}`} />
-                {option.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Loading */}
-      {isLoading && (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
-        </div>
-      )}
-
-      {/* Empty State */}
-      {!isLoading && (!organisations || organisations.length === 0) && (
-        <div className="bg-white rounded-xl p-12 text-center border">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Building2 className="h-8 w-8 text-gray-400" />
-          </div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">
-            Aucune organisation
-          </h2>
-          <p className="text-gray-500">
-            {selectedStatus === 'pending_validation'
-              ? 'Aucune organisation en attente de validation'
-              : 'Aucune organisation trouvee'}
-          </p>
-        </div>
-      )}
-
-      {/* Organisations Table */}
-      {!isLoading && organisations && organisations.length > 0 && (
-        <div className="bg-white rounded-xl border overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
-                  Organisation
-                </th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
-                  Enseigne
-                </th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
-                  Contact
-                </th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
-                  Statut
-                </th>
-                <th className="text-right px-6 py-4 text-sm font-medium text-gray-500">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {organisations.map(org => (
-                <tr key={org.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        {org.trade_name || org.legal_name}
+      <div className="bg-white rounded-xl border overflow-hidden">
+        <table className="w-full">
+          <thead className="bg-gray-50 border-b">
+            <tr>
+              <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+                Organisation
+              </th>
+              <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+                Enseigne
+              </th>
+              <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+                Contact
+              </th>
+              <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+                Localisation
+              </th>
+              <th className="text-right px-6 py-4 text-sm font-medium text-gray-500">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {organisations.map(org => (
+              <tr key={org.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4">
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      {org.trade_name || org.legal_name}
+                    </p>
+                    {org.trade_name && (
+                      <p className="text-sm text-gray-500">{org.legal_name}</p>
+                    )}
+                    {org.siret && (
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        SIRET: {org.siret}
                       </p>
-                      {org.trade_name && (
-                        <p className="text-sm text-gray-500">
-                          {org.legal_name}
-                        </p>
+                    )}
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <p className="text-gray-900">{org.enseigne_name || '-'}</p>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="space-y-1">
+                    {org.email && (
+                      <div className="flex items-center gap-1 text-sm text-gray-600">
+                        <Mail className="h-3 w-3" />
+                        {org.email}
+                      </div>
+                    )}
+                    {org.phone && (
+                      <div className="flex items-center gap-1 text-sm text-gray-600">
+                        <Phone className="h-3 w-3" />
+                        {org.phone}
+                      </div>
+                    )}
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-1 text-sm text-gray-600">
+                    <MapPin className="h-3 w-3" />
+                    {org.city || '-'}
+                    {org.postal_code && ` (${org.postal_code})`}
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex items-center justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleViewDetails(org)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRejectClick(org)}
+                      className="text-red-600 border-red-200 hover:bg-red-50"
+                    >
+                      <XCircle className="h-4 w-4 mr-1" />
+                      Rejeter
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => handleApprove(org)}
+                      disabled={approveOrg.isPending}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      {approveOrg.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      ) : (
+                        <CheckCircle className="h-4 w-4 mr-1" />
                       )}
-                      {org.siret && (
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          SIRET: {org.siret}
-                        </p>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className="text-gray-900">{org.enseigne_name || '-'}</p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="space-y-1">
-                      {org.email && (
-                        <div className="flex items-center gap-1 text-sm text-gray-600">
-                          <Mail className="h-3 w-3" />
-                          {org.email}
-                        </div>
-                      )}
-                      {org.phone && (
-                        <div className="flex items-center gap-1 text-sm text-gray-600">
-                          <Phone className="h-3 w-3" />
-                          {org.phone}
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <OrgStatusBadge status={org.approval_status} />
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewDetails(org)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      {org.approval_status === 'pending_validation' && (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRejectClick(org)}
-                            className="text-red-600 border-red-200 hover:bg-red-50"
-                          >
-                            <XCircle className="h-4 w-4 mr-1" />
-                            Rejeter
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => handleApprove(org)}
-                            disabled={approveOrg.isPending}
-                            className="bg-green-600 hover:bg-green-700"
-                          >
-                            {approveOrg.isPending ? (
-                              <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                            ) : (
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                            )}
-                            Approuver
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+                      Approuver
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {/* Detail Dialog */}
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
@@ -1493,40 +1308,5 @@ function OrganisationsTab() {
         </DialogContent>
       </Dialog>
     </>
-  );
-}
-
-function OrgStatusBadge({ status }: { status: OrganisationApprovalStatus }) {
-  const config: Record<
-    OrganisationApprovalStatus,
-    { label: string; icon: React.ElementType; color: string }
-  > = {
-    pending_validation: {
-      label: 'En attente',
-      icon: Clock,
-      color: 'text-amber-600 bg-amber-50',
-    },
-    approved: {
-      label: 'Approuvee',
-      icon: CheckCircle,
-      color: 'text-green-600 bg-green-50',
-    },
-    rejected: {
-      label: 'Rejetee',
-      icon: XCircle,
-      color: 'text-red-600 bg-red-50',
-    },
-  };
-
-  const statusConfig = config[status];
-  const Icon = statusConfig.icon;
-
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig.color}`}
-    >
-      <Icon className="h-3.5 w-3.5" />
-      {statusConfig.label}
-    </span>
   );
 }

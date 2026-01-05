@@ -27,6 +27,8 @@ export interface SelectionItem {
     sku: string;
     cost_price: number | null;
     product_status: string;
+    /** Stock reel (source de verite) */
+    stock_real?: number | null;
     /** Description du produit (pour modal détail) */
     description?: string | null;
     /** Arguments de vente (pour modal détail) */
@@ -156,7 +158,7 @@ async function fetchSelectionById(
       `
       *,
       product:products(
-        id, name, sku, cost_price, product_status,
+        id, name, sku, cost_price, product_status, stock_real,
         description, selling_points, weight, dimensions,
         subcategory_id,
         subcategory:subcategories(id, name),
@@ -250,6 +252,7 @@ async function fetchSelectionById(
             sku: rawProduct.sku,
             cost_price: rawProduct.cost_price,
             product_status: rawProduct.product_status,
+            stock_real: rawProduct.stock_real ?? null,
             description: rawProduct.description,
             selling_points: rawProduct.selling_points,
             weight_kg: rawProduct.weight,

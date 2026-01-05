@@ -118,12 +118,12 @@ export default function SelectionDetailPage() {
     }
   };
 
-  // Copier le lien public simplifie /s/[id]
+  // Copier le lien public simplifie /s/[slug]
   const handleCopyLink = () => {
     if (!selection) return;
 
-    // Nouvelle URL publique simplifiee /s/[id]
-    const shareUrl = `${window.location.origin}/s/${selection.id}`;
+    // URL publique avec slug lisible
+    const shareUrl = `${window.location.origin}/s/${selection.slug}`;
     navigator.clipboard.writeText(shareUrl);
     setLinkCopied(true);
     toast.success('Lien public copie !');
@@ -172,8 +172,8 @@ export default function SelectionDetailPage() {
     );
   }
 
-  // URL publique (utilise /s/[id] comme format canonique)
-  const publicUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/s/${selection.id}`;
+  // URL publique (utilise /s/[slug] comme format canonique)
+  const publicUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/s/${selection.slug}`;
 
   // Top 3 produits (basé sur display_order pour l'instant)
   const topProducts = items?.slice(0, 3) || [];
