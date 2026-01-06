@@ -2,35 +2,39 @@
  * API Route: POST /api/linkme/selections/delete
  * Supprime une sélection LinkMe via Supabase Admin API (bypass RLS)
  * Les items sont supprimés en CASCADE automatiquement
+ *
+ * 🔐 SECURITE: Requiert authentification admin back-office (owner/admin)
  */
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { createClient } from '@supabase/supabase-js';
+import { createAdminClient } from '@verone/utils/supabase/server';
 
-// Fonction pour créer le client Admin Supabase (lazy initialization)
-function getSupabaseAdmin() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    }
-  );
+import { requireBackofficeAdmin } from '@/lib/guards';
+import type { Database } from '@/types/supabase';
+
+type LinkmeSelectionRow =
+  Database['public']['Tables']['linkme_selections']['Row'];
+
+interface IDeleteSelectionInput {
+  selection_id: string;
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  // 🔐 GUARD: Vérifier authentification admin back-office
+  const guardResult = await requireBackofficeAdmin(request);
+  if (guardResult instanceof NextResponse) {
+    return guardResult; // 401 ou 403
+  }
+
   try {
-    const supabaseAdmin = getSupabaseAdmin();
-    const body = await request.json();
-    const { selection_id } = body;
+    const supabaseAdmin = createAdminClient();
+    const body = (await request.json()) as IDeleteSelectionInput;
+    const { selection_id: selectionId } = body;
 
     // Validation
-    if (!selection_id) {
+    if (!selectionId) {
       return NextResponse.json(
         { message: 'ID de la sélection requis' },
         { status: 400 }
@@ -40,9 +44,9 @@ export async function POST(request: NextRequest) {
     // Vérifier que la sélection existe
     const { data: selection, error: selectError } = await supabaseAdmin
       .from('linkme_selections')
-      .select('id, name, status')
-      .eq('id', selection_id)
-      .single();
+      .select('id, name')
+      .eq('id', selectionId)
+      .single<Pick<LinkmeSelectionRow, 'id' | 'name'>>();
 
     if (selectError || !selection) {
       return NextResponse.json(
@@ -55,7 +59,7 @@ export async function POST(request: NextRequest) {
     const { error: deleteError } = await supabaseAdmin
       .from('linkme_selections')
       .delete()
-      .eq('id', selection_id);
+      .eq('id', selectionId);
 
     if (deleteError) {
       console.error('Erreur suppression sélection:', deleteError);
@@ -68,7 +72,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: `Sélection "${selection.name}" supprimée avec succès`,
-      deleted_selection: {
+      deletedSelection: {
         id: selection.id,
         name: selection.name,
       },
