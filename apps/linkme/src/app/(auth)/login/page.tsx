@@ -1,15 +1,15 @@
 'use client';
 
 /**
- * Page de connexion LinkMe - Split Layout avec Globe 3D
+ * Page de connexion LinkMe - Split Layout avec Sphère 3D
  *
  * Design 2026:
- * - Gauche (60%): Globe 3D interactif avec images produits/organisations
+ * - Gauche (60%): Sphère 3D avec images produits (fond blanc)
  * - Droite (40%): Formulaire de connexion
  *
  * @module LoginPage
  * @since 2025-12-01
- * @updated 2026-01
+ * @updated 2026-01-06 - Nouveau composant SphereImageGrid
  */
 
 import { useState, useEffect, Suspense } from 'react';
@@ -28,26 +28,29 @@ import {
   X,
 } from 'lucide-react';
 
-import { ImageSphere, type GlobeImage } from '@/components/ui/ImageSphere';
+import {
+  SphereImageGrid,
+  type SphereImageData,
+} from '@/components/ui/SphereImageGrid';
 import { useAuth } from '@/contexts/AuthContext';
 
-// Images de démonstration pour le globe (en attendant l'API)
-const DEMO_GLOBE_IMAGES: GlobeImage[] = [
-  { id: '1', url: '/logo-linkme.png', alt: 'LinkMe', type: 'organisation' },
-  { id: '2', url: '/logo-linkme.png', alt: 'LinkMe', type: 'organisation' },
-  { id: '3', url: '/logo-linkme.png', alt: 'LinkMe', type: 'organisation' },
-  { id: '4', url: '/logo-linkme.png', alt: 'LinkMe', type: 'organisation' },
-  { id: '5', url: '/logo-linkme.png', alt: 'LinkMe', type: 'organisation' },
-  { id: '6', url: '/logo-linkme.png', alt: 'LinkMe', type: 'organisation' },
-];
+// Images de démonstration pour la sphère (en attendant l'API)
+const DEMO_SPHERE_IMAGES: SphereImageData[] = Array.from(
+  { length: 20 },
+  (_, i) => ({
+    id: `demo-${i + 1}`,
+    src: '/logo-linkme.png',
+    alt: `LinkMe ${i + 1}`,
+  })
+);
 
 // Wrapper pour Suspense (useSearchParams nécessite Suspense en Next.js 15)
 export default function LoginPage(): JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-linkme-marine to-linkme-royal">
-          <Loader2 className="h-8 w-8 animate-spin text-white" />
+        <div className="min-h-screen flex items-center justify-center bg-white">
+          <Loader2 className="h-8 w-8 animate-spin text-linkme-turquoise" />
         </div>
       }
     >
@@ -67,14 +70,14 @@ function LoginContent(): JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showTestAccounts, setShowTestAccounts] = useState(false);
-  const [globeImages, setGlobeImages] =
-    useState<GlobeImage[]>(DEMO_GLOBE_IMAGES);
+  const [sphereImages, setSphereImages] =
+    useState<SphereImageData[]>(DEMO_SPHERE_IMAGES);
 
   // Configuration de la page (globe, etc.)
   const [pageConfig, setPageConfig] = useState<{
     globe_enabled: boolean;
     globe_rotation_speed: number;
-  }>({ globe_enabled: true, globe_rotation_speed: 0.003 });
+  }>({ globe_enabled: true, globe_rotation_speed: 0.3 });
 
   // Comptes de test (DEV ONLY)
   const TEST_ACCOUNTS = [
@@ -91,7 +94,7 @@ function LoginContent(): JSX.Element {
   ];
 
   // URL de redirection après connexion
-  const redirectUrl = searchParams.get('redirect') ?? '/dashboard';
+  const redirectUrl = searchParams.get('redirect') ?? '/';
 
   // Type pour la réponse API
   type GlobeApiItem = {
@@ -113,7 +116,7 @@ function LoginContent(): JSX.Element {
           };
           setPageConfig({
             globe_enabled: data.globe_enabled ?? true,
-            globe_rotation_speed: data.globe_rotation_speed ?? 0.003,
+            globe_rotation_speed: (data.globe_rotation_speed ?? 0.003) * 100, // Convert to SphereImageGrid scale
           });
         }
       } catch {
@@ -123,29 +126,37 @@ function LoginContent(): JSX.Element {
     void loadPageConfig();
   }, []);
 
-  // Charger les images du globe depuis l'API
+  // Charger les images depuis l'API
   useEffect(() => {
-    async function loadGlobeImages(): Promise<void> {
+    async function loadSphereImages(): Promise<void> {
       try {
         const response = await fetch('/api/globe-items');
         if (response.ok) {
           const data = (await response.json()) as { items: GlobeApiItem[] };
           if (data.items && data.items.length > 0) {
-            setGlobeImages(
-              data.items.map((item: GlobeApiItem) => ({
-                id: item.id,
-                url: item.image_url,
-                alt: item.name,
-                type: item.item_type,
-              }))
-            );
+            // Dupliquer les images pour remplir la sphère (minimum 20 images)
+            const baseImages = data.items.map((item: GlobeApiItem) => ({
+              id: item.id,
+              src: item.image_url,
+              alt: item.name,
+            }));
+
+            const images: SphereImageData[] = [];
+            for (let i = 0; i < 30; i++) {
+              const baseIndex = i % baseImages.length;
+              images.push({
+                ...baseImages[baseIndex],
+                id: `sphere-${i}`,
+              });
+            }
+            setSphereImages(images);
           }
         }
       } catch {
         // Garder les images de démo si l'API échoue
       }
     }
-    void loadGlobeImages();
+    void loadSphereImages();
   }, []);
 
   // Rediriger si déjà connecté
@@ -181,64 +192,56 @@ function LoginContent(): JSX.Element {
   // Afficher un loader pendant le chargement initial
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-linkme-marine to-linkme-royal">
-        <Loader2 className="h-8 w-8 animate-spin text-white" />
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Loader2 className="h-8 w-8 animate-spin text-linkme-turquoise" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex">
-      {/* Gauche: Globe 3D (60%) - Desktop only - Conditionné par config */}
+    <div className="min-h-screen flex bg-white">
+      {/* Gauche: Sphère 3D (60%) - Desktop only */}
       {pageConfig.globe_enabled && (
-        <div className="hidden lg:flex w-3/5 bg-gradient-to-br from-linkme-marine via-linkme-royal to-linkme-marine items-center justify-center relative overflow-hidden">
-          {/* Fond avec motif subtil */}
-          <div
-            className="absolute inset-0 opacity-10"
-            style={{
-              backgroundImage:
-                'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
-              backgroundSize: '40px 40px',
-            }}
-          />
-
-          {/* Globe 3D */}
-          <div className="relative z-10">
-            <ImageSphere
-              images={globeImages}
-              size={380}
-              autoRotate
-              rotationSpeed={pageConfig.globe_rotation_speed}
-              className="drop-shadow-2xl"
+        <div className="hidden lg:flex w-3/5 bg-white flex-col items-center justify-center relative py-8">
+          {/* Logo LinkMe centré au-dessus de la sphère */}
+          <div className="mb-8 z-20">
+            <Image
+              src="/logo-linkme-full.png"
+              alt="LinkMe"
+              width={200}
+              height={200}
+              className="w-40 h-40 object-contain"
+              priority
             />
           </div>
 
-          {/* Texte en bas */}
-          <div className="absolute bottom-12 left-12 right-12 text-center z-20">
-            <h2 className="text-white text-3xl font-bold mb-3">
-              Connectez les personnes aux produits
-            </h2>
-            <p className="text-white/70 text-lg">
-              Rejoignez le réseau d&apos;affiliés LinkMe et développez votre
-              activité
-            </p>
+          {/* Sphère 3D centrée */}
+          <div className="relative z-10">
+            <SphereImageGrid
+              images={sphereImages}
+              containerSize={450}
+              sphereRadius={160}
+              autoRotate
+              autoRotateSpeed={pageConfig.globe_rotation_speed}
+              baseImageScale={0.12}
+            />
           </div>
-
-          {/* Gradient overlay en bas */}
-          <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-linkme-marine/80 to-transparent z-10" />
         </div>
       )}
 
       {/* Droite: Formulaire (40% si globe, 100% sinon) */}
       <div
-        className={`w-full flex items-center justify-center p-6 sm:p-8 bg-white ${
+        className={`w-full flex items-center justify-center p-6 sm:p-8 bg-gray-50 ${
           pageConfig.globe_enabled ? 'lg:w-2/5' : ''
         }`}
       >
         <div className="w-full max-w-md">
-          {/* Header avec Logo */}
+          {/* Header avec Logo (mobile only si globe activé) */}
           <div className="text-center mb-6">
-            <Link href="/" className="inline-block mb-2">
+            <Link
+              href="/"
+              className={`inline-block mb-2 ${pageConfig.globe_enabled ? 'lg:hidden' : ''}`}
+            >
               <Image
                 src="/logo-linkme.png"
                 alt="LinkMe"
@@ -248,6 +251,7 @@ function LoginContent(): JSX.Element {
                 priority
               />
             </Link>
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">Connexion</h1>
             <p className="text-gray-500 text-sm">
               Espace Partenaires & Affiliés
             </p>
@@ -265,7 +269,7 @@ function LoginContent(): JSX.Element {
 
           {/* Panel comptes de test */}
           {showTestAccounts && (
-            <div className="mb-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+            <div className="mb-4 p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-semibold text-linkme-marine">
                   Comptes de test
@@ -288,7 +292,7 @@ function LoginContent(): JSX.Element {
                       setPassword(account.password);
                       setShowTestAccounts(false);
                     }}
-                    className="w-full text-left p-3 bg-white border border-gray-100 rounded-lg hover:border-linkme-turquoise hover:bg-linkme-turquoise/5 transition-all"
+                    className="w-full text-left p-3 bg-gray-50 border border-gray-100 rounded-lg hover:border-linkme-turquoise hover:bg-linkme-turquoise/5 transition-all"
                   >
                     <div className="text-sm font-medium text-linkme-marine">
                       {account.role}
@@ -337,7 +341,7 @@ function LoginContent(): JSX.Element {
                 placeholder="vous@exemple.com"
                 required
                 disabled={loading}
-                className="w-full border border-gray-200 rounded-lg px-4 py-3 focus:ring-2 focus:ring-linkme-turquoise/30 focus:border-linkme-turquoise outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className="w-full border border-gray-200 rounded-lg px-4 py-3 bg-white focus:ring-2 focus:ring-linkme-turquoise/30 focus:border-linkme-turquoise outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -358,7 +362,7 @@ function LoginContent(): JSX.Element {
                   placeholder="••••••••"
                   required
                   disabled={loading}
-                  className="w-full border border-gray-200 rounded-lg px-4 py-3 pr-12 focus:ring-2 focus:ring-linkme-turquoise/30 focus:border-linkme-turquoise outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="w-full border border-gray-200 rounded-lg px-4 py-3 pr-12 bg-white focus:ring-2 focus:ring-linkme-turquoise/30 focus:border-linkme-turquoise outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
                 <button
                   type="button"
@@ -412,7 +416,7 @@ function LoginContent(): JSX.Element {
           </div>
 
           {/* Footer */}
-          <div className="mt-8 pt-6 border-t border-gray-100">
+          <div className="mt-8 pt-6 border-t border-gray-200">
             <p className="text-xs text-gray-400 text-center">
               En vous connectant, vous acceptez nos{' '}
               <a href="#" className="text-linkme-turquoise hover:underline">

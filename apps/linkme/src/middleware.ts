@@ -3,14 +3,17 @@
  *
  * Gère l'authentification et la protection des routes
  *
- * Routes protégées :
- * - /dashboard, /commissions, /ventes, /profil, /orders → Requiert authentification
+ * Comportement:
+ * - / → Redirige vers /dashboard si connecté, sinon affiche landing page
+ * - /login → Redirige vers /dashboard si connecté
+ * - Routes protégées → Redirige vers /login si non connecté
  *
- * Routes publiques :
- * - /, /login, /products, /categories, /cart
+ * Routes protégées :
+ * - /dashboard, /catalogue, /ma-selection, /mes-produits, /commandes, /commissions, /profil
  *
  * @module middleware
  * @since 2025-12-01
+ * @updated 2026-01
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
@@ -20,10 +23,12 @@ import { createMiddlewareClient, updateSession } from '@/lib/supabase-server';
 // Routes qui nécessitent une authentification
 const PROTECTED_ROUTES = [
   '/dashboard',
+  '/catalogue',
+  '/ma-selection',
+  '/mes-produits',
+  '/commandes',
   '/commissions',
-  '/ventes',
   '/profil',
-  '/orders',
 ];
 
 export async function middleware(request: NextRequest) {
@@ -64,8 +69,8 @@ export async function middleware(request: NextRequest) {
     return middlewareResponse;
   }
 
-  // Si sur /login et déjà connecté, rediriger vers dashboard
-  if (pathname === '/login') {
+  // Si sur / ou /login et déjà connecté, rediriger vers dashboard
+  if (pathname === '/' || pathname === '/login') {
     const { supabase } = createMiddlewareClient(request);
     const {
       data: { user },
