@@ -38,7 +38,11 @@ import {
 } from 'lucide-react';
 
 import { CreateOrderModal } from './components/CreateOrderModal';
-import { useLinkMeOrders } from '../../../hooks/use-linkme-orders';
+import { OrderDetailModal } from './components/OrderDetailModal';
+import {
+  useLinkMeOrders,
+  type LinkMeOrder,
+} from '../../../hooks/use-linkme-orders';
 import { useUserAffiliate } from '../../../lib/hooks/use-user-selection';
 
 // Mapping des statuts DB → Labels
@@ -69,6 +73,8 @@ export default function CommandesPage(): JSX.Element {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<LinkMeOrder | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   // Data - Affilié et ses commandes
   const { data: affiliate, isLoading: affiliateLoading } = useUserAffiliate();
@@ -131,6 +137,17 @@ export default function CommandesPage(): JSX.Element {
 
   const toggleOrder = (orderId: string) => {
     setExpandedOrderId(prev => (prev === orderId ? null : orderId));
+  };
+
+  const openDetailModal = (order: LinkMeOrder, e: React.MouseEvent) => {
+    e.stopPropagation(); // Empecher le toggle expand
+    setSelectedOrder(order);
+    setIsDetailModalOpen(true);
+  };
+
+  const closeDetailModal = () => {
+    setIsDetailModalOpen(false);
+    setSelectedOrder(null);
   };
 
   return (
@@ -470,6 +487,14 @@ export default function CommandesPage(): JSX.Element {
                                 +{order.total_affiliate_margin.toFixed(2)} €
                               </p>
                             </div>
+
+                            {/* Bouton Details */}
+                            <button
+                              onClick={e => openDetailModal(order, e)}
+                              className="px-3 py-1.5 text-sm font-medium text-[#5DBEBB] hover:text-white hover:bg-[#5DBEBB] border border-[#5DBEBB] rounded-lg transition-colors"
+                            >
+                              Details
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -599,6 +624,13 @@ export default function CommandesPage(): JSX.Element {
       <CreateOrderModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+      />
+
+      {/* Modal detail commande */}
+      <OrderDetailModal
+        order={selectedOrder}
+        isOpen={isDetailModalOpen}
+        onClose={closeDetailModal}
       />
     </div>
   );

@@ -8,7 +8,14 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Design dashboard vendeurs
+        // Charte graphique LinkMe
+        linkme: {
+          turquoise: '#5DBEBB',
+          royal: '#3976BB',
+          mauve: '#7E84C0',
+          marine: '#183559',
+        },
+        // Design dashboard vendeurs (legacy)
         primary: {
           50: '#eff6ff',
           500: '#3b82f6',

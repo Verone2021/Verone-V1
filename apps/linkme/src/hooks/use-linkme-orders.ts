@@ -35,6 +35,20 @@ export interface OrderItem {
 }
 
 /**
+ * Interface adresse structuree (JSONB)
+ */
+export interface StructuredAddress {
+  line1?: string;
+  line2?: string;
+  city?: string;
+  postal_code?: string;
+  country?: string;
+  contact_name?: string;
+  contact_phone?: string;
+  contact_email?: string;
+}
+
+/**
  * Interface commande LinkMe
  */
 export interface LinkMeOrder {
@@ -56,6 +70,17 @@ export interface LinkMeOrder {
   customer_city: string | null;
   customer_email: string | null;
   customer_phone: string | null;
+  // Adresses structurees (depuis sales_orders)
+  billing_address: StructuredAddress | null;
+  shipping_address: StructuredAddress | null;
+  // Dates de livraison (depuis sales_order_linkme_details)
+  desired_delivery_date: string | null;
+  confirmed_delivery_date: string | null;
+  // Contact facturation (depuis sales_order_linkme_details)
+  billing_name: string | null;
+  billing_email: string | null;
+  billing_phone: string | null;
+  // Affiliate info
   affiliate_id: string;
   affiliate_name: string | null;
   affiliate_type: 'enseigne' | 'organisation' | null;
@@ -64,7 +89,7 @@ export interface LinkMeOrder {
   items_count: number;
   created_at: string;
   updated_at: string;
-  // Items chargés séparément
+  // Items charges separement
   items: OrderItem[];
 }
 
@@ -139,6 +164,17 @@ export function useLinkMeOrders(
             customer_city: order.customer_city,
             customer_email: order.customer_email,
             customer_phone: order.customer_phone,
+            // Adresses structurees (nouveaux champs)
+            billing_address: order.billing_address || null,
+            shipping_address: order.shipping_address || null,
+            // Dates de livraison
+            desired_delivery_date: order.desired_delivery_date || null,
+            confirmed_delivery_date: order.confirmed_delivery_date || null,
+            // Contact facturation
+            billing_name: order.billing_name || null,
+            billing_email: order.billing_email || null,
+            billing_phone: order.billing_phone || null,
+            // Affiliate info
             affiliate_id: order.affiliate_id,
             affiliate_name: order.affiliate_name,
             affiliate_type: order.affiliate_type as
