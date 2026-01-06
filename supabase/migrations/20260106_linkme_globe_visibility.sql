@@ -10,7 +10,7 @@ ALTER TABLE products
 ADD COLUMN IF NOT EXISTS show_on_linkme_globe BOOLEAN DEFAULT false;
 
 COMMENT ON COLUMN products.show_on_linkme_globe IS
-  'Si true, le produit apparaît sur le globe 3D de LinkMe (nécessite image_url)';
+  'Si true, le produit apparaît sur le globe 3D de LinkMe (nécessite une image primaire dans product_images)';
 
 -- Organisations: visibilité sur globe LinkMe
 ALTER TABLE organisations
@@ -29,21 +29,24 @@ ON organisations(show_on_linkme_globe)
 WHERE show_on_linkme_globe = true;
 
 -- Vue pour récupérer les items du globe
+-- Note: products.image_url n'existe pas, on utilise product_images avec is_primary
+-- Note: organisations.name n'existe pas, on utilise COALESCE(trade_name, legal_name)
 CREATE OR REPLACE VIEW linkme_globe_items AS
 SELECT
   'product'::text as item_type,
   p.id::text,
   p.name,
-  p.image_url
+  pi.public_url as image_url
 FROM products p
+INNER JOIN product_images pi ON pi.product_id = p.id AND pi.is_primary = true
 WHERE p.show_on_linkme_globe = true
-  AND p.image_url IS NOT NULL
-  AND p.image_url != ''
+  AND pi.public_url IS NOT NULL
+  AND pi.public_url != ''
 UNION ALL
 SELECT
   'organisation'::text as item_type,
   o.id::text,
-  o.name,
+  COALESCE(o.trade_name, o.legal_name) as name,
   o.logo_url as image_url
 FROM organisations o
 WHERE o.show_on_linkme_globe = true

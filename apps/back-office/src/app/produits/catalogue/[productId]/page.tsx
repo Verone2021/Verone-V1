@@ -153,7 +153,6 @@ interface Product {
   organisation_id: string;
   enseigne_id: string | null;
   assigned_client_id: string | null;
-  image_url: string | null;
   show_on_linkme_globe: boolean | null;
   enseigne?: {
     id: string;
@@ -926,24 +925,12 @@ export default function ProductDetailPage() {
                 <Switch
                   checked={product.show_on_linkme_globe ?? false}
                   onCheckedChange={(checked: boolean) => {
-                    // Si on active et qu'il n'y a pas d'image_url mais des images existent
-                    if (
-                      checked &&
-                      !product.image_url &&
-                      primaryImage?.public_url
-                    ) {
-                      handleProductUpdate({
-                        show_on_linkme_globe: checked,
-                        image_url: primaryImage.public_url,
-                      });
-                    } else {
-                      handleProductUpdate({ show_on_linkme_globe: checked });
-                    }
+                    handleProductUpdate({ show_on_linkme_globe: checked });
                   }}
-                  disabled={!product.image_url && productImages.length === 0}
+                  disabled={productImages.length === 0}
                 />
               </div>
-              {!product.image_url && productImages.length === 0 && (
+              {productImages.length === 0 && (
                 <p className="text-sm text-amber-600 flex items-center gap-2">
                   <AlertCircle className="h-4 w-4" />
                   Une image produit est requise pour l&apos;affichage sur le
