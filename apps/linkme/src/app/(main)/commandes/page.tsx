@@ -43,6 +43,7 @@ import {
   useLinkMeOrders,
   type LinkMeOrder,
 } from '../../../hooks/use-linkme-orders';
+import { useAffiliateCommissionStats } from '../../../lib/hooks/use-affiliate-commission-stats';
 import { useUserAffiliate } from '../../../lib/hooks/use-user-selection';
 
 // Mapping des statuts DB → Labels
@@ -90,7 +91,12 @@ export default function CommandesPage(): JSX.Element {
     enabled: !!affiliate?.id,
   });
 
-  const isLoading = affiliateLoading || ordersLoading || kpisLoading;
+  // SOURCE DE VÉRITÉ: Statistiques commissions depuis linkme_commissions
+  const { data: commissionStats, isLoading: commissionStatsLoading } =
+    useAffiliateCommissionStats();
+
+  const isLoading =
+    affiliateLoading || ordersLoading || kpisLoading || commissionStatsLoading;
 
   // KPIs par statut (comptages locaux depuis les commandes)
   const statusKpis = useMemo(() => {
@@ -232,7 +238,7 @@ export default function CommandesPage(): JSX.Element {
             </div>
           </div>
 
-          {/* Commissions totales (TTC) */}
+          {/* Commissions totales (TTC) - SOURCE DE VÉRITÉ: linkme_commissions */}
           <div className="bg-white rounded-xl border p-5 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-emerald-100 rounded-lg">
@@ -241,7 +247,7 @@ export default function CommandesPage(): JSX.Element {
               <div>
                 <p className="text-sm text-gray-500">Commissions TTC</p>
                 <p className="text-2xl font-bold text-emerald-600">
-                  {(monthlyKPIs?.allTime.commissionsTTC ?? 0).toLocaleString(
+                  {(commissionStats?.total.amountTTC ?? 0).toLocaleString(
                     'fr-FR',
                     {
                       minimumFractionDigits: 0,
