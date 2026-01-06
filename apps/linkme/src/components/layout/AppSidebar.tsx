@@ -12,7 +12,7 @@ import {
   Package,
   ShoppingCart,
   Coins,
-  User,
+  Settings,
   LogOut,
   X,
 } from 'lucide-react';
@@ -29,7 +29,7 @@ const sidebarLinks = [
   { icon: Package, label: 'Mes Produits', href: '/mes-produits' },
   { icon: ShoppingCart, label: 'Commandes', href: '/commandes' },
   { icon: Coins, label: 'Commissions', href: '/commissions' },
-  { icon: User, label: 'Profil', href: '/profil' },
+  { icon: Settings, label: 'Paramètres', href: '/parametres' },
 ];
 
 export function AppSidebar(): JSX.Element | null {
@@ -61,8 +61,8 @@ export function AppSidebar(): JSX.Element | null {
     }
   }, [pathname, isMobile, close]);
 
-  const handleSignOut = useCallback((): void => {
-    void signOut();
+  const handleSignOut = useCallback(async (): Promise<void> => {
+    await signOut('/'); // Redirige vers la page d'accueil
   }, [signOut]);
 
   // Ne pas afficher la sidebar si l'utilisateur n'est pas connecté
