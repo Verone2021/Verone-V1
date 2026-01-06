@@ -23,7 +23,7 @@ import { ProductInfoSection } from '@verone/products';
 import { SampleRequirementSection } from '@verone/products';
 import { SupplierEditSection } from '@verone/products';
 import { WeightEditSection } from '@verone/products';
-import { ClientOrEnseigneSelector } from '@verone/products';
+import { ClientOrEnseigneSelector, useProductImages } from '@verone/products';
 import { StockEditSection } from '@verone/stock';
 import { StockStatusCompact } from '@verone/stock';
 import type { Database } from '@verone/types';
@@ -219,6 +219,12 @@ export default function ProductDetailPage() {
     useState(false);
   const [showDescriptionsModal, setShowDescriptionsModal] = useState(false);
   const [isCategorizeModalOpen, setIsCategorizeModalOpen] = useState(false);
+
+  // Hook pour récupérer les images du produit (table product_images)
+  const { images: productImages, primaryImage } = useProductImages({
+    productId: productId || '',
+    autoFetch: true,
+  });
 
   const startTime = Date.now();
 
@@ -919,13 +925,25 @@ export default function ProductDetailPage() {
                 </div>
                 <Switch
                   checked={product.show_on_linkme_globe ?? false}
-                  onCheckedChange={(checked: boolean) =>
-                    handleProductUpdate({ show_on_linkme_globe: checked })
-                  }
-                  disabled={!product.image_url && !(product.images?.length > 0)}
+                  onCheckedChange={(checked: boolean) => {
+                    // Si on active et qu'il n'y a pas d'image_url mais des images existent
+                    if (
+                      checked &&
+                      !product.image_url &&
+                      primaryImage?.public_url
+                    ) {
+                      handleProductUpdate({
+                        show_on_linkme_globe: checked,
+                        image_url: primaryImage.public_url,
+                      });
+                    } else {
+                      handleProductUpdate({ show_on_linkme_globe: checked });
+                    }
+                  }}
+                  disabled={!product.image_url && productImages.length === 0}
                 />
               </div>
-              {!product.image_url && !(product.images?.length > 0) && (
+              {!product.image_url && productImages.length === 0 && (
                 <p className="text-sm text-amber-600 flex items-center gap-2">
                   <AlertCircle className="h-4 w-4" />
                   Une image produit est requise pour l&apos;affichage sur le

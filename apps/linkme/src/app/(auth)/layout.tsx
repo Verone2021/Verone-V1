@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 
 import { Providers } from '../../components/providers/Providers';
-import '../globals.css';
 
 export const metadata: Metadata = {
   title: 'Connexion - LINKME',
@@ -18,10 +17,8 @@ export default function AuthLayout({
   children: React.ReactNode;
 }): React.ReactElement {
   return (
-    <html lang="fr">
-      <body className="min-h-screen bg-gradient-to-br from-linkme-turquoise/5 via-white to-linkme-royal/5">
-        <Providers>{children}</Providers>
-      </body>
-    </html>
+    <div className="min-h-screen bg-gradient-to-br from-linkme-turquoise/5 via-white to-linkme-royal/5">
+      <Providers>{children}</Providers>
+    </div>
   );
 }

@@ -1,35 +1,19 @@
 'use client';
 
 /**
- * ProductCard E-commerce
- * Design moderne et minimaliste style boutique raffinée
- * Avec tooltip hover affichant style + description
+ * ProductCard E-commerce - Design Luxe 2026
+ * Design spacieux et élégant style showroom haut de gamme
+ * SANS bordure - Cartes blanches avec hover effects
  */
+
+import { useState } from 'react';
 
 import Image from 'next/image';
 
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@verone/ui';
 import { Package, Plus, Sparkles, Star } from 'lucide-react';
 
 import type { LinkMeCatalogProduct } from '@/lib/hooks/use-linkme-catalog';
 import { cn } from '@/lib/utils';
-
-// Labels pour les styles décoratifs
-const STYLE_LABELS: Record<string, string> = {
-  minimaliste: 'Minimaliste',
-  contemporain: 'Contemporain',
-  moderne: 'Moderne',
-  scandinave: 'Scandinave',
-  industriel: 'Industriel',
-  classique: 'Classique',
-  boheme: 'Bohème',
-  art_deco: 'Art Déco',
-};
 
 interface ProductCardProps {
   product: LinkMeCatalogProduct;
@@ -57,7 +41,8 @@ function formatPrice(price: number): string {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',
-    minimumFractionDigits: 2,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(price);
 }
 
@@ -67,6 +52,7 @@ export function ProductCard({
   onAddToSelection,
   showCustomBadge = false,
 }: ProductCardProps): JSX.Element {
+  const [isHovered, setIsHovered] = useState(false);
   const displayTitle = product.custom_title || product.name;
 
   // Prix client calculé = prix vente × (1 + commission%)
@@ -75,113 +61,136 @@ export function ProductCard({
     product.channel_commission_rate
   );
 
-  // Texte pour le tooltip (style + description)
-  const styleLabel = product.style ? STYLE_LABELS[product.style] : null;
-  const hasTooltipContent = styleLabel || product.custom_description;
+  // Calculer la marge en pourcentage
+  const marginPercent = product.channel_commission_rate ?? 0;
 
   return (
-    <div className="relative p-[2px] rounded-xl bg-gradient-to-br from-[#7E84C0] to-[#5DBEBB] transition-all duration-300 hover:shadow-lg group">
-      <div className="bg-white rounded-[10px] overflow-hidden h-full">
-        {/* Image avec ratio carré style Amazon + Tooltip hover */}
-        <TooltipProvider>
-          <Tooltip delayDuration={300}>
-            <TooltipTrigger asChild>
-              <div className="aspect-square relative bg-white p-3 overflow-hidden cursor-pointer">
-                {product.image_url ? (
-                  <Image
-                    src={product.image_url}
-                    alt={displayTitle}
-                    fill
-                    className="object-contain p-2 group-hover:scale-105 transition-transform duration-500"
-                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-lg">
-                    <Package className="h-12 w-12 text-gray-300" />
-                  </div>
-                )}
-
-                {/* Badges superposés */}
-                <div className="absolute top-2 left-2 flex flex-col gap-1">
-                  {product.is_featured && (
-                    <span className="inline-flex items-center gap-1 bg-linkme-mauve text-white text-[10px] font-semibold px-2 py-1 rounded-full shadow-sm">
-                      <Star className="h-3 w-3 fill-current" />
-                      Vedette
-                    </span>
-                  )}
-                </div>
-
-                {showCustomBadge && (
-                  <span className="absolute top-2 right-2 inline-flex items-center gap-1 bg-linkme-royal text-white text-[10px] font-semibold px-2 py-1 rounded-full shadow-sm">
-                    <Sparkles className="h-3 w-3" />
-                    Sur mesure
-                  </span>
-                )}
-
-                {/* Overlay hover */}
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-              </div>
-            </TooltipTrigger>
-            {hasTooltipContent && (
-              <TooltipContent
-                side="top"
-                className="max-w-xs bg-white border border-gray-200 shadow-lg"
-              >
-                {styleLabel && (
-                  <p className="font-semibold text-linkme-marine text-sm mb-1">
-                    {styleLabel}
-                  </p>
-                )}
-                {product.custom_description && (
-                  <p className="text-xs text-gray-600 line-clamp-3">
-                    {product.custom_description}
-                  </p>
-                )}
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </TooltipProvider>
-
-        {/* Contenu */}
-        <div className="p-4">
-          {/* Catégorie */}
-          {product.category_name && (
-            <p className="text-xs text-gray-400 mb-1 uppercase tracking-wide">
-              {product.category_name}
-            </p>
+    <div
+      className="group relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div
+        className={cn(
+          'bg-white border border-gray-100 rounded-xl overflow-hidden transition-all duration-300',
+          'hover:shadow-2xl hover:bg-gray-50/50 hover:scale-[1.02]'
+        )}
+      >
+        {/* Image Container - Ratio 4:3 */}
+        <div className="relative aspect-[4/3] overflow-hidden">
+          {product.image_url ? (
+            <Image
+              src={product.image_url}
+              alt={displayTitle}
+              fill
+              className="object-cover transition-transform duration-700 group-hover:scale-110"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gray-50">
+              <Package className="h-16 w-16 text-gray-200" />
+            </div>
           )}
 
-          {/* Nom */}
-          <h3 className="font-medium text-linkme-marine line-clamp-2 text-sm mb-2 leading-snug group-hover:text-linkme-turquoise transition-colors">
-            {displayTitle}
-          </h3>
+          {/* Gradient Overlay on Hover */}
+          <div
+            className={cn(
+              'absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-transparent transition-opacity duration-300',
+              isHovered ? 'opacity-100' : 'opacity-0'
+            )}
+          />
 
-          {/* Référence */}
-          <p className="text-[10px] text-gray-400 font-mono mb-3">
-            Réf: {product.reference}
-          </p>
+          {/* Product Name Overlay on Hover */}
+          <div
+            className={cn(
+              'absolute bottom-0 left-0 right-0 p-6 transition-all duration-300',
+              isHovered
+                ? 'opacity-100 translate-y-0'
+                : 'opacity-0 translate-y-4'
+            )}
+          >
+            <h3 className="text-white text-xl font-semibold line-clamp-2">
+              {displayTitle}
+            </h3>
+            <p className="text-white/80 text-sm mt-1">
+              {product.category_name}
+            </p>
+          </div>
 
-          {/* Prix et bouton */}
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-lg font-bold text-linkme-marine">
-                {formatPrice(customerPriceHT)}
+          {/* Margin Badge - Top Right */}
+          {marginPercent > 0 && (
+            <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-lg">
+              <span className="text-xs font-medium text-linkme-turquoise">
+                {marginPercent}% marge
               </span>
-              <span className="text-xs text-gray-400 ml-1">HT</span>
+            </div>
+          )}
+
+          {/* Featured Badge - Top Left */}
+          {product.is_featured && (
+            <div className="absolute top-4 left-4">
+              <span className="inline-flex items-center gap-1 bg-linkme-mauve text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-lg">
+                <Star className="h-3 w-3 fill-current" />
+                Vedette
+              </span>
+            </div>
+          )}
+
+          {/* Custom Badge */}
+          {showCustomBadge && !product.is_featured && (
+            <div className="absolute top-4 left-4">
+              <span className="inline-flex items-center gap-1 bg-linkme-royal text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-lg">
+                <Sparkles className="h-3 w-3" />
+                Sur mesure
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Product Info */}
+        <div className="p-6 space-y-4">
+          {/* Product Name (visible when not hovering) */}
+          <div
+            className={cn(
+              'transition-opacity duration-300',
+              isHovered ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'
+            )}
+          >
+            <h3 className="text-xl font-semibold text-linkme-marine mb-1 line-clamp-2">
+              {displayTitle}
+            </h3>
+            <p className="text-sm text-gray-500">{product.category_name}</p>
+          </div>
+
+          {/* Pricing */}
+          <div className="flex items-end justify-between">
+            <div>
+              <p className="text-2xl font-bold text-linkme-marine">
+                {formatPrice(customerPriceHT)}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                Coût: {formatPrice(product.selling_price_ht)}
+              </p>
             </div>
 
+            {/* Add to Selection Button - Appears on Hover */}
             <button
               onClick={onAddToSelection}
               disabled={!canAddToSelection}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-200',
+                'px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 shadow-lg whitespace-nowrap',
+                isHovered
+                  ? 'opacity-100 translate-y-0'
+                  : 'opacity-0 translate-y-4',
                 canAddToSelection
-                  ? 'bg-linkme-turquoise text-white hover:bg-linkme-turquoise/90 hover:shadow-md active:scale-95'
-                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  ? 'bg-linkme-turquoise text-white hover:opacity-90'
+                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
               )}
             >
-              <Plus className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Ajouter</span>
+              <span className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Ajouter
+              </span>
             </button>
           </div>
         </div>

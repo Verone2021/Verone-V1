@@ -388,8 +388,8 @@ function CatalogueContent(): JSX.Element | null {
           </div>
         </div>
 
-        {/* Grille Produits */}
-        <div className="flex-1 overflow-y-auto p-4 lg:p-6 bg-gray-50/30">
+        {/* Grille Produits - Design spacieux */}
+        <div className="flex-1 overflow-y-auto px-12 py-12 bg-white">
           {filteredProducts.length === 0 ? (
             <div className="text-center py-16">
               <Package className="h-16 w-16 text-gray-200 mx-auto mb-4" />
@@ -410,7 +410,7 @@ function CatalogueContent(): JSX.Element | null {
               )}
             </div>
           ) : viewMode === 'grid' ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
               {filteredProducts.map(product => (
                 <ProductCard
                   key={product.id}

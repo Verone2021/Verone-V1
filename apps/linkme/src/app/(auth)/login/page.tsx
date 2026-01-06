@@ -62,7 +62,7 @@ export default function LoginPage(): JSX.Element {
 function LoginContent(): JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { signIn, user, loading: authLoading } = useAuth();
+  const { signIn, user, initializing } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -161,10 +161,10 @@ function LoginContent(): JSX.Element {
 
   // Rediriger si déjà connecté
   useEffect(() => {
-    if (!authLoading && user) {
+    if (!initializing && user) {
       router.push(redirectUrl);
     }
-  }, [user, authLoading, router, redirectUrl]);
+  }, [user, initializing, router, redirectUrl]);
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
@@ -190,7 +190,7 @@ function LoginContent(): JSX.Element {
   };
 
   // Afficher un loader pendant le chargement initial
-  if (authLoading) {
+  if (initializing) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <Loader2 className="h-8 w-8 animate-spin text-linkme-turquoise" />
