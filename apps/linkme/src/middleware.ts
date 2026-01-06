@@ -4,10 +4,10 @@
  * Gère l'authentification et la protection des routes
  *
  * Routes protégées :
- * - /dashboard, /commissions, /ventes, /profil → Requiert authentification
+ * - /dashboard, /commissions, /ventes, /profil, /orders → Requiert authentification
  *
  * Routes publiques :
- * - /, /login, /products, /categories, /api/public
+ * - /, /login, /products, /categories, /cart
  *
  * @module middleware
  * @since 2025-12-01
@@ -15,7 +15,7 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { updateSession } from '@/lib/supabase-server';
+import { createMiddlewareClient, updateSession } from '@/lib/supabase-server';
 
 // Routes qui nécessitent une authentification
 const PROTECTED_ROUTES = [
@@ -25,9 +25,6 @@ const PROTECTED_ROUTES = [
   '/profil',
   '/orders',
 ];
-
-// Routes toujours publiques
-const PUBLIC_ROUTES = ['/', '/login', '/products', '/categories', '/cart'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -50,27 +47,31 @@ export async function middleware(request: NextRequest) {
   );
 
   if (isProtectedRoute) {
-    // Vérifier la présence d'un cookie de session LinkMe spécifique
-    // Utilise 'sb-linkme-auth' au lieu du cookie générique pour isoler les sessions
-    const hasSession = request.cookies
-      .getAll()
-      .some(cookie => cookie.name.startsWith('sb-linkme-auth'));
+    // Vérifier la session RÉELLE avec Supabase (pas juste le cookie)
+    const { supabase, response: middlewareResponse } =
+      createMiddlewareClient(request);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    if (!hasSession) {
+    if (!user) {
       // Rediriger vers login avec URL de retour
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }
+
+    return middlewareResponse;
   }
 
   // Si sur /login et déjà connecté, rediriger vers dashboard
   if (pathname === '/login') {
-    const hasSession = request.cookies
-      .getAll()
-      .some(cookie => cookie.name.startsWith('sb-linkme-auth'));
+    const { supabase } = createMiddlewareClient(request);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    if (hasSession) {
+    if (user) {
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
   }
