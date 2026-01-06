@@ -8,6 +8,8 @@
  * @since 2026-01-06
  */
 
+import Image from 'next/image';
+
 import {
   Badge,
   Button,
@@ -28,6 +30,7 @@ import { fr } from 'date-fns/locale';
 import {
   CalendarIcon,
   FileTextIcon,
+  ImageIcon,
   MapPinIcon,
   PackageIcon,
   TruckIcon,
@@ -277,6 +280,7 @@ export function OrderDetailModal({
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50">
+                    <TableHead className="w-16 text-[#183559]">Image</TableHead>
                     <TableHead className="text-[#183559]">Produit</TableHead>
                     <TableHead className="text-center text-[#183559]">
                       Qte
@@ -291,13 +295,28 @@ export function OrderDetailModal({
                       Marge %
                     </TableHead>
                     <TableHead className="text-right text-[#183559]">
-                      Marge
+                      Commission TTC
                     </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {order.items.map(item => (
                     <TableRow key={item.id}>
+                      <TableCell className="w-16">
+                        {item.product_image_url ? (
+                          <Image
+                            src={item.product_image_url}
+                            alt={item.product_name}
+                            width={48}
+                            height={48}
+                            className="rounded-md object-cover"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center">
+                            <ImageIcon className="h-5 w-5 text-gray-400" />
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <div>
                           <p className="font-medium text-[#183559]">
@@ -325,7 +344,7 @@ export function OrderDetailModal({
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right font-semibold text-emerald-600">
-                        +{formatPrice(item.affiliate_margin)}
+                        +{formatPrice(item.affiliate_margin * 1.2)}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -347,7 +366,9 @@ export function OrderDetailModal({
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Frais livraison</p>
+                  <p className="text-xs text-gray-500 mb-1">
+                    Frais livraison HT
+                  </p>
                   <p className="text-lg font-semibold text-[#183559]">
                     {formatPrice(order.shipping_cost_ht)}
                   </p>
@@ -360,10 +381,10 @@ export function OrderDetailModal({
                 </div>
                 <div className="bg-emerald-50 rounded-lg p-3 -m-1">
                   <p className="text-xs text-emerald-600 mb-1">
-                    Votre Commission
+                    Votre Commission TTC
                   </p>
                   <p className="text-lg font-bold text-emerald-600">
-                    +{formatPrice(order.total_affiliate_margin)}
+                    +{formatPrice(order.total_affiliate_margin * 1.2)}
                   </p>
                 </div>
               </div>

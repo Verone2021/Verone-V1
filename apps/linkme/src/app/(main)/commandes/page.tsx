@@ -172,9 +172,9 @@ export default function CommandesPage(): JSX.Element {
       </div>
 
       <div className="p-6 space-y-6">
-        {/* KPIs Dashboard - Mois en cours avec variations */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {/* Commandes ce mois */}
+        {/* KPIs Dashboard - Totaux */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* Commandes totales */}
           <div className="bg-white rounded-xl border p-5 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-blue-100 rounded-lg">
@@ -183,19 +183,13 @@ export default function CommandesPage(): JSX.Element {
               <div>
                 <p className="text-sm text-gray-500">Commandes</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {monthlyKPIs?.currentMonth.ordersCount ?? 0}
-                </p>
-                <p
-                  className={`text-xs ${getVariationColor(monthlyKPIs?.variations.ordersCount ?? 0)}`}
-                >
-                  {formatVariation(monthlyKPIs?.variations.ordersCount ?? 0)} vs
-                  mois dernier
+                  {monthlyKPIs?.allTime.ordersCount ?? 0}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* CA TTC ce mois */}
+          {/* CA TTC total */}
           <div className="bg-white rounded-xl border p-5 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-indigo-100 rounded-lg">
@@ -204,20 +198,11 @@ export default function CommandesPage(): JSX.Element {
               <div>
                 <p className="text-sm text-gray-500">CA TTC</p>
                 <p className="text-2xl font-bold text-indigo-600">
-                  {(monthlyKPIs?.currentMonth.caTTC ?? 0).toLocaleString(
-                    'fr-FR',
-                    {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    }
-                  )}{' '}
+                  {(monthlyKPIs?.allTime.caTTC ?? 0).toLocaleString('fr-FR', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                  })}{' '}
                   €
-                </p>
-                <p
-                  className={`text-xs ${getVariationColor(monthlyKPIs?.variations.caTTC ?? 0)}`}
-                >
-                  {formatVariation(monthlyKPIs?.variations.caTTC ?? 0)} vs mois
-                  dernier
                 </p>
               </div>
             </div>
@@ -232,72 +217,38 @@ export default function CommandesPage(): JSX.Element {
               <div>
                 <p className="text-sm text-gray-500">Panier Moyen</p>
                 <p className="text-2xl font-bold text-purple-600">
-                  {(monthlyKPIs?.currentMonth.panierMoyen ?? 0).toLocaleString(
-                    'fr-FR',
-                    {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    }
-                  )}{' '}
+                  {monthlyKPIs?.allTime.ordersCount
+                    ? (
+                        (monthlyKPIs?.allTime.caTTC ?? 0) /
+                        monthlyKPIs.allTime.ordersCount
+                      ).toLocaleString('fr-FR', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                      })
+                    : 0}{' '}
                   €
-                </p>
-                <p
-                  className={`text-xs ${getVariationColor(monthlyKPIs?.variations.panierMoyen ?? 0)}`}
-                >
-                  {formatVariation(monthlyKPIs?.variations.panierMoyen ?? 0)} vs
-                  mois dernier
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Commissions ce mois */}
+          {/* Commissions totales (TTC) */}
           <div className="bg-white rounded-xl border p-5 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-emerald-100 rounded-lg">
                 <Wallet className="h-6 w-6 text-emerald-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">Commissions</p>
+                <p className="text-sm text-gray-500">Commissions TTC</p>
                 <p className="text-2xl font-bold text-emerald-600">
-                  {(
-                    monthlyKPIs?.currentMonth.commissionsHT ?? 0
-                  ).toLocaleString('fr-FR', {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0,
-                  })}{' '}
-                  €
-                </p>
-                <p
-                  className={`text-xs ${getVariationColor(monthlyKPIs?.variations.commissionsHT ?? 0)}`}
-                >
-                  {formatVariation(monthlyKPIs?.variations.commissionsHT ?? 0)}{' '}
-                  vs mois dernier
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Total historique */}
-          <div className="bg-white rounded-xl border p-5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-gray-100 rounded-lg">
-                <Calendar className="h-6 w-6 text-gray-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Total historique</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {monthlyKPIs?.allTime.ordersCount ?? 0}
-                </p>
-                <p className="text-xs text-gray-400">
-                  {(monthlyKPIs?.allTime.commissionsHT ?? 0).toLocaleString(
+                  {(monthlyKPIs?.allTime.commissionsTTC ?? 0).toLocaleString(
                     'fr-FR',
                     {
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 0,
                     }
                   )}{' '}
-                  € gagnés
+                  €
                 </p>
               </div>
             </div>
