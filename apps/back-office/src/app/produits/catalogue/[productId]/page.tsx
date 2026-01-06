@@ -35,7 +35,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@verone/ui';
-import { Badge, ButtonUnified, IconButton } from '@verone/ui';
+import { Badge, ButtonUnified, IconButton, Switch, Label } from '@verone/ui';
 import { cn, checkSLOCompliance } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import {
@@ -54,6 +54,8 @@ import {
   Info,
   Building2,
   Sparkles,
+  Globe,
+  AlertCircle,
 } from 'lucide-react';
 
 // Champs obligatoires pour un produit complet
@@ -151,6 +153,8 @@ interface Product {
   organisation_id: string;
   enseigne_id: string | null;
   assigned_client_id: string | null;
+  image_url: string | null;
+  show_on_linkme_globe: boolean | null;
   enseigne?: {
     id: string;
     name: string;
@@ -895,7 +899,43 @@ export default function ProductDetailPage() {
             />
           </ProductDetailAccordion>
 
-          {/* Accordion 10: Métadonnées & Audit */}
+          {/* Accordion 10: Visibilité LinkMe */}
+          <ProductDetailAccordion
+            title="Visibilité LinkMe"
+            icon={Globe}
+            defaultOpen={false}
+          >
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex-1">
+                  <Label className="font-medium flex items-center gap-2">
+                    <Globe className="h-4 w-4 text-[#2ECCC1]" />
+                    Afficher sur le Globe LinkMe
+                  </Label>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Ce produit apparaîtra sur le globe 3D de la page
+                    d&apos;accueil et de connexion LinkMe
+                  </p>
+                </div>
+                <Switch
+                  checked={product.show_on_linkme_globe ?? false}
+                  onCheckedChange={(checked: boolean) =>
+                    handleProductUpdate({ show_on_linkme_globe: checked })
+                  }
+                  disabled={!product.image_url && !(product.images?.length > 0)}
+                />
+              </div>
+              {!product.image_url && !(product.images?.length > 0) && (
+                <p className="text-sm text-amber-600 flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" />
+                  Une image produit est requise pour l&apos;affichage sur le
+                  globe
+                </p>
+              )}
+            </div>
+          </ProductDetailAccordion>
+
+          {/* Accordion 11: Métadonnées & Audit */}
           <ProductDetailAccordion
             title="Métadonnées & Audit"
             icon={Clock}

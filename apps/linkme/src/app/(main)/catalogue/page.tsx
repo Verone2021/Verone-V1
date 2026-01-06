@@ -1,19 +1,15 @@
 'use client';
 
 /**
- * Page Catalogue LinkMe
+ * Page Catalogue LinkMe - Design E-commerce 2026
  *
- * Affiche tous les produits du catalogue LinkMe
- * Accessible uniquement aux utilisateurs connectés avec rôle autorisé
- *
- * Droits:
- * - enseigne_admin: Accès complet + Ajouter à sélection
- * - org_independante: Accès complet + Ajouter à sélection
- * - organisation_admin: Accès lecture seule (bouton grisé)
- * - client: Pas d'accès (redirect)
+ * Structure:
+ * - Barre filtres horizontale: Onglets + Dropdown catégories + Recherche
+ * - Grille produits pleine largeur
  *
  * @module CataloguePage
  * @since 2025-12-04
+ * @updated 2026-01
  */
 
 import { useState, useMemo, useEffect, Suspense } from 'react';
@@ -28,27 +24,33 @@ import {
   X,
   LayoutGrid,
   List,
-  Plus,
-  Filter,
-  Sparkles,
   ArrowLeft,
   Star,
-  Check,
-  PackagePlus,
 } from 'lucide-react';
 
-import { AddToSelectionModal } from '../../../components/catalogue/AddToSelectionModal';
-import { useAuth, type LinkMeRole } from '../../../contexts/AuthContext';
+import { AddToSelectionModal } from '@/components/catalogue/AddToSelectionModal';
+import { useAuth, type LinkMeRole } from '@/contexts/AuthContext';
 import {
   useCategorizedCatalogProducts,
   filterCatalogProducts,
   type LinkMeCatalogProduct,
   type CatalogFilters,
-} from '../../../lib/hooks/use-linkme-catalog';
+} from '@/lib/hooks/use-linkme-catalog';
 import {
   useSelectionProductIds,
   useUserSelections,
-} from '../../../lib/hooks/use-user-selection';
+} from '@/lib/hooks/use-user-selection';
+import { cn } from '@/lib/utils';
+
+import {
+  CategoryBar,
+  CategoryDropdown,
+  FeaturedCarousel,
+  FilterDrawer,
+  ProductCard,
+  ProductListItem,
+  type ProductTypeFilter,
+} from './components';
 
 // Rôles autorisés à accéder au catalogue
 const AUTHORIZED_ROLES: LinkMeRole[] = [
@@ -64,14 +66,14 @@ const CAN_ADD_TO_SELECTION_ROLES: LinkMeRole[] = [
 ];
 
 // Wrapper avec Suspense pour useSearchParams (Next.js 15 requirement)
-export default function CataloguePage() {
+export default function CataloguePage(): JSX.Element {
   return (
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center space-y-4">
-            <Loader2 className="h-12 w-12 text-blue-600 animate-spin mx-auto" />
-            <p className="text-gray-600">Chargement du catalogue...</p>
+            <Loader2 className="h-12 w-12 text-linkme-turquoise animate-spin mx-auto" />
+            <p className="text-gray-500">Chargement du catalogue...</p>
           </div>
         </div>
       }
@@ -81,7 +83,7 @@ export default function CataloguePage() {
   );
 }
 
-function CatalogueContent() {
+function CatalogueContent(): JSX.Element | null {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, linkMeRole, loading: authLoading } = useAuth();
@@ -103,7 +105,6 @@ function CatalogueContent() {
   const {
     customProducts,
     generalProducts,
-    allProducts,
     isLoading: productsLoading,
   } = useCategorizedCatalogProducts(
     linkMeRole?.enseigne_id || null,
@@ -115,7 +116,17 @@ function CatalogueContent() {
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>(
     undefined
   );
+  const [selectedSubcategory, setSelectedSubcategory] = useState<
+    string | undefined
+  >(undefined);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [productTypeFilter, setProductTypeFilter] =
+    useState<ProductTypeFilter>('all');
+
+  // State FilterDrawer
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+  // State filtre pièces (multi-sélection)
+  const [selectedRooms, setSelectedRooms] = useState<string[]>([]);
 
   // State modal ajout sélection
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -146,71 +157,97 @@ function CatalogueContent() {
     );
   }, [linkMeRole]);
 
+  // Tous les produits mélangés (sur mesure + général)
+  const allProducts = useMemo(() => {
+    return [...customProducts, ...generalProducts];
+  }, [customProducts, generalProducts]);
+
   // Filtres actifs
   const filters: CatalogFilters = useMemo(
     () => ({
       search: searchTerm || undefined,
       category: selectedCategory,
+      subcategory: selectedSubcategory,
     }),
-    [searchTerm, selectedCategory]
+    [searchTerm, selectedCategory, selectedSubcategory]
   );
 
-  // Produits sur mesure filtrés (+ exclusion des produits déjà dans la sélection)
-  const filteredCustomProducts = useMemo(() => {
-    let products = filterCatalogProducts(customProducts, filters);
+  // Produits filtrés (+ filtre type + exclusion des produits déjà dans la sélection)
+  const filteredProducts = useMemo(() => {
+    let products = filterCatalogProducts(allProducts, filters);
+
+    // Filtre par type de produit
+    if (productTypeFilter === 'catalog') {
+      products = products.filter(p => !p.is_custom);
+    } else if (productTypeFilter === 'custom') {
+      products = products.filter(p => p.is_custom === true);
+    }
+
     // Si on est en mode ajout à une sélection, exclure les produits déjà présents
     if (selectionIdFromUrl && existingProductIds.length > 0) {
       products = products.filter(
         p => !existingProductIds.includes(p.product_id)
       );
     }
-    return products;
-  }, [customProducts, filters, selectionIdFromUrl, existingProductIds]);
 
-  // Produits généraux filtrés (+ exclusion des produits déjà dans la sélection)
-  const filteredGeneralProducts = useMemo(() => {
-    let products = filterCatalogProducts(generalProducts, filters);
-    // Si on est en mode ajout à une sélection, exclure les produits déjà présents
-    if (selectionIdFromUrl && existingProductIds.length > 0) {
-      products = products.filter(
-        p => !existingProductIds.includes(p.product_id)
+    // Filtre par pièces (multi-sélection)
+    if (selectedRooms.length > 0) {
+      products = products.filter(p =>
+        p.suitable_rooms?.some(room => selectedRooms.includes(room))
       );
     }
+
     return products;
-  }, [generalProducts, filters, selectionIdFromUrl, existingProductIds]);
+  }, [
+    allProducts,
+    filters,
+    productTypeFilter,
+    selectionIdFromUrl,
+    existingProductIds,
+    selectedRooms,
+  ]);
 
-  // Total produits filtrés (pour affichage)
-  const totalFilteredProducts =
-    filteredCustomProducts.length + filteredGeneralProducts.length;
-
-  // Catégories uniques pour le filtre (tous produits visibles)
-  const categories = useMemo(() => {
-    const allVisibleProducts = [...customProducts, ...generalProducts];
-    const uniqueCategories = new Set(
-      allVisibleProducts.map(p => p.category_name).filter(Boolean) as string[]
-    );
-    return Array.from(uniqueCategories).sort();
-  }, [customProducts, generalProducts]);
+  // Compter les filtres actifs
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (productTypeFilter !== 'all') count++;
+    if (selectedSubcategory) count++;
+    return count;
+  }, [productTypeFilter, selectedSubcategory]);
 
   // Handler ajouter à la sélection
-  const handleAddToSelection = (product: LinkMeCatalogProduct) => {
+  const handleAddToSelection = (product: LinkMeCatalogProduct): void => {
     setSelectedProduct(product);
     setIsAddModalOpen(true);
   };
 
   // Handler fermer le modal
-  const handleCloseModal = () => {
+  const handleCloseModal = (): void => {
     setIsAddModalOpen(false);
     setSelectedProduct(null);
   };
+
+  // Reset des filtres
+  const handleResetFilters = (): void => {
+    setSearchTerm('');
+    setSelectedCategory(undefined);
+    setSelectedSubcategory(undefined);
+    setProductTypeFilter('all');
+  };
+
+  const hasActiveFilters =
+    searchTerm ||
+    selectedCategory ||
+    selectedSubcategory ||
+    productTypeFilter !== 'all';
 
   // Chargement
   if (authLoading || productsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
-          <Loader2 className="h-12 w-12 text-blue-600 animate-spin mx-auto" />
-          <p className="text-gray-600">Chargement du catalogue...</p>
+          <Loader2 className="h-12 w-12 text-linkme-turquoise animate-spin mx-auto" />
+          <p className="text-gray-500">Chargement du catalogue...</p>
         </div>
       </div>
     );
@@ -222,269 +259,183 @@ function CatalogueContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Bandeau: Mode ajout à une sélection */}
-        {selectionIdFromUrl && targetSelection && (
-          <div className="mb-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100">
-                  <Star className="h-4 w-4 text-amber-600" />
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900 text-sm">
-                    Ajout à :{' '}
-                    <span className="text-amber-700">
-                      {targetSelection.name}
-                    </span>
-                  </p>
-                  <p className="text-xs text-gray-600">
-                    {existingProductIds.length > 0
-                      ? `${existingProductIds.length} produit${existingProductIds.length > 1 ? 's' : ''} déjà dans cette sélection (masqués)`
-                      : 'Sélectionnez des produits à ajouter'}
-                  </p>
-                </div>
+    <div className="min-h-screen bg-gray-50/30">
+      {/* Bandeau: Mode ajout à une sélection */}
+      {selectionIdFromUrl && targetSelection && (
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200 px-4 py-3">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100">
+                <Star className="h-4 w-4 text-amber-600" />
               </div>
-              <Link
-                href={`/ma-selection/${selectionIdFromUrl}/produits`}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Retour à la sélection
-              </Link>
-            </div>
-          </div>
-        )}
-
-        {/* Header */}
-        <div className="mb-5">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100">
-              <Package className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-gray-900">
-                Catalogue LinkMe
-              </h1>
-              <p className="text-gray-600 text-sm">
-                {selectionIdFromUrl
-                  ? 'Sélectionnez les produits à ajouter'
-                  : 'Découvrez nos produits et ajoutez-les à votre sélection'}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Filtres */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 mb-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            {/* Recherche */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Rechercher un produit..."
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            {/* Filtre catégorie */}
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-gray-400" />
-              <select
-                value={selectedCategory || ''}
-                onChange={e => setSelectedCategory(e.target.value || undefined)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Toutes les catégories</option>
-                {categories.map(cat => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Toggle vue */}
-            <div className="flex items-center border rounded-lg p-0.5 bg-gray-100">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`p-2 rounded transition-colors ${
-                  viewMode === 'grid'
-                    ? 'bg-white shadow-sm text-blue-600'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-                title="Vue grille"
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`p-2 rounded transition-colors ${
-                  viewMode === 'list'
-                    ? 'bg-white shadow-sm text-blue-600'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-                title="Vue liste"
-              >
-                <List className="h-4 w-4" />
-              </button>
-            </div>
-
-            {/* Bouton Mes Produits */}
-            {canAddToSelection && (
-              <Link
-                href="/mes-produits"
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg hover:from-emerald-600 hover:to-teal-600 transition-all shadow-sm font-medium"
-              >
-                <PackagePlus className="h-4 w-4" />
-                Mes Produits
-              </Link>
-            )}
-          </div>
-
-          {/* Résultats + Reset */}
-          <div className="flex items-center justify-between mt-4 pt-4 border-t">
-            <p className="text-sm text-gray-600">
-              {totalFilteredProducts} produit
-              {totalFilteredProducts > 1 ? 's' : ''} trouvé
-              {totalFilteredProducts > 1 ? 's' : ''}
-              {filteredCustomProducts.length > 0 && (
-                <span className="text-purple-600 ml-1">
-                  (dont {filteredCustomProducts.length} sur mesure)
-                </span>
-              )}
-            </p>
-
-            {(searchTerm || selectedCategory) && (
-              <button
-                onClick={() => {
-                  setSearchTerm('');
-                  setSelectedCategory(undefined);
-                }}
-                className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
-              >
-                <X className="h-4 w-4" />
-                Réinitialiser
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Aucun produit */}
-        {totalFilteredProducts === 0 ? (
-          <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-            <Package className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-600 font-medium">Aucun produit trouvé</p>
-            <p className="text-sm text-gray-500 mt-1">
-              Essayez de modifier vos filtres
-            </p>
-          </div>
-        ) : (
-          <>
-            {/* Section: Produits sur mesure */}
-            {filteredCustomProducts.length > 0 && (
-              <div className="mb-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100">
-                    <Sparkles className="h-4 w-4 text-purple-600" />
-                  </div>
-                  <div>
-                    <h2 className="text-base font-semibold text-gray-900">
-                      Produits sur mesure
-                    </h2>
-                    <p className="text-sm text-gray-500">
-                      {filteredCustomProducts.length} produit
-                      {filteredCustomProducts.length > 1 ? 's' : ''} créé
-                      {filteredCustomProducts.length > 1 ? 's' : ''}{' '}
-                      spécialement pour vous
-                    </p>
-                  </div>
-                </div>
-
-                {viewMode === 'grid' ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                    {filteredCustomProducts.map(product => (
-                      <ProductCard
-                        key={product.id}
-                        product={product}
-                        canAddToSelection={canAddToSelection}
-                        onAddToSelection={() => handleAddToSelection(product)}
-                        showCustomBadge
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="bg-white rounded-xl border border-gray-200 divide-y">
-                    {filteredCustomProducts.map(product => (
-                      <ProductListItem
-                        key={product.id}
-                        product={product}
-                        canAddToSelection={canAddToSelection}
-                        onAddToSelection={() => handleAddToSelection(product)}
-                        showCustomBadge
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Séparateur si les deux sections existent */}
-            {filteredCustomProducts.length > 0 &&
-              filteredGeneralProducts.length > 0 && (
-                <div className="border-t border-gray-200 my-8" />
-              )}
-
-            {/* Section: Catalogue général */}
-            {filteredGeneralProducts.length > 0 && (
               <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100">
-                    <Package className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <div>
-                    <h2 className="text-base font-semibold text-gray-900">
-                      Catalogue général
-                    </h2>
-                    <p className="text-sm text-gray-500">
-                      {filteredGeneralProducts.length} produit
-                      {filteredGeneralProducts.length > 1 ? 's' : ''}
-                    </p>
-                  </div>
-                </div>
-
-                {viewMode === 'grid' ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                    {filteredGeneralProducts.map(product => (
-                      <ProductCard
-                        key={product.id}
-                        product={product}
-                        canAddToSelection={canAddToSelection}
-                        onAddToSelection={() => handleAddToSelection(product)}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="bg-white rounded-xl border border-gray-200 divide-y">
-                    {filteredGeneralProducts.map(product => (
-                      <ProductListItem
-                        key={product.id}
-                        product={product}
-                        canAddToSelection={canAddToSelection}
-                        onAddToSelection={() => handleAddToSelection(product)}
-                      />
-                    ))}
-                  </div>
-                )}
+                <p className="font-medium text-gray-900 text-sm">
+                  Ajout à :{' '}
+                  <span className="text-amber-700">{targetSelection.name}</span>
+                </p>
+                <p className="text-xs text-gray-600">
+                  {existingProductIds.length > 0
+                    ? `${existingProductIds.length} produit${existingProductIds.length > 1 ? 's' : ''} déjà dans cette sélection (masqués)`
+                    : 'Sélectionnez des produits à ajouter'}
+                </p>
               </div>
-            )}
-          </>
-        )}
-      </div>
+            </div>
+            <Link
+              href={`/ma-selection/${selectionIdFromUrl}/produits`}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Retour
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Zone principale - Pleine largeur (sans sidebar) */}
+      <main className="flex flex-col min-h-[calc(100vh-4rem)]">
+        {/* Carousel produits vedettes */}
+        <div className="px-4 lg:px-6 py-4">
+          <FeaturedCarousel
+            products={allProducts}
+            onProductClick={handleAddToSelection}
+          />
+        </div>
+
+        {/* Barre de catégories dynamiques */}
+        <CategoryBar
+          products={allProducts}
+          selectedCategory={selectedCategory}
+          onCategorySelect={setSelectedCategory}
+          onOpenFilters={() => setIsFilterDrawerOpen(true)}
+          activeFiltersCount={activeFiltersCount}
+        />
+
+        {/* Barre de filtres horizontale sticky */}
+        <div className="bg-white border-b border-gray-100 sticky top-0 z-20">
+          {/* Filtres sur une ligne */}
+          <div className="px-4 lg:px-6 py-3">
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Dropdown catégories (pour sous-catégories) */}
+              <CategoryDropdown
+                products={allProducts}
+                selectedCategory={selectedCategory}
+                selectedSubcategory={selectedSubcategory}
+                onCategorySelect={setSelectedCategory}
+                onSubcategorySelect={setSelectedSubcategory}
+              />
+
+              {/* Recherche */}
+              <div className="flex-1 min-w-[200px] relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Rechercher un produit..."
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-linkme-turquoise/30 focus:border-linkme-turquoise transition-all text-sm"
+                />
+              </div>
+
+              {/* Toggle vue grille/liste */}
+              <div className="flex items-center border border-gray-200 rounded-lg p-0.5 bg-gray-50">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={cn(
+                    'p-2 rounded-md transition-all',
+                    viewMode === 'grid'
+                      ? 'bg-white shadow-sm text-linkme-turquoise'
+                      : 'text-gray-400 hover:text-gray-600'
+                  )}
+                  title="Vue grille"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={cn(
+                    'p-2 rounded-md transition-all',
+                    viewMode === 'list'
+                      ? 'bg-white shadow-sm text-linkme-turquoise'
+                      : 'text-gray-400 hover:text-gray-600'
+                  )}
+                  title="Vue liste"
+                >
+                  <List className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Compteur résultats + Reset */}
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+              <p className="text-sm text-gray-500">
+                <span className="font-medium text-linkme-marine">
+                  {filteredProducts.length}
+                </span>{' '}
+                produit{filteredProducts.length > 1 ? 's' : ''} trouvé
+                {filteredProducts.length > 1 ? 's' : ''}
+              </p>
+
+              {hasActiveFilters && (
+                <button
+                  onClick={handleResetFilters}
+                  className="flex items-center gap-1 text-sm text-gray-500 hover:text-linkme-turquoise transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                  Réinitialiser
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Grille Produits */}
+        <div className="flex-1 overflow-y-auto p-4 lg:p-6 bg-gray-50/30">
+          {filteredProducts.length === 0 ? (
+            <div className="text-center py-16">
+              <Package className="h-16 w-16 text-gray-200 mx-auto mb-4" />
+              <p className="text-gray-600 font-medium mb-2">
+                Aucun produit trouvé
+              </p>
+              <p className="text-sm text-gray-400 mb-4">
+                Essayez de modifier vos filtres de recherche
+              </p>
+              {hasActiveFilters && (
+                <button
+                  onClick={handleResetFilters}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm text-linkme-turquoise hover:bg-linkme-turquoise/10 rounded-lg transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                  Réinitialiser les filtres
+                </button>
+              )}
+            </div>
+          ) : viewMode === 'grid' ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+              {filteredProducts.map(product => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  canAddToSelection={canAddToSelection}
+                  onAddToSelection={() => handleAddToSelection(product)}
+                  showCustomBadge={product.is_custom === true}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100 overflow-hidden">
+              {filteredProducts.map(product => (
+                <ProductListItem
+                  key={product.id}
+                  product={product}
+                  canAddToSelection={canAddToSelection}
+                  onAddToSelection={() => handleAddToSelection(product)}
+                  showCustomBadge={product.is_custom === true}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </main>
 
       {/* Modal ajout à la sélection */}
       <AddToSelectionModal
@@ -493,213 +444,20 @@ function CatalogueContent() {
         product={selectedProduct}
         preselectedSelectionId={selectionIdFromUrl}
       />
-    </div>
-  );
-}
 
-// ============================================================================
-// Helpers
-// ============================================================================
-
-/**
- * Calcule le prix client LinkMe avec commission
- * Formule: prix_vente × (1 + commission_rate / 100)
- */
-function calculateCustomerPrice(
-  sellingPriceHT: number,
-  commissionRate: number | null
-): number {
-  const commission = commissionRate ?? 0;
-  return sellingPriceHT * (1 + commission / 100);
-}
-
-// ============================================================================
-// Composants internes
-// ============================================================================
-
-interface ProductCardProps {
-  product: LinkMeCatalogProduct;
-  canAddToSelection: boolean;
-  onAddToSelection: () => void;
-  showCustomBadge?: boolean;
-}
-
-function ProductCard({
-  product,
-  canAddToSelection,
-  onAddToSelection,
-  showCustomBadge = false,
-}: ProductCardProps) {
-  const displayTitle = product.custom_title || product.name;
-  const displayDescription = product.custom_description || product.description;
-
-  // Prix client calculé = prix vente × (1 + commission%)
-  const customerPriceHT = calculateCustomerPrice(
-    product.selling_price_ht,
-    product.channel_commission_rate
-  );
-
-  return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-      {/* Image */}
-      <div className="aspect-square bg-gray-100 relative">
-        {product.image_url ? (
-          <img
-            src={product.image_url}
-            alt={displayTitle}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Package className="h-10 w-10 text-gray-300" />
-          </div>
-        )}
-
-        {/* Badge sur mesure */}
-        {showCustomBadge && (
-          <span className="absolute top-1.5 right-1.5 bg-purple-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5">
-            <Sparkles className="h-2.5 w-2.5" />
-            Sur mesure
-          </span>
-        )}
-
-        {/* Badge vedette */}
-        {product.is_featured && (
-          <span className="absolute top-1.5 left-1.5 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-1.5 py-0.5 rounded">
-            Vedette
-          </span>
-        )}
-      </div>
-
-      {/* Contenu */}
-      <div className="p-2.5">
-        {/* Catégorie */}
-        {product.category_name && (
-          <p className="text-[10px] text-gray-500 mb-0.5 truncate">
-            {product.category_name}
-          </p>
-        )}
-
-        {/* Nom */}
-        <h3 className="font-medium text-gray-900 line-clamp-2 text-sm mb-0.5 leading-tight">
-          {displayTitle}
-        </h3>
-
-        {/* Référence */}
-        <p className="text-[10px] text-gray-400 font-mono mb-1.5">
-          {product.reference}
-        </p>
-
-        {/* Prix */}
-        <div className="mb-2">
-          <div className="flex items-baseline gap-1">
-            <span className="text-sm font-bold text-gray-900">
-              {customerPriceHT.toFixed(2)} €
-            </span>
-            <span className="text-[10px] text-gray-500">HT</span>
-          </div>
-        </div>
-
-        {/* Bouton ajouter */}
-        <button
-          onClick={onAddToSelection}
-          disabled={!canAddToSelection}
-          className={`w-full flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs font-medium transition-colors ${
-            canAddToSelection
-              ? 'bg-blue-600 text-white hover:bg-blue-700'
-              : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-          }`}
-        >
-          <Plus className="h-3 w-3" />
-          Ajouter
-        </button>
-      </div>
-    </div>
-  );
-}
-
-interface ProductListItemProps {
-  product: LinkMeCatalogProduct;
-  canAddToSelection: boolean;
-  onAddToSelection: () => void;
-  showCustomBadge?: boolean;
-}
-
-function ProductListItem({
-  product,
-  canAddToSelection,
-  onAddToSelection,
-  showCustomBadge = false,
-}: ProductListItemProps) {
-  const displayTitle = product.custom_title || product.name;
-
-  // Prix client calculé = prix vente × (1 + commission%)
-  const customerPriceHT = calculateCustomerPrice(
-    product.selling_price_ht,
-    product.channel_commission_rate
-  );
-
-  return (
-    <div className="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors">
-      {/* Image */}
-      <div className="w-12 h-12 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
-        {product.image_url ? (
-          <img
-            src={product.image_url}
-            alt={displayTitle}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Package className="h-6 w-6 text-gray-300" />
-          </div>
-        )}
-      </div>
-
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
-          <h3 className="font-medium text-gray-900 truncate text-sm">
-            {displayTitle}
-          </h3>
-          {showCustomBadge && (
-            <span className="bg-purple-100 text-purple-700 text-[10px] font-medium px-1.5 py-0.5 rounded flex items-center gap-0.5">
-              <Sparkles className="h-2.5 w-2.5" />
-              Sur mesure
-            </span>
-          )}
-          {product.is_featured && (
-            <span className="bg-yellow-100 text-yellow-700 text-[10px] font-medium px-1.5 py-0.5 rounded">
-              Vedette
-            </span>
-          )}
-        </div>
-        <p className="text-xs text-gray-500">
-          {product.category_name && `${product.category_name} • `}
-          <span className="font-mono">{product.reference}</span>
-        </p>
-      </div>
-
-      {/* Prix */}
-      <div className="text-right">
-        <p className="font-bold text-gray-900 text-sm">
-          {customerPriceHT.toFixed(2)} € HT
-        </p>
-      </div>
-
-      {/* Action */}
-      <button
-        onClick={onAddToSelection}
-        disabled={!canAddToSelection}
-        className={`flex items-center gap-1 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-          canAddToSelection
-            ? 'bg-blue-600 text-white hover:bg-blue-700'
-            : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-        }`}
-      >
-        <Plus className="h-3 w-3" />
-        <span className="hidden lg:inline">Ajouter</span>
-      </button>
+      {/* Tiroir de filtres avancés */}
+      <FilterDrawer
+        isOpen={isFilterDrawerOpen}
+        onClose={() => setIsFilterDrawerOpen(false)}
+        products={allProducts}
+        productTypeFilter={productTypeFilter}
+        onProductTypeChange={setProductTypeFilter}
+        selectedSubcategory={selectedSubcategory}
+        onSubcategoryChange={setSelectedSubcategory}
+        selectedCategory={selectedCategory}
+        selectedRooms={selectedRooms}
+        onRoomsChange={setSelectedRooms}
+      />
     </div>
   );
 }
