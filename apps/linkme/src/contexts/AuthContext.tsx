@@ -311,9 +311,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUser(null);
     setSession(null);
     setLinkMeRole(null);
-    // Toujours rediriger vers login apres deconnexion pour eviter la reconnexion auto
+    // Rediriger vers la page d'accueil apres deconnexion
     if (typeof window !== 'undefined') {
-      window.location.href = redirectTo || '/login';
+      window.location.href = redirectTo || '/';
     }
   };
 
