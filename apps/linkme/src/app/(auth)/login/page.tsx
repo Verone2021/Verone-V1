@@ -29,6 +29,7 @@ import {
   X,
 } from 'lucide-react';
 
+import { LandingHeader } from '@/components/landing';
 import {
   SphereImageGrid,
   type SphereImageData,
@@ -196,218 +197,224 @@ function LoginContent(): JSX.Element {
   }
 
   return (
-    <div className="min-h-screen flex">
-      {/* Gauche: Sphere sur fond gradient - plein ecran */}
-      {pageConfig.globe_enabled && (
-        <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-[#7E84C0]/50 via-[#7E84C0]/25 to-white flex-col items-center justify-center">
-          {/* Sphere 3D avec logo en arriere-plan */}
-          <div className="relative flex items-center justify-center">
-            {/* Logo en arriere-plan - meme diametre que la sphere */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Image
-                src="/Linkme-fondblanc.png"
-                alt="LinkMe"
-                width={440}
-                height={440}
-                className="w-[440px] h-[440px] object-contain opacity-55 drop-shadow-sm"
+    <div className="min-h-screen flex flex-col">
+      {/* Header Landing */}
+      <LandingHeader />
+
+      {/* Main Content - avec pt-16 pour compenser le header fixe */}
+      <div className="flex-1 flex pt-16">
+        {/* Gauche: Sphere sur fond gradient - plein ecran */}
+        {pageConfig.globe_enabled && (
+          <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-[#7E84C0]/20 via-[#7E84C0]/10 to-white flex-col items-center justify-center">
+            {/* Sphere 3D avec logo en arriere-plan */}
+            <div className="relative flex items-center justify-center">
+              {/* Logo en arriere-plan - meme diametre que la sphere */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Image
+                  src="/Linkme-fondblanc.png"
+                  alt="LinkMe"
+                  width={440}
+                  height={440}
+                  className="w-[440px] h-[440px] object-contain opacity-55 drop-shadow-sm"
+                />
+              </div>
+              {/* Sphere 3D centree */}
+              <SphereImageGrid
+                images={sphereImages}
+                containerSize={575}
+                sphereRadius={220}
+                autoRotate
+                autoRotateSpeed={pageConfig.globe_rotation_speed}
+                baseImageScale={0.15}
               />
             </div>
-            {/* Sphere 3D centree */}
-            <SphereImageGrid
-              images={sphereImages}
-              containerSize={575}
-              sphereRadius={220}
-              autoRotate
-              autoRotateSpeed={pageConfig.globe_rotation_speed}
-              baseImageScale={0.15}
-            />
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Droite: Formulaire sur fond blanc - plein ecran */}
-      <div
-        className={`flex-1 flex items-center justify-center bg-white p-6 sm:p-10 ${
-          pageConfig.globe_enabled ? 'lg:w-1/2' : 'w-full'
-        }`}
-      >
-        <div className="w-full max-w-md">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-[#183559]">Connexion</h1>
-            <p className="text-[#183559] text-sm mt-2">Espace Utilisateurs</p>
-          </div>
+        {/* Droite: Formulaire sur fond blanc - plein ecran */}
+        <div
+          className={`flex-1 flex items-center justify-center bg-white p-6 sm:p-10 ${
+            pageConfig.globe_enabled ? 'lg:w-1/2' : 'w-full'
+          }`}
+        >
+          <div className="w-full max-w-md">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-[#183559]">Connexion</h1>
+              <p className="text-[#183559] text-sm mt-2">Espace Utilisateurs</p>
+            </div>
 
-          {/* Bouton comptes test */}
-          <button
-            type="button"
-            onClick={() => setShowTestAccounts(!showTestAccounts)}
-            className="w-full mb-5 flex items-center justify-center gap-2 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-sm hover:bg-amber-100 transition-all duration-200 font-medium"
-          >
-            <Info className="h-4 w-4" />
-            Comptes de test (DEV)
-          </button>
+            {/* Bouton comptes test */}
+            <button
+              type="button"
+              onClick={() => setShowTestAccounts(!showTestAccounts)}
+              className="w-full mb-5 flex items-center justify-center gap-2 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-sm hover:bg-amber-100 transition-all duration-200 font-medium"
+            >
+              <Info className="h-4 w-4" />
+              Comptes de test (DEV)
+            </button>
 
-          {/* Panel comptes test */}
-          {showTestAccounts && (
-            <div className="mb-5 p-4 bg-gray-50 border border-gray-100 rounded-xl">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-semibold text-[#183559]">
-                  Comptes de test
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setShowTestAccounts(false)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-              <div className="space-y-2">
-                {TEST_ACCOUNTS.map((account, idx) => (
+            {/* Panel comptes test */}
+            {showTestAccounts && (
+              <div className="mb-5 p-4 bg-gray-50 border border-gray-100 rounded-xl">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-semibold text-[#183559]">
+                    Comptes de test
+                  </span>
                   <button
-                    key={idx}
                     type="button"
-                    onClick={() => {
-                      setEmail(account.email);
-                      setPassword(account.password);
-                      setShowTestAccounts(false);
-                    }}
-                    className="w-full text-left p-3 bg-white border border-gray-100 rounded-lg hover:border-[#5DBEBB] hover:bg-[#5DBEBB]/5 transition-all duration-200"
+                    onClick={() => setShowTestAccounts(false)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
                   >
-                    <div className="text-sm font-medium text-[#183559]">
-                      {account.role}
-                    </div>
-                    <div className="text-xs text-gray-500 font-mono mt-1">
-                      {account.email}
-                    </div>
+                    <X className="h-4 w-4" />
                   </button>
-                ))}
+                </div>
+                <div className="space-y-2">
+                  {TEST_ACCOUNTS.map((account, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setEmail(account.email);
+                        setPassword(account.password);
+                        setShowTestAccounts(false);
+                      }}
+                      className="w-full text-left p-3 bg-white border border-gray-100 rounded-lg hover:border-[#5DBEBB] hover:bg-[#5DBEBB]/5 transition-all duration-200"
+                    >
+                      <div className="text-sm font-medium text-[#183559]">
+                        {account.role}
+                      </div>
+                      <div className="text-xs text-gray-500 font-mono mt-1">
+                        {account.email}
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Erreur */}
-          {error && (
-            <div className="mb-5 p-4 bg-red-50 border border-red-100 rounded-xl flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-red-700">{error}</div>
-            </div>
-          )}
+            {/* Erreur */}
+            {error && (
+              <div className="mb-5 p-4 bg-red-50 border border-red-100 rounded-xl flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-red-700">{error}</div>
+              </div>
+            )}
 
-          {/* Formulaire */}
-          <form
-            onSubmit={(e): void => {
-              void handleSubmit(e);
-            }}
-            className="space-y-5"
-          >
-            {/* Email */}
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-[#183559] mb-2"
-              >
-                Adresse email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="vous@exemple.com"
-                required
-                disabled={loading}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-[#5DBEBB]/30 focus:border-[#5DBEBB] outline-none transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
-              />
-            </div>
-
-            {/* Mot de passe */}
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-[#183559] mb-2"
-              >
-                Mot de passe
-              </label>
-              <div className="relative">
+            {/* Formulaire */}
+            <form
+              onSubmit={(e): void => {
+                void handleSubmit(e);
+              }}
+              className="space-y-5"
+            >
+              {/* Email */}
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-[#183559] mb-2"
+                >
+                  Adresse email
+                </label>
                 <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="vous@exemple.com"
                   required
                   disabled={loading}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-12 bg-white focus:ring-2 focus:ring-[#5DBEBB]/30 focus:border-[#5DBEBB] outline-none transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-[#5DBEBB]/30 focus:border-[#5DBEBB] outline-none transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#183559] transition-colors"
-                  tabIndex={-1}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
-                </button>
               </div>
-            </div>
 
-            {/* Bouton connexion */}
-            <button
-              type="submit"
-              disabled={loading || !email || !password}
-              className="w-full bg-gradient-to-r from-[#5DBEBB] to-[#5DBEBB]/60 text-white py-3.5 rounded-xl font-semibold hover:from-[#4CA9A6] hover:to-[#4CA9A6]/60 hover:scale-[1.02] hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:from-[#3976BB]/80 disabled:to-[#3976BB]/50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none shadow-md"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  Connexion en cours...
-                </>
-              ) : (
-                <>
-                  <LogIn className="h-5 w-5" />
-                  Se connecter
-                </>
-              )}
-            </button>
-          </form>
+              {/* Mot de passe */}
+              <div>
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-[#183559] mb-2"
+                >
+                  Mot de passe
+                </label>
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    disabled={loading}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-12 bg-white focus:ring-2 focus:ring-[#5DBEBB]/30 focus:border-[#5DBEBB] outline-none transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#183559] transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
+              </div>
 
-          {/* Liens */}
-          <div className="mt-6 text-center space-y-3">
-            <a
-              href="#"
-              className="text-sm text-[#3976BB] hover:text-[#5DBEBB] hover:underline block transition-colors duration-200"
-            >
-              Mot de passe oublie ?
-            </a>
-            <p className="text-sm text-gray-500">
-              Pas encore partenaire ?{' '}
+              {/* Bouton connexion */}
+              <button
+                type="submit"
+                disabled={loading || !email || !password}
+                className="w-full bg-gradient-to-r from-[#5DBEBB] to-[#5DBEBB]/60 text-white py-3.5 rounded-xl font-semibold hover:from-[#4CA9A6] hover:to-[#4CA9A6]/60 hover:scale-[1.02] hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:from-[#3976BB]/80 disabled:to-[#3976BB]/50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none shadow-md"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Connexion en cours...
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="h-5 w-5" />
+                    Se connecter
+                  </>
+                )}
+              </button>
+            </form>
+
+            {/* Liens */}
+            <div className="mt-6 text-center space-y-3">
               <a
                 href="#"
-                className="text-[#5DBEBB] hover:underline font-medium"
+                className="text-sm text-[#3976BB] hover:text-[#5DBEBB] hover:underline block transition-colors duration-200"
               >
-                Contactez-nous
+                Mot de passe oublie ?
               </a>
-            </p>
-          </div>
+              <p className="text-sm text-gray-500">
+                Pas encore partenaire ?{' '}
+                <a
+                  href="#"
+                  className="text-[#5DBEBB] hover:underline font-medium"
+                >
+                  Contactez-nous
+                </a>
+              </p>
+            </div>
 
-          {/* Footer */}
-          <div className="mt-8 pt-6 border-t border-gray-100">
-            <p className="text-xs text-gray-400 text-center">
-              En vous connectant, vous acceptez nos{' '}
-              <a href="#" className="text-[#3976BB] hover:underline">
-                conditions d&apos;utilisation
-              </a>{' '}
-              et notre{' '}
-              <a href="#" className="text-[#3976BB] hover:underline">
-                politique de confidentialite
-              </a>
-              .
-            </p>
+            {/* Footer */}
+            <div className="mt-8 pt-6 border-t border-gray-100">
+              <p className="text-xs text-gray-400 text-center">
+                En vous connectant, vous acceptez nos{' '}
+                <a href="#" className="text-[#3976BB] hover:underline">
+                  conditions d&apos;utilisation
+                </a>{' '}
+                et notre{' '}
+                <a href="#" className="text-[#3976BB] hover:underline">
+                  politique de confidentialite
+                </a>
+                .
+              </p>
+            </div>
           </div>
         </div>
       </div>
