@@ -71,10 +71,34 @@ export async function GET(request: NextRequest): Promise<
       status ? { status } : undefined
     );
 
+    // Map Qonto response to our expected format
+    // Qonto API uses 'number' for quote number and amounts might be strings
+    const mappedQuotes = result.client_quotes.map(quote => {
+      // Cast to any to access potential extra fields from Qonto API
+      const q = quote as typeof quote & { number?: string };
+      return {
+        id: q.id,
+        // Qonto uses 'number' not 'quote_number'
+        quote_number: q.number || q.quote_number || '-',
+        status: q.status,
+        currency: q.currency || 'EUR',
+        // Handle amount as string or number
+        total_amount:
+          typeof q.total_amount === 'string'
+            ? parseFloat(q.total_amount)
+            : (q.total_amount ??
+              (q.total_amount_cents ? q.total_amount_cents / 100 : 0)),
+        issue_date: q.issue_date,
+        expiry_date: q.expiry_date,
+        client: q.client,
+        converted_to_invoice_id: q.converted_to_invoice_id,
+      };
+    });
+
     return NextResponse.json({
       success: true,
-      quotes: result.client_quotes,
-      count: result.client_quotes.length,
+      quotes: mappedQuotes,
+      count: mappedQuotes.length,
       meta: result.meta,
     });
   } catch (error) {

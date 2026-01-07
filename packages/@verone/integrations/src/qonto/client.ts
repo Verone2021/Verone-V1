@@ -1270,22 +1270,28 @@ export class QontoClient {
     if (params?.currentPage)
       queryParams.append('page', params.currentPage.toString());
 
-    const endpoint = `/v2/client_quotes${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    // Qonto API uses /v2/quotes (not /v2/client_quotes)
+    const endpoint = `/v2/quotes${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
 
     const response = await this.request<
       QontoApiResponse<{
-        client_quotes: QontoClientQuote[];
+        quotes: QontoClientQuote[];
         meta: {
-          total_count: number;
+          total: number;
           current_page: number;
           total_pages: number;
         };
       }>
     >('GET', endpoint);
 
+    // Map Qonto API response to our internal format
     return {
-      client_quotes: response.client_quotes,
-      meta: response.meta,
+      client_quotes: response.quotes,
+      meta: {
+        total_count: response.meta.total,
+        current_page: response.meta.current_page,
+        total_pages: response.meta.total_pages,
+      },
     };
   }
 
@@ -1293,10 +1299,11 @@ export class QontoClient {
    * Récupère un devis client par ID
    */
   async getClientQuoteById(quoteId: string): Promise<QontoClientQuote> {
+    // Qonto API uses /v2/quotes (not /v2/client_quotes)
     const response = await this.request<
-      QontoApiResponse<{ client_quote: QontoClientQuote }>
-    >('GET', `/v2/client_quotes/${quoteId}`);
-    return response.client_quote;
+      QontoApiResponse<{ quote: QontoClientQuote }>
+    >('GET', `/v2/quotes/${quoteId}`);
+    return response.quote;
   }
 
   /**
@@ -1308,11 +1315,12 @@ export class QontoClient {
   ): Promise<QontoClientQuote> {
     const key = idempotencyKey || generateIdempotencyKey();
 
+    // Qonto API uses /v2/quotes (not /v2/client_quotes)
     const response = await this.requestWithIdempotency<
-      QontoApiResponse<{ client_quote: QontoClientQuote }>
+      QontoApiResponse<{ quote: QontoClientQuote }>
     >(
       'POST',
-      '/v2/client_quotes',
+      '/v2/quotes',
       {
         client_id: params.clientId,
         currency: params.currency || 'EUR',
@@ -1321,23 +1329,25 @@ export class QontoClient {
         purchase_order_number: params.purchaseOrderNumber,
         header: params.header,
         footer: params.footer,
-        terms_and_conditions: params.termsAndConditions,
+        terms_and_conditions:
+          params.termsAndConditions ||
+          'Conditions générales de vente applicables.',
         items: params.items.map(item => ({
           title: item.title,
           description: item.description,
-          quantity: item.quantity,
+          quantity: String(item.quantity),
           unit: item.unit || 'unit',
           unit_price: {
-            value: item.unitPrice.value,
+            value: String(item.unitPrice.value),
             currency: item.unitPrice.currency,
           },
-          vat_rate: item.vatRate,
+          vat_rate: String(item.vatRate),
         })),
       },
       key
     );
 
-    return response.client_quote;
+    return response.quote;
   }
 
   /**
@@ -1363,38 +1373,41 @@ export class QontoClient {
       updateData.items = params.items.map(item => ({
         title: item.title,
         description: item.description,
-        quantity: item.quantity,
+        quantity: String(item.quantity),
         unit: item.unit || 'unit',
         unit_price: {
-          value: item.unitPrice.value,
+          value: String(item.unitPrice.value),
           currency: item.unitPrice.currency,
         },
-        vat_rate: item.vatRate,
+        vat_rate: String(item.vatRate),
       }));
     }
 
+    // Qonto API uses /v2/quotes (not /v2/client_quotes)
     const response = await this.request<
-      QontoApiResponse<{ client_quote: QontoClientQuote }>
-    >('PATCH' as any, `/v2/client_quotes/${quoteId}`, updateData);
+      QontoApiResponse<{ quote: QontoClientQuote }>
+    >('PATCH' as any, `/v2/quotes/${quoteId}`, updateData);
 
-    return response.client_quote;
+    return response.quote;
   }
 
   /**
    * Finalise un devis (draft → finalized)
    */
   async finalizeClientQuote(quoteId: string): Promise<QontoClientQuote> {
+    // Qonto API uses /v2/quotes (not /v2/client_quotes)
     const response = await this.request<
-      QontoApiResponse<{ client_quote: QontoClientQuote }>
-    >('POST', `/v2/client_quotes/${quoteId}/finalize`);
-    return response.client_quote;
+      QontoApiResponse<{ quote: QontoClientQuote }>
+    >('POST', `/v2/quotes/${quoteId}/finalize`);
+    return response.quote;
   }
 
   /**
    * Supprime un devis brouillon
    */
   async deleteClientQuote(quoteId: string): Promise<void> {
-    await this.request<void>('DELETE', `/v2/client_quotes/${quoteId}`);
+    // Qonto API uses /v2/quotes (not /v2/client_quotes)
+    await this.request<void>('DELETE', `/v2/quotes/${quoteId}`);
   }
 
   /**
@@ -1403,9 +1416,10 @@ export class QontoClient {
    * IMPORTANT: La facture créée est en brouillon (draft)
    */
   async convertQuoteToInvoice(quoteId: string): Promise<QontoClientInvoice> {
+    // Qonto API uses /v2/quotes (not /v2/client_quotes)
     const response = await this.request<
       QontoApiResponse<{ client_invoice: QontoClientInvoice }>
-    >('POST', `/v2/client_quotes/${quoteId}/convert_to_invoice`);
+    >('POST', `/v2/quotes/${quoteId}/convert_to_invoice`);
     return response.client_invoice;
   }
 
