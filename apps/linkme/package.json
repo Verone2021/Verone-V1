@@ -24,6 +24,7 @@
     "@tremor/react": "^3.18.7",
     "@verone/ui": "workspace:*",
     "@verone/utils": "workspace:*",
+    "cobe": "^0.6.5",
     "lucide-react": "^0.400.0",
     "next": "^15.5.7",
     "react": "18.3.1",
