@@ -447,6 +447,7 @@ export interface UploadSupplierInvoicesResult {
 
 export interface CreateClientParams {
   name: string;
+  type: 'company' | 'individual'; // Required by Qonto API
   email?: string;
   currency?: string;
   vatNumber?: string;

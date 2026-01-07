@@ -29,6 +29,7 @@ interface IGetResponse {
 
 interface IPostRequestBody {
   name: string;
+  type: 'company' | 'individual'; // Required by Qonto API
   email?: string;
   vatNumber?: string;
   address?: {
@@ -88,11 +89,18 @@ export async function POST(
 ): Promise<NextResponse<IPostResponse>> {
   try {
     const body = (await request.json()) as IPostRequestBody;
-    const { name, email, vatNumber, address } = body;
+    const { name, type, email, vatNumber, address } = body;
 
     if (!name) {
       return NextResponse.json(
         { success: false, error: 'name is required' },
+        { status: 400 }
+      );
+    }
+
+    if (!type || !['company', 'individual'].includes(type)) {
+      return NextResponse.json(
+        { success: false, error: 'type is required (company or individual)' },
         { status: 400 }
       );
     }
@@ -115,6 +123,7 @@ export async function POST(
     // Créer le client
     const newClient = await qontoClient.createClient({
       name,
+      type,
       email,
       vatNumber,
       currency: 'EUR',
