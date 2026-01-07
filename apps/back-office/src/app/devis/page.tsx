@@ -9,7 +9,7 @@ import {
   OrderSelectModal,
   QuoteCreateFromOrderModal,
   QuoteCreateServiceModal,
-  type IOrderForQuote,
+  type IOrderForDocument,
 } from '@verone/finance/components';
 import {
   AlertDialog,
@@ -113,7 +113,7 @@ export default function DevisPage(): React.ReactNode {
   const [showOrderSelect, setShowOrderSelect] = useState(false);
   const [showQuoteCreate, setShowQuoteCreate] = useState(false);
   const [showServiceModal, setShowServiceModal] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<IOrderForQuote | null>(
+  const [selectedOrder, setSelectedOrder] = useState<IOrderForDocument | null>(
     null
   );
   const [quoteToDelete, setQuoteToDelete] = useState<Quote | null>(null);
@@ -143,7 +143,7 @@ export default function DevisPage(): React.ReactNode {
     void fetchQuotes();
   }, []);
 
-  const handleOrderSelected = (order: IOrderForQuote): void => {
+  const handleOrderSelected = (order: IOrderForDocument): void => {
     setSelectedOrder(order);
     setShowOrderSelect(false);
     setShowQuoteCreate(true);

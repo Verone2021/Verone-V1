@@ -12,13 +12,12 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  Badge,
   Button,
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-  Checkbox,
+  Input,
   Label,
   Table,
   TableBody,
@@ -39,30 +38,30 @@ import {
   CheckCircle2,
   Download,
   ExternalLink,
-  FileText,
+  FileEdit,
   Loader2,
-  Mail,
   Send,
 } from 'lucide-react';
 
 import { type IOrderForDocument } from './OrderSelectModal';
 
-interface IInvoiceCreateFromOrderModalProps {
+interface IQuoteCreateFromOrderModalProps {
   order: IOrderForDocument | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: (invoiceId: string) => void;
+  onSuccess?: (quoteId: string) => void;
 }
 
 type CreateStatus = 'idle' | 'creating' | 'success' | 'error';
 
-interface CreatedInvoice {
+interface CreatedQuote {
   id: string;
-  invoice_number: string;
+  quote_number: string;
   pdf_url?: string;
   public_url?: string;
   total_amount: number;
   currency: string;
+  status: string;
 }
 
 function formatAmount(amount: number, currency = 'EUR'): string {
@@ -72,26 +71,22 @@ function formatAmount(amount: number, currency = 'EUR'): string {
   }).format(amount);
 }
 
-export function InvoiceCreateFromOrderModal({
+export function QuoteCreateFromOrderModal({
   order,
   open,
   onOpenChange,
   onSuccess,
-}: IInvoiceCreateFromOrderModalProps): React.ReactNode {
+}: IQuoteCreateFromOrderModalProps): React.ReactNode {
   const { toast } = useToast();
   const [status, setStatus] = useState<CreateStatus>('idle');
-  const [autoFinalize, setAutoFinalize] = useState(false); // DÉFAUT: brouillon (false)
-  const [createdInvoice, setCreatedInvoice] = useState<CreatedInvoice | null>(
-    null
-  );
-  const [isSendingEmail, setIsSendingEmail] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
+  const [expiryDays, setExpiryDays] = useState(30);
+  const [createdQuote, setCreatedQuote] = useState<CreatedQuote | null>(null);
   const [showFinalizeWarning, setShowFinalizeWarning] = useState(false);
 
   const resetState = useCallback((): void => {
     setStatus('idle');
-    setCreatedInvoice(null);
-    setEmailSent(false);
+    setExpiryDays(30);
+    setCreatedQuote(null);
     setShowFinalizeWarning(false);
   }, []);
 
@@ -100,45 +95,34 @@ export function InvoiceCreateFromOrderModal({
     onOpenChange(false);
   }, [onOpenChange, resetState]);
 
-  // Gère le clic sur "Créer" - affiche warning si finalisation demandée
-  const handleCreateClick = (): void => {
-    if (autoFinalize) {
-      // Afficher le dialog d'avertissement AVANT de finaliser
-      setShowFinalizeWarning(true);
-    } else {
-      // Brouillon direct, pas besoin de confirmation
-      void handleCreateInvoice();
-    }
-  };
-
-  const handleCreateInvoice = async (): Promise<void> => {
+  const handleCreateQuote = async (): Promise<void> => {
     if (!order) return;
 
     setStatus('creating');
 
     try {
-      const response = await fetch('/api/qonto/invoices', {
+      const response = await fetch('/api/qonto/quotes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           salesOrderId: order.id,
-          autoFinalize,
+          expiryDays,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to create invoice');
+        throw new Error(data.error || 'Failed to create quote');
       }
 
-      setCreatedInvoice(data.invoice);
+      setCreatedQuote(data.quote);
       setStatus('success');
       toast({
-        title: 'Facture créée',
-        description: `Facture ${data.invoice.invoice_number} créée avec succès`,
+        title: 'Devis créé',
+        description: `Devis ${data.quote.quote_number} créé en brouillon`,
       });
-      onSuccess?.(data.invoice.id);
+      onSuccess?.(data.quote.id);
     } catch (error) {
       setStatus('error');
       toast({
@@ -150,13 +134,45 @@ export function InvoiceCreateFromOrderModal({
     }
   };
 
-  const handleDownloadPdf = async (): Promise<void> => {
-    if (!createdInvoice?.id) return;
+  const handleFinalizeQuote = async (): Promise<void> => {
+    if (!createdQuote?.id) return;
+
+    setShowFinalizeWarning(false);
 
     try {
       const response = await fetch(
-        `/api/qonto/invoices/${createdInvoice.id}/pdf`
+        `/api/qonto/quotes/${createdQuote.id}/finalize`,
+        { method: 'POST' }
       );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to finalize quote');
+      }
+
+      setCreatedQuote(data.quote);
+      toast({
+        title: 'Devis finalisé',
+        description: 'Devis finalisé et envoyable au client',
+      });
+    } catch (error) {
+      toast({
+        title: 'Erreur',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Erreur lors de la finalisation',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDownloadPdf = async (): Promise<void> => {
+    if (!createdQuote?.id) return;
+
+    try {
+      const response = await fetch(`/api/qonto/quotes/${createdQuote.id}/pdf`);
 
       if (!response.ok) {
         throw new Error('Failed to download PDF');
@@ -166,7 +182,7 @@ export function InvoiceCreateFromOrderModal({
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `facture-${createdInvoice.invoice_number}.pdf`;
+      a.download = `devis-${createdQuote.quote_number}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -174,7 +190,7 @@ export function InvoiceCreateFromOrderModal({
 
       toast({
         title: 'PDF téléchargé',
-        description: 'La facture a été téléchargée',
+        description: 'Le devis a été téléchargé',
       });
     } catch (error) {
       toast({
@@ -185,53 +201,36 @@ export function InvoiceCreateFromOrderModal({
     }
   };
 
-  const handleSendEmail = async (): Promise<void> => {
-    if (!createdInvoice?.id || !order) return;
-
-    const customerEmail =
-      order.organisations?.email || order.individual_customers?.email;
-
-    if (!customerEmail) {
-      toast({
-        title: 'Erreur',
-        description: 'Aucune adresse email client disponible',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsSendingEmail(true);
+  const handleConvertToInvoice = async (): Promise<void> => {
+    if (!createdQuote?.id) return;
 
     try {
-      const response = await fetch('/api/emails/send-invoice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          invoiceId: createdInvoice.id,
-          to: customerEmail,
-        }),
-      });
+      const response = await fetch(
+        `/api/qonto/quotes/${createdQuote.id}/convert`,
+        { method: 'POST' }
+      );
 
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to send email');
+        throw new Error(data.error || 'Failed to convert quote');
       }
 
-      setEmailSent(true);
       toast({
-        title: 'Email envoyé',
-        description: `Facture envoyée à ${customerEmail}`,
+        title: 'Devis converti',
+        description: 'Facture créée en brouillon depuis le devis',
       });
+
+      handleClose();
     } catch (error) {
       toast({
         title: 'Erreur',
         description:
-          error instanceof Error ? error.message : "Erreur lors de l'envoi",
+          error instanceof Error
+            ? error.message
+            : 'Erreur lors de la conversion',
         variant: 'destructive',
       });
-    } finally {
-      setIsSendingEmail(false);
     }
   };
 
@@ -242,36 +241,32 @@ export function InvoiceCreateFromOrderModal({
     `${order.individual_customers?.first_name || ''} ${order.individual_customers?.last_name || ''}`.trim() ||
     'Client';
 
-  const customerEmail =
-    order.organisations?.email || order.individual_customers?.email;
-
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            {status === 'success' ? 'Facture créée' : 'Créer une facture'}
+            <FileEdit className="h-5 w-5" />
+            {status === 'success' ? 'Devis créé' : 'Créer un devis'}
           </DialogTitle>
           <DialogDescription>
             {status === 'success'
-              ? `Facture ${createdInvoice?.invoice_number} - ${formatAmount(createdInvoice?.total_amount || 0)}`
+              ? `Devis ${createdQuote?.quote_number} - ${formatAmount(createdQuote?.total_amount || 0)}`
               : `Commande ${order.order_number} - ${customerName}`}
           </DialogDescription>
         </DialogHeader>
 
-        {status === 'success' && createdInvoice ? (
-          // Vue succès avec actions
+        {status === 'success' && createdQuote ? (
           <div className="space-y-4">
             <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4">
               <CheckCircle2 className="h-6 w-6 text-green-600" />
               <div>
                 <p className="font-medium text-green-800">
-                  Facture créée avec succès
+                  Devis créé en brouillon
                 </p>
                 <p className="text-sm text-green-600">
-                  N° {createdInvoice.invoice_number} -{' '}
-                  {formatAmount(createdInvoice.total_amount)}
+                  N° {createdQuote.quote_number} -{' '}
+                  {formatAmount(createdQuote.total_amount)}
                 </p>
               </div>
             </div>
@@ -280,31 +275,33 @@ export function InvoiceCreateFromOrderModal({
               <Button
                 variant="outline"
                 onClick={handleDownloadPdf}
-                disabled={!createdInvoice.pdf_url}
+                disabled={!createdQuote.pdf_url}
               >
                 <Download className="mr-2 h-4 w-4" />
                 Télécharger PDF
               </Button>
 
-              <Button
-                variant="outline"
-                onClick={handleSendEmail}
-                disabled={!customerEmail || isSendingEmail || emailSent}
-              >
-                {isSendingEmail ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : emailSent ? (
-                  <CheckCircle2 className="mr-2 h-4 w-4 text-green-600" />
-                ) : (
-                  <Mail className="mr-2 h-4 w-4" />
-                )}
-                {emailSent ? 'Email envoyé' : 'Envoyer par email'}
-              </Button>
+              {createdQuote.status === 'draft' && (
+                <Button
+                  variant="default"
+                  onClick={() => setShowFinalizeWarning(true)}
+                >
+                  <Send className="mr-2 h-4 w-4" />
+                  Finaliser le devis
+                </Button>
+              )}
 
-              {createdInvoice.public_url && (
+              {createdQuote.status === 'finalized' && (
+                <Button variant="default" onClick={handleConvertToInvoice}>
+                  <FileEdit className="mr-2 h-4 w-4" />
+                  Convertir en facture
+                </Button>
+              )}
+
+              {createdQuote.public_url && (
                 <Button variant="outline" asChild>
                   <a
-                    href={createdInvoice.public_url}
+                    href={createdQuote.public_url}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -314,15 +311,8 @@ export function InvoiceCreateFromOrderModal({
                 </Button>
               )}
             </div>
-
-            {customerEmail && (
-              <p className="text-xs text-muted-foreground">
-                Email client: {customerEmail}
-              </p>
-            )}
           </div>
         ) : (
-          // Vue création
           <div className="space-y-4">
             {/* Récap client */}
             <Card>
@@ -331,11 +321,10 @@ export function InvoiceCreateFromOrderModal({
               </CardHeader>
               <CardContent>
                 <p className="font-medium">{customerName}</p>
-                {customerEmail && (
-                  <p className="text-sm text-muted-foreground">
-                    {customerEmail}
-                  </p>
-                )}
+                <p className="text-sm text-muted-foreground">
+                  {order.organisations?.email ||
+                    order.individual_customers?.email}
+                </p>
               </CardContent>
             </Card>
 
@@ -397,15 +386,20 @@ export function InvoiceCreateFromOrderModal({
             </div>
 
             {/* Options */}
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="autoFinalize"
-                checked={autoFinalize}
-                onCheckedChange={checked => setAutoFinalize(checked === true)}
+            <div className="space-y-2">
+              <Label htmlFor="expiryDays">Validité du devis (jours)</Label>
+              <Input
+                id="expiryDays"
+                type="number"
+                min={1}
+                max={365}
+                value={expiryDays}
+                onChange={e => setExpiryDays(Number(e.target.value))}
+                className="w-32"
               />
-              <Label htmlFor="autoFinalize" className="text-sm">
-                Finaliser automatiquement (génère le PDF)
-              </Label>
+              <p className="text-xs text-muted-foreground">
+                Le devis expirera dans {expiryDays} jours
+              </p>
             </div>
           </div>
         )}
@@ -419,7 +413,7 @@ export function InvoiceCreateFromOrderModal({
                 Annuler
               </Button>
               <Button
-                onClick={handleCreateClick}
+                onClick={handleCreateQuote}
                 disabled={status === 'creating'}
               >
                 {status === 'creating' ? (
@@ -429,8 +423,8 @@ export function InvoiceCreateFromOrderModal({
                   </>
                 ) : (
                   <>
-                    <Send className="mr-2 h-4 w-4" />
-                    {autoFinalize ? 'Créer et finaliser' : 'Créer en brouillon'}
+                    <FileEdit className="mr-2 h-4 w-4" />
+                    Créer le devis (brouillon)
                   </>
                 )}
               </Button>
@@ -439,28 +433,22 @@ export function InvoiceCreateFromOrderModal({
         </DialogFooter>
       </DialogContent>
 
-      {/* Dialog de confirmation pour finalisation (IRRÉVERSIBLE) */}
+      {/* Dialog de confirmation pour finalisation */}
       <AlertDialog
         open={showFinalizeWarning}
         onOpenChange={setShowFinalizeWarning}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-destructive">
-              Finaliser la facture ?
-            </AlertDialogTitle>
+            <AlertDialogTitle>Finaliser le devis ?</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
-              <p className="font-semibold text-foreground">
-                Cette action est IRRÉVERSIBLE.
-              </p>
               <p>
-                Une fois finalisée, la facture ne pourra plus être modifiée ni
-                supprimée. Elle recevra un numéro officiel et sera enregistrée
-                définitivement.
+                Une fois finalisé, le devis ne pourra plus être modifié. Il
+                recevra un numéro officiel et pourra être envoyé au client.
               </p>
               <p className="text-sm text-muted-foreground">
-                Si vous n&apos;êtes pas sûr, créez la facture en brouillon
-                d&apos;abord.
+                Vous pourrez ensuite le convertir en facture si le client
+                accepte.
               </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -468,14 +456,8 @@ export function InvoiceCreateFromOrderModal({
             <AlertDialogCancel onClick={() => setShowFinalizeWarning(false)}>
               Annuler
             </AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => {
-                setShowFinalizeWarning(false);
-                void handleCreateInvoice();
-              }}
-            >
-              Oui, finaliser définitivement
+            <AlertDialogAction onClick={handleFinalizeQuote}>
+              Finaliser le devis
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

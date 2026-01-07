@@ -23,12 +23,48 @@ import {
   ShoppingCart,
 } from 'lucide-react';
 
-import { type IOrderForInvoice } from './InvoiceCreateFromOrderModal';
+/**
+ * Interface unifiée pour les commandes utilisées dans les documents
+ * (factures, devis, avoirs). Remplace IOrderForInvoice et IOrderForQuote.
+ */
+export interface IOrderForDocument {
+  id: string;
+  order_number: string;
+  total_ht: number;
+  total_ttc: number;
+  tax_rate: number;
+  currency: string;
+  payment_terms?: string; // Optionnel pour compatibilité avec devis
+  organisations?: {
+    name?: string;
+    email?: string | null;
+  } | null;
+  individual_customers?: {
+    first_name?: string | null;
+    last_name?: string | null;
+    email?: string | null;
+  } | null;
+  sales_order_items?: Array<{
+    id: string;
+    quantity: number;
+    unit_price_ht: number;
+    tax_rate: number;
+    products?: {
+      name: string;
+    } | null;
+  }>;
+}
+
+// Alias pour rétrocompatibilité avec les factures
+export type IOrderForInvoice = IOrderForDocument;
+
+// Alias pour rétrocompatibilité avec les devis
+export type IOrderForQuote = IOrderForDocument;
 
 export interface OrderSelectModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelectOrder: (order: IOrderForInvoice) => void;
+  onSelectOrder: (order: IOrderForDocument) => void;
 }
 
 interface OrderListItem {
@@ -271,8 +307,8 @@ export function OrderSelectModal({
         }
       }
 
-      // Transformer en IOrderForInvoice
-      const orderForInvoice: IOrderForInvoice = {
+      // Transformer en IOrderForDocument (unifié pour factures et devis)
+      const orderForDocument: IOrderForDocument = {
         id: order.id,
         order_number: order.order_number,
         total_ht: order.total_ht || 0,
@@ -285,7 +321,7 @@ export function OrderSelectModal({
         sales_order_items: order.sales_order_items || [],
       };
 
-      onSelectOrder(orderForInvoice);
+      onSelectOrder(orderForDocument);
       onOpenChange(false);
     } catch (error) {
       console.error('[OrderSelect] Error:', error);
