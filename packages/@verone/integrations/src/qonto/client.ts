@@ -21,6 +21,12 @@ import type {
   CreateClientParams,
   UploadSupplierInvoiceParams,
   UploadSupplierInvoicesResult,
+  // Credit Notes (Avoirs) - 2026-01-07
+  QontoClientCreditNote,
+  CreateClientCreditNoteParams,
+  // Quotes (Devis) - 2026-01-07
+  QontoClientQuote,
+  CreateClientQuoteParams,
 } from './types';
 
 // =====================================================================
@@ -1120,6 +1126,287 @@ export class QontoClient {
       `/v2/transactions/${transactionId}/labels`,
       { label_ids: labelIds }
     );
+  }
+
+  // ===================================================================
+  // CLIENT CREDIT NOTES (Avoirs)
+  // Date: 2026-01-07
+  // ===================================================================
+
+  /**
+   * Liste les avoirs clients
+   */
+  async getClientCreditNotes(params?: {
+    status?: 'draft' | 'finalized';
+    perPage?: number;
+    currentPage?: number;
+  }): Promise<{
+    client_credit_notes: QontoClientCreditNote[];
+    meta: { total_count: number; current_page: number; total_pages: number };
+  }> {
+    const queryParams = new URLSearchParams();
+
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.perPage)
+      queryParams.append('per_page', params.perPage.toString());
+    if (params?.currentPage)
+      queryParams.append('page', params.currentPage.toString());
+
+    const endpoint = `/v2/client_credit_notes${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+
+    const response = await this.request<
+      QontoApiResponse<{
+        client_credit_notes: QontoClientCreditNote[];
+        meta: {
+          total_count: number;
+          current_page: number;
+          total_pages: number;
+        };
+      }>
+    >('GET', endpoint);
+
+    return {
+      client_credit_notes: response.client_credit_notes,
+      meta: response.meta,
+    };
+  }
+
+  /**
+   * Récupère un avoir client par ID
+   */
+  async getClientCreditNoteById(
+    creditNoteId: string
+  ): Promise<QontoClientCreditNote> {
+    const response = await this.request<
+      QontoApiResponse<{ client_credit_note: QontoClientCreditNote }>
+    >('GET', `/v2/client_credit_notes/${creditNoteId}`);
+    return response.client_credit_note;
+  }
+
+  /**
+   * Crée un nouvel avoir client
+   * IMPORTANT: Toujours créé en brouillon (draft)
+   */
+  async createClientCreditNote(
+    params: CreateClientCreditNoteParams,
+    idempotencyKey?: string
+  ): Promise<QontoClientCreditNote> {
+    const key = idempotencyKey || generateIdempotencyKey();
+
+    const response = await this.requestWithIdempotency<
+      QontoApiResponse<{ client_credit_note: QontoClientCreditNote }>
+    >(
+      'POST',
+      '/v2/client_credit_notes',
+      {
+        client_id: params.clientId,
+        currency: params.currency || 'EUR',
+        issue_date: params.issueDate,
+        invoice_id: params.invoiceId,
+        reason: params.reason,
+        items: params.items.map(item => ({
+          title: item.title,
+          description: item.description,
+          quantity: item.quantity,
+          unit: item.unit || 'unit',
+          unit_price: {
+            value: item.unitPrice.value,
+            currency: item.unitPrice.currency,
+          },
+          vat_rate: item.vatRate,
+        })),
+      },
+      key
+    );
+
+    return response.client_credit_note;
+  }
+
+  /**
+   * Finalise un avoir (draft → finalized)
+   * ATTENTION: Action IRRÉVERSIBLE
+   */
+  async finalizeClientCreditNote(
+    creditNoteId: string
+  ): Promise<QontoClientCreditNote> {
+    const response = await this.request<
+      QontoApiResponse<{ client_credit_note: QontoClientCreditNote }>
+    >('POST', `/v2/client_credit_notes/${creditNoteId}/finalize`);
+    return response.client_credit_note;
+  }
+
+  /**
+   * Supprime un avoir brouillon
+   * Note: Seuls les avoirs avec statut "draft" peuvent être supprimés
+   */
+  async deleteClientCreditNote(creditNoteId: string): Promise<void> {
+    await this.request<void>(
+      'DELETE',
+      `/v2/client_credit_notes/${creditNoteId}`
+    );
+  }
+
+  // ===================================================================
+  // CLIENT QUOTES (Devis)
+  // Date: 2026-01-07
+  // ===================================================================
+
+  /**
+   * Liste les devis clients
+   */
+  async getClientQuotes(params?: {
+    status?: 'draft' | 'finalized' | 'accepted' | 'declined' | 'expired';
+    perPage?: number;
+    currentPage?: number;
+  }): Promise<{
+    client_quotes: QontoClientQuote[];
+    meta: { total_count: number; current_page: number; total_pages: number };
+  }> {
+    const queryParams = new URLSearchParams();
+
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.perPage)
+      queryParams.append('per_page', params.perPage.toString());
+    if (params?.currentPage)
+      queryParams.append('page', params.currentPage.toString());
+
+    const endpoint = `/v2/client_quotes${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+
+    const response = await this.request<
+      QontoApiResponse<{
+        client_quotes: QontoClientQuote[];
+        meta: {
+          total_count: number;
+          current_page: number;
+          total_pages: number;
+        };
+      }>
+    >('GET', endpoint);
+
+    return {
+      client_quotes: response.client_quotes,
+      meta: response.meta,
+    };
+  }
+
+  /**
+   * Récupère un devis client par ID
+   */
+  async getClientQuoteById(quoteId: string): Promise<QontoClientQuote> {
+    const response = await this.request<
+      QontoApiResponse<{ client_quote: QontoClientQuote }>
+    >('GET', `/v2/client_quotes/${quoteId}`);
+    return response.client_quote;
+  }
+
+  /**
+   * Crée un nouveau devis client
+   */
+  async createClientQuote(
+    params: CreateClientQuoteParams,
+    idempotencyKey?: string
+  ): Promise<QontoClientQuote> {
+    const key = idempotencyKey || generateIdempotencyKey();
+
+    const response = await this.requestWithIdempotency<
+      QontoApiResponse<{ client_quote: QontoClientQuote }>
+    >(
+      'POST',
+      '/v2/client_quotes',
+      {
+        client_id: params.clientId,
+        currency: params.currency || 'EUR',
+        issue_date: params.issueDate,
+        expiry_date: params.expiryDate,
+        purchase_order_number: params.purchaseOrderNumber,
+        header: params.header,
+        footer: params.footer,
+        terms_and_conditions: params.termsAndConditions,
+        items: params.items.map(item => ({
+          title: item.title,
+          description: item.description,
+          quantity: item.quantity,
+          unit: item.unit || 'unit',
+          unit_price: {
+            value: item.unitPrice.value,
+            currency: item.unitPrice.currency,
+          },
+          vat_rate: item.vatRate,
+        })),
+      },
+      key
+    );
+
+    return response.client_quote;
+  }
+
+  /**
+   * Met à jour un devis client (brouillon uniquement)
+   */
+  async updateClientQuote(
+    quoteId: string,
+    params: Partial<CreateClientQuoteParams>
+  ): Promise<QontoClientQuote> {
+    const updateData: Record<string, unknown> = {};
+
+    if (params.clientId) updateData.client_id = params.clientId;
+    if (params.currency) updateData.currency = params.currency;
+    if (params.issueDate) updateData.issue_date = params.issueDate;
+    if (params.expiryDate) updateData.expiry_date = params.expiryDate;
+    if (params.purchaseOrderNumber)
+      updateData.purchase_order_number = params.purchaseOrderNumber;
+    if (params.header) updateData.header = params.header;
+    if (params.footer) updateData.footer = params.footer;
+    if (params.termsAndConditions)
+      updateData.terms_and_conditions = params.termsAndConditions;
+    if (params.items) {
+      updateData.items = params.items.map(item => ({
+        title: item.title,
+        description: item.description,
+        quantity: item.quantity,
+        unit: item.unit || 'unit',
+        unit_price: {
+          value: item.unitPrice.value,
+          currency: item.unitPrice.currency,
+        },
+        vat_rate: item.vatRate,
+      }));
+    }
+
+    const response = await this.request<
+      QontoApiResponse<{ client_quote: QontoClientQuote }>
+    >('PATCH' as any, `/v2/client_quotes/${quoteId}`, updateData);
+
+    return response.client_quote;
+  }
+
+  /**
+   * Finalise un devis (draft → finalized)
+   */
+  async finalizeClientQuote(quoteId: string): Promise<QontoClientQuote> {
+    const response = await this.request<
+      QontoApiResponse<{ client_quote: QontoClientQuote }>
+    >('POST', `/v2/client_quotes/${quoteId}/finalize`);
+    return response.client_quote;
+  }
+
+  /**
+   * Supprime un devis brouillon
+   */
+  async deleteClientQuote(quoteId: string): Promise<void> {
+    await this.request<void>('DELETE', `/v2/client_quotes/${quoteId}`);
+  }
+
+  /**
+   * Convertit un devis en facture
+   * Le devis doit être finalisé pour être converti
+   * IMPORTANT: La facture créée est en brouillon (draft)
+   */
+  async convertQuoteToInvoice(quoteId: string): Promise<QontoClientInvoice> {
+    const response = await this.request<
+      QontoApiResponse<{ client_invoice: QontoClientInvoice }>
+    >('POST', `/v2/client_quotes/${quoteId}/convert_to_invoice`);
+    return response.client_invoice;
   }
 
   // ===================================================================

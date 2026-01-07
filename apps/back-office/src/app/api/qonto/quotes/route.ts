@@ -1,0 +1,285 @@
+/**
+ * API Route: /api/qonto/quotes
+ * Gestion des devis clients via Qonto API
+ *
+ * GET  - Liste les devis
+ * POST - Crée un devis depuis une commande
+ */
+
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+
+import { QontoClient } from '@verone/integrations/qonto';
+import type { CreateClientQuoteParams } from '@verone/integrations/qonto';
+import type { Database } from '@verone/types';
+import { createAdminClient } from '@verone/utils/supabase/server';
+
+type SalesOrder = Database['public']['Tables']['sales_orders']['Row'];
+type Organisation = Database['public']['Tables']['organisations']['Row'];
+type IndividualCustomer =
+  Database['public']['Tables']['individual_customers']['Row'];
+
+interface ISalesOrderWithItems extends SalesOrder {
+  sales_order_items: Array<{
+    id: string;
+    quantity: number;
+    unit_price_ht: number;
+    tax_rate: number | null;
+    notes: string | null;
+    products: { id: string; name: string; sku: string | null } | null;
+  }>;
+}
+
+interface ISalesOrderWithCustomer extends ISalesOrderWithItems {
+  customer: Organisation | IndividualCustomer | null;
+}
+
+function getQontoClient(): QontoClient {
+  return new QontoClient({
+    authMode: (process.env.QONTO_AUTH_MODE as 'oauth' | 'api_key') ?? 'oauth',
+    organizationId: process.env.QONTO_ORGANIZATION_ID,
+    apiKey: process.env.QONTO_API_KEY,
+    accessToken: process.env.QONTO_ACCESS_TOKEN,
+  });
+}
+
+/**
+ * GET /api/qonto/quotes
+ * Liste les devis avec filtre optionnel par status
+ */
+export async function GET(request: NextRequest): Promise<
+  NextResponse<{
+    success: boolean;
+    quotes?: unknown[];
+    count?: number;
+    meta?: unknown;
+    error?: string;
+  }>
+> {
+  try {
+    const { searchParams } = new URL(request.url);
+    const status = searchParams.get('status') as
+      | 'draft'
+      | 'finalized'
+      | 'accepted'
+      | 'declined'
+      | 'expired'
+      | null;
+
+    const client = getQontoClient();
+    const result = await client.getClientQuotes(
+      status ? { status } : undefined
+    );
+
+    return NextResponse.json({
+      success: true,
+      quotes: result.client_quotes,
+      count: result.client_quotes.length,
+      meta: result.meta,
+    });
+  } catch (error) {
+    console.error('[API Qonto Quotes] GET error:', error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    );
+  }
+}
+
+interface IPostRequestBody {
+  salesOrderId: string;
+  expiryDays?: number; // Nombre de jours avant expiration (défaut: 30)
+}
+
+/**
+ * POST /api/qonto/quotes
+ * Crée un devis depuis une commande client
+ *
+ * Body:
+ * - salesOrderId: UUID de la commande
+ * - expiryDays: nombre de jours avant expiration (défaut: 30)
+ */
+export async function POST(request: NextRequest): Promise<
+  NextResponse<{
+    success: boolean;
+    quote?: unknown;
+    message?: string;
+    error?: string;
+  }>
+> {
+  try {
+    const body = (await request.json()) as IPostRequestBody;
+    const { salesOrderId, expiryDays = 30 } = body;
+
+    if (!salesOrderId) {
+      return NextResponse.json(
+        { success: false, error: 'salesOrderId is required' },
+        { status: 400 }
+      );
+    }
+
+    // Récupérer la commande avec ses lignes
+    const supabase = createAdminClient();
+    const { data: order, error: orderError } = await supabase
+      .from('sales_orders')
+      .select(
+        `
+        *,
+        sales_order_items (
+          *,
+          products:product_id (id, name, sku)
+        )
+      `
+      )
+      .eq('id', salesOrderId)
+      .single();
+
+    if (orderError || !order) {
+      console.error('[API Qonto Quotes] Order fetch error:', orderError);
+      return NextResponse.json(
+        { success: false, error: 'Order not found' },
+        { status: 404 }
+      );
+    }
+
+    const orderWithItems = order as unknown as ISalesOrderWithItems;
+
+    // Fetch manuel du customer selon customer_type
+    let customer: Organisation | IndividualCustomer | null = null;
+
+    if (orderWithItems.customer_id && orderWithItems.customer_type) {
+      if (orderWithItems.customer_type === 'organisation') {
+        const { data: org } = await supabase
+          .from('organisations')
+          .select('*')
+          .eq('id', orderWithItems.customer_id)
+          .single();
+        customer = org;
+      } else if (orderWithItems.customer_type === 'individual') {
+        const { data: indiv } = await supabase
+          .from('individual_customers')
+          .select('*')
+          .eq('id', orderWithItems.customer_id)
+          .single();
+        customer = indiv;
+      }
+    }
+
+    const typedOrder: ISalesOrderWithCustomer = {
+      ...orderWithItems,
+      customer,
+    };
+
+    const qontoClient = getQontoClient();
+
+    // Extraire email et nom selon le type de customer
+    let customerEmail: string | null = null;
+    let customerName = 'Client';
+
+    if (typedOrder.customer_type === 'organisation' && typedOrder.customer) {
+      const org = typedOrder.customer as Organisation;
+      customerEmail = org.email ?? null;
+      customerName = org.trade_name ?? org.legal_name ?? 'Client';
+    } else if (
+      typedOrder.customer_type === 'individual' &&
+      typedOrder.customer
+    ) {
+      const indiv = typedOrder.customer as IndividualCustomer;
+      customerEmail = indiv.email ?? null;
+      customerName =
+        `${indiv.first_name ?? ''} ${indiv.last_name ?? ''}`.trim() || 'Client';
+    }
+
+    if (!customerEmail) {
+      return NextResponse.json(
+        { success: false, error: 'Customer email is required' },
+        { status: 400 }
+      );
+    }
+
+    // Récupérer ou créer le client Qonto
+    let qontoClientId: string;
+    const billingAddress = typedOrder.billing_address as Record<
+      string,
+      string
+    > | null;
+
+    const qontoAddress = {
+      streetAddress: billingAddress?.street || billingAddress?.address || '',
+      city: billingAddress?.city || 'Paris',
+      zipCode: billingAddress?.postal_code || '75001',
+      countryCode: billingAddress?.country || 'FR',
+    };
+
+    const qontoClientType =
+      typedOrder.customer_type === 'organisation' ? 'company' : 'individual';
+
+    const existingClient = await qontoClient.findClientByEmail(customerEmail);
+    if (existingClient) {
+      await qontoClient.updateClient(existingClient.id, {
+        name: customerName || existingClient.name,
+        type: qontoClientType,
+        address: qontoAddress,
+      });
+      qontoClientId = existingClient.id;
+    } else {
+      const newClient = await qontoClient.createClient({
+        name: customerName || 'Client',
+        type: qontoClientType,
+        email: customerEmail,
+        currency: 'EUR',
+        address: qontoAddress,
+      });
+      qontoClientId = newClient.id;
+    }
+
+    // Mapper les lignes de commande vers items devis
+    const items = (typedOrder.sales_order_items ?? []).map(item => ({
+      title: item.products?.name ?? 'Article',
+      description: item.notes ?? undefined,
+      quantity: String(item.quantity ?? 1),
+      unit: 'pièce',
+      unitPrice: {
+        value: String(item.unit_price_ht ?? 0),
+        currency: 'EUR',
+      },
+      vatRate: String(item.tax_rate ?? 0.2),
+    }));
+
+    // Calculer les dates
+    const issueDate = new Date().toISOString().split('T')[0];
+    const expiryDate = new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split('T')[0];
+
+    // Créer le devis
+    const quoteParams: CreateClientQuoteParams = {
+      clientId: qontoClientId,
+      currency: 'EUR',
+      issueDate,
+      expiryDate,
+      purchaseOrderNumber: typedOrder.order_number ?? undefined,
+      items,
+    };
+
+    const quote = await qontoClient.createClientQuote(quoteParams);
+
+    return NextResponse.json({
+      success: true,
+      quote,
+      message: 'Quote created as draft',
+    });
+  } catch (error) {
+    console.error('[API Qonto Quotes] POST error:', error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    );
+  }
+}
