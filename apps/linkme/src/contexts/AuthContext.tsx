@@ -291,6 +291,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         };
       }
 
+      // Mettre a jour les states IMMEDIATEMENT avec les donnees retournees
+      // (ne pas attendre onAuthStateChange qui peut etre lent)
+      setSession(data.session);
+      setUser(data.user);
+      await fetchLinkMeRole(data.user.id);
+
       return { error: null };
     } catch (err) {
       return {
@@ -305,9 +311,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUser(null);
     setSession(null);
     setLinkMeRole(null);
-    // Toujours rediriger vers login apres deconnexion pour eviter la reconnexion auto
+    // Rediriger vers la page d'accueil apres deconnexion
     if (typeof window !== 'undefined') {
-      window.location.href = redirectTo || '/login';
+      window.location.href = redirectTo || '/';
     }
   };
 
