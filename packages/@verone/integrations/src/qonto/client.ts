@@ -193,7 +193,18 @@ export class QontoClient {
 
       // Success
       if (response.ok) {
-        const data = await response.json();
+        // Handle empty responses (204 No Content, etc.)
+        if (
+          response.status === 204 ||
+          response.headers.get('content-length') === '0'
+        ) {
+          return {} as T;
+        }
+        const text = await response.text();
+        if (!text || text.trim() === '') {
+          return {} as T;
+        }
+        const data = JSON.parse(text);
         return data as T;
       }
 
@@ -274,7 +285,18 @@ export class QontoClient {
       clearTimeout(timeout);
 
       if (response.ok) {
-        const data = await response.json();
+        // Handle empty responses (204 No Content, etc.)
+        if (
+          response.status === 204 ||
+          response.headers.get('content-length') === '0'
+        ) {
+          return {} as T;
+        }
+        const text = await response.text();
+        if (!text || text.trim() === '') {
+          return {} as T;
+        }
+        const data = JSON.parse(text);
         return data as T;
       }
 

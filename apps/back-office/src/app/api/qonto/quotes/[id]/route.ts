@@ -124,7 +124,7 @@ export async function PATCH(
 
 /**
  * DELETE /api/qonto/quotes/[id]
- * Supprime un devis brouillon
+ * Supprime un devis (non converti en facture)
  */
 export async function DELETE(
   request: NextRequest,
@@ -140,14 +140,16 @@ export async function DELETE(
     const { id } = await params;
     const client = getQontoClient();
 
-    // Vérifier que le devis est en brouillon
+    // Vérifier que le devis n'a pas été converti en facture
     const currentQuote = await client.getClientQuoteById(id);
 
-    if (currentQuote.status !== 'draft') {
+    // Les devis acceptés et convertis ne peuvent pas être supprimés
+    if (currentQuote.converted_to_invoice_id) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Only draft quotes can be deleted',
+          error:
+            'Ce devis a été converti en facture et ne peut pas être supprimé',
         },
         { status: 400 }
       );

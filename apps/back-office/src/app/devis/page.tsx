@@ -12,6 +12,14 @@ import {
   type IOrderForQuote,
 } from '@verone/finance/components';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
   Badge,
   Button,
   Card,
@@ -40,6 +48,7 @@ import {
   Plus,
   RefreshCw,
   ShoppingCart,
+  Trash2,
 } from 'lucide-react';
 
 interface Quote {
@@ -107,6 +116,8 @@ export default function DevisPage(): React.ReactNode {
   const [selectedOrder, setSelectedOrder] = useState<IOrderForQuote | null>(
     null
   );
+  const [quoteToDelete, setQuoteToDelete] = useState<Quote | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchQuotes = async (): Promise<void> => {
     setLoading(true);
@@ -163,6 +174,31 @@ export default function DevisPage(): React.ReactNode {
       document.body.removeChild(a);
     } catch (err) {
       console.error('Download error:', err);
+    }
+  };
+
+  const handleDeleteQuote = async (): Promise<void> => {
+    if (!quoteToDelete) return;
+
+    setDeleting(true);
+    try {
+      const response = await fetch(`/api/qonto/quotes/${quoteToDelete.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Erreur lors de la suppression');
+      }
+
+      // Refresh the list
+      void fetchQuotes();
+    } catch (err) {
+      console.error('Delete error:', err);
+      setError(err instanceof Error ? err.message : 'Erreur de suppression');
+    } finally {
+      setDeleting(false);
+      setQuoteToDelete(null);
     }
   };
 
@@ -263,7 +299,12 @@ export default function DevisPage(): React.ReactNode {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          asChild
+                          title="Voir"
+                        >
                           <Link href={`/devis/${quote.id}`}>
                             <Eye className="h-4 w-4" />
                           </Link>
@@ -273,10 +314,20 @@ export default function DevisPage(): React.ReactNode {
                             variant="ghost"
                             size="icon"
                             onClick={() => handleDownloadPdf(quote)}
+                            title="Telecharger PDF"
                           >
                             <Download className="h-4 w-4" />
                           </Button>
                         )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setQuoteToDelete(quote)}
+                          title="Supprimer"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -310,6 +361,33 @@ export default function DevisPage(): React.ReactNode {
           void fetchQuotes();
         }}
       />
+
+      {/* Dialog confirmation suppression */}
+      <AlertDialog
+        open={!!quoteToDelete}
+        onOpenChange={open => !open && setQuoteToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer ce devis ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vous allez supprimer le devis{' '}
+              <strong>{quoteToDelete?.quote_number}</strong>. Cette action est
+              irreversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteQuote}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? 'Suppression...' : 'Supprimer'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
