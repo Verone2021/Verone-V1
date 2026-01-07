@@ -11,7 +11,11 @@ import {
 } from '@verone/finance';
 import {
   InvoiceUploadModal,
+  InvoiceCreateFromOrderModal,
+  InvoiceCreateServiceModal,
+  OrderSelectModal,
   type TransactionForUpload,
+  type IOrderForInvoice,
 } from '@verone/finance/components';
 import {
   Card,
@@ -25,6 +29,10 @@ import {
   TabsTrigger,
   Button,
   Badge,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from '@verone/ui';
 import {
   Money,
@@ -52,6 +60,9 @@ import {
   Upload,
   AlertTriangle,
   Paperclip,
+  Briefcase,
+  ChevronDown,
+  ShoppingCart,
 } from 'lucide-react';
 
 // =====================================================================
@@ -325,6 +336,16 @@ export default function FacturesPage() {
   const [selectedMissingTx, setSelectedMissingTx] =
     useState<TransactionMissingInvoice | null>(null);
 
+  // Etats pour creation de facture depuis commande
+  const [showOrderSelect, setShowOrderSelect] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<IOrderForInvoice | null>(
+    null
+  );
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+
+  // Etat pour facture de service (sans commande)
+  const [showServiceModal, setShowServiceModal] = useState(false);
+
   // Récupérer les documents financiers (sauf pour l'onglet manquantes)
   const { documents, loading, error, stats, refresh } = useFinancialDocuments({
     document_type:
@@ -364,6 +385,24 @@ export default function FacturesPage() {
   const handleOpenUpload = (tx: TransactionMissingInvoice): void => {
     setSelectedMissingTx(tx);
     setShowUploadModal(true);
+  };
+
+  // Handler pour selection de commande et ouverture du modal de creation facture
+  const handleOrderSelected = (order: IOrderForInvoice): void => {
+    setSelectedOrder(order);
+    setShowOrderSelect(false);
+    setShowInvoiceModal(true);
+  };
+
+  // Handler pour fermeture du modal de creation facture
+  const handleInvoiceModalClose = (): void => {
+    setShowInvoiceModal(false);
+    setSelectedOrder(null);
+  };
+
+  // Handler pour succes de creation facture
+  const handleInvoiceCreated = (_invoiceId: string): void => {
+    refresh();
   };
 
   // Calculer les KPIs
@@ -503,10 +542,25 @@ export default function FacturesPage() {
         </div>
         <div className="flex items-center gap-2">
           <SyncButton onSync={handleSync} label="Sync Qonto" showLastSync />
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Nouvelle facture
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Nouvelle facture
+                <ChevronDown className="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setShowOrderSelect(true)}>
+                <ShoppingCart className="h-4 w-4 mr-2" />
+                Depuis une commande
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowServiceModal(true)}>
+                <Briefcase className="h-4 w-4 mr-2" />
+                Facture de service
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -600,10 +654,11 @@ export default function FacturesPage() {
                 label: 'Statut',
                 options: [
                   { value: 'draft', label: 'Brouillon' },
-                  { value: 'sent', label: 'Envoyée' },
-                  { value: 'paid', label: 'Payée' },
+                  { value: 'sent', label: 'Envoyee' },
+                  { value: 'paid', label: 'Payee' },
                   { value: 'partially_paid', label: 'Paiement partiel' },
                   { value: 'overdue', label: 'En retard' },
+                  { value: 'cancelled', label: 'Annulee' },
                 ],
               },
             ]}
@@ -615,11 +670,10 @@ export default function FacturesPage() {
               setSearch('');
               setStatusFilter('all');
             }}
-            onRefresh={refresh}
             loading={loading}
             resultCount={documents.length}
             actions={
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" disabled>
                 <Download className="h-4 w-4 mr-2" />
                 Exporter
               </Button>
@@ -728,6 +782,32 @@ export default function FacturesPage() {
           void refreshMissing();
           setShowUploadModal(false);
           setSelectedMissingTx(null);
+        }}
+      />
+
+      {/* Modal selection commande pour nouvelle facture */}
+      <OrderSelectModal
+        open={showOrderSelect}
+        onOpenChange={setShowOrderSelect}
+        onSelectOrder={handleOrderSelected}
+      />
+
+      {/* Modal creation facture depuis commande */}
+      <InvoiceCreateFromOrderModal
+        order={selectedOrder}
+        open={showInvoiceModal}
+        onOpenChange={open => {
+          if (!open) handleInvoiceModalClose();
+        }}
+        onSuccess={handleInvoiceCreated}
+      />
+
+      {/* Modal creation facture de service (sans commande) */}
+      <InvoiceCreateServiceModal
+        open={showServiceModal}
+        onOpenChange={setShowServiceModal}
+        onSuccess={() => {
+          refresh();
         }}
       />
     </div>

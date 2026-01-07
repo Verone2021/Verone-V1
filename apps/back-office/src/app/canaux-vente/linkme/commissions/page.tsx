@@ -405,32 +405,37 @@ export default function LinkMeCommissionsPage() {
   // COMPUTED VALUES
   // ============================================
 
+  // Totaux en TTC (cohérent avec LinkMe app)
   const tabCounts: Record<TabType, { count: number; total: number }> = {
     en_attente: {
       count: getCommissionsByTab('en_attente').length,
       total: getCommissionsByTab('en_attente').reduce(
-        (sum, c) => sum + c.affiliate_commission,
+        (sum, c) =>
+          sum + (c.affiliate_commission_ttc || c.affiliate_commission * 1.2),
         0
       ),
     },
     payables: {
       count: getCommissionsByTab('payables').length,
       total: getCommissionsByTab('payables').reduce(
-        (sum, c) => sum + c.affiliate_commission,
+        (sum, c) =>
+          sum + (c.affiliate_commission_ttc || c.affiliate_commission * 1.2),
         0
       ),
     },
     en_cours: {
       count: getCommissionsByTab('en_cours').length,
       total: getCommissionsByTab('en_cours').reduce(
-        (sum, c) => sum + c.affiliate_commission,
+        (sum, c) =>
+          sum + (c.affiliate_commission_ttc || c.affiliate_commission * 1.2),
         0
       ),
     },
     payees: {
       count: getCommissionsByTab('payees').length,
       total: getCommissionsByTab('payees').reduce(
-        (sum, c) => sum + c.affiliate_commission,
+        (sum, c) =>
+          sum + (c.affiliate_commission_ttc || c.affiliate_commission * 1.2),
         0
       ),
     },
