@@ -161,7 +161,7 @@ export class QontoClient {
   // ===================================================================
 
   private async request<T>(
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+    method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
     endpoint: string,
     body?: unknown,
     options?: { retryCount?: number }
@@ -745,10 +745,12 @@ export class QontoClient {
       QontoApiResponse<{ client: QontoClientEntity }>
     >('POST', '/v2/clients', {
       name: params.name,
+      type: params.type, // Required by Qonto API ('company' | 'individual')
       email: params.email,
       currency: params.currency || 'EUR',
       vat_number: params.vatNumber,
-      address: params.address
+      // billing_address est le champ requis pour la facturation
+      billing_address: params.address
         ? {
             street_address: params.address.streetAddress,
             city: params.address.city,
@@ -758,6 +760,36 @@ export class QontoClient {
         : undefined,
       phone: params.phone,
       locale: params.locale || 'fr',
+    });
+
+    return response.client;
+  }
+
+  /**
+   * Met à jour un client existant
+   */
+  async updateClient(
+    clientId: string,
+    params: Partial<CreateClientParams>
+  ): Promise<QontoClientEntity> {
+    const response = await this.request<
+      QontoApiResponse<{ client: QontoClientEntity }>
+    >('PATCH', `/v2/clients/${clientId}`, {
+      name: params.name,
+      type: params.type,
+      email: params.email,
+      currency: params.currency,
+      vat_number: params.vatNumber,
+      billing_address: params.address
+        ? {
+            street_address: params.address.streetAddress,
+            city: params.address.city,
+            zip_code: params.address.zipCode,
+            country_code: params.address.countryCode,
+          }
+        : undefined,
+      phone: params.phone,
+      locale: params.locale,
     });
 
     return response.client;
