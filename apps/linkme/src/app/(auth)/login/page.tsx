@@ -178,8 +178,8 @@ function LoginContent(): JSX.Element {
         return;
       }
 
-      router.push(redirectUrl);
-      router.refresh();
+      // Succes : reset loading, le useEffect redirigera automatiquement
+      setLoading(false);
     } catch {
       setError('Une erreur est survenue. Veuillez reessayer.');
       setLoading(false);
@@ -199,7 +199,7 @@ function LoginContent(): JSX.Element {
     <div className="min-h-screen flex">
       {/* Gauche: Sphere sur fond gradient - plein ecran */}
       {pageConfig.globe_enabled && (
-        <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-[#5DBEBB]/30 via-[#5DBEBB]/10 to-white flex-col items-center justify-center">
+        <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-[#7E84C0]/50 via-[#7E84C0]/25 to-white flex-col items-center justify-center">
           {/* Sphere 3D avec logo en arriere-plan */}
           <div className="relative flex items-center justify-center">
             {/* Logo en arriere-plan - meme diametre que la sphere */}
@@ -360,7 +360,7 @@ function LoginContent(): JSX.Element {
             <button
               type="submit"
               disabled={loading || !email || !password}
-              className="w-full bg-[#5DBEBB] text-white py-3.5 rounded-xl font-semibold hover:bg-[#4CA9A6] hover:scale-[1.02] hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:bg-[#183559] disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none shadow-md"
+              className="w-full bg-gradient-to-r from-[#5DBEBB] to-[#5DBEBB]/60 text-white py-3.5 rounded-xl font-semibold hover:from-[#4CA9A6] hover:to-[#4CA9A6]/60 hover:scale-[1.02] hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:from-[#3976BB]/80 disabled:to-[#3976BB]/50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none shadow-md"
             >
               {loading ? (
                 <>
