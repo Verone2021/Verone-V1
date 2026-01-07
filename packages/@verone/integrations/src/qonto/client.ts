@@ -670,6 +670,27 @@ export class QontoClient {
   }
 
   /**
+   * Annule une facture (unpaid → canceled)
+   * Note: Seules les factures non payées peuvent être annulées
+   * La facture reste dans le système avec statut "canceled"
+   */
+  async cancelClientInvoice(invoiceId: string): Promise<QontoClientInvoice> {
+    const response = await this.request<
+      QontoApiResponse<{ client_invoice: QontoClientInvoice }>
+    >('POST', `/v2/client_invoices/${invoiceId}/mark_as_canceled`);
+    return response.client_invoice;
+  }
+
+  /**
+   * Supprime une facture brouillon
+   * Note: Seules les factures avec statut "draft" peuvent être supprimées
+   * Les factures finalisées doivent être annulées, pas supprimées
+   */
+  async deleteClientInvoice(invoiceId: string): Promise<void> {
+    await this.request<void>('DELETE', `/v2/client_invoices/${invoiceId}`);
+  }
+
+  /**
    * Envoie une facture par email
    */
   async sendClientInvoiceByEmail(
@@ -679,16 +700,6 @@ export class QontoClient {
     await this.request<void>('POST', `/v2/client_invoices/${invoiceId}/send`, {
       recipient_emails: emails,
     });
-  }
-
-  /**
-   * Annule une facture
-   */
-  async cancelClientInvoice(invoiceId: string): Promise<QontoClientInvoice> {
-    const response = await this.request<
-      QontoApiResponse<{ client_invoice: QontoClientInvoice }>
-    >('POST', `/v2/client_invoices/${invoiceId}/cancel`);
-    return response.client_invoice;
   }
 
   // ===================================================================

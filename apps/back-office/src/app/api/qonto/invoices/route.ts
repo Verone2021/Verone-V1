@@ -114,7 +114,7 @@ export async function POST(request: NextRequest): Promise<
 > {
   try {
     const body = (await request.json()) as IPostRequestBody;
-    const { salesOrderId, autoFinalize = true } = body;
+    const { salesOrderId, autoFinalize = false } = body; // Défaut: brouillon pour validation
 
     if (!salesOrderId) {
       return NextResponse.json(
@@ -268,7 +268,7 @@ export async function POST(request: NextRequest): Promise<
         value: String(item.unit_price_ht ?? 0),
         currency: 'EUR',
       },
-      vatRate: String((item.tax_rate ?? 20) / 100), // Qonto attend 0.20 pour 20%
+      vatRate: String(item.tax_rate ?? 0.2), // tax_rate est déjà en decimal (0.2 = 20%)
     }));
 
     // Calculer la date d'échéance selon les termes de paiement
