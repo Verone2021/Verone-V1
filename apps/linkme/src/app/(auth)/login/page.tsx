@@ -1,15 +1,16 @@
 'use client';
 
 /**
- * Page de connexion LinkMe - Split Layout avec Sphère 3D
+ * Page de connexion LinkMe - Design 2026
  *
- * Design 2026:
- * - Gauche (60%): Sphère 3D avec images produits (fond blanc)
- * - Droite (40%): Formulaire de connexion
+ * Design:
+ * - Layout split plein ecran (comme back-office)
+ * - Gauche: Sphere sur fond gradient turquoise
+ * - Droite: Formulaire sur fond blanc
  *
  * @module LoginPage
  * @since 2025-12-01
- * @updated 2026-01-06 - Nouveau composant SphereImageGrid
+ * @updated 2026-01-06 - Split plein ecran
  */
 
 import { useState, useEffect, Suspense } from 'react';
@@ -34,7 +35,7 @@ import {
 } from '@/components/ui/SphereImageGrid';
 import { useAuth } from '@/contexts/AuthContext';
 
-// Images de démonstration pour la sphère (en attendant l'API)
+// Images de demonstration pour la sphere
 const DEMO_SPHERE_IMAGES: SphereImageData[] = Array.from(
   { length: 20 },
   (_, i) => ({
@@ -44,13 +45,13 @@ const DEMO_SPHERE_IMAGES: SphereImageData[] = Array.from(
   })
 );
 
-// Wrapper pour Suspense (useSearchParams nécessite Suspense en Next.js 15)
+// Wrapper pour Suspense
 export default function LoginPage(): JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-white">
-          <Loader2 className="h-8 w-8 animate-spin text-linkme-turquoise" />
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#5DBEBB]/30 via-white to-white">
+          <Loader2 className="h-8 w-8 animate-spin text-[#5DBEBB]" />
         </div>
       }
     >
@@ -73,7 +74,7 @@ function LoginContent(): JSX.Element {
   const [sphereImages, setSphereImages] =
     useState<SphereImageData[]>(DEMO_SPHERE_IMAGES);
 
-  // Configuration de la page (globe, etc.)
+  // Configuration de la page
   const [pageConfig, setPageConfig] = useState<{
     globe_enabled: boolean;
     globe_rotation_speed: number;
@@ -89,14 +90,12 @@ function LoginContent(): JSX.Element {
     {
       email: 'test-org@verone.fr',
       password: 'TestLinkMe2025',
-      role: 'Org Indépendante',
+      role: 'Org Independante',
     },
   ];
 
-  // URL de redirection après connexion
   const redirectUrl = searchParams.get('redirect') ?? '/';
 
-  // Type pour la réponse API
   type GlobeApiItem = {
     id: string;
     name: string;
@@ -104,7 +103,7 @@ function LoginContent(): JSX.Element {
     item_type: 'product' | 'organisation';
   };
 
-  // Charger la configuration de la page
+  // Charger la configuration
   useEffect(() => {
     async function loadPageConfig(): Promise<void> {
       try {
@@ -116,17 +115,17 @@ function LoginContent(): JSX.Element {
           };
           setPageConfig({
             globe_enabled: data.globe_enabled ?? true,
-            globe_rotation_speed: (data.globe_rotation_speed ?? 0.003) * 100, // Convert to SphereImageGrid scale
+            globe_rotation_speed: (data.globe_rotation_speed ?? 0.003) * 100,
           });
         }
       } catch {
-        // Garder la config par défaut si l'API échoue
+        // Config par defaut
       }
     }
     void loadPageConfig();
   }, []);
 
-  // Charger les images depuis l'API
+  // Charger les images
   useEffect(() => {
     async function loadSphereImages(): Promise<void> {
       try {
@@ -134,7 +133,6 @@ function LoginContent(): JSX.Element {
         if (response.ok) {
           const data = (await response.json()) as { items: GlobeApiItem[] };
           if (data.items && data.items.length > 0) {
-            // Dupliquer les images pour remplir la sphère (minimum 20 images)
             const baseImages = data.items.map((item: GlobeApiItem) => ({
               id: item.id,
               src: item.image_url,
@@ -153,13 +151,13 @@ function LoginContent(): JSX.Element {
           }
         }
       } catch {
-        // Garder les images de démo si l'API échoue
+        // Images demo
       }
     }
     void loadSphereImages();
   }, []);
 
-  // Rediriger si déjà connecté
+  // Rediriger si connecte
   useEffect(() => {
     if (!initializing && user) {
       router.push(redirectUrl);
@@ -180,98 +178,81 @@ function LoginContent(): JSX.Element {
         return;
       }
 
-      // Connexion réussie - redirection gérée par useEffect
       router.push(redirectUrl);
       router.refresh();
     } catch {
-      setError('Une erreur est survenue. Veuillez réessayer.');
+      setError('Une erreur est survenue. Veuillez reessayer.');
       setLoading(false);
     }
   };
 
-  // Afficher un loader pendant le chargement initial
+  // Loader initial
   if (initializing) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <Loader2 className="h-8 w-8 animate-spin text-linkme-turquoise" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#5DBEBB]/30 via-white to-white">
+        <Loader2 className="h-8 w-8 animate-spin text-[#5DBEBB]" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex bg-white">
-      {/* Gauche: Sphère 3D (60%) - Desktop only */}
+    <div className="min-h-screen flex">
+      {/* Gauche: Sphere sur fond gradient - plein ecran */}
       {pageConfig.globe_enabled && (
-        <div className="hidden lg:flex w-3/5 bg-white flex-col items-center justify-center relative py-8">
-          {/* Logo LinkMe centré au-dessus de la sphère */}
-          <div className="mb-8 z-20">
-            <Image
-              src="/logo-linkme-full.png"
-              alt="LinkMe"
-              width={200}
-              height={200}
-              className="w-40 h-40 object-contain"
-              priority
-            />
-          </div>
-
-          {/* Sphère 3D centrée */}
-          <div className="relative z-10">
+        <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-[#5DBEBB]/30 via-[#5DBEBB]/10 to-white flex-col items-center justify-center">
+          {/* Sphere 3D avec logo en arriere-plan */}
+          <div className="relative flex items-center justify-center">
+            {/* Logo en arriere-plan - meme diametre que la sphere */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Image
+                src="/Linkme-fondblanc.png"
+                alt="LinkMe"
+                width={440}
+                height={440}
+                className="w-[440px] h-[440px] object-contain opacity-55 drop-shadow-sm"
+              />
+            </div>
+            {/* Sphere 3D centree */}
             <SphereImageGrid
               images={sphereImages}
-              containerSize={450}
-              sphereRadius={160}
+              containerSize={575}
+              sphereRadius={220}
               autoRotate
               autoRotateSpeed={pageConfig.globe_rotation_speed}
-              baseImageScale={0.12}
+              baseImageScale={0.15}
             />
           </div>
         </div>
       )}
 
-      {/* Droite: Formulaire (40% si globe, 100% sinon) */}
+      {/* Droite: Formulaire sur fond blanc - plein ecran */}
       <div
-        className={`w-full flex items-center justify-center p-6 sm:p-8 bg-gray-50 ${
-          pageConfig.globe_enabled ? 'lg:w-2/5' : ''
+        className={`flex-1 flex items-center justify-center bg-white p-6 sm:p-10 ${
+          pageConfig.globe_enabled ? 'lg:w-1/2' : 'w-full'
         }`}
       >
         <div className="w-full max-w-md">
-          {/* Header avec Logo (mobile only si globe activé) */}
-          <div className="text-center mb-6">
-            <Link
-              href="/"
-              className={`inline-block mb-2 ${pageConfig.globe_enabled ? 'lg:hidden' : ''}`}
-            >
-              <Image
-                src="/logo-linkme.png"
-                alt="LinkMe"
-                width={160}
-                height={44}
-                className="h-11 w-auto mx-auto"
-                priority
-              />
-            </Link>
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">Connexion</h1>
-            <p className="text-gray-500 text-sm">
-              Espace Partenaires & Affiliés
-            </p>
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-[#183559]">Connexion</h1>
+            <p className="text-[#183559] text-sm mt-2">Espace Utilisateurs</p>
           </div>
 
-          {/* DEV: Bouton comptes de test */}
+          {/* Bouton comptes test */}
           <button
             type="button"
             onClick={() => setShowTestAccounts(!showTestAccounts)}
-            className="w-full mb-4 flex items-center justify-center gap-2 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-sm hover:bg-amber-100 transition-colors font-medium"
+            className="w-full mb-5 flex items-center justify-center gap-2 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-sm hover:bg-amber-100 transition-all duration-200 font-medium"
           >
             <Info className="h-4 w-4" />
             Comptes de test (DEV)
           </button>
 
-          {/* Panel comptes de test */}
+          {/* Panel comptes test */}
           {showTestAccounts && (
-            <div className="mb-4 p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+            <div className="mb-5 p-4 bg-gray-50 border border-gray-100 rounded-xl">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-semibold text-linkme-marine">
+                <span className="text-sm font-semibold text-[#183559]">
                   Comptes de test
                 </span>
                 <button
@@ -292,17 +273,13 @@ function LoginContent(): JSX.Element {
                       setPassword(account.password);
                       setShowTestAccounts(false);
                     }}
-                    className="w-full text-left p-3 bg-gray-50 border border-gray-100 rounded-lg hover:border-linkme-turquoise hover:bg-linkme-turquoise/5 transition-all"
+                    className="w-full text-left p-3 bg-white border border-gray-100 rounded-lg hover:border-[#5DBEBB] hover:bg-[#5DBEBB]/5 transition-all duration-200"
                   >
-                    <div className="text-sm font-medium text-linkme-marine">
+                    <div className="text-sm font-medium text-[#183559]">
                       {account.role}
                     </div>
                     <div className="text-xs text-gray-500 font-mono mt-1">
                       {account.email}
-                    </div>
-                    <div className="text-xs text-gray-400 mt-0.5">
-                      Mot de passe:{' '}
-                      <span className="font-mono">{account.password}</span>
                     </div>
                   </button>
                 ))}
@@ -312,7 +289,7 @@ function LoginContent(): JSX.Element {
 
           {/* Erreur */}
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+            <div className="mb-5 p-4 bg-red-50 border border-red-100 rounded-xl flex items-start gap-3">
               <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-red-700">{error}</div>
             </div>
@@ -329,7 +306,7 @@ function LoginContent(): JSX.Element {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="block text-sm font-medium text-[#183559] mb-2"
               >
                 Adresse email
               </label>
@@ -341,7 +318,7 @@ function LoginContent(): JSX.Element {
                 placeholder="vous@exemple.com"
                 required
                 disabled={loading}
-                className="w-full border border-gray-200 rounded-lg px-4 py-3 bg-white focus:ring-2 focus:ring-linkme-turquoise/30 focus:border-linkme-turquoise outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-[#5DBEBB]/30 focus:border-[#5DBEBB] outline-none transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -349,7 +326,7 @@ function LoginContent(): JSX.Element {
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="block text-sm font-medium text-[#183559] mb-2"
               >
                 Mot de passe
               </label>
@@ -362,12 +339,12 @@ function LoginContent(): JSX.Element {
                   placeholder="••••••••"
                   required
                   disabled={loading}
-                  className="w-full border border-gray-200 rounded-lg px-4 py-3 pr-12 bg-white focus:ring-2 focus:ring-linkme-turquoise/30 focus:border-linkme-turquoise outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-12 bg-white focus:ring-2 focus:ring-[#5DBEBB]/30 focus:border-[#5DBEBB] outline-none transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#183559] transition-colors"
                   tabIndex={-1}
                 >
                   {showPassword ? (
@@ -383,7 +360,7 @@ function LoginContent(): JSX.Element {
             <button
               type="submit"
               disabled={loading || !email || !password}
-              className="w-full bg-linkme-turquoise text-white py-3 rounded-lg font-semibold hover:bg-linkme-turquoise/90 transition-all flex items-center justify-center gap-2 disabled:bg-gray-300 disabled:cursor-not-allowed shadow-sm"
+              className="w-full bg-[#5DBEBB] text-white py-3.5 rounded-xl font-semibold hover:bg-[#4CA9A6] hover:scale-[1.02] hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:bg-[#183559] disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none shadow-md"
             >
               {loading ? (
                 <>
@@ -403,28 +380,31 @@ function LoginContent(): JSX.Element {
           <div className="mt-6 text-center space-y-3">
             <a
               href="#"
-              className="text-sm text-linkme-turquoise hover:underline block"
+              className="text-sm text-[#3976BB] hover:text-[#5DBEBB] hover:underline block transition-colors duration-200"
             >
-              Mot de passe oublié ?
+              Mot de passe oublie ?
             </a>
             <p className="text-sm text-gray-500">
               Pas encore partenaire ?{' '}
-              <a href="#" className="text-linkme-turquoise hover:underline">
+              <a
+                href="#"
+                className="text-[#5DBEBB] hover:underline font-medium"
+              >
                 Contactez-nous
               </a>
             </p>
           </div>
 
           {/* Footer */}
-          <div className="mt-8 pt-6 border-t border-gray-200">
+          <div className="mt-8 pt-6 border-t border-gray-100">
             <p className="text-xs text-gray-400 text-center">
               En vous connectant, vous acceptez nos{' '}
-              <a href="#" className="text-linkme-turquoise hover:underline">
+              <a href="#" className="text-[#3976BB] hover:underline">
                 conditions d&apos;utilisation
               </a>{' '}
               et notre{' '}
-              <a href="#" className="text-linkme-turquoise hover:underline">
-                politique de confidentialité
+              <a href="#" className="text-[#3976BB] hover:underline">
+                politique de confidentialite
               </a>
               .
             </p>
