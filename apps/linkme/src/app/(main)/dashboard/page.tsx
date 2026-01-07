@@ -4,6 +4,7 @@
  * Dashboard LinkMe - Version Minimaliste
  *
  * Design épuré avec :
+ * - Section héros avec Globe 3D interactif
  * - 1 KPI principal (commissions en attente)
  * - 3 actions rapides (Ma sélection, Mes commandes, Mon profil)
  * - Résumé compact du mois
@@ -15,9 +16,10 @@
  *
  * @module DashboardPage
  * @since 2025-12-10
+ * @updated 2026-01-06 - Ajout section héros avec Globe 3D
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -39,6 +41,8 @@ import {
   Package,
 } from 'lucide-react';
 
+import { ImageSphere, type GlobeImage } from '@/components/ui/ImageSphere';
+
 import { useAuth } from '../../../contexts/AuthContext';
 import { useAffiliateAnalytics } from '../../../lib/hooks/use-affiliate-analytics';
 import {
@@ -46,9 +50,35 @@ import {
   useUserSelections,
 } from '../../../lib/hooks/use-user-selection';
 
+// Images de démo pour le globe (fallback)
+const DEMO_GLOBE_IMAGES: GlobeImage[] = [
+  { id: '1', url: '/logo-linkme.png', alt: 'LinkMe', type: 'organisation' },
+  { id: '2', url: '/logo-linkme.png', alt: 'LinkMe', type: 'organisation' },
+  { id: '3', url: '/logo-linkme.png', alt: 'LinkMe', type: 'organisation' },
+  { id: '4', url: '/logo-linkme.png', alt: 'LinkMe', type: 'organisation' },
+];
+
+// Type pour la réponse API
+type GlobeApiItem = {
+  id: string;
+  name: string;
+  image_url: string;
+  item_type: 'product' | 'organisation';
+};
+
 export default function DashboardPage(): JSX.Element | null {
   const router = useRouter();
   const { user, linkMeRole, loading } = useAuth();
+
+  // État pour les images du globe
+  const [globeImages, setGlobeImages] =
+    useState<GlobeImage[]>(DEMO_GLOBE_IMAGES);
+
+  // Configuration de la page (globe, etc.)
+  const [pageConfig, setPageConfig] = useState<{
+    globe_enabled: boolean;
+    globe_rotation_speed: number;
+  }>({ globe_enabled: true, globe_rotation_speed: 0.002 });
 
   // Affiliate ID pour les requêtes
   const { data: affiliate } = useUserAffiliate();
@@ -64,6 +94,53 @@ export default function DashboardPage(): JSX.Element | null {
     useAffiliateAnalytics('year');
 
   const { data: selections } = useUserSelections();
+
+  // Charger la configuration de la page
+  useEffect(() => {
+    async function loadPageConfig(): Promise<void> {
+      try {
+        const response = await fetch('/api/page-config/dashboard');
+        if (response.ok) {
+          const data = (await response.json()) as {
+            globe_enabled: boolean;
+            globe_rotation_speed: number;
+          };
+          setPageConfig({
+            globe_enabled: data.globe_enabled ?? true,
+            globe_rotation_speed: data.globe_rotation_speed ?? 0.002,
+          });
+        }
+      } catch {
+        // Garder la config par défaut si l'API échoue
+      }
+    }
+    void loadPageConfig();
+  }, []);
+
+  // Charger les images du globe depuis l'API
+  useEffect(() => {
+    async function loadGlobeImages(): Promise<void> {
+      try {
+        const response = await fetch('/api/globe-items');
+        if (response.ok) {
+          const data = (await response.json()) as { items: GlobeApiItem[] };
+          if (data.items && data.items.length > 0) {
+            setGlobeImages(
+              data.items.map((item: GlobeApiItem) => ({
+                id: item.id,
+                url: item.image_url,
+                alt: item.name,
+                type: item.item_type,
+              }))
+            );
+          }
+        }
+      } catch {
+        // Garder les images de démo si l'API échoue
+      }
+    }
+    void loadGlobeImages();
+  }, []);
 
   // Rediriger si non connecté
   useEffect(() => {
@@ -111,15 +188,46 @@ export default function DashboardPage(): JSX.Element | null {
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        {/* Header avec salutation */}
-        <div className="mb-6">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-            Bonjour, {firstName}
-          </h1>
-          <p className="text-gray-500 mt-1 text-sm">
-            Bienvenue sur votre espace LinkMe
-          </p>
-        </div>
+        {/* Section Héros avec Globe 3D */}
+        <section className="relative h-48 sm:h-56 bg-gradient-to-r from-linkme-marine via-linkme-royal to-linkme-marine rounded-2xl overflow-hidden mb-6">
+          {/* Fond avec motif subtil */}
+          <div
+            className="absolute inset-0 opacity-10"
+            style={{
+              backgroundImage:
+                'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
+              backgroundSize: '32px 32px',
+            }}
+          />
+
+          {/* Globe 3D (côté droit, desktop only) - Conditionné par config */}
+          {pageConfig.globe_enabled && (
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/4 hidden sm:block">
+              <ImageSphere
+                images={globeImages}
+                size={200}
+                autoRotate
+                rotationSpeed={pageConfig.globe_rotation_speed}
+                className="opacity-80"
+              />
+            </div>
+          )}
+
+          {/* Contenu texte */}
+          <div className="relative z-10 h-full flex items-center p-6 sm:p-8">
+            <div className="max-w-xs sm:max-w-sm">
+              <h1 className="text-white text-xl sm:text-2xl font-bold mb-1">
+                Bonjour, {firstName}
+              </h1>
+              <p className="text-white/70 text-sm sm:text-base">
+                Bienvenue sur votre espace LinkMe
+              </p>
+            </div>
+          </div>
+
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-linkme-marine/50 via-transparent to-transparent z-0" />
+        </section>
 
         {/* Carte principale - Commissions en attente */}
         <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-lg p-5 sm:p-6 mb-6 border border-emerald-100">

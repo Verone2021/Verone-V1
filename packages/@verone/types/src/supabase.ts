@@ -4666,6 +4666,63 @@ export type Database = {
           },
         ]
       }
+      linkme_page_configurations: {
+        Row: {
+          config: Json | null
+          created_at: string | null
+          globe_enabled: boolean | null
+          globe_rotation_speed: number | null
+          id: string
+          page_description: string | null
+          page_icon: string | null
+          page_id: string
+          page_name: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string | null
+          globe_enabled?: boolean | null
+          globe_rotation_speed?: number | null
+          id?: string
+          page_description?: string | null
+          page_icon?: string | null
+          page_id: string
+          page_name: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string | null
+          globe_enabled?: boolean | null
+          globe_rotation_speed?: number | null
+          id?: string
+          page_description?: string | null
+          page_icon?: string | null
+          page_id?: string
+          page_name?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "linkme_page_configurations_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "v_linkme_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "linkme_page_configurations_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "v_users_with_roles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       linkme_payment_request_items: {
         Row: {
           commission_amount_ttc: number
@@ -5454,6 +5511,7 @@ export type Database = {
           shipping_country: string | null
           shipping_postal_code: string | null
           shipping_region: string | null
+          show_on_linkme_globe: boolean | null
           siren: string | null
           siret: string | null
           source: string | null
@@ -5526,6 +5584,7 @@ export type Database = {
           shipping_country?: string | null
           shipping_postal_code?: string | null
           shipping_region?: string | null
+          show_on_linkme_globe?: boolean | null
           siren?: string | null
           siret?: string | null
           source?: string | null
@@ -5598,6 +5657,7 @@ export type Database = {
           shipping_country?: string | null
           shipping_postal_code?: string | null
           shipping_region?: string | null
+          show_on_linkme_globe?: boolean | null
           siren?: string | null
           siret?: string | null
           source?: string | null
@@ -6859,6 +6919,7 @@ export type Database = {
           requires_sample: boolean | null
           search_vector: unknown
           selling_points: Json | null
+          show_on_linkme_globe: boolean | null
           sku: string
           slug: string | null
           sourcing_type: string | null
@@ -6868,6 +6929,7 @@ export type Database = {
           stock_real: number | null
           stock_status: Database["public"]["Enums"]["stock_status_type"]
           store_at_verone: boolean | null
+          style: string | null
           subcategory_id: string | null
           suitable_rooms: Database["public"]["Enums"]["room_type"][] | null
           supplier_id: string | null
@@ -6928,6 +6990,7 @@ export type Database = {
           requires_sample?: boolean | null
           search_vector?: unknown
           selling_points?: Json | null
+          show_on_linkme_globe?: boolean | null
           sku: string
           slug?: string | null
           sourcing_type?: string | null
@@ -6937,6 +7000,7 @@ export type Database = {
           stock_real?: number | null
           stock_status?: Database["public"]["Enums"]["stock_status_type"]
           store_at_verone?: boolean | null
+          style?: string | null
           subcategory_id?: string | null
           suitable_rooms?: Database["public"]["Enums"]["room_type"][] | null
           supplier_id?: string | null
@@ -6997,6 +7061,7 @@ export type Database = {
           requires_sample?: boolean | null
           search_vector?: unknown
           selling_points?: Json | null
+          show_on_linkme_globe?: boolean | null
           sku?: string
           slug?: string | null
           sourcing_type?: string | null
@@ -7006,6 +7071,7 @@ export type Database = {
           stock_real?: number | null
           stock_status?: Database["public"]["Enums"]["stock_status_type"]
           store_at_verone?: boolean | null
+          style?: string | null
           subcategory_id?: string | null
           suitable_rooms?: Database["public"]["Enums"]["room_type"][] | null
           supplier_id?: string | null
@@ -7319,7 +7385,15 @@ export type Database = {
           expected_delivery_date: string | null
           id: string
           insurance_cost_ht: number | null
+          manual_payment_by: string | null
+          manual_payment_date: string | null
+          manual_payment_note: string | null
+          manual_payment_reference: string | null
+          manual_payment_type:
+            | Database["public"]["Enums"]["manual_payment_type"]
+            | null
           notes: string | null
+          payment_status_v2: string | null
           payment_terms: string | null
           payment_terms_notes: string | null
           payment_terms_type:
@@ -7352,7 +7426,15 @@ export type Database = {
           expected_delivery_date?: string | null
           id?: string
           insurance_cost_ht?: number | null
+          manual_payment_by?: string | null
+          manual_payment_date?: string | null
+          manual_payment_note?: string | null
+          manual_payment_reference?: string | null
+          manual_payment_type?:
+            | Database["public"]["Enums"]["manual_payment_type"]
+            | null
           notes?: string | null
+          payment_status_v2?: string | null
           payment_terms?: string | null
           payment_terms_notes?: string | null
           payment_terms_type?:
@@ -7385,7 +7467,15 @@ export type Database = {
           expected_delivery_date?: string | null
           id?: string
           insurance_cost_ht?: number | null
+          manual_payment_by?: string | null
+          manual_payment_date?: string | null
+          manual_payment_note?: string | null
+          manual_payment_reference?: string | null
+          manual_payment_type?:
+            | Database["public"]["Enums"]["manual_payment_type"]
+            | null
           notes?: string | null
+          payment_status_v2?: string | null
           payment_terms?: string | null
           payment_terms_notes?: string | null
           payment_terms_type?:
@@ -7417,6 +7507,20 @@ export type Database = {
           {
             foreignKeyName: "purchase_orders_created_by_fkey"
             columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_users_with_roles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_manual_payment_by_fkey"
+            columns: ["manual_payment_by"]
+            isOneToOne: false
+            referencedRelation: "v_linkme_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_manual_payment_by_fkey"
+            columns: ["manual_payment_by"]
             isOneToOne: false
             referencedRelation: "v_users_with_roles"
             referencedColumns: ["user_id"]
@@ -7989,6 +8093,13 @@ export type Database = {
           id: string
           insurance_cost_ht: number | null
           linkme_selection_id: string | null
+          manual_payment_by: string | null
+          manual_payment_date: string | null
+          manual_payment_note: string | null
+          manual_payment_reference: string | null
+          manual_payment_type:
+            | Database["public"]["Enums"]["manual_payment_type"]
+            | null
           notes: string | null
           order_number: string
           paid_amount: number | null
@@ -8043,6 +8154,13 @@ export type Database = {
           id?: string
           insurance_cost_ht?: number | null
           linkme_selection_id?: string | null
+          manual_payment_by?: string | null
+          manual_payment_date?: string | null
+          manual_payment_note?: string | null
+          manual_payment_reference?: string | null
+          manual_payment_type?:
+            | Database["public"]["Enums"]["manual_payment_type"]
+            | null
           notes?: string | null
           order_number: string
           paid_amount?: number | null
@@ -8097,6 +8215,13 @@ export type Database = {
           id?: string
           insurance_cost_ht?: number | null
           linkme_selection_id?: string | null
+          manual_payment_by?: string | null
+          manual_payment_date?: string | null
+          manual_payment_note?: string | null
+          manual_payment_reference?: string | null
+          manual_payment_type?:
+            | Database["public"]["Enums"]["manual_payment_type"]
+            | null
           notes?: string | null
           order_number?: string
           paid_amount?: number | null
@@ -8228,6 +8353,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "linkme_selections"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_orders_manual_payment_by_fkey"
+            columns: ["manual_payment_by"]
+            isOneToOne: false
+            referencedRelation: "v_linkme_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "sales_orders_manual_payment_by_fkey"
+            columns: ["manual_payment_by"]
+            isOneToOne: false
+            referencedRelation: "v_users_with_roles"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "sales_orders_shipped_by_fkey"
@@ -10147,6 +10286,15 @@ export type Database = {
         }
         Relationships: []
       }
+      linkme_globe_items: {
+        Row: {
+          id: string | null
+          image_url: string | null
+          item_type: string | null
+          name: string | null
+        }
+        Relationships: []
+      }
       linkme_order_items_enriched: {
         Row: {
           affiliate_margin: number | null
@@ -10445,6 +10593,7 @@ export type Database = {
           emitted_at: string | null
           has_attachment: boolean | null
           id: string | null
+          justification_optional: boolean | null
           label: string | null
           notes: string | null
           organisation_id: string | null
@@ -10990,10 +11139,6 @@ export type Database = {
         }
         Returns: string
       }
-      add_products_to_linkme_catalog: {
-        Args: { p_product_ids: string[] }
-        Returns: number
-      }
       apply_all_matching_rules: {
         Args: never
         Returns: {
@@ -11484,7 +11629,15 @@ export type Database = {
           expected_delivery_date: string | null
           id: string
           insurance_cost_ht: number | null
+          manual_payment_by: string | null
+          manual_payment_date: string | null
+          manual_payment_note: string | null
+          manual_payment_reference: string | null
+          manual_payment_type:
+            | Database["public"]["Enums"]["manual_payment_type"]
+            | null
           notes: string | null
+          payment_status_v2: string | null
           payment_terms: string | null
           payment_terms_notes: string | null
           payment_terms_type:
@@ -12029,37 +12182,6 @@ export type Database = {
           sync_run_id: string
         }[]
       }
-      get_linkme_catalog_products_for_affiliate: {
-        Args: { p_affiliate_id?: string }
-        Returns: {
-          assigned_client_id: string
-          custom_description: string
-          custom_selling_points: string[]
-          custom_title: string
-          display_order: number
-          enseigne_id: string
-          id: string
-          is_enabled: boolean
-          is_featured: boolean
-          is_public_showcase: boolean
-          is_sourced: boolean
-          linkme_commission_rate: number
-          max_margin_rate: number
-          min_margin_rate: number
-          product_category_name: string
-          product_family_name: string
-          product_id: string
-          product_image_url: string
-          product_is_active: boolean
-          product_name: string
-          product_price_ht: number
-          product_reference: string
-          product_stock_real: number
-          selections_count: number
-          suggested_margin_rate: number
-          views_count: number
-        }[]
-      }
       get_linkme_channel_id: { Args: never; Returns: string }
       get_linkme_order_items: {
         Args: { p_order_id: string }
@@ -12086,6 +12208,11 @@ export type Database = {
           affiliate_id: string
           affiliate_name: string
           affiliate_type: string
+          billing_address: Json
+          billing_email: string
+          billing_name: string
+          billing_phone: string
+          confirmed_delivery_date: string
           created_at: string
           created_by_affiliate_id: string
           customer_address: string
@@ -12096,54 +12223,24 @@ export type Database = {
           customer_phone: string
           customer_postal_code: string
           customer_type: string
+          desired_delivery_date: string
           handling_cost_ht: number
           id: string
           insurance_cost_ht: number
+          items: Json
           items_count: number
           order_number: string
           payment_status: string
           pending_admin_validation: boolean
           selection_id: string
           selection_name: string
+          shipping_address: Json
           shipping_cost_ht: number
           status: string
           total_affiliate_margin: number
           total_ht: number
           total_ttc: number
           updated_at: string
-        }[]
-      }
-      get_linkme_showcase_collections_with_products: {
-        Args: never
-        Returns: {
-          collection_description: string
-          collection_display_order: number
-          collection_id: string
-          collection_image_url: string
-          collection_layout_type: string
-          collection_name: string
-          collection_slug: string
-          products: Json
-        }[]
-      }
-      get_linkme_showcase_products: {
-        Args: never
-        Returns: {
-          custom_description: string
-          custom_selling_points: string[]
-          custom_title: string
-          display_order: number
-          id: string
-          is_featured: boolean
-          max_margin_rate: number
-          product_category_name: string
-          product_family_name: string
-          product_id: string
-          product_image_url: string
-          product_name: string
-          product_price_ht: number
-          product_reference: string
-          suggested_margin_rate: number
         }[]
       }
       get_low_stock_products: {
@@ -13343,6 +13440,13 @@ export type Database = {
         | "lifestyle"
         | "thumbnail"
       language_type: "fr" | "en" | "pt"
+      manual_payment_type:
+        | "cash"
+        | "check"
+        | "transfer_other"
+        | "card"
+        | "compensation"
+        | "verified_bubble"
       matching_status:
         | "unmatched"
         | "auto_matched"
@@ -13687,6 +13791,14 @@ export const Constants = {
         "thumbnail",
       ],
       language_type: ["fr", "en", "pt"],
+      manual_payment_type: [
+        "cash",
+        "check",
+        "transfer_other",
+        "card",
+        "compensation",
+        "verified_bubble",
+      ],
       matching_status: [
         "unmatched",
         "auto_matched",

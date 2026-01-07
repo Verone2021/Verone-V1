@@ -291,6 +291,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         };
       }
 
+      // Mettre a jour les states IMMEDIATEMENT avec les donnees retournees
+      // (ne pas attendre onAuthStateChange qui peut etre lent)
+      setSession(data.session);
+      setUser(data.user);
+      await fetchLinkMeRole(data.user.id);
+
       return { error: null };
     } catch (err) {
       return {
