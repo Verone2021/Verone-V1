@@ -21,6 +21,12 @@ import type {
   CreateClientParams,
   UploadSupplierInvoiceParams,
   UploadSupplierInvoicesResult,
+  // Credit Notes (Avoirs) - 2026-01-07
+  QontoClientCreditNote,
+  CreateClientCreditNoteParams,
+  // Quotes (Devis) - 2026-01-07
+  QontoClientQuote,
+  CreateClientQuoteParams,
 } from './types';
 
 // =====================================================================
@@ -161,7 +167,7 @@ export class QontoClient {
   // ===================================================================
 
   private async request<T>(
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+    method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
     endpoint: string,
     body?: unknown,
     options?: { retryCount?: number }
@@ -187,7 +193,18 @@ export class QontoClient {
 
       // Success
       if (response.ok) {
-        const data = await response.json();
+        // Handle empty responses (204 No Content, etc.)
+        if (
+          response.status === 204 ||
+          response.headers.get('content-length') === '0'
+        ) {
+          return {} as T;
+        }
+        const text = await response.text();
+        if (!text || text.trim() === '') {
+          return {} as T;
+        }
+        const data = JSON.parse(text);
         return data as T;
       }
 
@@ -268,7 +285,18 @@ export class QontoClient {
       clearTimeout(timeout);
 
       if (response.ok) {
-        const data = await response.json();
+        // Handle empty responses (204 No Content, etc.)
+        if (
+          response.status === 204 ||
+          response.headers.get('content-length') === '0'
+        ) {
+          return {} as T;
+        }
+        const text = await response.text();
+        if (!text || text.trim() === '') {
+          return {} as T;
+        }
+        const data = JSON.parse(text);
         return data as T;
       }
 
@@ -670,6 +698,27 @@ export class QontoClient {
   }
 
   /**
+   * Annule une facture (unpaid → canceled)
+   * Note: Seules les factures non payées peuvent être annulées
+   * La facture reste dans le système avec statut "canceled"
+   */
+  async cancelClientInvoice(invoiceId: string): Promise<QontoClientInvoice> {
+    const response = await this.request<
+      QontoApiResponse<{ client_invoice: QontoClientInvoice }>
+    >('POST', `/v2/client_invoices/${invoiceId}/mark_as_canceled`);
+    return response.client_invoice;
+  }
+
+  /**
+   * Supprime une facture brouillon
+   * Note: Seules les factures avec statut "draft" peuvent être supprimées
+   * Les factures finalisées doivent être annulées, pas supprimées
+   */
+  async deleteClientInvoice(invoiceId: string): Promise<void> {
+    await this.request<void>('DELETE', `/v2/client_invoices/${invoiceId}`);
+  }
+
+  /**
    * Envoie une facture par email
    */
   async sendClientInvoiceByEmail(
@@ -679,16 +728,6 @@ export class QontoClient {
     await this.request<void>('POST', `/v2/client_invoices/${invoiceId}/send`, {
       recipient_emails: emails,
     });
-  }
-
-  /**
-   * Annule une facture
-   */
-  async cancelClientInvoice(invoiceId: string): Promise<QontoClientInvoice> {
-    const response = await this.request<
-      QontoApiResponse<{ client_invoice: QontoClientInvoice }>
-    >('POST', `/v2/client_invoices/${invoiceId}/cancel`);
-    return response.client_invoice;
   }
 
   // ===================================================================
@@ -745,10 +784,12 @@ export class QontoClient {
       QontoApiResponse<{ client: QontoClientEntity }>
     >('POST', '/v2/clients', {
       name: params.name,
+      type: params.type, // Required by Qonto API ('company' | 'individual')
       email: params.email,
       currency: params.currency || 'EUR',
       vat_number: params.vatNumber,
-      address: params.address
+      // billing_address est le champ requis pour la facturation
+      billing_address: params.address
         ? {
             street_address: params.address.streetAddress,
             city: params.address.city,
@@ -758,6 +799,36 @@ export class QontoClient {
         : undefined,
       phone: params.phone,
       locale: params.locale || 'fr',
+    });
+
+    return response.client;
+  }
+
+  /**
+   * Met à jour un client existant
+   */
+  async updateClient(
+    clientId: string,
+    params: Partial<CreateClientParams>
+  ): Promise<QontoClientEntity> {
+    const response = await this.request<
+      QontoApiResponse<{ client: QontoClientEntity }>
+    >('PATCH', `/v2/clients/${clientId}`, {
+      name: params.name,
+      type: params.type,
+      email: params.email,
+      currency: params.currency,
+      vat_number: params.vatNumber,
+      billing_address: params.address
+        ? {
+            street_address: params.address.streetAddress,
+            city: params.address.city,
+            zip_code: params.address.zipCode,
+            country_code: params.address.countryCode,
+          }
+        : undefined,
+      phone: params.phone,
+      locale: params.locale,
     });
 
     return response.client;
@@ -1077,6 +1148,301 @@ export class QontoClient {
       `/v2/transactions/${transactionId}/labels`,
       { label_ids: labelIds }
     );
+  }
+
+  // ===================================================================
+  // CLIENT CREDIT NOTES (Avoirs)
+  // Date: 2026-01-07
+  // ===================================================================
+
+  /**
+   * Liste les avoirs clients
+   */
+  async getClientCreditNotes(params?: {
+    status?: 'draft' | 'finalized';
+    perPage?: number;
+    currentPage?: number;
+  }): Promise<{
+    client_credit_notes: QontoClientCreditNote[];
+    meta: { total_count: number; current_page: number; total_pages: number };
+  }> {
+    const queryParams = new URLSearchParams();
+
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.perPage)
+      queryParams.append('per_page', params.perPage.toString());
+    if (params?.currentPage)
+      queryParams.append('page', params.currentPage.toString());
+
+    const endpoint = `/v2/client_credit_notes${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+
+    const response = await this.request<
+      QontoApiResponse<{
+        client_credit_notes: QontoClientCreditNote[];
+        meta: {
+          total_count: number;
+          current_page: number;
+          total_pages: number;
+        };
+      }>
+    >('GET', endpoint);
+
+    return {
+      client_credit_notes: response.client_credit_notes,
+      meta: response.meta,
+    };
+  }
+
+  /**
+   * Récupère un avoir client par ID
+   */
+  async getClientCreditNoteById(
+    creditNoteId: string
+  ): Promise<QontoClientCreditNote> {
+    const response = await this.request<
+      QontoApiResponse<{ client_credit_note: QontoClientCreditNote }>
+    >('GET', `/v2/client_credit_notes/${creditNoteId}`);
+    return response.client_credit_note;
+  }
+
+  /**
+   * Crée un nouvel avoir client
+   * IMPORTANT: Toujours créé en brouillon (draft)
+   */
+  async createClientCreditNote(
+    params: CreateClientCreditNoteParams,
+    idempotencyKey?: string
+  ): Promise<QontoClientCreditNote> {
+    const key = idempotencyKey || generateIdempotencyKey();
+
+    const response = await this.requestWithIdempotency<
+      QontoApiResponse<{ client_credit_note: QontoClientCreditNote }>
+    >(
+      'POST',
+      '/v2/client_credit_notes',
+      {
+        client_id: params.clientId,
+        currency: params.currency || 'EUR',
+        issue_date: params.issueDate,
+        invoice_id: params.invoiceId,
+        reason: params.reason,
+        items: params.items.map(item => ({
+          title: item.title,
+          description: item.description,
+          quantity: item.quantity,
+          unit: item.unit || 'unit',
+          unit_price: {
+            value: item.unitPrice.value,
+            currency: item.unitPrice.currency,
+          },
+          vat_rate: item.vatRate,
+        })),
+      },
+      key
+    );
+
+    return response.client_credit_note;
+  }
+
+  /**
+   * Finalise un avoir (draft → finalized)
+   * ATTENTION: Action IRRÉVERSIBLE
+   */
+  async finalizeClientCreditNote(
+    creditNoteId: string
+  ): Promise<QontoClientCreditNote> {
+    const response = await this.request<
+      QontoApiResponse<{ client_credit_note: QontoClientCreditNote }>
+    >('POST', `/v2/client_credit_notes/${creditNoteId}/finalize`);
+    return response.client_credit_note;
+  }
+
+  /**
+   * Supprime un avoir brouillon
+   * Note: Seuls les avoirs avec statut "draft" peuvent être supprimés
+   */
+  async deleteClientCreditNote(creditNoteId: string): Promise<void> {
+    await this.request<void>(
+      'DELETE',
+      `/v2/client_credit_notes/${creditNoteId}`
+    );
+  }
+
+  // ===================================================================
+  // CLIENT QUOTES (Devis)
+  // Date: 2026-01-07
+  // ===================================================================
+
+  /**
+   * Liste les devis clients
+   */
+  async getClientQuotes(params?: {
+    status?: 'draft' | 'finalized' | 'accepted' | 'declined' | 'expired';
+    perPage?: number;
+    currentPage?: number;
+  }): Promise<{
+    client_quotes: QontoClientQuote[];
+    meta: { total_count: number; current_page: number; total_pages: number };
+  }> {
+    const queryParams = new URLSearchParams();
+
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.perPage)
+      queryParams.append('per_page', params.perPage.toString());
+    if (params?.currentPage)
+      queryParams.append('page', params.currentPage.toString());
+
+    // Qonto API uses /v2/quotes (not /v2/client_quotes)
+    const endpoint = `/v2/quotes${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+
+    const response = await this.request<
+      QontoApiResponse<{
+        quotes: QontoClientQuote[];
+        meta: {
+          total: number;
+          current_page: number;
+          total_pages: number;
+        };
+      }>
+    >('GET', endpoint);
+
+    // Map Qonto API response to our internal format
+    return {
+      client_quotes: response.quotes,
+      meta: {
+        total_count: response.meta.total,
+        current_page: response.meta.current_page,
+        total_pages: response.meta.total_pages,
+      },
+    };
+  }
+
+  /**
+   * Récupère un devis client par ID
+   */
+  async getClientQuoteById(quoteId: string): Promise<QontoClientQuote> {
+    // Qonto API uses /v2/quotes (not /v2/client_quotes)
+    const response = await this.request<
+      QontoApiResponse<{ quote: QontoClientQuote }>
+    >('GET', `/v2/quotes/${quoteId}`);
+    return response.quote;
+  }
+
+  /**
+   * Crée un nouveau devis client
+   */
+  async createClientQuote(
+    params: CreateClientQuoteParams,
+    idempotencyKey?: string
+  ): Promise<QontoClientQuote> {
+    const key = idempotencyKey || generateIdempotencyKey();
+
+    // Qonto API uses /v2/quotes (not /v2/client_quotes)
+    const response = await this.requestWithIdempotency<
+      QontoApiResponse<{ quote: QontoClientQuote }>
+    >(
+      'POST',
+      '/v2/quotes',
+      {
+        client_id: params.clientId,
+        currency: params.currency || 'EUR',
+        issue_date: params.issueDate,
+        expiry_date: params.expiryDate,
+        purchase_order_number: params.purchaseOrderNumber,
+        header: params.header,
+        footer: params.footer,
+        terms_and_conditions:
+          params.termsAndConditions ||
+          'Conditions générales de vente applicables.',
+        items: params.items.map(item => ({
+          title: item.title,
+          description: item.description,
+          quantity: String(item.quantity),
+          unit: item.unit || 'unit',
+          unit_price: {
+            value: String(item.unitPrice.value),
+            currency: item.unitPrice.currency,
+          },
+          vat_rate: String(item.vatRate),
+        })),
+      },
+      key
+    );
+
+    return response.quote;
+  }
+
+  /**
+   * Met à jour un devis client (brouillon uniquement)
+   */
+  async updateClientQuote(
+    quoteId: string,
+    params: Partial<CreateClientQuoteParams>
+  ): Promise<QontoClientQuote> {
+    const updateData: Record<string, unknown> = {};
+
+    if (params.clientId) updateData.client_id = params.clientId;
+    if (params.currency) updateData.currency = params.currency;
+    if (params.issueDate) updateData.issue_date = params.issueDate;
+    if (params.expiryDate) updateData.expiry_date = params.expiryDate;
+    if (params.purchaseOrderNumber)
+      updateData.purchase_order_number = params.purchaseOrderNumber;
+    if (params.header) updateData.header = params.header;
+    if (params.footer) updateData.footer = params.footer;
+    if (params.termsAndConditions)
+      updateData.terms_and_conditions = params.termsAndConditions;
+    if (params.items) {
+      updateData.items = params.items.map(item => ({
+        title: item.title,
+        description: item.description,
+        quantity: String(item.quantity),
+        unit: item.unit || 'unit',
+        unit_price: {
+          value: String(item.unitPrice.value),
+          currency: item.unitPrice.currency,
+        },
+        vat_rate: String(item.vatRate),
+      }));
+    }
+
+    // Qonto API uses /v2/quotes (not /v2/client_quotes)
+    const response = await this.request<
+      QontoApiResponse<{ quote: QontoClientQuote }>
+    >('PATCH' as any, `/v2/quotes/${quoteId}`, updateData);
+
+    return response.quote;
+  }
+
+  /**
+   * Finalise un devis (draft → finalized)
+   */
+  async finalizeClientQuote(quoteId: string): Promise<QontoClientQuote> {
+    // Qonto API uses /v2/quotes (not /v2/client_quotes)
+    const response = await this.request<
+      QontoApiResponse<{ quote: QontoClientQuote }>
+    >('POST', `/v2/quotes/${quoteId}/finalize`);
+    return response.quote;
+  }
+
+  /**
+   * Supprime un devis brouillon
+   */
+  async deleteClientQuote(quoteId: string): Promise<void> {
+    // Qonto API uses /v2/quotes (not /v2/client_quotes)
+    await this.request<void>('DELETE', `/v2/quotes/${quoteId}`);
+  }
+
+  /**
+   * Convertit un devis en facture
+   * Le devis doit être finalisé pour être converti
+   * IMPORTANT: La facture créée est en brouillon (draft)
+   */
+  async convertQuoteToInvoice(quoteId: string): Promise<QontoClientInvoice> {
+    // Qonto API uses /v2/quotes (not /v2/client_quotes)
+    const response = await this.request<
+      QontoApiResponse<{ client_invoice: QontoClientInvoice }>
+    >('POST', `/v2/quotes/${quoteId}/convert_to_invoice`);
+    return response.client_invoice;
   }
 
   // ===================================================================

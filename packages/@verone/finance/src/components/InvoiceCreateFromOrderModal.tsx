@@ -4,6 +4,14 @@ import { useCallback, useState } from 'react';
 
 import { useToast } from '@verone/common/hooks';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
   Badge,
   Button,
   Card,
@@ -37,36 +45,10 @@ import {
   Send,
 } from 'lucide-react';
 
-export interface IOrderForInvoice {
-  id: string;
-  order_number: string;
-  total_ht: number;
-  total_ttc: number;
-  tax_rate: number;
-  currency: string;
-  payment_terms: string;
-  organisations?: {
-    name?: string;
-    email?: string | null;
-  } | null;
-  individual_customers?: {
-    first_name?: string | null;
-    last_name?: string | null;
-    email?: string | null;
-  } | null;
-  sales_order_items?: Array<{
-    id: string;
-    quantity: number;
-    unit_price_ht: number;
-    tax_rate: number;
-    products?: {
-      name: string;
-    } | null;
-  }>;
-}
+import { type IOrderForDocument } from './OrderSelectModal';
 
 interface IInvoiceCreateFromOrderModalProps {
-  order: IOrderForInvoice | null;
+  order: IOrderForDocument | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: (invoiceId: string) => void;
@@ -98,23 +80,36 @@ export function InvoiceCreateFromOrderModal({
 }: IInvoiceCreateFromOrderModalProps): React.ReactNode {
   const { toast } = useToast();
   const [status, setStatus] = useState<CreateStatus>('idle');
-  const [autoFinalize, setAutoFinalize] = useState(true);
+  const [autoFinalize, setAutoFinalize] = useState(false); // DÉFAUT: brouillon (false)
   const [createdInvoice, setCreatedInvoice] = useState<CreatedInvoice | null>(
     null
   );
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [showFinalizeWarning, setShowFinalizeWarning] = useState(false);
 
   const resetState = useCallback((): void => {
     setStatus('idle');
     setCreatedInvoice(null);
     setEmailSent(false);
+    setShowFinalizeWarning(false);
   }, []);
 
   const handleClose = useCallback((): void => {
     resetState();
     onOpenChange(false);
   }, [onOpenChange, resetState]);
+
+  // Gère le clic sur "Créer" - affiche warning si finalisation demandée
+  const handleCreateClick = (): void => {
+    if (autoFinalize) {
+      // Afficher le dialog d'avertissement AVANT de finaliser
+      setShowFinalizeWarning(true);
+    } else {
+      // Brouillon direct, pas besoin de confirmation
+      void handleCreateInvoice();
+    }
+  };
 
   const handleCreateInvoice = async (): Promise<void> => {
     if (!order) return;
@@ -424,7 +419,7 @@ export function InvoiceCreateFromOrderModal({
                 Annuler
               </Button>
               <Button
-                onClick={handleCreateInvoice}
+                onClick={handleCreateClick}
                 disabled={status === 'creating'}
               >
                 {status === 'creating' ? (
@@ -435,7 +430,7 @@ export function InvoiceCreateFromOrderModal({
                 ) : (
                   <>
                     <Send className="mr-2 h-4 w-4" />
-                    Créer la facture
+                    {autoFinalize ? 'Créer et finaliser' : 'Créer en brouillon'}
                   </>
                 )}
               </Button>
@@ -443,6 +438,48 @@ export function InvoiceCreateFromOrderModal({
           )}
         </DialogFooter>
       </DialogContent>
+
+      {/* Dialog de confirmation pour finalisation (IRRÉVERSIBLE) */}
+      <AlertDialog
+        open={showFinalizeWarning}
+        onOpenChange={setShowFinalizeWarning}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive">
+              Finaliser la facture ?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p className="font-semibold text-foreground">
+                Cette action est IRRÉVERSIBLE.
+              </p>
+              <p>
+                Une fois finalisée, la facture ne pourra plus être modifiée ni
+                supprimée. Elle recevra un numéro officiel et sera enregistrée
+                définitivement.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Si vous n&apos;êtes pas sûr, créez la facture en brouillon
+                d&apos;abord.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowFinalizeWarning(false)}>
+              Annuler
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                setShowFinalizeWarning(false);
+                void handleCreateInvoice();
+              }}
+            >
+              Oui, finaliser définitivement
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

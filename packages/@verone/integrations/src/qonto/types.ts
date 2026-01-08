@@ -447,6 +447,7 @@ export interface UploadSupplierInvoicesResult {
 
 export interface CreateClientParams {
   name: string;
+  type: 'company' | 'individual'; // Required by Qonto API
   email?: string;
   currency?: string;
   vatNumber?: string;
@@ -478,4 +479,183 @@ export interface QontoSyncResult {
     details?: unknown;
   }>;
   syncedAt: Date;
+}
+
+// =====================================================================
+// CLIENT CREDIT NOTES (Avoirs clients Qonto)
+// Date: 2026-01-07
+// =====================================================================
+
+export type QontoCreditNoteStatus = 'draft' | 'finalized';
+
+export interface QontoClientCreditNote {
+  id: string;
+  credit_note_number: string;
+  status: QontoCreditNoteStatus;
+  currency: string;
+
+  // Client
+  client_id: string;
+  client?: QontoClientEntity;
+
+  // Facture liée (optionnel)
+  invoice_id?: string;
+  invoice?: QontoClientInvoice;
+
+  // Dates
+  issue_date: string;
+
+  // Montants
+  total_amount: number;
+  total_amount_cents: number;
+  total_vat_amount: number;
+  total_vat_amount_cents: number;
+  subtotal_amount: number;
+  subtotal_amount_cents: number;
+
+  // Items
+  items: QontoCreditNoteItem[];
+
+  // Motif de l'avoir
+  reason?: string;
+
+  // PDF
+  pdf_url?: string;
+  public_url?: string;
+
+  // Metadata
+  created_at: string;
+  updated_at: string;
+  finalized_at?: string;
+}
+
+export interface QontoCreditNoteItem {
+  id?: string;
+  title: string;
+  description?: string;
+  quantity: number;
+  unit: string;
+  unit_price: number;
+  vat_rate: number;
+  total_amount?: number;
+  total_amount_cents?: number;
+}
+
+/**
+ * Paramètres pour créer un avoir client
+ * Doc: https://docs.qonto.com/api-reference/business-api/expense-management/client-quotes-notes/client-credit-notes
+ */
+export interface CreateClientCreditNoteParams {
+  clientId: string;
+  currency?: string;
+  issueDate: string; // YYYY-MM-DD
+  invoiceId?: string; // Facture de référence (optionnel)
+  reason?: string; // Motif de l'avoir
+  items: CreateCreditNoteItemParams[];
+}
+
+export interface CreateCreditNoteItemParams {
+  title: string;
+  description?: string;
+  quantity: string; // Décimal en string
+  unit?: string;
+  unitPrice: QontoAmount;
+  vatRate: string; // Décimal en string, ex: "0.20"
+}
+
+// =====================================================================
+// CLIENT QUOTES (Devis clients Qonto)
+// Date: 2026-01-07
+// =====================================================================
+
+export type QontoQuoteStatus =
+  | 'draft'
+  | 'finalized'
+  | 'accepted'
+  | 'declined'
+  | 'expired';
+
+export interface QontoClientQuote {
+  id: string;
+  quote_number: string;
+  status: QontoQuoteStatus;
+  currency: string;
+
+  // Client
+  client_id: string;
+  client?: QontoClientEntity;
+
+  // Dates
+  issue_date: string;
+  expiry_date: string; // Date d'expiration du devis
+  accepted_at?: string;
+  declined_at?: string;
+
+  // Montants
+  total_amount: number;
+  total_amount_cents: number;
+  total_vat_amount: number;
+  total_vat_amount_cents: number;
+  subtotal_amount: number;
+  subtotal_amount_cents: number;
+
+  // Items
+  items: QontoQuoteItem[];
+
+  // Références
+  purchase_order_number?: string;
+
+  // Textes personnalisés
+  header?: string;
+  footer?: string;
+  terms_and_conditions?: string;
+
+  // PDF
+  pdf_url?: string;
+  public_url?: string;
+
+  // Conversion en facture
+  converted_to_invoice_id?: string;
+
+  // Metadata
+  created_at: string;
+  updated_at: string;
+  finalized_at?: string;
+}
+
+export interface QontoQuoteItem {
+  id?: string;
+  title: string;
+  description?: string;
+  quantity: number;
+  unit: string;
+  unit_price: number;
+  vat_rate: number;
+  total_amount?: number;
+  total_amount_cents?: number;
+}
+
+/**
+ * Paramètres pour créer un devis client
+ * Doc: https://docs.qonto.com/api-reference/business-api/expense-management/client-quotes-notes/client-quotes
+ */
+export interface CreateClientQuoteParams {
+  clientId: string;
+  currency?: string;
+  issueDate: string; // YYYY-MM-DD
+  expiryDate: string; // YYYY-MM-DD - Date d'expiration
+  purchaseOrderNumber?: string;
+  header?: string;
+  footer?: string;
+  termsAndConditions?: string;
+  items: CreateQuoteItemParams[];
+}
+
+export interface CreateQuoteItemParams {
+  title: string;
+  description?: string;
+  quantity: string; // Décimal en string
+  unit?: string;
+  unitPrice: QontoAmount;
+  vatRate: string; // Décimal en string, ex: "0.20"
 }
