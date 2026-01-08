@@ -35,6 +35,20 @@ export interface OrderItem {
 }
 
 /**
+ * Interface adresse structuree (JSONB)
+ */
+export interface StructuredAddress {
+  line1?: string;
+  line2?: string;
+  city?: string;
+  postal_code?: string;
+  country?: string;
+  contact_name?: string;
+  contact_phone?: string;
+  contact_email?: string;
+}
+
+/**
  * Interface commande LinkMe
  */
 export interface LinkMeOrder {
@@ -56,6 +70,17 @@ export interface LinkMeOrder {
   customer_city: string | null;
   customer_email: string | null;
   customer_phone: string | null;
+  // Adresses structurees (depuis sales_orders)
+  billing_address: StructuredAddress | null;
+  shipping_address: StructuredAddress | null;
+  // Dates de livraison (depuis sales_order_linkme_details)
+  desired_delivery_date: string | null;
+  confirmed_delivery_date: string | null;
+  // Contact facturation (depuis sales_order_linkme_details)
+  billing_name: string | null;
+  billing_email: string | null;
+  billing_phone: string | null;
+  // Affiliate info
   affiliate_id: string;
   affiliate_name: string | null;
   affiliate_type: 'enseigne' | 'organisation' | null;
@@ -64,7 +89,7 @@ export interface LinkMeOrder {
   items_count: number;
   created_at: string;
   updated_at: string;
-  // Items chargés séparément
+  // Items charges separement
   items: OrderItem[];
 }
 
@@ -90,7 +115,7 @@ export function useLinkMeOrders(
       // Si pas de fetchAll et pas d'affiliateId, retourner vide
       if (!fetchAll && !affiliateId) return [];
 
-      // 1. Fetch commandes via RPC
+      // Fetch commandes via RPC (items inclus directement - elimine N+1)
       const supabase = createClient();
       const { data: ordersData, error: ordersError } = await (
         supabase as any
@@ -105,76 +130,72 @@ export function useLinkMeOrders(
         return [];
       }
 
-      // 2. Fetch items pour chaque commande en parallèle
-      const ordersWithItems = await Promise.all(
-        ordersData.map(async (order: any) => {
-          const { data: itemsData, error: itemsError } = await (
-            supabase as any
-          ).rpc('get_linkme_order_items', { p_order_id: order.id });
-
-          if (itemsError) {
-            console.error('Erreur fetch items:', itemsError);
-            return {
-              ...order,
-              items: [],
-            };
-          }
-
-          return {
-            id: order.id,
-            order_number: order.order_number,
-            status: order.status,
-            payment_status: order.payment_status,
-            total_ht: order.total_ht || 0,
-            total_ttc: order.total_ttc || 0,
-            shipping_cost_ht: order.shipping_cost_ht || 0,
-            handling_cost_ht: order.handling_cost_ht || 0,
-            insurance_cost_ht: order.insurance_cost_ht || 0,
-            total_affiliate_margin: order.total_affiliate_margin || 0,
-            customer_name: order.customer_name || 'Client inconnu',
-            customer_type: order.customer_type as 'organization' | 'individual',
-            customer_id: order.customer_id,
-            customer_address: order.customer_address,
-            customer_postal_code: order.customer_postal_code,
-            customer_city: order.customer_city,
-            customer_email: order.customer_email,
-            customer_phone: order.customer_phone,
-            affiliate_id: order.affiliate_id,
-            affiliate_name: order.affiliate_name,
-            affiliate_type: order.affiliate_type as
-              | 'enseigne'
-              | 'organisation'
-              | null,
-            selection_id: order.selection_id,
-            selection_name: order.selection_name,
-            items_count: order.items_count || 0,
-            created_at: order.created_at,
-            updated_at: order.updated_at,
-            items: (itemsData || []).map((item: any) => ({
-              id: item.id,
-              product_id: item.product_id,
-              product_name: item.product_name || 'Produit inconnu',
-              product_sku: item.product_sku || '',
-              product_image_url: item.product_image_url,
-              quantity: item.quantity || 0,
-              unit_price_ht: item.unit_price_ht || 0,
-              total_ht: item.total_ht || 0,
-              tax_rate: item.tax_rate || 0,
-              base_price_ht: item.base_price_ht || 0,
-              margin_rate: item.margin_rate || 0,
-              commission_rate: item.commission_rate || 0,
-              selling_price_ht: item.selling_price_ht || 0,
-              affiliate_margin: item.affiliate_margin || 0,
-            })),
-          };
-        })
-      );
-
-      return ordersWithItems;
+      // Map les commandes (items deja inclus dans la RPC)
+      return ordersData.map((order: any) => ({
+        id: order.id,
+        order_number: order.order_number,
+        status: order.status,
+        payment_status: order.payment_status,
+        total_ht: order.total_ht || 0,
+        total_ttc: order.total_ttc || 0,
+        shipping_cost_ht: order.shipping_cost_ht || 0,
+        handling_cost_ht: order.handling_cost_ht || 0,
+        insurance_cost_ht: order.insurance_cost_ht || 0,
+        total_affiliate_margin: order.total_affiliate_margin || 0,
+        customer_name: order.customer_name || 'Client inconnu',
+        customer_type: order.customer_type as 'organization' | 'individual',
+        customer_id: order.customer_id,
+        customer_address: order.customer_address,
+        customer_postal_code: order.customer_postal_code,
+        customer_city: order.customer_city,
+        customer_email: order.customer_email,
+        customer_phone: order.customer_phone,
+        // Adresses structurees
+        billing_address: order.billing_address || null,
+        shipping_address: order.shipping_address || null,
+        // Dates de livraison
+        desired_delivery_date: order.desired_delivery_date || null,
+        confirmed_delivery_date: order.confirmed_delivery_date || null,
+        // Contact facturation
+        billing_name: order.billing_name || null,
+        billing_email: order.billing_email || null,
+        billing_phone: order.billing_phone || null,
+        // Affiliate info
+        affiliate_id: order.affiliate_id,
+        affiliate_name: order.affiliate_name,
+        affiliate_type: order.affiliate_type as
+          | 'enseigne'
+          | 'organisation'
+          | null,
+        selection_id: order.selection_id,
+        selection_name: order.selection_name,
+        items_count: order.items_count || 0,
+        created_at: order.created_at,
+        updated_at: order.updated_at,
+        // Items inclus directement depuis la RPC (plus de N+1)
+        items: (order.items || []).map((item: any) => ({
+          id: item.id,
+          product_id: item.product_id,
+          product_name: item.product_name || 'Produit inconnu',
+          product_sku: item.product_sku || '',
+          product_image_url: item.product_image_url,
+          quantity: item.quantity || 0,
+          unit_price_ht: item.unit_price_ht || 0,
+          total_ht: item.total_ht || 0,
+          tax_rate: item.tax_rate || 0,
+          base_price_ht: item.base_price_ht || 0,
+          margin_rate: item.margin_rate || 0,
+          commission_rate: item.commission_rate || 0,
+          selling_price_ht: item.selling_price_ht || 0,
+          affiliate_margin: item.affiliate_margin || 0,
+        })),
+      }));
     },
     enabled: fetchAll || !!affiliateId,
-    staleTime: 30000, // 30 secondes
-    refetchOnWindowFocus: true,
+    // Optimisation: cache plus long, pas de refetch sur focus
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
+    refetchOnWindowFocus: false,
   });
 }
 

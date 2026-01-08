@@ -3,13 +3,14 @@
  * Métriques centralisées pour le dashboard LinkMe (4 KPIs essentiels)
  *
  * KPIs:
- * 1. CA Généré (ce mois vs mois précédent)
+ * 1. CA Généré (ce mois vs moyenne mensuelle)
  * 2. Commissions à payer (montant + count)
  * 3. Affiliés actifs (+ nouveaux ce mois)
- * 4. Commandes ce mois (+ % vs mois précédent)
+ * 4. Commandes ce mois (+ % vs moyenne mensuelle)
  *
  * @module use-linkme-dashboard
  * @since 2025-12-11
+ * @updated 2026-01-06 - Comparaison avec moyenne au lieu de mois précédent
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -23,8 +24,8 @@ export interface DashboardKPIs {
   // KPI 1: CA Généré
   revenue: {
     current: number;
-    previous: number;
-    growth: number; // Pourcentage
+    average: number; // Moyenne mensuelle historique
+    growth: number; // Pourcentage vs moyenne
   };
   // KPI 2: Commissions à payer
   pendingCommissions: {
@@ -39,8 +40,8 @@ export interface DashboardKPIs {
   // KPI 4: Commandes ce mois
   orders: {
     current: number;
-    previous: number;
-    growth: number; // Pourcentage
+    average: number; // Moyenne mensuelle historique
+    growth: number; // Pourcentage vs moyenne
   };
 }
 
@@ -71,9 +72,52 @@ function getMonthBounds(monthOffset: number = 0) {
   };
 }
 
-function calculateGrowth(current: number, previous: number): number {
-  if (previous === 0) return current > 0 ? 100 : 0;
-  return Math.round(((current - previous) / previous) * 100);
+function calculateGrowthVsAverage(current: number, average: number): number {
+  if (average === 0) return current > 0 ? 100 : 0;
+  return Math.round(((current - average) / average) * 100);
+}
+
+/**
+ * Groupe les commandes par mois et calcule la moyenne mensuelle
+ * Exclut le mois courant du calcul de la moyenne
+ */
+function calculateMonthlyAverage(
+  orders: Array<{ created_at: string; total_ht?: number }>,
+  currentMonthStart: Date
+): { avgRevenue: number; avgCount: number; monthsCount: number } {
+  // Grouper par mois (YYYY-MM)
+  const monthlyData: Record<string, { revenue: number; count: number }> = {};
+
+  orders.forEach(order => {
+    const orderDate = new Date(order.created_at);
+    // Exclure le mois courant
+    if (orderDate >= currentMonthStart) return;
+
+    const monthKey = `${orderDate.getFullYear()}-${String(orderDate.getMonth() + 1).padStart(2, '0')}`;
+
+    if (!monthlyData[monthKey]) {
+      monthlyData[monthKey] = { revenue: 0, count: 0 };
+    }
+
+    monthlyData[monthKey].revenue += Number(order.total_ht || 0);
+    monthlyData[monthKey].count += 1;
+  });
+
+  const months = Object.values(monthlyData);
+  const monthsCount = months.length;
+
+  if (monthsCount === 0) {
+    return { avgRevenue: 0, avgCount: 0, monthsCount: 0 };
+  }
+
+  const totalRevenue = months.reduce((sum, m) => sum + m.revenue, 0);
+  const totalCount = months.reduce((sum, m) => sum + m.count, 0);
+
+  return {
+    avgRevenue: totalRevenue / monthsCount,
+    avgCount: totalCount / monthsCount,
+    monthsCount,
+  };
 }
 
 // ============================================================================
@@ -87,38 +131,41 @@ export function useLinkMeDashboard() {
     queryKey: ['linkme-dashboard-kpis'],
     queryFn: async (): Promise<DashboardKPIs> => {
       const currentMonth = getMonthBounds(0);
-      const previousMonth = getMonthBounds(-1);
+      const currentMonthStart = new Date(currentMonth.start);
 
       // ========================================
       // KPI 1 & 4: CA + Orders count
-      // Utilise la vue linkme_orders_with_margins pour filtrer sur
-      // la vraie date de commande (sales_orders.created_at), pas la date d'insertion
+      // Récupère TOUTES les commandes pour calculer la moyenne mensuelle
       // ========================================
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: ordersCurrentMonth } = await (supabase as any)
+      const { data: allOrders } = await (supabase as any)
         .from('linkme_orders_with_margins')
-        .select('id, total_ht, total_affiliate_margin')
-        .gte('created_at', currentMonth.start) // ✅ Date commande réelle (sales_orders.created_at)
-        .lte('created_at', currentMonth.end);
+        .select('id, total_ht, total_affiliate_margin, created_at')
+        .order('created_at', { ascending: true });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: ordersPreviousMonth } = await (supabase as any)
-        .from('linkme_orders_with_margins')
-        .select('id, total_ht')
-        .gte('created_at', previousMonth.start)
-        .lte('created_at', previousMonth.end);
+      // Filtrer les commandes du mois courant
+      const ordersCurrentMonth = (allOrders || []).filter(
+        (o: { created_at: string }) => {
+          const orderDate = new Date(o.created_at);
+          return (
+            orderDate >= new Date(currentMonth.start) &&
+            orderDate <= new Date(currentMonth.end)
+          );
+        }
+      );
 
-      const currentRevenue = (ordersCurrentMonth || []).reduce(
+      // Calculer le CA et le nombre de commandes du mois courant
+      const currentRevenue = ordersCurrentMonth.reduce(
         (sum: number, o: { total_ht: number }) => sum + Number(o.total_ht || 0),
         0
       );
-      const previousRevenue = (ordersPreviousMonth || []).reduce(
-        (sum: number, o: { total_ht: number }) => sum + Number(o.total_ht || 0),
-        0
-      );
+      const currentOrdersCount = ordersCurrentMonth.length;
 
-      const currentOrdersCount = (ordersCurrentMonth || []).length;
-      const previousOrdersCount = (ordersPreviousMonth || []).length;
+      // Calculer la moyenne mensuelle (tous les mois précédents)
+      const { avgRevenue, avgCount } = calculateMonthlyAverage(
+        allOrders || [],
+        currentMonthStart
+      );
 
       // ========================================
       // KPI 2: Commissions en attente (pending + invoice_received)
@@ -161,8 +208,8 @@ export function useLinkMeDashboard() {
       return {
         revenue: {
           current: currentRevenue,
-          previous: previousRevenue,
-          growth: calculateGrowth(currentRevenue, previousRevenue),
+          average: avgRevenue,
+          growth: calculateGrowthVsAverage(currentRevenue, avgRevenue),
         },
         pendingCommissions: {
           amount: pendingAmount,
@@ -174,8 +221,8 @@ export function useLinkMeDashboard() {
         },
         orders: {
           current: currentOrdersCount,
-          previous: previousOrdersCount,
-          growth: calculateGrowth(currentOrdersCount, previousOrdersCount),
+          average: avgCount,
+          growth: calculateGrowthVsAverage(currentOrdersCount, avgCount),
         },
       };
     },
