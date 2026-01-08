@@ -35,6 +35,11 @@ export interface IOrderForDocument {
   tax_rate: number;
   currency: string;
   payment_terms?: string; // Optionnel pour compatibilité avec devis
+  // Frais de service
+  shipping_cost_ht?: number | null;
+  handling_cost_ht?: number | null;
+  insurance_cost_ht?: number | null;
+  fees_vat_rate?: number | null;
   organisations?: {
     name?: string;
     email?: string | null;
@@ -53,6 +58,18 @@ export interface IOrderForDocument {
       name: string;
     } | null;
   }>;
+}
+
+/**
+ * Interface pour les lignes personnalisées (libellés custom)
+ */
+export interface ICustomLine {
+  id: string;
+  title: string;
+  description?: string;
+  quantity: number;
+  unit_price_ht: number;
+  vat_rate: number;
 }
 
 // Alias pour rétrocompatibilité avec les factures

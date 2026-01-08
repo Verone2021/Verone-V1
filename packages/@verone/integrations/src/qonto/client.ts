@@ -1414,13 +1414,16 @@ export class QontoClient {
   }
 
   /**
-   * Finalise un devis (draft → finalized)
+   * Envoie un devis par email (rend le PDF disponible)
+   * Note: Qonto n'a pas d'endpoint "finalize" pour les devis, seulement "send"
    */
   async finalizeClientQuote(quoteId: string): Promise<QontoClientQuote> {
-    // Qonto API uses /v2/quotes (not /v2/client_quotes)
+    // Qonto n'a pas d'endpoint "finalize" pour les devis
+    // On utilise l'endpoint "send" qui envoie le devis par email au client
+    // Le PDF devient disponible après l'envoi
     const response = await this.request<
       QontoApiResponse<{ quote: QontoClientQuote }>
-    >('POST', `/v2/quotes/${quoteId}/finalize`);
+    >('POST', `/v2/quotes/${quoteId}/send`);
     return response.quote;
   }
 
@@ -1443,6 +1446,37 @@ export class QontoClient {
       QontoApiResponse<{ client_invoice: QontoClientInvoice }>
     >('POST', `/v2/quotes/${quoteId}/convert_to_invoice`);
     return response.client_invoice;
+  }
+
+  // ===================================================================
+  // ATTACHMENTS
+  // ===================================================================
+
+  /**
+   * Récupère les informations d'un attachment (fichier joint)
+   * Retourne une URL temporaire (valide 30 min) pour télécharger le fichier
+   */
+  async getAttachment(attachmentId: string): Promise<{
+    id: string;
+    file_name: string;
+    file_size: number;
+    file_content_type: string;
+    url: string;
+    created_at: string;
+  }> {
+    const response = await this.request<
+      QontoApiResponse<{
+        attachment: {
+          id: string;
+          file_name: string;
+          file_size: number;
+          file_content_type: string;
+          url: string;
+          created_at: string;
+        };
+      }>
+    >('GET', `/v2/attachments/${attachmentId}`);
+    return response.attachment;
   }
 
   // ===================================================================

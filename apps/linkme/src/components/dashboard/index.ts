@@ -16,3 +16,9 @@ export {
   type IMetricCardProps,
   type MetricCardVariant,
 } from './MetricCard';
+
+export {
+  CommissionKPICard,
+  type CommissionKPICardProps,
+  type CommissionKPIVariant,
+} from './CommissionKPICard';

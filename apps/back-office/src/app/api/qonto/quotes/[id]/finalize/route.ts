@@ -35,7 +35,12 @@ export async function POST(
     // Vérifier l'état actuel avant finalisation
     const currentQuote = await client.getClientQuoteById(id);
 
-    if (currentQuote.status !== 'draft') {
+    // Qonto uses 'pending_approval' for drafts, we accept both
+    const isDraft =
+      currentQuote.status === 'draft' ||
+      currentQuote.status === 'pending_approval';
+
+    if (!isDraft) {
       return NextResponse.json(
         {
           success: false,

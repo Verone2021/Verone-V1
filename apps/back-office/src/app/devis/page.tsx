@@ -45,8 +45,10 @@ import {
   Download,
   Eye,
   FileEdit,
+  Loader2,
   Plus,
   RefreshCw,
+  Send,
   ShoppingCart,
   Trash2,
 } from 'lucide-react';
@@ -54,7 +56,13 @@ import {
 interface Quote {
   id: string;
   quote_number: string;
-  status: 'draft' | 'finalized' | 'accepted' | 'declined' | 'expired';
+  status:
+    | 'draft'
+    | 'pending_approval'
+    | 'finalized'
+    | 'accepted'
+    | 'declined'
+    | 'expired';
   currency: string;
   total_amount: number;
   issue_date: string;
@@ -82,6 +90,7 @@ function StatusBadge({ status }: { status: string }): React.ReactNode {
     'default' | 'secondary' | 'destructive' | 'outline'
   > = {
     draft: 'secondary',
+    pending_approval: 'outline',
     finalized: 'default',
     accepted: 'default',
     declined: 'destructive',
@@ -90,6 +99,7 @@ function StatusBadge({ status }: { status: string }): React.ReactNode {
 
   const labels: Record<string, string> = {
     draft: 'Brouillon',
+    pending_approval: 'En attente',
     finalized: 'Finalisé',
     accepted: 'Accepté',
     declined: 'Refusé',
@@ -118,6 +128,7 @@ export default function DevisPage(): React.ReactNode {
   );
   const [quoteToDelete, setQuoteToDelete] = useState<Quote | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [finalizingId, setFinalizingId] = useState<string | null>(null);
 
   const fetchQuotes = async (): Promise<void> => {
     setLoading(true);
@@ -160,20 +171,35 @@ export default function DevisPage(): React.ReactNode {
       const response = await fetch(`/api/qonto/quotes/${quote.id}/pdf`);
 
       if (!response.ok) {
-        throw new Error('Failed to download PDF');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error || `Erreur ${response.status}: ${response.statusText}`
+        );
       }
 
       const blob = await response.blob();
+
+      // Vérifier que le blob contient des données
+      if (blob.size === 0) {
+        throw new Error('Le PDF est vide');
+      }
+
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = `devis-${quote.quote_number}.pdf`;
+      a.style.display = 'none';
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+
+      // Délai avant de révoquer l'URL pour laisser le téléchargement démarrer
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }, 1000);
     } catch (err) {
       console.error('Download error:', err);
+      setError(err instanceof Error ? err.message : 'Erreur de téléchargement');
     }
   };
 
@@ -200,6 +226,40 @@ export default function DevisPage(): React.ReactNode {
       setDeleting(false);
       setQuoteToDelete(null);
     }
+  };
+
+  const handleFinalizeQuote = async (quote: Quote): Promise<void> => {
+    setFinalizingId(quote.id);
+    try {
+      const response = await fetch(`/api/qonto/quotes/${quote.id}/finalize`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Erreur lors de la finalisation');
+      }
+
+      // Refresh the list
+      void fetchQuotes();
+    } catch (err) {
+      console.error('Finalize error:', err);
+      setError(err instanceof Error ? err.message : 'Erreur de finalisation');
+    } finally {
+      setFinalizingId(null);
+    }
+  };
+
+  // Helper to check if quote is a draft
+  const isDraftQuote = (quote: Quote): boolean => {
+    return quote.status === 'draft' || quote.status === 'pending_approval';
+  };
+
+  // Helper to check if quote is finalized (PDF available)
+  const isFinalized = (quote: Quote): boolean => {
+    return ['finalized', 'accepted', 'declined', 'expired'].includes(
+      quote.status
+    );
   };
 
   return (
@@ -299,35 +359,62 @@ export default function DevisPage(): React.ReactNode {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          asChild
-                          title="Voir"
-                        >
-                          <Link href={`/devis/${quote.id}`}>
+                        <Button variant="ghost" size="icon" asChild>
+                          <Link href={`/devis/${quote.id}`} title="Voir">
                             <Eye className="h-4 w-4" />
                           </Link>
                         </Button>
-                        {quote.status !== 'draft' && (
+                        {isDraftQuote(quote) && (
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleDownloadPdf(quote)}
-                            title="Telecharger PDF"
+                            onClick={() => handleFinalizeQuote(quote)}
+                            title="Envoyer au client"
+                            disabled={finalizingId === quote.id}
+                            className="text-primary hover:text-primary hover:bg-primary/10"
                           >
-                            <Download className="h-4 w-4" />
+                            {finalizingId === quote.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Send className="h-4 w-4" />
+                            )}
                           </Button>
                         )}
+                        {/* Voir PDF - ouvre dans nouvel onglet */}
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => setQuoteToDelete(quote)}
-                          title="Supprimer"
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() =>
+                            window.open(
+                              `/api/qonto/quotes/${quote.id}/view`,
+                              '_blank'
+                            )
+                          }
+                          title="Voir PDF"
+                          className="text-primary hover:text-primary hover:bg-primary/10"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <FileEdit className="h-4 w-4" />
                         </Button>
+                        {/* Télécharger PDF */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDownloadPdf(quote)}
+                          title="Télécharger PDF"
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                        {isDraftQuote(quote) && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setQuoteToDelete(quote)}
+                            title="Supprimer"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

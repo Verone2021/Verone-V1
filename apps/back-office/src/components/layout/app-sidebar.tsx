@@ -255,19 +255,26 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
     ],
   },
   {
-    title: 'Factures',
+    title: 'Facturation',
     href: '/factures',
     icon: FileText,
-  },
-  {
-    title: 'Devis',
-    href: '/devis',
-    icon: FileEdit,
-  },
-  {
-    title: 'Avoirs',
-    href: '/avoirs',
-    icon: FileX,
+    children: [
+      {
+        title: 'Devis',
+        href: '/devis',
+        icon: FileEdit,
+      },
+      {
+        title: 'Factures',
+        href: '/factures',
+        icon: FileText,
+      },
+      {
+        title: 'Avoirs',
+        href: '/avoirs',
+        icon: FileX,
+      },
+    ],
   },
   {
     title: 'Livraisons',
@@ -329,7 +336,10 @@ function SidebarContent() {
       Achats: 'commandes',
       Comptabilité: 'finance',
       Finance: 'finance',
+      Facturation: 'factures',
       Factures: 'factures',
+      Devis: 'factures',
+      Avoirs: 'factures',
       Trésorerie: 'tresorerie',
       Organisation: 'contacts',
     };
@@ -341,9 +351,9 @@ function SidebarContent() {
   const navItems = useMemo(() => {
     const items = getNavItems(stockAlertsCount);
 
-    // Masquer Comptabilité/Factures/Trésorerie si financeEnabled = false
+    // Masquer Comptabilité/Facturation/Trésorerie si financeEnabled = false
     if (!featureFlags.financeEnabled) {
-      const financeModules = ['Comptabilité', 'Factures', 'Trésorerie'];
+      const financeModules = ['Comptabilité', 'Facturation', 'Trésorerie'];
       return items.filter(item => !financeModules.includes(item.title));
     }
 

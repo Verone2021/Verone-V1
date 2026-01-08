@@ -3,19 +3,14 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { Menu, ShoppingCart } from 'lucide-react';
+import { Menu } from 'lucide-react';
 
 import { UserMenu } from '@/components/auth/UserMenu';
-import { useCart } from '@/components/cart/CartProvider';
-import { cn } from '@/lib/utils';
 
 import { useSidebar } from './SidebarProvider';
 
-export function MinimalHeader() {
+export function MinimalHeader(): JSX.Element {
   const { toggle, isMobile } = useSidebar();
-  const { items, openCart } = useCart();
-
-  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
     <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6 sticky top-0 z-30">
@@ -42,31 +37,8 @@ export function MinimalHeader() {
         </Link>
       </div>
 
-      {/* Right: Cart + User */}
-      <div className="flex items-center gap-2">
-        {/* Cart Button */}
-        <button
-          onClick={openCart}
-          className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
-          aria-label="Ouvrir le panier"
-        >
-          <ShoppingCart className="h-5 w-5 text-linkme-marine" />
-          {itemCount > 0 && (
-            <span
-              className={cn(
-                'absolute -top-0.5 -right-0.5 flex items-center justify-center',
-                'min-w-[18px] h-[18px] px-1 rounded-full',
-                'bg-linkme-turquoise text-white text-xs font-medium'
-              )}
-            >
-              {itemCount > 99 ? '99+' : itemCount}
-            </span>
-          )}
-        </button>
-
-        {/* User Menu */}
-        <UserMenu />
-      </div>
+      {/* Right: User Menu */}
+      <UserMenu />
     </header>
   );
 }

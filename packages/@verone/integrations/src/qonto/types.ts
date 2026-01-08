@@ -570,6 +570,7 @@ export interface CreateCreditNoteItemParams {
 
 export type QontoQuoteStatus =
   | 'draft'
+  | 'pending_approval' // Qonto uses this for draft quotes
   | 'finalized'
   | 'accepted'
   | 'declined'
@@ -610,7 +611,8 @@ export interface QontoClientQuote {
   footer?: string;
   terms_and_conditions?: string;
 
-  // PDF
+  // PDF - attachment_id est la clé pour télécharger via /v2/attachments/{id}
+  attachment_id?: string;
   pdf_url?: string;
   public_url?: string;
 

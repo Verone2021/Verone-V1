@@ -72,22 +72,48 @@ export async function GET(request: NextRequest): Promise<
     );
 
     // Map Qonto response to our expected format
-    // Qonto API uses 'number' for quote number and amounts might be strings
+    // Qonto API uses 'number' for quote number and amounts might be strings or objects
     const mappedQuotes = result.client_quotes.map(quote => {
       // Cast to any to access potential extra fields from Qonto API
-      const q = quote as typeof quote & { number?: string };
+      const q = quote as typeof quote & {
+        number?: string;
+        total_amount?:
+          | number
+          | string
+          | { value: string; currency?: string }
+          | null;
+      };
+
+      // Parse total_amount from various formats Qonto might return
+      let parsedAmount = 0;
+      const totalAmt = q.total_amount as
+        | number
+        | string
+        | { value: string }
+        | null
+        | undefined;
+
+      if (totalAmt !== null && totalAmt !== undefined) {
+        if (typeof totalAmt === 'number') {
+          parsedAmount = totalAmt;
+        } else if (typeof totalAmt === 'string') {
+          parsedAmount = parseFloat(totalAmt) || 0;
+        } else if (typeof totalAmt === 'object' && 'value' in totalAmt) {
+          // Handle { value: "123.45", currency: "EUR" } format
+          parsedAmount = parseFloat(totalAmt.value) || 0;
+        }
+      } else if (q.total_amount_cents) {
+        // Fallback to cents
+        parsedAmount = q.total_amount_cents / 100;
+      }
+
       return {
         id: q.id,
         // Qonto uses 'number' not 'quote_number'
-        quote_number: q.number || q.quote_number || '-',
+        quote_number: q.number ?? q.quote_number ?? '-',
         status: q.status,
-        currency: q.currency || 'EUR',
-        // Handle amount as string or number
-        total_amount:
-          typeof q.total_amount === 'string'
-            ? parseFloat(q.total_amount)
-            : (q.total_amount ??
-              (q.total_amount_cents ? q.total_amount_cents / 100 : 0)),
+        currency: q.currency ?? 'EUR',
+        total_amount: parsedAmount,
         issue_date: q.issue_date,
         expiry_date: q.expiry_date,
         client: q.client,
@@ -113,9 +139,32 @@ export async function GET(request: NextRequest): Promise<
   }
 }
 
+/**
+ * Interface pour les frais de service
+ */
+interface IFeesData {
+  shipping_cost_ht?: number;
+  handling_cost_ht?: number;
+  insurance_cost_ht?: number;
+  fees_vat_rate?: number;
+}
+
+/**
+ * Interface pour les lignes personnalisées
+ */
+interface ICustomLine {
+  title: string;
+  description?: string;
+  quantity: number;
+  unit_price_ht: number;
+  vat_rate: number;
+}
+
 interface IPostRequestBody {
   salesOrderId: string;
   expiryDays?: number; // Nombre de jours avant expiration (défaut: 30)
+  fees?: IFeesData;
+  customLines?: ICustomLine[];
 }
 
 /**
@@ -136,7 +185,7 @@ export async function POST(request: NextRequest): Promise<
 > {
   try {
     const body = (await request.json()) as IPostRequestBody;
-    const { salesOrderId, expiryDays = 30 } = body;
+    const { salesOrderId, expiryDays = 30, fees, customLines } = body;
 
     if (!salesOrderId) {
       return NextResponse.json(
@@ -232,10 +281,10 @@ export async function POST(request: NextRequest): Promise<
     > | null;
 
     const qontoAddress = {
-      streetAddress: billingAddress?.street || billingAddress?.address || '',
-      city: billingAddress?.city || 'Paris',
-      zipCode: billingAddress?.postal_code || '75001',
-      countryCode: billingAddress?.country || 'FR',
+      streetAddress: billingAddress?.street ?? billingAddress?.address ?? '',
+      city: billingAddress?.city ?? 'Paris',
+      zipCode: billingAddress?.postal_code ?? '75001',
+      countryCode: billingAddress?.country ?? 'FR',
     };
 
     const qontoClientType =
@@ -272,6 +321,77 @@ export async function POST(request: NextRequest): Promise<
       },
       vatRate: String(item.tax_rate ?? 0.2),
     }));
+
+    // Déterminer la TVA des frais (priorité: body > commande > défaut 20%)
+    const feesVatRate = fees?.fees_vat_rate ?? typedOrder.fees_vat_rate ?? 0.2;
+
+    // Ajouter les frais de livraison
+    const shippingCost =
+      fees?.shipping_cost_ht ?? typedOrder.shipping_cost_ht ?? 0;
+    if (shippingCost > 0) {
+      items.push({
+        title: 'Frais de livraison',
+        description: undefined,
+        quantity: '1',
+        unit: 'forfait',
+        unitPrice: {
+          value: String(shippingCost),
+          currency: 'EUR',
+        },
+        vatRate: String(feesVatRate),
+      });
+    }
+
+    // Ajouter les frais de manutention
+    const handlingCost =
+      fees?.handling_cost_ht ?? typedOrder.handling_cost_ht ?? 0;
+    if (handlingCost > 0) {
+      items.push({
+        title: 'Frais de manutention',
+        description: undefined,
+        quantity: '1',
+        unit: 'forfait',
+        unitPrice: {
+          value: String(handlingCost),
+          currency: 'EUR',
+        },
+        vatRate: String(feesVatRate),
+      });
+    }
+
+    // Ajouter les frais d'assurance
+    const insuranceCost =
+      fees?.insurance_cost_ht ?? typedOrder.insurance_cost_ht ?? 0;
+    if (insuranceCost > 0) {
+      items.push({
+        title: "Frais d'assurance",
+        description: undefined,
+        quantity: '1',
+        unit: 'forfait',
+        unitPrice: {
+          value: String(insuranceCost),
+          currency: 'EUR',
+        },
+        vatRate: String(feesVatRate),
+      });
+    }
+
+    // Ajouter les lignes personnalisées (custom lines)
+    if (customLines && customLines.length > 0) {
+      for (const line of customLines) {
+        items.push({
+          title: line.title,
+          description: line.description,
+          quantity: String(line.quantity),
+          unit: 'pièce',
+          unitPrice: {
+            value: String(line.unit_price_ht),
+            currency: 'EUR',
+          },
+          vatRate: String(line.vat_rate),
+        });
+      }
+    }
 
     // Calculer les dates
     const issueDate = new Date().toISOString().split('T')[0];

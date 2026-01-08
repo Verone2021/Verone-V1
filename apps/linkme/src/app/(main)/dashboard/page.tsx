@@ -1,53 +1,45 @@
 'use client';
 
 /**
- * Dashboard LinkMe - Version Refonte 2026
+ * Dashboard LinkMe - Version Épurée 2026
  *
- * Design NICNIC (21st.dev Modern Analytics Dashboard) :
- * - 4 MetricCards full width avec mini-graphiques
- * - Charte graphique LinkMe (4 couleurs officielles)
- * - Top produits vendus
- *
- * Couleurs :
- * - Turquoise #5DBEBB (Commissions)
- * - Bleu Royal #3976BB (Commandes)
- * - Mauve #7E84C0 (Organisations)
- * - Bleu Marine #183559 (Produits)
+ * Design minimaliste et centré :
+ * - Layout max-w-3xl mx-auto (pas plein écran)
+ * - Message de bienvenue simple
+ * - 4 KPIs de commission (Total, Payables, En cours, En attente)
+ * - 3 actions rapides
+ * - Top produits (5 max)
+ * - Lien vers page analytics
  *
  * @module DashboardPage
  * @since 2025-12-10
- * @updated 2026-01-07 - Refonte NICNIC avec MetricCards et graphiques
+ * @updated 2026-01-07 - Refonte épurée
  */
 
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { useMonthlyKPIs } from '@verone/orders/hooks/use-monthly-kpis';
 import {
   Wallet,
   Loader2,
   Package,
   ShoppingBag,
-  TrendingUp,
+  Star,
+  User,
   Award,
-  Building2,
   ArrowRight,
-  Activity,
   CheckCircle,
   Clock,
-  XCircle,
   Banknote,
+  BarChart3,
 } from 'lucide-react';
 
-import { MetricCard, generateChartData } from '../../../components/dashboard';
+import { CommissionKPICard } from '../../../components/dashboard';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useAffiliateAnalytics } from '../../../lib/hooks/use-affiliate-analytics';
-import { useAffiliateProducts } from '../../../lib/hooks/use-affiliate-products';
-import { useEnseigneOrganisations } from '../../../lib/hooks/use-enseigne-organisations';
-import { useCategorizedCatalogProducts } from '../../../lib/hooks/use-linkme-catalog';
 import { useUserAffiliate } from '../../../lib/hooks/use-user-selection';
 
 export default function DashboardPage(): JSX.Element | null {
@@ -55,37 +47,11 @@ export default function DashboardPage(): JSX.Element | null {
   const { user, linkMeRole, loading } = useAuth();
 
   // Affiliate ID pour les requêtes
-  const { data: affiliate, isLoading: affiliateLoading } = useUserAffiliate();
-
-  // KPIs mensuels avec variations (hook partagé - source de vérité)
-  const { data: monthlyKPIs, isLoading: kpisLoading } = useMonthlyKPIs({
-    affiliateId: affiliate?.id,
-    enabled: !!affiliate?.id,
-  });
+  const { data: _affiliate, isLoading: affiliateLoading } = useUserAffiliate();
 
   // Analytics pour commissions + top produits (all-time via commissionsByStatus)
   const { data: analytics, isLoading: analyticsLoading } =
-    useAffiliateAnalytics('year');
-
-  // Organisations de l'enseigne (visible uniquement pour enseigne_admin)
-  const { data: organisations = [], isLoading: orgsLoading } =
-    useEnseigneOrganisations(affiliate?.id ?? null, {
-      enabled: !!affiliate?.id && linkMeRole?.role === 'enseigne_admin',
-    });
-
-  // Produits catalogue (général + sur mesure)
-  const {
-    generalProducts = [],
-    customProducts = [],
-    isLoading: catalogLoading,
-  } = useCategorizedCatalogProducts(
-    linkMeRole?.enseigne_id ?? null,
-    linkMeRole?.organisation_id ?? null
-  );
-
-  // Produits créés par l'affilié (filière)
-  const { data: affiliateProducts = [], isLoading: affiliateProductsLoading } =
-    useAffiliateProducts();
+    useAffiliateAnalytics('all');
 
   // Rediriger si non connecté
   useEffect(() => {
@@ -93,12 +59,6 @@ export default function DashboardPage(): JSX.Element | null {
       router.push('/login');
     }
   }, [user, loading, router]);
-
-  // Générer les données de graphique (mock pour l'instant)
-  const commissionsChartData = useMemo(() => generateChartData(12), []);
-  const ordersChartData = useMemo(() => generateChartData(12), []);
-  const orgsChartData = useMemo(() => generateChartData(12), []);
-  const productsChartData = useMemo(() => generateChartData(12), []);
 
   // Afficher loader pendant chargement
   if (loading) {
@@ -121,146 +81,133 @@ export default function DashboardPage(): JSX.Element | null {
     user.email?.split('@')[0] ??
     'vous';
 
-  // ============================================
-  // Données COMMISSIONS
-  // ============================================
-  const totalCommissions = analytics?.totalCommissionsTTCAllTime ?? 0;
-  const lastMonthCommissions = totalCommissions * 0.88; // Mock: -12%
-  const commissionsVariation =
-    lastMonthCommissions > 0
-      ? ((totalCommissions - lastMonthCommissions) / lastMonthCommissions) * 100
-      : 0;
-
-  // ============================================
-  // Données COMMANDES - Total all-time + variation mensuelle
-  // ============================================
-  const totalOrders = monthlyKPIs?.allTime.ordersCount ?? 0;
-  const currentMonthOrders = monthlyKPIs?.currentMonth.ordersCount ?? 0;
-  const avgMonthlyOrders = monthlyKPIs?.monthlyAverage.ordersCount ?? 0;
-  // Variation vs moyenne mensuelle (plus pertinent pour afficher tendance)
-  const ordersVariation = monthlyKPIs?.averageVariations.ordersCount ?? 0;
-
-  // ============================================
-  // Données ORGANISATIONS
-  // ============================================
-  const orgsCount = organisations.length;
-  const isEnseigneAdmin = linkMeRole?.role === 'enseigne_admin';
-
-  // ============================================
-  // Données PRODUITS
-  // ============================================
-  const totalProducts =
-    generalProducts.length + customProducts.length + affiliateProducts.length;
-
-  // Top produits
-  const topProducts = analytics?.topProducts ?? [];
-
   // Loading state combiné
-  const isLoading =
-    affiliateLoading ||
-    analyticsLoading ||
-    kpisLoading ||
-    orgsLoading ||
-    catalogLoading ||
-    affiliateProductsLoading;
+  const isLoading = affiliateLoading || analyticsLoading;
 
-  // Calcul du max pour les barres de progression (basé sur les gains)
-  const maxCommission = Math.max(...topProducts.map(p => p.commissionHT), 1);
+  // Données des commissions par statut
+  const commissionsByStatus = analytics?.commissionsByStatus;
 
-  // Formater les montants
-  const formatCurrency = (amount: number): string => {
-    if (amount >= 1000) {
-      return `${(amount / 1000).toFixed(1)}K €`;
-    }
-    return `${amount.toFixed(0)} €`;
-  };
+  // Top produits (5 max)
+  const topProducts = analytics?.topProducts?.slice(0, 5) ?? [];
 
   return (
     <div className="min-h-screen bg-gray-50/50">
-      {/* Full width container */}
-      <div className="w-full px-6 py-8">
+      {/* Container centré */}
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Section Bienvenue */}
         <section className="mb-8">
           <h1 className="text-2xl font-bold text-[#183559]">
             Bonjour, {firstName}
           </h1>
-          <p className="text-gray-500 mt-1">
-            Voici le résumé de votre activité
-          </p>
+          <p className="text-gray-500 mt-1">Votre tableau de bord</p>
         </section>
 
-        {/* 4 MetricCards - Full Width Layout */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {/* Card 1: Commissions - Turquoise */}
-          <MetricCard
-            title="Commissions"
-            icon={Wallet}
+        {/* 4 KPIs Commissions */}
+        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+          {/* Total TTC - Turquoise */}
+          <CommissionKPICard
+            label="Total"
+            amount={commissionsByStatus?.total?.amountTTC ?? 0}
+            count={commissionsByStatus?.total?.count ?? 0}
             variant="turquoise"
-            value={formatCurrency(totalCommissions)}
-            trend={commissionsVariation}
-            trendLabel={`Vs mois préc.: ${formatCurrency(lastMonthCommissions)}`}
-            chartData={commissionsChartData}
+            icon={Wallet}
             isLoading={isLoading}
           />
 
-          {/* Card 2: Commandes - Bleu Royal (Total all-time) */}
-          <MetricCard
-            title="Commandes"
-            icon={ShoppingBag}
-            variant="royal"
-            value={totalOrders}
-            trend={ordersVariation}
-            trendLabel={`Ce mois: ${currentMonthOrders} | Moy: ${avgMonthlyOrders}/mois`}
-            chartData={ordersChartData}
+          {/* Payables - Vert */}
+          <CommissionKPICard
+            label="Payables"
+            amount={commissionsByStatus?.validated?.amountTTC ?? 0}
+            count={commissionsByStatus?.validated?.count ?? 0}
+            variant="green"
+            icon={CheckCircle}
             isLoading={isLoading}
           />
 
-          {/* Card 3: Organisations - Mauve (enseigne_admin only) */}
-          {isEnseigneAdmin && (
-            <MetricCard
-              title="Organisations"
-              icon={Building2}
-              variant="mauve"
-              value={orgsCount}
-              trend={orgsCount > 0 ? 8.2 : 0}
-              trendLabel={`${orgsCount} établissement${orgsCount > 1 ? 's' : ''} actif${orgsCount > 1 ? 's' : ''}`}
-              chartData={orgsChartData}
-              isLoading={isLoading}
-            />
-          )}
-
-          {/* Card 4: Produits - Bleu Marine */}
-          <MetricCard
-            title="Produits"
-            icon={Package}
-            variant="marine"
-            value={totalProducts}
-            trend={15.4}
-            trendLabel={`Catalogue: ${generalProducts.length} | Sur mesure: ${customProducts.length}`}
-            chartData={productsChartData}
+          {/* En cours de règlement - Bleu */}
+          <CommissionKPICard
+            label="En cours"
+            amount={commissionsByStatus?.requested?.amountTTC ?? 0}
+            count={commissionsByStatus?.requested?.count ?? 0}
+            variant="blue"
+            icon={Banknote}
             isLoading={isLoading}
           />
 
-          {/* Card de remplacement si pas enseigne_admin (pour garder 4 colonnes) */}
-          {!isEnseigneAdmin && (
-            <MetricCard
-              title="Performance"
-              icon={TrendingUp}
-              variant="mauve"
-              value={topProducts.length > 0 ? `${topProducts.length} top` : '0'}
-              trend={topProducts.length > 0 ? 5.6 : 0}
-              trendLabel="Produits les plus vendus"
-              chartData={orgsChartData}
-              isLoading={isLoading}
-            />
-          )}
+          {/* En attente - Orange */}
+          <CommissionKPICard
+            label="En attente"
+            amount={commissionsByStatus?.pending?.amountTTC ?? 0}
+            count={commissionsByStatus?.pending?.count ?? 0}
+            variant="orange"
+            icon={Clock}
+            isLoading={isLoading}
+          />
         </section>
 
-        {/* Section 2 colonnes : Top Produits + Activités */}
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Top Produits Vendus - Colonne gauche */}
-          <div className="bg-white rounded-xl border border-[#7E84C0]/20 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-[#7E84C0]/10">
+        {/* Lien vers Analytics */}
+        <section className="mb-8">
+          <Link
+            href="/analytics"
+            className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 hover:border-[#5DBEBB] hover:text-[#5DBEBB] transition-all"
+          >
+            <BarChart3 className="h-4 w-4" />
+            Voir les statistiques détaillées
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </section>
+
+        {/* Actions rapides */}
+        <section className="mb-8">
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+            Actions rapides
+          </h2>
+          <div className="grid grid-cols-3 gap-3">
+            {/* Ma sélection */}
+            <Link
+              href="/ma-selection"
+              className="flex flex-col items-center gap-2 p-4 bg-white border border-gray-100 rounded-lg hover:bg-amber-50 hover:border-amber-200 transition-colors group"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 group-hover:bg-amber-200 transition-colors">
+                <Star className="h-5 w-5 text-amber-600" />
+              </div>
+              <span className="text-sm font-medium text-gray-700 text-center">
+                Ma sélection
+              </span>
+            </Link>
+
+            {/* Mes commandes */}
+            <Link
+              href="/commandes"
+              className="flex flex-col items-center gap-2 p-4 bg-white border border-gray-100 rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-colors group"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 group-hover:bg-blue-200 transition-colors">
+                <ShoppingBag className="h-5 w-5 text-blue-600" />
+              </div>
+              <span className="text-sm font-medium text-gray-700 text-center">
+                Mes commandes
+              </span>
+            </Link>
+
+            {/* Mon profil */}
+            <Link
+              href="/profil"
+              className="flex flex-col items-center gap-2 p-4 bg-white border border-gray-100 rounded-lg hover:bg-gray-100 hover:border-gray-200 transition-colors group"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 group-hover:bg-gray-200 transition-colors">
+                <User className="h-5 w-5 text-gray-600" />
+              </div>
+              <span className="text-sm font-medium text-gray-700 text-center">
+                Mon profil
+              </span>
+            </Link>
+          </div>
+        </section>
+
+        {/* Top produits vendus */}
+        <section className="mb-8">
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="p-4 sm:p-6 border-b border-gray-100">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#7E84C0]/10">
@@ -271,11 +218,10 @@ export default function DashboardPage(): JSX.Element | null {
                   </h2>
                 </div>
                 <Link
-                  href="/statistiques"
-                  className="text-sm text-gray-500 hover:text-[#5DBEBB] transition-colors flex items-center gap-1"
+                  href="/analytics"
+                  className="text-sm text-gray-500 hover:text-[#5DBEBB] transition-colors"
                 >
-                  <TrendingUp className="h-4 w-4" />
-                  Stats
+                  Tout voir
                 </Link>
               </div>
             </div>
@@ -300,7 +246,7 @@ export default function DashboardPage(): JSX.Element | null {
                   </Link>
                 </div>
               ) : (
-                topProducts.slice(0, 5).map((product, index) => {
+                topProducts.map((product, index) => {
                   const commissionPerUnit =
                     product.quantitySold > 0
                       ? product.commissionHT / product.quantitySold
@@ -339,9 +285,9 @@ export default function DashboardPage(): JSX.Element | null {
                         </p>
                         <p className="text-xs text-gray-500">
                           {product.quantitySold} ×{' '}
-                          {commissionPerUnit.toFixed(0)}€{' → '}
+                          {commissionPerUnit.toFixed(0)}€{' '}
                           <span className="text-[#5DBEBB] font-semibold">
-                            {product.commissionHT.toFixed(0)}€
+                            → {product.commissionHT.toFixed(0)}€
                           </span>
                         </p>
                       </div>
@@ -350,188 +296,12 @@ export default function DashboardPage(): JSX.Element | null {
                 })
               )}
             </div>
-
-            {topProducts.length > 5 && (
-              <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 text-center">
-                <Link
-                  href="/statistiques"
-                  className="text-sm text-[#5DBEBB] hover:underline"
-                >
-                  Voir tous →
-                </Link>
-              </div>
-            )}
-          </div>
-
-          {/* Activités Récentes - Colonne droite */}
-          <div className="bg-white rounded-xl border border-[#3976BB]/20 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-[#3976BB]/10">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#3976BB]/10">
-                  <Activity className="h-5 w-5 text-[#3976BB]" />
-                </div>
-                <h2 className="font-semibold text-[#183559]">
-                  Activités récentes
-                </h2>
-              </div>
-            </div>
-
-            <div className="p-4 space-y-3">
-              {isLoading ? (
-                <div className="p-8 text-center">
-                  <Loader2 className="h-6 w-6 animate-spin text-gray-400 mx-auto" />
-                </div>
-              ) : (
-                <>
-                  {/* Commissions en attente */}
-                  {(analytics?.commissionsByStatus?.pending?.count ?? 0) >
-                    0 && (
-                    <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-50 border border-amber-100">
-                      <Clock className="h-5 w-5 text-amber-500 flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-amber-800">
-                          {analytics?.commissionsByStatus?.pending?.count}{' '}
-                          commission
-                          {(analytics?.commissionsByStatus?.pending?.count ??
-                            0) > 1
-                            ? 's'
-                            : ''}{' '}
-                          en attente
-                        </p>
-                        <p className="text-xs text-amber-600">
-                          {(
-                            analytics?.commissionsByStatus?.pending
-                              ?.amountTTC ?? 0
-                          ).toFixed(2)}{' '}
-                          € TTC
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Commissions validées */}
-                  {(analytics?.commissionsByStatus?.validated?.count ?? 0) >
-                    0 && (
-                    <div className="flex items-center gap-3 p-3 rounded-lg bg-green-50 border border-green-100">
-                      <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-green-800">
-                          {analytics?.commissionsByStatus?.validated?.count}{' '}
-                          commission
-                          {(analytics?.commissionsByStatus?.validated?.count ??
-                            0) > 1
-                            ? 's'
-                            : ''}{' '}
-                          payable
-                          {(analytics?.commissionsByStatus?.validated?.count ??
-                            0) > 1
-                            ? 's'
-                            : ''}
-                        </p>
-                        <p className="text-xs text-green-600">
-                          {(
-                            analytics?.commissionsByStatus?.validated
-                              ?.amountTTC ?? 0
-                          ).toFixed(2)}{' '}
-                          € TTC disponibles
-                        </p>
-                      </div>
-                      <Link
-                        href="/commissions"
-                        className="text-xs text-green-700 hover:underline"
-                      >
-                        Demander →
-                      </Link>
-                    </div>
-                  )}
-
-                  {/* Commissions demandées */}
-                  {(analytics?.commissionsByStatus?.requested?.count ?? 0) >
-                    0 && (
-                    <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 border border-blue-100">
-                      <Banknote className="h-5 w-5 text-blue-500 flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-blue-800">
-                          {analytics?.commissionsByStatus?.requested?.count}{' '}
-                          paiement
-                          {(analytics?.commissionsByStatus?.requested?.count ??
-                            0) > 1
-                            ? 's'
-                            : ''}{' '}
-                          demandé
-                          {(analytics?.commissionsByStatus?.requested?.count ??
-                            0) > 1
-                            ? 's'
-                            : ''}
-                        </p>
-                        <p className="text-xs text-blue-600">
-                          {(
-                            analytics?.commissionsByStatus?.requested
-                              ?.amountTTC ?? 0
-                          ).toFixed(2)}{' '}
-                          € TTC en cours
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Total commandes */}
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100">
-                    <ShoppingBag className="h-5 w-5 text-gray-500 flex-shrink-0" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-700">
-                        {currentMonthOrders} commande
-                        {currentMonthOrders > 1 ? 's' : ''} ce mois
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Moyenne: {avgMonthlyOrders}/mois
-                      </p>
-                    </div>
-                    <Link
-                      href="/commandes"
-                      className="text-xs text-gray-600 hover:underline"
-                    >
-                      Voir →
-                    </Link>
-                  </div>
-
-                  {/* Total commissions générées */}
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-[#5DBEBB]/10 border border-[#5DBEBB]/20">
-                    <Wallet className="h-5 w-5 text-[#5DBEBB] flex-shrink-0" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-[#183559]">
-                        Total généré all-time
-                      </p>
-                      <p className="text-xs text-[#5DBEBB] font-semibold">
-                        {totalCommissions.toFixed(2)} € TTC
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Si aucune activité */}
-                  {(analytics?.commissionsByStatus?.pending?.count ?? 0) ===
-                    0 &&
-                    (analytics?.commissionsByStatus?.validated?.count ?? 0) ===
-                      0 &&
-                    (analytics?.commissionsByStatus?.requested?.count ?? 0) ===
-                      0 &&
-                    currentMonthOrders === 0 && (
-                      <div className="p-4 text-center">
-                        <Activity className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-                        <p className="text-gray-500 text-sm">
-                          Aucune activité récente
-                        </p>
-                      </div>
-                    )}
-                </>
-              )}
-            </div>
           </div>
         </section>
 
         {/* Message si pas de rôle LinkMe */}
         {!linkMeRole && (
-          <div className="mt-8 bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
             <Package className="h-8 w-8 text-amber-400 mx-auto mb-3" />
             <p className="text-amber-800 text-sm">
               Votre compte n&apos;a pas encore de rôle LinkMe configuré.

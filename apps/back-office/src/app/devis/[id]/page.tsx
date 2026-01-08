@@ -23,24 +23,53 @@ import {
   Skeleton,
 } from '@verone/ui';
 import {
+  AlertCircle,
   ArrowLeft,
   ArrowRight,
+  CheckCircle,
   Download,
   ExternalLink,
+  Eye,
   FileEdit,
   Loader2,
   Send,
   Trash2,
 } from 'lucide-react';
 
+interface QuoteItem {
+  title: string;
+  description?: string;
+  quantity: number | string;
+  unit?: string;
+  // Qonto returns unit_price as object { value: string, currency: string }
+  unit_price: number | { value: string; currency: string };
+  vat_rate: number | string;
+  total_amount?: number | { value: string; currency: string };
+}
+
+// Qonto amount type - can be number or object
+type QontoAmount = number | { value: string; currency: string };
+
 interface Quote {
   id: string;
   quote_number: string;
-  status: 'draft' | 'finalized' | 'accepted' | 'declined' | 'expired';
+  number?: string; // Qonto uses 'number' field
+  // Qonto uses 'pending_approval' for drafts
+  status:
+    | 'draft'
+    | 'pending_approval'
+    | 'finalized'
+    | 'accepted'
+    | 'declined'
+    | 'expired';
   currency: string;
-  total_amount: number;
-  total_vat_amount: number;
-  subtotal_amount: number;
+  // Qonto may return amounts as objects { value, currency } or numbers
+  total_amount: QontoAmount;
+  total_amount_cents?: number;
+  total_vat_amount: QontoAmount;
+  total_vat_amount_cents?: number;
+  subtotal_amount: QontoAmount;
+  subtotal_amount_cents?: number;
   issue_date: string;
   expiry_date: string;
   pdf_url?: string;
@@ -49,13 +78,31 @@ interface Quote {
   client?: {
     name: string;
     email?: string;
+    billing_address?: {
+      street_address?: string;
+      city?: string;
+      zip_code?: string;
+      country_code?: string;
+    };
   };
-  items?: Array<{
-    title: string;
-    quantity: number;
-    unit_price: number;
-    vat_rate: number;
-  }>;
+  items?: QuoteItem[];
+}
+
+// Parse Qonto amount - handles both number and object formats
+function parseQontoAmount(
+  amount: QontoAmount | undefined,
+  fallbackCents?: number
+): number {
+  if (amount === undefined || amount === null) {
+    return fallbackCents ? fallbackCents / 100 : 0;
+  }
+  if (typeof amount === 'number') {
+    return amount;
+  }
+  if (typeof amount === 'object' && 'value' in amount) {
+    return parseFloat(amount.value) || 0;
+  }
+  return 0;
 }
 
 function formatAmount(amount: number, currency = 'EUR'): string {
@@ -75,6 +122,7 @@ function StatusBadge({ status }: { status: string }): React.ReactNode {
     'default' | 'secondary' | 'destructive' | 'outline'
   > = {
     draft: 'secondary',
+    pending_approval: 'secondary', // Qonto uses this for drafts
     finalized: 'default',
     accepted: 'default',
     declined: 'destructive',
@@ -83,6 +131,7 @@ function StatusBadge({ status }: { status: string }): React.ReactNode {
 
   const labels: Record<string, string> = {
     draft: 'Brouillon',
+    pending_approval: 'Brouillon', // Qonto uses this for drafts
     finalized: 'Finalisé',
     accepted: 'Accepté',
     declined: 'Refusé',
@@ -237,22 +286,41 @@ export default function QuoteDetailPage(): React.ReactNode {
       const response = await fetch(`/api/qonto/quotes/${id}/pdf`);
 
       if (!response.ok) {
-        throw new Error('Failed to download PDF');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error || `Erreur ${response.status}: ${response.statusText}`
+        );
       }
 
       const blob = await response.blob();
+
+      // Vérifier que le blob contient des données
+      if (blob.size === 0) {
+        throw new Error('Le PDF est vide');
+      }
+
+      // Utiliser le numéro de devis ou l'ID si non disponible
+      const filename = quote.quote_number || quote.number || id;
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `devis-${quote.quote_number}.pdf`;
+      a.download = `devis-${filename}.pdf`;
+      a.style.display = 'none';
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+
+      // Délai avant de révoquer l'URL pour laisser le téléchargement démarrer
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }, 1000);
     } catch (err) {
       toast({
         title: 'Erreur',
-        description: 'Impossible de télécharger le PDF',
+        description:
+          err instanceof Error
+            ? err.message
+            : 'Impossible de télécharger le PDF',
         variant: 'destructive',
       });
     }
@@ -277,8 +345,15 @@ export default function QuoteDetailPage(): React.ReactNode {
     );
   }
 
-  const canFinalize = quote.status === 'draft';
-  const canDelete = quote.status === 'draft';
+  // Qonto uses 'pending_approval' for drafts, we also handle 'draft' for compatibility
+  const isDraft =
+    quote.status === 'draft' || quote.status === 'pending_approval';
+  const isFinalized = ['finalized', 'accepted', 'declined', 'expired'].includes(
+    quote.status
+  );
+
+  const canFinalize = isDraft;
+  const canDelete = isDraft;
   const canConvert =
     quote.status === 'finalized' && !quote.converted_to_invoice_id;
 
@@ -305,6 +380,19 @@ export default function QuoteDetailPage(): React.ReactNode {
 
       {/* Actions */}
       <div className="flex gap-2">
+        {/* Voir PDF - ouvre dans un nouvel onglet */}
+        <Button
+          variant="default"
+          onClick={() => window.open(`/api/qonto/quotes/${id}/view`, '_blank')}
+        >
+          <Eye className="mr-2 h-4 w-4" />
+          Voir PDF
+        </Button>
+        {/* Télécharger PDF */}
+        <Button variant="outline" onClick={handleDownloadPdf}>
+          <Download className="mr-2 h-4 w-4" />
+          Télécharger PDF
+        </Button>
         {canFinalize && (
           <Button
             onClick={() => setShowFinalizeWarning(true)}
@@ -315,7 +403,7 @@ export default function QuoteDetailPage(): React.ReactNode {
             ) : (
               <Send className="mr-2 h-4 w-4" />
             )}
-            Finaliser
+            Envoyer au client
           </Button>
         )}
         {canConvert && (
@@ -338,27 +426,53 @@ export default function QuoteDetailPage(): React.ReactNode {
             Supprimer
           </Button>
         )}
-        {quote.status !== 'draft' && (
-          <>
-            <Button variant="outline" onClick={handleDownloadPdf}>
-              <Download className="mr-2 h-4 w-4" />
-              Télécharger PDF
-            </Button>
-            {quote.public_url && (
-              <Button variant="outline" asChild>
-                <a
-                  href={quote.public_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  Voir sur Qonto
-                </a>
-              </Button>
-            )}
-          </>
+        {quote.public_url && (
+          <Button variant="outline" asChild>
+            <a
+              href={quote.public_url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Voir sur Qonto
+            </a>
+          </Button>
         )}
       </div>
+
+      {/* Draft notice */}
+      {isDraft && (
+        <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
+          <div>
+            <p className="font-medium text-blue-800">
+              Ce devis est en brouillon
+            </p>
+            <p className="mt-1 text-sm text-blue-700">
+              Vous pouvez télécharger le PDF à tout moment. Pour convertir ce
+              devis en facture, vous devez d&apos;abord l&apos;envoyer au
+              client.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Finalized notice */}
+      {isFinalized && !quote.converted_to_invoice_id && (
+        <div className="flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 p-4">
+          <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-600" />
+          <div>
+            <p className="font-medium text-green-800">
+              Devis finalisé - PDF disponible
+            </p>
+            <p className="mt-1 text-sm text-green-700">
+              Vous pouvez télécharger le PDF et le partager avec votre client.
+              {quote.status === 'finalized' &&
+                ' Si le client accepte, vous pouvez convertir ce devis en facture.'}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Converted notice */}
       {quote.converted_to_invoice_id && (
@@ -378,6 +492,99 @@ export default function QuoteDetailPage(): React.ReactNode {
         </div>
       )}
 
+      {/* Items/Articles */}
+      {quote.items && quote.items.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              Articles ({quote.items.length} ligne
+              {quote.items.length > 1 ? 's' : ''})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b text-left text-sm text-muted-foreground">
+                    <th className="pb-3 font-medium">Article</th>
+                    <th className="pb-3 text-right font-medium">Qté</th>
+                    <th className="pb-3 text-right font-medium">Prix HT</th>
+                    <th className="pb-3 text-right font-medium">TVA</th>
+                    <th className="pb-3 text-right font-medium">Total HT</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {quote.items.map((item, index) => {
+                    const qty =
+                      typeof item.quantity === 'string'
+                        ? parseFloat(item.quantity)
+                        : item.quantity;
+                    const vatRate =
+                      typeof item.vat_rate === 'string'
+                        ? parseFloat(item.vat_rate)
+                        : item.vat_rate;
+                    // Handle unit_price as number or object { value, currency }
+                    const unitPrice =
+                      typeof item.unit_price === 'object' && item.unit_price
+                        ? parseFloat(item.unit_price.value)
+                        : typeof item.unit_price === 'number'
+                          ? item.unit_price
+                          : 0;
+                    const totalHT = qty * unitPrice;
+                    const vatPercent = vatRate < 1 ? vatRate * 100 : vatRate;
+
+                    return (
+                      <tr
+                        key={index}
+                        className="border-b last:border-0 hover:bg-muted/50"
+                      >
+                        <td className="py-4">
+                          <p className="font-medium">{item.title}</p>
+                          {item.description && (
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              {item.description}
+                            </p>
+                          )}
+                          {item.unit && (
+                            <p className="mt-0.5 text-xs text-muted-foreground">
+                              Unité: {item.unit}
+                            </p>
+                          )}
+                        </td>
+                        <td className="py-4 text-right tabular-nums">{qty}</td>
+                        <td className="py-4 text-right tabular-nums">
+                          {formatAmount(unitPrice)}
+                        </td>
+                        <td className="py-4 text-right tabular-nums">
+                          {vatPercent.toFixed(0)}%
+                        </td>
+                        <td className="py-4 text-right font-medium tabular-nums">
+                          {formatAmount(totalHT)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Empty state for items */}
+      {(!quote.items || quote.items.length === 0) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Articles</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              Aucun article dans ce devis.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Content */}
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
@@ -392,6 +599,23 @@ export default function QuoteDetailPage(): React.ReactNode {
                 <p className="text-sm text-muted-foreground">
                   {quote.client.email}
                 </p>
+              )}
+              {quote.client?.billing_address && (
+                <div className="mt-2 text-sm text-muted-foreground">
+                  {quote.client.billing_address.street_address && (
+                    <p>{quote.client.billing_address.street_address}</p>
+                  )}
+                  {(quote.client.billing_address.zip_code ??
+                    quote.client.billing_address.city) && (
+                    <p>
+                      {quote.client.billing_address.zip_code}{' '}
+                      {quote.client.billing_address.city}
+                    </p>
+                  )}
+                  {quote.client.billing_address.country_code && (
+                    <p>{quote.client.billing_address.country_code}</p>
+                  )}
+                </div>
               )}
             </div>
             <div>
@@ -414,18 +638,86 @@ export default function QuoteDetailPage(): React.ReactNode {
             <CardTitle>Montants</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Sous-total HT</span>
-              <span>{formatAmount(quote.subtotal_amount)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">TVA</span>
-              <span>{formatAmount(quote.total_vat_amount)}</span>
-            </div>
-            <div className="flex justify-between border-t pt-2 text-lg font-bold">
-              <span>Total TTC</span>
-              <span>{formatAmount(quote.total_amount)}</span>
-            </div>
+            {(() => {
+              // Calculer les montants à partir des items si l'API ne les retourne pas
+              let subtotalHT = parseQontoAmount(
+                quote.subtotal_amount,
+                quote.subtotal_amount_cents
+              );
+              let totalVAT = parseQontoAmount(
+                quote.total_vat_amount,
+                quote.total_vat_amount_cents
+              );
+              const totalTTC = parseQontoAmount(
+                quote.total_amount,
+                quote.total_amount_cents
+              );
+
+              // Si subtotal est 0 mais qu'on a des items, calculer depuis les items
+              if (subtotalHT === 0 && quote.items && quote.items.length > 0) {
+                subtotalHT = quote.items.reduce((sum, item) => {
+                  const qty =
+                    typeof item.quantity === 'string'
+                      ? parseFloat(item.quantity)
+                      : item.quantity;
+                  const unitPrice =
+                    typeof item.unit_price === 'object' && item.unit_price
+                      ? parseFloat(item.unit_price.value)
+                      : typeof item.unit_price === 'number'
+                        ? item.unit_price
+                        : 0;
+                  return sum + qty * unitPrice;
+                }, 0);
+              }
+
+              // Calculer la TVA si elle est 0
+              if (totalVAT === 0 && quote.items && quote.items.length > 0) {
+                totalVAT = quote.items.reduce((sum, item) => {
+                  const qty =
+                    typeof item.quantity === 'string'
+                      ? parseFloat(item.quantity)
+                      : item.quantity;
+                  const unitPrice =
+                    typeof item.unit_price === 'object' && item.unit_price
+                      ? parseFloat(item.unit_price.value)
+                      : typeof item.unit_price === 'number'
+                        ? item.unit_price
+                        : 0;
+                  const vatRate =
+                    typeof item.vat_rate === 'string'
+                      ? parseFloat(item.vat_rate)
+                      : item.vat_rate;
+                  // Si vatRate < 1, c'est un pourcentage décimal (0.2 = 20%)
+                  const vatMultiplier = vatRate < 1 ? vatRate : vatRate / 100;
+                  return sum + qty * unitPrice * vatMultiplier;
+                }, 0);
+              }
+
+              return (
+                <>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Sous-total HT</span>
+                    <span className="tabular-nums">
+                      {formatAmount(subtotalHT)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">TVA</span>
+                    <span className="tabular-nums">
+                      {formatAmount(totalVAT)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between border-t pt-2 text-lg font-bold">
+                    <span>Total TTC</span>
+                    <span className="tabular-nums">
+                      {formatAmount(
+                        totalTTC > 0 ? totalTTC : subtotalHT + totalVAT
+                      )}
+                    </span>
+                  </div>
+                </>
+              );
+            })()}
           </CardContent>
         </Card>
       </div>
@@ -437,16 +729,18 @@ export default function QuoteDetailPage(): React.ReactNode {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Finaliser le devis ?</AlertDialogTitle>
+            <AlertDialogTitle>Envoyer le devis au client ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Une fois finalisé, le devis ne pourra plus être modifié. Vous
-              pourrez ensuite le convertir en facture.
+              Le devis sera envoyé par email à{' '}
+              {quote.client?.email || "l'adresse du client"}. Une fois envoyé,
+              le PDF sera disponible au téléchargement et vous pourrez le
+              convertir en facture.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={handleFinalize}>
-              Finaliser
+              Envoyer
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
