@@ -49,6 +49,24 @@ interface ISelection {
   created_at: string;
 }
 
+interface IBranding {
+  primary_color: string;
+  secondary_color: string;
+  accent_color: string;
+  text_color: string;
+  background_color: string;
+  logo_url: string | null;
+}
+
+const DEFAULT_BRANDING: IBranding = {
+  primary_color: '#5DBEBB',
+  secondary_color: '#3976BB',
+  accent_color: '#7E84C0',
+  text_color: '#183559',
+  background_color: '#FFFFFF',
+  logo_url: null,
+};
+
 interface ICartItem extends ISelectionItem {
   quantity: number;
 }
@@ -66,6 +84,7 @@ export default function PublicSelectionPage({
   const { id } = use(params);
   const [selection, setSelection] = useState<ISelection | null>(null);
   const [items, setItems] = useState<ISelectionItem[]>([]);
+  const [branding, setBranding] = useState<IBranding>(DEFAULT_BRANDING);
   const [cart, setCart] = useState<ICartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -103,6 +122,10 @@ export default function PublicSelectionPage({
         setSelection(data.selection as ISelection);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
         setItems((data.items as ISelectionItem[]) ?? []);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        if (data.branding) {
+          setBranding(data.branding as IBranding);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erreur de chargement');
       } finally {
@@ -193,7 +216,12 @@ export default function PublicSelectionPage({
             className="object-cover opacity-60"
           />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-r from-linkme-turquoise to-linkme-royal" />
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(to right, ${branding.primary_color}, ${branding.secondary_color})`,
+            }}
+          />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
         <div className="relative h-full max-w-7xl mx-auto px-4 flex flex-col justify-end pb-8">
@@ -223,7 +251,8 @@ export default function PublicSelectionPage({
       {cartCount > 0 && (
         <button
           onClick={() => setIsEnseigneStepperOpen(true)}
-          className="fixed bottom-6 right-6 z-40 bg-linkme-turquoise text-white px-6 py-4 rounded-full shadow-lg hover:bg-linkme-royal transition-all flex items-center gap-3"
+          className="fixed bottom-6 right-6 z-40 text-white px-6 py-4 rounded-full shadow-lg transition-all flex items-center gap-3 hover:opacity-90"
+          style={{ backgroundColor: branding.primary_color }}
         >
           <ShoppingCart className="h-5 w-5" />
           <span className="font-medium">
@@ -242,9 +271,12 @@ export default function PublicSelectionPage({
               return (
                 <div
                   key={item.id}
-                  className={`bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300 ${
-                    item.is_featured ? 'ring-2 ring-linkme-mauve' : ''
-                  }`}
+                  className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300"
+                  style={
+                    item.is_featured
+                      ? { boxShadow: `0 0 0 2px ${branding.accent_color}` }
+                      : undefined
+                  }
                 >
                   {/* Product Image */}
                   <div className="relative h-56 bg-gray-100 overflow-hidden group">
@@ -264,7 +296,10 @@ export default function PublicSelectionPage({
                     <div className="absolute top-3 left-3 right-3 flex justify-between items-start">
                       {/* Featured Badge - Left */}
                       {item.is_featured && (
-                        <span className="bg-linkme-mauve text-white text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                        <span
+                          className="text-white text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm"
+                          style={{ backgroundColor: branding.accent_color }}
+                        >
                           <Star className="h-3 w-3 fill-current" />
                           Vedette
                         </span>
@@ -273,7 +308,10 @@ export default function PublicSelectionPage({
                       {!item.is_featured && <span />}
                       {/* Stock Badge - Right */}
                       {item.stock_quantity > 0 ? (
-                        <span className="bg-linkme-turquoise text-white text-xs font-medium px-2.5 py-1 rounded-full shadow-sm">
+                        <span
+                          className="text-white text-xs font-medium px-2.5 py-1 rounded-full shadow-sm"
+                          style={{ backgroundColor: branding.primary_color }}
+                        >
                           Stock: {item.stock_quantity}
                         </span>
                       ) : (
@@ -295,7 +333,10 @@ export default function PublicSelectionPage({
 
                     {/* Price */}
                     <div className="flex items-baseline gap-2 mb-4">
-                      <span className="text-xl font-bold text-linkme-marine">
+                      <span
+                        className="text-xl font-bold"
+                        style={{ color: branding.text_color }}
+                      >
                         {formatPrice(item.selling_price_ttc)}
                       </span>
                       <span className="text-sm text-gray-500">TTC</span>
@@ -321,7 +362,8 @@ export default function PublicSelectionPage({
                     ) : (
                       <button
                         onClick={() => addToCart(item)}
-                        className="w-full flex items-center justify-center gap-2 bg-linkme-turquoise text-white py-3 px-4 rounded-lg hover:bg-linkme-royal transition-colors"
+                        className="w-full flex items-center justify-center gap-2 text-white py-3 px-4 rounded-lg transition-colors hover:opacity-90"
+                        style={{ backgroundColor: branding.primary_color }}
                       >
                         <Plus className="h-4 w-4" />
                         Ajouter
@@ -373,7 +415,8 @@ export default function PublicSelectionPage({
                     setIsEnseigneStepperOpen(false);
                     setCart([]);
                   }}
-                  className="px-6 py-2 bg-linkme-marine text-white rounded-lg hover:bg-linkme-royal"
+                  className="px-6 py-2 text-white rounded-lg hover:opacity-90"
+                  style={{ backgroundColor: branding.text_color }}
                 >
                   Fermer
                 </button>
