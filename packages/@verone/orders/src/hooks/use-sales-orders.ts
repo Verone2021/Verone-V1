@@ -128,6 +128,13 @@ export interface SalesOrder {
     city?: string;
   };
   sales_order_items?: SalesOrderItem[];
+
+  // Frais additionnels (HT)
+  shipping_cost_ht?: number;
+  insurance_cost_ht?: number;
+  handling_cost_ht?: number;
+  // TVA appliquée aux frais (différente de la TVA produits)
+  fees_vat_rate?: number; // Ex: 0.20 = 20%
 }
 
 export interface SalesOrderItem {
@@ -177,6 +184,8 @@ export interface CreateSalesOrderData {
   shipping_cost_ht?: number;
   insurance_cost_ht?: number;
   handling_cost_ht?: number;
+  // TVA appliquée aux frais (différente de la TVA produits)
+  fees_vat_rate?: number; // Ex: 0.20 = 20%
   items: CreateSalesOrderItemData[];
 }
 

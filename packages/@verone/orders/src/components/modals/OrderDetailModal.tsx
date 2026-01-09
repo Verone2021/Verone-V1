@@ -300,19 +300,60 @@ export function OrderDetailModal({
                   {/* TOTAUX (bas de table) */}
                   <Separator className="my-4" />
                   {(() => {
-                    // Calcul correct des totaux
-                    const productsHT = order.total_ht || 0;
-                    const shippingHT = (order as any).shipping_cost_ht || 0;
-                    const insuranceHT = (order as any).insurance_cost_ht || 0;
-                    const handlingHT = (order as any).handling_cost_ht || 0;
-                    const totalHT =
-                      productsHT + shippingHT + insuranceHT + handlingHT;
-                    const taxRate = (order as any).tax_rate || 0.2;
-                    const tvaAmount = totalHT * taxRate;
-                    const totalTTC = totalHT + tvaAmount;
+                    // === CALCUL TVA PAR LIGNE DE PRODUIT ===
+                    // Grouper les lignes par taux de TVA
+                    const tvaByRate: Record<
+                      number,
+                      { ht: number; tva: number }
+                    > = {};
+                    let productsHT = 0;
+
+                    order.sales_order_items?.forEach(item => {
+                      const lineHT =
+                        item.quantity *
+                        item.unit_price_ht *
+                        (1 - (item.discount_percentage || 0) / 100);
+                      const lineTaxRate = item.tax_rate || 0.2;
+                      const lineTVA = lineHT * lineTaxRate;
+
+                      productsHT += lineHT;
+
+                      if (!tvaByRate[lineTaxRate]) {
+                        tvaByRate[lineTaxRate] = { ht: 0, tva: 0 };
+                      }
+                      tvaByRate[lineTaxRate].ht += lineHT;
+                      tvaByRate[lineTaxRate].tva += lineTVA;
+                    });
+
+                    // Trier les taux de TVA (du plus élevé au plus bas)
+                    const sortedRates = Object.keys(tvaByRate)
+                      .map(Number)
+                      .sort((a, b) => b - a);
+
+                    // TVA totale produits
+                    const totalProductsTVA = Object.values(tvaByRate).reduce(
+                      (sum, v) => sum + v.tva,
+                      0
+                    );
+
+                    // === FRAIS (toujours affichés, même à 0) ===
+                    const shippingHT = order.shipping_cost_ht || 0;
+                    const insuranceHT = order.insurance_cost_ht || 0;
+                    const handlingHT = order.handling_cost_ht || 0;
+                    const totalFeesHT = shippingHT + insuranceHT + handlingHT;
+
+                    // TVA des frais (taux unique pour tous les frais)
+                    const feesVatRate = order.fees_vat_rate || 0.2;
+                    const feesTVA = totalFeesHT * feesVatRate;
+
+                    // === TOTAUX GLOBAUX ===
+                    const totalHT = productsHT + totalFeesHT;
+                    const totalTVA = totalProductsTVA + feesTVA;
+                    const totalTTC = totalHT + totalTVA;
 
                     return (
                       <div className="space-y-2 text-right">
+                        {/* Total HT Produits */}
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-600">
                             Total HT produits :
@@ -321,44 +362,56 @@ export function OrderDetailModal({
                             {formatCurrency(productsHT)}
                           </span>
                         </div>
-                        {/* Frais additionnels */}
-                        {(shippingHT > 0 ||
-                          insuranceHT > 0 ||
-                          handlingHT > 0) && (
-                          <>
-                            {shippingHT > 0 && (
-                              <div className="flex justify-between text-sm text-gray-600">
-                                <span>Frais de livraison HT :</span>
-                                <span>{formatCurrency(shippingHT)}</span>
-                              </div>
-                            )}
-                            {insuranceHT > 0 && (
-                              <div className="flex justify-between text-sm text-gray-600">
-                                <span>Frais d'assurance HT :</span>
-                                <span>{formatCurrency(insuranceHT)}</span>
-                              </div>
-                            )}
-                            {handlingHT > 0 && (
-                              <div className="flex justify-between text-sm text-gray-600">
-                                <span>Frais de manutention HT :</span>
-                                <span>{formatCurrency(handlingHT)}</span>
-                              </div>
-                            )}
-                          </>
-                        )}
-                        {/* Total HT global (produits + frais) si frais existent */}
-                        {(shippingHT > 0 ||
-                          insuranceHT > 0 ||
-                          handlingHT > 0) && (
-                          <div className="flex justify-between text-sm font-medium pt-1 border-t border-dashed">
-                            <span className="text-gray-700">Total HT :</span>
-                            <span>{formatCurrency(totalHT)}</span>
+
+                        {/* Frais additionnels - TOUJOURS affichés */}
+                        <div className="pt-2 mt-2 border-t border-dashed space-y-1">
+                          <div className="flex justify-between text-sm text-gray-600">
+                            <span>Frais de livraison HT :</span>
+                            <span>{formatCurrency(shippingHT)}</span>
                           </div>
-                        )}
-                        <div className="flex justify-between text-sm text-gray-600">
-                          <span>TVA ({(taxRate * 100).toFixed(0)}%) :</span>
-                          <span>{formatCurrency(tvaAmount)}</span>
+                          <div className="flex justify-between text-sm text-gray-600">
+                            <span>Frais d'assurance HT :</span>
+                            <span>{formatCurrency(insuranceHT)}</span>
+                          </div>
+                          <div className="flex justify-between text-sm text-gray-600">
+                            <span>Frais de manutention HT :</span>
+                            <span>{formatCurrency(handlingHT)}</span>
+                          </div>
                         </div>
+
+                        {/* Total HT global */}
+                        <div className="flex justify-between text-sm font-medium pt-2 border-t">
+                          <span className="text-gray-700">Total HT :</span>
+                          <span>{formatCurrency(totalHT)}</span>
+                        </div>
+
+                        {/* TVA par taux (produits) */}
+                        <div className="pt-2 border-t border-dashed space-y-1">
+                          {sortedRates.map(rate => (
+                            <div
+                              key={rate}
+                              className="flex justify-between text-sm text-gray-600"
+                            >
+                              <span>
+                                TVA{' '}
+                                {(rate * 100).toFixed(rate === 0.055 ? 1 : 0)}%
+                                (produits) :
+                              </span>
+                              <span>{formatCurrency(tvaByRate[rate].tva)}</span>
+                            </div>
+                          ))}
+                          {/* TVA frais (si frais > 0) */}
+                          {totalFeesHT > 0 && (
+                            <div className="flex justify-between text-sm text-gray-600">
+                              <span>
+                                TVA {(feesVatRate * 100).toFixed(0)}% (frais) :
+                              </span>
+                              <span>{formatCurrency(feesTVA)}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Total TTC */}
                         <Separator />
                         <div className="flex justify-between text-base font-bold">
                           <span>Total TTC :</span>
