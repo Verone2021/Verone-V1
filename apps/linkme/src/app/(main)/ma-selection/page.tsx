@@ -13,6 +13,7 @@
 
 import { useState } from 'react';
 
+import Image from 'next/image';
 import Link from 'next/link';
 
 import {
@@ -299,7 +300,7 @@ export default function MaSelectionPage(): React.JSX.Element {
 // Composant OnboardingStep
 // ============================================================================
 
-interface OnboardingStepProps {
+interface IOnboardingStepProps {
   step: number;
   icon: React.ReactNode;
   title: string;
@@ -311,7 +312,7 @@ function OnboardingStep({
   icon,
   title,
   description,
-}: OnboardingStepProps): React.JSX.Element {
+}: IOnboardingStepProps): React.JSX.Element {
   return (
     <div className="flex items-center gap-3 bg-white/60 rounded-xl p-3">
       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linkme-turquoise text-white text-sm font-bold flex-shrink-0">
@@ -332,11 +333,11 @@ function OnboardingStep({
 // Composant SelectionCard - Style catalogue avec hover effects
 // ============================================================================
 
-interface SelectionCardProps {
+interface ISelectionCardProps {
   selection: UserSelection;
 }
 
-function SelectionCard({ selection }: SelectionCardProps): React.JSX.Element {
+function SelectionCard({ selection }: ISelectionCardProps): React.JSX.Element {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -348,10 +349,11 @@ function SelectionCard({ selection }: SelectionCardProps): React.JSX.Element {
       {/* Image header avec zoom au hover */}
       <div className="relative h-40 overflow-hidden">
         {selection.image_url ? (
-          <img
+          <Image
             src={selection.image_url}
             alt={selection.name}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+            fill
+            className="object-cover group-hover:scale-110 transition-transform duration-700"
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-linkme-turquoise/20 via-linkme-royal/10 to-linkme-mauve/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-700">
@@ -389,9 +391,9 @@ function SelectionCard({ selection }: SelectionCardProps): React.JSX.Element {
           </span>
         </div>
 
-        {/* Actions au hover (slide-up) */}
+        {/* Actions au hover (slide-up) - z-10 pour être au-dessus du lien invisible */}
         <div
-          className={`absolute bottom-0 left-0 right-0 p-4 transition-all duration-300 ${
+          className={`absolute bottom-0 left-0 right-0 p-4 transition-all duration-300 z-10 ${
             isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
           }`}
         >
@@ -415,7 +417,7 @@ function SelectionCard({ selection }: SelectionCardProps): React.JSX.Element {
                 <button
                   onClick={e => {
                     e.preventDefault();
-                    navigator.clipboard.writeText(
+                    void navigator.clipboard.writeText(
                       `${window.location.origin}/s/${selection.slug ?? selection.id}`
                     );
                   }}
