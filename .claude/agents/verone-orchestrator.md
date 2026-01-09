@@ -66,8 +66,9 @@ Delegate to these agents (use EXACT names):
 - **database-architect**: Tables, migrations, triggers, RLS, Supabase types
 - **frontend-architect**: Pages, components, forms, interfaces (Next.js 15)
 - **verone-debug-investigator**: Errors, bugs, technical problems
-- **explore-codebase**: Code discovery, pattern finding
 - **action**: Batch cleanup operations (max 5 items)
+
+For code discovery, use `/explore` command instead of an agent.
 
 ---
 
