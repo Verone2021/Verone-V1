@@ -330,7 +330,10 @@ function InvoicesTable({
             <TableCell className="text-right">
               <div className="flex justify-end gap-1">
                 <Button variant="ghost" size="icon" asChild>
-                  <Link href={`/factures/${invoice.id}`} title="Voir">
+                  <Link
+                    href={`/factures/${invoice.id}?type=invoice`}
+                    title="Voir"
+                  >
                     <Eye className="h-4 w-4" />
                   </Link>
                 </Button>
@@ -861,8 +864,11 @@ export default function FacturationPage() {
   }, [invoices]);
 
   // Handler pour voir une facture
-  const handleView = (id: string) => {
-    window.location.href = `/factures/${id}`;
+  const handleView = (
+    id: string,
+    type: 'invoice' | 'quote' | 'credit_note' = 'invoice'
+  ) => {
+    window.location.href = `/factures/${id}?type=${type}`;
   };
 
   // Handler sync Qonto
@@ -1202,7 +1208,10 @@ export default function FacturationPage() {
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
                             <Button variant="ghost" size="icon" asChild>
-                              <Link href={`/devis/${quote.id}`} title="Voir">
+                              <Link
+                                href={`/factures/${quote.id}?type=quote`}
+                                title="Voir"
+                              >
                                 <Eye className="h-4 w-4" />
                               </Link>
                             </Button>
@@ -1336,7 +1345,7 @@ export default function FacturationPage() {
                         <TableCell>
                           {creditNote.invoice_id ? (
                             <Link
-                              href={`/factures/${creditNote.invoice_id}`}
+                              href={`/factures/${creditNote.invoice_id}?type=invoice`}
                               className="text-primary hover:underline font-mono text-sm"
                             >
                               {creditNote.invoice?.invoice_number ??
@@ -1364,7 +1373,9 @@ export default function FacturationPage() {
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
                             <Button variant="ghost" size="icon" asChild>
-                              <Link href={`/avoirs/${creditNote.id}`}>
+                              <Link
+                                href={`/factures/${creditNote.id}?type=credit_note`}
+                              >
                                 <Eye className="h-4 w-4" />
                               </Link>
                             </Button>
