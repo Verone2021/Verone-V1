@@ -18,6 +18,7 @@ L'application utilisait **API Routes** (`/api/purchase-receptions/validate`, `/a
 4. **Confusion terminologique** : Utilisation incorrecte du terme "API" pour des opérations internes
 
 **Sources** :
+
 - [Next.js Server Actions vs API Routes (Wisp CMS)](https://www.wisp.blog/blog/server-actions-vs-api-routes-in-nextjs-15-which-should-i-use)
 - [Next.js Official Docs - Server Actions](https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions-and-mutations)
 
@@ -43,7 +44,9 @@ const response = await fetch('/api/purchase-receptions/validate', {
 });
 
 // APRÈS (Server Action - best practice Next.js 15)
-const { validatePurchaseReception } = await import('../actions/purchase-receptions');
+const { validatePurchaseReception } = await import(
+  '../actions/purchase-receptions'
+);
 const result = await validatePurchaseReception(payload);
 ```
 
@@ -75,11 +78,13 @@ const result = await validatePurchaseReception(payload);
 **ANNULÉE** : Migration `20251122_010_sync_quantity_triggers.sql` supprimée
 
 **Raison** : Analyse approfondie a révélé **CONFLITS MAJEURS** avec triggers existants :
+
 - ❌ Double UPDATE `stock_real` (triggers existants + nouveaux triggers)
 - ❌ Double UPDATE `stock_forecasted_in/out`
 - ❌ Risque corruption données stock en production
 
 **Découverte** : Les triggers existants (migration `20251120163000_restore_purchase_order_stock_triggers.sql`) gèrent **DÉJÀ** toute la logique stock :
+
 - ✅ Tables `purchase_order_receptions` et `sales_order_shipments` existent
 - ✅ Triggers synchronisent `quantity_received` / `quantity_shipped`
 - ✅ Triggers mettent à jour `stock_real`, `stock_forecasted_in/out`
@@ -92,23 +97,26 @@ const result = await validatePurchaseReception(payload);
 **Migration active** : `20251120163000_restore_purchase_order_stock_triggers.sql`
 
 **10 triggers existants préservés** :
+
 1. `trigger_po_update_forecasted_in` - Validation PO → stock_forecasted_in
 2. `trigger_reception_update_stock` - Réception → stock_real + sync quantity_received
 3. `trigger_so_update_forecasted_out` - Validation SO → stock_forecasted_out
 4. `trigger_shipment_update_stock` - Expédition → stock_real + sync quantity_shipped
 5. `trigger_update_po_status_after_reception` - Status PO (received/partially_received)
 6. `trigger_update_so_status_after_shipment` - Status SO (shipped/partially_shipped)
-7-10. Triggers alertes stock + notifications
+   7-10. Triggers alertes stock + notifications
 
 **Workflow complet géré** : Stock prévisionnel + stock réel + synchronisation colonnes
 
 ### 3. Server Actions
 
 **Fichiers créés** :
+
 - `packages/@verone/orders/src/actions/purchase-receptions.ts`
 - `packages/@verone/orders/src/actions/sales-shipments.ts`
 
 **Fonctionnalités** :
+
 - Directive `'use server'`
 - Validation Zod stricte
 - Error handling structuré
@@ -117,6 +125,7 @@ const result = await validatePurchaseReception(payload);
 ### 4. Hooks Modifiés
 
 **Fichiers modifiés** :
+
 - `packages/@verone/orders/src/hooks/use-purchase-receptions.ts:170`
 - `packages/@verone/orders/src/hooks/use-sales-shipments.ts:230`
 
@@ -125,6 +134,7 @@ const result = await validatePurchaseReception(payload);
 ### 5. Suppression
 
 **Fichiers supprimés** :
+
 - `apps/back-office/src/app/api/purchase-receptions/`
 - `apps/back-office/src/app/api/sales-shipments/`
 
@@ -132,12 +142,12 @@ const result = await validatePurchaseReception(payload);
 
 ## 📊 Métriques Success
 
-| Métrique | Objectif | Validation |
-|----------|----------|------------|
-| Console errors | 0 | ✅ Règle sacrée |
-| Performance | +15-30% | ✅ Server Actions vs API Routes |
-| Traçabilité | 100% réceptions/expéditions | ✅ Tables séparées utilisées |
-| Type-safety | End-to-end | ✅ TypeScript natif |
+| Métrique       | Objectif                    | Validation                      |
+| -------------- | --------------------------- | ------------------------------- |
+| Console errors | 0                           | ✅ Règle sacrée                 |
+| Performance    | +15-30%                     | ✅ Server Actions vs API Routes |
+| Traçabilité    | 100% réceptions/expéditions | ✅ Tables séparées utilisées    |
+| Type-safety    | End-to-end                  | ✅ TypeScript natif             |
 
 ---
 
@@ -162,16 +172,19 @@ const result = await validatePurchaseReception(payload);
 ### Pourquoi Migration 010 Annulée
 
 **Conflit #1 : Double UPDATE stock_real sur Réception**
+
 - Trigger existant `trigger_reception_update_stock` : `stock_real += quantity`
 - Nouveau trigger (annulé) : `stock_real += quantity` ENCORE
 - **Résultat** : Stock réel incrémenté DEUX FOIS → Corruption données
 
 **Conflit #2 : Double UPDATE stock_real sur Expédition**
+
 - Trigger existant `trigger_shipment_update_stock` : `stock_real -= quantity`
 - Nouveau trigger (annulé) : `stock_real -= quantity` ENCORE
 - **Résultat** : Stock réel décrémenté DEUX FOIS → Corruption données
 
 **Conflit #3 : Logique quantity_received Contradictoire**
+
 - Trigger existant : Incrémentation (`quantity_received += new_quantity`)
 - Nouveau trigger (annulé) : Recalcul total (SUM depuis table)
 - **Résultat** : Désynchronisation si exécution dans mauvais ordre
@@ -196,11 +209,13 @@ const result = await validatePurchaseReception(payload);
 ### Tables à Conserver
 
 **NE PAS supprimer** `purchase_order_receptions` / `sales_order_shipments` :
+
 - Traçabilité multi-réceptions/expéditions essentielle
 - Métadonnées transporteurs (tracking_number, carrier_name)
 - Intégrations futures (Packlink, Mondial Relay, Chronotruck)
 
 **Approche hybride optimale** :
+
 - Colonnes `quantity_received` / `quantity_shipped` dans `_items` tables → Calculs rapides
 - Tables séparées → Historique détaillé + audit trail
 

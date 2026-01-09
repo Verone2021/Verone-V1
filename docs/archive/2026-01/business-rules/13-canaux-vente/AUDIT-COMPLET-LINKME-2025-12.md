@@ -10,6 +10,7 @@
 LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organisations de créer des sélections de produits personnalisées et de percevoir des commissions sur les ventes.
 
 **Architecture:**
+
 - **apps/back-office** : CMS administrateur LinkMe (port 3000)
 - **apps/linkme** : Application front affiliés (port 3002)
 - **Base de données** : Supabase (tables linkme_affiliates, linkme_selections, linkme_commissions, etc.)
@@ -48,6 +49,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
 ### ✅ Fonctionnalités Opérationnelles
 
 #### 1. Dashboard (page.tsx)
+
 - **Fichier:** `apps/back-office/src/app/canaux-vente/linkme/page.tsx`
 - **Statut:** ✅ Opérationnel
 - **Fonctionnalités:**
@@ -58,6 +60,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
   - Actions rapides
 
 #### 2. Utilisateurs (/utilisateurs)
+
 - **Fichiers:**
   - `apps/back-office/src/app/canaux-vente/linkme/utilisateurs/page.tsx`
   - `apps/back-office/src/app/canaux-vente/linkme/utilisateurs/[id]/page.tsx`
@@ -72,6 +75,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
   - Vue détail utilisateur
 
 #### 3. Enseignes & Organisations (/enseignes)
+
 - **Fichiers:**
   - `apps/back-office/src/app/canaux-vente/linkme/enseignes/page.tsx`
   - `apps/back-office/src/app/canaux-vente/linkme/enseignes/[id]/page.tsx`
@@ -88,6 +92,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
     - Performance
 
 #### 4. Catalogue (/catalogue)
+
 - **Fichiers:**
   - `apps/back-office/src/app/canaux-vente/linkme/catalogue/page.tsx` - Liste produits
   - `apps/back-office/src/app/canaux-vente/linkme/catalogue/[id]/page.tsx` - Détail produit
@@ -104,6 +109,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
   - Configuration marges et commissions
 
 #### 5. Sélections (/selections)
+
 - **Fichiers:**
   - `apps/back-office/src/app/canaux-vente/linkme/selections/page.tsx`
   - `apps/back-office/src/app/canaux-vente/linkme/selections/[id]/page.tsx`
@@ -117,6 +123,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
   - Stats par sélection (produits, vues, CA)
 
 #### 6. Commandes (/commandes)
+
 - **Fichier:** `apps/back-office/src/app/canaux-vente/linkme/commandes/page.tsx`
 - **Statut:** ✅ Opérationnel
 - **Fonctionnalités:**
@@ -127,6 +134,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
   - Statistiques commandes
 
 #### 7. Rémunération (/commissions)
+
 - **Fichier:** `apps/back-office/src/app/canaux-vente/linkme/commissions/page.tsx`
 - **Statut:** ✅ Opérationnel
 - **Fonctionnalités:**
@@ -136,6 +144,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
   - Filtres et recherche
 
 #### 8. Demandes Paiement (/demandes-paiement)
+
 - **Fichier:** `apps/back-office/src/app/canaux-vente/linkme/demandes-paiement/page.tsx`
 - **Statut:** ✅ Opérationnel
 - **Fonctionnalités:**
@@ -146,6 +155,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
   - Génération factures
 
 #### 9. Analytics (/analytics)
+
 - **Fichiers:**
   - `apps/back-office/src/app/canaux-vente/linkme/analytics/page.tsx` - Vue d'ensemble
   - `apps/back-office/src/app/canaux-vente/linkme/analytics/performance/page.tsx` - Performance globale
@@ -163,6 +173,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
   - Tableau sélections avec métriques
 
 #### 10. Configuration (/configuration)
+
 - **Fichiers:**
   - `apps/back-office/src/app/canaux-vente/linkme/configuration/page.tsx`
   - `apps/back-office/src/app/canaux-vente/linkme/configuration/commissions/page.tsx` (🔒)
@@ -177,6 +188,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
 ### 🎨 Composants Clés (components/)
 
 **Hooks disponibles (14 hooks):**
+
 - `use-linkme-dashboard.ts` - Dashboard KPIs
 - `use-linkme-analytics.ts` - Analytics globales
 - `use-performance-analytics.ts` - Analytics performance
@@ -193,6 +205,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
 - `use-tracking-stats.ts` - Stats tracking
 
 **Composants UI (36 composants):**
+
 - Modals : UserCreateModal, UserEditModal, UserViewModal, LinkMeDeleteUserDialog, LinkMeResetPasswordDialog, CreateLinkMeOrderModal, LinkMeOrderDetailModal, SelectionProductDetailModal, PaymentRequestModalAdmin
 - Sections : DashboardSection, UsersSection, EnseignesSection, AffiliatesSection, SelectionsSection, CommissionsSection, ConfigurationSection
 - Cards : ProductInfoCard, ProductPricingCard, ProductVariantsCard, ProductStatsCard, ProductReadOnlyCard, ProductDetailHeader, ProductMarginEditor, CommissionsStatusCard
@@ -202,6 +215,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
 ### ❌ Fonctionnalités Manquantes/À Développer
 
 #### Priorité HAUTE
+
 1. **Analytics/Rapports** (actuellement désactivé)
    - Génération rapports PDF/Excel
    - Rapports personnalisés (période, affilié, sélection)
@@ -221,6 +235,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
    - Synchronisation stocks
 
 #### Priorité MOYENNE
+
 4. **Notifications système**
    - Alertes admin (nouvelle demande paiement, commande problème)
    - Notifications par email
@@ -239,6 +254,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
    - Comparaison périodes
 
 #### Priorité BASSE
+
 7. **Logs et audit**
    - Historique actions admin
    - Logs connexions
@@ -254,6 +270,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
 ## 🌐 PARTIE 2 : Application LinkMe (Affiliés)
 
 ### Pages Publiques
+
 - `/` - Landing page (page.tsx:38)
 - `/[affiliateSlug]` - Page affilié publique
 - `/[affiliateSlug]/[selectionSlug]` - Boutique sélection publique
@@ -263,6 +280,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
 #### ✅ Fonctionnalités Opérationnelles
 
 ##### 1. Authentification
+
 - **Fichiers:**
   - `apps/linkme/src/app/login/page.tsx`
   - `apps/linkme/src/contexts/AuthContext.tsx`
@@ -274,6 +292,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
   - Auto-redirect selon rôle
 
 ##### 2. Dashboard (/dashboard)
+
 - **Fichier:** `apps/linkme/src/app/dashboard/page.tsx`
 - **Statut:** ✅ Opérationnel
 - **Fonctionnalités:**
@@ -284,6 +303,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
   - Lien vers statistiques détaillées
 
 ##### 3. Catalogue (/catalogue)
+
 - **Fichier:** `apps/linkme/src/app/catalogue/page.tsx`
 - **Statut:** ✅ Opérationnel
 - **Fonctionnalités:**
@@ -297,6 +317,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
   - Modal AddToSelectionModal avec choix marge
 
 ##### 4. Ma Sélection (/ma-selection)
+
 - **Fichiers:**
   - `apps/linkme/src/app/ma-selection/page.tsx` - Liste sélections
   - `apps/linkme/src/app/ma-selection/nouvelle/page.tsx` - Créer sélection
@@ -314,6 +335,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
   - Prévisualisation boutique publique
 
 ##### 5. Commissions (/commissions)
+
 - **Fichiers:**
   - `apps/linkme/src/app/commissions/page.tsx`
   - `apps/linkme/src/app/commissions/demandes/page.tsx`
@@ -329,6 +351,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
   - Historique demandes paiement
 
 ##### 6. Ventes (/ventes)
+
 - **Fichier:** `apps/linkme/src/app/ventes/page.tsx`
 - **Statut:** ✅ Opérationnel
 - **Fonctionnalités:**
@@ -338,6 +361,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
   - Stats ventes
 
 ##### 7. Statistiques (/statistiques)
+
 - **Fichier:** `apps/linkme/src/app/statistiques/page.tsx`
 - **Statut:** ✅ Opérationnel
 - **Fonctionnalités:**
@@ -348,6 +372,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
   - Performance par sélection
 
 ##### 8. E-commerce Public
+
 - **Fichiers:**
   - `apps/linkme/src/app/cart/page.tsx` - Panier
   - `apps/linkme/src/app/checkout/page.tsx` - Passage commande
@@ -366,6 +391,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
   - Tracking commande
 
 ##### 9. API & Webhooks
+
 - **Fichiers:**
   - `apps/linkme/src/app/api/create-order/route.ts`
   - `apps/linkme/src/app/api/webhook/revolut/route.ts`
@@ -380,6 +406,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
 ### 🎨 Composants & Hooks
 
 **Hooks (6 hooks):**
+
 - `use-user-selection.ts` - Sélections utilisateur
 - `use-linkme-catalog.ts` - Catalogue produits
 - `use-linkme-public.ts` - Pages publiques
@@ -388,6 +415,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
 - `use-payment-requests.ts` - Demandes paiement
 
 **Composants (25 composants):**
+
 - **Commissions** : CommissionsChart, CommissionsTable, CommissionKPICard, PaymentRequestModal, InvoiceTemplate
 - **Analytics** : AffiliateKPIGrid, CommissionsOverview, RevenueChart, SelectionPerformanceCard, TopProductsTable
 - **Catalogue** : AddToSelectionModal
@@ -400,6 +428,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
 ### ❌ Fonctionnalités Manquantes/À Développer
 
 #### Priorité HAUTE
+
 1. **Page Profil (/profil)** - ⚠️ MANQUANT
    - Fichier : `apps/linkme/src/app/profil/page.tsx` n'existe pas
    - Lien présent dans dashboard (dashboard/page.tsx:175)
@@ -421,6 +450,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
    - Tutoriel création sélection
 
 #### Priorité MOYENNE
+
 4. **Notifications in-app**
    - Centre notifications
    - Alertes commandes
@@ -440,6 +470,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
    - Preview Open Graph optimisé
 
 #### Priorité BASSE
+
 7. **Favoris/Wishlist**
    - Produits favoris
    - Alertes dispo/prix
@@ -458,6 +489,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
 ## 📊 Métriques Globales
 
 ### CMS Back-Office
+
 - **Pages totales:** 28
 - **Pages opérationnelles:** 24 (86%)
 - **Pages désactivées:** 3 (11%)
@@ -466,6 +498,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
 - **Composants:** 36
 
 ### App Affiliés
+
 - **Pages totales:** 18
 - **Pages opérationnelles:** 17 (94%)
 - **Pages manquantes critiques:** 1 (/profil)
@@ -473,7 +506,9 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
 - **Composants:** 25
 
 ### Architecture Base de Données
+
 **Tables principales:**
+
 - `linkme_affiliates` - Profils business (marges, commissions)
 - `linkme_selections` - Sélections créées par affiliés
 - `linkme_selection_items` - Produits dans sélections
@@ -488,12 +523,14 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
 ## 🎯 Plan de Développement Prioritaire
 
 ### Phase 1 : Corrections critiques (1-2 jours)
+
 1. ✅ Créer page Profil (/profil)
    - Fichier : `apps/linkme/src/app/profil/page.tsx`
    - Composants : EditProfileModal, BankDetailsForm
    - Hook : use-user-profile.ts
 
 ### Phase 2 : Fonctionnalités manquantes (3-5 jours)
+
 2. ✅ Analytics/Rapports (CMS)
    - Export PDF/Excel
    - Rapports personnalisés
@@ -511,12 +548,14 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
    - Emails automatiques
 
 ### Phase 3 : Améliorations (5-7 jours)
+
 6. ✅ Onboarding affilié
 7. ✅ Analytics avancés
 8. ✅ Partage social
 9. ✅ Support/Tickets
 
 ### Phase 4 : Nice-to-have (2-3 jours)
+
 10. ✅ Multi-langue
 11. ✅ Favoris/Wishlist
 12. ✅ Logs audit complets
@@ -526,6 +565,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
 ## 📝 Notes Techniques
 
 ### Patterns Identifiés
+
 - **Auth:** Supabase Auth + user_app_roles (app='linkme')
 - **Data Fetching:** React Query (@tanstack/react-query)
 - **Forms:** React Hook Form + Zod
@@ -535,6 +575,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
 - **Architecture:** Turborepo monorepo
 
 ### Points d'Attention
+
 1. **RLS Policies** - Vérifier que toutes les tables ont des policies correctes
 2. **Migrations** - Documenter migrations Supabase (dossier supabase/migrations/)
 3. **Types** - Générer types Supabase régulièrement
@@ -546,6 +587,7 @@ LinkMe est une plateforme d'affiliation B2B2C permettant aux enseignes et organi
 ## 🔗 Fichiers Critiques
 
 ### CMS Back-Office
+
 ```
 apps/back-office/src/app/canaux-vente/linkme/
 ├── page.tsx                          # Dashboard
@@ -568,6 +610,7 @@ apps/back-office/src/app/canaux-vente/linkme/
 ```
 
 ### App Affiliés
+
 ```
 apps/linkme/src/
 ├── app/
