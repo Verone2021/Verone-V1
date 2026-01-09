@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, useMemo, use } from 'react';
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
+import { PaymentRecordModal, ReconcileTransactionModal } from '@verone/finance';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,6 +53,7 @@ import {
   CheckCircle,
   XCircle,
   Pencil,
+  Landmark,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -140,6 +142,44 @@ function formatAmount(cents: number | undefined, currency = 'EUR'): string {
   }).format(amount);
 }
 
+function formatVatRate(vatRate: string | number | undefined): string {
+  if (vatRate === undefined || vatRate === null) return '-';
+  // Qonto returns vat_rate as decimal (e.g., "0.20" for 20%)
+  const rate = typeof vatRate === 'string' ? parseFloat(vatRate) : vatRate;
+  // If rate is less than 1, it's a decimal - multiply by 100
+  const percentage = rate < 1 ? rate * 100 : rate;
+  return `${percentage.toFixed(percentage % 1 === 0 ? 0 : 1)}%`;
+}
+
+// Calculate totals from items if not provided by API
+function calculateTotalsFromItems(items: QontoInvoiceItem[]): {
+  subtotalCents: number;
+  vatCents: number;
+  totalCents: number;
+} {
+  let subtotalCents = 0;
+  let vatCents = 0;
+
+  for (const item of items) {
+    const quantity = parseFloat(item.quantity) || 0;
+    const unitPrice = parseFloat(item.unit_price?.value || '0');
+    const vatRate = parseFloat(item.vat_rate || '0');
+
+    const itemSubtotal = quantity * unitPrice;
+    // vatRate is decimal (0.20 for 20%)
+    const itemVat = itemSubtotal * vatRate;
+
+    subtotalCents += Math.round(itemSubtotal * 100);
+    vatCents += Math.round(itemVat * 100);
+  }
+
+  return {
+    subtotalCents,
+    vatCents,
+    totalCents: subtotalCents + vatCents,
+  };
+}
+
 function getDocumentTypeLabel(type: DocumentType): string {
   const labels: Record<DocumentType, string> = {
     invoice: 'Facture',
@@ -212,6 +252,8 @@ export default function DocumentDetailPage({
   const [showCreditNoteDialog, setShowCreditNoteDialog] = useState(false);
   const [showAcceptDialog, setShowAcceptDialog] = useState(false);
   const [showDeclineDialog, setShowDeclineDialog] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showReconcileModal, setShowReconcileModal] = useState(false);
 
   // Fetch document data
   useEffect(() => {
@@ -499,6 +541,30 @@ export default function DocumentDetailPage({
     new Date(document.payment_deadline) < new Date() &&
     !isPaid;
 
+  // Calculate totals from items if API doesn't provide them
+  const computedTotals = useMemo(() => {
+    if (!document?.items || document.items.length === 0) {
+      return {
+        subtotalCents: document?.subtotal_amount_cents ?? 0,
+        vatCents: document?.total_vat_amount_cents ?? 0,
+        totalCents: document?.total_amount_cents ?? 0,
+      };
+    }
+    // If API provides the values, use them; otherwise calculate
+    if (
+      document.subtotal_amount_cents !== undefined &&
+      document.total_vat_amount_cents !== undefined
+    ) {
+      return {
+        subtotalCents: document.subtotal_amount_cents,
+        vatCents: document.total_vat_amount_cents,
+        totalCents: document.total_amount_cents ?? 0,
+      };
+    }
+    // Calculate from items
+    return calculateTotalsFromItems(document.items);
+  }, [document]);
+
   // ===== RENDER =====
 
   // Feature flag check
@@ -638,20 +704,24 @@ export default function DocumentDetailPage({
             </Button>
           )}
 
-          {/* Mark as paid (invoices, finalized, not paid) */}
+          {/* Payment actions (invoices, finalized, not paid) */}
           {documentType === 'invoice' && isFinalized && !isPaid && (
-            <Button
-              variant="outline"
-              onClick={handleMarkPaid}
-              disabled={actionLoading === 'markPaid'}
-            >
-              {actionLoading === 'markPaid' ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => setShowPaymentModal(true)}
+              >
                 <CreditCard className="h-4 w-4 mr-2" />
-              )}
-              Marquer payée
-            </Button>
+                Enregistrer paiement
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowReconcileModal(true)}
+              >
+                <Landmark className="h-4 w-4 mr-2" />
+                Rapprochement bancaire
+              </Button>
+            </>
           )}
 
           {/* Convert to invoice (quotes) */}
@@ -786,22 +856,19 @@ export default function DocumentDetailPage({
                 <div>
                   <InfoRow label="Montant HT">
                     {formatAmount(
-                      document.subtotal_amount_cents,
+                      computedTotals.subtotalCents,
                       document.currency
                     )}
                   </InfoRow>
-                  <InfoRow label="TVA">
-                    {formatAmount(
-                      document.total_vat_amount_cents,
-                      document.currency
-                    )}
+                  <InfoRow label="Montant TVA">
+                    {formatAmount(computedTotals.vatCents, document.currency)}
                   </InfoRow>
                   <InfoRow label="Montant TTC">
                     <span className="font-bold">
                       {formatAmount(
                         documentType === 'credit_note'
-                          ? Math.abs(document.total_amount_cents || 0)
-                          : document.total_amount_cents,
+                          ? Math.abs(computedTotals.totalCents)
+                          : computedTotals.totalCents,
                         document.currency
                       )}
                     </span>
@@ -864,7 +931,7 @@ export default function DocumentDetailPage({
                           {item.unit_price?.value} {item.unit_price?.currency}
                         </TableCell>
                         <TableCell className="text-right">
-                          {item.vat_rate}%
+                          {formatVatRate(item.vat_rate)}
                         </TableCell>
                         <TableCell className="text-right font-medium">
                           {item.total_amount?.value}{' '}
@@ -1149,6 +1216,32 @@ export default function DocumentDetailPage({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Payment Record Modal */}
+      {documentType === 'invoice' && (
+        <PaymentRecordModal
+          open={showPaymentModal}
+          onOpenChange={setShowPaymentModal}
+          invoiceId={id}
+          invoiceNumber={document.invoice_number || docNumber}
+          totalAmount={computedTotals.totalCents / 100}
+          currency={document.currency}
+          onSuccess={() => window.location.reload()}
+        />
+      )}
+
+      {/* Reconcile Transaction Modal */}
+      {documentType === 'invoice' && (
+        <ReconcileTransactionModal
+          open={showReconcileModal}
+          onOpenChange={setShowReconcileModal}
+          invoiceId={id}
+          invoiceNumber={document.invoice_number || docNumber}
+          invoiceAmount={computedTotals.totalCents}
+          currency={document.currency}
+          onSuccess={() => window.location.reload()}
+        />
+      )}
     </div>
   );
 }
