@@ -7,6 +7,11 @@ export * from './InvoiceUploadModal';
 export * from './RapprochementModal';
 export * from './RapprochementFromOrderModal'; // Modal inverse: Commande → Transaction
 export * from './InvoiceCreateFromOrderModal'; // Modal: Commande → Facture Qonto
+export * from './InvoiceCreateServiceModal'; // Modal: Facture service (sans commande) (2026-01-07)
+export * from './OrderSelectModal'; // Modal: Selection commande pour facturation
+export * from './CreditNoteCreateModal'; // Modal: Facture → Avoir Qonto (2026-01-07)
+export * from './QuoteCreateFromOrderModal'; // Modal: Commande → Devis Qonto (2026-01-07)
+export * from './QuoteCreateServiceModal'; // Modal: Devis service (sans commande) (2026-01-07)
 export * from './RuleModal'; // SLICE 2: RuleModal universel (création + édition)
 export * from './ApplyExistingWizard'; // Wizard preview/confirm pour application de règles
 
