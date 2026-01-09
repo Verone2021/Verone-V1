@@ -19,11 +19,13 @@ interface SalesStats {
 
 interface Consultation {
   id: string;
-  organisation_name: string;
+  organisation_name: string; // Computed from organisation_id/enseigne_id
   client_email: string;
   status: string;
   created_at: string;
   tarif_maximum: number | null;
+  organisation_id: string | null;
+  enseigne_id: string | null;
 }
 
 interface SalesOrder {
@@ -57,16 +59,46 @@ export function useSalesDashboard() {
     try {
       // ============================================
       // QUERY 1: Consultations actives (status != 'closed')
+      // Note: organisation_name a été remplacé par organisation_id/enseigne_id en déc. 2025
       // ============================================
-      const { data: consultations, error: consultationsError } = await supabase
-        .from('client_consultations')
-        .select(
-          'id, organisation_name, client_email, status, created_at, tarif_maximum'
-        )
-        .neq('status', 'closed')
-        .order('created_at', { ascending: false });
+      const { data: rawConsultations, error: consultationsError } =
+        await supabase
+          .from('client_consultations')
+          .select(
+            'id, organisation_id, enseigne_id, client_email, status, created_at, tarif_maximum'
+          )
+          .neq('status', 'closed')
+          .order('created_at', { ascending: false });
 
       if (consultationsError) throw consultationsError;
+
+      // Enrichir avec le nom de l'organisation ou enseigne
+      const consultations: Consultation[] = [];
+      for (const c of rawConsultations || []) {
+        let organisationName = 'Client inconnu';
+
+        if (c.organisation_id) {
+          const { data: org } = await supabase
+            .from('organisations')
+            .select('legal_name, trade_name')
+            .eq('id', c.organisation_id)
+            .single();
+          organisationName =
+            org?.trade_name || org?.legal_name || 'Organisation inconnue';
+        } else if (c.enseigne_id) {
+          const { data: enseigne } = await supabase
+            .from('enseignes')
+            .select('name')
+            .eq('id', c.enseigne_id)
+            .single();
+          organisationName = enseigne?.name || 'Enseigne inconnue';
+        }
+
+        consultations.push({
+          ...c,
+          organisation_name: organisationName,
+        } as Consultation);
+      }
 
       // ============================================
       // QUERY 2: Commandes en cours (confirmed, partially_shipped)

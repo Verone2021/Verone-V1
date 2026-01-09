@@ -4,7 +4,7 @@
  */
 
 // Périodes disponibles pour les analytics
-export type AnalyticsPeriod = 'week' | 'month' | 'quarter' | 'year';
+export type AnalyticsPeriod = 'all' | 'week' | 'month' | 'quarter' | 'year';
 
 // Données complètes analytics niveau affilié
 export interface AffiliateAnalyticsData {
@@ -46,6 +46,7 @@ export interface RevenueDataPoint {
 export interface CommissionsByStatus {
   pending: CommissionStatusData;
   validated: CommissionStatusData;
+  requested: CommissionStatusData;
   paid: CommissionStatusData;
   total: CommissionStatusData;
 }
@@ -100,12 +101,18 @@ export interface CommissionItem {
   selectionName?: string;
 }
 
-export type CommissionStatus = 'pending' | 'validated' | 'paid' | 'cancelled';
+export type CommissionStatus =
+  | 'pending'
+  | 'validated'
+  | 'requested'
+  | 'paid'
+  | 'cancelled';
 
 // Labels pour les statuts
 export const COMMISSION_STATUS_LABELS: Record<CommissionStatus, string> = {
   pending: 'En attente',
-  validated: 'Validée',
+  validated: 'Payable',
+  requested: 'Demande en cours',
   paid: 'Payée',
   cancelled: 'Annulée',
 };
@@ -113,13 +120,15 @@ export const COMMISSION_STATUS_LABELS: Record<CommissionStatus, string> = {
 // Couleurs pour les statuts
 export const COMMISSION_STATUS_COLORS: Record<CommissionStatus, string> = {
   pending: 'orange',
-  validated: 'blue',
+  validated: 'teal', // Turquoise LinkMe
+  requested: 'blue',
   paid: 'green',
   cancelled: 'red',
 };
 
 // Labels périodes
 export const PERIOD_LABELS: Record<AnalyticsPeriod, string> = {
+  all: 'Tout',
   week: '7 jours',
   month: '30 jours',
   quarter: '90 jours',
@@ -127,7 +136,9 @@ export const PERIOD_LABELS: Record<AnalyticsPeriod, string> = {
 };
 
 // Helper pour calculer la date de début de période
-export function getPeriodStartDate(period: AnalyticsPeriod): Date {
+// Retourne null pour 'all' (pas de filtre de date)
+export function getPeriodStartDate(period: AnalyticsPeriod): Date | null {
+  if (period === 'all') return null;
   const now = new Date();
   switch (period) {
     case 'week':

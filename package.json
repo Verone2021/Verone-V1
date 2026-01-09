@@ -9,6 +9,8 @@
   ],
   "scripts": {
     "dev": "turbo dev",
+    "ports:check": "./scripts/dev-ports-check.sh",
+    "ports:kill": "./scripts/dev-ports-kill.sh",
     "build": "turbo build",
     "start": "turbo start",
     "lint": "turbo lint",
@@ -42,6 +44,7 @@
     "webhook:register": "tsx scripts/setup-packlink-webhook.ts",
     "webhook:register:sandbox": "tsx scripts/setup-packlink-webhook.ts sandbox",
     "webhook:register:prod": "tsx scripts/setup-packlink-webhook.ts production",
+    "validate:pr": "npm run format:check && npm run lint && npm run type-check && npm run build",
     "prepare": "husky"
   },
   "dependencies": {
