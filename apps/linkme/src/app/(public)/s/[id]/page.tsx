@@ -5,17 +5,25 @@ import { use, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 
 import { createClient } from '@verone/utils/supabase/client';
-import { Package, ShoppingCart, Plus, Minus, Check, Store } from 'lucide-react';
+import {
+  Package,
+  ShoppingCart,
+  Plus,
+  Minus,
+  Check,
+  Store,
+  Star,
+} from 'lucide-react';
 
 import { EnseigneStepper } from '@/components/checkout';
 
 const supabase = createClient();
 
-interface SelectionPageProps {
+interface ISelectionPageProps {
   params: Promise<{ id: string }>;
 }
 
-interface SelectionItem {
+interface ISelectionItem {
   id: string;
   product_id: string;
   product_name: string;
@@ -27,20 +35,21 @@ interface SelectionItem {
   margin_rate: number;
   stock_quantity: number;
   category: string | null;
+  is_featured: boolean;
 }
 
-interface Selection {
+interface ISelection {
   id: string;
   name: string;
   description: string | null;
   image_url: string | null;
   affiliate_id: string;
-  /** Timestamp de publication. null = non publié */
+  /** Timestamp de publication. null = non publie */
   published_at: string | null;
   created_at: string;
 }
 
-interface CartItem extends SelectionItem {
+interface ICartItem extends ISelectionItem {
   quantity: number;
 }
 
@@ -51,11 +60,13 @@ function formatPrice(price: number): string {
   }).format(price);
 }
 
-export default function PublicSelectionPage({ params }: SelectionPageProps) {
+export default function PublicSelectionPage({
+  params,
+}: ISelectionPageProps): React.JSX.Element {
   const { id } = use(params);
-  const [selection, setSelection] = useState<Selection | null>(null);
-  const [items, setItems] = useState<SelectionItem[]>([]);
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [selection, setSelection] = useState<ISelection | null>(null);
+  const [items, setItems] = useState<ISelectionItem[]>([]);
+  const [cart, setCart] = useState<ICartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEnseigneStepperOpen, setIsEnseigneStepperOpen] = useState(false);
@@ -68,7 +79,7 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
 
   // Fetch selection data
   useEffect(() => {
-    const fetchSelection = async () => {
+    const fetchSelection = async (): Promise<void> => {
       try {
         // Detect if id is UUID or slug
         const isUuid =
@@ -76,18 +87,22 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
             id
           );
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
         const { data, error: rpcError } = await (supabase.rpc as any)(
           isUuid ? 'get_public_selection' : 'get_public_selection_by_slug',
           isUuid ? { p_selection_id: id } : { p_slug: id }
         );
 
         if (rpcError) throw rpcError;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         if (!data?.success)
-          throw new Error(data?.error || 'Selection non trouvee');
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          throw new Error((data?.error as string) ?? 'Selection non trouvee');
 
-        setSelection(data.selection);
-        setItems(data.items || []);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        setSelection(data.selection as ISelection);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        setItems((data.items as ISelectionItem[]) ?? []);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erreur de chargement');
       } finally {
@@ -95,23 +110,21 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
       }
     };
 
-    fetchSelection();
+    void fetchSelection();
   }, [id]);
 
   // Track view
   useEffect(() => {
     if (selection?.id && !hasTrackedView.current) {
       hasTrackedView.current = true;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (supabase.rpc as any)('track_selection_view', {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      void (supabase.rpc as any)('track_selection_view', {
         p_selection_id: selection.id,
-      })
-        .then(() => {})
-        .catch(() => {});
+      });
     }
   }, [selection?.id]);
 
-  const addToCart = (item: SelectionItem) => {
+  const addToCart = (item: ISelectionItem): void => {
     setCart(prev => {
       const existing = prev.find(c => c.id === item.id);
       if (existing) {
@@ -123,7 +136,7 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
     });
   };
 
-  const updateQuantity = (itemId: string, delta: number) => {
+  const updateQuantity = (itemId: string, delta: number): void => {
     setCart(prev =>
       prev
         .map(c =>
@@ -152,7 +165,7 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
     );
   }
 
-  if (error || !selection) {
+  if (error ?? !selection) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -161,7 +174,7 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
             Selection introuvable
           </h1>
           <p className="text-gray-600">
-            {error || "Cette selection n'existe pas ou n'est plus disponible."}
+            {error ?? "Cette selection n'existe pas ou n'est plus disponible."}
           </p>
         </div>
       </div>
@@ -180,7 +193,7 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
             className="object-cover opacity-60"
           />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600" />
+          <div className="absolute inset-0 bg-gradient-to-r from-linkme-turquoise to-linkme-royal" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
         <div className="relative h-full max-w-7xl mx-auto px-4 flex flex-col justify-end pb-8">
@@ -210,7 +223,7 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
       {cartCount > 0 && (
         <button
           onClick={() => setIsEnseigneStepperOpen(true)}
-          className="fixed bottom-6 right-6 z-40 bg-blue-600 text-white px-6 py-4 rounded-full shadow-lg hover:bg-blue-700 transition-all flex items-center gap-3"
+          className="fixed bottom-6 right-6 z-40 bg-linkme-turquoise text-white px-6 py-4 rounded-full shadow-lg hover:bg-linkme-royal transition-all flex items-center gap-3"
         >
           <ShoppingCart className="h-5 w-5" />
           <span className="font-medium">
@@ -229,7 +242,9 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
               return (
                 <div
                   key={item.id}
-                  className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300"
+                  className={`bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300 ${
+                    item.is_featured ? 'ring-2 ring-linkme-mauve' : ''
+                  }`}
                 >
                   {/* Product Image */}
                   <div className="relative h-56 bg-gray-100 overflow-hidden group">
@@ -245,14 +260,24 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
                         <Package className="h-16 w-16" />
                       </div>
                     )}
-                    {/* Stock Badge */}
-                    <div className="absolute top-3 right-3">
+                    {/* Badges Container */}
+                    <div className="absolute top-3 left-3 right-3 flex justify-between items-start">
+                      {/* Featured Badge - Left */}
+                      {item.is_featured && (
+                        <span className="bg-linkme-mauve text-white text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                          <Star className="h-3 w-3 fill-current" />
+                          Vedette
+                        </span>
+                      )}
+                      {/* Spacer if no featured badge */}
+                      {!item.is_featured && <span />}
+                      {/* Stock Badge - Right */}
                       {item.stock_quantity > 0 ? (
-                        <span className="bg-green-500 text-white text-xs font-medium px-2 py-1 rounded-full">
+                        <span className="bg-linkme-turquoise text-white text-xs font-medium px-2.5 py-1 rounded-full shadow-sm">
                           Stock: {item.stock_quantity}
                         </span>
                       ) : (
-                        <span className="bg-orange-500 text-white text-xs font-medium px-2 py-1 rounded-full">
+                        <span className="bg-amber-500 text-white text-xs font-medium px-2.5 py-1 rounded-full shadow-sm">
                           Sur commande
                         </span>
                       )}
@@ -270,7 +295,7 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
 
                     {/* Price */}
                     <div className="flex items-baseline gap-2 mb-4">
-                      <span className="text-xl font-bold text-gray-900">
+                      <span className="text-xl font-bold text-linkme-marine">
                         {formatPrice(item.selling_price_ttc)}
                       </span>
                       <span className="text-sm text-gray-500">TTC</span>
@@ -296,7 +321,7 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
                     ) : (
                       <button
                         onClick={() => addToCart(item)}
-                        className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                        className="w-full flex items-center justify-center gap-2 bg-linkme-turquoise text-white py-3 px-4 rounded-lg hover:bg-linkme-royal transition-colors"
                       >
                         <Plus className="h-4 w-4" />
                         Ajouter
@@ -348,7 +373,7 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
                     setIsEnseigneStepperOpen(false);
                     setCart([]);
                   }}
-                  className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+                  className="px-6 py-2 bg-linkme-marine text-white rounded-lg hover:bg-linkme-royal"
                 >
                   Fermer
                 </button>
