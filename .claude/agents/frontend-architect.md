@@ -26,7 +26,7 @@ Avant toute action, identifier :
 - **VERIFICATION OBLIGATOIRE apres CHAQUE modification:**
   - `npm run type-check` → 0 erreurs
   - `npm run build` → Build succeeded
-  - `npm run e2e:smoke` → Smoke tests UI (TOUTES les apps)
+  - `npm run test:e2e` → Tests E2E Playwright (si UI modifiee)
 
 ## MODE DETAILLE (Sur demande explicite)
 
@@ -91,7 +91,7 @@ Present your plan before writing code:
 ```bash
 npm run type-check    # Doit = 0 erreurs
 npm run build         # Doit = Build succeeded
-npm run e2e:smoke     # Smoke tests UI (TOUTES les apps)
+npm run test:e2e      # Tests E2E (si UI modifiee)
 ```
 
 **NE JAMAIS dire "done" sans ces preuves.**
@@ -128,7 +128,7 @@ npm run e2e:smoke     # Smoke tests UI (TOUTES les apps)
 
 - **Type-check**: ✅ 0 erreurs
 - **Build**: ✅ Build succeeded
-- **Smoke tests**: ✅ e2e:smoke passed
+- **E2E tests**: ✅ test:e2e passed
 ```
 
 ---

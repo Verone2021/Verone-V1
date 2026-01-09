@@ -6,6 +6,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
   Badge,
   Button,
   Card,
@@ -19,6 +27,7 @@ import { Money, StatusPill } from '@verone/ui-business';
 import { featureFlags } from '@verone/utils/feature-flags';
 import { createClient } from '@verone/utils/supabase/client';
 import {
+  AlertTriangle,
   ArrowLeft,
   Calendar,
   Building2,
@@ -31,7 +40,9 @@ import {
   Lock,
   Loader2,
   ExternalLink,
+  Send,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 // =====================================================================
 // TYPES
@@ -174,6 +185,8 @@ export default function InvoiceDetailPage({
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showFinalizeWarning, setShowFinalizeWarning] = useState(false);
+  const [isFinalizingInvoice, setIsFinalizingInvoice] = useState(false);
 
   // Fetch document data
   useEffect(() => {
@@ -188,7 +201,7 @@ export default function InvoiceDetailPage({
           .select(
             `
             *,
-            partner:organisations!partner_id(id, legal_name, trade_name, type)
+            partner:organisations!fk_partner(id, legal_name, trade_name, type)
           `
           )
           .eq('id', id)
@@ -230,6 +243,45 @@ export default function InvoiceDetailPage({
   const handleDownload = () => {
     if (document?.id) {
       window.open(`/api/documents/${document.id}/download`, '_blank');
+    }
+  };
+
+  // Handle finalize invoice (IRRÉVERSIBLE)
+  const handleFinalizeInvoice = async () => {
+    if (!document?.id) return;
+
+    setIsFinalizingInvoice(true);
+    setShowFinalizeWarning(false);
+
+    try {
+      const response = await fetch(
+        `/api/qonto/invoices/${document.id}/finalize`,
+        {
+          method: 'POST',
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Erreur lors de la finalisation');
+      }
+
+      toast.success('Facture finalisée avec succès', {
+        description: `La facture ${data.invoice?.invoice_number || document.document_number} a été finalisée`,
+      });
+
+      // Refresh the page to get updated status
+      router.refresh();
+      // Force re-fetch
+      window.location.reload();
+    } catch (err) {
+      console.error('[Finalize Invoice] Error:', err);
+      toast.error('Erreur lors de la finalisation', {
+        description: err instanceof Error ? err.message : 'Erreur inconnue',
+      });
+    } finally {
+      setIsFinalizingInvoice(false);
     }
   };
 
@@ -329,7 +381,23 @@ export default function InvoiceDetailPage({
               Télécharger
             </Button>
           )}
-          {document.status !== 'paid' && (
+          {/* Bouton Finaliser - uniquement pour les brouillons */}
+          {document.status === 'draft' && (
+            <Button
+              variant="outline"
+              onClick={() => setShowFinalizeWarning(true)}
+              disabled={isFinalizingInvoice}
+              className="border-amber-300 text-amber-700 hover:bg-amber-50"
+            >
+              {isFinalizingInvoice ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4 mr-2" />
+              )}
+              Finaliser
+            </Button>
+          )}
+          {document.status !== 'paid' && document.status !== 'draft' && (
             <Button>
               <CreditCard className="h-4 w-4 mr-2" />
               Enregistrer un paiement
@@ -541,6 +609,45 @@ export default function InvoiceDetailPage({
           </Card>
         </div>
       </div>
+
+      {/* Dialog de confirmation pour finalisation (IRRÉVERSIBLE) */}
+      <AlertDialog
+        open={showFinalizeWarning}
+        onOpenChange={setShowFinalizeWarning}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-amber-600">
+              <AlertTriangle className="h-5 w-5" />
+              Finaliser la facture ?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p className="font-semibold text-foreground">
+                Cette action est IRRÉVERSIBLE.
+              </p>
+              <p>
+                Une fois finalisée, la facture ne pourra plus être modifiée ni
+                supprimée. Elle recevra un numéro officiel et sera enregistrée
+                définitivement dans Qonto.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Vérifiez bien toutes les informations avant de confirmer.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowFinalizeWarning(false)}>
+              Annuler
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-amber-600 text-white hover:bg-amber-700"
+              onClick={handleFinalizeInvoice}
+            >
+              Oui, finaliser définitivement
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
