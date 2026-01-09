@@ -116,11 +116,11 @@ export async function GET(
       );
     }
 
-    // Retourner le PDF avec les bons headers (aligné sur route factures)
+    // Retourner le PDF avec les bons headers pour VISUALISATION (inline)
     return new NextResponse(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="devis-${quote.quote_number || quote.id}.pdf"`,
+        'Content-Disposition': `inline; filename="devis-${quote.quote_number ?? quote.id}.pdf"`,
         'Content-Length': String(pdfBuffer.byteLength),
       },
     });
