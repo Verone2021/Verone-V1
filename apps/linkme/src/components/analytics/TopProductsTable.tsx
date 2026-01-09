@@ -8,9 +8,10 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 
-import { Card, BarList, Badge } from '@tremor/react';
-import { Package, TrendingUp } from 'lucide-react';
+import { Card, Badge } from '@tremor/react';
+import { Package, TrendingUp, ArrowRight } from 'lucide-react';
 
 import type { TopProductData } from '../../types/analytics';
 import { formatCurrency } from '../../types/analytics';
@@ -90,9 +91,18 @@ export function TopProductsTable({
           </div>
           <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
         </div>
-        <Badge color="gray" size="sm">
-          {displayProducts.length} produits
-        </Badge>
+        <div className="flex items-center gap-3">
+          <Badge color="gray" size="sm">
+            {displayProducts.length} produits
+          </Badge>
+          <Link
+            href="/statistiques/produits"
+            className="flex items-center gap-1 text-sm text-[#5DBEBB] hover:text-[#3976BB] transition-colors"
+          >
+            Voir tout
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
       </div>
 
       {displayProducts.length > 0 ? (

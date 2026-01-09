@@ -8,7 +8,8 @@ CRM/ERP modulaire pour decoration et mobilier d'interieur haut de gamme.
 npm run dev          # Dev (localhost:3000)
 npm run build        # Production build
 npm run type-check   # TypeScript validation
-npm run e2e:smoke    # Smoke tests UI
+npm run test:e2e     # Tests E2E Playwright
+npm run validate:pr  # Avant PR (format + lint + types + build)
 ```
 
 ## Workflow Obligatoire
@@ -37,7 +38,7 @@ npm run e2e:smoke    # Smoke tests UI
 ```bash
 npm run type-check   # Doit = 0 erreurs
 npm run build        # Doit = Build succeeded
-npm run e2e:smoke    # Si UI modifiee (obligatoire)
+npm run test:e2e     # Si UI modifiee (obligatoire)
 ```
 
 **NE JAMAIS dire "done" sans ces preuves.**
@@ -100,7 +101,7 @@ feature/*  → Branches de developpement
 
 ---
 
-_Version 6.0.0 - 2025-12-19_
+_Version 6.1.0 - 2026-01-09_
 _Structure Anthropic Best Practices_
 
 <!-- Trigger deploy 2026-01-05 -->
