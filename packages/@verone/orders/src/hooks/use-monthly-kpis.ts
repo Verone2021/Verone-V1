@@ -43,9 +43,27 @@ export interface MonthlyKPIs {
     commissionsTTC: number;
     panierMoyen: number;
   };
-  // Variations en %
+  // Variations vs mois précédent (en %)
   variations: {
     ordersCount: number; // +15 = +15%, -10 = -10%
+    caHT: number;
+    caTTC: number;
+    commissionsHT: number;
+    commissionsTTC: number;
+    panierMoyen: number;
+  };
+  // Variations vs moyenne générale (en %)
+  averageVariations: {
+    ordersCount: number;
+    caHT: number;
+    caTTC: number;
+    commissionsHT: number;
+    commissionsTTC: number;
+    panierMoyen: number;
+  };
+  // Moyenne mensuelle (pour référence)
+  monthlyAverage: {
+    ordersCount: number;
     caHT: number;
     caTTC: number;
     commissionsHT: number;
@@ -206,7 +224,28 @@ export function useMonthlyKPIs(options: UseMonthlyKPIsOptions = {}) {
       const previousKPIs = calculateKPIs(previousMonthOrders);
       const allTimeKPIs = calculateKPIs(orders);
 
-      // Calculer les variations
+      // Calculer le nombre de mois avec des commandes
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const monthsWithOrders = new Set(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        orders.map((o: any) => {
+          const d = new Date(o.created_at);
+          return `${d.getFullYear()}-${d.getMonth()}`;
+        })
+      );
+      const numberOfMonths = Math.max(monthsWithOrders.size, 1);
+
+      // Calculer les moyennes mensuelles
+      const monthlyAverage = {
+        ordersCount: Math.round(allTimeKPIs.ordersCount / numberOfMonths),
+        caHT: allTimeKPIs.caHT / numberOfMonths,
+        caTTC: allTimeKPIs.caTTC / numberOfMonths,
+        commissionsHT: allTimeKPIs.commissionsHT / numberOfMonths,
+        commissionsTTC: allTimeKPIs.commissionsTTC / numberOfMonths,
+        panierMoyen: allTimeKPIs.panierMoyen, // Moyenne du panier moyen reste le même
+      };
+
+      // Calculer les variations vs mois précédent
       const variations = {
         ordersCount: calculateVariation(
           currentKPIs.ordersCount,
@@ -228,6 +267,28 @@ export function useMonthlyKPIs(options: UseMonthlyKPIsOptions = {}) {
         ),
       };
 
+      // Calculer les variations vs moyenne générale
+      const averageVariations = {
+        ordersCount: calculateVariation(
+          currentKPIs.ordersCount,
+          monthlyAverage.ordersCount
+        ),
+        caHT: calculateVariation(currentKPIs.caHT, monthlyAverage.caHT),
+        caTTC: calculateVariation(currentKPIs.caTTC, monthlyAverage.caTTC),
+        commissionsHT: calculateVariation(
+          currentKPIs.commissionsHT,
+          monthlyAverage.commissionsHT
+        ),
+        commissionsTTC: calculateVariation(
+          currentKPIs.commissionsTTC,
+          monthlyAverage.commissionsTTC
+        ),
+        panierMoyen: calculateVariation(
+          currentKPIs.panierMoyen,
+          monthlyAverage.panierMoyen
+        ),
+      };
+
       return {
         currentMonth: {
           label: formatMonthLabel(currentMonthStart),
@@ -238,6 +299,8 @@ export function useMonthlyKPIs(options: UseMonthlyKPIsOptions = {}) {
           ...previousKPIs,
         },
         variations,
+        averageVariations,
+        monthlyAverage,
         allTime: {
           ordersCount: allTimeKPIs.ordersCount,
           caHT: allTimeKPIs.caHT,
@@ -248,8 +311,11 @@ export function useMonthlyKPIs(options: UseMonthlyKPIsOptions = {}) {
       };
     },
     enabled,
-    staleTime: 60000, // 1 minute
-    refetchOnWindowFocus: true,
+    // Optimisation: cache plus long, pas de refetch sur focus
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
+    refetchOnWindowFocus: false,
+    refetchOnMount: 'always', // Force refetch pour debug
   });
 }
 

@@ -38,7 +38,12 @@ import {
 } from 'lucide-react';
 
 import { CreateOrderModal } from './components/CreateOrderModal';
-import { useLinkMeOrders } from '../../../hooks/use-linkme-orders';
+import { OrderDetailModal } from './components/OrderDetailModal';
+import {
+  useLinkMeOrders,
+  type LinkMeOrder,
+} from '../../../hooks/use-linkme-orders';
+import { useAffiliateCommissionStats } from '../../../lib/hooks/use-affiliate-commission-stats';
 import { useUserAffiliate } from '../../../lib/hooks/use-user-selection';
 
 // Mapping des statuts DB → Labels
@@ -69,6 +74,8 @@ export default function CommandesPage(): JSX.Element {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<LinkMeOrder | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   // Data - Affilié et ses commandes
   const { data: affiliate, isLoading: affiliateLoading } = useUserAffiliate();
@@ -84,7 +91,12 @@ export default function CommandesPage(): JSX.Element {
     enabled: !!affiliate?.id,
   });
 
-  const isLoading = affiliateLoading || ordersLoading || kpisLoading;
+  // SOURCE DE VÉRITÉ: Statistiques commissions depuis linkme_commissions
+  const { data: commissionStats, isLoading: commissionStatsLoading } =
+    useAffiliateCommissionStats();
+
+  const isLoading =
+    affiliateLoading || ordersLoading || kpisLoading || commissionStatsLoading;
 
   // KPIs par statut (comptages locaux depuis les commandes)
   const statusKpis = useMemo(() => {
@@ -133,6 +145,17 @@ export default function CommandesPage(): JSX.Element {
     setExpandedOrderId(prev => (prev === orderId ? null : orderId));
   };
 
+  const openDetailModal = (order: LinkMeOrder, e: React.MouseEvent) => {
+    e.stopPropagation(); // Empecher le toggle expand
+    setSelectedOrder(order);
+    setIsDetailModalOpen(true);
+  };
+
+  const closeDetailModal = () => {
+    setIsDetailModalOpen(false);
+    setSelectedOrder(null);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -155,9 +178,9 @@ export default function CommandesPage(): JSX.Element {
       </div>
 
       <div className="p-6 space-y-6">
-        {/* KPIs Dashboard - Mois en cours avec variations */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {/* Commandes ce mois */}
+        {/* KPIs Dashboard - Totaux */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* Commandes totales */}
           <div className="bg-white rounded-xl border p-5 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-blue-100 rounded-lg">
@@ -166,19 +189,13 @@ export default function CommandesPage(): JSX.Element {
               <div>
                 <p className="text-sm text-gray-500">Commandes</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {monthlyKPIs?.currentMonth.ordersCount ?? 0}
-                </p>
-                <p
-                  className={`text-xs ${getVariationColor(monthlyKPIs?.variations.ordersCount ?? 0)}`}
-                >
-                  {formatVariation(monthlyKPIs?.variations.ordersCount ?? 0)} vs
-                  mois dernier
+                  {monthlyKPIs?.allTime.ordersCount ?? 0}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* CA TTC ce mois */}
+          {/* CA TTC total */}
           <div className="bg-white rounded-xl border p-5 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-indigo-100 rounded-lg">
@@ -187,20 +204,11 @@ export default function CommandesPage(): JSX.Element {
               <div>
                 <p className="text-sm text-gray-500">CA TTC</p>
                 <p className="text-2xl font-bold text-indigo-600">
-                  {(monthlyKPIs?.currentMonth.caTTC ?? 0).toLocaleString(
-                    'fr-FR',
-                    {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    }
-                  )}{' '}
+                  {(monthlyKPIs?.allTime.caTTC ?? 0).toLocaleString('fr-FR', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                  })}{' '}
                   €
-                </p>
-                <p
-                  className={`text-xs ${getVariationColor(monthlyKPIs?.variations.caTTC ?? 0)}`}
-                >
-                  {formatVariation(monthlyKPIs?.variations.caTTC ?? 0)} vs mois
-                  dernier
                 </p>
               </div>
             </div>
@@ -215,72 +223,38 @@ export default function CommandesPage(): JSX.Element {
               <div>
                 <p className="text-sm text-gray-500">Panier Moyen</p>
                 <p className="text-2xl font-bold text-purple-600">
-                  {(monthlyKPIs?.currentMonth.panierMoyen ?? 0).toLocaleString(
-                    'fr-FR',
-                    {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    }
-                  )}{' '}
+                  {monthlyKPIs?.allTime.ordersCount
+                    ? (
+                        (monthlyKPIs?.allTime.caTTC ?? 0) /
+                        monthlyKPIs.allTime.ordersCount
+                      ).toLocaleString('fr-FR', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                      })
+                    : 0}{' '}
                   €
-                </p>
-                <p
-                  className={`text-xs ${getVariationColor(monthlyKPIs?.variations.panierMoyen ?? 0)}`}
-                >
-                  {formatVariation(monthlyKPIs?.variations.panierMoyen ?? 0)} vs
-                  mois dernier
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Commissions ce mois */}
+          {/* Commissions totales (TTC) - SOURCE DE VÉRITÉ: linkme_commissions */}
           <div className="bg-white rounded-xl border p-5 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-emerald-100 rounded-lg">
                 <Wallet className="h-6 w-6 text-emerald-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">Commissions</p>
+                <p className="text-sm text-gray-500">Commissions TTC</p>
                 <p className="text-2xl font-bold text-emerald-600">
-                  {(
-                    monthlyKPIs?.currentMonth.commissionsHT ?? 0
-                  ).toLocaleString('fr-FR', {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0,
-                  })}{' '}
-                  €
-                </p>
-                <p
-                  className={`text-xs ${getVariationColor(monthlyKPIs?.variations.commissionsHT ?? 0)}`}
-                >
-                  {formatVariation(monthlyKPIs?.variations.commissionsHT ?? 0)}{' '}
-                  vs mois dernier
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Total historique */}
-          <div className="bg-white rounded-xl border p-5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-gray-100 rounded-lg">
-                <Calendar className="h-6 w-6 text-gray-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Total historique</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {monthlyKPIs?.allTime.ordersCount ?? 0}
-                </p>
-                <p className="text-xs text-gray-400">
-                  {(monthlyKPIs?.allTime.commissionsHT ?? 0).toLocaleString(
+                  {(commissionStats?.total.amountTTC ?? 0).toLocaleString(
                     'fr-FR',
                     {
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 0,
                     }
                   )}{' '}
-                  € gagnés
+                  €
                 </p>
               </div>
             </div>
@@ -470,6 +444,14 @@ export default function CommandesPage(): JSX.Element {
                                 +{order.total_affiliate_margin.toFixed(2)} €
                               </p>
                             </div>
+
+                            {/* Bouton Details */}
+                            <button
+                              onClick={e => openDetailModal(order, e)}
+                              className="px-3 py-1.5 text-sm font-medium text-[#5DBEBB] hover:text-white hover:bg-[#5DBEBB] border border-[#5DBEBB] rounded-lg transition-colors"
+                            >
+                              Details
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -599,6 +581,13 @@ export default function CommandesPage(): JSX.Element {
       <CreateOrderModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+      />
+
+      {/* Modal detail commande */}
+      <OrderDetailModal
+        order={selectedOrder}
+        isOpen={isDetailModalOpen}
+        onClose={closeDetailModal}
       />
     </div>
   );
