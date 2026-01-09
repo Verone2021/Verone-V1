@@ -81,6 +81,7 @@ next-env.d.ts
 # Claude Code specific
 .claude/scratch/
 .claude/reports/**
+.claude/playwright-profiles/
 **/sessions.jsonl
 
 # Husky
