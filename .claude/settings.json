@@ -1,6 +1,11 @@
 {
   "enableAllProjectMcpServers": true,
-  "enabledMcpServers": ["context7", "serena", "playwright"],
+  "enabledMcpServers": [
+    "context7",
+    "serena",
+    "playwright-lane-1",
+    "playwright-lane-2"
+  ],
   "statusLine": {
     "type": "command",
     "command": "npx ccusage@latest statusline --visual-burn-rate emoji --no-offline",
@@ -12,7 +17,8 @@
       "mcp__*",
       "mcp__serena__*",
       "mcp__context7__*",
-      "mcp__playwright__*",
+      "mcp__playwright-lane-1__*",
+      "mcp__playwright-lane-2__*",
       "mcp__ide__*",
 
       "Read",

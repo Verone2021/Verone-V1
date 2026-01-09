@@ -253,9 +253,14 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
     ],
   },
   {
-    title: 'Factures',
+    title: 'Facturation',
     href: '/factures',
     icon: FileText,
+  },
+  {
+    title: 'Livraisons',
+    href: '/livraisons',
+    icon: Truck,
   },
   {
     title: 'Trésorerie',
@@ -312,7 +317,10 @@ function SidebarContent() {
       Achats: 'commandes',
       Comptabilité: 'finance',
       Finance: 'finance',
+      Facturation: 'factures',
       Factures: 'factures',
+      Devis: 'factures',
+      Avoirs: 'factures',
       Trésorerie: 'tresorerie',
       Organisation: 'contacts',
     };
@@ -324,9 +332,9 @@ function SidebarContent() {
   const navItems = useMemo(() => {
     const items = getNavItems(stockAlertsCount);
 
-    // Masquer Comptabilité/Factures/Trésorerie si financeEnabled = false
+    // Masquer Comptabilité/Facturation/Trésorerie si financeEnabled = false
     if (!featureFlags.financeEnabled) {
-      const financeModules = ['Comptabilité', 'Factures', 'Trésorerie'];
+      const financeModules = ['Comptabilité', 'Facturation', 'Trésorerie'];
       return items.filter(item => !financeModules.includes(item.title));
     }
 
