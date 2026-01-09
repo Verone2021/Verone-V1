@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 
 import { useAuth, type LinkMeRole } from '../../../contexts/AuthContext';
+import { useAffiliateAnalytics } from '../../../lib/hooks/use-affiliate-analytics';
 import {
   useUserAffiliate,
   useUserSelections,
@@ -48,9 +49,16 @@ export default function MaSelectionPage(): React.JSX.Element {
   const { data: affiliate, isLoading: affiliateLoading } = useUserAffiliate();
   const { data: selections, isLoading: selectionsLoading } =
     useUserSelections();
+  const { data: analytics, isLoading: analyticsLoading } =
+    useAffiliateAnalytics('all');
 
   // Chargement (incluant le chargement du rôle)
-  if (authLoading || affiliateLoading || selectionsLoading) {
+  if (
+    authLoading ||
+    affiliateLoading ||
+    selectionsLoading ||
+    analyticsLoading
+  ) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -112,8 +120,8 @@ export default function MaSelectionPage(): React.JSX.Element {
   // Calculs KPIs minimalistes
   const totalSelections = selections?.length ?? 0;
   const publishedCount = selections?.filter(s => !!s.published_at).length ?? 0;
-  const totalQuantitySold =
-    selections?.reduce((sum, s) => sum + (s.orders_count ?? 0), 0) ?? 0;
+  // Utiliser les vraies quantités vendues depuis linkme_order_items_enriched
+  const totalQuantitySold = analytics?.totalQuantitySold ?? 0;
 
   // Afficher onboarding si peu de sélections
   const showOnboarding = totalSelections < 2;

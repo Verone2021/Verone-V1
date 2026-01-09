@@ -365,6 +365,8 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
         .filter((id): id is string => !!id);
 
       let topProducts: TopProductData[] = [];
+      // eslint-disable-next-line prefer-const -- modifié dans le bloc if
+      let totalQuantitySoldAllTime = 0;
 
       if (orderIds.length > 0) {
         // Utiliser linkme_order_items_enriched qui calcule correctement affiliate_margin
@@ -395,7 +397,12 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
 
         orderItems.forEach(item => {
           const productId = item.product_id;
-          // Ignorer les items sans product_id
+          const qty = item.quantity || 0;
+
+          // Ajouter à la somme totale des quantités
+          totalQuantitySoldAllTime += qty;
+
+          // Ignorer les items sans product_id pour l'agrégation par produit
           if (!productId) return;
 
           if (!productMap.has(productId)) {
@@ -406,7 +413,7 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
             });
           }
           const entry = productMap.get(productId)!;
-          entry.quantity += item.quantity || 0;
+          entry.quantity += qty;
           entry.revenue += item.total_ht || 0;
           // SOURCE DE VÉRITÉ: affiliate_margin depuis linkme_order_items_enriched
           entry.commission += item.affiliate_margin || 0;
@@ -470,6 +477,7 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
         totalRevenueHT,
         totalCommissionsHT,
         totalCommissionsTTC,
+        totalQuantitySold: totalQuantitySoldAllTime,
         // KPIs ALL TIME (pour page Commissions)
         // IMPORTANT: Utiliser les valeurs ALL TIME de commissionsByStatus
         totalCommissionsTTCAllTime: commissionsByStatus.total.amountTTC,

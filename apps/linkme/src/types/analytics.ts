@@ -13,6 +13,7 @@ export interface AffiliateAnalyticsData {
   totalRevenueHT: number;
   totalCommissionsHT: number;
   totalCommissionsTTC: number;
+  totalQuantitySold: number; // Somme de toutes les quantités vendues
   // KPI ALL TIME - source de verite pour page Commissions
   totalCommissionsTTCAllTime: number;
   pendingCommissionsHT: number;
