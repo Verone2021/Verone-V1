@@ -76,19 +76,19 @@ export function ProductCard({
           'hover:shadow-2xl hover:bg-gray-50/50 hover:scale-[1.02]'
         )}
       >
-        {/* Image Container - Ratio 4:3 */}
-        <div className="relative aspect-[4/3] overflow-hidden">
+        {/* Image Container - Carré avec object-contain (style Amazon) */}
+        <div className="relative aspect-square overflow-hidden bg-white">
           {product.image_url ? (
             <Image
               src={product.image_url}
               alt={displayTitle}
               fill
-              className="object-cover transition-transform duration-700 group-hover:scale-110"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className="object-contain p-4 transition-transform duration-500 group-hover:scale-105"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gray-50">
-              <Package className="h-16 w-16 text-gray-200" />
+              <Package className="h-12 w-12 text-gray-200" />
             </div>
           )}
 

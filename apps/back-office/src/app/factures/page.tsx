@@ -830,9 +830,14 @@ export default function FacturationPage() {
 
   // Calculer les KPIs pour les factures (Qonto)
   const kpis = useMemo(() => {
-    // Exclure les factures annulées (Qonto utilise 'canceled' UK spelling)
+    // Helper pour vérifier si une facture est annulée
+    // Qonto utilise 'cancelled' (UK) mais on vérifie les deux par sécurité
+    const isAnnulee = (status: string) =>
+      status === 'cancelled' || status === 'canceled';
+
+    // Exclure les factures annulées et brouillons du total facturé
     const facturesActives = invoices.filter(
-      inv => inv.status !== 'canceled' && inv.status !== 'draft'
+      inv => !isAnnulee(inv.status) && inv.status !== 'draft'
     );
     // Utiliser total_amount_cents (en centimes) et convertir en euros
     const totalFacture =
@@ -849,12 +854,12 @@ export default function FacturationPage() {
         inv.due_date &&
         new Date(inv.due_date) < new Date() &&
         inv.status !== 'paid' &&
-        inv.status !== 'canceled'
+        !isAnnulee(inv.status)
     );
     const enAttente = invoices.filter(
       inv =>
         inv.status !== 'paid' &&
-        inv.status !== 'canceled' &&
+        !isAnnulee(inv.status) &&
         inv.status !== 'draft'
     );
 
