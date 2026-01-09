@@ -430,6 +430,7 @@ export class QontoClient {
   async getTransactions(params?: {
     bankAccountId?: string;
     status?: string;
+    side?: 'credit' | 'debit';
     updatedAtFrom?: string;
     updatedAtTo?: string;
     settledAtFrom?: string;
@@ -446,6 +447,7 @@ export class QontoClient {
     if (params?.bankAccountId)
       queryParams.append('bank_account_id', params.bankAccountId);
     if (params?.status) queryParams.append('status', params.status);
+    if (params?.side) queryParams.append('side', params.side);
     if (params?.updatedAtFrom)
       queryParams.append('updated_at_from', params.updatedAtFrom);
     if (params?.updatedAtTo)
@@ -595,28 +597,27 @@ export class QontoClient {
         client_id: params.clientId,
         currency: params.currency || 'EUR',
         issue_date: params.issueDate,
-        due_date: params.dueDate, // Corrigé: était payment_deadline
+        due_date: params.dueDate,
         payment_methods: {
-          iban: params.paymentMethods.iban, // OBLIGATOIRE selon doc Qonto
+          iban: params.paymentMethods.iban,
         },
         performance_start_date: params.performanceStartDate,
         performance_end_date: params.performanceEndDate,
         purchase_order_number: params.purchaseOrderNumber,
-        number: params.number, // Optionnel - Qonto génère si non fourni
+        number: params.number,
         header: params.header,
         footer: params.footer,
         terms_and_conditions: params.termsAndConditions,
         items: params.items.map(item => ({
           title: item.title,
           description: item.description,
-          quantity: item.quantity, // String décimal
+          quantity: item.quantity,
           unit: item.unit || 'unit',
           unit_price: {
-            // Objet avec value et currency
             value: item.unitPrice.value,
             currency: item.unitPrice.currency,
           },
-          vat_rate: item.vatRate, // String décimal, ex: "0.20"
+          vat_rate: item.vatRate,
         })),
       },
       key
@@ -788,6 +789,9 @@ export class QontoClient {
       email: params.email,
       currency: params.currency || 'EUR',
       vat_number: params.vatNumber,
+      // tax_identification_number = TIN (SIRET pour France) - requis pour facturation
+      tax_identification_number:
+        params.taxIdentificationNumber || params.vatNumber,
       // billing_address est le champ requis pour la facturation
       billing_address: params.address
         ? {
@@ -819,6 +823,9 @@ export class QontoClient {
       email: params.email,
       currency: params.currency,
       vat_number: params.vatNumber,
+      // tax_identification_number = TIN (SIRET pour France) - requis pour facturation
+      tax_identification_number:
+        params.taxIdentificationNumber || params.vatNumber,
       billing_address: params.address
         ? {
             street_address: params.address.streetAddress,
@@ -1174,11 +1181,11 @@ export class QontoClient {
     if (params?.currentPage)
       queryParams.append('page', params.currentPage.toString());
 
-    const endpoint = `/v2/client_credit_notes${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const endpoint = `/v2/credit_notes${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
 
     const response = await this.request<
       QontoApiResponse<{
-        client_credit_notes: QontoClientCreditNote[];
+        credit_notes: QontoClientCreditNote[];
         meta: {
           total_count: number;
           current_page: number;
@@ -1188,8 +1195,12 @@ export class QontoClient {
     >('GET', endpoint);
 
     return {
-      client_credit_notes: response.client_credit_notes,
-      meta: response.meta,
+      client_credit_notes: response.credit_notes ?? [],
+      meta: response.meta ?? {
+        total_count: 0,
+        current_page: 1,
+        total_pages: 1,
+      },
     };
   }
 
@@ -1200,9 +1211,9 @@ export class QontoClient {
     creditNoteId: string
   ): Promise<QontoClientCreditNote> {
     const response = await this.request<
-      QontoApiResponse<{ client_credit_note: QontoClientCreditNote }>
-    >('GET', `/v2/client_credit_notes/${creditNoteId}`);
-    return response.client_credit_note;
+      QontoApiResponse<{ credit_note: QontoClientCreditNote }>
+    >('GET', `/v2/credit_notes/${creditNoteId}`);
+    return response.credit_note;
   }
 
   /**
@@ -1216,10 +1227,10 @@ export class QontoClient {
     const key = idempotencyKey || generateIdempotencyKey();
 
     const response = await this.requestWithIdempotency<
-      QontoApiResponse<{ client_credit_note: QontoClientCreditNote }>
+      QontoApiResponse<{ credit_note: QontoClientCreditNote }>
     >(
       'POST',
-      '/v2/client_credit_notes',
+      '/v2/credit_notes',
       {
         client_id: params.clientId,
         currency: params.currency || 'EUR',
@@ -1241,7 +1252,7 @@ export class QontoClient {
       key
     );
 
-    return response.client_credit_note;
+    return response.credit_note;
   }
 
   /**
@@ -1252,9 +1263,9 @@ export class QontoClient {
     creditNoteId: string
   ): Promise<QontoClientCreditNote> {
     const response = await this.request<
-      QontoApiResponse<{ client_credit_note: QontoClientCreditNote }>
-    >('POST', `/v2/client_credit_notes/${creditNoteId}/finalize`);
-    return response.client_credit_note;
+      QontoApiResponse<{ credit_note: QontoClientCreditNote }>
+    >('POST', `/v2/credit_notes/${creditNoteId}/finalize`);
+    return response.credit_note;
   }
 
   /**
@@ -1262,10 +1273,43 @@ export class QontoClient {
    * Note: Seuls les avoirs avec statut "draft" peuvent être supprimés
    */
   async deleteClientCreditNote(creditNoteId: string): Promise<void> {
-    await this.request<void>(
-      'DELETE',
-      `/v2/client_credit_notes/${creditNoteId}`
-    );
+    await this.request<void>('DELETE', `/v2/credit_notes/${creditNoteId}`);
+  }
+
+  /**
+   * Met à jour un avoir brouillon
+   * Note: Seuls les avoirs avec statut "draft" peuvent être modifiés
+   */
+  async updateClientCreditNote(
+    creditNoteId: string,
+    params: Partial<CreateClientCreditNoteParams>
+  ): Promise<QontoClientCreditNote> {
+    const updateData: Record<string, unknown> = {};
+
+    if (params.clientId) updateData.client_id = params.clientId;
+    if (params.currency) updateData.currency = params.currency;
+    if (params.issueDate) updateData.issue_date = params.issueDate;
+    if (params.invoiceId) updateData.invoice_id = params.invoiceId;
+    if (params.reason) updateData.reason = params.reason;
+    if (params.items) {
+      updateData.items = params.items.map(item => ({
+        title: item.title,
+        description: item.description,
+        quantity: item.quantity,
+        unit: item.unit || 'unit',
+        unit_price: {
+          value: item.unitPrice.value,
+          currency: item.unitPrice.currency,
+        },
+        vat_rate: item.vatRate,
+      }));
+    }
+
+    const response = await this.request<
+      QontoApiResponse<{ credit_note: QontoClientCreditNote }>
+    >('PATCH' as any, `/v2/credit_notes/${creditNoteId}`, updateData);
+
+    return response.credit_note;
   }
 
   // ===================================================================

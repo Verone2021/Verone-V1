@@ -306,7 +306,8 @@ export interface QontoClientInvoice {
   // Références
   purchase_order_number?: string;
 
-  // PDF
+  // PDF - attachment_id est la clé pour télécharger via /v2/attachments/{id}
+  attachment_id?: string;
   pdf_url?: string;
   public_url?: string;
 
@@ -450,7 +451,8 @@ export interface CreateClientParams {
   type: 'company' | 'individual'; // Required by Qonto API
   email?: string;
   currency?: string;
-  vatNumber?: string;
+  vatNumber?: string; // TVA intracommunautaire (ex: FR12345678901)
+  taxIdentificationNumber?: string; // TIN / SIRET - requis pour facturation
   address?: {
     streetAddress?: string;
     city?: string;
@@ -519,7 +521,8 @@ export interface QontoClientCreditNote {
   // Motif de l'avoir
   reason?: string;
 
-  // PDF
+  // PDF - attachment_id est la clé pour télécharger via /v2/attachments/{id}
+  attachment_id?: string;
   pdf_url?: string;
   public_url?: string;
 

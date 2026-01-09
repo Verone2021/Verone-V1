@@ -520,15 +520,15 @@ export function useSelectionTopProducts(selectionId: string | null) {
 
       if (orderIds.length === 0) return [];
 
-      // Récupérer les items
+      // Récupérer les items depuis la vue enrichie (source de vérité)
       const { data: orderItemsData } = await supabase
-        .from('sales_order_items')
+        .from('linkme_order_items_enriched')
         .select(
           `
           product_id,
           quantity,
           total_ht,
-          retrocession_amount
+          affiliate_margin
         `
         )
         .in('sales_order_id', orderIds);
@@ -543,13 +543,14 @@ export function useSelectionTopProducts(selectionId: string | null) {
 
       orderItems.forEach(item => {
         const productId = item.product_id;
+        if (!productId) return; // Skip items without product_id
         if (!productMap.has(productId)) {
           productMap.set(productId, { quantity: 0, revenue: 0, commission: 0 });
         }
         const entry = productMap.get(productId)!;
         entry.quantity += item.quantity || 0;
         entry.revenue += item.total_ht || 0;
-        entry.commission += item.retrocession_amount || 0;
+        entry.commission += item.affiliate_margin || 0;
       });
 
       const productIds = Array.from(productMap.keys());

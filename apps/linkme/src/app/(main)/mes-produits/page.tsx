@@ -18,6 +18,10 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+// Disable static generation completely - force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 import {
   Package,
   Loader2,

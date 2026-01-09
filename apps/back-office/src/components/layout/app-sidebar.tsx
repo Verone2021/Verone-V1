@@ -56,8 +56,6 @@ import {
   LayoutDashboard,
   ArrowLeftRight,
   BookOpenCheck,
-  FileEdit,
-  FileX,
 } from 'lucide-react';
 
 import {
@@ -258,23 +256,6 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
     title: 'Facturation',
     href: '/factures',
     icon: FileText,
-    children: [
-      {
-        title: 'Devis',
-        href: '/devis',
-        icon: FileEdit,
-      },
-      {
-        title: 'Factures',
-        href: '/factures',
-        icon: FileText,
-      },
-      {
-        title: 'Avoirs',
-        href: '/avoirs',
-        icon: FileX,
-      },
-    ],
   },
   {
     title: 'Livraisons',

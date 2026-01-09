@@ -830,10 +830,16 @@ export default function FacturationPage() {
 
   // Calculer les KPIs pour les factures (Qonto)
   const kpis = useMemo(() => {
+    // Exclure les factures annulées (Qonto utilise 'canceled' UK spelling)
+    const facturesActives = invoices.filter(
+      inv => inv.status !== 'canceled' && inv.status !== 'draft'
+    );
     // Utiliser total_amount_cents (en centimes) et convertir en euros
     const totalFacture =
-      invoices.reduce((sum, inv) => sum + (inv.total_amount_cents || 0), 0) /
-      100;
+      facturesActives.reduce(
+        (sum, inv) => sum + (inv.total_amount_cents || 0),
+        0
+      ) / 100;
     const totalPaye =
       invoices
         .filter(inv => inv.status === 'paid')
@@ -846,12 +852,16 @@ export default function FacturationPage() {
         inv.status !== 'canceled'
     );
     const enAttente = invoices.filter(
-      inv => inv.status !== 'paid' && inv.status !== 'canceled'
+      inv =>
+        inv.status !== 'paid' &&
+        inv.status !== 'canceled' &&
+        inv.status !== 'draft'
     );
 
     return {
       totalFacture,
       totalPaye,
+      nombreFacturesActives: facturesActives.length,
       enAttente: enAttente.length,
       montantEnAttente:
         enAttente.reduce((sum, inv) => sum + (inv.total_amount_cents || 0), 0) /
@@ -1017,7 +1027,7 @@ export default function FacturationPage() {
             value={kpis.totalFacture}
             valueType="money"
             icon={<FileText className="h-4 w-4" />}
-            description={`${invoices.length} facture(s)`}
+            description={`${kpis.nombreFacturesActives} facture(s) finalisée(s)`}
           />
           <KpiCard
             title="Total payé"
@@ -1097,7 +1107,7 @@ export default function FacturationPage() {
                     { value: 'paid', label: 'Payee' },
                     { value: 'partially_paid', label: 'Paiement partiel' },
                     { value: 'overdue', label: 'En retard' },
-                    { value: 'cancelled', label: 'Annulee' },
+                    { value: 'canceled', label: 'Annulee' },
                   ],
                 },
               ]}

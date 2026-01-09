@@ -31,11 +31,12 @@ export interface ProductStatsData {
   productImageUrl: string | null;
   quantitySold: number;
   revenueHT: number;
-  taxRate: number; // % TVA (20, 10, 5.5, etc.)
-  revenueTTC: number;
   commissionHT: number;
-  commissionTTC: number;
   commissionType: CommissionType; // 'catalogue' = produit Vérone, 'revendeur' = produit affilié
+  // Nouveaux champs - Source de vérité: linkme_order_items_enriched
+  avgMarginRate: number; // Taux de commission moyen pondéré par quantité (%)
+  marginPerUnit: number; // Marge HT par unité (€)
+  isCustomProduct: boolean; // true si enseigne_id ou assigned_client_id non-null (Sur mesure)
 }
 
 export interface AllProductsStatsResult {
@@ -44,17 +45,7 @@ export interface AllProductsStatsResult {
     productsCount: number;
     totalQuantity: number;
     totalRevenueHT: number;
-    totalRevenueTTC: number;
     totalCommissionHT: number;
-    totalCommissionTTC: number;
-  };
-  // Réconciliation avec source de vérité
-  reconciliation: {
-    sourceOfTruthTTC: number; // linkme_commissions.affiliate_commission_ttc total
-    catalogueCommissionTTC: number; // Produits Vérone
-    revendeurCommissionTTC: number; // Produits affilié (Pokawa, etc.)
-    otherCommissionTTC: number; // Différence non ventilée
-    isReconciled: boolean; // true si écart < 1€
   };
 }
 
@@ -85,12 +76,6 @@ export function useAllProductsStats(): ReturnType<
         throw commissionsError;
       }
 
-      // Calculer la source de vérité (total TTC officiel)
-      const sourceOfTruthTTC = (commissionsData ?? []).reduce(
-        (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
-        0
-      );
-
       const orderIds = (commissionsData ?? [])
         .map(c => c.order_id)
         .filter((id): id is string => !!id);
@@ -102,21 +87,12 @@ export function useAllProductsStats(): ReturnType<
             productsCount: 0,
             totalQuantity: 0,
             totalRevenueHT: 0,
-            totalRevenueTTC: 0,
             totalCommissionHT: 0,
-            totalCommissionTTC: 0,
-          },
-          reconciliation: {
-            sourceOfTruthTTC,
-            catalogueCommissionTTC: 0,
-            revendeurCommissionTTC: 0,
-            otherCommissionTTC: sourceOfTruthTTC,
-            isReconciled: sourceOfTruthTTC === 0,
           },
         };
       }
 
-      // 2. Récupérer les items depuis linkme_order_items_enriched (inclut tax_rate)
+      // 2. Récupérer les items depuis linkme_order_items_enriched (inclut margin_rate)
       const { data: orderItemsData, error: orderItemsError } = await supabase
         .from('linkme_order_items_enriched')
         .select(
@@ -124,8 +100,8 @@ export function useAllProductsStats(): ReturnType<
           product_id,
           quantity,
           total_ht,
-          tax_rate,
-          affiliate_margin
+          affiliate_margin,
+          margin_rate
         `
         )
         .in('sales_order_id', orderIds);
@@ -137,26 +113,44 @@ export function useAllProductsStats(): ReturnType<
 
       const orderItems = orderItemsData ?? [];
 
-      // 2b. Récupérer les produits créés par un affilié (Modèle 2 = Revendeur)
-      const { data: affiliateProductsData } = await supabase
+      // 2b. Récupérer les produits avec leurs infos de type
+      // - created_by_affiliate: produit créé par affilié (revendeur)
+      // - enseigne_id / assigned_client_id: produit sur mesure Vérone
+      const productIdsFromItems: string[] = [
+        ...new Set(
+          (orderItemsData ?? [])
+            .map(item => item.product_id)
+            .filter((id): id is string => id !== null && id !== undefined)
+        ),
+      ];
+
+      const { data: productsTypeData } = await supabase
         .from('products')
-        .select('id')
-        .not('created_by_affiliate', 'is', null);
+        .select('id, created_by_affiliate, enseigne_id, assigned_client_id')
+        .in('id', productIdsFromItems);
 
-      const affiliateProductIds = new Set(
-        (affiliateProductsData ?? []).map(p => p.id)
-      );
+      // Map pour identifier le type de chaque produit
+      const productTypeMap = new Map<
+        string,
+        { isAffiliate: boolean; isCustom: boolean }
+      >();
+      (productsTypeData ?? []).forEach(p => {
+        productTypeMap.set(p.id, {
+          isAffiliate: p.created_by_affiliate !== null,
+          isCustom: p.enseigne_id !== null || p.assigned_client_id !== null,
+        });
+      });
 
-      // 3. Agréger par produit avec TVA
+      // 3. Agréger par produit
       const productMap = new Map<
         string,
         {
           quantity: number;
           revenueHT: number;
           commissionHT: number;
-          taxRate: number;
-          taxRateCount: number;
+          weightedMarginRate: number; // margin_rate × quantity pour moyenne pondérée
           isAffiliateProduct: boolean;
+          isCustomProduct: boolean;
         }
       >();
 
@@ -164,30 +158,29 @@ export function useAllProductsStats(): ReturnType<
         const productId = item.product_id;
         if (!productId) return;
 
-        // DB stocke le taux TVA en décimal (0.20) ou en pourcentage (20)
-        const taxRateRaw = item.tax_rate ?? 0.2;
-        // Convertir en pourcentage si c'est un décimal (< 1)
-        const taxRate = taxRateRaw < 1 ? taxRateRaw * 100 : taxRateRaw;
-        const isAffiliateProduct = affiliateProductIds.has(productId);
+        const marginRate = item.margin_rate ?? 0;
+        const typeInfo = productTypeMap.get(productId);
+        const isAffiliateProduct = typeInfo?.isAffiliate ?? false;
+        const isCustomProduct = typeInfo?.isCustom ?? false;
 
         if (!productMap.has(productId)) {
           productMap.set(productId, {
             quantity: 0,
             revenueHT: 0,
             commissionHT: 0,
-            taxRate: 0,
-            taxRateCount: 0,
+            weightedMarginRate: 0,
             isAffiliateProduct,
+            isCustomProduct,
           });
         }
 
         const entry = productMap.get(productId)!;
-        entry.quantity += item.quantity ?? 0;
+        const qty = item.quantity ?? 0;
+        entry.quantity += qty;
         entry.revenueHT += item.total_ht ?? 0;
         entry.commissionHT += item.affiliate_margin ?? 0;
-        // Moyenne pondérée du taux de TVA
-        entry.taxRate += taxRate;
-        entry.taxRateCount += 1;
+        // Moyenne pondérée du taux de commission
+        entry.weightedMarginRate += marginRate * qty;
       });
 
       // 4. Récupérer les infos produits et images
@@ -200,16 +193,7 @@ export function useAllProductsStats(): ReturnType<
             productsCount: 0,
             totalQuantity: 0,
             totalRevenueHT: 0,
-            totalRevenueTTC: 0,
             totalCommissionHT: 0,
-            totalCommissionTTC: 0,
-          },
-          reconciliation: {
-            sourceOfTruthTTC,
-            catalogueCommissionTTC: 0,
-            revendeurCommissionTTC: 0,
-            otherCommissionTTC: sourceOfTruthTTC,
-            isReconciled: sourceOfTruthTTC === 0,
           },
         };
       }
@@ -234,13 +218,16 @@ export function useAllProductsStats(): ReturnType<
         (imagesResult.data ?? []).map(img => [img.product_id, img.public_url])
       );
 
-      // 5. Construire les données finales avec TTC et type de commission
+      // 5. Construire les données finales
       const products: ProductStatsData[] = Array.from(productMap.entries()).map(
         ([productId, data]) => {
           const info = productsInfo.get(productId);
-          // Calculer le taux moyen de TVA
-          const avgTaxRate =
-            data.taxRateCount > 0 ? data.taxRate / data.taxRateCount : 20;
+          // Calculer le taux de commission moyen pondéré par quantité
+          const avgMarginRate =
+            data.quantity > 0 ? data.weightedMarginRate / data.quantity : 0;
+          // Calculer la marge HT par unité
+          const marginPerUnit =
+            data.quantity > 0 ? data.commissionHT / data.quantity : 0;
 
           return {
             productId,
@@ -249,63 +236,35 @@ export function useAllProductsStats(): ReturnType<
             productImageUrl: imageMap.get(productId) ?? null,
             quantitySold: data.quantity,
             revenueHT: data.revenueHT,
-            taxRate: avgTaxRate,
-            revenueTTC: data.revenueHT * (1 + avgTaxRate / 100),
             commissionHT: data.commissionHT,
-            commissionTTC: data.commissionHT * (1 + avgTaxRate / 100),
             commissionType: data.isAffiliateProduct ? 'revendeur' : 'catalogue',
+            avgMarginRate,
+            marginPerUnit,
+            isCustomProduct: data.isCustomProduct,
           };
         }
       );
 
-      // 6. Trier par commission TTC décroissante
-      products.sort((a, b) => b.commissionTTC - a.commissionTTC);
+      // 6. Trier par commission HT décroissante
+      products.sort((a, b) => b.commissionHT - a.commissionHT);
 
-      // 7. Calculer les totaux et réconciliation par type
+      // 7. Calculer les totaux
       const totals = products.reduce(
         (acc, p) => ({
           productsCount: acc.productsCount + 1,
           totalQuantity: acc.totalQuantity + p.quantitySold,
           totalRevenueHT: acc.totalRevenueHT + p.revenueHT,
-          totalRevenueTTC: acc.totalRevenueTTC + p.revenueTTC,
           totalCommissionHT: acc.totalCommissionHT + p.commissionHT,
-          totalCommissionTTC: acc.totalCommissionTTC + p.commissionTTC,
         }),
         {
           productsCount: 0,
           totalQuantity: 0,
           totalRevenueHT: 0,
-          totalRevenueTTC: 0,
           totalCommissionHT: 0,
-          totalCommissionTTC: 0,
         }
       );
 
-      // 8. Calculer les commissions par type pour réconciliation
-      const catalogueCommissionTTC = products
-        .filter(p => p.commissionType === 'catalogue')
-        .reduce((sum, p) => sum + p.commissionTTC, 0);
-
-      const revendeurCommissionTTC = products
-        .filter(p => p.commissionType === 'revendeur')
-        .reduce((sum, p) => sum + p.commissionTTC, 0);
-
-      // Commissions non ventilées par produit (différence avec source de vérité)
-      const productsTotalTTC = catalogueCommissionTTC + revendeurCommissionTTC;
-      const otherCommissionTTC = sourceOfTruthTTC - productsTotalTTC;
-
-      // Écart < 1€ = réconcilié
-      const isReconciled = Math.abs(otherCommissionTTC) < 1;
-
-      const reconciliation = {
-        sourceOfTruthTTC,
-        catalogueCommissionTTC,
-        revendeurCommissionTTC,
-        otherCommissionTTC,
-        isReconciled,
-      };
-
-      return { products, totals, reconciliation };
+      return { products, totals };
     },
     enabled: !!affiliate,
     staleTime: 60000, // 1 minute

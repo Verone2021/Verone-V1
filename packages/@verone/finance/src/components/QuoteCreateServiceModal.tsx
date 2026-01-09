@@ -8,20 +8,11 @@ import {
   type UnifiedCustomer,
 } from '@verone/orders/components/modals/customer-selector';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
   Button,
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-  Checkbox,
   Input,
   Label,
   Select,
@@ -93,9 +84,9 @@ export function QuoteCreateServiceModal({
 }: IQuoteCreateServiceModalProps): React.ReactNode {
   const { toast } = useToast();
   const [status, setStatus] = useState<CreateStatus>('idle');
-  const [autoFinalize, setAutoFinalize] = useState(false);
+  // SUPPRIMÉ: autoFinalize - JAMAIS de finalisation automatique
+  // Les devis sont TOUJOURS créés en brouillon
   const [createdQuote, setCreatedQuote] = useState<CreatedQuote | null>(null);
-  const [showFinalizeWarning, setShowFinalizeWarning] = useState(false);
 
   // Client selection - using CustomerSelector
   const [selectedCustomer, setSelectedCustomer] =
@@ -133,8 +124,6 @@ export function QuoteCreateServiceModal({
     ]);
     setValidityDays('30');
     setReference('');
-    setAutoFinalize(false);
-    setShowFinalizeWarning(false);
   }, []);
 
   const handleClose = useCallback((): void => {
@@ -186,11 +175,8 @@ export function QuoteCreateServiceModal({
   };
 
   const handleCreateClick = (): void => {
-    if (autoFinalize) {
-      setShowFinalizeWarning(true);
-    } else {
-      void handleCreateQuote();
-    }
+    // Toujours créer en brouillon - pas de confirmation nécessaire
+    void handleCreateQuote();
   };
 
   const handleCreateQuote = async (): Promise<void> => {
@@ -232,7 +218,8 @@ export function QuoteCreateServiceModal({
           })),
           validityDays: Number(validityDays),
           reference: reference || undefined,
-          autoFinalize,
+          // FORCÉ: autoFinalize = false - TOUJOURS brouillon
+          autoFinalize: false,
         }),
       });
 
@@ -530,17 +517,7 @@ export function QuoteCreateServiceModal({
               </div>
             </div>
 
-            {/* Auto finalize checkbox */}
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="autoFinalize"
-                checked={autoFinalize}
-                onCheckedChange={checked => setAutoFinalize(checked === true)}
-              />
-              <Label htmlFor="autoFinalize" className="text-sm">
-                Finaliser automatiquement (génère le PDF)
-              </Label>
-            </div>
+            {/* SUPPRIMÉ: Checkbox autoFinalize - Les devis sont TOUJOURS créés en brouillon */}
           </div>
         )}
 
@@ -564,7 +541,7 @@ export function QuoteCreateServiceModal({
                 ) : (
                   <>
                     <Send className="mr-2 h-4 w-4" />
-                    {autoFinalize ? 'Créer et finaliser' : 'Créer en brouillon'}
+                    Créer en brouillon
                   </>
                 )}
               </Button>
@@ -572,41 +549,7 @@ export function QuoteCreateServiceModal({
           )}
         </DialogFooter>
       </DialogContent>
-
-      {/* Dialog de confirmation pour finalisation */}
-      <AlertDialog
-        open={showFinalizeWarning}
-        onOpenChange={setShowFinalizeWarning}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-destructive">
-              Finaliser le devis ?
-            </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              <p className="font-semibold text-foreground">
-                Cette action est IRRÉVERSIBLE.
-              </p>
-              <p>
-                Une fois finalisé, le devis ne pourra plus être modifié. Vous
-                pourrez ensuite le convertir en facture si le client accepte.
-              </p>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => {
-                setShowFinalizeWarning(false);
-                void handleCreateQuote();
-              }}
-            >
-              Oui, finaliser
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* SUPPRIMÉ: AlertDialog de confirmation - Plus de finalisation automatique */}
     </Dialog>
   );
 }

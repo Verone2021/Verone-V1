@@ -140,14 +140,42 @@ export async function POST(request: NextRequest): Promise<
         `${indiv.first_name ?? ''} ${indiv.last_name ?? ''}`.trim() || 'Client';
     }
 
-    if (!customerEmail) {
-      return NextResponse.json(
-        { success: false, error: 'Customer email is required for invoicing' },
-        { status: 400 }
-      );
-    }
+    // Email optionnel - utiliser placeholder si pas d'email
+    // Cela permet de créer la facture, mais l'envoi automatique sera désactivé
+    const hasRealEmail = !!customerEmail;
+    const emailForQonto =
+      customerEmail || `noreply+${clientId.slice(0, 8)}@verone.app`;
 
     const qontoClient = getQontoClient();
+
+    // Normaliser country code vers ISO 2 lettres
+    const normalizeCountryCode = (
+      country: string | null | undefined
+    ): string => {
+      if (!country) return 'FR';
+      const upper = country.toUpperCase().trim();
+      // Si déjà 2 caractères, c'est bon
+      if (upper.length === 2) return upper;
+      // Mapper les noms de pays courants
+      const countryMap: Record<string, string> = {
+        FRANCE: 'FR',
+        BELGIQUE: 'BE',
+        BELGIUM: 'BE',
+        SUISSE: 'CH',
+        SWITZERLAND: 'CH',
+        LUXEMBOURG: 'LU',
+        ALLEMAGNE: 'DE',
+        GERMANY: 'DE',
+        ESPAGNE: 'ES',
+        SPAIN: 'ES',
+        ITALIE: 'IT',
+        ITALY: 'IT',
+        'ROYAUME-UNI': 'GB',
+        'UNITED KINGDOM': 'GB',
+        UK: 'GB',
+      };
+      return countryMap[upper] || 'FR';
+    };
 
     // Construire adresse pour Qonto
     // Organisation a des champs billing_* séparés
@@ -165,7 +193,7 @@ export async function POST(request: NextRequest): Promise<
         streetAddress: org.billing_address_line1 || org.address_line1 || '',
         city: org.billing_city || org.city || 'Paris',
         zipCode: org.billing_postal_code || org.postal_code || '75001',
-        countryCode: org.billing_country || org.country || 'FR',
+        countryCode: normalizeCountryCode(org.billing_country || org.country),
       };
     } else {
       const indiv = customer as IndividualCustomer;
@@ -173,7 +201,7 @@ export async function POST(request: NextRequest): Promise<
         streetAddress: indiv.address_line1 || '',
         city: indiv.city || 'Paris',
         zipCode: indiv.postal_code || '75001',
-        countryCode: indiv.country || 'FR',
+        countryCode: normalizeCountryCode(indiv.country),
       };
     }
 
@@ -181,24 +209,34 @@ export async function POST(request: NextRequest): Promise<
     const qontoClientType =
       clientType === 'organisation' ? 'company' : 'individual';
 
+    // Récupérer le numéro TVA/SIRET pour les entreprises
+    let vatNumber: string | undefined;
+    if (clientType === 'organisation') {
+      const org = customer as Organisation;
+      // Priorité: vat_number (TVA intra), sinon siret
+      vatNumber = org.vat_number || org.siret || undefined;
+    }
+
     // Chercher ou créer le client Qonto
     let qontoClientId: string;
-    const existingClient = await qontoClient.findClientByEmail(customerEmail);
+    const existingClient = await qontoClient.findClientByEmail(emailForQonto);
 
     if (existingClient) {
       await qontoClient.updateClient(existingClient.id, {
         name: customerName,
         type: qontoClientType,
         address: qontoAddress,
+        vatNumber,
       });
       qontoClientId = existingClient.id;
     } else {
       const newClient = await qontoClient.createClient({
         name: customerName,
         type: qontoClientType,
-        email: customerEmail,
+        email: emailForQonto,
         currency: 'EUR',
         address: qontoAddress,
+        vatNumber,
       });
       qontoClientId = newClient.id;
     }
@@ -255,6 +293,7 @@ export async function POST(request: NextRequest): Promise<
     }
 
     // Créer la facture
+    // Note: Le tin_number est passé au client Qonto via tax_identification_number
     const invoiceParams: CreateClientInvoiceParams = {
       clientId: qontoClientId,
       currency: 'EUR',
@@ -278,9 +317,12 @@ export async function POST(request: NextRequest): Promise<
     return NextResponse.json({
       success: true,
       invoice: finalizedInvoice,
+      hasRealEmail,
       message: autoFinalize
         ? 'Service invoice created and finalized'
-        : 'Service invoice created as draft',
+        : hasRealEmail
+          ? 'Service invoice created as draft'
+          : 'Service invoice created as draft (no email - sending disabled)',
     });
   } catch (error) {
     const errorDetails =

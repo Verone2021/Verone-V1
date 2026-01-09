@@ -3,6 +3,7 @@
  * Gestion d'un avoir spécifique
  *
  * GET    - Détail d'un avoir
+ * PATCH  - Modifie un avoir brouillon
  * DELETE - Supprime un avoir brouillon
  */
 
@@ -46,6 +47,68 @@ export async function GET(
     });
   } catch (error) {
     console.error('[API Qonto Credit Note] GET error:', error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    );
+  }
+}
+
+interface IPatchRequestBody {
+  reason?: string;
+  items?: Array<{
+    title: string;
+    description?: string;
+    quantity: string;
+    unit?: string;
+    unitPrice: { value: string; currency: string };
+    vatRate: string;
+  }>;
+}
+
+/**
+ * PATCH /api/qonto/credit-notes/[id]
+ * Modifie un avoir brouillon
+ */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+): Promise<
+  NextResponse<{
+    success: boolean;
+    credit_note?: unknown;
+    error?: string;
+  }>
+> {
+  try {
+    const { id } = await params;
+    const body = (await request.json()) as IPatchRequestBody;
+    const client = getQontoClient();
+
+    // Vérifier que l'avoir est en brouillon
+    const currentCreditNote = await client.getClientCreditNoteById(id);
+
+    if (currentCreditNote.status !== 'draft') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Only draft credit notes can be modified',
+        },
+        { status: 400 }
+      );
+    }
+
+    const creditNote = await client.updateClientCreditNote(id, body);
+
+    return NextResponse.json({
+      success: true,
+      credit_note: creditNote,
+    });
+  } catch (error) {
+    console.error('[API Qonto Credit Note] PATCH error:', error);
     return NextResponse.json(
       {
         success: false,

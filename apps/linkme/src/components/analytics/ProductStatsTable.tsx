@@ -6,7 +6,8 @@
  * - Pagination (10/20 par page)
  * - Tri par commission, quantité, CA
  * - Recherche par nom/SKU
- * - Affichage HT et TTC avec TVA
+ * - Badge Sur mesure / Catalogue
+ * - Affichage HT uniquement (pas de TTC)
  *
  * @module ProductStatsTable
  * @since 2026-01-08
@@ -57,7 +58,7 @@ function formatCurrency(value: number): string {
 }
 
 function formatPercent(value: number): string {
-  return `${value.toFixed(1)}%`;
+  return `${value.toFixed(1)} %`;
 }
 
 // ============================================
@@ -100,20 +101,20 @@ export function ProductStatsTable({
 
       switch (sortField) {
         case 'commission':
-          valueA = a.commissionTTC;
-          valueB = b.commissionTTC;
+          valueA = a.commissionHT;
+          valueB = b.commissionHT;
           break;
         case 'quantity':
           valueA = a.quantitySold;
           valueB = b.quantitySold;
           break;
         case 'revenue':
-          valueA = a.revenueTTC;
-          valueB = b.revenueTTC;
+          valueA = a.revenueHT;
+          valueB = b.revenueHT;
           break;
         default:
-          valueA = a.commissionTTC;
-          valueB = b.commissionTTC;
+          valueA = a.commissionHT;
+          valueB = b.commissionHT;
       }
 
       return sortDirection === 'desc' ? valueB - valueA : valueA - valueB;
@@ -237,23 +238,19 @@ export function ProductStatsTable({
                 CA HT
               </th>
               <th className="text-right py-3 px-2 font-medium text-gray-500">
-                TVA
+                Taux
               </th>
               <th className="text-right py-3 px-2 font-medium text-gray-500">
-                CA TTC
+                Marge/u
               </th>
               <th className="text-right py-3 px-2 font-medium text-gray-500">
                 {commissionLabel} HT
-              </th>
-              <th className="text-right py-3 px-2 font-medium text-gray-500">
-                {commissionLabel} TTC
               </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {paginatedProducts.map((product, index) => {
               const rank = (page - 1) * perPage + index + 1;
-              const tvaAmount = product.revenueTTC - product.revenueHT;
 
               return (
                 <tr
@@ -269,7 +266,7 @@ export function ProductStatsTable({
                     </div>
                   </td>
 
-                  {/* Produit */}
+                  {/* Produit avec Badge */}
                   <td className="py-3 px-2">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
@@ -288,9 +285,25 @@ export function ProductStatsTable({
                         )}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-medium text-[#183559] truncate max-w-[200px]">
-                          {product.productName}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-[#183559] truncate max-w-[180px]">
+                            {product.productName}
+                          </p>
+                          {/* Badge Sur mesure / Catalogue */}
+                          {!isRevendeur && (
+                            <span
+                              className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                                product.isCustomProduct
+                                  ? 'bg-purple-100 text-purple-700'
+                                  : 'bg-blue-100 text-blue-700'
+                              }`}
+                            >
+                              {product.isCustomProduct
+                                ? 'Sur mesure'
+                                : 'Catalogue'}
+                            </span>
+                          )}
+                        </div>
                         <p className="text-xs text-gray-400">
                           {product.productSku}
                         </p>
@@ -308,32 +321,21 @@ export function ProductStatsTable({
                     {formatCurrency(product.revenueHT)}
                   </td>
 
-                  {/* TVA */}
+                  {/* Taux de commission moyen */}
                   <td className="py-3 px-2 text-right">
-                    <div className="text-xs">
-                      <span className="text-gray-400">
-                        {formatPercent(product.taxRate)}
-                      </span>
-                      <br />
-                      <span className="text-gray-500">
-                        {formatCurrency(tvaAmount)}
-                      </span>
-                    </div>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-teal-50 text-teal-700">
+                      {formatPercent(product.avgMarginRate)}
+                    </span>
                   </td>
 
-                  {/* CA TTC */}
-                  <td className="py-3 px-2 text-right font-medium text-[#183559]">
-                    {formatCurrency(product.revenueTTC)}
+                  {/* Marge par unité */}
+                  <td className="py-3 px-2 text-right text-gray-600">
+                    {formatCurrency(product.marginPerUnit)}
                   </td>
 
                   {/* Commission HT */}
-                  <td className="py-3 px-2 text-right text-gray-600">
-                    {formatCurrency(product.commissionHT)}
-                  </td>
-
-                  {/* Commission TTC */}
                   <td className="py-3 px-2 text-right font-semibold text-[#5DBEBB]">
-                    {formatCurrency(product.commissionTTC)}
+                    {formatCurrency(product.commissionHT)}
                   </td>
                 </tr>
               );

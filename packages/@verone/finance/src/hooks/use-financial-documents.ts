@@ -200,7 +200,7 @@ export function useFinancialDocuments(filters?: FinancialDocumentFilters) {
         .select(
           `
           *,
-          partner:organisations!partner_id(id, legal_name, trade_name, type)
+          partner:organisations!fk_partner(id, legal_name, trade_name, type)
         `
         )
         .is('deleted_at', null)

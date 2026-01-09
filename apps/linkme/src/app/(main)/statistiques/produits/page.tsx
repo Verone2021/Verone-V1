@@ -4,9 +4,10 @@
  * Page Statistiques Produits
  *
  * Affiche TOUS les produits vendus avec statistiques complètes :
- * - KPIs globaux (produits, quantités, CA, commissions)
+ * - KPIs globaux (produits, quantités, CA HT, commissions HT)
  * - Tableau paginé avec recherche et tri
- * - Valeurs HT et TTC avec TVA
+ * - Badge Sur mesure / Catalogue
+ * - Taux de commission et marge par unité
  *
  * @module StatistiquesProduits
  * @since 2026-01-08
@@ -155,46 +156,42 @@ export default function StatistiquesProduits(): JSX.Element {
             )}
           </Card>
 
-          {/* CA Total TTC */}
+          {/* CA Total HT */}
           <Card className="p-4 border-l-4 border-[#183559]">
             <div className="flex items-center gap-2 mb-2">
               <div className="p-1.5 bg-[#183559]/10 rounded-lg">
                 <DollarSign className="h-4 w-4 text-[#183559]" />
               </div>
-              <span className="text-sm text-gray-600">CA Total TTC</span>
+              <span className="text-sm text-gray-600">CA Total HT</span>
             </div>
             {isLoading ? (
               <div className="animate-pulse h-8 bg-gray-200 rounded w-28" />
             ) : (
               <>
                 <p className="text-2xl font-bold text-[#183559]">
-                  {formatCurrency(data?.totals.totalRevenueTTC ?? 0)}
+                  {formatCurrency(data?.totals.totalRevenueHT ?? 0)}
                 </p>
-                <p className="text-xs text-gray-500">
-                  HT: {formatCurrency(data?.totals.totalRevenueHT ?? 0)}
-                </p>
+                <p className="text-xs text-gray-500">chiffre d&apos;affaires</p>
               </>
             )}
           </Card>
 
-          {/* Commissions TTC */}
+          {/* Commissions HT */}
           <Card className="p-4 border-l-4 border-[#5DBEBB]">
             <div className="flex items-center gap-2 mb-2">
               <div className="p-1.5 bg-[#5DBEBB]/10 rounded-lg">
                 <Wallet className="h-4 w-4 text-[#5DBEBB]" />
               </div>
-              <span className="text-sm text-gray-600">Commissions TTC</span>
+              <span className="text-sm text-gray-600">Commissions HT</span>
             </div>
             {isLoading ? (
               <div className="animate-pulse h-8 bg-gray-200 rounded w-28" />
             ) : (
               <>
                 <p className="text-2xl font-bold text-[#5DBEBB]">
-                  {formatCurrency(data?.totals.totalCommissionTTC ?? 0)}
+                  {formatCurrency(data?.totals.totalCommissionHT ?? 0)}
                 </p>
-                <p className="text-xs text-gray-500">
-                  HT: {formatCurrency(data?.totals.totalCommissionHT ?? 0)}
-                </p>
+                <p className="text-xs text-gray-500">total gagné</p>
               </>
             )}
           </Card>

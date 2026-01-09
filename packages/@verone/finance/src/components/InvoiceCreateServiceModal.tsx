@@ -8,20 +8,11 @@ import {
   type UnifiedCustomer,
 } from '@verone/orders/components/modals/customer-selector';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
   Button,
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-  Checkbox,
   Input,
   Label,
   Select,
@@ -93,11 +84,11 @@ export function InvoiceCreateServiceModal({
 }: IInvoiceCreateServiceModalProps): React.ReactNode {
   const { toast } = useToast();
   const [status, setStatus] = useState<CreateStatus>('idle');
-  const [autoFinalize, setAutoFinalize] = useState(false);
+  // SUPPRIMÉ: autoFinalize - JAMAIS de finalisation automatique
+  // Les factures sont TOUJOURS créées en brouillon
   const [createdInvoice, setCreatedInvoice] = useState<CreatedInvoice | null>(
     null
   );
-  const [showFinalizeWarning, setShowFinalizeWarning] = useState(false);
 
   // Client selection - using CustomerSelector
   const [selectedCustomer, setSelectedCustomer] =
@@ -135,8 +126,6 @@ export function InvoiceCreateServiceModal({
     ]);
     setPaymentTerms('net_30');
     setReference('');
-    setAutoFinalize(false);
-    setShowFinalizeWarning(false);
   }, []);
 
   const handleClose = useCallback((): void => {
@@ -188,11 +177,8 @@ export function InvoiceCreateServiceModal({
   };
 
   const handleCreateClick = (): void => {
-    if (autoFinalize) {
-      setShowFinalizeWarning(true);
-    } else {
-      void handleCreateInvoice();
-    }
+    // Toujours créer en brouillon - pas de confirmation nécessaire
+    void handleCreateInvoice();
   };
 
   const handleCreateInvoice = async (): Promise<void> => {
@@ -235,7 +221,8 @@ export function InvoiceCreateServiceModal({
           })),
           paymentTerms,
           reference: reference || undefined,
-          autoFinalize,
+          // FORCÉ: autoFinalize = false - TOUJOURS brouillon
+          autoFinalize: false,
         }),
       });
 
@@ -537,17 +524,7 @@ export function InvoiceCreateServiceModal({
               </div>
             </div>
 
-            {/* Auto finalize checkbox */}
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="autoFinalize"
-                checked={autoFinalize}
-                onCheckedChange={checked => setAutoFinalize(checked === true)}
-              />
-              <Label htmlFor="autoFinalize" className="text-sm">
-                Finaliser automatiquement (génère le PDF)
-              </Label>
-            </div>
+            {/* SUPPRIMÉ: Checkbox autoFinalize - Les factures sont TOUJOURS créées en brouillon */}
           </div>
         )}
 
@@ -571,7 +548,7 @@ export function InvoiceCreateServiceModal({
                 ) : (
                   <>
                     <Send className="mr-2 h-4 w-4" />
-                    {autoFinalize ? 'Créer et finaliser' : 'Créer en brouillon'}
+                    Créer en brouillon
                   </>
                 )}
               </Button>
@@ -579,42 +556,7 @@ export function InvoiceCreateServiceModal({
           )}
         </DialogFooter>
       </DialogContent>
-
-      {/* Dialog de confirmation pour finalisation */}
-      <AlertDialog
-        open={showFinalizeWarning}
-        onOpenChange={setShowFinalizeWarning}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-destructive">
-              Finaliser la facture ?
-            </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              <p className="font-semibold text-foreground">
-                Cette action est IRRÉVERSIBLE.
-              </p>
-              <p>
-                Une fois finalisée, la facture ne pourra plus être modifiée ni
-                supprimée. Elle recevra un numéro officiel et sera enregistrée
-                définitivement.
-              </p>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => {
-                setShowFinalizeWarning(false);
-                void handleCreateInvoice();
-              }}
-            >
-              Oui, finaliser définitivement
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* SUPPRIMÉ: AlertDialog de confirmation - Plus de finalisation automatique */}
     </Dialog>
   );
 }
