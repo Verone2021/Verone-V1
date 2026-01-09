@@ -299,66 +299,76 @@ export function OrderDetailModal({
 
                   {/* TOTAUX (bas de table) */}
                   <Separator className="my-4" />
-                  <div className="space-y-2 text-right">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Total HT produits :</span>
-                      <span className="font-semibold">
-                        {formatCurrency(order.total_ht || 0)}
-                      </span>
-                    </div>
-                    {/* Frais additionnels */}
-                    {((order as any).shipping_cost_ht > 0 ||
-                      (order as any).insurance_cost_ht > 0 ||
-                      (order as any).handling_cost_ht > 0) && (
-                      <>
-                        {(order as any).shipping_cost_ht > 0 && (
-                          <div className="flex justify-between text-sm text-gray-600">
-                            <span>Frais de livraison HT :</span>
-                            <span>
-                              {formatCurrency((order as any).shipping_cost_ht)}
-                            </span>
+                  {(() => {
+                    // Calcul correct des totaux
+                    const productsHT = order.total_ht || 0;
+                    const shippingHT = (order as any).shipping_cost_ht || 0;
+                    const insuranceHT = (order as any).insurance_cost_ht || 0;
+                    const handlingHT = (order as any).handling_cost_ht || 0;
+                    const totalHT =
+                      productsHT + shippingHT + insuranceHT + handlingHT;
+                    const taxRate = (order as any).tax_rate || 0.2;
+                    const tvaAmount = totalHT * taxRate;
+                    const totalTTC = totalHT + tvaAmount;
+
+                    return (
+                      <div className="space-y-2 text-right">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">
+                            Total HT produits :
+                          </span>
+                          <span className="font-semibold">
+                            {formatCurrency(productsHT)}
+                          </span>
+                        </div>
+                        {/* Frais additionnels */}
+                        {(shippingHT > 0 ||
+                          insuranceHT > 0 ||
+                          handlingHT > 0) && (
+                          <>
+                            {shippingHT > 0 && (
+                              <div className="flex justify-between text-sm text-gray-600">
+                                <span>Frais de livraison HT :</span>
+                                <span>{formatCurrency(shippingHT)}</span>
+                              </div>
+                            )}
+                            {insuranceHT > 0 && (
+                              <div className="flex justify-between text-sm text-gray-600">
+                                <span>Frais d'assurance HT :</span>
+                                <span>{formatCurrency(insuranceHT)}</span>
+                              </div>
+                            )}
+                            {handlingHT > 0 && (
+                              <div className="flex justify-between text-sm text-gray-600">
+                                <span>Frais de manutention HT :</span>
+                                <span>{formatCurrency(handlingHT)}</span>
+                              </div>
+                            )}
+                          </>
+                        )}
+                        {/* Total HT global (produits + frais) si frais existent */}
+                        {(shippingHT > 0 ||
+                          insuranceHT > 0 ||
+                          handlingHT > 0) && (
+                          <div className="flex justify-between text-sm font-medium pt-1 border-t border-dashed">
+                            <span className="text-gray-700">Total HT :</span>
+                            <span>{formatCurrency(totalHT)}</span>
                           </div>
                         )}
-                        {(order as any).insurance_cost_ht > 0 && (
-                          <div className="flex justify-between text-sm text-gray-600">
-                            <span>Frais d'assurance HT :</span>
-                            <span>
-                              {formatCurrency((order as any).insurance_cost_ht)}
-                            </span>
-                          </div>
-                        )}
-                        {(order as any).handling_cost_ht > 0 && (
-                          <div className="flex justify-between text-sm text-gray-600">
-                            <span>Frais de manutention HT :</span>
-                            <span>
-                              {formatCurrency((order as any).handling_cost_ht)}
-                            </span>
-                          </div>
-                        )}
-                      </>
-                    )}
-                    <div className="flex justify-between text-sm text-gray-600">
-                      <span>
-                        TVA ({((order as any).tax_rate || 0.2) * 100}%) :
-                      </span>
-                      <span>
-                        {formatCurrency(
-                          (order.total_ht || 0) *
-                            ((order as any).tax_rate || 0.2)
-                        )}
-                      </span>
-                    </div>
-                    <Separator />
-                    <div className="flex justify-between text-base font-bold">
-                      <span>Total TTC :</span>
-                      <span className="text-primary">
-                        {formatCurrency(
-                          (order.total_ht || 0) *
-                            (1 + ((order as any).tax_rate || 0.2))
-                        )}
-                      </span>
-                    </div>
-                  </div>
+                        <div className="flex justify-between text-sm text-gray-600">
+                          <span>TVA ({(taxRate * 100).toFixed(0)}%) :</span>
+                          <span>{formatCurrency(tvaAmount)}</span>
+                        </div>
+                        <Separator />
+                        <div className="flex justify-between text-base font-bold">
+                          <span>Total TTC :</span>
+                          <span className="text-primary">
+                            {formatCurrency(totalTTC)}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </CardContent>
               </Card>
             </div>
