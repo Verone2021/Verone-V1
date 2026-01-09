@@ -64,9 +64,7 @@ purchase_order_receptions (Detail Receipt Log)
 const allItemsFullyReceived = items.every(
   item => item.quantity_received >= item.quantity
 );
-const hasPartialReceipts = items.some(
-  item => item.quantity_received > 0
-);
+const hasPartialReceipts = items.some(item => item.quantity_received > 0);
 
 if (allItemsFullyReceived) {
   newStatus = 'received';
@@ -82,14 +80,17 @@ if (allItemsFullyReceived) {
 ### 1. **Incomplete Quantity Cancellation** ⚠️
 
 **Issue**: When a partial shipment is received, the remaining quantity is never formally tracked:
+
 - Example: Order 100 units, receive 60 → 40 remain in limbo
 - No column to record "quantity_cancelled" at line item level
 
 **Current Workaround**:
+
 - Modal "CancelRemainderModal" allows users to mark remainder as cancelled
 - But NO database column records this decision
 
 **Missing Schema**:
+
 ```sql
 ALTER TABLE purchase_order_items ADD COLUMN (
   quantity_cancelled INTEGER DEFAULT 0,  -- Units that won't be delivered
@@ -101,23 +102,27 @@ ALTER TABLE purchase_order_items ADD COLUMN (
 ### 2. **Reliquat Tracking Not Formally Stored** ⚠️
 
 **Issue**: Only visual calculation at UI level, no persistent record
+
 - Opening modal shows remainders but they're calculated on-the-fly
 - No historical trace of what was cancelled vs what's still pending
 
 ### 3. **Billing Integration Gap** ⚠️
 
 **Issue**: No link between PO fulfillment status and invoicing
+
 - `financial_documents` table has `purchase_order_id` FK
 - But no business logic prevents invoicing partial orders or validates fulfillment
 - Missing: Is invoice created ONLY after full receipt? Or can be partial?
 
 **Current State in financial_documents**:
+
 - Just a foreign key reference
 - No enforcement of fulfillment status
 
 ### 4. **Stock Movements Don't Differentiate** ⚠️
 
 **Issue**: `stock_movements.reference_type` is generic
+
 - Records "purchase_order" but doesn't distinguish:
   - Initial receipt (full)
   - Partial receipt 1
@@ -136,14 +141,14 @@ ALTER TABLE purchase_order_items ADD COLUMN (
 const statusLabels = {
   draft: 'Brouillon',
   validated: 'Validée',
-  partially_received: 'Partiellement reçue',  // ✅ Clearly shown
-  received: 'Reçue',                          // ✅ Clearly shown
+  partially_received: 'Partiellement reçue', // ✅ Clearly shown
+  received: 'Reçue', // ✅ Clearly shown
   cancelled: 'Annulée',
 };
 
 const statusColors = {
-  partially_received: 'bg-amber-100 text-amber-800',  // 🟠 Amber badge
-  received: 'bg-green-100 text-green-800',            // 🟢 Green badge
+  partially_received: 'bg-amber-100 text-amber-800', // 🟠 Amber badge
+  received: 'bg-green-100 text-green-800', // 🟢 Green badge
 };
 ```
 
@@ -167,6 +172,7 @@ const statusColors = {
 ### Current Connection
 
 `financial_documents` table:
+
 ```sql
 purchase_order_id UUID REFERENCES purchase_orders(id),
 ```
@@ -174,6 +180,7 @@ purchase_order_id UUID REFERENCES purchase_orders(id),
 ### Missing Validations
 
 No business rule that says:
+
 - ❌ "Cannot invoice until order fully received"
 - ❌ "Can only invoice received quantities"
 - ❌ "Invoice total must match order fulfillment"
@@ -181,6 +188,7 @@ No business rule that says:
 ### Implication
 
 A user COULD:
+
 1. Order 100 units
 2. Receive 60 units
 3. Create invoice for 100 units (WRONG - exposes overcharge risk)
@@ -191,7 +199,7 @@ A user COULD:
 
 ### Files Analyzed
 
-1. **Database Schema** (via mcp__supabase__list_tables)
+1. **Database Schema** (via mcp**supabase**list_tables)
    - `purchase_orders` table structure
    - `purchase_order_items` with quantity_received column
    - `purchase_order_receptions` exists for audit trail
@@ -240,20 +248,24 @@ Before proceeding, clarify:
 ## Technical Recommendations
 
 ### Phase 1: Schema Enhancement (Required)
+
 1. Add `quantity_cancelled` + `cancelled_at` to `purchase_order_items`
 2. Add `reception_id` FK to `stock_movements` for full traceability
 3. Create trigger to auto-calculate `status` based on item quantities
 
 ### Phase 2: Business Rules (Required)
+
 1. Enforce invoicing rules (can't invoice > received)
 2. Add validation in financial_documents insert
 
 ### Phase 3: UI Enhancement (Optional)
+
 1. Show breakdown: Ordered | Received | Cancelled | Pending
 2. Add historical timeline of receptions
 3. Add remainder cancellation reason selection
 
 ### Phase 4: Integration (Optional)
+
 1. Auto-notify supplier on partial receipt
 2. Auto-generate backorder PO for cancelled items
 
@@ -262,16 +274,19 @@ Before proceeding, clarify:
 ## Files to Modify
 
 ### Core Files
+
 1. `/supabase/migrations/` - Schema changes
 2. `packages/@verone/orders/src/hooks/use-purchase-orders.ts` - Status logic
 3. `apps/back-office/src/app/commandes/fournisseurs/page.tsx` - UI display
 
 ### Supporting Files
+
 4. `packages/@verone/orders/src/components/modals/CancelRemainderModal.tsx` - Form persistence
 5. `packages/@verone/orders/src/actions/purchase-receptions.ts` - Business rules
 6. `packages/@verone/orders/src/components/tables/` - Table enhancements
 
 ### Financial Integration
+
 7. `packages/@verone/financial/` - Billing validations (if exists)
 
 ---
@@ -299,4 +314,3 @@ Before proceeding, clarify:
 ❌ **MISSING**: Full stock movement traceability
 
 **Recommendation**: Before coding, get stakeholder input on the 5 questions above. The actual implementation is straightforward once business rules are defined.
-
