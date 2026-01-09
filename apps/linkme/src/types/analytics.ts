@@ -131,7 +131,7 @@ export const PERIOD_LABELS: Record<AnalyticsPeriod, string> = {
   all: 'Tout',
   week: '7 jours',
   month: '30 jours',
-  quarter: '90 jours',
+  quarter: 'Ce trimestre',
   year: 'Cette année',
 };
 
@@ -145,8 +145,11 @@ export function getPeriodStartDate(period: AnalyticsPeriod): Date | null {
       return new Date(now.setDate(now.getDate() - 7));
     case 'month':
       return new Date(now.setDate(now.getDate() - 30));
-    case 'quarter':
-      return new Date(now.setDate(now.getDate() - 90));
+    case 'quarter': {
+      // Trimestre calendaire: Q1=Jan-Mars, Q2=Avr-Juin, Q3=Juil-Sept, Q4=Oct-Déc
+      const currentQuarter = Math.floor(now.getMonth() / 3);
+      return new Date(now.getFullYear(), currentQuarter * 3, 1);
+    }
     case 'year':
       return new Date(now.getFullYear(), 0, 1);
     default:
