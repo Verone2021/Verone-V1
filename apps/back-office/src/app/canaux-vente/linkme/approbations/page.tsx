@@ -51,6 +51,8 @@ import {
   Mail,
   Phone,
   MapPin,
+  Pencil,
+  History,
 } from 'lucide-react';
 
 import {
@@ -63,9 +65,11 @@ import {
 import {
   usePendingOrganisations,
   usePendingOrganisationsCount,
+  useAllOrganisationsWithApproval,
   useApproveOrganisation,
   useRejectOrganisation,
   type PendingOrganisation,
+  type OrganisationApprovalStatus,
 } from '../hooks/use-organisation-approvals';
 import {
   usePendingApprovals,
@@ -73,6 +77,8 @@ import {
   useAllAffiliateProducts,
   useApproveProduct,
   useRejectProduct,
+  useUpdateAffiliateProduct,
+  useProductCommissionHistory,
   COMMISSION_RATES,
   type PendingProduct,
   type AffiliateProductApprovalStatus,
@@ -419,6 +425,12 @@ function ProduitsTab() {
   const [selectedCommission, setSelectedCommission] =
     useState<CommissionRate>(5);
 
+  // Dialogue edition produit affilie (nouveau 2026-01-09)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editCommissionRate, setEditCommissionRate] = useState<number>(0);
+  const [editPayoutHt, setEditPayoutHt] = useState<number>(0);
+  const [editChangeReason, setEditChangeReason] = useState('');
+
   const {
     data: products,
     isLoading,
@@ -428,6 +440,7 @@ function ProduitsTab() {
   );
 
   const approveProduct = useApproveProduct();
+  const updateProduct = useUpdateAffiliateProduct();
   const rejectProduct = useRejectProduct();
 
   // Ouvrir dialogue approbation (ne pas approuver directement)
@@ -479,6 +492,37 @@ function ProduitsTab() {
   const handleViewDetails = (product: PendingProduct) => {
     setSelectedProduct(product);
     setIsDetailOpen(true);
+  };
+
+  // Ouvrir dialogue edition (produits approuves uniquement)
+  const handleEditClick = (product: PendingProduct) => {
+    setSelectedProduct(product);
+    setEditCommissionRate(product.affiliate_commission_rate || 0);
+    setEditPayoutHt(product.affiliate_payout_ht || 0);
+    setEditChangeReason('');
+    setIsEditDialogOpen(true);
+  };
+
+  // Confirmer modification
+  const handleEditConfirm = async () => {
+    if (!selectedProduct) return;
+
+    try {
+      await updateProduct.mutateAsync({
+        productId: selectedProduct.id,
+        commissionRate: editCommissionRate,
+        payoutHt: editPayoutHt,
+        changeReason: editChangeReason || undefined,
+      });
+      setIsEditDialogOpen(false);
+      setSelectedProduct(null);
+      refetch();
+    } catch (err) {
+      alert(
+        'Erreur lors de la modification: ' +
+          (err instanceof Error ? err.message : 'Erreur inconnue')
+      );
+    }
   };
 
   // Fonctions de calcul commission (modele affilies: commission DEDUITE)
@@ -640,6 +684,18 @@ function ProduitsTab() {
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
+                      {/* Bouton Edit pour produits approuves */}
+                      {product.affiliate_approval_status === 'approved' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditClick(product)}
+                          className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                        >
+                          <Pencil className="h-4 w-4 mr-1" />
+                          Modifier
+                        </Button>
+                      )}
                       {product.affiliate_approval_status ===
                         'pending_approval' && (
                         <>
@@ -970,6 +1026,136 @@ function ProduitsTab() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Edit Dialog - Modifier commission/payout (nouveau 2026-01-09) */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="h-5 w-5 text-blue-500" />
+              Modifier le produit
+            </DialogTitle>
+            <DialogDescription>
+              Modifiez la commission et/ou le payout du produit affilie.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedProduct && (
+            <div className="py-4 space-y-4">
+              {/* Recap produit */}
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="font-medium">{selectedProduct.name}</p>
+                <p className="text-sm text-gray-500">{selectedProduct.sku}</p>
+              </div>
+
+              {/* Commission Rate */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Commission Verone (%)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.5"
+                  value={editCommissionRate}
+                  onChange={e =>
+                    setEditCommissionRate(parseFloat(e.target.value) || 0)
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              {/* Payout HT */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Payout affilie (EUR HT)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={editPayoutHt}
+                  onChange={e =>
+                    setEditPayoutHt(parseFloat(e.target.value) || 0)
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              {/* Raison du changement */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Raison du changement (optionnel)
+                </label>
+                <Textarea
+                  value={editChangeReason}
+                  onChange={e => setEditChangeReason(e.target.value)}
+                  placeholder="Ex: Ajustement suite a negociation..."
+                  rows={2}
+                />
+              </div>
+
+              {/* Apercu calcule */}
+              <div className="p-4 bg-blue-50 rounded-lg space-y-2">
+                <p className="text-sm font-medium text-blue-700 flex items-center gap-2">
+                  <History className="h-4 w-4" />
+                  Apercu apres modification:
+                </p>
+                <div className="text-sm space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Prix client:</span>
+                    <span className="font-medium">
+                      {editPayoutHt.toFixed(2)} EUR
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-amber-700">
+                    <span>Commission Verone ({editCommissionRate}%):</span>
+                    <span>
+                      -
+                      {getCommissionAmount(
+                        editPayoutHt,
+                        editCommissionRate
+                      ).toFixed(2)}{' '}
+                      EUR
+                    </span>
+                  </div>
+                  <hr className="border-blue-200" />
+                  <div className="flex justify-between text-green-700 font-medium">
+                    <span>Affilie recoit:</span>
+                    <span>
+                      {getAffiliateEarning(
+                        editPayoutHt,
+                        editCommissionRate
+                      ).toFixed(2)}{' '}
+                      EUR
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditDialogOpen(false)}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={handleEditConfirm}
+              disabled={updateProduct.isPending}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {updateProduct.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Pencil className="h-4 w-4 mr-2" />
+              )}
+              Enregistrer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
@@ -1014,8 +1200,47 @@ function StatusBadge({ status }: { status: AffiliateProductApprovalStatus }) {
 // TAB: ORGANISATIONS
 // ============================================================================
 
+// Status filter options for organisations
+const ORG_STATUS_OPTIONS: {
+  value: OrganisationApprovalStatus | 'all';
+  label: string;
+  icon: React.ElementType;
+  color: string;
+}[] = [
+  { value: 'all', label: 'Toutes', icon: Building2, color: 'text-gray-600' },
+  {
+    value: 'pending_validation',
+    label: 'En attente',
+    icon: Clock,
+    color: 'text-amber-600',
+  },
+  {
+    value: 'approved',
+    label: 'Approuvees',
+    icon: CheckCircle,
+    color: 'text-green-600',
+  },
+  {
+    value: 'rejected',
+    label: 'Rejetees',
+    icon: XCircle,
+    color: 'text-red-600',
+  },
+];
+
 function OrganisationsTab() {
-  const { data: organisations, isLoading, refetch } = usePendingOrganisations();
+  const [selectedStatus, setSelectedStatus] = useState<
+    OrganisationApprovalStatus | 'all'
+  >('pending_validation');
+
+  const {
+    data: organisations,
+    isLoading,
+    refetch,
+  } = useAllOrganisationsWithApproval(
+    selectedStatus === 'all' ? undefined : selectedStatus
+  );
+
   const approveOrg = useApproveOrganisation();
   const rejectOrg = useRejectOrganisation();
 
@@ -1062,135 +1287,175 @@ function OrganisationsTab() {
     setIsDetailOpen(true);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
-      </div>
-    );
-  }
-
-  if (!organisations || organisations.length === 0) {
-    return (
-      <div className="bg-white rounded-xl p-12 text-center border">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <CheckCircle className="h-8 w-8 text-green-600" />
-        </div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">
-          Aucune organisation en attente
-        </h2>
-        <p className="text-gray-500">
-          Toutes les organisations ont ete validees
-        </p>
-      </div>
-    );
-  }
-
   return (
     <>
-      <div className="bg-white rounded-xl border overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b">
-            <tr>
-              <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
-                Organisation
-              </th>
-              <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
-                Enseigne
-              </th>
-              <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
-                Contact
-              </th>
-              <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
-                Localisation
-              </th>
-              <th className="text-right px-6 py-4 text-sm font-medium text-gray-500">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {organisations.map(org => (
-              <tr key={org.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4">
-                  <div>
-                    <p className="font-medium text-gray-900">
-                      {org.trade_name || org.legal_name}
-                    </p>
-                    {org.trade_name && (
-                      <p className="text-sm text-gray-500">{org.legal_name}</p>
-                    )}
-                    {org.siret && (
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        SIRET: {org.siret}
-                      </p>
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <p className="text-gray-900">{org.enseigne_name || '-'}</p>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="space-y-1">
-                    {org.email && (
-                      <div className="flex items-center gap-1 text-sm text-gray-600">
-                        <Mail className="h-3 w-3" />
-                        {org.email}
-                      </div>
-                    )}
-                    {org.phone && (
-                      <div className="flex items-center gap-1 text-sm text-gray-600">
-                        <Phone className="h-3 w-3" />
-                        {org.phone}
-                      </div>
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-1 text-sm text-gray-600">
-                    <MapPin className="h-3 w-3" />
-                    {org.city || '-'}
-                    {org.postal_code && ` (${org.postal_code})`}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center justify-end gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleViewDetails(org)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleRejectClick(org)}
-                      className="text-red-600 border-red-200 hover:bg-red-50"
-                    >
-                      <XCircle className="h-4 w-4 mr-1" />
-                      Rejeter
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => handleApprove(org)}
-                      disabled={approveOrg.isPending}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      {approveOrg.isPending ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                      ) : (
-                        <CheckCircle className="h-4 w-4 mr-1" />
-                      )}
-                      Approuver
-                    </Button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* Status Filter */}
+      <div className="flex items-center gap-2 mb-6">
+        <Filter className="h-4 w-4 text-gray-400" />
+        <div className="flex gap-1 p-1 bg-gray-100 rounded-lg">
+          {ORG_STATUS_OPTIONS.map(option => {
+            const Icon = option.icon;
+            const isActive = selectedStatus === option.value;
+            return (
+              <button
+                key={option.value}
+                onClick={() => setSelectedStatus(option.value)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors ${
+                  isActive
+                    ? 'bg-white shadow-sm font-medium'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <Icon className={`h-4 w-4 ${option.color}`} />
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
+
+      {/* Loading */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!isLoading && (!organisations || organisations.length === 0) && (
+        <div className="bg-white rounded-xl p-12 text-center border">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Building2 className="h-8 w-8 text-gray-400" />
+          </div>
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">
+            Aucune organisation
+          </h2>
+          <p className="text-gray-500">
+            {selectedStatus === 'pending_validation'
+              ? 'Aucune organisation en attente de validation'
+              : 'Aucune organisation trouvee avec ce filtre'}
+          </p>
+        </div>
+      )}
+
+      {/* Organisations Table */}
+      {!isLoading && organisations && organisations.length > 0 && (
+        <div className="bg-white rounded-xl border overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b">
+              <tr>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+                  Organisation
+                </th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+                  Enseigne
+                </th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+                  Contact
+                </th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+                  Localisation
+                </th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+                  Statut
+                </th>
+                <th className="text-right px-6 py-4 text-sm font-medium text-gray-500">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {organisations.map(org => (
+                <tr key={org.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4">
+                    <div>
+                      <p className="font-medium text-gray-900">
+                        {org.trade_name || org.legal_name}
+                      </p>
+                      {org.trade_name && (
+                        <p className="text-sm text-gray-500">
+                          {org.legal_name}
+                        </p>
+                      )}
+                      {org.siret && (
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          SIRET: {org.siret}
+                        </p>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="text-gray-900">{org.enseigne_name || '-'}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="space-y-1">
+                      {org.email && (
+                        <div className="flex items-center gap-1 text-sm text-gray-600">
+                          <Mail className="h-3 w-3" />
+                          {org.email}
+                        </div>
+                      )}
+                      {org.phone && (
+                        <div className="flex items-center gap-1 text-sm text-gray-600">
+                          <Phone className="h-3 w-3" />
+                          {org.phone}
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-1 text-sm text-gray-600">
+                      <MapPin className="h-3 w-3" />
+                      {org.city || '-'}
+                      {org.postal_code && ` (${org.postal_code})`}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <OrgStatusBadge status={org.approval_status} />
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleViewDetails(org)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      {org.approval_status === 'pending_validation' && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleRejectClick(org)}
+                            className="text-red-600 border-red-200 hover:bg-red-50"
+                          >
+                            <XCircle className="h-4 w-4 mr-1" />
+                            Rejeter
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => handleApprove(org)}
+                            disabled={approveOrg.isPending}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            {approveOrg.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                            ) : (
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                            )}
+                            Approuver
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Detail Dialog */}
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
@@ -1308,5 +1573,36 @@ function OrganisationsTab() {
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function OrgStatusBadge({ status }: { status: OrganisationApprovalStatus }) {
+  const config = {
+    pending_validation: {
+      label: 'En attente',
+      icon: Clock,
+      color: 'text-amber-600 bg-amber-50',
+    },
+    approved: {
+      label: 'Approuvee',
+      icon: CheckCircle,
+      color: 'text-green-600 bg-green-50',
+    },
+    rejected: {
+      label: 'Rejetee',
+      icon: XCircle,
+      color: 'text-red-600 bg-red-50',
+    },
+  }[status];
+
+  const Icon = config.icon;
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.color}`}
+    >
+      <Icon className="h-3.5 w-3.5" />
+      {config.label}
+    </span>
   );
 }
