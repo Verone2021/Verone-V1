@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -316,9 +316,30 @@ function NavItemComponent({
 }
 
 export function LinkMeSidebar() {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const pathname = usePathname();
   const { data: counts } = usePaymentRequestsCounts();
+
+  // Debounce hover pour éviter les re-renders excessifs
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const debouncedSetExpanded = useCallback((value: boolean) => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    hoverTimeoutRef.current = setTimeout(() => {
+      setIsExpanded(value);
+    }, 150);
+  }, []);
+
+  // Cleanup du timeout au démontage
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Injecter le badge dynamique pour les demandes de paiement
   const navWithBadges = LINKME_NAV.map(item => {
@@ -330,6 +351,8 @@ export function LinkMeSidebar() {
 
   return (
     <aside
+      onMouseEnter={() => debouncedSetExpanded(true)}
+      onMouseLeave={() => debouncedSetExpanded(false)}
       className={cn(
         'h-full bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out',
         isExpanded ? 'w-64' : 'w-16'

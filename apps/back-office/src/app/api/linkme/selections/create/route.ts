@@ -1,49 +1,59 @@
 /**
  * API Route: POST /api/linkme/selections/create
  * Crée une nouvelle sélection LinkMe avec ses produits
+ *
+ * 🔐 SECURITE: Requiert authentification admin back-office (owner/admin)
  */
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { createClient } from '@supabase/supabase-js';
+import { createAdminClient } from '@verone/utils/supabase/server';
 
-// Fonction pour créer le client Admin Supabase (lazy initialization)
-function getSupabaseAdmin() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    }
-  );
-}
+import { requireBackofficeAdmin } from '@/lib/guards';
+import type { Database } from '@/types/supabase';
 
-interface ProductInput {
+type UserAppRoleRow = Database['public']['Tables']['user_app_roles']['Row'];
+type UserProfileRow = Database['public']['Tables']['user_profiles']['Row'];
+type LinkmeAffiliateRow =
+  Database['public']['Tables']['linkme_affiliates']['Row'];
+type LinkmeAffiliateInsert =
+  Database['public']['Tables']['linkme_affiliates']['Insert'];
+type LinkmeSelectionRow =
+  Database['public']['Tables']['linkme_selections']['Row'];
+type LinkmeSelectionInsert =
+  Database['public']['Tables']['linkme_selections']['Insert'];
+type LinkmeSelectionItemInsert =
+  Database['public']['Tables']['linkme_selection_items']['Insert'];
+
+interface IProductInput {
   product_id: string;
   base_price_ht: number;
   margin_rate: number;
 }
 
-interface CreateSelectionInput {
+interface ICreateSelectionInput {
   user_id: string;
   name: string;
   description?: string | null;
   status: 'draft' | 'active';
-  products: ProductInput[];
+  products: IProductInput[];
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  // 🔐 GUARD: Vérifier authentification admin back-office
+  const guardResult = await requireBackofficeAdmin(request);
+  if (guardResult instanceof NextResponse) {
+    return guardResult; // 401 ou 403
+  }
+
   try {
-    const supabaseAdmin = getSupabaseAdmin();
-    const body: CreateSelectionInput = await request.json();
-    const { user_id, name, description, status, products } = body;
+    const supabaseAdmin = createAdminClient();
+    const body = (await request.json()) as ICreateSelectionInput;
+    const { user_id: userId, name, description, status, products } = body;
 
     // Validation
-    if (!user_id || !name) {
+    if (!userId || !name) {
       return NextResponse.json(
         { message: 'user_id et name sont requis' },
         { status: 400 }
@@ -61,9 +71,14 @@ export async function POST(request: NextRequest) {
     const { data: userRole, error: userRoleError } = await supabaseAdmin
       .from('user_app_roles')
       .select('user_id, role, enseigne_id, organisation_id')
-      .eq('user_id', user_id)
+      .eq('user_id', userId)
       .eq('app', 'linkme')
-      .single();
+      .single<
+        Pick<
+          UserAppRoleRow,
+          'user_id' | 'role' | 'enseigne_id' | 'organisation_id'
+        >
+      >();
 
     if (userRoleError || !userRole) {
       return NextResponse.json(
@@ -93,7 +108,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data: existingAffiliate } = await existingAffiliateQuery.single();
+    const { data: existingAffiliate } =
+      await existingAffiliateQuery.single<Pick<LinkmeAffiliateRow, 'id'>>();
 
     if (existingAffiliate) {
       affiliateId = existingAffiliate.id;
@@ -103,15 +119,15 @@ export async function POST(request: NextRequest) {
       const { data: userProfile } = await supabaseAdmin
         .from('user_profiles')
         .select('first_name, last_name')
-        .eq('user_id', user_id)
-        .single();
+        .eq('user_id', userId)
+        .single<Pick<UserProfileRow, 'first_name' | 'last_name'>>();
 
       const { data: authUser } =
-        await supabaseAdmin.auth.admin.getUserById(user_id);
+        await supabaseAdmin.auth.admin.getUserById(userId);
 
       const displayName = userProfile
-        ? `${userProfile.first_name} ${userProfile.last_name}`
-        : authUser?.user?.email || 'Affilié';
+        ? `${userProfile.first_name ?? ''} ${userProfile.last_name ?? ''}`.trim()
+        : (authUser?.user?.email ?? 'Affilié');
 
       // Générer un slug unique
       const baseSlug = displayName
@@ -123,30 +139,24 @@ export async function POST(request: NextRequest) {
       const uniqueSlug = `${baseSlug}-${Date.now().toString(36)}`;
 
       // Note: linkme_affiliates n'a pas de user_id ni max_margin_rate
-      const affiliateData: Record<string, unknown> = {
+      const affiliateData: LinkmeAffiliateInsert = {
         affiliate_type:
           userRole.role === 'enseigne_admin' ? 'enseigne' : 'prescripteur',
         display_name: displayName,
         slug: uniqueSlug,
-        email: authUser?.user?.email,
+        email: authUser?.user?.email ?? null,
         status: 'active',
         default_margin_rate: 20,
         linkme_commission_rate: 5,
+        enseigne_id: userRole.enseigne_id ?? null,
+        organisation_id: userRole.organisation_id ?? null,
       };
-
-      // Lier à l'entité appropriée
-      if (userRole.enseigne_id) {
-        affiliateData.enseigne_id = userRole.enseigne_id;
-      }
-      if (userRole.organisation_id) {
-        affiliateData.organisation_id = userRole.organisation_id;
-      }
 
       const { data: newAffiliate, error: affiliateError } = await supabaseAdmin
         .from('linkme_affiliates')
         .insert(affiliateData)
         .select('id')
-        .single();
+        .single<Pick<LinkmeAffiliateRow, 'id'>>();
 
       if (affiliateError || !newAffiliate) {
         console.error('Erreur création affilié:', affiliateError);
@@ -154,7 +164,7 @@ export async function POST(request: NextRequest) {
           {
             message:
               "Erreur lors de la création de l'affilié: " +
-              (affiliateError?.message || 'Erreur inconnue'),
+              (affiliateError?.message ?? 'Erreur inconnue'),
           },
           { status: 500 }
         );
@@ -173,22 +183,24 @@ export async function POST(request: NextRequest) {
     const selectionSlug = `${selectionBaseSlug}-${Date.now().toString(36)}`;
 
     // 4. Créer la sélection
+    const selectionData: LinkmeSelectionInsert = {
+      affiliate_id: affiliateId,
+      name,
+      slug: selectionSlug,
+      description: description ?? null,
+      // published_at = NOW() si status === 'active', sinon NULL (brouillon)
+      published_at: status === 'active' ? new Date().toISOString() : null,
+      products_count: products.length,
+      views_count: 0,
+      orders_count: 0,
+      total_revenue: 0,
+    };
+
     const { data: selection, error: selectionError } = await supabaseAdmin
       .from('linkme_selections')
-      .insert({
-        affiliate_id: affiliateId,
-        name,
-        slug: selectionSlug,
-        description: description || null,
-        // published_at = NOW() si status === 'active', sinon NULL (brouillon)
-        published_at: status === 'active' ? new Date().toISOString() : null,
-        products_count: products.length,
-        views_count: 0,
-        orders_count: 0,
-        total_revenue: 0,
-      })
+      .insert(selectionData)
       .select('id, name, slug')
-      .single();
+      .single<Pick<LinkmeSelectionRow, 'id' | 'name' | 'slug'>>();
 
     if (selectionError || !selection) {
       console.error('Erreur création sélection:', selectionError);
@@ -196,21 +208,23 @@ export async function POST(request: NextRequest) {
         {
           message:
             'Erreur lors de la création de la sélection: ' +
-            (selectionError?.message || 'Erreur inconnue'),
+            (selectionError?.message ?? 'Erreur inconnue'),
         },
         { status: 500 }
       );
     }
 
     // 5. Ajouter les produits à la sélection
-    const selectionItems = products.map((p, index) => ({
-      selection_id: selection.id,
-      product_id: p.product_id,
-      base_price_ht: p.base_price_ht,
-      margin_rate: p.margin_rate,
-      display_order: index + 1,
-      is_featured: false,
-    }));
+    const selectionItems: LinkmeSelectionItemInsert[] = products.map(
+      (p, index) => ({
+        selection_id: selection.id,
+        product_id: p.product_id,
+        base_price_ht: p.base_price_ht,
+        margin_rate: p.margin_rate,
+        display_order: index + 1,
+        is_featured: false,
+      })
+    );
 
     const { error: itemsError } = await supabaseAdmin
       .from('linkme_selection_items')

@@ -8,3 +8,5 @@ export { CommissionsTable } from './CommissionsTable';
 export { CommissionsChart } from './CommissionsChart';
 export { InvoiceTemplate } from './InvoiceTemplate';
 export { PaymentRequestModal } from './PaymentRequestModal';
+export { PaymentRequestsPanel } from './PaymentRequestsPanel';
+export { HowToGetPaidBanner } from './HowToGetPaidBanner';

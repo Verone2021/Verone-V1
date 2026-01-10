@@ -1,69 +1,57 @@
 'use client';
 
 /**
- * Dashboard LinkMe - Version Minimaliste
+ * Dashboard LinkMe - Version Épurée 2026
  *
- * Design épuré avec :
- * - 1 KPI principal (commissions en attente)
- * - 3 actions rapides (Ma sélection, Mes commandes, Mon profil)
- * - Résumé compact du mois
- *
- * Principes UX appliqués :
- * - Max 5-6 éléments visibles
- * - Single screen (pas de scroll)
- * - "Less is more"
+ * Design minimaliste et centré :
+ * - Layout max-w-3xl mx-auto (pas plein écran)
+ * - Message de bienvenue simple
+ * - 4 KPIs de commission (Total, Payables, En cours, En attente)
+ * - 3 actions rapides
+ * - Top produits (5 max)
+ * - Lien vers page analytics
  *
  * @module DashboardPage
  * @since 2025-12-10
+ * @updated 2026-01-07 - Refonte épurée
  */
 
 import { useEffect } from 'react';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import {
-  useMonthlyKPIs,
-  formatVariation,
-  getVariationColor,
-} from '@verone/orders/hooks/use-monthly-kpis';
-import {
-  Star,
-  ShoppingCart,
-  User,
   Wallet,
-  ArrowRight,
   Loader2,
-  TrendingUp,
-  BarChart3,
   Package,
+  ShoppingBag,
+  Star,
+  User,
+  Award,
+  ArrowRight,
+  CheckCircle,
+  Clock,
+  Banknote,
+  BarChart3,
 } from 'lucide-react';
 
+import { CommissionKPICard } from '../../../components/dashboard';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useAffiliateAnalytics } from '../../../lib/hooks/use-affiliate-analytics';
-import {
-  useUserAffiliate,
-  useUserSelections,
-} from '../../../lib/hooks/use-user-selection';
+import { useUserAffiliate } from '../../../lib/hooks/use-user-selection';
 
 export default function DashboardPage(): JSX.Element | null {
   const router = useRouter();
-  const { user, linkMeRole, loading } = useAuth();
+  const { user, linkMeRole, loading, initializing } = useAuth();
 
   // Affiliate ID pour les requêtes
-  const { data: affiliate } = useUserAffiliate();
+  const { data: _affiliate, isLoading: affiliateLoading } = useUserAffiliate();
 
-  // KPIs mensuels avec variations (hook partagé - source de vérité)
-  const { data: monthlyKPIs, isLoading: kpisLoading } = useMonthlyKPIs({
-    affiliateId: affiliate?.id,
-    enabled: !!affiliate?.id,
-  });
-
-  // Analytics pour les commissions en attente uniquement (basé sur statut)
+  // Analytics pour commissions + top produits (all-time via commissionsByStatus)
   const { data: analytics, isLoading: analyticsLoading } =
-    useAffiliateAnalytics('year');
-
-  const { data: selections } = useUserSelections();
+    useAffiliateAnalytics('all');
 
   // Rediriger si non connecté
   useEffect(() => {
@@ -72,8 +60,8 @@ export default function DashboardPage(): JSX.Element | null {
     }
   }, [user, loading, router]);
 
-  // Afficher loader pendant chargement
-  if (loading) {
+  // Afficher loader pendant chargement initial ou action en cours
+  if (loading || initializing) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
@@ -93,195 +81,232 @@ export default function DashboardPage(): JSX.Element | null {
     user.email?.split('@')[0] ??
     'vous';
 
-  // Données analytics - commissions en attente (basé sur statut)
-  const pendingCommissions = analytics?.pendingCommissionsTTC ?? 0;
-
-  // Données mensuelles (depuis le hook partagé - vraies dates)
-  const monthlyOrders = monthlyKPIs?.currentMonth.ordersCount ?? 0;
-  const monthlyRevenue = monthlyKPIs?.currentMonth.caHT ?? 0;
-  const monthlyCommissions = monthlyKPIs?.currentMonth.commissionsTTC ?? 0;
-  const ordersVariation = monthlyKPIs?.variations.ordersCount ?? 0;
-
-  // Sélections (published_at !== null = publiée)
-  const selectionsCount = selections?.filter(s => !!s.published_at).length ?? 0;
-
   // Loading state combiné
-  const isLoading = analyticsLoading || kpisLoading;
+  const isLoading = affiliateLoading || analyticsLoading;
+
+  // Données des commissions par statut
+  const commissionsByStatus = analytics?.commissionsByStatus;
+
+  // Top produits (5 max)
+  const topProducts = analytics?.topProducts?.slice(0, 5) ?? [];
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        {/* Header avec salutation */}
-        <div className="mb-6">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+    <div className="min-h-screen bg-gray-50/50">
+      {/* Container centré */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        {/* Section Bienvenue */}
+        <section className="mb-8">
+          <h1 className="text-2xl font-bold text-[#183559]">
             Bonjour, {firstName}
           </h1>
-          <p className="text-gray-500 mt-1 text-sm">
-            Bienvenue sur votre espace LinkMe
-          </p>
-        </div>
+          <p className="text-gray-500 mt-1">Votre tableau de bord</p>
+        </section>
 
-        {/* Carte principale - Commissions en attente */}
-        <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-lg p-5 sm:p-6 mb-6 border border-emerald-100">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-2 text-emerald-700 mb-2">
-                <Wallet className="h-5 w-5" />
-                <span className="text-sm font-medium">
-                  Commissions en attente
-                </span>
-              </div>
-              <div className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
-                {isLoading ? (
-                  <span className="text-gray-300">--</span>
-                ) : (
-                  `${pendingCommissions.toFixed(2)} €`
-                )}
-              </div>
-              <p className="text-sm text-gray-500">À verser prochainement</p>
-            </div>
+        {/* 4 KPIs Commissions */}
+        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+          {/* Total TTC - Turquoise */}
+          <CommissionKPICard
+            label="Total"
+            amount={commissionsByStatus?.total?.amountTTC ?? 0}
+            count={commissionsByStatus?.total?.count ?? 0}
+            variant="turquoise"
+            icon={Wallet}
+            isLoading={isLoading}
+          />
+
+          {/* Payables - Vert */}
+          <CommissionKPICard
+            label="Payables"
+            amount={commissionsByStatus?.validated?.amountTTC ?? 0}
+            count={commissionsByStatus?.validated?.count ?? 0}
+            variant="green"
+            icon={CheckCircle}
+            isLoading={isLoading}
+          />
+
+          {/* En cours de règlement - Bleu */}
+          <CommissionKPICard
+            label="En cours"
+            amount={commissionsByStatus?.requested?.amountTTC ?? 0}
+            count={commissionsByStatus?.requested?.count ?? 0}
+            variant="blue"
+            icon={Banknote}
+            isLoading={isLoading}
+          />
+
+          {/* En attente - Orange */}
+          <CommissionKPICard
+            label="En attente"
+            amount={commissionsByStatus?.pending?.amountTTC ?? 0}
+            count={commissionsByStatus?.pending?.count ?? 0}
+            variant="orange"
+            icon={Clock}
+            isLoading={isLoading}
+          />
+        </section>
+
+        {/* Lien vers Analytics */}
+        <section className="mb-8">
+          <Link
+            href="/analytics"
+            className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 hover:border-[#5DBEBB] hover:text-[#5DBEBB] transition-all"
+          >
+            <BarChart3 className="h-4 w-4" />
+            Voir les statistiques détaillées
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </section>
+
+        {/* Actions rapides */}
+        <section className="mb-8">
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+            Actions rapides
+          </h2>
+          <div className="grid grid-cols-3 gap-3">
+            {/* Ma sélection */}
             <Link
-              href="/commissions"
-              className="flex items-center gap-1 text-sm font-medium text-emerald-700 hover:text-emerald-800 transition-colors"
+              href="/ma-selection"
+              className="flex flex-col items-center gap-2 p-4 bg-white border border-gray-100 rounded-lg hover:bg-amber-50 hover:border-amber-200 transition-colors group"
             >
-              Voir détails
-              <ArrowRight className="h-4 w-4" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 group-hover:bg-amber-200 transition-colors">
+                <Star className="h-5 w-5 text-amber-600" />
+              </div>
+              <span className="text-sm font-medium text-gray-700 text-center">
+                Ma sélection
+              </span>
+            </Link>
+
+            {/* Mes commandes */}
+            <Link
+              href="/commandes"
+              className="flex flex-col items-center gap-2 p-4 bg-white border border-gray-100 rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-colors group"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 group-hover:bg-blue-200 transition-colors">
+                <ShoppingBag className="h-5 w-5 text-blue-600" />
+              </div>
+              <span className="text-sm font-medium text-gray-700 text-center">
+                Mes commandes
+              </span>
+            </Link>
+
+            {/* Mon profil */}
+            <Link
+              href="/profil"
+              className="flex flex-col items-center gap-2 p-4 bg-white border border-gray-100 rounded-lg hover:bg-gray-100 hover:border-gray-200 transition-colors group"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 group-hover:bg-gray-200 transition-colors">
+                <User className="h-5 w-5 text-gray-600" />
+              </div>
+              <span className="text-sm font-medium text-gray-700 text-center">
+                Mon profil
+              </span>
             </Link>
           </div>
-        </div>
+        </section>
 
-        {/* Actions rapides - 3 cartes */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-          {/* Ma sélection */}
-          <Link
-            href="/ma-selection"
-            className="group bg-gray-50 hover:bg-gray-100 rounded-lg p-4 transition-colors border border-gray-100 hover:border-gray-200"
-          >
-            <div className="flex items-center gap-2.5 mb-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
-                <Star className="h-5 w-5" />
+        {/* Top produits vendus */}
+        <section className="mb-8">
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="p-4 sm:p-6 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#7E84C0]/10">
+                    <Award className="h-5 w-5 text-[#7E84C0]" />
+                  </div>
+                  <h2 className="font-semibold text-[#183559]">
+                    Top produits vendus
+                  </h2>
+                </div>
+                <Link
+                  href="/analytics"
+                  className="text-sm text-gray-500 hover:text-[#5DBEBB] transition-colors"
+                >
+                  Tout voir
+                </Link>
               </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-900 group-hover:text-amber-700 transition-colors">
-                  Ma sélection
-                </h3>
-              </div>
-              <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
             </div>
-            <p className="text-sm text-gray-500">
-              {selectionsCount > 0
-                ? `${selectionsCount} sélection${selectionsCount > 1 ? 's' : ''} active${selectionsCount > 1 ? 's' : ''}`
-                : 'Créer ma première sélection'}
-            </p>
-          </Link>
 
-          {/* Mes commandes */}
-          <Link
-            href="/commandes"
-            className="group bg-gray-50 hover:bg-gray-100 rounded-lg p-4 transition-colors border border-gray-100 hover:border-gray-200"
-          >
-            <div className="flex items-center gap-2.5 mb-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
-                <ShoppingCart className="h-5 w-5" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-900 group-hover:text-blue-700 transition-colors">
-                  Mes commandes
-                </h3>
-              </div>
-              <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
-            </div>
-            <p className="text-sm text-gray-500">
-              {monthlyOrders > 0
-                ? `${monthlyOrders} commande${monthlyOrders > 1 ? 's' : ''} ce mois`
-                : 'Aucune commande ce mois'}
-              {monthlyOrders > 0 && ordersVariation !== 0 && (
-                <span className={`ml-1 ${getVariationColor(ordersVariation)}`}>
-                  ({formatVariation(ordersVariation)})
-                </span>
+            <div className="divide-y divide-gray-50">
+              {isLoading ? (
+                <div className="p-8 text-center">
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400 mx-auto" />
+                </div>
+              ) : topProducts.length === 0 ? (
+                <div className="p-8 text-center">
+                  <Package className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500 text-sm">
+                    Aucune vente enregistrée
+                  </p>
+                  <Link
+                    href="/catalogue"
+                    className="inline-flex items-center gap-2 mt-4 text-sm text-[#5DBEBB] hover:underline"
+                  >
+                    Explorer le catalogue
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              ) : (
+                topProducts.map((product, index) => {
+                  const commissionPerUnit =
+                    product.quantitySold > 0
+                      ? product.commissionHT / product.quantitySold
+                      : 0;
+
+                  return (
+                    <div
+                      key={product.productId}
+                      className="flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center">
+                        <span className="text-xs font-bold text-gray-500">
+                          {index + 1}
+                        </span>
+                      </div>
+
+                      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gray-100 overflow-hidden">
+                        {product.productImageUrl ? (
+                          <Image
+                            src={product.productImageUrl}
+                            alt={product.productName}
+                            width={40}
+                            height={40}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Package className="h-4 w-4 text-gray-400" />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-[#183559] text-sm truncate">
+                          {product.productName}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {product.quantitySold} ×{' '}
+                          {commissionPerUnit.toFixed(0)}€{' '}
+                          <span className="text-[#5DBEBB] font-semibold">
+                            → {product.commissionHT.toFixed(0)}€
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })
               )}
-            </p>
-          </Link>
-
-          {/* Mon profil */}
-          <Link
-            href="/profil"
-            className="group bg-gray-50 hover:bg-gray-100 rounded-lg p-4 transition-colors border border-gray-100 hover:border-gray-200"
-          >
-            <div className="flex items-center gap-2.5 mb-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-200 text-gray-600">
-                <User className="h-5 w-5" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-900 group-hover:text-gray-700 transition-colors">
-                  Mon profil
-                </h3>
-              </div>
-              <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
-            </div>
-            <p className="text-sm text-gray-500">Gérer mon compte</p>
-          </Link>
-        </div>
-
-        {/* Séparateur avec résumé du mois */}
-        <div className="border-t border-gray-100 pt-6">
-          <div className="flex items-center gap-2 text-gray-600 mb-4">
-            <BarChart3 className="h-4 w-4" />
-            <span className="text-sm font-medium">Résumé du mois</span>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            {/* CA */}
-            <div className="text-center">
-              <div className="text-lg sm:text-xl font-bold text-gray-900">
-                {isLoading
-                  ? '--'
-                  : `${monthlyRevenue.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €`}
-              </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Chiffre d'affaires HT
-              </p>
-            </div>
-
-            {/* Commissions */}
-            <div className="text-center">
-              <div className="text-lg sm:text-xl font-bold text-gray-900">
-                {isLoading
-                  ? '--'
-                  : `${monthlyCommissions.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €`}
-              </div>
-              <p className="text-xs text-gray-500 mt-1">Commissions TTC</p>
-            </div>
-
-            {/* Commandes */}
-            <div className="text-center">
-              <div className="text-lg sm:text-xl font-bold text-gray-900">
-                {isLoading ? '--' : monthlyOrders}
-              </div>
-              <p className="text-xs text-gray-500 mt-1">Commandes</p>
             </div>
           </div>
-        </div>
-
-        {/* Lien vers statistiques détaillées (discret) */}
-        <div className="mt-8 text-center">
-          <Link
-            href="/statistiques"
-            className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <TrendingUp className="h-4 w-4" />
-            Voir les statistiques détaillées
-          </Link>
-        </div>
+        </section>
 
         {/* Message si pas de rôle LinkMe */}
         {!linkMeRole && (
-          <div className="mt-6 bg-amber-50 border border-amber-200 rounded-lg p-4 text-center">
-            <Package className="h-6 w-6 text-amber-400 mx-auto mb-2" />
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
+            <Package className="h-8 w-8 text-amber-400 mx-auto mb-3" />
             <p className="text-amber-800 text-sm">
-              Votre compte n'a pas encore de rôle LinkMe configuré.
+              Votre compte n&apos;a pas encore de rôle LinkMe configuré.
               <br />
-              Contactez votre administrateur pour obtenir l'accès aux
+              Contactez votre administrateur pour obtenir l&apos;accès aux
               fonctionnalités.
             </p>
           </div>
