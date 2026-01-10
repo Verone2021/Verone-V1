@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -271,8 +271,32 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
 
 function SidebarContent() {
   const pathname = usePathname();
-  const { state } = useSidebar();
+  const { state, setOpen } = useSidebar();
   const isCollapsed = state === 'collapsed';
+
+  // Debounce hover pour éviter les re-renders excessifs
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const debouncedSetOpen = useCallback(
+    (value: boolean) => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+      hoverTimeoutRef.current = setTimeout(() => {
+        setOpen(value);
+      }, 150);
+    },
+    [setOpen]
+  );
+
+  // Cleanup du timeout au démontage
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Phase 1 : Alertes stock désactivées (Phase 2+)
   const stockAlertsCount = 0; // Anciennement : useStockAlertsCount()
@@ -597,6 +621,8 @@ function SidebarContent() {
 
   return (
     <aside
+      onMouseEnter={() => debouncedSetOpen(true)}
+      onMouseLeave={() => debouncedSetOpen(false)}
       className={cn(
         'flex h-screen flex-col border-r border-black bg-white transition-all duration-300',
         isCollapsed ? 'w-16' : 'w-64'

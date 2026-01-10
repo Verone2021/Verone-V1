@@ -42,6 +42,42 @@ interface LinkMeEnrichedData {
     total_affiliate_margin: number;
     pending_admin_validation: boolean;
     created_by_affiliate_id: string | null;
+    linkme_selection_id: string | null;
+  };
+}
+
+// Fonction pour determiner le canal de la commande
+// 3 canaux mutuellement exclusifs:
+// 1. Affilié = commande créée par un affilié depuis l'app LinkMe
+// 2. Sélection publique = commande créée par client final via catalogue public
+// 3. Back-office = commande créée manuellement par admin
+function getOrderChannel(
+  created_by_affiliate_id: string | null,
+  linkme_selection_id: string | null
+): { label: string; color: string; bg: string } {
+  // Canal 1: Commande créée par un affilié depuis l'app LinkMe
+  if (created_by_affiliate_id !== null) {
+    return {
+      label: 'Affilié',
+      color: 'text-teal-700',
+      bg: 'bg-teal-100',
+    };
+  }
+
+  // Canal 2: Commande via sélection publique (client final)
+  if (linkme_selection_id !== null) {
+    return {
+      label: 'Sélection publique',
+      color: 'text-amber-700',
+      bg: 'bg-amber-100',
+    };
+  }
+
+  // Canal 3: Créée dans le back-office par admin
+  return {
+    label: 'Back-office',
+    color: 'text-blue-700',
+    bg: 'bg-blue-100',
   };
 }
 
@@ -77,6 +113,7 @@ export default function LinkMeOrdersPage() {
             total_affiliate_margin: order.total_affiliate_margin || 0,
             pending_admin_validation: order.pending_admin_validation || false,
             created_by_affiliate_id: order.created_by_affiliate_id || null,
+            linkme_selection_id: order.linkme_selection_id || null,
           };
         });
 
@@ -89,7 +126,8 @@ export default function LinkMeOrdersPage() {
     }
 
     fetchEnrichedData();
-  }, [supabase]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Fetch une seule fois au montage
 
   // Compter les commandes en attente de validation
   const pendingValidationCount = useMemo(() => {
@@ -97,9 +135,30 @@ export default function LinkMeOrdersPage() {
       .length;
   }, [enrichedData]);
 
-  // Colonnes additionnelles pour LinkMe (avec colonne Approbation)
+  // Colonnes additionnelles pour LinkMe (avec colonne Canal et Approbation)
   const additionalColumns = useMemo(
     () => [
+      {
+        key: 'order_channel',
+        header: 'Canal',
+        cell: (order: SalesOrder) => {
+          const data = enrichedData[order.id];
+          if (isLoadingEnriched) {
+            return <span className="text-gray-400 text-xs">...</span>;
+          }
+          const channel = getOrderChannel(
+            data?.created_by_affiliate_id || null,
+            data?.linkme_selection_id || null
+          );
+          return (
+            <span
+              className={`px-2 py-1 text-xs font-medium rounded-full ${channel.bg} ${channel.color}`}
+            >
+              {channel.label}
+            </span>
+          );
+        },
+      },
       {
         key: 'approval_status',
         header: 'Approbation',
@@ -124,38 +183,7 @@ export default function LinkMeOrdersPage() {
           );
         },
       },
-      {
-        key: 'affiliate',
-        header: 'Affilie',
-        cell: (order: SalesOrder) => {
-          const data = enrichedData[order.id];
-          if (isLoadingEnriched) {
-            return <span className="text-gray-400 text-xs">...</span>;
-          }
-          return data?.affiliate_name ? (
-            <Badge variant="outline" className="text-xs">
-              {data.affiliate_name}
-            </Badge>
-          ) : (
-            <span className="text-gray-400">-</span>
-          );
-        },
-      },
-      {
-        key: 'selection',
-        header: 'Selection',
-        cell: (order: SalesOrder) => {
-          const data = enrichedData[order.id];
-          if (isLoadingEnriched) {
-            return <span className="text-gray-400 text-xs">...</span>;
-          }
-          return data?.selection_name ? (
-            <span className="text-sm text-gray-700">{data.selection_name}</span>
-          ) : (
-            <span className="text-gray-400">-</span>
-          );
-        },
-      },
+      // Colonnes Affilié et Sélection retirées pour gain de place
       {
         key: 'margin',
         header: 'Marge Affilie',
@@ -225,6 +253,7 @@ export default function LinkMeOrdersPage() {
                         order.pending_admin_validation || false,
                       created_by_affiliate_id:
                         order.created_by_affiliate_id || null,
+                      linkme_selection_id: order.linkme_selection_id || null,
                     };
                   });
                   setEnrichedData(enriched);
