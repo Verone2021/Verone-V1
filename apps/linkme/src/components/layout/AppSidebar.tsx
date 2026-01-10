@@ -13,8 +13,10 @@ import {
   ShoppingCart,
   Coins,
   Settings,
+  Building2,
   LogOut,
   X,
+  type LucideIcon,
 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -22,20 +24,41 @@ import { cn } from '@/lib/utils';
 
 import { useSidebar } from './SidebarProvider';
 
-const sidebarLinks = [
+interface SidebarLink {
+  icon: LucideIcon;
+  label: string;
+  href: string;
+  /** Si défini, le lien n'est visible que pour ces rôles */
+  roles?: string[];
+}
+
+const sidebarLinks: SidebarLink[] = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' },
   { icon: ShoppingBag, label: 'Catalogue', href: '/catalogue' },
   { icon: Star, label: 'Ma Sélection', href: '/ma-selection' },
   { icon: Package, label: 'Mes Produits', href: '/mes-produits' },
   { icon: ShoppingCart, label: 'Commandes', href: '/commandes' },
   { icon: Coins, label: 'Commissions', href: '/commissions' },
+  {
+    icon: Building2,
+    label: 'Organisations',
+    href: '/organisations',
+    roles: ['enseigne_admin', 'organisation_admin'],
+  },
   { icon: Settings, label: 'Paramètres', href: '/parametres' },
 ];
 
 export function AppSidebar(): JSX.Element | null {
   const pathname = usePathname();
   const { isOpen, isMobile, close, setIsMobile } = useSidebar();
-  const { user, signOut } = useAuth();
+  const { user, linkMeRole, signOut } = useAuth();
+
+  // Filtrer les liens selon le rôle de l'utilisateur
+  const filteredLinks = sidebarLinks.filter(link => {
+    if (!link.roles) return true; // Pas de restriction
+    if (!linkMeRole) return false; // Pas de rôle = pas d'accès aux liens restreints
+    return link.roles.includes(linkMeRole.role);
+  });
 
   // État pour le hover (desktop) - collapsible
   const [isExpanded, setIsExpanded] = useState(false);
@@ -101,7 +124,7 @@ export function AppSidebar(): JSX.Element | null {
 
           {/* Navigation Links */}
           <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-            {sidebarLinks.map(link => {
+            {filteredLinks.map(link => {
               const isActive =
                 pathname === link.href || pathname.startsWith(`${link.href}/`);
 
@@ -158,7 +181,7 @@ export function AppSidebar(): JSX.Element | null {
 
       {/* Navigation Links */}
       <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto overflow-x-hidden">
-        {sidebarLinks.map(link => {
+        {filteredLinks.map(link => {
           const isActive =
             pathname === link.href || pathname.startsWith(`${link.href}/`);
 
