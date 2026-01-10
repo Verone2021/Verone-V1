@@ -399,7 +399,7 @@ function SelectionCard({ selection }: ISelectionCardProps): React.JSX.Element {
         >
           <div className="flex gap-2">
             <Link
-              href={`/ma-selection/${selection.id}`}
+              href={`/ma-selection/${selection.slug}`}
               className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-white text-linkme-marine rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors"
             >
               <Settings className="h-4 w-4" />
@@ -460,7 +460,7 @@ function SelectionCard({ selection }: ISelectionCardProps): React.JSX.Element {
 
       {/* Lien invisible pour navigation */}
       <Link
-        href={`/ma-selection/${selection.id}`}
+        href={`/ma-selection/${selection.slug}`}
         className="absolute inset-0 z-0"
         aria-label={`Configurer ${selection.name}`}
       />

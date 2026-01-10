@@ -6,6 +6,8 @@ module.exports = {
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
     // Tremor module
     './node_modules/@tremor/**/*.{js,ts,jsx,tsx}',
+    // Packages partagés @verone/ui
+    '../../packages/@verone/ui/src/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
     extend: {

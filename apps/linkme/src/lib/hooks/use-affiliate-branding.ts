@@ -15,6 +15,7 @@ export interface IAffiliateBranding {
   accent_color: string;
   text_color: string;
   background_color: string;
+  price_display_mode: 'HT' | 'TTC';
 }
 
 // LinkMe default colors (from tailwind.config.js)
@@ -24,6 +25,7 @@ export const LINKME_DEFAULT_BRANDING: IAffiliateBranding = {
   accent_color: '#7E84C0', // mauve
   text_color: '#183559', // marine
   background_color: '#FFFFFF', // white
+  price_display_mode: 'TTC', // default to TTC
 };
 
 // ============================================================================
@@ -65,7 +67,7 @@ export function useAffiliateBranding(
       const { data, error: fetchError } = (await supabase
         .from('linkme_affiliates')
         .select(
-          'primary_color, secondary_color, accent_color, text_color, background_color'
+          'primary_color, secondary_color, accent_color, text_color, background_color, price_display_mode'
         )
         .eq('id', affiliateId)
         .single()) as {
@@ -89,6 +91,9 @@ export function useAffiliateBranding(
         text_color: data?.text_color ?? LINKME_DEFAULT_BRANDING.text_color,
         background_color:
           data?.background_color ?? LINKME_DEFAULT_BRANDING.background_color,
+        price_display_mode:
+          data?.price_display_mode ??
+          LINKME_DEFAULT_BRANDING.price_display_mode,
       };
     },
     enabled: enabled && !!affiliateId,

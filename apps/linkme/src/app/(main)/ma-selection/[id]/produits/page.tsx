@@ -76,8 +76,16 @@ export default function SelectionProductsPage() {
   const { data: affiliate, isLoading: affiliateLoading } = useUserAffiliate();
   const { data: selections, isLoading: selectionsLoading } =
     useUserSelections();
-  const { data: items, isLoading: itemsLoading } =
-    useSelectionItems(selectionId);
+
+  // Trouver la sélection par ID ou slug (URL propre)
+  const selection = selections?.find(
+    s => s.id === selectionId || s.slug === selectionId
+  );
+
+  // Fetcher les items avec l'ID réel (pas le slug)
+  const { data: items, isLoading: itemsLoading } = useSelectionItems(
+    selection?.id ?? null
+  );
 
   const removeItemMutation = useRemoveFromSelection();
   const reorderMutation = useReorderProducts();
@@ -99,9 +107,6 @@ export default function SelectionProductsPage() {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
-
-  // Trouver la sélection actuelle
-  const selection = selections?.find(s => s.id === selectionId);
 
   // Synchroniser les items locaux avec les données serveur
   useEffect(() => {
@@ -128,10 +133,10 @@ export default function SelectionProductsPage() {
       const newItems = arrayMove(localItems, oldIndex, newIndex);
       setLocalItems(newItems);
 
-      // Sauvegarder l'ordre en base
+      // Sauvegarder l'ordre en base (avec l'ID réel, pas le slug)
       reorderMutation.mutate(
         {
-          selectionId,
+          selectionId: selection?.id ?? '',
           orderedItemIds: newItems.map(item => item.id),
         },
         {
@@ -155,7 +160,7 @@ export default function SelectionProductsPage() {
     try {
       await removeItemMutation.mutateAsync({
         itemId: item.id,
-        selectionId: selectionId,
+        selectionId: selection?.id ?? '',
       });
       toast.success('Produit retiré de la sélection');
       setDeletingItemId(null);
@@ -243,7 +248,7 @@ export default function SelectionProductsPage() {
         {/* Header navigation */}
         <div className="flex items-center justify-between mb-6">
           <Link
-            href={`/ma-selection/${selectionId}`}
+            href={`/ma-selection/${selection?.slug ?? selectionId}`}
             className="flex items-center gap-2 text-linkme-marine/60 hover:text-linkme-marine transition-colors text-sm group"
           >
             <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform duration-200" />
@@ -251,7 +256,7 @@ export default function SelectionProductsPage() {
           </Link>
 
           <Link
-            href={`/catalogue?selection=${selectionId}`}
+            href={`/catalogue?selection=${selection?.id ?? ''}`}
             className="flex items-center gap-2 px-4 py-2.5 bg-linkme-turquoise text-white rounded-xl font-semibold hover:bg-linkme-turquoise/90 transition-all duration-200 shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] text-sm"
           >
             <Plus className="h-4 w-4" />
@@ -377,10 +382,10 @@ export default function SelectionProductsPage() {
       </div>
 
       {/* Modal édition marge */}
-      {editingItem && (
+      {editingItem && selection && (
         <EditMarginModal
           item={editingItem}
-          selectionId={selectionId}
+          selectionId={selection.id}
           onClose={() => setEditingItem(null)}
         />
       )}

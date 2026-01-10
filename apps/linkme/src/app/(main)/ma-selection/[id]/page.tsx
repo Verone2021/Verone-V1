@@ -18,6 +18,7 @@
 
 import { useState, useEffect } from 'react';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
@@ -31,18 +32,17 @@ import {
   Trash2,
   Copy,
   Check,
-  Camera,
   Eye,
-  Share2,
   Settings,
-  ExternalLink,
   CheckCircle2,
   Save,
   X,
   LayoutGrid,
+  Camera,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { SelectionImageUploadDialog } from '../../../../components/selection/SelectionImageUploadDialog';
 import { useAuth, type LinkMeRole } from '../../../../contexts/AuthContext';
 import {
   useUserAffiliate,
@@ -53,12 +53,12 @@ import {
 // Rôles autorisés
 const AUTHORIZED_ROLES: LinkMeRole[] = ['enseigne_admin', 'org_independante'];
 
-export default function SelectionDetailPage() {
+export default function SelectionDetailPage(): React.JSX.Element | null {
   const params = useParams();
   const selectionId = params.id as string;
 
   const { user, linkMeRole, initializing: authLoading } = useAuth();
-  const { data: affiliate, isLoading: affiliateLoading } = useUserAffiliate();
+  const { data: _affiliate, isLoading: affiliateLoading } = useUserAffiliate();
   const { data: selections, isLoading: selectionsLoading } =
     useUserSelections();
 
@@ -69,9 +69,12 @@ export default function SelectionDetailPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
+  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
 
-  // Trouver la sélection actuelle
-  const selection = selections?.find(s => s.id === selectionId);
+  // Trouver la sélection actuelle (par ID ou slug pour URLs propres)
+  const selection = selections?.find(
+    s => s.id === selectionId || s.slug === selectionId
+  );
 
   // Helper: vérifier si la sélection est publiée (basé sur published_at)
   const isPublished = !!selection?.published_at;
@@ -80,12 +83,12 @@ export default function SelectionDetailPage() {
   useEffect(() => {
     if (selection) {
       setEditName(selection.name);
-      setEditDescription(selection.description || '');
+      setEditDescription(selection.description ?? '');
     }
   }, [selection]);
 
   // Handler toggle publié
-  const handleTogglePublished = async () => {
+  const handleTogglePublished = async (): Promise<void> => {
     if (!selection) return;
 
     try {
@@ -106,11 +109,11 @@ export default function SelectionDetailPage() {
   };
 
   // Copier le lien public /s/[slug]
-  const handleCopyLink = () => {
+  const handleCopyLink = (): void => {
     if (!selection) return;
 
     const shareUrl = `${window.location.origin}/s/${selection.slug}`;
-    navigator.clipboard.writeText(shareUrl);
+    void navigator.clipboard.writeText(shareUrl);
     setLinkCopied(true);
     toast.success('Lien copié !');
 
@@ -118,13 +121,13 @@ export default function SelectionDetailPage() {
   };
 
   // Handler sauvegarde édition (placeholder)
-  const handleSaveEdit = () => {
+  const handleSaveEdit = (): void => {
     toast.info('Sauvegarde à implémenter');
     setIsEditing(false);
   };
 
   // Handler suppression (placeholder)
-  const handleDelete = () => {
+  const handleDelete = (): void => {
     toast.info('Suppression à implémenter');
   };
 
@@ -201,7 +204,7 @@ export default function SelectionDetailPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white to-gray-50">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Header navigation */}
         <div className="flex items-center justify-between mb-6">
           <Link
@@ -237,50 +240,75 @@ export default function SelectionDetailPage() {
         </div>
 
         {/* Card Image de couverture */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
-          <div className="relative h-48 bg-gradient-to-br from-linkme-turquoise/20 to-linkme-royal/20">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6 relative">
+          <div
+            className="relative h-48 bg-gradient-to-br from-linkme-turquoise/20 to-linkme-royal/20 cursor-pointer group"
+            onClick={() => setIsImageDialogOpen(true)}
+          >
             {selection.image_url ? (
-              <img
-                src={selection.image_url}
-                alt={selection.name}
-                className="w-full h-full object-cover"
-              />
+              <>
+                <Image
+                  src={selection.image_url}
+                  alt={selection.name}
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <span className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg text-linkme-marine font-medium">
+                    <Camera className="h-4 w-4" />
+                    Modifier l'image
+                  </span>
+                </div>
+              </>
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center">
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
                 <button
-                  onClick={() => toast.info('Upload image à venir')}
+                  type="button"
                   className="flex items-center gap-2 px-5 py-3 bg-white/90 backdrop-blur-sm rounded-xl text-linkme-marine hover:bg-white transition-all duration-200 shadow-md hover:shadow-lg group"
                 >
                   <Camera className="h-5 w-5 text-linkme-turquoise group-hover:scale-110 transition-transform duration-200" />
                   <span className="font-medium">Ajouter une image</span>
                 </button>
+                <span className="text-xs text-linkme-marine/50 bg-white/70 px-3 py-1 rounded-full backdrop-blur-sm">
+                  Dimensions recommandées : 1280 × 360 pixels
+                </span>
               </div>
             )}
+          </div>
 
-            {/* Badge statut */}
-            <div className="absolute top-4 right-4">
-              <span
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm ${
-                  isPublished
-                    ? 'bg-linkme-turquoise text-white'
-                    : 'bg-white text-linkme-marine/70'
-                }`}
-              >
-                {isPublished ? (
-                  <>
-                    <Globe className="h-3.5 w-3.5" />
-                    Publiée
-                  </>
-                ) : (
-                  <>
-                    <Lock className="h-3.5 w-3.5" />
-                    Brouillon
-                  </>
-                )}
-              </span>
-            </div>
+          {/* Badge statut */}
+          <div className="absolute top-4 right-4 z-10">
+            <span
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm ${
+                isPublished
+                  ? 'bg-linkme-turquoise text-white'
+                  : 'bg-white text-linkme-marine/70'
+              }`}
+            >
+              {isPublished ? (
+                <>
+                  <Globe className="h-3.5 w-3.5" />
+                  Publiée
+                </>
+              ) : (
+                <>
+                  <Lock className="h-3.5 w-3.5" />
+                  Brouillon
+                </>
+              )}
+            </span>
           </div>
         </div>
+
+        {/* Dialog Upload Image */}
+        <SelectionImageUploadDialog
+          isOpen={isImageDialogOpen}
+          onClose={() => setIsImageDialogOpen(false)}
+          selectionId={selection.id}
+          currentImageUrl={selection.image_url}
+          selectionName={selection.name}
+        />
 
         {/* Card Informations */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
@@ -351,7 +379,10 @@ export default function SelectionDetailPage() {
                 />
               ) : (
                 <p className="text-linkme-marine/70 text-sm">
-                  {selection.description || (
+                  {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- empty string should show fallback */}
+                  {selection.description ? (
+                    selection.description
+                  ) : (
                     <span className="italic text-linkme-marine/40">
                       Aucune description
                     </span>
@@ -370,7 +401,7 @@ export default function SelectionDetailPage() {
                 </span>
               </div>
               <Link
-                href={`/ma-selection/${selectionId}/produits`}
+                href={`/ma-selection/${selection.slug}/produits`}
                 className="text-sm font-medium text-linkme-turquoise hover:text-linkme-turquoise/80 transition-colors"
               >
                 Gérer les produits →
@@ -389,7 +420,9 @@ export default function SelectionDetailPage() {
             {/* Option Brouillon */}
             <button
               type="button"
-              onClick={() => isPublished && handleTogglePublished()}
+              onClick={() => {
+                if (isPublished) void handleTogglePublished();
+              }}
               disabled={togglePublishedMutation.isPending}
               className={`relative p-4 rounded-xl border-2 transition-all duration-200 text-left ${
                 !isPublished
@@ -414,7 +447,9 @@ export default function SelectionDetailPage() {
             {/* Option Publiée */}
             <button
               type="button"
-              onClick={() => !isPublished && handleTogglePublished()}
+              onClick={() => {
+                if (!isPublished) void handleTogglePublished();
+              }}
               disabled={togglePublishedMutation.isPending}
               className={`relative p-4 rounded-xl border-2 transition-all duration-200 text-left ${
                 isPublished
@@ -499,7 +534,7 @@ export default function SelectionDetailPage() {
           </Link>
 
           <Link
-            href={`/ma-selection/${selectionId}/produits`}
+            href={`/ma-selection/${selection.slug}/produits`}
             className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-linkme-turquoise text-linkme-turquoise rounded-xl font-semibold hover:bg-linkme-turquoise/5 transition-all duration-200"
           >
             <Package className="h-5 w-5" />

@@ -4,6 +4,8 @@ import { useState } from 'react';
 
 import {
   Check,
+  Copy,
+  Euro,
   Loader2,
   Package,
   Palette,
@@ -38,6 +40,18 @@ function ColorPickerInput({
   onChange,
   description,
 }: IColorPickerInputProps): React.JSX.Element {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async (): Promise<void> => {
+    try {
+      await navigator.clipboard.writeText(value.toUpperCase());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
   return (
     <div className="flex items-center gap-4">
       <div className="relative">
@@ -65,6 +79,18 @@ function ColorPickerInput({
             className="w-24 px-2 py-1 text-sm font-mono border border-gray-200 rounded"
             placeholder="#5DBEBB"
           />
+          <button
+            type="button"
+            onClick={() => void handleCopy()}
+            className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+            title="Copier la couleur"
+          >
+            {copied ? (
+              <Check className="h-4 w-4 text-green-500" />
+            ) : (
+              <Copy className="h-4 w-4" />
+            )}
+          </button>
           {description && (
             <span className="text-xs text-gray-500">{description}</span>
           )}
@@ -298,6 +324,52 @@ export default function ParametresPage(): React.JSX.Element {
               onChange={v => handleColorChange('background_color', v)}
               description="Fond des cartes"
             />
+          </div>
+
+          {/* Price display mode */}
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <div className="flex items-center gap-2 mb-4">
+              <Euro className="h-5 w-5 text-linkme-mauve" />
+              <h2 className="text-lg font-semibold text-gray-900">
+                Affichage des prix
+              </h2>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-600">
+                Afficher les prix sur votre mini-site en :
+              </span>
+              <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => handleColorChange('price_display_mode', 'HT')}
+                  className={`px-4 py-2 text-sm font-medium transition-colors ${
+                    displayBranding.price_display_mode === 'HT'
+                      ? 'bg-linkme-turquoise text-white'
+                      : 'bg-white text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  HT
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleColorChange('price_display_mode', 'TTC')}
+                  className={`px-4 py-2 text-sm font-medium transition-colors ${
+                    displayBranding.price_display_mode === 'TTC'
+                      ? 'bg-linkme-turquoise text-white'
+                      : 'bg-white text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  TTC
+                </button>
+              </div>
+            </div>
+            <p className="mt-2 text-xs text-gray-500">
+              Les prix seront affichés{' '}
+              {displayBranding.price_display_mode === 'TTC'
+                ? 'toutes taxes comprises'
+                : 'hors taxes'}{' '}
+              sur votre page publique
+            </p>
           </div>
 
           {/* Action buttons */}

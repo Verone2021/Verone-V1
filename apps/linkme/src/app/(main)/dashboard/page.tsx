@@ -93,7 +93,7 @@ export default function DashboardPage(): JSX.Element | null {
   return (
     <div className="min-h-screen bg-gray-50/50">
       {/* Container centré */}
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Section Bienvenue */}
         <section className="mb-8">
           <h1 className="text-2xl font-bold text-[#183559]">
