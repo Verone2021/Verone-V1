@@ -703,6 +703,23 @@ export default function PublicSelectionPage({
                 onSuccess={orderNumber => {
                   setEnseigneOrderNumber(orderNumber);
                 }}
+                onUpdateQuantity={(itemId, newQuantity) => {
+                  if (newQuantity < 1) return;
+                  setCart(prev =>
+                    prev.map(item =>
+                      item.id === itemId
+                        ? { ...item, quantity: newQuantity }
+                        : item
+                    )
+                  );
+                }}
+                onRemoveItem={itemId => {
+                  setCart(prev => prev.filter(item => item.id !== itemId));
+                  // Si le panier devient vide, fermer le stepper
+                  if (cart.length === 1) {
+                    setIsEnseigneStepperOpen(false);
+                  }
+                }}
               />
             )}
           </div>

@@ -22,6 +22,7 @@
     "@supabase/supabase-js": "^2.57.4",
     "@tanstack/react-query": "^5.72.2",
     "@tremor/react": "^3.18.7",
+    "@verone/notifications": "workspace:*",
     "@verone/ui": "workspace:*",
     "@verone/utils": "workspace:*",
     "cobe": "^0.6.5",

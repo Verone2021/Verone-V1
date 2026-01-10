@@ -16,6 +16,9 @@ import {
   AlertCircle,
   Package,
   ShoppingBag,
+  Minus,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 
 import { useEnseigneOrganisations } from '@/lib/hooks/use-enseigne-organisations';
@@ -81,6 +84,8 @@ interface EnseigneStepperProps {
   cart: CartItem[];
   onClose: () => void;
   onSuccess: (orderNumber: string) => void;
+  onUpdateQuantity?: (itemId: string, quantity: number) => void;
+  onRemoveItem?: (itemId: string) => void;
 }
 
 const INITIAL_DATA: EnseigneStepperData = {
@@ -133,6 +138,8 @@ export function EnseigneStepper({
   cart,
   onClose,
   onSuccess,
+  onUpdateQuantity,
+  onRemoveItem,
 }: EnseigneStepperProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [data, setData] = useState<EnseigneStepperData>(INITIAL_DATA);
@@ -290,11 +297,12 @@ export function EnseigneStepper({
             <thead className="bg-gray-100 sticky top-0">
               <tr className="text-xs text-gray-500 uppercase">
                 <th className="px-3 py-2 text-left font-medium">Produit</th>
-                <th className="px-2 py-2 text-center font-medium w-12">Qté</th>
+                <th className="px-2 py-2 text-center font-medium w-24">Qté</th>
                 <th className="px-3 py-2 text-right font-medium w-24">
                   Prix HT
                 </th>
                 <th className="px-3 py-2 text-right font-medium w-24">Total</th>
+                {onRemoveItem && <th className="px-2 py-2 w-10" />}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -328,8 +336,39 @@ export function EnseigneStepper({
                       </div>
                     </div>
                   </td>
-                  <td className="px-2 py-2 text-center text-gray-600">
-                    {item.quantity}
+                  <td className="px-2 py-2">
+                    {onUpdateQuantity ? (
+                      <div className="flex items-center justify-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onUpdateQuantity(item.id, item.quantity - 1)
+                          }
+                          disabled={item.quantity <= 1}
+                          className="p-1 rounded hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                          title="Diminuer la quantité"
+                        >
+                          <Minus className="h-3 w-3 text-gray-600" />
+                        </button>
+                        <span className="w-6 text-center text-gray-600">
+                          {item.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onUpdateQuantity(item.id, item.quantity + 1)
+                          }
+                          className="p-1 rounded hover:bg-gray-200 transition-colors"
+                          title="Augmenter la quantité"
+                        >
+                          <Plus className="h-3 w-3 text-gray-600" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="text-center text-gray-600">
+                        {item.quantity}
+                      </div>
+                    )}
                   </td>
                   <td className="px-3 py-2 text-right text-gray-600">
                     {formatPrice(item.selling_price_ht)}
@@ -337,6 +376,18 @@ export function EnseigneStepper({
                   <td className="px-3 py-2 text-right font-medium text-gray-900">
                     {formatPrice(item.selling_price_ttc * item.quantity)}
                   </td>
+                  {onRemoveItem && (
+                    <td className="px-2 py-2 text-center">
+                      <button
+                        type="button"
+                        onClick={() => onRemoveItem(item.id)}
+                        className="p-1 rounded hover:bg-red-100 transition-colors text-gray-400 hover:text-red-600"
+                        title="Supprimer l'article"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

@@ -97,9 +97,33 @@ export default function LinkMeOrdersPage() {
       .length;
   }, [enrichedData]);
 
-  // Colonnes additionnelles pour LinkMe (sans colonne Validation - info dans le badge en haut)
+  // Colonnes additionnelles pour LinkMe (avec colonne Approbation)
   const additionalColumns = useMemo(
     () => [
+      {
+        key: 'approval_status',
+        header: 'Approbation',
+        cell: (order: SalesOrder) => {
+          const data = enrichedData[order.id];
+          if (isLoadingEnriched) {
+            return <span className="text-gray-400 text-xs">...</span>;
+          }
+          return data?.pending_admin_validation ? (
+            <Badge variant="destructive" className="text-xs gap-1">
+              <AlertCircle className="h-3 w-3" />
+              En attente
+            </Badge>
+          ) : (
+            <Badge
+              variant="outline"
+              className="text-xs gap-1 border-green-300 text-green-700 bg-green-50"
+            >
+              <CheckCircle2 className="h-3 w-3" />
+              Approuvée
+            </Badge>
+          );
+        },
+      },
       {
         key: 'affiliate',
         header: 'Affilie',
