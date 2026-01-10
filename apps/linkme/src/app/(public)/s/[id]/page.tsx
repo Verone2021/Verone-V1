@@ -437,8 +437,8 @@ export default function PublicSelectionPage({
             onClick={() => setIsEnseigneStepperOpen(false)}
           />
 
-          {/* Panel */}
-          <div className="absolute right-0 top-0 bottom-0 w-full max-w-lg bg-white shadow-xl">
+          {/* Panel - Large modal with rounded corners */}
+          <div className="absolute inset-4 md:inset-8 lg:inset-12 bg-white rounded-2xl shadow-2xl overflow-hidden">
             {enseigneOrderNumber ? (
               /* Success State */
               <div className="flex flex-col items-center justify-center h-full p-8 text-center">
@@ -475,6 +475,9 @@ export default function PublicSelectionPage({
                   id: item.id,
                   product_id: item.product_id,
                   product_name: item.product_name,
+                  product_sku: item.product_sku,
+                  product_image: item.product_image,
+                  selling_price_ht: item.selling_price_ht,
                   selling_price_ttc: item.selling_price_ttc,
                   quantity: item.quantity,
                 }))}
