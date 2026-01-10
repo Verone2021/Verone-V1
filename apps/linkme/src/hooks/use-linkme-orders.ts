@@ -89,6 +89,8 @@ export interface LinkMeOrder {
   items_count: number;
   created_at: string;
   updated_at: string;
+  // Approbation
+  pending_admin_validation: boolean;
   // Items charges separement
   items: OrderItem[];
 }
@@ -172,6 +174,8 @@ export function useLinkMeOrders(
         items_count: order.items_count || 0,
         created_at: order.created_at,
         updated_at: order.updated_at,
+        // Approbation
+        pending_admin_validation: order.pending_admin_validation ?? false,
         // Items inclus directement depuis la RPC (plus de N+1)
         items: (order.items || []).map((item: any) => ({
           id: item.id,

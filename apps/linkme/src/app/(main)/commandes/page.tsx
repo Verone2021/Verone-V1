@@ -67,7 +67,13 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
 };
 
 // Onglets alignes avec Back-Office (source de verite)
-type TabType = 'all' | 'draft' | 'validated' | 'shipped' | 'cancelled';
+type TabType =
+  | 'all'
+  | 'pending_approval'
+  | 'draft'
+  | 'validated'
+  | 'shipped'
+  | 'cancelled';
 
 export default function CommandesPage(): JSX.Element {
   // State
@@ -102,6 +108,7 @@ export default function CommandesPage(): JSX.Element {
   const statusKpis = useMemo(() => {
     const defaults = {
       total: 0,
+      pendingApproval: 0,
       draft: 0,
       validated: 0,
       shipped: 0,
@@ -112,6 +119,8 @@ export default function CommandesPage(): JSX.Element {
 
     return {
       total: orders.length,
+      pendingApproval: orders.filter(o => o.pending_admin_validation === true)
+        .length,
       draft: orders.filter(o => o.status === 'draft').length,
       validated: orders.filter(o => o.status === 'validated').length,
       shipped: orders.filter(o =>
@@ -126,6 +135,8 @@ export default function CommandesPage(): JSX.Element {
     if (!orders) return [];
 
     switch (activeTab) {
+      case 'pending_approval':
+        return orders.filter(o => o.pending_admin_validation === true);
       case 'draft':
         return orders.filter(o => o.status === 'draft');
       case 'validated':
@@ -273,6 +284,12 @@ export default function CommandesPage(): JSX.Element {
                   color: 'blue',
                 },
                 {
+                  id: 'pending_approval' as const,
+                  label: 'En approbation',
+                  count: statusKpis.pendingApproval,
+                  color: 'teal',
+                },
+                {
                   id: 'draft' as const,
                   label: 'Brouillon',
                   count: statusKpis.draft,
@@ -302,13 +319,15 @@ export default function CommandesPage(): JSX.Element {
                 const badgeColor =
                   tab.color === 'orange'
                     ? 'bg-amber-100 text-amber-600'
-                    : tab.color === 'green'
-                      ? 'bg-green-100 text-green-600'
-                      : tab.color === 'gray'
-                        ? 'bg-gray-100 text-gray-500'
-                        : isActive
-                          ? 'bg-blue-100 text-blue-600'
-                          : 'bg-gray-100 text-gray-500';
+                    : tab.color === 'teal'
+                      ? 'bg-teal-100 text-teal-600'
+                      : tab.color === 'green'
+                        ? 'bg-green-100 text-green-600'
+                        : tab.color === 'gray'
+                          ? 'bg-gray-100 text-gray-500'
+                          : isActive
+                            ? 'bg-blue-100 text-blue-600'
+                            : 'bg-gray-100 text-gray-500';
 
                 return (
                   <button
@@ -444,6 +463,13 @@ export default function CommandesPage(): JSX.Element {
                                 +{order.total_affiliate_margin.toFixed(2)} €
                               </p>
                             </div>
+
+                            {/* Badge En attente validation (si en attente) */}
+                            {order.pending_admin_validation && (
+                              <span className="px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-100 rounded-full">
+                                En attente validation Vérone
+                              </span>
+                            )}
 
                             {/* Bouton Details */}
                             <button
