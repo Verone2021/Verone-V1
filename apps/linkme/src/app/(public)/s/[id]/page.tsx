@@ -1,21 +1,30 @@
 'use client';
 
-import { use, useEffect, useRef, useState } from 'react';
+import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Image from 'next/image';
 
 import { createClient } from '@verone/utils/supabase/client';
 import {
-  Package,
-  ShoppingCart,
-  Plus,
-  Minus,
   Check,
-  Store,
+  Minus,
+  Package,
+  Plus,
+  ShoppingCart,
   Star,
+  Store,
 } from 'lucide-react';
 
 import { EnseigneStepper } from '@/components/checkout';
+import {
+  CategoryTabs,
+  ContactForm,
+  FAQSection,
+  ProductFilters,
+  SelectionHeader,
+  SelectionHero,
+  StoreLocatorMap,
+} from '@/components/public-selection';
 
 const supabase = createClient();
 
@@ -47,6 +56,9 @@ interface ISelection {
   /** Timestamp de publication. null = non publie */
   published_at: string | null;
   created_at: string;
+  contact_name: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
 }
 
 interface IBranding {
@@ -56,6 +68,25 @@ interface IBranding {
   text_color: string;
   background_color: string;
   logo_url: string | null;
+}
+
+interface IOrganisation {
+  id: string;
+  name: string;
+  address: string | null;
+  city: string | null;
+  postalCode: string | null;
+  country: string | null;
+  phone: string | null;
+  email: string | null;
+  latitude: number | null;
+  longitude: number | null;
+}
+
+interface IAffiliateInfo {
+  role: string | null;
+  enseigne_id: string | null;
+  enseigne_name: string | null;
 }
 
 const DEFAULT_BRANDING: IBranding = {
@@ -69,6 +100,19 @@ const DEFAULT_BRANDING: IBranding = {
 
 interface ICartItem extends ISelectionItem {
   quantity: number;
+}
+
+interface ICategory {
+  id: string;
+  name: string;
+  count: number;
+  subcategories?: { id: string; name: string; count: number }[];
+}
+
+interface INavItem {
+  id: string;
+  label: string;
+  href: string;
 }
 
 function formatPrice(price: number): string {
@@ -93,12 +137,95 @@ export default function PublicSelectionPage({
     null
   );
 
+  // New states for navigation and filtering
+  const [activeSection, setActiveSection] = useState('catalogue');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(
+    null
+  );
+
+  // Affiliate info for conditional sections
+  const [affiliateInfo, setAffiliateInfo] = useState<IAffiliateInfo | null>(
+    null
+  );
+  const [organisations, setOrganisations] = useState<IOrganisation[]>([]);
+
   // Hover states for animations
-  const [isHeaderHovered, setIsHeaderHovered] = useState(false);
   const [hoveredProductId, setHoveredProductId] = useState<string | null>(null);
+
+  // Section refs for navigation
+  const catalogueRef = useRef<HTMLDivElement>(null);
+  const faqRef = useRef<HTMLDivElement>(null);
+  const contactRef = useRef<HTMLDivElement>(null);
+  const storesRef = useRef<HTMLDivElement>(null);
 
   // Track view
   const hasTrackedView = useRef(false);
+
+  // Navigation items
+  const navItems: INavItem[] = useMemo(
+    () => [
+      { id: 'catalogue', label: 'Catalogue', href: '#catalogue' },
+      { id: 'points-de-vente', label: 'Points de vente', href: '#stores' },
+      { id: 'faq', label: 'FAQ', href: '#faq' },
+      { id: 'contact', label: 'Contact', href: '#contact' },
+    ],
+    []
+  );
+
+  // Extract categories from items
+  const categories: ICategory[] = useMemo(() => {
+    const categoryMap = new Map<string, { count: number }>();
+
+    for (const item of items) {
+      const cat = item.category ?? 'Autres';
+      const existing = categoryMap.get(cat);
+      if (existing) {
+        existing.count++;
+      } else {
+        categoryMap.set(cat, { count: 1 });
+      }
+    }
+
+    return Array.from(categoryMap.entries())
+      .map(([name, data]) => ({
+        id: name.toLowerCase().replace(/\s+/g, '-'),
+        name,
+        count: data.count,
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [items]);
+
+  // Filter items based on search and category
+  const filteredItems = useMemo(() => {
+    let filtered = items;
+
+    // Filter by search
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        item =>
+          item.product_name.toLowerCase().includes(query) ||
+          item.product_sku.toLowerCase().includes(query)
+      );
+    }
+
+    // Filter by category
+    if (selectedCategory) {
+      const categoryName = categories.find(
+        c => c.id === selectedCategory
+      )?.name;
+      if (categoryName) {
+        filtered = filtered.filter(
+          item => (item.category ?? 'Autres') === categoryName
+        );
+      }
+    }
+
+    return filtered;
+  }, [items, searchQuery, selectedCategory, categories]);
 
   // Fetch selection data
   useEffect(() => {
@@ -130,6 +257,14 @@ export default function PublicSelectionPage({
         if (data.branding) {
           setBranding(data.branding as IBranding);
         }
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        if (data.affiliate_info) {
+          setAffiliateInfo(data.affiliate_info as IAffiliateInfo);
+        }
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        if (data.organisations) {
+          setOrganisations(data.organisations as IOrganisation[]);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erreur de chargement');
       } finally {
@@ -150,6 +285,23 @@ export default function PublicSelectionPage({
       });
     }
   }, [selection?.id]);
+
+  // Handle navigation click
+  const handleNavClick = useCallback((sectionId: string): void => {
+    setActiveSection(sectionId);
+
+    const refs: Record<string, React.RefObject<HTMLDivElement | null>> = {
+      catalogue: catalogueRef,
+      faq: faqRef,
+      contact: contactRef,
+      'points-de-vente': storesRef,
+    };
+
+    const ref = refs[sectionId];
+    if (ref?.current) {
+      ref.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, []);
 
   const addToCart = (item: ISelectionItem): void => {
     setCart(prev => {
@@ -181,6 +333,10 @@ export default function PublicSelectionPage({
   );
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
+  // Check if should show points de vente (only for enseigne_admin)
+  const showPointsDeVente =
+    affiliateInfo?.role === 'enseigne_admin' && organisations.length > 0;
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -210,66 +366,272 @@ export default function PublicSelectionPage({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Header with Hover Animation */}
-      <div
-        className="relative h-64 md:h-80 bg-gray-900"
-        onMouseEnter={() => setIsHeaderHovered(true)}
-        onMouseLeave={() => setIsHeaderHovered(false)}
-      >
-        {selection.image_url ? (
-          <Image
-            src={selection.image_url}
-            alt={selection.name}
-            fill
-            className="object-cover opacity-85"
-          />
-        ) : (
-          <div
-            className="absolute inset-0"
-            style={{
-              background: `linear-gradient(to right, ${branding.primary_color}, ${branding.secondary_color})`,
-            }}
-          />
-        )}
-        {/* Gradient overlay - more subtle */}
-        <div
-          className={`absolute inset-0 bg-gradient-to-t from-black/50 to-transparent transition-opacity duration-300 ${
-            isHeaderHovered ? 'opacity-100' : 'opacity-60'
-          }`}
-        />
-        {/* Content with slide-up animation on hover */}
-        <div className="relative h-full max-w-7xl mx-auto px-4 flex flex-col justify-end pb-8">
-          <div
-            className={`transition-all duration-300 ${
-              isHeaderHovered
-                ? 'opacity-100 translate-y-0'
-                : 'opacity-0 translate-y-4'
-            }`}
-          >
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-              {selection.name}
-            </h1>
-            {selection.description && (
-              <p className="text-white/80 max-w-2xl">{selection.description}</p>
-            )}
-            <div className="flex items-center gap-4 mt-3">
-              <p className="text-white/60">{items.length} produits</p>
-              {/* Bouton Commander Enseigne dans le header */}
-              {cartCount > 0 && (
+      {/* Header */}
+      <SelectionHeader
+        selectionName={selection.name}
+        branding={branding}
+        cartCount={cartCount}
+        onCartClick={() => setIsEnseigneStepperOpen(true)}
+        onSearchClick={() => setIsSearchOpen(true)}
+        navItems={navItems}
+        activeSection={activeSection}
+        onNavClick={handleNavClick}
+        showPointsDeVente={showPointsDeVente}
+      />
+
+      {/* Hero - Reduced height */}
+      <SelectionHero
+        name={selection.name}
+        description={selection.description}
+        imageUrl={selection.image_url}
+        branding={branding}
+        productCount={items.length}
+      />
+
+      {/* Search Bar (expandable) */}
+      <ProductFilters
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        branding={branding}
+        isSearchOpen={isSearchOpen}
+        onSearchOpenChange={setIsSearchOpen}
+      />
+
+      {/* Category Tabs */}
+      <CategoryTabs
+        categories={categories}
+        selectedCategory={selectedCategory}
+        selectedSubcategory={selectedSubcategory}
+        onCategoryChange={setSelectedCategory}
+        onSubcategoryChange={setSelectedSubcategory}
+        branding={branding}
+        totalCount={items.length}
+      />
+
+      {/* Catalogue Section */}
+      <div ref={catalogueRef} id="catalogue" className="scroll-mt-20">
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          {/* Search results info */}
+          {(searchQuery || selectedCategory) && (
+            <div className="mb-4 flex items-center justify-between">
+              <p className="text-sm text-gray-600">
+                {filteredItems.length} résultat
+                {filteredItems.length > 1 ? 's' : ''}
+                {searchQuery && ` pour "${searchQuery}"`}
+              </p>
+              {(searchQuery || selectedCategory) && (
                 <button
-                  onClick={() => setIsEnseigneStepperOpen(true)}
-                  className="flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors border border-white/30"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSelectedCategory(null);
+                    setSelectedSubcategory(null);
+                  }}
+                  className="text-sm font-medium hover:underline"
+                  style={{ color: branding.primary_color }}
                 >
-                  <Store className="h-4 w-4" />
-                  Commander ({cartCount})
+                  Effacer les filtres
                 </button>
               )}
             </div>
-          </div>
+          )}
+
+          {/* Products Grid */}
+          {filteredItems.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredItems.map(item => {
+                const inCart = cart.find(c => c.id === item.id);
+                const isHovered = hoveredProductId === item.id;
+                return (
+                  <div
+                    key={item.id}
+                    className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300"
+                    style={
+                      item.is_featured
+                        ? { boxShadow: `0 0 0 2px ${branding.accent_color}` }
+                        : undefined
+                    }
+                    onMouseEnter={() => setHoveredProductId(item.id)}
+                    onMouseLeave={() => setHoveredProductId(null)}
+                  >
+                    {/* Product Image with Hover Overlay */}
+                    <div className="relative h-48 bg-gray-100 overflow-hidden group">
+                      {item.product_image ? (
+                        <Image
+                          src={item.product_image}
+                          alt={item.product_name}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-300">
+                          <Package className="h-16 w-16" />
+                        </div>
+                      )}
+
+                      {/* Gradient Overlay on Hover */}
+                      <div
+                        className={`absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-300 ${
+                          isHovered ? 'opacity-100' : 'opacity-0'
+                        }`}
+                      />
+
+                      {/* Product Name + SKU on Hover (slide-up) */}
+                      <div
+                        className={`absolute bottom-0 left-0 right-0 p-4 transition-all duration-300 ${
+                          isHovered
+                            ? 'opacity-100 translate-y-0'
+                            : 'opacity-0 translate-y-4'
+                        }`}
+                      >
+                        <h3 className="text-white font-semibold line-clamp-2">
+                          {item.product_name}
+                        </h3>
+                        <p className="text-white/70 text-xs mt-1">
+                          {item.product_sku}
+                        </p>
+                      </div>
+
+                      {/* Badges Container */}
+                      <div className="absolute top-3 left-3 right-3 flex justify-between items-start">
+                        {/* Featured Badge - Left */}
+                        {item.is_featured && (
+                          <span
+                            className="text-white text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm"
+                            style={{ backgroundColor: branding.accent_color }}
+                          >
+                            <Star className="h-3 w-3 fill-current" />
+                            Vedette
+                          </span>
+                        )}
+                        {/* Spacer if no featured badge */}
+                        {!item.is_featured && <span />}
+                        {/* Stock Badge - Right */}
+                        {item.stock_quantity > 0 ? (
+                          <span
+                            className="text-white text-xs font-medium px-2.5 py-1 rounded-full shadow-sm"
+                            style={{ backgroundColor: branding.primary_color }}
+                          >
+                            Stock: {item.stock_quantity}
+                          </span>
+                        ) : (
+                          <span className="bg-amber-500 text-white text-xs font-medium px-2.5 py-1 rounded-full shadow-sm">
+                            Sur commande
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Product Info - Reduced (Price + Actions only) */}
+                    <div className="p-4">
+                      <div className="flex items-center justify-between">
+                        {/* Price */}
+                        <div>
+                          <span
+                            className="text-xl font-bold"
+                            style={{ color: branding.text_color }}
+                          >
+                            {formatPrice(item.selling_price_ttc)}
+                          </span>
+                          <span className="text-sm text-gray-500 ml-1">
+                            TTC
+                          </span>
+                        </div>
+
+                        {/* Add to Cart / Quantity */}
+                        {inCart ? (
+                          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                            <button
+                              onClick={() => updateQuantity(item.id, -1)}
+                              className="p-1.5 hover:bg-gray-200 rounded-md transition-colors"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </button>
+                            <span className="w-6 text-center font-medium text-sm">
+                              {inCart.quantity}
+                            </span>
+                            <button
+                              onClick={() => updateQuantity(item.id, 1)}
+                              className="p-1.5 hover:bg-gray-200 rounded-md transition-colors"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => addToCart(item)}
+                            className="flex items-center gap-2 text-white py-2 px-4 rounded-lg transition-colors hover:opacity-90"
+                            style={{ backgroundColor: branding.primary_color }}
+                          >
+                            <Plus className="h-4 w-4" />
+                            Ajouter
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <Package className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+              <p className="text-gray-500">
+                {searchQuery || selectedCategory
+                  ? 'Aucun produit ne correspond à votre recherche'
+                  : 'Aucun produit dans cette selection'}
+              </p>
+              {(searchQuery || selectedCategory) && (
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSelectedCategory(null);
+                    setSelectedSubcategory(null);
+                  }}
+                  className="mt-4 text-sm font-medium hover:underline"
+                  style={{ color: branding.primary_color }}
+                >
+                  Voir tous les produits
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Floating Cart Button - Ouvre maintenant EnseigneStepper */}
+      {/* Points de vente Section - Only for enseignes */}
+      {showPointsDeVente && (
+        <div ref={storesRef} id="stores" className="scroll-mt-20">
+          <StoreLocatorMap
+            organisations={organisations}
+            branding={branding}
+            enseigneName={affiliateInfo?.enseigne_name ?? selection.name}
+          />
+        </div>
+      )}
+
+      {/* FAQ Section */}
+      <div ref={faqRef} id="faq" className="scroll-mt-20">
+        <FAQSection
+          branding={branding}
+          contactInfo={{
+            name: selection.contact_name,
+            email: selection.contact_email,
+            phone: selection.contact_phone,
+          }}
+          selectionName={selection.name}
+        />
+      </div>
+
+      {/* Contact Section */}
+      <div ref={contactRef} id="contact" className="scroll-mt-20">
+        <ContactForm
+          selectionId={selection.id}
+          selectionName={selection.name}
+          branding={branding}
+        />
+      </div>
+
+      {/* Floating Cart Button */}
       {cartCount > 0 && (
         <button
           onClick={() => setIsEnseigneStepperOpen(true)}
@@ -283,150 +645,6 @@ export default function PublicSelectionPage({
           <span className="font-bold">{formatPrice(cartTotal)}</span>
         </button>
       )}
-
-      {/* Products Grid */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {items.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {items.map(item => {
-              const inCart = cart.find(c => c.id === item.id);
-              const isHovered = hoveredProductId === item.id;
-              return (
-                <div
-                  key={item.id}
-                  className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300"
-                  style={
-                    item.is_featured
-                      ? { boxShadow: `0 0 0 2px ${branding.accent_color}` }
-                      : undefined
-                  }
-                  onMouseEnter={() => setHoveredProductId(item.id)}
-                  onMouseLeave={() => setHoveredProductId(null)}
-                >
-                  {/* Product Image with Hover Overlay */}
-                  <div className="relative h-48 bg-gray-100 overflow-hidden group">
-                    {item.product_image ? (
-                      <Image
-                        src={item.product_image}
-                        alt={item.product_name}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-300">
-                        <Package className="h-16 w-16" />
-                      </div>
-                    )}
-
-                    {/* Gradient Overlay on Hover */}
-                    <div
-                      className={`absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-300 ${
-                        isHovered ? 'opacity-100' : 'opacity-0'
-                      }`}
-                    />
-
-                    {/* Product Name + SKU on Hover (slide-up) */}
-                    <div
-                      className={`absolute bottom-0 left-0 right-0 p-4 transition-all duration-300 ${
-                        isHovered
-                          ? 'opacity-100 translate-y-0'
-                          : 'opacity-0 translate-y-4'
-                      }`}
-                    >
-                      <h3 className="text-white font-semibold line-clamp-2">
-                        {item.product_name}
-                      </h3>
-                      <p className="text-white/70 text-xs mt-1">
-                        {item.product_sku}
-                      </p>
-                    </div>
-
-                    {/* Badges Container */}
-                    <div className="absolute top-3 left-3 right-3 flex justify-between items-start">
-                      {/* Featured Badge - Left */}
-                      {item.is_featured && (
-                        <span
-                          className="text-white text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm"
-                          style={{ backgroundColor: branding.accent_color }}
-                        >
-                          <Star className="h-3 w-3 fill-current" />
-                          Vedette
-                        </span>
-                      )}
-                      {/* Spacer if no featured badge */}
-                      {!item.is_featured && <span />}
-                      {/* Stock Badge - Right */}
-                      {item.stock_quantity > 0 ? (
-                        <span
-                          className="text-white text-xs font-medium px-2.5 py-1 rounded-full shadow-sm"
-                          style={{ backgroundColor: branding.primary_color }}
-                        >
-                          Stock: {item.stock_quantity}
-                        </span>
-                      ) : (
-                        <span className="bg-amber-500 text-white text-xs font-medium px-2.5 py-1 rounded-full shadow-sm">
-                          Sur commande
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Product Info - Reduced (Price + Actions only) */}
-                  <div className="p-4">
-                    <div className="flex items-center justify-between">
-                      {/* Price */}
-                      <div>
-                        <span
-                          className="text-xl font-bold"
-                          style={{ color: branding.text_color }}
-                        >
-                          {formatPrice(item.selling_price_ttc)}
-                        </span>
-                        <span className="text-sm text-gray-500 ml-1">TTC</span>
-                      </div>
-
-                      {/* Add to Cart / Quantity */}
-                      {inCart ? (
-                        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-                          <button
-                            onClick={() => updateQuantity(item.id, -1)}
-                            className="p-1.5 hover:bg-gray-200 rounded-md transition-colors"
-                          >
-                            <Minus className="h-4 w-4" />
-                          </button>
-                          <span className="w-6 text-center font-medium text-sm">
-                            {inCart.quantity}
-                          </span>
-                          <button
-                            onClick={() => updateQuantity(item.id, 1)}
-                            className="p-1.5 hover:bg-gray-200 rounded-md transition-colors"
-                          >
-                            <Plus className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => addToCart(item)}
-                          className="flex items-center gap-2 text-white py-2 px-4 rounded-lg transition-colors hover:opacity-90"
-                          style={{ backgroundColor: branding.primary_color }}
-                        >
-                          <Plus className="h-4 w-4" />
-                          Ajouter
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="text-center py-16">
-            <Package className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-            <p className="text-gray-500">Aucun produit dans cette selection</p>
-          </div>
-        )}
-      </div>
 
       {/* Enseigne Stepper (Slide-over) */}
       {isEnseigneStepperOpen && (
