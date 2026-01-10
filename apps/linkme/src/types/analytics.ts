@@ -106,6 +106,7 @@ export interface CommissionItem {
 export type CommissionStatus =
   | 'pending'
   | 'validated'
+  | 'payable' // Alias de 'validated' utilisé dans certaines parties de la DB
   | 'requested'
   | 'paid'
   | 'cancelled';
@@ -114,6 +115,7 @@ export type CommissionStatus =
 export const COMMISSION_STATUS_LABELS: Record<CommissionStatus, string> = {
   pending: 'En attente',
   validated: 'Payable',
+  payable: 'Payable', // Alias de 'validated'
   requested: 'Demande en cours',
   paid: 'Payée',
   cancelled: 'Annulée',
@@ -123,6 +125,7 @@ export const COMMISSION_STATUS_LABELS: Record<CommissionStatus, string> = {
 export const COMMISSION_STATUS_COLORS: Record<CommissionStatus, string> = {
   pending: 'orange',
   validated: 'teal', // Turquoise LinkMe
+  payable: 'teal', // Alias de 'validated'
   requested: 'blue',
   paid: 'green',
   cancelled: 'red',
