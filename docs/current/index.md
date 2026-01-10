@@ -1,6 +1,6 @@
 # Documentation Verone - Source de Verite
 
-**Derniere mise a jour:** 2026-01-09
+**Derniere mise a jour:** 2026-01-10
 
 Cette documentation est la **source unique de verite** pour le projet Verone.
 Toute autre documentation doit etre consideree comme archive.
@@ -19,6 +19,15 @@ Toute autre documentation doit etre consideree comme archive.
 | [integrations.md](./integrations.md)                   | Qonto, Sentry, Google Merchant   | APIs externes       |
 | [deploy-runbooks.md](./deploy-runbooks.md)             | Vercel, GitHub CI/CD, rollback   | Deploiement         |
 | [business-rules-linkme.md](./business-rules-linkme.md) | Workflows LinkMe B2B             | Business logic      |
+
+### Serena Memories (CRITICAL)
+
+| Doc                                           | Description                      | Usage              |
+| --------------------------------------------- | -------------------------------- | ------------------ |
+| [serena/INDEX.md](./serena/INDEX.md)          | Index des 15 memories CRITICAL   | Reference memoires |
+| [serena/\_TEMPLATE.md](./serena/_TEMPLATE.md) | Template pour nouvelles memories | Creation memory    |
+
+> **Note**: Les memories CRITICAL sont versionnees ici. Les memories REFERENCE/TEMP restent dans `.serena/memories/` (gitignored).
 
 ---
 
@@ -62,4 +71,4 @@ Le manifest `docs/archive/2026-01/ARCHIVE_MANIFEST.md` explique ou retrouver les
 
 ---
 
-_Version 1.0.0 - 2026-01-09_
+_Version 1.1.0 - 2026-01-10 - Ajout section Serena memories_
