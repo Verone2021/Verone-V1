@@ -93,6 +93,10 @@ export default function PublicSelectionPage({
     null
   );
 
+  // Hover states for animations
+  const [isHeaderHovered, setIsHeaderHovered] = useState(false);
+  const [hoveredProductId, setHoveredProductId] = useState<string | null>(null);
+
   // Track view
   const hasTrackedView = useRef(false);
 
@@ -206,14 +210,18 @@ export default function PublicSelectionPage({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Header */}
-      <div className="relative h-64 md:h-80 bg-gray-900">
+      {/* Hero Header with Hover Animation */}
+      <div
+        className="relative h-64 md:h-80 bg-gray-900"
+        onMouseEnter={() => setIsHeaderHovered(true)}
+        onMouseLeave={() => setIsHeaderHovered(false)}
+      >
         {selection.image_url ? (
           <Image
             src={selection.image_url}
             alt={selection.name}
             fill
-            className="object-cover opacity-60"
+            className="object-cover opacity-85"
           />
         ) : (
           <div
@@ -223,26 +231,40 @@ export default function PublicSelectionPage({
             }}
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        {/* Gradient overlay - more subtle */}
+        <div
+          className={`absolute inset-0 bg-gradient-to-t from-black/50 to-transparent transition-opacity duration-300 ${
+            isHeaderHovered ? 'opacity-100' : 'opacity-60'
+          }`}
+        />
+        {/* Content with slide-up animation on hover */}
         <div className="relative h-full max-w-7xl mx-auto px-4 flex flex-col justify-end pb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-            {selection.name}
-          </h1>
-          {selection.description && (
-            <p className="text-white/80 max-w-2xl">{selection.description}</p>
-          )}
-          <div className="flex items-center gap-4 mt-3">
-            <p className="text-white/60">{items.length} produits</p>
-            {/* Bouton Commander Enseigne dans le header */}
-            {cartCount > 0 && (
-              <button
-                onClick={() => setIsEnseigneStepperOpen(true)}
-                className="flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors border border-white/30"
-              >
-                <Store className="h-4 w-4" />
-                Commander ({cartCount})
-              </button>
+          <div
+            className={`transition-all duration-300 ${
+              isHeaderHovered
+                ? 'opacity-100 translate-y-0'
+                : 'opacity-0 translate-y-4'
+            }`}
+          >
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+              {selection.name}
+            </h1>
+            {selection.description && (
+              <p className="text-white/80 max-w-2xl">{selection.description}</p>
             )}
+            <div className="flex items-center gap-4 mt-3">
+              <p className="text-white/60">{items.length} produits</p>
+              {/* Bouton Commander Enseigne dans le header */}
+              {cartCount > 0 && (
+                <button
+                  onClick={() => setIsEnseigneStepperOpen(true)}
+                  className="flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors border border-white/30"
+                >
+                  <Store className="h-4 w-4" />
+                  Commander ({cartCount})
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -268,18 +290,21 @@ export default function PublicSelectionPage({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {items.map(item => {
               const inCart = cart.find(c => c.id === item.id);
+              const isHovered = hoveredProductId === item.id;
               return (
                 <div
                   key={item.id}
-                  className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300"
+                  className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300"
                   style={
                     item.is_featured
                       ? { boxShadow: `0 0 0 2px ${branding.accent_color}` }
                       : undefined
                   }
+                  onMouseEnter={() => setHoveredProductId(item.id)}
+                  onMouseLeave={() => setHoveredProductId(null)}
                 >
-                  {/* Product Image */}
-                  <div className="relative h-56 bg-gray-100 overflow-hidden group">
+                  {/* Product Image with Hover Overlay */}
+                  <div className="relative h-48 bg-gray-100 overflow-hidden group">
                     {item.product_image ? (
                       <Image
                         src={item.product_image}
@@ -292,6 +317,30 @@ export default function PublicSelectionPage({
                         <Package className="h-16 w-16" />
                       </div>
                     )}
+
+                    {/* Gradient Overlay on Hover */}
+                    <div
+                      className={`absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-300 ${
+                        isHovered ? 'opacity-100' : 'opacity-0'
+                      }`}
+                    />
+
+                    {/* Product Name + SKU on Hover (slide-up) */}
+                    <div
+                      className={`absolute bottom-0 left-0 right-0 p-4 transition-all duration-300 ${
+                        isHovered
+                          ? 'opacity-100 translate-y-0'
+                          : 'opacity-0 translate-y-4'
+                      }`}
+                    >
+                      <h3 className="text-white font-semibold line-clamp-2">
+                        {item.product_name}
+                      </h3>
+                      <p className="text-white/70 text-xs mt-1">
+                        {item.product_sku}
+                      </p>
+                    </div>
+
                     {/* Badges Container */}
                     <div className="absolute top-3 left-3 right-3 flex justify-between items-start">
                       {/* Featured Badge - Left */}
@@ -322,53 +371,50 @@ export default function PublicSelectionPage({
                     </div>
                   </div>
 
-                  {/* Product Info */}
+                  {/* Product Info - Reduced (Price + Actions only) */}
                   <div className="p-4">
-                    <p className="text-xs text-gray-500 mb-1">
-                      {item.product_sku}
-                    </p>
-                    <h3 className="font-medium text-gray-900 line-clamp-2 mb-3 min-h-[2.5rem]">
-                      {item.product_name}
-                    </h3>
-
-                    {/* Price */}
-                    <div className="flex items-baseline gap-2 mb-4">
-                      <span
-                        className="text-xl font-bold"
-                        style={{ color: branding.text_color }}
-                      >
-                        {formatPrice(item.selling_price_ttc)}
-                      </span>
-                      <span className="text-sm text-gray-500">TTC</span>
-                    </div>
-
-                    {/* Add to Cart */}
-                    {inCart ? (
-                      <div className="flex items-center justify-between bg-gray-100 rounded-lg p-2">
-                        <button
-                          onClick={() => updateQuantity(item.id, -1)}
-                          className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                    <div className="flex items-center justify-between">
+                      {/* Price */}
+                      <div>
+                        <span
+                          className="text-xl font-bold"
+                          style={{ color: branding.text_color }}
                         >
-                          <Minus className="h-4 w-4" />
-                        </button>
-                        <span className="font-medium">{inCart.quantity}</span>
+                          {formatPrice(item.selling_price_ttc)}
+                        </span>
+                        <span className="text-sm text-gray-500 ml-1">TTC</span>
+                      </div>
+
+                      {/* Add to Cart / Quantity */}
+                      {inCart ? (
+                        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                          <button
+                            onClick={() => updateQuantity(item.id, -1)}
+                            className="p-1.5 hover:bg-gray-200 rounded-md transition-colors"
+                          >
+                            <Minus className="h-4 w-4" />
+                          </button>
+                          <span className="w-6 text-center font-medium text-sm">
+                            {inCart.quantity}
+                          </span>
+                          <button
+                            onClick={() => updateQuantity(item.id, 1)}
+                            className="p-1.5 hover:bg-gray-200 rounded-md transition-colors"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : (
                         <button
-                          onClick={() => updateQuantity(item.id, 1)}
-                          className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                          onClick={() => addToCart(item)}
+                          className="flex items-center gap-2 text-white py-2 px-4 rounded-lg transition-colors hover:opacity-90"
+                          style={{ backgroundColor: branding.primary_color }}
                         >
                           <Plus className="h-4 w-4" />
+                          Ajouter
                         </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => addToCart(item)}
-                        className="w-full flex items-center justify-center gap-2 text-white py-3 px-4 rounded-lg transition-colors hover:opacity-90"
-                        style={{ backgroundColor: branding.primary_color }}
-                      >
-                        <Plus className="h-4 w-4" />
-                        Ajouter
-                      </button>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
               );
