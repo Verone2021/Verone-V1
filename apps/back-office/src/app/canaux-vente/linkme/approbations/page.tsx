@@ -53,6 +53,12 @@ import {
   MapPin,
   Pencil,
   History,
+  ChevronDown,
+  ChevronRight,
+  Store,
+  FileText,
+  Calendar,
+  Briefcase,
 } from 'lucide-react';
 
 import {
@@ -61,6 +67,8 @@ import {
   useApproveOrder,
   useRejectOrder,
   type PendingOrder,
+  type PendingOrderItem,
+  type PendingOrderLinkMeDetails,
 } from '../hooks/use-linkme-order-actions';
 import {
   usePendingOrganisations,
@@ -181,7 +189,23 @@ function CommandesTab() {
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
 
-  const handleApprove = async (order: PendingOrder) => {
+  // État pour les lignes expandues
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+  const toggleRow = (orderId: string) => {
+    setExpandedRows(prev => {
+      const next = new Set(prev);
+      if (next.has(orderId)) {
+        next.delete(orderId);
+      } else {
+        next.add(orderId);
+      }
+      return next;
+    });
+  };
+
+  const handleApprove = async (order: PendingOrder, e: React.MouseEvent) => {
+    e.stopPropagation(); // Éviter de toggle la ligne
     try {
       await approveOrder.mutateAsync({ orderId: order.id });
       refetch();
@@ -190,7 +214,8 @@ function CommandesTab() {
     }
   };
 
-  const handleRejectClick = (order: PendingOrder) => {
+  const handleRejectClick = (order: PendingOrder, e: React.MouseEvent) => {
+    e.stopPropagation(); // Éviter de toggle la ligne
     setSelectedOrder(order);
     setRejectReason('');
     setIsRejectDialogOpen(true);
@@ -210,6 +235,17 @@ function CommandesTab() {
     } catch {
       alert('Erreur lors du rejet');
     }
+  };
+
+  // Format du type de demandeur
+  const formatRequesterType = (type: string | null | undefined) => {
+    if (!type) return '-';
+    const types: Record<string, string> = {
+      responsable_enseigne: 'Responsable enseigne',
+      architecte: 'Architecte',
+      franchise: 'Franchise',
+    };
+    return types[type] || type;
   };
 
   if (isLoading) {
@@ -240,6 +276,7 @@ function CommandesTab() {
         <table className="w-full">
           <thead className="bg-gray-50 border-b">
             <tr>
+              <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 w-8" />
               <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
                 Commande
               </th>
@@ -258,77 +295,175 @@ function CommandesTab() {
             </tr>
           </thead>
           <tbody className="divide-y">
-            {orders.map(order => (
-              <tr key={order.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4">
-                  <div>
-                    <p className="font-medium text-gray-900">
-                      {order.order_number}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {new Date(order.created_at).toLocaleDateString('fr-FR')}
-                    </p>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div>
-                    <p className="text-gray-900">
-                      {order.requester_name || '-'}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {order.requester_email || '-'}
-                    </p>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div>
-                    <p className="text-gray-900">
-                      {order.organisation_name || '-'}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {order.enseigne_name || '-'}
-                    </p>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <p className="font-semibold text-gray-900">
-                    {order.total_ttc.toFixed(2)} EUR
-                  </p>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center justify-end gap-2">
-                    <Link
-                      href={`/canaux-vente/linkme/commandes/${order.id}`}
-                      className="p-2 text-gray-500 hover:text-gray-700"
+            {orders.map(order => {
+              const isExpanded = expandedRows.has(order.id);
+              const details = order.linkme_details;
+              const isNewRestaurant = details?.is_new_restaurant ?? false;
+
+              return (
+                <>
+                  {/* Ligne principale - cliquable */}
+                  <tr
+                    key={order.id}
+                    className="hover:bg-gray-50 cursor-pointer"
+                    onClick={() => toggleRow(order.id)}
+                  >
+                    <td className="px-3 py-4">
+                      <button className="p-1 text-gray-400 hover:text-gray-600">
+                        {isExpanded ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </button>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {order.order_number}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {new Date(order.created_at).toLocaleDateString(
+                            'fr-FR'
+                          )}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div>
+                        <p className="text-gray-900">
+                          {order.requester_name || '-'}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {order.requester_email || '-'}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col gap-1">
+                        <p className="text-gray-900">
+                          {order.organisation_name || '-'}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {order.enseigne_name || '-'}
+                        </p>
+                        {/* Badge Nouveau / Existant */}
+                        {isNewRestaurant ? (
+                          <span className="inline-flex items-center gap-1 w-fit px-2 py-0.5 rounded-full text-xs font-medium border border-orange-300 text-orange-700 bg-orange-50">
+                            <Building2 className="h-3 w-3" />
+                            Nouveau restaurant
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 w-fit px-2 py-0.5 rounded-full text-xs font-medium border border-green-300 text-green-700 bg-green-50">
+                            <Store className="h-3 w-3" />
+                            Restaurant existant
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div>
+                        <p className="font-semibold text-gray-900">
+                          {order.total_ttc.toFixed(2)} EUR
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {order.items.length} article
+                          {order.items.length > 1 ? 's' : ''}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div
+                        className="flex items-center justify-end gap-2"
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <Link
+                          href={`/canaux-vente/linkme/commandes/${order.id}`}
+                          className="p-2 text-gray-500 hover:text-gray-700"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Link>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={e => handleRejectClick(order, e)}
+                          className="text-red-600 border-red-200 hover:bg-red-50"
+                        >
+                          <XCircle className="h-4 w-4 mr-1" />
+                          Rejeter
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={e => handleApprove(order, e)}
+                          disabled={approveOrder.isPending}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          {approveOrder.isPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                          ) : (
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                          )}
+                          Approuver
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+
+                  {/* Ligne expandue avec produits */}
+                  {isExpanded && (
+                    <tr
+                      key={`${order.id}-expanded`}
+                      className="bg-gray-50 hover:bg-gray-50"
                     >
-                      <Eye className="h-4 w-4" />
-                    </Link>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleRejectClick(order)}
-                      className="text-red-600 border-red-200 hover:bg-red-50"
-                    >
-                      <XCircle className="h-4 w-4 mr-1" />
-                      Rejeter
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => handleApprove(order)}
-                      disabled={approveOrder.isPending}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      {approveOrder.isPending ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                      ) : (
-                        <CheckCircle className="h-4 w-4 mr-1" />
-                      )}
-                      Approuver
-                    </Button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                      <td colSpan={6} className="p-0">
+                        <div className="py-3 px-6 space-y-2">
+                          {order.items.map(item => (
+                            <div
+                              key={item.id}
+                              className="flex items-center gap-4 text-sm py-2"
+                            >
+                              {/* Thumbnail */}
+                              <div className="w-10 h-10 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                                {item.products?.primary_image_url ? (
+                                  <img
+                                    src={item.products.primary_image_url}
+                                    alt=""
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <Package className="w-full h-full p-2 text-gray-400" />
+                                )}
+                              </div>
+                              {/* Nom */}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium truncate">
+                                  {item.products?.name || 'Produit inconnu'}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {item.products?.sku || '-'}
+                                </p>
+                              </div>
+                              {/* Quantite */}
+                              <p className="text-gray-600 font-medium">
+                                x{item.quantity}
+                              </p>
+                              {/* Prix unitaire */}
+                              <p className="text-gray-500 text-xs w-20 text-right">
+                                {item.unit_price_ht.toFixed(2)} EUR
+                              </p>
+                              {/* Total */}
+                              <p className="font-semibold text-gray-900 w-24 text-right">
+                                {item.total_ht.toFixed(2)} EUR HT
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </>
+              );
+            })}
           </tbody>
         </table>
       </div>

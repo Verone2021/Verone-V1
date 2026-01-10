@@ -87,12 +87,10 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
       const periodStartISO = periodStart?.toISOString() ?? null;
 
       // ============================================
-      // 1-3. Requêtes parallèles
+      // 1-2. Requêtes parallèles
       // ============================================
-      // IMPORTANT: On récupère TOUTES les commissions avec jointure sales_orders
-      // puis on filtre côté client par sales_orders.created_at (DATE DE COMMANDE)
       const [allCommissionsResult, selectionsResult] = await Promise.all([
-        // 1. Commissions avec jointure sales_orders (SOURCE DE VÉRITÉ)
+        // 1. Commissions (sans jointure sales_orders pour éviter erreurs RLS)
         supabase
           .from('linkme_commissions')
           .select(
@@ -109,11 +107,7 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
             status,
             created_at,
             validated_at,
-            paid_at,
-            sales_orders(
-              payment_status,
-              created_at
-            )
+            paid_at
           `
           )
           .eq('affiliate_id', affiliate.id)
@@ -146,52 +140,30 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
       const allCommissions = allCommissionsResult.data ?? [];
 
       // ============================================
-      // HELPER: Extraire sales_orders (peut être objet ou tableau selon PostgREST)
+      // FILTRAGE PAR PÉRIODE (basé sur created_at de la commission)
       // ============================================
-      const getSalesOrder = (c: (typeof allCommissions)[0]) => {
-        const so = c.sales_orders;
-        if (!so) return null;
-        // Si c'est un tableau, prendre le premier élément
-        if (Array.isArray(so)) return so[0] ?? null;
-        return so;
-      };
-
-      // ============================================
-      // FILTRAGE PAR PÉRIODE (basé sur sales_orders.created_at)
-      // ============================================
-      // Si period = 'all', on garde toutes les commissions
-      // Sinon, on filtre par la date de commande (pas la date de commission)
       const commissions = periodStartISO
-        ? allCommissions.filter(c => {
-            const salesOrder = getSalesOrder(c);
-            const orderDate = salesOrder?.created_at;
-            return orderDate && orderDate >= periodStartISO;
-          })
+        ? allCommissions.filter(
+            c => c.created_at && c.created_at >= periodStartISO
+          )
         : allCommissions;
 
       // ============================================
-      // Calculs par statut - SOURCE DE VÉRITÉ: sales_orders.payment_status
+      // Calculs par statut - basé sur linkme_commissions.status
       // ============================================
-      // IMPORTANT: On utilise `commissions` (filtré par période) pour les KPIs
-      // pending = client n'a PAS payé (payment_status !== 'paid')
-      // validated = client a payé ET pas de demande de paiement (PAYABLE)
-      // requested = demande de paiement en cours
-      // paid = commission payée à l'affilié
+      // pending = commande non payée
+      // validated = commande payée, prête pour demande de versement
+      // requested = demande de versement en cours
+      // paid = commission versée à l'affilié
 
-      const pendingCommissions = commissions.filter(c => {
-        const salesOrder = getSalesOrder(c);
-        return salesOrder?.payment_status !== 'paid';
-      });
+      const pendingCommissions = commissions.filter(
+        c => c.status === 'pending' || c.status === null
+      );
 
-      const validatedCommissions = commissions.filter(c => {
-        const salesOrder = getSalesOrder(c);
-        // Payable = client a payé ET commission pas encore demandée/payée à l'affilié
-        // status peut être null, 'pending', ou 'validated' - tous sont payables
-        return (
-          salesOrder?.payment_status === 'paid' &&
-          !['requested', 'paid'].includes(c.status ?? '')
-        );
-      });
+      // 'payable' est un alias de 'validated' dans la DB
+      const validatedCommissions = commissions.filter(
+        c => c.status === 'validated' || c.status === 'payable'
+      );
 
       const requestedCommissions = commissions.filter(
         c => c.status === 'requested'
@@ -321,9 +293,8 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
       >();
 
       commissions.forEach(c => {
-        // Utiliser la DATE DE COMMANDE (pas la date de commission)
-        const salesOrder = getSalesOrder(c);
-        const orderDate = salesOrder?.created_at;
+        // Utiliser la date de création de la commission
+        const orderDate = c.created_at;
 
         if (orderDate) {
           const date = new Date(orderDate);
@@ -335,7 +306,7 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
           }
 
           const entry = revenueMap.get(key)!;
-          entry.revenue += c.order_amount_ht || 0;
+          entry.revenue += c.order_amount_ht ?? 0;
           entry.orders += 1;
         }
       });

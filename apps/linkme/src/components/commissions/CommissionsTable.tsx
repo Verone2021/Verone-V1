@@ -29,14 +29,14 @@ import {
   COMMISSION_STATUS_LABELS,
 } from '../../types/analytics';
 
-interface CommissionsTableProps {
+interface ICommissionsTableProps {
   commissions: CommissionItem[];
   isLoading?: boolean;
   onRequestPayment?: (selectedIds: string[]) => void;
 }
 
 // Badge de statut
-function StatusBadge({ status }: { status: CommissionStatus }) {
+function StatusBadge({ status }: { status: CommissionStatus }): JSX.Element {
   const colorClasses = {
     pending: 'bg-orange-100 text-orange-700',
     validated: 'bg-blue-100 text-blue-700',
@@ -49,10 +49,10 @@ function StatusBadge({ status }: { status: CommissionStatus }) {
       className={`
         inline-flex items-center px-2 py-0.5 rounded-full
         text-[10px] font-medium
-        ${colorClasses[status] || colorClasses.pending}
+        ${colorClasses[status] ?? colorClasses.pending}
       `}
     >
-      {COMMISSION_STATUS_LABELS[status] || status}
+      {COMMISSION_STATUS_LABELS[status] ?? status}
     </span>
   );
 }
@@ -66,7 +66,7 @@ function Checkbox({
   checked: boolean;
   onChange: (checked: boolean) => void;
   disabled?: boolean;
-}) {
+}): JSX.Element {
   return (
     <button
       type="button"
@@ -99,7 +99,7 @@ function CommissionRow({
   isSelected: boolean;
   onSelect: (id: string, selected: boolean) => void;
   showCheckbox: boolean;
-}) {
+}): JSX.Element {
   const date = commission.createdAt
     ? new Date(commission.createdAt).toLocaleDateString('fr-FR', {
         day: '2-digit',
@@ -135,7 +135,7 @@ function CommissionRow({
         #{commission.orderNumber}
       </td>
       <td className="px-3 py-2.5 text-xs text-gray-600 max-w-[150px] truncate">
-        {commission.selectionName}
+        {commission.customerName ?? commission.selectionName}
       </td>
       <td className="px-3 py-2.5 text-xs text-gray-600">
         {formatCurrency(commission.orderAmountHT)}
@@ -151,7 +151,7 @@ function CommissionRow({
 }
 
 // Skeleton row
-function SkeletonRow({ showCheckbox }: { showCheckbox: boolean }) {
+function SkeletonRow({ showCheckbox }: { showCheckbox: boolean }): JSX.Element {
   return (
     <tr className="animate-pulse">
       {showCheckbox && (
@@ -182,7 +182,7 @@ function SkeletonRow({ showCheckbox }: { showCheckbox: boolean }) {
 }
 
 // Empty state
-function EmptyState({ message }: { message: string }) {
+function EmptyState({ message }: { message: string }): JSX.Element {
   return (
     <div className="flex flex-col items-center justify-center py-10 text-gray-400">
       <Inbox className="h-10 w-10 mb-3 opacity-50" />
@@ -195,12 +195,14 @@ export function CommissionsTable({
   commissions,
   isLoading,
   onRequestPayment,
-}: CommissionsTableProps) {
+}: ICommissionsTableProps): JSX.Element {
   const [selectedTab, setSelectedTab] = useState(0);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Filtrer les commissions par onglet
-  const filterByStatus = (status: CommissionStatus | 'all') => {
+  const filterByStatus = (
+    status: CommissionStatus | 'all'
+  ): CommissionItem[] => {
     if (status === 'all') return commissions;
     return commissions.filter(c => c.status === status);
   };
@@ -237,7 +239,7 @@ export function CommissionsTable({
   }, [commissions, selectedIds]);
 
   // Handlers sélection
-  const handleSelect = (id: string, selected: boolean) => {
+  const handleSelect = (id: string, selected: boolean): void => {
     setSelectedIds(prev => {
       const next = new Set(prev);
       if (selected) {
@@ -249,7 +251,7 @@ export function CommissionsTable({
     });
   };
 
-  const handleSelectAll = (checked: boolean) => {
+  const handleSelectAll = (checked: boolean): void => {
     if (checked) {
       setSelectedIds(new Set(validatedCommissions.map(c => c.id)));
     } else {
@@ -261,15 +263,12 @@ export function CommissionsTable({
   const allValidatedSelected =
     validatedCommissions.length > 0 &&
     validatedCommissions.every(c => selectedIds.has(c.id));
-  const someValidatedSelected =
-    validatedCommissions.some(c => selectedIds.has(c.id)) &&
-    !allValidatedSelected;
 
   // Afficher checkbox seulement si des commissions validées existent
   const showCheckbox = validatedCommissions.length > 0;
 
   // Handler demande versement
-  const handleRequestPayment = () => {
+  const handleRequestPayment = (): void => {
     if (onRequestPayment && selectedIds.size > 0) {
       onRequestPayment(Array.from(selectedIds));
     }
@@ -277,30 +276,39 @@ export function CommissionsTable({
 
   return (
     <Card className="p-0 overflow-hidden">
-      {/* Header avec titre et bouton demande */}
-      <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+      {/* Header avec titre et bouton CTA */}
+      <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h3 className="text-base font-semibold text-gray-900">
           Historique des commissions
         </h3>
 
-        {/* Bouton demande de versement - visible si sélection */}
-        {selectedIds.size > 0 && (
+        {/* Bouton CTA - TOUJOURS visible si commissions validées existent */}
+        {validatedCommissions.length > 0 && (
           <button
             onClick={handleRequestPayment}
-            className="
-              flex items-center gap-2 px-4 py-2
-              bg-gradient-to-r from-blue-600 to-blue-700
-              text-white text-sm font-medium rounded-lg
-              shadow-sm hover:shadow-md
-              transition-all duration-200
-              hover:from-blue-700 hover:to-blue-800
-            "
+            disabled={selectedIds.size === 0}
+            className={`
+              flex items-center justify-center gap-2 px-5 py-2.5
+              text-sm font-semibold rounded-xl
+              shadow-md transition-all duration-200
+              ${
+                selectedIds.size > 0
+                  ? 'bg-gradient-to-r from-linkme-turquoise to-linkme-royal text-white hover:shadow-lg hover:scale-[1.02]'
+                  : 'bg-gray-100 text-gray-500 cursor-not-allowed'
+              }
+            `}
           >
-            <Banknote className="h-4 w-4" />
-            Demander versement ({selectedIds.size})
-            <span className="ml-1 text-blue-200">
-              {formatCurrency(selectedTotal)}
-            </span>
+            <Banknote className="h-5 w-5" />
+            {selectedIds.size > 0 ? (
+              <>
+                Demander versement ({selectedIds.size})
+                <span className="ml-1 px-2 py-0.5 bg-white/20 rounded-lg text-xs">
+                  {formatCurrency(selectedTotal)}
+                </span>
+              </>
+            ) : (
+              'Sélectionnez des commissions payables'
+            )}
           </button>
         )}
       </div>
@@ -368,7 +376,7 @@ export function CommissionsTable({
                           Commande
                         </th>
                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
-                          Sélection
+                          Client
                         </th>
                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
                           CA HT

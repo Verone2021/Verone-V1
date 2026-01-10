@@ -100,6 +100,7 @@ export interface CommissionItem {
   validatedAt: string | null;
   paidAt: string | null;
   selectionName?: string;
+  customerName?: string; // Nom du restaurant/client
 }
 
 export type CommissionStatus =

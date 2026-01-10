@@ -1,30 +1,30 @@
 /**
- * Page Mes Commissions - LinkMe
+ * Page Mes Rémunérations - LinkMe
  *
- * Affiche les commissions de l'affilié avec :
- * - 4 KPI Cards (Total, Payées, Validées, En attente)
- * - Graphique évolution CA + Donut répartition
- * - Tableau détaillé avec filtres par statut
- * - Sélection multiple pour demande de versement
+ * Refonte 2026-01 avec :
+ * - 3 KPI Cards (Total TTC, Payables, En attente)
+ * - Banner explicatif "Comment être rémunéré"
+ * - Layout 2 colonnes (Table 60% | Demandes 40%)
+ * - Graphiques collapsibles
  *
  * @module CommissionsPage
  * @since 2025-12-10
- * @updated 2025-12-11 - Ajout demande de versement
+ * @updated 2026-01-10 - Refonte layout et UX
  */
 
 'use client';
 
 import { useState, useMemo } from 'react';
 
-import Link from 'next/link';
-
+import { Card } from '@tremor/react';
 import {
   Wallet,
-  BadgeCheck,
   CheckCircle2,
   Clock,
   Calendar,
-  FileText,
+  ChevronDown,
+  ChevronUp,
+  BarChart3,
 } from 'lucide-react';
 
 import { CommissionsOverview } from '../../../components/analytics/CommissionsOverview';
@@ -33,10 +33,12 @@ import {
   CommissionsTable,
   CommissionsChart,
   PaymentRequestModal,
+  PaymentRequestsPanel,
+  HowToGetPaidBanner,
 } from '../../../components/commissions';
 import { useAffiliateAnalytics } from '../../../lib/hooks/use-affiliate-analytics';
 import { useAffiliateCommissions } from '../../../lib/hooks/use-affiliate-commissions';
-import type { AnalyticsPeriod, CommissionItem } from '../../../types/analytics';
+import type { AnalyticsPeriod } from '../../../types/analytics';
 import { PERIOD_LABELS } from '../../../types/analytics';
 
 export default function CommissionsPage() {
@@ -45,6 +47,7 @@ export default function CommissionsPage() {
   const [selectedCommissionIds, setSelectedCommissionIds] = useState<string[]>(
     []
   );
+  const [showCharts, setShowCharts] = useState(false);
 
   // Données analytics (KPIs, graphique, statuts)
   const { data: analyticsData, isLoading: analyticsLoading } =
@@ -74,119 +77,143 @@ export default function CommissionsPage() {
   // Handler succès de création
   const handleSuccess = () => {
     setSelectedCommissionIds([]);
-    refetch(); // Rafraîchir les commissions
+    refetch();
   };
 
   return (
-    <div className="space-y-5 p-4">
+    <div className="space-y-4 p-4">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Mes Commissions</h1>
+          <h1 className="text-xl font-bold text-gray-900">Mes Rémunérations</h1>
           <p className="text-gray-500 text-sm">
-            Suivez vos gains et l&apos;évolution de vos commissions
+            Suivez vos commissions et demandez vos versements
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* Lien vers les demandes */}
-          <Link
-            href="/commissions/demandes"
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+        {/* Filtre période */}
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-gray-400" />
+          <select
+            value={period}
+            onChange={e => setPeriod(e.target.value as AnalyticsPeriod)}
+            className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:ring-2 focus:ring-linkme-turquoise focus:border-linkme-turquoise outline-none"
           >
-            <FileText className="h-4 w-4" />
-            Mes demandes
-          </Link>
-
-          {/* Filtre période */}
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-gray-400" />
-            <select
-              value={period}
-              onChange={e => setPeriod(e.target.value as AnalyticsPeriod)}
-              className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            >
-              {(
-                Object.entries(PERIOD_LABELS) as [AnalyticsPeriod, string][]
-              ).map(([value, label]) => (
+            {(Object.entries(PERIOD_LABELS) as [AnalyticsPeriod, string][]).map(
+              ([value, label]) => (
                 <option key={value} value={value}>
                   {label}
                 </option>
-              ))}
-            </select>
-          </div>
+              )
+            )}
+          </select>
         </div>
       </div>
 
-      {/* KPI Cards - Valeurs ALL TIME (source de verite) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {/* 3 KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <CommissionKPICard
           title="Total TTC"
           amount={analyticsData?.totalCommissionsTTCAllTime || 0}
           count={analyticsData?.commissionsByStatus?.total.count}
-          subtitle="Toutes periodes"
+          subtitle="Toutes périodes confondues"
           icon={Wallet}
-          iconColor="text-purple-600"
-          bgGradient="from-purple-50 to-white"
+          iconColor="text-linkme-royal"
+          bgGradient="from-linkme-royal/10 to-white"
           isLoading={isLoading}
         />
         <CommissionKPICard
-          title="Payées"
-          amount={analyticsData?.paidCommissionsTTC || 0}
-          count={analyticsData?.commissionsByStatus?.paid.count}
-          subtitle="Versées sur compte"
-          icon={BadgeCheck}
-          iconColor="text-emerald-600"
-          bgGradient="from-emerald-50 to-white"
-          isLoading={isLoading}
-        />
-        <CommissionKPICard
-          title="Validées"
+          title="Payables"
           amount={analyticsData?.validatedCommissionsTTC || 0}
           count={analyticsData?.commissionsByStatus?.validated.count}
-          subtitle="Prêtes au versement"
+          subtitle="Prêtes pour versement"
           icon={CheckCircle2}
-          iconColor="text-blue-600"
-          bgGradient="from-blue-50 to-white"
+          iconColor="text-linkme-turquoise"
+          bgGradient="from-linkme-turquoise/10 to-white"
           isLoading={isLoading}
         />
         <CommissionKPICard
           title="En attente"
           amount={analyticsData?.pendingCommissionsTTC || 0}
           count={analyticsData?.commissionsByStatus?.pending.count}
-          subtitle="En cours de validation"
+          subtitle="Commandes non payées"
           icon={Clock}
-          iconColor="text-orange-600"
+          iconColor="text-orange-500"
           bgGradient="from-orange-50 to-white"
           isLoading={isLoading}
         />
       </div>
 
-      {/* Graphiques : Évolution + Donut */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Chart évolution - 2/3 */}
-        <div className="lg:col-span-2">
-          <CommissionsChart
-            data={analyticsData?.revenueByPeriod || []}
-            isLoading={isLoading}
+      {/* Banner "Comment être rémunéré" */}
+      <HowToGetPaidBanner defaultExpanded={false} />
+
+      {/* Layout 2 colonnes : Table (60%) | Panel Demandes (40%) */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        {/* Colonne gauche : Table des commissions (3/5 = 60%) */}
+        <div className="lg:col-span-3">
+          <CommissionsTable
+            commissions={commissions || []}
+            isLoading={commissionsLoading}
+            onRequestPayment={handleRequestPayment}
           />
         </div>
 
-        {/* Donut répartition - 1/3 */}
-        <div className="lg:col-span-1">
-          <CommissionsOverview
-            data={analyticsData?.commissionsByStatus}
-            isLoading={isLoading}
-          />
+        {/* Colonne droite : Panel demandes (2/5 = 40%) */}
+        <div className="lg:col-span-2">
+          <PaymentRequestsPanel />
         </div>
       </div>
 
-      {/* Tableau des commissions avec sélection */}
-      <CommissionsTable
-        commissions={commissions || []}
-        isLoading={commissionsLoading}
-        onRequestPayment={handleRequestPayment}
-      />
+      {/* Section Graphiques - Collapsible */}
+      <Card className="p-0 overflow-hidden">
+        <button
+          onClick={() => setShowCharts(!showCharts)}
+          className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-indigo-100 rounded-full">
+              <BarChart3 className="h-4 w-4 text-indigo-600" />
+            </div>
+            <div className="text-left">
+              <h3 className="text-sm font-semibold text-gray-900">
+                Analyses & Graphiques
+              </h3>
+              <p className="text-xs text-gray-500">
+                Évolution du CA et répartition des commissions
+              </p>
+            </div>
+          </div>
+          <div className="p-1 text-gray-400">
+            {showCharts ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </div>
+        </button>
+
+        {showCharts && (
+          <div className="p-4 pt-0 border-t border-gray-100">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {/* Chart évolution - 2/3 */}
+              <div className="lg:col-span-2">
+                <CommissionsChart
+                  data={analyticsData?.revenueByPeriod || []}
+                  isLoading={isLoading}
+                />
+              </div>
+
+              {/* Donut répartition - 1/3 */}
+              <div className="lg:col-span-1">
+                <CommissionsOverview
+                  data={analyticsData?.commissionsByStatus}
+                  isLoading={isLoading}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+      </Card>
 
       {/* Modal demande de versement */}
       <PaymentRequestModal

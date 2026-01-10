@@ -134,7 +134,7 @@ export default function LinkMeOrderDetailPage() {
     const supabase = createClient();
 
     try {
-      // Récupérer la commande avec organisation et items
+      // Récupérer la commande avec items
       const { data: orderData, error: orderError } = await supabase
         .from('sales_orders')
         .select(
@@ -147,13 +147,8 @@ export default function LinkMeOrderDetailPage() {
           total_ttc,
           notes,
           customer_id,
+          customer_type,
           expected_delivery_date,
-          organisations!sales_orders_customer_id_fkey (
-            id,
-            trade_name,
-            legal_name,
-            approval_status
-          ),
           sales_order_items (
             id,
             product_id,
@@ -172,6 +167,22 @@ export default function LinkMeOrderDetailPage() {
 
       if (orderError) {
         throw orderError;
+      }
+
+      // Récupérer l'organisation séparément si customer_type = 'organization'
+      let organisation: {
+        id: string;
+        trade_name: string | null;
+        legal_name: string;
+        approval_status: string | null;
+      } | null = null;
+      if (orderData.customer_type === 'organization' && orderData.customer_id) {
+        const { data: orgData } = await supabase
+          .from('organisations')
+          .select('id, trade_name, legal_name, approval_status')
+          .eq('id', orderData.customer_id)
+          .single();
+        organisation = orgData;
       }
 
       // Récupérer les détails LinkMe
@@ -195,7 +206,7 @@ export default function LinkMeOrderDetailPage() {
         notes: orderData.notes,
         customer_id: orderData.customer_id,
         expected_delivery_date: orderData.expected_delivery_date,
-        organisation: orderData.organisations as any,
+        organisation: organisation,
         items: (orderData.sales_order_items || []).map((item: any) => ({
           id: item.id,
           product_id: item.product_id,

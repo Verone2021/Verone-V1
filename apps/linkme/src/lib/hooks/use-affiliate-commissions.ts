@@ -33,7 +33,7 @@ export function useAffiliateCommissions(
       if (!affiliate) return [];
 
       // Construction de la requête
-      let query = supabase
+      const query = supabase
         .from('linkme_commissions')
         .select(
           `
@@ -58,21 +58,46 @@ export function useAffiliateCommissions(
         .eq('affiliate_id', affiliate.id)
         .order('created_at', { ascending: false });
 
-      // Filtrage par statut si spécifié
-      if (status !== 'all') {
-        query = query.eq('status', status);
+      // Récupérer les order_ids pour chercher les noms clients
+      const { data: commissionsData, error: commissionsError } = await query;
+
+      if (commissionsError) {
+        console.error('Erreur fetch commissions list:', commissionsError);
+        throw commissionsError;
       }
 
-      const { data, error } = await query;
+      // Récupérer les noms des clients depuis linkme_orders_enriched
+      const orderIds = (commissionsData || [])
+        .map(c => c.order_id)
+        .filter(Boolean);
+      let customerNameMap = new Map<string, string>();
 
-      if (error) {
-        console.error('Erreur fetch commissions list:', error);
-        throw error;
+      if (orderIds.length > 0) {
+        const { data: ordersData } = await supabase
+          .from('linkme_orders_enriched')
+          .select('id, customer_name')
+          .in('id', orderIds);
+
+        customerNameMap = new Map(
+          (ordersData || []).map(o => [
+            o.id!,
+            o.customer_name || 'Client inconnu',
+          ])
+        );
+      }
+
+      // Filtrer par statut si nécessaire
+      let filteredData = commissionsData || [];
+      if (status !== 'all') {
+        filteredData = filteredData.filter(c => c.status === status);
       }
 
       // Transformer les données
-      return (data || []).map(item => {
+      return filteredData.map(item => {
         const selection = item.linkme_selections as unknown as { name: string };
+        const customerName =
+          customerNameMap.get(item.order_id) || 'Client inconnu';
+
         return {
           id: item.id,
           orderNumber: item.order_number || '',
@@ -86,6 +111,7 @@ export function useAffiliateCommissions(
           validatedAt: item.validated_at,
           paidAt: item.paid_at,
           selectionName: selection?.name || 'Sélection inconnue',
+          customerName,
         };
       });
     },
