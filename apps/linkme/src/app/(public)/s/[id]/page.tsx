@@ -5,17 +5,25 @@ import { use, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 
 import { createClient } from '@verone/utils/supabase/client';
-import { Package, ShoppingCart, Plus, Minus, Check, Store } from 'lucide-react';
+import {
+  Package,
+  ShoppingCart,
+  Plus,
+  Minus,
+  Check,
+  Store,
+  Star,
+} from 'lucide-react';
 
 import { EnseigneStepper } from '@/components/checkout';
 
 const supabase = createClient();
 
-interface SelectionPageProps {
+interface ISelectionPageProps {
   params: Promise<{ id: string }>;
 }
 
-interface SelectionItem {
+interface ISelectionItem {
   id: string;
   product_id: string;
   product_name: string;
@@ -27,20 +35,39 @@ interface SelectionItem {
   margin_rate: number;
   stock_quantity: number;
   category: string | null;
+  is_featured: boolean;
 }
 
-interface Selection {
+interface ISelection {
   id: string;
   name: string;
   description: string | null;
   image_url: string | null;
   affiliate_id: string;
-  /** Timestamp de publication. null = non publié */
+  /** Timestamp de publication. null = non publie */
   published_at: string | null;
   created_at: string;
 }
 
-interface CartItem extends SelectionItem {
+interface IBranding {
+  primary_color: string;
+  secondary_color: string;
+  accent_color: string;
+  text_color: string;
+  background_color: string;
+  logo_url: string | null;
+}
+
+const DEFAULT_BRANDING: IBranding = {
+  primary_color: '#5DBEBB',
+  secondary_color: '#3976BB',
+  accent_color: '#7E84C0',
+  text_color: '#183559',
+  background_color: '#FFFFFF',
+  logo_url: null,
+};
+
+interface ICartItem extends ISelectionItem {
   quantity: number;
 }
 
@@ -51,11 +78,14 @@ function formatPrice(price: number): string {
   }).format(price);
 }
 
-export default function PublicSelectionPage({ params }: SelectionPageProps) {
+export default function PublicSelectionPage({
+  params,
+}: ISelectionPageProps): React.JSX.Element {
   const { id } = use(params);
-  const [selection, setSelection] = useState<Selection | null>(null);
-  const [items, setItems] = useState<SelectionItem[]>([]);
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [selection, setSelection] = useState<ISelection | null>(null);
+  const [items, setItems] = useState<ISelectionItem[]>([]);
+  const [branding, setBranding] = useState<IBranding>(DEFAULT_BRANDING);
+  const [cart, setCart] = useState<ICartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEnseigneStepperOpen, setIsEnseigneStepperOpen] = useState(false);
@@ -63,12 +93,16 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
     null
   );
 
+  // Hover states for animations
+  const [isHeaderHovered, setIsHeaderHovered] = useState(false);
+  const [hoveredProductId, setHoveredProductId] = useState<string | null>(null);
+
   // Track view
   const hasTrackedView = useRef(false);
 
   // Fetch selection data
   useEffect(() => {
-    const fetchSelection = async () => {
+    const fetchSelection = async (): Promise<void> => {
       try {
         // Detect if id is UUID or slug
         const isUuid =
@@ -76,18 +110,26 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
             id
           );
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
         const { data, error: rpcError } = await (supabase.rpc as any)(
           isUuid ? 'get_public_selection' : 'get_public_selection_by_slug',
           isUuid ? { p_selection_id: id } : { p_slug: id }
         );
 
         if (rpcError) throw rpcError;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         if (!data?.success)
-          throw new Error(data?.error || 'Selection non trouvee');
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          throw new Error((data?.error as string) ?? 'Selection non trouvee');
 
-        setSelection(data.selection);
-        setItems(data.items || []);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        setSelection(data.selection as ISelection);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        setItems((data.items as ISelectionItem[]) ?? []);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        if (data.branding) {
+          setBranding(data.branding as IBranding);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erreur de chargement');
       } finally {
@@ -95,23 +137,21 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
       }
     };
 
-    fetchSelection();
+    void fetchSelection();
   }, [id]);
 
   // Track view
   useEffect(() => {
     if (selection?.id && !hasTrackedView.current) {
       hasTrackedView.current = true;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (supabase.rpc as any)('track_selection_view', {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      void (supabase.rpc as any)('track_selection_view', {
         p_selection_id: selection.id,
-      })
-        .then(() => {})
-        .catch(() => {});
+      });
     }
   }, [selection?.id]);
 
-  const addToCart = (item: SelectionItem) => {
+  const addToCart = (item: ISelectionItem): void => {
     setCart(prev => {
       const existing = prev.find(c => c.id === item.id);
       if (existing) {
@@ -123,7 +163,7 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
     });
   };
 
-  const updateQuantity = (itemId: string, delta: number) => {
+  const updateQuantity = (itemId: string, delta: number): void => {
     setCart(prev =>
       prev
         .map(c =>
@@ -152,7 +192,7 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
     );
   }
 
-  if (error || !selection) {
+  if (error ?? !selection) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -161,7 +201,7 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
             Selection introuvable
           </h1>
           <p className="text-gray-600">
-            {error || "Cette selection n'existe pas ou n'est plus disponible."}
+            {error ?? "Cette selection n'existe pas ou n'est plus disponible."}
           </p>
         </div>
       </div>
@@ -170,38 +210,61 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Header */}
-      <div className="relative h-64 md:h-80 bg-gray-900">
+      {/* Hero Header with Hover Animation */}
+      <div
+        className="relative h-64 md:h-80 bg-gray-900"
+        onMouseEnter={() => setIsHeaderHovered(true)}
+        onMouseLeave={() => setIsHeaderHovered(false)}
+      >
         {selection.image_url ? (
           <Image
             src={selection.image_url}
             alt={selection.name}
             fill
-            className="object-cover opacity-60"
+            className="object-cover opacity-85"
           />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600" />
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(to right, ${branding.primary_color}, ${branding.secondary_color})`,
+            }}
+          />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        {/* Gradient overlay - more subtle */}
+        <div
+          className={`absolute inset-0 bg-gradient-to-t from-black/50 to-transparent transition-opacity duration-300 ${
+            isHeaderHovered ? 'opacity-100' : 'opacity-60'
+          }`}
+        />
+        {/* Content with slide-up animation on hover */}
         <div className="relative h-full max-w-7xl mx-auto px-4 flex flex-col justify-end pb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-            {selection.name}
-          </h1>
-          {selection.description && (
-            <p className="text-white/80 max-w-2xl">{selection.description}</p>
-          )}
-          <div className="flex items-center gap-4 mt-3">
-            <p className="text-white/60">{items.length} produits</p>
-            {/* Bouton Commander Enseigne dans le header */}
-            {cartCount > 0 && (
-              <button
-                onClick={() => setIsEnseigneStepperOpen(true)}
-                className="flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors border border-white/30"
-              >
-                <Store className="h-4 w-4" />
-                Commander ({cartCount})
-              </button>
+          <div
+            className={`transition-all duration-300 ${
+              isHeaderHovered
+                ? 'opacity-100 translate-y-0'
+                : 'opacity-0 translate-y-4'
+            }`}
+          >
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+              {selection.name}
+            </h1>
+            {selection.description && (
+              <p className="text-white/80 max-w-2xl">{selection.description}</p>
             )}
+            <div className="flex items-center gap-4 mt-3">
+              <p className="text-white/60">{items.length} produits</p>
+              {/* Bouton Commander Enseigne dans le header */}
+              {cartCount > 0 && (
+                <button
+                  onClick={() => setIsEnseigneStepperOpen(true)}
+                  className="flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors border border-white/30"
+                >
+                  <Store className="h-4 w-4" />
+                  Commander ({cartCount})
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -210,7 +273,8 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
       {cartCount > 0 && (
         <button
           onClick={() => setIsEnseigneStepperOpen(true)}
-          className="fixed bottom-6 right-6 z-40 bg-blue-600 text-white px-6 py-4 rounded-full shadow-lg hover:bg-blue-700 transition-all flex items-center gap-3"
+          className="fixed bottom-6 right-6 z-40 text-white px-6 py-4 rounded-full shadow-lg transition-all flex items-center gap-3 hover:opacity-90"
+          style={{ backgroundColor: branding.primary_color }}
         >
           <ShoppingCart className="h-5 w-5" />
           <span className="font-medium">
@@ -226,13 +290,21 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {items.map(item => {
               const inCart = cart.find(c => c.id === item.id);
+              const isHovered = hoveredProductId === item.id;
               return (
                 <div
                   key={item.id}
-                  className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300"
+                  className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300"
+                  style={
+                    item.is_featured
+                      ? { boxShadow: `0 0 0 2px ${branding.accent_color}` }
+                      : undefined
+                  }
+                  onMouseEnter={() => setHoveredProductId(item.id)}
+                  onMouseLeave={() => setHoveredProductId(null)}
                 >
-                  {/* Product Image */}
-                  <div className="relative h-56 bg-gray-100 overflow-hidden group">
+                  {/* Product Image with Hover Overlay */}
+                  <div className="relative h-48 bg-gray-100 overflow-hidden group">
                     {item.product_image ? (
                       <Image
                         src={item.product_image}
@@ -245,63 +317,104 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
                         <Package className="h-16 w-16" />
                       </div>
                     )}
-                    {/* Stock Badge */}
-                    <div className="absolute top-3 right-3">
+
+                    {/* Gradient Overlay on Hover */}
+                    <div
+                      className={`absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-300 ${
+                        isHovered ? 'opacity-100' : 'opacity-0'
+                      }`}
+                    />
+
+                    {/* Product Name + SKU on Hover (slide-up) */}
+                    <div
+                      className={`absolute bottom-0 left-0 right-0 p-4 transition-all duration-300 ${
+                        isHovered
+                          ? 'opacity-100 translate-y-0'
+                          : 'opacity-0 translate-y-4'
+                      }`}
+                    >
+                      <h3 className="text-white font-semibold line-clamp-2">
+                        {item.product_name}
+                      </h3>
+                      <p className="text-white/70 text-xs mt-1">
+                        {item.product_sku}
+                      </p>
+                    </div>
+
+                    {/* Badges Container */}
+                    <div className="absolute top-3 left-3 right-3 flex justify-between items-start">
+                      {/* Featured Badge - Left */}
+                      {item.is_featured && (
+                        <span
+                          className="text-white text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm"
+                          style={{ backgroundColor: branding.accent_color }}
+                        >
+                          <Star className="h-3 w-3 fill-current" />
+                          Vedette
+                        </span>
+                      )}
+                      {/* Spacer if no featured badge */}
+                      {!item.is_featured && <span />}
+                      {/* Stock Badge - Right */}
                       {item.stock_quantity > 0 ? (
-                        <span className="bg-green-500 text-white text-xs font-medium px-2 py-1 rounded-full">
+                        <span
+                          className="text-white text-xs font-medium px-2.5 py-1 rounded-full shadow-sm"
+                          style={{ backgroundColor: branding.primary_color }}
+                        >
                           Stock: {item.stock_quantity}
                         </span>
                       ) : (
-                        <span className="bg-orange-500 text-white text-xs font-medium px-2 py-1 rounded-full">
+                        <span className="bg-amber-500 text-white text-xs font-medium px-2.5 py-1 rounded-full shadow-sm">
                           Sur commande
                         </span>
                       )}
                     </div>
                   </div>
 
-                  {/* Product Info */}
+                  {/* Product Info - Reduced (Price + Actions only) */}
                   <div className="p-4">
-                    <p className="text-xs text-gray-500 mb-1">
-                      {item.product_sku}
-                    </p>
-                    <h3 className="font-medium text-gray-900 line-clamp-2 mb-3 min-h-[2.5rem]">
-                      {item.product_name}
-                    </h3>
-
-                    {/* Price */}
-                    <div className="flex items-baseline gap-2 mb-4">
-                      <span className="text-xl font-bold text-gray-900">
-                        {formatPrice(item.selling_price_ttc)}
-                      </span>
-                      <span className="text-sm text-gray-500">TTC</span>
-                    </div>
-
-                    {/* Add to Cart */}
-                    {inCart ? (
-                      <div className="flex items-center justify-between bg-gray-100 rounded-lg p-2">
-                        <button
-                          onClick={() => updateQuantity(item.id, -1)}
-                          className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                    <div className="flex items-center justify-between">
+                      {/* Price */}
+                      <div>
+                        <span
+                          className="text-xl font-bold"
+                          style={{ color: branding.text_color }}
                         >
-                          <Minus className="h-4 w-4" />
-                        </button>
-                        <span className="font-medium">{inCart.quantity}</span>
+                          {formatPrice(item.selling_price_ttc)}
+                        </span>
+                        <span className="text-sm text-gray-500 ml-1">TTC</span>
+                      </div>
+
+                      {/* Add to Cart / Quantity */}
+                      {inCart ? (
+                        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                          <button
+                            onClick={() => updateQuantity(item.id, -1)}
+                            className="p-1.5 hover:bg-gray-200 rounded-md transition-colors"
+                          >
+                            <Minus className="h-4 w-4" />
+                          </button>
+                          <span className="w-6 text-center font-medium text-sm">
+                            {inCart.quantity}
+                          </span>
+                          <button
+                            onClick={() => updateQuantity(item.id, 1)}
+                            className="p-1.5 hover:bg-gray-200 rounded-md transition-colors"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : (
                         <button
-                          onClick={() => updateQuantity(item.id, 1)}
-                          className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                          onClick={() => addToCart(item)}
+                          className="flex items-center gap-2 text-white py-2 px-4 rounded-lg transition-colors hover:opacity-90"
+                          style={{ backgroundColor: branding.primary_color }}
                         >
                           <Plus className="h-4 w-4" />
+                          Ajouter
                         </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => addToCart(item)}
-                        className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors"
-                      >
-                        <Plus className="h-4 w-4" />
-                        Ajouter
-                      </button>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -324,8 +437,8 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
             onClick={() => setIsEnseigneStepperOpen(false)}
           />
 
-          {/* Panel */}
-          <div className="absolute right-0 top-0 bottom-0 w-full max-w-lg bg-white shadow-xl">
+          {/* Panel - Large modal with rounded corners */}
+          <div className="absolute inset-4 md:inset-8 lg:inset-12 bg-white rounded-2xl shadow-2xl overflow-hidden">
             {enseigneOrderNumber ? (
               /* Success State */
               <div className="flex flex-col items-center justify-center h-full p-8 text-center">
@@ -348,7 +461,8 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
                     setIsEnseigneStepperOpen(false);
                     setCart([]);
                   }}
-                  className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+                  className="px-6 py-2 text-white rounded-lg hover:opacity-90"
+                  style={{ backgroundColor: branding.text_color }}
                 >
                   Fermer
                 </button>
@@ -361,6 +475,9 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
                   id: item.id,
                   product_id: item.product_id,
                   product_name: item.product_name,
+                  product_sku: item.product_sku,
+                  product_image: item.product_image,
+                  selling_price_ht: item.selling_price_ht,
                   selling_price_ttc: item.selling_price_ttc,
                   quantity: item.quantity,
                 }))}

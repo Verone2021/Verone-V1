@@ -15,7 +15,7 @@ apps/
 └── linkme/           # Commissions Apporteurs (Port 3002)
 ```
 
-### 28 Packages @verone/\*
+### 26 Packages @verone/\*
 
 ```
 packages/@verone/
