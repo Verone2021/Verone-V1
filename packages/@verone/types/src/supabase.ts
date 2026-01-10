@@ -5501,6 +5501,9 @@ export type Database = {
           logo_url: string | null;
           minimum_order_amount: number | null;
           notes: string | null;
+          ownership_type:
+            | Database['public']['Enums']['organisation_ownership_type']
+            | null;
           payment_terms: string | null;
           payment_terms_notes: string | null;
           payment_terms_type:
@@ -5574,6 +5577,9 @@ export type Database = {
           logo_url?: string | null;
           minimum_order_amount?: number | null;
           notes?: string | null;
+          ownership_type?:
+            | Database['public']['Enums']['organisation_ownership_type']
+            | null;
           payment_terms?: string | null;
           payment_terms_notes?: string | null;
           payment_terms_type?:
@@ -5647,6 +5653,9 @@ export type Database = {
           logo_url?: string | null;
           minimum_order_amount?: number | null;
           notes?: string | null;
+          ownership_type?:
+            | Database['public']['Enums']['organisation_ownership_type']
+            | null;
           payment_terms?: string | null;
           payment_terms_notes?: string | null;
           payment_terms_type?:
@@ -12094,6 +12103,15 @@ export type Database = {
         }[];
       };
       get_enseigne_details: { Args: { enseigne_uuid: string }; Returns: Json };
+      get_enseigne_organisation_stats: {
+        Args: { p_enseigne_id: string };
+        Returns: {
+          order_count: number;
+          org_id: string;
+          total_commissions_ht: number;
+          total_revenue_ht: number;
+        }[];
+      };
       get_error_reports_dashboard: {
         Args: {
           limit_param?: number;
@@ -13493,6 +13511,7 @@ export type Database = {
         | 'ignored';
       movement_type: 'IN' | 'OUT' | 'ADJUST' | 'TRANSFER';
       organisation_type: 'internal' | 'supplier' | 'customer' | 'partner';
+      organisation_ownership_type: 'propre' | 'franchise' | 'succursale';
       package_type: 'single' | 'pack' | 'bulk' | 'custom';
       payment_terms_type:
         | 'IMMEDIATE'
