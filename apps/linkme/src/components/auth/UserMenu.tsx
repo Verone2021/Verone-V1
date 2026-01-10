@@ -140,6 +140,18 @@ export function UserMenu({ className }: IUserMenuProps): JSX.Element | null {
               <User className="h-4 w-4" />
               Mon profil
             </Link>
+            {/* Lien Organisations - uniquement pour enseignes */}
+            {(linkMeRole?.role === 'enseigne_admin' ||
+              linkMeRole?.role === 'organisation_admin') && (
+              <Link
+                href="/organisations"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              >
+                <Building2 className="h-4 w-4" />
+                Mes organisations
+              </Link>
+            )}
           </div>
 
           {/* Actions */}

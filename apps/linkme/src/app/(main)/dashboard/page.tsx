@@ -44,7 +44,7 @@ import { useUserAffiliate } from '../../../lib/hooks/use-user-selection';
 
 export default function DashboardPage(): JSX.Element | null {
   const router = useRouter();
-  const { user, linkMeRole, loading } = useAuth();
+  const { user, linkMeRole, loading, initializing } = useAuth();
 
   // Affiliate ID pour les requêtes
   const { data: _affiliate, isLoading: affiliateLoading } = useUserAffiliate();
@@ -60,8 +60,8 @@ export default function DashboardPage(): JSX.Element | null {
     }
   }, [user, loading, router]);
 
-  // Afficher loader pendant chargement
-  if (loading) {
+  // Afficher loader pendant chargement initial ou action en cours
+  if (loading || initializing) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
