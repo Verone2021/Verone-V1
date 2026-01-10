@@ -1,12 +1,12 @@
 /**
  * CommissionsTable
- * Tableau des commissions avec filtrage par statut et sélection multiple
+ * Tableau des commissions avec filtrage par statut, pagination et sélection multiple
  *
- * Permet la sélection des commissions validées pour demander un versement
+ * Permet la sélection des commissions payables pour demander un versement
  *
  * @module CommissionsTable
  * @since 2025-12-10
- * @updated 2025-12-11 - Ajout sélection multiple pour versement
+ * @updated 2026-01-10 - Ajout pagination, fix statut payable
  */
 
 'use client';
@@ -21,7 +21,13 @@ import {
   TabPanels,
   TabPanel,
 } from '@tremor/react';
-import { Inbox, Banknote, Check } from 'lucide-react';
+import {
+  Inbox,
+  Banknote,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 
 import type { CommissionItem, CommissionStatus } from '../../types/analytics';
 import {
@@ -29,17 +35,32 @@ import {
   COMMISSION_STATUS_LABELS,
 } from '../../types/analytics';
 
+// ============================================
+// CONSTANTS
+// ============================================
+const ITEMS_PER_PAGE = 15;
+
+// Helper pour vérifier si une commission est payable
+const isPayableStatus = (status: CommissionStatus | null): boolean =>
+  status === 'validated' || status === 'payable';
+
 interface ICommissionsTableProps {
   commissions: CommissionItem[];
   isLoading?: boolean;
   onRequestPayment?: (selectedIds: string[]) => void;
 }
 
+// ============================================
+// SUB-COMPONENTS
+// ============================================
+
 // Badge de statut
 function StatusBadge({ status }: { status: CommissionStatus }): JSX.Element {
-  const colorClasses = {
+  const colorClasses: Record<string, string> = {
     pending: 'bg-orange-100 text-orange-700',
-    validated: 'bg-blue-100 text-blue-700',
+    validated: 'bg-teal-100 text-teal-700',
+    payable: 'bg-teal-100 text-teal-700',
+    requested: 'bg-blue-100 text-blue-700',
     paid: 'bg-emerald-100 text-emerald-700',
     cancelled: 'bg-gray-100 text-gray-700',
   };
@@ -78,8 +99,8 @@ function Checkbox({
         ${disabled ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}
         ${
           checked
-            ? 'bg-blue-600 border-blue-600'
-            : 'bg-white border-gray-300 hover:border-blue-400'
+            ? 'bg-teal-600 border-teal-600'
+            : 'bg-white border-gray-300 hover:border-teal-400'
         }
       `}
     >
@@ -108,25 +129,25 @@ function CommissionRow({
       })
     : '-';
 
-  const isValidated = commission.status === 'validated';
+  const isPayable = isPayableStatus(commission.status);
 
   return (
     <tr
       className={`
         hover:bg-gray-50 transition-colors
-        ${isSelected ? 'bg-blue-50/50' : ''}
+        ${isSelected ? 'bg-teal-50/50' : ''}
       `}
     >
-      {/* Checkbox - visible seulement pour validated */}
+      {/* Checkbox - visible seulement pour payables */}
       {showCheckbox && (
         <td className="px-3 py-2.5 w-10">
-          {isValidated ? (
+          {isPayable ? (
             <Checkbox
               checked={isSelected}
               onChange={checked => onSelect(commission.id, checked)}
             />
           ) : (
-            <div className="w-4 h-4" /> // Placeholder pour alignement
+            <div className="w-4 h-4" />
           )}
         </td>
       )}
@@ -191,6 +212,96 @@ function EmptyState({ message }: { message: string }): JSX.Element {
   );
 }
 
+// Pagination component
+function Pagination({
+  currentPage,
+  totalPages,
+  totalItems,
+  onPageChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  onPageChange: (page: number) => void;
+}): JSX.Element {
+  const startItem = (currentPage - 1) * ITEMS_PER_PAGE + 1;
+  const endItem = Math.min(currentPage * ITEMS_PER_PAGE, totalItems);
+
+  return (
+    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/50">
+      <span className="text-xs text-gray-500">
+        Affichage {startItem}-{endItem} sur {totalItems}
+      </span>
+      <div className="flex items-center gap-1">
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className={`
+            p-1.5 rounded-lg transition-colors
+            ${
+              currentPage === 1
+                ? 'text-gray-300 cursor-not-allowed'
+                : 'text-gray-600 hover:bg-gray-100'
+            }
+          `}
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+
+        {/* Page numbers */}
+        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+          let pageNum: number;
+          if (totalPages <= 5) {
+            pageNum = i + 1;
+          } else if (currentPage <= 3) {
+            pageNum = i + 1;
+          } else if (currentPage >= totalPages - 2) {
+            pageNum = totalPages - 4 + i;
+          } else {
+            pageNum = currentPage - 2 + i;
+          }
+
+          return (
+            <button
+              key={pageNum}
+              onClick={() => onPageChange(pageNum)}
+              className={`
+                w-8 h-8 text-xs rounded-lg transition-colors
+                ${
+                  currentPage === pageNum
+                    ? 'bg-teal-600 text-white font-semibold'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }
+              `}
+            >
+              {pageNum}
+            </button>
+          );
+        })}
+
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className={`
+            p-1.5 rounded-lg transition-colors
+            ${
+              currentPage === totalPages
+                ? 'text-gray-300 cursor-not-allowed'
+                : 'text-gray-600 hover:bg-gray-100'
+            }
+          `}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// MAIN COMPONENT
+// ============================================
+
 export function CommissionsTable({
   commissions,
   isLoading,
@@ -198,36 +309,47 @@ export function CommissionsTable({
 }: ICommissionsTableProps): JSX.Element {
   const [selectedTab, setSelectedTab] = useState(0);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Reset page when tab changes
+  const handleTabChange = (index: number): void => {
+    setSelectedTab(index);
+    setCurrentPage(1);
+  };
 
   // Filtrer les commissions par onglet
   const filterByStatus = (
     status: CommissionStatus | 'all'
   ): CommissionItem[] => {
     if (status === 'all') return commissions;
+    // Pour 'validated', inclure aussi 'payable'
+    if (status === 'validated') {
+      return commissions.filter(c => isPayableStatus(c.status));
+    }
     return commissions.filter(c => c.status === status);
   };
 
   const tabs: { label: string; status: CommissionStatus | 'all' }[] = [
     { label: 'Toutes', status: 'all' },
+    { label: 'Payables', status: 'validated' },
     { label: 'En attente', status: 'pending' },
-    { label: 'Validées', status: 'validated' },
     { label: 'Payées', status: 'paid' },
   ];
 
-  // Compter par statut
+  // Compter par statut (inclut 'payable' dans validated)
   const counts = useMemo(
     () => ({
       all: commissions.length,
       pending: commissions.filter(c => c.status === 'pending').length,
-      validated: commissions.filter(c => c.status === 'validated').length,
+      validated: commissions.filter(c => isPayableStatus(c.status)).length,
       paid: commissions.filter(c => c.status === 'paid').length,
     }),
     [commissions]
   );
 
-  // Commissions validées (éligibles au versement)
-  const validatedCommissions = useMemo(
-    () => commissions.filter(c => c.status === 'validated'),
+  // Commissions payables (éligibles au versement) - inclut 'validated' ET 'payable'
+  const payableCommissions = useMemo(
+    () => commissions.filter(c => isPayableStatus(c.status)),
     [commissions]
   );
 
@@ -251,21 +373,22 @@ export function CommissionsTable({
     });
   };
 
+  // Sélectionner toutes les commissions payables (cross-page)
   const handleSelectAll = (checked: boolean): void => {
     if (checked) {
-      setSelectedIds(new Set(validatedCommissions.map(c => c.id)));
+      setSelectedIds(new Set(payableCommissions.map(c => c.id)));
     } else {
       setSelectedIds(new Set());
     }
   };
 
-  // Vérifier si tous les validés sont sélectionnés
-  const allValidatedSelected =
-    validatedCommissions.length > 0 &&
-    validatedCommissions.every(c => selectedIds.has(c.id));
+  // Vérifier si toutes les payables sont sélectionnées
+  const allPayableSelected =
+    payableCommissions.length > 0 &&
+    payableCommissions.every(c => selectedIds.has(c.id));
 
-  // Afficher checkbox seulement si des commissions validées existent
-  const showCheckbox = validatedCommissions.length > 0;
+  // Afficher checkbox seulement si des commissions payables existent
+  const showCheckbox = payableCommissions.length > 0;
 
   // Handler demande versement
   const handleRequestPayment = (): void => {
@@ -279,11 +402,11 @@ export function CommissionsTable({
       {/* Header avec titre et bouton CTA */}
       <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h3 className="text-base font-semibold text-gray-900">
-          Historique des commissions
+          Demandez vos commissions
         </h3>
 
-        {/* Bouton CTA - TOUJOURS visible si commissions validées existent */}
-        {validatedCommissions.length > 0 && (
+        {/* Bouton CTA - TOUJOURS visible si commissions payables existent */}
+        {payableCommissions.length > 0 && (
           <button
             onClick={handleRequestPayment}
             disabled={selectedIds.size === 0}
@@ -307,13 +430,13 @@ export function CommissionsTable({
                 </span>
               </>
             ) : (
-              'Sélectionnez des commissions payables'
+              'Sélectionnez des commissions'
             )}
           </button>
         )}
       </div>
 
-      <TabGroup index={selectedTab} onIndexChange={setSelectedTab}>
+      <TabGroup index={selectedTab} onIndexChange={handleTabChange}>
         <TabList className="px-4 pt-2 border-b border-gray-100">
           {tabs.map((tab, idx) => (
             <Tab
@@ -323,7 +446,7 @@ export function CommissionsTable({
                 transition-colors duration-200
                 ${
                   selectedTab === idx
-                    ? 'bg-blue-50 text-blue-600 border-b-2 border-blue-600'
+                    ? 'bg-teal-50 text-teal-600 border-b-2 border-teal-600'
                     : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                 }
               `}
@@ -334,7 +457,7 @@ export function CommissionsTable({
                   ml-1.5 px-1.5 py-0.5 rounded-full text-[10px]
                   ${
                     selectedTab === idx
-                      ? 'bg-blue-100 text-blue-600'
+                      ? 'bg-teal-100 text-teal-600'
                       : 'bg-gray-100 text-gray-500'
                   }
                 `}
@@ -348,6 +471,11 @@ export function CommissionsTable({
         <TabPanels>
           {tabs.map(tab => {
             const filtered = filterByStatus(tab.status);
+            const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+            const paginatedItems = filtered.slice(
+              (currentPage - 1) * ITEMS_PER_PAGE,
+              currentPage * ITEMS_PER_PAGE
+            );
             const showSelectAllForTab =
               showCheckbox &&
               (tab.status === 'all' || tab.status === 'validated');
@@ -356,14 +484,14 @@ export function CommissionsTable({
               <TabPanel key={tab.status}>
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-gray-50 sticky top-0">
                       <tr>
-                        {/* Header checkbox - sélectionner tous les validés */}
+                        {/* Header checkbox - sélectionner tous les payables */}
                         {showCheckbox && (
                           <th className="px-3 py-2 w-10">
                             {showSelectAllForTab && (
                               <Checkbox
-                                checked={allValidatedSelected}
+                                checked={allPayableSelected}
                                 onChange={handleSelectAll}
                               />
                             )}
@@ -394,14 +522,14 @@ export function CommissionsTable({
                         Array.from({ length: 5 }).map((_, i) => (
                           <SkeletonRow key={i} showCheckbox={showCheckbox} />
                         ))
-                      ) : filtered.length === 0 ? (
+                      ) : paginatedItems.length === 0 ? (
                         <tr>
                           <td colSpan={showCheckbox ? 7 : 6}>
                             <EmptyState message="Aucune commission pour ce filtre" />
                           </td>
                         </tr>
                       ) : (
-                        filtered.map(commission => (
+                        paginatedItems.map(commission => (
                           <CommissionRow
                             key={commission.id}
                             commission={commission}
@@ -414,6 +542,16 @@ export function CommissionsTable({
                     </tbody>
                   </table>
                 </div>
+
+                {/* Pagination */}
+                {!isLoading && filtered.length > ITEMS_PER_PAGE && (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalItems={filtered.length}
+                    onPageChange={setCurrentPage}
+                  />
+                )}
               </TabPanel>
             );
           })}
@@ -422,17 +560,17 @@ export function CommissionsTable({
 
       {/* Footer sticky - Résumé sélection */}
       {selectedIds.size > 0 && (
-        <div className="sticky bottom-0 bg-gradient-to-r from-blue-50 to-indigo-50 border-t border-blue-100 p-3">
+        <div className="sticky bottom-0 bg-gradient-to-r from-teal-50 to-cyan-50 border-t border-teal-100 p-3">
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-4">
-              <span className="text-blue-700 font-medium">
+              <span className="text-teal-700 font-medium">
                 {selectedIds.size} commission
                 {selectedIds.size > 1 ? 's' : ''} sélectionnée
                 {selectedIds.size > 1 ? 's' : ''}
               </span>
               <button
                 onClick={() => setSelectedIds(new Set())}
-                className="text-blue-600 hover:text-blue-800 text-xs underline"
+                className="text-teal-600 hover:text-teal-800 text-xs underline"
               >
                 Tout désélectionner
               </button>

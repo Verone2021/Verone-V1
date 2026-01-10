@@ -3,35 +3,24 @@
  *
  * Refonte 2026-01 avec :
  * - 3 KPI Cards (Total TTC, Payables, En attente)
- * - Banner explicatif "Comment être rémunéré"
+ * - Banner simplifié "Comment ça marche" avec bouton modal
  * - Layout 2 colonnes (Table 60% | Demandes 40%)
- * - Graphiques collapsibles
  *
  * @module CommissionsPage
  * @since 2025-12-10
- * @updated 2026-01-10 - Refonte layout et UX
+ * @updated 2026-01-10 - Suppression accordéons, ajout modal sélection
  */
 
 'use client';
 
 import { useState, useMemo } from 'react';
 
-import { Card } from '@tremor/react';
-import {
-  Wallet,
-  CheckCircle2,
-  Clock,
-  Calendar,
-  ChevronDown,
-  ChevronUp,
-  BarChart3,
-} from 'lucide-react';
+import { Wallet, CheckCircle2, Clock, Calendar } from 'lucide-react';
 
-import { CommissionsOverview } from '../../../components/analytics/CommissionsOverview';
 import {
   CommissionKPICard,
   CommissionsTable,
-  CommissionsChart,
+  CommissionSelectionModal,
   PaymentRequestModal,
   PaymentRequestsPanel,
   HowToGetPaidBanner,
@@ -41,15 +30,15 @@ import { useAffiliateCommissions } from '../../../lib/hooks/use-affiliate-commis
 import type { AnalyticsPeriod } from '../../../types/analytics';
 import { PERIOD_LABELS } from '../../../types/analytics';
 
-export default function CommissionsPage() {
+export default function CommissionsPage(): JSX.Element {
   const [period, setPeriod] = useState<AnalyticsPeriod>('month');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false);
   const [selectedCommissionIds, setSelectedCommissionIds] = useState<string[]>(
     []
   );
-  const [showCharts, setShowCharts] = useState(false);
 
-  // Données analytics (KPIs, graphique, statuts)
+  // Données analytics (KPIs)
   const { data: analyticsData, isLoading: analyticsLoading } =
     useAffiliateAnalytics(period);
 
@@ -62,22 +51,29 @@ export default function CommissionsPage() {
 
   const isLoading = analyticsLoading || commissionsLoading;
 
-  // Commissions sélectionnées (pour la modal)
+  // Commissions sélectionnées (pour la modal de paiement)
   const selectedCommissions = useMemo(() => {
     if (!commissions) return [];
     return commissions.filter(c => selectedCommissionIds.includes(c.id));
   }, [commissions, selectedCommissionIds]);
 
-  // Handler demande de versement
-  const handleRequestPayment = (ids: string[]) => {
+  // Handler demande de versement depuis la table
+  const handleRequestPayment = (ids: string[]): void => {
     setSelectedCommissionIds(ids);
-    setIsModalOpen(true);
+    setIsPaymentModalOpen(true);
+  };
+
+  // Handler confirmation depuis le modal de sélection
+  const handleSelectionConfirm = (ids: string[]): void => {
+    setSelectedCommissionIds(ids);
+    setIsSelectionModalOpen(false);
+    setIsPaymentModalOpen(true);
   };
 
   // Handler succès de création
-  const handleSuccess = () => {
+  const handleSuccess = (): void => {
     setSelectedCommissionIds([]);
-    refetch();
+    void refetch();
   };
 
   return (
@@ -114,7 +110,7 @@ export default function CommissionsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <CommissionKPICard
           title="Total TTC"
-          amount={analyticsData?.totalCommissionsTTCAllTime || 0}
+          amount={analyticsData?.totalCommissionsTTCAllTime ?? 0}
           count={analyticsData?.commissionsByStatus?.total.count}
           subtitle="Toutes périodes confondues"
           icon={Wallet}
@@ -124,7 +120,7 @@ export default function CommissionsPage() {
         />
         <CommissionKPICard
           title="Payables"
-          amount={analyticsData?.validatedCommissionsTTC || 0}
+          amount={analyticsData?.validatedCommissionsTTC ?? 0}
           count={analyticsData?.commissionsByStatus?.validated.count}
           subtitle="Prêtes pour versement"
           icon={CheckCircle2}
@@ -134,7 +130,7 @@ export default function CommissionsPage() {
         />
         <CommissionKPICard
           title="En attente"
-          amount={analyticsData?.pendingCommissionsTTC || 0}
+          amount={analyticsData?.pendingCommissionsTTC ?? 0}
           count={analyticsData?.commissionsByStatus?.pending.count}
           subtitle="Commandes non payées"
           icon={Clock}
@@ -144,15 +140,19 @@ export default function CommissionsPage() {
         />
       </div>
 
-      {/* Banner "Comment être rémunéré" */}
-      <HowToGetPaidBanner defaultExpanded={false} />
+      {/* Banner simplifié "Comment ça marche" avec bouton modal */}
+      <HowToGetPaidBanner
+        onOpenSelectionModal={() => setIsSelectionModalOpen(true)}
+        payableCount={analyticsData?.commissionsByStatus?.validated.count ?? 0}
+        payableAmount={analyticsData?.validatedCommissionsTTC ?? 0}
+      />
 
       {/* Layout 2 colonnes : Table (60%) | Panel Demandes (40%) */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         {/* Colonne gauche : Table des commissions (3/5 = 60%) */}
         <div className="lg:col-span-3">
           <CommissionsTable
-            commissions={commissions || []}
+            commissions={commissions ?? []}
             isLoading={commissionsLoading}
             onRequestPayment={handleRequestPayment}
           />
@@ -164,61 +164,17 @@ export default function CommissionsPage() {
         </div>
       </div>
 
-      {/* Section Graphiques - Collapsible */}
-      <Card className="p-0 overflow-hidden">
-        <button
-          onClick={() => setShowCharts(!showCharts)}
-          className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-        >
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-100 rounded-full">
-              <BarChart3 className="h-4 w-4 text-indigo-600" />
-            </div>
-            <div className="text-left">
-              <h3 className="text-sm font-semibold text-gray-900">
-                Analyses & Graphiques
-              </h3>
-              <p className="text-xs text-gray-500">
-                Évolution du CA et répartition des commissions
-              </p>
-            </div>
-          </div>
-          <div className="p-1 text-gray-400">
-            {showCharts ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
-          </div>
-        </button>
-
-        {showCharts && (
-          <div className="p-4 pt-0 border-t border-gray-100">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {/* Chart évolution - 2/3 */}
-              <div className="lg:col-span-2">
-                <CommissionsChart
-                  data={analyticsData?.revenueByPeriod || []}
-                  isLoading={isLoading}
-                />
-              </div>
-
-              {/* Donut répartition - 1/3 */}
-              <div className="lg:col-span-1">
-                <CommissionsOverview
-                  data={analyticsData?.commissionsByStatus}
-                  isLoading={isLoading}
-                />
-              </div>
-            </div>
-          </div>
-        )}
-      </Card>
+      {/* Modal sélection des commissions (depuis banner) */}
+      <CommissionSelectionModal
+        isOpen={isSelectionModalOpen}
+        onClose={() => setIsSelectionModalOpen(false)}
+        onConfirm={handleSelectionConfirm}
+      />
 
       {/* Modal demande de versement */}
       <PaymentRequestModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
         selectedCommissions={selectedCommissions}
         onSuccess={handleSuccess}
       />
