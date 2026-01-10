@@ -8,9 +8,11 @@
     "packages/@verone/*"
   ],
   "scripts": {
-    "dev": "turbo dev",
+    "dev": "./scripts/dev-with-lock.sh",
+    "dev:unsafe": "turbo dev",
     "ports:check": "./scripts/dev-ports-check.sh",
     "ports:kill": "./scripts/dev-ports-kill.sh",
+    "dev:wait": "./scripts/wait-dev-ready.sh",
     "build": "turbo build",
     "start": "turbo start",
     "lint": "turbo lint",
