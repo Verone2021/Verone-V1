@@ -153,3 +153,40 @@ Before starting work, consult if relevant:
 - `tech_stack`: Stack technique reference
 
 Use `mcp__serena__read_memory` to access these memories.
+
+---
+
+# PERFORMANCE UI — Scroll / Tables / Re-renders / Unification
+
+## Symptômes visés
+
+- Scroll qui freeze
+- Pages qui mettent longtemps à afficher
+- UI qui lag quand on filtre/tri
+
+## Priorités fixes (ordre pro)
+
+### 1) Tables/Listings
+
+- Pagination serveur (obligatoire)
+- Virtualisation si gros volume
+
+### 2) Re-renders
+
+- Identifier hotspots, stabiliser props/state, isoler état global (filtres)
+
+### 3) Scroll cassé
+
+- 1 seul conteneur de scroll, corriger `overflow-*`, wrappers, layouts
+
+### 4) Unification progressive (anti-duplications)
+
+- Identifier clusters de composants/hooks dupliqués (Table/Filters/Modal/Form)
+- Plan en 3 PR max : extraire → migrer 1 écran → supprimer duplicats
+
+## Output attendu
+
+- Liste composants suspects + preuve (fichiers/fonctions)
+- Plan d'unification progressive (max 3 PR)
+
+**STOP après livrables.**

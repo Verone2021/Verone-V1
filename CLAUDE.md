@@ -109,6 +109,44 @@ git status --porcelain      # Voir fichiers modifies
 
 ---
 
+## Playwright MCP (lane-1 / lane-2)
+
+### Regle Absolue : Dev Runner UNIQUEMENT
+
+- **UN SEUL terminal** lance `pnpm dev` (le "Dev Runner")
+- **Les lanes Playwright** (lane-1, lane-2) ne lancent JAMAIS :
+  - `pnpm dev`, `turbo dev`, `next dev`
+  - `pnpm build`, `turbo build`
+  - `npm run start`
+
+### Si serveur down ou rebuild
+
+1. Appeler : `pnpm run dev:wait` ou `./scripts/wait-dev-ready.sh`
+2. Attendre le message "Tous les serveurs sont prets!"
+3. Continuer les operations Playwright
+
+### Ports Autorises (JAMAIS d'autre port)
+
+| Port | Application   |
+| ---- | ------------- |
+| 3000 | back-office   |
+| 3001 | site-internet |
+| 3002 | linkme        |
+
+**Si Playwright navigue vers un port != 3000/3001/3002 = ERREUR DE CONFIG**
+
+### Commandes Dev
+
+```bash
+pnpm run dev        # Lance avec lock (recommande)
+pnpm run dev:unsafe # Sans lock (debug uniquement)
+pnpm run dev:wait   # Attend que serveurs soient prets
+pnpm run ports:check # Verifie ports
+pnpm run ports:kill  # Kill processus sur ports
+```
+
+---
+
 ## Regles Absolues
 
 1. **JAMAIS** commit sans autorisation explicite
@@ -199,6 +237,6 @@ feature/*  → Branches de developpement
 
 ---
 
-_Version 7.0.0 - 2026-01-10_
+_Version 7.1.0 - 2026-01-10_
 _Structure Anthropic Best Practices_
 _Source-of-truth: docs/current/_

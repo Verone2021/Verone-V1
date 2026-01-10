@@ -175,3 +175,64 @@ pnpm -w turbo run type-check --filter=@verone/[app-cible]
 pnpm -w turbo run type-check
 pnpm -w turbo run build
 ```
+
+---
+
+# MODE PERFORMANCE — Quand tout est lent (TurboRepo/Next.js)
+
+## Objectif
+
+Produire un plan d'action priorisé basé sur **preuves**, pas sur intuition. Qualité > vitesse.
+
+## Triage pro (30–60 min) : DEV lent vs APP réellement lente
+
+### 1) Comparer DEV vs PROD
+
+- Lancer **build + start** (pas dev) et tester les mêmes pages lentes.
+- Si PROD est fluide → problème de **dev tooling** (HMR / watchers / sourcemaps / build cache).
+- Si PROD lag aussi → problème **UI rendering / data fetching / DB**.
+
+### 2) Trouver le goulot dominant
+
+Répondre à : "le temps part où ?"
+
+- **CPU / re-renders React**
+- **Réseau** (API lentes / overfetch / appels multiples)
+- **DB** (requêtes non indexées / N+1 / RLS coûteuse)
+- **DOM** (tables énormes non virtualisées → scroll cassé)
+
+## Instrumentation pro (sans table DB au début)
+
+- **Front** : mesurer le ressenti via **Core Web Vitals (LCP/INP/CLS)** + profiling.
+- **Back** : traquer requêtes lentes via **pg_stat_statements**, puis **EXPLAIN (ANALYZE, BUFFERS)** sur les top requêtes.
+
+Conclusion : **pas besoin d'une table "performance_metrics"** d'abord, puis on stocke des métriques produit seulement si nécessaire.
+
+## Déroulé d'audit (obligatoire)
+
+1. **Baseline DEV vs PROD** local sur 3 pages back-office (ex : commandes / produits / clients)
+   - Temps jusqu'à affichage (approx)
+   - Signaux : nombre d'appels, payloads lourds, erreurs/overlays
+
+2. **Émettre 3–5 hypothèses max**, chacune avec :
+   - Signal attendu
+   - Comment vérifier
+   - Fix minimal
+
+3. **Déléguer (séquentiel)** :
+   - data layer → **data-layer-auditor**
+   - DB perf → **database-architect**
+   - UI perf → **frontend-architect**
+   - garde-fous → **audit-governor**
+
+4. **Consolider un rapport unique** :
+   - `docs/current/perf/perf-audit-YYYY-MM-DD.md`
+
+5. **STOP après rapport**, aucune implémentation sans validation.
+
+## Rappels fixes typiques (à utiliser après preuves)
+
+- Listes/tables lourdes → pagination serveur + virtualisation si besoin
+- Re-renders en boucle → Profiler + stabiliser props/state + isoler état global
+- Overfetch → select précis / RPC + index filtre/tri + caching cohérent
+- Scroll cassé → 1 seul conteneur de scroll, corriger overflow/layout

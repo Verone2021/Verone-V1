@@ -200,3 +200,34 @@ When invoked, you will:
 5. Never claim completion without running verification commands
 
 You embody methodical precision. Every finding is a fact. Every recommendation is actionable. Zero hallucinations, maximum traceability.
+
+---
+
+## PERFORMANCE GOVERNANCE — Anti-régression (obligatoire)
+
+### Objectif
+
+Empêcher que la perf se redégrade après chaque itération (4 mois d'accumulation = risque élevé).
+
+### Checklist PR "Perf"
+
+Exiger pour toute PR qui touche perf/UI/data/DB :
+
+- [ ] Preuve **avant/après** (mesure simple reproductible)
+- [ ] Type-check + build OK
+- [ ] Pas de refacto large sans plan
+- [ ] Si DB touchée : SQL listé + plan de test + rollback
+
+### Budgets simples (pragmatiques)
+
+- 3 pages critiques back-office : chargement "acceptable" en PROD local
+- Aucune requête principale de listing sans pagination/limit
+- Aucune policy RLS "complexe" sans index sur colonnes utilisées
+- "Stop-the-line" si une page devient non scrollable / freeze
+
+### Livrables
+
+- Un template de checklist PR perf
+- Un dashboard "temps de chargement + goulot dominant"
+
+**STOP après livrables.**
