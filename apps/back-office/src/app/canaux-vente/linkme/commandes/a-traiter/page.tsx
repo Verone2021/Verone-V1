@@ -45,30 +45,34 @@ import {
 // TYPES
 // ============================================
 
-interface EnseigneOrderToProcess {
+interface IOrderToProcess {
   id: string;
   order_number: string;
   created_at: string;
   total_ttc: number;
   customer_id: string;
-  // Details LinkMe
-  requester_name: string;
-  requester_email: string;
-  requester_type: string;
-  is_new_restaurant: boolean;
-  owner_email: string | null;
-  owner_contact_same_as_requester: boolean | null;
-  desired_delivery_date: string | null;
+  // Source de la commande
+  source: 'enseigne' | 'affiliate';
+  // Details LinkMe (optionnels - uniquement pour commandes Enseigne)
+  requester_name?: string;
+  requester_email?: string;
+  requester_type?: string;
+  is_new_restaurant?: boolean;
+  owner_email?: string | null;
+  owner_contact_same_as_requester?: boolean | null;
+  desired_delivery_date?: string | null;
   // Organisation
   organisation_name: string | null;
+  // Affiliate (optionnel - uniquement pour commandes affiliés)
+  affiliate_name?: string | null;
 }
 
 // ============================================
 // PAGE COMPONENT
 // ============================================
 
-export default function LinkMeOrdersToProcessPage() {
-  const [orders, setOrders] = useState<EnseigneOrderToProcess[]>([]);
+export default function LinkMeOrdersToProcessPage(): JSX.Element {
+  const [orders, setOrders] = useState<IOrderToProcess[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -79,7 +83,8 @@ export default function LinkMeOrdersToProcessPage() {
     const supabase = createClient();
 
     try {
-      // Récupérer les commandes draft avec leurs détails LinkMe
+      // Récupérer TOUTES les commandes en attente d'approbation
+      // (Enseigne via sales_order_linkme_details OU Affiliés via created_by_affiliate_id)
       const { data, error: fetchError } = await supabase
         .from('sales_orders')
         .select(
@@ -89,11 +94,7 @@ export default function LinkMeOrdersToProcessPage() {
           created_at,
           total_ttc,
           customer_id,
-          organisations!sales_orders_customer_id_fkey (
-            id,
-            trade_name,
-            legal_name
-          ),
+          created_by_affiliate_id,
           sales_order_linkme_details (
             requester_name,
             requester_email,
@@ -105,37 +106,41 @@ export default function LinkMeOrdersToProcessPage() {
           )
         `
         )
-        .eq('status', 'draft')
-        .not('sales_order_linkme_details', 'is', null)
+        .eq('pending_admin_validation', true)
         .order('created_at', { ascending: false });
 
       if (fetchError) {
         throw fetchError;
       }
 
-      // Mapper les données
-      const mapped: EnseigneOrderToProcess[] = (data || [])
-        .filter((order: any) => order.sales_order_linkme_details?.length > 0)
-        .map((order: any) => {
-          const details = order.sales_order_linkme_details[0];
-          const org = order.organisations;
-          return {
-            id: order.id,
-            order_number: order.order_number,
-            created_at: order.created_at,
-            total_ttc: order.total_ttc,
-            customer_id: order.customer_id,
-            requester_name: details.requester_name,
-            requester_email: details.requester_email,
-            requester_type: details.requester_type,
-            is_new_restaurant: details.is_new_restaurant,
-            owner_email: details.owner_email,
-            owner_contact_same_as_requester:
-              details.owner_contact_same_as_requester,
-            desired_delivery_date: details.desired_delivery_date,
-            organisation_name: org?.trade_name || org?.legal_name || null,
-          };
-        });
+      // Mapper les données (Enseigne + Affiliés)
+      const mapped: IOrderToProcess[] = (data ?? []).map((order: any) => {
+        const details = order.sales_order_linkme_details?.[0];
+        const affiliate = order.linkme_affiliates;
+        const isEnseigne = !!details;
+
+        return {
+          id: order.id,
+          order_number: order.order_number,
+          created_at: order.created_at,
+          total_ttc: order.total_ttc,
+          customer_id: order.customer_id,
+          source: isEnseigne ? 'enseigne' : 'affiliate',
+          // Champs Enseigne (optionnels)
+          requester_name: details?.requester_name,
+          requester_email: details?.requester_email,
+          requester_type: details?.requester_type,
+          is_new_restaurant: details?.is_new_restaurant,
+          owner_email: details?.owner_email,
+          owner_contact_same_as_requester:
+            details?.owner_contact_same_as_requester,
+          desired_delivery_date: details?.desired_delivery_date,
+          // Organisation (non récupérée pour simplifier)
+          organisation_name: null,
+          // Affiliate
+          affiliate_name: affiliate?.name ?? null,
+        };
+      });
 
       setOrders(mapped);
     } catch (err) {
@@ -152,8 +157,9 @@ export default function LinkMeOrdersToProcessPage() {
     fetchOrders();
   }, []);
 
-  // Helper: badge type demandeur
-  const getRequesterTypeBadge = (type: string) => {
+  // Helper: badge type demandeur (Enseigne uniquement)
+  const getRequesterTypeBadge = (type?: string): JSX.Element | null => {
+    if (!type) return null;
     const labels: Record<string, string> = {
       responsable_enseigne: 'Responsable Enseigne',
       architecte: 'Architecte',
@@ -161,13 +167,26 @@ export default function LinkMeOrdersToProcessPage() {
     };
     return (
       <Badge variant="outline" className="text-xs">
-        {labels[type] || type}
+        {labels[type] ?? type}
       </Badge>
     );
   };
 
-  // Helper: badge Étape 2
-  const getStep2Badge = (order: EnseigneOrderToProcess) => {
+  // Helper: badge source (Enseigne vs Affilié)
+  const getSourceBadge = (order: IOrderToProcess): JSX.Element => {
+    if (order.source === 'affiliate') {
+      return (
+        <Badge className="bg-teal-100 text-teal-800 text-xs">Affilié</Badge>
+      );
+    }
+    return (
+      <Badge className="bg-blue-100 text-blue-800 text-xs">Enseigne</Badge>
+    );
+  };
+
+  // Helper: badge Étape 2 (Enseigne uniquement)
+  const getStep2Badge = (order: IOrderToProcess): JSX.Element | null => {
+    if (order.source !== 'enseigne') return null;
     const hasOwnerEmail =
       !!order.owner_contact_same_as_requester || !!order.owner_email;
     if (hasOwnerEmail) {
@@ -190,10 +209,10 @@ export default function LinkMeOrdersToProcessPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
-            Commandes Enseigne à Traiter
+            Commandes à Traiter
           </h1>
           <p className="text-gray-600 mt-1">
-            Commandes B2B en attente de validation back-office
+            Commandes LinkMe en attente de validation (Enseigne + Affiliés)
           </p>
         </div>
         <Button
@@ -208,7 +227,7 @@ export default function LinkMeOrdersToProcessPage() {
       </div>
 
       {/* Stats rapides */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Total à traiter</CardDescription>
@@ -217,21 +236,25 @@ export default function LinkMeOrdersToProcessPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Nouveaux restaurants</CardDescription>
-            <CardTitle className="text-2xl">
-              {orders.filter(o => o.is_new_restaurant).length}
+            <CardDescription>Commandes Enseigne</CardDescription>
+            <CardTitle className="text-2xl text-blue-600">
+              {orders.filter(o => o.source === 'enseigne').length}
             </CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Étape 2 incomplète</CardDescription>
-            <CardTitle className="text-2xl text-orange-600">
-              {
-                orders.filter(
-                  o => !o.owner_contact_same_as_requester && !o.owner_email
-                ).length
-              }
+            <CardDescription>Commandes Affiliés</CardDescription>
+            <CardTitle className="text-2xl text-teal-600">
+              {orders.filter(o => o.source === 'affiliate').length}
+            </CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Nouveaux restaurants</CardDescription>
+            <CardTitle className="text-2xl">
+              {orders.filter(o => o.is_new_restaurant).length}
             </CardTitle>
           </CardHeader>
         </Card>
@@ -263,7 +286,7 @@ export default function LinkMeOrdersToProcessPage() {
           ) : orders.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
               <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Aucune commande Enseigne en attente</p>
+              <p>Aucune commande en attente de validation</p>
             </div>
           ) : (
             <Table>
@@ -271,10 +294,10 @@ export default function LinkMeOrdersToProcessPage() {
                 <TableRow>
                   <TableHead>N° Commande</TableHead>
                   <TableHead>Date</TableHead>
-                  <TableHead>Demandeur</TableHead>
-                  <TableHead>Restaurant</TableHead>
+                  <TableHead>Source</TableHead>
+                  <TableHead>Demandeur / Affilié</TableHead>
+                  <TableHead>Organisation</TableHead>
                   <TableHead>Montant TTC</TableHead>
-                  <TableHead>Statut</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -290,15 +313,27 @@ export default function LinkMeOrdersToProcessPage() {
                         {new Date(order.created_at).toLocaleDateString('fr-FR')}
                       </div>
                     </TableCell>
+                    <TableCell>{getSourceBadge(order)}</TableCell>
                     <TableCell>
                       <div className="space-y-1">
-                        <div className="flex items-center gap-1">
-                          <User className="h-3 w-3 text-gray-400" />
-                          <span className="text-sm">
-                            {order.requester_name}
-                          </span>
-                        </div>
-                        {getRequesterTypeBadge(order.requester_type)}
+                        {order.source === 'enseigne' ? (
+                          <>
+                            <div className="flex items-center gap-1">
+                              <User className="h-3 w-3 text-gray-400" />
+                              <span className="text-sm">
+                                {order.requester_name}
+                              </span>
+                            </div>
+                            {getRequesterTypeBadge(order.requester_type)}
+                          </>
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            <User className="h-3 w-3 text-teal-500" />
+                            <span className="text-sm font-medium text-teal-700">
+                              {order.affiliate_name ?? 'Affilié inconnu'}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -325,7 +360,6 @@ export default function LinkMeOrdersToProcessPage() {
                     <TableCell className="font-medium">
                       {formatCurrency(order.total_ttc)}
                     </TableCell>
-                    <TableCell>{getStep2Badge(order)}</TableCell>
                     <TableCell className="text-right">
                       <Link href={`/canaux-vente/linkme/commandes/${order.id}`}>
                         <Button variant="outline" size="sm" className="gap-1">

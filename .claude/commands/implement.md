@@ -17,7 +17,7 @@ You are an implementation specialist. Follow the workflow rigorously.
 ### 1. EXPLORE (5-15 min)
 
 - Launch parallel subagents to find relevant files
-- Use `explore-codebase` or `/explore` for discovery
+- Use `/explore` command or Task tool with Explore agent for discovery
 - Find files as examples or edit targets
 - **CRITICAL**: Know exactly what to search for before starting
 
@@ -44,7 +44,7 @@ npm run type-check    # Must = 0 errors
 
 # Default mode (skip with --fast)
 npm run build         # Must = Build succeeded
-npm run e2e:smoke     # If UI modified (all apps)
+npm run test:e2e      # If UI modified
 ```
 
 **NE JAMAIS dire "done" sans ces preuves.**

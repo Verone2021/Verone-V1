@@ -57,8 +57,9 @@ export function usePendingApprovalsCount() {
 
       return data || 0;
     },
-    staleTime: 30000,
+    staleTime: 120000, // 2 minutes
     refetchInterval: 60000, // Refresh every minute
+    refetchIntervalInBackground: false,
   });
 }
 
@@ -291,5 +292,129 @@ export function useRejectProduct() {
       queryClient.invalidateQueries({ queryKey: ['pending-approvals-count'] });
       queryClient.invalidateQueries({ queryKey: ['all-affiliate-products'] });
     },
+  });
+}
+
+// ============================================
+// NOUVELLES FONCTIONS - Mise a jour produits affilies
+// Ajoutees: 2026-01-09
+// ============================================
+
+/**
+ * Interface pour la mise a jour d'un produit affilie
+ */
+export interface UpdateAffiliateProductParams {
+  productId: string;
+  commissionRate?: number;
+  payoutHt?: number;
+  changeReason?: string;
+}
+
+/**
+ * Resultat de la mise a jour
+ */
+export interface UpdateAffiliateProductResult {
+  success: boolean;
+  product_id?: string;
+  old_commission_rate?: number;
+  new_commission_rate?: number;
+  old_payout_ht?: number;
+  new_payout_ht?: number;
+  error?: string;
+}
+
+/**
+ * Hook: mettre a jour un produit affilie approuve
+ * Permet de modifier la commission et/ou le payout
+ */
+export function useUpdateAffiliateProduct() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      productId,
+      commissionRate,
+      payoutHt,
+      changeReason,
+    }: UpdateAffiliateProductParams): Promise<UpdateAffiliateProductResult> => {
+      const supabase = createClient();
+
+      // Note: RPC function 'update_affiliate_product' - types will be available after migration
+      const { data, error } = await (supabase.rpc as any)(
+        'update_affiliate_product',
+        {
+          p_product_id: productId,
+          p_commission_rate: commissionRate ?? null,
+          p_payout_ht: payoutHt ?? null,
+          p_change_reason: changeReason ?? null,
+        }
+      );
+
+      if (error) {
+        console.error('Error updating affiliate product:', error);
+        throw error;
+      }
+
+      const result = data as unknown as UpdateAffiliateProductResult;
+
+      if (!result.success) {
+        throw new Error(result.error || 'Erreur lors de la mise a jour');
+      }
+
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['all-affiliate-products'] });
+      queryClient.invalidateQueries({
+        queryKey: ['product-commission-history'],
+      });
+    },
+  });
+}
+
+/**
+ * Interface pour l'historique des commissions
+ */
+export interface CommissionHistoryEntry {
+  id: string;
+  old_commission_rate: number | null;
+  new_commission_rate: number | null;
+  old_payout_ht: number | null;
+  new_payout_ht: number | null;
+  change_reason: string | null;
+  change_type: 'approval' | 'update' | 'system';
+  modified_by: string | null;
+  modified_by_email: string | null;
+  modified_at: string;
+}
+
+/**
+ * Hook: recuperer l'historique des modifications de commission d'un produit
+ */
+export function useProductCommissionHistory(productId: string | undefined) {
+  return useQuery({
+    queryKey: ['product-commission-history', productId],
+    queryFn: async (): Promise<CommissionHistoryEntry[]> => {
+      if (!productId) return [];
+
+      const supabase = createClient();
+
+      // Note: RPC function 'get_product_commission_history' - types will be available after migration
+      const { data, error } = await (supabase.rpc as any)(
+        'get_product_commission_history',
+        {
+          p_product_id: productId,
+        }
+      );
+
+      if (error) {
+        console.error('Error fetching commission history:', error);
+        throw error;
+      }
+
+      return (data || []) as unknown as CommissionHistoryEntry[];
+    },
+    enabled: !!productId,
+    staleTime: 30000,
   });
 }
