@@ -34,6 +34,33 @@ const clients: Partial<
 export const createClient = (
   appName: AppName = 'backoffice'
 ): ReturnType<typeof createBrowserClient<Database>> => {
+  // CRITICAL: Prevent SSR/SSG execution
+  // During Next.js static generation, window is not defined
+  // Return a mock client that will be replaced on client-side
+  if (typeof window === 'undefined') {
+    // Return a mock client for SSR
+    return {
+      auth: {
+        getSession: async () => ({ data: { session: null }, error: null }),
+        getUser: async () => ({ data: { user: null }, error: null }),
+        onAuthStateChange: () => ({
+          data: { subscription: { unsubscribe: () => {} } },
+        }),
+        signInWithPassword: async () => ({
+          data: null,
+          error: new Error('SSR not supported'),
+        }),
+        signOut: async () => ({ error: null }),
+      },
+      from: () => ({
+        select: () => ({
+          eq: () => ({ single: async () => ({ data: null, error: null }) }),
+        }),
+      }),
+      rpc: async () => ({ data: null, error: null }),
+    } as any;
+  }
+
   if (!clients[appName]) {
     // Back-office utilise le cookie par défaut (rétrocompatibilité)
     // LinkMe et Site utilisent des cookies distincts pour isoler les sessions

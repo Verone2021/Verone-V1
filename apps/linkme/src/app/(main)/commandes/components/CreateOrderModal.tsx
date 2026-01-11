@@ -818,13 +818,6 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                                   <span className="text-xs px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded">
                                     {product.marginRate.toFixed(0)}%
                                   </span>
-                                  <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">
-                                    TVA{' '}
-                                    {((product.taxRate ?? 0.2) * 100).toFixed(
-                                      0
-                                    )}
-                                    %
-                                  </span>
                                 </div>
                               </div>
                             </div>
@@ -910,7 +903,6 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                             <th className="px-4 py-3 text-left">Produit</th>
                             <th className="px-4 py-3 text-center">Qté</th>
                             <th className="px-4 py-3 text-right">Prix HT</th>
-                            <th className="px-4 py-3 text-right">TVA</th>
                             <th className="px-4 py-3 text-right">Total HT</th>
                             <th className="px-4 py-3 text-right">Marge</th>
                             <th className="px-4 py-3 w-10" />
@@ -967,11 +959,6 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                                 </td>
                                 <td className="px-4 py-3 text-right text-gray-700">
                                   {item.unitPriceHt.toFixed(2)} €
-                                </td>
-                                <td className="px-4 py-3 text-right text-gray-500">
-                                  <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">
-                                    {(item.taxRate * 100).toFixed(0)}%
-                                  </span>
                                 </td>
                                 <td className="px-4 py-3 text-right font-medium text-gray-900">
                                   {lineHt.toFixed(2)} €
