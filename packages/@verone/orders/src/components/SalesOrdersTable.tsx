@@ -218,6 +218,9 @@ export interface SalesOrdersTableProps {
 
   /** Nombre d'items par page par defaut (10 ou 20) */
   defaultItemsPerPage?: 10 | 20;
+
+  /** Commandes pré-chargées (évite double fetch quand parent fetch déjà) */
+  preloadedOrders?: SalesOrder[];
 }
 
 const isOrderEditable = (order: SalesOrder, channelId?: string | null) => {
@@ -262,10 +265,11 @@ export function SalesOrdersTable({
   customFilter,
   enablePagination = false,
   defaultItemsPerPage = 10,
+  preloadedOrders,
 }: SalesOrdersTableProps) {
   const {
-    loading,
-    orders,
+    loading: hookLoading,
+    orders: fetchedOrders,
     stats: _stats,
     fetchOrders,
     fetchStats,
@@ -273,6 +277,10 @@ export function SalesOrdersTable({
     deleteOrder,
     markAsManuallyPaid,
   } = useSalesOrders();
+
+  // ✅ OPTIMISÉ: Utiliser preloadedOrders si fourni (évite double fetch)
+  const orders = preloadedOrders ?? fetchedOrders;
+  const loading = preloadedOrders ? false : hookLoading;
 
   const { toast } = useToast();
   const searchParams = useSearchParams();
@@ -334,10 +342,13 @@ export function SalesOrdersTable({
 
   // Fetch initial avec filtre canal
   useEffect(() => {
+    // ✅ OPTIMISÉ: Ne pas fetch si preloadedOrders fourni (évite double fetch)
+    if (preloadedOrders) return;
+
     const filters = channelId ? { channel_id: channelId } : undefined;
     fetchOrders(filters);
     fetchStats(filters);
-  }, [fetchOrders, fetchStats, channelId]);
+  }, [fetchOrders, fetchStats, channelId, preloadedOrders]);
 
   // Ouvrir automatiquement le modal si query param ?id= present
   useEffect(() => {
@@ -1127,455 +1138,472 @@ export function SalesOrdersTable({
               <p className="text-gray-500">Aucune commande trouvee</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-10" />
-                    <TableHead>N Commande</TableHead>
-                    <TableHead
-                      className="cursor-pointer hover:bg-gray-50"
-                      onClick={() => handleSort('client')}
-                    >
-                      <span className="inline-flex items-center gap-1">
-                        Client
-                        {renderSortIcon('client')}
-                      </span>
-                    </TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead>Paiement</TableHead>
-                    <TableHead>Paiement V2</TableHead>
-                    <TableHead className="w-20 text-center">Articles</TableHead>
-                    <TableHead
-                      className="cursor-pointer hover:bg-gray-50"
-                      onClick={() => handleSort('date')}
-                    >
-                      <span className="inline-flex items-center gap-1">
-                        Date
-                        {renderSortIcon('date')}
-                      </span>
-                    </TableHead>
-                    {showChannelColumn && <TableHead>Canal</TableHead>}
-                    {/* Colonnes additionnelles */}
-                    {additionalColumns.map(col => (
-                      <TableHead key={col.key}>{col.header}</TableHead>
-                    ))}
-                    <TableHead
-                      className="cursor-pointer hover:bg-gray-50"
-                      onClick={() => handleSort('amount')}
-                    >
-                      <span className="inline-flex items-center gap-1">
-                        Montant TTC
-                        {renderSortIcon('amount')}
-                      </span>
-                    </TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedOrders.map(order => {
-                    const customerName =
-                      order.customer_type === 'organization'
-                        ? order.organisations?.trade_name ||
-                          order.organisations?.legal_name
-                        : `${order.individual_customers?.first_name} ${order.individual_customers?.last_name}`;
+            <div className="overflow-x-auto -mx-6">
+              <div className="inline-block min-w-full px-6">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-10" />
+                      <TableHead>N Commande</TableHead>
+                      <TableHead
+                        className="cursor-pointer hover:bg-gray-50"
+                        onClick={() => handleSort('client')}
+                      >
+                        <span className="inline-flex items-center gap-1">
+                          Client
+                          {renderSortIcon('client')}
+                        </span>
+                      </TableHead>
+                      <TableHead>Statut</TableHead>
+                      <TableHead>Paiement</TableHead>
+                      <TableHead>Paiement V2</TableHead>
+                      <TableHead className="w-20 text-center">
+                        Articles
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer hover:bg-gray-50"
+                        onClick={() => handleSort('date')}
+                      >
+                        <span className="inline-flex items-center gap-1">
+                          Date
+                          {renderSortIcon('date')}
+                        </span>
+                      </TableHead>
+                      {showChannelColumn && <TableHead>Canal</TableHead>}
+                      {/* Colonnes additionnelles */}
+                      {additionalColumns.map(col => (
+                        <TableHead key={col.key}>{col.header}</TableHead>
+                      ))}
+                      <TableHead
+                        className="cursor-pointer hover:bg-gray-50"
+                        onClick={() => handleSort('amount')}
+                      >
+                        <span className="inline-flex items-center gap-1">
+                          Montant TTC
+                          {renderSortIcon('amount')}
+                        </span>
+                      </TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedOrders.map(order => {
+                      const customerName =
+                        order.customer_type === 'organization'
+                          ? order.organisations?.trade_name ||
+                            order.organisations?.legal_name
+                          : `${order.individual_customers?.first_name} ${order.individual_customers?.last_name}`;
 
-                    const canDelete =
-                      order.status === 'draft' || order.status === 'cancelled';
+                      const canDelete =
+                        order.status === 'draft' ||
+                        order.status === 'cancelled';
 
-                    const items = order.sales_order_items || [];
-                    const hasSamples = items.some(
-                      (item: any) => item.is_sample === true
-                    );
-                    const isExpanded = expandedRows.has(order.id);
+                      const items = order.sales_order_items || [];
+                      const hasSamples = items.some(
+                        (item: any) => item.is_sample === true
+                      );
+                      const isExpanded = expandedRows.has(order.id);
 
-                    return (
-                      <React.Fragment key={order.id}>
-                        <TableRow>
-                          {/* Chevron expansion */}
-                          <TableCell className="w-10">
-                            {items.length > 0 && (
-                              <button
-                                onClick={() => toggleRow(order.id)}
-                                className="p-1 hover:bg-gray-100 rounded"
-                              >
-                                <ChevronDown
-                                  className={cn(
-                                    'h-4 w-4 text-gray-500 transition-transform',
-                                    isExpanded && 'rotate-180'
-                                  )}
-                                />
-                              </button>
-                            )}
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {order.order_number}
-                          </TableCell>
-                          <TableCell>
-                            <div>
-                              <div className="font-medium">
-                                {customerName || 'Non defini'}
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                {order.customer_type === 'organization'
-                                  ? 'Professionnel'
-                                  : 'Particulier'}
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Badge className={statusColors[order.status]}>
-                                {statusLabels[order.status]}
-                              </Badge>
-                              {hasSamples && (
-                                <Badge variant="secondary" className="text-xs">
-                                  Echantillon
-                                </Badge>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {order.payment_status ? (
-                              <Badge
-                                className={
-                                  paymentStatusColors[order.payment_status] ||
-                                  'bg-gray-100 text-gray-800'
-                                }
-                              >
-                                {paymentStatusLabels[order.payment_status] ||
-                                  order.payment_status}
-                              </Badge>
-                            ) : (
-                              <span className="text-gray-400 text-sm">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              {order.payment_status_v2 === 'paid' ? (
-                                <Badge className="bg-green-100 text-green-800">
-                                  Payé
-                                  {order.manual_payment_type && (
-                                    <span className="ml-1 opacity-70">
-                                      (manuel)
-                                    </span>
-                                  )}
-                                </Badge>
-                              ) : (
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <button className="flex items-center gap-1 cursor-pointer">
-                                      <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-200 transition-colors">
-                                        En attente
-                                        <ChevronDown className="h-3 w-3 ml-1" />
-                                      </Badge>
-                                    </button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="start">
-                                    <DropdownMenuLabel>
-                                      Marquer comme payé
-                                    </DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                      onClick={() =>
-                                        void markAsManuallyPaid(
-                                          order.id,
-                                          'cash'
-                                        )
-                                      }
-                                    >
-                                      <Banknote className="h-4 w-4 mr-2" />
-                                      Espèces
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() =>
-                                        void markAsManuallyPaid(
-                                          order.id,
-                                          'check'
-                                        )
-                                      }
-                                    >
-                                      <Receipt className="h-4 w-4 mr-2" />
-                                      Chèque
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() =>
-                                        void markAsManuallyPaid(
-                                          order.id,
-                                          'transfer_other'
-                                        )
-                                      }
-                                    >
-                                      <Building2 className="h-4 w-4 mr-2" />
-                                      Virement autre banque
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() =>
-                                        void markAsManuallyPaid(
-                                          order.id,
-                                          'card'
-                                        )
-                                      }
-                                    >
-                                      <CreditCard className="h-4 w-4 mr-2" />
-                                      Carte bancaire
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                      onClick={() =>
-                                        void markAsManuallyPaid(
-                                          order.id,
-                                          'compensation'
-                                        )
-                                      }
-                                    >
-                                      <CheckSquare className="h-4 w-4 mr-2" />
-                                      Compensation
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() =>
-                                        void markAsManuallyPaid(
-                                          order.id,
-                                          'verified_bubble'
-                                        )
-                                      }
-                                    >
-                                      <CheckCircle className="h-4 w-4 mr-2" />
-                                      Vérifié Bubble
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <span className="font-medium">{items.length}</span>
-                            <span className="text-muted-foreground text-xs ml-1">
-                              ref.
-                            </span>
-                          </TableCell>
-                          <TableCell>{formatDate(order.created_at)}</TableCell>
-                          {showChannelColumn && (
-                            <TableCell>
-                              {order.sales_channel?.name ? (
-                                <Badge
-                                  variant="outline"
-                                  className="text-xs font-medium"
+                      return (
+                        <React.Fragment key={order.id}>
+                          <TableRow>
+                            {/* Chevron expansion */}
+                            <TableCell className="w-10">
+                              {items.length > 0 && (
+                                <button
+                                  onClick={() => toggleRow(order.id)}
+                                  className="p-1 hover:bg-gray-100 rounded"
                                 >
-                                  {order.sales_channel.name}
+                                  <ChevronDown
+                                    className={cn(
+                                      'h-4 w-4 text-gray-500 transition-transform',
+                                      isExpanded && 'rotate-180'
+                                    )}
+                                  />
+                                </button>
+                              )}
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {order.order_number}
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <div className="font-medium">
+                                  {customerName || 'Non defini'}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {order.customer_type === 'organization'
+                                    ? 'Professionnel'
+                                    : 'Particulier'}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Badge className={statusColors[order.status]}>
+                                  {statusLabels[order.status]}
+                                </Badge>
+                                {hasSamples && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="text-xs"
+                                  >
+                                    Echantillon
+                                  </Badge>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {order.payment_status ? (
+                                <Badge
+                                  className={
+                                    paymentStatusColors[order.payment_status] ||
+                                    'bg-gray-100 text-gray-800'
+                                  }
+                                >
+                                  {paymentStatusLabels[order.payment_status] ||
+                                    order.payment_status}
                                 </Badge>
                               ) : (
                                 <span className="text-gray-400 text-sm">-</span>
                               )}
                             </TableCell>
-                          )}
-                          {/* Colonnes additionnelles */}
-                          {additionalColumns.map(col => (
-                            <TableCell key={col.key}>
-                              {col.cell(order)}
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                {order.payment_status_v2 === 'paid' ? (
+                                  <Badge className="bg-green-100 text-green-800">
+                                    Payé
+                                    {order.manual_payment_type && (
+                                      <span className="ml-1 opacity-70">
+                                        (manuel)
+                                      </span>
+                                    )}
+                                  </Badge>
+                                ) : (
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <button className="flex items-center gap-1 cursor-pointer">
+                                        <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-200 transition-colors">
+                                          En attente
+                                          <ChevronDown className="h-3 w-3 ml-1" />
+                                        </Badge>
+                                      </button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="start">
+                                      <DropdownMenuLabel>
+                                        Marquer comme payé
+                                      </DropdownMenuLabel>
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuItem
+                                        onClick={() =>
+                                          void markAsManuallyPaid(
+                                            order.id,
+                                            'cash'
+                                          )
+                                        }
+                                      >
+                                        <Banknote className="h-4 w-4 mr-2" />
+                                        Espèces
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={() =>
+                                          void markAsManuallyPaid(
+                                            order.id,
+                                            'check'
+                                          )
+                                        }
+                                      >
+                                        <Receipt className="h-4 w-4 mr-2" />
+                                        Chèque
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={() =>
+                                          void markAsManuallyPaid(
+                                            order.id,
+                                            'transfer_other'
+                                          )
+                                        }
+                                      >
+                                        <Building2 className="h-4 w-4 mr-2" />
+                                        Virement autre banque
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={() =>
+                                          void markAsManuallyPaid(
+                                            order.id,
+                                            'card'
+                                          )
+                                        }
+                                      >
+                                        <CreditCard className="h-4 w-4 mr-2" />
+                                        Carte bancaire
+                                      </DropdownMenuItem>
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuItem
+                                        onClick={() =>
+                                          void markAsManuallyPaid(
+                                            order.id,
+                                            'compensation'
+                                          )
+                                        }
+                                      >
+                                        <CheckSquare className="h-4 w-4 mr-2" />
+                                        Compensation
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={() =>
+                                          void markAsManuallyPaid(
+                                            order.id,
+                                            'verified_bubble'
+                                          )
+                                        }
+                                      >
+                                        <CheckCircle className="h-4 w-4 mr-2" />
+                                        Vérifié Bubble
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                )}
+                              </div>
                             </TableCell>
-                          ))}
-                          <TableCell>
-                            <div className="font-medium">
-                              {formatCurrency(
-                                order.total_ttc || order.total_ht
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              {/* Voir */}
-                              <IconButton
-                                icon={Eye}
-                                variant="outline"
-                                size="sm"
-                                label="Voir details"
-                                onClick={() => openOrderDetail(order)}
-                              />
-
-                              {/* Lien externe pour commandes de canaux (si pas filtre) */}
-                              {!channelId && getChannelRedirectUrl(order) && (
-                                <Link
-                                  href={getChannelRedirectUrl(order) || '#'}
-                                >
-                                  <IconButton
-                                    icon={ExternalLink}
+                            <TableCell className="text-center">
+                              <span className="font-medium">
+                                {items.length}
+                              </span>
+                              <span className="text-muted-foreground text-xs ml-1">
+                                ref.
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              {formatDate(order.created_at)}
+                            </TableCell>
+                            {showChannelColumn && (
+                              <TableCell>
+                                {order.sales_channel?.name ? (
+                                  <Badge
                                     variant="outline"
-                                    size="sm"
-                                    label={`Gerer dans ${order.sales_channel?.name || 'le CMS du canal'}`}
-                                  />
-                                </Link>
-                              )}
+                                    className="text-xs font-medium"
+                                  >
+                                    {order.sales_channel.name}
+                                  </Badge>
+                                ) : (
+                                  <span className="text-gray-400 text-sm">
+                                    -
+                                  </span>
+                                )}
+                              </TableCell>
+                            )}
+                            {/* Colonnes additionnelles */}
+                            {additionalColumns.map(col => (
+                              <TableCell key={col.key}>
+                                {col.cell(order)}
+                              </TableCell>
+                            ))}
+                            <TableCell>
+                              <div className="font-medium">
+                                {formatCurrency(
+                                  order.total_ttc || order.total_ht
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                {/* Voir */}
+                                <IconButton
+                                  icon={Eye}
+                                  variant="outline"
+                                  size="sm"
+                                  label="Voir details"
+                                  onClick={() => openOrderDetail(order)}
+                                />
 
-                              {/* Modifier */}
-                              {allowEdit &&
-                                (order.status === 'draft' ||
-                                  order.status === 'validated') &&
-                                isOrderEditable(order, channelId) && (
-                                  <IconButton
-                                    icon={Edit}
-                                    variant="outline"
-                                    size="sm"
-                                    label="Modifier"
-                                    onClick={() => openEditOrder(order.id)}
-                                  />
+                                {/* Lien externe pour commandes de canaux (si pas filtre) */}
+                                {!channelId && getChannelRedirectUrl(order) && (
+                                  <Link
+                                    href={getChannelRedirectUrl(order) || '#'}
+                                  >
+                                    <IconButton
+                                      icon={ExternalLink}
+                                      variant="outline"
+                                      size="sm"
+                                      label={`Gerer dans ${order.sales_channel?.name || 'le CMS du canal'}`}
+                                    />
+                                  </Link>
                                 )}
 
-                              {/* Valider */}
-                              {allowValidate && order.status === 'draft' && (
-                                <IconButton
-                                  icon={CheckCircle}
-                                  variant="success"
-                                  size="sm"
-                                  label="Valider"
-                                  onClick={() =>
-                                    handleStatusChange(order.id, 'validated')
-                                  }
-                                />
-                              )}
+                                {/* Modifier */}
+                                {allowEdit &&
+                                  (order.status === 'draft' ||
+                                    order.status === 'validated') &&
+                                  isOrderEditable(order, channelId) && (
+                                    <IconButton
+                                      icon={Edit}
+                                      variant="outline"
+                                      size="sm"
+                                      label="Modifier"
+                                      onClick={() => openEditOrder(order.id)}
+                                    />
+                                  )}
 
-                              {/* Devalider */}
-                              {allowValidate &&
-                                order.status === 'validated' && (
+                                {/* Valider */}
+                                {allowValidate && order.status === 'draft' && (
                                   <IconButton
-                                    icon={RotateCcw}
-                                    variant="outline"
+                                    icon={CheckCircle}
+                                    variant="success"
                                     size="sm"
-                                    label="Devalider (retour brouillon)"
+                                    label="Valider"
                                     onClick={() =>
-                                      handleStatusChange(order.id, 'draft')
+                                      handleStatusChange(order.id, 'validated')
                                     }
                                   />
                                 )}
 
-                              {/* Expedier */}
-                              {allowShip &&
-                                (order.status === 'validated' ||
-                                  order.status === 'partially_shipped') && (
+                                {/* Devalider */}
+                                {allowValidate &&
+                                  order.status === 'validated' && (
+                                    <IconButton
+                                      icon={RotateCcw}
+                                      variant="outline"
+                                      size="sm"
+                                      label="Devalider (retour brouillon)"
+                                      onClick={() =>
+                                        handleStatusChange(order.id, 'draft')
+                                      }
+                                    />
+                                  )}
+
+                                {/* Expedier */}
+                                {allowShip &&
+                                  (order.status === 'validated' ||
+                                    order.status === 'partially_shipped') && (
+                                    <IconButton
+                                      icon={Truck}
+                                      variant="outline"
+                                      size="sm"
+                                      label="Expedier"
+                                      onClick={() => openShipmentModal(order)}
+                                    />
+                                  )}
+
+                                {/* Annuler (brouillon uniquement) */}
+                                {allowCancel && order.status === 'draft' && (
                                   <IconButton
-                                    icon={Truck}
-                                    variant="outline"
+                                    icon={Ban}
+                                    variant="danger"
                                     size="sm"
-                                    label="Expedier"
-                                    onClick={() => openShipmentModal(order)}
+                                    label="Annuler la commande"
+                                    onClick={() => handleCancel(order.id)}
                                   />
                                 )}
 
-                              {/* Annuler (brouillon uniquement) */}
-                              {allowCancel && order.status === 'draft' && (
-                                <IconButton
-                                  icon={Ban}
-                                  variant="danger"
-                                  size="sm"
-                                  label="Annuler la commande"
-                                  onClick={() => handleCancel(order.id)}
-                                />
-                              )}
-
-                              {/* Annuler disabled pour validated */}
-                              {allowCancel && order.status === 'validated' && (
-                                <IconButton
-                                  icon={Ban}
-                                  variant="outline"
-                                  size="sm"
-                                  label="Devalider d'abord pour annuler"
-                                  disabled
-                                />
-                              )}
-
-                              {/* Supprimer */}
-                              {allowDelete && order.status === 'cancelled' && (
-                                <IconButton
-                                  icon={Trash2}
-                                  variant="danger"
-                                  size="sm"
-                                  label="Supprimer"
-                                  onClick={() => handleDelete(order.id)}
-                                />
-                              )}
-
-                              {/* Lier transaction / Rapprochée */}
-                              {(order.status === 'validated' ||
-                                order.status === 'shipped' ||
-                                order.status === 'delivered') && (
-                                <>
-                                  {order.is_matched ? (
-                                    <Badge
-                                      variant="outline"
-                                      className="text-xs bg-green-50 text-green-700 border-green-300 cursor-help"
-                                      title={`Rapprochée: ${order.matched_transaction_label || 'Transaction'} (${formatCurrency(Math.abs(order.matched_transaction_amount || 0))})`}
-                                    >
-                                      <Link2 className="h-3 w-3 mr-1 text-green-600" />
-                                      Rapprochée
-                                    </Badge>
-                                  ) : (
+                                {/* Annuler disabled pour validated */}
+                                {allowCancel &&
+                                  order.status === 'validated' && (
                                     <IconButton
-                                      icon={Link2}
+                                      icon={Ban}
                                       variant="outline"
                                       size="sm"
-                                      label="Lier transaction"
-                                      onClick={() => {
-                                        setSelectedOrderForLink(order);
-                                        setShowLinkTransactionModal(true);
-                                      }}
+                                      label="Devalider d'abord pour annuler"
+                                      disabled
                                     />
                                   )}
-                                </>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
 
-                        {/* Ligne d'expansion - affiche les produits */}
-                        {isExpanded && items.length > 0 && (
-                          <TableRow className="bg-muted/50 hover:bg-muted/50">
-                            <TableCell
-                              colSpan={
-                                8 +
-                                additionalColumns.length +
-                                (showChannelColumn ? 1 : 0)
-                              }
-                              className="p-0"
-                            >
-                              <div className="py-3 px-6 space-y-2">
-                                {items.map((item: any) => (
-                                  <div
-                                    key={item.id}
-                                    className="flex items-center gap-4 text-sm py-1"
-                                  >
-                                    <ProductThumbnail
-                                      src={item.products?.primary_image_url}
-                                      alt={item.products?.name || 'Produit'}
-                                      size="xs"
+                                {/* Supprimer */}
+                                {allowDelete &&
+                                  order.status === 'cancelled' && (
+                                    <IconButton
+                                      icon={Trash2}
+                                      variant="danger"
+                                      size="sm"
+                                      label="Supprimer"
+                                      onClick={() => handleDelete(order.id)}
                                     />
-                                    <span className="flex-1 font-medium">
-                                      {item.products?.name || 'Produit inconnu'}
-                                    </span>
-                                    <span className="text-muted-foreground">
-                                      x{item.quantity}
-                                    </span>
-                                    <span className="font-medium w-24 text-right">
-                                      {formatCurrency(item.total_ht || 0)}
-                                    </span>
-                                    {item.is_sample && (
+                                  )}
+
+                                {/* Lier transaction / Rapprochée */}
+                                {(order.status === 'validated' ||
+                                  order.status === 'shipped' ||
+                                  order.status === 'delivered') && (
+                                  <>
+                                    {order.is_matched ? (
                                       <Badge
-                                        variant="secondary"
-                                        className="text-xs"
+                                        variant="outline"
+                                        className="text-xs bg-green-50 text-green-700 border-green-300 cursor-help"
+                                        title={`Rapprochée: ${order.matched_transaction_label || 'Transaction'} (${formatCurrency(Math.abs(order.matched_transaction_amount || 0))})`}
                                       >
-                                        Echantillon
+                                        <Link2 className="h-3 w-3 mr-1 text-green-600" />
+                                        Rapprochée
                                       </Badge>
+                                    ) : (
+                                      <IconButton
+                                        icon={Link2}
+                                        variant="outline"
+                                        size="sm"
+                                        label="Lier transaction"
+                                        onClick={() => {
+                                          setSelectedOrderForLink(order);
+                                          setShowLinkTransactionModal(true);
+                                        }}
+                                      />
                                     )}
-                                  </div>
-                                ))}
+                                  </>
+                                )}
                               </div>
                             </TableCell>
                           </TableRow>
-                        )}
-                      </React.Fragment>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+
+                          {/* Ligne d'expansion - affiche les produits */}
+                          {isExpanded && items.length > 0 && (
+                            <TableRow className="bg-muted/50 hover:bg-muted/50">
+                              <TableCell
+                                colSpan={
+                                  8 +
+                                  additionalColumns.length +
+                                  (showChannelColumn ? 1 : 0)
+                                }
+                                className="p-0"
+                              >
+                                <div className="py-3 px-6 space-y-2">
+                                  {items.map((item: any) => (
+                                    <div
+                                      key={item.id}
+                                      className="flex items-center gap-4 text-sm py-1"
+                                    >
+                                      <ProductThumbnail
+                                        src={item.products?.primary_image_url}
+                                        alt={item.products?.name || 'Produit'}
+                                        size="xs"
+                                      />
+                                      <span className="flex-1 font-medium">
+                                        {item.products?.name ||
+                                          'Produit inconnu'}
+                                      </span>
+                                      <span className="text-muted-foreground">
+                                        x{item.quantity}
+                                      </span>
+                                      <span className="font-medium w-24 text-right">
+                                        {formatCurrency(item.total_ht || 0)}
+                                      </span>
+                                      {item.is_sample && (
+                                        <Badge
+                                          variant="secondary"
+                                          className="text-xs"
+                                        >
+                                          Echantillon
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           )}
 
