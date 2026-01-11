@@ -28,7 +28,7 @@ import type { LinkMePricingUpdate, LinkMeMetadataUpdate } from '../../types';
  * Page détail produit LinkMe
  * Route: /canaux-vente/linkme/catalogue/[id]
  */
-export default function LinkMeProductDetailPage() {
+export default function LinkMeProductDetailPage(): React.JSX.Element {
   const params = useParams();
   const router = useRouter();
   const catalogProductId = params.id as string;
@@ -63,7 +63,7 @@ export default function LinkMeProductDetailPage() {
       | 'is_featured'
       | 'show_supplier',
     value: boolean
-  ) => {
+  ): Promise<void> => {
     try {
       await toggleField.mutateAsync({ catalogProductId, field, value });
       toast.success('Paramètre mis à jour');
@@ -72,7 +72,9 @@ export default function LinkMeProductDetailPage() {
     }
   };
 
-  const handleSavePricing = async (pricing: LinkMePricingUpdate) => {
+  const handleSavePricing = async (
+    pricing: LinkMePricingUpdate
+  ): Promise<void> => {
     try {
       await updatePricing.mutateAsync({ catalogProductId, pricing });
       toast.success('Pricing enregistré');
@@ -81,7 +83,9 @@ export default function LinkMeProductDetailPage() {
     }
   };
 
-  const handleSaveMetadata = async (metadata: LinkMeMetadataUpdate) => {
+  const handleSaveMetadata = async (
+    metadata: LinkMeMetadataUpdate
+  ): Promise<void> => {
     try {
       await updateMetadata.mutateAsync({ catalogProductId, metadata });
       toast.success('Informations enregistrées');
@@ -90,7 +94,7 @@ export default function LinkMeProductDetailPage() {
     }
   };
 
-  const handleSaveAffiliateCommission = async () => {
+  const handleSaveAffiliateCommission = async (): Promise<void> => {
     if (!product?.product_id || editedCommission === null) return;
     try {
       await updateAffiliateCommission.mutateAsync({
@@ -183,8 +187,8 @@ export default function LinkMeProductDetailPage() {
         <CardContent className="pt-6">
           <ProductDetailHeader
             product={product}
-            onToggleActive={v => handleToggle('is_enabled', v)}
-            onToggleFeatured={v => handleToggle('is_featured', v)}
+            onToggleActive={(v): void => void handleToggle('is_enabled', v)}
+            onToggleFeatured={(v): void => void handleToggle('is_featured', v)}
             isUpdating={toggleField.isPending}
           />
         </CardContent>
@@ -202,15 +206,15 @@ export default function LinkMeProductDetailPage() {
           <p className="text-sm text-amber-700 mt-1">
             Exclusif à :{' '}
             <span className="font-semibold">
-              {product.enseigne_name || product.assigned_client_name}
+              {product.enseigne_name ?? product.assigned_client_name}
             </span>
           </p>
         </div>
       )}
 
-      {/* Section Produit Affilié (si applicable) */}
+      {/* Badge Produit Affilié (si applicable) */}
       {product.created_by_affiliate && (
-        <div className="bg-violet-50 border border-violet-200 rounded-lg p-4 space-y-4">
+        <div className="bg-violet-50 border border-violet-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <UserPlus className="h-5 w-5 text-violet-600" />
@@ -219,86 +223,102 @@ export default function LinkMeProductDetailPage() {
               </span>
             </div>
             <span className="text-sm text-violet-600 bg-violet-100 px-2 py-1 rounded">
-              {product.affiliate_name || 'Affilié'}
+              {product.affiliate_name ?? 'Affilié'}
             </span>
-          </div>
-
-          {/* Commission Vérone - ÉDITABLE */}
-          <div className="bg-white rounded-lg p-4 space-y-3">
-            <div className="flex items-center gap-4">
-              <Label className="text-sm font-medium text-gray-700">
-                Commission Vérone (%)
-              </Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  value={currentCommission}
-                  onChange={e => setEditedCommission(Number(e.target.value))}
-                  min={0}
-                  max={100}
-                  step={0.5}
-                  className="w-24"
-                />
-                {editedCommission !== null &&
-                  editedCommission !== product.affiliate_commission_rate && (
-                    <Button
-                      size="sm"
-                      onClick={handleSaveAffiliateCommission}
-                      disabled={updateAffiliateCommission.isPending}
-                    >
-                      <Save className="h-4 w-4 mr-1" />
-                      Enregistrer
-                    </Button>
-                  )}
-              </div>
-            </div>
-
-            {/* Simulateur de commission */}
-            <div className="text-sm text-gray-600 bg-gray-50 rounded p-3">
-              <p className="font-medium mb-2">
-                Simulation pour un prix de vente de 1000€ HT :
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <span className="text-gray-500">Commission Vérone :</span>
-                  <span className="font-semibold text-violet-600 ml-2">
-                    {((1000 * currentCommission) / 100).toFixed(2)}€
-                  </span>
-                </div>
-                <div>
-                  <span className="text-gray-500">Payout Affilié :</span>
-                  <span className="font-semibold text-green-600 ml-2">
-                    {(1000 * (1 - currentCommission / 100)).toFixed(2)}€
-                  </span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       )}
 
-      {/* Section 2 : Deux colonnes asymétriques (60% / 40%) */}
+      {/* Section 2 : Layout deux colonnes */}
       <div className="grid md:grid-cols-[3fr_2fr] gap-6">
-        {/* Colonne gauche (plus large) : Informations personnalisées */}
+        {/* Colonne gauche : Informations personnalisées */}
         <ProductInfoCard
           product={product}
           onSave={handleSaveMetadata}
           isSaving={updateMetadata.isPending}
         />
 
-        {/* Colonne droite (plus petite) : Pricing & Marges */}
-        <ProductPricingCard
-          product={product}
-          onSave={handleSavePricing}
-          isSaving={updatePricing.isPending}
-        />
+        {/* Colonne droite : Pricing OU Commission affilié */}
+        {product.created_by_affiliate ? (
+          // Carte Commission Affilié
+          <Card>
+            <CardContent className="pt-6 space-y-4">
+              <div className="flex items-center gap-2">
+                <UserPlus className="h-5 w-5 text-violet-600" />
+                <h3 className="font-semibold text-lg">Commission Vérone</h3>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-4">
+                  <Label className="text-sm font-medium text-gray-700">
+                    Taux (%)
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      value={currentCommission}
+                      onChange={e =>
+                        setEditedCommission(Number(e.target.value))
+                      }
+                      min={0}
+                      max={100}
+                      step={0.5}
+                      className="w-24"
+                    />
+                    {editedCommission !== null &&
+                      editedCommission !==
+                        product.affiliate_commission_rate && (
+                        <Button
+                          size="sm"
+                          onClick={(): void =>
+                            void handleSaveAffiliateCommission()
+                          }
+                          disabled={updateAffiliateCommission.isPending}
+                        >
+                          <Save className="h-4 w-4 mr-1" />
+                          Enregistrer
+                        </Button>
+                      )}
+                  </div>
+                </div>
+
+                {/* Simulateur de commission */}
+                <div className="text-sm text-gray-600 bg-gray-50 rounded p-3">
+                  <p className="font-medium mb-2">Simulation pour 1000€ HT :</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <span className="text-gray-500">Commission Vérone :</span>
+                      <span className="font-semibold text-violet-600 ml-2">
+                        {((1000 * currentCommission) / 100).toFixed(2)}€
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Payout Affilié :</span>
+                      <span className="font-semibold text-green-600 ml-2">
+                        {(1000 * (1 - currentCommission / 100)).toFixed(2)}€
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <ProductPricingCard
+            product={product}
+            onSave={handleSavePricing}
+            isSaving={updatePricing.isPending}
+          />
+        )}
       </div>
 
-      {/* Section 3 : Variantes - Pleine largeur en bas */}
-      <ProductVariantsCard
-        variants={variants || []}
-        isLoading={variantsLoading}
-      />
+      {/* Section 3 : Variantes - Masqué pour produits affiliés */}
+      {!product.created_by_affiliate && (
+        <ProductVariantsCard
+          variants={variants ?? []}
+          isLoading={variantsLoading}
+        />
+      )}
     </div>
   );
 }

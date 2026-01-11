@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 
+import { NotificationsDropdown } from '@verone/notifications';
 import {
   ShoppingCart,
   LogIn,
@@ -139,6 +140,9 @@ export function Header() {
                 </span>
               )}
             </button>
+
+            {/* Notifications - visible seulement si connecté */}
+            {user && <NotificationsDropdown />}
 
             {/* Auth */}
             {initializing ? (
