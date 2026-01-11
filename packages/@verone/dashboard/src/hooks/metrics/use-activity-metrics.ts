@@ -5,7 +5,9 @@
 
 'use client';
 
-import { createBrowserClient } from '@supabase/ssr';
+import { useMemo } from 'react';
+
+import { createClient } from '@verone/utils/supabase/client';
 
 interface RecentAction {
   type: string;
@@ -15,10 +17,8 @@ interface RecentAction {
 }
 
 export function useActivityMetrics() {
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  // ✅ FIX: Use singleton client via useMemo
+  const supabase = useMemo(() => createClient(), []);
 
   const fetch = async () => {
     try {
@@ -82,28 +82,31 @@ export function useActivityMetrics() {
 
       // Ajout des produits créés/modifiés
       productsToday?.slice(0, 3).forEach(p => {
+        if (!p.created_at) return;
         const isNew = new Date(p.created_at) >= todayStart;
         recentActions.push({
           type: isNew ? 'product_created' : 'product_updated',
           description: isNew ? 'Nouveau produit ajouté' : 'Produit mis à jour',
-          timestamp: isNew ? p.created_at : p.updated_at,
+          timestamp: isNew ? p.created_at : (p.updated_at ?? p.created_at),
         });
       });
 
       // Ajout des collections créées/modifiées
       collectionsToday?.slice(0, 2).forEach(c => {
+        if (!c.created_at) return;
         const isNew = new Date(c.created_at) >= todayStart;
         recentActions.push({
           type: isNew ? 'collection_created' : 'collection_updated',
           description: isNew
             ? 'Nouvelle collection créée'
             : 'Collection mise à jour',
-          timestamp: isNew ? c.created_at : c.updated_at,
+          timestamp: isNew ? c.created_at : (c.updated_at ?? c.created_at),
         });
       });
 
       // Ajout des nouveaux utilisateurs
       usersToday?.slice(0, 2).forEach(u => {
+        if (!u.created_at) return;
         recentActions.push({
           type: 'user_registered',
           description: 'Nouvel utilisateur inscrit',
