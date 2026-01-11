@@ -10,7 +10,7 @@ Primary_sources:
 - supabase/migrations/20260109\*.sql
   Owner: Romeo Dos Santos
   Created: 2026-01-07
-  Updated: 2026-01-10
+  Updated: 2026-01-11
 
 ---
 
@@ -39,20 +39,33 @@ products → channel_pricing → linkme_selection_items → sales_order_items �
 ### Produits CATALOGUE (Verone distribue a l'affilie)
 
 ```sql
--- L'affilie GAGNE une marge SUR le prix de base
-commission_affilie = base_price_ht × (margin_rate / 100) × quantity
-prix_vente_final = base_price_ht × (1 + margin_rate / 100)
+-- TAUX DE MARQUE: margin_rate s'applique sur le PRIX DE VENTE, pas sur le cout
+-- Formule prix de vente: selling_price = base_price / (1 - margin_rate / 100)
+-- La marge de l'affilie est INCLUSE dans le prix de vente LinkMe
+
+-- Exemple avec base = 100€, margin_rate = 15%:
+selling_price_ht = base_price_ht / (1 - margin_rate / 100)
+-- selling_price = 100 / (1 - 0.15) = 100 / 0.85 = 117.65€
+
+-- La retrocession (gain affilie) = prix de vente × taux de marque
+retrocession_affilie = selling_price_ht × (margin_rate / 100) × quantity
+-- retrocession = 117.65 × 0.15 = 17.65€
+
+-- Commission plateforme LinkMe (ex: 5%) AJOUTEE au prix de vente
+prix_client_final = selling_price_ht × (1 + channel_commission_rate / 100)
+-- prix_client = 117.65 × 1.05 = 123.53€
 ```
 
-### Produits AFFILIE/REVENDEUR (Verone preleve sur l'affilie)
+### Produits AFFILIE/REVENDEUR (LinkMe preleve sur l'affilie)
 
 ```sql
--- INVERSE: Verone DEDUIT sa commission du prix de vente
--- Le prix catalogue EST le prix de vente final au client
-prix_vente_client = products.price_ht  -- C'est le prix affiche
-commission_verone = prix_vente_client × (affiliate_commission_rate / 100)
-payout_affilie = prix_vente_client - commission_verone
--- Exemple: 500€ vente - 75€ commission = 425€ pour l'affilie
+-- MODELE INVERSE: L'affilie fixe son prix, LinkMe deduit sa commission
+-- Le prix que l'affilie definit = prix de vente final au client
+
+prix_vente_client = products.price_ht  -- Prix defini par l'affilie
+commission_linkme = prix_vente_client × (affiliate_commission_rate / 100)
+payout_affilie = prix_vente_client - commission_linkme
+-- Exemple: 100€ vente - 10% commission = 90€ payout pour l'affilie
 ```
 
 ---
@@ -92,13 +105,15 @@ retrocession_amount = selling_price_ht × margin_rate / 100 × quantity
 const isAffiliateProduct = item.product?.created_by_affiliate !== null;
 
 if (isAffiliateProduct) {
-  // Modele INVERSE: Verone DEDUIT sa commission
-  const fraisLinkMe = prixVente * (affiliateCommissionRate / 100);
-  const payoutAffilie = prixVente - fraisLinkMe;
+  // REVENDEUR: LinkMe deduit sa commission du prix defini par l'affilie
+  const commissionLinkMe = prixVente * (affiliateCommissionRate / 100);
+  const payoutAffilie = prixVente - commissionLinkMe;
+  // Exemple: 100€ × 10% = 10€ commission, payout = 90€
 } else {
-  // Modele STANDARD: L'affilie GAGNE une marge
-  const margeAffilie = prixBase * (marginRate / 100);
-  const prixFinal = prixBase + margeAffilie;
+  // CATALOGUE: Taux de MARQUE (sur prix de vente)
+  const prixVenteAvecMarge = prixBase / (1 - marginRate / 100);
+  const margeAffilie = prixVenteAvecMarge * (marginRate / 100);
+  // Exemple: 100€ / 0.85 = 117.65€, marge = 117.65 × 15% = 17.65€
 }
 ```
 
