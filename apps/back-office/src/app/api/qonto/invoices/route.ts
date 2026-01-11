@@ -12,16 +12,15 @@ import { NextResponse } from 'next/server';
 import { QontoClient } from '@verone/integrations/qonto';
 import type { CreateClientInvoiceParams } from '@verone/integrations/qonto';
 import type { Database } from '@verone/types';
-import { createClient } from '@verone/utils/supabase/server';
+import { createAdminClient } from '@verone/utils/supabase/server';
 
 type SalesOrder = Database['public']['Tables']['sales_orders']['Row'];
 type Organisation = Database['public']['Tables']['organisations']['Row'];
 type IndividualCustomer =
   Database['public']['Tables']['individual_customers']['Row'];
 
-interface ISalesOrderWithRelations extends SalesOrder {
-  organisations: Organisation | null;
-  individual_customers: IndividualCustomer | null;
+// Interface pour la commande avec items (relations polymorphiques gérées manuellement)
+interface ISalesOrderWithItems extends SalesOrder {
   sales_order_items: Array<{
     id: string;
     quantity: number;
@@ -30,6 +29,11 @@ interface ISalesOrderWithRelations extends SalesOrder {
     notes: string | null;
     products: { id: string; name: string; sku: string | null } | null;
   }>;
+}
+
+// Interface enrichie avec customer (après fetch manuel)
+interface ISalesOrderWithCustomer extends ISalesOrderWithItems {
+  customer: Organisation | IndividualCustomer | null;
 }
 
 function getQontoClient(): QontoClient {
@@ -87,9 +91,32 @@ export async function GET(request: NextRequest): Promise<
   }
 }
 
+/**
+ * Interface pour les frais de service
+ */
+interface IFeesData {
+  shipping_cost_ht?: number;
+  handling_cost_ht?: number;
+  insurance_cost_ht?: number;
+  fees_vat_rate?: number;
+}
+
+/**
+ * Interface pour les lignes personnalisées
+ */
+interface ICustomLine {
+  title: string;
+  description?: string;
+  quantity: number;
+  unit_price_ht: number;
+  vat_rate: number;
+}
+
 interface IPostRequestBody {
   salesOrderId: string;
   autoFinalize?: boolean;
+  fees?: IFeesData;
+  customLines?: ICustomLine[];
 }
 
 /**
@@ -110,7 +137,7 @@ export async function POST(request: NextRequest): Promise<
 > {
   try {
     const body = (await request.json()) as IPostRequestBody;
-    const { salesOrderId, autoFinalize = true } = body;
+    const { salesOrderId, autoFinalize = false, fees, customLines } = body; // Défaut: brouillon pour validation
 
     if (!salesOrderId) {
       return NextResponse.json(
@@ -119,15 +146,14 @@ export async function POST(request: NextRequest): Promise<
       );
     }
 
-    // Récupérer la commande avec ses lignes et client
-    const supabase = createClient();
+    // Récupérer la commande avec ses lignes (sans jointures polymorphiques)
+    // Utilise createAdminClient pour bypasser RLS (API route sans contexte user)
+    const supabase = createAdminClient();
     const { data: order, error: orderError } = await supabase
       .from('sales_orders')
       .select(
         `
         *,
-        organisations:organisation_id (*),
-        individual_customers:individual_customer_id (*),
         sales_order_items (
           *,
           products:product_id (id, name, sku)
@@ -138,6 +164,7 @@ export async function POST(request: NextRequest): Promise<
       .single();
 
     if (orderError || !order) {
+      console.error('[API Qonto Invoices] Order fetch error:', orderError);
       return NextResponse.json(
         { success: false, error: 'Order not found' },
         { status: 404 }
@@ -145,44 +172,95 @@ export async function POST(request: NextRequest): Promise<
     }
 
     // Cast to typed order
-    const typedOrder = order as unknown as ISalesOrderWithRelations;
+    const orderWithItems = order as unknown as ISalesOrderWithItems;
+
+    // Fetch manuel du customer selon customer_type (pattern polymorphique)
+    let customer: Organisation | IndividualCustomer | null = null;
+
+    if (orderWithItems.customer_id && orderWithItems.customer_type) {
+      if (orderWithItems.customer_type === 'organisation') {
+        const { data: org } = await supabase
+          .from('organisations')
+          .select('*')
+          .eq('id', orderWithItems.customer_id)
+          .single();
+        customer = org;
+      } else if (orderWithItems.customer_type === 'individual') {
+        const { data: indiv } = await supabase
+          .from('individual_customers')
+          .select('*')
+          .eq('id', orderWithItems.customer_id)
+          .single();
+        customer = indiv;
+      }
+    }
+
+    const typedOrder: ISalesOrderWithCustomer = {
+      ...orderWithItems,
+      customer,
+    };
 
     const qontoClient = getQontoClient();
 
     // Récupérer ou créer le client Qonto
     let qontoClientId: string;
-    const customerEmail =
-      typedOrder.organisations?.email ?? typedOrder.individual_customers?.email;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const customerName: string =
-      typedOrder.organisations?.trade_name ??
-      typedOrder.organisations?.legal_name ??
-      `${typedOrder.individual_customers?.first_name ?? ''} ${typedOrder.individual_customers?.last_name ?? ''}`.trim();
+
+    // Extraire email et nom selon le type de customer
+    let customerEmail: string | null = null;
+    let customerName = 'Client';
+
+    if (typedOrder.customer_type === 'organisation' && typedOrder.customer) {
+      const org = typedOrder.customer as Organisation;
+      customerEmail = org.email ?? null;
+      customerName = org.trade_name ?? org.legal_name ?? 'Client';
+    } else if (
+      typedOrder.customer_type === 'individual' &&
+      typedOrder.customer
+    ) {
+      const indiv = typedOrder.customer as IndividualCustomer;
+      customerEmail = indiv.email ?? null;
+      customerName =
+        `${indiv.first_name ?? ''} ${indiv.last_name ?? ''}`.trim() || 'Client';
+    }
 
     if (customerEmail) {
+      // Construire une adresse valide pour Qonto (fallbacks si données manquantes)
+      // Note: billing_address peut avoir différents formats (legacy vs nouveau)
+      const billingAddress = typedOrder.billing_address as Record<
+        string,
+        string
+      > | null;
+
+      const qontoAddress = {
+        streetAddress: billingAddress?.street ?? billingAddress?.address ?? '',
+        city: billingAddress?.city ?? 'Paris', // Fallback requis par Qonto
+        zipCode: billingAddress?.postal_code ?? '75001',
+        countryCode: billingAddress?.country ?? 'FR',
+      };
+
+      // Mapper customer_type vers type Qonto
+      const qontoClientType =
+        typedOrder.customer_type === 'organisation' ? 'company' : 'individual';
+
       // Chercher le client par email
       const existingClient = await qontoClient.findClientByEmail(customerEmail);
       if (existingClient) {
+        // Client existant - mettre à jour son adresse pour s'assurer qu'elle est présente
+        // (Qonto requiert billing_address pour la facturation)
+        await qontoClient.updateClient(existingClient.id, {
+          name: customerName || existingClient.name,
+          type: qontoClientType,
+          address: qontoAddress,
+        });
         qontoClientId = existingClient.id;
       } else {
-        // Créer le client
-        const billingAddress = typedOrder.billing_address as Record<
-          string,
-          string
-        > | null;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        // Créer un nouveau client
         const newClient = await qontoClient.createClient({
-          name: customerName ?? 'Client',
+          name: customerName || 'Client',
+          type: qontoClientType,
           email: customerEmail,
           currency: 'EUR',
-          address: billingAddress
-            ? {
-                streetAddress: billingAddress.street ?? '',
-                city: billingAddress.city ?? '',
-                zipCode: billingAddress.postal_code ?? '',
-                countryCode: billingAddress.country ?? 'FR',
-              }
-            : undefined,
+          address: qontoAddress,
         });
         qontoClientId = newClient.id;
       }
@@ -213,8 +291,79 @@ export async function POST(request: NextRequest): Promise<
         value: String(item.unit_price_ht ?? 0),
         currency: 'EUR',
       },
-      vatRate: String((item.tax_rate ?? 20) / 100), // Qonto attend 0.20 pour 20%
+      vatRate: String(item.tax_rate ?? 0.2), // tax_rate est déjà en decimal (0.2 = 20%)
     }));
+
+    // Déterminer la TVA des frais (priorité: body > commande > défaut 20%)
+    const feesVatRate = fees?.fees_vat_rate ?? typedOrder.fees_vat_rate ?? 0.2;
+
+    // Ajouter les frais de livraison
+    const shippingCost =
+      fees?.shipping_cost_ht ?? typedOrder.shipping_cost_ht ?? 0;
+    if (shippingCost > 0) {
+      items.push({
+        title: 'Frais de livraison',
+        description: undefined,
+        quantity: '1',
+        unit: 'forfait',
+        unitPrice: {
+          value: String(shippingCost),
+          currency: 'EUR',
+        },
+        vatRate: String(feesVatRate),
+      });
+    }
+
+    // Ajouter les frais de manutention
+    const handlingCost =
+      fees?.handling_cost_ht ?? typedOrder.handling_cost_ht ?? 0;
+    if (handlingCost > 0) {
+      items.push({
+        title: 'Frais de manutention',
+        description: undefined,
+        quantity: '1',
+        unit: 'forfait',
+        unitPrice: {
+          value: String(handlingCost),
+          currency: 'EUR',
+        },
+        vatRate: String(feesVatRate),
+      });
+    }
+
+    // Ajouter les frais d'assurance
+    const insuranceCost =
+      fees?.insurance_cost_ht ?? typedOrder.insurance_cost_ht ?? 0;
+    if (insuranceCost > 0) {
+      items.push({
+        title: "Frais d'assurance",
+        description: undefined,
+        quantity: '1',
+        unit: 'forfait',
+        unitPrice: {
+          value: String(insuranceCost),
+          currency: 'EUR',
+        },
+        vatRate: String(feesVatRate),
+      });
+    }
+
+    // Ajouter les lignes personnalisées (custom lines)
+    if (customLines && customLines.length > 0) {
+      for (const line of customLines) {
+        items.push({
+          title: line.title,
+          description: line.description,
+          quantity: String(line.quantity),
+          unit: 'pièce',
+          unitPrice: {
+            value: String(line.unit_price_ht),
+            currency: 'EUR',
+          },
+          vatRate: String(line.vat_rate),
+        });
+      }
+    }
 
     // Calculer la date d'échéance selon les termes de paiement
     const issueDate = new Date().toISOString().split('T')[0];
@@ -276,11 +425,20 @@ export async function POST(request: NextRequest): Promise<
         : 'Invoice created as draft',
     });
   } catch (error) {
+    // Log avec détails complets pour QontoError
+    const errorDetails =
+      error && typeof error === 'object' && 'details' in error
+        ? JSON.stringify((error as { details: unknown }).details, null, 2)
+        : undefined;
     console.error('[API Qonto Invoices] POST error:', error);
+    if (errorDetails) {
+      console.error('[API Qonto Invoices] Error details:', errorDetails);
+    }
     return NextResponse.json(
       {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
+        details: errorDetails,
       },
       { status: 500 }
     );

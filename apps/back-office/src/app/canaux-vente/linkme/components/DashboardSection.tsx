@@ -246,7 +246,7 @@ export function DashboardSection() {
         <KPICard
           title="CA Généré"
           value={formatCurrency(kpis?.revenue.current || 0)}
-          subtext="vs mois précédent"
+          subtext="vs moyenne"
           growth={kpis?.revenue.growth}
           icon={<TrendingUp className="h-4 w-4 text-emerald-600" />}
           iconBgColor="bg-emerald-100"
@@ -274,7 +274,7 @@ export function DashboardSection() {
         <KPICard
           title="Commandes ce mois"
           value={String(kpis?.orders.current || 0)}
-          subtext="vs mois précédent"
+          subtext="vs moyenne"
           growth={kpis?.orders.growth}
           icon={<ShoppingCart className="h-4 w-4 text-purple-600" />}
           iconBgColor="bg-purple-100"
