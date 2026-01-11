@@ -16,7 +16,7 @@ import { createClient } from '@verone/utils/supabase/client';
 // TYPES
 // =====================================================================
 
-export type OrganisationOwnershipType = 'propre' | 'franchise' | 'succursale';
+export type OrganisationOwnershipType = 'succursale' | 'franchise';
 
 export interface EnseigneOrganisation {
   id: string;

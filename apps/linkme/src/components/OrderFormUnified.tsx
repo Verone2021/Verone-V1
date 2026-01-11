@@ -70,7 +70,7 @@ export interface OrderFormUnifiedData {
 
   // SI NOUVEAU RESTAURANT - STEP 2: Propriétaire
   owner: {
-    type: 'propre' | 'franchise' | null;
+    type: 'succursale' | 'franchise' | null;
     contactSameAsRequester: boolean;
     name: string;
     email: string;
@@ -1082,10 +1082,10 @@ function OpeningStep2({ data, errors, updateData }: StepProps) {
           <button
             type="button"
             onClick={() =>
-              updateData({ owner: { ...data.owner, type: 'propre' } })
+              updateData({ owner: { ...data.owner, type: 'succursale' } })
             }
             className={`flex-1 py-3 px-4 rounded-lg border-2 transition-colors ${
-              data.owner.type === 'propre'
+              data.owner.type === 'succursale'
                 ? 'bg-blue-50 border-blue-500 text-blue-700'
                 : 'border-gray-300 text-gray-700 hover:bg-gray-50'
             }`}

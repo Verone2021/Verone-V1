@@ -54,15 +54,10 @@ function getOwnershipBadge(
   type: string | null
 ): { label: string; className: string } | null {
   switch (type) {
-    case 'propre':
+    case 'succursale':
       return { label: 'Propre', className: 'bg-blue-100 text-blue-700' };
     case 'franchise':
       return { label: 'Franchise', className: 'bg-amber-100 text-amber-700' };
-    case 'succursale':
-      return {
-        label: 'Succursale',
-        className: 'bg-purple-100 text-purple-700',
-      };
     default:
       return null;
   }

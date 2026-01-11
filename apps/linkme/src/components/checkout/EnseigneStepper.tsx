@@ -1,5 +1,14 @@
 'use client';
 
+/**
+ * @deprecated Utilisez OrderFormUnified.tsx à la place.
+ * Ce composant est remplacé par le formulaire unifié qui intègre
+ * la question "Est-ce une ouverture ?" comme première étape.
+ *
+ * @see @/components/OrderFormUnified.tsx
+ * @deprecated 2026-01-11
+ */
+
 import { useState } from 'react';
 
 import Image from 'next/image';
@@ -58,7 +67,7 @@ export interface EnseigneStepperData {
   };
 
   // Etape 2 - Proprietaire (optionnel)
-  ownerType: 'propre' | 'franchise' | null;
+  ownerType: 'succursale' | 'franchise' | null;
   ownerContactSameAsRequester: boolean;
   ownerName: string;
   ownerEmail: string;
@@ -850,9 +859,9 @@ function Step2Proprietaire({ data, updateData }: Step2Props) {
         <div className="flex gap-3">
           <button
             type="button"
-            onClick={() => updateData({ ownerType: 'propre' })}
+            onClick={() => updateData({ ownerType: 'succursale' })}
             className={`flex-1 py-3 px-4 rounded-lg border-2 transition-colors ${
-              data.ownerType === 'propre'
+              data.ownerType === 'succursale'
                 ? 'bg-blue-50 border-blue-500 text-blue-700'
                 : 'border-gray-300 text-gray-700 hover:bg-gray-50'
             }`}

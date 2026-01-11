@@ -5,9 +5,11 @@
  *
  * Modal d'édition d'une organisation
  * Permet de modifier : trade_name, adresse de livraison
+ * Intègre l'autocomplete d'adresse avec géocodage automatique
  *
  * @module EditOrganisationModal
  * @since 2026-01-10
+ * @updated 2026-01-11 - Ajout AddressAutocomplete avec coordonnées GPS
  */
 
 import { useState, useEffect } from 'react';
@@ -19,6 +21,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  AddressAutocomplete,
+  type AddressResult,
 } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
 import { Building2, Loader2 } from 'lucide-react';
@@ -41,6 +45,11 @@ interface FormData {
   shipping_address_line1: string;
   shipping_city: string;
   shipping_postal_code: string;
+  // Coordonnées GPS pour la carte
+  latitude: number | null;
+  longitude: number | null;
+  // Type de propriété
+  ownership_type: 'succursale' | 'franchise' | null;
 }
 
 // =====================================================================
@@ -60,6 +69,9 @@ export function EditOrganisationModal({
     shipping_address_line1: '',
     shipping_city: '',
     shipping_postal_code: '',
+    latitude: null,
+    longitude: null,
+    ownership_type: null,
   });
 
   // Reset form when organisation changes
@@ -70,9 +82,24 @@ export function EditOrganisationModal({
         shipping_address_line1: organisation.shipping_address_line1 || '',
         shipping_city: organisation.shipping_city || '',
         shipping_postal_code: organisation.shipping_postal_code || '',
+        latitude: (organisation as any).latitude || null,
+        longitude: (organisation as any).longitude || null,
+        ownership_type: organisation.ownership_type || null,
       });
     }
   }, [organisation]);
+
+  // Handle address selection from autocomplete
+  const handleAddressSelect = (address: AddressResult) => {
+    setFormData(prev => ({
+      ...prev,
+      shipping_address_line1: address.streetAddress,
+      shipping_city: address.city,
+      shipping_postal_code: address.postalCode,
+      latitude: address.latitude,
+      longitude: address.longitude,
+    }));
+  };
 
   // Mutation for updating
   const updateMutation = useMutation({
@@ -87,6 +114,11 @@ export function EditOrganisationModal({
           shipping_address_line1: data.shipping_address_line1 || null,
           shipping_city: data.shipping_city || null,
           shipping_postal_code: data.shipping_postal_code || null,
+          // Coordonnées GPS pour la carte StoreLocatorMap
+          latitude: data.latitude,
+          longitude: data.longitude,
+          // Type de propriété (succursale/franchise)
+          ownership_type: data.ownership_type,
         })
         .eq('id', organisation.id);
 
@@ -146,20 +178,73 @@ export function EditOrganisationModal({
             </p>
           </div>
 
-          {/* Adresse de livraison */}
+          {/* Type de propriété */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Type de propriété
+            </label>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() =>
+                  setFormData(prev => ({
+                    ...prev,
+                    ownership_type: 'succursale',
+                  }))
+                }
+                className={`flex-1 py-2.5 px-4 text-sm font-medium rounded-lg border-2 transition-colors ${
+                  formData.ownership_type === 'succursale'
+                    ? 'bg-blue-50 border-blue-500 text-blue-700'
+                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                Restaurant propre
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setFormData(prev => ({
+                    ...prev,
+                    ownership_type: 'franchise',
+                  }))
+                }
+                className={`flex-1 py-2.5 px-4 text-sm font-medium rounded-lg border-2 transition-colors ${
+                  formData.ownership_type === 'franchise'
+                    ? 'bg-amber-50 border-amber-500 text-amber-700'
+                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                Franchise
+              </button>
+            </div>
+            {!formData.ownership_type && (
+              <p className="mt-1 text-xs text-orange-600">
+                Information manquante - Veuillez sélectionner le type
+              </p>
+            )}
+          </div>
+
+          {/* Adresse de livraison avec autocomplete */}
           <div className="space-y-3">
             <p className="text-sm font-medium text-gray-700">
               Adresse de livraison
             </p>
 
-            <input
-              type="text"
+            {/* Autocomplete avec géocodage automatique */}
+            <AddressAutocomplete
               value={formData.shipping_address_line1}
-              onChange={handleChange('shipping_address_line1')}
-              placeholder="Adresse (rue, numéro)"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              onChange={value =>
+                setFormData(prev => ({
+                  ...prev,
+                  shipping_address_line1: value,
+                }))
+              }
+              onSelect={handleAddressSelect}
+              placeholder="Rechercher une adresse..."
+              id="shipping-address"
             />
 
+            {/* Champs pré-remplis (modifiables) */}
             <div className="grid grid-cols-3 gap-3">
               <input
                 type="text"
@@ -176,6 +261,16 @@ export function EditOrganisationModal({
                 className="col-span-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
+
+            {/* Indicateur coordonnées GPS */}
+            {formData.latitude && formData.longitude && (
+              <p className="text-xs text-green-600 flex items-center gap-1">
+                <span className="w-2 h-2 bg-green-500 rounded-full" />
+                Coordonnées GPS enregistrées ({formData.latitude.toFixed(
+                  4
+                )}, {formData.longitude.toFixed(4)})
+              </p>
+            )}
           </div>
 
           <DialogFooter className="mt-6">

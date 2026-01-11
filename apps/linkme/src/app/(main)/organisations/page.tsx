@@ -67,6 +67,9 @@ export default function OrganisationsPage(): JSX.Element | null {
   // États locaux
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [activeTab, setActiveTab] = useState<
+    'all' | 'succursale' | 'franchise' | 'incomplete'
+  >('all');
   const [selectedOrg, setSelectedOrg] = useState<EnseigneOrganisation | null>(
     null
   );
@@ -96,23 +99,49 @@ export default function OrganisationsPage(): JSX.Element | null {
     }
   }, [linkMeRole, loading, initializing, router]);
 
-  // Reset page quand la recherche change
+  // Reset page quand la recherche ou le tab change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm]);
+  }, [searchTerm, activeTab]);
 
-  // Filtrer les organisations par recherche
+  // Stats par onglet
+  const tabStats = useMemo(() => {
+    if (!organisations)
+      return { all: 0, succursale: 0, franchise: 0, incomplete: 0 };
+    return {
+      all: organisations.length,
+      succursale: organisations.filter(o => o.ownership_type === 'succursale')
+        .length,
+      franchise: organisations.filter(o => o.ownership_type === 'franchise')
+        .length,
+      incomplete: organisations.filter(o => !o.ownership_type).length,
+    };
+  }, [organisations]);
+
+  // Filtrer les organisations par recherche ET par onglet
   const filteredOrgs = useMemo(() => {
     if (!organisations) return [];
+
+    // Filtre par onglet
+    let filtered = organisations;
+    if (activeTab === 'succursale') {
+      filtered = organisations.filter(o => o.ownership_type === 'succursale');
+    } else if (activeTab === 'franchise') {
+      filtered = organisations.filter(o => o.ownership_type === 'franchise');
+    } else if (activeTab === 'incomplete') {
+      filtered = organisations.filter(o => !o.ownership_type);
+    }
+
+    // Filtre par recherche
     const searchLower = searchTerm.toLowerCase();
-    return organisations.filter(
+    return filtered.filter(
       org =>
         org.legal_name.toLowerCase().includes(searchLower) ||
         org.trade_name?.toLowerCase().includes(searchLower) ||
         org.city?.toLowerCase().includes(searchLower) ||
         org.shipping_city?.toLowerCase().includes(searchLower)
     );
-  }, [organisations, searchTerm]);
+  }, [organisations, searchTerm, activeTab]);
 
   // Pagination
   const totalPages = Math.ceil(filteredOrgs.length / ITEMS_PER_PAGE);
@@ -210,6 +239,56 @@ export default function OrganisationsPage(): JSX.Element | null {
               Ajouter
             </button>
           </div>
+        </div>
+
+        {/* Onglets de filtrage par type */}
+        <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-2">
+          <button
+            onClick={() => setActiveTab('all')}
+            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
+              activeTab === 'all'
+                ? 'bg-linkme-turquoise text-white'
+                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            Tous
+            <span className="ml-1.5 opacity-70">({tabStats.all})</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('succursale')}
+            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
+              activeTab === 'succursale'
+                ? 'bg-blue-500 text-white'
+                : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+            }`}
+          >
+            Propres
+            <span className="ml-1.5 opacity-70">({tabStats.succursale})</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('franchise')}
+            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
+              activeTab === 'franchise'
+                ? 'bg-amber-500 text-white'
+                : 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+            }`}
+          >
+            Franchises
+            <span className="ml-1.5 opacity-70">({tabStats.franchise})</span>
+          </button>
+          {tabStats.incomplete > 0 && (
+            <button
+              onClick={() => setActiveTab('incomplete')}
+              className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
+                activeTab === 'incomplete'
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-orange-50 text-orange-700 hover:bg-orange-100'
+              }`}
+            >
+              À compléter
+              <span className="ml-1.5 opacity-70">({tabStats.incomplete})</span>
+            </button>
+          )}
         </div>
 
         {/* Barre de recherche + info pagination */}

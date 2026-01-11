@@ -16,6 +16,8 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 
+import { useQueryClient } from '@tanstack/react-query';
+import { createClient } from '@verone/utils/supabase/client';
 import {
   X,
   Loader2,
@@ -36,6 +38,7 @@ import {
   Store,
   FileText,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { ContactsSection } from '../../../../components/ContactsSection';
 import {
@@ -71,24 +74,32 @@ interface CartItem {
 
 // État pour un nouveau restaurant
 interface NewRestaurantFormState {
+  // Étape 1 - Livraison
   tradeName: string;
   city: string;
   address: string;
   postalCode: string;
-  ownerType: 'propre' | 'franchise' | null;
-  // Propriétaire
+  ownerType: 'succursale' | 'franchise' | null;
+  // Étape 2 - Propriétaire
   ownerFirstName: string;
   ownerLastName: string;
   ownerEmail: string;
   ownerPhone: string;
-  ownerCompanyName: string;
+  ownerCompanyName: string; // Raison sociale si franchise
   ownerKbisUrl: string;
-  // Facturation
+  // Étape 3 - Facturation
   billingSameAsOwner: boolean;
+  billingUseSameAddress: boolean; // Reprendre adresse livraison
+  billingCompanyName: string; // Dénomination sociale
   billingFirstName: string;
   billingLastName: string;
   billingEmail: string;
   billingPhone: string;
+  billingAddress: string;
+  billingPostalCode: string;
+  billingCity: string;
+  billingSiret: string;
+  billingKbisUrl: string; // Facultatif
 }
 
 const initialNewRestaurantForm: NewRestaurantFormState = {
@@ -104,10 +115,17 @@ const initialNewRestaurantForm: NewRestaurantFormState = {
   ownerCompanyName: '',
   ownerKbisUrl: '',
   billingSameAsOwner: true,
+  billingUseSameAddress: true,
+  billingCompanyName: '',
   billingFirstName: '',
   billingLastName: '',
   billingEmail: '',
   billingPhone: '',
+  billingAddress: '',
+  billingPostalCode: '',
+  billingCity: '',
+  billingSiret: '',
+  billingKbisUrl: '',
 };
 
 export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
@@ -121,10 +139,11 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
     billingContact: ContactFormData | null;
   } | null>(null);
 
-  // Stepper pour nouveau restaurant
+  // Stepper pour nouveau restaurant (5 étapes)
   const [newRestaurantStep, setNewRestaurantStep] = useState(1);
   const [newRestaurantForm, setNewRestaurantForm] =
     useState<NewRestaurantFormState>(initialNewRestaurantForm);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   // ============================================
   // STATE - Formulaire commande
@@ -145,6 +164,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
   // ============================================
   // HOOKS
   // ============================================
+  const queryClient = useQueryClient();
   const { data: affiliate, isLoading: affiliateLoading } = useUserAffiliate();
   const { data: selections, isLoading: selectionsLoading } =
     useUserSelections();
@@ -365,22 +385,167 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
       return;
     }
 
-    // TODO: Implémenter la création d'une commande pour nouveau restaurant
-    // Cette fonctionnalité nécessite une RPC spécifique pour créer:
-    // 1. Une entrée dans sales_order_linkme_details avec is_new_restaurant = true
-    // 2. Les infos owner_* et billing_*
-    // 3. pending_admin_validation = true
+    const supabase = createClient();
 
-    console.log('Submit new restaurant order:', {
-      form: newRestaurantForm,
-      items: cart.map(item => ({
-        selection_item_id: item.selectionItemId,
+    try {
+      // Préparer le panier
+      const p_cart = cart.map(item => ({
+        product_id: item.productId,
         quantity: item.quantity,
-      })),
-      notes,
-    });
+        selling_price_ttc: item.unitPriceHt * (1 + item.taxRate),
+        id: item.selectionItemId,
+      }));
 
-    handleClose();
+      // Demandeur = Propriétaire
+      const p_requester = {
+        type: 'responsable_enseigne',
+        name: `${newRestaurantForm.ownerFirstName} ${newRestaurantForm.ownerLastName}`,
+        email: newRestaurantForm.ownerEmail,
+        phone: newRestaurantForm.ownerPhone || null,
+        position: null,
+      };
+
+      // Organisation nouvelle
+      const p_organisation = {
+        is_new: true,
+        trade_name: newRestaurantForm.tradeName,
+        legal_name:
+          newRestaurantForm.ownerType === 'franchise'
+            ? newRestaurantForm.billingCompanyName ||
+              newRestaurantForm.ownerCompanyName
+            : newRestaurantForm.tradeName,
+        city: newRestaurantForm.city,
+        postal_code: newRestaurantForm.postalCode || null,
+        address: newRestaurantForm.address || null,
+        siret: newRestaurantForm.billingSiret || null,
+      };
+
+      // Propriétaire
+      const p_owner = {
+        type: newRestaurantForm.ownerType,
+        same_as_requester: false,
+        name: `${newRestaurantForm.ownerFirstName} ${newRestaurantForm.ownerLastName}`,
+        email: newRestaurantForm.ownerEmail,
+        phone: newRestaurantForm.ownerPhone || null,
+      };
+
+      // Facturation - Contact
+      const billingName = newRestaurantForm.billingSameAsOwner
+        ? `${newRestaurantForm.ownerFirstName} ${newRestaurantForm.ownerLastName}`
+        : `${newRestaurantForm.billingFirstName} ${newRestaurantForm.billingLastName}`;
+      const billingEmail = newRestaurantForm.billingSameAsOwner
+        ? newRestaurantForm.ownerEmail
+        : newRestaurantForm.billingEmail;
+      const billingPhone = newRestaurantForm.billingSameAsOwner
+        ? newRestaurantForm.ownerPhone
+        : newRestaurantForm.billingPhone;
+
+      // Adresse de facturation
+      const billingAddress = newRestaurantForm.billingUseSameAddress
+        ? newRestaurantForm.address
+        : newRestaurantForm.billingAddress;
+      const billingPostalCode = newRestaurantForm.billingUseSameAddress
+        ? newRestaurantForm.postalCode
+        : newRestaurantForm.billingPostalCode;
+      const billingCity = newRestaurantForm.billingUseSameAddress
+        ? newRestaurantForm.city
+        : newRestaurantForm.billingCity;
+
+      const p_billing = {
+        contact_source: newRestaurantForm.billingSameAsOwner
+          ? 'step2'
+          : 'custom',
+        name: billingName,
+        email: billingEmail,
+        phone: billingPhone || null,
+        address: billingAddress || null,
+        postal_code: billingPostalCode || null,
+        city: billingCity || null,
+        delivery_date: null,
+        mall_form_required: false,
+      };
+
+      // Appel RPC
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: result, error: rpcError } = await (supabase.rpc as any)(
+        'create_public_linkme_order',
+        {
+          p_affiliate_id: affiliate.id,
+          p_selection_id: selectedSelectionId,
+          p_cart: p_cart,
+          p_requester: p_requester,
+          p_organisation: p_organisation,
+          p_owner: p_owner,
+          p_billing: p_billing,
+        }
+      );
+
+      if (rpcError) {
+        throw new Error(`Erreur création commande: ${rpcError.message}`);
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rpcResult = result;
+
+      if (!rpcResult?.success) {
+        throw new Error(
+          rpcResult?.error || 'Erreur inconnue lors de la création'
+        );
+      }
+
+      const orderId = rpcResult.order_id;
+      const orderNumber = rpcResult.order_number;
+      const totalTtc = rpcResult.total_ttc;
+
+      // Envoyer notification email
+      try {
+        const { data: selectionData } = await supabase
+          .from('linkme_selections')
+          .select('name, linkme_affiliates(name)')
+          .eq('id', selectedSelectionId)
+          .single();
+
+        await fetch('/api/emails/notify-enseigne-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderNumber,
+            orderId,
+            requesterName: p_requester.name,
+            requesterEmail: p_requester.email,
+            requesterType: 'responsable_enseigne',
+            organisationName: newRestaurantForm.tradeName,
+            isNewRestaurant: true,
+            totalTtc: totalTtc,
+            source: 'create_order_modal',
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            affiliateName: (selectionData?.linkme_affiliates as any)?.name,
+            selectionName: selectionData?.name,
+            notes: notes || null,
+          }),
+        });
+      } catch (emailError) {
+        console.error('Erreur envoi notification email:', emailError);
+      }
+
+      // Invalider les caches
+      queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
+      queryClient.invalidateQueries({
+        queryKey: ['affiliate-orders', affiliate.id],
+      });
+
+      toast.success('Demande envoyée !', {
+        description: `Commande ${orderNumber} en attente de validation.`,
+      });
+
+      handleClose();
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Erreur inconnue';
+      toast.error('Erreur', {
+        description: errorMessage,
+      });
+    }
   };
 
   // ============================================
@@ -1009,7 +1174,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                 Nouveau restaurant - Ouverture
               </h2>
               <p className="text-green-100 text-sm">
-                Étape {newRestaurantStep}/4
+                Étape {newRestaurantStep}/5
               </p>
             </div>
           </div>
@@ -1029,6 +1194,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
               { step: 2, label: 'Propriétaire', icon: User },
               { step: 3, label: 'Facturation', icon: FileText },
               { step: 4, label: 'Produits', icon: ShoppingCart },
+              { step: 5, label: 'Validation', icon: Check },
             ].map((s, idx) => (
               <div key={s.step} className="flex items-center">
                 <div
@@ -1053,7 +1219,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                     {s.label}
                   </span>
                 </div>
-                {idx < 3 && (
+                {idx < 4 && (
                   <div
                     className={`w-12 h-0.5 mx-2 ${newRestaurantStep > s.step ? 'bg-green-600' : 'bg-gray-200'}`}
                   />
@@ -1065,12 +1231,12 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
-          {/* Step 1: Restaurant */}
+          {/* Step 1: Restaurant - Adresse de livraison */}
           {newRestaurantStep === 1 && (
             <div className="max-w-xl mx-auto space-y-6">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Informations du restaurant
+                  Adresse de livraison du restaurant
                 </h3>
                 <div className="space-y-4">
                   <div>
@@ -1079,6 +1245,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                     </label>
                     <input
                       type="text"
+                      autoComplete="organization"
                       value={newRestaurantForm.tradeName}
                       onChange={e =>
                         setNewRestaurantForm(prev => ({
@@ -1097,6 +1264,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                       </label>
                       <input
                         type="text"
+                        autoComplete="address-level2"
                         value={newRestaurantForm.city}
                         onChange={e =>
                           setNewRestaurantForm(prev => ({
@@ -1114,6 +1282,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                       </label>
                       <input
                         type="text"
+                        autoComplete="postal-code"
                         value={newRestaurantForm.postalCode}
                         onChange={e =>
                           setNewRestaurantForm(prev => ({
@@ -1132,6 +1301,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                     </label>
                     <input
                       type="text"
+                      autoComplete="street-address"
                       value={newRestaurantForm.address}
                       onChange={e =>
                         setNewRestaurantForm(prev => ({
@@ -1155,17 +1325,17 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                     onClick={() =>
                       setNewRestaurantForm(prev => ({
                         ...prev,
-                        ownerType: 'propre',
+                        ownerType: 'succursale',
                       }))
                     }
                     className={`p-4 border-2 rounded-xl transition-all ${
-                      newRestaurantForm.ownerType === 'propre'
+                      newRestaurantForm.ownerType === 'succursale'
                         ? 'border-green-500 bg-green-50'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
                     <Building2
-                      className={`h-8 w-8 mx-auto mb-2 ${newRestaurantForm.ownerType === 'propre' ? 'text-green-600' : 'text-gray-400'}`}
+                      className={`h-8 w-8 mx-auto mb-2 ${newRestaurantForm.ownerType === 'succursale' ? 'text-green-600' : 'text-gray-400'}`}
                     />
                     <p className="font-medium text-gray-900">Propre</p>
                     <p className="text-xs text-gray-500 mt-1">
@@ -1212,6 +1382,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                     </label>
                     <input
                       type="text"
+                      autoComplete="given-name"
                       value={newRestaurantForm.ownerFirstName}
                       onChange={e =>
                         setNewRestaurantForm(prev => ({
@@ -1228,6 +1399,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                     </label>
                     <input
                       type="text"
+                      autoComplete="family-name"
                       value={newRestaurantForm.ownerLastName}
                       onChange={e =>
                         setNewRestaurantForm(prev => ({
@@ -1245,6 +1417,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                   </label>
                   <input
                     type="email"
+                    autoComplete="email"
                     value={newRestaurantForm.ownerEmail}
                     onChange={e =>
                       setNewRestaurantForm(prev => ({
@@ -1261,6 +1434,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                   </label>
                   <input
                     type="tel"
+                    autoComplete="tel"
                     value={newRestaurantForm.ownerPhone}
                     onChange={e =>
                       setNewRestaurantForm(prev => ({
@@ -1284,6 +1458,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                         </label>
                         <input
                           type="text"
+                          autoComplete="organization"
                           value={newRestaurantForm.ownerCompanyName}
                           onChange={e =>
                             setNewRestaurantForm(prev => ({
@@ -1305,103 +1480,272 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
           {newRestaurantStep === 3 && (
             <div className="max-w-xl mx-auto space-y-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Responsable Facturation
+                Informations de facturation
               </h3>
 
-              <label className="flex items-center gap-3 p-4 border rounded-xl cursor-pointer hover:bg-gray-50">
+              {/* Dénomination sociale (franchise uniquement) */}
+              {newRestaurantForm.ownerType === 'franchise' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Dénomination sociale *
+                  </label>
+                  <input
+                    type="text"
+                    autoComplete="organization"
+                    value={newRestaurantForm.billingCompanyName}
+                    onChange={e =>
+                      setNewRestaurantForm(prev => ({
+                        ...prev,
+                        billingCompanyName: e.target.value,
+                      }))
+                    }
+                    placeholder="Ex: SARL Le Gourmet"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  />
+                </div>
+              )}
+
+              {/* Adresse de facturation */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-medium text-gray-900">
+                  Adresse de facturation
+                </h4>
+                <label className="flex items-center gap-3 p-4 border rounded-xl cursor-pointer hover:bg-gray-50">
+                  <input
+                    type="checkbox"
+                    checked={newRestaurantForm.billingUseSameAddress}
+                    onChange={e =>
+                      setNewRestaurantForm(prev => ({
+                        ...prev,
+                        billingUseSameAddress: e.target.checked,
+                      }))
+                    }
+                    className="w-5 h-5 text-green-600 rounded focus:ring-green-500"
+                  />
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      Reprendre l'adresse de livraison
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {newRestaurantForm.address},{' '}
+                      {newRestaurantForm.postalCode} {newRestaurantForm.city}
+                    </p>
+                  </div>
+                </label>
+
+                {!newRestaurantForm.billingUseSameAddress && (
+                  <div className="space-y-4 pt-2">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Adresse *
+                      </label>
+                      <input
+                        type="text"
+                        autoComplete="street-address"
+                        value={newRestaurantForm.billingAddress}
+                        onChange={e =>
+                          setNewRestaurantForm(prev => ({
+                            ...prev,
+                            billingAddress: e.target.value,
+                          }))
+                        }
+                        placeholder="123 rue de la Facturation"
+                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Code postal *
+                        </label>
+                        <input
+                          type="text"
+                          autoComplete="postal-code"
+                          value={newRestaurantForm.billingPostalCode}
+                          onChange={e =>
+                            setNewRestaurantForm(prev => ({
+                              ...prev,
+                              billingPostalCode: e.target.value,
+                            }))
+                          }
+                          placeholder="75001"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Ville *
+                        </label>
+                        <input
+                          type="text"
+                          autoComplete="address-level2"
+                          value={newRestaurantForm.billingCity}
+                          onChange={e =>
+                            setNewRestaurantForm(prev => ({
+                              ...prev,
+                              billingCity: e.target.value,
+                            }))
+                          }
+                          placeholder="Paris"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* SIRET */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  SIRET *
+                </label>
                 <input
-                  type="checkbox"
-                  checked={newRestaurantForm.billingSameAsOwner}
+                  type="text"
+                  value={newRestaurantForm.billingSiret}
                   onChange={e =>
                     setNewRestaurantForm(prev => ({
                       ...prev,
-                      billingSameAsOwner: e.target.checked,
+                      billingSiret: e.target.value.replace(/\s/g, ''),
                     }))
                   }
-                  className="w-5 h-5 text-green-600 rounded focus:ring-green-500"
+                  placeholder="123 456 789 00012"
+                  maxLength={14}
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none font-mono"
                 />
-                <div>
-                  <p className="font-medium text-gray-900">
-                    Même contact que le propriétaire
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {newRestaurantForm.ownerFirstName}{' '}
-                    {newRestaurantForm.ownerLastName} -{' '}
-                    {newRestaurantForm.ownerEmail}
-                  </p>
-                </div>
-              </label>
+                <p className="text-xs text-gray-500 mt-1">
+                  14 chiffres sans espaces
+                </p>
+              </div>
 
-              {!newRestaurantForm.billingSameAsOwner && (
-                <div className="space-y-4 pt-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Prénom *
-                      </label>
-                      <input
-                        type="text"
-                        value={newRestaurantForm.billingFirstName}
-                        onChange={e =>
-                          setNewRestaurantForm(prev => ({
-                            ...prev,
-                            billingFirstName: e.target.value,
-                          }))
-                        }
-                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Nom *
-                      </label>
-                      <input
-                        type="text"
-                        value={newRestaurantForm.billingLastName}
-                        onChange={e =>
-                          setNewRestaurantForm(prev => ({
-                            ...prev,
-                            billingLastName: e.target.value,
-                          }))
-                        }
-                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Email *
-                    </label>
-                    <input
-                      type="email"
-                      value={newRestaurantForm.billingEmail}
-                      onChange={e =>
-                        setNewRestaurantForm(prev => ({
-                          ...prev,
-                          billingEmail: e.target.value,
-                        }))
-                      }
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Téléphone
-                    </label>
-                    <input
-                      type="tel"
-                      value={newRestaurantForm.billingPhone}
-                      onChange={e =>
-                        setNewRestaurantForm(prev => ({
-                          ...prev,
-                          billingPhone: e.target.value,
-                        }))
-                      }
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-                    />
-                  </div>
+              {/* K-bis (facultatif) */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  K-bis (facultatif)
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="text"
+                    value={newRestaurantForm.billingKbisUrl}
+                    onChange={e =>
+                      setNewRestaurantForm(prev => ({
+                        ...prev,
+                        billingKbisUrl: e.target.value,
+                      }))
+                    }
+                    placeholder="URL du document K-bis"
+                    className="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  />
                 </div>
-              )}
+                <p className="text-xs text-gray-500 mt-1">
+                  Lien vers le document (Google Drive, Dropbox, etc.)
+                </p>
+              </div>
+
+              {/* Contact facturation */}
+              <div className="pt-4 border-t">
+                <h4 className="text-sm font-medium text-gray-900 mb-4">
+                  Contact facturation
+                </h4>
+                <label className="flex items-center gap-3 p-4 border rounded-xl cursor-pointer hover:bg-gray-50">
+                  <input
+                    type="checkbox"
+                    checked={newRestaurantForm.billingSameAsOwner}
+                    onChange={e =>
+                      setNewRestaurantForm(prev => ({
+                        ...prev,
+                        billingSameAsOwner: e.target.checked,
+                      }))
+                    }
+                    className="w-5 h-5 text-green-600 rounded focus:ring-green-500"
+                  />
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      Même contact que le propriétaire
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {newRestaurantForm.ownerFirstName}{' '}
+                      {newRestaurantForm.ownerLastName} -{' '}
+                      {newRestaurantForm.ownerEmail}
+                    </p>
+                  </div>
+                </label>
+
+                {!newRestaurantForm.billingSameAsOwner && (
+                  <div className="space-y-4 pt-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Prénom *
+                        </label>
+                        <input
+                          type="text"
+                          autoComplete="given-name"
+                          value={newRestaurantForm.billingFirstName}
+                          onChange={e =>
+                            setNewRestaurantForm(prev => ({
+                              ...prev,
+                              billingFirstName: e.target.value,
+                            }))
+                          }
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Nom *
+                        </label>
+                        <input
+                          type="text"
+                          autoComplete="family-name"
+                          value={newRestaurantForm.billingLastName}
+                          onChange={e =>
+                            setNewRestaurantForm(prev => ({
+                              ...prev,
+                              billingLastName: e.target.value,
+                            }))
+                          }
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Email *
+                      </label>
+                      <input
+                        type="email"
+                        autoComplete="email"
+                        value={newRestaurantForm.billingEmail}
+                        onChange={e =>
+                          setNewRestaurantForm(prev => ({
+                            ...prev,
+                            billingEmail: e.target.value,
+                          }))
+                        }
+                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Téléphone
+                      </label>
+                      <input
+                        type="tel"
+                        autoComplete="tel"
+                        value={newRestaurantForm.billingPhone}
+                        onChange={e =>
+                          setNewRestaurantForm(prev => ({
+                            ...prev,
+                            billingPhone: e.target.value,
+                          }))
+                        }
+                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -1578,6 +1922,217 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Step 5: Validation / Récapitulatif */}
+          {newRestaurantStep === 5 && (
+            <div className="max-w-3xl mx-auto space-y-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Récapitulatif de la commande
+              </h3>
+
+              {/* Récap Restaurant */}
+              <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                  <Store className="h-4 w-4 text-green-600" />
+                  Restaurant
+                </h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-500">Nom commercial</p>
+                    <p className="font-medium">{newRestaurantForm.tradeName}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Type</p>
+                    <p className="font-medium capitalize">
+                      {newRestaurantForm.ownerType === 'franchise'
+                        ? 'Franchisé'
+                        : 'Propre'}
+                    </p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-gray-500">Adresse de livraison</p>
+                    <p className="font-medium">
+                      {newRestaurantForm.address},{' '}
+                      {newRestaurantForm.postalCode} {newRestaurantForm.city}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Récap Propriétaire */}
+              <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                  <User className="h-4 w-4 text-green-600" />
+                  Propriétaire
+                </h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-500">Nom complet</p>
+                    <p className="font-medium">
+                      {newRestaurantForm.ownerFirstName}{' '}
+                      {newRestaurantForm.ownerLastName}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Email</p>
+                    <p className="font-medium">
+                      {newRestaurantForm.ownerEmail}
+                    </p>
+                  </div>
+                  {newRestaurantForm.ownerPhone && (
+                    <div>
+                      <p className="text-gray-500">Téléphone</p>
+                      <p className="font-medium">
+                        {newRestaurantForm.ownerPhone}
+                      </p>
+                    </div>
+                  )}
+                  {newRestaurantForm.ownerType === 'franchise' &&
+                    newRestaurantForm.ownerCompanyName && (
+                      <div>
+                        <p className="text-gray-500">Raison sociale</p>
+                        <p className="font-medium">
+                          {newRestaurantForm.ownerCompanyName}
+                        </p>
+                      </div>
+                    )}
+                </div>
+              </div>
+
+              {/* Récap Facturation */}
+              <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-green-600" />
+                  Facturation
+                </h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  {newRestaurantForm.ownerType === 'franchise' && (
+                    <div>
+                      <p className="text-gray-500">Dénomination sociale</p>
+                      <p className="font-medium">
+                        {newRestaurantForm.billingCompanyName || '-'}
+                      </p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-gray-500">SIRET</p>
+                    <p className="font-medium font-mono">
+                      {newRestaurantForm.billingSiret || '-'}
+                    </p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-gray-500">Adresse de facturation</p>
+                    <p className="font-medium">
+                      {newRestaurantForm.billingUseSameAddress
+                        ? `${newRestaurantForm.address}, ${newRestaurantForm.postalCode} ${newRestaurantForm.city}`
+                        : `${newRestaurantForm.billingAddress}, ${newRestaurantForm.billingPostalCode} ${newRestaurantForm.billingCity}`}
+                    </p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-gray-500">Contact facturation</p>
+                    <p className="font-medium">
+                      {newRestaurantForm.billingSameAsOwner
+                        ? `${newRestaurantForm.ownerFirstName} ${newRestaurantForm.ownerLastName} - ${newRestaurantForm.ownerEmail}`
+                        : `${newRestaurantForm.billingFirstName} ${newRestaurantForm.billingLastName} - ${newRestaurantForm.billingEmail}`}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Récap Panier */}
+              <div className="bg-white border rounded-xl overflow-hidden">
+                <div className="px-4 py-3 bg-gray-50 border-b">
+                  <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                    <ShoppingCart className="h-4 w-4 text-green-600" />
+                    Panier ({cart.reduce(
+                      (sum, item) => sum + item.quantity,
+                      0
+                    )}{' '}
+                    article
+                    {cart.reduce((sum, item) => sum + item.quantity, 0) > 1
+                      ? 's'
+                      : ''}
+                    )
+                  </h4>
+                </div>
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
+                    <tr>
+                      <th className="px-4 py-2 text-left">Produit</th>
+                      <th className="px-4 py-2 text-center">Qté</th>
+                      <th className="px-4 py-2 text-right">Prix unit.</th>
+                      <th className="px-4 py-2 text-right">Total HT</th>
+                      <th className="px-4 py-2 text-right">Marge</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {cart.map(item => {
+                      const lineHt = item.quantity * item.unitPriceHt;
+                      const lineMargin =
+                        item.quantity *
+                        item.basePriceHt *
+                        (item.marginRate / 100);
+                      return (
+                        <tr key={item.selectionItemId}>
+                          <td className="px-4 py-2">
+                            <p className="font-medium text-gray-900">
+                              {item.productName}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {item.productSku}
+                            </p>
+                          </td>
+                          <td className="px-4 py-2 text-center">
+                            {item.quantity}
+                          </td>
+                          <td className="px-4 py-2 text-right">
+                            {item.unitPriceHt.toFixed(2)} €
+                          </td>
+                          <td className="px-4 py-2 text-right font-medium">
+                            {lineHt.toFixed(2)} €
+                          </td>
+                          <td className="px-4 py-2 text-right text-green-600">
+                            +{lineMargin.toFixed(2)} €
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+                <div className="px-4 py-3 bg-gray-50 border-t">
+                  <div className="flex justify-end">
+                    <div className="w-64 space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Total HT</span>
+                        <span className="font-medium">
+                          {cartTotals.totalHt.toFixed(2)} €
+                        </span>
+                      </div>
+                      {cartTotals.tvaDetails.map(tva => (
+                        <div
+                          key={tva.rate}
+                          className="flex justify-between text-gray-500"
+                        >
+                          <span>TVA ({(tva.rate * 100).toFixed(0)}%)</span>
+                          <span>{tva.amount.toFixed(2)} €</span>
+                        </div>
+                      ))}
+                      <div className="flex justify-between font-bold text-base pt-1 border-t">
+                        <span>Total TTC</span>
+                        <span>{cartTotals.totalTtc.toFixed(2)} €</span>
+                      </div>
+                      <div className="flex justify-between text-green-600 pt-1 border-t">
+                        <span className="font-medium">Votre commission</span>
+                        <span className="font-bold">
+                          +{cartTotals.totalMargin.toFixed(2)} €
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               {/* Notes */}
               <div>
@@ -1591,6 +2146,20 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                   rows={2}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
                 />
+              </div>
+
+              {/* Avertissement validation */}
+              <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-amber-800">
+                    Validation requise
+                  </p>
+                  <p className="text-sm text-amber-700 mt-0.5">
+                    Votre commande sera envoyée à l'équipe pour validation avant
+                    traitement.
+                  </p>
+                </div>
               </div>
             </div>
           )}
@@ -1610,7 +2179,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
             Retour
           </button>
 
-          {newRestaurantStep < 4 ? (
+          {newRestaurantStep < 5 ? (
             <button
               onClick={() => setNewRestaurantStep(prev => prev + 1)}
               disabled={
@@ -1621,7 +2190,11 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                 (newRestaurantStep === 2 &&
                   (!newRestaurantForm.ownerFirstName.trim() ||
                     !newRestaurantForm.ownerLastName.trim() ||
-                    !newRestaurantForm.ownerEmail.trim()))
+                    !newRestaurantForm.ownerEmail.trim())) ||
+                (newRestaurantStep === 3 &&
+                  !newRestaurantForm.billingSiret.trim()) ||
+                (newRestaurantStep === 4 &&
+                  (!selectedSelectionId || cart.length === 0))
               }
               className="flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
             >
@@ -1630,7 +2203,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
             </button>
           ) : (
             <button
-              onClick={handleSubmitNew}
+              onClick={() => setShowConfirmModal(true)}
               disabled={!canSubmitNew || createOrder.isPending}
               className="flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
             >
@@ -1639,11 +2212,78 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
               ) : (
                 <Check className="h-5 w-5" />
               )}
-              Créer la commande
+              Valider la commande
             </button>
           )}
         </div>
       </div>
+
+      {/* Modal de confirmation (double-check) */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowConfirmModal(false)}
+          />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="px-6 py-4 border-b bg-gradient-to-r from-green-600 to-green-700">
+              <h3 className="text-lg font-semibold text-white">
+                Confirmer la commande ?
+              </h3>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-gray-600">
+                Vous êtes sur le point de soumettre une commande pour :
+              </p>
+              <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                <p className="font-semibold text-gray-900">
+                  {newRestaurantForm.tradeName}
+                </p>
+                <p className="text-sm text-gray-600">
+                  {newRestaurantForm.address}, {newRestaurantForm.postalCode}{' '}
+                  {newRestaurantForm.city}
+                </p>
+                <div className="pt-2 border-t">
+                  <p className="text-sm text-gray-500">
+                    {cart.reduce((sum, item) => sum + item.quantity, 0)}{' '}
+                    article(s)
+                  </p>
+                  <p className="font-bold text-gray-900">
+                    {cartTotals.totalTtc.toFixed(2)} € TTC
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2 text-sm text-amber-700 bg-amber-50 p-3 rounded-lg">
+                <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                <p>La commande sera envoyée à l'équipe pour validation.</p>
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t bg-gray-50 flex items-center justify-end gap-3">
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={() => {
+                  setShowConfirmModal(false);
+                  handleSubmitNew();
+                }}
+                disabled={createOrder.isPending}
+                className="flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium transition-colors"
+              >
+                {createOrder.isPending ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Check className="h-5 w-5" />
+                )}
+                Confirmer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
