@@ -220,23 +220,36 @@ async function requestInfo(
 ): Promise<OrderActionResult> {
   const supabase = createClient();
 
-  // 1. Récupérer les détails LinkMe pour avoir l'email du demandeur
-  const details = await fetchLinkMeOrderDetails(input.orderId);
+  // Paralléliser les requêtes pour éviter séquentiel (fix perf)
+  const [details, orderResult] = await Promise.all([
+    // 1. Récupérer les détails LinkMe
+    fetchLinkMeOrderDetails(input.orderId),
+    // 2. Récupérer la commande avec jointure organisation
+    supabase
+      .from('sales_orders')
+      .select(
+        'order_number, notes, customer_id, customer_type, organisations!sales_orders_customer_id_fkey(trade_name, legal_name)'
+      )
+      .eq('id', input.orderId)
+      .single(),
+  ]);
 
   if (!details) {
     throw new Error('Détails LinkMe non trouvés pour cette commande');
   }
 
-  // 2. Ajouter une note à la commande
-  const { data: order, error: fetchError } = await supabase
-    .from('sales_orders')
-    .select('notes')
-    .eq('id', input.orderId)
-    .single();
-
-  if (fetchError) {
-    throw new Error(`Erreur récupération commande: ${fetchError.message}`);
+  if (orderResult.error) {
+    throw new Error(
+      `Erreur récupération commande: ${orderResult.error.message}`
+    );
   }
+
+  const order = orderResult.data;
+
+  // Organisation récupérée via jointure (peut être array ou objet selon Supabase)
+  const orgRaw = order.organisations as any;
+  const orgData = Array.isArray(orgRaw) ? orgRaw[0] : orgRaw;
+  const organisationName = orgData?.trade_name || orgData?.legal_name || null;
 
   const timestamp = new Date().toLocaleString('fr-FR');
   const newNote = `[${timestamp}] DEMANDE COMPLEMENTS: ${input.message}`;
@@ -254,7 +267,23 @@ async function requestInfo(
     throw new Error(`Erreur mise à jour notes: ${updateError.message}`);
   }
 
-  // TODO Phase 3: Envoyer email au demandeur (details.requester_email)
+  // 4. Envoyer email au demandeur
+  try {
+    await fetch('/api/emails/linkme-order-request-info', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderNumber: order.order_number,
+        requesterEmail: details.requester_email,
+        requesterName: details.requester_name,
+        message: input.message,
+        organisationName,
+      }),
+    });
+  } catch (emailError) {
+    console.error('Erreur envoi email request-info:', emailError);
+    // On ne bloque pas si l'email échoue
+  }
 
   return {
     success: true,
@@ -265,36 +294,49 @@ async function requestInfo(
 /**
  * Refuse une commande
  * - Met à jour status = 'cancelled'
- * - TODO: Envoyer email au demandeur avec la raison
+ * - Envoie email au demandeur avec la raison
  */
 async function rejectOrder(
   input: RejectOrderInput
 ): Promise<OrderActionResult> {
   const supabase = createClient();
 
-  // 1. Récupérer les détails LinkMe
-  const details = await fetchLinkMeOrderDetails(input.orderId);
+  // Paralléliser les requêtes pour éviter séquentiel (fix perf)
+  const [details, orderResult] = await Promise.all([
+    // 1. Récupérer les détails LinkMe
+    fetchLinkMeOrderDetails(input.orderId),
+    // 2. Récupérer la commande avec jointure organisation
+    supabase
+      .from('sales_orders')
+      .select(
+        'order_number, notes, customer_id, customer_type, organisations!sales_orders_customer_id_fkey(trade_name, legal_name)'
+      )
+      .eq('id', input.orderId)
+      .single(),
+  ]);
 
   if (!details) {
     throw new Error('Détails LinkMe non trouvés pour cette commande');
   }
 
-  // 2. Ajouter une note avec la raison du refus
-  const { data: order, error: fetchError } = await supabase
-    .from('sales_orders')
-    .select('notes')
-    .eq('id', input.orderId)
-    .single();
-
-  if (fetchError) {
-    throw new Error(`Erreur récupération commande: ${fetchError.message}`);
+  if (orderResult.error) {
+    throw new Error(
+      `Erreur récupération commande: ${orderResult.error.message}`
+    );
   }
+
+  const order = orderResult.data;
+
+  // Organisation récupérée via jointure (peut être array ou objet selon Supabase)
+  const orgRaw = order.organisations as any;
+  const orgData = Array.isArray(orgRaw) ? orgRaw[0] : orgRaw;
+  const organisationName = orgData?.trade_name || orgData?.legal_name || null;
 
   const timestamp = new Date().toLocaleString('fr-FR');
   const newNote = `[${timestamp}] COMMANDE REFUSEE: ${input.reason}`;
   const updatedNotes = order.notes ? `${order.notes}\n\n${newNote}` : newNote;
 
-  // 3. Mettre à jour la commande
+  // 4. Mettre à jour la commande
   const { error: updateError } = await supabase
     .from('sales_orders')
     .update({
@@ -308,7 +350,23 @@ async function rejectOrder(
     throw new Error(`Erreur mise à jour commande: ${updateError.message}`);
   }
 
-  // TODO Phase 3: Envoyer email au demandeur avec la raison
+  // 5. Envoyer email au demandeur
+  try {
+    await fetch('/api/emails/linkme-order-rejected', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderNumber: order.order_number,
+        requesterEmail: details.requester_email,
+        requesterName: details.requester_name,
+        reason: input.reason,
+        organisationName,
+      }),
+    });
+  } catch (emailError) {
+    console.error('Erreur envoi email rejection:', emailError);
+    // On ne bloque pas si l'email échoue
+  }
 
   return {
     success: true,
@@ -370,8 +428,127 @@ export function useRejectOrder() {
 }
 
 // ============================================
+// UPDATE LINKME DETAILS (ÉDITION BACK-OFFICE)
+// ============================================
+
+export interface UpdateLinkMeDetailsInput {
+  orderId: string;
+  updates: Partial<{
+    // Étape 1: Demandeur
+    requester_type: string;
+    requester_name: string;
+    requester_email: string;
+    requester_phone: string | null;
+    requester_position: string | null;
+    is_new_restaurant: boolean;
+    // Étape 2: Propriétaire
+    owner_type: string | null;
+    owner_contact_same_as_requester: boolean | null;
+    owner_name: string | null;
+    owner_email: string | null;
+    owner_phone: string | null;
+    owner_company_legal_name: string | null;
+    owner_company_trade_name: string | null;
+    owner_kbis_url: string | null;
+    // Étape 3: Facturation
+    billing_contact_source: string | null;
+    billing_name: string | null;
+    billing_email: string | null;
+    billing_phone: string | null;
+    delivery_terms_accepted: boolean | null;
+    desired_delivery_date: string | null;
+    mall_form_required: boolean | null;
+    mall_form_email: string | null;
+  }>;
+}
+
+/**
+ * Mise à jour des détails LinkMe d'une commande
+ * Utilisé par l'admin pour compléter/modifier les infos des Étapes 1-3
+ */
+async function updateLinkMeDetails(
+  input: UpdateLinkMeDetailsInput
+): Promise<{ success: boolean }> {
+  const supabase = createClient();
+
+  // Convertir les valeurs undefined en conservant null uniquement où autorisé
+  const cleanedUpdates: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(input.updates)) {
+    if (value !== undefined) {
+      cleanedUpdates[key] = value;
+    }
+  }
+
+  const { error } = await supabase
+    .from('sales_order_linkme_details')
+    .update({
+      ...cleanedUpdates,
+      updated_at: new Date().toISOString(),
+    } as Record<string, unknown>)
+    .eq('sales_order_id', input.orderId);
+
+  if (error) {
+    console.error('Erreur update LinkMe details:', error);
+    throw new Error(`Erreur lors de la mise à jour: ${error.message}`);
+  }
+
+  return { success: true };
+}
+
+/**
+ * Hook: useUpdateLinkMeDetails
+ * Permet à l'admin de modifier les détails LinkMe d'une commande
+ */
+export function useUpdateLinkMeDetails() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updateLinkMeDetails,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['pending-orders'] });
+    },
+  });
+}
+
+// ============================================
 // PENDING ORDERS FOR APPROBATIONS
 // ============================================
+
+export interface PendingOrderItem {
+  id: string;
+  quantity: number;
+  unit_price_ht: number;
+  total_ht: number;
+  products: {
+    id: string;
+    name: string;
+    sku: string;
+    primary_image_url: string | null;
+  } | null;
+}
+
+export interface PendingOrderLinkMeDetails {
+  is_new_restaurant: boolean;
+  requester_type: string | null;
+  requester_name: string | null;
+  requester_email: string | null;
+  requester_phone: string | null;
+  requester_position: string | null;
+  owner_type: string | null;
+  owner_contact_same_as_requester: boolean | null;
+  owner_name: string | null;
+  owner_email: string | null;
+  owner_phone: string | null;
+  owner_company_legal_name: string | null;
+  owner_company_trade_name: string | null;
+  billing_contact_source: string | null;
+  billing_name: string | null;
+  billing_email: string | null;
+  billing_phone: string | null;
+  desired_delivery_date: string | null;
+  mall_form_required: boolean | null;
+}
 
 export interface PendingOrder {
   id: string;
@@ -380,13 +557,16 @@ export interface PendingOrder {
   total_ht: number;
   total_ttc: number;
   created_at: string;
-  // LinkMe details
+  // LinkMe details (simple)
   requester_name: string | null;
   requester_email: string | null;
   requester_type: string | null;
   // Organisation
   organisation_name: string | null;
   enseigne_name: string | null;
+  // Enriched data for detail view
+  linkme_details: PendingOrderLinkMeDetails | null;
+  items: PendingOrderItem[];
 }
 
 /**
@@ -417,6 +597,7 @@ export function usePendingOrdersCount() {
 
 /**
  * Hook: récupère les commandes en attente de validation
+ * Enrichi avec les détails LinkMe et les items pour la vue détail
  */
 export function usePendingOrders() {
   return useQuery({
@@ -436,7 +617,40 @@ export function usePendingOrders() {
           total_ttc,
           created_at,
           customer_id,
-          customer_type
+          customer_type,
+          sales_order_linkme_details (
+            is_new_restaurant,
+            requester_type,
+            requester_name,
+            requester_email,
+            requester_phone,
+            requester_position,
+            owner_type,
+            owner_contact_same_as_requester,
+            owner_name,
+            owner_email,
+            owner_phone,
+            owner_company_legal_name,
+            owner_company_trade_name,
+            billing_contact_source,
+            billing_name,
+            billing_email,
+            billing_phone,
+            desired_delivery_date,
+            mall_form_required
+          ),
+          sales_order_items (
+            id,
+            quantity,
+            unit_price_ht,
+            total_ht,
+            products (
+              id,
+              name,
+              sku,
+              product_images!left(public_url, is_primary)
+            )
+          )
         `
         )
         .eq('pending_admin_validation', true)
@@ -447,33 +661,87 @@ export function usePendingOrders() {
         throw error;
       }
 
-      // Enrich with LinkMe details and organisation names
+      // BATCH: Récupérer toutes les organisations en UNE SEULE requête (fix N+1)
+      const organisationIds = (orders || [])
+        .filter(o => o.customer_type === 'organization' && o.customer_id)
+        .map(o => o.customer_id);
+
+      const organisationsMap = new Map<
+        string,
+        {
+          trade_name: string | null;
+          legal_name: string | null;
+          enseigne_name: string | null;
+        }
+      >();
+
+      if (organisationIds.length > 0) {
+        const { data: orgsData } = await supabase
+          .from('organisations')
+          .select('id, trade_name, legal_name, enseigne:enseigne_id(name)')
+          .in('id', organisationIds);
+
+        if (orgsData) {
+          for (const org of orgsData) {
+            organisationsMap.set(org.id, {
+              trade_name: org.trade_name,
+              legal_name: org.legal_name,
+              enseigne_name: (org.enseigne as any)?.name || null,
+            });
+          }
+        }
+      }
+
+      // Map orders with organisation data from the batch
       const enrichedOrders: PendingOrder[] = [];
 
       for (const order of orders || []) {
-        // Get LinkMe details
-        const { data: linkmeDetails } = await supabase
-          .from('sales_order_linkme_details')
-          .select('requester_name, requester_email, requester_type')
-          .eq('sales_order_id', order.id)
-          .single();
-
-        // Get organisation name if customer_type = 'organization'
+        // Get organisation name from cached map (no additional query)
         let organisationName: string | null = null;
         let enseigneName: string | null = null;
 
         if (order.customer_type === 'organization' && order.customer_id) {
-          const { data: org } = await supabase
-            .from('organisations')
-            .select('trade_name, legal_name, enseigne:enseigne_id(name)')
-            .eq('id', order.customer_id)
-            .single();
-
-          if (org) {
-            organisationName = org.trade_name || org.legal_name;
-            enseigneName = (org.enseigne as any)?.name || null;
+          const orgData = organisationsMap.get(order.customer_id);
+          if (orgData) {
+            organisationName = orgData.trade_name || orgData.legal_name;
+            enseigneName = orgData.enseigne_name;
           }
         }
+
+        // Extract linkme details (can be single object or array depending on Supabase query)
+        const linkmeDetailsRaw = order.sales_order_linkme_details as any;
+        const linkmeDetails = Array.isArray(linkmeDetailsRaw)
+          ? linkmeDetailsRaw[0] || null
+          : linkmeDetailsRaw || null;
+
+        // Map items with proper typing and extract primary image
+        const items: PendingOrderItem[] = (
+          (order.sales_order_items as any[]) ?? []
+        ).map((item: any) => {
+          // Extract primary image from product_images array
+          const productImages = item.products?.product_images as
+            | Array<{ public_url: string; is_primary: boolean }>
+            | undefined;
+          const primaryImage =
+            productImages?.find(img => img.is_primary)?.public_url ??
+            productImages?.[0]?.public_url ??
+            null;
+
+          return {
+            id: item.id as string,
+            quantity: item.quantity as number,
+            unit_price_ht: item.unit_price_ht as number,
+            total_ht: item.total_ht as number,
+            products: item.products
+              ? {
+                  id: item.products.id as string,
+                  name: item.products.name as string,
+                  sku: item.products.sku as string,
+                  primary_image_url: primaryImage,
+                }
+              : null,
+          };
+        });
 
         enrichedOrders.push({
           id: order.id,
@@ -487,6 +755,33 @@ export function usePendingOrders() {
           requester_type: linkmeDetails?.requester_type || null,
           organisation_name: organisationName,
           enseigne_name: enseigneName,
+          linkme_details: linkmeDetails
+            ? {
+                is_new_restaurant: linkmeDetails.is_new_restaurant ?? false,
+                requester_type: linkmeDetails.requester_type,
+                requester_name: linkmeDetails.requester_name,
+                requester_email: linkmeDetails.requester_email,
+                requester_phone: linkmeDetails.requester_phone,
+                requester_position: linkmeDetails.requester_position,
+                owner_type: linkmeDetails.owner_type,
+                owner_contact_same_as_requester:
+                  linkmeDetails.owner_contact_same_as_requester,
+                owner_name: linkmeDetails.owner_name,
+                owner_email: linkmeDetails.owner_email,
+                owner_phone: linkmeDetails.owner_phone,
+                owner_company_legal_name:
+                  linkmeDetails.owner_company_legal_name,
+                owner_company_trade_name:
+                  linkmeDetails.owner_company_trade_name,
+                billing_contact_source: linkmeDetails.billing_contact_source,
+                billing_name: linkmeDetails.billing_name,
+                billing_email: linkmeDetails.billing_email,
+                billing_phone: linkmeDetails.billing_phone,
+                desired_delivery_date: linkmeDetails.desired_delivery_date,
+                mall_form_required: linkmeDetails.mall_form_required,
+              }
+            : null,
+          items,
         });
       }
 
