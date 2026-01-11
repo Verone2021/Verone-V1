@@ -80,6 +80,7 @@ export function useVercelAnalytics() {
     queryFn: fetchVercelAnalytics,
     staleTime: 300000, // 5 minutes
     refetchInterval: 300000, // Refresh toutes les 5 minutes
+    refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
   });
 }

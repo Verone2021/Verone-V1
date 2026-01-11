@@ -128,6 +128,13 @@ export interface SalesOrder {
     city?: string;
   };
   sales_order_items?: SalesOrderItem[];
+
+  // Frais additionnels (HT)
+  shipping_cost_ht?: number;
+  insurance_cost_ht?: number;
+  handling_cost_ht?: number;
+  // TVA appliquée aux frais (différente de la TVA produits)
+  fees_vat_rate?: number; // Ex: 0.20 = 20%
 }
 
 export interface SalesOrderItem {
@@ -177,6 +184,8 @@ export interface CreateSalesOrderData {
   shipping_cost_ht?: number;
   insurance_cost_ht?: number;
   handling_cost_ht?: number;
+  // TVA appliquée aux frais (différente de la TVA produits)
+  fees_vat_rate?: number; // Ex: 0.20 = 20%
   items: CreateSalesOrderItemData[];
 }
 
@@ -425,97 +434,113 @@ export function useSalesOrders() {
         >();
 
         if (uniqueCreatorIds.length > 0) {
-          // Utiliser user_profiles pour les infos enrichies
+          // ✅ OPTIMISÉ: 1 seule requête batch au lieu de N RPC calls
+          // Note: email n'est pas dans user_profiles (dans auth.users), on le laisse null
           const { data: profiles } = await supabase
             .from('user_profiles')
             .select('user_id, first_name, last_name')
             .in('user_id', uniqueCreatorIds);
 
-          // Utiliser la RPC get_user_info pour les emails et fallback
-          for (const creatorId of uniqueCreatorIds) {
-            const profile = profiles?.find(p => p.user_id === creatorId);
-            const { data: userInfo } = await (supabase.rpc as any)(
-              'get_user_info',
-              { p_user_id: creatorId }
-            );
-
-            if (userInfo && userInfo.length > 0) {
-              creatorsMap.set(creatorId, {
-                first_name:
-                  profile?.first_name ||
-                  userInfo[0].first_name ||
-                  'Utilisateur',
-                last_name: profile?.last_name || userInfo[0].last_name || '',
-                email: userInfo[0].email || null,
+          // Mapper les profils directement (pas de boucle avec RPC)
+          for (const profile of profiles || []) {
+            if (profile.user_id) {
+              creatorsMap.set(profile.user_id, {
+                first_name: profile.first_name || 'Utilisateur',
+                last_name: profile.last_name || '',
+                email: null, // email pas accessible depuis user_profiles
               });
             }
           }
         }
 
-        // Fetch manuel des données clients pour chaque commande (relations polymorphiques)
-        const ordersWithCustomers = await Promise.all(
-          (ordersData || []).map(async order => {
-            let customerData: any = null;
+        // ✅ OPTIMISÉ: Batch fetch des clients (2 requêtes au lieu de N)
+        // Collecter tous les IDs par type de client
+        const orgIds = (ordersData || [])
+          .filter(o => o.customer_type === 'organization' && o.customer_id)
+          .map(o => o.customer_id);
+        const individualIds = (ordersData || [])
+          .filter(o => o.customer_type === 'individual' && o.customer_id)
+          .map(o => o.customer_id);
 
-            if (order.customer_type === 'organization' && order.customer_id) {
-              const { data: org } = await supabase
-                .from('organisations')
-                .select(
-                  'id, legal_name, trade_name, email, phone, website, address_line1, address_line2, postal_code, city, region'
-                )
-                .eq('id', order.customer_id)
-                .single();
-              customerData = { organisations: org };
-            } else if (
-              order.customer_type === 'individual' &&
-              order.customer_id
-            ) {
-              const { data: individual } = await supabase
-                .from('individual_customers')
-                .select(
-                  'id, first_name, last_name, email, phone, address_line1, address_line2, postal_code, city'
-                )
-                .eq('id', order.customer_id)
-                .single();
-              customerData = { individual_customers: individual };
-            }
+        // Batch fetch organisations (1 seule requête)
+        const orgsMap = new Map<string, any>();
+        if (orgIds.length > 0) {
+          const { data: orgs } = await supabase
+            .from('organisations')
+            .select(
+              'id, legal_name, trade_name, email, phone, website, address_line1, address_line2, postal_code, city, region'
+            )
+            .in('id', orgIds);
+          for (const org of orgs || []) {
+            orgsMap.set(org.id, org);
+          }
+        }
 
-            // Enrichir les produits avec primary_image_url (BR-TECH-002)
-            const enrichedItems = (order.sales_order_items || []).map(item => ({
-              ...item,
-              products: item.products
-                ? {
-                    ...item.products,
-                    primary_image_url:
-                      item.products.product_images?.[0]?.public_url || null,
-                  }
-                : null,
-            }));
+        // Batch fetch individual_customers (1 seule requête)
+        const individualsMap = new Map<string, any>();
+        if (individualIds.length > 0) {
+          const { data: individuals } = await supabase
+            .from('individual_customers')
+            .select(
+              'id, first_name, last_name, email, phone, address_line1, address_line2, postal_code, city'
+            )
+            .in('id', individualIds);
+          for (const ind of individuals || []) {
+            individualsMap.set(ind.id, ind);
+          }
+        }
 
-            // 🆕 Ajouter info créateur
-            const creatorInfo = order.created_by
-              ? creatorsMap.get(order.created_by)
+        // Mapper les commandes avec les données clients (sans requêtes supplémentaires)
+        const ordersWithCustomers = (ordersData || []).map(order => {
+          let customerData: any = null;
+
+          if (order.customer_type === 'organization' && order.customer_id) {
+            const org = orgsMap.get(order.customer_id);
+            customerData = org ? { organisations: org } : null;
+          } else if (
+            order.customer_type === 'individual' &&
+            order.customer_id
+          ) {
+            const individual = individualsMap.get(order.customer_id);
+            customerData = individual
+              ? { individual_customers: individual }
               : null;
+          }
 
-            // 🆕 Ajouter info rapprochement bancaire
-            const matchInfo = matchedOrdersMap.get(order.id);
+          // Enrichir les produits avec primary_image_url (BR-TECH-002)
+          const enrichedItems = (order.sales_order_items || []).map(item => ({
+            ...item,
+            products: item.products
+              ? {
+                  ...item.products,
+                  primary_image_url:
+                    item.products.product_images?.[0]?.public_url || null,
+                }
+              : null,
+          }));
 
-            return {
-              ...order,
-              sales_order_items: enrichedItems,
-              creator: creatorInfo || null,
-              // 🆕 Rapprochement
-              is_matched: !!matchInfo,
-              matched_transaction_id: matchInfo?.transaction_id || null,
-              matched_transaction_label: matchInfo?.label || null,
-              matched_transaction_amount: matchInfo?.amount || null,
-              matched_transaction_emitted_at: matchInfo?.emitted_at || null,
-              matched_transaction_attachment_ids:
-                matchInfo?.attachment_ids || null,
-              ...customerData,
-            };
-          })
-        );
+          // Info créateur
+          const creatorInfo = order.created_by
+            ? creatorsMap.get(order.created_by)
+            : null;
+
+          // Info rapprochement bancaire
+          const matchInfo = matchedOrdersMap.get(order.id);
+
+          return {
+            ...order,
+            sales_order_items: enrichedItems,
+            creator: creatorInfo || null,
+            is_matched: !!matchInfo,
+            matched_transaction_id: matchInfo?.transaction_id || null,
+            matched_transaction_label: matchInfo?.label || null,
+            matched_transaction_amount: matchInfo?.amount || null,
+            matched_transaction_emitted_at: matchInfo?.emitted_at || null,
+            matched_transaction_attachment_ids:
+              matchInfo?.attachment_ids || null,
+            ...customerData,
+          };
+        });
 
         console.log(
           '✅ [FETCH] Mise à jour state avec',
@@ -1436,26 +1461,37 @@ export function useSalesOrders() {
           if (insertError) throw insertError;
         }
 
-        // 7. Mettre à jour les items modifiés
-        for (const itemToUpdate of itemsToUpdate) {
-          const existingItem = existingItemsMap.get(itemToUpdate.product_id);
-          if (!existingItem) continue;
-
-          const { error: updateItemError } = await supabase
-            .from('sales_order_items')
-            .update({
-              quantity: itemToUpdate.quantity,
-              unit_price_ht: itemToUpdate.unit_price_ht,
-              tax_rate: itemToUpdate.tax_rate ?? 0.2, // TVA par défaut 20%
-              discount_percentage: itemToUpdate.discount_percentage || 0,
-              eco_tax: itemToUpdate.eco_tax ?? 0, // Éco-taxe (défaut 0)
-              expected_delivery_date: itemToUpdate.expected_delivery_date,
-              notes: itemToUpdate.notes,
-              is_sample: itemToUpdate.is_sample ?? false, // Échantillon (défaut false)
+        // 7. ✅ OPTIMISÉ: Mettre à jour les items modifiés (1 upsert au lieu de N UPDATE)
+        if (itemsToUpdate.length > 0) {
+          const updatePayloads = itemsToUpdate
+            .map(itemToUpdate => {
+              const existingItem = existingItemsMap.get(
+                itemToUpdate.product_id
+              );
+              if (!existingItem) return null;
+              return {
+                id: existingItem.id,
+                sales_order_id: orderId,
+                product_id: itemToUpdate.product_id,
+                quantity: itemToUpdate.quantity,
+                unit_price_ht: itemToUpdate.unit_price_ht,
+                tax_rate: itemToUpdate.tax_rate ?? 0.2,
+                discount_percentage: itemToUpdate.discount_percentage || 0,
+                eco_tax: itemToUpdate.eco_tax ?? 0,
+                expected_delivery_date: itemToUpdate.expected_delivery_date,
+                notes: itemToUpdate.notes,
+                is_sample: itemToUpdate.is_sample ?? false,
+              };
             })
-            .eq('id', existingItem.id);
+            .filter(Boolean);
 
-          if (updateItemError) throw updateItemError;
+          if (updatePayloads.length > 0) {
+            const { error: updateItemsError } = await supabase
+              .from('sales_order_items')
+              .upsert(updatePayloads as any);
+
+            if (updateItemsError) throw updateItemsError;
+          }
         }
 
         // 8. Recalculer les totaux de la commande

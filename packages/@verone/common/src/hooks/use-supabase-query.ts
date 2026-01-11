@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 
 import type { PostgrestFilterBuilder } from '@supabase/postgrest-js';
 import { createClient } from '@verone/utils/supabase/client';
@@ -56,8 +56,8 @@ export function useSupabaseQuery<T = any>(
     error: null,
   });
 
-  // ✅ Singleton déjà mémorisé - pas besoin de useMemo
-  const supabase = createClient();
+  // ✅ FIX: useMemo garantit createClient() appelé une seule fois par instance
+  const supabase = useMemo(() => createClient(), []);
 
   const fetchData = useCallback(async () => {
     if (!enabled) return;
@@ -154,8 +154,8 @@ export function useSupabaseMutation<T = any>(
     error: null,
   });
 
-  // ✅ Singleton déjà mémorisé - pas besoin de useMemo
-  const supabase = createClient();
+  // ✅ FIX: useMemo garantit createClient() appelé une seule fois par instance
+  const supabase = useMemo(() => createClient(), []);
 
   const mutate = useCallback(
     async (variables: any): Promise<T | null> => {

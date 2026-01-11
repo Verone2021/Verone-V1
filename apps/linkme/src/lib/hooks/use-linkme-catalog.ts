@@ -43,10 +43,15 @@ export interface LinkMeCatalogProduct {
   family_name: string | null;
   supplier_name: string | null;
   stock_real: number;
-  // Produits sur mesure
+  // Produits sur mesure (sourcés par Verone)
   enseigne_id: string | null; // Produit exclusif à une enseigne
   assigned_client_id: string | null; // Produit exclusif à une organisation
-  is_custom: boolean; // true si enseigne_id OU assigned_client_id
+  is_custom: boolean; // true si produit sur mesure (is_sourced && !created_by_affiliate)
+  is_sourced: boolean; // true si produit exclusif à enseigne/organisation
+  created_by_affiliate: string | null; // ID affilié créateur (produit créé par affilié)
+  // Style et pièces (nouveaux champs 2026-01)
+  style: string | null; // minimaliste, contemporain, moderne, etc.
+  suitable_rooms: string[] | null; // Pièces compatibles (salon, chambre, etc.)
 }
 
 /**
@@ -99,7 +104,10 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
         subcategory_id,
         supplier_id,
         enseigne_id,
-        assigned_client_id
+        assigned_client_id,
+        created_by_affiliate,
+        style,
+        suitable_rooms
       )
     `
     )
@@ -204,7 +212,11 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
 
     const enseigneId = product?.enseigne_id || null;
     const assignedClientId = product?.assigned_client_id || null;
-    const isCustom = !!(enseigneId || assignedClientId);
+    const createdByAffiliate = product?.created_by_affiliate || null;
+    // is_sourced = produit exclusif à une enseigne/organisation (sourcé par Verone)
+    const isSourced = !!(enseigneId || assignedClientId);
+    // is_custom = produit sur mesure (sourcé par Verone, PAS créé par affilié)
+    const isCustom = isSourced && !createdByAffiliate;
 
     return {
       id: cp.id,
@@ -226,10 +238,15 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
       family_name: categoryData?.family_name || null,
       supplier_name: supplierMap.get(product?.supplier_id) || null,
       stock_real: product?.stock_real || 0,
-      // Produits sur mesure
+      // Produits sur mesure (sourcés par Verone)
       enseigne_id: enseigneId,
       assigned_client_id: assignedClientId,
       is_custom: isCustom,
+      is_sourced: isSourced,
+      created_by_affiliate: createdByAffiliate,
+      // Style et pièces
+      style: product?.style || null,
+      suitable_rooms: product?.suitable_rooms || null,
     };
   });
 }
@@ -394,11 +411,12 @@ export function filterCatalogProducts(
 /**
  * Catégorise les produits en "sur mesure" vs "catalogue général"
  *
- * Logique:
- * - Si product.enseigne_id != null ET == userEnseigneId → sur mesure
- * - Si product.assigned_client_id != null ET == userOrganisationId → sur mesure
- * - Si product n'a pas d'attribution exclusive → catalogue général
- * - Si product a attribution mais pas pour cet utilisateur → FILTRÉ (invisible)
+ * Logique (alignée avec back-office):
+ * - Si product.created_by_affiliate != null → EXCLUS (produit d'affilié, pas dans catalogue)
+ * - Si product.is_sourced ET enseigne_id == userEnseigneId → sur mesure
+ * - Si product.is_sourced ET assigned_client_id == userOrganisationId → sur mesure
+ * - Si product.is_sourced mais pas pour cet utilisateur → FILTRÉ (invisible)
+ * - Si product n'a pas d'attribution exclusive → catalogue général (visible par tous)
  */
 export function categorizeProducts(
   products: LinkMeCatalogProduct[],
@@ -409,7 +427,12 @@ export function categorizeProducts(
   const generalProducts: LinkMeCatalogProduct[] = [];
 
   for (const product of products) {
-    // Produit exclusif à une enseigne
+    // EXCLUSION: Produits créés par un affilié (ne doivent PAS apparaître dans le catalogue)
+    if (product.created_by_affiliate) {
+      continue; // Invisible dans le catalogue LinkMe
+    }
+
+    // Produit exclusif à une enseigne (sourcé par Verone)
     if (product.enseigne_id) {
       // Visible uniquement si c'est l'enseigne de l'utilisateur
       if (product.enseigne_id === userEnseigneId) {
@@ -419,7 +442,7 @@ export function categorizeProducts(
       continue;
     }
 
-    // Produit exclusif à une organisation (org_independante)
+    // Produit exclusif à une organisation (org_independante, sourcé par Verone)
     if (product.assigned_client_id) {
       // Visible uniquement si c'est l'organisation de l'utilisateur
       if (product.assigned_client_id === userOrganisationId) {
