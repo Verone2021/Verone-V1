@@ -2,10 +2,7 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 
-import {
-  useSupabaseQuery,
-  useSupabaseMutation,
-} from '@verone/common/hooks/use-supabase-query';
+import { useSupabaseQuery, useSupabaseMutation } from '@verone/common';
 
 export interface ActivityEvent {
   action: string;

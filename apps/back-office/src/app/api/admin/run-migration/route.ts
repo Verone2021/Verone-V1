@@ -5,25 +5,25 @@
  * Exécute le SQL de migration Google Merchant
  *
  * ⚠️ ROUTE TEMPORAIRE - À supprimer après installation
+ * 🔐 SECURITE: Requiert authentification admin back-office (owner/admin)
  */
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { createClient } from '@supabase/supabase-js';
+import { createAdminClient } from '@verone/utils/supabase/server';
 
-export async function POST(request: NextRequest) {
+import { requireBackofficeAdmin } from '@/lib/guards';
+
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  // 🔐 GUARD: Vérifier authentification admin back-office
+  const guardResult = await requireBackofficeAdmin(request);
+  if (guardResult instanceof NextResponse) {
+    return guardResult; // 401 ou 403
+  }
+
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-        },
-      }
-    );
+    const supabase = createAdminClient();
 
     const sql = `
 -- Drop existing functions if structure changed
