@@ -544,9 +544,25 @@ export default function SelectionDetailPage({
                   <TableHead className="text-right">
                     Prix vente Final HT
                   </TableHead>
-                  <TableHead className="text-center w-24">Marge %</TableHead>
-                  <TableHead className="text-right">Marge €</TableHead>
-                  <TableHead className="text-right">Prix affilié HT</TableHead>
+                  <TableHead className="text-center w-24">
+                    {productTab === 'reseller'
+                      ? 'Frais LinkMe %'
+                      : productTab === 'catalog'
+                        ? 'Marge %'
+                        : 'Marge/Frais %'}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {productTab === 'reseller'
+                      ? 'Frais LinkMe €'
+                      : productTab === 'catalog'
+                        ? 'Marge €'
+                        : 'Marge/Frais €'}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {productTab === 'reseller'
+                      ? 'Encaissement affilié'
+                      : 'Prix affilié HT'}
+                  </TableHead>
                   <TableHead className="text-right w-24">Actions</TableHead>
                 </TableRow>
               </TableHeader>

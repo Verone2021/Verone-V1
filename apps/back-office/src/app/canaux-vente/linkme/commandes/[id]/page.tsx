@@ -46,6 +46,12 @@ import {
   SelectTrigger,
   SelectValue,
   Switch,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '@verone/ui';
 import { formatCurrency } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
@@ -115,6 +121,25 @@ interface OrderWithDetails {
   linkmeDetails: LinkMeOrderDetails | null;
 }
 
+// Type pour les items enrichis avec infos commission
+interface EnrichedOrderItem {
+  id: string;
+  product_id: string;
+  product_name: string;
+  product_sku: string;
+  product_image_url: string | null;
+  quantity: number;
+  unit_price_ht: number;
+  total_ht: number;
+  base_price_ht: number;
+  margin_rate: number;
+  commission_rate: number;
+  selling_price_ht: number;
+  affiliate_margin: number;
+  // Ajouté via jointure products
+  created_by_affiliate: string | null;
+}
+
 // Fonction pour determiner le canal de la commande
 function getOrderChannel(
   created_by_affiliate_id: string | null,
@@ -151,6 +176,7 @@ export default function LinkMeOrderDetailPage() {
   const orderId = params.id as string;
 
   const [order, setOrder] = useState<OrderWithDetails | null>(null);
+  const [enrichedItems, setEnrichedItems] = useState<EnrichedOrderItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -289,6 +315,46 @@ export default function LinkMeOrderDetailPage() {
         })),
         linkmeDetails: linkmeData,
       });
+
+      // Récupérer les items enrichis avec infos commission
+      const { data: enrichedData } = await supabase
+        .from('linkme_order_items_enriched')
+        .select('*')
+        .eq('sales_order_id', orderId);
+
+      if (enrichedData && enrichedData.length > 0) {
+        // Récupérer les product_ids pour fetch created_by_affiliate
+        const productIds = enrichedData
+          .map((item: any) => item.product_id)
+          .filter(Boolean);
+        const { data: productsData } = await supabase
+          .from('products')
+          .select('id, created_by_affiliate')
+          .in('id', productIds);
+
+        const productMap = new Map(
+          (productsData || []).map((p: any) => [p.id, p.created_by_affiliate])
+        );
+
+        setEnrichedItems(
+          enrichedData.map((item: any) => ({
+            id: item.id,
+            product_id: item.product_id,
+            product_name: item.product_name || 'Produit inconnu',
+            product_sku: item.product_sku || '-',
+            product_image_url: item.product_image_url,
+            quantity: item.quantity || 0,
+            unit_price_ht: item.unit_price_ht || 0,
+            total_ht: item.total_ht || 0,
+            base_price_ht: item.base_price_ht || 0,
+            margin_rate: item.margin_rate || 0,
+            commission_rate: item.commission_rate || 0,
+            selling_price_ht: item.selling_price_ht || 0,
+            affiliate_margin: item.affiliate_margin || 0,
+            created_by_affiliate: productMap.get(item.product_id) || null,
+          }))
+        );
+      }
     } catch (err) {
       console.error('Erreur fetch commande:', err);
       setError(
@@ -616,9 +682,104 @@ export default function LinkMeOrderDetailPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col lg:flex-row gap-6">
-            {/* Articles */}
-            <div className="flex-1 space-y-2">
+          {/* Tableau détaillé des items avec commissions */}
+          {enrichedItems.length > 0 ? (
+            <div className="overflow-x-auto mb-6">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="min-w-[200px]">Produit</TableHead>
+                    <TableHead className="text-right">Prix vente HT</TableHead>
+                    <TableHead className="text-center">Qté</TableHead>
+                    <TableHead className="text-right">Total HT</TableHead>
+                    <TableHead className="text-center">Marge/Comm. %</TableHead>
+                    <TableHead className="text-right">Marge/Comm. €</TableHead>
+                    <TableHead className="text-right">Payout affilié</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {enrichedItems.map(item => {
+                    const isRevendeur = !!item.created_by_affiliate;
+                    // Calcul de la marge/commission en €
+                    const marginCommissionEuros = item.affiliate_margin || 0;
+                    // Payout affilié = prix vente - commission LinkMe (pour revendeur)
+                    // Pour catalogue: payout = marge gagnée
+                    const payoutAffilie = isRevendeur
+                      ? item.total_ht - marginCommissionEuros
+                      : marginCommissionEuros;
+
+                    return (
+                      <TableRow key={item.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div>
+                              <p className="font-medium text-sm">
+                                {item.product_name}
+                              </p>
+                              <div className="flex items-center gap-2">
+                                <p className="text-xs text-gray-500 font-mono">
+                                  {item.product_sku}
+                                </p>
+                                <Badge
+                                  variant="outline"
+                                  className={
+                                    isRevendeur
+                                      ? 'text-[10px] border-violet-500 text-violet-700 bg-violet-50'
+                                      : 'text-[10px] border-blue-500 text-blue-700 bg-blue-50'
+                                  }
+                                >
+                                  {isRevendeur ? 'REVENDEUR' : 'CATALOGUE'}
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(
+                            item.selling_price_ht || item.unit_price_ht
+                          )}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {item.quantity}
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatCurrency(item.total_ht)}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span
+                            className={
+                              isRevendeur ? 'text-purple-600' : 'text-teal-600'
+                            }
+                          >
+                            {isRevendeur
+                              ? `${item.commission_rate || 0}%`
+                              : `${item.margin_rate || 0}%`}
+                          </span>
+                          <p className="text-[10px] text-gray-400">
+                            {isRevendeur ? 'Comm. LinkMe' : 'Marge affilié'}
+                          </p>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <span
+                            className={
+                              isRevendeur ? 'text-purple-600' : 'text-teal-600'
+                            }
+                          >
+                            {formatCurrency(marginCommissionEuros)}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right font-semibold text-green-600">
+                          {formatCurrency(payoutAffilie)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            /* Fallback: liste simple si pas de données enrichies */
+            <div className="flex-1 space-y-2 mb-6">
               {order.items.map(item => (
                 <div
                   key={item.id}
@@ -638,7 +799,10 @@ export default function LinkMeOrderDetailPage() {
                 </div>
               ))}
             </div>
-            {/* Totaux */}
+          )}
+
+          {/* Totaux */}
+          <div className="flex justify-end">
             <div className="w-full lg:w-48 space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Total HT</span>
