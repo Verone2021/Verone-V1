@@ -35,9 +35,11 @@ import {
   MapPin,
   Wallet,
   Calendar,
+  Pencil,
 } from 'lucide-react';
 
 import { CreateOrderModal } from './components/CreateOrderModal';
+import { EditOrderModal } from './components/EditOrderModal';
 import { OrderDetailModal } from './components/OrderDetailModal';
 import {
   useLinkMeOrders,
@@ -82,6 +84,8 @@ export default function CommandesPage(): JSX.Element {
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<LinkMeOrder | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [orderToEdit, setOrderToEdit] = useState<LinkMeOrder | null>(null);
 
   // Data - Affilié et ses commandes
   const { data: affiliate, isLoading: affiliateLoading } = useUserAffiliate();
@@ -165,6 +169,18 @@ export default function CommandesPage(): JSX.Element {
   const closeDetailModal = () => {
     setIsDetailModalOpen(false);
     setSelectedOrder(null);
+  };
+
+  // Handler pour ouvrir le modal d'édition (commandes brouillon uniquement)
+  const openEditModal = (order: LinkMeOrder, e: React.MouseEvent) => {
+    e.stopPropagation(); // Empêcher le toggle expand
+    setOrderToEdit(order);
+    setIsEditModalOpen(true);
+  };
+
+  const closeEditModal = () => {
+    setIsEditModalOpen(false);
+    setOrderToEdit(null);
   };
 
   return (
@@ -471,12 +487,23 @@ export default function CommandesPage(): JSX.Element {
                               </span>
                             )}
 
+                            {/* Bouton Modifier (brouillon uniquement) */}
+                            {order.status === 'draft' && (
+                              <button
+                                onClick={e => openEditModal(order, e)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-amber-600 hover:text-white hover:bg-amber-500 border border-amber-400 rounded-lg transition-colors"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                                Modifier
+                              </button>
+                            )}
+
                             {/* Bouton Details */}
                             <button
                               onClick={e => openDetailModal(order, e)}
                               className="px-3 py-1.5 text-sm font-medium text-[#5DBEBB] hover:text-white hover:bg-[#5DBEBB] border border-[#5DBEBB] rounded-lg transition-colors"
                             >
-                              Details
+                              Détails
                             </button>
                           </div>
                         </div>
@@ -614,6 +641,13 @@ export default function CommandesPage(): JSX.Element {
         order={selectedOrder}
         isOpen={isDetailModalOpen}
         onClose={closeDetailModal}
+      />
+
+      {/* Modal édition commande brouillon */}
+      <EditOrderModal
+        order={orderToEdit}
+        isOpen={isEditModalOpen}
+        onClose={closeEditModal}
       />
     </div>
   );
