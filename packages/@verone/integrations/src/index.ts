@@ -3,9 +3,6 @@
  * Intégrations tierces pour Vérone CRM/ERP
  */
 
-// Abby (facturation)
-export * from './abby';
-
 // Google Merchant
 export * from './google-merchant';
 

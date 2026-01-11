@@ -7,11 +7,10 @@
 
 'use client';
 
-import { useState } from 'react';
-
-import { toast } from 'react-hot-toast';
+import { useState, useMemo } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
+import { toast } from 'react-hot-toast';
 
 export interface MutationOptions<T> {
   tableName: string;
@@ -33,7 +32,8 @@ export function useSupabaseMutation<T>(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const supabase = createClient();
+  // ✅ FIX: useMemo garantit createClient() appelé une seule fois par instance
+  const supabase = useMemo(() => createClient(), []);
 
   const create = async (data: Partial<T>): Promise<T | null> => {
     try {
