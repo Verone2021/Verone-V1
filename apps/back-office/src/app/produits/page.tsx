@@ -39,7 +39,7 @@ export default function ProduitsPage() {
     const loadMetrics = async () => {
       try {
         const data = await fetchProductMetrics();
-        setMetrics(data);
+        setMetrics(data as typeof metrics);
         setError(null); // Reset error on success
       } catch (err) {
         console.error('Erreur chargement métriques:', err);

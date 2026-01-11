@@ -138,6 +138,95 @@ async function approveOrder(
     );
   }
 
+  // 2b. CASCADE: Si ouverture (is_new_restaurant = true), créer organisation + contacts
+  let createdOrganisationId: string | null = null;
+  if (details.is_new_restaurant) {
+    // a) Créer l'organisation avec les données du formulaire
+    const { data: newOrg, error: orgError } = await supabase
+      .from('organisations')
+      .insert({
+        legal_name:
+          details.owner_company_legal_name ||
+          details.owner_company_trade_name ||
+          'À compléter',
+        trade_name: details.owner_company_trade_name,
+        email: details.owner_email,
+        phone: details.owner_phone,
+        approval_status: 'approved',
+        approved_at: new Date().toISOString(),
+      })
+      .select('id')
+      .single();
+
+    if (orgError) {
+      console.error('Erreur création organisation:', orgError);
+      throw new Error(`Erreur création organisation: ${orgError.message}`);
+    }
+
+    createdOrganisationId = newOrg.id;
+
+    // b) Lier la commande à l'organisation nouvellement créée
+    const { error: linkError } = await supabase
+      .from('sales_orders')
+      .update({
+        customer_id: newOrg.id,
+        customer_type: 'organization',
+      })
+      .eq('id', input.orderId);
+
+    if (linkError) {
+      console.error('Erreur liaison commande-organisation:', linkError);
+      throw new Error(`Erreur liaison commande: ${linkError.message}`);
+    }
+
+    // c) Créer contact propriétaire
+    const ownerName = details.owner_name || '';
+    const ownerNameParts = ownerName.split(' ');
+    const { error: ownerContactError } = await (supabase.from as any)(
+      'contacts'
+    ).insert({
+      organisation_id: newOrg.id,
+      first_name: ownerNameParts[0] || '',
+      last_name: ownerNameParts.slice(1).join(' ') || '',
+      email: details.owner_email,
+      phone: details.owner_phone,
+      is_primary_contact: true,
+    });
+
+    if (ownerContactError) {
+      console.error('Erreur création contact propriétaire:', ownerContactError);
+      // Non bloquant, on continue
+    }
+
+    // d) Créer contact facturation si différent
+    if (
+      details.billing_contact_source === 'custom' &&
+      details.billing_email &&
+      details.billing_email !== details.owner_email
+    ) {
+      const billingName = details.billing_name || '';
+      const billingNameParts = billingName.split(' ');
+      const { error: billingContactError } = await supabase
+        .from('contacts')
+        .insert({
+          organisation_id: newOrg.id,
+          first_name: billingNameParts[0] || '',
+          last_name: billingNameParts.slice(1).join(' ') || '',
+          email: details.billing_email,
+          phone: details.billing_phone,
+          is_billing_contact: true,
+        });
+
+      if (billingContactError) {
+        console.error(
+          'Erreur création contact facturation:',
+          billingContactError
+        );
+        // Non bloquant, on continue
+      }
+    }
+  }
+
   // 3. Générer le token Étape 4 (UUID)
   const step4Token = crypto.randomUUID();
   const step4ExpiresAt = new Date();
