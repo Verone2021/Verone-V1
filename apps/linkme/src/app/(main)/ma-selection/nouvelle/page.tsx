@@ -2,7 +2,7 @@
 
 /**
  * Page Création Nouvelle Sélection
- * Formulaire complet avec tous les champs disponibles
+ * Design moderne avec charte graphique LinkMe
  *
  * Fonctionnalités :
  * - Nom (obligatoire)
@@ -12,10 +12,10 @@
  * - Redirection après création
  *
  * @module NewSelectionPage
- * @since 2025-12-10
+ * @since 2026-01-09
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -28,6 +28,8 @@ import {
   Lock,
   Plus,
   Sparkles,
+  LayoutGrid,
+  CheckCircle2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -43,7 +45,7 @@ const AUTHORIZED_ROLES: LinkMeRole[] = ['enseigne_admin', 'org_independante'];
 export default function NewSelectionPage() {
   const router = useRouter();
 
-  const { user, linkMeRole, loading: authLoading } = useAuth();
+  const { user, linkMeRole, initializing: authLoading } = useAuth();
   const { data: affiliate, isLoading: affiliateLoading } = useUserAffiliate();
 
   const createSelectionMutation = useCreateSelection();
@@ -53,21 +55,6 @@ export default function NewSelectionPage() {
   const [description, setDescription] = useState('');
   const [visibility, setVisibility] = useState<'draft' | 'public'>('draft');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-
-  // Vérifier les droits d'accès
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        router.push('/login');
-        return;
-      }
-
-      if (!linkMeRole || !AUTHORIZED_ROLES.includes(linkMeRole.role)) {
-        router.push('/dashboard');
-        return;
-      }
-    }
-  }, [user, linkMeRole, authLoading, router]);
 
   // Handler création
   const handleSubmit = async (e: React.FormEvent) => {
@@ -88,8 +75,10 @@ export default function NewSelectionPage() {
 
       // Redirection vers la page de gestion des produits
       router.push(`/ma-selection/${newSelection.id}/produits`);
-    } catch (error: any) {
-      toast.error(error.message || 'Erreur lors de la création');
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Erreur lors de la création';
+      toast.error(errorMessage);
     }
   };
 
@@ -101,35 +90,64 @@ export default function NewSelectionPage() {
   // Chargement
   if (authLoading || affiliateLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-3">
-          <Loader2 className="h-8 w-8 text-blue-600 animate-spin mx-auto" />
-          <p className="text-gray-600 text-sm">Chargement...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white to-gray-50">
+        <div className="text-center space-y-4">
+          <div className="relative">
+            <div className="w-16 h-16 rounded-2xl bg-linkme-turquoise/10 flex items-center justify-center mx-auto">
+              <Loader2 className="h-8 w-8 text-linkme-turquoise animate-spin" />
+            </div>
+          </div>
+          <p className="text-linkme-marine/60 text-sm font-medium">
+            Chargement...
+          </p>
         </div>
       </div>
     );
   }
 
-  // Vérification accès
+  // Vérification accès - afficher message si non autorisé
   if (!user || !linkMeRole || !AUTHORIZED_ROLES.includes(linkMeRole.role)) {
-    return null;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-white to-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-8">
+          <div className="w-16 h-16 rounded-2xl bg-linkme-turquoise/10 flex items-center justify-center mx-auto mb-4">
+            <Lock className="h-8 w-8 text-linkme-turquoise" />
+          </div>
+          <h1 className="text-xl font-bold text-linkme-marine mb-2">
+            Accès non autorisé
+          </h1>
+          <p className="text-linkme-marine/60 mb-6 text-sm">
+            Vous n&apos;avez pas les permissions pour créer une sélection.
+          </p>
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-linkme-turquoise text-white rounded-xl font-medium hover:bg-linkme-turquoise/90 transition-all duration-200 shadow-md hover:shadow-lg text-sm"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Retour au dashboard
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   // Pas d'affilié
   if (!affiliate) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-6">
-          <Sparkles className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-          <h1 className="text-xl font-bold text-gray-900 mb-2">
+      <div className="min-h-screen bg-gradient-to-br from-white to-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-8">
+          <div className="w-16 h-16 rounded-2xl bg-linkme-turquoise/10 flex items-center justify-center mx-auto mb-4">
+            <Sparkles className="h-8 w-8 text-linkme-turquoise" />
+          </div>
+          <h1 className="text-xl font-bold text-linkme-marine mb-2">
             Compte affilié non configuré
           </h1>
-          <p className="text-gray-600 mb-4 text-sm">
-            Votre compte n'est pas encore configuré comme affilié LinkMe.
+          <p className="text-linkme-marine/60 mb-6 text-sm">
+            Votre compte n&apos;est pas encore configuré comme affilié LinkMe.
           </p>
           <Link
             href="/ma-selection"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-linkme-turquoise text-white rounded-xl font-medium hover:bg-linkme-turquoise/90 transition-all duration-200 shadow-md hover:shadow-lg text-sm"
           >
             <ArrowLeft className="h-4 w-4" />
             Retour
@@ -140,192 +158,208 @@ export default function NewSelectionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="min-h-screen bg-gradient-to-br from-white to-gray-50">
+      <div className="max-w-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header navigation */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-8">
           <Link
             href="/ma-selection"
-            className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 transition-colors text-sm"
+            className="flex items-center gap-2 text-linkme-marine/60 hover:text-linkme-marine transition-colors text-sm group"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform duration-200" />
             <span className="font-medium">Annuler</span>
           </Link>
+
+          {/* Indicateur étapes */}
+          <div className="flex items-center gap-2 text-xs text-linkme-marine/40">
+            <span className="flex items-center gap-1 text-linkme-turquoise font-medium">
+              <span className="w-5 h-5 rounded-full bg-linkme-turquoise text-white flex items-center justify-center text-xs">
+                1
+              </span>
+              Créer
+            </span>
+            <span className="text-linkme-marine/20">→</span>
+            <span className="flex items-center gap-1">
+              <span className="w-5 h-5 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-xs">
+                2
+              </span>
+              Produits
+            </span>
+          </div>
         </div>
 
-        {/* Titre */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-amber-100 rounded-lg mb-3">
-            <Sparkles className="h-6 w-6 text-amber-600" />
+        {/* Titre avec icône */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-linkme-turquoise/10 rounded-2xl mb-4">
+            <LayoutGrid className="h-8 w-8 text-linkme-turquoise" />
           </div>
-          <h1 className="text-xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-linkme-marine">
             Nouvelle sélection
           </h1>
-          <p className="text-gray-600 mt-1 text-sm">
-            Créez une sélection personnalisée de produits à partager
+          <p className="text-linkme-marine/60 mt-2 text-sm max-w-sm mx-auto">
+            Créez un mini-site personnalisé pour présenter vos produits à vos
+            clients
           </p>
         </div>
 
         {/* Formulaire */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Image de couverture */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Image de couverture
-            </label>
-            <button
-              type="button"
-              onClick={handleImageClick}
-              className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors flex flex-col items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100"
-            >
-              {imagePreview ? (
-                <img
-                  src={imagePreview}
-                  alt="Aperçu"
-                  className="w-full h-full object-cover rounded-lg"
-                />
-              ) : (
-                <>
-                  <Camera className="h-6 w-6 text-gray-400" />
-                  <span className="text-xs text-gray-500">
-                    Cliquez pour ajouter une image
-                  </span>
-                  <span className="text-[10px] text-gray-400">
-                    (Fonctionnalité à venir)
-                  </span>
-                </>
-              )}
-            </button>
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Card principale */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
+            {/* Image de couverture */}
+            <div>
+              <label className="block text-sm font-semibold text-linkme-marine mb-2">
+                Image de couverture
+              </label>
+              <button
+                type="button"
+                onClick={handleImageClick}
+                className="w-full h-40 border-2 border-dashed border-linkme-turquoise/30 rounded-xl hover:border-linkme-turquoise transition-all duration-200 flex flex-col items-center justify-center gap-3 bg-linkme-turquoise/5 hover:bg-linkme-turquoise/10 group"
+              >
+                {imagePreview ? (
+                  <img
+                    src={imagePreview}
+                    alt="Aperçu"
+                    className="w-full h-full object-cover rounded-xl"
+                  />
+                ) : (
+                  <>
+                    <div className="w-12 h-12 rounded-xl bg-linkme-turquoise/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                      <Camera className="h-6 w-6 text-linkme-turquoise" />
+                    </div>
+                    <div className="text-center">
+                      <span className="text-sm text-linkme-marine/70 font-medium">
+                        Cliquez pour ajouter une image
+                      </span>
+                      <span className="block text-xs text-linkme-marine/40 mt-1">
+                        Format recommandé : 16:9
+                      </span>
+                    </div>
+                  </>
+                )}
+              </button>
+            </div>
 
-          {/* Nom */}
-          <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-gray-700 mb-1.5"
-            >
-              Nom de la sélection <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="name"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="Ex: Ma sélection déco"
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
-          </div>
-
-          {/* Description */}
-          <div>
-            <label
-              htmlFor="description"
-              className="block text-sm font-medium text-gray-700 mb-1.5"
-            >
-              Description <span className="text-gray-400">(optionnelle)</span>
-            </label>
-            <textarea
-              id="description"
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              placeholder="Décrivez votre sélection en quelques mots..."
-              rows={3}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-            />
-          </div>
-
-          {/* Visibilité */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Visibilité
-            </label>
-            <div className="space-y-2">
+            {/* Nom */}
+            <div>
               <label
-                className={`flex items-start gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+                htmlFor="name"
+                className="block text-sm font-semibold text-linkme-marine mb-2"
+              >
+                Nom de la sélection{' '}
+                <span className="text-linkme-turquoise">*</span>
+              </label>
+              <input
+                type="text"
+                id="name"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="Ex: Collection Printemps 2026"
+                className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-linkme-turquoise/30 focus:border-linkme-turquoise transition-all duration-200 placeholder:text-gray-400"
+                required
+              />
+            </div>
+
+            {/* Description */}
+            <div>
+              <label
+                htmlFor="description"
+                className="block text-sm font-semibold text-linkme-marine mb-2"
+              >
+                Description{' '}
+                <span className="text-linkme-marine/40 font-normal">
+                  (optionnelle)
+                </span>
+              </label>
+              <textarea
+                id="description"
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                placeholder="Décrivez votre sélection pour donner envie à vos clients..."
+                rows={3}
+                className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-linkme-turquoise/30 focus:border-linkme-turquoise transition-all duration-200 resize-none placeholder:text-gray-400"
+              />
+            </div>
+          </div>
+
+          {/* Visibilité - Card séparée */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <label className="block text-sm font-semibold text-linkme-marine mb-4">
+              Visibilité initiale
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              {/* Option Brouillon */}
+              <button
+                type="button"
+                onClick={() => setVisibility('draft')}
+                className={`relative p-4 rounded-xl border-2 transition-all duration-200 text-left ${
                   visibility === 'draft'
-                    ? 'border-blue-500 bg-blue-50'
+                    ? 'border-linkme-marine bg-linkme-marine/5'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <input
-                  type="radio"
-                  name="visibility"
-                  value="draft"
-                  checked={visibility === 'draft'}
-                  onChange={() => setVisibility('draft')}
-                  className="mt-0.5"
-                />
-                <div className="flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <Lock className="h-3.5 w-3.5 text-gray-600" />
-                    <span className="font-medium text-gray-900 text-sm">
-                      Brouillon
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    La sélection n'est pas visible. Vous pourrez la publier plus
-                    tard.
-                  </p>
+                {visibility === 'draft' && (
+                  <CheckCircle2 className="absolute top-3 right-3 h-5 w-5 text-linkme-marine" />
+                )}
+                <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center mb-3">
+                  <Lock className="h-5 w-5 text-gray-600" />
                 </div>
-              </label>
+                <div className="font-semibold text-linkme-marine text-sm mb-1">
+                  Brouillon
+                </div>
+                <p className="text-xs text-linkme-marine/50">
+                  Non visible, modifiable
+                </p>
+              </button>
 
-              <label
-                className={`flex items-start gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+              {/* Option Publiée */}
+              <button
+                type="button"
+                onClick={() => setVisibility('public')}
+                className={`relative p-4 rounded-xl border-2 transition-all duration-200 text-left ${
                   visibility === 'public'
-                    ? 'border-green-500 bg-green-50'
+                    ? 'border-linkme-turquoise bg-linkme-turquoise/5'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <input
-                  type="radio"
-                  name="visibility"
-                  value="public"
-                  checked={visibility === 'public'}
-                  onChange={() => setVisibility('public')}
-                  className="mt-0.5"
-                />
-                <div className="flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <Globe className="h-3.5 w-3.5 text-green-600" />
-                    <span className="font-medium text-gray-900 text-sm">
-                      Publiée
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    La sélection sera visible sur votre page affilié dès sa
-                    création.
-                  </p>
+                {visibility === 'public' && (
+                  <CheckCircle2 className="absolute top-3 right-3 h-5 w-5 text-linkme-turquoise" />
+                )}
+                <div className="w-10 h-10 rounded-lg bg-linkme-turquoise/10 flex items-center justify-center mb-3">
+                  <Globe className="h-5 w-5 text-linkme-turquoise" />
                 </div>
-              </label>
+                <div className="font-semibold text-linkme-marine text-sm mb-1">
+                  Publiée
+                </div>
+                <p className="text-xs text-linkme-marine/50">
+                  Visible par vos clients
+                </p>
+              </button>
             </div>
           </div>
 
           {/* Bouton submit */}
-          <div className="pt-3">
-            <button
-              type="submit"
-              disabled={createSelectionMutation.isPending || !name.trim()}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-            >
-              {createSelectionMutation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Création en cours...
-                </>
-              ) : (
-                <>
-                  <Plus className="h-4 w-4" />
-                  Créer et ajouter des produits
-                </>
-              )}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={createSelectionMutation.isPending || !name.trim()}
+            className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-linkme-turquoise text-white rounded-xl font-semibold hover:bg-linkme-turquoise/90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
+          >
+            {createSelectionMutation.isPending ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Création en cours...
+              </>
+            ) : (
+              <>
+                <Plus className="h-5 w-5" />
+                Créer et ajouter des produits
+              </>
+            )}
+          </button>
 
           {/* Info */}
-          <p className="text-center text-xs text-gray-500">
-            Après création, vous pourrez ajouter des produits depuis le
-            catalogue.
+          <p className="text-center text-xs text-linkme-marine/40">
+            Étape suivante : ajoutez des produits depuis le catalogue LinkMe
           </p>
         </form>
       </div>
