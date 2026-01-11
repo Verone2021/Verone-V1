@@ -12,7 +12,7 @@
  * @since 2026-01-05
  */
 
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 
 import Link from 'next/link';
 
@@ -66,9 +66,11 @@ import {
   usePendingOrdersCount,
   useApproveOrder,
   useRejectOrder,
+  useAllLinkMeOrders,
   type PendingOrder,
   type PendingOrderItem,
   type PendingOrderLinkMeDetails,
+  type OrderValidationStatus,
 } from '../hooks/use-linkme-order-actions';
 import {
   usePendingOrganisations,
@@ -180,8 +182,44 @@ export default function ApprobationsPage() {
 // TAB: COMMANDES
 // ============================================================================
 
+const ORDER_STATUS_OPTIONS: {
+  value: OrderValidationStatus | 'all';
+  label: string;
+  icon: React.ElementType;
+  color: string;
+}[] = [
+  { value: 'all', label: 'Tous', icon: ShoppingCart, color: 'text-gray-600' },
+  {
+    value: 'pending',
+    label: 'En attente',
+    icon: Clock,
+    color: 'text-amber-600',
+  },
+  {
+    value: 'approved',
+    label: 'Approuves',
+    icon: CheckCircle,
+    color: 'text-green-600',
+  },
+  {
+    value: 'rejected',
+    label: 'Rejetes',
+    icon: XCircle,
+    color: 'text-red-600',
+  },
+];
+
 function CommandesTab() {
-  const { data: orders, isLoading, refetch } = usePendingOrders();
+  const [selectedStatus, setSelectedStatus] = useState<
+    OrderValidationStatus | 'all'
+  >('pending');
+
+  const {
+    data: orders,
+    isLoading,
+    refetch,
+  } = useAllLinkMeOrders(selectedStatus === 'all' ? undefined : selectedStatus);
+
   const approveOrder = useApproveOrder();
   const rejectOrder = useRejectOrder();
 
@@ -248,225 +286,254 @@ function CommandesTab() {
     return types[type] || type;
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
-      </div>
-    );
-  }
-
-  if (!orders || orders.length === 0) {
-    return (
-      <div className="bg-white rounded-xl p-12 text-center border">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <CheckCircle className="h-8 w-8 text-green-600" />
-        </div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">
-          Aucune commande en attente
-        </h2>
-        <p className="text-gray-500">Toutes les commandes ont ete traitees</p>
-      </div>
-    );
-  }
-
   return (
     <>
-      <div className="bg-white rounded-xl border overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b">
-            <tr>
-              <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 w-8" />
-              <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
-                Commande
-              </th>
-              <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
-                Demandeur
-              </th>
-              <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
-                Organisation
-              </th>
-              <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
-                Montant
-              </th>
-              <th className="text-right px-6 py-4 text-sm font-medium text-gray-500">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {orders.map(order => {
-              const isExpanded = expandedRows.has(order.id);
-              const details = order.linkme_details;
-              const isNewRestaurant = details?.is_new_restaurant ?? false;
+      {/* Status Filter */}
+      <div className="flex items-center gap-2 mb-6">
+        <Filter className="h-4 w-4 text-gray-400" />
+        <div className="flex gap-1 p-1 bg-gray-100 rounded-lg">
+          {ORDER_STATUS_OPTIONS.map(option => {
+            const Icon = option.icon;
+            const isActive = selectedStatus === option.value;
+            return (
+              <button
+                key={option.value}
+                onClick={() => setSelectedStatus(option.value)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors ${
+                  isActive
+                    ? 'bg-white shadow-sm font-medium'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <Icon className={`h-4 w-4 ${option.color}`} />
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
-              return (
-                <>
-                  {/* Ligne principale - cliquable */}
-                  <tr
-                    key={order.id}
-                    className="hover:bg-gray-50 cursor-pointer"
-                    onClick={() => toggleRow(order.id)}
-                  >
-                    <td className="px-3 py-4">
-                      <button className="p-1 text-gray-400 hover:text-gray-600">
-                        {isExpanded ? (
-                          <ChevronDown className="h-4 w-4" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4" />
-                        )}
-                      </button>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div>
-                        <p className="font-medium text-gray-900">
-                          {order.order_number}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {new Date(order.created_at).toLocaleDateString(
-                            'fr-FR'
-                          )}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div>
-                        <p className="text-gray-900">
-                          {order.requester_name || '-'}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {order.requester_email || '-'}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col gap-1">
-                        <p className="text-gray-900">
-                          {order.organisation_name || '-'}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {order.enseigne_name || '-'}
-                        </p>
-                        {/* Badge Nouveau / Existant */}
-                        {isNewRestaurant ? (
-                          <span className="inline-flex items-center gap-1 w-fit px-2 py-0.5 rounded-full text-xs font-medium border border-orange-300 text-orange-700 bg-orange-50">
-                            <Building2 className="h-3 w-3" />
-                            Nouveau restaurant
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 w-fit px-2 py-0.5 rounded-full text-xs font-medium border border-green-300 text-green-700 bg-green-50">
-                            <Store className="h-3 w-3" />
-                            Restaurant existant
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div>
-                        <p className="font-semibold text-gray-900">
-                          {order.total_ttc.toFixed(2)} EUR
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {order.items.length} article
-                          {order.items.length > 1 ? 's' : ''}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div
-                        className="flex items-center justify-end gap-2"
-                        onClick={e => e.stopPropagation()}
-                      >
-                        <Link
-                          href={`/canaux-vente/linkme/commandes/${order.id}`}
-                          className="p-2 text-gray-500 hover:text-gray-700"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Link>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={e => handleRejectClick(order, e)}
-                          className="text-red-600 border-red-200 hover:bg-red-50"
-                        >
-                          <XCircle className="h-4 w-4 mr-1" />
-                          Rejeter
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={e => handleApprove(order, e)}
-                          disabled={approveOrder.isPending}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          {approveOrder.isPending ? (
-                            <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                          ) : (
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                          )}
-                          Approuver
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
+      {/* Loading */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
+        </div>
+      )}
 
-                  {/* Ligne expandue avec produits */}
-                  {isExpanded && (
+      {/* Empty State */}
+      {!isLoading && (!orders || orders.length === 0) && (
+        <div className="bg-white rounded-xl p-12 text-center border">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <ShoppingCart className="h-8 w-8 text-gray-400" />
+          </div>
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">
+            Aucune commande
+          </h2>
+          <p className="text-gray-500">
+            {selectedStatus === 'pending'
+              ? 'Aucune commande en attente de validation'
+              : 'Aucune commande trouvee avec ce filtre'}
+          </p>
+        </div>
+      )}
+
+      {/* Orders Table */}
+      {!isLoading && orders && orders.length > 0 && (
+        <div className="bg-white rounded-xl border overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b">
+              <tr>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500 w-8" />
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+                  Commande
+                </th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+                  Demandeur
+                </th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+                  Organisation
+                </th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+                  Montant
+                </th>
+                <th className="text-right px-6 py-4 text-sm font-medium text-gray-500">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {orders.map(order => {
+                const isExpanded = expandedRows.has(order.id);
+                const details = order.linkme_details;
+                const isNewRestaurant = details?.is_new_restaurant ?? false;
+
+                return (
+                  <Fragment key={order.id}>
+                    {/* Ligne principale - cliquable */}
                     <tr
-                      key={`${order.id}-expanded`}
-                      className="bg-gray-50 hover:bg-gray-50"
+                      className="hover:bg-gray-50 cursor-pointer"
+                      onClick={() => toggleRow(order.id)}
                     >
-                      <td colSpan={6} className="p-0">
-                        <div className="py-3 px-6 space-y-2">
-                          {order.items.map(item => (
-                            <div
-                              key={item.id}
-                              className="flex items-center gap-4 text-sm py-2"
-                            >
-                              {/* Thumbnail */}
-                              <div className="w-10 h-10 bg-gray-100 rounded overflow-hidden flex-shrink-0">
-                                {item.products?.primary_image_url ? (
-                                  <img
-                                    src={item.products.primary_image_url}
-                                    alt=""
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <Package className="w-full h-full p-2 text-gray-400" />
-                                )}
-                              </div>
-                              {/* Nom */}
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate">
-                                  {item.products?.name || 'Produit inconnu'}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {item.products?.sku || '-'}
-                                </p>
-                              </div>
-                              {/* Quantite */}
-                              <p className="text-gray-600 font-medium">
-                                x{item.quantity}
-                              </p>
-                              {/* Prix unitaire */}
-                              <p className="text-gray-500 text-xs w-20 text-right">
-                                {item.unit_price_ht.toFixed(2)} EUR
-                              </p>
-                              {/* Total */}
-                              <p className="font-semibold text-gray-900 w-24 text-right">
-                                {item.total_ht.toFixed(2)} EUR HT
-                              </p>
-                            </div>
-                          ))}
+                      <td className="px-3 py-4">
+                        <button className="p-1 text-gray-400 hover:text-gray-600">
+                          {isExpanded ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4" />
+                          )}
+                        </button>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div>
+                          <p className="font-medium text-gray-900">
+                            {order.order_number}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {new Date(order.created_at).toLocaleDateString(
+                              'fr-FR'
+                            )}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div>
+                          <p className="text-gray-900">
+                            {order.requester_name || '-'}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {order.requester_email || '-'}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-1">
+                          <p className="text-gray-900">
+                            {order.organisation_name || '-'}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {order.enseigne_name || '-'}
+                          </p>
+                          {/* Badge Nouveau / Existant */}
+                          {isNewRestaurant ? (
+                            <span className="inline-flex items-center gap-1 w-fit px-2 py-0.5 rounded-full text-xs font-medium border border-orange-300 text-orange-700 bg-orange-50">
+                              <Building2 className="h-3 w-3" />
+                              Nouveau restaurant
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 w-fit px-2 py-0.5 rounded-full text-xs font-medium border border-green-300 text-green-700 bg-green-50">
+                              <Store className="h-3 w-3" />
+                              Restaurant existant
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div>
+                          <p className="font-semibold text-gray-900">
+                            {order.total_ttc.toFixed(2)} EUR
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {order.items.length} article
+                            {order.items.length > 1 ? 's' : ''}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div
+                          className="flex items-center justify-end gap-2"
+                          onClick={e => e.stopPropagation()}
+                        >
+                          <Link
+                            href={`/canaux-vente/linkme/commandes/${order.id}`}
+                            className="p-2 text-gray-500 hover:text-gray-700"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Link>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={e => handleRejectClick(order, e)}
+                            className="text-red-600 border-red-200 hover:bg-red-50"
+                          >
+                            <XCircle className="h-4 w-4 mr-1" />
+                            Rejeter
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={e => handleApprove(order, e)}
+                            disabled={approveOrder.isPending}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            {approveOrder.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                            ) : (
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                            )}
+                            Approuver
+                          </Button>
                         </div>
                       </td>
                     </tr>
-                  )}
-                </>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+
+                    {/* Ligne expandue avec produits */}
+                    {isExpanded && (
+                      <tr
+                        key={`${order.id}-expanded`}
+                        className="bg-gray-50 hover:bg-gray-50"
+                      >
+                        <td colSpan={6} className="p-0">
+                          <div className="py-3 px-6 space-y-2">
+                            {order.items.map(item => (
+                              <div
+                                key={item.id}
+                                className="flex items-center gap-4 text-sm py-2"
+                              >
+                                {/* Thumbnail */}
+                                <div className="w-10 h-10 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                                  {item.products?.primary_image_url ? (
+                                    <img
+                                      src={item.products.primary_image_url}
+                                      alt=""
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <Package className="w-full h-full p-2 text-gray-400" />
+                                  )}
+                                </div>
+                                {/* Nom */}
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium truncate">
+                                    {item.products?.name || 'Produit inconnu'}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {item.products?.sku || '-'}
+                                  </p>
+                                </div>
+                                {/* Quantite */}
+                                <p className="text-gray-600 font-medium">
+                                  x{item.quantity}
+                                </p>
+                                {/* Prix unitaire */}
+                                <p className="text-gray-500 text-xs w-20 text-right">
+                                  {item.unit_price_ht.toFixed(2)} EUR
+                                </p>
+                                {/* Total */}
+                                <p className="font-semibold text-gray-900 w-24 text-right">
+                                  {item.total_ht.toFixed(2)} EUR HT
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Reject Dialog */}
       <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
