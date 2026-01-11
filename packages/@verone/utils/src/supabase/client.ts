@@ -13,10 +13,44 @@ import type { Database } from './types';
 // Types d'apps supportées
 export type AppName = 'backoffice' | 'linkme' | 'site';
 
-// Cache des clients par app (au lieu d'un singleton global)
-const clients: Partial<
+// ============================================================================
+// SINGLETON ROBUSTE - Résiste au hot reload et garantit 1 instance par app
+// ============================================================================
+
+// Utiliser globalThis pour survivre au hot module replacement (HMR)
+const globalKey = '__VERONE_SUPABASE_CLIENTS__' as const;
+
+type ClientsCache = Partial<
   Record<AppName, ReturnType<typeof createBrowserClient<Database>>>
-> = {};
+>;
+
+// Initialiser le cache global s'il n'existe pas
+if (typeof globalThis !== 'undefined' && !(globalThis as any)[globalKey]) {
+  (globalThis as any)[globalKey] = {};
+}
+
+// ✅ FIX: Mock SSR unique (même instance à chaque appel)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ssrMockClient: any = {
+  auth: {
+    getSession: async () => ({ data: { session: null }, error: null }),
+    getUser: async () => ({ data: { user: null }, error: null }),
+    onAuthStateChange: () => ({
+      data: { subscription: { unsubscribe: () => {} } },
+    }),
+    signInWithPassword: async () => ({
+      data: null,
+      error: new Error('SSR not supported'),
+    }),
+    signOut: async () => ({ error: null }),
+  },
+  from: () => ({
+    select: () => ({
+      eq: () => ({ single: async () => ({ data: null, error: null }) }),
+    }),
+  }),
+  rpc: async () => ({ data: null, error: null }),
+};
 
 /**
  * Crée un client Supabase pour le navigateur avec cookie isolé par app
@@ -36,30 +70,13 @@ export const createClient = (
 ): ReturnType<typeof createBrowserClient<Database>> => {
   // CRITICAL: Prevent SSR/SSG execution
   // During Next.js static generation, window is not defined
-  // Return a mock client that will be replaced on client-side
+  // Return the SAME mock client (not a new object) for SSR stability
   if (typeof window === 'undefined') {
-    // Return a mock client for SSR
-    return {
-      auth: {
-        getSession: async () => ({ data: { session: null }, error: null }),
-        getUser: async () => ({ data: { user: null }, error: null }),
-        onAuthStateChange: () => ({
-          data: { subscription: { unsubscribe: () => {} } },
-        }),
-        signInWithPassword: async () => ({
-          data: null,
-          error: new Error('SSR not supported'),
-        }),
-        signOut: async () => ({ error: null }),
-      },
-      from: () => ({
-        select: () => ({
-          eq: () => ({ single: async () => ({ data: null, error: null }) }),
-        }),
-      }),
-      rpc: async () => ({ data: null, error: null }),
-    } as any;
+    return ssrMockClient;
   }
+
+  // ✅ FIX: Utiliser le cache global pour résister au HMR
+  const clients: ClientsCache = (globalThis as any)[globalKey] || {};
 
   if (!clients[appName]) {
     // Back-office utilise le cookie par défaut (rétrocompatibilité)
@@ -74,6 +91,10 @@ export const createClient = (
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       options
     );
+
+    // Persister dans le cache global
+    (globalThis as any)[globalKey] = clients;
   }
+
   return clients[appName];
 };
