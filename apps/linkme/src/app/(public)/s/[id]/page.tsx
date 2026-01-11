@@ -15,7 +15,8 @@ import {
   Store,
 } from 'lucide-react';
 
-import { EnseigneStepper } from '@/components/checkout';
+import { OrderFormUnified } from '@/components/OrderFormUnified';
+import type { CartItem as UnifiedCartItem } from '@/components/OrderFormUnified';
 import {
   CategoryTabs,
   ContactForm,
@@ -25,6 +26,8 @@ import {
   SelectionHero,
   StoreLocatorMap,
 } from '@/components/public-selection';
+import { useEnseigneOrganisations } from '@/lib/hooks/use-enseigne-organisations';
+import { useSubmitUnifiedOrder } from '@/lib/hooks/use-submit-unified-order';
 
 const supabase = createClient();
 
@@ -132,10 +135,8 @@ export default function PublicSelectionPage({
   const [cart, setCart] = useState<ICartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isEnseigneStepperOpen, setIsEnseigneStepperOpen] = useState(false);
-  const [enseigneOrderNumber, setEnseigneOrderNumber] = useState<string | null>(
-    null
-  );
+  const [isOrderFormOpen, setIsOrderFormOpen] = useState(false);
+  const [orderNumber, setOrderNumber] = useState<string | null>(null);
 
   // New states for navigation and filtering
   const [activeSection, setActiveSection] = useState('catalogue');
@@ -154,6 +155,12 @@ export default function PublicSelectionPage({
 
   // Hover states for animations
   const [hoveredProductId, setHoveredProductId] = useState<string | null>(null);
+
+  // Hooks for unified order form
+  const { submitOrder, isSubmitting } = useSubmitUnifiedOrder();
+  const { data: enseigneOrgs = [] } = useEnseigneOrganisations(
+    selection?.affiliate_id ?? null
+  );
 
   // Section refs for navigation
   const catalogueRef = useRef<HTMLDivElement>(null);
@@ -371,7 +378,7 @@ export default function PublicSelectionPage({
         selectionName={selection.name}
         branding={branding}
         cartCount={cartCount}
-        onCartClick={() => setIsEnseigneStepperOpen(true)}
+        onCartClick={() => setIsOrderFormOpen(true)}
         onSearchClick={() => setIsSearchOpen(true)}
         navItems={navItems}
         activeSection={activeSection}
@@ -634,7 +641,7 @@ export default function PublicSelectionPage({
       {/* Floating Cart Button */}
       {cartCount > 0 && (
         <button
-          onClick={() => setIsEnseigneStepperOpen(true)}
+          onClick={() => setIsOrderFormOpen(true)}
           className="fixed bottom-6 right-6 z-40 text-white px-6 py-4 rounded-full shadow-lg transition-all flex items-center gap-3 hover:opacity-90"
           style={{ backgroundColor: branding.primary_color }}
         >
@@ -647,17 +654,17 @@ export default function PublicSelectionPage({
       )}
 
       {/* Enseigne Stepper (Slide-over) */}
-      {isEnseigneStepperOpen && (
+      {isOrderFormOpen && (
         <div className="fixed inset-0 z-50">
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/50"
-            onClick={() => setIsEnseigneStepperOpen(false)}
+            onClick={() => setIsOrderFormOpen(false)}
           />
 
           {/* Panel - Large modal with rounded corners */}
           <div className="absolute inset-4 md:inset-8 lg:inset-12 bg-white rounded-2xl shadow-2xl overflow-hidden">
-            {enseigneOrderNumber ? (
+            {orderNumber ? (
               /* Success State */
               <div className="flex flex-col items-center justify-center h-full p-8 text-center">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
@@ -667,16 +674,15 @@ export default function PublicSelectionPage({
                   Commande envoyee !
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  Votre commande <strong>{enseigneOrderNumber}</strong> a ete
-                  recue.
+                  Votre commande <strong>{orderNumber}</strong> a ete recue.
                 </p>
                 <p className="text-sm text-gray-500 mb-8">
                   Elle sera validee par notre equipe sous 24h.
                 </p>
                 <button
                   onClick={() => {
-                    setEnseigneOrderNumber(null);
-                    setIsEnseigneStepperOpen(false);
+                    setOrderNumber(null);
+                    setIsOrderFormOpen(false);
                     setCart([]);
                   }}
                   className="px-6 py-2 text-white rounded-lg hover:opacity-90"
@@ -686,23 +692,41 @@ export default function PublicSelectionPage({
                 </button>
               </div>
             ) : (
-              <EnseigneStepper
+              <OrderFormUnified
                 affiliateId={selection.affiliate_id}
                 selectionId={selection.id}
-                cart={cart.map(item => ({
-                  id: item.id,
-                  product_id: item.product_id,
-                  product_name: item.product_name,
-                  product_sku: item.product_sku,
-                  product_image: item.product_image,
-                  selling_price_ht: item.selling_price_ht,
-                  selling_price_ttc: item.selling_price_ttc,
-                  quantity: item.quantity,
+                cart={cart.map(
+                  (item): UnifiedCartItem => ({
+                    id: item.id,
+                    product_id: item.product_id,
+                    product_name: item.product_name,
+                    product_sku: item.product_sku,
+                    product_image: item.product_image,
+                    selling_price_ht: item.selling_price_ht,
+                    selling_price_ttc: item.selling_price_ttc,
+                    margin_rate: item.margin_rate,
+                    quantity: item.quantity,
+                  })
+                )}
+                organisations={enseigneOrgs.map(org => ({
+                  id: org.id,
+                  legal_name: org.legal_name,
+                  trade_name: org.trade_name,
+                  city: org.city,
                 }))}
-                onClose={() => setIsEnseigneStepperOpen(false)}
-                onSuccess={orderNumber => {
-                  setEnseigneOrderNumber(orderNumber);
+                onClose={() => setIsOrderFormOpen(false)}
+                onSubmit={async (data, cartItems) => {
+                  const result = await submitOrder({
+                    affiliateId: selection.affiliate_id,
+                    selectionId: selection.id,
+                    cart: cartItems,
+                    data,
+                  });
+                  if (result.success && result.orderNumber) {
+                    setOrderNumber(result.orderNumber);
+                  }
                 }}
+                isSubmitting={isSubmitting}
                 onUpdateQuantity={(itemId, newQuantity) => {
                   if (newQuantity < 1) return;
                   setCart(prev =>
@@ -715,9 +739,8 @@ export default function PublicSelectionPage({
                 }}
                 onRemoveItem={itemId => {
                   setCart(prev => prev.filter(item => item.id !== itemId));
-                  // Si le panier devient vide, fermer le stepper
                   if (cart.length === 1) {
-                    setIsEnseigneStepperOpen(false);
+                    setIsOrderFormOpen(false);
                   }
                 }}
               />

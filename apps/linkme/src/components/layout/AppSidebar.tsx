@@ -167,12 +167,13 @@ export function AppSidebar(): JSX.Element | null {
   }
 
   // Desktop: Sidebar collapsible (icônes seules → expand on hover)
+  // z-20 pour permettre aux dropdowns (z-50) de s'afficher au-dessus
   return (
     <aside
       onMouseEnter={() => setIsExpanded(true)}
       onMouseLeave={() => setIsExpanded(false)}
       className={cn(
-        'fixed inset-y-0 left-0 z-40 bg-white border-r border-gray-100 flex flex-col transition-all duration-300 ease-in-out',
+        'fixed inset-y-0 left-0 z-20 bg-white border-r border-gray-100 flex flex-col transition-all duration-300 ease-in-out',
         isExpanded ? 'w-56' : 'w-16'
       )}
     >

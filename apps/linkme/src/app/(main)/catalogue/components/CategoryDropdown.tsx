@@ -149,8 +149,8 @@ export function CategoryDropdown({
   const hasSelection = selectedCategory || selectedSubcategory;
 
   return (
-    <div className="relative" ref={dropdownRef}>
-      {/* Bouton trigger */}
+    <div className="relative z-30" ref={dropdownRef}>
+      {/* Bouton trigger - z-30 pour être au-dessus du sidebar (z-20) */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(

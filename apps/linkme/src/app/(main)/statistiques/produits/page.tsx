@@ -235,7 +235,7 @@ export default function StatistiquesProduits(): JSX.Element {
 
         {/* Footer */}
         <div className="text-center text-xs text-gray-400 pb-6">
-          <p>
+          <p suppressHydrationWarning>
             Les données incluent tous les produits vendus depuis le début.
             Dernière mise à jour : {new Date().toLocaleString('fr-FR')}
           </p>

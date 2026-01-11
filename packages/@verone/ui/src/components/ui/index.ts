@@ -125,3 +125,8 @@ export * from './room-multi-select';
 // HELP & ONBOARDING COMPONENTS
 // ========================================
 export * from './help-lexique-section';
+
+// ========================================
+// ADDRESS COMPONENTS
+// ========================================
+export * from './address-autocomplete';

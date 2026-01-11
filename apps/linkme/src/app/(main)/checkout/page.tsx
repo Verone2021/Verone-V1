@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+import { AddressAutocomplete, type AddressResult } from '@verone/ui';
 import {
   ArrowLeft,
   Lock,
@@ -176,6 +177,30 @@ export default function CheckoutPage() {
     },
     []
   );
+
+  // Handler pour l'autocomplete d'adresse de livraison
+  const handleShippingAddressSelect = useCallback((address: AddressResult) => {
+    setFormData(prev => ({
+      ...prev,
+      address: address.streetAddress,
+      city: address.city,
+      postalCode: address.postalCode,
+      country: address.country || 'France',
+      countryCode: address.countryCode || 'FR',
+    }));
+  }, []);
+
+  // Handler pour l'autocomplete d'adresse de facturation
+  const handleBillingAddressSelect = useCallback((address: AddressResult) => {
+    setFormData(prev => ({
+      ...prev,
+      billingAddress: address.streetAddress,
+      billingCity: address.city,
+      billingPostalCode: address.postalCode,
+      billingCountry: address.country || 'France',
+      billingCountryCode: address.countryCode || 'FR',
+    }));
+  }, []);
 
   const validateForm = (): boolean => {
     if (!formData.email || !formData.phone) {
@@ -489,16 +514,13 @@ export default function CheckoutPage() {
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Adresse *
-                    </label>
-                    <input
-                      type="text"
-                      required
+                    <AddressAutocomplete
                       value={formData.address}
-                      onChange={e => updateFormData('address', e.target.value)}
-                      className="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Numéro et nom de rue"
+                      onChange={value => updateFormData('address', value)}
+                      onSelect={handleShippingAddressSelect}
+                      placeholder="Rechercher une adresse..."
+                      label="Adresse *"
+                      id="shipping-address-checkout"
                     />
                   </div>
                   <div className="md:col-span-2">
@@ -625,17 +647,15 @@ export default function CheckoutPage() {
                       />
                     </div>
                     <div className="md:col-span-2">
-                      <label className="block text-xs font-medium text-gray-700 mb-1">
-                        Adresse *
-                      </label>
-                      <input
-                        type="text"
-                        required
+                      <AddressAutocomplete
                         value={formData.billingAddress}
-                        onChange={e =>
-                          updateFormData('billingAddress', e.target.value)
+                        onChange={value =>
+                          updateFormData('billingAddress', value)
                         }
-                        className="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        onSelect={handleBillingAddressSelect}
+                        placeholder="Rechercher une adresse..."
+                        label="Adresse *"
+                        id="billing-address-checkout"
                       />
                     </div>
                     <div className="md:col-span-2">
