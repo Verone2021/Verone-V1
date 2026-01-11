@@ -226,8 +226,9 @@ export function useLinkMeDashboard() {
         },
       };
     },
-    staleTime: 60000, // 1 minute
+    staleTime: 120000, // 2 minutes
     refetchInterval: 120000, // Rafraîchir toutes les 2 minutes
+    refetchIntervalInBackground: false,
   });
 }
 

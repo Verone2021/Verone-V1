@@ -87,8 +87,9 @@ export function usePendingOrganisationsCount() {
 
       return count || 0;
     },
-    staleTime: 30000,
+    staleTime: 120000, // 2 minutes
     refetchInterval: 60000,
+    refetchIntervalInBackground: false,
   });
 }
 
