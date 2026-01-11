@@ -47,12 +47,6 @@ npm run check:console:ci
 
 # Audit bundle size
 npm run build | grep "First Load JS"
-
-# Vérifier ports dev
-npm run ports:check
-
-# Attendre serveurs prêts
-npm run dev:wait
 ```
 
 ---

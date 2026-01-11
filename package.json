@@ -8,11 +8,7 @@
     "packages/@verone/*"
   ],
   "scripts": {
-    "dev": "./scripts/dev-with-lock.sh",
-    "dev:unsafe": "turbo dev",
-    "ports:check": "./scripts/dev-ports-check.sh",
-    "ports:kill": "./scripts/dev-ports-kill.sh",
-    "dev:wait": "./scripts/wait-dev-ready.sh",
+    "dev": "turbo dev",
     "build": "turbo build",
     "start": "turbo start",
     "lint": "turbo lint",
@@ -46,8 +42,7 @@
     "webhook:register": "tsx scripts/setup-packlink-webhook.ts",
     "webhook:register:sandbox": "tsx scripts/setup-packlink-webhook.ts sandbox",
     "webhook:register:prod": "tsx scripts/setup-packlink-webhook.ts production",
-    "validate:pr": "npm run format:check && npm run lint && npm run type-check && npm run build",
-    "prepare": "husky"
+    "validate:pr": "npm run format:check && npm run lint && npm run type-check && npm run build"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.17.1",
@@ -121,7 +116,6 @@
     "eslint-config-next": "^15.0.3",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
-    "husky": "^9.1.7",
     "jscodeshift": "^17.3.0",
     "jscpd": "^4.0.5",
     "knip": "^5.66.2",
