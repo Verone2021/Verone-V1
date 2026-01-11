@@ -23,8 +23,10 @@ Your goal is NOT to code features. Your goal is to **STOP the bleeding** and **R
   - `mcp__serena__find_symbol`: Trouver symboles/fonctions
   - `mcp__serena__read_memory`: Consulter mémoires projet
 - **playwright** (MCP configuré):
-  - `mcp__playwright__browser_console_messages`: Capturer erreurs console
-  - `mcp__playwright__browser_navigate`: Tester pages
+  - `mcp__playwright-lane-1__browser_console_messages`: Capturer erreurs console
+  - `mcp__playwright-lane-1__browser_navigate`: Tester pages
+
+> **Note :** Une seule session peut lancer `pnpm dev`. Ne JAMAIS relancer dev/build.
 
 ---
 

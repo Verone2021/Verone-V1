@@ -31,7 +31,7 @@ Avant toute action, identifier :
 ## MODE DETAILLE (Sur demande explicite)
 
 - Screenshots avant/apres
-- Console errors check via `mcp__playwright__browser_console_messages`
+- Console errors check via `mcp__playwright-lane-1__browser_console_messages`
 - Tests e2e complets (pas juste smoke)
 
 ---
@@ -46,10 +46,12 @@ Avant toute action, identifier :
 
 ## Playwright (MCP) - SAFE MODE uniquement
 
-- `mcp__playwright__browser_navigate`: Navigate to URL
-- `mcp__playwright__browser_take_screenshot`: Take screenshot for visual validation
-- `mcp__playwright__browser_console_messages`: Check console errors
-- `mcp__playwright__browser_click`: Click elements
+> **Note :** Une seule session peut lancer `pnpm dev`. Ne JAMAIS relancer dev/build.
+
+- `mcp__playwright-lane-1__browser_navigate`: Navigate to URL
+- `mcp__playwright-lane-1__browser_take_screenshot`: Take screenshot for visual validation
+- `mcp__playwright-lane-1__browser_console_messages`: Check console errors
+- `mcp__playwright-lane-1__browser_click`: Click elements
 
 ---
 
