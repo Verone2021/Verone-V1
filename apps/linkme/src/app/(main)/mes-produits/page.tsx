@@ -13,7 +13,7 @@
  * @updated 2026-01
  */
 
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -99,9 +99,15 @@ function MesProduitsContent(): JSX.Element | null {
 
   const canCreate = linkMeRole && CAN_CREATE_ROLES.includes(linkMeRole.role);
 
-  // Redirect if not authenticated
+  // Redirect if not authenticated - via useEffect to avoid "Cannot update component while rendering" error
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login');
+    }
+  }, [authLoading, user, router]);
+
+  // Early return while redirecting
   if (!authLoading && !user) {
-    router.push('/login');
     return null;
   }
 
@@ -227,10 +233,13 @@ function MesProduitsContent(): JSX.Element | null {
                       Produit
                     </th>
                     <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
-                      Prix Payout
+                      Prix vente HT
                     </th>
                     <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
-                      Commission
+                      Commission LinkMe
+                    </th>
+                    <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+                      <span className="text-green-600">Encaissement net</span>
                     </th>
                     <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
                       Statut
@@ -260,6 +269,14 @@ function ProductRow({ product }: { product: AffiliateProduct }): JSX.Element {
   const canEdit = product.affiliate_approval_status === 'draft';
   const isRejected = product.affiliate_approval_status === 'rejected';
 
+  // Calcul du prix de vente HT à partir de l'encaissement et du taux de commission
+  // Formule: prixVente = encaissement / (1 - commissionRate/100)
+  const commissionRate = product.affiliate_commission_rate || 0;
+  const payoutHt = product.affiliate_payout_ht || 0;
+  const prixVenteHt =
+    commissionRate < 100 ? payoutHt / (1 - commissionRate / 100) : payoutHt;
+  const commissionMontant = prixVenteHt - payoutHt;
+
   return (
     <tr className="hover:bg-gray-50/50 transition-colors">
       <td className="px-6 py-4">
@@ -269,13 +286,19 @@ function ProductRow({ product }: { product: AffiliateProduct }): JSX.Element {
         </div>
       </td>
       <td className="px-6 py-4">
-        <span className="font-semibold text-linkme-marine">
-          {product.affiliate_payout_ht?.toFixed(2)} €
-        </span>
+        <span className="text-gray-700">{prixVenteHt.toFixed(2)} €</span>
       </td>
       <td className="px-6 py-4">
-        <span className="text-gray-600">
-          {product.affiliate_commission_rate}%
+        <div>
+          <span className="text-gray-600">{commissionRate}%</span>
+          <p className="text-xs text-gray-400">
+            ({commissionMontant.toFixed(2)} €)
+          </p>
+        </div>
+      </td>
+      <td className="px-6 py-4">
+        <span className="font-semibold text-green-600">
+          {payoutHt.toFixed(2)} €
         </span>
       </td>
       <td className="px-6 py-4">
@@ -302,27 +325,32 @@ function ProductRow({ product }: { product: AffiliateProduct }): JSX.Element {
       </td>
       <td className="px-6 py-4 text-right">
         <div className="flex items-center justify-end gap-2">
+          {/* Voir - toujours disponible */}
+          <Link
+            href={`/mes-produits/${product.id}`}
+            className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors font-medium"
+          >
+            Voir
+          </Link>
+
+          {/* Modifier - uniquement draft */}
           {canEdit && (
             <Link
-              href={`/mes-produits/${product.id}`}
+              href={`/mes-produits/${product.id}?edit=true`}
               className="px-3 py-1.5 text-sm text-linkme-turquoise hover:bg-linkme-turquoise/10 rounded-lg transition-colors font-medium"
             >
               Modifier
             </Link>
           )}
+
+          {/* Corriger - uniquement rejected */}
           {isRejected && (
             <Link
-              href={`/mes-produits/${product.id}`}
+              href={`/mes-produits/${product.id}?edit=true`}
               className="px-3 py-1.5 text-sm text-amber-600 hover:bg-amber-50 rounded-lg transition-colors font-medium"
             >
               Corriger
             </Link>
-          )}
-          {product.affiliate_approval_status === 'approved' && (
-            <span className="text-sm text-gray-400">-</span>
-          )}
-          {product.affiliate_approval_status === 'pending_approval' && (
-            <span className="text-sm text-gray-400">En cours...</span>
           )}
         </div>
       </td>

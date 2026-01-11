@@ -87,8 +87,14 @@ export default function DashboardPage(): JSX.Element | null {
   // Données des commissions par statut
   const commissionsByStatus = analytics?.commissionsByStatus;
 
-  // Top produits (5 max)
-  const topProducts = analytics?.topProducts?.slice(0, 5) ?? [];
+  // Séparer les top produits: Catalogue (marge gagnée) vs Revendeur (encaissement)
+  const allTopProducts = analytics?.topProducts ?? [];
+  const topProductsCatalogue = allTopProducts
+    .filter(p => !p.isRevendeur)
+    .slice(0, 5);
+  const topProductsRevendeur = allTopProducts
+    .filter(p => p.isRevendeur)
+    .slice(0, 5);
 
   return (
     <div className="min-h-screen bg-gray-50/50">
@@ -204,8 +210,8 @@ export default function DashboardPage(): JSX.Element | null {
           </div>
         </section>
 
-        {/* Top produits vendus */}
-        <section className="mb-8">
+        {/* Top produits Catalogue (marge gagnée) */}
+        <section className="mb-6">
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="p-4 sm:p-6 border-b border-gray-100">
               <div className="flex items-center justify-between">
@@ -213,9 +219,12 @@ export default function DashboardPage(): JSX.Element | null {
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#7E84C0]/10">
                     <Award className="h-5 w-5 text-[#7E84C0]" />
                   </div>
-                  <h2 className="font-semibold text-[#183559]">
-                    Top produits vendus
-                  </h2>
+                  <div>
+                    <h2 className="font-semibold text-[#183559]">
+                      Top Produits Catalogue
+                    </h2>
+                    <p className="text-xs text-gray-500">Marge gagnée</p>
+                  </div>
                 </div>
                 <Link
                   href="/analytics"
@@ -231,22 +240,22 @@ export default function DashboardPage(): JSX.Element | null {
                 <div className="p-8 text-center">
                   <Loader2 className="h-6 w-6 animate-spin text-gray-400 mx-auto" />
                 </div>
-              ) : topProducts.length === 0 ? (
-                <div className="p-8 text-center">
-                  <Package className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+              ) : topProductsCatalogue.length === 0 ? (
+                <div className="p-6 text-center">
+                  <Package className="h-8 w-8 text-gray-300 mx-auto mb-2" />
                   <p className="text-gray-500 text-sm">
-                    Aucune vente enregistrée
+                    Aucune vente de produits catalogue
                   </p>
                   <Link
                     href="/catalogue"
-                    className="inline-flex items-center gap-2 mt-4 text-sm text-[#5DBEBB] hover:underline"
+                    className="inline-flex items-center gap-2 mt-3 text-sm text-[#5DBEBB] hover:underline"
                   >
                     Explorer le catalogue
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
               ) : (
-                topProducts.map((product, index) => {
+                topProductsCatalogue.map((product, index) => {
                   const commissionPerUnit =
                     product.quantitySold > 0
                       ? product.commissionHT / product.quantitySold
@@ -285,7 +294,7 @@ export default function DashboardPage(): JSX.Element | null {
                         </p>
                         <p className="text-xs text-gray-500">
                           {product.quantitySold} ×{' '}
-                          {commissionPerUnit.toFixed(0)}€{' '}
+                          {commissionPerUnit.toFixed(0)}€ marge{' '}
                           <span className="text-[#5DBEBB] font-semibold">
                             → {product.commissionHT.toFixed(0)}€
                           </span>
@@ -298,6 +307,87 @@ export default function DashboardPage(): JSX.Element | null {
             </div>
           </div>
         </section>
+
+        {/* Top produits Revendeur (encaissement) */}
+        {topProductsRevendeur.length > 0 && (
+          <section className="mb-8">
+            <div className="bg-white rounded-xl border border-green-100 shadow-sm overflow-hidden">
+              <div className="p-4 sm:p-6 border-b border-green-100 bg-green-50/30">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
+                      <Package className="h-5 w-5 text-green-600" />
+                    </div>
+                    <div>
+                      <h2 className="font-semibold text-[#183559]">
+                        Mes Produits Revendeur
+                      </h2>
+                      <p className="text-xs text-green-600">Encaissement net</p>
+                    </div>
+                  </div>
+                  <Link
+                    href="/mes-produits"
+                    className="text-sm text-gray-500 hover:text-green-600 transition-colors"
+                  >
+                    Gérer
+                  </Link>
+                </div>
+              </div>
+
+              <div className="divide-y divide-green-50">
+                {topProductsRevendeur.map((product, index) => {
+                  // Pour les produits revendeur, commissionHT = ce que l'affilié encaisse
+                  const encaissementPerUnit =
+                    product.quantitySold > 0
+                      ? product.commissionHT / product.quantitySold
+                      : 0;
+
+                  return (
+                    <div
+                      key={product.productId}
+                      className="flex items-center gap-3 p-4 hover:bg-green-50/50 transition-colors"
+                    >
+                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-green-100 flex items-center justify-center">
+                        <span className="text-xs font-bold text-green-600">
+                          {index + 1}
+                        </span>
+                      </div>
+
+                      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gray-100 overflow-hidden">
+                        {product.productImageUrl ? (
+                          <Image
+                            src={product.productImageUrl}
+                            alt={product.productName}
+                            width={40}
+                            height={40}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Package className="h-4 w-4 text-gray-400" />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-[#183559] text-sm truncate">
+                          {product.productName}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {product.quantitySold} ×{' '}
+                          {encaissementPerUnit.toFixed(0)}€{' '}
+                          <span className="text-green-600 font-semibold">
+                            → {product.commissionHT.toFixed(0)}€ encaissés
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Message si pas de rôle LinkMe */}
         {!linkMeRole && (

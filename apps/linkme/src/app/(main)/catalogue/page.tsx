@@ -45,7 +45,6 @@ import { cn } from '@/lib/utils';
 import {
   CategoryBar,
   CategoryDropdown,
-  FeaturedCarousel,
   FilterDrawer,
   ProductCard,
   ProductListItem,
@@ -293,14 +292,6 @@ function CatalogueContent(): JSX.Element | null {
 
       {/* Zone principale - Pleine largeur (sans sidebar) */}
       <main className="flex flex-col min-h-[calc(100vh-4rem)]">
-        {/* Carousel produits vedettes */}
-        <div className="px-4 lg:px-6 py-4">
-          <FeaturedCarousel
-            products={allProducts}
-            onProductClick={handleAddToSelection}
-          />
-        </div>
-
         {/* Barre de catégories dynamiques */}
         <CategoryBar
           products={allProducts}

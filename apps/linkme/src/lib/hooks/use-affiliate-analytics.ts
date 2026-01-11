@@ -398,7 +398,7 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
           const [productsResult, imagesResult] = await Promise.all([
             supabase
               .from('products')
-              .select('id, name, sku')
+              .select('id, name, sku, created_by_affiliate')
               .in('id', productIds),
             supabase
               .from('product_images')
@@ -417,7 +417,11 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
           const productsInfo = new Map(
             (productsResult.data || []).map(p => [
               p.id,
-              { name: p.name, sku: p.sku },
+              {
+                name: p.name,
+                sku: p.sku,
+                createdByAffiliate: p.created_by_affiliate,
+              },
             ])
           );
 
@@ -432,6 +436,7 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
                 quantitySold: data.quantity,
                 revenueHT: data.revenue,
                 commissionHT: data.commission,
+                isRevendeur: !!info?.createdByAffiliate,
               };
             })
             .sort((a, b) => b.commissionHT - a.commissionHT)

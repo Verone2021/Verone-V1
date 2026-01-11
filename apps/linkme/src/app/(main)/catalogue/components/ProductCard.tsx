@@ -128,12 +128,10 @@ export function ProductCard({
 
           {/* Featured Badge - Top Left */}
           {product.is_featured && (
-            <div className="absolute top-4 left-4">
-              <span className="inline-flex items-center gap-1 bg-linkme-mauve text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-lg">
-                <Star className="h-3 w-3 fill-current" />
-                Vedette
-              </span>
-            </div>
+            <span className="absolute top-1.5 left-1.5 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1">
+              <Star className="h-2.5 w-2.5 fill-current" />
+              Vedette
+            </span>
           )}
 
           {/* Custom Badge */}
@@ -256,7 +254,7 @@ export function ProductListItem({
             </span>
           )}
           {product.is_featured && (
-            <span className="inline-flex items-center gap-0.5 bg-linkme-mauve/10 text-linkme-mauve text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0">
+            <span className="inline-flex items-center gap-0.5 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-1.5 py-0.5 rounded flex-shrink-0">
               <Star className="h-2.5 w-2.5 fill-current" />
               Vedette
             </span>

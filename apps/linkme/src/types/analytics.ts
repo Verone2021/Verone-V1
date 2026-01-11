@@ -84,6 +84,7 @@ export interface TopProductData {
   commissionHT: number;
   selectionId?: string;
   selectionName?: string;
+  isRevendeur?: boolean; // true si produit créé par l'affilié
 }
 
 // Commission individuelle pour liste
