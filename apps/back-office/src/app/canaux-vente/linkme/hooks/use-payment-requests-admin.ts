@@ -111,8 +111,9 @@ export function usePaymentRequestsCounts() {
 
       return counts;
     },
-    staleTime: 30000, // 30 secondes
+    staleTime: 120000, // 2 minutes
     refetchInterval: 60000, // Rafraîchir toutes les minutes
+    refetchIntervalInBackground: false,
   });
 }
 

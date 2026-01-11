@@ -209,8 +209,8 @@ export function useLinkMeAffiliates(type?: AffiliateType) {
   return useQuery({
     queryKey: ['linkme-affiliates', type],
     queryFn: () => fetchLinkMeAffiliates(type),
-    staleTime: 30000,
-    refetchOnWindowFocus: true,
+    staleTime: 300000, // 5 minutes (was 30s - trop agressif)
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -222,6 +222,6 @@ export function useLinkMeAffiliate(affiliateId: string | null) {
     queryKey: ['linkme-affiliate', affiliateId],
     queryFn: () => fetchLinkMeAffiliateById(affiliateId!),
     enabled: !!affiliateId,
-    staleTime: 30000,
+    staleTime: 300000, // 5 minutes
   });
 }
