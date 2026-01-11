@@ -465,8 +465,9 @@ async function createLinkMeOrder(
     // total_ht est GENERATED - ne pas l'inserer
     tax_rate: item.tax_rate || 0.2, // TVA par ligne (defaut 20%)
     retrocession_rate: item.retrocession_rate,
+    // CORRECTION: utiliser base_price_ht (prix catalogue) et non unit_price_ht (prix vente)
     retrocession_amount:
-      item.quantity * item.unit_price_ht * item.retrocession_rate,
+      item.quantity * item.base_price_ht * item.retrocession_rate,
     linkme_selection_item_id: item.linkme_selection_item_id || null,
   }));
 
