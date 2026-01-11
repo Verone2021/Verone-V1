@@ -61,6 +61,7 @@ export interface Organisation {
   industry_sector: string | null;
   supplier_segment: string | null;
   is_service_provider: boolean | null; // true = prestataire, false = fournisseur de biens
+  ownership_type: 'succursale' | 'franchise' | null; // Type de propriété (clients uniquement)
 
   // Informations commerciales
   payment_terms: string | null;
@@ -771,8 +772,14 @@ export function useOrganisation(id: string) {
   const [organisation, setOrganisation] = useState<Organisation | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const supabase = createClient();
+
+  // Fonction pour forcer le rafraîchissement des données
+  const refetch = useCallback(() => {
+    setRefreshKey(prev => prev + 1);
+  }, []);
 
   useEffect(() => {
     const fetchOrganisation = async () => {
@@ -878,7 +885,7 @@ export function useOrganisation(id: string) {
     };
 
     fetchOrganisation();
-  }, [id]);
+  }, [id, refreshKey]);
 
-  return { organisation, loading, error };
+  return { organisation, loading, error, refetch };
 }

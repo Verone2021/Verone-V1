@@ -11,9 +11,8 @@
 
 import React from 'react';
 
-import { Target, Star, CheckCircle, Package } from 'lucide-react';
-
 import { cn } from '@verone/utils';
+import { Target, Star, CheckCircle, Package } from 'lucide-react';
 
 // Type ENUM depuis database (standards CRM/ERP)
 export type SupplierSegmentType =
@@ -96,6 +95,10 @@ export function SupplierSegmentBadge({
   }
 
   const config = SEGMENT_CONFIG[segment];
+  // Protection contre les segments invalides (non présents dans SEGMENT_CONFIG)
+  if (!config) {
+    return null;
+  }
   const sizeConfig = SIZE_CONFIG[size];
   const Icon = config.icon;
 

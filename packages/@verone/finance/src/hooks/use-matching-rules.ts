@@ -157,7 +157,14 @@ export function useMatchingRules(): UseMatchingRulesReturn {
       setRules((data || []) as MatchingRule[]);
     } catch (err) {
       console.error('[useMatchingRules] Error:', err);
-      setError(err instanceof Error ? err.message : 'Erreur inconnue');
+      // Message plus explicite pour les erreurs réseau
+      if (err instanceof TypeError && err.message === 'Failed to fetch') {
+        setError(
+          'Impossible de contacter le serveur. Vérifiez votre connexion.'
+        );
+      } else {
+        setError(err instanceof Error ? err.message : 'Erreur inconnue');
+      }
     } finally {
       setIsLoading(false);
     }
