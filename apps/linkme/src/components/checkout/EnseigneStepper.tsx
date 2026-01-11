@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 
+import Image from 'next/image';
+
 import {
   User,
   Building2,
@@ -12,6 +14,11 @@ import {
   Check,
   Loader2,
   AlertCircle,
+  Package,
+  ShoppingBag,
+  Minus,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 
 import { useEnseigneOrganisations } from '@/lib/hooks/use-enseigne-organisations';
@@ -25,6 +32,9 @@ export interface CartItem {
   id: string;
   product_id: string;
   product_name: string;
+  product_sku: string;
+  product_image?: string | null;
+  selling_price_ht: number;
   selling_price_ttc: number;
   quantity: number;
 }
@@ -74,6 +84,8 @@ interface EnseigneStepperProps {
   cart: CartItem[];
   onClose: () => void;
   onSuccess: (orderNumber: string) => void;
+  onUpdateQuantity?: (itemId: string, quantity: number) => void;
+  onRemoveItem?: (itemId: string) => void;
 }
 
 const INITIAL_DATA: EnseigneStepperData = {
@@ -126,6 +138,8 @@ export function EnseigneStepper({
   cart,
   onClose,
   onSuccess,
+  onUpdateQuantity,
+  onRemoveItem,
 }: EnseigneStepperProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [data, setData] = useState<EnseigneStepperData>(INITIAL_DATA);
@@ -251,148 +265,279 @@ export function EnseigneStepper({
       currency: 'EUR',
     }).format(price);
 
+  // Calculs des totaux
+  const totalHT = cart.reduce(
+    (sum, item) => sum + item.selling_price_ht * item.quantity,
+    0
+  );
+  const totalTVA = cartTotal - totalHT;
+  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+
   return (
-    <div className="flex flex-col h-full bg-white">
-      {/* Header avec progression */}
-      <div className="flex-shrink-0 border-b bg-gray-50 px-6 py-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-900">
-            Commander pour une enseigne
-          </h2>
-          <button
-            onClick={onClose}
-            disabled={isSubmitting}
-            className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
-          >
-            <span className="sr-only">Fermer</span>
-            &times;
-          </button>
+    <div className="flex h-full bg-white">
+      {/* LEFT: Order Summary (50% - Desktop only) */}
+      <div className="hidden md:flex w-1/2 bg-gray-50 border-r flex-col">
+        {/* Header compact */}
+        <div className="flex-shrink-0 px-4 py-3 border-b bg-white flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold text-gray-900">Récapitulatif</h3>
+            <p className="text-xs text-gray-500">
+              {totalItems} article{totalItems > 1 ? 's' : ''}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-gray-500">Total TTC</p>
+            <p className="font-bold text-gray-900">{formatPrice(cartTotal)}</p>
+          </div>
         </div>
 
-        {/* Steps indicator */}
-        <div className="flex items-center justify-between">
-          {STEPS.map((step, index) => {
-            const Icon = step.icon;
-            const isActive = currentStep === step.id;
-            const isCompleted = currentStep > step.id;
-
-            return (
-              <div key={step.id} className="flex items-center flex-1">
-                <div className="flex flex-col items-center">
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
-                      isCompleted
-                        ? 'bg-green-500 text-white'
-                        : isActive
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-200 text-gray-500'
-                    }`}
-                  >
-                    {isCompleted ? (
-                      <Check className="h-5 w-5" />
+        {/* Product list - compact table style */}
+        <div className="flex-1 overflow-y-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-100 sticky top-0">
+              <tr className="text-xs text-gray-500 uppercase">
+                <th className="px-3 py-2 text-left font-medium">Produit</th>
+                <th className="px-2 py-2 text-center font-medium w-24">Qté</th>
+                <th className="px-3 py-2 text-right font-medium w-24">
+                  Prix HT
+                </th>
+                <th className="px-3 py-2 text-right font-medium w-24">Total</th>
+                {onRemoveItem && <th className="px-2 py-2 w-10" />}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {cart.map(item => (
+                <tr key={item.id} className="hover:bg-gray-50">
+                  <td className="px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-gray-100 rounded flex-shrink-0 overflow-hidden">
+                        {item.product_image ? (
+                          <Image
+                            src={item.product_image}
+                            alt={item.product_name}
+                            width={32}
+                            height={32}
+                            className="w-full h-full object-cover"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Package className="h-4 w-4 text-gray-400" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-medium text-gray-900 truncate text-xs">
+                          {item.product_name}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {item.product_sku}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-2 py-2">
+                    {onUpdateQuantity ? (
+                      <div className="flex items-center justify-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onUpdateQuantity(item.id, item.quantity - 1)
+                          }
+                          disabled={item.quantity <= 1}
+                          className="p-1 rounded hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                          title="Diminuer la quantité"
+                        >
+                          <Minus className="h-3 w-3 text-gray-600" />
+                        </button>
+                        <span className="w-6 text-center text-gray-600">
+                          {item.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onUpdateQuantity(item.id, item.quantity + 1)
+                          }
+                          className="p-1 rounded hover:bg-gray-200 transition-colors"
+                          title="Augmenter la quantité"
+                        >
+                          <Plus className="h-3 w-3 text-gray-600" />
+                        </button>
+                      </div>
                     ) : (
-                      <Icon className="h-5 w-5" />
+                      <div className="text-center text-gray-600">
+                        {item.quantity}
+                      </div>
                     )}
-                  </div>
-                  <span
-                    className={`mt-1 text-xs font-medium ${
-                      isActive ? 'text-blue-600' : 'text-gray-500'
-                    }`}
-                  >
-                    {step.title}
-                  </span>
-                </div>
-                {index < STEPS.length - 1 && (
+                  </td>
+                  <td className="px-3 py-2 text-right text-gray-600">
+                    {formatPrice(item.selling_price_ht)}
+                  </td>
+                  <td className="px-3 py-2 text-right font-medium text-gray-900">
+                    {formatPrice(item.selling_price_ttc * item.quantity)}
+                  </td>
+                  {onRemoveItem && (
+                    <td className="px-2 py-2 text-center">
+                      <button
+                        type="button"
+                        onClick={() => onRemoveItem(item.id)}
+                        className="p-1 rounded hover:bg-red-100 transition-colors text-gray-400 hover:text-red-600"
+                        title="Supprimer l'article"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Total section - compact */}
+        <div className="flex-shrink-0 px-4 py-3 border-t bg-white">
+          <div className="flex justify-between text-xs text-gray-500 mb-1">
+            <span>HT: {formatPrice(totalHT)}</span>
+            <span>TVA: {formatPrice(totalTVA)}</span>
+          </div>
+          <div className="flex justify-between font-bold text-gray-900">
+            <span>Total TTC</span>
+            <span className="text-lg">{formatPrice(cartTotal)}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* RIGHT: Form (50%) */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header compact */}
+        <div className="flex-shrink-0 border-b bg-white px-4 py-3">
+          {/* Titre + fermer + progress sur une ligne */}
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <h2 className="font-semibold text-gray-900">
+                {currentStep}. {STEPS[currentStep - 1].title}
+              </h2>
+              <span className="text-xs text-gray-400">
+                ({currentStep}/{STEPS.length})
+              </span>
+            </div>
+
+            {/* Progress dots */}
+            <div className="flex items-center gap-1">
+              {STEPS.map(step => {
+                const isActive = currentStep === step.id;
+                const isCompleted = currentStep > step.id;
+                return (
                   <div
-                    className={`flex-1 h-0.5 mx-2 ${
-                      isCompleted ? 'bg-green-500' : 'bg-gray-200'
+                    key={step.id}
+                    className={`w-2 h-2 rounded-full ${
+                      isCompleted
+                        ? 'bg-green-500'
+                        : isActive
+                          ? 'bg-blue-600'
+                          : 'bg-gray-300'
                     }`}
                   />
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
+                );
+              })}
+            </div>
 
-      {/* Contenu de l'etape */}
-      <div className="flex-1 overflow-y-auto p-6">
-        {currentStep === 1 && (
-          <Step1Demandeur
-            data={data}
-            errors={errors}
-            updateData={updateData}
-            affiliateId={affiliateId}
-            organisations={organisations}
-            isLoadingOrganisations={isLoadingOrganisations}
-          />
-        )}
-        {currentStep === 2 && (
-          <Step2Proprietaire data={data} updateData={updateData} />
-        )}
-        {currentStep === 3 && (
-          <Step3Facturation
-            data={data}
-            errors={errors}
-            updateData={updateData}
-          />
-        )}
-      </div>
-
-      {/* Footer avec total et navigation */}
-      <div className="flex-shrink-0 border-t bg-gray-50 px-6 py-4">
-        {errors.submit && (
-          <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700 text-sm">
-            <AlertCircle className="h-4 w-4 flex-shrink-0" />
-            {errors.submit}
+            <button
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="p-1 hover:bg-gray-100 rounded transition-colors text-gray-400 hover:text-gray-600"
+            >
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
           </div>
-        )}
+        </div>
 
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-sm text-gray-600">
-            {cart.length} article{cart.length > 1 ? 's' : ''}
-          </span>
-          <div className="text-right">
-            <span className="text-sm text-gray-500">Total TTC</span>
-            <span className="ml-2 text-xl font-bold text-gray-900">
-              {formatPrice(cartTotal)}
+        {/* Contenu de l'etape */}
+        <div className="flex-1 overflow-y-auto p-4">
+          {currentStep === 1 && (
+            <Step1Demandeur
+              data={data}
+              errors={errors}
+              updateData={updateData}
+              affiliateId={affiliateId}
+              organisations={organisations}
+              isLoadingOrganisations={isLoadingOrganisations}
+            />
+          )}
+          {currentStep === 2 && (
+            <Step2Proprietaire data={data} updateData={updateData} />
+          )}
+          {currentStep === 3 && (
+            <Step3Facturation
+              data={data}
+              errors={errors}
+              updateData={updateData}
+            />
+          )}
+        </div>
+
+        {/* Footer compact */}
+        <div className="flex-shrink-0 border-t bg-gray-50 px-4 py-3">
+          {errors.submit && (
+            <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded flex items-center gap-2 text-red-700 text-xs">
+              <AlertCircle className="h-3 w-3 flex-shrink-0" />
+              {errors.submit}
+            </div>
+          )}
+
+          {/* Mobile only: show cart summary */}
+          <div className="md:hidden flex items-center justify-between mb-3 pb-3 border-b border-gray-200 text-sm">
+            <span className="text-gray-600">
+              {totalItems} art. | HT: {formatPrice(totalHT)}
+            </span>
+            <span className="font-bold text-gray-900">
+              TTC: {formatPrice(cartTotal)}
             </span>
           </div>
-        </div>
 
-        <div className="flex gap-3">
-          {currentStep > 1 && (
-            <button
-              onClick={handleBack}
-              disabled={isSubmitting}
-              className="flex-1 py-3 px-4 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Retour
-            </button>
-          )}
-          <button
-            onClick={handleNext}
-            disabled={isSubmitting}
-            className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Envoi...
-              </>
-            ) : currentStep === 3 ? (
-              <>
-                Confirmer la commande
-                <Check className="h-4 w-4" />
-              </>
-            ) : (
-              <>
-                Continuer
-                <ChevronRight className="h-4 w-4" />
-              </>
+          <div className="flex gap-2">
+            {currentStep > 1 && (
+              <button
+                onClick={handleBack}
+                disabled={isSubmitting}
+                className="flex-1 py-2 px-3 border border-gray-300 rounded font-medium text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors flex items-center justify-center gap-1"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Retour
+              </button>
             )}
-          </button>
+            <button
+              onClick={handleNext}
+              disabled={isSubmitting}
+              className="flex-1 py-2 px-3 bg-blue-600 text-white rounded font-medium text-sm hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-1"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Envoi...
+                </>
+              ) : currentStep === 3 ? (
+                'Confirmer'
+              ) : (
+                <>
+                  Suivant
+                  <ChevronRight className="h-4 w-4" />
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>
