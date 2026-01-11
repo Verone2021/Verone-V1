@@ -16,11 +16,19 @@ import { createClient } from '@verone/utils/supabase/client';
 // TYPES
 // =====================================================================
 
+export type OrganisationOwnershipType = 'propre' | 'franchise' | 'succursale';
+
 export interface EnseigneOrganisation {
   id: string;
   legal_name: string;
   trade_name: string | null;
   city: string | null;
+  postal_code: string | null;
+  shipping_address_line1: string | null;
+  shipping_city: string | null;
+  shipping_postal_code: string | null;
+  logo_url: string | null;
+  ownership_type: OrganisationOwnershipType | null;
 }
 
 interface UseEnseigneOrganisationsOptions {
@@ -74,12 +82,15 @@ export function useEnseigneOrganisations(
         return [];
       }
 
-      // 2. Récupérer organisations de l'enseigne
+      // 2. Récupérer organisations de l'enseigne avec adresses, logo et type
       const { data: organisations, error: orgError } = await supabase
         .from('organisations')
-        .select('id, legal_name, trade_name, city')
+        .select(
+          'id, legal_name, trade_name, city, postal_code, shipping_address_line1, shipping_city, shipping_postal_code, logo_url, ownership_type'
+        )
         .eq('enseigne_id', affiliate.enseigne_id)
         .eq('approval_status', 'approved')
+        .is('archived_at', null)
         .order('trade_name', { ascending: true, nullsFirst: false });
 
       if (orgError) {

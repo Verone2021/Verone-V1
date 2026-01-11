@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 
 import { useToast } from '@verone/common/hooks';
 import { createClient } from '@verone/utils/supabase/client';
@@ -8,6 +8,7 @@ import { createClient } from '@verone/utils/supabase/client';
 // =============================================
 // DASHBOARD VENTES - VRAIES DONNÉES (pas mock)
 // Consultations (client_consultations) + Commandes (sales_orders)
+// ✅ FIX: Utilise des JOINs Supabase au lieu de boucles N+1
 // =============================================
 
 interface SalesStats {
@@ -19,11 +20,13 @@ interface SalesStats {
 
 interface Consultation {
   id: string;
-  organisation_name: string;
+  organisation_name: string; // Computed from organisation_id/enseigne_id
   client_email: string;
   status: string;
   created_at: string;
   tarif_maximum: number | null;
+  organisation_id: string | null;
+  enseigne_id: string | null;
 }
 
 interface SalesOrder {
@@ -48,7 +51,8 @@ export function useSalesDashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const supabase = createClient();
+  // ✅ FIX: useMemo pour éviter recréation du client
+  const supabase = useMemo(() => createClient(), []);
 
   const fetchDashboardMetrics = useCallback(async () => {
     setLoading(true);
@@ -56,25 +60,62 @@ export function useSalesDashboard() {
 
     try {
       // ============================================
-      // QUERY 1: Consultations actives (status != 'closed')
+      // QUERY 1: Consultations actives avec JOINs (1 requête au lieu de N+1)
+      // ✅ FIX: Utilise les relations Supabase au lieu de boucles
       // ============================================
-      const { data: consultations, error: consultationsError } = await supabase
+      const { data: rawConsultations, error: consultationsError } = await (
+        supabase as any
+      )
         .from('client_consultations')
         .select(
-          'id, organisation_name, client_email, status, created_at, tarif_maximum'
+          `
+            id, organisation_id, enseigne_id, client_email, status, created_at, tarif_maximum,
+            organisation:organisations!organisation_id(legal_name, trade_name),
+            enseigne:enseignes!enseigne_id(name)
+          `
         )
         .neq('status', 'closed')
         .order('created_at', { ascending: false });
 
       if (consultationsError) throw consultationsError;
 
+      // Mapper les résultats avec noms enrichis (pas de requêtes supplémentaires)
+      const consultations: Consultation[] = (rawConsultations || []).map(
+        (c: any) => {
+          let organisationName = 'Client inconnu';
+          if (c.organisation) {
+            organisationName =
+              c.organisation.trade_name ||
+              c.organisation.legal_name ||
+              'Organisation inconnue';
+          } else if (c.enseigne) {
+            organisationName = c.enseigne.name || 'Enseigne inconnue';
+          }
+          return {
+            id: c.id,
+            organisation_id: c.organisation_id,
+            enseigne_id: c.enseigne_id,
+            client_email: c.client_email,
+            status: c.status,
+            created_at: c.created_at,
+            tarif_maximum: c.tarif_maximum,
+            organisation_name: organisationName,
+          };
+        }
+      );
+
       // ============================================
-      // QUERY 2: Commandes en cours (confirmed, partially_shipped)
+      // QUERY 2: Commandes en cours avec JOINs (1 requête au lieu de N+1)
+      // ✅ FIX: customer_organisation pour les organisations
       // ============================================
-      const { data: orders, error: ordersError } = await supabase
+      const { data: orders, error: ordersError } = await (supabase as any)
         .from('sales_orders')
         .select(
-          'id, order_number, customer_id, customer_type, status, total_ttc, created_at'
+          `
+          id, order_number, customer_id, customer_type, status, total_ttc, created_at,
+          customer_organisation:organisations!customer_id(legal_name, trade_name),
+          customer_individual:individual_customers!customer_id(first_name, last_name)
+        `
         )
         .in('status', ['validated', 'partially_shipped'])
         .order('created_at', { ascending: false });
@@ -100,37 +141,34 @@ export function useSalesDashboard() {
         0
       );
 
-      // ============================================
-      // Enrichissement noms clients pour commandes
-      // ============================================
-      const enrichedOrders: SalesOrder[] = [];
-      for (const order of orders || []) {
+      // Mapper les commandes avec noms enrichis (pas de requêtes supplémentaires)
+      const enrichedOrders: SalesOrder[] = (orders || []).map((order: any) => {
         let customerName = 'Client inconnu';
-
-        if (order.customer_type === 'organization' && order.customer_id) {
-          const { data: org } = await supabase
-            .from('organisations')
-            .select('legal_name, trade_name')
-            .eq('id', order.customer_id)
-            .single();
+        if (
+          order.customer_type === 'organization' &&
+          order.customer_organisation
+        ) {
           customerName =
-            org?.trade_name || org?.legal_name || 'Organisation inconnue';
-        } else if (order.customer_type === 'individual' && order.customer_id) {
-          const { data: individual } = await supabase
-            .from('individual_customers')
-            .select('first_name, last_name')
-            .eq('id', order.customer_id)
-            .single();
-          customerName = individual
-            ? `${individual.first_name} ${individual.last_name}`
-            : 'Particulier inconnu';
+            order.customer_organisation.trade_name ||
+            order.customer_organisation.legal_name ||
+            'Organisation inconnue';
+        } else if (
+          order.customer_type === 'individual' &&
+          order.customer_individual
+        ) {
+          customerName = `${order.customer_individual.first_name} ${order.customer_individual.last_name}`;
         }
-
-        enrichedOrders.push({
-          ...order,
+        return {
+          id: order.id,
+          order_number: order.order_number,
+          customer_id: order.customer_id,
+          customer_type: order.customer_type,
+          status: order.status,
+          total_ttc: order.total_ttc,
+          created_at: order.created_at,
           customer_name: customerName,
-        } as any);
-      }
+        };
+      });
 
       // ============================================
       // Calcul taux de conversion (commandes / consultations)
@@ -152,7 +190,7 @@ export function useSalesDashboard() {
           chiffreAffaireMois,
           tauxConversion,
         },
-        recentConsultations: ((consultations || []) as any).slice(0, 3), // Top 3
+        recentConsultations: consultations.slice(0, 3), // Top 3
         recentOrders: enrichedOrders.slice(0, 3), // Top 3
       });
     } catch (err: any) {
