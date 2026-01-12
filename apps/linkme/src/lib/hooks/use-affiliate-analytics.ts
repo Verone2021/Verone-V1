@@ -45,7 +45,8 @@ function formatDateLabel(date: Date, period: AnalyticsPeriod): string {
   if (period === 'quarter') {
     return `S${getWeekNumber(date)}`;
   }
-  return date.toLocaleDateString('fr-FR', { month: 'short' });
+  // Pour 'all' ou 'year': inclure mois + année (ex: "juin 24")
+  return date.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' });
 }
 
 function getWeekNumber(date: Date): number {
@@ -68,7 +69,7 @@ function getDateKey(date: Date, period: AnalyticsPeriod): string {
 // MAIN HOOK
 // ============================================
 
-export function useAffiliateAnalytics(period: AnalyticsPeriod = 'month') {
+export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
   const { data: affiliate } = useUserAffiliate();
 
   return useQuery({
@@ -83,107 +84,147 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'month') {
       }
 
       const periodStart = getPeriodStartDate(period);
-      const periodStartISO = periodStart.toISOString();
+      const periodStartISO = periodStart?.toISOString() ?? null;
 
       // ============================================
-      // 1-3. Requetes paralleles (commissions periode, all time, selections)
+      // 1-2. Requêtes parallèles
       // ============================================
-      const [commissionsResult, allCommissionsResult, selectionsResult] =
-        await Promise.all([
-          // 1. Commissions de l'affilié (période)
-          supabase
-            .from('linkme_commissions')
-            .select(
-              `
-              id,
-              order_id,
-              selection_id,
-              order_number,
-              order_amount_ht,
-              affiliate_commission,
-              affiliate_commission_ttc,
-              linkme_commission,
-              margin_rate_applied,
-              status,
-              created_at,
-              validated_at,
-              paid_at
+      const [allCommissionsResult, selectionsResult] = await Promise.all([
+        // 1. Commissions (sans jointure sales_orders pour éviter erreurs RLS)
+        supabase
+          .from('linkme_commissions')
+          .select(
             `
-            )
-            .eq('affiliate_id', affiliate.id)
-            .gte('created_at', periodStartISO)
-            .order('created_at', { ascending: true }),
+            id,
+            order_id,
+            selection_id,
+            order_number,
+            order_amount_ht,
+            affiliate_commission,
+            affiliate_commission_ttc,
+            linkme_commission,
+            margin_rate_applied,
+            status,
+            created_at,
+            validated_at,
+            paid_at
+          `
+          )
+          .eq('affiliate_id', affiliate.id)
+          .order('created_at', { ascending: true }),
 
-          // 2. Commissions ALL TIME (pour status)
-          supabase
-            .from('linkme_commissions')
-            .select('status, affiliate_commission, affiliate_commission_ttc')
-            .eq('affiliate_id', affiliate.id),
-
-          // 3. Sélections de l'affilié
-          supabase
-            .from('linkme_selections')
-            .select(
-              `
-              id,
-              name,
-              slug,
-              image_url,
-              products_count,
-              views_count,
-              orders_count,
-              total_revenue,
-              published_at
+        // 2. Sélections de l'affilié
+        supabase
+          .from('linkme_selections')
+          .select(
             `
-            )
-            .eq('affiliate_id', affiliate.id),
-        ]);
+            id,
+            name,
+            slug,
+            image_url,
+            products_count,
+            views_count,
+            orders_count,
+            total_revenue,
+            published_at
+          `
+          )
+          .eq('affiliate_id', affiliate.id),
+      ]);
 
-      if (commissionsResult.error) {
-        console.error('Erreur fetch commissions:', commissionsResult.error);
-        throw commissionsResult.error;
+      if (allCommissionsResult.error) {
+        console.error('Erreur fetch commissions:', allCommissionsResult.error);
+        throw allCommissionsResult.error;
       }
 
-      const commissions = commissionsResult.data || [];
-      const allCommissions = allCommissionsResult.data || [];
+      const allCommissions = allCommissionsResult.data ?? [];
 
-      // Calculs par statut
+      // ============================================
+      // FILTRAGE PAR PÉRIODE (basé sur created_at de la commission)
+      // ============================================
+      const commissions = periodStartISO
+        ? allCommissions.filter(
+            c => c.created_at && c.created_at >= periodStartISO
+          )
+        : allCommissions;
+
+      // ============================================
+      // Calculs par statut - basé sur linkme_commissions.status
+      // ============================================
+      // pending = commande non payée
+      // validated = commande payée, prête pour demande de versement
+      // requested = demande de versement en cours
+      // paid = commission versée à l'affilié
+
+      const pendingCommissions = commissions.filter(
+        c => c.status === 'pending' || c.status === null
+      );
+
+      // 'payable' est un alias de 'validated' dans la DB
+      const validatedCommissions = commissions.filter(
+        c => c.status === 'validated' || c.status === 'payable'
+      );
+
+      const requestedCommissions = commissions.filter(
+        c => c.status === 'requested'
+      );
+
+      const paidCommissions = commissions.filter(c => c.status === 'paid');
+
       const commissionsByStatus: CommissionsByStatus = {
         pending: {
-          count: allCommissions.filter(c => c.status === 'pending').length,
-          amountHT: allCommissions
-            .filter(c => c.status === 'pending')
-            .reduce((sum, c) => sum + (c.affiliate_commission || 0), 0),
-          amountTTC: allCommissions
-            .filter(c => c.status === 'pending')
-            .reduce((sum, c) => sum + (c.affiliate_commission_ttc || 0), 0),
-        },
-        validated: {
-          count: allCommissions.filter(c => c.status === 'validated').length,
-          amountHT: allCommissions
-            .filter(c => c.status === 'validated')
-            .reduce((sum, c) => sum + (c.affiliate_commission || 0), 0),
-          amountTTC: allCommissions
-            .filter(c => c.status === 'validated')
-            .reduce((sum, c) => sum + (c.affiliate_commission_ttc || 0), 0),
-        },
-        paid: {
-          count: allCommissions.filter(c => c.status === 'paid').length,
-          amountHT: allCommissions
-            .filter(c => c.status === 'paid')
-            .reduce((sum, c) => sum + (c.affiliate_commission || 0), 0),
-          amountTTC: allCommissions
-            .filter(c => c.status === 'paid')
-            .reduce((sum, c) => sum + (c.affiliate_commission_ttc || 0), 0),
-        },
-        total: {
-          count: allCommissions.length,
-          amountHT: allCommissions.reduce(
-            (sum, c) => sum + (c.affiliate_commission || 0),
+          count: pendingCommissions.length,
+          amountHT: pendingCommissions.reduce(
+            (sum, c) => sum + (c.affiliate_commission ?? 0),
             0
           ),
-          amountTTC: allCommissions.reduce(
-            (sum, c) => sum + (c.affiliate_commission_ttc || 0),
+          amountTTC: pendingCommissions.reduce(
+            (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
+            0
+          ),
+        },
+        validated: {
+          count: validatedCommissions.length,
+          amountHT: validatedCommissions.reduce(
+            (sum, c) => sum + (c.affiliate_commission ?? 0),
+            0
+          ),
+          amountTTC: validatedCommissions.reduce(
+            (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
+            0
+          ),
+        },
+        requested: {
+          count: requestedCommissions.length,
+          amountHT: requestedCommissions.reduce(
+            (sum, c) => sum + (c.affiliate_commission ?? 0),
+            0
+          ),
+          amountTTC: requestedCommissions.reduce(
+            (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
+            0
+          ),
+        },
+        paid: {
+          count: paidCommissions.length,
+          amountHT: paidCommissions.reduce(
+            (sum, c) => sum + (c.affiliate_commission ?? 0),
+            0
+          ),
+          amountTTC: paidCommissions.reduce(
+            (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
+            0
+          ),
+        },
+        total: {
+          // Utiliser commissions (filtré par période) pour cohérence avec les autres KPIs
+          count: commissions.length,
+          amountHT: commissions.reduce(
+            (sum, c) => sum + (c.affiliate_commission ?? 0),
+            0
+          ),
+          amountTTC: commissions.reduce(
+            (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
             0
           ),
         },
@@ -243,16 +284,20 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'month') {
         totalViews > 0 ? (totalOrders / totalViews) * 100 : 0;
 
       // ============================================
-      // 5. Revenue par période (graphique)
+      // 5. Revenue par période (graphique) - CA CUMULATIF
       // ============================================
+      // IMPORTANT: Utiliser sales_orders.created_at (date commande, pas commission)
       const revenueMap = new Map<
         string,
         { revenue: number; orders: number; label: string }
       >();
 
       commissions.forEach(c => {
-        if (c.created_at) {
-          const date = new Date(c.created_at);
+        // Utiliser la date de création de la commission
+        const orderDate = c.created_at;
+
+        if (orderDate) {
+          const date = new Date(orderDate);
           const key = getDateKey(date, period);
           const label = formatDateLabel(date, period);
 
@@ -261,47 +306,59 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'month') {
           }
 
           const entry = revenueMap.get(key)!;
-          entry.revenue += c.order_amount_ht || 0;
+          entry.revenue += c.order_amount_ht ?? 0;
           entry.orders += 1;
         }
       });
 
+      // Calculer le CA CUMULATIF (ligne qui ne fait que monter)
+      let cumulativeRevenue = 0;
       const revenueByPeriod: RevenueDataPoint[] = Array.from(
         revenueMap.entries()
       )
-        .map(([date, data]) => ({
-          date,
-          label: data.label,
-          revenue: data.revenue,
-          orders: data.orders,
-        }))
-        .sort((a, b) => a.date.localeCompare(b.date));
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([date, data]) => {
+          cumulativeRevenue += data.revenue;
+          return {
+            date,
+            label: data.label,
+            revenue: cumulativeRevenue, // CA cumulatif
+            orders: data.orders,
+          };
+        });
 
       // ============================================
-      // 6. Top produits vendus
+      // 6. Top produits vendus (ALL TIME - pas filtré par période)
       // ============================================
-      // Récupérer les order_ids des commissions
-      const orderIds = commissions
+      // Utiliser allCommissions pour avoir TOUS les produits vendus
+      const orderIds = allCommissions
         .map(c => c.order_id)
         .filter((id): id is string => !!id);
 
       let topProducts: TopProductData[] = [];
+      // eslint-disable-next-line prefer-const -- modifié dans le bloc if
+      let totalQuantitySoldAllTime = 0;
 
       if (orderIds.length > 0) {
-        // Récupérer les items de commande
-        const { data: orderItemsData } = await supabase
-          .from('sales_order_items')
+        // Utiliser linkme_order_items_enriched qui calcule correctement affiliate_margin
+        // à partir de linkme_selection_items.base_price_ht × margin_rate / 100 × quantity
+        const { data: orderItemsData, error: orderItemsError } = await supabase
+          .from('linkme_order_items_enriched')
           .select(
             `
             product_id,
             quantity,
             total_ht,
-            retrocession_amount
+            affiliate_margin
           `
           )
           .in('sales_order_id', orderIds);
 
-        const orderItems = orderItemsData || [];
+        if (orderItemsError) {
+          // Erreur non bloquante - continuer avec tableau vide
+        }
+
+        const orderItems = orderItemsData ?? [];
 
         // Agréger par produit
         const productMap = new Map<
@@ -311,6 +368,14 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'month') {
 
         orderItems.forEach(item => {
           const productId = item.product_id;
+          const qty = item.quantity || 0;
+
+          // Ajouter à la somme totale des quantités
+          totalQuantitySoldAllTime += qty;
+
+          // Ignorer les items sans product_id pour l'agrégation par produit
+          if (!productId) return;
+
           if (!productMap.has(productId)) {
             productMap.set(productId, {
               quantity: 0,
@@ -319,9 +384,10 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'month') {
             });
           }
           const entry = productMap.get(productId)!;
-          entry.quantity += item.quantity || 0;
+          entry.quantity += qty;
           entry.revenue += item.total_ht || 0;
-          entry.commission += item.retrocession_amount || 0;
+          // SOURCE DE VÉRITÉ: affiliate_margin depuis linkme_order_items_enriched
+          entry.commission += item.affiliate_margin || 0;
         });
 
         // Récupérer les infos produits
@@ -332,7 +398,7 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'month') {
           const [productsResult, imagesResult] = await Promise.all([
             supabase
               .from('products')
-              .select('id, name, sku')
+              .select('id, name, sku, created_by_affiliate')
               .in('id', productIds),
             supabase
               .from('product_images')
@@ -351,7 +417,11 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'month') {
           const productsInfo = new Map(
             (productsResult.data || []).map(p => [
               p.id,
-              { name: p.name, sku: p.sku },
+              {
+                name: p.name,
+                sku: p.sku,
+                createdByAffiliate: p.created_by_affiliate,
+              },
             ])
           );
 
@@ -366,9 +436,10 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'month') {
                 quantitySold: data.quantity,
                 revenueHT: data.revenue,
                 commissionHT: data.commission,
+                isRevendeur: !!info?.createdByAffiliate,
               };
             })
-            .sort((a, b) => b.quantitySold - a.quantitySold)
+            .sort((a, b) => b.commissionHT - a.commissionHT)
             .slice(0, 10);
         }
       }
@@ -382,6 +453,7 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'month') {
         totalRevenueHT,
         totalCommissionsHT,
         totalCommissionsTTC,
+        totalQuantitySold: totalQuantitySoldAllTime,
         // KPIs ALL TIME (pour page Commissions)
         // IMPORTANT: Utiliser les valeurs ALL TIME de commissionsByStatus
         totalCommissionsTTCAllTime: commissionsByStatus.total.amountTTC,
@@ -432,15 +504,15 @@ export function useSelectionTopProducts(selectionId: string | null) {
 
       if (orderIds.length === 0) return [];
 
-      // Récupérer les items
+      // Récupérer les items depuis la vue enrichie (source de vérité)
       const { data: orderItemsData } = await supabase
-        .from('sales_order_items')
+        .from('linkme_order_items_enriched')
         .select(
           `
           product_id,
           quantity,
           total_ht,
-          retrocession_amount
+          affiliate_margin
         `
         )
         .in('sales_order_id', orderIds);
@@ -455,13 +527,14 @@ export function useSelectionTopProducts(selectionId: string | null) {
 
       orderItems.forEach(item => {
         const productId = item.product_id;
+        if (!productId) return; // Skip items without product_id
         if (!productMap.has(productId)) {
           productMap.set(productId, { quantity: 0, revenue: 0, commission: 0 });
         }
         const entry = productMap.get(productId)!;
         entry.quantity += item.quantity || 0;
         entry.revenue += item.total_ht || 0;
-        entry.commission += item.retrocession_amount || 0;
+        entry.commission += item.affiliate_margin || 0;
       });
 
       const productIds = Array.from(productMap.keys());
