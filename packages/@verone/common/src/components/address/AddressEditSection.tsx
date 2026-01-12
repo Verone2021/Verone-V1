@@ -6,7 +6,16 @@ import { ButtonV2 } from '@verone/ui';
 import { Checkbox } from '@verone/ui';
 import { AddressAutocomplete, type AddressResult } from '@verone/ui';
 import { cn } from '@verone/utils';
-import { MapPin, Save, X, Edit, Home, Building, Copy } from 'lucide-react';
+import {
+  MapPin,
+  Save,
+  X,
+  Edit,
+  Home,
+  Building,
+  Copy,
+  Navigation,
+} from 'lucide-react';
 
 import { useInlineEdit, type EditableSection } from '@verone/common/hooks';
 
@@ -34,6 +43,10 @@ interface Organisation {
   shipping_city?: string | null;
   shipping_region?: string | null;
   shipping_country?: string | null;
+
+  // Coordonnées GPS (adresse de livraison)
+  latitude?: number | null;
+  longitude?: number | null;
 
   // Indicateur adresses différentes
   has_different_shipping_address?: boolean | null;
@@ -108,6 +121,10 @@ export function AddressEditSection({
       shipping_city: organisation.shipping_city || '',
       shipping_region: organisation.shipping_region || '',
       shipping_country: organisation.shipping_country || 'FR',
+
+      // Coordonnées GPS (adresse de livraison)
+      latitude: organisation.latitude || null,
+      longitude: organisation.longitude || null,
 
       has_different_shipping_address:
         organisation.has_different_shipping_address || false,
@@ -198,13 +215,21 @@ export function AddressEditSection({
 
   // Handler pour l'autocomplete d'adresse de facturation
   const handleBillingAddressSelect = (address: AddressResult) => {
-    updateEditedData(section, {
+    const updates: Record<string, unknown> = {
       billing_address_line1: address.streetAddress,
       billing_city: address.city,
       billing_postal_code: address.postalCode,
       billing_region: address.region || '',
       billing_country: address.countryCode || 'FR',
-    });
+    };
+
+    // Si adresse de livraison = facturation, mettre à jour les coordonnées GPS
+    if (!editData?.has_different_shipping_address) {
+      updates.latitude = address.latitude || null;
+      updates.longitude = address.longitude || null;
+    }
+
+    updateEditedData(section, updates);
   };
 
   // Handler pour l'autocomplete d'adresse de livraison
@@ -215,6 +240,9 @@ export function AddressEditSection({
       shipping_postal_code: address.postalCode,
       shipping_region: address.region || '',
       shipping_country: address.countryCode || 'FR',
+      // Coordonnées GPS automatiquement mises à jour
+      latitude: address.latitude || null,
+      longitude: address.longitude || null,
     });
   };
 
@@ -534,6 +562,23 @@ export function AddressEditSection({
               </div>
             </div>
           )}
+
+          {/* Coordonnées GPS (lecture seule) */}
+          {(editData?.latitude || editData?.longitude) && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+              <div className="flex items-center gap-2 text-green-700">
+                <Navigation className="h-4 w-4" />
+                <span className="text-sm font-medium">Coordonnées GPS</span>
+                <span className="text-xs text-green-600 ml-auto">
+                  (mises à jour automatiquement)
+                </span>
+              </div>
+              <div className="mt-2 pl-6 text-sm text-green-800 font-mono">
+                {editData?.latitude?.toFixed(6)},{' '}
+                {editData?.longitude?.toFixed(6)}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Message d'erreur */}
@@ -668,6 +713,23 @@ export function AddressEditSection({
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
             <div className="text-sm text-blue-700">
               📦 Adresse de livraison identique à l'adresse de facturation
+            </div>
+          </div>
+        )}
+
+        {/* Coordonnées GPS (lecture seule) */}
+        {(organisation.latitude || organisation.longitude) && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+            <div className="flex items-center gap-2 text-green-700">
+              <Navigation className="h-4 w-4" />
+              <span className="text-sm font-medium">Coordonnées GPS</span>
+              <span className="text-xs text-green-600 ml-auto">
+                Adresse de livraison
+              </span>
+            </div>
+            <div className="mt-2 pl-6 text-sm text-green-800 font-mono">
+              {organisation.latitude?.toFixed(6)},{' '}
+              {organisation.longitude?.toFixed(6)}
             </div>
           </div>
         )}

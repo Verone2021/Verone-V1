@@ -9758,6 +9758,41 @@ export type Database = {
           },
         ];
       };
+      user_dashboard_preferences: {
+        Row: {
+          id: string;
+          user_id: string;
+          tab: string;
+          widgets: Json;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          tab?: string;
+          widgets?: Json;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          tab?: string;
+          widgets?: Json;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'user_dashboard_preferences_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       user_sessions: {
         Row: {
           actions_count: number | null;

@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
 
+import type { Json } from '@/types/supabase';
+
 import type { DashboardTab } from '../components/dashboard-tabs';
 import {
   type KPIPeriod,
@@ -114,7 +116,7 @@ export function useDashboardPreferences(
             .insert({
               user_id: user.id,
               tab,
-              widgets: defaultWidgets,
+              widgets: defaultWidgets as unknown as Json,
             })
             .select()
             .single();
@@ -127,13 +129,13 @@ export function useDashboardPreferences(
             );
             setPreferences(null);
           } else {
-            setPreferences(newPrefs);
+            setPreferences(newPrefs as unknown as DashboardPreferences);
           }
         } else {
           throw fetchError;
         }
       } else {
-        setPreferences(data);
+        setPreferences(data as unknown as DashboardPreferences);
       }
     } catch (err) {
       console.error('Error loading dashboard preferences:', err);
@@ -165,7 +167,7 @@ export function useDashboardPreferences(
             {
               user_id: user.id,
               tab,
-              widgets: newWidgets,
+              widgets: newWidgets as unknown as Json,
               updated_at: new Date().toISOString(),
             },
             {
@@ -184,7 +186,7 @@ export function useDashboardPreferences(
           return;
         }
 
-        setPreferences(data);
+        setPreferences(data as unknown as DashboardPreferences);
       } catch (err) {
         console.error('Error saving dashboard preferences:', err);
         setError(err instanceof Error ? err : new Error(String(err)));
