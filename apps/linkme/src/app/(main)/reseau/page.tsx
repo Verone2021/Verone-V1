@@ -1,13 +1,14 @@
 'use client';
 
 /**
- * Page Réseau - Carte Leaflet avec Clustering
+ * Page Réseau - Carte MapLibre avec Clustering
  *
  * Affiche le réseau d'établissements sur une carte interactive
  * avec zoom, clustering pour les zones denses, et KPIs simples.
  *
  * @module ReseauPage
  * @since 2026-01-12
+ * @updated 2026-01-12 - Migration Leaflet → MapLibre GL
  */
 
 import dynamic from 'next/dynamic';
@@ -20,10 +21,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEnseigneOrganisations } from '@/lib/hooks/use-enseigne-organisations';
 import { useUserAffiliate } from '@/lib/hooks/use-user-selection';
 
-// Import dynamique pour éviter SSR (Leaflet nécessite window)
-const LeafletMapView = dynamic(
+// Import dynamique pour éviter SSR (MapLibre nécessite window)
+const MapLibreMapView = dynamic(
   () =>
-    import('@/components/shared/LeafletMapView').then(m => m.LeafletMapView),
+    import('@/components/shared/MapLibreMapView').then(m => m.MapLibreMapView),
   {
     ssr: false,
     loading: () => (
@@ -201,7 +202,7 @@ export default function ReseauPage() {
           </div>
         )}
 
-        {/* Carte Leaflet */}
+        {/* Carte MapLibre */}
         <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
           {isLoading ? (
             <div className="h-[600px] bg-gray-100 animate-pulse flex items-center justify-center">
@@ -211,12 +212,7 @@ export default function ReseauPage() {
               </div>
             </div>
           ) : (
-            <LeafletMapView
-              organisations={organisations}
-              height={600}
-              center={[46.5, 2.5]}
-              zoom={6}
-            />
+            <MapLibreMapView organisations={organisations} height={600} />
           )}
         </div>
 
