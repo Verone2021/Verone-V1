@@ -47,4 +47,16 @@ export type {
   UploadSupplierInvoicesResult,
   // Sync
   QontoSyncResult,
+  // Credit Notes (Avoirs) - 2026-01-07
+  QontoCreditNoteStatus,
+  QontoClientCreditNote,
+  QontoCreditNoteItem,
+  CreateClientCreditNoteParams,
+  CreateCreditNoteItemParams,
+  // Quotes (Devis) - 2026-01-07
+  QontoQuoteStatus,
+  QontoClientQuote,
+  QontoQuoteItem,
+  CreateClientQuoteParams,
+  CreateQuoteItemParams,
 } from './types';

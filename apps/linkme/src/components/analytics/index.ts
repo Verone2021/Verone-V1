@@ -5,6 +5,7 @@
 
 export { AffiliateKPIGrid } from './AffiliateKPIGrid';
 export { CommissionsOverview } from './CommissionsOverview';
+export { ProductStatsTable } from './ProductStatsTable';
 export { RevenueChart } from './RevenueChart';
-export { TopProductsTable } from './TopProductsTable';
 export { SelectionPerformanceCard } from './SelectionPerformanceCard';
+export { TopProductsTable } from './TopProductsTable';

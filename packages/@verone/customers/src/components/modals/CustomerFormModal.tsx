@@ -58,6 +58,7 @@ const customerSchema = z.object({
   // Enseigne (franchise/groupe)
   enseigne_id: z.string().optional().nullable(),
   is_enseigne_parent: z.boolean().default(false),
+  ownership_type: z.enum(['succursale', 'franchise']).optional().nullable(),
 
   // Adresse de facturation
   billing_address_line1: z.string().optional(),
@@ -139,6 +140,7 @@ export function CustomerFormModal({
       currency: 'EUR',
       enseigne_id: null,
       is_enseigne_parent: false,
+      ownership_type: null,
     },
   });
 
@@ -163,6 +165,7 @@ export function CustomerFormModal({
         currency: customer.currency || 'EUR',
         enseigne_id: (customer as any).enseigne_id || null,
         is_enseigne_parent: (customer as any).is_enseigne_parent || false,
+        ownership_type: (customer as any).ownership_type || null,
       });
     }
   }, [mode, customer, form]);
@@ -189,6 +192,7 @@ export function CustomerFormModal({
         notes: data.description || null,
         enseigne_id: data.enseigne_id || null,
         is_enseigne_parent: data.is_enseigne_parent,
+        ownership_type: data.ownership_type || null,
       };
 
       if (mode === 'edit' && customer) {
@@ -342,16 +346,19 @@ export function CustomerFormModal({
                 <div>
                   <Label htmlFor="enseigne_id">Enseigne</Label>
                   <Select
-                    value={form.watch('enseigne_id') || ''}
+                    value={form.watch('enseigne_id') || '__none__'}
                     onValueChange={value =>
-                      form.setValue('enseigne_id', value === '' ? null : value)
+                      form.setValue(
+                        'enseigne_id',
+                        value === '__none__' ? null : value
+                      )
                     }
                   >
                     <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Aucune enseigne" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Aucune enseigne</SelectItem>
+                      <SelectItem value="__none__">Aucune enseigne</SelectItem>
                       {enseignes.map(enseigne => (
                         <SelectItem key={enseigne.id} value={enseigne.id}>
                           {enseigne.name}
@@ -390,6 +397,39 @@ export function CustomerFormModal({
                   </div>
                 )}
               </div>
+
+              {/* Type de propriété (succursale/franchise) */}
+              {form.watch('enseigne_id') && (
+                <div>
+                  <Label htmlFor="ownership_type">Type de propriété</Label>
+                  <Select
+                    value={form.watch('ownership_type') || '__none__'}
+                    onValueChange={value =>
+                      form.setValue(
+                        'ownership_type',
+                        value === '__none__'
+                          ? null
+                          : (value as 'succursale' | 'franchise')
+                      )
+                    }
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Non défini" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">Non défini</SelectItem>
+                      <SelectItem value="succursale">
+                        Succursale (restaurant propre)
+                      </SelectItem>
+                      <SelectItem value="franchise">Franchise</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Succursale = détenu par l'enseigne, Franchise = franchisé
+                    indépendant
+                  </p>
+                </div>
+              )}
             </div>
           )}
 

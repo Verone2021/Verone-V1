@@ -141,3 +141,45 @@ rg "table_name" packages/@verone/types/
 - ❌ Sauter le STOP & VALIDATION
 - ❌ Tables sans RLS policies
 - ❌ Générer SQL sans "GO" explicite
+
+---
+
+# PERFORMANCE DB — Index / RLS / Triggers / Migrations
+
+## Quand l'utiliser
+
+Quand **toutes les pages** sont lentes ou quand les listings (commandes/produits/clients) ont un TTFB élevé.
+
+## À auditer en priorité
+
+### 1) Indexes manquants
+
+- Listings : `WHERE ... ORDER BY created_at DESC LIMIT ...`
+- Index composite si filtre + tri
+
+### 2) RLS coûteuse
+
+- Policies avec sous-requêtes, `IN (SELECT ...)`, OR multiples, fonctions en cascade
+- Vérifier index sur colonnes utilisées par RLS
+
+### 3) Triggers
+
+- Triggers redondants, chainés, sur tables high-traffic
+- Classer : indispensables / suspects / dangereux
+
+### 4) Migrations & tables mortes
+
+- Tables/colonnes jamais lues, vues/trigger legacy, duplications
+
+## Méthode de preuve
+
+- Identifier top requêtes probables des pages lentes
+- Proposer `EXPLAIN (ANALYZE, BUFFERS)` templates
+- Proposer création d'index (sans appliquer)
+
+## Output attendu
+
+- Top 10 suspects (index/RLS/triggers) + justification
+- SQL proposé + risques + plan de test
+
+**STOP** (aucune migration appliquée sans accord).
