@@ -42,12 +42,12 @@ export default function CommissionsPage(): JSX.Element {
   const { data: analyticsData, isLoading: analyticsLoading } =
     useAffiliateAnalytics(period);
 
-  // Liste des commissions (tableau)
+  // Liste des commissions (tableau) - FILTRÉE PAR PÉRIODE
   const {
     data: commissions,
     isLoading: commissionsLoading,
     refetch,
-  } = useAffiliateCommissions();
+  } = useAffiliateCommissions({ period });
 
   const isLoading = analyticsLoading || commissionsLoading;
 
@@ -110,9 +110,11 @@ export default function CommissionsPage(): JSX.Element {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <CommissionKPICard
           title="Total TTC"
-          amount={analyticsData?.totalCommissionsTTCAllTime ?? 0}
+          amount={analyticsData?.commissionsByStatus?.total.amountTTC ?? 0}
           count={analyticsData?.commissionsByStatus?.total.count}
-          subtitle="Toutes périodes confondues"
+          subtitle={
+            period === 'all' ? 'Toutes périodes' : PERIOD_LABELS[period]
+          }
           icon={Wallet}
           iconColor="text-linkme-royal"
           bgGradient="from-linkme-royal/10 to-white"
@@ -151,6 +153,16 @@ export default function CommissionsPage(): JSX.Element {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         {/* Colonne gauche : Table des commissions (3/5 = 60%) */}
         <div className="lg:col-span-3">
+          {/* Indicateur période du tableau */}
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Commissions {period !== 'all' && `(${PERIOD_LABELS[period]})`}
+            </h2>
+            <span className="text-sm text-gray-500">
+              {commissions?.length ?? 0} résultat
+              {(commissions?.length ?? 0) > 1 ? 's' : ''}
+            </span>
+          </div>
           <CommissionsTable
             commissions={commissions ?? []}
             isLoading={commissionsLoading}

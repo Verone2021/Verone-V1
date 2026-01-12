@@ -340,7 +340,7 @@ export function OrderDetailModal({
                       </TableCell>
                       <TableCell className="text-center">
                         <Badge variant="secondary" className="text-xs">
-                          {(item.margin_rate * 100).toFixed(0)}%
+                          {item.margin_rate.toFixed(0)}%
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right font-semibold text-emerald-600">

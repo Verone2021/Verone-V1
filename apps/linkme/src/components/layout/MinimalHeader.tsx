@@ -7,6 +7,7 @@ import { Menu } from 'lucide-react';
 
 import { UserMenu } from '@/components/auth/UserMenu';
 
+import { ActionsRequiredDropdown } from './ActionsRequiredDropdown';
 import { useSidebar } from './SidebarProvider';
 
 export function MinimalHeader(): JSX.Element {
@@ -37,8 +38,11 @@ export function MinimalHeader(): JSX.Element {
         </Link>
       </div>
 
-      {/* Right: User Menu */}
-      <UserMenu />
+      {/* Right: Actions + User Menu */}
+      <div className="flex items-center gap-3">
+        <ActionsRequiredDropdown />
+        <UserMenu />
+      </div>
     </header>
   );
 }

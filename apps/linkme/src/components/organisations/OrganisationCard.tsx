@@ -8,13 +8,29 @@
  * - CA et commissions totales (compact)
  * - Boutons CRUD : Voir, Modifier, Archiver (icônes)
  *
+ * Mode "incomplete" : variante pour les organisations nécessitant
+ * une action (ownership_type manquant), avec boutons inline.
+ *
  * @module OrganisationCard
  * @since 2026-01-10
+ * @updated 2026-01-12 - Ajout mode incomplete avec completion inline
  */
 
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { OrganisationLogo } from '@verone/organisations/components/display/OrganisationLogo';
 import { Card } from '@verone/ui';
-import { MapPin, Euro, Coins, Eye, Pencil, Archive } from 'lucide-react';
+import { createClient } from '@verone/utils/supabase/client';
+import {
+  MapPin,
+  Euro,
+  Coins,
+  Eye,
+  Pencil,
+  Archive,
+  AlertCircle,
+  Loader2,
+} from 'lucide-react';
+import { toast } from 'sonner';
 
 import type { EnseigneOrganisation } from '../../lib/hooks/use-enseigne-organisations';
 import type { OrganisationStats } from '../../lib/hooks/use-organisation-stats';
@@ -30,6 +46,8 @@ interface OrganisationCardProps {
   onEdit: (org: EnseigneOrganisation) => void;
   onArchive: (org: EnseigneOrganisation) => void;
   isLoading?: boolean;
+  /** Mode d'affichage: normal ou incomplete (avec completion inline) */
+  mode?: 'normal' | 'incomplete';
 }
 
 interface AddressLines {
@@ -95,7 +113,9 @@ export function OrganisationCard({
   onEdit,
   onArchive,
   isLoading = false,
+  mode = 'normal',
 }: OrganisationCardProps) {
+  const queryClient = useQueryClient();
   const displayName = organisation.trade_name || organisation.legal_name;
   const address = getAddressLines(organisation);
   const hasAddress = address.line1 || address.line2;
@@ -104,6 +124,103 @@ export function OrganisationCard({
   const totalCA = stats?.totalRevenueHT ?? 0;
   const totalCommissions = stats?.totalCommissionsHT ?? 0;
 
+  // Mutation pour mise à jour rapide du ownership_type
+  const updateOwnershipMutation = useMutation({
+    mutationFn: async (ownershipType: 'succursale' | 'franchise') => {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('organisations')
+        .update({ ownership_type: ownershipType })
+        .eq('id', organisation.id);
+
+      if (error) throw error;
+      return ownershipType;
+    },
+    onSuccess: ownershipType => {
+      queryClient.invalidateQueries({ queryKey: ['enseigne-organisations'] });
+      toast.success(
+        `Type défini : ${ownershipType === 'succursale' ? 'Restaurant propre' : 'Franchise'}`
+      );
+    },
+    onError: () => {
+      toast.error('Erreur lors de la mise à jour');
+    },
+  });
+
+  // Mode incomplete : carte avec actions de completion inline
+  if (mode === 'incomplete' && !organisation.ownership_type) {
+    return (
+      <Card className="p-4 border-orange-200 bg-orange-50/30">
+        {/* Header avec icône warning et nom */}
+        <div className="flex items-start gap-3 mb-4">
+          <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-orange-100 flex items-center justify-center">
+            <AlertCircle className="h-6 w-6 text-orange-500" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="font-semibold text-gray-900 text-sm leading-tight truncate">
+              {displayName}
+            </h3>
+            {hasAddress && (
+              <p className="text-xs text-gray-500 mt-0.5 truncate">
+                {address.line2 || address.line1}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Action: Définir le type de propriété */}
+        <div className="p-3 bg-white rounded-lg border border-orange-200">
+          <p className="text-sm text-gray-600 mb-2">Type de propriété</p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => updateOwnershipMutation.mutate('succursale')}
+              disabled={updateOwnershipMutation.isPending}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors disabled:opacity-50"
+            >
+              {updateOwnershipMutation.isPending &&
+              updateOwnershipMutation.variables === 'succursale' ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : null}
+              Propre
+            </button>
+            <button
+              onClick={() => updateOwnershipMutation.mutate('franchise')}
+              disabled={updateOwnershipMutation.isPending}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium bg-amber-50 text-amber-700 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors disabled:opacity-50"
+            >
+              {updateOwnershipMutation.isPending &&
+              updateOwnershipMutation.variables === 'franchise' ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : null}
+              Franchise
+            </button>
+          </div>
+        </div>
+
+        {/* Actions secondaires */}
+        <div className="flex items-center justify-end gap-1 mt-3 pt-3 border-t border-orange-100">
+          <button
+            onClick={() => onView(organisation)}
+            disabled={isLoading}
+            className="p-1.5 text-gray-500 hover:text-linkme-turquoise hover:bg-linkme-turquoise/10 rounded transition-colors"
+            title="Voir les détails"
+          >
+            <Eye className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => onEdit(organisation)}
+            disabled={isLoading}
+            className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+            title="Modifier"
+          >
+            <Pencil className="h-4 w-4" />
+          </button>
+        </div>
+      </Card>
+    );
+  }
+
+  // Mode normal : carte standard
   return (
     <Card variant="interactive" className="p-3 flex flex-col h-full">
       {/* Header avec logo, nom et adresse */}

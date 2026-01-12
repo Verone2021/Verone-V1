@@ -15,20 +15,27 @@ import { createClient } from '@verone/utils/supabase/client';
 const supabase = createClient();
 
 import { useUserAffiliate } from './use-user-selection';
-import type { CommissionItem, CommissionStatus } from '../../types/analytics';
+import type {
+  AnalyticsPeriod,
+  CommissionItem,
+  CommissionStatus,
+} from '../../types/analytics';
+import { getPeriodStartDate } from '../../types/analytics';
 
 interface UseAffiliateCommissionsOptions {
   status?: CommissionStatus | 'all';
+  /** Filtrer par période (pour synchroniser avec les KPIs) */
+  period?: AnalyticsPeriod;
 }
 
 export function useAffiliateCommissions(
   options: UseAffiliateCommissionsOptions = {}
 ) {
-  const { status = 'all' } = options;
+  const { status = 'all', period = 'all' } = options;
   const { data: affiliate } = useUserAffiliate();
 
   return useQuery({
-    queryKey: ['affiliate-commissions', affiliate?.id, status],
+    queryKey: ['affiliate-commissions', affiliate?.id, status, period],
     queryFn: async (): Promise<CommissionItem[]> => {
       if (!affiliate) return [];
 
@@ -66,10 +73,20 @@ export function useAffiliateCommissions(
         throw commissionsError;
       }
 
+      // Filtrer par période si spécifiée
+      let filteredByPeriod = commissionsData || [];
+      if (period !== 'all') {
+        const periodStart = getPeriodStartDate(period);
+        if (periodStart) {
+          const periodStartISO = periodStart.toISOString();
+          filteredByPeriod = filteredByPeriod.filter(
+            c => c.created_at && c.created_at >= periodStartISO
+          );
+        }
+      }
+
       // Récupérer les noms des clients depuis linkme_orders_enriched
-      const orderIds = (commissionsData || [])
-        .map(c => c.order_id)
-        .filter(Boolean);
+      const orderIds = filteredByPeriod.map(c => c.order_id).filter(Boolean);
       let customerNameMap = new Map<string, string>();
 
       if (orderIds.length > 0) {
@@ -86,8 +103,8 @@ export function useAffiliateCommissions(
         );
       }
 
-      // Filtrer par statut si nécessaire
-      let filteredData = commissionsData || [];
+      // Filtrer par statut si nécessaire (déjà filtré par période)
+      let filteredData = filteredByPeriod;
       if (status !== 'all') {
         filteredData = filteredData.filter(c => c.status === status);
       }

@@ -336,6 +336,7 @@ export default function OrganisationsPage(): JSX.Element | null {
                 onEdit={handleEdit}
                 onArchive={handleArchiveClick}
                 isLoading={isArchiving}
+                mode={activeTab === 'incomplete' ? 'incomplete' : 'normal'}
               />
             ))}
           </div>
