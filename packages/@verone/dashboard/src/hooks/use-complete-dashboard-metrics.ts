@@ -160,7 +160,7 @@ export function useCompleteDashboardMetrics() {
 
   const supabase = createClient();
 
-  // Fetch des données additionnelles
+  // Fetch des données additionnelles - OPTIMISÉ avec Promise.all()
   const fetchAdditionalData = useCallback(async () => {
     try {
       setDataLoading(true);
@@ -176,7 +176,7 @@ export function useCompleteDashboardMetrics() {
       }
 
       // ========================================
-      // Orders Metrics
+      // Dates de référence
       // ========================================
       const now = new Date();
       const startOfToday = new Date(
@@ -190,41 +190,96 @@ export function useCompleteDashboardMetrics() {
         now.getMonth() - 1,
         1
       );
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-      // Récupérer les commandes du mois (pour stats de statut)
-      const { data: monthOrders } = await supabase
-        .from('sales_orders')
-        .select('id, status, total_ht, created_at')
-        .gte('created_at', startOfMonth.toISOString());
 
       // ========================================
-      // CA calculé depuis les FACTURES (pas les commandes)
+      // OPTIMISATION: Toutes les requêtes en parallèle
+      // 10 requêtes séquentielles → 7 requêtes parallèles
       // ========================================
-      const { data: monthInvoices } = await supabase
-        .from('invoices')
-        .select('total_ht, status, created_at')
-        .gte('created_at', startOfMonth.toISOString())
-        .eq('type', 'invoice')
-        .not('status', 'eq', 'cancelled');
+      const [
+        { data: monthOrders },
+        { data: allInvoices }, // Fusionnée: récupère mois + mois précédent
+        { data: products },
+        { data: allLinkmeOrders }, // Fusionnée: récupère mois + mois précédent
+        { data: pendingPayments },
+        { data: affiliates },
+        { data: selections },
+      ] = await Promise.all([
+        // 1. Commandes du mois (pour stats de statut)
+        supabase
+          .from('sales_orders')
+          .select('id, status, total_ht, created_at')
+          .gte('created_at', startOfMonth.toISOString()),
 
-      const { data: prevMonthInvoices } = await supabase
-        .from('invoices')
-        .select('total_ht')
-        .gte('created_at', startOfPrevMonth.toISOString())
-        .lt('created_at', startOfMonth.toISOString())
-        .eq('type', 'invoice')
-        .not('status', 'eq', 'cancelled');
+        // 2. Factures (mois précédent + mois en cours) - FUSIONNÉE
+        supabase
+          .from('invoices')
+          .select('total_ht, status, created_at')
+          .gte('created_at', startOfPrevMonth.toISOString())
+          .eq('type', 'invoice')
+          .not('status', 'eq', 'cancelled'),
 
-      const { data: todayInvoices } = await supabase
-        .from('invoices')
-        .select('total_ht')
-        .gte('created_at', startOfToday.toISOString())
-        .eq('type', 'invoice')
-        .not('status', 'eq', 'cancelled');
+        // 3. Produits pour stock
+        supabase
+          .from('products')
+          .select('id, stock_real, min_stock')
+          .eq('archived', false),
 
-      // Calculer les métriques de commandes (statuts)
+        // 4. LinkMe orders (mois précédent + mois en cours) - FUSIONNÉE
+        supabase
+          .from('linkme_orders_with_margins')
+          .select('id, total_ht, total_affiliate_margin, created_at')
+          .gte('created_at', startOfPrevMonth.toISOString()),
+
+        // 5. Paiements en attente
+        supabase
+          .from('linkme_payment_requests')
+          .select('total_amount_ttc')
+          .in('status', ['pending', 'invoice_received']),
+
+        // 6. Affiliés actifs
+        supabase
+          .from('linkme_affiliates')
+          .select('id, status')
+          .eq('status', 'active'),
+
+        // 7. Sélections du mois
+        supabase
+          .from('linkme_selections')
+          .select('id')
+          .gte('created_at', startOfMonth.toISOString()),
+      ]);
+
+      // ========================================
+      // Filtrage client-side des factures (rapide)
+      // ========================================
+      const monthInvoices = (allInvoices || []).filter(
+        i => new Date(i.created_at) >= startOfMonth
+      );
+      const prevMonthInvoices = (allInvoices || []).filter(
+        i =>
+          new Date(i.created_at) >= startOfPrevMonth &&
+          new Date(i.created_at) < startOfMonth
+      );
+      const todayInvoices = (allInvoices || []).filter(
+        i => new Date(i.created_at) >= startOfToday
+      );
+
+      // ========================================
+      // Filtrage client-side des commandes LinkMe
+      // ========================================
+      const linkmeOrders = (allLinkmeOrders || []).filter(
+        o => o.created_at && new Date(o.created_at) >= startOfMonth
+      );
+      const prevLinkmeOrders = (allLinkmeOrders || []).filter(
+        o =>
+          o.created_at &&
+          new Date(o.created_at) >= startOfPrevMonth &&
+          new Date(o.created_at) < startOfMonth
+      );
+
+      // ========================================
+      // Orders Metrics
+      // ========================================
       const pending =
         monthOrders?.filter(o => ['draft', 'validated'].includes(o.status))
           .length || 0;
@@ -237,17 +292,17 @@ export function useCompleteDashboardMetrics() {
         monthOrders?.filter(o => o.status === 'cancelled').length || 0;
 
       // CA du mois = somme des factures (pas des commandes)
-      const monthRevenue = (monthInvoices || []).reduce(
+      const monthRevenue = monthInvoices.reduce(
         (sum, i) => sum + parseFloat(String(i.total_ht || 0)),
         0
       );
 
-      const prevMonthRevenue = (prevMonthInvoices || []).reduce(
+      const prevMonthRevenue = prevMonthInvoices.reduce(
         (sum, i) => sum + parseFloat(String(i.total_ht || 0)),
         0
       );
 
-      const dayRevenue = (todayInvoices || []).reduce(
+      const dayRevenue = todayInvoices.reduce(
         (sum, i) => sum + parseFloat(String(i.total_ht || 0)),
         0
       );
@@ -285,11 +340,6 @@ export function useCompleteDashboardMetrics() {
       // ========================================
       // Stock Metrics
       // ========================================
-      const { data: products } = await supabase
-        .from('products')
-        .select('id, stock_real, min_stock')
-        .eq('archived', false);
-
       let inStock = 0;
       let outOfStock = 0;
       let lowStock = 0;
@@ -315,37 +365,11 @@ export function useCompleteDashboardMetrics() {
       // ========================================
       // LinkMe Metrics
       // ========================================
-      const { data: linkmeOrders } = await supabase
-        .from('linkme_orders_with_margins')
-        .select('id, total_ht, total_affiliate_margin, created_at')
-        .gte('created_at', startOfMonth.toISOString());
-
-      const { data: prevLinkmeOrders } = await supabase
-        .from('linkme_orders_with_margins')
-        .select('id, total_ht')
-        .gte('created_at', startOfPrevMonth.toISOString())
-        .lt('created_at', startOfMonth.toISOString());
-
-      const { data: pendingPayments } = await supabase
-        .from('linkme_payment_requests')
-        .select('total_amount_ttc')
-        .in('status', ['pending', 'invoice_received']);
-
-      const { data: affiliates } = await supabase
-        .from('linkme_affiliates')
-        .select('id, status')
-        .eq('status', 'active');
-
-      const { data: selections } = await supabase
-        .from('linkme_selections')
-        .select('id')
-        .gte('created_at', startOfMonth.toISOString());
-
-      const linkmeRevenue = (linkmeOrders || []).reduce(
+      const linkmeRevenue = linkmeOrders.reduce(
         (sum, o) => sum + parseFloat(String(o.total_ht || 0)),
         0
       );
-      const prevLinkmeRevenue = (prevLinkmeOrders || []).reduce(
+      const prevLinkmeRevenue = prevLinkmeOrders.reduce(
         (sum, o) => sum + parseFloat(String(o.total_ht || 0)),
         0
       );
@@ -355,7 +379,7 @@ export function useCompleteDashboardMetrics() {
       );
 
       // Calcul du taux de marge moyen
-      const totalMargin = (linkmeOrders || []).reduce(
+      const totalMargin = linkmeOrders.reduce(
         (sum, o) => sum + parseFloat(String(o.total_affiliate_margin || 0)),
         0
       );
@@ -365,9 +389,7 @@ export function useCompleteDashboardMetrics() {
       // Taux de conversion (commandes / sélections)
       const selectionsCount = selections?.length || 0;
       const conversionRate =
-        selectionsCount > 0
-          ? ((linkmeOrders?.length || 0) / selectionsCount) * 100
-          : 0;
+        selectionsCount > 0 ? (linkmeOrders.length / selectionsCount) * 100 : 0;
 
       let linkmeTrend = 0;
       if (prevLinkmeRevenue > 0) {
@@ -380,7 +402,7 @@ export function useCompleteDashboardMetrics() {
       setLinkmeMetrics({
         revenue: linkmeRevenue,
         commissions: linkmeCommissions,
-        ordersCount: linkmeOrders?.length || 0,
+        ordersCount: linkmeOrders.length,
         activeAffiliates: affiliates?.length || 0,
         trend: Math.round(linkmeTrend * 10) / 10,
         averageMargin: Math.round(avgMargin * 10) / 10,

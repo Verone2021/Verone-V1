@@ -7,6 +7,8 @@
  * @created 2026-01-12
  */
 
+import { useEffect } from 'react';
+
 import Link from 'next/link';
 
 import { useSalesOrders } from '@verone/orders/hooks';
@@ -44,6 +46,11 @@ interface RecentOrdersWidgetProps {
 
 export function RecentOrdersWidget({ onRemove }: RecentOrdersWidgetProps) {
   const { orders, loading, fetchOrders } = useSalesOrders();
+
+  // Charger les commandes au montage
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   return (
     <WidgetCard
