@@ -40,7 +40,7 @@ import {
 import {
   useDatabaseNotifications,
   type DatabaseNotification,
-} from '@verone/notifications/hooks';
+} from '../../hooks';
 
 /**
  * Badge de sévérité - Style minimaliste Design System V2

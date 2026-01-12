@@ -97,7 +97,7 @@ interface CatalogueFilters {
   page?: number; // Page courante (1-indexed)
 }
 
-const ITEMS_PER_PAGE = 50;
+const ITEMS_PER_PAGE = 24; // Optimized: 3 rows × 4 columns × 2 viewport
 
 interface CatalogueState {
   productGroups: ProductGroup[];
