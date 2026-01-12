@@ -70,4 +70,4 @@ refactor(orders): simplify validation logic
 
 - Ne push pas (utiliser `/pr`)
 - Ne crée pas de branche (utiliser `/pr`)
-- Ne lance pas les checks (le hook pre-commit s'en charge)
+- Ne lance pas les checks (validation manuelle recommandée avant commit)
