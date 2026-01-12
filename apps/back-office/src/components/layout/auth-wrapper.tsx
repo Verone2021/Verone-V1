@@ -14,11 +14,10 @@ import type { User } from '@supabase/supabase-js';
 import { SidebarProvider } from '@verone/ui';
 import { TooltipProvider } from '@verone/ui';
 
-import { useSupabase } from '../providers/supabase-provider';
-
 import { AppHeader } from './app-header';
 import { AppSidebar } from './app-sidebar';
 import { PublicLayout } from './public-layout';
+import { useSupabase } from '../providers/supabase-provider';
 
 interface AuthWrapperProps {
   children: React.ReactNode;
@@ -37,7 +36,6 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
 
   // Vérification authentification avec Supabase
   useEffect(() => {
-
     // Obtenir la session courante
     const getSession = async () => {
       const {
@@ -82,7 +80,7 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
   // Layout authentifié avec sidebar/header
   return (
     <TooltipProvider>
-      <SidebarProvider defaultOpen className="h-screen overflow-hidden">
+      <SidebarProvider defaultOpen={false} className="h-screen overflow-hidden">
         {/* Sidebar fixe */}
         <AppSidebar />
 

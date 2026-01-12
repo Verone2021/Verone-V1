@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 
 import { ProductThumbnail } from '@verone/products';
-import { Button, Badge } from '@verone/ui';
+import { Button, Badge, Switch, Label } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
@@ -23,6 +23,8 @@ import {
   FileText,
   Users,
   Briefcase,
+  Globe,
+  AlertCircle,
 } from 'lucide-react';
 
 /**
@@ -42,6 +44,7 @@ interface OrganisationDetail {
   country: string | null;
   phone: string | null;
   email: string | null;
+  show_on_linkme_globe: boolean | null;
 }
 
 /**
@@ -95,7 +98,7 @@ function useOrganisation(organisationId: string | null) {
           id, legal_name, trade_name, logo_url,
           siret, siren,
           address_line1, address_line2, city, postal_code, country,
-          phone, email
+          phone, email, show_on_linkme_globe
         `
         )
         .eq('id', organisationId)
@@ -105,7 +108,8 @@ function useOrganisation(organisationId: string | null) {
         console.error('Erreur chargement organisation:', error);
         setError('Organisation non trouvée');
       } else {
-        setOrganisation(data);
+        // Cast nécessaire car show_on_linkme_globe n'est pas encore dans les types générés
+        setOrganisation(data as unknown as OrganisationDetail);
       }
       setLoading(false);
     };
@@ -113,7 +117,29 @@ function useOrganisation(organisationId: string | null) {
     fetchOrganisation();
   }, [organisationId]);
 
-  return { organisation, loading, error };
+  // Fonction pour mettre à jour l'organisation
+  const updateOrganisation = async (
+    updates: Partial<OrganisationDetail>
+  ): Promise<boolean> => {
+    if (!organisationId) return false;
+
+    const supabase = createClient();
+    const { error: updateError } = await supabase
+      .from('organisations')
+      .update(updates)
+      .eq('id', organisationId);
+
+    if (updateError) {
+      console.error('Erreur mise à jour organisation:', updateError);
+      return false;
+    }
+
+    // Mettre à jour l'état local
+    setOrganisation(prev => (prev ? { ...prev, ...updates } : null));
+    return true;
+  };
+
+  return { organisation, loading, error, updateOrganisation };
 }
 
 /**
@@ -287,6 +313,7 @@ export default function OrganisationDetailPage() {
     organisation,
     loading: orgLoading,
     error: orgError,
+    updateOrganisation,
   } = useOrganisation(id);
   const { products, loading: productsLoading } = useOrganisationProducts(id);
   const { selections, loading: selectionsLoading } =
@@ -504,6 +531,43 @@ export default function OrganisationDetailPage() {
                   )}
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Section Globe LinkMe */}
+          <Card className="mt-4">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Globe className="h-5 w-5 text-[#2ECCC1]" />
+                Visibilité Globe LinkMe
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex-1">
+                  <Label className="font-medium flex items-center gap-2">
+                    <Globe className="h-4 w-4 text-[#2ECCC1]" />
+                    Afficher sur le Globe LinkMe
+                  </Label>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Le logo apparaîtra sur le globe 3D de la page d&apos;accueil
+                    et de connexion LinkMe
+                  </p>
+                </div>
+                <Switch
+                  checked={organisation.show_on_linkme_globe ?? false}
+                  onCheckedChange={(checked: boolean) => {
+                    void updateOrganisation({ show_on_linkme_globe: checked });
+                  }}
+                  disabled={!organisation.logo_url}
+                />
+              </div>
+              {!organisation.logo_url && (
+                <p className="text-sm text-amber-600 mt-3 flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" />
+                  Un logo est requis pour l&apos;affichage sur le globe
+                </p>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
