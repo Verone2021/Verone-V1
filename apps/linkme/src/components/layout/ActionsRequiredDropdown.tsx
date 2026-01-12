@@ -92,7 +92,7 @@ export function ActionsRequiredDropdown() {
       >
         <AlertCircle className="h-5 w-5 text-orange-500" />
         <span className="hidden md:inline text-sm font-medium text-gray-700">
-          À compléter
+          Notifications
         </span>
 
         {/* Counter badge */}

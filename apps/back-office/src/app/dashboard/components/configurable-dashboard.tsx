@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { useCompleteDashboardMetrics } from '@verone/dashboard';
 import { cn } from '@verone/ui';
 import { Button } from '@verone/ui';
@@ -20,10 +21,14 @@ import { useDashboardPreferences } from '../hooks/use-dashboard-preferences';
 import type { KPIPeriod } from '../lib/kpi-catalog';
 
 export function ConfigurableDashboard(): React.ReactElement {
+  // Query client pour rafraîchissement global
+  const queryClient = useQueryClient();
+
   // État local
   const [activeTab, setActiveTab] = useState<DashboardTab>('apercu');
   const [isConfigMode, setIsConfigMode] = useState(false);
   const [isKpiModalOpen, setIsKpiModalOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Hook métriques
   const {
@@ -100,6 +105,13 @@ export function ConfigurableDashboard(): React.ReactElement {
     setIsConfigMode(false);
   };
 
+  // Rafraîchir toutes les données du dashboard
+  const handleRefreshAll = async (): Promise<void> => {
+    setIsRefreshing(true);
+    await queryClient.invalidateQueries();
+    setIsRefreshing(false);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header avec navigation et actions */}
@@ -110,6 +122,20 @@ export function ConfigurableDashboard(): React.ReactElement {
 
             {/* Actions */}
             <div className="flex items-center gap-2">
+              {/* Bouton Actualiser tout (toujours visible) */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void handleRefreshAll()}
+                disabled={isRefreshing}
+                className="text-slate-600"
+              >
+                <RotateCcw
+                  className={cn('h-4 w-4 mr-2', isRefreshing && 'animate-spin')}
+                />
+                Actualiser
+              </Button>
+
               {isConfigMode && (
                 <Button
                   variant="outline"

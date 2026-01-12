@@ -7,6 +7,7 @@
  * - Nom, adresse de livraison (2 lignes)
  * - CA et commissions totales (compact)
  * - Boutons CRUD : Voir, Modifier, Archiver (icônes)
+ * - Badges cliquables pour les champs manquants (quick edit)
  *
  * Mode "incomplete" : variante pour les organisations nécessitant
  * une action (ownership_type manquant), avec boutons inline.
@@ -14,6 +15,7 @@
  * @module OrganisationCard
  * @since 2026-01-10
  * @updated 2026-01-12 - Ajout mode incomplete avec completion inline
+ * @updated 2026-01-12 - Ajout badges cliquables pour quick edit
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -29,6 +31,8 @@ import {
   Archive,
   AlertCircle,
   Loader2,
+  Building2,
+  Truck,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -48,6 +52,10 @@ interface OrganisationCardProps {
   isLoading?: boolean;
   /** Mode d'affichage: normal ou incomplete (avec completion inline) */
   mode?: 'normal' | 'incomplete';
+  /** Quick edit: ouvre le modal d'édition d'adresse de livraison */
+  onEditShippingAddress?: (org: EnseigneOrganisation) => void;
+  /** Quick edit: ouvre le modal d'édition du type de propriété */
+  onEditOwnershipType?: (org: EnseigneOrganisation) => void;
 }
 
 interface AddressLines {
@@ -114,12 +122,18 @@ export function OrganisationCard({
   onArchive,
   isLoading = false,
   mode = 'normal',
+  onEditShippingAddress,
+  onEditOwnershipType,
 }: OrganisationCardProps) {
   const queryClient = useQueryClient();
   const displayName = organisation.trade_name || organisation.legal_name;
   const address = getAddressLines(organisation);
   const hasAddress = address.line1 || address.line2;
   const ownershipBadge = getOwnershipBadge(organisation.ownership_type);
+
+  // Détection des champs manquants pour les badges cliquables
+  const missingShippingAddress = !organisation.shipping_address_line1;
+  const missingOwnershipType = !organisation.ownership_type;
 
   const totalCA = stats?.totalRevenueHT ?? 0;
   const totalCommissions = stats?.totalCommissionsHT ?? 0;
@@ -257,6 +271,40 @@ export function OrganisationCard({
           )}
         </div>
       </div>
+
+      {/* Badges cliquables pour les champs manquants */}
+      {(missingShippingAddress || missingOwnershipType) && (
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {missingShippingAddress && onEditShippingAddress && (
+            <button
+              type="button"
+              onClick={e => {
+                e.stopPropagation();
+                onEditShippingAddress(organisation);
+              }}
+              className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium bg-orange-50 text-orange-700 border border-orange-200 rounded hover:bg-orange-100 transition-colors"
+              title="Ajouter l'adresse de livraison"
+            >
+              <Truck className="h-3 w-3" />
+              Adresse ?
+            </button>
+          )}
+          {missingOwnershipType && onEditOwnershipType && (
+            <button
+              type="button"
+              onClick={e => {
+                e.stopPropagation();
+                onEditOwnershipType(organisation);
+              }}
+              className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
+              title="Définir le type de propriété"
+            >
+              <Building2 className="h-3 w-3" />
+              Type ?
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Stats CA et Commissions - Compact */}
       <div className="flex items-center gap-3 mt-auto mb-2 text-xs">

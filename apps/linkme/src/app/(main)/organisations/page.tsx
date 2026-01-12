@@ -31,6 +31,8 @@ import {
   OrganisationCard,
   OrganisationDetailSheet,
   EditOrganisationModal,
+  QuickEditShippingAddressModal,
+  QuickEditOwnershipTypeModal,
 } from '../../../components/organisations';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useArchiveOrganisation } from '../../../lib/hooks/use-archive-organisation';
@@ -79,6 +81,12 @@ export default function OrganisationsPage(): JSX.Element | null {
   const [orgToArchive, setOrgToArchive] = useState<EnseigneOrganisation | null>(
     null
   );
+
+  // Quick edit modals
+  const [shippingAddressModalOrg, setShippingAddressModalOrg] =
+    useState<EnseigneOrganisation | null>(null);
+  const [ownershipTypeModalOrg, setOwnershipTypeModalOrg] =
+    useState<EnseigneOrganisation | null>(null);
 
   // Rediriger si non connecté
   useEffect(() => {
@@ -337,6 +345,8 @@ export default function OrganisationsPage(): JSX.Element | null {
                 onArchive={handleArchiveClick}
                 isLoading={isArchiving}
                 mode={activeTab === 'incomplete' ? 'incomplete' : 'normal'}
+                onEditShippingAddress={setShippingAddressModalOrg}
+                onEditOwnershipType={setOwnershipTypeModalOrg}
               />
             ))}
           </div>
@@ -454,6 +464,29 @@ export default function OrganisationsPage(): JSX.Element | null {
         variant="destructive"
         onConfirm={handleArchiveConfirm}
         loading={isArchiving}
+      />
+
+      {/* Quick Edit Modals */}
+      <QuickEditShippingAddressModal
+        organisationId={shippingAddressModalOrg?.id ?? ''}
+        organisationName={
+          shippingAddressModalOrg?.trade_name ||
+          shippingAddressModalOrg?.legal_name ||
+          ''
+        }
+        isOpen={!!shippingAddressModalOrg}
+        onClose={() => setShippingAddressModalOrg(null)}
+      />
+
+      <QuickEditOwnershipTypeModal
+        organisationId={ownershipTypeModalOrg?.id ?? ''}
+        organisationName={
+          ownershipTypeModalOrg?.trade_name ||
+          ownershipTypeModalOrg?.legal_name ||
+          ''
+        }
+        isOpen={!!ownershipTypeModalOrg}
+        onClose={() => setOwnershipTypeModalOrg(null)}
       />
     </div>
   );

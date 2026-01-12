@@ -31,7 +31,8 @@ import type { AnalyticsPeriod } from '../../../types/analytics';
 import { PERIOD_LABELS } from '../../../types/analytics';
 
 export default function CommissionsPage(): JSX.Element {
-  const [period, setPeriod] = useState<AnalyticsPeriod>('month');
+  // Défaut 'all' pour afficher toutes les commissions par défaut
+  const [period, setPeriod] = useState<AnalyticsPeriod>('all');
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false);
   const [selectedCommissionIds, setSelectedCommissionIds] = useState<string[]>(

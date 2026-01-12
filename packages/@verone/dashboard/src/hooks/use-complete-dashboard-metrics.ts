@@ -419,7 +419,8 @@ export function useCompleteDashboardMetrics() {
   // Phase 2 - Données réelles depuis Supabase
   const stocksData = {
     totalValue: stockOrdersMetrics?.stock_value || 0,
-    lowStockItems: stockMetrics.lowStock + stockMetrics.critical,
+    lowStockItems:
+      stockMetrics.outOfStock + stockMetrics.lowStock + stockMetrics.critical,
     recentMovements: 0,
     inStock: stockMetrics.inStock,
     outOfStock: stockMetrics.outOfStock,
