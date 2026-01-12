@@ -1,24 +1,19 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-import { useLocalStorage } from '@verone/hooks';
 import {
   Badge,
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@verone/ui';
-import { SidebarProvider, SidebarTrigger, useSidebar } from '@verone/ui';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-  TooltipProvider,
-} from '@verone/ui';
+// Popover pour menus interactifs, Tooltip pour labels simples
+import { Popover, PopoverContent, PopoverTrigger } from '@verone/ui';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@verone/ui';
 import { cn } from '@verone/utils';
 import {
   featureFlags,
@@ -253,9 +248,14 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
     ],
   },
   {
-    title: 'Factures',
+    title: 'Facturation',
     href: '/factures',
     icon: FileText,
+  },
+  {
+    title: 'Livraisons',
+    href: '/livraisons',
+    icon: Truck,
   },
   {
     title: 'Trésorerie',
@@ -266,17 +266,16 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
 
 function SidebarContent() {
   const pathname = usePathname();
-  const { state } = useSidebar();
-  const isCollapsed = state === 'collapsed';
+  // Sidebar toujours compacte - tooltips au survol
+  const isCollapsed = true;
 
   // Phase 1 : Alertes stock désactivées (Phase 2+)
   const stockAlertsCount = 0; // Anciennement : useStockAlertsCount()
 
-  // State persistence avec useLocalStorage (cross-tab sync automatique)
-  const [expandedItems, setExpandedItems] = useLocalStorage<string[]>(
-    'verone-sidebar-expanded',
-    ['Administration'] // Administration section expanded by default
-  );
+  // State local pour les items expandés (pas besoin de persistence cross-tab)
+  const [expandedItems, setExpandedItems] = useState<string[]>([
+    'Administration',
+  ]);
 
   // Theme toggle supprimé (Phase 1 - pas nécessaire)
 
@@ -312,7 +311,10 @@ function SidebarContent() {
       Achats: 'commandes',
       Comptabilité: 'finance',
       Finance: 'finance',
+      Facturation: 'factures',
       Factures: 'factures',
+      Devis: 'factures',
+      Avoirs: 'factures',
       Trésorerie: 'tresorerie',
       Organisation: 'contacts',
     };
@@ -324,9 +326,9 @@ function SidebarContent() {
   const navItems = useMemo(() => {
     const items = getNavItems(stockAlertsCount);
 
-    // Masquer Comptabilité/Factures/Trésorerie si financeEnabled = false
+    // Masquer Comptabilité/Facturation/Trésorerie si financeEnabled = false
     if (!featureFlags.financeEnabled) {
-      const financeModules = ['Comptabilité', 'Factures', 'Trésorerie'];
+      const financeModules = ['Comptabilité', 'Facturation', 'Trésorerie'];
       return items.filter(item => !financeModules.includes(item.title));
     }
 
@@ -446,134 +448,124 @@ function SidebarContent() {
     const isExpanded = expandedItems.includes(item.title);
     const isActiveItem = isActiveOrHasActiveChild(item);
 
-    const navContent = (
-      <li key={item.title} className="relative">
-        {item.children ? (
-          <Collapsible
-            open={isExpanded}
-            onOpenChange={() =>
-              moduleStatus === 'active' && toggleExpanded(item.title)
-            }
-          >
-            <div className="flex w-full items-center">
-              <Link
-                href={moduleStatus === 'active' ? item.href! : '#'}
-                onClick={e => moduleStatus !== 'active' && e.preventDefault()}
-                prefetch={moduleStatus === 'active' ? undefined : false}
+    // Mode compact avec Popover pour sous-menus ou Tooltip pour items simples
+    if (moduleStatus !== 'active') {
+      // Module inactif - simple icône disabled
+      return (
+        <li key={item.title}>
+          <Tooltip delayDuration={300}>
+            <TooltipTrigger asChild>
+              <div className="nav-item flex items-center justify-center px-2 py-2 text-sm rounded-md opacity-60 cursor-not-allowed">
+                <item.icon className="h-4 w-4" />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              <p className="font-medium">{item.title}</p>
+              <PhaseIndicator
+                moduleName={moduleName}
+                variant="badge"
+                className="mt-1"
+              />
+            </TooltipContent>
+          </Tooltip>
+        </li>
+      );
+    }
+
+    // Items avec enfants → Popover interactif
+    if (item.children && item.children.length > 0) {
+      return (
+        <li key={item.title}>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
                 className={cn(
-                  'nav-item flex flex-1 items-center gap-2 px-3 py-2 text-sm rounded-l relative',
+                  'nav-item w-full flex items-center justify-center px-2 py-2 text-sm rounded-md relative',
                   'transition-all duration-150 ease-out',
-                  'text-black/70 hover:text-black hover:bg-black/5 hover:scale-[1.02]',
-                  isActiveItem && 'bg-black text-white shadow-sm',
-                  moduleStatus !== 'active' &&
-                    'opacity-60 cursor-not-allowed hover:scale-100 hover:bg-transparent',
-                  isCollapsed && 'justify-center px-2'
+                  'text-black/70 hover:text-black hover:bg-black/5',
+                  isActiveItem && 'bg-black text-white shadow-sm'
                 )}
               >
-                <item.icon className="h-4 w-4 flex-shrink-0" />
-                {!isCollapsed && (
-                  <>
-                    <span className="font-medium">{item.title}</span>
-                    {moduleStatus !== 'active' && (
-                      <PhaseIndicator
-                        moduleName={moduleName}
-                        variant="badge"
-                        className="ml-auto scale-75"
-                      />
-                    )}
-                    {item.badge && (
-                      <Badge
-                        variant={
-                          item.badgeVariant === 'urgent'
-                            ? 'destructive'
-                            : 'default'
-                        }
-                        className="ml-auto"
-                      >
-                        {item.badge}
-                      </Badge>
-                    )}
-                  </>
-                )}
-              </Link>
-
-              {moduleStatus === 'active' && !isCollapsed && (
-                <CollapsibleTrigger
-                  className={cn(
-                    'px-3 py-2 transition-all duration-150 ease-out rounded-r',
-                    isActiveItem
-                      ? 'bg-black text-white shadow-sm'
-                      : 'text-black/70 hover:text-black hover:bg-black/5'
-                  )}
-                >
-                  <ChevronDown
-                    className={cn(
-                      'h-4 w-4 transition-transform duration-200',
-                      isExpanded ? 'rotate-0' : '-rotate-90'
-                    )}
-                  />
-                </CollapsibleTrigger>
-              )}
-            </div>
-
-            {moduleStatus === 'active' && !isCollapsed && (
-              <CollapsibleContent className="overflow-hidden transition-all duration-200 data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
-                <ul className="mt-1 space-y-1 ml-4">
-                  {item.children.map((child, idx) =>
-                    renderChildNavItem(child, idx, isExpanded)
-                  )}
-                </ul>
-              </CollapsibleContent>
-            )}
-          </Collapsible>
-        ) : (
-          <Link
-            href={moduleStatus === 'active' ? item.href! : '#'}
-            onClick={e => moduleStatus !== 'active' && e.preventDefault()}
-            prefetch={moduleStatus === 'active' ? undefined : false}
-            className={cn(
-              'nav-item flex items-center gap-2 px-3 py-2 text-sm rounded-md relative',
-              'transition-all duration-150 ease-out',
-              'text-black/70 hover:text-black hover:bg-black/5 hover:scale-[1.02]',
-              isActiveItem && 'bg-black text-white shadow-sm',
-              moduleStatus !== 'active' &&
-                'opacity-60 cursor-not-allowed hover:scale-100 hover:bg-transparent',
-              isCollapsed && 'justify-center px-2'
-            )}
-          >
-            <item.icon className="h-4 w-4 flex-shrink-0" />
-            {!isCollapsed && (
-              <>
-                <span className="font-medium">{item.title}</span>
-                {moduleStatus !== 'active' && (
-                  <PhaseIndicator
-                    moduleName={moduleName}
-                    variant="badge"
-                    className="ml-auto scale-75"
-                  />
-                )}
+                <item.icon className="h-4 w-4" />
                 {item.badge && (
-                  <Badge
-                    variant={
-                      item.badgeVariant === 'urgent' ? 'destructive' : 'default'
-                    }
-                    className="ml-auto"
-                  >
-                    {item.badge}
-                  </Badge>
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full">
+                    {item.badge > 9 ? '9+' : item.badge}
+                  </span>
                 )}
-              </>
-            )}
-          </Link>
-        )}
-      </li>
-    );
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              side="right"
+              align="start"
+              className="w-56 p-0"
+              sideOffset={8}
+            >
+              <div className="font-semibold px-3 py-2 border-b bg-gray-50 text-sm">
+                {item.title}
+              </div>
+              <div className="py-1">
+                {item.children.map(child => {
+                  const childHref: string = child.href ?? '#';
+                  const isChildActive =
+                    pathname === childHref ||
+                    pathname.startsWith(childHref + '/');
+                  return (
+                    <Link
+                      key={childHref}
+                      href={childHref}
+                      className={cn(
+                        'flex items-center gap-2 px-3 py-2 text-sm transition-colors',
+                        isChildActive
+                          ? 'bg-black text-white'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      )}
+                    >
+                      <child.icon className="h-4 w-4" />
+                      <span>{child.title}</span>
+                      {child.badge && (
+                        <Badge
+                          variant={
+                            child.badgeVariant === 'urgent'
+                              ? 'destructive'
+                              : 'default'
+                          }
+                          className="ml-auto"
+                        >
+                          {child.badge}
+                        </Badge>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
+        </li>
+      );
+    }
 
-    // Wrap with tooltip if collapsed
-    if (isCollapsed && moduleStatus === 'active') {
-      return (
-        <Tooltip key={item.title} delayDuration={300}>
-          <TooltipTrigger asChild>{navContent}</TooltipTrigger>
+    // Items simples → Tooltip
+    return (
+      <li key={item.title}>
+        <Tooltip delayDuration={300}>
+          <TooltipTrigger asChild>
+            <Link
+              href={item.href!}
+              className={cn(
+                'nav-item flex items-center justify-center px-2 py-2 text-sm rounded-md relative',
+                'transition-all duration-150 ease-out',
+                'text-black/70 hover:text-black hover:bg-black/5',
+                isActiveItem && 'bg-black text-white shadow-sm'
+              )}
+            >
+              <item.icon className="h-4 w-4" />
+              {item.badge && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full">
+                  {item.badge > 9 ? '9+' : item.badge}
+                </span>
+              )}
+            </Link>
+          </TooltipTrigger>
           <TooltipContent side="right" className="font-medium">
             <p>{item.title}</p>
             {item.description && (
@@ -581,34 +573,29 @@ function SidebarContent() {
             )}
           </TooltipContent>
         </Tooltip>
-      );
-    }
-
-    return navContent;
+      </li>
+    );
   };
 
   return (
-    <aside
-      className={cn(
-        'flex h-screen flex-col border-r border-black bg-white transition-all duration-300',
-        isCollapsed ? 'w-16' : 'w-64'
-      )}
-    >
-      {/* Logo Vérone + Toggle */}
-      <div
-        className={cn(
-          'flex h-16 items-center border-b border-black transition-all',
-          isCollapsed ? 'justify-center px-2' : 'justify-between px-6'
-        )}
-      >
-        {!isCollapsed && (
-          <Link href="/dashboard" className="flex items-center space-x-2">
-            <div className="logo-black font-logo text-xl font-light tracking-wider">
-              VÉRONE
-            </div>
-          </Link>
-        )}
-        <SidebarTrigger />
+    <aside className="flex h-screen w-16 flex-col border-r border-black bg-white">
+      {/* Logo Vérone - Compact avec tooltip */}
+      <div className="flex h-16 items-center justify-center border-b border-black px-2">
+        <Tooltip delayDuration={300}>
+          <TooltipTrigger asChild>
+            <Link
+              href="/dashboard"
+              className="flex items-center justify-center p-2 rounded-md hover:bg-black/5 transition-colors"
+            >
+              <div className="logo-black font-logo text-sm font-light tracking-wider">
+                V
+              </div>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            <p>VÉRONE - Dashboard</p>
+          </TooltipContent>
+        </Tooltip>
       </div>
 
       {/* Navigation principale */}
@@ -618,22 +605,26 @@ function SidebarContent() {
         </ul>
       </nav>
 
-      {/* Zone déconnexion */}
+      {/* Zone déconnexion avec tooltip */}
       <div className="border-t border-black p-4">
-        <button
-          onClick={async () => {
-            const supabase = createClient();
-            await supabase.auth.signOut();
-            window.location.href = '/login';
-          }}
-          className={cn(
-            'flex w-full items-center space-x-2 px-3 py-2 text-sm text-black opacity-70 hover:opacity-100 hover:bg-black hover:bg-opacity-5 transition-all duration-150 rounded-md',
-            isCollapsed && 'justify-center'
-          )}
-        >
-          <LogOut className="h-4 w-4" />
-          {!isCollapsed && <span>Déconnexion</span>}
-        </button>
+        <Tooltip delayDuration={300}>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => {
+                const supabase = createClient();
+                void supabase.auth.signOut().then(() => {
+                  window.location.href = '/login';
+                });
+              }}
+              className="flex w-full items-center justify-center px-3 py-2 text-sm text-black opacity-70 hover:opacity-100 hover:bg-black hover:bg-opacity-5 transition-all duration-150 rounded-md"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            <p>Déconnexion</p>
+          </TooltipContent>
+        </Tooltip>
       </div>
 
       <style jsx>{`

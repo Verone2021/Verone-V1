@@ -4,7 +4,7 @@
  */
 
 // Périodes disponibles pour les analytics
-export type AnalyticsPeriod = 'week' | 'month' | 'quarter' | 'year';
+export type AnalyticsPeriod = 'all' | 'week' | 'month' | 'quarter' | 'year';
 
 // Données complètes analytics niveau affilié
 export interface AffiliateAnalyticsData {
@@ -13,6 +13,7 @@ export interface AffiliateAnalyticsData {
   totalRevenueHT: number;
   totalCommissionsHT: number;
   totalCommissionsTTC: number;
+  totalQuantitySold: number; // Somme de toutes les quantités vendues
   // KPI ALL TIME - source de verite pour page Commissions
   totalCommissionsTTCAllTime: number;
   pendingCommissionsHT: number;
@@ -46,6 +47,7 @@ export interface RevenueDataPoint {
 export interface CommissionsByStatus {
   pending: CommissionStatusData;
   validated: CommissionStatusData;
+  requested: CommissionStatusData;
   paid: CommissionStatusData;
   total: CommissionStatusData;
 }
@@ -82,6 +84,7 @@ export interface TopProductData {
   commissionHT: number;
   selectionId?: string;
   selectionName?: string;
+  isRevendeur?: boolean; // true si produit créé par l'affilié
 }
 
 // Commission individuelle pour liste
@@ -98,14 +101,23 @@ export interface CommissionItem {
   validatedAt: string | null;
   paidAt: string | null;
   selectionName?: string;
+  customerName?: string; // Nom du restaurant/client
 }
 
-export type CommissionStatus = 'pending' | 'validated' | 'paid' | 'cancelled';
+export type CommissionStatus =
+  | 'pending'
+  | 'validated'
+  | 'payable' // Alias de 'validated' utilisé dans certaines parties de la DB
+  | 'requested'
+  | 'paid'
+  | 'cancelled';
 
 // Labels pour les statuts
 export const COMMISSION_STATUS_LABELS: Record<CommissionStatus, string> = {
   pending: 'En attente',
-  validated: 'Validée',
+  validated: 'Payable',
+  payable: 'Payable', // Alias de 'validated'
+  requested: 'Demande en cours',
   paid: 'Payée',
   cancelled: 'Annulée',
 };
@@ -113,29 +125,37 @@ export const COMMISSION_STATUS_LABELS: Record<CommissionStatus, string> = {
 // Couleurs pour les statuts
 export const COMMISSION_STATUS_COLORS: Record<CommissionStatus, string> = {
   pending: 'orange',
-  validated: 'blue',
+  validated: 'teal', // Turquoise LinkMe
+  payable: 'teal', // Alias de 'validated'
+  requested: 'blue',
   paid: 'green',
   cancelled: 'red',
 };
 
 // Labels périodes
 export const PERIOD_LABELS: Record<AnalyticsPeriod, string> = {
+  all: 'Tout',
   week: '7 jours',
   month: '30 jours',
-  quarter: '90 jours',
+  quarter: 'Ce trimestre',
   year: 'Cette année',
 };
 
 // Helper pour calculer la date de début de période
-export function getPeriodStartDate(period: AnalyticsPeriod): Date {
+// Retourne null pour 'all' (pas de filtre de date)
+export function getPeriodStartDate(period: AnalyticsPeriod): Date | null {
+  if (period === 'all') return null;
   const now = new Date();
   switch (period) {
     case 'week':
       return new Date(now.setDate(now.getDate() - 7));
     case 'month':
       return new Date(now.setDate(now.getDate() - 30));
-    case 'quarter':
-      return new Date(now.setDate(now.getDate() - 90));
+    case 'quarter': {
+      // Trimestre calendaire: Q1=Jan-Mars, Q2=Avr-Juin, Q3=Juil-Sept, Q4=Oct-Déc
+      const currentQuarter = Math.floor(now.getMonth() / 3);
+      return new Date(now.getFullYear(), currentQuarter * 3, 1);
+    }
     case 'year':
       return new Date(now.getFullYear(), 0, 1);
     default:
