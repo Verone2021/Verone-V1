@@ -5,10 +5,11 @@ import React, { useState } from 'react';
 import { useCompleteDashboardMetrics } from '@verone/dashboard';
 import { cn } from '@verone/ui';
 import { Button } from '@verone/ui';
-import { Settings, RotateCcw, AlertCircle } from 'lucide-react';
+import { Settings, RotateCcw, AlertCircle, AlertTriangle } from 'lucide-react';
 
 import { DashboardTabs, type DashboardTab } from './dashboard-tabs';
 import { KPIGrid } from './kpi-grid';
+import { KPISelectorModal } from './kpi-selector-modal';
 import { useDashboardPreferences } from '../hooks/use-dashboard-preferences';
 import type { KPIPeriod } from '../lib/kpi-catalog';
 
@@ -16,6 +17,7 @@ export function ConfigurableDashboard(): React.ReactElement {
   // État local
   const [activeTab, setActiveTab] = useState<DashboardTab>('apercu');
   const [isConfigMode, setIsConfigMode] = useState(false);
+  const [isKpiModalOpen, setIsKpiModalOpen] = useState(false);
 
   // Hook métriques
   const {
@@ -31,6 +33,7 @@ export function ConfigurableDashboard(): React.ReactElement {
     isLoading: prefsLoading,
     updateWidgetPeriod,
     removeWidget,
+    addWidget,
     resetToDefaults,
   } = useDashboardPreferences(activeTab);
 
@@ -77,7 +80,13 @@ export function ConfigurableDashboard(): React.ReactElement {
   };
 
   const handleAddWidget = (): void => {
-    // TODO: Ouvrir modal de sélection de KPI - implémentation à venir
+    if (widgets.length < 6) {
+      setIsKpiModalOpen(true);
+    }
+  };
+
+  const handleSelectKpi = (kpiId: string): void => {
+    void addWidget(kpiId);
   };
 
   const handleResetToDefaults = (): void => {
@@ -143,6 +152,21 @@ export function ConfigurableDashboard(): React.ReactElement {
           </div>
         )}
 
+        {/* Message si maximum atteint (en mode config) */}
+        {isConfigMode && widgets.length >= 6 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-amber-900">
+                Maximum de 6 KPIs atteint
+              </p>
+              <p className="text-sm text-amber-700">
+                Retirez un KPI existant pour pouvoir en ajouter un autre.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Grille KPIs */}
         <section>
           <h2 className="text-sm font-semibold text-slate-700 mb-3">
@@ -191,6 +215,15 @@ export function ConfigurableDashboard(): React.ReactElement {
           </div>
         </section>
       </div>
+
+      {/* Modal sélection KPI */}
+      <KPISelectorModal
+        open={isKpiModalOpen}
+        onOpenChange={setIsKpiModalOpen}
+        currentTab={activeTab}
+        existingKpiIds={widgets.map(w => w.kpi_id)}
+        onAddKpi={handleSelectKpi}
+      />
     </div>
   );
 }
