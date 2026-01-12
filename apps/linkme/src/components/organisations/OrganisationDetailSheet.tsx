@@ -194,7 +194,14 @@ function ContactCard({ contact }: { contact: OrganisationContact }) {
           <User className="h-5 w-5 text-linkme-turquoise" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-gray-900 truncate">{fullName}</p>
+          <div className="flex items-center gap-2">
+            <p className="font-medium text-gray-900 truncate">{fullName}</p>
+            {contact.isUser && (
+              <Badge className="text-xs bg-blue-500 text-white">
+                Utilisateur
+              </Badge>
+            )}
+          </div>
           {contact.title && (
             <p className="text-xs text-gray-500 truncate">{contact.title}</p>
           )}
@@ -332,8 +339,12 @@ export function OrganisationDetailSheet({
   );
 
   // Hook pour les contacts de l'organisation
+  // Passe aussi l'enseigne_id pour trouver les contacts liés à l'enseigne
   const { data: contactsData, isLoading: contactsLoading } =
-    useOrganisationContacts(open ? organisationId : null);
+    useOrganisationContacts(
+      open ? organisationId : null,
+      open ? data?.organisation?.enseigne_id : null
+    );
 
   // Adresses formatées
   const shippingAddress = useMemo(() => {

@@ -29,6 +29,7 @@ export interface OrganisationContact {
   isBillingContact: boolean;
   isCommercialContact: boolean;
   isTechnicalContact: boolean;
+  isUser: boolean; // Contact lié à un utilisateur (auto-sync/backfill)
 }
 
 export interface ContactFormData {
@@ -52,16 +53,23 @@ export interface UpdateContactsInput {
 /**
  * Hook pour récupérer les contacts d'une organisation
  * Retourne les contacts avec leurs rôles identifiés
+ *
+ * @param organisationId - ID de l'organisation
+ * @param enseigneId - ID de l'enseigne (optionnel) - pour chercher aussi les contacts liés à l'enseigne
  */
-export function useOrganisationContacts(organisationId: string | null) {
+export function useOrganisationContacts(
+  organisationId: string | null,
+  enseigneId?: string | null
+) {
   return useQuery({
-    queryKey: ['organisation-contacts', organisationId],
+    queryKey: ['organisation-contacts', organisationId, enseigneId],
     queryFn: async () => {
-      if (!organisationId) return null;
+      if (!organisationId && !enseigneId) return null;
 
       const supabase = createClient();
 
-      const { data, error } = await supabase
+      // Construire la requête de base
+      let query = supabase
         .from('contacts')
         .select(
           `
@@ -75,12 +83,27 @@ export function useOrganisationContacts(organisationId: string | null) {
           is_primary_contact,
           is_billing_contact,
           is_commercial_contact,
-          is_technical_contact
+          is_technical_contact,
+          notes
         `
         )
-        .eq('organisation_id', organisationId)
-        .eq('is_active', true)
-        .order('is_primary_contact', { ascending: false });
+        .eq('is_active', true);
+
+      // Filtrer par organisation_id OU enseigne_id
+      if (organisationId && enseigneId) {
+        // Chercher contacts liés à l'organisation OU à l'enseigne
+        query = query.or(
+          `organisation_id.eq.${organisationId},enseigne_id.eq.${enseigneId}`
+        );
+      } else if (organisationId) {
+        query = query.eq('organisation_id', organisationId);
+      } else if (enseigneId) {
+        query = query.eq('enseigne_id', enseigneId);
+      }
+
+      const { data, error } = await query.order('is_primary_contact', {
+        ascending: false,
+      });
 
       if (error) {
         console.error('Erreur récupération contacts:', error);
@@ -99,6 +122,11 @@ export function useOrganisationContacts(organisationId: string | null) {
         isBillingContact: c.is_billing_contact || false,
         isCommercialContact: c.is_commercial_contact || false,
         isTechnicalContact: c.is_technical_contact || false,
+        // Détecter si c'est un utilisateur (créé par auto-sync ou backfill)
+        isUser:
+          c.notes?.includes('auto-sync') ||
+          c.notes?.includes('backfill') ||
+          false,
       }));
 
       // Identifier les contacts clés
@@ -136,7 +164,7 @@ export function useOrganisationContacts(organisationId: string | null) {
           : isPrimaryComplete,
       };
     },
-    enabled: !!organisationId,
+    enabled: !!organisationId || !!enseigneId,
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
