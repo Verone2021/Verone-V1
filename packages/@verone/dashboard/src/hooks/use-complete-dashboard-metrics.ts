@@ -193,32 +193,38 @@ export function useCompleteDashboardMetrics() {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      // Récupérer les commandes du mois
+      // Récupérer les commandes du mois (pour stats de statut)
       const { data: monthOrders } = await supabase
         .from('sales_orders')
         .select('id, status, total_ht, created_at')
         .gte('created_at', startOfMonth.toISOString());
 
-      // Récupérer les commandes du mois précédent pour le trend
-      const { data: prevMonthOrders } = await supabase
-        .from('sales_orders')
-        .select('id, total_ht')
-        .gte('created_at', startOfPrevMonth.toISOString())
-        .lt('created_at', startOfMonth.toISOString());
+      // ========================================
+      // CA calculé depuis les FACTURES (pas les commandes)
+      // ========================================
+      const { data: monthInvoices } = await supabase
+        .from('invoices')
+        .select('total_ht, status, created_at')
+        .gte('created_at', startOfMonth.toISOString())
+        .eq('type', 'invoice')
+        .not('status', 'eq', 'cancelled');
 
-      // Récupérer les commandes d'aujourd'hui
-      const { data: todayOrders } = await supabase
-        .from('sales_orders')
+      const { data: prevMonthInvoices } = await supabase
+        .from('invoices')
+        .select('total_ht')
+        .gte('created_at', startOfPrevMonth.toISOString())
+        .lt('created_at', startOfMonth.toISOString())
+        .eq('type', 'invoice')
+        .not('status', 'eq', 'cancelled');
+
+      const { data: todayInvoices } = await supabase
+        .from('invoices')
         .select('total_ht')
         .gte('created_at', startOfToday.toISOString())
-        .in('status', [
-          'validated',
-          'partially_shipped',
-          'shipped',
-          'delivered',
-        ]);
+        .eq('type', 'invoice')
+        .not('status', 'eq', 'cancelled');
 
-      // Calculer les métriques
+      // Calculer les métriques de commandes (statuts)
       const pending =
         monthOrders?.filter(o => ['draft', 'validated'].includes(o.status))
           .length || 0;
@@ -230,21 +236,19 @@ export function useCompleteDashboardMetrics() {
       const cancelled =
         monthOrders?.filter(o => o.status === 'cancelled').length || 0;
 
-      const monthRevenue = (monthOrders || [])
-        .filter(o =>
-          ['validated', 'partially_shipped', 'shipped', 'delivered'].includes(
-            o.status
-          )
-        )
-        .reduce((sum, o) => sum + parseFloat(String(o.total_ht || 0)), 0);
-
-      const prevMonthRevenue = (prevMonthOrders || []).reduce(
-        (sum, o) => sum + parseFloat(String(o.total_ht || 0)),
+      // CA du mois = somme des factures (pas des commandes)
+      const monthRevenue = (monthInvoices || []).reduce(
+        (sum, i) => sum + parseFloat(String(i.total_ht || 0)),
         0
       );
 
-      const dayRevenue = (todayOrders || []).reduce(
-        (sum, o) => sum + parseFloat(String(o.total_ht || 0)),
+      const prevMonthRevenue = (prevMonthInvoices || []).reduce(
+        (sum, i) => sum + parseFloat(String(i.total_ht || 0)),
+        0
+      );
+
+      const dayRevenue = (todayInvoices || []).reduce(
+        (sum, i) => sum + parseFloat(String(i.total_ht || 0)),
         0
       );
 

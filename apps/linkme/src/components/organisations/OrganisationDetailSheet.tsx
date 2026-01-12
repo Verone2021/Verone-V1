@@ -35,16 +35,21 @@ import {
   MapPin,
   Phone,
   Mail,
-  Globe,
   Euro,
   Coins,
   Package,
   Calendar,
-  ExternalLink,
   Edit,
   FileText,
+  User,
+  Smartphone,
+  ExternalLink,
 } from 'lucide-react';
 
+import {
+  useOrganisationContacts,
+  type OrganisationContact,
+} from '../../lib/hooks/use-organisation-contacts';
 import {
   useOrganisationDetail,
   type OrganisationOrder,
@@ -173,6 +178,76 @@ function ContactItem({
   return content;
 }
 
+function ContactCard({ contact }: { contact: OrganisationContact }) {
+  const fullName = `${contact.firstName} ${contact.lastName}`;
+  const roles: string[] = [];
+  if (contact.isPrimaryContact) roles.push('Principal');
+  if (contact.isBillingContact) roles.push('Facturation');
+  if (contact.isCommercialContact) roles.push('Commercial');
+  if (contact.isTechnicalContact) roles.push('Technique');
+
+  return (
+    <div className="p-3 bg-gray-50 rounded-lg space-y-2">
+      {/* Header avec nom et rôles */}
+      <div className="flex items-start gap-3">
+        <div className="w-10 h-10 bg-linkme-turquoise/10 rounded-full flex items-center justify-center flex-shrink-0">
+          <User className="h-5 w-5 text-linkme-turquoise" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-gray-900 truncate">{fullName}</p>
+          {contact.title && (
+            <p className="text-xs text-gray-500 truncate">{contact.title}</p>
+          )}
+          {roles.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1">
+              {roles.map(role => (
+                <Badge
+                  key={role}
+                  variant="secondary"
+                  className="text-xs bg-linkme-turquoise/10 text-linkme-turquoise"
+                >
+                  {role}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Coordonnées */}
+      <div className="pl-13 space-y-1">
+        {contact.email && (
+          <a
+            href={`mailto:${contact.email}`}
+            className="flex items-center gap-2 text-sm text-gray-600 hover:text-linkme-turquoise transition-colors"
+          >
+            <Mail className="h-3.5 w-3.5" />
+            <span className="truncate">{contact.email}</span>
+          </a>
+        )}
+        {contact.phone && (
+          <a
+            href={`tel:${contact.phone}`}
+            className="flex items-center gap-2 text-sm text-gray-600 hover:text-linkme-turquoise transition-colors"
+          >
+            <Phone className="h-3.5 w-3.5" />
+            <span>{contact.phone}</span>
+          </a>
+        )}
+        {contact.mobile && (
+          <a
+            href={`tel:${contact.mobile}`}
+            className="flex items-center gap-2 text-sm text-gray-600 hover:text-linkme-turquoise transition-colors"
+          >
+            <Smartphone className="h-3.5 w-3.5" />
+            <span>{contact.mobile}</span>
+          </a>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function StatCard({
   icon: Icon,
   label,
@@ -182,14 +257,14 @@ function StatCard({
   icon: React.ElementType;
   label: string;
   value: string | number;
-  color: 'blue' | 'green' | 'purple';
+  color: 'turquoise' | 'green' | 'purple';
 }) {
   const colorClasses = {
-    blue: {
-      bg: 'bg-blue-50',
-      icon: 'text-blue-600',
-      label: 'text-blue-600',
-      value: 'text-blue-900',
+    turquoise: {
+      bg: 'bg-linkme-turquoise/10',
+      icon: 'text-linkme-turquoise',
+      label: 'text-linkme-turquoise',
+      value: 'text-gray-900',
     },
     green: {
       bg: 'bg-green-50',
@@ -256,6 +331,10 @@ export function OrganisationDetailSheet({
     open ? organisationId : null
   );
 
+  // Hook pour les contacts de l'organisation
+  const { data: contactsData, isLoading: contactsLoading } =
+    useOrganisationContacts(open ? organisationId : null);
+
   // Adresses formatées
   const shippingAddress = useMemo(() => {
     if (!data?.organisation) return null;
@@ -293,7 +372,7 @@ export function OrganisationDetailSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+      <SheetContent className="w-full sm:max-w-lg overflow-y-auto bg-white">
         {/* Header */}
         <SheetHeader className="pb-4 border-b">
           <div className="flex items-center gap-3">
@@ -351,10 +430,25 @@ export function OrganisationDetailSheet({
         {/* Content */}
         {data && !isLoading && (
           <Tabs defaultValue="infos" className="mt-4">
-            <TabsList className="w-full grid grid-cols-3">
-              <TabsTrigger value="infos">Infos</TabsTrigger>
-              <TabsTrigger value="contacts">Contacts</TabsTrigger>
-              <TabsTrigger value="activite">Activite</TabsTrigger>
+            <TabsList className="w-full grid grid-cols-3 bg-gray-100">
+              <TabsTrigger
+                value="infos"
+                className="data-[state=active]:bg-linkme-turquoise data-[state=active]:text-white"
+              >
+                Infos
+              </TabsTrigger>
+              <TabsTrigger
+                value="contacts"
+                className="data-[state=active]:bg-linkme-turquoise data-[state=active]:text-white"
+              >
+                Contacts
+              </TabsTrigger>
+              <TabsTrigger
+                value="activite"
+                className="data-[state=active]:bg-linkme-turquoise data-[state=active]:text-white"
+              >
+                Activite
+              </TabsTrigger>
             </TabsList>
 
             {/* Onglet Infos */}
@@ -403,55 +497,32 @@ export function OrganisationDetailSheet({
             </TabsContent>
 
             {/* Onglet Contacts */}
-            <TabsContent value="contacts" className="mt-4 space-y-2">
-              <ContactItem
-                icon={Phone}
-                label="Telephone"
-                value={data.organisation.phone}
-                href={
-                  data.organisation.phone
-                    ? `tel:${data.organisation.phone}`
-                    : undefined
-                }
-              />
-              <ContactItem
-                icon={Mail}
-                label="Email principal"
-                value={data.organisation.email}
-                href={
-                  data.organisation.email
-                    ? `mailto:${data.organisation.email}`
-                    : undefined
-                }
-              />
-              <ContactItem
-                icon={Mail}
-                label="Email secondaire"
-                value={data.organisation.secondary_email}
-                href={
-                  data.organisation.secondary_email
-                    ? `mailto:${data.organisation.secondary_email}`
-                    : undefined
-                }
-              />
-              <ContactItem
-                icon={Globe}
-                label="Site web"
-                value={data.organisation.website}
-                href={
-                  data.organisation.website
-                    ? data.organisation.website.startsWith('http')
-                      ? data.organisation.website
-                      : `https://${data.organisation.website}`
-                    : undefined
-                }
-              />
+            <TabsContent value="contacts" className="mt-4 space-y-3">
+              {/* Loading state for contacts */}
+              {contactsLoading && (
+                <div className="space-y-2">
+                  <Skeleton className="h-24 w-full" />
+                  <Skeleton className="h-24 w-full" />
+                </div>
+              )}
 
-              {!data.organisation.phone &&
-                !data.organisation.email &&
-                !data.organisation.website && (
+              {/* Liste des contacts */}
+              {!contactsLoading &&
+                contactsData?.contacts &&
+                contactsData.contacts.length > 0 && (
+                  <div className="space-y-2">
+                    {contactsData.contacts.map(contact => (
+                      <ContactCard key={contact.id} contact={contact} />
+                    ))}
+                  </div>
+                )}
+
+              {/* Aucun contact */}
+              {!contactsLoading &&
+                (!contactsData?.contacts ||
+                  contactsData.contacts.length === 0) && (
                   <div className="text-center py-8 text-gray-400">
-                    <Mail className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <User className="h-8 w-8 mx-auto mb-2 opacity-50" />
                     <p>Aucun contact renseigne</p>
                   </div>
                 )}
@@ -465,7 +536,7 @@ export function OrganisationDetailSheet({
                   icon={Euro}
                   label="CA HT"
                   value={formatCurrency(data.stats.totalRevenueHT)}
-                  color="blue"
+                  color="turquoise"
                 />
                 <StatCard
                   icon={Coins}
@@ -506,7 +577,11 @@ export function OrganisationDetailSheet({
         {/* Footer avec bouton Modifier (mode edit uniquement) */}
         {mode === 'edit' && data && !isLoading && onEdit && (
           <div className="mt-6 pt-4 border-t">
-            <Button onClick={onEdit} className="w-full" size="lg">
+            <Button
+              onClick={onEdit}
+              className="w-full bg-linkme-turquoise hover:bg-linkme-turquoise/90 text-white"
+              size="lg"
+            >
               <Edit className="h-4 w-4 mr-2" />
               Modifier
             </Button>

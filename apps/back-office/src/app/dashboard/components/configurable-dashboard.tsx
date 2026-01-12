@@ -7,9 +7,15 @@ import { cn } from '@verone/ui';
 import { Button } from '@verone/ui';
 import { Settings, RotateCcw, AlertCircle, AlertTriangle } from 'lucide-react';
 
+import { RevenueChart, TreasuryChart } from './charts';
 import { DashboardTabs, type DashboardTab } from './dashboard-tabs';
 import { KPIGrid } from './kpi-grid';
 import { KPISelectorModal } from './kpi-selector-modal';
+import {
+  RecentOrdersWidget,
+  StockAlertsWidget,
+  StockMovementsWidget,
+} from './widgets';
 import { useDashboardPreferences } from '../hooks/use-dashboard-preferences';
 import type { KPIPeriod } from '../lib/kpi-catalog';
 
@@ -185,33 +191,34 @@ export function ConfigurableDashboard(): React.ReactElement {
           />
         </section>
 
-        {/* Placeholder pour futurs graphiques et listes */}
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-xl border border-slate-200 p-6 min-h-[300px] flex items-center justify-center">
-            <p className="text-slate-400 text-sm">
-              Graphique CA - 30 jours (à venir)
-            </p>
-          </div>
-          <div className="bg-white rounded-xl border border-slate-200 p-6 min-h-[300px] flex items-center justify-center">
-            <p className="text-slate-400 text-sm">
-              Graphique Trésorerie - 12 mois (à venir)
-            </p>
+        {/* Graphiques */}
+        <section>
+          <h2 className="text-sm font-semibold text-slate-700 mb-3">
+            Graphiques
+          </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="min-h-[300px]">
+              <RevenueChart />
+            </div>
+            <div className="min-h-[300px]">
+              <TreasuryChart />
+            </div>
           </div>
         </section>
 
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="bg-white rounded-xl border border-slate-200 p-6 min-h-[250px] flex items-center justify-center">
-            <p className="text-slate-400 text-sm">
-              Commandes récentes (à venir)
-            </p>
-          </div>
-          <div className="bg-white rounded-xl border border-slate-200 p-6 min-h-[250px] flex items-center justify-center">
-            <p className="text-slate-400 text-sm">
-              Factures impayées (à venir)
-            </p>
-          </div>
-          <div className="bg-white rounded-xl border border-slate-200 p-6 min-h-[250px] flex items-center justify-center">
-            <p className="text-slate-400 text-sm">Activité récente (à venir)</p>
+        {/* Widgets */}
+        <section>
+          <h2 className="text-sm font-semibold text-slate-700 mb-3">Widgets</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="min-h-[300px]">
+              <RecentOrdersWidget />
+            </div>
+            <div className="min-h-[300px]">
+              <StockAlertsWidget />
+            </div>
+            <div className="min-h-[300px]">
+              <StockMovementsWidget />
+            </div>
           </div>
         </section>
       </div>
