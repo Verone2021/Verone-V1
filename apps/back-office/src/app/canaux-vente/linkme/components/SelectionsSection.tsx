@@ -187,18 +187,53 @@ export function SelectionsSection() {
 
       if (affiliatesError) throw affiliatesError;
 
-      // Fetch catalogue LinkMe via RPC
-      const { data: catalogData, error: catalogError } = await supabase.rpc(
-        'get_linkme_catalog_products_for_affiliate' as any
-      );
+      // Fetch catalogue LinkMe depuis channel_pricing
+      // Channel ID LinkMe: 93c68db1-5a30-4168-89ec-6383152be405
+      const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
+      const { data: catalogData, error: catalogError } = await supabase
+        .from('channel_pricing')
+        .select(
+          `
+          id,
+          product_id,
+          min_margin_rate,
+          max_margin_rate,
+          suggested_margin_rate,
+          channel_commission_rate,
+          public_price_ht,
+          products:product_id (
+            name,
+            sku,
+            primary_image_url
+          )
+        `
+        )
+        .eq('channel_id', LINKME_CHANNEL_ID)
+        .eq('is_active', true);
 
       if (catalogError) {
         console.error('Error fetching catalog:', catalogError);
       }
 
+      // Transformer les données pour correspondre à l'interface CatalogProduct
+      const transformedCatalog: CatalogProduct[] = (catalogData || []).map(
+        (item: any) => ({
+          id: item.id,
+          product_id: item.product_id,
+          product_name: item.products?.name || 'Produit inconnu',
+          product_reference: item.products?.sku || '',
+          product_price_ht: Number(item.public_price_ht) || 0,
+          product_image_url: item.products?.primary_image_url || null,
+          max_margin_rate: Number(item.max_margin_rate) || 30,
+          min_margin_rate: Number(item.min_margin_rate) || 5,
+          suggested_margin_rate: Number(item.suggested_margin_rate) || 15,
+          linkme_commission_rate: Number(item.channel_commission_rate) || 5,
+        })
+      );
+
       setSelections(selectionsData || []);
       setAffiliates(affiliatesData || []);
-      setCatalogProducts((catalogData as unknown as CatalogProduct[]) || []);
+      setCatalogProducts(transformedCatalog);
     } catch (error) {
       console.error('Error fetching selections:', error);
       toast({

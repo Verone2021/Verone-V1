@@ -1,5 +1,11 @@
 // ===== LOCAL HOOKS ONLY =====
 export { useBaseHook } from './use-base-hook';
+export {
+  useCurrentUser,
+  useCurrentUserId,
+  CURRENT_USER_QUERY_KEY,
+  type CurrentUserResult,
+} from './use-current-user';
 export { useImageUpload, type UseImageUploadProps } from './use-image-upload';
 export { useInlineEdit, type EditableSection } from './use-inline-edit';
 export { useLogoUpload } from './use-logo-upload';
