@@ -32,6 +32,36 @@ function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
   }, obj);
 }
 
+/**
+ * Mapping des catégories de KPI vers les chemins de trend dans metrics
+ */
+const TREND_PATHS: Record<string, string> = {
+  sales: 'orders.trend',
+  stock: 'stocks.trend',
+  finance: 'treasury.trend',
+  linkme: 'linkme.trend',
+  general: 'products.trend',
+};
+
+/**
+ * Extrait le trend réel depuis les métriques basé sur la catégorie du KPI
+ */
+function getTrendForKPI(
+  metrics: Record<string, unknown>,
+  category: string
+): { value: number; isPositive: boolean } | undefined {
+  const trendPath = TREND_PATHS[category];
+  if (!trendPath) return undefined;
+
+  const trendValue = getNestedValue(metrics, trendPath);
+  if (typeof trendValue !== 'number' || trendValue === 0) return undefined;
+
+  return {
+    value: Math.abs(trendValue),
+    isPositive: trendValue >= 0,
+  };
+}
+
 export function KPIGrid({
   widgets,
   metrics,
@@ -67,13 +97,9 @@ export function KPIGrid({
             ? rawValue
             : null;
 
-        // TODO: Calculer le trend réel basé sur la période
-        // Pour l'instant, on utilise une valeur simulée
+        // Extraire le trend réel depuis les métriques
         const trend = kpiDef.showTrend
-          ? {
-              value: Math.random() * 20 - 10, // Simulé pour démo
-              isPositive: Math.random() > 0.5,
-            }
+          ? getTrendForKPI(metrics, kpiDef.category)
           : undefined;
 
         return (
@@ -101,15 +127,15 @@ export function KPIGrid({
         <Button
           variant="outline"
           className={cn(
-            'h-full min-h-[140px] border-dashed border-2 border-slate-200',
+            'h-full min-h-[110px] border-dashed border-2 border-slate-200',
             'flex flex-col items-center justify-center gap-2',
             'text-slate-400 hover:text-slate-600 hover:border-slate-300',
             'transition-all duration-200'
           )}
           onClick={onAddWidget}
         >
-          <Plus className="h-6 w-6" />
-          <span className="text-sm font-medium">Ajouter un KPI</span>
+          <Plus className="h-5 w-5" />
+          <span className="text-xs font-medium">Ajouter un KPI</span>
         </Button>
       )}
     </div>

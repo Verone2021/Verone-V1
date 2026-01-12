@@ -886,20 +886,37 @@ export default function FacturationPage() {
     window.location.href = `/factures/${id}?type=${type}`;
   };
 
-  // Handler sync Qonto
+  // Handler sync Qonto - Sync transactions ET factures
   const handleSync = async () => {
     try {
-      const response = await fetch('/api/qonto/sync', {
+      // 1. Sync transactions bancaires
+      const transactionsResponse = await fetch('/api/qonto/sync', {
         method: 'POST',
       });
-      const result = await response.json();
+      const transactionsResult = await transactionsResponse.json();
 
-      if (!result.success) {
-        console.error('[Qonto Sync] Failed:', result.message);
+      if (!transactionsResult.success) {
+        console.error(
+          '[Qonto Sync Transactions] Failed:',
+          transactionsResult.message
+        );
       } else {
-        console.log('[Qonto Sync] Success:', result);
+        console.log('[Qonto Sync Transactions] Success:', transactionsResult);
       }
 
+      // 2. Sync factures clients vers financial_documents
+      const invoicesResponse = await fetch('/api/qonto/sync-invoices', {
+        method: 'POST',
+      });
+      const invoicesResult = await invoicesResponse.json();
+
+      if (!invoicesResult.success) {
+        console.error('[Qonto Sync Invoices] Failed:', invoicesResult.message);
+      } else {
+        console.log('[Qonto Sync Invoices] Success:', invoicesResult);
+      }
+
+      // Rafraîchir les données
       void fetchInvoices();
       void fetchQuotes();
       void fetchCreditNotes();

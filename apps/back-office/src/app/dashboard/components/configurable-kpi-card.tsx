@@ -111,7 +111,7 @@ export function ConfigurableKPICard({
   return (
     <div
       className={cn(
-        'relative bg-white rounded-xl border border-slate-200 p-5 transition-all duration-200',
+        'relative bg-white rounded-xl border border-slate-200 p-4 transition-all duration-200',
         !isConfigMode &&
           'cursor-pointer hover:shadow-md hover:-translate-y-0.5',
         isDragging && 'shadow-lg ring-2 ring-blue-500 opacity-90',
@@ -190,7 +190,7 @@ export function ConfigurableKPICard({
       {/* Icon */}
       <div
         className={cn(
-          'w-10 h-10 rounded-lg flex items-center justify-center mb-3',
+          'w-8 h-8 rounded-lg flex items-center justify-center mb-2',
           kpiDef.category === 'sales' && 'bg-blue-50 text-blue-600',
           kpiDef.category === 'stock' && 'bg-purple-50 text-purple-600',
           kpiDef.category === 'finance' && 'bg-green-50 text-green-600',
@@ -198,7 +198,7 @@ export function ConfigurableKPICard({
           kpiDef.category === 'general' && 'bg-slate-50 text-slate-600'
         )}
       >
-        <Icon className="h-5 w-5" />
+        <Icon className="h-4 w-4" />
       </div>
 
       {/* Label & Period Badge */}
@@ -211,7 +211,7 @@ export function ConfigurableKPICard({
 
       {/* Value */}
       <div className="flex items-end gap-2">
-        <span className="text-2xl font-bold text-slate-900 font-mono">
+        <span className="text-xl font-bold text-slate-900 font-mono">
           {formattedValue}
         </span>
 
