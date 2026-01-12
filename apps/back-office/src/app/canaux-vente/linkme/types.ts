@@ -105,6 +105,8 @@ export interface LinkMeProductDetail {
   affiliate_name: string | null;
   /** Commission Vérone sur ce produit affilié (%) - depuis products.affiliate_commission_rate */
   affiliate_commission_rate: number | null;
+  /** Montant que l'affilié encaisse par unité vendue (HT) - depuis products.affiliate_payout_ht */
+  affiliate_payout_ht: number | null;
   /** Statut d'approbation du produit affilié */
   affiliate_approval_status:
     | 'draft'

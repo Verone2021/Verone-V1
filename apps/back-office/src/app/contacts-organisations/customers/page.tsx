@@ -73,6 +73,40 @@ import { HeartBadge } from '@/components/business/heart-badge';
 // ✅ FIX TypeScript: Utiliser type Organisation (pas de Customer local)
 // Interface Organisation définie dans use-organisations.ts
 
+// Composant pour afficher les badges de champs manquants
+const MissingFieldsBadges = ({ customer }: { customer: Organisation }) => {
+  const missing: string[] = [];
+  if (
+    !customer.billing_address_line1 ||
+    !customer.billing_postal_code ||
+    !customer.billing_city
+  ) {
+    missing.push('Adresse');
+  }
+  if (!customer.ownership_type) {
+    missing.push('Type');
+  }
+  if (customer.ownership_type === 'franchise' && !customer.siren) {
+    missing.push('SIREN');
+  }
+
+  if (missing.length === 0) return null;
+
+  return (
+    <div className="flex gap-1 flex-wrap mt-2">
+      {missing.map(field => (
+        <Badge
+          key={field}
+          variant="outline"
+          className="text-xs text-orange-600 border-orange-300 bg-orange-50"
+        >
+          {field} manquant
+        </Badge>
+      ))}
+    </div>
+  );
+};
+
 export default function CustomersPage() {
   const searchParams = useSearchParams();
   const urlType = searchParams.get('type') as
@@ -82,7 +116,7 @@ export default function CustomersPage() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<
-    'active' | 'archived' | 'preferred'
+    'active' | 'archived' | 'preferred' | 'incomplete'
   >('active');
   const [archivedCustomers, setArchivedCustomers] = useState<Organisation[]>(
     []
@@ -162,15 +196,29 @@ export default function CustomersPage() {
     return result;
   }, [customers, enseigneFilter]);
 
+  // Calcul des organisations incomplètes (critères: adresse, ownership_type, SIREN franchise)
+  const incompleteCustomers = useMemo(() => {
+    return filteredCustomers.filter(c => {
+      const missingAddress =
+        !c.billing_address_line1 || !c.billing_postal_code || !c.billing_city;
+      const missingOwnershipType = !c.ownership_type;
+      const franchiseMissingSiren =
+        c.ownership_type === 'franchise' && !c.siren;
+
+      return missingAddress || missingOwnershipType || franchiseMissingSiren;
+    });
+  }, [filteredCustomers]);
+
   const stats = useMemo(() => {
     const total = filteredCustomers.length;
     const active = filteredCustomers.filter(c => c.is_active).length;
     const favorites = filteredCustomers.filter(
       c => c.preferred_supplier === true
     ).length;
+    const incomplete = incompleteCustomers.length;
 
-    return { total, active, favorites };
-  }, [filteredCustomers]);
+    return { total, active, favorites, incomplete };
+  }, [filteredCustomers, incompleteCustomers]);
 
   const handleCreateCustomer = () => {
     setSelectedCustomer(null);
@@ -258,9 +306,11 @@ export default function CustomersPage() {
       return archivedCustomers;
     } else if (activeTab === 'preferred') {
       return filteredCustomers.filter(c => c.preferred_supplier === true);
+    } else if (activeTab === 'incomplete') {
+      return incompleteCustomers;
     }
     return filteredCustomers;
-  }, [activeTab, filteredCustomers, archivedCustomers]);
+  }, [activeTab, filteredCustomers, archivedCustomers, incompleteCustomers]);
 
   // Pagination
   const paginatedCustomers = useMemo(() => {
@@ -276,7 +326,9 @@ export default function CustomersPage() {
   }, [searchQuery, activeTab, enseigneFilter]);
 
   const isLoading =
-    activeTab === 'active' || activeTab === 'preferred'
+    activeTab === 'active' ||
+    activeTab === 'preferred' ||
+    activeTab === 'incomplete'
       ? loading
       : archivedLoading;
 
@@ -426,6 +478,19 @@ export default function CustomersPage() {
             }
             )
           </span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('incomplete')}
+          className={cn(
+            'px-4 py-2 rounded-lg text-sm font-medium transition-all',
+            activeTab === 'incomplete'
+              ? 'bg-orange-500 text-white'
+              : 'bg-orange-100 text-orange-700 hover:bg-orange-200'
+          )}
+        >
+          À compléter
+          <span className="ml-2 opacity-70">({stats.incomplete})</span>
         </button>
 
         {/* Barre de recherche alignée */}
@@ -608,6 +673,11 @@ export default function CustomersPage() {
                           )}
                         </div>
 
+                        {/* Badges champs manquants - Visible uniquement onglet incomplete */}
+                        {activeTab === 'incomplete' && (
+                          <MissingFieldsBadges customer={customer} />
+                        )}
+
                         {/* Boutons - Pattern Catalogue IconButton */}
                         <div
                           className="mt-auto pt-4 border-t"
@@ -615,7 +685,8 @@ export default function CustomersPage() {
                         >
                           <div className="flex items-center gap-1">
                             {activeTab === 'active' ||
-                            activeTab === 'preferred' ? (
+                            activeTab === 'preferred' ||
+                            activeTab === 'incomplete' ? (
                               <>
                                 <FavoriteToggleButton
                                   organisationId={customer.id}

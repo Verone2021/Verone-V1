@@ -1382,24 +1382,24 @@ export default function LinkMeCataloguePage() {
                       )}
                     </div>
 
-                    {/* Commission LinkMe */}
-                    <div className="hidden lg:block text-right min-w-[50px]">
-                      <p className="text-[10px] text-gray-400">Comm.</p>
-                      {product.linkme_commission_rate !== null ? (
+                    {/* Commission Vérone (produit affilié) */}
+                    <div className="hidden lg:block text-right min-w-[70px]">
+                      <p className="text-[10px] text-gray-400">Comm. Vérone</p>
+                      {product.affiliate_commission_rate !== null ? (
                         <p className="text-xs text-purple-600">
-                          {product.linkme_commission_rate}%
+                          {product.affiliate_commission_rate}%
                         </p>
                       ) : (
                         <p className="text-xs text-gray-400">—</p>
                       )}
                     </div>
 
-                    {/* Prix client LinkMe (calculé) */}
+                    {/* Payout affilié HT (encaissement) */}
                     <div className="hidden lg:block text-right min-w-[80px]">
-                      <p className="text-[10px] text-gray-400">Prix Client</p>
-                      {clientPrice ? (
-                        <p className="text-xs font-medium text-green-600">
-                          {formatPrice(clientPrice)}
+                      <p className="text-[10px] text-gray-400">Payout HT</p>
+                      {product.affiliate_payout_ht !== null ? (
+                        <p className="text-xs font-semibold text-green-600">
+                          {formatPrice(product.affiliate_payout_ht)}
                         </p>
                       ) : (
                         <p className="text-xs text-gray-400">—</p>
