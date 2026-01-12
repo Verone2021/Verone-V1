@@ -44,6 +44,8 @@ interface MapLibreMapViewProps {
   height?: number;
   /** Callback au clic sur un marker */
   onMarkerClick?: (org: Organisation) => void;
+  /** Callback pour voir les détails d'une organisation */
+  onViewDetails?: (organisationId: string) => void;
 }
 
 interface ClusterProperties {
@@ -72,6 +74,7 @@ const FRANCE_CENTER = { longitude: 2.5, latitude: 46.5 };
 const DEFAULT_ZOOM = 5.5;
 const MAX_ZOOM = 18;
 const MIN_ZOOM = 3;
+const ZOOM_BONUS = 3; // Bonus de zoom pour clic cluster (plus agressif)
 
 // Style Carto Voyager (coloré, gratuit, pas de token)
 const MAP_STYLE =
@@ -159,6 +162,7 @@ export function MapLibreMapView({
   organisations,
   height = 500,
   onMarkerClick,
+  onViewDetails,
 }: MapLibreMapViewProps) {
   const mapRef = useRef<MapRef>(null);
   const [viewState, setViewState] = useState({
@@ -247,13 +251,11 @@ export function MapLibreMapView({
     }
   }, [validOrganisations]);
 
-  // Handler clic sur cluster
+  // Handler clic sur cluster - avec ZOOM_BONUS pour zoom plus agressif
   const handleClusterClick = useCallback(
     (clusterId: number, longitude: number, latitude: number) => {
-      const expansionZoom = Math.min(
-        supercluster.getClusterExpansionZoom(clusterId),
-        MAX_ZOOM
-      );
+      const baseZoom = supercluster.getClusterExpansionZoom(clusterId);
+      const expansionZoom = Math.min(baseZoom + ZOOM_BONUS, MAX_ZOOM);
 
       mapRef.current?.flyTo({
         center: [longitude, latitude],
@@ -385,7 +387,7 @@ export function MapLibreMapView({
             onClose={() => setSelectedOrg(null)}
             closeOnClick={false}
           >
-            <div className="min-w-[160px] p-1">
+            <div className="min-w-[180px] p-1">
               <p className="font-semibold text-gray-900">
                 {selectedOrg.trade_name || selectedOrg.legal_name}
               </p>
@@ -407,6 +409,15 @@ export function MapLibreMapView({
                     : 'Franchise'}
                 </span>
               </p>
+              {/* Bouton voir détails */}
+              {onViewDetails && (
+                <button
+                  onClick={() => onViewDetails(selectedOrg.id)}
+                  className="mt-3 w-full px-3 py-1.5 text-sm font-medium text-white bg-[#5DBEBB] rounded-lg hover:bg-[#4DAEAB] transition-colors"
+                >
+                  Voir les détails
+                </button>
+              )}
             </div>
           </Popup>
         )}

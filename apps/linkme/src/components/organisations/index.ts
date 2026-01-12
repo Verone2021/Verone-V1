@@ -9,4 +9,5 @@
 
 export { OrganisationCard } from './OrganisationCard';
 export { OrganisationDetailModal } from './OrganisationDetailModal';
+export { OrganisationDetailSheet } from './OrganisationDetailSheet';
 export { EditOrganisationModal } from './EditOrganisationModal';

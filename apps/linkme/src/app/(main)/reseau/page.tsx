@@ -9,7 +9,10 @@
  * @module ReseauPage
  * @since 2026-01-12
  * @updated 2026-01-12 - Migration Leaflet → MapLibre GL
+ * @updated 2026-01-12 - Ajout OrganisationDetailSheet
  */
+
+import { useState } from 'react';
 
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
@@ -17,6 +20,7 @@ import { useRouter } from 'next/navigation';
 import { Card } from '@tremor/react';
 import { AlertCircle, Building2, MapPin, Store, Users } from 'lucide-react';
 
+import { OrganisationDetailSheet } from '@/components/organisations';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEnseigneOrganisations } from '@/lib/hooks/use-enseigne-organisations';
 import { useUserAffiliate } from '@/lib/hooks/use-user-selection';
@@ -97,6 +101,9 @@ export default function ReseauPage() {
   const router = useRouter();
   const { linkMeRole, loading: authLoading } = useAuth();
   const { data: affiliate, isLoading: affiliateLoading } = useUserAffiliate();
+
+  // État pour le detail sheet
+  const [detailSheetOrgId, setDetailSheetOrgId] = useState<string | null>(null);
 
   // Récupérer les organisations de l'enseigne avec coordonnées GPS
   const { data: organisations = [], isLoading: networkLoading } =
@@ -212,7 +219,11 @@ export default function ReseauPage() {
               </div>
             </div>
           ) : (
-            <MapLibreMapView organisations={organisations} height={600} />
+            <MapLibreMapView
+              organisations={organisations}
+              height={600}
+              onViewDetails={orgId => setDetailSheetOrgId(orgId)}
+            />
           )}
         </div>
 
@@ -234,6 +245,14 @@ export default function ReseauPage() {
           </div>
         </div>
       </div>
+
+      {/* Detail Sheet (mode view - lecture seule) */}
+      <OrganisationDetailSheet
+        organisationId={detailSheetOrgId}
+        open={!!detailSheetOrgId}
+        onOpenChange={open => !open && setDetailSheetOrgId(null)}
+        mode="view"
+      />
     </div>
   );
 }

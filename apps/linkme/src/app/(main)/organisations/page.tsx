@@ -29,7 +29,7 @@ import {
 
 import {
   OrganisationCard,
-  OrganisationDetailModal,
+  OrganisationDetailSheet,
   EditOrganisationModal,
 } from '../../../components/organisations';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -73,7 +73,7 @@ export default function OrganisationsPage(): JSX.Element | null {
   const [selectedOrg, setSelectedOrg] = useState<EnseigneOrganisation | null>(
     null
   );
-  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [detailSheetOrgId, setDetailSheetOrgId] = useState<string | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const [orgToArchive, setOrgToArchive] = useState<EnseigneOrganisation | null>(
@@ -153,7 +153,7 @@ export default function OrganisationsPage(): JSX.Element | null {
   // Handlers
   const handleView = (org: EnseigneOrganisation) => {
     setSelectedOrg(org);
-    setDetailModalOpen(true);
+    setDetailSheetOrgId(org.id);
   };
 
   const handleEdit = (org: EnseigneOrganisation) => {
@@ -420,12 +420,19 @@ export default function OrganisationsPage(): JSX.Element | null {
         )}
       </div>
 
-      {/* Modal de détail */}
-      <OrganisationDetailModal
-        organisation={selectedOrg}
-        stats={selectedOrg ? statsMap?.[selectedOrg.id] : undefined}
-        open={detailModalOpen}
-        onOpenChange={setDetailModalOpen}
+      {/* Sheet de détail (mode edit) */}
+      <OrganisationDetailSheet
+        organisationId={detailSheetOrgId}
+        open={!!detailSheetOrgId}
+        onOpenChange={open => !open && setDetailSheetOrgId(null)}
+        mode="edit"
+        onEdit={() => {
+          // Ouvrir le modal d'édition et fermer le sheet
+          if (selectedOrg) {
+            setEditModalOpen(true);
+            setDetailSheetOrgId(null);
+          }
+        }}
       />
 
       {/* Modal d'édition */}
