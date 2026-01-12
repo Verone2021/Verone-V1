@@ -5496,8 +5496,10 @@ export type Database = {
           is_enseigne_parent: boolean;
           is_service_provider: boolean | null;
           legal_form: string | null;
+          latitude: number | null;
           legal_name: string;
           linkme_code: string | null;
+          longitude: number | null;
           logo_url: string | null;
           minimum_order_amount: number | null;
           notes: string | null;
@@ -5571,9 +5573,11 @@ export type Database = {
           is_active?: boolean | null;
           is_enseigne_parent?: boolean;
           is_service_provider?: boolean | null;
+          latitude?: number | null;
           legal_form?: string | null;
           legal_name: string;
           linkme_code?: string | null;
+          longitude?: number | null;
           logo_url?: string | null;
           minimum_order_amount?: number | null;
           notes?: string | null;
@@ -5647,9 +5651,11 @@ export type Database = {
           is_active?: boolean | null;
           is_enseigne_parent?: boolean;
           is_service_provider?: boolean | null;
+          latitude?: number | null;
           legal_form?: string | null;
           legal_name?: string;
           linkme_code?: string | null;
+          longitude?: number | null;
           logo_url?: string | null;
           minimum_order_amount?: number | null;
           notes?: string | null;

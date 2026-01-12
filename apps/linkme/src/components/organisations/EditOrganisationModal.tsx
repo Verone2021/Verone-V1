@@ -49,7 +49,7 @@ interface FormData {
   latitude: number | null;
   longitude: number | null;
   // Type de propriété
-  ownership_type: 'succursale' | 'franchise' | null;
+  ownership_type: 'propre' | 'succursale' | 'franchise' | null;
 }
 
 // =====================================================================
