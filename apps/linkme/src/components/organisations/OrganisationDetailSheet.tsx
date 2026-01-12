@@ -17,6 +17,7 @@
 
 import { useMemo } from 'react';
 
+import { OrganisationLogo } from '@verone/organisations/components/display/OrganisationLogo';
 import {
   Sheet,
   SheetContent,
@@ -339,11 +340,13 @@ export function OrganisationDetailSheet({
   );
 
   // Hook pour les contacts de l'organisation
-  // Passe aussi l'enseigne_id pour trouver les contacts liés à l'enseigne
+  // Passe aussi l'enseigne_id et is_enseigne_parent pour afficher les contacts enseigne
+  // uniquement pour la maison mère (is_enseigne_parent = true)
   const { data: contactsData, isLoading: contactsLoading } =
     useOrganisationContacts(
       open ? organisationId : null,
-      open ? data?.organisation?.enseigne_id : null
+      open ? data?.organisation?.enseigne_id : null,
+      open ? (data?.organisation?.is_enseigne_parent ?? false) : false
     );
 
   // Adresses formatées
@@ -387,18 +390,14 @@ export function OrganisationDetailSheet({
         {/* Header */}
         <SheetHeader className="pb-4 border-b">
           <div className="flex items-center gap-3">
-            {/* Logo ou icône */}
-            {data?.organisation?.logo_url ? (
-              <img
-                src={data.organisation.logo_url}
-                alt={displayName}
-                className="w-14 h-14 rounded-xl object-cover border"
-              />
-            ) : (
-              <div className="w-14 h-14 bg-linkme-turquoise/10 rounded-xl flex items-center justify-center">
-                <Building2 className="h-7 w-7 text-linkme-turquoise" />
-              </div>
-            )}
+            {/* Logo avec composant unifié (gère les URLs Supabase Storage) */}
+            <OrganisationLogo
+              logoUrl={data?.organisation?.logo_url}
+              organisationName={displayName}
+              size="lg"
+              fallback="icon"
+              className="rounded-xl"
+            />
             <div className="flex-1 min-w-0">
               <SheetTitle className="text-lg truncate">
                 {displayName}

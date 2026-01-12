@@ -56,10 +56,13 @@ export interface UpdateContactsInput {
  *
  * @param organisationId - ID de l'organisation
  * @param enseigneId - ID de l'enseigne (optionnel) - pour chercher aussi les contacts liés à l'enseigne
+ * @param isEnseigneParent - true si c'est la maison mère (is_enseigne_parent = true)
+ *                          Seule la maison mère affiche les contacts de l'enseigne
  */
 export function useOrganisationContacts(
   organisationId: string | null,
-  enseigneId?: string | null
+  enseigneId?: string | null,
+  isEnseigneParent?: boolean
 ) {
   return useQuery({
     queryKey: ['organisation-contacts', organisationId, enseigneId],
@@ -89,15 +92,18 @@ export function useOrganisationContacts(
         )
         .eq('is_active', true);
 
-      // Filtrer par organisation_id OU enseigne_id
-      if (organisationId && enseigneId) {
-        // Chercher contacts liés à l'organisation OU à l'enseigne
+      // Filtrer selon le contexte
+      // Bug fix: Les contacts enseigne ne doivent s'afficher QUE pour la maison mère
+      if (organisationId && enseigneId && isEnseigneParent) {
+        // Maison mère : contacts de l'org + contacts enseigne (sans org)
         query = query.or(
-          `organisation_id.eq.${organisationId},enseigne_id.eq.${enseigneId}`
+          `organisation_id.eq.${organisationId},and(enseigne_id.eq.${enseigneId},organisation_id.is.null)`
         );
       } else if (organisationId) {
+        // Organisation normale : seulement ses propres contacts
         query = query.eq('organisation_id', organisationId);
       } else if (enseigneId) {
+        // Fallback : contacts enseigne uniquement
         query = query.eq('enseigne_id', enseigneId);
       }
 

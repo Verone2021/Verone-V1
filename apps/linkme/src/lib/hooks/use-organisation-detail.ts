@@ -57,6 +57,9 @@ export interface OrganisationDetail {
 
   // Enseigne (pour récupérer les stats)
   enseigne_id: string | null;
+
+  // Maison mère de l'enseigne (pour affichage contacts enseigne)
+  is_enseigne_parent: boolean;
 }
 
 export interface OrganisationOrder {
@@ -133,7 +136,8 @@ export function useOrganisationDetail(organisationId: string | null) {
           vat_number,
           latitude,
           longitude,
-          enseigne_id
+          enseigne_id,
+          is_enseigne_parent
         `
         )
         .eq('id', organisationId)
