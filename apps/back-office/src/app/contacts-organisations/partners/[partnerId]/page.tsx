@@ -60,6 +60,7 @@ export default function PartnerDetailPage() {
     organisation: partner,
     loading,
     error,
+    refetch: refetchPartner,
   } = useOrganisation(partnerId as string);
   const { archiveOrganisation, unarchiveOrganisation, refetch } =
     useOrganisations({ type: 'partner' });
@@ -105,7 +106,9 @@ export default function PartnerDetailPage() {
 
   // Gestionnaire de mise à jour des données partenaire
   const handlePartnerUpdate = (updatedData: Partial<Organisation>) => {
-    // Les données sont automatiquement mises à jour par le hook useInlineEdit
+    // Rafraîchir les données du partenaire immédiatement
+    refetchPartner();
+    // Rafraîchir la liste des organisations (cache)
     refetch();
     // Rafraîchir les compteurs
     refreshCounts();

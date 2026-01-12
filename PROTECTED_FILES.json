@@ -97,7 +97,6 @@
     "methods": [
       "GitHub CODEOWNERS (.github/CODEOWNERS)",
       "GitHub Branch Protection Rules",
-      "Pre-commit hooks (husky)",
       "CI/CD checks (GitHub Actions)"
     ]
   },
