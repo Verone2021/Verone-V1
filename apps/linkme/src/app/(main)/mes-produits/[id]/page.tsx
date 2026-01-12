@@ -11,7 +11,7 @@
 
 import { useState, useEffect } from 'react';
 
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 
 import {
   Package,
@@ -26,6 +26,9 @@ import {
   Warehouse,
   Truck,
   ImagePlus,
+  Eye,
+  Clock,
+  CheckCircle,
 } from 'lucide-react';
 
 import { ProductImageUpload } from '../../../../components/forms/ProductImageUpload';
@@ -54,7 +57,9 @@ interface FormData {
 export default function EditProduitPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const productId = params.id as string;
+  const isEditMode = searchParams.get('edit') === 'true';
 
   const { user, linkMeRole, loading: authLoading } = useAuth();
   const { data: product, isLoading: productLoading } =
@@ -101,11 +106,22 @@ export default function EditProduitPage() {
   const canEdit = linkMeRole && CAN_EDIT_ROLES.includes(linkMeRole.role);
   const isDraft = product?.affiliate_approval_status === 'draft';
   const isRejected = product?.affiliate_approval_status === 'rejected';
+  const isPending = product?.affiliate_approval_status === 'pending_approval';
+  const isApproved = product?.affiliate_approval_status === 'approved';
   const canModify = isDraft || isRejected;
 
-  // Redirect if not authenticated or not authorized
-  if (!authLoading && !productLoading && (!user || !canEdit || !canModify)) {
-    router.push('/mes-produits');
+  // Mode lecture seule si pas modifiable OU si pas en mode edition
+  const viewOnly = !canModify || !isEditMode;
+
+  // Redirect if not authenticated (use useEffect to avoid render-time state update)
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login');
+    }
+  }, [authLoading, user, router]);
+
+  // Return null while redirecting
+  if (!authLoading && !user) {
     return null;
   }
 
@@ -272,25 +288,44 @@ export default function EditProduitPage() {
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push('/mes-produits')}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-gray-900">
-              Modifier le produit
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              {viewOnly ? (
+                <>
+                  <Eye className="h-6 w-6 text-gray-400" />
+                  Détail du produit
+                </>
+              ) : (
+                'Modifier le produit'
+              )}
             </h1>
             <p className="text-gray-500">{product.sku}</p>
           </div>
           {isDraft && (
-            <span className="px-3 py-1 text-sm bg-gray-100 text-gray-600 rounded-full">
+            <span className="px-3 py-1 text-sm bg-gray-100 text-gray-600 rounded-full flex items-center gap-1">
               Brouillon
+            </span>
+          )}
+          {isPending && (
+            <span className="px-3 py-1 text-sm bg-amber-50 text-amber-600 rounded-full flex items-center gap-1">
+              <Clock className="h-3.5 w-3.5" />
+              En attente
+            </span>
+          )}
+          {isApproved && (
+            <span className="px-3 py-1 text-sm bg-green-50 text-green-600 rounded-full flex items-center gap-1">
+              <CheckCircle className="h-3.5 w-3.5" />
+              Approuvé
             </span>
           )}
           {isRejected && (
             <span className="px-3 py-1 text-sm bg-red-50 text-red-600 rounded-full">
-              Rejete
+              Rejeté
             </span>
           )}
         </div>
@@ -331,16 +366,17 @@ export default function EditProduitPage() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nom du produit *
+                    Nom du produit {!viewOnly && '*'}
                   </label>
                   <input
                     type="text"
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
+                    disabled={viewOnly}
                     className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                       errors.name ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                    } ${viewOnly ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                   />
                   {errors.name && (
                     <p className="text-red-500 text-sm mt-1">{errors.name}</p>
@@ -355,8 +391,9 @@ export default function EditProduitPage() {
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
+                    disabled={viewOnly}
                     rows={4}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${viewOnly ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                   />
                 </div>
               </div>
@@ -372,7 +409,7 @@ export default function EditProduitPage() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Votre prix (payout HT) *
+                    Votre prix (payout HT) {!viewOnly && '*'}
                   </label>
                   <div className="relative">
                     <input
@@ -380,13 +417,14 @@ export default function EditProduitPage() {
                       name="affiliate_payout_ht"
                       value={formData.affiliate_payout_ht}
                       onChange={handleChange}
+                      disabled={viewOnly}
                       step="0.01"
                       min="0"
                       className={`w-full px-4 py-2.5 pr-12 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                         errors.affiliate_payout_ht
                           ? 'border-red-500'
                           : 'border-gray-300'
-                      }`}
+                      } ${viewOnly ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                     />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">
                       EUR
@@ -402,12 +440,23 @@ export default function EditProduitPage() {
                   </p>
                 </div>
 
-                <div className="p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-700">
-                    La commission plateforme sera definie par Verone lors de
-                    l&apos;approbation du produit.
-                  </p>
-                </div>
+                {isApproved && product.affiliate_commission_rate && (
+                  <div className="p-3 bg-green-50 rounded-lg">
+                    <p className="text-sm text-green-700">
+                      Commission plateforme :{' '}
+                      <strong>{product.affiliate_commission_rate}%</strong>
+                    </p>
+                  </div>
+                )}
+
+                {!isApproved && (
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-700">
+                      La commission plateforme sera définie par Vérone lors de
+                      l&apos;approbation du produit.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -421,19 +470,21 @@ export default function EditProduitPage() {
               {/* Toggle stockage */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Comment souhaitez-vous gerer le stockage ?
+                  Comment souhaitez-vous gérer le stockage ?
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
                     onClick={() =>
+                      !viewOnly &&
                       setFormData(prev => ({ ...prev, store_at_verone: true }))
                     }
+                    disabled={viewOnly}
                     className={`p-4 rounded-lg border-2 transition-all ${
                       formData.store_at_verone
                         ? 'border-blue-500 bg-blue-50'
                         : 'border-gray-200 hover:border-gray-300'
-                    }`}
+                    } ${viewOnly ? 'cursor-not-allowed opacity-75' : ''}`}
                   >
                     <Warehouse
                       className={`h-6 w-6 mx-auto mb-2 ${formData.store_at_verone ? 'text-blue-600' : 'text-gray-400'}`}
@@ -441,22 +492,24 @@ export default function EditProduitPage() {
                     <p
                       className={`font-medium ${formData.store_at_verone ? 'text-blue-700' : 'text-gray-700'}`}
                     >
-                      Stocker chez Verone
+                      Stocker chez Vérone
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
-                      Nous gerons le stock et les envois
+                      Nous gérons le stock et les envois
                     </p>
                   </button>
                   <button
                     type="button"
                     onClick={() =>
+                      !viewOnly &&
                       setFormData(prev => ({ ...prev, store_at_verone: false }))
                     }
+                    disabled={viewOnly}
                     className={`p-4 rounded-lg border-2 transition-all ${
                       !formData.store_at_verone
                         ? 'border-blue-500 bg-blue-50'
                         : 'border-gray-200 hover:border-gray-300'
-                    }`}
+                    } ${viewOnly ? 'cursor-not-allowed opacity-75' : ''}`}
                   >
                     <Truck
                       className={`h-6 w-6 mx-auto mb-2 ${!formData.store_at_verone ? 'text-blue-600' : 'text-gray-400'}`}
@@ -464,7 +517,7 @@ export default function EditProduitPage() {
                     <p
                       className={`font-medium ${!formData.store_at_verone ? 'text-blue-700' : 'text-gray-700'}`}
                     >
-                      Gerer moi-meme
+                      Gérer moi-même
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
                       Vous envoyez directement au client
@@ -477,7 +530,8 @@ export default function EditProduitPage() {
               {formData.store_at_verone && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Dimensions du produit (obligatoires pour le stockage) *
+                    Dimensions du produit{' '}
+                    {!viewOnly && '(obligatoires pour le stockage) *'}
                   </label>
                   <div className="grid grid-cols-3 gap-4">
                     <div>
@@ -489,13 +543,14 @@ export default function EditProduitPage() {
                         name="length_cm"
                         value={formData.length_cm}
                         onChange={handleChange}
+                        disabled={viewOnly}
                         step="0.1"
                         min="0"
                         className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                           errors.length_cm
                             ? 'border-red-500'
                             : 'border-gray-300'
-                        }`}
+                        } ${viewOnly ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                       />
                       {errors.length_cm && (
                         <p className="text-red-500 text-xs mt-1">
@@ -512,11 +567,12 @@ export default function EditProduitPage() {
                         name="width_cm"
                         value={formData.width_cm}
                         onChange={handleChange}
+                        disabled={viewOnly}
                         step="0.1"
                         min="0"
                         className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                           errors.width_cm ? 'border-red-500' : 'border-gray-300'
-                        }`}
+                        } ${viewOnly ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                       />
                       {errors.width_cm && (
                         <p className="text-red-500 text-xs mt-1">
@@ -533,13 +589,14 @@ export default function EditProduitPage() {
                         name="height_cm"
                         value={formData.height_cm}
                         onChange={handleChange}
+                        disabled={viewOnly}
                         step="0.1"
                         min="0"
                         className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                           errors.height_cm
                             ? 'border-red-500'
                             : 'border-gray-300'
-                        }`}
+                        } ${viewOnly ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                       />
                       {errors.height_cm && (
                         <p className="text-red-500 text-xs mt-1">
@@ -556,14 +613,20 @@ export default function EditProduitPage() {
             <div className="bg-white rounded-2xl shadow-sm p-6">
               <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <ImagePlus className="h-5 w-5 text-orange-600" />
-                Images (max 5)
+                Images {!viewOnly && '(max 5)'}
               </h2>
 
               <ProductImageUpload
                 productId={productId}
                 maxImages={5}
-                disabled={isSubmitting}
+                disabled={isSubmitting || viewOnly}
               />
+
+              {viewOnly && (
+                <p className="text-xs text-gray-500 mt-2 text-center">
+                  Mode consultation - les images ne peuvent pas être modifiées
+                </p>
+              )}
             </div>
           </div>
 
@@ -587,35 +650,58 @@ export default function EditProduitPage() {
               </div>
 
               <div className="mt-6 space-y-3">
-                {isDraft && (
-                  <button
-                    onClick={handleSave}
-                    disabled={isSubmitting}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
-                  >
-                    {isSubmitting ? (
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                    ) : (
-                      <Save className="h-5 w-5" />
+                {/* Mode lecture seule : afficher info */}
+                {viewOnly && (
+                  <div className="p-3 bg-gray-50 rounded-lg text-center">
+                    <Eye className="h-5 w-5 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-600">Mode consultation</p>
+                    {canModify && (
+                      <button
+                        onClick={() =>
+                          router.push(`/mes-produits/${productId}?edit=true`)
+                        }
+                        className="mt-2 text-sm text-blue-600 hover:underline"
+                      >
+                        Passer en mode édition
+                      </button>
                     )}
-                    Sauvegarder
-                  </button>
+                  </div>
                 )}
 
-                <button
-                  onClick={handleSubmitForApproval}
-                  disabled={isSubmitting}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                >
-                  {isSubmitting ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : (
-                    <Send className="h-5 w-5" />
-                  )}
-                  {isRejected
-                    ? 'Resoumettre pour approbation'
-                    : 'Soumettre pour approbation'}
-                </button>
+                {/* Mode édition : boutons d'action */}
+                {!viewOnly && (
+                  <>
+                    {isDraft && (
+                      <button
+                        onClick={handleSave}
+                        disabled={isSubmitting}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                      >
+                        {isSubmitting ? (
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                        ) : (
+                          <Save className="h-5 w-5" />
+                        )}
+                        Sauvegarder
+                      </button>
+                    )}
+
+                    <button
+                      onClick={handleSubmitForApproval}
+                      disabled={isSubmitting}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                    >
+                      {isSubmitting ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <Send className="h-5 w-5" />
+                      )}
+                      {isRejected
+                        ? 'Resoumettre pour approbation'
+                        : 'Soumettre pour approbation'}
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
