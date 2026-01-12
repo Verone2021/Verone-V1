@@ -2,15 +2,13 @@
 
 import { useState } from 'react';
 
-import { MapPin, Save, X, Edit, Home, Building, Copy } from 'lucide-react';
-
 import { ButtonV2 } from '@verone/ui';
 import { Checkbox } from '@verone/ui';
+import { AddressAutocomplete, type AddressResult } from '@verone/ui';
 import { cn } from '@verone/utils';
-import {
-  useInlineEdit,
-  type EditableSection,
-} from '@verone/common/hooks';
+import { MapPin, Save, X, Edit, Home, Building, Copy } from 'lucide-react';
+
+import { useInlineEdit, type EditableSection } from '@verone/common/hooks';
 
 interface Organisation {
   id: string;
@@ -198,6 +196,28 @@ export function AddressEditSection({
     updateEditedData(section, { [field]: processedValue || null });
   };
 
+  // Handler pour l'autocomplete d'adresse de facturation
+  const handleBillingAddressSelect = (address: AddressResult) => {
+    updateEditedData(section, {
+      billing_address_line1: address.streetAddress,
+      billing_city: address.city,
+      billing_postal_code: address.postalCode,
+      billing_region: address.region || '',
+      billing_country: address.countryCode || 'FR',
+    });
+  };
+
+  // Handler pour l'autocomplete d'adresse de livraison
+  const handleShippingAddressSelect = (address: AddressResult) => {
+    updateEditedData(section, {
+      shipping_address_line1: address.streetAddress,
+      shipping_city: address.city,
+      shipping_postal_code: address.postalCode,
+      shipping_region: address.region || '',
+      shipping_country: address.countryCode || 'FR',
+    });
+  };
+
   // Options de pays
   const countries = [
     { code: 'FR', name: 'France' },
@@ -275,25 +295,24 @@ export function AddressEditSection({
               </ButtonV2>
             </div>
 
+            {/* Autocomplete adresse de facturation */}
+            <div className="md:col-span-2 mb-4">
+              <AddressAutocomplete
+                value={editData?.billing_address_line1 || ''}
+                onChange={value =>
+                  handleFieldChange('billing_address_line1', value)
+                }
+                onSelect={handleBillingAddressSelect}
+                placeholder="Rechercher une adresse..."
+                label="Adresse"
+                id="billing-address-edit"
+              />
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-black mb-1">
-                  Adresse ligne 1
-                </label>
-                <input
-                  type="text"
-                  value={editData?.billing_address_line1 || ''}
-                  onChange={e =>
-                    handleFieldChange('billing_address_line1', e.target.value)
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-                  placeholder="Numéro et nom de rue"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-black mb-1">
-                  Adresse ligne 2
+                  Complément d'adresse
                 </label>
                 <input
                   type="text"
@@ -302,7 +321,7 @@ export function AddressEditSection({
                     handleFieldChange('billing_address_line2', e.target.value)
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-                  placeholder="Complément d'adresse (optionnel)"
+                  placeholder="Bâtiment, étage, etc. (optionnel)"
                 />
               </div>
 
@@ -413,28 +432,24 @@ export function AddressEditSection({
                 Adresse de livraison
               </h4>
 
+              {/* Autocomplete adresse de livraison */}
+              <div className="md:col-span-2">
+                <AddressAutocomplete
+                  value={editData?.shipping_address_line1 || ''}
+                  onChange={value =>
+                    handleFieldChange('shipping_address_line1', value)
+                  }
+                  onSelect={handleShippingAddressSelect}
+                  placeholder="Rechercher une adresse..."
+                  label="Adresse"
+                  id="shipping-address-edit"
+                />
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-black mb-1">
-                    Adresse ligne 1
-                  </label>
-                  <input
-                    type="text"
-                    value={editData?.shipping_address_line1 || ''}
-                    onChange={e =>
-                      handleFieldChange(
-                        'shipping_address_line1',
-                        e.target.value
-                      )
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-                    placeholder="Numéro et nom de rue"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-black mb-1">
-                    Adresse ligne 2
+                    Complément d'adresse
                   </label>
                   <input
                     type="text"
@@ -446,7 +461,7 @@ export function AddressEditSection({
                       )
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-                    placeholder="Complément d'adresse (optionnel)"
+                    placeholder="Bâtiment, étage, etc. (optionnel)"
                   />
                 </div>
 

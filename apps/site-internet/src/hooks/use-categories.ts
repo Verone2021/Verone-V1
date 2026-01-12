@@ -13,7 +13,7 @@ export interface Category {
   name: string;
   slug: string;
   description: string | null;
-  parent_id: string | null;
+  family_id: string | null;
 }
 
 export function useCategories() {
@@ -35,8 +35,8 @@ export function useCategories() {
 
       const { data, error } = await supabase
         .from('categories')
-        .select('id, name, slug, description, parent_id')
-        .eq('is_site_internet_visible', true)
+        .select('id, name, slug, description, family_id')
+        .eq('is_active', true)
         .order('name');
 
       if (error) {

@@ -22,13 +22,21 @@
     "@supabase/supabase-js": "^2.57.4",
     "@tanstack/react-query": "^5.72.2",
     "@tremor/react": "^3.18.7",
+    "@types/leaflet": "^1.9.21",
+    "@verone/notifications": "workspace:*",
     "@verone/ui": "workspace:*",
     "@verone/utils": "workspace:*",
+    "cobe": "^0.6.5",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.400.0",
     "next": "^15.5.7",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "react-simple-maps": "^3.0.0"
+    "react-easy-crop": "^5.5.6",
+    "react-leaflet": "^5.0.0",
+    "react-leaflet-cluster": "^4.0.0",
+    "react-simple-maps": "^3.0.0",
+    "recharts": "^3.3.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",
