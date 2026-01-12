@@ -103,6 +103,10 @@ export default function DeliveryInfoPage() {
   const [receptionEmail, setReceptionEmail] = useState('');
   const [receptionPhone, setReceptionPhone] = useState('');
   const [confirmedDate, setConfirmedDate] = useState('');
+  // Nouveaux champs Step 4 (2026-01-11)
+  const [desiredDeliveryDate, setDesiredDeliveryDate] = useState('');
+  const [mallFormRequired, setMallFormRequired] = useState(false);
+  const [mallFormEmail, setMallFormEmail] = useState('');
 
   // Validate token and fetch order
   useEffect(() => {
@@ -319,6 +323,10 @@ export default function DeliveryInfoPage() {
           reception_contact_email: receptionEmail,
           reception_contact_phone: receptionPhone || null,
           confirmed_delivery_date: confirmedDate || null,
+          // Nouveaux champs Step 4 (2026-01-11)
+          desired_delivery_date: desiredDeliveryDate || null,
+          mall_form_required: mallFormRequired,
+          mall_form_email: mallFormRequired ? mallFormEmail : null,
           step4_completed_at: new Date().toISOString(),
         })
         .eq('id', validation.order.linkmeDetails.id);
@@ -607,22 +615,60 @@ export default function DeliveryInfoPage() {
 
               <div className="space-y-2">
                 <Label
-                  htmlFor="confirmedDate"
+                  htmlFor="desiredDeliveryDate"
                   className="flex items-center gap-1"
                 >
                   <Calendar className="h-4 w-4" />
                   Date de livraison souhaitée
                 </Label>
                 <Input
-                  id="confirmedDate"
+                  id="desiredDeliveryDate"
                   type="date"
-                  value={confirmedDate}
-                  onChange={e => setConfirmedDate(e.target.value)}
+                  value={desiredDeliveryDate}
+                  onChange={e => setDesiredDeliveryDate(e.target.value)}
                   min={new Date().toISOString().split('T')[0]}
                 />
                 <p className="text-xs text-gray-500">
                   Notre équipe vous confirmera la date finale par email.
                 </p>
+              </div>
+
+              <Separator />
+
+              {/* Centre commercial */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="mallFormRequired"
+                    checked={mallFormRequired}
+                    onChange={e => setMallFormRequired(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                  />
+                  <Label htmlFor="mallFormRequired" className="cursor-pointer">
+                    Livraison en centre commercial (formulaire requis)
+                  </Label>
+                </div>
+
+                {mallFormRequired && (
+                  <div className="space-y-2 pl-7">
+                    <Label htmlFor="mallFormEmail">
+                      Email du centre commercial *
+                    </Label>
+                    <Input
+                      id="mallFormEmail"
+                      type="email"
+                      value={mallFormEmail}
+                      onChange={e => setMallFormEmail(e.target.value)}
+                      placeholder="contact@centre-commercial.fr"
+                      required={mallFormRequired}
+                    />
+                    <p className="text-xs text-gray-500">
+                      Nous vous enverrons le formulaire à remplir pour
+                      l'autorisation de livraison.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {submitError && (

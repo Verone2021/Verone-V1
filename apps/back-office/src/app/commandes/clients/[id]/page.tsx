@@ -29,6 +29,8 @@ import {
 } from 'lucide-react';
 
 import { CopyButton } from './CopyButton';
+import { FeesSection } from './FeesSection';
+import { PaymentSection } from './PaymentSection';
 
 interface OrderDetailPageProps {
   params: Promise<{ id: string }>;
@@ -54,6 +56,10 @@ export default async function OrderDetailPage({
       shipping_address,
       total_ht,
       total_ttc,
+      shipping_cost_ht,
+      handling_cost_ht,
+      insurance_cost_ht,
+      fees_vat_rate,
       created_at,
       created_by,
       channel_id,
@@ -356,67 +362,41 @@ export default async function OrderDetailPage({
               </div>
             </Card>
 
-            {/* Section Paiement */}
-            <Card className="p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <CreditCard className="h-5 w-5 text-muted-foreground" />
-                <h2 className="text-xl font-semibold">Paiement</h2>
-              </div>
+            {/* Section Frais de service - Client Component */}
+            <FeesSection
+              orderId={order.id}
+              shippingCostHt={order.shipping_cost_ht ?? 0}
+              handlingCostHt={order.handling_cost_ht ?? 0}
+              insuranceCostHt={order.insurance_cost_ht ?? 0}
+              feesVatRate={order.fees_vat_rate ?? 0.2}
+            />
 
-              <div className="space-y-3">
-                {/* Statut paiement */}
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Statut</span>
-                  {order.payment_status === 'paid' ? (
-                    <Badge
-                      variant="default"
-                      className="bg-green-100 text-green-800 border-green-200"
-                    >
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                      Payé
-                    </Badge>
-                  ) : order.payment_status === 'partial' ? (
-                    <Badge
-                      variant="secondary"
-                      className="bg-yellow-100 text-yellow-800 border-yellow-200"
-                    >
-                      <AlertCircle className="h-3 w-3 mr-1" />
-                      Partiel
-                    </Badge>
-                  ) : (
-                    <Badge
-                      variant="outline"
-                      className="bg-red-50 text-red-700 border-red-200"
-                    >
-                      <AlertCircle className="h-3 w-3 mr-1" />
-                      Non payé
-                    </Badge>
-                  )}
-                </div>
-
-                {/* Montant TTC */}
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Montant</span>
-                  <span className="font-medium">
-                    {order.total_ttc?.toFixed(2)} €
-                  </span>
-                </div>
-
-                {/* Bouton Associer un paiement */}
-                {order.payment_status !== 'paid' && (
-                  <div className="pt-2">
-                    <Link
-                      href={`/finance/rapprochement?orderId=${order.id}&amount=${order.total_ttc}`}
-                    >
-                      <Button variant="outline" className="w-full">
-                        <CreditCard className="h-4 w-4 mr-2" />
-                        Associer un paiement
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-              </div>
-            </Card>
+            {/* Section Paiement - Client Component avec bouton Creer facture */}
+            <PaymentSection
+              orderId={order.id}
+              orderNumber={order.order_number}
+              orderStatus={order.status}
+              totalHt={order.total_ht || 0}
+              totalTtc={order.total_ttc || 0}
+              taxRate={20}
+              currency="EUR"
+              paymentTerms="immediate"
+              paymentStatus={order.payment_status || 'pending'}
+              customerName={customerName}
+              customerEmail={customerEmail || null}
+              customerType={
+                order.customer_type === 'organization'
+                  ? 'organization'
+                  : 'individual'
+              }
+              orderItems={items.map((item: any) => ({
+                id: item.id,
+                quantity: item.quantity,
+                unit_price_ht: item.unit_price_ht,
+                tax_rate: 20,
+                products: item.products ? { name: item.products.name } : null,
+              }))}
+            />
           </div>
         </div>
 
