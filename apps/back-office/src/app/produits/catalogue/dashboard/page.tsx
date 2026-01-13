@@ -219,7 +219,7 @@ export default function DashboardProduitsPage() {
             <button
               onClick={() => router.push('/produits/catalogue/create')}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm transition-colors shadow-sm flex items-center gap-2"
-              aria-title="Créer un nouveau produit"
+              title="Créer un nouveau produit"
             >
               <Plus className="w-4 h-4" />
               Nouveau Produit
@@ -243,7 +243,6 @@ export default function DashboardProduitsPage() {
               icon={Package}
               description="Disponibles à la vente"
               onClick={() => router.push('/produits/catalogue')}
-              aria-title="Voir les produits du catalogue"
             />
 
             <KPICardUnified
@@ -253,7 +252,6 @@ export default function DashboardProduitsPage() {
               icon={Target}
               description="Sourcing + Validation"
               onClick={() => router.push('/produits/sourcing')}
-              aria-title="Voir les produits en sourcing"
             />
 
             <KPICardUnified
@@ -263,7 +261,6 @@ export default function DashboardProduitsPage() {
               icon={TrendingUp}
               description="Données produits complètes"
               onClick={() => router.push('/produits/catalogue')}
-              aria-title="Voir le taux de complétion des produits"
             />
 
             <KPICardUnified
@@ -281,7 +278,6 @@ export default function DashboardProduitsPage() {
               }
               description="Nouveaux produits 7j"
               onClick={() => router.push('/produits/catalogue')}
-              aria-title="Voir la croissance hebdomadaire"
             />
           </div>
         </div>
@@ -306,7 +302,7 @@ export default function DashboardProduitsPage() {
                     key={card.id}
                     onClick={() => router.push(card.path)}
                     className="group relative overflow-hidden rounded-xl bg-white border border-neutral-200 p-3 text-left transition-all duration-200 hover:shadow-lg hover:border-neutral-300 hover:-translate-y-1"
-                    aria-title={`Accéder à ${card.title}`}
+                    title={`Accéder à ${card.title}`}
                   >
                     {/* Gradient Background (hover) */}
                     <div

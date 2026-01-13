@@ -12,6 +12,48 @@
  * Manual test: echo '{"tool_name":"Bash","tool_input":{"command":"rm -rf /"}}' | bun validate-command.js
  */
 
+// =====================================================
+// TASK ID VALIDATION FOR GIT COMMITS
+// =====================================================
+const TASK_ID_REGEX = /\b(BO|LM|WEB)-[A-Z0-9]{2,}-\d{3}\b/;
+const NO_TASK_BYPASS = "[NO-TASK]";
+const ALLOWED_COMMIT_PREFIXES = [
+  "chore(plan):",
+  "chore(deps):",
+  "chore(release):",
+  "Merge",
+  "Revert",
+];
+
+/**
+ * Validate git commit message for Task ID requirement
+ */
+function validateGitCommit(commitMessage) {
+  // Check allowed prefixes (chore, merge, revert, etc.)
+  if (ALLOWED_COMMIT_PREFIXES.some((p) => commitMessage.startsWith(p))) {
+    return { valid: true, reason: "Allowed prefix" };
+  }
+
+  // Check bypass tag
+  if (commitMessage.includes(NO_TASK_BYPASS)) {
+    return { valid: true, warning: "Bypass [NO-TASK] used", reason: "Bypass" };
+  }
+
+  // Check Task ID presence
+  if (!TASK_ID_REGEX.test(commitMessage)) {
+    return {
+      valid: false,
+      error: `Commit bloque: ajoute un Task ID (ex: BO-DASH-001, LM-ORD-001, WEB-CMS-001) ou [NO-TASK].\nFormat: [APP]-[DOMAIN]-[NNN] ou APP = BO|LM|WEB`,
+    };
+  }
+
+  return { valid: true, reason: "Task ID found" };
+}
+
+// =====================================================
+// SECURITY RULES
+// =====================================================
+
 // Comprehensive dangerous command patterns database
 const SECURITY_RULES = {
   // Critical system destruction commands
@@ -677,6 +719,37 @@ async function main() {
     if (!command) {
       console.error("No command found in tool input");
       process.exit(1);
+    }
+
+    // =====================================================
+    // GIT COMMIT TASK ID VALIDATION
+    // =====================================================
+    if (command.includes("git commit")) {
+      // Extract commit message from -m flag
+      // Supports: -m "message", -m 'message', -m message
+      const msgMatch = command.match(/-m\s+["'](.+?)["']/s) ||
+                       command.match(/-m\s+(\S+)/);
+
+      if (msgMatch) {
+        const commitMessage = msgMatch[1];
+        const commitValidation = validateGitCommit(commitMessage);
+
+        if (!commitValidation.valid) {
+          const hookOutput = {
+            hookSpecificOutput: {
+              hookEventName: "PreToolUse",
+              permissionDecision: "deny",
+              permissionDecisionReason: `❌ ${commitValidation.error}`,
+            },
+          };
+          console.log(JSON.stringify(hookOutput));
+          process.exit(0);
+        }
+
+        if (commitValidation.warning) {
+          console.error(`⚠️  ${commitValidation.warning}`);
+        }
+      }
     }
 
     // Validate the command
