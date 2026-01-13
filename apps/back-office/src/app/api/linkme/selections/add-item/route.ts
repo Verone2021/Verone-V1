@@ -21,16 +21,32 @@ type LinkmeSelectionItemInsert =
   Database['public']['Tables']['linkme_selection_items']['Insert'];
 type ProductRow = Database['public']['Tables']['products']['Row'];
 
+// Domaines autorisés pour CORS
+const ALLOWED_ORIGINS = [
+  'https://linkme.verone.app',
+  'https://verone-linkme.vercel.app',
+  process.env.NODE_ENV === 'development' ? 'http://localhost:3002' : null,
+].filter(Boolean) as string[];
+
 // CORS headers pour permettre les requêtes cross-origin depuis LinkMe
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-};
+function getCorsHeaders(request: NextRequest) {
+  const origin = request.headers.get('origin');
+  const allowedOrigin =
+    origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  };
+}
 
 // Handler OPTIONS pour les preflight requests CORS
-export function OPTIONS(): NextResponse {
-  return new NextResponse(null, { status: 204, headers: corsHeaders });
+export function OPTIONS(request: NextRequest): NextResponse {
+  return new NextResponse(null, {
+    status: 204,
+    headers: getCorsHeaders(request),
+  });
 }
 
 interface IAddItemInput {
@@ -61,21 +77,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (!selectionId || !productId) {
       return NextResponse.json(
         { message: 'selection_id et product_id sont requis' },
-        { status: 400, headers: corsHeaders }
+        { status: 400, headers: getCorsHeaders(request) }
       );
     }
 
     if (typeof basePriceHt !== 'number' || basePriceHt < 0) {
       return NextResponse.json(
         { message: 'base_price_ht doit être un nombre positif' },
-        { status: 400, headers: corsHeaders }
+        { status: 400, headers: getCorsHeaders(request) }
       );
     }
 
     if (typeof marginRate !== 'number' || marginRate < 0 || marginRate > 100) {
       return NextResponse.json(
         { message: 'margin_rate doit être un nombre entre 0 et 100' },
-        { status: 400, headers: corsHeaders }
+        { status: 400, headers: getCorsHeaders(request) }
       );
     }
 
@@ -89,7 +105,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (selectError || !selection) {
       return NextResponse.json(
         { message: 'Sélection introuvable' },
-        { status: 404, headers: corsHeaders }
+        { status: 404, headers: getCorsHeaders(request) }
       );
     }
 
@@ -103,7 +119,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (productError || !product) {
       return NextResponse.json(
         { message: 'Produit introuvable' },
-        { status: 404, headers: corsHeaders }
+        { status: 404, headers: getCorsHeaders(request) }
       );
     }
 
@@ -118,7 +134,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (existingItem) {
       return NextResponse.json(
         { message: 'Ce produit est déjà dans la sélection' },
-        { status: 409, headers: corsHeaders }
+        { status: 409, headers: getCorsHeaders(request) }
       );
     }
 
@@ -166,7 +182,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       console.error('Erreur ajout produit à sélection:', insertError);
       return NextResponse.json(
         { message: insertError.message },
-        { status: 400, headers: corsHeaders }
+        { status: 400, headers: getCorsHeaders(request) }
       );
     }
 
@@ -187,13 +203,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         message: `Produit "${product.name}" ajouté à la sélection "${selection.name}"`,
         item: newItem,
       },
-      { headers: corsHeaders }
+      { headers: getCorsHeaders(request) }
     );
   } catch (error) {
     console.error('Erreur API add-item:', error);
     return NextResponse.json(
       { message: 'Erreur interne du serveur' },
-      { status: 500, headers: corsHeaders }
+      { status: 500, headers: getCorsHeaders(request) }
     );
   }
 }

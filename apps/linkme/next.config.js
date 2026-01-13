@@ -1,3 +1,5 @@
+const { withSentryConfig } = require('@sentry/nextjs');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -32,4 +34,26 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+// Sentry configuration
+const sentryWebpackPluginOptions = {
+  // Organisation et projet Sentry
+  org: 'verone',
+  project: 'linkme',
+
+  // Silence sourcemap upload logs
+  silent: !process.env.CI,
+
+  // Upload sourcemaps mais les supprimer du bundle client
+  hideSourceMaps: true,
+
+  // Tunnel pour contourner ad-blockers
+  tunnelRoute: '/monitoring',
+
+  // Auto-attach releases sur Vercel
+  automaticVercelMonitors: true,
+
+  // Desactiver telemetrie Sentry
+  telemetry: false,
+};
+
+module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);

@@ -16,6 +16,7 @@
 - [x] BO-WORK-003 Documenter workflow Task ID dans CLAUDE.md et memoire Serena (d695ad88)
 - [x] BO-WORK-004 Handoff READ→WRITE mailbox (boite aux lettres locale) (b447c5ef)
 - [x] LM-ORG-001 Transformer page /reseau en onglet Vue Carte dans /organisations (e3930d65)
+- [ ] BO-SENTRY-001 Setup Sentry expert (Replay + Feedback + Security fixes)
 
 ## Done
 
