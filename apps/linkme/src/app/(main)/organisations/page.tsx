@@ -27,6 +27,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Map,
+  Store,
+  Users,
 } from 'lucide-react';
 
 import {
@@ -95,6 +97,11 @@ export default function OrganisationsPage(): JSX.Element | null {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const [orgToArchive, setOrgToArchive] = useState<EnseigneOrganisation | null>(
+    null
+  );
+
+  // State pour detail sheet depuis la carte (mode view)
+  const [mapDetailSheetOrgId, setMapDetailSheetOrgId] = useState<string | null>(
     null
   );
 
@@ -349,25 +356,117 @@ export default function OrganisationsPage(): JSX.Element | null {
         {/* Contenu principal : Carte ou Grille */}
         {activeTab === 'map' ? (
           /* Vue Carte */
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            {isLoading ? (
-              <div className="h-[500px] flex items-center justify-center">
-                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-                <span className="ml-2 text-gray-500">Chargement...</span>
-              </div>
-            ) : organisations && organisations.length > 0 ? (
-              <MapLibreMapView organisations={organisations} />
-            ) : (
-              <div className="h-[500px] flex items-center justify-center">
-                <div className="text-center">
-                  <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">
-                    Aucune organisation à afficher
-                  </p>
+          <>
+            {/* KPI Cards pour la carte */}
+            {organisations && organisations.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="bg-white rounded-lg shadow p-4 flex items-center gap-4">
+                  <div className="p-3 bg-gray-100 rounded-lg">
+                    <Building2 className="h-6 w-6 text-gray-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Total</p>
+                    <p className="text-2xl font-bold">{organisations.length}</p>
+                  </div>
+                </div>
+                <div className="bg-white rounded-lg shadow p-4 flex items-center gap-4">
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <Store className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Propres</p>
+                    <p className="text-2xl font-bold">
+                      {
+                        organisations.filter(
+                          o => o.ownership_type === 'succursale'
+                        ).length
+                      }
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {Math.round(
+                        (organisations.filter(
+                          o => o.ownership_type === 'succursale'
+                        ).length /
+                          organisations.length) *
+                          100
+                      )}
+                      %
+                    </p>
+                  </div>
+                </div>
+                <div className="bg-white rounded-lg shadow p-4 flex items-center gap-4">
+                  <div className="p-3 bg-amber-50 rounded-lg">
+                    <Users className="h-6 w-6 text-amber-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Franchises</p>
+                    <p className="text-2xl font-bold">
+                      {
+                        organisations.filter(
+                          o => o.ownership_type === 'franchise'
+                        ).length
+                      }
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {Math.round(
+                        (organisations.filter(
+                          o => o.ownership_type === 'franchise'
+                        ).length /
+                          organisations.length) *
+                          100
+                      )}
+                      %
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
-          </div>
+
+            {/* Carte */}
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              {isLoading ? (
+                <div className="h-[500px] flex items-center justify-center">
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                  <span className="ml-2 text-gray-500">Chargement...</span>
+                </div>
+              ) : organisations && organisations.length > 0 ? (
+                <MapLibreMapView
+                  organisations={organisations}
+                  height={500}
+                  onViewDetails={orgId => setMapDetailSheetOrgId(orgId)}
+                />
+              ) : (
+                <div className="h-[500px] flex items-center justify-center">
+                  <div className="text-center">
+                    <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500">
+                      Aucune organisation à afficher
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Légende */}
+            {organisations && organisations.length > 0 && (
+              <div className="mt-4 flex items-center justify-center gap-6 text-sm text-gray-500">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full bg-blue-500" />
+                  <span>Propre</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full bg-orange-500" />
+                  <span>Franchise</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-[#5DBEBB] text-white text-xs flex items-center justify-center font-semibold">
+                    5+
+                  </div>
+                  <span>Cluster (cliquez pour zoomer)</span>
+                </div>
+              </div>
+            )}
+          </>
         ) : (
           /* Grille de cartes */
           <>
@@ -406,8 +505,8 @@ export default function OrganisationsPage(): JSX.Element | null {
           </>
         )}
 
-        {/* Pagination */}
-        {totalPages > 1 && (
+        {/* Pagination - cachée en mode carte */}
+        {totalPages > 1 && activeTab !== 'map' && (
           <div className="flex items-center justify-center gap-2 mt-6">
             <button
               onClick={() => goToPage(currentPage - 1)}
@@ -485,7 +584,7 @@ export default function OrganisationsPage(): JSX.Element | null {
         )}
       </div>
 
-      {/* Sheet de détail (mode edit) */}
+      {/* Sheet de détail (mode edit) - depuis la liste */}
       <OrganisationDetailSheet
         organisationId={detailSheetOrgId}
         open={!!detailSheetOrgId}
@@ -498,6 +597,14 @@ export default function OrganisationsPage(): JSX.Element | null {
             setDetailSheetOrgId(null);
           }
         }}
+      />
+
+      {/* Sheet de détail (mode view) - depuis la carte */}
+      <OrganisationDetailSheet
+        organisationId={mapDetailSheetOrgId}
+        open={!!mapDetailSheetOrgId}
+        onOpenChange={open => !open && setMapDetailSheetOrgId(null)}
+        mode="view"
       />
 
       {/* Modal d'édition */}
