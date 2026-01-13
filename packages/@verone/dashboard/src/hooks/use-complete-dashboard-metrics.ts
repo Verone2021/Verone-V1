@@ -307,15 +307,9 @@ export function useCompleteDashboardMetrics() {
         0
       );
 
-      const validMonthOrders = (monthOrders || []).filter(o =>
-        ['validated', 'partially_shipped', 'shipped', 'delivered'].includes(
-          o.status
-        )
-      );
+      // AOV = CA mensuel / nombre de factures (pas commandes)
       const averageOrderValue =
-        validMonthOrders.length > 0
-          ? monthRevenue / validMonthOrders.length
-          : 0;
+        monthInvoices.length > 0 ? monthRevenue / monthInvoices.length : 0;
 
       let orderTrend = 0;
       if (prevMonthRevenue > 0) {
@@ -373,18 +367,15 @@ export function useCompleteDashboardMetrics() {
         (sum, o) => sum + parseFloat(String(o.total_ht || 0)),
         0
       );
-      const linkmeCommissions = (pendingPayments || []).reduce(
-        (sum, p) => sum + parseFloat(String(p.total_amount_ttc || 0)),
+      // Commissions = somme des marges affiliés sur toutes les commandes
+      const linkmeCommissions = linkmeOrders.reduce(
+        (sum, o) => sum + parseFloat(String(o.total_affiliate_margin || 0)),
         0
       );
 
       // Calcul du taux de marge moyen
-      const totalMargin = linkmeOrders.reduce(
-        (sum, o) => sum + parseFloat(String(o.total_affiliate_margin || 0)),
-        0
-      );
       const avgMargin =
-        linkmeRevenue > 0 ? (totalMargin / linkmeRevenue) * 100 : 0;
+        linkmeRevenue > 0 ? (linkmeCommissions / linkmeRevenue) * 100 : 0;
 
       // Taux de conversion (commandes / sélections)
       const selectionsCount = selections?.length || 0;
