@@ -47,22 +47,22 @@ claude mcp:list               # Validation MCP servers actifs
 
 ```typescript
 // Navigation pages critiques
-mcp__playwright__browser_navigate('http://localhost:3000');
-mcp__playwright__browser_navigate('http://localhost:3000/catalogue');
-mcp__playwright__browser_navigate(
+mcp__playwright-lane-1__browser_navigate('http://localhost:3000');
+mcp__playwright-lane-1__browser_navigate('http://localhost:3000/catalogue');
+mcp__playwright-lane-1__browser_navigate(
   'http://localhost:3000/catalogue/collections'
 );
 
 // Validation interactions
-mcp__playwright__browser_click(element, ref);
-mcp__playwright__browser_snapshot();
+mcp__playwright-lane-1__browser_click(element, ref);
+mcp__playwright-lane-1__browser_snapshot();
 ```
 
 ### **Étape 3 : Monitoring Console Errors**
 
 ```typescript
 // Détection temps réel
-mcp__playwright__browser_console_messages();
+mcp__playwright-lane-1__browser_console_messages();
 
 // Validation règle zéro erreur
 if (console.errors.length > 0) {
