@@ -1,6 +1,11 @@
 {
   "enableAllProjectMcpServers": true,
-  "enabledMcpServers": ["context7", "serena", "playwright"],
+  "enabledMcpServers": [
+    "context7",
+    "serena",
+    "playwright-lane-1",
+    "playwright-lane-2"
+  ],
   "statusLine": {
     "type": "command",
     "command": "npx ccusage@latest statusline --visual-burn-rate emoji --no-offline",
@@ -12,7 +17,8 @@
       "mcp__*",
       "mcp__serena__*",
       "mcp__context7__*",
-      "mcp__playwright__*",
+      "mcp__playwright-lane-1__*",
+      "mcp__playwright-lane-2__*",
       "mcp__ide__*",
 
       "Read",
@@ -131,6 +137,15 @@
           {
             "type": "command",
             "command": "bun $CLAUDE_PROJECT_DIR/.claude/scripts/hook-post-file.ts"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"$TOOL_INPUT\" | grep -q 'git commit'; then node $CLAUDE_PROJECT_DIR/.claude/scripts/plan-sync.js 2>/dev/null || true; fi"
           }
         ]
       }
