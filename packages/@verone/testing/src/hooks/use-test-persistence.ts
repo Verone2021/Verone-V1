@@ -6,9 +6,9 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
-import { createBrowserClient } from '@supabase/ssr';
+import { createClient } from '@verone/utils/supabase/client';
 
 interface TestValidationState {
   id: string;
@@ -45,10 +45,8 @@ export function useTestPersistence() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  // ✅ FIX: Use singleton client via useMemo
+  const supabase = useMemo(() => createClient(), []);
 
   // 📊 Charger l'état de validation des tests
   const loadValidationStates = useCallback(
@@ -57,8 +55,8 @@ export function useTestPersistence() {
         setIsLoading(true);
         setError(null);
 
-        let query = supabase
-          .from('test_validation_state')
+        // Note: test_validation_state is an optional testing table
+        let query = (supabase.from as any)('test_validation_state')
           .select('*')
           .order('test_id');
 
@@ -75,8 +73,9 @@ export function useTestPersistence() {
         setValidationStates(data || []);
 
         // Charger aussi les statistiques des modules
-        const { data: progressData, error: progressError } = await supabase
-          .from('module_test_progress')
+        const { data: progressData, error: progressError } = await (
+          supabase.from as any
+        )('module_test_progress')
           .select('*')
           .order('module_name');
 
@@ -117,8 +116,9 @@ export function useTestPersistence() {
         };
 
         // Le trigger auto_lock_validated_test() se charge du verrouillage automatique
-        const { data, error: updateError } = await supabase
-          .from('test_validation_state')
+        const { data, error: updateError } = await (supabase.from as any)(
+          'test_validation_state'
+        )
           .update(updateData)
           .eq('test_id', testId)
           .select('*')
@@ -136,8 +136,9 @@ export function useTestPersistence() {
         );
 
         // Recharger les statistiques des modules
-        const { data: progressData } = await supabase
-          .from('module_test_progress')
+        const { data: progressData } = await (supabase.from as any)(
+          'module_test_progress'
+        )
           .select('*')
           .order('module_name');
 
@@ -147,8 +148,9 @@ export function useTestPersistence() {
 
         console.log(`🔒 Test ${testId} mis à jour:`, {
           status,
-          locked: data.locked,
-          validation_timestamp: data.validation_timestamp,
+          locked: (data as TestValidationState)?.locked,
+          validation_timestamp: (data as TestValidationState)
+            ?.validation_timestamp,
         });
 
         return data;
@@ -199,8 +201,9 @@ export function useTestPersistence() {
           return false;
         }
 
-        const { error: resetError } = await supabase
-          .from('test_validation_state')
+        const { error: resetError } = await (supabase.from as any)(
+          'test_validation_state'
+        )
           .update({
             status: 'pending',
             locked: false,

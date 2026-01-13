@@ -5,8 +5,8 @@
 
 import { useState, useCallback } from 'react';
 
-import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@verone/common/hooks';
+import { createClient } from '@verone/utils/supabase/client';
 
 // Types pour les mouvements de stock
 export type MovementType = 'IN' | 'OUT' | 'ADJUST' | 'TRANSFER';
@@ -185,7 +185,10 @@ export function useStockMovements() {
 
         setMovements(enrichedMovements as any);
       } catch (error) {
-        console.error('Erreur lors de la récupération des mouvements:', error);
+        console.error(
+          'Erreur lors de la récupération des mouvements:',
+          error instanceof Error ? error.message : JSON.stringify(error)
+        );
         toast({
           title: 'Erreur',
           description: 'Impossible de récupérer les mouvements de stock',
