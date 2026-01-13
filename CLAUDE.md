@@ -62,6 +62,41 @@ git status --porcelain      # Voir fichiers modifies
 
 ---
 
+## Workflow Task ID (Commits)
+
+### Source de verite
+`.claude/work/ACTIVE.md` - Plan actif versionne et partage entre sessions
+
+### Format Task ID
+`[APP]-[DOMAIN]-[NNN]` ou APP = BO | LM | WEB
+
+| Prefixe | Application |
+|---------|-------------|
+| `BO-*` | back-office |
+| `LM-*` | linkme |
+| `WEB-*` | site-internet |
+
+Exemples: `BO-DASH-001`, `LM-ORD-002`, `WEB-CMS-003`
+
+### Commits
+- **Obligatoire** : Task ID dans le message
+- **Bypass** : `[NO-TASK]` (rare)
+- **Prefixes autorises** : `chore(plan):`, `chore(deps):`, `Merge`
+
+### Commandes
+```bash
+pnpm plan:sync   # Synchroniser ACTIVE.md apres commit
+```
+
+### Flow
+1. Ajouter tache dans `.claude/work/ACTIVE.md` : `- [ ] BO-XXX-001 Description`
+2. Coder
+3. Commit avec Task ID : `git commit -m "[BO-XXX-001] fix: description"`
+4. `pnpm plan:sync` (auto via hook PostToolUse)
+5. `git commit -am "chore(plan): sync"`
+
+---
+
 ## Narrow Bridges (Zones Critiques)
 
 > **Consulter AVANT de modifier ces domaines.**
