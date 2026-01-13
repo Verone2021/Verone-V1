@@ -1,7 +1,7 @@
 # Plan Actif
 
 **Branche**: `fix/multi-bugs-2026-01`
-**Last sync**: 2026-01-13 (ff74fdaa)
+**Last sync**: 2026-01-13 (d695ad88)
 
 ## Regles
 
@@ -13,7 +13,7 @@
 
 - [x] BO-WORK-001 Mise en place du workflow Claude Code avec source de verite unique (738dcc67)
 - [x] BO-WORK-002 Fix Stop hook - gestion chemins absolus et exit codes (ff74fdaa)
-- [ ] BO-WORK-003 Documenter workflow Task ID dans CLAUDE.md et memoire Serena
+- [x] BO-WORK-003 Documenter workflow Task ID dans CLAUDE.md et memoire Serena (d695ad88)
 
 ## Done
 
