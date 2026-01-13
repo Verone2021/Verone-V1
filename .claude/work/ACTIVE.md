@@ -1,7 +1,7 @@
 # Plan Actif
 
 **Branche**: `fix/multi-bugs-2026-01`
-**Last sync**: 2026-01-13 (7a48a74d)
+**Last sync**: 2026-01-13 (9afe8fb2)
 
 ## Regles
 
@@ -19,6 +19,7 @@
 - [x] BO-SENTRY-001 Setup Sentry expert (Replay + Feedback + Security fixes) (0368aeca)
 
 ## Done
+- [x] BO-WORK-005 (9afe8fb2) (auto-added)
 - [x] LM-ORG-002 (7a48a74d) (auto-added)
 
 <!-- Taches completees automatiquement deplacees ici -->
