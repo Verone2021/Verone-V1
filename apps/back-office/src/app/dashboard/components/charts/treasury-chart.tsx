@@ -5,10 +5,10 @@
  * Evolution de la tresorerie sur 12 mois (entrees/sorties/balance)
  *
  * @created 2026-01-12
- * @updated 2026-01-12 - Implementee avec Recharts + useCashFlowForecast
+ * @updated 2026-01-13 - Fix: Utilise useTreasuryStats au lieu de useCashFlowForecast
  */
 
-import { useCashFlowForecast } from '@verone/dashboard/hooks';
+import { useTreasuryStats } from '@verone/finance/hooks';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import { Wallet, RefreshCw } from 'lucide-react';
 import {
@@ -72,11 +72,21 @@ function CustomTooltip({
 }
 
 export function TreasuryChart({ onRemove }: TreasuryChartProps) {
-  const { forecast, isLoading, error } = useCashFlowForecast();
+  // Utilise useTreasuryStats qui récupère les données depuis bank_transactions
+  const { evolution, loading, error } = useTreasuryStats();
 
-  const data = forecast?.data || [];
+  // Transformer les données pour le graphique
+  const data = evolution.map(item => ({
+    month: new Date(item.date + '-01').toLocaleDateString('fr-FR', {
+      month: 'short',
+      year: '2-digit',
+    }),
+    incoming: Math.round(item.inbound),
+    outgoing: Math.round(item.outbound),
+    balance: Math.round(item.balance),
+  }));
 
-  if (isLoading) {
+  if (loading) {
     return (
       <Card className="h-full flex flex-col">
         <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">

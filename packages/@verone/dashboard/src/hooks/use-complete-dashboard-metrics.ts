@@ -156,6 +156,7 @@ export function useCompleteDashboardMetrics() {
     critical: 0,
   });
   const [salesOrdersCount, setSalesOrdersCount] = useState<number>(0);
+  const [stockAlertsFromRPC, setStockAlertsFromRPC] = useState<number>(0);
   const [dataLoading, setDataLoading] = useState(true);
 
   const supabase = createClient();
@@ -195,11 +196,17 @@ export function useCompleteDashboardMetrics() {
       // OPTIMISATION: Toutes les requêtes en parallèle
       // 10 requêtes séquentielles → 7 requêtes parallèles
       // ========================================
+      // Appel RPC pour les alertes stock (source de vérité)
+      const { data: stockAlertsCount } = await supabase.rpc(
+        'get_stock_alerts_count'
+      );
+      setStockAlertsFromRPC(stockAlertsCount || 0);
+
       const [
         { data: monthOrders },
         { data: allInvoices }, // Fusionnée: récupère mois + mois précédent
         { data: products },
-        { data: allLinkmeOrders }, // Fusionnée: récupère mois + mois précédent
+        { data: allLinkmeCommissions }, // Table linkme_commissions sans filtre temporel
         { data: pendingPayments },
         { data: affiliates },
         { data: selections },
@@ -218,17 +225,16 @@ export function useCompleteDashboardMetrics() {
           .eq('type', 'invoice')
           .not('status', 'eq', 'cancelled'),
 
-        // 3. Produits pour stock
+        // 3. Produits pour stock (fix: archived_at au lieu de archived)
         supabase
           .from('products')
           .select('id, stock_real, min_stock')
-          .eq('archived', false),
+          .is('archived_at', null),
 
-        // 4. LinkMe orders (mois précédent + mois en cours) - FUSIONNÉE
+        // 4. Commissions LinkMe - SANS filtre temporel pour avoir le total
         supabase
-          .from('linkme_orders_with_margins')
-          .select('id, total_ht, total_affiliate_margin, created_at')
-          .gte('created_at', startOfPrevMonth.toISOString()),
+          .from('linkme_commissions')
+          .select('id, order_amount_ht, affiliate_commission_ttc, created_at'),
 
         // 5. Paiements en attente
         supabase
@@ -265,17 +271,9 @@ export function useCompleteDashboardMetrics() {
       );
 
       // ========================================
-      // Filtrage client-side des commandes LinkMe
+      // Commissions LinkMe - PAS de filtre temporel
+      // (source de vérité: table linkme_commissions)
       // ========================================
-      const linkmeOrders = (allLinkmeOrders || []).filter(
-        o => o.created_at && new Date(o.created_at) >= startOfMonth
-      );
-      const prevLinkmeOrders = (allLinkmeOrders || []).filter(
-        o =>
-          o.created_at &&
-          new Date(o.created_at) >= startOfPrevMonth &&
-          new Date(o.created_at) < startOfMonth
-      );
 
       // ========================================
       // Orders Metrics
@@ -307,9 +305,18 @@ export function useCompleteDashboardMetrics() {
         0
       );
 
-      // AOV = CA mensuel / nombre de factures (pas commandes)
+      // AOV = Total HT commandes / nombre de commandes non annulées
+      const validMonthOrders = (monthOrders || []).filter(
+        o => o.status !== 'cancelled'
+      );
+      const totalOrdersRevenue = validMonthOrders.reduce(
+        (sum, o) => sum + parseFloat(String(o.total_ht || 0)),
+        0
+      );
       const averageOrderValue =
-        monthInvoices.length > 0 ? monthRevenue / monthInvoices.length : 0;
+        validMonthOrders.length > 0
+          ? totalOrdersRevenue / validMonthOrders.length
+          : 0;
 
       let orderTrend = 0;
       if (prevMonthRevenue > 0) {
@@ -357,19 +364,17 @@ export function useCompleteDashboardMetrics() {
       setStockMetrics({ inStock, outOfStock, lowStock, critical });
 
       // ========================================
-      // LinkMe Metrics
+      // LinkMe Metrics - Source: table linkme_commissions
       // ========================================
-      const linkmeRevenue = linkmeOrders.reduce(
-        (sum, o) => sum + parseFloat(String(o.total_ht || 0)),
+      // Total des commissions = somme de affiliate_commission_ttc (TOUTES les commissions)
+      const linkmeCommissions = (allLinkmeCommissions || []).reduce(
+        (sum, c) => sum + parseFloat(String(c.affiliate_commission_ttc || 0)),
         0
       );
-      const prevLinkmeRevenue = prevLinkmeOrders.reduce(
-        (sum, o) => sum + parseFloat(String(o.total_ht || 0)),
-        0
-      );
-      // Commissions = somme des marges affiliés sur toutes les commandes
-      const linkmeCommissions = linkmeOrders.reduce(
-        (sum, o) => sum + parseFloat(String(o.total_affiliate_margin || 0)),
+
+      // CA LinkMe = somme des order_amount_ht
+      const linkmeRevenue = (allLinkmeCommissions || []).reduce(
+        (sum, c) => sum + parseFloat(String(c.order_amount_ht || 0)),
         0
       );
 
@@ -379,23 +384,16 @@ export function useCompleteDashboardMetrics() {
 
       // Taux de conversion (commandes / sélections)
       const selectionsCount = selections?.length || 0;
+      const commissionsCount = (allLinkmeCommissions || []).length;
       const conversionRate =
-        selectionsCount > 0 ? (linkmeOrders.length / selectionsCount) * 100 : 0;
-
-      let linkmeTrend = 0;
-      if (prevLinkmeRevenue > 0) {
-        linkmeTrend =
-          ((linkmeRevenue - prevLinkmeRevenue) / prevLinkmeRevenue) * 100;
-      } else if (linkmeRevenue > 0) {
-        linkmeTrend = 100;
-      }
+        selectionsCount > 0 ? (commissionsCount / selectionsCount) * 100 : 0;
 
       setLinkmeMetrics({
         revenue: linkmeRevenue,
         commissions: linkmeCommissions,
-        ordersCount: linkmeOrders.length,
+        ordersCount: commissionsCount,
         activeAffiliates: affiliates?.length || 0,
-        trend: Math.round(linkmeTrend * 10) / 10,
+        trend: 0, // Pas de trend sans filtre temporel
         averageMargin: Math.round(avgMargin * 10) / 10,
         conversionRate: Math.round(conversionRate * 10) / 10,
       });
@@ -432,8 +430,7 @@ export function useCompleteDashboardMetrics() {
   // Phase 2 - Données réelles depuis Supabase
   const stocksData = {
     totalValue: stockOrdersMetrics?.stock_value || 0,
-    lowStockItems:
-      stockMetrics.outOfStock + stockMetrics.lowStock + stockMetrics.critical,
+    lowStockItems: stockAlertsFromRPC, // Source de vérité: RPC get_stock_alerts_count()
     recentMovements: 0,
     inStock: stockMetrics.inStock,
     outOfStock: stockMetrics.outOfStock,
