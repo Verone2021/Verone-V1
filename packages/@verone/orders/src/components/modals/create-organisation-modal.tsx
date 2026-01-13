@@ -2,8 +2,11 @@
 
 import { useState } from 'react';
 
-import { Plus, Building2, X } from 'lucide-react';
-
+import { useToast } from '@verone/common/hooks';
+import {
+  useOrganisations,
+  type CreateOrganisationData,
+} from '@verone/organisations/hooks';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent } from '@verone/ui';
 import { Checkbox } from '@verone/ui';
@@ -26,11 +29,8 @@ import {
 } from '@verone/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
 import { Textarea } from '@verone/ui';
-import { useToast } from '@verone/common/hooks';
-import {
-  useOrganisations,
-  type CreateOrganisationData,
-} from '@verone/organisations/hooks';
+import { AddressAutocomplete, type AddressResult } from '@verone/ui';
+import { Plus, Building2, X } from 'lucide-react';
 
 interface CreateOrganisationModalProps {
   onOrganisationCreated?: (
@@ -111,6 +111,30 @@ export function CreateOrganisationModal({
     value: any
   ) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Handler pour l'autocomplete d'adresse de facturation
+  const handleBillingAddressSelect = (address: AddressResult) => {
+    setFormData(prev => ({
+      ...prev,
+      billing_address_line1: address.streetAddress,
+      billing_city: address.city,
+      billing_postal_code: address.postalCode,
+      billing_region: address.region || '',
+      billing_country: address.countryCode || 'FR',
+    }));
+  };
+
+  // Handler pour l'autocomplete d'adresse de livraison
+  const handleShippingAddressSelect = (address: AddressResult) => {
+    setFormData(prev => ({
+      ...prev,
+      shipping_address_line1: address.streetAddress,
+      shipping_city: address.city,
+      shipping_postal_code: address.postalCode,
+      shipping_region: address.region || '',
+      shipping_country: address.countryCode || 'FR',
+    }));
   };
 
   // Label par défaut basé sur le type
@@ -283,28 +307,24 @@ export function CreateOrganisationModal({
                     Adresse de facturation
                   </h3>
 
+                  {/* Autocomplete adresse de facturation */}
+                  <div className="col-span-2">
+                    <AddressAutocomplete
+                      value={formData.billing_address_line1 || ''}
+                      onChange={value =>
+                        handleInputChange('billing_address_line1', value)
+                      }
+                      onSelect={handleBillingAddressSelect}
+                      placeholder="Rechercher une adresse..."
+                      label="Adresse"
+                      id="billing-address-autocomplete"
+                    />
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2 space-y-2">
-                      <Label htmlFor="billing_address_line1">
-                        Adresse ligne 1
-                      </Label>
-                      <Input
-                        id="billing_address_line1"
-                        value={formData.billing_address_line1 || ''}
-                        onChange={e =>
-                          handleInputChange(
-                            'billing_address_line1',
-                            e.target.value
-                          )
-                        }
-                        placeholder="12 rue de la Paix"
-                        className="border-black"
-                      />
-                    </div>
-
-                    <div className="col-span-2 space-y-2">
                       <Label htmlFor="billing_address_line2">
-                        Adresse ligne 2
+                        Complément d'adresse
                       </Label>
                       <Input
                         id="billing_address_line2"
@@ -401,28 +421,24 @@ export function CreateOrganisationModal({
                         Adresse de livraison
                       </h3>
 
+                      {/* Autocomplete adresse de livraison */}
+                      <div className="col-span-2">
+                        <AddressAutocomplete
+                          value={formData.shipping_address_line1 || ''}
+                          onChange={value =>
+                            handleInputChange('shipping_address_line1', value)
+                          }
+                          onSelect={handleShippingAddressSelect}
+                          placeholder="Rechercher une adresse..."
+                          label="Adresse"
+                          id="shipping-address-autocomplete"
+                        />
+                      </div>
+
                       <div className="grid grid-cols-2 gap-4">
                         <div className="col-span-2 space-y-2">
-                          <Label htmlFor="shipping_address_line1">
-                            Adresse ligne 1
-                          </Label>
-                          <Input
-                            id="shipping_address_line1"
-                            value={formData.shipping_address_line1 || ''}
-                            onChange={e =>
-                              handleInputChange(
-                                'shipping_address_line1',
-                                e.target.value
-                              )
-                            }
-                            placeholder="15 avenue des Champs"
-                            className="border-black"
-                          />
-                        </div>
-
-                        <div className="col-span-2 space-y-2">
                           <Label htmlFor="shipping_address_line2">
-                            Adresse ligne 2
+                            Complément d'adresse
                           </Label>
                           <Input
                             id="shipping_address_line2"
