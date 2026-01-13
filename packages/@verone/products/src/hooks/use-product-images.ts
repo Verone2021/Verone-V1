@@ -432,3 +432,100 @@ export function useProductImages({
     technicalImages: getImagesByType('technical'),
   };
 }
+
+/**
+ * 🚀 PERF FIX 2026-01-10: Batch fetch images pour multiple produits
+ *
+ * Au lieu de N requêtes (1 par produit), fait 1 seule requête avec IN()
+ * Usage: Dans parent component, pas dans map/loop
+ *
+ * @example
+ * const productIds = products.map(p => p.id);
+ * const { imagesMap, loading } = useProductImagesBatch(productIds);
+ * // imagesMap.get(productId) => ProductImage[] | undefined
+ */
+export function useProductImagesBatch(productIds: string[]) {
+  const [imagesMap, setImagesMap] = useState<Map<string, ProductImage[]>>(
+    new Map()
+  );
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const supabase = createClient();
+
+  // Stable reference for productIds
+  const productIdsKey = productIds.filter(Boolean).sort().join(',');
+
+  useEffect(() => {
+    const fetchBatch = async () => {
+      const validIds = productIds.filter(id => id && id.trim() !== '');
+      if (validIds.length === 0) {
+        setImagesMap(new Map());
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        // 🚀 UNE SEULE requête pour tous les produits
+        const { data, error: fetchError } = await supabase
+          .from('product_images')
+          .select(
+            'id, product_id, public_url, display_order, alt_text, is_primary, created_at, updated_at'
+          )
+          .in('product_id', validIds)
+          .order('display_order')
+          .order('created_at');
+
+        if (fetchError) throw fetchError;
+
+        // Grouper par product_id (cast as ProductImage pour compatibilité)
+        const map = new Map<string, ProductImage[]>();
+        ((data || []) as ProductImage[]).forEach(img => {
+          const existing = map.get(img.product_id) || [];
+          existing.push(img);
+          map.set(img.product_id, existing);
+        });
+
+        logger.info('Batch images chargées', {
+          operation: 'batch_fetch_product_images',
+          productCount: validIds.length,
+          imageCount: data?.length || 0,
+        });
+
+        setImagesMap(map);
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : 'Erreur batch images';
+        logger.error('Erreur batch images', err as Error, {
+          operation: 'batch_fetch_product_images_failed',
+        });
+        setError(errorMessage);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBatch();
+  }, [productIdsKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Helper pour obtenir image primaire d'un produit
+  const getPrimaryImage = useCallback(
+    (productId: string): ProductImage | null => {
+      const images = imagesMap.get(productId);
+      if (!images || images.length === 0) return null;
+      return images.find(img => img.is_primary) || images[0] || null;
+    },
+    [imagesMap]
+  );
+
+  return {
+    imagesMap,
+    loading,
+    error,
+    getPrimaryImage,
+    getImagesForProduct: (productId: string) => imagesMap.get(productId) || [],
+  };
+}

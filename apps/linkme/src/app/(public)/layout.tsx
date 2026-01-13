@@ -4,8 +4,6 @@ import type { Metadata } from 'next';
 
 import { PublicProviders } from '@/components/providers/PublicProviders';
 
-import '../globals.css';
-
 export const metadata: Metadata = {
   title: 'Catalogue',
   description: 'Selection de produits',
@@ -26,14 +24,12 @@ export default function PublicSelectionLayout({
   children: ReactNode;
 }) {
   return (
-    <html lang="fr">
-      <body className="min-h-screen bg-gray-50">
-        <PublicProviders>
-          {/* PAS DE HEADER - white label */}
-          {children}
-          {/* PAS DE FOOTER - white label */}
-        </PublicProviders>
-      </body>
-    </html>
+    <div className="min-h-screen bg-gray-50">
+      <PublicProviders>
+        {/* PAS DE HEADER - white label */}
+        {children}
+        {/* PAS DE FOOTER - white label */}
+      </PublicProviders>
+    </div>
   );
 }

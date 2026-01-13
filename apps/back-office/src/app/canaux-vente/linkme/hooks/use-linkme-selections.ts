@@ -43,6 +43,17 @@ export interface SelectionItem {
     category_name?: string | null;
     /** Fournisseur */
     supplier_name?: string | null;
+    /**
+     * PRODUITS AFFILIÉ (Revendeur) - champs pour modèle inversé
+     * Si created_by_affiliate IS NOT NULL → produit créé par l'affilié
+     * Le prix catalogue = prix de vente client
+     * Verone DÉDUIT sa commission, l'affilié reçoit le reste
+     */
+    created_by_affiliate?: string | null;
+    /** Taux commission Verone sur produits affilié (ex: 15%) */
+    affiliate_commission_rate?: number | null;
+    /** Payout affilié = prix vente - commission Verone */
+    affiliate_payout_ht?: number | null;
   };
   product_image_url?: string | null;
   /** Commission NITMI/LinkMe en décimal (0.05 = 5%) - depuis channel_pricing */
@@ -151,6 +162,7 @@ async function fetchSelectionById(
   if (!selection) return null;
 
   // 2. Récupérer les items de la sélection avec les produits (données étendues pour modal)
+  // Inclut les champs produits affilié pour le modèle inversé (Verone prélève commission)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: items, error: itemsError } = await (supabase as any)
     .from('linkme_selection_items')
@@ -162,7 +174,10 @@ async function fetchSelectionById(
         description, selling_points, weight, dimensions,
         subcategory_id,
         subcategory:subcategories(id, name),
-        supplier:organisations!supplier_id(trade_name, legal_name)
+        supplier:organisations!supplier_id(trade_name, legal_name),
+        created_by_affiliate,
+        affiliate_commission_rate,
+        affiliate_payout_ht
       )
     `
     )
@@ -264,6 +279,11 @@ async function fetchSelectionById(
               rawProduct.supplier?.trade_name ||
               rawProduct.supplier?.legal_name ||
               null,
+            // PRODUITS AFFILIÉ (modèle inversé)
+            created_by_affiliate: rawProduct.created_by_affiliate ?? null,
+            affiliate_commission_rate:
+              rawProduct.affiliate_commission_rate ?? null,
+            affiliate_payout_ht: rawProduct.affiliate_payout_ht ?? null,
           }
         : undefined,
       product_image_url: imagesByProductId[item.product_id] || null,

@@ -82,13 +82,8 @@ jobs:
           echo "📋 PR: #${{ github.event.number }}"
           echo "🌿 Branch: ${{ github.event.pull_request.head.ref }}"
 
-          # Playwright console check (simulated)
-          echo "🎭 Running Playwright console messages check..."
-
-          # Future: Real Playwright console check
-          # npx playwright test console-errors.spec.ts
-
-          echo "✅ Console check completed for PR"
+          # Real console check using Playwright
+          npm run check:console:ci
 
       - name: 📊 Console Check Status
         run: |
