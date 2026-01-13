@@ -1,7 +1,7 @@
 # Plan Actif
 
 **Branche**: `fix/multi-bugs-2026-01`
-**Last sync**: 2026-01-13 (df2bbf09)
+**Last sync**: 2026-01-13 (ff74fdaa)
 
 ## Regles
 
@@ -12,7 +12,7 @@
 ## Taches
 
 - [x] BO-WORK-001 Mise en place du workflow Claude Code avec source de verite unique (738dcc67)
-- [ ] BO-WORK-002 Fix Stop hook - gestion chemins absolus et exit codes
+- [x] BO-WORK-002 Fix Stop hook - gestion chemins absolus et exit codes (ff74fdaa)
 
 ## Done
 
