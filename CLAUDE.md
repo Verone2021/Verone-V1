@@ -97,6 +97,20 @@ pnpm plan:sync   # Synchroniser ACTIVE.md apres commit
 
 ---
 
+## Handoff READ → WRITE (sans copy/paste)
+
+| Session | Action |
+|---------|--------|
+| READ | Analyse, valide plan, STOP → export auto vers `~/.claude/handoff/LATEST.md` |
+| WRITE | Au demarrage : `pnpm handoff:show` puis execute |
+
+```bash
+pnpm handoff:show   # Afficher le dernier plan exporte
+pnpm handoff:open   # Details + apercu du plan
+```
+
+---
+
 ## Narrow Bridges (Zones Critiques)
 
 > **Consulter AVANT de modifier ces domaines.**

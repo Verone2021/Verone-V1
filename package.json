@@ -43,7 +43,9 @@
     "webhook:register:sandbox": "tsx scripts/setup-packlink-webhook.ts sandbox",
     "webhook:register:prod": "tsx scripts/setup-packlink-webhook.ts production",
     "validate:pr": "npm run format:check && npm run lint && npm run type-check && npm run build",
-    "plan:sync": "node .claude/scripts/plan-sync.js"
+    "plan:sync": "node .claude/scripts/plan-sync.js",
+    "handoff:show": "cat ~/.claude/handoff/LATEST.md 2>/dev/null || echo 'No handoff file'",
+    "handoff:open": "ls -la ~/.claude/handoff 2>/dev/null && echo '---' && sed -n '1,120p' ~/.claude/handoff/LATEST.md 2>/dev/null || echo 'No handoff'"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.17.1",
