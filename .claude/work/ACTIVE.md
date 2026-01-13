@@ -15,6 +15,7 @@
 - [x] BO-WORK-002 Fix Stop hook - gestion chemins absolus et exit codes (ff74fdaa)
 - [x] BO-WORK-003 Documenter workflow Task ID dans CLAUDE.md et memoire Serena (d695ad88)
 - [x] BO-WORK-004 Handoff READ→WRITE mailbox (boite aux lettres locale) (b447c5ef)
+- [ ] LM-ORG-001 Transformer page /reseau en onglet Vue Carte dans /organisations
 
 ## Done
 

@@ -13,6 +13,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -25,6 +26,7 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
+  Map,
 } from 'lucide-react';
 
 import {
@@ -42,6 +44,20 @@ import {
 } from '../../../lib/hooks/use-enseigne-organisations';
 import { useOrganisationStats } from '../../../lib/hooks/use-organisation-stats';
 import { useUserAffiliate } from '../../../lib/hooks/use-user-selection';
+
+// Import dynamique de la carte (SSR désactivé)
+const MapLibreMapView = dynamic(
+  () =>
+    import('@/components/shared/MapLibreMapView').then(m => m.MapLibreMapView),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[500px] bg-gray-100 animate-pulse rounded-xl flex items-center justify-center">
+        <div className="text-gray-400">Chargement de la carte...</div>
+      </div>
+    ),
+  }
+);
 
 // Configuration pagination
 const ITEMS_PER_PAGE = 18; // 3 colonnes x 6 lignes
@@ -70,7 +86,7 @@ export default function OrganisationsPage(): JSX.Element | null {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState<
-    'all' | 'succursale' | 'franchise' | 'incomplete'
+    'all' | 'succursale' | 'franchise' | 'incomplete' | 'map'
   >('all');
   const [selectedOrg, setSelectedOrg] = useState<EnseigneOrganisation | null>(
     null
@@ -297,6 +313,18 @@ export default function OrganisationsPage(): JSX.Element | null {
               <span className="ml-1.5 opacity-70">({tabStats.incomplete})</span>
             </button>
           )}
+          {/* Onglet Vue Carte */}
+          <button
+            onClick={() => setActiveTab('map')}
+            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5 ${
+              activeTab === 'map'
+                ? 'bg-green-500 text-white'
+                : 'bg-green-50 text-green-700 hover:bg-green-100'
+            }`}
+          >
+            <Map className="h-4 w-4" />
+            Vue Carte
+          </button>
         </div>
 
         {/* Barre de recherche + info pagination */}
@@ -318,38 +346,64 @@ export default function OrganisationsPage(): JSX.Element | null {
           )}
         </div>
 
-        {/* Grille de cartes */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-            <span className="ml-2 text-gray-500">Chargement...</span>
-          </div>
-        ) : paginatedOrgs.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-            <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">
-              {searchTerm
-                ? 'Aucune organisation trouvée'
-                : 'Aucune organisation'}
-            </p>
+        {/* Contenu principal : Carte ou Grille */}
+        {activeTab === 'map' ? (
+          /* Vue Carte */
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            {isLoading ? (
+              <div className="h-[500px] flex items-center justify-center">
+                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                <span className="ml-2 text-gray-500">Chargement...</span>
+              </div>
+            ) : organisations && organisations.length > 0 ? (
+              <MapLibreMapView organisations={organisations} />
+            ) : (
+              <div className="h-[500px] flex items-center justify-center">
+                <div className="text-center">
+                  <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">
+                    Aucune organisation à afficher
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {paginatedOrgs.map(org => (
-              <OrganisationCard
-                key={org.id}
-                organisation={org}
-                stats={statsMap?.[org.id]}
-                onView={handleView}
-                onEdit={handleEdit}
-                onArchive={handleArchiveClick}
-                isLoading={isArchiving}
-                mode={activeTab === 'incomplete' ? 'incomplete' : 'normal'}
-                onEditShippingAddress={setShippingAddressModalOrg}
-                onEditOwnershipType={setOwnershipTypeModalOrg}
-              />
-            ))}
-          </div>
+          /* Grille de cartes */
+          <>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                <span className="ml-2 text-gray-500">Chargement...</span>
+              </div>
+            ) : paginatedOrgs.length === 0 ? (
+              <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
+                <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500">
+                  {searchTerm
+                    ? 'Aucune organisation trouvée'
+                    : 'Aucune organisation'}
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {paginatedOrgs.map(org => (
+                  <OrganisationCard
+                    key={org.id}
+                    organisation={org}
+                    stats={statsMap?.[org.id]}
+                    onView={handleView}
+                    onEdit={handleEdit}
+                    onArchive={handleArchiveClick}
+                    isLoading={isArchiving}
+                    mode={activeTab === 'incomplete' ? 'incomplete' : 'normal'}
+                    onEditShippingAddress={setShippingAddressModalOrg}
+                    onEditOwnershipType={setOwnershipTypeModalOrg}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
 
         {/* Pagination */}
