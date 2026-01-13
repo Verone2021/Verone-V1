@@ -67,6 +67,7 @@ export default function SupplierDetailPage() {
     organisation: supplier,
     loading,
     error,
+    refetch: refetchSupplier,
   } = useOrganisation(supplierId as string);
   const { archiveOrganisation, unarchiveOrganisation, refetch } =
     useSuppliers();
@@ -112,7 +113,9 @@ export default function SupplierDetailPage() {
 
   // Gestionnaire de mise à jour des données fournisseur
   const handleSupplierUpdate = (updatedData: Partial<Organisation>) => {
-    // Les données sont automatiquement mises à jour par le hook useInlineEdit
+    // Rafraîchir les données du fournisseur immédiatement
+    refetchSupplier();
+    // Rafraîchir la liste des organisations (cache)
     refetch();
     // Rafraîchir les compteurs
     refreshCounts();

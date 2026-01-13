@@ -2,10 +2,7 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 
-import {
-  useSupabaseQuery,
-  useSupabaseMutation,
-} from '@verone/common/hooks/use-supabase-query';
+import { useSupabaseQuery, useSupabaseMutation } from '@verone/common';
 
 export interface ActivityEvent {
   action: string;
@@ -58,8 +55,9 @@ const currentSession: UserSession = {
 };
 
 // Configuration batching (constantes globales OK)
-const BATCH_SIZE = 10;
-const BATCH_INTERVAL = 30000; // 30 secondes
+// Augmenté pour réduire le spam réseau et console
+const BATCH_SIZE = 50;
+const BATCH_INTERVAL = 60000; // 60 secondes
 
 export function useUserActivityTracker() {
   // ✅ FIX: useRef pour eventQueue (stable entre renders)
@@ -84,7 +82,9 @@ export function useUserActivityTracker() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        console.warn('❌ Activity tracking: No authenticated user');
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn('❌ Activity tracking: No authenticated user');
+        }
         return { data: false, error: new Error('No authenticated user') };
       }
 
@@ -109,11 +109,13 @@ export function useUserActivityTracker() {
         );
 
       if (error) {
-        console.warn(
-          '⚠️ Activity tracking insert error (non-bloquant):',
-          error
-        );
-      } else {
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn(
+            '⚠️ Activity tracking insert error (non-bloquant):',
+            error
+          );
+        }
+      } else if (process.env.NODE_ENV !== 'production') {
         console.log(
           `✅ Activity tracking: ${events.length} events logged for user ${user.id} (session: ${sessionIdRef.current.substring(0, 8)}...)`
         );

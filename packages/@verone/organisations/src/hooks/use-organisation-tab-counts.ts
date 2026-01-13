@@ -46,42 +46,69 @@ export function useOrganisationTabCounts({
   const { products, refetch: refetchProducts } = useProducts();
 
   // Charger et compter les contacts
+  // Note: On utilise un ref pour éviter les re-fetch en cascade
   useEffect(() => {
     if (organisationId) {
-      fetchOrganisationContacts(organisationId).then(() => {
-        const orgContacts = contacts.filter(
-          c => c.organisation_id === organisationId
-        );
-        setCounts(prev => ({ ...prev, contacts: orgContacts.length }));
-      });
+      fetchOrganisationContacts(organisationId);
     }
-  }, [organisationId, contacts.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [organisationId]);
 
-  // Charger et compter les commandes (si fournisseur)
+  // Mettre à jour le count quand contacts change
+  useEffect(() => {
+    if (organisationId && contacts.length > 0) {
+      const orgContacts = contacts.filter(
+        c => c.organisation_id === organisationId
+      );
+      setCounts(prev => ({ ...prev, contacts: orgContacts.length }));
+    }
+  }, [organisationId, contacts]);
+
+  // Charger les commandes (si fournisseur)
   useEffect(() => {
     if (organisationId && organisationType === 'supplier') {
-      fetchOrders({ supplier_id: organisationId }).then(() => {
-        const orgOrders = orders.filter(o => o.supplier_id === organisationId);
-        setCounts(prev => ({
-          ...prev,
-          orders: orgOrders.length,
-          loading: false,
-        }));
-      });
+      fetchOrders({ supplier_id: organisationId });
     }
-  }, [organisationId, organisationType, orders.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [organisationId, organisationType]);
 
-  // Charger et compter les produits (si fournisseur)
+  // Mettre à jour le count quand orders change
+  useEffect(() => {
+    if (
+      organisationId &&
+      organisationType === 'supplier' &&
+      orders.length > 0
+    ) {
+      const orgOrders = orders.filter(o => o.supplier_id === organisationId);
+      setCounts(prev => ({
+        ...prev,
+        orders: orgOrders.length,
+        loading: false,
+      }));
+    }
+  }, [organisationId, organisationType, orders]);
+
+  // Charger les produits (si fournisseur)
   useEffect(() => {
     if (organisationId && organisationType === 'supplier') {
-      refetchProducts().then(() => {
-        const orgProducts = products.filter(
-          p => p.supplier_id === organisationId
-        );
-        setCounts(prev => ({ ...prev, products: orgProducts.length }));
-      });
+      refetchProducts();
     }
-  }, [organisationId, organisationType, products.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [organisationId, organisationType]);
+
+  // Mettre à jour le count quand products change
+  useEffect(() => {
+    if (
+      organisationId &&
+      organisationType === 'supplier' &&
+      products.length > 0
+    ) {
+      const orgProducts = products.filter(
+        p => p.supplier_id === organisationId
+      );
+      setCounts(prev => ({ ...prev, products: orgProducts.length }));
+    }
+  }, [organisationId, organisationType, products]);
 
   // Charger et compter les échantillons (si client)
   useEffect(() => {
