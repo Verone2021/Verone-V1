@@ -139,6 +139,15 @@
             "command": "bun $CLAUDE_PROJECT_DIR/.claude/scripts/hook-post-file.ts"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"$TOOL_INPUT\" | grep -q 'git commit'; then node $CLAUDE_PROJECT_DIR/.claude/scripts/plan-sync.js 2>/dev/null || true; fi"
+          }
+        ]
       }
     ],
     "Stop": [
