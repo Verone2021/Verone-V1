@@ -57,20 +57,6 @@ export function WidgetCard({
         </div>
 
         <div className="flex items-center gap-1">
-          {onRefresh && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={onRefresh}
-              disabled={isLoading}
-            >
-              <RefreshCw
-                className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`}
-              />
-            </Button>
-          )}
-
           {linkTo && (
             <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
               <Link href={linkTo}>
