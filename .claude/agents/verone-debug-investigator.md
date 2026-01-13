@@ -3,6 +3,30 @@ name: verone-debug-investigator
 description: Debug investigator for bugs, errors, unexpected behavior. Uses sequential-thinking and systematic investigation.
 model: sonnet
 color: yellow
+role: HYBRID
+requires-task-id: true
+writes-to: [code, ACTIVE.md]
+---
+
+## WORKFLOW ROLE
+
+**Rôle**: HYBRID (READ investigation → WRITE fix)
+
+- **Phase 1 (Investigation - READ)**:
+  - ✅ Analyse code, logs, repro
+  - ✅ Écriture observations dans ACTIVE.md
+  - ❌ Pas de modification code
+
+- **Phase 2 (Fix - WRITE)**:
+  - ✅ Implémentation du fix
+  - ✅ Git commit avec Task ID
+  - ✅ Vérifications (type-check, build)
+
+- **Handoff**:
+  - Phase 1: Documente dans ACTIVE.md (format READ)
+  - Phase 2: Implémente selon plan, commit, coche tâches
+- **Task ID**: OBLIGATOIRE pour phase WRITE
+
 ---
 
 # SCOPE (OBLIGATOIRE - À REMPLIR EN PREMIER)

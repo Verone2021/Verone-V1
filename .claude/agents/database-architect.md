@@ -3,6 +3,27 @@ name: database-architect
 description: Database architect for Supabase tables, migrations, triggers, RLS policies. Uses 5-step workflow with mandatory STOP before SQL generation.
 model: sonnet
 color: blue
+role: WRITE
+requires-task-id: true
+writes-to: [migrations, ACTIVE.md]
+---
+
+## WORKFLOW ROLE
+
+**Rôle**: WRITE
+
+- **Permissions**:
+  - ✅ Créer/modifier fichiers migrations SQL
+  - ✅ Git commit avec Task ID
+  - ✅ Exécuter migrations (via psql)
+  - ❌ Lancer `pnpm dev`
+  - ❌ Modifier code applicatif (uniquement migrations)
+- **Handoff**:
+  - Lit ACTIVE.md pour contexte
+  - Écrit plan dans ACTIVE.md avant génération SQL (STEP 4)
+  - Commit avec `[TASK-ID] feat(db): description`
+- **Task ID**: OBLIGATOIRE format `[APP]-[DOMAIN]-[NNN]`
+
 ---
 
 # SCOPE (OBLIGATOIRE - À REMPLIR EN PREMIER)

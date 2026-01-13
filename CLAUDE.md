@@ -111,6 +111,96 @@ pnpm handoff:open   # Details + apercu du plan
 
 ---
 
+## Rôles Multi-Agents et Permissions
+
+> **Workflow moderne**: Sessions spécialisées communiquant via `.claude/work/ACTIVE.md`
+
+### Matrice des Rôles
+
+| Rôle | Commande | Outils | Écriture Code | Git | Dev Server | Écriture ACTIVE.md |
+|------|----------|--------|---------------|-----|------------|-------------------|
+| **READ1** | `/read1` | playwright-lane-1, serena, read | ❌ | ❌ | ❌ | ✅ (observations) |
+| **READ2** | `/read2` | playwright-lane-2, serena, read | ❌ | ❌ | ❌ | ✅ (observations) |
+| **PLAN** | `/plan` | serena, read, grep, glob | ❌ | ❌ | ❌ | ✅ (checklist) |
+| **WRITE** | `/write` | tous sauf playwright | ✅ | ✅ | ❌ | ✅ (status) |
+| **DEV-RUNNER** | `/dev` | bash (dev uniquement) | ❌ | ❌ | ✅ | ❌ |
+
+### Descriptions des Rôles
+
+**READ1 & READ2** (Investigation)
+- Testent l'application avec Playwright (lanes 1 et 2)
+- Documentent bugs/comportements dans ACTIVE.md
+- Fournissent: repro steps, screenshots, console errors, hypothèses
+- Peuvent tourner en parallèle pour tester différents scénarios
+- **Interdits**: modifier code, commit, lancer dev
+
+**PLAN** (Planification)
+- Lit les observations READ
+- Explore le code concerné
+- Conçoit une solution détaillée
+- Écrit un plan actionnable (checklist) dans ACTIVE.md
+- **Interdits**: modifier code, commit, lancer dev
+
+**WRITE** (Implémentation)
+- Lit le plan dans ACTIVE.md
+- Implémente la solution
+- Vérifie (type-check, build, lint)
+- Commit avec format `[TASK-ID] type: description`
+- Hook PostToolUse auto-sync le plan
+- **Interdits**: lancer `pnpm dev` (déléguer à DEV-RUNNER)
+
+**DEV-RUNNER** (Serveur Dev)
+- Démarre/arrête `pnpm dev` sur les bons ports
+- Surveille les logs console
+- Une seule session autorisée à la fois
+- **Interdits**: modifier code, commit
+
+### Workflows Typiques
+
+**Investigation → Fix**:
+```bash
+# Terminal 1 (optional): Dev server
+claude /dev start --app=back-office
+
+# Terminal 2: Investigation
+claude /read1 TASK=BO-BUG-001 http://localhost:3000/orders login=admin
+
+# Terminal 3: Planification
+claude /plan TASK=BO-BUG-001
+
+# Terminal 4: Implémentation
+claude /write TASK=BO-BUG-001
+```
+
+**Parallel Investigation** (2 scénarios différents):
+```bash
+# Terminal 1: Scénario admin
+claude /read1 TASK=LM-ORG-002 http://localhost:3002/organisations login=admin
+
+# Terminal 2: Scénario commercial
+claude /read2 TASK=LM-ORG-002 http://localhost:3002/organisations login=commercial
+```
+
+### Règles de Transition
+
+1. **READ → ACTIVE.md** : Les observations sont déposées dans ACTIVE.md
+2. **PLAN lit ACTIVE.md** : Transforme observations en checklist
+3. **WRITE lit ACTIVE.md** : Implémente selon le plan
+4. **WRITE commit** : Hook PostToolUse auto-exécute `plan:sync`
+5. **WRITE maj ACTIVE.md** : Coche les tâches terminées
+
+### Fichier Unique de Handoff
+
+**`.claude/work/ACTIVE.md`** = Single Source of Truth
+
+- READ1/READ2 ajoutent leurs observations
+- PLAN ajoute la checklist d'implémentation
+- WRITE lit et exécute, puis coche les tâches
+- `plan-sync.js` maintient synchronisé avec git commits
+- Archivage automatique > 200 lignes vers `.claude/archive/plans-YYYY-MM/`
+
+---
+
 ## Narrow Bridges (Zones Critiques)
 
 > **Consulter AVANT de modifier ces domaines.**
@@ -241,13 +331,18 @@ feature/*  → Branches de developpement
 
 ## Commandes Disponibles
 
-| Commande     | Usage                  |
-| ------------ | ---------------------- |
-| `/implement` | Implementation feature |
-| `/explore`   | Exploration codebase   |
-| `/commit`    | Commit rapide          |
-| `/pr`        | Creer PR               |
-| `/db`        | Operations Supabase    |
+| Commande     | Usage                            |
+| ------------ | -------------------------------- |
+| `/read1`     | Investigation Playwright lane-1  |
+| `/read2`     | Investigation Playwright lane-2  |
+| `/plan`      | Planification depuis observations|
+| `/write`     | Implémentation depuis plan       |
+| `/dev`       | Gestion serveur développement    |
+| `/implement` | Implementation feature           |
+| `/explore`   | Exploration codebase             |
+| `/commit`    | Commit rapide                    |
+| `/pr`        | Creer PR                         |
+| `/db`        | Operations Supabase              |
 
 ---
 
