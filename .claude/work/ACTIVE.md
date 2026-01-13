@@ -12,6 +12,7 @@
 ## Taches
 
 - [x] BO-WORK-001 Mise en place du workflow Claude Code avec source de verite unique (738dcc67)
+- [ ] BO-WORK-002 Fix Stop hook - gestion chemins absolus et exit codes
 
 ## Done
 
