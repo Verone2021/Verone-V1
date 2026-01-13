@@ -3,6 +3,7 @@
 import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Image from 'next/image';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { createClient } from '@verone/utils/supabase/client';
 import {
@@ -21,6 +22,7 @@ import {
   CategoryTabs,
   ContactForm,
   FAQSection,
+  Pagination,
   ProductFilters,
   SelectionHeader,
   SelectionHero,
@@ -129,6 +131,10 @@ export default function PublicSelectionPage({
   params,
 }: ISelectionPageProps): React.JSX.Element {
   const { id } = use(params);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const activeTab = searchParams.get('tab') ?? 'catalogue';
+
   const [selection, setSelection] = useState<ISelection | null>(null);
   const [items, setItems] = useState<ISelectionItem[]>([]);
   const [branding, setBranding] = useState<IBranding>(DEFAULT_BRANDING);
@@ -139,13 +145,13 @@ export default function PublicSelectionPage({
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
 
   // New states for navigation and filtering
-  const [activeSection, setActiveSection] = useState('catalogue');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(
     null
   );
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Affiliate info for conditional sections
   const [affiliateInfo, setAffiliateInfo] = useState<IAffiliateInfo | null>(
@@ -162,22 +168,20 @@ export default function PublicSelectionPage({
     selection?.affiliate_id ?? null
   );
 
-  // Section refs for navigation
-  const catalogueRef = useRef<HTMLDivElement>(null);
-  const faqRef = useRef<HTMLDivElement>(null);
-  const contactRef = useRef<HTMLDivElement>(null);
-  const storesRef = useRef<HTMLDivElement>(null);
-
   // Track view
   const hasTrackedView = useRef(false);
 
   // Navigation items
   const navItems: INavItem[] = useMemo(
     () => [
-      { id: 'catalogue', label: 'Catalogue', href: '#catalogue' },
-      { id: 'points-de-vente', label: 'Points de vente', href: '#stores' },
-      { id: 'faq', label: 'FAQ', href: '#faq' },
-      { id: 'contact', label: 'Contact', href: '#contact' },
+      { id: 'catalogue', label: 'Catalogue', href: '?tab=catalogue' },
+      {
+        id: 'points-de-vente',
+        label: 'Points de vente',
+        href: '?tab=points-de-vente',
+      },
+      { id: 'faq', label: 'FAQ', href: '?tab=faq' },
+      { id: 'contact', label: 'Contact', href: '?tab=contact' },
     ],
     []
   );
@@ -233,6 +237,20 @@ export default function PublicSelectionPage({
 
     return filtered;
   }, [items, searchQuery, selectedCategory, categories]);
+
+  // Pagination constants and calculations
+  const PRODUCTS_PER_PAGE = 16; // 4 rows × 4 columns
+  const totalPages = Math.ceil(filteredItems.length / PRODUCTS_PER_PAGE);
+  const paginatedItems = useMemo(() => {
+    const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
+    const endIndex = startIndex + PRODUCTS_PER_PAGE;
+    return filteredItems.slice(startIndex, endIndex);
+  }, [filteredItems, currentPage]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory, selectedSubcategory]);
 
   // Fetch selection data
   useEffect(() => {
@@ -293,22 +311,13 @@ export default function PublicSelectionPage({
     }
   }, [selection?.id]);
 
-  // Handle navigation click
-  const handleNavClick = useCallback((sectionId: string): void => {
-    setActiveSection(sectionId);
-
-    const refs: Record<string, React.RefObject<HTMLDivElement | null>> = {
-      catalogue: catalogueRef,
-      faq: faqRef,
-      contact: contactRef,
-      'points-de-vente': storesRef,
-    };
-
-    const ref = refs[sectionId];
-    if (ref?.current) {
-      ref.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, []);
+  // Handle tab change
+  const handleTabChange = useCallback(
+    (tab: string): void => {
+      router.push(`?tab=${tab}`, { scroll: false });
+    },
+    [router]
+  );
 
   const addToCart = (item: ISelectionItem): void => {
     setCart(prev => {
@@ -381,8 +390,8 @@ export default function PublicSelectionPage({
         onCartClick={() => setIsOrderFormOpen(true)}
         onSearchClick={() => setIsSearchOpen(true)}
         navItems={navItems}
-        activeSection={activeSection}
-        onNavClick={handleNavClick}
+        activeSection={activeTab}
+        onNavClick={handleTabChange}
         showPointsDeVente={showPointsDeVente}
       />
 
@@ -416,198 +425,214 @@ export default function PublicSelectionPage({
       />
 
       {/* Catalogue Section */}
-      <div ref={catalogueRef} id="catalogue" className="scroll-mt-20">
-        <div className="max-w-6xl mx-auto px-4 py-8">
-          {/* Search results info */}
-          {(searchQuery || selectedCategory) && (
-            <div className="mb-4 flex items-center justify-between">
-              <p className="text-sm text-gray-600">
-                {filteredItems.length} résultat
-                {filteredItems.length > 1 ? 's' : ''}
-                {searchQuery && ` pour "${searchQuery}"`}
-              </p>
-              {(searchQuery || selectedCategory) && (
-                <button
-                  onClick={() => {
-                    setSearchQuery('');
-                    setSelectedCategory(null);
-                    setSelectedSubcategory(null);
-                  }}
-                  className="text-sm font-medium hover:underline"
-                  style={{ color: branding.primary_color }}
-                >
-                  Effacer les filtres
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Products Grid */}
-          {filteredItems.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredItems.map(item => {
-                const inCart = cart.find(c => c.id === item.id);
-                const isHovered = hoveredProductId === item.id;
-                return (
-                  <div
-                    key={item.id}
-                    className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300"
-                    style={
-                      item.is_featured
-                        ? { boxShadow: `0 0 0 2px ${branding.accent_color}` }
-                        : undefined
-                    }
-                    onMouseEnter={() => setHoveredProductId(item.id)}
-                    onMouseLeave={() => setHoveredProductId(null)}
+      {activeTab === 'catalogue' && (
+        <div id="catalogue" className="scroll-mt-20">
+          <div className="max-w-6xl mx-auto px-4 py-8">
+            {/* Search results info */}
+            {(searchQuery || selectedCategory) && (
+              <div className="mb-4 flex items-center justify-between">
+                <p className="text-sm text-gray-600">
+                  {filteredItems.length} résultat
+                  {filteredItems.length > 1 ? 's' : ''}
+                  {searchQuery && ` pour "${searchQuery}"`}
+                </p>
+                {(searchQuery || selectedCategory) && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedCategory(null);
+                      setSelectedSubcategory(null);
+                    }}
+                    className="text-sm font-medium hover:underline"
+                    style={{ color: branding.primary_color }}
                   >
-                    {/* Product Image with Hover Overlay */}
-                    <div className="relative h-48 bg-gray-100 overflow-hidden group">
-                      {item.product_image ? (
-                        <Image
-                          src={item.product_image}
-                          alt={item.product_name}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-300">
-                          <Package className="h-16 w-16" />
-                        </div>
-                      )}
+                    Effacer les filtres
+                  </button>
+                )}
+              </div>
+            )}
 
-                      {/* Gradient Overlay on Hover */}
-                      <div
-                        className={`absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-300 ${
-                          isHovered ? 'opacity-100' : 'opacity-0'
-                        }`}
-                      />
-
-                      {/* Product Name + SKU on Hover (slide-up) */}
-                      <div
-                        className={`absolute bottom-0 left-0 right-0 p-4 transition-all duration-300 ${
-                          isHovered
-                            ? 'opacity-100 translate-y-0'
-                            : 'opacity-0 translate-y-4'
-                        }`}
-                      >
-                        <h3 className="text-white font-semibold line-clamp-2">
-                          {item.product_name}
-                        </h3>
-                        <p className="text-white/70 text-xs mt-1">
-                          {item.product_sku}
-                        </p>
-                      </div>
-
-                      {/* Badges Container */}
-                      <div className="absolute top-3 left-3 right-3 flex justify-between items-start">
-                        {/* Featured Badge - Left */}
-                        {item.is_featured && (
-                          <span
-                            className="text-white text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm"
-                            style={{ backgroundColor: branding.accent_color }}
-                          >
-                            <Star className="h-3 w-3 fill-current" />
-                            Vedette
-                          </span>
-                        )}
-                        {/* Spacer if no featured badge */}
-                        {!item.is_featured && <span />}
-                        {/* Stock Badge - Right */}
-                        {item.stock_quantity > 0 ? (
-                          <span
-                            className="text-white text-xs font-medium px-2.5 py-1 rounded-full shadow-sm"
-                            style={{ backgroundColor: branding.primary_color }}
-                          >
-                            Stock: {item.stock_quantity}
-                          </span>
+            {/* Products Grid */}
+            {filteredItems.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {paginatedItems.map(item => {
+                  const inCart = cart.find(c => c.id === item.id);
+                  const isHovered = hoveredProductId === item.id;
+                  return (
+                    <div
+                      key={item.id}
+                      className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300"
+                      style={
+                        item.is_featured
+                          ? { boxShadow: `0 0 0 2px ${branding.accent_color}` }
+                          : undefined
+                      }
+                      onMouseEnter={() => setHoveredProductId(item.id)}
+                      onMouseLeave={() => setHoveredProductId(null)}
+                    >
+                      {/* Product Image with Hover Overlay */}
+                      <div className="relative h-48 bg-gray-100 overflow-hidden group">
+                        {item.product_image ? (
+                          <Image
+                            src={item.product_image}
+                            alt={item.product_name}
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
                         ) : (
-                          <span className="bg-amber-500 text-white text-xs font-medium px-2.5 py-1 rounded-full shadow-sm">
-                            Sur commande
-                          </span>
+                          <div className="w-full h-full flex items-center justify-center text-gray-300">
+                            <Package className="h-16 w-16" />
+                          </div>
                         )}
-                      </div>
-                    </div>
 
-                    {/* Product Info - Reduced (Price + Actions only) */}
-                    <div className="p-4">
-                      <div className="flex items-center justify-between">
-                        {/* Price */}
-                        <div>
-                          <span
-                            className="text-xl font-bold"
-                            style={{ color: branding.text_color }}
-                          >
-                            {formatPrice(item.selling_price_ttc)}
-                          </span>
-                          <span className="text-sm text-gray-500 ml-1">
-                            TTC
-                          </span>
+                        {/* Gradient Overlay on Hover */}
+                        <div
+                          className={`absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-300 ${
+                            isHovered ? 'opacity-100' : 'opacity-0'
+                          }`}
+                        />
+
+                        {/* Product Name + SKU on Hover (slide-up) */}
+                        <div
+                          className={`absolute bottom-0 left-0 right-0 p-4 transition-all duration-300 ${
+                            isHovered
+                              ? 'opacity-100 translate-y-0'
+                              : 'opacity-0 translate-y-4'
+                          }`}
+                        >
+                          <h3 className="text-white font-semibold line-clamp-2">
+                            {item.product_name}
+                          </h3>
+                          <p className="text-white/70 text-xs mt-1">
+                            {item.product_sku}
+                          </p>
                         </div>
 
-                        {/* Add to Cart / Quantity */}
-                        {inCart ? (
-                          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-                            <button
-                              onClick={() => updateQuantity(item.id, -1)}
-                              className="p-1.5 hover:bg-gray-200 rounded-md transition-colors"
+                        {/* Badges Container */}
+                        <div className="absolute top-3 left-3 right-3 flex justify-between items-start">
+                          {/* Featured Badge - Left */}
+                          {item.is_featured && (
+                            <span
+                              className="text-white text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm"
+                              style={{ backgroundColor: branding.accent_color }}
                             >
-                              <Minus className="h-4 w-4" />
-                            </button>
-                            <span className="w-6 text-center font-medium text-sm">
-                              {inCart.quantity}
+                              <Star className="h-3 w-3 fill-current" />
+                              Vedette
                             </span>
+                          )}
+                          {/* Spacer if no featured badge */}
+                          {!item.is_featured && <span />}
+                          {/* Stock Badge - Right */}
+                          {item.stock_quantity > 0 ? (
+                            <span
+                              className="text-white text-xs font-medium px-2.5 py-1 rounded-full shadow-sm"
+                              style={{
+                                backgroundColor: branding.primary_color,
+                              }}
+                            >
+                              Stock: {item.stock_quantity}
+                            </span>
+                          ) : (
+                            <span className="bg-amber-500 text-white text-xs font-medium px-2.5 py-1 rounded-full shadow-sm">
+                              Sur commande
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Product Info - Reduced (Price + Actions only) */}
+                      <div className="p-4">
+                        <div className="flex items-center justify-between">
+                          {/* Price */}
+                          <div>
+                            <span
+                              className="text-xl font-bold"
+                              style={{ color: branding.text_color }}
+                            >
+                              {formatPrice(item.selling_price_ttc)}
+                            </span>
+                            <span className="text-sm text-gray-500 ml-1">
+                              TTC
+                            </span>
+                          </div>
+
+                          {/* Add to Cart / Quantity */}
+                          {inCart ? (
+                            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                              <button
+                                onClick={() => updateQuantity(item.id, -1)}
+                                className="p-1.5 hover:bg-gray-200 rounded-md transition-colors"
+                              >
+                                <Minus className="h-4 w-4" />
+                              </button>
+                              <span className="w-6 text-center font-medium text-sm">
+                                {inCart.quantity}
+                              </span>
+                              <button
+                                onClick={() => updateQuantity(item.id, 1)}
+                                className="p-1.5 hover:bg-gray-200 rounded-md transition-colors"
+                              >
+                                <Plus className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ) : (
                             <button
-                              onClick={() => updateQuantity(item.id, 1)}
-                              className="p-1.5 hover:bg-gray-200 rounded-md transition-colors"
+                              onClick={() => addToCart(item)}
+                              className="flex items-center gap-2 text-white py-2 px-4 rounded-lg transition-colors hover:opacity-90"
+                              style={{
+                                backgroundColor: branding.primary_color,
+                              }}
                             >
                               <Plus className="h-4 w-4" />
+                              Ajouter
                             </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => addToCart(item)}
-                            className="flex items-center gap-2 text-white py-2 px-4 rounded-lg transition-colors hover:opacity-90"
-                            style={{ backgroundColor: branding.primary_color }}
-                          >
-                            <Plus className="h-4 w-4" />
-                            Ajouter
-                          </button>
-                        )}
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-16">
-              <Package className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-              <p className="text-gray-500">
-                {searchQuery || selectedCategory
-                  ? 'Aucun produit ne correspond à votre recherche'
-                  : 'Aucun produit dans cette selection'}
-              </p>
-              {(searchQuery || selectedCategory) && (
-                <button
-                  onClick={() => {
-                    setSearchQuery('');
-                    setSelectedCategory(null);
-                    setSelectedSubcategory(null);
-                  }}
-                  className="mt-4 text-sm font-medium hover:underline"
-                  style={{ color: branding.primary_color }}
-                >
-                  Voir tous les produits
-                </button>
-              )}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <Package className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <p className="text-gray-500">
+                  {searchQuery || selectedCategory
+                    ? 'Aucun produit ne correspond à votre recherche'
+                    : 'Aucun produit dans cette selection'}
+                </p>
+                {(searchQuery || selectedCategory) && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedCategory(null);
+                      setSelectedSubcategory(null);
+                    }}
+                    className="mt-4 text-sm font-medium hover:underline"
+                    style={{ color: branding.primary_color }}
+                  >
+                    Voir tous les produits
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                branding={branding}
+              />
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Points de vente Section - Only for enseignes */}
-      {showPointsDeVente && (
-        <div ref={storesRef} id="stores" className="scroll-mt-20">
+      {activeTab === 'points-de-vente' && showPointsDeVente && (
+        <div id="stores" className="scroll-mt-20">
           <StoreLocatorMap
             organisations={organisations}
             branding={branding}
@@ -617,26 +642,30 @@ export default function PublicSelectionPage({
       )}
 
       {/* FAQ Section */}
-      <div ref={faqRef} id="faq" className="scroll-mt-20">
-        <FAQSection
-          branding={branding}
-          contactInfo={{
-            name: selection.contact_name,
-            email: selection.contact_email,
-            phone: selection.contact_phone,
-          }}
-          selectionName={selection.name}
-        />
-      </div>
+      {activeTab === 'faq' && (
+        <div id="faq" className="scroll-mt-20">
+          <FAQSection
+            branding={branding}
+            contactInfo={{
+              name: selection.contact_name,
+              email: selection.contact_email,
+              phone: selection.contact_phone,
+            }}
+            selectionName={selection.name}
+          />
+        </div>
+      )}
 
       {/* Contact Section */}
-      <div ref={contactRef} id="contact" className="scroll-mt-20">
-        <ContactForm
-          selectionId={selection.id}
-          selectionName={selection.name}
-          branding={branding}
-        />
-      </div>
+      {activeTab === 'contact' && (
+        <div id="contact" className="scroll-mt-20">
+          <ContactForm
+            selectionId={selection.id}
+            selectionName={selection.name}
+            branding={branding}
+          />
+        </div>
+      )}
 
       {/* Floating Cart Button */}
       {cartCount > 0 && (

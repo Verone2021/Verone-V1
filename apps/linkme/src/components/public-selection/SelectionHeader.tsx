@@ -29,8 +29,8 @@ interface ISelectionHeaderProps {
   onCartClick: () => void;
   onSearchClick: () => void;
   navItems: INavItem[];
-  activeSection: string;
-  onNavClick: (sectionId: string) => void;
+  activeSection: string; // Will be activeTab from parent
+  onNavClick: (sectionId: string) => void; // Not used with Link navigation
   showPointsDeVente?: boolean;
 }
 
@@ -85,9 +85,9 @@ export function SelectionHeader({
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-1">
             {filteredNavItems.map(item => (
-              <button
+              <Link
                 key={item.id}
-                onClick={() => onNavClick(item.id)}
+                href={item.href}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   activeSection === item.id
                     ? 'text-white'
@@ -100,7 +100,7 @@ export function SelectionHeader({
                 }
               >
                 {item.label}
-              </button>
+              </Link>
             ))}
           </nav>
 
@@ -150,12 +150,10 @@ export function SelectionHeader({
           <nav className="md:hidden py-4 border-t border-gray-100">
             <div className="flex flex-col gap-1">
               {filteredNavItems.map(item => (
-                <button
+                <Link
                   key={item.id}
-                  onClick={() => {
-                    onNavClick(item.id);
-                    setIsMobileMenuOpen(false);
-                  }}
+                  href={item.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
                   className={`px-4 py-3 rounded-lg text-left text-sm font-medium transition-colors ${
                     activeSection === item.id
                       ? 'text-white'
@@ -168,7 +166,7 @@ export function SelectionHeader({
                   }
                 >
                   {item.label}
-                </button>
+                </Link>
               ))}
             </div>
           </nav>

@@ -5,3 +5,4 @@ export { CategoryTabs } from './CategoryTabs';
 export { FAQSection } from './FAQSection';
 export { ContactForm } from './ContactForm';
 export { StoreLocatorMap } from './StoreLocatorMap';
+export { Pagination } from './Pagination';
