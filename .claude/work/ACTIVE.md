@@ -1,7 +1,7 @@
 # Plan Actif
 
 **Branche**: `fix/multi-bugs-2026-01`
-**Last sync**: (non synchronise)
+**Last sync**: 2026-01-13 (738dcc67)
 
 ## Regles
 
@@ -11,7 +11,7 @@
 
 ## Taches
 
-- [ ] BO-WORK-001 Mise en place du workflow Claude Code avec source de verite unique
+- [x] BO-WORK-001 Mise en place du workflow Claude Code avec source de verite unique (738dcc67)
 
 ## Done
 
