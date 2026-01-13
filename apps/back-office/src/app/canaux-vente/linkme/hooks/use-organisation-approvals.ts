@@ -2,11 +2,16 @@
  * Hook: useOrganisationApprovals
  * Gestion de la queue d'approbation des organisations LinkMe
  *
+ * IMPORTANT: Seules les organisations LIEES A LINKME doivent s'afficher
+ * C'est-a-dire celles qui ont un enregistrement dans linkme_affiliates
+ * avec organisation_id correspondant.
+ *
  * Les organisations sont creees via le stepper enseigne sur LinkMe
  * et doivent etre validees avant d'etre utilisables.
  *
  * @module use-organisation-approvals
  * @since 2026-01-05
+ * @updated 2026-01-09 - Fix: filtrer uniquement les orgs LinkMe via linkme_affiliates
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -40,7 +45,8 @@ export interface PendingOrganisation {
 }
 
 /**
- * Hook: compte le nombre d'organisations en attente de validation
+ * Hook: compte le nombre d'organisations LinkMe en attente de validation
+ * IMPORTANT: Ne compte que les organisations ayant un profil linkme_affiliates
  */
 export function usePendingOrganisationsCount() {
   return useQuery({
@@ -48,9 +54,30 @@ export function usePendingOrganisationsCount() {
     queryFn: async (): Promise<number> => {
       const supabase = createClient();
 
+      // D'abord récupérer les organisation_id depuis linkme_affiliates
+      const { data: affiliates, error: affError } = await supabase
+        .from('linkme_affiliates')
+        .select('organisation_id')
+        .not('organisation_id', 'is', null);
+
+      if (affError) {
+        console.error('Error fetching affiliate org ids:', affError);
+        throw affError;
+      }
+
+      const orgIds = (affiliates || [])
+        .map(a => a.organisation_id)
+        .filter(Boolean) as string[];
+
+      if (orgIds.length === 0) {
+        return 0;
+      }
+
+      // Compter seulement les organisations LinkMe en attente
       const { count, error } = await supabase
         .from('organisations')
         .select('*', { count: 'exact', head: true })
+        .in('id', orgIds)
         .eq('approval_status', 'pending_validation');
 
       if (error) {
@@ -60,19 +87,45 @@ export function usePendingOrganisationsCount() {
 
       return count || 0;
     },
-    staleTime: 30000,
+    staleTime: 120000, // 2 minutes
     refetchInterval: 60000,
+    refetchIntervalInBackground: false,
   });
 }
 
 /**
- * Hook: recupere la liste des organisations en attente de validation
+ * Hook: recupere la liste des organisations LinkMe en attente de validation
+ * IMPORTANT: Ne retourne que les organisations ayant un profil linkme_affiliates
  */
 export function usePendingOrganisations() {
   return useQuery({
     queryKey: ['pending-organisations'],
     queryFn: async (): Promise<PendingOrganisation[]> => {
       const supabase = createClient();
+
+      // D'abord récupérer les organisation_id et display_name depuis linkme_affiliates
+      const { data: affiliates, error: affError } = await supabase
+        .from('linkme_affiliates')
+        .select('organisation_id, display_name')
+        .not('organisation_id', 'is', null);
+
+      if (affError) {
+        console.error('Error fetching affiliate org ids:', affError);
+        throw affError;
+      }
+
+      const orgIds = (affiliates || [])
+        .map(a => a.organisation_id)
+        .filter(Boolean) as string[];
+
+      if (orgIds.length === 0) {
+        return [];
+      }
+
+      // Créer un map pour les display_name
+      const displayNameMap = new Map(
+        (affiliates || []).map(a => [a.organisation_id, a.display_name])
+      );
 
       const { data, error } = await supabase
         .from('organisations')
@@ -98,6 +151,7 @@ export function usePendingOrganisations() {
           )
         `
         )
+        .in('id', orgIds)
         .eq('approval_status', 'pending_validation')
         .order('created_at', { ascending: false });
 
@@ -109,6 +163,7 @@ export function usePendingOrganisations() {
       return (data || []).map((org: Record<string, unknown>) => ({
         ...org,
         enseigne_name: (org.enseigne as { name?: string })?.name || null,
+        affiliate_display_name: displayNameMap.get(org.id as string) || null,
       })) as PendingOrganisation[];
     },
     staleTime: 30000,
@@ -116,7 +171,8 @@ export function usePendingOrganisations() {
 }
 
 /**
- * Hook: recupere toutes les organisations (tous statuts)
+ * Hook: recupere toutes les organisations LinkMe (tous statuts)
+ * IMPORTANT: Ne retourne que les organisations ayant un profil linkme_affiliates
  */
 export function useAllOrganisationsWithApproval(
   status?: OrganisationApprovalStatus
@@ -125,6 +181,30 @@ export function useAllOrganisationsWithApproval(
     queryKey: ['all-organisations-approval', status],
     queryFn: async (): Promise<PendingOrganisation[]> => {
       const supabase = createClient();
+
+      // D'abord récupérer les organisation_id et display_name depuis linkme_affiliates
+      const { data: affiliates, error: affError } = await supabase
+        .from('linkme_affiliates')
+        .select('organisation_id, display_name')
+        .not('organisation_id', 'is', null);
+
+      if (affError) {
+        console.error('Error fetching affiliate org ids:', affError);
+        throw affError;
+      }
+
+      const orgIds = (affiliates || [])
+        .map(a => a.organisation_id)
+        .filter(Boolean) as string[];
+
+      if (orgIds.length === 0) {
+        return [];
+      }
+
+      // Créer un map pour les display_name
+      const displayNameMap = new Map(
+        (affiliates || []).map(a => [a.organisation_id, a.display_name])
+      );
 
       let query = supabase
         .from('organisations')
@@ -150,8 +230,8 @@ export function useAllOrganisationsWithApproval(
           )
         `
         )
-        // Only show orgs that have an approval_status (i.e., created via LinkMe)
-        .not('approval_status', 'is', null)
+        // Filtrer UNIQUEMENT les organisations liees a LinkMe
+        .in('id', orgIds)
         .order('created_at', { ascending: false });
 
       if (status) {
@@ -168,6 +248,7 @@ export function useAllOrganisationsWithApproval(
       return (data || []).map((org: Record<string, unknown>) => ({
         ...org,
         enseigne_name: (org.enseigne as { name?: string })?.name || null,
+        affiliate_display_name: displayNameMap.get(org.id as string) || null,
       })) as PendingOrganisation[];
     },
     staleTime: 30000,
