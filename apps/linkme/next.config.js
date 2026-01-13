@@ -37,8 +37,8 @@ const nextConfig = {
 // Sentry configuration
 const sentryWebpackPluginOptions = {
   // Organisation et projet Sentry
-  org: 'verone',
-  project: 'linkme',
+  org: 'verone-4q',
+  project: 'javascript-nextjs',
 
   // Silence sourcemap upload logs
   silent: !process.env.CI,
