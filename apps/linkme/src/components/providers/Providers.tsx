@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from 'react';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'sonner';
 
 import { AuthProvider } from '../../contexts/AuthContext';
 import { CartDrawer } from '../cart/CartDrawer';
@@ -31,6 +32,7 @@ export function Providers({ children }: ProvidersProps): React.ReactElement {
         <CartProvider>
           {children}
           <CartDrawer />
+          <Toaster position="top-right" richColors />
         </CartProvider>
       </AuthProvider>
     </QueryClientProvider>

@@ -1,16 +1,23 @@
 /**
  * Hook unifié pour Dashboard CRM/ERP 2025
- * Combine données réelles Phase 1 + données réelles Phase 2 (Stock/Commandes)
+ * Combine données réelles Phase 1 + Phase 2 + Treasury + LinkMe
+ *
+ * @updated 2026-01-12 - Intégration complète des KPIs (Finance, Orders, Stock, LinkMe)
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
+import { useTreasuryStats } from '@verone/finance/hooks';
 import { useOrganisations } from '@verone/organisations/hooks';
 import { createClient } from '@verone/utils/supabase/client';
 
 import { useStockOrdersMetrics } from '@verone/dashboard/hooks/metrics/use-stock-orders-metrics';
 
 import { useRealDashboardMetrics } from './use-real-dashboard-metrics';
+
+// ============================================================================
+// Types
+// ============================================================================
 
 export interface CompleteDashboardMetrics {
   // Phase 1 - Données RÉELLES
@@ -35,17 +42,50 @@ export interface CompleteDashboardMetrics {
     totalValue: number;
     lowStockItems: number;
     recentMovements: number;
+    inStock: number;
+    outOfStock: number;
+    critical: number;
   };
 
   orders: {
     purchaseOrders: number;
     salesOrders: number;
     monthRevenue: number;
+    dayRevenue: number;
+    averageOrderValue: number;
+    pending: number;
+    processing: number;
+    completed: number;
+    cancelled: number;
+    trend: number;
   };
 
   sourcing: {
     productsToSource: number;
     samplesWaiting: number;
+  };
+
+  // Treasury - Données RÉELLES (Qonto + Supabase)
+  treasury: {
+    balance: number;
+    accountsReceivable: number;
+    accountsPayable: number;
+    unpaidInvoices: number;
+    burnRate: number;
+    runwayMonths: number;
+    cashFlowNet: number;
+    trend: number;
+  };
+
+  // LinkMe - Données RÉELLES
+  linkme: {
+    totalCommissions: number;
+    ordersCount: number;
+    activeAffiliates: number;
+    conversionRate: number;
+    averageMargin: number;
+    revenue: number;
+    trend: number;
   };
 
   // Compatibilité avec sections de détail du dashboard
@@ -63,6 +103,10 @@ export interface CompleteDashboardMetrics {
   };
 }
 
+// ============================================================================
+// Hook
+// ============================================================================
+
 export function useCompleteDashboardMetrics() {
   // Phase 1 - Données réelles
   const {
@@ -77,47 +121,295 @@ export function useCompleteDashboardMetrics() {
   const { metrics: stockOrdersMetrics, isLoading: stockOrdersLoading } =
     useStockOrdersMetrics();
 
-  // État pour salesOrders
+  // Treasury - Données Qonto + Supabase
+  const {
+    stats: treasuryStats,
+    bankBalance,
+    metrics: treasuryMetrics,
+    loading: treasuryLoading,
+  } = useTreasuryStats();
+
+  // États internes pour les données qui nécessitent un fetch explicite
+  const [orderMetrics, setOrderMetrics] = useState({
+    pending: 0,
+    processing: 0,
+    completed: 0,
+    cancelled: 0,
+    trend: 0,
+    dayRevenue: 0,
+    monthRevenue: 0,
+    averageOrderValue: 0,
+  });
+  const [linkmeMetrics, setLinkmeMetrics] = useState({
+    revenue: 0,
+    commissions: 0,
+    ordersCount: 0,
+    activeAffiliates: 0,
+    trend: 0,
+    averageMargin: 0,
+    conversionRate: 0,
+  });
+  const [stockMetrics, setStockMetrics] = useState({
+    inStock: 0,
+    outOfStock: 0,
+    lowStock: 0,
+    critical: 0,
+  });
   const [salesOrdersCount, setSalesOrdersCount] = useState<number>(0);
-  const [salesOrdersLoading, setSalesOrdersLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(true);
 
-  // Charger le comptage des commandes de vente
-  useEffect(() => {
-    const fetchSalesOrders = async () => {
-      try {
-        setSalesOrdersLoading(true);
-        const supabase = createClient();
+  const supabase = createClient();
 
-        // ✅ FIX: Vérifier authentification AVANT fetch (Console Zero Tolerance)
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+  // Fetch des données additionnelles - OPTIMISÉ avec Promise.all()
+  const fetchAdditionalData = useCallback(async () => {
+    try {
+      setDataLoading(true);
 
-        if (!user) {
-          // Si pas d'utilisateur, retourner état neutre sans erreur
-          setSalesOrdersCount(0);
-          setSalesOrdersLoading(false);
-          return;
-        }
+      // Vérifier authentification
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-        const { count, error } = await supabase
-          .from('sales_orders')
-          .select('id', { count: 'exact', head: true });
-
-        if (error) {
-          console.error('Erreur comptage sales_orders:', error);
-        } else {
-          setSalesOrdersCount(count || 0);
-        }
-      } catch (err) {
-        console.error('Erreur chargement sales_orders:', err);
-      } finally {
-        setSalesOrdersLoading(false);
+      if (!user) {
+        setDataLoading(false);
+        return;
       }
-    };
 
-    fetchSalesOrders();
-  }, []);
+      // ========================================
+      // Dates de référence
+      // ========================================
+      const now = new Date();
+      const startOfToday = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate()
+      );
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const startOfPrevMonth = new Date(
+        now.getFullYear(),
+        now.getMonth() - 1,
+        1
+      );
+
+      // ========================================
+      // OPTIMISATION: Toutes les requêtes en parallèle
+      // 10 requêtes séquentielles → 7 requêtes parallèles
+      // ========================================
+      const [
+        { data: monthOrders },
+        { data: allInvoices }, // Fusionnée: récupère mois + mois précédent
+        { data: products },
+        { data: allLinkmeOrders }, // Fusionnée: récupère mois + mois précédent
+        { data: pendingPayments },
+        { data: affiliates },
+        { data: selections },
+      ] = await Promise.all([
+        // 1. Commandes du mois (pour stats de statut)
+        supabase
+          .from('sales_orders')
+          .select('id, status, total_ht, created_at')
+          .gte('created_at', startOfMonth.toISOString()),
+
+        // 2. Factures (mois précédent + mois en cours) - FUSIONNÉE
+        supabase
+          .from('invoices')
+          .select('total_ht, status, created_at')
+          .gte('created_at', startOfPrevMonth.toISOString())
+          .eq('type', 'invoice')
+          .not('status', 'eq', 'cancelled'),
+
+        // 3. Produits pour stock
+        supabase
+          .from('products')
+          .select('id, stock_real, min_stock')
+          .eq('archived', false),
+
+        // 4. LinkMe orders (mois précédent + mois en cours) - FUSIONNÉE
+        supabase
+          .from('linkme_orders_with_margins')
+          .select('id, total_ht, total_affiliate_margin, created_at')
+          .gte('created_at', startOfPrevMonth.toISOString()),
+
+        // 5. Paiements en attente
+        supabase
+          .from('linkme_payment_requests')
+          .select('total_amount_ttc')
+          .in('status', ['pending', 'invoice_received']),
+
+        // 6. Affiliés actifs
+        supabase
+          .from('linkme_affiliates')
+          .select('id, status')
+          .eq('status', 'active'),
+
+        // 7. Sélections du mois
+        supabase
+          .from('linkme_selections')
+          .select('id')
+          .gte('created_at', startOfMonth.toISOString()),
+      ]);
+
+      // ========================================
+      // Filtrage client-side des factures (rapide)
+      // ========================================
+      const monthInvoices = (allInvoices || []).filter(
+        i => new Date(i.created_at) >= startOfMonth
+      );
+      const prevMonthInvoices = (allInvoices || []).filter(
+        i =>
+          new Date(i.created_at) >= startOfPrevMonth &&
+          new Date(i.created_at) < startOfMonth
+      );
+      const todayInvoices = (allInvoices || []).filter(
+        i => new Date(i.created_at) >= startOfToday
+      );
+
+      // ========================================
+      // Filtrage client-side des commandes LinkMe
+      // ========================================
+      const linkmeOrders = (allLinkmeOrders || []).filter(
+        o => o.created_at && new Date(o.created_at) >= startOfMonth
+      );
+      const prevLinkmeOrders = (allLinkmeOrders || []).filter(
+        o =>
+          o.created_at &&
+          new Date(o.created_at) >= startOfPrevMonth &&
+          new Date(o.created_at) < startOfMonth
+      );
+
+      // ========================================
+      // Orders Metrics
+      // ========================================
+      const pending =
+        monthOrders?.filter(o => ['draft', 'validated'].includes(o.status))
+          .length || 0;
+      const processing =
+        monthOrders?.filter(o => o.status === 'partially_shipped').length || 0;
+      const completed =
+        monthOrders?.filter(o => ['shipped', 'delivered'].includes(o.status))
+          .length || 0;
+      const cancelled =
+        monthOrders?.filter(o => o.status === 'cancelled').length || 0;
+
+      // CA du mois = somme des factures (pas des commandes)
+      const monthRevenue = monthInvoices.reduce(
+        (sum, i) => sum + parseFloat(String(i.total_ht || 0)),
+        0
+      );
+
+      const prevMonthRevenue = prevMonthInvoices.reduce(
+        (sum, i) => sum + parseFloat(String(i.total_ht || 0)),
+        0
+      );
+
+      const dayRevenue = todayInvoices.reduce(
+        (sum, i) => sum + parseFloat(String(i.total_ht || 0)),
+        0
+      );
+
+      // AOV = CA mensuel / nombre de factures (pas commandes)
+      const averageOrderValue =
+        monthInvoices.length > 0 ? monthRevenue / monthInvoices.length : 0;
+
+      let orderTrend = 0;
+      if (prevMonthRevenue > 0) {
+        orderTrend =
+          ((monthRevenue - prevMonthRevenue) / prevMonthRevenue) * 100;
+      } else if (monthRevenue > 0) {
+        orderTrend = 100;
+      }
+
+      setSalesOrdersCount(monthOrders?.length || 0);
+      setOrderMetrics({
+        pending,
+        processing,
+        completed,
+        cancelled,
+        trend: Math.round(orderTrend * 10) / 10,
+        dayRevenue: Math.round(dayRevenue * 100) / 100,
+        monthRevenue: Math.round(monthRevenue * 100) / 100,
+        averageOrderValue: Math.round(averageOrderValue * 100) / 100,
+      });
+
+      // ========================================
+      // Stock Metrics
+      // ========================================
+      let inStock = 0;
+      let outOfStock = 0;
+      let lowStock = 0;
+      let critical = 0;
+
+      (products || []).forEach(p => {
+        const stockQty = p.stock_real || 0;
+        const threshold = p.min_stock || 5;
+
+        if (stockQty === 0) {
+          outOfStock++;
+        } else if (stockQty <= 2) {
+          critical++;
+        } else if (stockQty <= threshold) {
+          lowStock++;
+        } else {
+          inStock++;
+        }
+      });
+
+      setStockMetrics({ inStock, outOfStock, lowStock, critical });
+
+      // ========================================
+      // LinkMe Metrics
+      // ========================================
+      const linkmeRevenue = linkmeOrders.reduce(
+        (sum, o) => sum + parseFloat(String(o.total_ht || 0)),
+        0
+      );
+      const prevLinkmeRevenue = prevLinkmeOrders.reduce(
+        (sum, o) => sum + parseFloat(String(o.total_ht || 0)),
+        0
+      );
+      // Commissions = somme des marges affiliés sur toutes les commandes
+      const linkmeCommissions = linkmeOrders.reduce(
+        (sum, o) => sum + parseFloat(String(o.total_affiliate_margin || 0)),
+        0
+      );
+
+      // Calcul du taux de marge moyen
+      const avgMargin =
+        linkmeRevenue > 0 ? (linkmeCommissions / linkmeRevenue) * 100 : 0;
+
+      // Taux de conversion (commandes / sélections)
+      const selectionsCount = selections?.length || 0;
+      const conversionRate =
+        selectionsCount > 0 ? (linkmeOrders.length / selectionsCount) * 100 : 0;
+
+      let linkmeTrend = 0;
+      if (prevLinkmeRevenue > 0) {
+        linkmeTrend =
+          ((linkmeRevenue - prevLinkmeRevenue) / prevLinkmeRevenue) * 100;
+      } else if (linkmeRevenue > 0) {
+        linkmeTrend = 100;
+      }
+
+      setLinkmeMetrics({
+        revenue: linkmeRevenue,
+        commissions: linkmeCommissions,
+        ordersCount: linkmeOrders.length,
+        activeAffiliates: affiliates?.length || 0,
+        trend: Math.round(linkmeTrend * 10) / 10,
+        averageMargin: Math.round(avgMargin * 10) / 10,
+        conversionRate: Math.round(conversionRate * 10) / 10,
+      });
+    } catch (err) {
+      console.error('Error fetching additional dashboard data:', err);
+    } finally {
+      setDataLoading(false);
+    }
+  }, [supabase]);
+
+  // Charger les données au montage
+  useEffect(() => {
+    fetchAdditionalData();
+  }, [fetchAdditionalData]);
 
   // Calcul statistiques organisations (excluant particuliers)
   const organisationsOnly = organisations.filter(
@@ -140,19 +432,56 @@ export function useCompleteDashboardMetrics() {
   // Phase 2 - Données réelles depuis Supabase
   const stocksData = {
     totalValue: stockOrdersMetrics?.stock_value || 0,
-    lowStockItems: 0, // TODO #VERONE-STOCK-001: Implémenter seuil stock minimum
-    recentMovements: 0, // TODO #VERONE-STOCK-002: Implémenter tracking mouvements
+    lowStockItems:
+      stockMetrics.outOfStock + stockMetrics.lowStock + stockMetrics.critical,
+    recentMovements: 0,
+    inStock: stockMetrics.inStock,
+    outOfStock: stockMetrics.outOfStock,
+    critical: stockMetrics.critical,
   };
 
   const ordersData = {
     purchaseOrders: stockOrdersMetrics?.purchase_orders_count || 0,
-    salesOrders: salesOrdersCount, // ✅ Données réelles depuis Supabase
-    monthRevenue: stockOrdersMetrics?.month_revenue || 0,
+    salesOrders: salesOrdersCount,
+    monthRevenue:
+      orderMetrics.monthRevenue || stockOrdersMetrics?.month_revenue || 0,
+    dayRevenue: orderMetrics.dayRevenue,
+    averageOrderValue: orderMetrics.averageOrderValue,
+    pending: orderMetrics.pending,
+    processing: orderMetrics.processing,
+    completed: orderMetrics.completed,
+    cancelled: orderMetrics.cancelled,
+    trend: orderMetrics.trend,
   };
 
   const sourcingData = {
     productsToSource: stockOrdersMetrics?.products_to_source || 0,
-    samplesWaiting: 0, // TODO #VERONE-SOURCING-001: Implémenter tracking échantillons en attente
+    samplesWaiting: 0,
+  };
+
+  // Treasury data
+  const treasuryData = {
+    balance: bankBalance || 0,
+    accountsReceivable: treasuryStats?.total_invoiced_ar || 0,
+    accountsPayable: treasuryStats?.total_invoiced_ap || 0,
+    unpaidInvoices:
+      (treasuryStats?.unpaid_count_ar || 0) +
+      (treasuryStats?.unpaid_count_ap || 0),
+    burnRate: treasuryMetrics?.burnRate || 0,
+    runwayMonths: treasuryMetrics?.runwayMonths || 0,
+    cashFlowNet: treasuryMetrics?.cashFlowNet || 0,
+    trend: treasuryMetrics?.cashFlowVariation || 0,
+  };
+
+  // LinkMe data
+  const linkmeData = {
+    totalCommissions: linkmeMetrics.commissions,
+    ordersCount: linkmeMetrics.ordersCount,
+    activeAffiliates: linkmeMetrics.activeAffiliates,
+    conversionRate: linkmeMetrics.conversionRate,
+    averageMargin: linkmeMetrics.averageMargin,
+    revenue: linkmeMetrics.revenue,
+    trend: linkmeMetrics.trend,
   };
 
   const metrics: CompleteDashboardMetrics = {
@@ -168,6 +497,8 @@ export function useCompleteDashboardMetrics() {
     stocks: stocksData,
     orders: ordersData,
     sourcing: sourcingData,
+    treasury: treasuryData,
+    linkme: linkmeData,
     // Compatibilité avec sections de détail du dashboard
     collections: {
       total: catalogueMetrics?.collections.total || 0,
@@ -185,12 +516,14 @@ export function useCompleteDashboardMetrics() {
     catalogueLoading ||
     organisationsLoading ||
     stockOrdersLoading ||
-    salesOrdersLoading;
+    treasuryLoading ||
+    dataLoading;
   const error = catalogueError;
 
   return {
     metrics,
     isLoading: isLoading,
     error,
+    refresh: fetchAdditionalData,
   };
 }

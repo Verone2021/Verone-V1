@@ -82,17 +82,20 @@ rg "error pattern" apps/back-office/
 rg "function_name" packages/@verone/
 
 # Si besoin de docs officielles, utiliser Context7 MCP
-mcp__context7__get-library-docs(libraryId: "/vercel/next.js", topic: "error handling")
+mcp__context7__resolve-library-id(libraryName: "next.js", query: "error handling")
+mcp__context7__query-docs(libraryId: "/vercel/next.js", query: "error handling")
 ```
 
 ## PHASE 4: REPRODUCTION (Playwright - SAFE MODE uniquement)
 
+> **Note :** Une seule session peut lancer `pnpm dev`. Ne JAMAIS relancer dev/build.
+
 ```bash
-mcp__playwright__browser_navigate(url: "http://localhost:3000/page-probleme")
-mcp__playwright__browser_take_screenshot(filename: "debug-snapshot.png")
-mcp__playwright__browser_click(element: "Bouton test", ref: "btn-123")
-mcp__playwright__browser_console_messages(onlyErrors: true)
-mcp__playwright__browser_take_screenshot(filename: "bug-reproduction.png")
+mcp__playwright-lane-1__browser_navigate(url: "http://localhost:3000/page-probleme")
+mcp__playwright-lane-1__browser_take_screenshot(filename: "debug-snapshot.png")
+mcp__playwright-lane-1__browser_click(element: "Bouton test", ref: "btn-123")
+mcp__playwright-lane-1__browser_console_messages(level: "error")
+mcp__playwright-lane-1__browser_take_screenshot(filename: "bug-reproduction.png")
 ```
 
 ---
@@ -179,5 +182,5 @@ git log --oneline -10
 git diff HEAD~5
 
 # Console browser
-mcp__playwright__browser_console_messages()
+mcp__playwright-lane-1__browser_console_messages()
 ```
