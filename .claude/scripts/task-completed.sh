@@ -62,6 +62,16 @@ fi
 # =====================================================
 # CHECK IF LAST COMMIT HAS TASK ID
 # =====================================================
+# Skip check if commit is a chore(plan) sync commit
+if echo "$LAST_COMMIT_MSG" | grep -qE "^chore\(plan\):"; then
+  echo "✅ Claude Code: Tache terminee avec succes !"
+  echo "   (chore(plan) commit, sync check skipped)"
+  if command -v afplay >/dev/null 2>&1; then
+    afplay /System/Library/Sounds/Hero.aiff 2>/dev/null &
+  fi
+  exit 0
+fi
+
 if echo "$LAST_COMMIT_MSG" | grep -qE "$TASK_ID_REGEX"; then
   # Last commit contains a Task ID
 
