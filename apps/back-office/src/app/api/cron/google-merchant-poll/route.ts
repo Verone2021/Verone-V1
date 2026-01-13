@@ -50,13 +50,19 @@ export async function GET(
     const authHeader = request.headers.get('authorization');
     const cronSecret = process.env.CRON_SECRET;
 
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    // CRON_SECRET OBLIGATOIRE en production
+    if (!cronSecret) {
+      console.error('[CRON] CRON_SECRET not configured');
+      return NextResponse.json(
+        { success: false, error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
+
+    if (authHeader !== `Bearer ${cronSecret}`) {
       console.error('[CRON] Unauthorized: Invalid CRON_SECRET');
       return NextResponse.json(
-        {
-          success: false,
-          error: 'Unauthorized',
-        },
+        { success: false, error: 'Unauthorized' },
         { status: 401 }
       );
     }

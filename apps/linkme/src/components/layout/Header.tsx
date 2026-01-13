@@ -2,13 +2,13 @@
 
 import Link from 'next/link';
 
+import { NotificationsDropdown } from '@verone/notifications';
 import {
   ShoppingCart,
   LogIn,
   Loader2,
   Package,
   Star,
-  Building2,
   PackagePlus,
   Warehouse,
 } from 'lucide-react';
@@ -27,9 +27,6 @@ const CATALOG_ROLES: LinkMeRole[] = [
 // Rôles autorisés à voir "Ma sélection"
 const SELECTION_ROLES: LinkMeRole[] = ['enseigne_admin', 'org_independante'];
 
-// Rôles autorisés à voir "Mon Réseau" (enseignes uniquement)
-const NETWORK_ROLES: LinkMeRole[] = ['enseigne_admin'];
-
 // Rôles autorisés à créer des produits (affiliés)
 const CREATE_PRODUCT_ROLES: LinkMeRole[] = [
   'enseigne_admin',
@@ -47,7 +44,6 @@ export function Header() {
   const canSeeCatalog = linkMeRole && CATALOG_ROLES.includes(linkMeRole.role);
   const canSeeSelection =
     linkMeRole && SELECTION_ROLES.includes(linkMeRole.role);
-  const canSeeNetwork = linkMeRole && NETWORK_ROLES.includes(linkMeRole.role);
   const canCreateProducts =
     linkMeRole && CREATE_PRODUCT_ROLES.includes(linkMeRole.role);
   const canSeeStorage = linkMeRole && STORAGE_ROLES.includes(linkMeRole.role);
@@ -95,15 +91,6 @@ export function Header() {
                 Ma sélection
               </Link>
             )}
-            {canSeeNetwork && (
-              <Link
-                href="/reseau"
-                className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 font-medium"
-              >
-                <Building2 className="h-4 w-4" />
-                Mon Réseau
-              </Link>
-            )}
             {canCreateProducts && (
               <Link
                 href="/mes-produits"
@@ -139,6 +126,9 @@ export function Header() {
                 </span>
               )}
             </button>
+
+            {/* Notifications - visible seulement si connecté */}
+            {user && <NotificationsDropdown />}
 
             {/* Auth */}
             {initializing ? (

@@ -42,7 +42,10 @@
     "webhook:register": "tsx scripts/setup-packlink-webhook.ts",
     "webhook:register:sandbox": "tsx scripts/setup-packlink-webhook.ts sandbox",
     "webhook:register:prod": "tsx scripts/setup-packlink-webhook.ts production",
-    "prepare": "husky"
+    "validate:pr": "npm run format:check && npm run lint && npm run type-check && npm run build",
+    "plan:sync": "node .claude/scripts/plan-sync.js",
+    "handoff:show": "cat ~/.claude/handoff/LATEST.md 2>/dev/null || echo 'No handoff file'",
+    "handoff:open": "ls -la ~/.claude/handoff 2>/dev/null && echo '---' && sed -n '1,120p' ~/.claude/handoff/LATEST.md 2>/dev/null || echo 'No handoff'"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.17.1",
@@ -69,7 +72,8 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@radix-ui/react-visually-hidden": "^1.2.3",
     "@react-pdf/renderer": "^4.3.1",
-    "@supabase/ssr": "^0.7.0",
+    "@sentry/nextjs": "^10.33.0",
+    "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.57.4",
     "@tanstack/react-query": "^5.20.1",
     "@tanstack/react-table": "^8.21.3",
@@ -116,11 +120,9 @@
     "eslint-config-next": "^15.0.3",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
-    "husky": "^9.1.7",
     "jscodeshift": "^17.3.0",
     "jscpd": "^4.0.5",
     "knip": "^5.66.2",
-    "lint-staged": "^16.2.6",
     "madge": "^8.0.0",
     "playwright": "^1.55.0",
     "postcss": "^8.4.35",
