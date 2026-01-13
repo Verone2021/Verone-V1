@@ -268,7 +268,7 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
             .from('financial_documents')
             .select('total_ttc, amount_paid')
             .eq('document_direction', 'inbound')
-            .not('status', 'in', '("paid","cancelled")');
+            .not('status', 'in', '(paid,cancelled)');
 
           if (arData) {
             arData.forEach((doc: any) => {
@@ -285,7 +285,7 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
             .from('financial_documents')
             .select('total_ttc, amount_paid')
             .eq('document_direction', 'outbound')
-            .not('status', 'in', '("paid","cancelled")');
+            .not('status', 'in', '(paid,cancelled)');
 
           if (apData) {
             apData.forEach((doc: any) => {
@@ -495,7 +495,7 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
           .from('financial_documents')
           .select('total_ttc, amount_paid')
           .eq('document_direction', 'inbound')
-          .not('status', 'in', '("paid","cancelled")');
+          .not('status', 'in', '(paid,cancelled)');
 
         if (arData) {
           arData.forEach((doc: any) => {
@@ -512,7 +512,7 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
           .from('financial_documents')
           .select('total_ttc, amount_paid')
           .eq('document_direction', 'outbound')
-          .not('status', 'in', '("paid","cancelled")');
+          .not('status', 'in', '(paid,cancelled)');
 
         if (apData) {
           apData.forEach((doc: any) => {
