@@ -43,6 +43,8 @@ const securityHeaders = {
         'https://aorroydfjsrygmosnzrl.supabase.co',
         'wss://aorroydfjsrygmosnzrl.supabase.co',
         'https://vitals.vercel-insights.com', // Vercel Analytics
+        'https://api-adresse.data.gouv.fr', // API BAN (Base Adresse Nationale - France)
+        'https://api.geoapify.com', // API Geoapify (Geocoding international)
       ],
       mediaSrc: ["'self'", 'https://aorroydfjsrygmosnzrl.supabase.co'],
       objectSrc: ["'none'"],

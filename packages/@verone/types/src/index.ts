@@ -4,7 +4,7 @@
  */
 
 // Supabase Database Types (primary source)
-export * from './supabase';
+export type * from './supabase';
 
 // Re-export specific types from database.ts to avoid conflicts
 // database.ts contains extended/helper types based on supabase types
@@ -25,4 +25,5 @@ export type Product = Database['public']['Tables']['products']['Row'];
 export type Collection = Database['public']['Tables']['collections']['Row'];
 
 // Types créations
-export type CreateCollectionData = Database['public']['Tables']['collections']['Insert'];
+export type CreateCollectionData =
+  Database['public']['Tables']['collections']['Insert'];
