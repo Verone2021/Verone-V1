@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 
-import { createClient } from '@verone/utils/supabase/client';
 import { Check, Loader2, Mail, Send } from 'lucide-react';
 
 interface IBranding {
@@ -64,33 +63,46 @@ export function ContactForm({
     setError(null);
 
     try {
-      const supabase = createClient();
-
-      // Note: Table type will be available after migration is applied
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: insertError } = await (supabase as any)
-        .from('linkme_contact_requests')
-        .insert({
-          selection_id: selectionId,
-          first_name: formData.firstName,
-          last_name: formData.lastName,
+      // Call the new form submission API
+      const response = await fetch('/api/forms/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          formType: 'selection_inquiry',
+          firstName: formData.firstName,
+          lastName: formData.lastName,
           email: formData.email,
-          company: formData.company || null,
-          role: formData.role || null,
           phone: formData.phone,
+          company: formData.company || undefined,
+          role: formData.role || undefined,
+          subject: `Contact depuis la sélection "${selectionName}"`,
           message: formData.message,
-        });
+          source: 'linkme',
+          priority: 'medium',
+          metadata: {
+            selection_id: selectionId,
+            selection_name: selectionName,
+          },
+        }),
+      });
 
-      if (insertError) {
-        throw insertError;
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Erreur lors de l'envoi");
       }
 
+      // Success: show confirmation and reset form
       setIsSubmitted(true);
       setFormData(initialFormData);
     } catch (err) {
       console.error('Error submitting contact form:', err);
       setError(
-        "Une erreur est survenue lors de l'envoi de votre message. Veuillez réessayer."
+        err instanceof Error && err.message
+          ? err.message
+          : "Une erreur est survenue lors de l'envoi de votre message. Veuillez réessayer."
       );
     } finally {
       setIsSubmitting(false);
