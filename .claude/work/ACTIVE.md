@@ -11,6 +11,1092 @@
 
 ## Taches
 
+### LM-ADDR-001 : Intégrer AddressAutocomplete dans tous les formulaires
+
+**Demande utilisateur** : Utiliser l'autocomplete d'adresse avec API France (BAN) et API internationale (Geoapify) dans TOUS les formulaires avec saisie d'adresse.
+
+**Status** : ✅ Audit terminé, ✅ Plan créé (17 tâches, 6 phases), ✅ Observations READ1 visuelles
+**Prêt pour** : /write session d'implémentation
+**Voir** : Sections "Observations READ1 - LM-ADDR-001", "Audit AddressAutocomplete LM-ADDR-001" et "Plan d'implémentation - LM-ADDR-001" ci-dessous
+
+#### Observations READ1 - LM-ADDR-001 (2026-01-14)
+
+**Objectif** : Observer visuellement le formulaire CreateOrderModal pour confirmer l'absence d'AddressAutocomplete.
+
+**Environnement** :
+- URL : http://localhost:3002/commandes (LinkMe)
+- Utilisateur : Pokawa (`pokawa-test@verone.io`)
+- Modal : CreateOrderModal ("Nouvelle vente")
+
+**Reproduction steps** :
+1. Connexion LinkMe avec utilisateur Pokawa
+2. Navigation vers `/commandes`
+3. Clic sur bouton "Nouvelle vente" (bouton bleu en haut à droite)
+4. Modal s'ouvre automatiquement à l'étape 1/5 "Nouveau restaurant - Ouverture"
+
+**Observations visuelles** :
+
+**✅ CONFIRMATION du problème** : Les champs d'adresse utilisent des **inputs texte manuels** au lieu d'**AddressAutocomplete**.
+
+**Étape 1/5 - "Nouveau restaurant - Ouverture"** :
+- **Nom commercial** : Input texte manuel (placeholder: "Ex: Restaurant Le Gourmet")
+- **Ville** : Input texte manuel (pré-rempli avec "Paris")
+- **Code postal** : Input texte manuel (pré-rempli avec "75001")
+- **Adresse** : Input texte manuel (pré-rempli avec "123 rue de la Gastronomie")
+- **Type de restaurant** : Boutons radio (Propre / Franchisé)
+
+**Problèmes identifiés** :
+- ❌ **3 champs séparés** (Ville, Code postal, Adresse) au lieu d'un seul champ AddressAutocomplete
+- ❌ **Pas d'autocomplete** : l'utilisateur doit taper manuellement toute l'adresse
+- ❌ **Pas de géocodage** : aucune latitude/longitude capturée
+- ❌ **Risque d'erreurs** : fautes de frappe, adresses invalides, format incohérent
+- ❌ **Pas de support API** : ni BAN (France) ni Geoapify (International)
+
+**Navigation dans les étapes suivantes** :
+- Impossible de passer à l'étape 2 sans validation complète
+- Bouton "Suivant" reste désactivé (disabled) tant que le formulaire n'est pas valide
+- ⚠️ **Note** : Étape 3/5 "Facturation" contient probablement aussi des champs d'adresse manuels (à confirmer avec /write session)
+
+**Preuves visuelles** :
+- Screenshot : `lm-addr-001-commandes-page.png` - Modal CreateOrderModal étape 1/5
+- Screenshot : `lm-addr-001-step1-filled.png` - Formulaire rempli avec inputs manuels
+
+**Conclusion** :
+Le problème est **CONFIRMÉ visuellement**. Le formulaire CreateOrderModal utilise 3 inputs texte séparés au lieu d'un composant AddressAutocomplete avec API BAN/Geoapify. Cela correspond exactement à l'audit technique effectué précédemment.
+
+**Recommandation** :
+Implémenter le plan LM-ADDR-001 (17 tâches) pour remplacer ces inputs par AddressAutocomplete avec support dual-API (BAN pour France, Geoapify pour international).
+
+---
+
+### LM-ORD-005 : Audit flux de données commandes publiques LinkMe
+
+**Demande utilisateur** : Comprendre où sont stockées les données du formulaire de commande publique et comment automatiser la création de contacts.
+
+**Audit terminé** - Voir section "Audit flux complet LM-ORD-005" ci-dessous
+
+---
+
+### BO-FORM-001 : Système extensible de gestion des formulaires de contact
+
+**Objectif** : Créer un système centralisé et extensible pour gérer tous les formulaires de contact (LinkMe, website, back-office) avec conversions vers consultations, commandes, sourcing, contacts CRM, leads.
+
+**MVP** : Formulaire "Ma Sélection" LinkMe avec emails automatiques.
+
+**Checklist Phase 1 - Infrastructure (Migrations SQL)** :
+
+- [x] BO-FORM-001-1 : Créer migration `20260115_001_create_form_submissions.sql`
+- [x] BO-FORM-001-2 : Créer migration `20260115_002_create_form_types.sql`
+- [x] BO-FORM-001-3 : Créer migration `20260115_003_create_form_submission_messages.sql`
+- [x] BO-FORM-001-4 : Créer migration `20260115_004_create_app_settings.sql`
+- [x] BO-FORM-001-5 : Créer migration `20260115_005_form_submissions_rls.sql`
+- [x] BO-FORM-001-6 : Créer migration `20260115_006_form_submission_triggers.sql`
+- [x] BO-FORM-001-7 : Créer migration `20260115_007_drop_linkme_contact_requests.sql`
+- [x] BO-FORM-001-8 : Appliquer toutes les migrations via psql
+- [x] BO-FORM-001-9 : Vérifier tables dans Supabase Dashboard
+
+**Checklist Phase 2 - API Routes** :
+
+- [ ] BO-FORM-001-10 : Créer `/api/forms/submit` route
+- [ ] BO-FORM-001-11 : Créer `/api/emails/form-confirmation` route
+- [ ] BO-FORM-001-12 : Créer `/api/emails/form-notification` route
+- [ ] BO-FORM-001-13 : Tester avec curl/Postman
+
+**Checklist Phase 3 - MVP LinkMe** :
+
+- [ ] BO-FORM-001-14 : Modifier `ContactForm.tsx` handleSubmit
+- [ ] BO-FORM-001-15 : Tester soumission depuis LinkMe
+- [ ] BO-FORM-001-16 : Vérifier emails envoyés
+
+**Checklist Phase 4 - Interface Back-Office** :
+
+- [ ] BO-FORM-001-17 : Créer page `/prises-contact` (liste)
+- [ ] BO-FORM-001-18 : Créer page `/prises-contact/[id]` (détail)
+- [ ] BO-FORM-001-19 : Tester filtres et navigation
+
+**Checklist Phase 5 - Conversions** :
+
+- [ ] BO-FORM-001-20 : Créer Server Actions conversions
+- [ ] BO-FORM-001-21 : Intégrer boutons conversion
+- [ ] BO-FORM-001-22 : Tester workflows complets
+
+**Checklist Phase 6 - Paramètres** :
+
+- [ ] BO-FORM-001-23 : Créer page `/parametres/notifications`
+- [ ] BO-FORM-001-24 : Implémenter CRUD emails
+- [ ] BO-FORM-001-25 : Tester configuration
+
+---
+
+## Plan détaillé - BO-FORM-001 (2026-01-15)
+
+### Contexte
+
+**Problème actuel** :
+- Table `linkme_contact_requests` simpliste, pas extensible
+- Pas d'automatisation email (confirmation + notification)
+- Pas de système de suivi/workflow/SLA
+- Pas de conversion vers autres entités métier
+- Architecture non préparée pour futurs formulaires (SAV, consultation, ouverture compte, etc.)
+
+**Solution** : Système configuration-driven extensible pour TOUS les formulaires
+
+**MVP** : Formulaire LinkMe "Ma Sélection" avec emails
+
+### Architecture données
+
+**Table `form_submissions`** :
+- form_type (TEXT) : Code du type (ex: 'selection_inquiry')
+- source ('linkme' | 'website' | 'backoffice' | 'other')
+- source_reference_id, source_reference_name : Liens contextuels (ex: selection_id)
+- Données contact : first_name, last_name, email, phone, company, role, subject, message
+- Workflow : status (new, open, pending, replied, closed, spam), priority (low/medium/high/urgent)
+- Assignment : assigned_to, sla_deadline, internal_notes
+- Conversions polymorphes : converted_to_type ('consultation'|'order'|'sourcing'|'contact'|'lead'), converted_to_id, converted_at
+- Timestamps : created_at, read_at, first_reply_at, closed_at, updated_at
+- Metadata JSONB extensible
+
+**Table `form_types`** :
+- code (UNIQUE) : Identifiant technique
+- label, description, enabled, icon, color
+- Workflow config : default_category, default_priority, sla_hours
+- Validation : required_fields JSONB, optional_fields JSONB
+- Routing : routing_rules JSONB, conversion_config JSONB
+- UI : display_order
+- **7 types pré-seedés** : selection_inquiry, account_request, sav_request, product_inquiry, consultation_request, technical_support, general_inquiry
+
+**Table `form_submission_messages`** :
+- Thread de conversation par submission
+- message_type ('client_reply' | 'staff_response' | 'internal_note' | 'system_message')
+- message, attachments JSONB
+- sent_by (user_id), sent_by_email, sent_at
+
+**Table `app_settings`** :
+- Configuration dynamique (emails notifications, etc.)
+- setting_key (UNIQUE), setting_value JSONB
+- **Seed** : `notification_emails` = `{"form_submissions": ["veronebyromeo@gmail.com"]}`
+
+### Automatisation
+
+**Triggers** :
+- `calculate_sla_deadline()` : BEFORE INSERT, calcule deadline = NOW() + form_type.sla_hours
+- `notify_admin_new_form_submission()` : AFTER INSERT, crée notification pour admins
+
+**RLS** :
+- Back-office : Full access
+- LinkMe admins : SELECT leurs soumissions
+- Public : INSERT only
+
+### API Routes
+
+**POST `/api/forms/submit`** :
+1. Valide form_type (enabled = true)
+2. Insert form_submissions avec metadata (user_agent, IP)
+3. Déclenche emails async (confirmation client + notification équipe)
+4. Retourne submissionId
+
+**POST `/api/emails/form-confirmation`** :
+- Email Resend au client
+- Sujet : "Confirmation de votre demande"
+- Contenu : Bonjour {first_name}, référence {id}
+
+**POST `/api/emails/form-notification`** :
+- Fetch destinataires depuis app_settings.notification_emails
+- Email Resend aux admins
+- Sujet : "[Type] Nom Prénom"
+- Lien vers /prises-contact/{id}
+
+### MVP LinkMe
+
+**Fichier** : `apps/linkme/src/components/public-selection/ContactForm.tsx`
+- Remplacer handleSubmit (L61-98)
+- Appel fetch `/api/forms/submit` avec formType='selection_inquiry'
+- source='linkme', sourceReferenceId=selectionId, sourceReferenceName=selectionName
+- Supprimer code direct Supabase
+
+### Interface Back-Office
+
+**Page `/prises-contact`** :
+- Liste avec filtres : form_type, status, source, priority, search
+- Stats badges : New (X), Open (X), Urgent (X)
+- Cards colorées par priorité/statut
+- Pagination
+
+**Page `/prises-contact/[id]`** :
+- Layout 2 colonnes
+- LEFT : Infos contact, metadata, boutons conversion (selon form_type.conversion_config.allowed)
+- RIGHT : Thread conversation + formulaire réponse
+
+**Page `/parametres/notifications`** :
+- CRUD liste emails pour form_submissions
+- Update app_settings.notification_emails
+
+### Conversions (Phase 5)
+
+**Server Actions** (`/prises-contact/[id]/actions.ts`) :
+
+```typescript
+convertToOrder(submissionId, orderData) → sales_orders
+convertToSourcing(submissionId, {clientType, clientId}) → products (avec assigned_client_id ou enseigne_id)
+convertToConsultation(submissionId, consultationData) → client_consultations
+convertToContact(submissionId) → contacts
+convertToLead(submissionId) → leads
+```
+
+Toutes les conversions :
+1. Créent l'entité cible
+2. Mettent à jour form_submissions : converted_to_type, converted_to_id, converted_at, status='closed'
+3. Ajoutent message système dans form_submission_messages
+
+### Commandes migrations
+
+```bash
+source .mcp.env
+cd supabase/migrations/
+psql "$DATABASE_URL" -f 20260115_001_create_form_submissions.sql
+psql "$DATABASE_URL" -f 20260115_002_create_form_types.sql
+psql "$DATABASE_URL" -f 20260115_003_create_form_submission_messages.sql
+psql "$DATABASE_URL" -f 20260115_004_create_app_settings.sql
+psql "$DATABASE_URL" -f 20260115_005_form_submissions_rls.sql
+psql "$DATABASE_URL" -f 20260115_006_form_submission_triggers.sql
+psql "$DATABASE_URL" -f 20260115_007_drop_linkme_contact_requests.sql
+```
+
+### Extensibilité future
+
+**Ajouter nouveau formulaire** (sans migration) :
+1. INSERT dans form_types (code, label, config)
+2. Créer composant frontend utilisant `/api/forms/submit` avec le nouveau code
+3. C'est tout !
+
+**Exemples futurs** :
+- Formulaire ouverture compte website → 'account_request'
+- Formulaire SAV → 'sav_request'
+- Demande info produit → 'product_inquiry'
+
+### Notes techniques
+
+- Resend déjà configuré (RESEND_API_KEY)
+- Conversion sourcing : utilise `assigned_client_id` (organisation) OU `enseigne_id` (enseigne)
+- SLA tracking automatique via trigger
+- Performance : indexes sur status, form_type, assigned_to, created_at
+- JSONB metadata permet champs custom par form_type sans migration
+
+---
+
+## Audit AddressAutocomplete LM-ADDR-001 (2026-01-14)
+
+**Objectif** : Vérifier l'utilisation actuelle des APIs d'adresses et identifier tous les formulaires qui doivent utiliser l'autocomplete.
+
+### ✅ Composant existant : AddressAutocomplete
+
+**Fichier** : `packages/@verone/ui/src/components/ui/address-autocomplete.tsx` (630 lignes)
+
+**Technologie DUAL-API déjà implémentée** :
+1. **API BAN** (adresse.data.gouv.fr) - **GRATUITE** pour France
+2. **Geoapify** - Pour international (requiert clé API)
+
+**Fonctionnalités** :
+- ✅ Détection automatique France vs International
+- ✅ Fonction `seemsFrench()` : détecte code postal 5 chiffres, villes françaises, mots-clés (rue, avenue, etc.)
+- ✅ Fallback intelligent : BAN → Geoapify si pas de résultats
+- ✅ Bouton toggle Globe pour forcer mode international
+- ✅ Autocomplete avec debounce (300ms)
+- ✅ Navigation clavier (ArrowUp/Down, Enter, Escape)
+- ✅ Géocodage automatique (latitude/longitude)
+- ✅ Résultat structuré : `streetAddress`, `city`, `postalCode`, `region`, `countryCode`, `latitude`, `longitude`
+
+**Interface de retour** :
+```typescript
+interface AddressResult {
+  label: string;              // "123 Rue de la Roquette, 75011 Paris"
+  streetAddress: string;      // "123 Rue de la Roquette"
+  city: string;               // "Paris"
+  postalCode: string;         // "75011"
+  region?: string;            // "Île-de-France"
+  countryCode: string;        // "FR"
+  country: string;            // "France"
+  latitude: number;           // 48.8566
+  longitude: number;          // 2.3522
+  source: 'ban' | 'geoapify'; // Source API utilisée
+}
+```
+
+**Props** :
+- `forceInternational`: Force utilisation Geoapify
+- `defaultCountry`: Filtre par pays (ex: 'FR', 'BE', 'US')
+- `onSelect`: Callback avec adresse structurée complète
+
+### ✅ Où le composant EST déjà utilisé
+
+1. **`QuickEditBillingAddressModal.tsx`** (LinkMe organisations)
+   - Édition rapide adresse facturation
+   - Mode France uniquement
+
+2. **`QuickEditShippingAddressModal.tsx`** (LinkMe organisations)
+   - Édition rapide adresse livraison
+   - Mode France uniquement
+
+3. **`EditOrganisationModal.tsx`** (LinkMe organisations)
+   - Édition complète organisation
+   - Adresse livraison + facturation
+
+4. **`AddressEditSection.tsx`** (`@verone/common`)
+   - Section réutilisable édition adresse
+   - Utilisé dans plusieurs contextes
+
+5. **`create-organisation-modal.tsx`** (`@verone/orders`)
+   - Création organisation depuis back-office
+   - Support international
+
+6. **`checkout/page.tsx`** (LinkMe checkout - ancien workflow)
+   - Ancien tunnel paiement
+
+### ❌ Où le composant MANQUE (PROBLÈME)
+
+#### 1. **CreateOrderModal.tsx** (Commandes LinkMe - Utilisateur authentifié)
+**Fichier** : `apps/linkme/src/app/(main)/commandes/components/CreateOrderModal.tsx`
+
+**Champs concernés** :
+- **Étape 1 - Livraison** :
+  - `address` : Input texte manuel ❌
+  - `city` : Input texte manuel ❌
+  - `postalCode` : Input texte manuel ❌
+
+- **Étape 3 - Facturation** :
+  - `billingAddress` : Input texte manuel ❌
+  - `billingCity` : Input texte manuel ❌
+  - `billingPostalCode` : Input texte manuel ❌
+
+**Problèmes actuels** :
+- Pas d'autocomplete → utilisateur doit tout taper
+- Pas de géocodage → pas de latitude/longitude
+- Risque d'erreurs (fautes de frappe, adresses invalides)
+- Pas de validation format adresse
+
+#### 2. **OrderFormUnified.tsx** (Commandes publiques LinkMe)
+**Fichier** : `apps/linkme/src/components/OrderFormUnified.tsx`
+
+**Champs concernés** :
+- **Step 1 - Restaurant** :
+  - `newRestaurant.address` : Input texte manuel ❌
+  - `newRestaurant.city` : Input texte manuel ❌
+  - `newRestaurant.postalCode` : Input texte manuel ❌
+
+- **Step 3 - Facturation** :
+  - `billing.address` : Input texte manuel ❌
+  - `billing.city` : Input texte manuel ❌
+  - `billing.postalCode` : Input texte manuel ❌
+
+**Problèmes actuels** :
+- Utilisateur public doit taper toute l'adresse manuellement
+- Expérience utilisateur dégradée
+- Pas de géocodage pour affichage sur carte
+
+#### 3. **EnseigneStepper.tsx** (Ancien workflow LinkMe - à vérifier)
+**Fichier** : `apps/linkme/src/components/checkout/EnseigneStepper.tsx`
+
+**À vérifier** : Si encore utilisé
+
+#### 4. **CustomerFormModal.tsx** (`@verone/customers`)
+**Fichier** : `packages/@verone/customers/src/components/modals/CustomerFormModal.tsx`
+
+**Champs concernés** : Adresse client (à vérifier)
+
+### Configuration requise
+
+**Variable d'environnement** : `NEXT_PUBLIC_GEOAPIFY_API_KEY`
+
+**Vérification** :
+```bash
+# Dans .env.local (à vérifier)
+NEXT_PUBLIC_GEOAPIFY_API_KEY=votre_clé_ici
+```
+
+**Si manquante** :
+- BAN (France) fonctionne toujours (gratuit)
+- Geoapify (International) ne fonctionnera PAS
+- Besoin de créer compte sur geoapify.com
+
+### Recommandations
+
+#### Option 1 : Remplacement simple (Rapide)
+
+**Remplacer les inputs manuels par `<AddressAutocomplete>`** :
+
+**Avant** :
+```tsx
+<input
+  type="text"
+  value={newRestaurantForm.address}
+  onChange={e => setNewRestaurantForm(prev => ({ ...prev, address: e.target.value }))}
+  placeholder="Adresse"
+/>
+<input
+  type="text"
+  value={newRestaurantForm.postalCode}
+  onChange={e => setNewRestaurantForm(prev => ({ ...prev, postalCode: e.target.value }))}
+  placeholder="Code postal"
+/>
+<input
+  type="text"
+  value={newRestaurantForm.city}
+  onChange={e => setNewRestaurantForm(prev => ({ ...prev, city: e.target.value }))}
+  placeholder="Ville"
+/>
+```
+
+**Après** :
+```tsx
+<AddressAutocomplete
+  value={newRestaurantForm.address}
+  label="Adresse complète"
+  placeholder="Rechercher une adresse..."
+  onSelect={(address) => {
+    setNewRestaurantForm(prev => ({
+      ...prev,
+      address: address.streetAddress,
+      city: address.city,
+      postalCode: address.postalCode,
+      latitude: address.latitude,  // ✅ BONUS : Géocodage automatique
+      longitude: address.longitude,
+    }));
+  }}
+/>
+```
+
+**Avantages** :
+- ✅ Un seul champ au lieu de 3
+- ✅ Autocomplete intelligent
+- ✅ Géocodage automatique (latitude/longitude pour carte)
+- ✅ Validation format adresse
+- ✅ Support France + International
+
+#### Option 2 : Choix explicite France/Hors France (Meilleur UX)
+
+**Ajouter une question** : "Où se situe le restaurant ?"
+
+```tsx
+<div>
+  <label>Pays</label>
+  <select
+    value={newRestaurantForm.country}
+    onChange={e => setNewRestaurantForm(prev => ({ ...prev, country: e.target.value }))}
+  >
+    <option value="FR">France</option>
+    <option value="OTHER">Hors France</option>
+  </select>
+</div>
+
+<AddressAutocomplete
+  value={newRestaurantForm.address}
+  label="Adresse complète"
+  placeholder="Rechercher une adresse..."
+  forceInternational={newRestaurantForm.country !== 'FR'}
+  defaultCountry={newRestaurantForm.country !== 'FR' ? undefined : 'FR'}
+  onSelect={(address) => {
+    setNewRestaurantForm(prev => ({
+      ...prev,
+      address: address.streetAddress,
+      city: address.city,
+      postalCode: address.postalCode,
+      countryCode: address.countryCode,
+      country: address.country,
+      latitude: address.latitude,
+      longitude: address.longitude,
+    }));
+  }}
+/>
+
+{/* Lien "Saisir manuellement" si autocomplete ne trouve pas */}
+<button
+  type="button"
+  onClick={() => setManualMode(true)}
+  className="text-sm text-gray-500 hover:text-gray-700 underline"
+>
+  L'adresse n'est pas dans la liste ? Saisir manuellement
+</button>
+
+{manualMode && (
+  <div>
+    <input type="text" placeholder="Adresse" />
+    <input type="text" placeholder="Code postal" />
+    <input type="text" placeholder="Ville" />
+  </div>
+)}
+```
+
+**Avantages** :
+- ✅ ✅ Meilleure UX : choix clair France/International
+- ✅ ✅ API adaptée selon le pays
+- ✅ ✅ Fallback manuel si adresse introuvable
+- ✅ Explicite et compréhensible
+
+### Impacts sur la base de données
+
+**Tables à enrichir** (si pas déjà fait) :
+
+1. **`organisations`** :
+   - Ajouter `latitude`, `longitude` (pour carte)
+   - Ajouter `country_code` (ISO 2)
+
+2. **`sales_order_linkme_details`** :
+   - Ajouter `billing_latitude`, `billing_longitude`
+   - Ajouter `shipping_latitude`, `shipping_longitude`
+
+**Bénéfices** :
+- Affichage automatique sur carte (MapLibre)
+- Calcul distances
+- Zones de livraison
+- Analytics géographiques
+
+### Plan d'action recommandé
+
+#### Phase 1 : Vérifier configuration Geoapify
+- [ ] Vérifier si `NEXT_PUBLIC_GEOAPIFY_API_KEY` existe
+- [ ] Si non, créer compte Geoapify et obtenir clé
+- [ ] Ajouter dans `.env.local` de tous les environnements
+
+#### Phase 2 : CreateOrderModal (Priorité haute)
+- [ ] Remplacer inputs adresse livraison par `<AddressAutocomplete>`
+- [ ] Remplacer inputs adresse facturation par `<AddressAutocomplete>`
+- [ ] Ajouter toggle "Saisie manuelle" en fallback
+- [ ] Stocker latitude/longitude
+
+#### Phase 3 : OrderFormUnified (Priorité haute)
+- [ ] Remplacer inputs Step 1 (Restaurant) par `<AddressAutocomplete>`
+- [ ] Remplacer inputs Step 3 (Facturation) par `<AddressAutocomplete>`
+- [ ] Ajouter choix "France / Hors France"
+- [ ] Stocker latitude/longitude
+
+#### Phase 4 : Enrichir base de données (si nécessaire)
+- [ ] Migration : Ajouter `latitude`, `longitude` à `organisations`
+- [ ] Migration : Ajouter champs géocodage à `sales_order_linkme_details`
+
+#### Phase 5 : Autres formulaires
+- [ ] Auditer `CustomerFormModal.tsx`
+- [ ] Auditer `EnseigneStepper.tsx` (si encore utilisé)
+- [ ] Vérifier tous les autres formulaires avec adresse
+
+#### Phase 6 : Tests
+- [ ] Tester autocomplete France (BAN)
+- [ ] Tester autocomplete International (Geoapify)
+- [ ] Tester toggle France/Hors France
+- [ ] Tester fallback saisie manuelle
+- [ ] Vérifier géocodage (latitude/longitude)
+- [ ] Vérifier affichage carte avec nouvelles adresses
+
+### Bénéfices attendus
+
+✅ **UX améliorée** : Plus besoin de tout taper manuellement
+✅ **Validation automatique** : Adresses garanties valides
+✅ **Géocodage gratuit** : Coordonnées GPS pour carte
+✅ **Support international** : Pas limité à la France
+✅ **Réduction erreurs** : Moins de fautes de frappe
+✅ **Normalisation** : Format adresse cohérent en DB
+
+## Plan d'implémentation - LM-ADDR-001
+
+**Stratégie** : Remplacement progressif des inputs manuels par AddressAutocomplete avec support dual-API (BAN + Geoapify)
+
+### Phase 1 : Configuration et validation environnement
+
+- [ ] **LM-ADDR-001-1** : Vérifier la clé API Geoapify
+  - Vérifier existence de `NEXT_PUBLIC_GEOAPIFY_API_KEY` dans `.env.local`
+  - Si absente : créer compte sur geoapify.com (gratuit pour usage faible)
+  - Ajouter la clé dans tous les environnements (.env.local, Vercel)
+  - Tester que l'autocomplete international fonctionne
+
+- [ ] **LM-ADDR-001-2** : Vérifier que AddressAutocomplete est dans @verone/ui
+  - Fichier : `packages/@verone/ui/src/components/ui/address-autocomplete.tsx`
+  - Vérifier export dans `packages/@verone/ui/src/index.ts`
+  - Tester import : `import { AddressAutocomplete } from '@verone/ui'`
+
+### Phase 2 : CreateOrderModal (Formulaire authentifié - PRIORITÉ HAUTE)
+
+**Fichier** : `apps/linkme/src/app/(main)/commandes/components/CreateOrderModal.tsx`
+
+- [ ] **LM-ADDR-001-3** : Remplacer adresse de livraison (Step 1)
+  - Localiser les inputs : `address`, `city`, `postalCode` (Step 1)
+  - Importer : `import { AddressAutocomplete } from '@verone/ui'`
+  - Remplacer les 3 inputs par :
+    ```tsx
+    <AddressAutocomplete
+      value={formData.address}
+      label="Adresse de livraison"
+      placeholder="Rechercher une adresse..."
+      onSelect={(addr) => {
+        setFormData(prev => ({
+          ...prev,
+          address: addr.streetAddress,
+          city: addr.city,
+          postalCode: addr.postalCode,
+          shippingLatitude: addr.latitude,
+          shippingLongitude: addr.longitude,
+        }));
+      }}
+    />
+    ```
+  - Ajouter champs `shippingLatitude`, `shippingLongitude` au formulaire
+  - Ajouter bouton "Saisir manuellement" en fallback :
+    ```tsx
+    {!manualMode ? (
+      <AddressAutocomplete ... />
+    ) : (
+      <div>
+        <Input placeholder="Adresse" {...} />
+        <Input placeholder="Code postal" {...} />
+        <Input placeholder="Ville" {...} />
+      </div>
+    )}
+    <button onClick={() => setManualMode(!manualMode)}>
+      {manualMode ? 'Utiliser l\'autocomplete' : 'Saisir manuellement'}
+    </button>
+    ```
+
+- [ ] **LM-ADDR-001-4** : Remplacer adresse de facturation (Step 3)
+  - Localiser les inputs : `billingAddress`, `billingCity`, `billingPostalCode` (Step 3)
+  - Même logique que pour livraison
+  - Ajouter `billingLatitude`, `billingLongitude`
+  - Ajouter toggle "Identique à l'adresse de livraison" :
+    ```tsx
+    <Checkbox
+      checked={sameBillingAddress}
+      onCheckedChange={(checked) => {
+        setSameBillingAddress(checked);
+        if (checked) {
+          setFormData(prev => ({
+            ...prev,
+            billingAddress: prev.address,
+            billingCity: prev.city,
+            billingPostalCode: prev.postalCode,
+            billingLatitude: prev.shippingLatitude,
+            billingLongitude: prev.shippingLongitude,
+          }));
+        }
+      }}
+    >
+      Identique à l'adresse de livraison
+    </Checkbox>
+    ```
+
+- [ ] **LM-ADDR-001-5** : Adapter le hook de soumission
+  - Fichier : `apps/linkme/src/lib/hooks/use-create-order.ts` (si existe)
+  - Ou directement dans CreateOrderModal si soumission inline
+  - Inclure `shippingLatitude`, `shippingLongitude`, `billingLatitude`, `billingLongitude` dans payload
+  - Vérifier que RPC `create_affiliate_order` accepte ces champs (ou les ignorer si pas encore en DB)
+
+### Phase 3 : OrderFormUnified (Formulaire public - PRIORITÉ HAUTE)
+
+**Fichier** : `apps/linkme/src/components/OrderFormUnified.tsx`
+
+- [ ] **LM-ADDR-001-6** : Remplacer adresse restaurant (Step 1)
+  - Section : "Nouveau restaurant"
+  - Localiser inputs : `newRestaurant.address`, `newRestaurant.city`, `newRestaurant.postalCode`
+  - Ajouter choix explicite France/International :
+    ```tsx
+    <Select
+      value={newRestaurant.country}
+      onValueChange={(value) => setNewRestaurant(prev => ({ ...prev, country: value }))}
+    >
+      <SelectItem value="FR">France</SelectItem>
+      <SelectItem value="OTHER">Hors France</SelectItem>
+    </Select>
+    ```
+  - Remplacer par AddressAutocomplete avec prop `forceInternational` :
+    ```tsx
+    <AddressAutocomplete
+      value={newRestaurant.address}
+      label="Adresse du restaurant"
+      placeholder="Rechercher une adresse..."
+      forceInternational={newRestaurant.country !== 'FR'}
+      onSelect={(addr) => {
+        setNewRestaurant(prev => ({
+          ...prev,
+          address: addr.streetAddress,
+          city: addr.city,
+          postalCode: addr.postalCode,
+          countryCode: addr.countryCode,
+          country: addr.country,
+          latitude: addr.latitude,
+          longitude: addr.longitude,
+        }));
+      }}
+    />
+    ```
+  - Ajouter fallback "Saisir manuellement"
+
+- [ ] **LM-ADDR-001-7** : Remplacer adresse de facturation (Step 3)
+  - Section : "Facturation"
+  - Localiser inputs : `billing.address`, `billing.city`, `billing.postalCode`
+  - Même logique que Step 1
+  - Ajouter toggle "Identique à l'adresse du restaurant"
+  - Stocker `billing.latitude`, `billing.longitude`
+
+- [ ] **LM-ADDR-001-8** : Adapter le hook use-submit-unified-order
+  - Fichier : `apps/linkme/src/lib/hooks/use-submit-unified-order.ts`
+  - Inclure latitude/longitude dans payload `p_organisation` (ligne ~150)
+  - Inclure latitude/longitude dans payload `p_billing` (si applicable)
+  - Vérifier que RPC `create_public_linkme_order` accepte ces champs
+
+### Phase 4 : Migrations base de données (si nécessaire)
+
+- [ ] **LM-ADDR-001-9** : Vérifier colonnes organisations
+  - Vérifier si `organisations` a déjà `latitude`, `longitude`, `country_code`
+  - Si non, créer migration :
+    ```sql
+    -- supabase/migrations/YYYYMMDD_XXX_add_geocoding_to_organisations.sql
+    ALTER TABLE organisations
+      ADD COLUMN IF NOT EXISTS latitude NUMERIC(10, 7),
+      ADD COLUMN IF NOT EXISTS longitude NUMERIC(10, 7),
+      ADD COLUMN IF NOT EXISTS country_code VARCHAR(2) DEFAULT 'FR';
+
+    CREATE INDEX IF NOT EXISTS idx_organisations_coords
+      ON organisations(latitude, longitude)
+      WHERE latitude IS NOT NULL AND longitude IS NOT NULL;
+    ```
+  - Appliquer : `source .mcp.env && psql "$DATABASE_URL" -f supabase/migrations/YYYYMMDD_XXX_add_geocoding_to_organisations.sql`
+
+- [ ] **LM-ADDR-001-10** : Vérifier colonnes sales_order_linkme_details
+  - Vérifier si table a déjà colonnes géocodage pour livraison/facturation
+  - Si non, créer migration :
+    ```sql
+    ALTER TABLE sales_order_linkme_details
+      ADD COLUMN IF NOT EXISTS shipping_latitude NUMERIC(10, 7),
+      ADD COLUMN IF NOT EXISTS shipping_longitude NUMERIC(10, 7),
+      ADD COLUMN IF NOT EXISTS billing_latitude NUMERIC(10, 7),
+      ADD COLUMN IF NOT EXISTS billing_longitude NUMERIC(10, 7);
+    ```
+  - Appliquer migration
+
+- [ ] **LM-ADDR-001-11** : Adapter RPC create_public_linkme_order
+  - Fichier : `supabase/migrations/20260111_002_simplify_ownership_type_rpc.sql` (ou créer nouveau)
+  - Ajouter paramètres latitude/longitude à la fonction :
+    ```sql
+    CREATE OR REPLACE FUNCTION create_public_linkme_order(
+      ...
+      p_organisation jsonb,  -- Ajouter latitude, longitude
+      p_billing jsonb        -- Ajouter latitude, longitude
+    )
+    ```
+  - Modifier INSERT organisations pour stocker latitude/longitude
+  - Modifier INSERT sales_order_linkme_details pour stocker shipping/billing lat/lng
+
+### Phase 5 : Autres formulaires (Priorité moyenne)
+
+- [ ] **LM-ADDR-001-12** : Auditer CustomerFormModal
+  - Fichier : `packages/@verone/customers/src/components/modals/CustomerFormModal.tsx`
+  - Vérifier si adresse présente
+  - Si oui, remplacer par AddressAutocomplete
+
+- [ ] **LM-ADDR-001-13** : Auditer EnseigneStepper
+  - Fichier : `apps/linkme/src/components/checkout/EnseigneStepper.tsx`
+  - Vérifier si encore utilisé (probablement obsolète)
+  - Si utilisé, remplacer inputs adresse par AddressAutocomplete
+
+### Phase 6 : Tests et validation
+
+- [ ] **LM-ADDR-001-14** : Tester CreateOrderModal
+  - Ouvrir modal "Nouvelle vente"
+  - Step 1 : Taper "123 rue" → autocomplete affiche suggestions
+  - Sélectionner adresse → champs city/postalCode auto-remplis
+  - Tester toggle "Saisir manuellement"
+  - Step 3 : Tester autocomplete facturation
+  - Tester checkbox "Identique livraison"
+  - Soumettre commande → vérifier latitude/longitude en DB
+
+- [ ] **LM-ADDR-001-15** : Tester OrderFormUnified (public)
+  - Ouvrir une sélection publique
+  - Ajouter produits au panier
+  - Step 1 : Sélectionner "Nouveau restaurant"
+  - Choisir "France" → taper adresse → autocomplete BAN
+  - Choisir "Hors France" → taper adresse → autocomplete Geoapify
+  - Step 3 : Tester autocomplete facturation
+  - Soumettre → vérifier coordonnées GPS en DB
+
+- [ ] **LM-ADDR-001-16** : Tester affichage sur carte
+  - Si organisations ont latitude/longitude
+  - Vérifier que MapLibreMapView affiche correctement les nouveaux restaurants
+  - Page `/organisations` (LinkMe) → onglet Carte
+  - Vérifier clustering et popups
+
+- [ ] **LM-ADDR-001-17** : Vérifier console et erreurs
+  - Console Zero : aucune erreur BAN ou Geoapify
+  - Si GEOAPIFY_API_KEY manquante → warning explicite, pas d'erreur
+  - Autocomplete graceful degradation si API down
+
+### Notes techniques
+
+**Gestion des erreurs API** :
+- Si BAN échoue → fallback automatique sur Geoapify (déjà implémenté dans AddressAutocomplete)
+- Si Geoapify échoue (pas de clé) → afficher message clair : "Autocomplete international indisponible. Veuillez saisir manuellement."
+- Toujours offrir option "Saisir manuellement"
+
+**Performance** :
+- Debounce 300ms déjà implémenté
+- Pas de sur-requêtes API
+- Cache navigateur pour suggestions récurrentes
+
+**UX** :
+- Label clair : "Adresse complète" ou "Rechercher une adresse..."
+- Placeholder explicite : "Ex: 123 rue de Rivoli, Paris"
+- Feedback visuel : loading spinner pendant recherche
+- Navigation clavier : ArrowUp/Down, Enter, Escape
+
+**SEO et accessibilité** :
+- Labels explicites pour screen readers
+- Role="combobox" déjà implémenté
+- Aria attributes corrects
+
+### Dépendances
+
+**Packages** :
+- ✅ `@verone/ui` (AddressAutocomplete déjà présent)
+- ✅ Pas de nouvelle dépendance npm
+
+**API externes** :
+- ✅ BAN (adresse.data.gouv.fr) - Gratuit, pas de clé requise
+- ⚠️ Geoapify - Clé API requise (gratuit jusqu'à 3000 req/jour)
+
+**Base de données** :
+- Migration organisations (latitude, longitude, country_code)
+- Migration sales_order_linkme_details (shipping_latitude, shipping_longitude, billing_latitude, billing_longitude)
+- Modification RPC create_public_linkme_order
+
+---
+
+## Audit flux complet LM-ORD-005 (2026-01-14)
+
+**Objectif** : Tracer le parcours des données depuis le formulaire de commande publique jusqu'aux tables DB, et identifier comment automatiser la création de contacts.
+
+### Flux de soumission actuel
+
+**Frontend** : `apps/linkme/src/app/(public)/s/[id]/page.tsx`
+↓
+**Hook** : `apps/linkme/src/lib/hooks/use-submit-unified-order.ts`
+↓
+**RPC Supabase** : `create_public_linkme_order()` (migration `20260111_002_simplify_ownership_type_rpc.sql`)
+↓
+**Tables DB** : 4 tables impactées
+
+### Tables DB créées/modifiées
+
+#### 1. `organisations` (table restaurant client)
+
+**Nouveau restaurant** :
+```sql
+INSERT INTO organisations (
+  trade_name,          -- "Pokawa Bastille"
+  legal_name,          -- "SAS Pokawa Bastille" ou trade_name
+  city, postal_code, address_line1,
+  country,             -- 'FR'
+  email,               -- Email du demandeur ← ❌ PAS le propriétaire!
+  approval_status,     -- 'pending_validation' ← Attend validation admin
+  enseigne_id,         -- Pokawa
+  type,                -- 'customer'
+  ownership_type       -- 'succursale' | 'franchise'
+)
+```
+
+**❌ PROBLÈME** : `organisations.email` = email demandeur, mais AUCUN contact créé dans table contacts
+
+#### 2. `sales_orders` (table commande principale)
+
+```sql
+INSERT INTO sales_orders (
+  order_number,              -- "LNK-260114-A3F2E1"
+  customer_id,               -- → organisations.id
+  customer_type,             -- 'organization'
+  channel_id,                -- LINKME_CHANNEL_ID
+  status,                    -- 'draft'
+  pending_admin_validation,  -- TRUE ← Attend approbation
+  linkme_selection_id,
+  total_ht, total_ttc
+)
+```
+
+**État** : `draft` + `pending_admin_validation = TRUE`
+→ Apparaît dans onglet "En approbation" back-office
+
+#### 3. `sales_order_items` (lignes commande)
+
+```sql
+INSERT INTO sales_order_items (
+  sales_order_id,
+  product_id,
+  quantity,
+  unit_price_ht,
+  tax_rate,                 -- 0.20
+  linkme_selection_item_id
+)
+```
+
+#### 4. `sales_order_linkme_details` ← **TABLE CLÉ**
+
+**TOUTES les infos du formulaire** :
+```sql
+INSERT INTO sales_order_linkme_details (
+  sales_order_id,
+
+  -- DEMANDEUR (Step 1)
+  requester_type,          -- 'responsable_enseigne'
+  requester_name,          -- "Jean Dupont"
+  requester_email,         -- "jean@example.com"
+  requester_phone,         -- "0612345678"
+  requester_position,
+
+  -- RESTAURANT
+  is_new_restaurant,       -- true/false
+
+  -- PROPRIÉTAIRE (Step 2)
+  owner_type,              -- 'succursale' | 'franchise'
+  owner_contact_same_as_requester,  -- true/false
+  owner_name,              -- "Marie Martin"
+  owner_email,             -- "marie@example.com"
+  owner_phone,             -- "0698765432"
+
+  -- FACTURATION (Step 3)
+  billing_contact_source,  -- 'step1' | 'step2' | 'custom'
+  delivery_terms_accepted,
+  desired_delivery_date,
+  mall_form_required
+)
+```
+
+**✅ Toutes les données du formulaire sont stockées ici**
+**❌ MAIS elles restent "prisonnières" de la commande !**
+
+### Cartographie des données
+
+| Donnée | Table | Réutilisable ? | Problème |
+|--------|-------|----------------|----------|
+| **Restaurant** | `organisations` | ✅ Oui | - |
+| **Email restaurant** | `organisations.email` | ⚠️ Partiel | C'est l'email du demandeur, pas propriétaire |
+| **Contact demandeur** | `sales_order_linkme_details` | ❌ Non | Prisonnier de la commande |
+| **Contact propriétaire** | `sales_order_linkme_details` | ❌ Non | Prisonnier de la commande |
+| **Contact facturation** | `sales_order_linkme_details` | ❌ Non | Prisonnier de la commande |
+| **Produits** | `sales_order_items` | ✅ Oui | - |
+
+### Le problème : Pas de création de contacts
+
+**Scénario actuel** :
+1. Client passe commande publique → Remplit propriétaire (nom, email, téléphone)
+2. Données stockées dans `sales_order_linkme_details`
+3. Admin valide commande → Restaurant créé dans `organisations`
+4. **❌ Aucun contact créé** dans une table `organisation_contacts`
+5. **Conséquence** : Pour la prochaine commande → **TOUT RE-SAISIR** !
+
+**Ce qui manque** :
+- Trigger pour créer automatiquement contacts après validation
+- Table `organisation_contacts` (à vérifier si existe)
+
+### Données manquantes pour facturation custom
+
+**Actuellement**, le contact de facturation custom **n'est PAS stocké** !
+
+Dans `sales_order_linkme_details`, il manque :
+- `billing_name` (si `billing_contact_source = 'custom'`)
+- `billing_email` (si `billing_contact_source = 'custom'`)
+- `billing_phone` (si `billing_contact_source = 'custom'`)
+
+Seul `billing_contact_source` est stocké, mais pas les coordonnées du contact facturation personnalisé.
+
+### Solution proposée : Trigger auto-création contacts
+
+**Principe** : Après validation de la commande, créer automatiquement les contacts
+
+```sql
+CREATE OR REPLACE FUNCTION auto_create_contacts_from_order()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_details RECORD;
+BEGIN
+  -- Seulement si commande validée ET nouveau restaurant
+  IF NEW.status = 'validated' AND OLD.status != 'validated' THEN
+
+    SELECT * INTO v_details
+    FROM sales_order_linkme_details
+    WHERE sales_order_id = NEW.id;
+
+    IF v_details.is_new_restaurant = TRUE THEN
+
+      -- Créer contact PROPRIÉTAIRE (si différent du demandeur)
+      IF v_details.owner_contact_same_as_requester = FALSE THEN
+        INSERT INTO organisation_contacts (
+          organisation_id,
+          first_name,
+          last_name,
+          email,
+          phone,
+          is_primary,
+          role
+        ) VALUES (
+          NEW.customer_id,
+          SPLIT_PART(v_details.owner_name, ' ', 1),  -- Prénom
+          SPLIT_PART(v_details.owner_name, ' ', 2),  -- Nom
+          v_details.owner_email,
+          v_details.owner_phone,
+          TRUE,  -- Contact principal
+          CASE
+            WHEN v_details.owner_type = 'franchise' THEN 'franchisee'
+            ELSE 'owner'
+          END
+        );
+      END IF;
+
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trigger_auto_create_contacts
+  AFTER UPDATE ON sales_orders
+  FOR EACH ROW
+  EXECUTE FUNCTION auto_create_contacts_from_order();
+```
+
+### Plan d'action recommandé
+
+**Phase 1** : Vérifier schéma DB
+- [ ] Vérifier si table `organisation_contacts` existe dans Supabase
+- [ ] Documenter structure exacte (colonnes, types, contraintes)
+- [ ] Identifier si contacts actuellement gérés autrement
+
+**Phase 2** : Enrichir sales_order_linkme_details (si nécessaire)
+- [ ] Ajouter colonnes `billing_name`, `billing_email`, `billing_phone` pour contact facturation custom
+- [ ] Créer migration SQL
+- [ ] Mettre à jour RPC `create_public_linkme_order`
+- [ ] Mettre à jour hook frontend `useSubmitUnifiedOrder`
+
+**Phase 3** : Créer trigger auto-création contacts
+- [ ] Créer fonction + trigger `auto_create_contacts_from_order()`
+- [ ] Logique intelligente : éviter doublons (vérifier si email existe déjà)
+- [ ] Parser nom complet en prénom/nom (ou stocker séparément)
+- [ ] Gérer cas owner_contact_same_as_requester = true
+
+**Phase 4** : Intégration avec LM-ORD-004
+- [ ] Hook `useOrganisationContacts` pourra charger ces contacts auto-créés
+- [ ] Pré-remplissage automatique pour commandes suivantes
+- [ ] Workflow complet bouclé !
+
+**Phase 5** : Tests
+- [ ] Passer commande publique (nouveau restaurant)
+- [ ] Valider dans back-office
+- [ ] **Vérifier** : Contact créé automatiquement dans `organisation_contacts`
+- [ ] Passer 2e commande depuis affilié → **Vérifier** : Coordonnées pré-remplies
+
+### Bénéfices
+
+✅ **Plus de re-saisie** : Contacts créés automatiquement
+✅ **Workflow unifié** : Même logique pour commandes auth et publiques
+✅ **Base de données CRM** : Contacts réutilisables pour marketing, support, etc.
+✅ **Historique** : Qui a créé le restaurant, quand, comment
 
 ---
 
