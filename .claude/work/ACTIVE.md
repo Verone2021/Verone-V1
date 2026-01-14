@@ -100,7 +100,236 @@
 
 ---
 
-## TASK: [NO-TASK] — Problème affichage LinkMe (IDENTIFIÉ)
+## TASK: [NO-TASK] — site-internet/.env.local OBSOLÈTE + Processus READ1 illégitimes (CRITIQUE)
+
+### Contexte
+L'utilisateur essaie de lancer `pnpm dev` et obtient des erreurs `EADDRINUSE` sur les ports 3001, 3002, et back-office démarre sur port 3003 au lieu de 3000.
+
+### Steps to Reproduce
+1. Utilisateur lance `pnpm dev` dans son terminal
+2. Observe les erreurs :
+   ```
+   ⨯ Failed to start server
+   Error: listen EADDRINUSE: address already in use :::3002
+   ⨯ Failed to start server
+   Error: listen EADDRINUSE: address already in use :::3001
+   ⚠ Port 3000 is in use by process 69603, using available port 3003 instead.
+   ```
+
+### Expected vs Actual
+- **Expected**: 3 apps démarrent sur ports 3000, 3001, 3002
+- **Actual**: Erreurs EADDRINUSE, back-office démarre sur 3003
+
+### Evidence
+```bash
+$ ls -lah apps/*/\.env.local
+-rw-r--r--@ 1 romeodossantos staff 8.5K Jan 14 10:36 apps/back-office/.env.local
+-rw-r--r--@ 1 romeodossantos staff 8.0K Jan 14 10:36 apps/linkme/.env.local
+-rw-r--r--@ 1 romeodossantos staff 7.1K Nov  9 07:14 apps/site-internet/.env.local
+```
+
+### Causes Root (CONFIRMÉES)
+
+**1. Session READ1 a lancé pnpm dev en arrière-plan (VIOLATION RÈGLES)**
+- ❌ Mode READ1 ne doit **JAMAIS** lancer de serveurs
+- ❌ Mode READ1 ne doit écrire QUE dans ACTIVE.md
+- ✅ Processus tués maintenant
+
+**2. site-internet/.env.local OBSOLÈTE depuis 2 MOIS**
+- ⚠️ Dernière modif : **9 novembre 2024** (2 mois)
+- ✅ back-office/.env.local : Modifié aujourd'hui 10h36
+- ✅ linkme/.env.local : Modifié aujourd'hui 10h36
+- ❌ site-internet manque : variables récentes (Geoapify, Sentry DSN, Resend)
+
+### Impact
+
+🟢 **RÉSOLU** : Processus READ1 illégitimes arrêtés
+- ✅ Ports 3000, 3001, 3002 maintenant libres
+- ✅ L'utilisateur peut lancer `pnpm dev` normalement
+
+⚠️ **MEDIUM** : site-internet/.env.local obsolète
+- Manque variables ajoutées depuis novembre : Geoapify, Sentry DSN, Resend
+- Fonctionnalités potentiellement cassées (géolocalisation, monitoring, emails)
+
+### Fix Proposé (haut niveau)
+
+**Pour site-internet/.env.local** :
+- Copier depuis back-office/.env.local (modifié aujourd'hui)
+- Adapter les variables spécifiques au site-internet si besoin
+- Ou copier depuis linkme/.env.local (aussi modifié aujourd'hui)
+
+**Commande** :
+```bash
+# Backup de l'ancien
+cp apps/site-internet/.env.local apps/site-internet/.env.local.backup-obsolete
+
+# Copier depuis back-office (base commune)
+cp apps/back-office/.env.local apps/site-internet/.env.local
+
+# Vérifier/adapter les variables spécifiques
+# nano apps/site-internet/.env.local
+```
+
+### Acceptance Criteria
+- [ ] ✅ Processus READ1 arrêtés (FAIT)
+- [ ] L'utilisateur peut lancer `pnpm dev` sans EADDRINUSE
+- [ ] site-internet/.env.local synchronisé avec variables récentes
+- [ ] site-internet fonctionne avec géolocalisation + Sentry
+
+---
+
+## TASK: [NO-TASK] — Configuration Sentry obsolète (WARNINGS)
+
+### Contexte
+Au démarrage des serveurs, warnings Sentry apparaissent pour back-office et linkme :
+```
+[@sentry/nextjs] Could not find `onRequestError` hook in instrumentation file
+[@sentry/nextjs] DEPRECATION WARNING: It is recommended renaming your `sentry.client.config.ts` file
+```
+
+### Steps to Reproduce
+1. Lancer `pnpm dev`
+2. Observer les warnings Sentry au démarrage
+
+### Expected vs Actual
+- **Expected**: Configuration Sentry Next.js 15 + Turbopack compatible
+- **Actual**: Configuration obsolète (Next.js 14 style)
+
+### Evidence
+
+**Fichiers actuels** :
+```
+apps/back-office/instrumentation.ts         (manque onRequestError)
+apps/back-office/sentry.client.config.ts    (ancien format)
+apps/back-office/sentry.server.config.ts
+apps/back-office/sentry.edge.config.ts
+
+apps/linkme/instrumentation.ts              (manque onRequestError)
+apps/linkme/sentry.client.config.ts         (ancien format)
+apps/linkme/sentry.server.config.ts
+apps/linkme/sentry.edge.config.ts
+```
+
+### Causes Root
+
+**1. Hook `onRequestError` manquant**
+- Next.js 15 RSC (React Server Components) nécessite `onRequestError` pour capturer les erreurs
+- Fichier `instrumentation.ts` n'exporte que `register()`
+- Devrait aussi exporter `onRequestError()`
+
+**2. Configuration client obsolète**
+- `sentry.client.config.ts` = ancien format (Next.js 14)
+- Avec Turbopack (Next.js 15), doit migrer vers `instrumentation-client.ts`
+- Turbopack ne charge plus `sentry.client.config.ts`
+
+### Impact
+
+🟡 **MEDIUM - Fonctionnel mais pas optimal**
+- ✅ Sentry fonctionne (erreurs remontées)
+- ⚠️ Erreurs RSC non capturées (onRequestError manquant)
+- ⚠️ Incompatible Turbopack futur (deprecated config)
+- ⚠️ Warnings polluent les logs
+
+### Fix Proposé (Best Practices Sentry + Next.js 15)
+
+**Pour chaque app (back-office, linkme)** :
+
+**STEP 1** : Ajouter `onRequestError` dans `instrumentation.ts`
+```typescript
+// apps/back-office/instrumentation.ts
+import * as Sentry from '@sentry/nextjs';
+
+export async function register() {
+  if (process.env.NEXT_RUNTIME === 'nodejs') {
+    await import('./sentry.server.config');
+  }
+  if (process.env.NEXT_RUNTIME === 'edge') {
+    await import('./sentry.edge.config');
+  }
+}
+
+// ✅ AJOUTER cette fonction pour capturer erreurs RSC
+export async function onRequestError(
+  err: unknown,
+  request: { path: string; method: string; headers: Headers }
+) {
+  Sentry.captureException(err, {
+    contexts: {
+      nextjs: {
+        request: {
+          path: request.path,
+          method: request.method,
+        },
+      },
+    },
+  });
+}
+```
+
+**STEP 2** : Créer `instrumentation-client.ts` (nouveau format)
+```typescript
+// apps/back-office/instrumentation-client.ts
+import * as Sentry from '@sentry/nextjs';
+
+Sentry.init({
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  tracesSampleRate: 0.1,
+  replaysSessionSampleRate: 0.1,
+  replaysOnErrorSampleRate: 1.0,
+  integrations: [
+    Sentry.replayIntegration({
+      maskAllText: false,
+      blockAllMedia: false,
+    }),
+    Sentry.feedbackIntegration({
+      colorScheme: 'system',
+      buttonLabel: 'Signaler un bug',
+      submitButtonLabel: 'Envoyer',
+      formTitle: 'Signaler un problème',
+      messagePlaceholder: 'Décrivez le problème rencontré...',
+      successMessageText: 'Merci pour votre retour !',
+    }),
+  ],
+  ignoreErrors: [
+    'ResizeObserver loop',
+    'ResizeObserver loop limit exceeded',
+    'Network request failed',
+    /Loading chunk \d+ failed/,
+    'ChunkLoadError',
+    'NotAllowedError',
+  ],
+  environment: process.env.NEXT_PUBLIC_VERCEL_ENV || 'development',
+  enabled: process.env.NODE_ENV === 'production',
+});
+```
+
+**STEP 3** : Supprimer ancien `sentry.client.config.ts`
+```bash
+rm apps/back-office/sentry.client.config.ts
+rm apps/linkme/sentry.client.config.ts
+```
+
+**STEP 4** : Répéter pour linkme
+
+### Apps concernées
+- ❌ back-office : Warnings présents
+- ❌ linkme : Warnings présents
+- ⚠️ site-internet : Pas de config Sentry (à vérifier)
+
+### Acceptance Criteria
+- [x] `onRequestError` ajouté dans instrumentation.ts (back-office + linkme) ✅ (8184e314)
+- [x] `instrumentation-client.ts` créé (back-office + linkme) ✅ (8184e314)
+- [x] `sentry.client.config.ts` supprimé (back-office + linkme) ✅ (8184e314)
+- [ ] Redémarrer serveurs : 0 warnings Sentry (À tester par utilisateur)
+- [ ] Tester erreur RSC → remontée dans Sentry (À tester en production)
+
+### Temps Estimé
+- **Modification** : 10 minutes (2 apps × 3 steps)
+- **Tests** : 5 minutes
+
+---
+
+## TASK: [NO-TASK] — Problème affichage LinkMe (IDENTIFIÉ - SECONDAIRE)
 
 ### Contexte
 Le dashboard LinkMe affiche un **spinner qui tourne indéfiniment**. La page ne charge jamais son contenu. Les serveurs démarrent correctement, mais l'application est inutilisable.
