@@ -8,10 +8,13 @@ import { NextResponse } from 'next/server';
 
 import { Resend } from 'resend';
 
-function getResendClient(): Resend {
+function getResendClient(): Resend | null {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
-    throw new Error('RESEND_API_KEY environment variable is not set');
+    console.warn(
+      '[API Form Confirmation] RESEND_API_KEY not configured - emails disabled'
+    );
+    return null;
   }
   return new Resend(apiKey);
 }
@@ -47,6 +50,18 @@ export async function POST(request: NextRequest) {
     }
 
     const resendClient = getResendClient();
+
+    // If Resend is not configured, return early with success (emails disabled)
+    if (!resendClient) {
+      console.log(
+        `[API Form Confirmation] Skipping email to ${email} - Resend not configured`
+      );
+      return NextResponse.json({
+        success: true,
+        emailDisabled: true,
+        message: 'Email notifications are currently disabled',
+      });
+    }
 
     // Build confirmation email based on form type
     const subject = `Confirmation de votre ${formTypeLabel.toLowerCase()}`;
