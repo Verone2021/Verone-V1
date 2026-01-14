@@ -11,7 +11,8 @@
 export { OrganisationCard } from './OrganisationCard';
 export { OrganisationDetailModal } from './OrganisationDetailModal';
 export { OrganisationDetailSheet } from './OrganisationDetailSheet';
-export { EditOrganisationModal } from './EditOrganisationModal';
+export { OrganisationActionsBar } from './OrganisationActionsBar';
+export { OrganisationFilterTabs } from './OrganisationFilterTabs';
 
 // Quick Edit Modals
 export { QuickEditShippingAddressModal } from './QuickEditShippingAddressModal';

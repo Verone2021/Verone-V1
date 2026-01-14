@@ -231,14 +231,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       } catch (error) {
         console.error('[AuthContext] initSession ERROR:', error);
       } finally {
-        // Toujours setInitializing(false), même si cancelled
-        if (!cancelled) {
-          if (DEBUG)
-            console.log(
-              '[AuthContext] initSession DONE - setInitializing(false)'
-            );
-          setInitializing(false);
-        }
+        // TOUJOURS setInitializing(false) - critical pour sortir du loading
+        if (DEBUG)
+          console.log(
+            '[AuthContext] initSession DONE - setInitializing(false)'
+          );
+        setInitializing(false);
       }
     };
 

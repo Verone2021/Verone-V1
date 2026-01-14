@@ -15,18 +15,16 @@ import { useEffect, useState, useMemo } from 'react';
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { ConfirmDialog } from '@verone/ui';
 import {
   Building2,
   ArrowLeft,
   Loader2,
-  Plus,
   Search,
   ChevronLeft,
   ChevronRight,
-  Map,
   Store,
   Users,
 } from 'lucide-react';
@@ -34,7 +32,8 @@ import {
 import {
   OrganisationCard,
   OrganisationDetailSheet,
-  EditOrganisationModal,
+  OrganisationActionsBar,
+  OrganisationFilterTabs,
   QuickEditShippingAddressModal,
   QuickEditOwnershipTypeModal,
 } from '../../../components/organisations';
@@ -69,6 +68,7 @@ const ALLOWED_ROLES = ['enseigne_admin', 'organisation_admin'];
 
 export default function OrganisationsPage(): JSX.Element | null {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, linkMeRole, loading, initializing } = useAuth();
   const { data: affiliate, isLoading: affiliateLoading } = useUserAffiliate();
 
@@ -90,15 +90,12 @@ export default function OrganisationsPage(): JSX.Element | null {
   const [activeTab, setActiveTab] = useState<
     'all' | 'succursale' | 'franchise' | 'incomplete' | 'map'
   >('all');
-  const [selectedOrg, setSelectedOrg] = useState<EnseigneOrganisation | null>(
-    null
-  );
   const [detailSheetOrgId, setDetailSheetOrgId] = useState<string | null>(null);
-  const [editModalOpen, setEditModalOpen] = useState(false);
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const [orgToArchive, setOrgToArchive] = useState<EnseigneOrganisation | null>(
     null
   );
+  const [highlightedOrgId, setHighlightedOrgId] = useState<string | null>(null);
 
   // State pour detail sheet depuis la carte (mode view)
   const [mapDetailSheetOrgId, setMapDetailSheetOrgId] = useState<string | null>(
@@ -110,6 +107,36 @@ export default function OrganisationsPage(): JSX.Element | null {
     useState<EnseigneOrganisation | null>(null);
   const [ownershipTypeModalOrg, setOwnershipTypeModalOrg] =
     useState<EnseigneOrganisation | null>(null);
+
+  // Gérer le paramètre ?highlight=org-id pour ouvrir automatiquement le DetailSheet
+  useEffect(() => {
+    const highlightParam = searchParams?.get('highlight');
+    if (highlightParam && organisations) {
+      // Vérifier que l'organisation existe
+      const orgExists = organisations.some(org => org.id === highlightParam);
+      if (orgExists) {
+        setDetailSheetOrgId(highlightParam);
+        setHighlightedOrgId(highlightParam);
+
+        // Nettoyer l'URL après ouverture (sans recharger la page)
+        const newUrl =
+          window.location.pathname +
+          window.location.search
+            .replace(/[?&]highlight=[^&]+/, '')
+            .replace(/^&/, '?');
+        router.replace(
+          newUrl === window.location.pathname + '?'
+            ? window.location.pathname
+            : newUrl
+        );
+
+        // Retirer le highlight visuel après 3 secondes
+        setTimeout(() => {
+          setHighlightedOrgId(null);
+        }, 3000);
+      }
+    }
+  }, [searchParams, organisations, router]);
 
   // Rediriger si non connecté
   useEffect(() => {
@@ -182,22 +209,21 @@ export default function OrganisationsPage(): JSX.Element | null {
   }, [filteredOrgs, currentPage]);
 
   // Handlers
-  const handleView = (org: EnseigneOrganisation) => {
-    setSelectedOrg(org);
+  const handleView = (org: EnseigneOrganisation): void => {
     setDetailSheetOrgId(org.id);
   };
 
-  const handleEdit = (org: EnseigneOrganisation) => {
-    setSelectedOrg(org);
-    setEditModalOpen(true);
+  const handleEdit = (org: EnseigneOrganisation): void => {
+    // Ouvrir le DetailSheet qui gère maintenant l'édition inline
+    setDetailSheetOrgId(org.id);
   };
 
-  const handleArchiveClick = (org: EnseigneOrganisation) => {
+  const handleArchiveClick = (org: EnseigneOrganisation): void => {
     setOrgToArchive(org);
     setArchiveDialogOpen(true);
   };
 
-  const handleArchiveConfirm = () => {
+  const handleArchiveConfirm = (): void => {
     if (orgToArchive) {
       archiveOrg(orgToArchive.id);
       setArchiveDialogOpen(false);
@@ -205,7 +231,7 @@ export default function OrganisationsPage(): JSX.Element | null {
     }
   };
 
-  const goToPage = (page: number) => {
+  const goToPage = (page: number): void => {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -239,7 +265,7 @@ export default function OrganisationsPage(): JSX.Element | null {
             Retour au dashboard
           </Link>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <div>
               <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                 <Building2 className="h-6 w-6 text-linkme-turquoise" />
@@ -260,79 +286,22 @@ export default function OrganisationsPage(): JSX.Element | null {
               </p>
             </div>
 
-            <button
-              onClick={() => {
+            {/* Barre d'actions */}
+            <OrganisationActionsBar
+              onNewOrganisation={() => {
                 // TODO: Modal d'ajout
               }}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm bg-linkme-turquoise text-white rounded-lg hover:bg-linkme-turquoise/90 transition-colors"
-            >
-              <Plus className="h-4 w-4" />
-              Ajouter
-            </button>
+              disabled={isLoading}
+            />
           </div>
         </div>
 
         {/* Onglets de filtrage par type */}
-        <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-2">
-          <button
-            onClick={() => setActiveTab('all')}
-            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
-              activeTab === 'all'
-                ? 'bg-linkme-turquoise text-white'
-                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            Tous
-            <span className="ml-1.5 opacity-70">({tabStats.all})</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('succursale')}
-            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
-              activeTab === 'succursale'
-                ? 'bg-blue-500 text-white'
-                : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
-            }`}
-          >
-            Propres
-            <span className="ml-1.5 opacity-70">({tabStats.succursale})</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('franchise')}
-            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
-              activeTab === 'franchise'
-                ? 'bg-amber-500 text-white'
-                : 'bg-amber-50 text-amber-700 hover:bg-amber-100'
-            }`}
-          >
-            Franchises
-            <span className="ml-1.5 opacity-70">({tabStats.franchise})</span>
-          </button>
-          {tabStats.incomplete > 0 && (
-            <button
-              onClick={() => setActiveTab('incomplete')}
-              className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
-                activeTab === 'incomplete'
-                  ? 'bg-orange-500 text-white'
-                  : 'bg-orange-50 text-orange-700 hover:bg-orange-100'
-              }`}
-            >
-              À compléter
-              <span className="ml-1.5 opacity-70">({tabStats.incomplete})</span>
-            </button>
-          )}
-          {/* Onglet Vue Carte */}
-          <button
-            onClick={() => setActiveTab('map')}
-            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5 ${
-              activeTab === 'map'
-                ? 'bg-green-500 text-white'
-                : 'bg-green-50 text-green-700 hover:bg-green-100'
-            }`}
-          >
-            <Map className="h-4 w-4" />
-            Vue Carte
-          </button>
-        </div>
+        <OrganisationFilterTabs
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          stats={tabStats}
+        />
 
         {/* Barre de recherche + info pagination */}
         <div className="flex items-center justify-between gap-4 mb-4">
@@ -487,18 +456,28 @@ export default function OrganisationsPage(): JSX.Element | null {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {paginatedOrgs.map(org => (
-                  <OrganisationCard
+                  <div
                     key={org.id}
-                    organisation={org}
-                    stats={statsMap?.[org.id]}
-                    onView={handleView}
-                    onEdit={handleEdit}
-                    onArchive={handleArchiveClick}
-                    isLoading={isArchiving}
-                    mode={activeTab === 'incomplete' ? 'incomplete' : 'normal'}
-                    onEditShippingAddress={setShippingAddressModalOrg}
-                    onEditOwnershipType={setOwnershipTypeModalOrg}
-                  />
+                    className={
+                      highlightedOrgId === org.id
+                        ? 'animate-pulse ring-4 ring-linkme-turquoise ring-opacity-50 rounded-xl'
+                        : ''
+                    }
+                  >
+                    <OrganisationCard
+                      organisation={org}
+                      stats={statsMap?.[org.id]}
+                      onView={handleView}
+                      onEdit={handleEdit}
+                      onArchive={handleArchiveClick}
+                      isLoading={isArchiving}
+                      mode={
+                        activeTab === 'incomplete' ? 'incomplete' : 'normal'
+                      }
+                      onEditShippingAddress={setShippingAddressModalOrg}
+                      onEditOwnershipType={setOwnershipTypeModalOrg}
+                    />
+                  </div>
                 ))}
               </div>
             )}
@@ -584,19 +563,12 @@ export default function OrganisationsPage(): JSX.Element | null {
         )}
       </div>
 
-      {/* Sheet de détail (mode edit) - depuis la liste */}
+      {/* Sheet de détail (mode edit) - depuis la liste - gère l'édition inline */}
       <OrganisationDetailSheet
         organisationId={detailSheetOrgId}
         open={!!detailSheetOrgId}
         onOpenChange={open => !open && setDetailSheetOrgId(null)}
         mode="edit"
-        onEdit={() => {
-          // Ouvrir le modal d'édition et fermer le sheet
-          if (selectedOrg) {
-            setEditModalOpen(true);
-            setDetailSheetOrgId(null);
-          }
-        }}
       />
 
       {/* Sheet de détail (mode view) - depuis la carte */}
@@ -605,13 +577,6 @@ export default function OrganisationsPage(): JSX.Element | null {
         open={!!mapDetailSheetOrgId}
         onOpenChange={open => !open && setMapDetailSheetOrgId(null)}
         mode="view"
-      />
-
-      {/* Modal d'édition */}
-      <EditOrganisationModal
-        organisation={selectedOrg}
-        open={editModalOpen}
-        onOpenChange={setEditModalOpen}
       />
 
       {/* Dialog de confirmation d'archivage */}

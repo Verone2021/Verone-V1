@@ -1,45 +1,119 @@
 # Plan Actif
 
 **Branche**: `fix/multi-bugs-2026-01`
-**Last sync**: 2026-01-14 (5f117ef4)
+**Last sync**: 2026-01-14 (8e482ddb)
 
-## 📋 Session 2026-01-14 (20:00-21:00) - Récapitulatif
+## 📋 Session 2026-01-14 (22:00-23:00) - LM-ORG-004 Complété
 
-### ✅ Corrections Réalisées
+### ✅ Nouveau : LM-ORG-004 — Refonte Gestion Organisations (3 Phases)
 
-**1. LM-AUTH-001 : Fix spinner infini LinkMe** (20658534)
-- Problème : Dashboard LinkMe bloqué sur spinner infini (React StrictMode)
-- Solution : Suppression pattern `initializedRef`, ajout pattern `cancelled`
-- Fichier : `apps/linkme/src/contexts/AuthContext.tsx`
-- Statut : ✅ CODE IMPLÉMENTÉ - Tests utilisateur requis
+**Statut** : ✅ TERMINÉ (type-check passed, 0 erreurs)
+**Commit** : À créer avec Task ID `[LM-ORG-004]`
+**Temps réel** : ~90 minutes
 
-**2. Configuration Sentry : Migration Next.js 15** (8184e314 + 125f3ee8)
-- Problème : Warnings Sentry au démarrage (onRequestError, deprecated config)
-- Solution :
-  - Ajout hook `onRequestError` dans `instrumentation.ts`
-  - Création `instrumentation-client.ts` (Turbopack compatible)
-  - Ajout hook `onRouterTransitionStart` pour navigation tracking
-  - Suppression `sentry.client.config.ts` (obsolète)
-- Fichiers : `apps/back-office/*`, `apps/linkme/*`
-- Statut : ✅ VALIDÉ PAR UTILISATEUR (0 warnings)
+#### Phase 1 : Refonte OrganisationDetailSheet → Édition Inline
 
-### 📊 Commits de la Session
+**Problème** : Modal séparée (EditOrganisationModal) = mauvaise UX, composant supplémentaire
+**Solution** : Édition inline directement dans OrganisationDetailSheet
 
+**Fichiers modifiés** :
+- `apps/linkme/src/components/organisations/OrganisationDetailSheet.tsx` (+150 lignes)
+  - Ajout state management (isEditing, formData, errors)
+  - Intégration AddressAutocomplete (BAN + Geoapify)
+  - Validation inline avec messages d'erreur
+  - Mutation Supabase pour sauvegarde
+  - Boutons Modifier/Enregistrer/Annuler dans header
+
+**Fichiers supprimés** :
+- `apps/linkme/src/components/organisations/EditOrganisationModal.tsx` (obsolète)
+
+**Pattern utilisé** : EditConsultationModal comme référence
+
+#### Phase 2 : Réorganisation UI (Séparation Actions/Filtres)
+
+**Problème** : Actions et filtres mélangés, hiérarchie visuelle confuse
+**Solution** : Composants séparés pour meilleure UX
+
+**Fichiers créés** :
+- `apps/linkme/src/components/organisations/OrganisationActionsBar.tsx` (40 lignes)
+  - Bouton "Nouvelle organisation"
+  - Justifié à droite, séparé des filtres
+- `apps/linkme/src/components/organisations/OrganisationFilterTabs.tsx` (110 lignes)
+  - Onglets : Tout / Succursales / Franchises / Incomplet / Vue Carte
+  - Badges avec compteurs dynamiques
+  - Icons lucide-react
+
+**Fichiers modifiés** :
+- `apps/linkme/src/app/(main)/organisations/page.tsx`
+  - Intégration OrganisationActionsBar + OrganisationFilterTabs
+  - Suppression code inline tabs
+- `apps/linkme/src/components/organisations/index.ts`
+  - Exports mis à jour
+
+#### Phase 3 : Fix Routing Notifications (Paramètre ?highlight)
+
+**Problème** : Pas de deep linking, notifications ne peuvent pas pointer vers une org spécifique
+**Solution** : URL parameter `?highlight=org-id` avec auto-open + effet visuel
+
+**Fichiers modifiés** :
+- `apps/linkme/src/app/(main)/organisations/page.tsx`
+  - Import useSearchParams
+  - State highlightedOrgId
+  - useEffect pour lire ?highlight et auto-open DetailSheet
+  - Effet visuel : `animate-pulse ring-4 ring-linkme-turquoise`
+  - Cleanup URL après ouverture avec router.replace
+  - Auto-removal highlight après 3 secondes
+
+**Code clé ajouté** :
+```typescript
+const highlightParam = searchParams?.get('highlight');
+if (highlightParam && organisations) {
+  const orgExists = organisations.some(org => org.id === highlightParam);
+  if (orgExists) {
+    setDetailSheetOrgId(highlightParam);
+    setHighlightedOrgId(highlightParam);
+    // Clean URL
+    router.replace(newUrl);
+    // Remove highlight after 3s
+    setTimeout(() => setHighlightedOrgId(null), 3000);
+  }
+}
 ```
-5f117ef4 chore(plan): mark Sentry config as fully validated
-125f3ee8 [NO-TASK] fix(sentry): add onRouterTransitionStart hook
-c26f6798 chore(plan): mark Sentry config migration as completed
-8184e314 [NO-TASK] fix(sentry): migrate to Next.js 15 instrumentation
-3864e3d1 chore(plan): sync
-20658534 [LM-AUTH-001] fix: resolve infinite loading in dashboard
-```
 
-### 🔄 Tâches Restantes (Non traitées)
+#### Résumé Technique
 
-- **site-internet/.env.local obsolète** : Manque variables récentes (Geoapify, Sentry, Resend)
+**5 fichiers modifiés** :
+- OrganisationDetailSheet.tsx (refactor majeur)
+- page.tsx (intégration + routing)
+- index.ts (exports)
+- OrganisationActionsBar.tsx (créé)
+- OrganisationFilterTabs.tsx (créé)
+
+**1 fichier supprimé** :
+- EditOrganisationModal.tsx
+
+**Technologies** :
+- React 18 hooks (useState, useEffect, useMemo, useSearchParams)
+- TanStack Query (useMutation, useQueryClient)
+- Supabase client mutations
+- AddressAutocomplete (BAN + Geoapify)
+- Tailwind CSS animations
+- Next.js 15 App Router
+
+**Tests** :
+- ✅ `pnpm type-check` : 0 erreurs
+- ⚠️ ESLint : 8 warnings (style preferences, non-bloquant)
+
+---
+
+## 🔄 Tâches Prioritaires (À traiter maintenant)
+
+- **LM-ORD-006** 🔥 : Refonte UX Sélection Produits (CreateOrderModal) - PLAN COMPLET
+- **LM-ORD-005** 🔥 : Workflow création commande (Contact & Facturation) - 8 phases détaillées
 - **LM-ORD-004** : Pré-remplissage contacts (Phase 3-5)
 - **LM-ORG-003** : Popup carte organisations
 - **LM-SEL-003** : UX sélections publiques
+- **site-internet/.env.local obsolète** : Manque variables récentes (Geoapify, Sentry, Resend)
 - **WEB-DEV-001** : Symlink cassé node_modules/next
 
 ---
@@ -51,6 +125,401 @@ c26f6798 chore(plan): mark Sentry config migration as completed
 - Apres commit avec Task ID: `pnpm plan:sync` puis `git commit -am "chore(plan): sync"`
 
 ## Taches Actives
+
+---
+
+## TASK: LM-ORD-006 — Refonte UX Sélection Produits (CreateOrderModal)
+
+**Statut**: 📋 PLAN COMPLET (READ1)
+**Plan détaillé**: `.claude/work/PLAN-LM-ORD-006-PRODUCT-SELECTION-UX.md`
+**Priorité**: 🔥 HAUTE
+**Effort estimé**: ~6h
+
+### Résumé Problème
+
+CreateOrderModal (utilisateurs authentifiés LinkMe) a une UX de sélection de produits **insuffisante** comparée à la page publique :
+- ❌ **Pas de filtres par catégories** → difficile de naviguer dans un large catalogue
+- ❌ **Pas de pagination** → tous les produits chargés (performance)
+- ❌ **Liste verticale** → pas de vue d'ensemble (grille manquante)
+- ❌ **Panier en dessous** → l'utilisateur doit scroller pour voir le total
+- ⚠️ **Recherche basique** → pas de feedback visuel
+
+### Solution Proposée
+
+**Refonte complète** de la section "Produits" (Step 4) avec :
+1. ✅ Réutilisation composants publics (`ProductFilters`, `CategoryTabs`, `Pagination`)
+2. ✅ Layout 2 colonnes : **Catalogue 60%** + **Panier sticky 40%**
+3. ✅ Grille responsive (3 colonnes desktop → 1 mobile)
+4. ✅ Pagination 12 produits/page
+5. ✅ Filtrage multi-critères (recherche + catégories)
+
+### Fichiers Concernés
+
+- `apps/linkme/src/app/(main)/commandes/components/CreateOrderModal.tsx` (lignes 870-1950)
+- Composants à importer : `apps/linkme/src/components/public-selection/*.tsx`
+
+### Voir aussi
+
+- Analyse comparative page publique vs CreateOrderModal (dans le plan détaillé)
+- Best practices Baymard Institute 2025 (sources dans le plan)
+- `.claude/work/AUDIT-LM-ORD-005.md` (audit workflow commande)
+
+---
+
+## TASK: LM-ORD-005 — Workflow création commande - Contact & Facturation
+
+### Contexte
+Investigation et correction du workflow de création de commande dans LinkMe.
+
+**Audit complet** : `.claude/work/AUDIT-LM-ORD-005.md` (860 lignes de code analysées)
+
+**Problèmes critiques identifiés** :
+1. ❌ **CRITIQUE** : Demandeur (p_requester) = Propriétaire au lieu de l'utilisateur authentifié
+2. ❌ **MAJEUR** : useAuth() non utilisé - pas de récupération des données utilisateur
+3. ❌ **MAJEUR** : Section "Demandeur" absente du récapitulatif étape 5
+4. ⚠️ **MOYEN** : Labels étape 2 non conditionnels (Propriétaire/Responsable)
+5. ⚠️ **MOYEN** : Pas de récapitulatif dans flow "Restaurant existant"
+
+### Steps to Reproduce
+1. Aller sur http://localhost:3002
+2. S'authentifier avec Pokawa (`pokawa-test@verone.io`)
+3. Aller sur `/commandes` (nécessite un rafraîchissement F5 - BUG)
+4. Cliquer sur "Nouvelle vente"
+5. **Flow "Restaurant existant"** :
+   - Sélectionner "Restaurant existant"
+   - Sélectionner un restaurant (ex: Pokawa Bourgoin Jallieu)
+   - Observer la section "Contacts du restaurant"
+6. **Flow "Nouveau restaurant"** :
+   - Sélectionner "Nouveau restaurant"
+   - Naviguer à travers les 5 étapes
+
+### Expected vs Actual
+
+**Expected** (selon demande utilisateur) :
+- ✅ Les champs de contact doivent être pré-remplis depuis le profil de l'utilisateur authentifié
+- ✅ Label doit indiquer "Propriétaire" pour franchisé, "Responsable" pour restaurant propre
+- ✅ Étape 2 : contact du responsable
+- ✅ Étape 3 : facturation avec nom légal (obligatoire) et nom commercial (facultatif si différent)
+- ✅ Pas de doublon entre nom légal étape 2 et étape 3
+
+**Actual** (observé) :
+- ❌ **Flow "Restaurant existant"** :
+  - Champs de contact complètement vides (pas de pré-remplissage)
+  - Label générique "Propriétaire / Responsable" (pas de distinction)
+  - Section "Responsable Facturation" avec checkbox "Même contact que le propriétaire" (cochée)
+  - Aucun champ visible pour nom légal vs nom commercial
+  - Alerte : "Contacts incomplets - veuillez compléter les informations"
+
+- ❌ **Flow "Nouveau restaurant"** (5 étapes) :
+  - Étape 1 : Nom commercial + Adresse + Type (Propre/Franchisé) ✅
+  - Étape 2 : Propriétaire (non testé - autocomplete adresse cassé)
+  - Étape 3 : Facturation (non testé)
+  - Étape 4 : Produits
+  - Étape 5 : Validation
+
+### Evidence
+
+**Screenshots** :
+- `.claude/reports/linkme-create-order-modal-20260114.png` : Modal initial
+- `.claude/reports/linkme-create-order-step1-20260114.png` : Étape 1 - Sélection restaurant existant
+- `.claude/reports/linkme-contacts-section-20260114.png` : Section contacts (champs vides)
+- `.claude/reports/linkme-contacts-billing-20260114.png` : Section contacts + facturation
+- `.claude/reports/linkme-new-restaurant-step1-20260114.png` : Nouveau restaurant - Étape 1/5
+
+**Console errors** : Aucune
+
+**Network errors** : Aucune
+
+**Fichiers analysés** :
+- `apps/linkme/src/app/(main)/commandes/components/CreateOrderModal.tsx` : Modal principal (>800 lignes)
+- `apps/linkme/src/components/ContactsSection.tsx` : Composant de gestion des contacts
+
+### Hypothèses (fichiers/causes probables)
+
+**1. Pré-remplissage des contacts manquant**
+- **Fichier** : `apps/linkme/src/components/ContactsSection.tsx`
+- **Cause** : Le composant charge les contacts depuis `useOrganisationContacts(organisationId)` (ligne 70)
+- **Problème** : Il charge les contacts de l'**organisation** (restaurant), pas du **profil utilisateur authentifié**
+- **Solution probable** : Ajouter logique pour pré-remplir depuis le profil utilisateur si contacts organisation vides
+
+**2. Distinction franchisé/restaurant propre absente**
+- **Fichier** : `apps/linkme/src/components/ContactsSection.tsx` ligne 266
+- **Code actuel** : `<span className="font-medium">Propriétaire / Responsable</span>`
+- **Problème** : Label statique, pas de logique conditionnelle
+- **Solution probable** :
+  - Passer `ownerType` depuis CreateOrderModal
+  - Afficher "Propriétaire" si `ownerType === 'franchise'`
+  - Afficher "Responsable" si `ownerType === 'succursale'`
+
+**3. Nom légal vs nom commercial (confusion/doublons)**
+- **Fichier** : `apps/linkme/src/app/(main)/commandes/components/CreateOrderModal.tsx`
+- **Problème constaté** :
+  - Étape 1 (Restaurant) : champ "Nom commercial" (tradeName)
+  - Étape 2 (Propriétaire) : champs contact (firstName, lastName, email, phone) + ownerCompanyName (raison sociale si franchise)
+  - Étape 3 (Facturation) : billingCompanyName (dénomination sociale)
+- **Risque de doublon** :
+  - `ownerCompanyName` (étape 2) vs `billingCompanyName` (étape 3)
+  - Si franchisé : raison sociale peut être la même
+  - Si restaurant propre : pas de raison sociale à l'étape 2
+- **Solution probable** :
+  - Clarifier la distinction :
+    - Nom légal = raison sociale officielle (KBIS)
+    - Nom commercial = enseigne/marque (peut être différent ou identique)
+  - Ajouter logique pour éviter la saisie en double
+  - Si `billingSameAsOwner` ET franchisé : reprendre `ownerCompanyName`
+
+**4. Bug page /commandes nécessite rafraîchissement**
+- **Fichier** : Probablement lié au routage ou au state management
+- **Symptôme** : En arrivant sur `/commandes` pour la première fois, la page semble bloquée, nécessite F5
+- **Solution probable** : Investiguer le chargement des hooks (useUserAffiliate, useAffiliateCustomers)
+
+### Findings Audit (résumé)
+
+**✅ Ce qui fonctionne correctement** :
+- Modal produits en deux parties (sélection + panier) ✅
+- Récapitulatif étape 5 avec toutes les sections sauf Demandeur ✅
+- Gestion du panier (ajout/suppression/quantités) ✅
+- Calculs des totaux et marges ✅
+- Structure 5 étapes pour nouveau restaurant ✅
+
+**❌ Ce qui doit être corrigé** :
+1. **p_requester** est rempli avec les données du **propriétaire du restaurant** (étape 2) au lieu de l'**utilisateur authentifié**
+2. **useAuth()** n'est pas utilisé → pas de récupération des données utilisateur connecté
+3. Section **"Demandeur"** absente du récapitulatif étape 5
+4. Flow "Restaurant existant" n'a pas de récapitulatif avant soumission
+
+### Fix Proposé (détaillé dans AUDIT-LM-ORD-005.md)
+
+**Phase 1 : Récupération utilisateur authentifié (CRITIQUE)**
+- Importer `useAuth` depuis `@/contexts/AuthContext`
+- Créer state `requester` depuis `user.user_metadata` et `user.email`
+- **Fichier** : `CreateOrderModal.tsx` lignes 17, 178
+- **Temps** : 15 min
+
+**Phase 2 : Corriger handleSubmitNew (CRITIQUE)**
+- Remplacer `p_requester` (actuellement = propriétaire) par `requester` (utilisateur authentifié)
+- **Fichier** : `CreateOrderModal.tsx` ligne 460-467
+- **Temps** : 5 min
+
+**Phase 3 : Section Demandeur dans récapitulatif (MAJEUR)**
+- Ajouter section "Demandeur de la commande" dans l'étape 5
+- Afficher nom, email, téléphone de l'utilisateur authentifié
+- Insérer après ligne 1988 (après récap Restaurant)
+- **Fichier** : `CreateOrderModal.tsx`
+- **Temps** : 30 min
+
+**Phase 4 : Labels conditionnels étape 2 (MOYEN)**
+- Afficher "Propriétaire" si franchise, "Responsable" si propre
+- **Fichier** : `CreateOrderModal.tsx` ligne ~1412
+- **Temps** : 15 min
+
+**Phase 5 : Modal confirmation restaurant existant (OPTIONNEL)**
+- Ajouter récapitulatif avant soumission dans flow "Restaurant existant"
+- **Temps** : 60 min
+
+**Phase 6 : Section Notes (OPTIONNEL)**
+- Afficher les notes dans le récapitulatif si renseignées
+- **Temps** : 10 min
+
+**TOTAL CRITIQUE + MAJEUR** : ~50 min
+**TOTAL COMPLET** : ~2h30
+
+---
+
+### Plan d'Implémentation (checklist pour agent WRITE)
+
+**Fichier principal** : `apps/linkme/src/app/(main)/commandes/components/CreateOrderModal.tsx`
+
+#### Phase 1 : Récupération utilisateur authentifié (CRITIQUE - 15 min)
+
+- [ ] **LM-ORD-005-1** : Importer `useAuth` depuis `@/contexts/AuthContext`
+  - Ligne 17 : Ajouter `import { useAuth } from '@/contexts/AuthContext';`
+
+- [ ] **LM-ORD-005-2** : Appeler `useAuth()` dans CreateOrderModal
+  - Ligne 178 : Après `const { data: affiliate, isLoading: affiliateLoading } = useUserAffiliate();`
+  - Ajouter `const { user } = useAuth();`
+
+- [ ] **LM-ORD-005-3** : Créer state `requester` depuis données utilisateur
+  - Après ligne 172 (après `const [searchQuery, setSearchQuery] = useState('');`)
+  - Ajouter :
+  ```typescript
+  // Demandeur = utilisateur authentifié qui passe la commande
+  const [requester, setRequester] = useState({
+    type: 'responsable_enseigne',
+    name: '',
+    email: '',
+    phone: '',
+    position: null,
+  });
+  ```
+
+- [ ] **LM-ORD-005-4** : Ajouter useEffect pour initialiser `requester` depuis `user`
+  - Après le state `requester`
+  - Ajouter :
+  ```typescript
+  // Initialiser le demandeur depuis l'utilisateur authentifié
+  useEffect(() => {
+    if (user) {
+      setRequester({
+        type: 'responsable_enseigne',
+        name: user.user_metadata?.full_name || user.email || '',
+        email: user.email || '',
+        phone: user.user_metadata?.phone || '',
+        position: user.user_metadata?.position || null,
+      });
+    }
+  }, [user]);
+  ```
+
+#### Phase 2 : Corriger handleSubmitNew (CRITIQUE - 5 min)
+
+- [ ] **LM-ORD-005-5** : Remplacer `p_requester` par `requester`
+  - Lignes 460-467
+  - **Avant** :
+  ```typescript
+  // Demandeur = Propriétaire
+  const p_requester = {
+    type: 'responsable_enseigne',
+    name: `${newRestaurantForm.ownerFirstName} ${newRestaurantForm.ownerLastName}`,
+    email: newRestaurantForm.ownerEmail,
+    phone: newRestaurantForm.ownerPhone || null,
+    position: null,
+  };
+  ```
+  - **Après** :
+  ```typescript
+  // Demandeur = Utilisateur authentifié qui passe la commande
+  const p_requester = requester;
+  ```
+
+#### Phase 3 : Ajouter section Demandeur dans récapitulatif étape 5 (MAJEUR - 30 min)
+
+- [ ] **LM-ORD-005-6** : Insérer section "Demandeur" dans récapitulatif
+  - **Position** : Après ligne 1988 (après `{/* Récap Restaurant */}`)
+  - **Avant** : Section Propriétaire
+  - **Code à insérer** :
+  ```typescript
+  {/* Récap Demandeur */}
+  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-2">
+    <h4 className="font-medium text-gray-900 flex items-center gap-2">
+      <User className="h-4 w-4 text-blue-600" />
+      Demandeur de la commande
+    </h4>
+    <div className="grid grid-cols-2 gap-4 text-sm">
+      <div>
+        <p className="text-gray-500">Nom complet</p>
+        <p className="font-medium">{requester.name}</p>
+      </div>
+      <div>
+        <p className="text-gray-500">Email</p>
+        <p className="font-medium">{requester.email}</p>
+      </div>
+      {requester.phone && (
+        <div>
+          <p className="text-gray-500">Téléphone</p>
+          <p className="font-medium">{requester.phone}</p>
+        </div>
+      )}
+    </div>
+    <div className="mt-2 p-2 bg-blue-100 rounded text-xs text-blue-700">
+      ℹ️ Cette personne sera enregistrée comme le demandeur de la commande
+    </div>
+  </div>
+  ```
+
+#### Phase 4 : Labels conditionnels étape 2 (MOYEN - 15 min)
+
+- [ ] **LM-ORD-005-7** : Modifier titre étape 2 selon type restaurant
+  - **Position** : Ligne ~1420 (dans `{newRestaurantStep === 2 && (`)
+  - **Trouver** : `<h3 className="text-lg font-semibold text-gray-900 mb-4">`
+  - **Remplacer par** :
+  ```typescript
+  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+    {newRestaurantForm.ownerType === 'franchise'
+      ? 'Propriétaire du restaurant (Franchisé)'
+      : 'Responsable du restaurant'}
+  </h3>
+  <p className="text-sm text-gray-500 mb-4">
+    {newRestaurantForm.ownerType === 'franchise'
+      ? 'Informations du propriétaire franchisé'
+      : 'Informations du responsable de ce restaurant'}
+  </p>
+  ```
+
+#### Phase 5 : Section Notes dans récapitulatif (MAJEUR - 10 min)
+
+**Contexte UX** : Le champ Notes existe DÉJÀ à l'étape 5 (ligne 2163-2175), juste avant le bouton de validation ✅
+- ✅ Placement optimal selon best practices (Amazon, Uber Eats, Shopify)
+- ✅ Optionnel, pas intrusif
+- ✅ Pas de modal de confirmation supplémentaire nécessaire
+
+**Ce qui manque** : Section de RELECTURE des notes dans le récapitulatif visuel
+- L'utilisateur saisit ses notes mais ne les REVOIT PAS avant validation
+- Solution : Ajouter une card grise qui affiche les notes (si renseignées)
+
+**Voir** : `.claude/work/UX-NOTES-ANALYSIS.md` (analyse complète)
+
+- [ ] **LM-ORD-005-8** : Ajouter section Notes de relecture (preview temps réel)
+  - **Position** : Après ligne 2175 (après champ textarea Notes, avant message validation)
+  - **Effet** : L'utilisateur tape ses notes → voit immédiatement un aperçu formaté en-dessous
+  - **Code à insérer** :
+  ```typescript
+  {/* Preview Notes en temps réel */}
+  {notes && notes.trim() !== '' && (
+    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-2">
+      <h4 className="text-xs font-medium text-blue-700 uppercase tracking-wide flex items-center gap-1.5">
+        <FileText className="h-3.5 w-3.5" />
+        Aperçu de vos notes
+      </h4>
+      <p className="text-sm text-gray-900 whitespace-pre-wrap leading-relaxed">{notes}</p>
+    </div>
+  )}
+  ```
+
+#### Vérification finale
+
+- [ ] **LM-ORD-005-9** : `pnpm type-check` → 0 erreurs
+- [ ] **LM-ORD-005-10** : `pnpm build` → Build réussi
+- [ ] **LM-ORD-005-11** : Tester manuellement :
+  - Se connecter avec Pokawa
+  - Créer commande → Nouveau restaurant → Type Franchisé
+  - Vérifier étape 5 : Section Demandeur visible avec infos utilisateur
+  - Valider commande
+  - Vérifier en DB que `p_requester.email` = email utilisateur connecté
+
+---
+
+### Acceptance Criteria
+
+**Phase 1-2 (CRITIQUE)** :
+- [ ] useAuth() importé et utilisé dans CreateOrderModal
+- [ ] State `requester` créé depuis `user.user_metadata`
+- [ ] `p_requester` dans handleSubmitNew utilise `requester` (pas propriétaire)
+- [ ] Test : Créer commande → vérifier en DB que `p_requester.email` = email utilisateur connecté
+
+**Phase 3 (MAJEUR)** :
+- [ ] Section "Demandeur de la commande" visible dans récapitulatif étape 5
+- [ ] Affiche nom, email, téléphone de l'utilisateur authentifié
+- [ ] Message info : "Cette personne sera enregistrée comme le demandeur"
+
+**Phase 4 (MOYEN)** :
+- [ ] Étape 2 : Label "Propriétaire du restaurant (Franchisé)" si type=franchise
+- [ ] Étape 2 : Label "Responsable du restaurant" si type=propre
+
+**Tests complets** :
+- [ ] Nouveau restaurant franchisé :
+  - Se connecter avec Pokawa
+  - Créer commande → Nouveau restaurant → Type Franchisé
+  - Vérifier étape 5 : Section Demandeur = utilisateur Pokawa
+  - Vérifier étape 5 : Section Propriétaire = franchisé
+  - Valider → vérifier en DB `p_requester`
+- [ ] Restaurant existant :
+  - Sélectionner restaurant
+  - Ajouter produits
+  - Valider → vérifier en DB `p_requester`
+- [ ] Console Zero (0 erreurs)
+- [ ] Type-check OK
+- [ ] Build OK
 
 ---
 
@@ -217,419 +686,7 @@ cp apps/back-office/.env.local apps/site-internet/.env.local
 - [ ] site-internet/.env.local synchronisé avec variables récentes
 - [ ] site-internet fonctionne avec géolocalisation + Sentry
 
----
-
-## TASK: [NO-TASK] — Configuration Sentry obsolète (WARNINGS)
-
-### Contexte
-Au démarrage des serveurs, warnings Sentry apparaissent pour back-office et linkme :
-```
-[@sentry/nextjs] Could not find `onRequestError` hook in instrumentation file
-[@sentry/nextjs] DEPRECATION WARNING: It is recommended renaming your `sentry.client.config.ts` file
-```
-
-### Steps to Reproduce
-1. Lancer `pnpm dev`
-2. Observer les warnings Sentry au démarrage
-
-### Expected vs Actual
-- **Expected**: Configuration Sentry Next.js 15 + Turbopack compatible
-- **Actual**: Configuration obsolète (Next.js 14 style)
-
-### Evidence
-
-**Fichiers actuels** :
-```
-apps/back-office/instrumentation.ts         (manque onRequestError)
-apps/back-office/sentry.client.config.ts    (ancien format)
-apps/back-office/sentry.server.config.ts
-apps/back-office/sentry.edge.config.ts
-
-apps/linkme/instrumentation.ts              (manque onRequestError)
-apps/linkme/sentry.client.config.ts         (ancien format)
-apps/linkme/sentry.server.config.ts
-apps/linkme/sentry.edge.config.ts
-```
-
-### Causes Root
-
-**1. Hook `onRequestError` manquant**
-- Next.js 15 RSC (React Server Components) nécessite `onRequestError` pour capturer les erreurs
-- Fichier `instrumentation.ts` n'exporte que `register()`
-- Devrait aussi exporter `onRequestError()`
-
-**2. Configuration client obsolète**
-- `sentry.client.config.ts` = ancien format (Next.js 14)
-- Avec Turbopack (Next.js 15), doit migrer vers `instrumentation-client.ts`
-- Turbopack ne charge plus `sentry.client.config.ts`
-
-### Impact
-
-🟡 **MEDIUM - Fonctionnel mais pas optimal**
-- ✅ Sentry fonctionne (erreurs remontées)
-- ⚠️ Erreurs RSC non capturées (onRequestError manquant)
-- ⚠️ Incompatible Turbopack futur (deprecated config)
-- ⚠️ Warnings polluent les logs
-
-### Fix Proposé (Best Practices Sentry + Next.js 15)
-
-**Pour chaque app (back-office, linkme)** :
-
-**STEP 1** : Ajouter `onRequestError` dans `instrumentation.ts`
-```typescript
-// apps/back-office/instrumentation.ts
-import * as Sentry from '@sentry/nextjs';
-
-export async function register() {
-  if (process.env.NEXT_RUNTIME === 'nodejs') {
-    await import('./sentry.server.config');
-  }
-  if (process.env.NEXT_RUNTIME === 'edge') {
-    await import('./sentry.edge.config');
-  }
-}
-
-// ✅ AJOUTER cette fonction pour capturer erreurs RSC
-export async function onRequestError(
-  err: unknown,
-  request: { path: string; method: string; headers: Headers }
-) {
-  Sentry.captureException(err, {
-    contexts: {
-      nextjs: {
-        request: {
-          path: request.path,
-          method: request.method,
-        },
-      },
-    },
-  });
-}
-```
-
-**STEP 2** : Créer `instrumentation-client.ts` (nouveau format)
-```typescript
-// apps/back-office/instrumentation-client.ts
-import * as Sentry from '@sentry/nextjs';
-
-Sentry.init({
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-  tracesSampleRate: 0.1,
-  replaysSessionSampleRate: 0.1,
-  replaysOnErrorSampleRate: 1.0,
-  integrations: [
-    Sentry.replayIntegration({
-      maskAllText: false,
-      blockAllMedia: false,
-    }),
-    Sentry.feedbackIntegration({
-      colorScheme: 'system',
-      buttonLabel: 'Signaler un bug',
-      submitButtonLabel: 'Envoyer',
-      formTitle: 'Signaler un problème',
-      messagePlaceholder: 'Décrivez le problème rencontré...',
-      successMessageText: 'Merci pour votre retour !',
-    }),
-  ],
-  ignoreErrors: [
-    'ResizeObserver loop',
-    'ResizeObserver loop limit exceeded',
-    'Network request failed',
-    /Loading chunk \d+ failed/,
-    'ChunkLoadError',
-    'NotAllowedError',
-  ],
-  environment: process.env.NEXT_PUBLIC_VERCEL_ENV || 'development',
-  enabled: process.env.NODE_ENV === 'production',
-});
-```
-
-**STEP 3** : Supprimer ancien `sentry.client.config.ts`
-```bash
-rm apps/back-office/sentry.client.config.ts
-rm apps/linkme/sentry.client.config.ts
-```
-
-**STEP 4** : Répéter pour linkme
-
-### Apps concernées
-- ❌ back-office : Warnings présents
-- ❌ linkme : Warnings présents
-- ⚠️ site-internet : Pas de config Sentry (à vérifier)
-
-### Acceptance Criteria
-- [x] `onRequestError` ajouté dans instrumentation.ts (back-office + linkme) ✅ (8184e314)
-- [x] `instrumentation-client.ts` créé (back-office + linkme) ✅ (8184e314)
-- [x] `sentry.client.config.ts` supprimé (back-office + linkme) ✅ (8184e314)
-- [x] `onRouterTransitionStart` ajouté pour tracking navigation ✅ (125f3ee8)
-- [x] Redémarrer serveurs : 0 warnings Sentry ✅ **VALIDÉ PAR UTILISATEUR**
-- [ ] Tester erreur RSC → remontée dans Sentry (À tester en production)
-
-### Statut : ✅ **RÉSOLU** (2026-01-14 21:00)
-
-### Temps Estimé
-- **Modification** : 10 minutes (2 apps × 3 steps)
-- **Tests** : 5 minutes
-
----
-
-## TASK: LM-AUTH-001 — Problème affichage LinkMe (✅ RÉSOLU)
-
-### Contexte
-Le dashboard LinkMe affichait un **spinner qui tourne indéfiniment**. La page ne chargeait jamais son contenu. Les serveurs démarraient correctement, mais l'application était inutilisable.
-
-### Steps to Reproduce
-1. Lancer `pnpm dev`
-2. Aller sur http://localhost:3002
-3. Observer : spinner infini au centre de l'écran
-4. Attendre 10+ secondes : rien ne change
-
-### Expected vs Actual
-- **Expected**: Dashboard LinkMe s'affiche avec les KPIs, actions rapides, etc.
-- **Actual**: Spinner infini, page bloquée en état "loading"
-
-### Evidence
-- Screenshot: `.claude/reports/linkme-dashboard-loading-20260114.png`
-- Console warnings: `Multiple GoTrueClient instances detected`, `❌ Activity tracking: No authenticated user`
-- Network: Toutes les requêtes retournent 200 OK (Supabase fonctionne)
-- HTML body: `<div class="min-h-screen flex items-center justify-center bg-white"><svg ... animate-spin ...>`
-
-### Cause Root (IDENTIFIÉE)
-
-**Fichier**: `apps/linkme/src/contexts/AuthContext.tsx` lignes 203-206
-
-```typescript
-useEffect(() => {
-  // Éviter les doubles initialisations (StrictMode React)
-  if (initializedRef.current) return;  // ← BUG ICI
-  initializedRef.current = true;
-```
-
-**Problème** : En mode dev, **React StrictMode monte les composants 2 fois**.
-
-1. **Premier montage** (intentionnel par StrictMode) :
-   - `initializedRef.current` passe de `false` à `true`
-   - `initSession()` est appelé
-   - `setInitializing(false)` est appelé dans le finally
-
-2. **Deuxième montage** (le "vrai" montage) :
-   - `initializedRef.current` est déjà `true` (persiste entre les montages)
-   - `return` immédiat ligne 205 → **aucune initialisation**
-   - `initializing` reste bloqué à `true` pour toujours
-   - Dashboard reste en loading infini (ligne 64-70 de `dashboard/page.tsx`)
-
-### Pourquoi ça a cassé récemment ?
-
-**Git diff HEAD~3..HEAD** montre des commits récents sur LinkMe :
-- `[LM-ORD-004]` : Modifications OrderFormUnified + CreateOrderModal
-- `[NO-TASK]` : Fix multi-app stability (commit cf890814)
-
-Le problème existait probablement avant mais était masqué ou pas testé. La modification du commit `cf890814` a peut-être changé l'ordre de montage des composants, révélant le bug.
-
-### Impact (AVANT FIX)
-
-- ✅ **back-office** : Fonctionnait (http://localhost:3000/login)
-- ✅ **site-internet** : Fonctionnait (http://localhost:3001/)
-- ❌ **linkme** : **BLOQUÉ** (http://localhost:3002/dashboard)
-
-### Solution Implémentée (20658534)
-
-**Commit** : `[LM-AUTH-001] fix: resolve infinite loading in dashboard due to StrictMode` (20658534)
-
-**Fichier modifié** : `apps/linkme/src/contexts/AuthContext.tsx`
-
-**Changements** :
-- ❌ Supprimé : `initializedRef` pattern (ligne 75, 205)
-- ✅ Ajouté : Pattern `cancelled` avec cleanup
-- ✅ Compatible React 18 StrictMode
-- ✅ Évite fuites mémoire (setState après unmount)
-
-### Fix Proposé (haut niveau)
-
-**Option 1** (Recommandée) : Supprimer `initializedRef` et gérer le StrictMode proprement
-
-```typescript
-useEffect(() => {
-  let cancelled = false;
-
-  const initSession = async () => {
-    try {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-
-      if (!cancelled) {
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-        if (currentSession?.user) {
-          await fetchLinkMeRole(currentSession.user.id);
-        }
-      }
-    } catch (error) {
-      console.error('[AuthContext] initSession ERROR:', error);
-    } finally {
-      if (!cancelled) {
-        setInitializing(false);
-      }
-    }
-  };
-
-  initSession();
-
-  return () => {
-    cancelled = true;
-  };
-}, []);
-```
-
-**Option 2** (Quick fix) : Reset `initializedRef` dans le cleanup
-
-```typescript
-useEffect(() => {
-  initializedRef.current = true;
-
-  // ... code existant ...
-
-  return () => {
-    initializedRef.current = false; // Reset pour le prochain montage
-  };
-}, []);
-```
-
-### Plan de Correction (Best Practices React 18+)
-
-#### Analyse Préliminaire
-✅ Audit réalisé : Seul `apps/linkme/src/contexts/AuthContext.tsx` utilise le pattern problématique `initializedRef`. Les autres contextes (back-office, site-internet) ne sont pas affectés.
-
-#### Solution Technique (Recommandée)
-
-**Principe** : React 18 StrictMode monte/démonte intentionnellement les composants 2 fois en dev pour détecter les bugs. On doit gérer ce comportement, pas le bloquer.
-
-**Fichier** : `apps/linkme/src/contexts/AuthContext.tsx`
-
-**Modification** : Lignes 203-241 (remplacer le useEffect d'initialisation)
-
-```typescript
-// ❌ SUPPRIMER initializedRef.current complètement
-// const initializedRef = useRef(false); // Ligne 75 à supprimer
-
-// ✅ REMPLACER le useEffect par :
-useEffect(() => {
-  let cancelled = false;
-
-  const initSession = async () => {
-    const DEBUG = process.env.NEXT_PUBLIC_DEBUG_AUTH === '1';
-    if (DEBUG) console.log('[AuthContext] initSession START');
-
-    try {
-      const {
-        data: { session: currentSession },
-      } = await supabase.auth.getSession();
-
-      if (DEBUG)
-        console.log('[AuthContext] getSession result:', {
-          hasSession: !!currentSession,
-          userId: currentSession?.user?.id,
-        });
-
-      // ✅ Vérifier cancelled AVANT setState
-      if (cancelled) {
-        if (DEBUG) console.log('[AuthContext] initSession CANCELLED');
-        return;
-      }
-
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-
-      if (currentSession?.user) {
-        await fetchLinkMeRole(currentSession.user.id);
-      }
-    } catch (error) {
-      console.error('[AuthContext] initSession ERROR:', error);
-    } finally {
-      // ✅ Toujours setInitializing(false), même si cancelled
-      if (!cancelled) {
-        if (DEBUG)
-          console.log(
-            '[AuthContext] initSession DONE - setInitializing(false)'
-          );
-        setInitializing(false);
-      }
-    }
-  };
-
-  initSession();
-
-  // ✅ Cleanup: marquer comme cancelled pour éviter setState après unmount
-  return () => {
-    const DEBUG = process.env.NEXT_PUBLIC_DEBUG_AUTH === '1';
-    if (DEBUG) console.log('[AuthContext] useEffect CLEANUP');
-    cancelled = true;
-  };
-}, []); // Pas de dépendances, s'exécute à chaque montage
-```
-
-#### Pourquoi cette solution est meilleure ?
-
-1. **Compatible StrictMode** : S'exécute 2 fois en dev, mais chaque montage est nettoyé proprement
-2. **Évite les fuites mémoire** : `cancelled` empêche les setState après unmount
-3. **Pattern standard React** : Recommandé dans la doc officielle React 18
-4. **Pas de ref inutile** : Plus simple à comprendre et maintenir
-
-#### Étapes d'Implémentation
-
-**Phase 1 : Préparation**
-- [x] **STEP-1** : Créer une branche `fix/linkme-auth-strictmode` ✅ (fix/multi-bugs-2026-01)
-- [x] **STEP-2** : Backup du fichier actuel dans `.claude/archive/` ✅
-
-**Phase 2 : Modification du Code**
-- [x] **STEP-3** : Supprimer `const initializedRef = useRef(false);` (ligne 75) ✅ (20658534)
-- [x] **STEP-4** : Supprimer le commentaire "Ref pour éviter les appels multiples" (ligne 74) ✅ (20658534)
-- [x] **STEP-5** : Remplacer le useEffect lignes 203-241 par le nouveau code ci-dessus ✅ (20658534)
-- [x] **STEP-6** : Vérifier que `fetchLinkMeRole` et `supabase` sont toujours dans le scope ✅ (20658534)
-
-**Phase 3 : Tests Locaux**
-- [x] **STEP-7** : `pnpm type-check` (0 erreurs attendues) ✅ (20658534)
-- [ ] **STEP-8** : Redémarrer le serveur linkme (À TESTER PAR UTILISATEUR)
-- [ ] **STEP-9** : Aller sur http://localhost:3002/dashboard (À TESTER PAR UTILISATEUR)
-- [ ] **STEP-10** : Vérifier que le dashboard charge en < 2 secondes (À TESTER PAR UTILISATEUR)
-- [ ] **STEP-11** : Ouvrir la console : vérifier 0 erreurs (À TESTER PAR UTILISATEUR)
-- [ ] **STEP-12** : En mode DEBUG (`NEXT_PUBLIC_DEBUG_AUTH=1`) : vérifier 2 montages (OPTIONNEL)
-
-**Phase 4 : Tests de Non-Régression**
-- [ ] **STEP-13** : Tester la connexion : http://localhost:3002/login (À TESTER PAR UTILISATEUR)
-- [ ] **STEP-14** : Tester la déconnexion (À TESTER PAR UTILISATEUR)
-- [ ] **STEP-15** : Rafraîchir la page (F5) : session doit persister (À TESTER PAR UTILISATEUR)
-- [ ] **STEP-16** : Vérifier back-office (http://localhost:3000) fonctionne toujours (À TESTER PAR UTILISATEUR)
-- [ ] **STEP-17** : Vérifier site-internet (http://localhost:3001) fonctionne toujours (À TESTER PAR UTILISATEUR)
-
-**Phase 5 : Commit & Documentation**
-- [x] **STEP-18** : `git add apps/linkme/src/contexts/AuthContext.tsx` ✅ (20658534)
-- [x] **STEP-19** : Commit : `[LM-AUTH-001] fix: resolve infinite loading in dashboard due to StrictMode` ✅ (20658534)
-- [x] **STEP-20** : `pnpm plan:sync` ✅ (3864e3d1)
-- [x] **STEP-21** : `git commit -am "chore(plan): sync"` ✅ (3864e3d1)
-
-#### Critères de Succès (Acceptance)
-
-✅ **Fonctionnel** (À TESTER PAR UTILISATEUR)
-- [ ] Dashboard LinkMe s'affiche en < 2 secondes
-- [ ] Aucun spinner infini
-- [ ] Login/logout fonctionnent correctement
-- [ ] Rafraîchissement de page préserve la session
-
-✅ **Qualité**
-- [x] Console Zero : 0 erreurs TypeScript ✅ (20658534)
-- [x] TypeScript : 0 erreurs ✅ (20658534)
-- [ ] Back-office et site-internet non impactés (À TESTER)
-
-✅ **Best Practices**
-- [x] Code compatible React 18 StrictMode ✅ (20658534)
-- [x] Pattern cleanup standard utilisé ✅ (20658534)
-- [x] Pas de ref inutiles ✅ (20658534)
-
-#### Statut : ✅ **CODE IMPLÉMENTÉ** (20658534) - TESTS UTILISATEUR REQUIS
-
-**Temps réel** : 15 minutes (modification + commit)
-
-**Prochaine étape** : L'utilisateur doit tester le dashboard LinkMe pour valider que le spinner infini est résolu.
+_[Sections LM-AUTH-001 et Configuration Sentry archivées - voir fin du document]_
 
 ---
 
@@ -678,10 +735,44 @@ lsof -i :3000 -i :3001 -i :3002 | grep LISTEN
 
 ---
 
+## ✅ Tâches Complétées (Archivées - Session 2026-01-14)
+
+### LM-AUTH-001 : Fix spinner infini LinkMe (20658534) ✅
+- Problème : Dashboard LinkMe bloqué sur spinner infini (React StrictMode)
+- Solution : Suppression pattern `initializedRef`, ajout pattern `cancelled`
+- Fichier : `apps/linkme/src/contexts/AuthContext.tsx`
+- Statut : ✅ CODE IMPLÉMENTÉ
+
+### Configuration Sentry : Migration Next.js 15 (8184e314 + 125f3ee8) ✅
+- Problème : Warnings Sentry au démarrage (onRequestError, deprecated config)
+- Solution :
+  - Ajout hook `onRequestError` dans `instrumentation.ts`
+  - Création `instrumentation-client.ts` (Turbopack compatible)
+  - Ajout hook `onRouterTransitionStart` pour navigation tracking
+  - Suppression `sentry.client.config.ts` (obsolète)
+- Fichiers : `apps/back-office/*`, `apps/linkme/*`
+- Statut : ✅ VALIDÉ PAR UTILISATEUR (0 warnings)
+
+### Commits de Session 2026-01-14
+
+```
+5f117ef4 chore(plan): mark Sentry config as fully validated
+125f3ee8 [NO-TASK] fix(sentry): add onRouterTransitionStart hook
+c26f6798 chore(plan): mark Sentry config migration as completed
+8184e314 [NO-TASK] fix(sentry): migrate to Next.js 15 instrumentation
+3864e3d1 chore(plan): sync
+20658534 [LM-AUTH-001] fix: resolve infinite loading in dashboard
+```
+
+---
+
 ## Notes
 
 **Fichiers archivés** : `.claude/archive/plans-2026-01/ACTIVE-backup-*.md`
 
-**Priorité** : LM-ORD-004-5 à 4-10 (continuité logique)
+**Priorités actuelles** :
+1. 🔥 **LM-ORD-006** : Refonte UX Sélection Produits (PLAN COMPLET prêt)
+2. 🔥 **LM-ORD-005** : Workflow création commande (8 phases détaillées)
+3. **LM-ORD-004** : Pré-remplissage contacts (Phase 3-5)
 
 **Sentry DSN** : ✅ Configuré manuellement dans `.env.local`
