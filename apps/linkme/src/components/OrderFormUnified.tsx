@@ -19,6 +19,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 
 import Image from 'next/image';
 
+import { AddressAutocomplete, type AddressResult } from '@verone/ui';
 import {
   X,
   Loader2,
@@ -68,6 +69,8 @@ export interface OrderFormUnifiedData {
     city: string;
     address: string;
     postalCode: string;
+    latitude: number | null;
+    longitude: number | null;
   };
 
   // SI NOUVEAU RESTAURANT - STEP 2: Propriétaire
@@ -93,6 +96,8 @@ export interface OrderFormUnifiedData {
     address: string;
     postalCode: string;
     city: string;
+    latitude: number | null;
+    longitude: number | null;
     companyLegalName: string;
     siret: string;
   };
@@ -137,6 +142,8 @@ const INITIAL_DATA: OrderFormUnifiedData = {
     city: '',
     address: '',
     postalCode: '',
+    latitude: null,
+    longitude: null,
   },
   owner: {
     type: null,
@@ -157,6 +164,8 @@ const INITIAL_DATA: OrderFormUnifiedData = {
     address: '',
     postalCode: '',
     city: '',
+    latitude: null,
+    longitude: null,
     companyLegalName: '',
     siret: '',
   },
@@ -999,103 +1008,76 @@ function OpeningStep1({ data, errors, updateData }: StepProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Nom commercial *
-          </label>
-          <input
-            type="text"
-            value={data.newRestaurant.tradeName}
-            onChange={e =>
-              updateData({
-                newRestaurant: {
-                  ...data.newRestaurant,
-                  tradeName: e.target.value,
-                },
-              })
-            }
-            className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-              errors['newRestaurant.tradeName']
-                ? 'border-red-500'
-                : 'border-gray-300'
-            }`}
-            placeholder="Restaurant Exemple"
-          />
-          {errors['newRestaurant.tradeName'] && (
-            <p className="mt-1 text-xs text-red-600">
-              {errors['newRestaurant.tradeName']}
-            </p>
-          )}
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Ville *
-          </label>
-          <input
-            type="text"
-            value={data.newRestaurant.city}
-            onChange={e =>
-              updateData({
-                newRestaurant: {
-                  ...data.newRestaurant,
-                  city: e.target.value,
-                },
-              })
-            }
-            className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-              errors['newRestaurant.city']
-                ? 'border-red-500'
-                : 'border-gray-300'
-            }`}
-            placeholder="Paris"
-          />
-          {errors['newRestaurant.city'] && (
-            <p className="mt-1 text-xs text-red-600">
-              {errors['newRestaurant.city']}
-            </p>
-          )}
-        </div>
-      </div>
-
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Adresse
+          Nom commercial *
         </label>
         <input
           type="text"
-          value={data.newRestaurant.address}
+          value={data.newRestaurant.tradeName}
           onChange={e =>
             updateData({
               newRestaurant: {
                 ...data.newRestaurant,
-                address: e.target.value,
+                tradeName: e.target.value,
               },
             })
           }
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          placeholder="123 rue de la Paix"
+          className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+            errors['newRestaurant.tradeName']
+              ? 'border-red-500'
+              : 'border-gray-300'
+          }`}
+          placeholder="Restaurant Exemple"
         />
+        {errors['newRestaurant.tradeName'] && (
+          <p className="mt-1 text-xs text-red-600">
+            {errors['newRestaurant.tradeName']}
+          </p>
+        )}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Code postal
-        </label>
-        <input
-          type="text"
-          value={data.newRestaurant.postalCode}
-          onChange={e =>
+        <AddressAutocomplete
+          label="Adresse du restaurant *"
+          placeholder="Rechercher une adresse..."
+          value={
+            data.newRestaurant.address
+              ? `${data.newRestaurant.address}, ${data.newRestaurant.postalCode} ${data.newRestaurant.city}`
+              : ''
+          }
+          onChange={value => {
+            if (!value) {
+              updateData({
+                newRestaurant: {
+                  ...data.newRestaurant,
+                  address: '',
+                  city: '',
+                  postalCode: '',
+                  latitude: null,
+                  longitude: null,
+                },
+              });
+            }
+          }}
+          onSelect={(address: AddressResult) => {
             updateData({
               newRestaurant: {
                 ...data.newRestaurant,
-                postalCode: e.target.value,
+                address: address.streetAddress,
+                city: address.city,
+                postalCode: address.postalCode,
+                latitude: address.latitude,
+                longitude: address.longitude,
               },
-            })
-          }
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          placeholder="75001"
+            });
+          }}
         />
+        {errors['newRestaurant.city'] && (
+          <p className="mt-1 text-xs text-red-600">
+            {errors['newRestaurant.city']}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -1450,77 +1432,46 @@ function OpeningStep3({ data, errors, updateData }: StepProps) {
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Adresse *
-          </label>
-          <input
-            type="text"
-            value={data.billing.address}
-            onChange={e =>
-              updateData({
-                billing: { ...data.billing, address: e.target.value },
-              })
+          <AddressAutocomplete
+            label="Adresse de facturation *"
+            placeholder="Rechercher une adresse..."
+            value={
+              data.billing.address
+                ? `${data.billing.address}, ${data.billing.postalCode} ${data.billing.city}`
+                : ''
             }
-            placeholder="123 rue de la Facturation"
-            className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-              errors['billing.address'] ? 'border-red-500' : 'border-gray-300'
-            }`}
+            onChange={value => {
+              if (!value) {
+                updateData({
+                  billing: {
+                    ...data.billing,
+                    address: '',
+                    city: '',
+                    postalCode: '',
+                    latitude: null,
+                    longitude: null,
+                  },
+                });
+              }
+            }}
+            onSelect={(address: AddressResult) => {
+              updateData({
+                billing: {
+                  ...data.billing,
+                  address: address.streetAddress,
+                  city: address.city,
+                  postalCode: address.postalCode,
+                  latitude: address.latitude,
+                  longitude: address.longitude,
+                },
+              });
+            }}
           />
           {errors['billing.address'] && (
             <p className="mt-1 text-xs text-red-600">
               {errors['billing.address']}
             </p>
           )}
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Code postal *
-            </label>
-            <input
-              type="text"
-              value={data.billing.postalCode}
-              onChange={e =>
-                updateData({
-                  billing: { ...data.billing, postalCode: e.target.value },
-                })
-              }
-              placeholder="75001"
-              className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                errors['billing.postalCode']
-                  ? 'border-red-500'
-                  : 'border-gray-300'
-              }`}
-            />
-            {errors['billing.postalCode'] && (
-              <p className="mt-1 text-xs text-red-600">
-                {errors['billing.postalCode']}
-              </p>
-            )}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Ville *
-            </label>
-            <input
-              type="text"
-              value={data.billing.city}
-              onChange={e =>
-                updateData({
-                  billing: { ...data.billing, city: e.target.value },
-                })
-              }
-              placeholder="Paris"
-              className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                errors['billing.city'] ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
-            {errors['billing.city'] && (
-              <p className="mt-1 text-xs text-red-600">
-                {errors['billing.city']}
-              </p>
-            )}
-          </div>
         </div>
       </div>
 
