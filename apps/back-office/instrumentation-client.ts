@@ -5,6 +5,12 @@
  */
 import * as Sentry from '@sentry/nextjs';
 
+/**
+ * Hook Next.js 15 pour instrumenter les transitions de navigation
+ * @see https://docs.sentry.io/platforms/javascript/guides/nextjs/
+ */
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
+
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
