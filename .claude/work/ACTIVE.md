@@ -1,7 +1,7 @@
 # Plan Actif
 
 **Branche**: `fix/multi-bugs-2026-01`
-**Last sync**: 2026-01-14 (abaae16a)
+**Last sync**: 2026-01-14 (8a44b70f)
 
 ## Regles
 
@@ -12,7 +12,262 @@
 ## Taches
 
 
+---
 
+## Observations READ1 - LM-ORG-003 (2026-01-14)
+
+**Demande utilisateur** : Améliorer le design du popup qui s'affiche quand on clique sur un marqueur de la carte dans `/organisations` (onglet Vue Carte).
+
+**URL testée** : `http://localhost:3002/organisations?tab=map` (serveur dev en erreur, lecture code uniquement)
+
+**Fichiers analysés** :
+- `apps/linkme/src/app/(main)/organisations/page.tsx` (654 lignes)
+- `apps/linkme/src/components/shared/MapLibreMapView.tsx` (430 lignes)
+
+### État actuel du popup (MapLibreMapView.tsx L381-423)
+
+**Composant** : `<Popup>` de react-map-gl/maplibre
+
+**Contenu actuel** (très basique) :
+```tsx
+<div className="min-w-[180px] p-1">
+  <p className="font-semibold text-gray-900">{selectedOrg.trade_name || selectedOrg.legal_name}</p>
+  {selectedOrg.city && <p className="text-gray-500 text-sm">{selectedOrg.city}</p>}
+  <p className="text-xs mt-2">
+    <span className={`inline-block px-2 py-0.5 rounded-full text-white ${isPropre ? 'bg-blue-500' : 'bg-orange-500'}`}>
+      {isPropre ? 'Restaurant propre' : 'Franchise'}
+    </span>
+  </p>
+  <button onClick={() => onViewDetails(selectedOrg.id)}
+    className="mt-3 w-full px-3 py-1.5 text-sm font-medium text-white bg-[#5DBEBB] rounded-lg hover:bg-[#4DAEAB] transition-colors">
+    Voir les détails
+  </button>
+</div>
+```
+
+### Problèmes identifiés
+
+1. **Pas de logo** : Aucun logo de l'enseigne affiché
+2. **Bouton fermeture laid** : Croix par défaut de MapLibre (pas stylée)
+3. **Design minimaliste** : Trop simple, "à pleurer" selon utilisateur
+4. **Informations incomplètes** : Pas l'adresse complète, juste la ville
+5. **Hiérarchie visuelle faible** : Tout au même niveau
+
+### Demandes utilisateur
+
+**Popup amélioré doit contenir** :
+- ✅ Petit logo (enseigne ou icône générique)
+- ✅ Nom du restaurant
+- ✅ Adresse complète (pas juste ville)
+- ✅ Bouton de fermeture (croix) bien designé
+- ✅ Design moderne et synthétisé
+
+**Comportement** :
+- Clic sur marqueur → ouvre popup compact
+- Clic sur popup (ou bouton) → ouvre modal complet avec détails
+
+### Données disponibles (interface Organisation)
+
+```typescript
+interface Organisation {
+  id: string;
+  trade_name: string | null;
+  legal_name: string;
+  city: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  ownership_type?: 'propre' | 'franchise' | 'succursale' | null;
+}
+```
+
+**Données manquantes dans le popup** :
+- Adresse complète (street, postal_code)
+- Logo de l'enseigne
+
+**Note** : Le composant reçoit des organisations via `useEnseigneOrganisations` qui peut contenir plus de champs que l'interface minimale.
+
+### Interface complète disponible (EnseigneOrganisation)
+
+```typescript
+export interface EnseigneOrganisation {
+  id: string;
+  legal_name: string;
+  trade_name: string | null;
+  city: string | null;
+  postal_code: string | null;
+  shipping_address_line1: string | null;  // ✅ Adresse dispo
+  shipping_city: string | null;
+  shipping_postal_code: string | null;
+  logo_url: string | null;  // ✅ Logo dispo
+  ownership_type: OrganisationOwnershipType | null;
+  latitude: number | null;
+  longitude: number | null;
+}
+```
+
+**Toutes les données nécessaires sont déjà chargées !**
+
+---
+
+## Plan d'implémentation - LM-ORG-003
+
+**Objectif** : Améliorer le design du popup de carte (petit, synthétisé, beau)
+
+### Phase 1 : Enrichir l'interface Organisation dans MapLibreMapView
+
+- [ ] **LM-ORG-003-1** : Étendre interface Organisation
+  - Fichier : `apps/linkme/src/components/shared/MapLibreMapView.tsx`
+  - Ligne : 30-38
+  - Ajouter champs manquants :
+    ```typescript
+    interface Organisation {
+      id: string;
+      trade_name: string | null;
+      legal_name: string;
+      city: string | null;
+      postal_code: string | null;  // NOUVEAU
+      shipping_address_line1: string | null;  // NOUVEAU
+      shipping_city: string | null;  // NOUVEAU
+      shipping_postal_code: string | null;  // NOUVEAU
+      logo_url: string | null;  // NOUVEAU
+      latitude: number | null;
+      longitude: number | null;
+      ownership_type?: 'propre' | 'franchise' | 'succursale' | null;
+    }
+    ```
+
+### Phase 2 : Redesigner le popup
+
+- [ ] **LM-ORG-003-2** : Créer composant MapPopupCard
+  - Fichier : `apps/linkme/src/components/shared/MapPopupCard.tsx` (NOUVEAU)
+  - Props :
+    ```typescript
+    interface MapPopupCardProps {
+      organisation: {
+        id: string;
+        logo_url: string | null;
+        trade_name: string | null;
+        legal_name: string;
+        shipping_address_line1: string | null;
+        shipping_postal_code: string | null;
+        shipping_city: string | null;
+        ownership_type?: 'propre' | 'franchise' | 'succursale' | null;
+      };
+      onViewDetails: (id: string) => void;
+      onClose: () => void;
+    }
+    ```
+  - **Design moderne** :
+    - Header avec logo (rond, 40x40px) + nom
+    - Adresse complète (icône MapPin + texte gris)
+    - Badge type (Propre/Franchise) - discret
+    - Bouton "Voir plus" stylé (pas tout le width, icône Arrow)
+    - Bouton fermeture (X) en haut à droite - bien visible, hover effect
+    - Padding généreux : p-4
+    - Border shadow subtile
+    - Max-width: 280px
+
+- [ ] **LM-ORG-003-3** : Design détaillé du popup
+  - **Structure** :
+    ```
+    ┌─────────────────────────────┐
+    │ [Logo] Nom Restaurant    [X]│  ← Header avec logo + close button
+    │ ─────────────────────────── │
+    │ 📍 123 Rue Example          │  ← Adresse ligne 1
+    │    75001 Paris              │  ← Code postal + ville
+    │                             │
+    │ [Badge: Propre/Franchise]   │  ← Badge discret
+    │                             │
+    │         [Voir plus →]       │  ← Bouton centré, pas full width
+    └─────────────────────────────┘
+    ```
+  - **Couleurs** :
+    - Background : bg-white
+    - Logo fallback : bg-gray-100 avec icône Building2
+    - Texte nom : text-gray-900 font-semibold
+    - Texte adresse : text-gray-600 text-sm
+    - Bouton "Voir plus" : bg-linkme-turquoise hover:bg-linkme-turquoise/90
+    - Bouton close : text-gray-400 hover:text-gray-600
+  - **Espacements** :
+    - Padding général : p-4
+    - Gap entre sections : space-y-3
+    - Logo size : h-10 w-10 rounded-full
+    - Close button : absolute top-2 right-2
+
+- [ ] **LM-ORG-003-4** : Intégrer MapPopupCard dans MapLibreMapView
+  - Fichier : `apps/linkme/src/components/shared/MapLibreMapView.tsx`
+  - Lignes : 381-423 (remplacer le contenu du Popup)
+  - Importer MapPopupCard
+  - Passer les props complètes
+  - Gérer closeButton={false} sur Popup (on gère notre propre bouton X)
+
+### Phase 3 : Gestion du logo
+
+- [ ] **LM-ORG-003-5** : Fallback logo intelligent
+  - Si `logo_url` existe → afficher `<img src={logo_url} />`
+  - Si null → afficher icône `<Building2>` dans un cercle gris
+  - Classes : `h-10 w-10 rounded-full object-cover`
+  - Container fallback : `bg-gray-100 flex items-center justify-center`
+
+### Phase 4 : Formattage adresse
+
+- [ ] **LM-ORG-003-6** : Fonction utilitaire formatAddress
+  - Fichier : `apps/linkme/src/components/shared/MapPopupCard.tsx`
+  - Logique :
+    ```typescript
+    function formatAddress(org: Organisation): { line1: string | null, line2: string | null } {
+      const line1 = org.shipping_address_line1;
+      const line2 = org.shipping_postal_code && org.shipping_city
+        ? `${org.shipping_postal_code} ${org.shipping_city}`
+        : org.shipping_city || org.city || null;
+      return { line1, line2 };
+    }
+    ```
+  - Afficher sur 2 lignes si line1 existe
+  - Sinon juste line2
+
+### Phase 5 : Tests
+
+- [ ] **LM-ORG-003-7** : Tester le popup
+  - Aller sur `/organisations?tab=map`
+  - Cliquer sur un marqueur
+  - Vérifier :
+    - Logo s'affiche (ou fallback Building2)
+    - Nom du restaurant
+    - Adresse sur 2 lignes
+    - Badge discret
+    - Bouton "Voir plus" centré
+    - Bouton X fonctionnel et bien visible
+    - Design moderne, pas "à pleurer" ✅
+
+- [ ] **LM-ORG-003-8** : Tester responsive
+  - Mobile : popup doit rester lisible (max-width adaptive)
+  - Logo pas trop gros
+  - Texte pas trop petit
+
+### Notes techniques
+
+**Composant Popup de MapLibre** :
+- `closeButton={false}` pour gérer notre propre bouton X
+- `closeOnClick={false}` déjà présent
+- `anchor="bottom"` déjà correct
+- `offset={35}` peut être ajusté si besoin
+
+**Icônes à utiliser** :
+- Logo fallback : `Building2` de lucide-react
+- Adresse : `MapPin` de lucide-react
+- Bouton voir plus : `ArrowRight` de lucide-react
+- Close button : `X` de lucide-react
+
+**Hiérarchie visuelle** :
+1. Logo + Nom (plus gros, bold)
+2. Adresse (moyen, gris)
+3. Badge (petit, coloré mais discret)
+4. Bouton action (centré, turquoise)
+
+**Différence avec modal** :
+- Popup = rapide, synthétique, juste les infos clés
+- Modal (après clic "Voir plus") = complet avec tous les détails
 
 ---
 
