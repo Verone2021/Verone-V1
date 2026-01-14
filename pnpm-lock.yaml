@@ -354,6 +354,9 @@ importers:
       recharts:
         specifier: ^3.3.0
         version: 3.3.0(@types/react@18.3.26)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1)(redux@5.0.1)
+      resend:
+        specifier: ^6.6.0
+        version: 6.6.0
       supercluster:
         specifier: ^8.0.1
         version: 8.0.1
@@ -12427,7 +12430,7 @@ snapshots:
 
   core-js-compat@3.46.0:
     dependencies:
-      browserslist: 4.27.0
+      browserslist: 4.28.1
     optional: true
 
   core-js@3.46.0:
