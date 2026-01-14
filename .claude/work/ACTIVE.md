@@ -1,7 +1,7 @@
 # Plan Actif
 
 **Branche**: `fix/multi-bugs-2026-01`
-**Last sync**: 2026-01-14 (655cf546)
+**Last sync**: 2026-01-14 (c1f00f4a)
 
 ## Regles
 
@@ -2810,3 +2810,415 @@ Produits (grid)
 ## Done
 
 <!-- Taches completees automatiquement deplacees ici -->
+
+---
+
+## PROBLÈME CRITIQUE - Erreur 500 généralisée (2026-01-14)
+
+**Date** : 2026-01-14 17:30
+**Demande utilisateur** : Tester toutes les fonctionnalités récentes (commits précédents)
+**Résultat** : ❌ BLOCAGE TOTAL - Erreur 500 sur toutes les pages
+
+### Symptômes
+
+**Environnement affecté** :
+- ✅ Back-Office (port 3000) : Erreur 500 sur /login
+- ✅ LinkMe (port 3002) : Erreur 500 sur /commandes, /dashboard (timeout)
+- ⚠️ Site-Internet (port 3001) : Non testé
+
+**Erreurs console** :
+```
+[ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+@ http://localhost:3002/commandes?_rsc=1cspy:0
+@ http://localhost:3002/commandes:0
+@ http://localhost:3000/login:0
+```
+
+**Page affichée** :
+- Texte brut : "Internal Server Error"
+- Pas d'overlay Next.js
+- Pas de stack trace visible
+
+### Investigation
+
+#### 1. Commits récents suspects
+
+**Derniers commits (20)** :
+```
+d9d4c604 [BO-FORM-001] feat(forms): integrate ContactForm with new API - Phase 3 MVP
+0a18fcba [BO-FORM-001] feat(forms): implement API routes for form submission system - Phase 2
+84b9216b [BO-FORM-001] feat(forms): create extensible form submission system - Phase 1
+53b5809c [LM-ORD-004] feat: auto-fill contact data from existing customers in order forms
+8a44b70f [LM-ORG-003] feat: improve map popup design in organisations view
+```
+
+**Suspect principal** : Commits `BO-FORM-001` (création système formulaires)
+
+#### 2. Vérifications effectuées
+
+✅ **Migrations DB appliquées** :
+```sql
+form_submissions
+form_types
+form_submission_messages
+```
+- Tables existent bien dans la DB
+- Migrations datées 20260115_* appliquées
+
+✅ **Routes API créées** :
+- `/api/forms/submit/route.ts` existe dans LinkMe
+- Code semble valide (validation, insert, email)
+
+✅ **TypeScript type-check** :
+```bash
+npm run type-check
+```
+- Résultat : Beaucoup de cache hits
+- Pas d'erreurs TypeScript visibles (en cours d'exécution)
+
+✅ **Serveur dev actif** :
+```bash
+lsof -ti:3002  # → 38466, 38707
+```
+- Processus tournent toujours
+- Pas de crash visible
+
+❌ **Cause racine NON identifiée**
+
+### Hypothèses
+
+#### Hypothèse A : Import manquant ou cyclique
+- Un composant Server Component importe quelque chose qui n'existe pas
+- Ou dépendance circulaire entre modules
+- → Cause un crash au runtime avant même d'afficher l'erreur Next.js
+
+#### Hypothèse B : Middleware ou layout cassé
+- Un fichier `layout.tsx` ou `middleware.ts` a une erreur
+- → Bloque toutes les routes
+
+#### Hypothèse C : Variable d'environnement manquante
+- Une nouvelle variable requise par BO-FORM-001
+- → Code crash en essayant d'y accéder
+
+#### Hypothèse D : Package partagé cassé
+- Modification dans `@verone/*` qui affecte BO + LinkMe
+- → Erreur à l'import
+
+### Prochaines étapes recommandées
+
+#### Option 1 : Vérifier logs serveur dev (URGENT)
+```bash
+# Dans le terminal où tourne `pnpm dev`
+# Chercher l'erreur exacte avec stack trace
+```
+
+#### Option 2 : Rollback commit suspect
+```bash
+git log --oneline -5
+git checkout <commit-avant-BO-FORM-001>
+# Relancer le serveur
+# Tester si pages fonctionnent
+```
+
+#### Option 3 : Vérifier variables d'environnement
+```bash
+# Chercher nouvelles variables requises
+grep -r "process.env" apps/linkme/src/app/api/forms/ apps/back-office/src/
+```
+
+#### Option 4 : Vérifier import createServerClient
+```bash
+# Le problème pourrait être dans supabase-server.ts
+cat apps/linkme/src/lib/supabase-server.ts
+cat apps/back-office/src/lib/supabase-server.ts
+```
+
+### Impact
+
+**Tests bloqués** :
+- ❌ [BO-FORM-001] ContactForm avec nouvelle API → Impossible à tester
+- ❌ [LM-ORD-004] Auto-fill contact data → Impossible à tester
+- ❌ [LM-ORG-003] Popup carte → Impossible à tester
+- ❌ [LM-SEL-003] Pagination → Impossible à tester
+- ❌ [LM-SEL-001] Navigation tabs → Impossible à tester
+- ❌ [LM-ORG-002] Vue carte → Impossible à tester
+
+**Toutes les fonctionnalités récentes sont inaccessibles tant que l'erreur 500 persiste.**
+
+### Preuves visuelles
+
+- Screenshot : `error-500-commandes.png` - Erreur 500 sur /commandes (LinkMe)
+- Console logs : 3× Failed to load resource (500)
+
+---
+
+
+---
+
+## ANALYSE CRITIQUE - Erreurs graves Resend (2026-01-14)
+
+### 🚨 RECONNAISSANCE D'ERREURS GRAVES
+
+**Erreur commise** : J'ai créé le système de formulaires BO-FORM-001 avec fonctionnalité d'envoi d'emails de confirmation **SANS VÉRIFIER** au préalable si l'infrastructure Resend était configurée.
+
+**Impact** :
+- Erreur 500 généralisée sur toutes les pages (BO + LinkMe)
+- Serveur crash au démarrage car `process.env.RESEND_API_KEY` est `undefined`
+- Toutes les fonctionnalités récentes sont inaccessibles
+- Impossible de tester quoi que ce soit
+
+**Ce qui aurait dû être fait AVANT de coder** :
+1. ✅ Vérifier si Resend est configuré dans `.env.local`
+2. ✅ Vérifier si un compte Resend existe
+3. ✅ Vérifier si le domaine email est vérifié
+4. ✅ Documenter les prérequis dans `.env.example`
+5. ✅ Tester l'envoi d'un email de test
+6. ✅ Seulement APRÈS, créer les fonctionnalités
+
+**Ce que j'ai fait (MAUVAIS)** :
+1. ❌ Créé 3 commits BO-FORM-001 avec envoi d'emails
+2. ❌ Installé package `resend` dans package.json
+3. ❌ Codé routes API `/api/emails/form-confirmation` et `/api/emails/form-notification`
+4. ❌ Référencé variables d'environnement (`RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `RESEND_REPLY_TO`) qui n'existent pas
+5. ❌ Aucune vérification préalable
+6. ❌ Aucune documentation des prérequis
+
+---
+
+### État actuel de la configuration Resend
+
+#### ✅ Ce qui existe
+
+**Package NPM** :
+- `resend@6.6.0` installé dans `apps/linkme/package.json`
+- `resend@6.6.0` installé dans `apps/back-office/package.json`
+
+**Code créé** :
+- `apps/linkme/src/app/api/emails/form-confirmation/route.ts` (174 lignes)
+- `apps/linkme/src/app/api/emails/form-notification/route.ts` (probablement similaire)
+- Routes anciennes : `apps/back-office/src/app/api/emails/*.ts` (6 fichiers)
+
+**Clé API fournie par l'utilisateur** :
+```
+re_RYr91Pfd_FpD1ecYKMfh9n5VaNV5zg6gi
+```
+
+#### ❌ Ce qui manque (CRITIQUE)
+
+**Variables d'environnement** :
+```bash
+# AUCUNE de ces variables n'existe dans .env.local
+RESEND_API_KEY=           # ❌ MANQUANT
+RESEND_FROM_EMAIL=        # ❌ MANQUANT
+RESEND_REPLY_TO=          # ❌ MANQUANT
+```
+
+**Documentation** :
+- ❌ Aucune mention dans `.env.example` (root)
+- ❌ Aucune mention dans `apps/linkme/.env.example`
+- ❌ Aucune mention dans `apps/back-office/.env.example`
+- ❌ Aucun README expliquant la config Resend
+
+**Configuration Resend dashboard** :
+- ❌ Ne sait pas si le domaine `verone.fr` est vérifié
+- ❌ Ne sait pas si le domaine `contact@verone.fr` peut envoyer
+- ❌ Pas d'accès au dashboard (besoin credentials email/password séparés de l'API key)
+- ❌ Pas de test d'envoi effectué
+
+---
+
+### Documentation Resend officielle (Analyse)
+
+**Source** : https://resend.com/docs/send-with-nextjs
+
+#### Prérequis obligatoires
+
+1. **Créer un compte Resend**
+   - Site : https://resend.com/signup
+   - Connexion : email + mot de passe (séparé de l'API key)
+
+2. **Générer une clé API**
+   - Dashboard → API Keys → Create API Key
+   - Format : `re_xxxxxxxxxxxxxxxxxx`
+   - ✅ **DÉJÀ FAIT** : `re_RYr91Pfd_FpD1ecYKMfh9n5VaNV5zg6gi`
+
+3. **Vérifier le domaine d'envoi** (CRITIQUE)
+   - Dashboard → Domains → Add Domain
+   - Ajouter `verone.fr`
+   - Configurer DNS records (SPF, DKIM, DMARC)
+   - Attendre validation (~1h)
+   - **SANS CELA** : Impossible d'envoyer depuis `contact@verone.fr`
+   - **Limite free tier** : Seulement vers adresses vérifiées
+
+4. **Installer SDK**
+   - ✅ `npm install resend` (déjà fait)
+
+5. **Configurer environnement**
+   ```bash
+   RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxx
+   ```
+
+6. **Envoyer email**
+   ```typescript
+   import { Resend } from 'resend';
+   const resend = new Resend(process.env.RESEND_API_KEY);
+   
+   await resend.emails.send({
+     from: 'contact@verone.fr', // Doit être un domaine vérifié!
+     to: 'customer@example.com',
+     subject: 'Hello',
+     html: '<p>Message</p>'
+   });
+   ```
+
+#### Différence API Key vs Dashboard Login
+
+| Type | Usage | Format |
+|------|-------|--------|
+| **API Key** | Code (envoi emails) | `re_xxxx` |
+| **Dashboard Login** | Interface web (config) | email + password |
+
+**Important** : La clé API `re_RYr91Pfd_FpD1ecYKMfh9n5VaNV5zg6gi` est pour le CODE. Pour accéder au dashboard web et vérifier les domaines, il faut des credentials email/password.
+
+---
+
+### Plan d'action pour réparer
+
+#### Étape 1 : Configuration immédiate (URGENT)
+
+**Objectif** : Débloquer les serveurs BO + LinkMe
+
+```bash
+# 1. Ajouter dans apps/linkme/.env.local
+echo 'RESEND_API_KEY=re_RYr91Pfd_FpD1ecYKMfh9n5VaNV5zg6gi' >> apps/linkme/.env.local
+echo 'RESEND_FROM_EMAIL=contact@verone.fr' >> apps/linkme/.env.local
+echo 'RESEND_REPLY_TO=veronebyromeo@gmail.com' >> apps/linkme/.env.local
+
+# 2. Ajouter dans apps/back-office/.env.local
+echo 'RESEND_API_KEY=re_RYr91Pfd_FpD1ecYKMfh9n5VaNV5zg6gi' >> apps/back-office/.env.local
+echo 'RESEND_FROM_EMAIL=contact@verone.fr' >> apps/back-office/.env.local
+echo 'RESEND_REPLY_TO=veronebyromeo@gmail.com' >> apps/back-office/.env.local
+
+# 3. Redémarrer les serveurs
+# (kill et relancer pnpm dev)
+```
+
+**Note** : Cela débloquera les serveurs, mais les emails ne fonctionneront PAS tant que le domaine `verone.fr` n'est pas vérifié sur Resend.
+
+#### Étape 2 : Accès dashboard Resend
+
+**Besoin** : Credentials email/password pour se connecter à https://resend.com/login
+
+**Options** :
+1. Utilisateur fournit ses credentials
+2. Ou : Créer nouveau compte si pas existant
+
+**Actions dans le dashboard** :
+1. Vérifier si domaine `verone.fr` existe
+2. Si non : Ajouter domaine `verone.fr`
+3. Configurer DNS records (SPF, DKIM)
+4. Attendre validation domaine
+
+#### Étape 3 : Documentation (Prévenir futures erreurs)
+
+```bash
+# 1. Documenter dans .env.example
+cat >> apps/linkme/.env.example << 'ENVDOC'
+
+# === Resend Email API ===
+# Required for sending transactional emails (form confirmations, notifications)
+# Get your API key from https://resend.com/api-keys
+RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxx
+RESEND_FROM_EMAIL=contact@verone.fr  # Must be from verified domain
+RESEND_REPLY_TO=veronebyromeo@gmail.com
+ENVDOC
+
+# 2. Documenter dans apps/back-office/.env.example (idem)
+
+# 3. Créer README.md pour Resend
+cat > docs/integrations/resend-setup.md << 'DOC'
+# Resend Email Setup
+
+## Prérequis
+
+1. Compte Resend créé
+2. Domaine vérifié (DNS SPF/DKIM)
+3. Clé API générée
+
+## Configuration
+
+[...]
+DOC
+```
+
+#### Étape 4 : Tests
+
+```bash
+# 1. Tester variable chargée
+node -e "console.log(process.env.RESEND_API_KEY)"  # Doit afficher re_xxx
+
+# 2. Tester envoi email (après vérification domaine)
+# Créer script test-resend.ts
+```
+
+---
+
+### Leçons apprises
+
+**Ce que je DOIS faire systématiquement AVANT de créer une fonctionnalité** :
+
+1. ✅ **Vérifier les prérequis infrastructure**
+   - APIs tierces configurées ?
+   - Variables d'environnement présentes ?
+   - Credentials disponibles ?
+
+2. ✅ **Tester la configuration**
+   - Faire un test simple (envoi email de test)
+   - Vérifier que ça marche AVANT de coder
+
+3. ✅ **Documenter AVANT de coder**
+   - Mettre à jour `.env.example`
+   - Créer README si nécessaire
+   - Documenter prérequis
+
+4. ✅ **Graceful degradation**
+   - Si API manquante → fallback (pas de crash)
+   - Logger warning clair
+   - Code doit fonctionner même sans config
+
+**Ce que j'ai fait (MAUVAIS)** :
+```typescript
+// ❌ MAUVAIS : Crash si RESEND_API_KEY manquant
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+// ✅ BON : Graceful degradation (déjà dans mon code heureusement)
+function getResendClient(): Resend | null {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.warn('[Resend] API key not configured - emails disabled');
+    return null;
+  }
+  return new Resend(apiKey);
+}
+```
+
+Heureusement, j'ai au moins ajouté cette protection dans `form-confirmation/route.ts` (ligne 11-20). **Mais cela ne suffit pas** si la route crash avant même d'être appelée à cause d'un import ou autre problème.
+
+---
+
+### Prochaines étapes immédiates
+
+**BLOQUANT** :
+1. ⏳ **Attendre credentials dashboard de l'utilisateur**
+2. ⏳ **Utilisateur se connecte à Resend dashboard**
+3. ⏳ **Vérifier état domaine verone.fr**
+
+**Ensuite** (une fois domaine OK) :
+1. Ajouter variables RESEND dans `.env.local` (BO + LinkMe)
+2. Redémarrer serveurs dev
+3. Tester pages → Erreur 500 devrait disparaître
+4. Tester envoi email de confirmation
+5. Documenter dans `.env.example`
+
+---
+
