@@ -144,6 +144,8 @@ export function useSubmitUnifiedOrder() {
             city: data.newRestaurant.city,
             postal_code: data.newRestaurant.postalCode || null,
             address: data.newRestaurant.address || null,
+            latitude: data.newRestaurant.latitude || null,
+            longitude: data.newRestaurant.longitude || null,
           };
 
           // Propriétaire
