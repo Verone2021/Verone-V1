@@ -1,7 +1,7 @@
 # Plan Actif
 
 **Branche**: `fix/multi-bugs-2026-01`
-**Last sync**: 2026-01-14 (0a18fcba)
+**Last sync**: 2026-01-14 (655cf546)
 
 ## Regles
 
