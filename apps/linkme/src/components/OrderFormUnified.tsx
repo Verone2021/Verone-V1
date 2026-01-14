@@ -114,6 +114,14 @@ interface Organisation {
   city: string | null;
 }
 
+// Interface pour le cache localStorage des utilisateurs publics
+interface RequesterCache {
+  name: string;
+  email: string;
+  phone: string;
+  expiresAt: number; // Timestamp d'expiration (7 jours)
+}
+
 interface OrderFormUnifiedProps {
   // Context
   affiliateId: string;
@@ -133,6 +141,10 @@ interface OrderFormUnifiedProps {
   onSubmit: (data: OrderFormUnifiedData, cart: CartItem[]) => Promise<void>;
   isSubmitting?: boolean;
 }
+
+// Clé pour le cache localStorage des utilisateurs publics (TTL 7 jours)
+const REQUESTER_CACHE_KEY = 'linkme_requester_cache';
+const CACHE_TTL_DAYS = 7;
 
 const INITIAL_DATA: OrderFormUnifiedData = {
   isNewRestaurant: null,
@@ -245,6 +257,47 @@ export function OrderFormUnified({
       }));
     }
   }, [data.existingOrganisationId, organisationContacts]);
+
+  // Charger depuis localStorage au montage (seulement pour utilisateurs publics sans org existante)
+  useEffect(() => {
+    // Ne charger que si :
+    // 1. Premier montage (data.isNewRestaurant === null)
+    // 2. Pas d'organisation existante sélectionnée
+    if (data.isNewRestaurant === null && !data.existingOrganisationId) {
+      try {
+        const cached = localStorage.getItem(REQUESTER_CACHE_KEY);
+        if (cached) {
+          const parsedCache: RequesterCache = JSON.parse(cached);
+
+          // Vérifier si le cache n'est pas expiré
+          if (parsedCache.expiresAt > Date.now()) {
+            setData(prev => ({
+              ...prev,
+              owner: {
+                ...prev.owner,
+                name: parsedCache.name,
+                email: parsedCache.email,
+                phone: parsedCache.phone,
+              },
+              billing: {
+                ...prev.billing,
+                name: parsedCache.name,
+                email: parsedCache.email,
+                phone: parsedCache.phone,
+              },
+            }));
+          } else {
+            // Cache expiré, le supprimer
+            localStorage.removeItem(REQUESTER_CACHE_KEY);
+          }
+        }
+      } catch (error) {
+        console.error('Erreur chargement cache localStorage:', error);
+        // En cas d'erreur, supprimer le cache corrompu
+        localStorage.removeItem(REQUESTER_CACHE_KEY);
+      }
+    }
+  }, []); // Exécuter uniquement au montage
 
   // Mise à jour des données
   const updateData = useCallback((updates: Partial<OrderFormUnifiedData>) => {
@@ -397,6 +450,23 @@ export function OrderFormUnified({
   const handleSubmit = useCallback(async () => {
     try {
       await onSubmit(data, cart);
+
+      // Sauvegarder dans localStorage pour pré-remplissage futur (utilisateurs publics uniquement)
+      // Seulement si c'est un nouveau restaurant (pas une org existante)
+      if (data.isNewRestaurant && data.owner.name && data.owner.email) {
+        try {
+          const cache: RequesterCache = {
+            name: data.owner.name,
+            email: data.owner.email,
+            phone: data.owner.phone,
+            expiresAt: Date.now() + CACHE_TTL_DAYS * 24 * 60 * 60 * 1000, // 7 jours
+          };
+          localStorage.setItem(REQUESTER_CACHE_KEY, JSON.stringify(cache));
+        } catch (storageError) {
+          // Erreur localStorage non bloquante
+          console.error('Impossible de sauvegarder le cache:', storageError);
+        }
+      }
     } catch (error) {
       setErrors({ submit: 'Erreur lors de la soumission' });
     }
