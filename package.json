@@ -9,6 +9,8 @@
   ],
   "scripts": {
     "dev": "turbo dev",
+    "dev:stop": "./scripts/dev-stop.sh",
+    "dev:clean": "./scripts/dev-clean.sh",
     "build": "turbo build",
     "start": "turbo start",
     "lint": "turbo lint",
