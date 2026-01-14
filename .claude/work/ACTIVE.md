@@ -11,6 +11,719 @@
 
 ## Taches
 
+---
+
+## TASK: BO-DEPLOY-001 — Audit et Plan de Déploiement (154 commits)
+
+### Contexte
+
+**Demande utilisateur :** Faire un audit complet de tous les commits push sur la branche `fix/multi-bugs-2026-01` pour préparer les PRs et le déploiement en production. Identifier également le problème de configuration Sentry pour le déploiement.
+
+**Situation actuelle :**
+- **Branche actuelle** : `fix/multi-bugs-2026-01`
+- **Commits non mergés dans main** : **154 commits**
+- **Fichiers modifiés** : **694 fichiers**
+- **Migrations SQL ajoutées** : **52 migrations**
+- **Applications concernées** :
+  - 147 fichiers back-office modifiés
+  - 140 fichiers linkme modifiés
+  - 2 fichiers site-internet modifiés
+- **Dernier déploiement** : Il y a quelques jours (fonctionnait correctement)
+
+**Build Status (2026-01-14) :**
+- ✅ `npm run type-check` : **PASS** (0 erreurs TypeScript)
+- ✅ `npm run build` : **PASS** après nettoyage cache LinkMe
+- ⚠️ **Problème résolu** : Build LinkMe échouait avec erreur `_document` (cache Next.js corrompu, résolu par `rm -rf apps/linkme/.next`)
+
+### Steps to Reproduce
+
+**Audit effectué :**
+
+1. ✅ Vérification branche actuelle : `fix/multi-bugs-2026-01`
+2. ✅ Analyse historique Git :
+   ```bash
+   git log origin/main..HEAD --oneline | wc -l
+   # → 154 commits non mergés
+   ```
+3. ✅ Inventaire fichiers modifiés :
+   ```bash
+   git diff --name-status origin/main..HEAD | wc -l
+   # → 694 fichiers modifiés
+   ```
+4. ✅ Lecture documentation déploiement :
+   - `.github/DEPLOYMENT_STATUS.md` (⚠️ obsolète, date d'octobre 2025)
+   - `.github/PULL_REQUEST_TEMPLATE.md`
+   - `docs/current/deploy-runbooks.md`
+5. ✅ Vérification build local :
+   - Type-check : PASS
+   - Build : PASS (après fix cache LinkMe)
+6. ✅ Analyse répartition commits par Task ID
+
+### Expected vs Actual
+
+**Expected (workflow normal) :**
+- Déploiements incrémentaux fréquents (1-2 PRs par jour)
+- PRs thématiques de petite taille (<20 fichiers)
+- Migrations SQL appliquées progressivement
+- Rollback facile en cas de problème
+
+**Actual (situation actuelle) :**
+- ❌ **154 commits accumulés** sur la branche (risque élevé)
+- ❌ **694 fichiers modifiés** (très difficile à review)
+- ❌ **52 migrations SQL** à appliquer d'un coup (risque database)
+- ❌ **Multiples fonctionnalités interdépendantes** (impossible de rollback partiellement)
+- ⚠️ **Sentry mal configuré** pour déploiement (warnings, déprécations - à vérifier)
+
+### Evidence
+
+**Répartition des commits par Task ID :**
+
+| Task ID       | Commits | Domaine                                    |
+|---------------|---------|-------------------------------------------|
+| BO-FORM-001   | 8       | Système formulaires + emails Resend       |
+| LM-ADDR-001   | 3       | AddressAutocomplete avec géolocalisation  |
+| BO-WORK-*     | 5       | Workflow multi-agent Claude Code          |
+| LM-ORD-*      | 2       | Commandes LinkMe (auto-fill, auto-create) |
+| LM-ORG-*      | 3       | Organisations LinkMe (map, stats)         |
+| LM-SEL-*      | 2       | Sélections LinkMe (pagination, UI)        |
+| BO-SENTRY-001 | 1       | Monitoring Sentry + Replay + Feedback     |
+| [NO-TASK]     | 2       | Fixes dashboard + Sentry config update    |
+| **Anciens**   | ~128    | Dashboard, Qonto, Auth, Perf, RLS, etc.   |
+
+**Migrations SQL critiques :**
+```
+supabase/migrations/
+├── 20260106_add_addresses_to_linkme_orders_rpc.sql
+├── 20260106_add_style_to_products.sql
+├── 20260106_linkme_page_configurations.sql
+├── 20260107_add_fees_vat_rate_to_sales_orders.sql
+├── 20260109_001_product_commission_history.sql
+├── 20260109_011_drop_abby_integration.sql
+└── ... (46 autres migrations)
+```
+
+**Fichiers Sentry (à auditer) :**
+```
+apps/back-office/
+├── instrumentation.ts                 (nouveau)
+├── sentry.client.config.ts            (nouveau)
+├── sentry.edge.config.ts              (nouveau)
+├── sentry.server.config.ts            (nouveau)
+└── package.json                       (dépendances Sentry)
+```
+
+**Warnings build identifiés :**
+- ⚠️ LinkMe : Supabase Realtime API utilisée dans Edge Runtime (non bloquant)
+- ⚠️ Site-internet : ESLint warnings (non bloquant)
+- ⚠️ Tailwind : Pattern matching `node_modules` (performance, non bloquant)
+
+### Hypothèses (fichiers/causes probables)
+
+**1. Problème Sentry déploiement (mentionné par utilisateur) :**
+- **Fichiers concernés** :
+  - `apps/back-office/instrumentation.ts`
+  - `apps/back-office/sentry.*.config.ts` (3 fichiers)
+  - `apps/linkme/` (même structure probable)
+- **Hypothèse** : Configuration Sentry locale fonctionnelle, mais variables d'environnement ou build config manquantes pour Vercel
+- **À vérifier** :
+  - Variables env Vercel : `SENTRY_AUTH_TOKEN`, `SENTRY_PROJECT`, `SENTRY_ORG`
+  - Vercel build logs : warnings/déprécations Sentry
+  - Fichier `.sentryclirc` ou `sentry.properties`
+
+**2. Accumulation commits (workflow) :**
+- **Cause** : Développement continu sans déploiements intermédiaires
+- **Risque** : Review impossible, rollback compliqué, debugging difficile
+
+**3. Migrations SQL massives :**
+- **Risque** : Temps d'exécution long en production, risque de timeout
+- **Solution** : Appliquer migrations par batch avec monitoring
+
+**4. Build LinkMe instable :**
+- **Cause** : Cache Next.js corrompu (erreur `_document`)
+- **Solution appliquée** : `rm -rf apps/linkme/.next` avant build
+- **Recommandation** : Ajouter script `clean` dans package.json
+
+### Fix Proposé (haut niveau)
+
+**Approche : Déploiement par PRs thématiques progressifs**
+
+Au lieu de merger les 154 commits d'un coup, créer **plusieurs PRs thématiques** qui peuvent être testées, reviewées et rollback indépendamment :
+
+#### **Option A : Déploiement Thématique (RECOMMANDÉ)**
+
+Créer 6-8 PRs logiques basées sur les domaines fonctionnels :
+
+1. **PR1 : Infrastructure & Monitoring** (`BO-SENTRY-001` + migrations)
+   - Sentry setup (fix config déploiement)
+   - Migrations database critiques (structure, non data)
+   - Permet monitoring des PRs suivantes
+
+2. **PR2 : Workflow & Documentation** (`BO-WORK-*`)
+   - Workflow Claude Code multi-agent
+   - Documentation updates
+   - Faible risque
+
+3. **PR3 : LinkMe Organisations** (`LM-ORG-*`)
+   - Map view, stats, ownership
+   - Migrations organisations
+
+4. **PR4 : LinkMe Sélections** (`LM-SEL-*` + `LM-ADDR-001`)
+   - Pagination, UI
+   - AddressAutocomplete
+   - Migrations sélections
+
+5. **PR5 : LinkMe Commandes** (`LM-ORD-*`)
+   - Auto-fill, auto-create contacts
+   - Migrations commandes
+
+6. **PR6 : Back-Office Formulaires** (`BO-FORM-001`)
+   - Système formulaires extensible
+   - Emails Resend
+   - API routes
+
+7. **PR7 : Dashboard & KPIs** (commits anciens)
+   - Dashboard V2
+   - Recharts
+   - KPIs
+
+8. **PR8 : Qonto & Finance** (commits anciens)
+   - Factures, devis, avoirs
+   - Paiements, réconciliation
+
+**Avantages :**
+- ✅ Review facilité (chaque PR = 1 domaine)
+- ✅ Rollback granulaire possible
+- ✅ Tests ciblés par domaine
+- ✅ Déploiement progressif = moins de risque
+
+**Inconvénients :**
+- ⚠️ Dépendances entre PRs (ordre important)
+- ⚠️ Temps de review/merge plus long
+
+#### **Option B : Déploiement Monolithique (DÉCONSEILLÉ)**
+
+Créer 1 seule PR avec les 154 commits.
+
+**Avantages :**
+- ✅ Plus rapide à merger
+
+**Inconvénients :**
+- ❌ Review impossible (694 fichiers)
+- ❌ Rollback = tout ou rien
+- ❌ Debugging très difficile en cas de régression
+- ❌ Haut risque de breaking production
+
+**Recommandation : ÉVITER cette option**
+
+### Risques
+
+**Risques Déploiement Global :**
+
+| Risque                                  | Probabilité | Impact | Mitigation                                   |
+|-----------------------------------------|-------------|--------|----------------------------------------------|
+| Régression non détectée                 | ÉLEVÉ       | ÉLEVÉ  | Déployer par PRs thématiques                 |
+| Migration SQL timeout en prod           | MOYEN       | ÉLEVÉ  | Appliquer migrations par batch               |
+| Sentry mal configuré (warnings/errors)  | ÉLEVÉ       | MOYEN  | Auditer config Sentry avant merge            |
+| Cache Next.js corrompu sur Vercel       | FAIBLE      | MOYEN  | Script clean dans CI/CD                      |
+| Breaking change entre fonctionnalités   | ÉLEVÉ       | ÉLEVÉ  | Tests E2E complets avant chaque PR           |
+| Rollback impossible (tout interdépendant) | ÉLEVÉ     | TRÈS ÉLEVÉ | Option A (PRs thématiques)                |
+
+**Risques Spécifiques par Domaine :**
+
+**BO-FORM-001 (Formulaires) :**
+- ⚠️ Dépendance Resend API (RESEND_API_KEY requis en production)
+- ⚠️ Emails non envoyés si variable manquante (graceful degradation implémenté)
+- ✅ Mitigation : Variable env vérifiée dans code
+
+**LM-ADDR-001 (AddressAutocomplete) :**
+- ⚠️ API BAN (France) + Geoapify (International) requises
+- ⚠️ Géolocalisation peut échouer si API indisponibles
+- ✅ Mitigation : Fallback inputs manuels
+
+**BO-SENTRY-001 (Monitoring) :**
+- ⚠️ Variables env manquantes : `SENTRY_AUTH_TOKEN`, `SENTRY_PROJECT`, `SENTRY_ORG`
+- ⚠️ Build Vercel peut échouer si Sentry mal configuré
+- 🔴 **CRITIQUE : À auditer AVANT tout déploiement**
+
+**Migrations SQL :**
+- ⚠️ 52 migrations = temps d'exécution cumulé ~5-10 minutes
+- ⚠️ Risque timeout Supabase (limite 60s par transaction)
+- ✅ Mitigation : Appliquer migrations hors transaction, surveiller logs
+
+### Acceptance Criteria
+
+**Avant de créer les PRs :**
+
+- [x] ✅ Audit Git complet effectué (154 commits analysés)
+- [x] ✅ Build local PASS (type-check + build)
+- [ ] 🔴 **Audit Sentry config déploiement** (PRIORITÉ ABSOLUE)
+- [ ] Vérifier variables env Vercel pour toutes les features
+- [ ] Identifier dépendances entre PRs (ordre de merge)
+- [ ] Créer plan de rollback pour chaque PR
+
+**Pour chaque PR (checklist template) :**
+
+- [ ] Titre descriptif : `[TASK-IDs] type: description`
+- [ ] Description complète avec :
+  - Contexte & motivation
+  - Liste commits inclus
+  - Fichiers principaux modifiés
+  - Migrations SQL (si applicable)
+  - Variables env requises
+  - Tests effectués
+  - Plan de rollback
+- [ ] Build local PASS
+- [ ] Tests E2E passés (si UI modifié)
+- [ ] Console errors = 0
+- [ ] Migrations testées en local (si applicable)
+- [ ] Screenshots (si UI modifié)
+- [ ] Reviewers assignés
+- [ ] Prêt pour merge
+
+**Avant déploiement production (global) :**
+
+- [ ] Toutes les PRs mergées dans main
+- [ ] Build Vercel PASS
+- [ ] Variables env Vercel vérifiées
+- [ ] Migrations appliquées en staging (si disponible)
+- [ ] Tests smoke en production :
+  - [ ] Login back-office fonctionne
+  - [ ] Login linkme fonctionne
+  - [ ] Dashboard charge
+  - [ ] Commandes accessibles
+  - [ ] Sentry capture events correctement
+  - [ ] Console Vercel : 0 erreurs
+  - [ ] Console browser : 0 erreurs
+- [ ] Plan de rollback documenté
+- [ ] Monitoring Sentry actif
+
+### Plan d'Implémentation Détaillé
+
+#### **Phase 1 : Audit Sentry (URGENT - Avant tout déploiement)**
+
+**Objectif** : Résoudre le problème de configuration Sentry mentionné par l'utilisateur.
+
+**Actions :**
+
+1. **Vérifier fichiers Sentry existants :**
+   ```bash
+   # Back-office
+   cat apps/back-office/instrumentation.ts
+   cat apps/back-office/sentry.client.config.ts
+   cat apps/back-office/sentry.edge.config.ts
+   cat apps/back-office/sentry.server.config.ts
+
+   # LinkMe (si présent)
+   find apps/linkme -name "*sentry*" -o -name "instrumentation.ts"
+   ```
+
+2. **Vérifier variables env Vercel :**
+   - Se connecter sur Vercel Dashboard
+   - Projet : `verone-back-office`
+   - Settings > Environment Variables
+   - Vérifier présence :
+     - `SENTRY_AUTH_TOKEN`
+     - `SENTRY_PROJECT`
+     - `SENTRY_ORG`
+     - `SENTRY_DSN` (client-side)
+     - `NEXT_PUBLIC_SENTRY_DSN` (si utilisé)
+
+3. **Vérifier build config Sentry :**
+   ```bash
+   cat apps/back-office/next.config.js | grep -A 20 "withSentryConfig"
+   cat apps/linkme/next.config.js | grep -A 20 "withSentryConfig"
+   ```
+
+4. **Consulter logs Vercel :**
+   - Vercel Dashboard > Deployments > Dernier deploy
+   - Chercher warnings/erreurs Sentry
+   - Noter déprécations API Sentry
+
+5. **Documenter findings dans rapport :**
+   - Variables manquantes
+   - Warnings identifiés
+   - Config à corriger
+   - Fix proposé
+
+**Durée estimée** : 30-45 min
+**Bloquant** : OUI (avant toute PR)
+
+#### **Phase 2 : Création des PRs thématiques**
+
+**PR1 : Infrastructure & Monitoring**
+
+**Commits à inclure :**
+- `0368aeca` [BO-SENTRY-001] feat(monitoring): add Sentry expert setup
+- `eb313d50` [NO-TASK] fix(sentry): update org/project to verone-4q
+- Migrations : `20260109_011_drop_abby_integration.sql`, `20260109_010_cleanup_backup_tables.sql`
+
+**Fichiers principaux :**
+- `apps/back-office/instrumentation.ts`
+- `apps/back-office/sentry.*.config.ts` (3 fichiers)
+- `apps/back-office/next.config.js` (Sentry config)
+- `supabase/migrations/20260109_011_drop_abby_integration.sql`
+- `supabase/migrations/20260109_010_cleanup_backup_tables.sql`
+
+**Variables env à ajouter sur Vercel :**
+```
+SENTRY_AUTH_TOKEN=<from sentry.io>
+SENTRY_PROJECT=verone-4q
+SENTRY_ORG=verone-backoffice
+NEXT_PUBLIC_SENTRY_DSN=<from sentry.io>
+```
+
+**Tests requis :**
+- [ ] Build Vercel PASS
+- [ ] Sentry capture erreur test
+- [ ] Sentry Replay fonctionne
+- [ ] Sentry Feedback widget visible
+- [ ] Console : 0 erreurs Sentry
+
+**Rollback :**
+```bash
+# Code
+git revert <commit-sha>
+
+# Database
+-- Aucun rollback requis (DROP tables obsolètes)
+```
+
+---
+
+**PR2 : Workflow & Documentation**
+
+**Commits à inclure :**
+- `738dcc67` [BO-WORK-001] feat(workflow): implement Claude Code workflow
+- `ff74fdaa` [BO-WORK-002] fix(workflow): improve Stop hook robustness
+- `d695ad88` [BO-WORK-003] docs(workflow): document Task ID workflow
+- `b447c5ef` [BO-WORK-004] chore(workflow): add READ→WRITE handoff mailbox
+- `9afe8fb2` [BO-WORK-005] feat(workflow): implement multi-agent workflow
+
+**Fichiers principaux :**
+- `.claude/work/ACTIVE.md` (nouveau)
+- `.claude/scripts/plan-sync.js` (nouveau)
+- `.claude/commands/*.md` (read1, read2, plan, write, dev)
+- `CLAUDE.md` (workflow updates)
+
+**Tests requis :**
+- [ ] Documentation lisible et claire
+- [ ] Scripts plan-sync fonctionnels
+- [ ] Pas d'impact code applicatif
+
+**Rollback :** Facile (pas de code métier)
+
+---
+
+**PR3 : LinkMe Organisations**
+
+**Commits à inclure :**
+- `e3930d65` [LM-ORG-001] refactor(linkme): move /reseau map view
+- `7a48a74d` [LM-ORG-002] fix(linkme): restore map view features
+- `8a44b70f` [LM-ORG-003] feat: improve map popup design
+- Migrations : `20260106_linkme_page_configurations.sql`, `20260106_linkme_globe_visibility.sql`
+
+**Fichiers principaux :**
+- `apps/linkme/src/app/(main)/organisations/page.tsx`
+- `apps/linkme/src/components/organisations/*`
+- `supabase/migrations/20260106_linkme_*`
+
+**Tests requis :**
+- [ ] Page /organisations charge correctement
+- [ ] Map view affiche les organisations
+- [ ] Stats affichées correctement
+- [ ] Console : 0 erreurs
+
+**Rollback :**
+```bash
+git revert <range>
+# Database : Rollback migrations si nécessaire
+```
+
+---
+
+**PR4 : LinkMe Sélections + AddressAutocomplete**
+
+**Commits à inclure :**
+- `ae83cc67` [LM-SEL-001] feat: add pagination and tab-based navigation
+- `abaae16a` [LM-SEL-003] fix: reduce pagination and button size
+- `3d7cdbc6` [LM-ADDR-001] feat: integrate AddressAutocomplete in CreateOrderModal
+- `2e6fe258` [LM-ADDR-001] feat: integrate AddressAutocomplete in OrderFormUnified
+- `45da14be` [LM-ADDR-001] feat: add geolocation support to public order workflow
+- Migrations : `20260106_add_addresses_to_linkme_orders_rpc.sql`
+
+**Fichiers principaux :**
+- `apps/linkme/src/components/orders/CreateOrderModal.tsx`
+- `apps/linkme/src/components/orders/OrderFormUnified.tsx`
+- `apps/linkme/src/app/(public)/[affiliateSlug]/[selectionSlug]/page.tsx`
+- `supabase/migrations/20260106_add_addresses_to_linkme_orders_rpc.sql`
+
+**Variables env à vérifier :**
+```
+NEXT_PUBLIC_BAN_API_URL=https://api-adresse.data.gouv.fr
+NEXT_PUBLIC_GEOAPIFY_API_KEY=<from geoapify.com>
+```
+
+**Tests requis :**
+- [ ] AddressAutocomplete fonctionne (France)
+- [ ] AddressAutocomplete fonctionne (International)
+- [ ] Géolocalisation capturée (lat/lng)
+- [ ] Fallback inputs manuels si API échoue
+- [ ] Pagination sélections publiques
+- [ ] Console : 0 erreurs
+
+**Rollback :**
+```sql
+-- Rollback migration addresses
+DROP FUNCTION IF EXISTS get_linkme_orders_with_addresses();
+```
+
+---
+
+**PR5 : LinkMe Commandes**
+
+**Commits à inclure :**
+- `53b5809c` [LM-ORD-004] feat: auto-fill contact data from existing customers
+- `55225ab2` [LM-ORD-005] feat: auto-create contacts in CRM from public orders
+- Migrations : `20260106_include_items_in_linkme_orders_rpc.sql`
+
+**Fichiers principaux :**
+- `apps/linkme/src/components/orders/*.tsx`
+- `apps/linkme/src/app/api/create-order/route.ts`
+- `supabase/migrations/20260106_include_items_in_linkme_orders_rpc.sql`
+
+**Tests requis :**
+- [ ] Auto-fill contact fonctionne
+- [ ] Auto-create contact en CRM fonctionne
+- [ ] RPC include_items retourne données correctes
+- [ ] Console : 0 erreurs
+
+---
+
+**PR6 : Back-Office Formulaires**
+
+**Commits à inclure :**
+- `84b9216b` [BO-FORM-001] feat: create extensible form submission system - Phase 1
+- `0a18fcba` [BO-FORM-001] feat: implement API routes - Phase 2
+- `d9d4c604` [BO-FORM-001] feat: integrate ContactForm - Phase 3 MVP
+- `655cf546` [BO-FORM-001] feat: create back-office UI - Phase 4
+- `a5be00fe` [BO-FORM-001] feat: implement conversion server actions - Phase 5
+- `4d8d64a6` [BO-FORM-001] fix: make email sending gracefully optional
+- `c1f00f4a` [BO-FORM-001] docs: add Resend email configuration guide
+- `cc9f6930` [BO-FORM-001] feat: implement notification emails settings - Phase 6
+- Migrations : Tables `form_submissions`, `form_types`, `form_email_settings`
+
+**Fichiers principaux :**
+- `apps/back-office/src/app/api/forms/*`
+- `apps/back-office/src/app/(main)/formulaires/*`
+- `apps/linkme/src/components/contact/ContactForm.tsx`
+- `supabase/migrations/2026*_form_*.sql`
+- `docs/integrations/resend-email.md`
+
+**Variables env à ajouter :**
+```
+RESEND_API_KEY=<from resend.com>
+RESEND_FROM_EMAIL=noreply@verone.fr
+```
+
+**Tests requis :**
+- [ ] Formulaire contact LinkMe fonctionne
+- [ ] Email envoyé via Resend
+- [ ] Graceful degradation si RESEND_API_KEY absent
+- [ ] Interface back-office affiche submissions
+- [ ] Conversions vers consultations/commandes
+- [ ] Console : 0 erreurs
+
+**Rollback :**
+```sql
+DROP TABLE IF EXISTS form_submissions CASCADE;
+DROP TABLE IF EXISTS form_types CASCADE;
+DROP TABLE IF EXISTS form_email_settings CASCADE;
+```
+
+---
+
+**PR7 : Dashboard & KPIs**
+
+**Commits à inclure :**
+- `2e210996` fix(dashboard): fix 4 persistent bugs from audit v2
+- `a6abfccd` fix(dashboard): fix 6 critical bugs from audit
+- `f370534e` feat(dashboard): implement remaining Recharts charts
+- `631db0de` fix(dashboard,linkme): dashboard improvements
+- `62b421b7` [NO-TASK] fix(dashboard): remove individual refresh buttons
+- Migrations : KPIs dashboard (si applicable)
+
+**Fichiers principaux :**
+- `apps/back-office/src/app/(main)/dashboard/*`
+- `apps/linkme/src/app/(main)/dashboard/*`
+
+**Tests requis :**
+- [ ] Dashboard back-office charge < 3s
+- [ ] Tous les KPIs affichés correctement
+- [ ] Recharts charts s'affichent
+- [ ] Pas de requêtes N+1
+- [ ] Console : 0 erreurs
+
+---
+
+**PR8 : Qonto & Finance**
+
+**Commits à inclure :**
+- Tous les commits Qonto (invoices, quotes, credit-notes, delivery-notes)
+- Migrations : Qonto tables, RPC, triggers
+
+**Fichiers principaux :**
+- `apps/back-office/src/app/api/qonto/*`
+- `apps/back-office/src/app/(main)/facturation/*`
+- `supabase/migrations/*qonto*.sql`
+
+**Variables env à vérifier :**
+```
+QONTO_API_KEY=<from qonto.com>
+QONTO_API_URL=https://api.qonto.com
+```
+
+**Tests requis :**
+- [ ] Factures création/modification
+- [ ] Devis création/conversion
+- [ ] Avoirs création
+- [ ] Bons de livraison
+- [ ] PDF génération
+- [ ] API Qonto fonctionne
+- [ ] Console : 0 erreurs
+
+---
+
+#### **Phase 3 : Ordre de Merge des PRs**
+
+**IMPORTANT : Respecter cet ordre pour éviter les dépendances cassées**
+
+1. **PR1 - Infrastructure & Monitoring** (PRIORITÉ ABSOLUE)
+   - Permet monitoring des PRs suivantes
+   - Pas de dépendances
+
+2. **PR2 - Workflow & Documentation**
+   - Pas de dépendances code métier
+   - Peut être en parallèle de PR1
+
+3. **PR3 - LinkMe Organisations**
+   - Dépend de : PR1 (migrations)
+
+4. **PR4 - LinkMe Sélections + AddressAutocomplete**
+   - Dépend de : PR3 (migrations organisations)
+
+5. **PR5 - LinkMe Commandes**
+   - Dépend de : PR4 (AddressAutocomplete, migrations)
+
+6. **PR6 - Back-Office Formulaires**
+   - Dépend de : PR1 (migrations)
+   - Peut être en parallèle de PR3-5
+
+7. **PR7 - Dashboard & KPIs**
+   - Dépend de : PR1 (migrations)
+   - Peut être en parallèle de PR3-6
+
+8. **PR8 - Qonto & Finance**
+   - Dépend de : PR1 (migrations)
+   - Peut être après PR6 (formulaires)
+
+**Timeline estimée :**
+- **Semaine 1** : PR1 + PR2 (infrastructure stable)
+- **Semaine 2** : PR3 + PR4 (LinkMe organisations + sélections)
+- **Semaine 3** : PR5 + PR6 (LinkMe commandes + formulaires)
+- **Semaine 4** : PR7 + PR8 (Dashboard + Qonto)
+
+---
+
+#### **Phase 4 : Validation Post-Déploiement**
+
+**Smoke Tests Production (obligatoires après chaque PR mergée) :**
+
+1. **Back-Office :**
+   ```
+   - [ ] Login fonctionne
+   - [ ] Dashboard charge < 3s
+   - [ ] Console browser : 0 erreurs
+   - [ ] Sentry capture events
+   ```
+
+2. **LinkMe :**
+   ```
+   - [ ] Login fonctionne
+   - [ ] Commandes accessibles
+   - [ ] Sélections accessibles
+   - [ ] Organisations accessibles
+   - [ ] Console browser : 0 erreurs
+   ```
+
+3. **Database :**
+   ```
+   - [ ] Migrations appliquées (vérifier version)
+   - [ ] RLS policies actives
+   - [ ] Pas d'erreurs logs Supabase
+   ```
+
+4. **Monitoring :**
+   ```
+   - [ ] Sentry actif (events reçus)
+   - [ ] Vercel Functions pas d'erreurs
+   - [ ] Vercel Analytics OK
+   ```
+
+---
+
+### Checklist Finale Avant Déploiement Global
+
+**Pré-requis techniques :**
+
+- [x] ✅ Build local PASS (type-check + build)
+- [ ] 🔴 Audit Sentry config (URGENT)
+- [ ] Toutes les PRs créées avec descriptions complètes
+- [ ] Ordre de merge défini et communiqué
+- [ ] Variables env Vercel vérifiées pour chaque feature
+- [ ] Plan de rollback documenté pour chaque PR
+
+**Pré-requis organisationnels :**
+
+- [ ] Reviewers assignés pour chaque PR
+- [ ] Timeline déploiement validée
+- [ ] Fenêtre de maintenance communiquée (si nécessaire)
+- [ ] Backup database avant migrations critiques
+
+**Monitoring post-déploiement :**
+
+- [ ] Sentry monitoring actif
+- [ ] Vercel logs surveillés
+- [ ] Supabase logs surveillés
+- [ ] Tests smoke passés
+
+---
+
+### Notes Complémentaires
+
+**Fichiers critiques identifiés (PROTECTED) :**
+
+Ces fichiers ne doivent PAS être modifiés sans review approfondie :
+- `apps/back-office/src/lib/supabase-server.ts` (auth core)
+- `apps/linkme/src/lib/supabase-server.ts` (auth core)
+- `supabase/migrations/*` (database schema)
+- `.github/workflows/*` (CI/CD)
+
+**Documentation à jour après déploiement :**
+
+- [ ] `.github/DEPLOYMENT_STATUS.md` (mettre à jour date + status)
+- [ ] `CLAUDE.md` (si workflow modifié)
+- [ ] `docs/current/deploy-runbooks.md` (leçons apprises)
+
+**Leçons apprises (pour éviter à l'avenir) :**
+
+1. ❌ **Ne jamais accumuler 150+ commits** sur une branche
+2. ✅ **Déployer incrémentalement** (1-2 PRs par jour max)
+3. ✅ **Tester chaque PR** avant merge suivant
+4. ✅ **Migrations SQL progressives** (pas 52 d'un coup)
+5. ✅ **Variables env** vérifiées AVANT dev, pas APRÈS
+
+---
+
 ### LM-ADDR-001 : Intégrer AddressAutocomplete dans tous les formulaires
 
 **Demande utilisateur** : Utiliser l'autocomplete d'adresse avec API France (BAN) et API internationale (Geoapify) dans TOUS les formulaires avec saisie d'adresse.
