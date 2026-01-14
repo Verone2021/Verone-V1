@@ -1,7 +1,7 @@
 # Plan Actif
 
 **Branche**: `fix/multi-bugs-2026-01`
-**Last sync**: 2026-01-14 (8a44b70f)
+**Last sync**: 2026-01-14 (53b5809c)
 
 ## Regles
 
@@ -11,6 +11,800 @@
 
 ## Taches
 
+
+---
+
+## Audit - LM-ORD-004 (2026-01-14)
+
+**Demande utilisateur** : Audit complet des formulaires de commande et proposition d'alignement entre utilisateur authentifié et utilisateur public.
+
+### Context
+
+**2 workflows de commande** :
+1. **Utilisateur authentifié** (`/commandes` - CreateOrderModal) : Affilié Pokawa passant commande
+2. **Utilisateur public** (sélection publique `/s/[id]` - OrderFormUnified) : Client anonyme commandant depuis sélection partagée
+
+**Problème actuel** :
+- Utilisateur authentifié a déjà ses données (nom, prénom, email, téléphone) dans son profil
+- Ces données ne sont PAS pré-remplies dans le formulaire
+- Utilisateur doit saisir manuellement les informations du restaurant client (pas les siennes)
+
+### Fichiers analysés
+
+1. **Page Commandes** : `apps/linkme/src/app/(main)/commandes/page.tsx` (581 lignes)
+2. **Modal création** : `apps/linkme/src/app/(main)/commandes/components/CreateOrderModal.tsx` (>25000 tokens)
+3. **Page sélection publique** : `apps/linkme/src/app/(public)/s/[id]/page.tsx` (754 lignes)
+4. **Formulaire unifié** : `apps/linkme/src/components/OrderFormUnified.tsx` (analysé partiellement)
+
+### État actuel - CreateOrderModal (utilisateur authentifié)
+
+**Workflow** :
+1. Question initiale : "Restaurant existant ou nouveau ?"
+2. Si **restaurant existant** :
+   - Sélectionner restaurant dans liste clients (`useAffiliateCustomers`)
+   - Sélectionner sélection (catalogue)
+   - Ajouter produits au panier
+   - Remplir contacts (ContactsSection)
+   - Notes optionnelles
+   - → Crée commande en BROUILLON
+
+3. Si **nouveau restaurant** (stepper 5 étapes) :
+   - **Étape 1 - Livraison** : tradeName, city, address, postalCode, ownerType
+   - **Étape 2 - Propriétaire** : ownerFirstName, ownerLastName, ownerEmail, ownerPhone, ownerCompanyName, ownerKbisUrl
+   - **Étape 3 - Facturation** : billingSameAsOwner, billingUseSameAddress, billlingCompanyName, billingFirstName, billingLastName, billingEmail, billingPhone, billingAddress, billingPostalCode, billingCity, billingSiret, billingKbisUrl
+   - **Étape 4 - Produits** : sélection + panier
+   - **Étape 5 - Validation** : → Crée commande en APPROBATION
+
+**Données demandées** :
+```typescript
+interface NewRestaurantFormState {
+  // Étape 1 - Livraison
+  tradeName: string;
+  city: string;
+  address: string;
+  postalCode: string;
+  ownerType: 'succursale' | 'franchise' | null;
+  // Étape 2 - Propriétaire
+  ownerFirstName: string;
+  ownerLastName: string;
+  ownerEmail: string;
+  ownerPhone: string;
+  ownerCompanyName: string; // Raison sociale si franchise
+  ownerKbisUrl: string;
+  // Étape 3 - Facturation
+  billingSameAsOwner: boolean;
+  billingUseSameAddress: boolean;
+  billingCompanyName: string;
+  billingFirstName: string;
+  billingLastName: string;
+  billingEmail: string;
+  billingPhone: string;
+  billingAddress: string;
+  billingPostalCode: string;
+  billingCity: string;
+  billingSiret: string;
+  billingKbisUrl: string;
+}
+```
+
+**❌ Problème** : Aucun pré-remplissage avec les données de l'affilié connecté
+
+### État actuel - OrderFormUnified (sélection publique)
+
+**Workflow identique** :
+1. Question : "Est-ce une ouverture de restaurant ?"
+2. Si **restaurant existant** :
+   - Sélectionner restaurant dans liste organisations de l'enseigne
+   - Produits déjà dans panier (ajoutés depuis catalogue)
+   - → BROUILLON
+
+3. Si **nouveau restaurant** (stepper 3 étapes) :
+   - **Step 1 - Restaurant** : tradeName, city, address, postalCode
+   - **Step 2 - Propriétaire** : type, contactSameAsRequester, name, email, phone, companyLegalName, companyTradeName, siret, kbisUrl
+   - **Step 3 - Facturation** : contactSource ('owner' | 'custom'), name, email, phone, address, postalCode, city, companyLegalName, siret
+   - **Step 4 - Validation** : → APPROBATION
+
+**Données demandées** :
+```typescript
+export interface OrderFormUnifiedData {
+  isNewRestaurant: boolean | null;
+  existingOrganisationId: string | null;
+  newRestaurant: {
+    tradeName: string;
+    city: string;
+    address: string;
+    postalCode: string;
+  };
+  owner: {
+    type: 'succursale' | 'franchise' | null;
+    contactSameAsRequester: boolean;  // ← CHECKBOX important !
+    name: string;
+    email: string;
+    phone: string;
+    companyLegalName: string;
+    companyTradeName: string;
+    siret: string;
+    kbisUrl: string | null;
+  };
+  billing: {
+    contactSource: 'owner' | 'custom';  // ← CHOIX important !
+    name: string;
+    email: string;
+    phone: string;
+    address: string;
+    postalCode: string;
+    city: string;
+    companyLegalName: string;
+    siret: string;
+  };
+  deliveryTermsAccepted: boolean;
+  notes: string;
+}
+```
+
+**❌ Problème** : Utilisateur anonyme doit TOUT remplir manuellement
+
+### Comparaison des deux formulaires
+
+| Aspect | CreateOrderModal (auth) | OrderFormUnified (public) |
+|--------|------------------------|--------------------------|
+| **Question initiale** | "Restaurant existant ou nouveau ?" | "Est-ce une ouverture de restaurant ?" |
+| **Workflow** | Identique (existant vs nouveau) | Identique |
+| **Étapes nouveau** | 5 étapes | 4 étapes (3 + validation) |
+| **Champs demandés** | ~20 champs | ~18 champs |
+| **Pré-remplissage** | ❌ Aucun | ❌ Aucun |
+| **Backend** | ✅ Identique (`linkme_orders`) | ✅ Identique |
+
+**Points communs** :
+- Même logique métier
+- Même structure de données
+- Même workflow backend
+- Même distinction restaurant existant/nouveau
+
+**Différences** :
+- Noms de variables légèrement différents
+- Ordre des étapes
+- CreateOrderModal plus complexe (5 étapes vs 4)
+- OrderFormUnified a `contactSameAsRequester` checkbox (intelligent !)
+
+### Clarification du besoin utilisateur
+
+**Ce qui doit être pré-rempli** :
+- ❌ PAS les informations de l'utilisateur authentifié (l'affilié)
+- ✅ Les informations du **contact demandeur** pour un nouveau restaurant
+
+**Cas d'usage réel** :
+1. **Utilisateur public** (sélection partagée) :
+   - Client restaurant appelle Pokawa : "Je veux ouvrir un restaurant"
+   - Il navigue sur sélection Pokawa publique
+   - Ajoute produits au panier
+   - Doit remplir ses propres infos (nom, email, téléphone) → **Normal, pas de compte**
+
+2. **Utilisateur authentifié** (affilié) :
+   - Commercial Pokawa passe commande pour un client
+   - Client appelle : "Je m'appelle Jean Dupont, mon email est..."
+   - Commercial doit RE-SAISIR toutes ces infos manuellement → **❌ Perte de temps !**
+   - **Solution** : Si le client a déjà un compte/profil → pré-remplir avec ses données
+
+**Vrai problème identifié** :
+- Quand l'utilisateur authentifié (commercial Pokawa) passe commande pour un **client existant/récurrent**
+- Les coordonnées du contact (nom, email, téléphone) doivent être pré-remplies depuis le profil du client
+- Pas besoin de tout re-saisir à chaque commande
+
+### Recommandations professionnelles
+
+#### Option 1 : Pré-remplissage depuis profil utilisateur (limité)
+
+**Pour** : OrderFormUnified (sélection publique uniquement)
+
+**Principe** :
+- Si l'utilisateur public a déjà passé commande (cookie/session)
+- Stocker temporairement : `{ lastName: string, firstName: string, email: string, phone: string }`
+- Au prochain retour, pré-remplir ces champs avec option "C'est toujours moi ?"
+
+**Implémentation** :
+```typescript
+// LocalStorage key
+const REQUESTER_CACHE_KEY = 'linkme_requester_cache';
+
+interface RequesterCache {
+  name: string;
+  email: string;
+  phone: string;
+  expiresAt: number; // 30 jours
+}
+
+// Au chargement du formulaire
+useEffect(() => {
+  const cached = localStorage.getItem(REQUESTER_CACHE_KEY);
+  if (cached) {
+    const data: RequesterCache = JSON.parse(cached);
+    if (Date.now() < data.expiresAt) {
+      // Pré-remplir avec option de modifier
+      setData(prev => ({
+        ...prev,
+        owner: {
+          ...prev.owner,
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+        }
+      }));
+    }
+  }
+}, []);
+
+// Après soumission réussie
+const saveRequesterCache = (name: string, email: string, phone: string) => {
+  const cache: RequesterCache = {
+    name,
+    email,
+    phone,
+    expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 jours
+  };
+  localStorage.setItem(REQUESTER_CACHE_KEY, JSON.stringify(cache));
+};
+```
+
+**Avantages** :
+- ✅ Simple à implémenter
+- ✅ Améliore UX pour clients récurrents
+- ✅ Pas de compte requis
+- ✅ RGPD-friendly (local, pas de tracking)
+
+**Inconvénients** :
+- ❌ Limité au même navigateur
+- ❌ Effacé si cookies supprimés
+- ❌ Ne résout pas le problème de l'utilisateur authentifié
+
+#### Option 2 : Pré-remplissage depuis clients existants (PRO)
+
+**Pour** : CreateOrderModal (utilisateur authentifié) ET OrderFormUnified
+
+**Principe** :
+- Quand l'affilié sélectionne un **restaurant existant**
+- Charger automatiquement les contacts déjà enregistrés pour ce restaurant
+- Pré-remplir les champs avec ces données
+- Permettre modification si besoin
+
+**Implémentation** :
+```typescript
+// Hook pour charger les contacts d'une organisation
+function useOrganisationContacts(organisationId: string | null) {
+  return useQuery({
+    queryKey: ['organisation-contacts', organisationId],
+    queryFn: async () => {
+      if (!organisationId) return null;
+
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('organisation_contacts')
+        .select('*')
+        .eq('organisation_id', organisationId)
+        .order('is_primary', { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!organisationId,
+  });
+}
+
+// Dans le composant
+const { data: contacts } = useOrganisationContacts(selectedCustomerId);
+
+useEffect(() => {
+  if (contacts && contacts.length > 0) {
+    const primaryContact = contacts.find(c => c.is_primary) || contacts[0];
+
+    // Pré-remplir automatiquement
+    setData(prev => ({
+      ...prev,
+      owner: {
+        ...prev.owner,
+        name: `${primaryContact.first_name} ${primaryContact.last_name}`,
+        email: primaryContact.email,
+        phone: primaryContact.phone,
+      }
+    }));
+  }
+}, [contacts, selectedCustomerId]);
+```
+
+**Avantages** :
+- ✅ ✅ ✅ Solution professionnelle
+- ✅ Pas de re-saisie pour clients récurrents
+- ✅ Données toujours à jour (DB)
+- ✅ Fonctionne pour affiliés authentifiés
+- ✅ Applicable aux deux formulaires
+
+**Inconvénients** :
+- ⚠️ Requiert que les contacts soient bien maintenus en DB
+- ⚠️ Besoin d'interface pour mettre à jour contacts
+
+#### Option 3 : Unification complète avec OrderFormUnified (BEST)
+
+**Principe** :
+- Remplacer CreateOrderModal par OrderFormUnified partout
+- Ajouter prop `authenticatedUser` pour pré-remplissage
+- Un seul composant, deux modes d'utilisation
+
+**Implémentation** :
+```typescript
+interface OrderFormUnifiedProps {
+  // ... props existantes
+
+  // NOUVEAU - Utilisateur authentifié (optionnel)
+  authenticatedUser?: {
+    name: string;
+    email: string;
+    phone: string;
+  } | null;
+
+  // NOUVEAU - Mode de fonctionnement
+  mode: 'public' | 'authenticated';
+}
+
+// Dans le composant
+useEffect(() => {
+  if (mode === 'authenticated' && authenticatedUser) {
+    // Pré-remplir avec les données de l'affilié
+    setData(prev => ({
+      ...prev,
+      owner: {
+        ...prev.owner,
+        contactSameAsRequester: false, // Par défaut
+        // PAS de pré-remplissage ici, l'utilisateur entre les données du CLIENT
+      }
+    }));
+  }
+}, [mode, authenticatedUser]);
+
+// Mais quand on sélectionne un client existant
+useEffect(() => {
+  if (selectedCustomer && customerContacts) {
+    const primary = customerContacts.find(c => c.is_primary);
+    if (primary) {
+      setData(prev => ({
+        ...prev,
+        owner: {
+          ...prev.owner,
+          name: primary.name,
+          email: primary.email,
+          phone: primary.phone,
+        },
+        billing: {
+          ...prev.billing,
+          contactSource: 'owner', // Par défaut, reprendre le contact propriétaire
+          name: primary.name,
+          email: primary.email,
+          phone: primary.phone,
+        }
+      }));
+    }
+  }
+}, [selectedCustomer, customerContacts]);
+```
+
+**Avantages** :
+- ✅ ✅ ✅ ✅ Un seul composant à maintenir
+- ✅ ✅ ✅ Logique identique partout
+- ✅ ✅ Pré-remplissage intelligent
+- ✅ ✅ DRY (Don't Repeat Yourself)
+- ✅ Tests plus faciles
+
+**Inconvénients** :
+- ⚠️ Refactoring important
+- ⚠️ Risque de régression si mal fait
+
+### Proposition finale : Approche hybride (Quick Win + Long Term)
+
+#### Phase 1 - Quick Win (2-3h) : Pré-remplissage contacts existants
+
+**Objectif** : Résoudre le problème immédiat sans refactoring majeur
+
+**Actions** :
+1. Créer hook `useOrganisationContacts(organisationId)`
+2. Dans CreateOrderModal, quand l'utilisateur sélectionne un client existant :
+   - Charger automatiquement les contacts
+   - Pré-remplir les champs `ownerFirstName`, `ownerLastName`, `ownerEmail`, `ownerPhone`
+   - Afficher badge "Données pré-remplies depuis le profil client" (modifiables)
+3. Même logique dans OrderFormUnified pour organisations existantes
+
+**Résultat** :
+- ✅ Plus besoin de re-saisir les coordonnées des clients récurrents
+- ✅ Fonctionne dans les deux formulaires
+- ✅ Pas de changement architectural
+
+#### Phase 2 - Long Term (1-2 jours) : Unification complète
+
+**Objectif** : Éliminer la duplication, un seul composant
+
+**Actions** :
+1. Migrer CreateOrderModal vers OrderFormUnified
+2. Ajouter prop `mode: 'public' | 'authenticated'`
+3. Adapter l'UI selon le mode
+4. Tests complets
+5. Déprécier CreateOrderModal
+
+**Résultat** :
+- ✅ Un seul composant à maintenir
+- ✅ Logique unifiée
+- ✅ Plus facile à faire évoluer
+
+### Analyse technique approfondie
+
+#### Tables DB concernées
+
+1. **`auth.users`** : Utilisateurs (affiliés)
+   - Champs : `id`, `email`
+   - Pas de téléphone ni nom stockés ici
+
+2. **`user_profiles`** : Profils utilisateurs étendus
+   - Champs : `user_id`, `first_name`, `last_name`, `phone`
+   - **❓ À VÉRIFIER** : Existe-t-elle ? Utilisée ?
+
+3. **`organisations`** : Restaurants clients
+   - Champs : `id`, `legal_name`, `trade_name`, `city`, `shipping_address_line1`, `ownership_type`, etc.
+   - Contact principal stocké où ?
+
+4. **`organisation_contacts`** : Contacts des organisations
+   - Champs : `id`, `organisation_id`, `first_name`, `last_name`, `email`, `phone`, `is_primary`, `is_billing`
+   - **✅ TABLE CLÉ** pour pré-remplissage
+
+5. **`linkme_orders`** : Commandes
+   - Champs : `id`, `affiliate_id`, `organisation_id`, `status`, `total_ht`, `total_ttc`, etc.
+   - Lien vers organisation cliente
+
+#### Hooks existants à utiliser
+
+1. **`useUserAffiliate()`** : Récupère l'affilié connecté
+   - Retourne : `{ id, enseigne_id, user_id }`
+   - Utilisé dans CreateOrderModal
+
+2. **`useAffiliateCustomers(affiliateId)`** : Liste des clients de l'affilié
+   - Retourne : Liste des organisations
+   - Utilisé dans CreateOrderModal
+
+3. **`useOrganisationContacts(organisationId)`** : ❌ N'EXISTE PAS
+   - **À CRÉER** : Hook pour charger les contacts d'une organisation
+   - Fichier : `apps/linkme/src/lib/hooks/use-organisation-contacts.ts`
+
+4. **`useUpdateOrganisationContacts()`** : ✅ EXISTE
+   - Fichier : `apps/linkme/src/lib/hooks/use-organisation-contacts.ts`
+   - Permet de mettre à jour les contacts
+
+#### Composants concernés
+
+1. **`CreateOrderModal`** (apps/linkme/src/app/(main)/commandes/components/)
+   - ~25000 tokens
+   - Workflow complexe avec stepper
+   - Utilise `ContactsSection` pour gérer contacts
+
+2. **`OrderFormUnified`** (apps/linkme/src/components/)
+   - Formulaire unifié pour public
+   - Plus simple, plus moderne
+   - Pas de gestion contacts avancée
+
+3. **`ContactsSection`** (apps/linkme/src/components/)
+   - Composant réutilisable pour gérer contacts
+   - Utilisé dans CreateOrderModal
+   - À analyser en détail
+
+#### Flux de données actuel
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ UTILISATEUR AUTHENTIFIÉ (Affilié Pokawa)                    │
+└─────────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│ /commandes → CreateOrderModal                                │
+└─────────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Question: "Restaurant existant ou nouveau ?"                 │
+└─────────────────────────────────────────────────────────────┘
+         ┌────────────────┴────────────────┐
+         │                                  │
+         ▼                                  ▼
+┌──────────────────┐              ┌──────────────────┐
+│ EXISTANT         │              │ NOUVEAU          │
+│ (Brouillon)      │              │ (Approbation)    │
+└──────────────────┘              └──────────────────┘
+         │                                  │
+         │                                  │
+         ▼                                  ▼
+┌──────────────────┐              ┌──────────────────┐
+│ 1. Sélection     │              │ Stepper 5 étapes │
+│    client        │              │                  │
+│ (dropdown)       │              │ 1. Livraison     │
+│                  │              │ 2. Propriétaire  │
+│ ❌ PAS de        │              │ 3. Facturation   │
+│    pré-remplir   │              │ 4. Produits      │
+│    contacts      │              │ 5. Validation    │
+│                  │              │                  │
+│ 2. ContactsSection│             │ ❌ Tout manuel   │
+│    (MANUEL)      │              │                  │
+│                  │              │                  │
+│ 3. Produits      │              │                  │
+│                  │              │                  │
+│ 4. Soumission    │              │                  │
+└──────────────────┘              └──────────────────┘
+         │                                  │
+         └────────────────┬─────────────────┘
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│ linkme_orders                                                │
+│ + organisation_contacts (si nouveau restaurant)              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### Flux de données proposé (avec pré-remplissage)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ UTILISATEUR AUTHENTIFIÉ (Affilié Pokawa)                    │
+└─────────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│ /commandes → CreateOrderModal (ou OrderFormUnified)         │
+└─────────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Question: "Restaurant existant ou nouveau ?"                 │
+└─────────────────────────────────────────────────────────────┘
+         ┌────────────────┴────────────────┐
+         │                                  │
+         ▼                                  ▼
+┌──────────────────┐              ┌──────────────────┐
+│ EXISTANT         │              │ NOUVEAU          │
+│ (Brouillon)      │              │ (Approbation)    │
+└──────────────────┘              └──────────────────┘
+         │                                  │
+         │                                  │
+         ▼                                  ▼
+┌──────────────────┐              ┌──────────────────┐
+│ 1. Sélection     │              │ Stepper          │
+│    client        │              │                  │
+│ (dropdown)       │              │ Tout manuel      │
+│                  │              │ (normal)         │
+│ 2. ✅ AUTO-LOAD  │              │                  │
+│    contacts      │              │                  │
+│    depuis DB     │              │                  │
+│                  │              │                  │
+│ 3. ✅ PRÉ-REMPLIR│              │                  │
+│    formulaire    │              │                  │
+│    avec données  │              │                  │
+│    contact       │              │                  │
+│    principal     │              │                  │
+│                  │              │                  │
+│ 4. Badge:        │              │                  │
+│    "Pré-rempli"  │              │                  │
+│    (modifiable)  │              │                  │
+│                  │              │                  │
+│ 5. Produits      │              │                  │
+│                  │              │                  │
+│ 6. Soumission    │              │                  │
+└──────────────────┘              └──────────────────┘
+         │                                  │
+         └────────────────┬─────────────────┘
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│ linkme_orders                                                │
+│ + organisation_contacts (mis à jour si modifié)              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Plan d'implémentation - LM-ORD-004
+
+**Recommandation** : Phase 1 (Quick Win) - Pré-remplissage contacts clients existants
+
+### Phase 1 : Créer le hook useOrganisationContacts
+
+- [ ] **LM-ORD-004-1** : Créer hook useOrganisationContacts
+  - Fichier : `apps/linkme/src/lib/hooks/use-organisation-contacts.ts` (vérifier s'il existe déjà)
+  - Si existe déjà : vérifier qu'il a une fonction de lecture
+  - Sinon, créer :
+    ```typescript
+    export function useOrganisationContacts(organisationId: string | null) {
+      return useQuery({
+        queryKey: ['organisation-contacts', organisationId],
+        queryFn: async () => {
+          if (!organisationId) return null;
+
+          const supabase = createClient();
+          const { data, error } = await supabase
+            .from('organisation_contacts')
+            .select('id, first_name, last_name, email, phone, is_primary, is_billing, role')
+            .eq('organisation_id', organisationId)
+            .order('is_primary', { ascending: false });
+
+          if (error) throw error;
+          return data;
+        },
+        enabled: !!organisationId,
+      });
+    }
+    ```
+
+### Phase 2 : Modifier CreateOrderModal (restaurant existant)
+
+- [ ] **LM-ORD-004-2** : Importer et utiliser le hook
+  - Fichier : `apps/linkme/src/app/(main)/commandes/components/CreateOrderModal.tsx`
+  - Ligne : ~165-180 (section HOOKS)
+  - Ajouter :
+    ```typescript
+    const { data: selectedCustomerContacts } = useOrganisationContacts(
+      selectedCustomerId && selectedCustomerType === 'organization' ? selectedCustomerId : null
+    );
+    ```
+
+- [ ] **LM-ORD-004-3** : Pré-remplir les champs du stepper (nouveau restaurant)
+  - Fichier : `apps/linkme/src/app/(main)/commandes/components/CreateOrderModal.tsx`
+  - Chercher où `selectedCustomerId` change
+  - Ajouter `useEffect` :
+    ```typescript
+    // Pré-remplir les données du propriétaire quand un client est sélectionné
+    useEffect(() => {
+      if (selectedCustomerContacts && selectedCustomerContacts.length > 0) {
+        const primaryContact = selectedCustomerContacts.find(c => c.is_primary) || selectedCustomerContacts[0];
+
+        setNewRestaurantForm(prev => ({
+          ...prev,
+          ownerFirstName: primaryContact.first_name || '',
+          ownerLastName: primaryContact.last_name || '',
+          ownerEmail: primaryContact.email || '',
+          ownerPhone: primaryContact.phone || '',
+        }));
+      }
+    }, [selectedCustomerContacts]);
+    ```
+
+- [ ] **LM-ORD-004-4** : Afficher badge "Données pré-remplies"
+  - Fichier : `apps/linkme/src/app/(main)/commandes/components/CreateOrderModal.tsx`
+  - Dans le formulaire propriétaire (étape 2)
+  - Ajouter au-dessus des champs :
+    ```tsx
+    {selectedCustomerContacts && selectedCustomerContacts.length > 0 && (
+      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2">
+        <AlertCircle className="h-4 w-4 text-blue-600" />
+        <p className="text-sm text-blue-700">
+          Données pré-remplies depuis le profil client (modifiables)
+        </p>
+      </div>
+    )}
+    ```
+
+### Phase 3 : Modifier OrderFormUnified (sélection publique)
+
+- [ ] **LM-ORD-004-5** : Importer et utiliser le hook
+  - Fichier : `apps/linkme/src/components/OrderFormUnified.tsx`
+  - Ligne : ~176-187 (section HOOKS)
+  - Ajouter :
+    ```typescript
+    const { data: organisationContacts } = useOrganisationContacts(
+      data.existingOrganisationId
+    );
+    ```
+
+- [ ] **LM-ORD-004-6** : Pré-remplir quand organisation existante sélectionnée
+  - Fichier : `apps/linkme/src/components/OrderFormUnified.tsx`
+  - Ajouter `useEffect` :
+    ```typescript
+    useEffect(() => {
+      if (data.existingOrganisationId && organisationContacts && organisationContacts.length > 0) {
+        const primary = organisationContacts.find(c => c.is_primary) || organisationContacts[0];
+
+        setData(prev => ({
+          ...prev,
+          owner: {
+            ...prev.owner,
+            name: `${primary.first_name} ${primary.last_name}`,
+            email: primary.email || '',
+            phone: primary.phone || '',
+          },
+          billing: {
+            ...prev.billing,
+            contactSource: 'owner',
+            name: `${primary.first_name} ${primary.last_name}`,
+            email: primary.email || '',
+            phone: primary.phone || '',
+          }
+        }));
+      }
+    }, [data.existingOrganisationId, organisationContacts]);
+    ```
+
+### Phase 4 : LocalStorage pour utilisateurs publics (optionnel)
+
+- [ ] **LM-ORD-004-7** : Ajouter cache localStorage dans OrderFormUnified
+  - Fichier : `apps/linkme/src/components/OrderFormUnified.tsx`
+  - Constante : `const REQUESTER_CACHE_KEY = 'linkme_requester_cache';`
+  - Créer interface :
+    ```typescript
+    interface RequesterCache {
+      name: string;
+      email: string;
+      phone: string;
+      expiresAt: number;
+    }
+    ```
+  - Au montage, charger depuis localStorage (si pas d'organisation existante)
+  - Après soumission réussie, sauvegarder dans localStorage
+
+### Phase 5 : Tests
+
+- [ ] **LM-ORD-004-8** : Tester CreateOrderModal (utilisateur authentifié)
+  - Se connecter avec Pokawa
+  - Aller sur `/commandes`
+  - Cliquer "Nouvelle vente"
+  - Sélectionner "Restaurant existant"
+  - Choisir un client dans la liste
+  - **Vérifier** : Les champs du contact sont pré-remplis automatiquement
+  - **Vérifier** : Badge "Données pré-remplies" affiché
+  - **Vérifier** : Les données sont modifiables
+  - Soumettre la commande
+  - **Vérifier** : Commande créée avec succès
+
+- [ ] **LM-ORD-004-9** : Tester OrderFormUnified (sélection publique)
+  - Aller sur sélection Pokawa publique
+  - Ajouter produits au panier
+  - Ouvrir formulaire commande
+  - Sélectionner "Restaurant existant"
+  - Choisir organisation dans liste
+  - **Vérifier** : Les champs sont pré-remplis
+  - Soumettre commande
+  - **Vérifier** : Commande créée
+
+- [ ] **LM-ORD-004-10** : Tester cache localStorage
+  - En navigation privée, aller sur sélection publique
+  - Passer commande pour nouveau restaurant
+  - Noter nom, email, téléphone saisis
+  - Recharger la page
+  - Ajouter produits et ouvrir formulaire
+  - **Vérifier** : Les données sont pré-remplies depuis localStorage
+  - Effacer cookies et recharger
+  - **Vérifier** : Plus de pré-remplissage
+
+### Notes techniques
+
+**Table `organisation_contacts`** :
+- Champs : `id`, `organisation_id`, `first_name`, `last_name`, `email`, `phone`, `is_primary`, `is_billing`, `role`
+- Clé : `is_primary = true` indique le contact principal
+- Un restaurant peut avoir plusieurs contacts
+
+**Stratégie de pré-remplissage** :
+1. Priorité au contact `is_primary = true`
+2. Sinon, prendre le premier contact de la liste
+3. Si pas de contacts, laisser vide (formulaire vierge)
+
+**Comportement souhaité** :
+- Pré-remplissage = suggestion intelligente, PAS blocage
+- Utilisateur peut toujours modifier les valeurs
+- Badge visible pour indiquer que c'est pré-rempli
+- Si l'utilisateur modifie → mettre à jour les contacts en DB (optionnel)
+
+**Différence CreateOrderModal vs OrderFormUnified** :
+- CreateOrderModal : Champs séparés (firstName, lastName)
+- OrderFormUnified : Champ unique (name = "Prénom Nom")
+- Adapter le formatage selon le composant
+
+**Risques** :
+- ⚠️ Si contacts DB obsolètes → données incorrectes
+- ⚠️ Si plusieurs contacts → lequel choisir ?
+- ⚠️ Performance si beaucoup de requêtes
+
+**Mitigation** :
+- Permettre toujours la modification
+- Afficher clairement la source des données
+- Cache React Query pour éviter requêtes multiples
 
 ---
 
