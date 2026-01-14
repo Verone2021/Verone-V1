@@ -17,6 +17,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
+import { AddressAutocomplete, type AddressResult } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
 import {
   X,
@@ -80,6 +81,8 @@ interface NewRestaurantFormState {
   city: string;
   address: string;
   postalCode: string;
+  latitude: number | null;
+  longitude: number | null;
   ownerType: 'succursale' | 'franchise' | null;
   // Étape 2 - Propriétaire
   ownerFirstName: string;
@@ -99,6 +102,8 @@ interface NewRestaurantFormState {
   billingAddress: string;
   billingPostalCode: string;
   billingCity: string;
+  billingLatitude: number | null;
+  billingLongitude: number | null;
   billingSiret: string;
   billingKbisUrl: string; // Facultatif
 }
@@ -108,6 +113,8 @@ const initialNewRestaurantForm: NewRestaurantFormState = {
   city: '',
   address: '',
   postalCode: '',
+  latitude: null,
+  longitude: null,
   ownerType: null,
   ownerFirstName: '',
   ownerLastName: '',
@@ -125,6 +132,8 @@ const initialNewRestaurantForm: NewRestaurantFormState = {
   billingAddress: '',
   billingPostalCode: '',
   billingCity: '',
+  billingLatitude: null,
+  billingLongitude: null,
   billingSiret: '',
   billingKbisUrl: '',
 };
@@ -1284,60 +1293,39 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                       className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Ville *
-                      </label>
-                      <input
-                        type="text"
-                        autoComplete="address-level2"
-                        value={newRestaurantForm.city}
-                        onChange={e =>
-                          setNewRestaurantForm(prev => ({
-                            ...prev,
-                            city: e.target.value,
-                          }))
-                        }
-                        placeholder="Paris"
-                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Code postal
-                      </label>
-                      <input
-                        type="text"
-                        autoComplete="postal-code"
-                        value={newRestaurantForm.postalCode}
-                        onChange={e =>
-                          setNewRestaurantForm(prev => ({
-                            ...prev,
-                            postalCode: e.target.value,
-                          }))
-                        }
-                        placeholder="75001"
-                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-                      />
-                    </div>
-                  </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Adresse
-                    </label>
-                    <input
-                      type="text"
-                      autoComplete="street-address"
-                      value={newRestaurantForm.address}
-                      onChange={e =>
+                    <AddressAutocomplete
+                      label="Adresse du restaurant *"
+                      placeholder="Rechercher une adresse..."
+                      value={
+                        newRestaurantForm.address
+                          ? `${newRestaurantForm.address}, ${newRestaurantForm.postalCode} ${newRestaurantForm.city}`
+                          : ''
+                      }
+                      onChange={value => {
+                        // L'utilisateur tape manuellement
+                        if (!value) {
+                          setNewRestaurantForm(prev => ({
+                            ...prev,
+                            address: '',
+                            city: '',
+                            postalCode: '',
+                            latitude: null,
+                            longitude: null,
+                          }));
+                        }
+                      }}
+                      onSelect={(address: AddressResult) => {
+                        // L'utilisateur sélectionne une adresse depuis l'autocomplete
                         setNewRestaurantForm(prev => ({
                           ...prev,
-                          address: e.target.value,
-                        }))
-                      }
-                      placeholder="123 rue de la Gastronomie"
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                          address: address.streetAddress,
+                          city: address.city,
+                          postalCode: address.postalCode,
+                          latitude: address.latitude,
+                          longitude: address.longitude,
+                        }));
+                      }}
                     />
                   </div>
                 </div>
@@ -1573,62 +1561,37 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
 
                 {!newRestaurantForm.billingUseSameAddress && (
                   <div className="space-y-4 pt-2">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Adresse *
-                      </label>
-                      <input
-                        type="text"
-                        autoComplete="street-address"
-                        value={newRestaurantForm.billingAddress}
-                        onChange={e =>
+                    <AddressAutocomplete
+                      label="Adresse de facturation *"
+                      placeholder="Rechercher une adresse..."
+                      value={
+                        newRestaurantForm.billingAddress
+                          ? `${newRestaurantForm.billingAddress}, ${newRestaurantForm.billingPostalCode} ${newRestaurantForm.billingCity}`
+                          : ''
+                      }
+                      onChange={value => {
+                        if (!value) {
                           setNewRestaurantForm(prev => ({
                             ...prev,
-                            billingAddress: e.target.value,
-                          }))
+                            billingAddress: '',
+                            billingCity: '',
+                            billingPostalCode: '',
+                            billingLatitude: null,
+                            billingLongitude: null,
+                          }));
                         }
-                        placeholder="123 rue de la Facturation"
-                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Code postal *
-                        </label>
-                        <input
-                          type="text"
-                          autoComplete="postal-code"
-                          value={newRestaurantForm.billingPostalCode}
-                          onChange={e =>
-                            setNewRestaurantForm(prev => ({
-                              ...prev,
-                              billingPostalCode: e.target.value,
-                            }))
-                          }
-                          placeholder="75001"
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Ville *
-                        </label>
-                        <input
-                          type="text"
-                          autoComplete="address-level2"
-                          value={newRestaurantForm.billingCity}
-                          onChange={e =>
-                            setNewRestaurantForm(prev => ({
-                              ...prev,
-                              billingCity: e.target.value,
-                            }))
-                          }
-                          placeholder="Paris"
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-                        />
-                      </div>
-                    </div>
+                      }}
+                      onSelect={(address: AddressResult) => {
+                        setNewRestaurantForm(prev => ({
+                          ...prev,
+                          billingAddress: address.streetAddress,
+                          billingCity: address.city,
+                          billingPostalCode: address.postalCode,
+                          billingLatitude: address.latitude,
+                          billingLongitude: address.longitude,
+                        }));
+                      }}
+                    />
                   </div>
                 )}
               </div>
