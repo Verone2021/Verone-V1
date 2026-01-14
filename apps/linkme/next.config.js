@@ -49,8 +49,10 @@ const sentryWebpackPluginOptions = {
   // Tunnel pour contourner ad-blockers
   tunnelRoute: '/monitoring',
 
-  // Auto-attach releases sur Vercel
-  automaticVercelMonitors: true,
+  // ✅ FIXED: Migrate automaticVercelMonitors to webpack config (Sentry v8+ requirement)
+  webpack: {
+    automaticVercelMonitors: true,
+  },
 
   // Desactiver telemetrie Sentry
   telemetry: false,
