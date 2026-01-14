@@ -320,8 +320,11 @@ rm apps/linkme/sentry.client.config.ts
 - [x] `onRequestError` ajouté dans instrumentation.ts (back-office + linkme) ✅ (8184e314)
 - [x] `instrumentation-client.ts` créé (back-office + linkme) ✅ (8184e314)
 - [x] `sentry.client.config.ts` supprimé (back-office + linkme) ✅ (8184e314)
-- [ ] Redémarrer serveurs : 0 warnings Sentry (À tester par utilisateur)
+- [x] `onRouterTransitionStart` ajouté pour tracking navigation ✅ (125f3ee8)
+- [x] Redémarrer serveurs : 0 warnings Sentry ✅ **VALIDÉ PAR UTILISATEUR**
 - [ ] Tester erreur RSC → remontée dans Sentry (À tester en production)
+
+### Statut : ✅ **RÉSOLU** (2026-01-14 21:00)
 
 ### Temps Estimé
 - **Modification** : 10 minutes (2 apps × 3 steps)
