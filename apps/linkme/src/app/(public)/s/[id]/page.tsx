@@ -239,7 +239,7 @@ export default function PublicSelectionPage({
   }, [items, searchQuery, selectedCategory, categories]);
 
   // Pagination constants and calculations
-  const PRODUCTS_PER_PAGE = 16; // 4 rows × 4 columns
+  const PRODUCTS_PER_PAGE = 12; // 3 rows × 4 columns
   const totalPages = Math.ceil(filteredItems.length / PRODUCTS_PER_PAGE);
   const paginatedItems = useMemo(() => {
     const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
@@ -578,7 +578,7 @@ export default function PublicSelectionPage({
                           ) : (
                             <button
                               onClick={() => addToCart(item)}
-                              className="flex items-center gap-2 text-white py-2 px-4 rounded-lg transition-colors hover:opacity-90"
+                              className="flex items-center gap-1.5 text-white py-1.5 px-3 rounded-lg text-sm transition-colors hover:opacity-90"
                               style={{
                                 backgroundColor: branding.primary_color,
                               }}
