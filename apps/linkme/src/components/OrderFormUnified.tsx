@@ -15,7 +15,7 @@
  * @since 2026-01-11
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 
 import Image from 'next/image';
 
@@ -36,6 +36,8 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
+
+import { useOrganisationContacts } from '../lib/hooks/use-organisation-contacts';
 
 // =====================================================================
 // TYPES
@@ -205,6 +207,35 @@ export function OrderFormUnified({
 
     return { totalHt, totalTtc, totalTva, totalItems };
   }, [cart]);
+
+  // Hook pour charger les contacts de l'organisation sélectionnée
+  const { data: organisationContacts } = useOrganisationContacts(
+    data.existingOrganisationId
+  );
+
+  // Pré-remplir quand organisation existante sélectionnée
+  useEffect(() => {
+    if (data.existingOrganisationId && organisationContacts?.primaryContact) {
+      const primary = organisationContacts.primaryContact;
+
+      setData(prev => ({
+        ...prev,
+        owner: {
+          ...prev.owner,
+          name: `${primary.firstName} ${primary.lastName}`,
+          email: primary.email || '',
+          phone: primary.phone || primary.mobile || '',
+        },
+        billing: {
+          ...prev.billing,
+          contactSource: 'owner',
+          name: `${primary.firstName} ${primary.lastName}`,
+          email: primary.email || '',
+          phone: primary.phone || primary.mobile || '',
+        },
+      }));
+    }
+  }, [data.existingOrganisationId, organisationContacts]);
 
   // Mise à jour des données
   const updateData = useCallback((updates: Partial<OrderFormUnifiedData>) => {

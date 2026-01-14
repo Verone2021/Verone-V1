@@ -47,6 +47,7 @@ import {
   useSelectionProducts,
 } from '../../../../lib/hooks/use-affiliate-orders';
 import {
+  useOrganisationContacts,
   useUpdateOrganisationContacts,
   type ContactFormData,
 } from '../../../../lib/hooks/use-organisation-contacts';
@@ -179,6 +180,13 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
   const createOrder = useCreateAffiliateOrder();
   const updateContacts = useUpdateOrganisationContacts();
 
+  // Hook pour charger les contacts du client sélectionné
+  const { data: selectedCustomerContacts } = useOrganisationContacts(
+    selectedCustomerId && selectedCustomerType === 'organization'
+      ? selectedCustomerId
+      : null
+  );
+
   // ============================================
   // COMPUTED
   // ============================================
@@ -261,6 +269,25 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
       billingValid
     );
   }, [selectedSelectionId, cart, newRestaurantForm]);
+
+  // ============================================
+  // EFFECTS
+  // ============================================
+
+  // Pré-remplir les données du propriétaire quand un client est sélectionné
+  useEffect(() => {
+    if (selectedCustomerContacts?.primaryContact && isNewRestaurant === false) {
+      const primary = selectedCustomerContacts.primaryContact;
+
+      setNewRestaurantForm(prev => ({
+        ...prev,
+        ownerFirstName: primary.firstName || '',
+        ownerLastName: primary.lastName || '',
+        ownerEmail: primary.email || '',
+        ownerPhone: primary.phone || primary.mobile || '',
+      }));
+    }
+  }, [selectedCustomerContacts, isNewRestaurant]);
 
   // ============================================
   // HANDLERS
@@ -1374,6 +1401,17 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Propriétaire / Responsable
               </h3>
+
+              {/* Badge données pré-remplies */}
+              {selectedCustomerContacts?.primaryContact && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                  <p className="text-sm text-blue-700">
+                    Données pré-remplies depuis le profil client (modifiables)
+                  </p>
+                </div>
+              )}
+
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
