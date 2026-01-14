@@ -197,6 +197,31 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
   );
 
   // ============================================
+  // EFFECTS - Pré-remplissage automatique
+  // ============================================
+
+  // Pré-remplir les données du propriétaire quand un client est sélectionné
+  useEffect(() => {
+    if (
+      selectedCustomerContacts?.contacts &&
+      selectedCustomerContacts.contacts.length > 0 &&
+      isNewRestaurant === true // Seulement pour nouveau restaurant
+    ) {
+      const primaryContact = selectedCustomerContacts.primaryContact;
+
+      if (primaryContact) {
+        setNewRestaurantForm(prev => ({
+          ...prev,
+          ownerFirstName: primaryContact.firstName || '',
+          ownerLastName: primaryContact.lastName || '',
+          ownerEmail: primaryContact.email || '',
+          ownerPhone: primaryContact.phone || '',
+        }));
+      }
+    }
+  }, [selectedCustomerContacts, isNewRestaurant]);
+
+  // ============================================
   // COMPUTED
   // ============================================
   const selectedSelection = useMemo(
