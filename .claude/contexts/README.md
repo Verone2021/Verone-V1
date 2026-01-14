@@ -2,19 +2,18 @@
 
 Index des contextes spécialisés à charger selon la tâche.
 
-## Quand charger quoi
+## Contextes Disponibles
 
 | Tâche                        | Contexte           | Commande                                    |
 | ---------------------------- | ------------------ | ------------------------------------------- |
-| 🗄️ DB, Migrations, RLS       | `database.md`      | `Read('.claude/contexts/database.md')`      |
-| 🚀 CI/CD, Vercel, Rollback   | `deployment.md`    | `Read('.claude/contexts/deployment.md')`    |
 | 🎨 UI, Composants, Storybook | `design-system.md` | `Read('.claude/contexts/design-system.md')` |
 | 🏗️ Architecture Turborepo    | `monorepo.md`      | `Read('.claude/contexts/monorepo.md')`      |
+
+> **Note**: `database.md` et `deployment.md` ont été supprimés en v3.0.0 (doublons avec Serena memories et docs/current/).
 
 ## Principe
 
 - **Ne charger que le contexte nécessaire** (éviter surcharge tokens)
-- **Référencés dans CLAUDE.md** (lignes 510-522)
 - **Maintenus à jour** avec la réalité du projet
 
 ## Archivés
@@ -23,4 +22,4 @@ Index des contextes spécialisés à charger selon la tâche.
 
 ---
 
-**Dernière mise à jour** : 2025-12-17
+**Dernière mise à jour** : 2026-01-09

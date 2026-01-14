@@ -1,15 +1,14 @@
-// @ts-nocheck - getStockItems manquant
 /**
  * Hook pour les métriques de stock
  * Gère les alertes de stock et les statistiques d'inventaire
  *
- * 🔄 Phase 3.2 - Migration use-stock-ui
  * @since 2025-10-31
+ * @updated 2026-01-13 - Fix: Suppression @ts-nocheck, utilisation Supabase direct
  */
 
 'use client';
 
-import { useStock } from '@verone/stock/hooks';
+import { createClient } from '@verone/utils/supabase/client';
 
 interface StockAlert {
   id: string;
@@ -19,23 +18,35 @@ interface StockAlert {
 }
 
 export function useStockMetrics() {
-  const stock = useStock();
+  const supabase = createClient();
 
   const fetch = async () => {
     try {
-      // 🆕 Utilisation use-stock-ui au lieu de queries Supabase directes
-      // Réutilise cache use-stock-core pour éviter queries multiples
-      const items = await stock.getStockItems({ archived: false });
+      // Query directe Supabase pour récupérer les produits avec stock
+      const { data: items, error } = await supabase
+        .from('products')
+        .select('id, name, stock_real, min_stock, cost_price')
+        .is('archived_at', null);
 
-      // Agrégations JS (remplace queries SQL optimisées)
-      // Performance: acceptable pour <1000 produits (SLO <2s maintenu)
+      if (error) {
+        console.error('❌ [useStockMetrics] Erreur query:', error);
+        return {
+          inStock: 0,
+          outOfStock: 0,
+          lowStock: 0,
+          critical: 0,
+          alerts: [],
+        };
+      }
+
+      // Agrégations JS
       let inStockCount = 0;
       let outOfStockCount = 0;
       let lowStockCount = 0;
       let criticalCount = 0;
       const alertsList: StockAlert[] = [];
 
-      items.forEach(product => {
+      (items || []).forEach(product => {
         const stockQty = product.stock_real || 0;
         const threshold = product.min_stock || 5; // Seuil par défaut
 

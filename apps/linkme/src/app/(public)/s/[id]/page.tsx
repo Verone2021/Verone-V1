@@ -1,21 +1,43 @@
 'use client';
 
-import { use, useEffect, useRef, useState } from 'react';
+import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Image from 'next/image';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { createClient } from '@verone/utils/supabase/client';
-import { Package, ShoppingCart, Plus, Minus, Check, Store } from 'lucide-react';
+import {
+  Check,
+  Minus,
+  Package,
+  Plus,
+  ShoppingCart,
+  Star,
+  Store,
+} from 'lucide-react';
 
-import { EnseigneStepper } from '@/components/checkout';
+import { OrderFormUnified } from '@/components/OrderFormUnified';
+import type { CartItem as UnifiedCartItem } from '@/components/OrderFormUnified';
+import {
+  CategoryTabs,
+  ContactForm,
+  FAQSection,
+  Pagination,
+  ProductFilters,
+  SelectionHeader,
+  SelectionHero,
+  StoreLocatorMap,
+} from '@/components/public-selection';
+import { useEnseigneOrganisations } from '@/lib/hooks/use-enseigne-organisations';
+import { useSubmitUnifiedOrder } from '@/lib/hooks/use-submit-unified-order';
 
 const supabase = createClient();
 
-interface SelectionPageProps {
+interface ISelectionPageProps {
   params: Promise<{ id: string }>;
 }
 
-interface SelectionItem {
+interface ISelectionItem {
   id: string;
   product_id: string;
   product_name: string;
@@ -27,21 +49,75 @@ interface SelectionItem {
   margin_rate: number;
   stock_quantity: number;
   category: string | null;
+  is_featured: boolean;
 }
 
-interface Selection {
+interface ISelection {
   id: string;
   name: string;
   description: string | null;
   image_url: string | null;
   affiliate_id: string;
-  /** Timestamp de publication. null = non publié */
+  /** Timestamp de publication. null = non publie */
   published_at: string | null;
   created_at: string;
+  contact_name: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
 }
 
-interface CartItem extends SelectionItem {
+interface IBranding {
+  primary_color: string;
+  secondary_color: string;
+  accent_color: string;
+  text_color: string;
+  background_color: string;
+  logo_url: string | null;
+}
+
+interface IOrganisation {
+  id: string;
+  name: string;
+  address: string | null;
+  city: string | null;
+  postalCode: string | null;
+  country: string | null;
+  phone: string | null;
+  email: string | null;
+  latitude: number | null;
+  longitude: number | null;
+}
+
+interface IAffiliateInfo {
+  role: string | null;
+  enseigne_id: string | null;
+  enseigne_name: string | null;
+}
+
+const DEFAULT_BRANDING: IBranding = {
+  primary_color: '#5DBEBB',
+  secondary_color: '#3976BB',
+  accent_color: '#7E84C0',
+  text_color: '#183559',
+  background_color: '#FFFFFF',
+  logo_url: null,
+};
+
+interface ICartItem extends ISelectionItem {
   quantity: number;
+}
+
+interface ICategory {
+  id: string;
+  name: string;
+  count: number;
+  subcategories?: { id: string; name: string; count: number }[];
+}
+
+interface INavItem {
+  id: string;
+  label: string;
+  href: string;
 }
 
 function formatPrice(price: number): string {
@@ -51,24 +127,134 @@ function formatPrice(price: number): string {
   }).format(price);
 }
 
-export default function PublicSelectionPage({ params }: SelectionPageProps) {
+export default function PublicSelectionPage({
+  params,
+}: ISelectionPageProps): React.JSX.Element {
   const { id } = use(params);
-  const [selection, setSelection] = useState<Selection | null>(null);
-  const [items, setItems] = useState<SelectionItem[]>([]);
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const activeTab = searchParams.get('tab') ?? 'catalogue';
+
+  const [selection, setSelection] = useState<ISelection | null>(null);
+  const [items, setItems] = useState<ISelectionItem[]>([]);
+  const [branding, setBranding] = useState<IBranding>(DEFAULT_BRANDING);
+  const [cart, setCart] = useState<ICartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isEnseigneStepperOpen, setIsEnseigneStepperOpen] = useState(false);
-  const [enseigneOrderNumber, setEnseigneOrderNumber] = useState<string | null>(
+  const [isOrderFormOpen, setIsOrderFormOpen] = useState(false);
+  const [orderNumber, setOrderNumber] = useState<string | null>(null);
+
+  // New states for navigation and filtering
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(
     null
+  );
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Affiliate info for conditional sections
+  const [affiliateInfo, setAffiliateInfo] = useState<IAffiliateInfo | null>(
+    null
+  );
+  const [organisations, setOrganisations] = useState<IOrganisation[]>([]);
+
+  // Hover states for animations
+  const [hoveredProductId, setHoveredProductId] = useState<string | null>(null);
+
+  // Hooks for unified order form
+  const { submitOrder, isSubmitting } = useSubmitUnifiedOrder();
+  const { data: enseigneOrgs = [] } = useEnseigneOrganisations(
+    selection?.affiliate_id ?? null
   );
 
   // Track view
   const hasTrackedView = useRef(false);
 
+  // Navigation items
+  const navItems: INavItem[] = useMemo(
+    () => [
+      { id: 'catalogue', label: 'Catalogue', href: '?tab=catalogue' },
+      {
+        id: 'points-de-vente',
+        label: 'Points de vente',
+        href: '?tab=points-de-vente',
+      },
+      { id: 'faq', label: 'FAQ', href: '?tab=faq' },
+      { id: 'contact', label: 'Contact', href: '?tab=contact' },
+    ],
+    []
+  );
+
+  // Extract categories from items
+  const categories: ICategory[] = useMemo(() => {
+    const categoryMap = new Map<string, { count: number }>();
+
+    for (const item of items) {
+      const cat = item.category ?? 'Autres';
+      const existing = categoryMap.get(cat);
+      if (existing) {
+        existing.count++;
+      } else {
+        categoryMap.set(cat, { count: 1 });
+      }
+    }
+
+    return Array.from(categoryMap.entries())
+      .map(([name, data]) => ({
+        id: name.toLowerCase().replace(/\s+/g, '-'),
+        name,
+        count: data.count,
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [items]);
+
+  // Filter items based on search and category
+  const filteredItems = useMemo(() => {
+    let filtered = items;
+
+    // Filter by search
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        item =>
+          item.product_name.toLowerCase().includes(query) ||
+          item.product_sku.toLowerCase().includes(query)
+      );
+    }
+
+    // Filter by category
+    if (selectedCategory) {
+      const categoryName = categories.find(
+        c => c.id === selectedCategory
+      )?.name;
+      if (categoryName) {
+        filtered = filtered.filter(
+          item => (item.category ?? 'Autres') === categoryName
+        );
+      }
+    }
+
+    return filtered;
+  }, [items, searchQuery, selectedCategory, categories]);
+
+  // Pagination constants and calculations
+  const PRODUCTS_PER_PAGE = 12; // 3 rows × 4 columns
+  const totalPages = Math.ceil(filteredItems.length / PRODUCTS_PER_PAGE);
+  const paginatedItems = useMemo(() => {
+    const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
+    const endIndex = startIndex + PRODUCTS_PER_PAGE;
+    return filteredItems.slice(startIndex, endIndex);
+  }, [filteredItems, currentPage]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory, selectedSubcategory]);
+
   // Fetch selection data
   useEffect(() => {
-    const fetchSelection = async () => {
+    const fetchSelection = async (): Promise<void> => {
       try {
         // Detect if id is UUID or slug
         const isUuid =
@@ -76,18 +262,34 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
             id
           );
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
         const { data, error: rpcError } = await (supabase.rpc as any)(
           isUuid ? 'get_public_selection' : 'get_public_selection_by_slug',
           isUuid ? { p_selection_id: id } : { p_slug: id }
         );
 
         if (rpcError) throw rpcError;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         if (!data?.success)
-          throw new Error(data?.error || 'Selection non trouvee');
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          throw new Error((data?.error as string) ?? 'Selection non trouvee');
 
-        setSelection(data.selection);
-        setItems(data.items || []);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        setSelection(data.selection as ISelection);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        setItems((data.items as ISelectionItem[]) ?? []);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        if (data.branding) {
+          setBranding(data.branding as IBranding);
+        }
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        if (data.affiliate_info) {
+          setAffiliateInfo(data.affiliate_info as IAffiliateInfo);
+        }
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        if (data.organisations) {
+          setOrganisations(data.organisations as IOrganisation[]);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erreur de chargement');
       } finally {
@@ -95,23 +297,29 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
       }
     };
 
-    fetchSelection();
+    void fetchSelection();
   }, [id]);
 
   // Track view
   useEffect(() => {
     if (selection?.id && !hasTrackedView.current) {
       hasTrackedView.current = true;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (supabase.rpc as any)('track_selection_view', {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      void (supabase.rpc as any)('track_selection_view', {
         p_selection_id: selection.id,
-      })
-        .then(() => {})
-        .catch(() => {});
+      });
     }
   }, [selection?.id]);
 
-  const addToCart = (item: SelectionItem) => {
+  // Handle tab change
+  const handleTabChange = useCallback(
+    (tab: string): void => {
+      router.push(`?tab=${tab}`, { scroll: false });
+    },
+    [router]
+  );
+
+  const addToCart = (item: ISelectionItem): void => {
     setCart(prev => {
       const existing = prev.find(c => c.id === item.id);
       if (existing) {
@@ -123,7 +331,7 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
     });
   };
 
-  const updateQuantity = (itemId: string, delta: number) => {
+  const updateQuantity = (itemId: string, delta: number): void => {
     setCart(prev =>
       prev
         .map(c =>
@@ -141,6 +349,10 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
   );
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
+  // Check if should show points de vente (only for enseigne_admin)
+  const showPointsDeVente =
+    affiliateInfo?.role === 'enseigne_admin' && organisations.length > 0;
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -152,7 +364,7 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
     );
   }
 
-  if (error || !selection) {
+  if (error ?? !selection) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -161,7 +373,7 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
             Selection introuvable
           </h1>
           <p className="text-gray-600">
-            {error || "Cette selection n'existe pas ou n'est plus disponible."}
+            {error ?? "Cette selection n'existe pas ou n'est plus disponible."}
           </p>
         </div>
       </div>
@@ -170,47 +382,297 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Header */}
-      <div className="relative h-64 md:h-80 bg-gray-900">
-        {selection.image_url ? (
-          <Image
-            src={selection.image_url}
-            alt={selection.name}
-            fill
-            className="object-cover opacity-60"
-          />
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-        <div className="relative h-full max-w-7xl mx-auto px-4 flex flex-col justify-end pb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-            {selection.name}
-          </h1>
-          {selection.description && (
-            <p className="text-white/80 max-w-2xl">{selection.description}</p>
-          )}
-          <div className="flex items-center gap-4 mt-3">
-            <p className="text-white/60">{items.length} produits</p>
-            {/* Bouton Commander Enseigne dans le header */}
-            {cartCount > 0 && (
-              <button
-                onClick={() => setIsEnseigneStepperOpen(true)}
-                className="flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors border border-white/30"
-              >
-                <Store className="h-4 w-4" />
-                Commander ({cartCount})
-              </button>
+      {/* Header */}
+      <SelectionHeader
+        selectionName={selection.name}
+        branding={branding}
+        cartCount={cartCount}
+        onCartClick={() => setIsOrderFormOpen(true)}
+        onSearchClick={() => setIsSearchOpen(true)}
+        navItems={navItems}
+        activeSection={activeTab}
+        onNavClick={handleTabChange}
+        showPointsDeVente={showPointsDeVente}
+      />
+
+      {/* Hero - Reduced height */}
+      <SelectionHero
+        name={selection.name}
+        description={selection.description}
+        imageUrl={selection.image_url}
+        branding={branding}
+        productCount={items.length}
+      />
+
+      {/* Search Bar (expandable) */}
+      <ProductFilters
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        branding={branding}
+        isSearchOpen={isSearchOpen}
+        onSearchOpenChange={setIsSearchOpen}
+      />
+
+      {/* Category Tabs */}
+      <CategoryTabs
+        categories={categories}
+        selectedCategory={selectedCategory}
+        selectedSubcategory={selectedSubcategory}
+        onCategoryChange={setSelectedCategory}
+        onSubcategoryChange={setSelectedSubcategory}
+        branding={branding}
+        totalCount={items.length}
+      />
+
+      {/* Catalogue Section */}
+      {activeTab === 'catalogue' && (
+        <div id="catalogue" className="scroll-mt-20">
+          <div className="max-w-6xl mx-auto px-4 py-8">
+            {/* Search results info */}
+            {(searchQuery || selectedCategory) && (
+              <div className="mb-4 flex items-center justify-between">
+                <p className="text-sm text-gray-600">
+                  {filteredItems.length} résultat
+                  {filteredItems.length > 1 ? 's' : ''}
+                  {searchQuery && ` pour "${searchQuery}"`}
+                </p>
+                {(searchQuery || selectedCategory) && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedCategory(null);
+                      setSelectedSubcategory(null);
+                    }}
+                    className="text-sm font-medium hover:underline"
+                    style={{ color: branding.primary_color }}
+                  >
+                    Effacer les filtres
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Products Grid */}
+            {filteredItems.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {paginatedItems.map(item => {
+                  const inCart = cart.find(c => c.id === item.id);
+                  const isHovered = hoveredProductId === item.id;
+                  return (
+                    <div
+                      key={item.id}
+                      className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300"
+                      style={
+                        item.is_featured
+                          ? { boxShadow: `0 0 0 2px ${branding.accent_color}` }
+                          : undefined
+                      }
+                      onMouseEnter={() => setHoveredProductId(item.id)}
+                      onMouseLeave={() => setHoveredProductId(null)}
+                    >
+                      {/* Product Image with Hover Overlay */}
+                      <div className="relative h-48 bg-gray-100 overflow-hidden group">
+                        {item.product_image ? (
+                          <Image
+                            src={item.product_image}
+                            alt={item.product_name}
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-300">
+                            <Package className="h-16 w-16" />
+                          </div>
+                        )}
+
+                        {/* Gradient Overlay on Hover */}
+                        <div
+                          className={`absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-300 ${
+                            isHovered ? 'opacity-100' : 'opacity-0'
+                          }`}
+                        />
+
+                        {/* Product Name + SKU on Hover (slide-up) */}
+                        <div
+                          className={`absolute bottom-0 left-0 right-0 p-4 transition-all duration-300 ${
+                            isHovered
+                              ? 'opacity-100 translate-y-0'
+                              : 'opacity-0 translate-y-4'
+                          }`}
+                        >
+                          <h3 className="text-white font-semibold line-clamp-2">
+                            {item.product_name}
+                          </h3>
+                          <p className="text-white/70 text-xs mt-1">
+                            {item.product_sku}
+                          </p>
+                        </div>
+
+                        {/* Badges Container */}
+                        <div className="absolute top-3 left-3 right-3 flex justify-between items-start">
+                          {/* Featured Badge - Left */}
+                          {item.is_featured && (
+                            <span
+                              className="text-white text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm"
+                              style={{ backgroundColor: branding.accent_color }}
+                            >
+                              <Star className="h-3 w-3 fill-current" />
+                              Vedette
+                            </span>
+                          )}
+                          {/* Spacer if no featured badge */}
+                          {!item.is_featured && <span />}
+                          {/* Stock Badge - Right */}
+                          {item.stock_quantity > 0 ? (
+                            <span
+                              className="text-white text-xs font-medium px-2.5 py-1 rounded-full shadow-sm"
+                              style={{
+                                backgroundColor: branding.primary_color,
+                              }}
+                            >
+                              Stock: {item.stock_quantity}
+                            </span>
+                          ) : (
+                            <span className="bg-amber-500 text-white text-xs font-medium px-2.5 py-1 rounded-full shadow-sm">
+                              Sur commande
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Product Info - Reduced (Price + Actions only) */}
+                      <div className="p-4">
+                        <div className="flex items-center justify-between">
+                          {/* Price */}
+                          <div>
+                            <span
+                              className="text-xl font-bold"
+                              style={{ color: branding.text_color }}
+                            >
+                              {formatPrice(item.selling_price_ttc)}
+                            </span>
+                            <span className="text-sm text-gray-500 ml-1">
+                              TTC
+                            </span>
+                          </div>
+
+                          {/* Add to Cart / Quantity */}
+                          {inCart ? (
+                            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                              <button
+                                onClick={() => updateQuantity(item.id, -1)}
+                                className="p-1.5 hover:bg-gray-200 rounded-md transition-colors"
+                              >
+                                <Minus className="h-4 w-4" />
+                              </button>
+                              <span className="w-6 text-center font-medium text-sm">
+                                {inCart.quantity}
+                              </span>
+                              <button
+                                onClick={() => updateQuantity(item.id, 1)}
+                                className="p-1.5 hover:bg-gray-200 rounded-md transition-colors"
+                              >
+                                <Plus className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => addToCart(item)}
+                              className="flex items-center gap-1.5 text-white py-1.5 px-3 rounded-lg text-sm transition-colors hover:opacity-90"
+                              style={{
+                                backgroundColor: branding.primary_color,
+                              }}
+                            >
+                              <Plus className="h-4 w-4" />
+                              Ajouter
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <Package className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <p className="text-gray-500">
+                  {searchQuery || selectedCategory
+                    ? 'Aucun produit ne correspond à votre recherche'
+                    : 'Aucun produit dans cette selection'}
+                </p>
+                {(searchQuery || selectedCategory) && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedCategory(null);
+                      setSelectedSubcategory(null);
+                    }}
+                    className="mt-4 text-sm font-medium hover:underline"
+                    style={{ color: branding.primary_color }}
+                  >
+                    Voir tous les produits
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                branding={branding}
+              />
             )}
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Floating Cart Button - Ouvre maintenant EnseigneStepper */}
+      {/* Points de vente Section - Only for enseignes */}
+      {activeTab === 'points-de-vente' && showPointsDeVente && (
+        <div id="stores" className="scroll-mt-20">
+          <StoreLocatorMap
+            organisations={organisations}
+            branding={branding}
+            enseigneName={affiliateInfo?.enseigne_name ?? selection.name}
+          />
+        </div>
+      )}
+
+      {/* FAQ Section */}
+      {activeTab === 'faq' && (
+        <div id="faq" className="scroll-mt-20">
+          <FAQSection
+            branding={branding}
+            contactInfo={{
+              name: selection.contact_name,
+              email: selection.contact_email,
+              phone: selection.contact_phone,
+            }}
+            selectionName={selection.name}
+          />
+        </div>
+      )}
+
+      {/* Contact Section */}
+      {activeTab === 'contact' && (
+        <div id="contact" className="scroll-mt-20">
+          <ContactForm
+            selectionId={selection.id}
+            selectionName={selection.name}
+            branding={branding}
+          />
+        </div>
+      )}
+
+      {/* Floating Cart Button */}
       {cartCount > 0 && (
         <button
-          onClick={() => setIsEnseigneStepperOpen(true)}
-          className="fixed bottom-6 right-6 z-40 bg-blue-600 text-white px-6 py-4 rounded-full shadow-lg hover:bg-blue-700 transition-all flex items-center gap-3"
+          onClick={() => setIsOrderFormOpen(true)}
+          className="fixed bottom-6 right-6 z-40 text-white px-6 py-4 rounded-full shadow-lg transition-all flex items-center gap-3 hover:opacity-90"
+          style={{ backgroundColor: branding.primary_color }}
         >
           <ShoppingCart className="h-5 w-5" />
           <span className="font-medium">
@@ -220,113 +682,18 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
         </button>
       )}
 
-      {/* Products Grid */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {items.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {items.map(item => {
-              const inCart = cart.find(c => c.id === item.id);
-              return (
-                <div
-                  key={item.id}
-                  className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300"
-                >
-                  {/* Product Image */}
-                  <div className="relative h-56 bg-gray-100 overflow-hidden group">
-                    {item.product_image ? (
-                      <Image
-                        src={item.product_image}
-                        alt={item.product_name}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-300">
-                        <Package className="h-16 w-16" />
-                      </div>
-                    )}
-                    {/* Stock Badge */}
-                    <div className="absolute top-3 right-3">
-                      {item.stock_quantity > 0 ? (
-                        <span className="bg-green-500 text-white text-xs font-medium px-2 py-1 rounded-full">
-                          Stock: {item.stock_quantity}
-                        </span>
-                      ) : (
-                        <span className="bg-orange-500 text-white text-xs font-medium px-2 py-1 rounded-full">
-                          Sur commande
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Product Info */}
-                  <div className="p-4">
-                    <p className="text-xs text-gray-500 mb-1">
-                      {item.product_sku}
-                    </p>
-                    <h3 className="font-medium text-gray-900 line-clamp-2 mb-3 min-h-[2.5rem]">
-                      {item.product_name}
-                    </h3>
-
-                    {/* Price */}
-                    <div className="flex items-baseline gap-2 mb-4">
-                      <span className="text-xl font-bold text-gray-900">
-                        {formatPrice(item.selling_price_ttc)}
-                      </span>
-                      <span className="text-sm text-gray-500">TTC</span>
-                    </div>
-
-                    {/* Add to Cart */}
-                    {inCart ? (
-                      <div className="flex items-center justify-between bg-gray-100 rounded-lg p-2">
-                        <button
-                          onClick={() => updateQuantity(item.id, -1)}
-                          className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
-                        >
-                          <Minus className="h-4 w-4" />
-                        </button>
-                        <span className="font-medium">{inCart.quantity}</span>
-                        <button
-                          onClick={() => updateQuantity(item.id, 1)}
-                          className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => addToCart(item)}
-                        className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors"
-                      >
-                        <Plus className="h-4 w-4" />
-                        Ajouter
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="text-center py-16">
-            <Package className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-            <p className="text-gray-500">Aucun produit dans cette selection</p>
-          </div>
-        )}
-      </div>
-
       {/* Enseigne Stepper (Slide-over) */}
-      {isEnseigneStepperOpen && (
+      {isOrderFormOpen && (
         <div className="fixed inset-0 z-50">
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/50"
-            onClick={() => setIsEnseigneStepperOpen(false)}
+            onClick={() => setIsOrderFormOpen(false)}
           />
 
-          {/* Panel */}
-          <div className="absolute right-0 top-0 bottom-0 w-full max-w-lg bg-white shadow-xl">
-            {enseigneOrderNumber ? (
+          {/* Panel - Large modal with rounded corners */}
+          <div className="absolute inset-4 md:inset-8 lg:inset-12 bg-white rounded-2xl shadow-2xl overflow-hidden">
+            {orderNumber ? (
               /* Success State */
               <div className="flex flex-col items-center justify-center h-full p-8 text-center">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
@@ -336,37 +703,74 @@ export default function PublicSelectionPage({ params }: SelectionPageProps) {
                   Commande envoyee !
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  Votre commande <strong>{enseigneOrderNumber}</strong> a ete
-                  recue.
+                  Votre commande <strong>{orderNumber}</strong> a ete recue.
                 </p>
                 <p className="text-sm text-gray-500 mb-8">
                   Elle sera validee par notre equipe sous 24h.
                 </p>
                 <button
                   onClick={() => {
-                    setEnseigneOrderNumber(null);
-                    setIsEnseigneStepperOpen(false);
+                    setOrderNumber(null);
+                    setIsOrderFormOpen(false);
                     setCart([]);
                   }}
-                  className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+                  className="px-6 py-2 text-white rounded-lg hover:opacity-90"
+                  style={{ backgroundColor: branding.text_color }}
                 >
                   Fermer
                 </button>
               </div>
             ) : (
-              <EnseigneStepper
+              <OrderFormUnified
                 affiliateId={selection.affiliate_id}
                 selectionId={selection.id}
-                cart={cart.map(item => ({
-                  id: item.id,
-                  product_id: item.product_id,
-                  product_name: item.product_name,
-                  selling_price_ttc: item.selling_price_ttc,
-                  quantity: item.quantity,
+                cart={cart.map(
+                  (item): UnifiedCartItem => ({
+                    id: item.id,
+                    product_id: item.product_id,
+                    product_name: item.product_name,
+                    product_sku: item.product_sku,
+                    product_image: item.product_image,
+                    selling_price_ht: item.selling_price_ht,
+                    selling_price_ttc: item.selling_price_ttc,
+                    margin_rate: item.margin_rate,
+                    quantity: item.quantity,
+                  })
+                )}
+                organisations={enseigneOrgs.map(org => ({
+                  id: org.id,
+                  legal_name: org.legal_name,
+                  trade_name: org.trade_name,
+                  city: org.city,
                 }))}
-                onClose={() => setIsEnseigneStepperOpen(false)}
-                onSuccess={orderNumber => {
-                  setEnseigneOrderNumber(orderNumber);
+                onClose={() => setIsOrderFormOpen(false)}
+                onSubmit={async (data, cartItems) => {
+                  const result = await submitOrder({
+                    affiliateId: selection.affiliate_id,
+                    selectionId: selection.id,
+                    cart: cartItems,
+                    data,
+                  });
+                  if (result.success && result.orderNumber) {
+                    setOrderNumber(result.orderNumber);
+                  }
+                }}
+                isSubmitting={isSubmitting}
+                onUpdateQuantity={(itemId, newQuantity) => {
+                  if (newQuantity < 1) return;
+                  setCart(prev =>
+                    prev.map(item =>
+                      item.id === itemId
+                        ? { ...item, quantity: newQuantity }
+                        : item
+                    )
+                  );
+                }}
+                onRemoveItem={itemId => {
+                  setCart(prev => prev.filter(item => item.id !== itemId));
+                  if (cart.length === 1) {
+                    setIsOrderFormOpen(false);
+                  }
                 }}
               />
             )}

@@ -75,18 +75,18 @@ Configuration optimisee basee sur Anthropic Best Practices 2025.
 
 ## Workflow Obligatoire
 
-**Source de verite** : `CLAUDE.md` v6.0
+**Voir [CLAUDE.md](../CLAUDE.md)** pour le workflow complet en 5 etapes.
 
-1. **Explorer** - Lire fichiers AVANT de coder
-2. **Planifier** - Expliquer approche AVANT d'implementer
-3. **Coder** - Implementer en suivant patterns existants
-4. **Verifier** - OBLIGATOIRE:
-   - `npm run type-check` → 0 erreurs
-   - `npm run build` → Build succeeded
-   - `npm run e2e:smoke` → Si UI modifiee
-5. **Commiter** - Demander autorisation explicite
+### Quand utiliser quel agent?
 
-**NE JAMAIS dire "done" sans preuves de verification.**
+| Besoin                          | Agent/Command               |
+| ------------------------------- | --------------------------- |
+| Feature multi-domaines          | `verone-orchestrator`       |
+| Audit, cleanup, dette technique | `audit-governor`            |
+| Bug investigation               | `verone-debug-investigator` |
+| UI/UX, composants               | `frontend-architect`        |
+| Database, migrations            | `database-architect`        |
+| Exploration code                | `/explore` command          |
 
 ---
 
