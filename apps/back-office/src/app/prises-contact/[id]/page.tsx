@@ -82,9 +82,10 @@ type FormType = {
 export default function SubmissionDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const router = useRouter();
+  const [id, setId] = useState<string>('');
   const [submission, setSubmission] = useState<FormSubmission | null>(null);
   const [formType, setFormType] = useState<FormType | null>(null);
   const [loading, setLoading] = useState(true);
@@ -96,8 +97,15 @@ export default function SubmissionDetailPage({
   const [newNotes, setNewNotes] = useState('');
   const [saving, setSaving] = useState(false);
 
+  // Unwrap params (Next.js 15 passes params as Promise for client components)
+  useEffect(() => {
+    params.then(p => setId(p.id));
+  }, [params]);
+
   // Fetch data
   useEffect(() => {
+    if (!id) return;
+
     async function fetchData() {
       try {
         const supabase = createClient();
@@ -106,7 +114,7 @@ export default function SubmissionDetailPage({
         const { data: sub, error: subError } = await (supabase as any)
           .from('form_submissions')
           .select('*')
-          .eq('id', params.id)
+          .eq('id', id)
           .single();
 
         if (subError) throw subError;
@@ -138,7 +146,7 @@ export default function SubmissionDetailPage({
     }
 
     fetchData();
-  }, [params.id, router]);
+  }, [id, router]);
 
   // Save status
   const saveStatus = async () => {

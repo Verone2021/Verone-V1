@@ -11,6 +11,8 @@
     "dev": "turbo dev",
     "dev:stop": "./scripts/dev-stop.sh",
     "dev:clean": "./scripts/dev-clean.sh",
+    "dev:safe": "./scripts/validate-env.sh && pnpm dev",
+    "env:validate": "./scripts/validate-env.sh",
     "build": "turbo build",
     "start": "turbo start",
     "lint": "turbo lint",
