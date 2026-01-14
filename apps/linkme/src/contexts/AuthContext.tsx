@@ -71,9 +71,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [initializing, setInitializing] = useState(true); // Verification initiale
   const [loading, setLoading] = useState(false); // Actions explicites
 
-  // Ref pour éviter les appels multiples lors de l'initialisation
-  const initializedRef = useRef(false);
-
   // Fonction pour récupérer le rôle LinkMe (ne dépend pas de supabase car c'est un singleton)
   const fetchLinkMeRole = useCallback(
     async (userId: string) => {
@@ -201,9 +198,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Initialisation et écoute des changements d'auth
   useEffect(() => {
-    // Éviter les doubles initialisations (StrictMode React)
-    if (initializedRef.current) return;
-    initializedRef.current = true;
+    let cancelled = false;
 
     // Récupérer la session initiale
     const initSession = async () => {
@@ -221,6 +216,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
             userId: currentSession?.user?.id,
           });
 
+        // Vérifier cancelled AVANT setState pour éviter les fuites mémoire
+        if (cancelled) {
+          if (DEBUG) console.log('[AuthContext] initSession CANCELLED');
+          return;
+        }
+
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
 
@@ -230,11 +231,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       } catch (error) {
         console.error('[AuthContext] initSession ERROR:', error);
       } finally {
-        if (DEBUG)
-          console.log(
-            '[AuthContext] initSession DONE - setInitializing(false)'
-          );
-        setInitializing(false);
+        // Toujours setInitializing(false), même si cancelled
+        if (!cancelled) {
+          if (DEBUG)
+            console.log(
+              '[AuthContext] initSession DONE - setInitializing(false)'
+            );
+          setInitializing(false);
+        }
       }
     };
 
@@ -259,7 +263,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     });
 
+    // Cleanup: marquer comme cancelled et unsub
     return () => {
+      const DEBUG = process.env.NEXT_PUBLIC_DEBUG_AUTH === '1';
+      if (DEBUG) console.log('[AuthContext] useEffect CLEANUP');
+      cancelled = true;
       subscription.unsubscribe();
     };
   }, [fetchLinkMeRole]); // supabase retiré car c'est un singleton stable
