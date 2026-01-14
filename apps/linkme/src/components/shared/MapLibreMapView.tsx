@@ -23,6 +23,8 @@ import Supercluster from 'supercluster';
 
 import 'maplibre-gl/dist/maplibre-gl.css';
 
+import { MapPopupCard } from './MapPopupCard';
+
 // ============================================
 // TYPES
 // ============================================
@@ -32,6 +34,11 @@ interface Organisation {
   trade_name: string | null;
   legal_name: string;
   city: string | null;
+  postal_code: string | null;
+  shipping_address_line1: string | null;
+  shipping_city: string | null;
+  shipping_postal_code: string | null;
+  logo_url: string | null;
   latitude: number | null;
   longitude: number | null;
   ownership_type?: 'propre' | 'franchise' | 'succursale' | null;
@@ -386,39 +393,13 @@ export function MapLibreMapView({
             offset={35}
             onClose={() => setSelectedOrg(null)}
             closeOnClick={false}
+            closeButton={false}
           >
-            <div className="min-w-[180px] p-1">
-              <p className="font-semibold text-gray-900">
-                {selectedOrg.trade_name || selectedOrg.legal_name}
-              </p>
-              {selectedOrg.city && (
-                <p className="text-gray-500 text-sm">{selectedOrg.city}</p>
-              )}
-              <p className="text-xs mt-2">
-                <span
-                  className={`inline-block px-2 py-0.5 rounded-full text-white ${
-                    selectedOrg.ownership_type === 'propre' ||
-                    selectedOrg.ownership_type === 'succursale'
-                      ? 'bg-blue-500'
-                      : 'bg-orange-500'
-                  }`}
-                >
-                  {selectedOrg.ownership_type === 'propre' ||
-                  selectedOrg.ownership_type === 'succursale'
-                    ? 'Restaurant propre'
-                    : 'Franchise'}
-                </span>
-              </p>
-              {/* Bouton voir détails */}
-              {onViewDetails && (
-                <button
-                  onClick={() => onViewDetails(selectedOrg.id)}
-                  className="mt-3 w-full px-3 py-1.5 text-sm font-medium text-white bg-[#5DBEBB] rounded-lg hover:bg-[#4DAEAB] transition-colors"
-                >
-                  Voir les détails
-                </button>
-              )}
-            </div>
+            <MapPopupCard
+              organisation={selectedOrg}
+              onViewDetails={onViewDetails || (() => {})}
+              onClose={() => setSelectedOrg(null)}
+            />
           </Popup>
         )}
       </Map>
