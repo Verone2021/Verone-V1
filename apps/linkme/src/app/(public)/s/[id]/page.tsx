@@ -6,24 +6,17 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { createClient } from '@verone/utils/supabase/client';
-import {
-  Check,
-  Minus,
-  Package,
-  Plus,
-  ShoppingCart,
-  Star,
-  Store,
-} from 'lucide-react';
+import { Check, Minus, Package, Plus, ShoppingCart, Star } from 'lucide-react';
 
 import { OrderFormUnified } from '@/components/OrderFormUnified';
 import type { CartItem as UnifiedCartItem } from '@/components/OrderFormUnified';
 import {
-  CategoryTabs,
   ContactForm,
   FAQSection,
   Pagination,
   ProductFilters,
+  SelectionCategoryBar,
+  SelectionCategoryDropdown,
   SelectionHeader,
   SelectionHero,
   StoreLocatorMap,
@@ -278,16 +271,19 @@ export default function PublicSelectionPage({
         setSelection(data.selection as ISelection);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
         setItems((data.items as ISelectionItem[]) ?? []);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         if (data.branding) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
           setBranding(data.branding as IBranding);
         }
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         if (data.affiliate_info) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
           setAffiliateInfo(data.affiliate_info as IAffiliateInfo);
         }
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         if (data.organisations) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
           setOrganisations(data.organisations as IOrganisation[]);
         }
       } catch (err) {
@@ -413,16 +409,31 @@ export default function PublicSelectionPage({
         onSearchOpenChange={setIsSearchOpen}
       />
 
-      {/* Category Tabs */}
-      <CategoryTabs
+      {/* Category Bar */}
+      <SelectionCategoryBar
         categories={categories}
         selectedCategory={selectedCategory}
-        selectedSubcategory={selectedSubcategory}
         onCategoryChange={setSelectedCategory}
-        onSubcategoryChange={setSelectedSubcategory}
         branding={branding}
         totalCount={items.length}
       />
+
+      {/* Subcategory Dropdown (if category is selected and has subcategories) */}
+      {selectedCategory && (
+        <div className="bg-gray-50 border-b border-gray-100">
+          <div className="max-w-6xl mx-auto px-4 py-3">
+            <SelectionCategoryDropdown
+              subcategories={
+                categories.find(c => c.id === selectedCategory)
+                  ?.subcategories ?? []
+              }
+              selectedSubcategory={selectedSubcategory}
+              onSubcategoryChange={setSelectedSubcategory}
+              branding={branding}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Catalogue Section */}
       {activeTab === 'catalogue' && (
@@ -578,12 +589,12 @@ export default function PublicSelectionPage({
                           ) : (
                             <button
                               onClick={() => addToCart(item)}
-                              className="flex items-center gap-1.5 text-white py-1.5 px-3 rounded-lg text-sm transition-colors hover:opacity-90"
+                              className="flex items-center gap-1 text-white py-1.5 px-2.5 rounded-lg text-xs transition-colors hover:opacity-90"
                               style={{
                                 backgroundColor: branding.primary_color,
                               }}
                             >
-                              <Plus className="h-4 w-4" />
+                              <Plus className="h-3.5 w-3.5" />
                               Ajouter
                             </button>
                           )}
