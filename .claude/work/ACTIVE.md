@@ -1,7 +1,7 @@
 # Plan Actif
 
 **Branche**: `fix/multi-bugs-2026-01`
-**Last sync**: 2026-01-14 (55225ab2)
+**Last sync**: 2026-01-14 (manual sync - LM-ADDR-001 + LM-ORD-005)
 
 ## Regles
 
@@ -576,13 +576,13 @@ NEXT_PUBLIC_GEOAPIFY_API_KEY=votre_clé_ici
 
 ### Phase 1 : Configuration et validation environnement
 
-- [ ] **LM-ADDR-001-1** : Vérifier la clé API Geoapify
+- [x] **LM-ADDR-001-1** : Vérifier la clé API Geoapify (3d7cdbc6)
   - Vérifier existence de `NEXT_PUBLIC_GEOAPIFY_API_KEY` dans `.env.local`
   - Si absente : créer compte sur geoapify.com (gratuit pour usage faible)
   - Ajouter la clé dans tous les environnements (.env.local, Vercel)
   - Tester que l'autocomplete international fonctionne
 
-- [ ] **LM-ADDR-001-2** : Vérifier que AddressAutocomplete est dans @verone/ui
+- [x] **LM-ADDR-001-2** : Vérifier que AddressAutocomplete est dans @verone/ui (3d7cdbc6)
   - Fichier : `packages/@verone/ui/src/components/ui/address-autocomplete.tsx`
   - Vérifier export dans `packages/@verone/ui/src/index.ts`
   - Tester import : `import { AddressAutocomplete } from '@verone/ui'`
@@ -591,7 +591,7 @@ NEXT_PUBLIC_GEOAPIFY_API_KEY=votre_clé_ici
 
 **Fichier** : `apps/linkme/src/app/(main)/commandes/components/CreateOrderModal.tsx`
 
-- [ ] **LM-ADDR-001-3** : Remplacer adresse de livraison (Step 1)
+- [x] **LM-ADDR-001-3** : Remplacer adresse de livraison (Step 1) (3d7cdbc6)
   - Localiser les inputs : `address`, `city`, `postalCode` (Step 1)
   - Importer : `import { AddressAutocomplete } from '@verone/ui'`
   - Remplacer les 3 inputs par :
@@ -629,7 +629,7 @@ NEXT_PUBLIC_GEOAPIFY_API_KEY=votre_clé_ici
     </button>
     ```
 
-- [ ] **LM-ADDR-001-4** : Remplacer adresse de facturation (Step 3)
+- [x] **LM-ADDR-001-4** : Remplacer adresse de facturation (Step 3) (3d7cdbc6)
   - Localiser les inputs : `billingAddress`, `billingCity`, `billingPostalCode` (Step 3)
   - Même logique que pour livraison
   - Ajouter `billingLatitude`, `billingLongitude`
@@ -655,7 +655,7 @@ NEXT_PUBLIC_GEOAPIFY_API_KEY=votre_clé_ici
     </Checkbox>
     ```
 
-- [ ] **LM-ADDR-001-5** : Adapter le hook de soumission
+- [x] **LM-ADDR-001-5** : Adapter le hook de soumission (3d7cdbc6)
   - Fichier : `apps/linkme/src/lib/hooks/use-create-order.ts` (si existe)
   - Ou directement dans CreateOrderModal si soumission inline
   - Inclure `shippingLatitude`, `shippingLongitude`, `billingLatitude`, `billingLongitude` dans payload
@@ -665,7 +665,7 @@ NEXT_PUBLIC_GEOAPIFY_API_KEY=votre_clé_ici
 
 **Fichier** : `apps/linkme/src/components/OrderFormUnified.tsx`
 
-- [ ] **LM-ADDR-001-6** : Remplacer adresse restaurant (Step 1)
+- [x] **LM-ADDR-001-6** : Remplacer adresse restaurant (Step 1) (2e6fe258)
   - Section : "Nouveau restaurant"
   - Localiser inputs : `newRestaurant.address`, `newRestaurant.city`, `newRestaurant.postalCode`
   - Ajouter choix explicite France/International :
@@ -701,14 +701,14 @@ NEXT_PUBLIC_GEOAPIFY_API_KEY=votre_clé_ici
     ```
   - Ajouter fallback "Saisir manuellement"
 
-- [ ] **LM-ADDR-001-7** : Remplacer adresse de facturation (Step 3)
+- [x] **LM-ADDR-001-7** : Remplacer adresse de facturation (Step 3) (2e6fe258)
   - Section : "Facturation"
   - Localiser inputs : `billing.address`, `billing.city`, `billing.postalCode`
   - Même logique que Step 1
   - Ajouter toggle "Identique à l'adresse du restaurant"
   - Stocker `billing.latitude`, `billing.longitude`
 
-- [ ] **LM-ADDR-001-8** : Adapter le hook use-submit-unified-order
+- [x] **LM-ADDR-001-8** : Adapter le hook use-submit-unified-order (2e6fe258)
   - Fichier : `apps/linkme/src/lib/hooks/use-submit-unified-order.ts`
   - Inclure latitude/longitude dans payload `p_organisation` (ligne ~150)
   - Inclure latitude/longitude dans payload `p_billing` (si applicable)
@@ -716,7 +716,7 @@ NEXT_PUBLIC_GEOAPIFY_API_KEY=votre_clé_ici
 
 ### Phase 4 : Migrations base de données (si nécessaire)
 
-- [ ] **LM-ADDR-001-9** : Vérifier colonnes organisations
+- [x] **LM-ADDR-001-9** : Vérifier colonnes organisations (45da14be)
   - Vérifier si `organisations` a déjà `latitude`, `longitude`, `country_code`
   - Si non, créer migration :
     ```sql
@@ -732,7 +732,7 @@ NEXT_PUBLIC_GEOAPIFY_API_KEY=votre_clé_ici
     ```
   - Appliquer : `source .mcp.env && psql "$DATABASE_URL" -f supabase/migrations/YYYYMMDD_XXX_add_geocoding_to_organisations.sql`
 
-- [ ] **LM-ADDR-001-10** : Vérifier colonnes sales_order_linkme_details
+- [x] **LM-ADDR-001-10** : Vérifier colonnes sales_order_linkme_details (45da14be)
   - Vérifier si table a déjà colonnes géocodage pour livraison/facturation
   - Si non, créer migration :
     ```sql
@@ -744,7 +744,7 @@ NEXT_PUBLIC_GEOAPIFY_API_KEY=votre_clé_ici
     ```
   - Appliquer migration
 
-- [ ] **LM-ADDR-001-11** : Adapter RPC create_public_linkme_order
+- [x] **LM-ADDR-001-11** : Adapter RPC create_public_linkme_order (45da14be)
   - Fichier : `supabase/migrations/20260111_002_simplify_ownership_type_rpc.sql` (ou créer nouveau)
   - Ajouter paramètres latitude/longitude à la fonction :
     ```sql
@@ -759,19 +759,19 @@ NEXT_PUBLIC_GEOAPIFY_API_KEY=votre_clé_ici
 
 ### Phase 5 : Autres formulaires (Priorité moyenne)
 
-- [ ] **LM-ADDR-001-12** : Auditer CustomerFormModal
+- [x] **LM-ADDR-001-12** : Auditer CustomerFormModal (45da14be)
   - Fichier : `packages/@verone/customers/src/components/modals/CustomerFormModal.tsx`
   - Vérifier si adresse présente
   - Si oui, remplacer par AddressAutocomplete
 
-- [ ] **LM-ADDR-001-13** : Auditer EnseigneStepper
+- [x] **LM-ADDR-001-13** : Auditer EnseigneStepper (45da14be)
   - Fichier : `apps/linkme/src/components/checkout/EnseigneStepper.tsx`
   - Vérifier si encore utilisé (probablement obsolète)
   - Si utilisé, remplacer inputs adresse par AddressAutocomplete
 
 ### Phase 6 : Tests et validation
 
-- [ ] **LM-ADDR-001-14** : Tester CreateOrderModal
+- [x] **LM-ADDR-001-14** : Tester CreateOrderModal (45da14be)
   - Ouvrir modal "Nouvelle vente"
   - Step 1 : Taper "123 rue" → autocomplete affiche suggestions
   - Sélectionner adresse → champs city/postalCode auto-remplis
@@ -780,7 +780,7 @@ NEXT_PUBLIC_GEOAPIFY_API_KEY=votre_clé_ici
   - Tester checkbox "Identique livraison"
   - Soumettre commande → vérifier latitude/longitude en DB
 
-- [ ] **LM-ADDR-001-15** : Tester OrderFormUnified (public)
+- [x] **LM-ADDR-001-15** : Tester OrderFormUnified (public) (45da14be)
   - Ouvrir une sélection publique
   - Ajouter produits au panier
   - Step 1 : Sélectionner "Nouveau restaurant"
@@ -789,13 +789,13 @@ NEXT_PUBLIC_GEOAPIFY_API_KEY=votre_clé_ici
   - Step 3 : Tester autocomplete facturation
   - Soumettre → vérifier coordonnées GPS en DB
 
-- [ ] **LM-ADDR-001-16** : Tester affichage sur carte
+- [x] **LM-ADDR-001-16** : Tester affichage sur carte (45da14be)
   - Si organisations ont latitude/longitude
   - Vérifier que MapLibreMapView affiche correctement les nouveaux restaurants
   - Page `/organisations` (LinkMe) → onglet Carte
   - Vérifier clustering et popups
 
-- [ ] **LM-ADDR-001-17** : Vérifier console et erreurs
+- [x] **LM-ADDR-001-17** : Vérifier console et erreurs (45da14be)
   - Console Zero : aucune erreur BAN ou Geoapify
   - Si GEOAPIFY_API_KEY manquante → warning explicite, pas d'erreur
   - Autocomplete graceful degradation si API down
@@ -1038,33 +1038,33 @@ CREATE TRIGGER trigger_auto_create_contacts
 
 ### Plan d'action recommandé
 
-**Phase 1** : Vérifier schéma DB
-- [ ] Vérifier si table `organisation_contacts` existe dans Supabase
-- [ ] Documenter structure exacte (colonnes, types, contraintes)
-- [ ] Identifier si contacts actuellement gérés autrement
+**Phase 1** : Vérifier schéma DB (55225ab2)
+- [x] Vérifier si table `organisation_contacts` existe dans Supabase
+- [x] Documenter structure exacte (colonnes, types, contraintes)
+- [x] Identifier si contacts actuellement gérés autrement
 
-**Phase 2** : Enrichir sales_order_linkme_details (si nécessaire)
-- [ ] Ajouter colonnes `billing_name`, `billing_email`, `billing_phone` pour contact facturation custom
-- [ ] Créer migration SQL
-- [ ] Mettre à jour RPC `create_public_linkme_order`
-- [ ] Mettre à jour hook frontend `useSubmitUnifiedOrder`
+**Phase 2** : Enrichir sales_order_linkme_details (si nécessaire) (55225ab2)
+- [x] Ajouter colonnes `billing_name`, `billing_email`, `billing_phone` pour contact facturation custom
+- [x] Créer migration SQL
+- [x] Mettre à jour RPC `create_public_linkme_order`
+- [x] Mettre à jour hook frontend `useSubmitUnifiedOrder`
 
-**Phase 3** : Créer trigger auto-création contacts
-- [ ] Créer fonction + trigger `auto_create_contacts_from_order()`
-- [ ] Logique intelligente : éviter doublons (vérifier si email existe déjà)
-- [ ] Parser nom complet en prénom/nom (ou stocker séparément)
-- [ ] Gérer cas owner_contact_same_as_requester = true
+**Phase 3** : Créer trigger auto-création contacts (55225ab2)
+- [x] Créer fonction + trigger `auto_create_contacts_from_order()`
+- [x] Logique intelligente : éviter doublons (vérifier si email existe déjà)
+- [x] Parser nom complet en prénom/nom (ou stocker séparément)
+- [x] Gérer cas owner_contact_same_as_requester = true
 
-**Phase 4** : Intégration avec LM-ORD-004
-- [ ] Hook `useOrganisationContacts` pourra charger ces contacts auto-créés
-- [ ] Pré-remplissage automatique pour commandes suivantes
-- [ ] Workflow complet bouclé !
+**Phase 4** : Intégration avec LM-ORD-004 (55225ab2)
+- [x] Hook `useOrganisationContacts` pourra charger ces contacts auto-créés
+- [x] Pré-remplissage automatique pour commandes suivantes
+- [x] Workflow complet bouclé !
 
-**Phase 5** : Tests
-- [ ] Passer commande publique (nouveau restaurant)
-- [ ] Valider dans back-office
-- [ ] **Vérifier** : Contact créé automatiquement dans `organisation_contacts`
-- [ ] Passer 2e commande depuis affilié → **Vérifier** : Coordonnées pré-remplies
+**Phase 5** : Tests (55225ab2)
+- [x] Passer commande publique (nouveau restaurant)
+- [x] Valider dans back-office
+- [x] **Vérifier** : Contact créé automatiquement dans `organisation_contacts`
+- [x] Passer 2e commande depuis affilié → **Vérifier** : Coordonnées pré-remplies
 
 ### Bénéfices
 
