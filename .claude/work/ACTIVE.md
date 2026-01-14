@@ -1,7 +1,7 @@
 # Plan Actif
 
 **Branche**: `fix/multi-bugs-2026-01`
-**Last sync**: 2026-01-14 (53b5809c)
+**Last sync**: 2026-01-14 (84b9216b)
 
 ## Regles
 
@@ -85,46 +85,21 @@ Implémenter le plan LM-ADDR-001 (17 tâches) pour remplacer ces inputs par Addr
 
 **Checklist Phase 1 - Infrastructure (Migrations SQL)** :
 
-- [x] BO-FORM-001-1 : Créer migration `20260115_001_create_form_submissions.sql`
-- [x] BO-FORM-001-2 : Créer migration `20260115_002_create_form_types.sql`
-- [x] BO-FORM-001-3 : Créer migration `20260115_003_create_form_submission_messages.sql`
-- [x] BO-FORM-001-4 : Créer migration `20260115_004_create_app_settings.sql`
-- [x] BO-FORM-001-5 : Créer migration `20260115_005_form_submissions_rls.sql`
-- [x] BO-FORM-001-6 : Créer migration `20260115_006_form_submission_triggers.sql`
-- [x] BO-FORM-001-7 : Créer migration `20260115_007_drop_linkme_contact_requests.sql`
-- [x] BO-FORM-001-8 : Appliquer toutes les migrations via psql
-- [x] BO-FORM-001-9 : Vérifier tables dans Supabase Dashboard
 
 **Checklist Phase 2 - API Routes** :
 
-- [ ] BO-FORM-001-10 : Créer `/api/forms/submit` route
-- [ ] BO-FORM-001-11 : Créer `/api/emails/form-confirmation` route
-- [ ] BO-FORM-001-12 : Créer `/api/emails/form-notification` route
-- [ ] BO-FORM-001-13 : Tester avec curl/Postman
 
 **Checklist Phase 3 - MVP LinkMe** :
 
-- [ ] BO-FORM-001-14 : Modifier `ContactForm.tsx` handleSubmit
-- [ ] BO-FORM-001-15 : Tester soumission depuis LinkMe
-- [ ] BO-FORM-001-16 : Vérifier emails envoyés
 
 **Checklist Phase 4 - Interface Back-Office** :
 
-- [ ] BO-FORM-001-17 : Créer page `/prises-contact` (liste)
-- [ ] BO-FORM-001-18 : Créer page `/prises-contact/[id]` (détail)
-- [ ] BO-FORM-001-19 : Tester filtres et navigation
 
 **Checklist Phase 5 - Conversions** :
 
-- [ ] BO-FORM-001-20 : Créer Server Actions conversions
-- [ ] BO-FORM-001-21 : Intégrer boutons conversion
-- [ ] BO-FORM-001-22 : Tester workflows complets
 
 **Checklist Phase 6 - Paramètres** :
 
-- [ ] BO-FORM-001-23 : Créer page `/parametres/notifications`
-- [ ] BO-FORM-001-24 : Implémenter CRUD emails
-- [ ] BO-FORM-001-25 : Tester configuration
 
 ---
 
