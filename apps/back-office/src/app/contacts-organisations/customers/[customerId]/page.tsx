@@ -89,6 +89,7 @@ export default function CustomerDetailPage() {
     organisation: customer,
     loading,
     error,
+    refetch: refetchCustomer,
   } = useOrganisation(customerId as string);
 
   // Charger les produits sourcés pour ce client
@@ -172,7 +173,9 @@ export default function CustomerDetailPage() {
 
   // Gestionnaire de mise à jour des données client
   const handleCustomerUpdate = (updatedData: Partial<Organisation>) => {
-    // Les données sont automatiquement mises à jour par le hook useInlineEdit
+    // Rafraîchir les données du customer immédiatement
+    refetchCustomer();
+    // Rafraîchir la liste des organisations (cache)
     refetch();
     // Rafraîchir les compteurs
     refreshCounts();

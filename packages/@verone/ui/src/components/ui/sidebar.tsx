@@ -68,6 +68,9 @@ export const SidebarProvider = React.forwardRef<
     const [_open, _setOpen] = React.useState(defaultOpen);
     const open = openProp ?? _open;
 
+    // Ref pour debounce l'écriture cookie (évite blocage main thread)
+    const cookieTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
     const setOpen = React.useCallback(
       (value: boolean | ((value: boolean) => boolean)) => {
         const openState = typeof value === 'function' ? value(open) : value;
@@ -77,11 +80,25 @@ export const SidebarProvider = React.forwardRef<
           _setOpen(openState);
         }
 
-        // Cookie persistence
-        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+        // Cookie persistence - debounced pour éviter blocage sur hover rapide
+        if (cookieTimeoutRef.current) {
+          clearTimeout(cookieTimeoutRef.current);
+        }
+        cookieTimeoutRef.current = setTimeout(() => {
+          document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+        }, 300);
       },
       [setOpenProp, open]
     );
+
+    // Cleanup du cookie timeout au démontage
+    React.useEffect(() => {
+      return () => {
+        if (cookieTimeoutRef.current) {
+          clearTimeout(cookieTimeoutRef.current);
+        }
+      };
+    }, []);
 
     const toggleSidebar = React.useCallback(() => {
       return isMobile ? setOpenMobile(open => !open) : setOpen(open => !open);
