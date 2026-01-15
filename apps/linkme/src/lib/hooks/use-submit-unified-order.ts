@@ -135,21 +135,21 @@ export function useSubmitUnifiedOrder() {
             id: item.id,
           }));
 
-          // Demandeur = Propriétaire pour le nouveau formulaire
+          // Demandeur (Step 1)
           const p_requester = {
-            type: 'responsable_enseigne', // Valeur par défaut (plus demandé dans le formulaire)
-            name: data.responsable.name,
-            email: data.responsable.email,
-            phone: data.responsable.phone || null,
-            position: null,
+            name: data.requester.name,
+            email: data.requester.email,
+            phone: data.requester.phone || null,
+            position: data.requester.position || null,
+            notes: data.requester.notes || null,
           };
 
-          // Organisation nouvelle
+          // Organisation (Step 2)
           const p_organisation = {
             is_new: true,
             trade_name: data.newRestaurant.tradeName,
             legal_name:
-              data.responsable.type === 'franchise'
+              data.newRestaurant.ownershipType === 'franchise'
                 ? data.responsable.companyLegalName
                 : data.newRestaurant.tradeName,
             city: data.newRestaurant.city,
@@ -157,38 +157,112 @@ export function useSubmitUnifiedOrder() {
             address: data.newRestaurant.address || null,
             latitude: data.newRestaurant.latitude || null,
             longitude: data.newRestaurant.longitude || null,
+            ownership_type: data.newRestaurant.ownershipType, // 'succursale' | 'franchise'
           };
 
-          // Propriétaire
-          const p_owner = {
-            type: data.responsable.type,
-            same_as_requester: false,
-            name: data.responsable.name,
-            email: data.responsable.email,
-            phone: data.responsable.phone || null,
-          };
+          // Responsable (Step 3)
+          const p_responsable = data.isNewRestaurant
+            ? {
+                // Nouveau restaurant : créer nouveau contact
+                is_new: true,
+                name: data.responsable.name,
+                email: data.responsable.email,
+                phone: data.responsable.phone || null,
+                company_legal_name:
+                  data.newRestaurant.ownershipType === 'franchise'
+                    ? data.responsable.companyLegalName || null
+                    : null,
+                siret:
+                  data.newRestaurant.ownershipType === 'franchise'
+                    ? data.responsable.siret || null
+                    : null,
+              }
+            : data.existingContact.isNewContact
+              ? {
+                  // Restaurant existant + nouveau contact
+                  is_new: true,
+                  name: data.responsable.name,
+                  email: data.responsable.email,
+                  phone: data.responsable.phone || null,
+                  company_legal_name: null,
+                  siret: null,
+                }
+              : {
+                  // Restaurant existant + contact existant
+                  is_new: false,
+                  contact_id: data.existingContact.selectedContactId,
+                };
 
-          // Facturation
-          const billingName =
-            data.billing.contactSource === 'custom'
-              ? data.billing.name
-              : data.responsable.name;
-          const billingEmail =
-            data.billing.contactSource === 'custom'
-              ? data.billing.email
-              : data.responsable.email;
+          // Facturation (Step 4)
+          const p_billing = data.billing.useParentOrganisation
+            ? {
+                use_parent: true,
+                contact_source: null,
+                name: null,
+                email: null,
+                phone: null,
+                address: null,
+                postal_code: null,
+                city: null,
+                latitude: null,
+                longitude: null,
+                company_legal_name: null,
+                siret: null,
+              }
+            : {
+                use_parent: false,
+                contact_source:
+                  data.billing.contactSource === 'custom'
+                    ? 'custom'
+                    : 'responsable',
+                name:
+                  data.billing.contactSource === 'custom'
+                    ? data.billing.name
+                    : data.responsable.name,
+                email:
+                  data.billing.contactSource === 'custom'
+                    ? data.billing.email
+                    : data.responsable.email,
+                phone:
+                  data.billing.contactSource === 'custom'
+                    ? data.billing.phone || null
+                    : data.responsable.phone || null,
+                address: data.billing.address || null,
+                postal_code: data.billing.postalCode || null,
+                city: data.billing.city || null,
+                latitude: data.billing.latitude || null,
+                longitude: data.billing.longitude || null,
+                company_legal_name: data.billing.companyLegalName || null,
+                siret: data.billing.siret || null,
+              };
 
-          const p_billing = {
-            contact_source:
-              data.billing.contactSource === 'custom' ? 'custom' : 'step2',
-            name: billingName,
-            email: billingEmail,
-            phone:
-              data.billing.contactSource === 'custom'
-                ? data.billing.phone
-                : data.responsable.phone,
-            delivery_date: null, // Sera rempli au Step 4 post-approbation
-            mall_form_required: false, // Sera rempli au Step 4 post-approbation
+          // Livraison (Step 5)
+          const p_delivery = {
+            use_responsable_contact: data.delivery.useResponsableContact,
+            contact_name: data.delivery.useResponsableContact
+              ? null
+              : data.delivery.contactName || null,
+            contact_email: data.delivery.useResponsableContact
+              ? null
+              : data.delivery.contactEmail || null,
+            contact_phone: data.delivery.useResponsableContact
+              ? null
+              : data.delivery.contactPhone || null,
+            address: data.delivery.address || null,
+            postal_code: data.delivery.postalCode || null,
+            city: data.delivery.city || null,
+            latitude: data.delivery.latitude || null,
+            longitude: data.delivery.longitude || null,
+            delivery_date: data.delivery.deliveryDate || null,
+            is_mall_delivery: data.delivery.isMallDelivery || false,
+            mall_email: data.delivery.isMallDelivery
+              ? data.delivery.mallEmail || null
+              : null,
+            access_form_required: data.delivery.accessFormRequired || false,
+            access_form_url: data.delivery.accessFormUrl || null,
+            semi_trailer_accessible:
+              data.delivery.semiTrailerAccessible !== false, // true par défaut
+            notes: data.delivery.notes || null,
           };
 
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -200,8 +274,9 @@ export function useSubmitUnifiedOrder() {
               p_cart: p_cart,
               p_requester: p_requester,
               p_organisation: p_organisation,
-              p_owner: p_owner,
+              p_responsable: p_responsable,
               p_billing: p_billing,
+              p_delivery: p_delivery,
             }
           );
 
