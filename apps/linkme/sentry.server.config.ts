@@ -7,11 +7,12 @@ import * as Sentry from '@sentry/nextjs';
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
+  // Environment et release tracking
+  environment: process.env.VERCEL_ENV || process.env.NODE_ENV || 'development',
+  release: process.env.VERCEL_GIT_COMMIT_SHA,
+
   // Performance Monitoring
   tracesSampleRate: 0.1, // 10% des transactions
-
-  // Environnement
-  environment: process.env.NEXT_PUBLIC_VERCEL_ENV || 'development',
 
   // Desactiver en dev local
   enabled: process.env.NODE_ENV === 'production',
