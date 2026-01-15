@@ -7,9 +7,10 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
+
 export interface QueryOptions<T> {
   tableName: string;
   select?: string;
@@ -32,7 +33,8 @@ export function useSupabaseQuery<T>(options: QueryOptions<T>): QueryState<T> {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const supabase = createClient();
+  // ✅ FIX: useMemo garantit createClient() appelé une seule fois par instance
+  const supabase = useMemo(() => createClient(), []);
 
   const fetch = async () => {
     try {

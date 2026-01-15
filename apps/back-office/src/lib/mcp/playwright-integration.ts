@@ -118,7 +118,7 @@ export class MCPPlaywrightIntegration {
   private async getConsoleErrors(): Promise<string[]> {
     try {
       // Note: globalSentryDetector supprimé (Phase 1)
-      // Pour détecter erreurs console, utiliser mcp__playwright__browser_console_messages
+      // Pour détecter erreurs console, utiliser mcp__playwright-lane-1__browser_console_messages
       console.log(
         '[MCP] getConsoleErrors: Utiliser browser_console_messages pour détection erreurs'
       );

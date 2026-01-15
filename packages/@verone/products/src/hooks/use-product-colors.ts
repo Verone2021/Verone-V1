@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
-import { createBrowserClient } from '@supabase/ssr';
+import { createClient } from '@verone/utils/supabase/client';
 
 /**
  * Hook pour récupérer les couleurs/valeurs variantes déjà utilisées dans un groupe
@@ -14,14 +14,11 @@ export function useGroupUsedColors(
 ) {
   const [usedColors, setUsedColors] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  // ✅ FIX: Use singleton client via useMemo
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     async function fetchUsedColors() {
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
-
       setLoading(true);
 
       const { data, error } = await supabase
@@ -99,6 +96,8 @@ export interface ProductColor {
 export function useProductColors() {
   const [colors, setColors] = useState<ProductColor[]>([]);
   const [loading, setLoading] = useState(true);
+  // ✅ FIX: Use singleton client via useMemo
+  const supabase = useMemo(() => createClient(), []);
 
   // Couleurs prédéfinies par défaut (fallback)
   const defaultColors: ProductColor[] = [
@@ -117,11 +116,6 @@ export function useProductColors() {
   // Charger couleurs depuis DB
   useEffect(() => {
     async function fetchColors() {
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
-
       setLoading(true);
 
       const { data, error } = await supabase
@@ -137,25 +131,30 @@ export function useProductColors() {
         );
         setColors(defaultColors);
       } else {
-        setColors(data || defaultColors);
+        // Map data to ensure proper types (handle nullable fields from DB)
+        const mappedColors: ProductColor[] = (data || [])
+          .filter((c): c is typeof c & { hex_code: string } => !!c.hex_code)
+          .map(c => ({
+            id: c.id,
+            name: c.name,
+            hex_code: c.hex_code,
+            is_predefined: c.is_predefined ?? false,
+            created_at: c.created_at ?? undefined,
+          }));
+        setColors(mappedColors.length > 0 ? mappedColors : defaultColors);
       }
 
       setLoading(false);
     }
 
     fetchColors();
-  }, []);
+  }, [supabase]);
 
   // Créer nouvelle couleur
   const createColor = async (
     name: string,
     hex_code: string
   ): Promise<ProductColor | null> => {
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-
     // Normaliser nom couleur
     const normalizedName =
       name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
