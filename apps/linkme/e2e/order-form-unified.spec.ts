@@ -137,6 +137,73 @@ test.describe('OrderFormUnified - 6 Step Workflow', () => {
   });
 
   /**
+   * Test 4: Restaurant existant + Nouveau contact
+   * Priority: P1
+   */
+  test('Test 4: Existing restaurant + New contact', async ({ page }) => {
+    await page.goto(`${BASE_URL}/s/[SELECTION_ID]`); // TODO: Remplacer
+
+    // Ajouter produits + valider
+    await page.click('button:has-text("Ajouter au panier")');
+    await page.click('button:has-text("Valider la commande")');
+
+    // STEP 1: Demandeur
+    await page.fill('input[name="requester.name"]', 'Claire Bernard');
+    await page.fill(
+      'input[name="requester.email"]',
+      'claire.bernard@pokawa.fr'
+    );
+    await page.fill('input[name="requester.phone"]', '0623456789');
+    await page.click('button:has-text("Suivant")');
+
+    // STEP 2: Restaurant
+    await page.click('text=Restaurant existant');
+    await page.click('[data-testid="restaurant-card"]:first-child');
+    await page.click('button:has-text("Suivant")');
+
+    // STEP 3: Responsable - Ajouter un nouveau contact
+    await expect(page.locator('text=Responsable')).toBeVisible();
+    // Cliquer sur "Ajouter un nouveau contact"
+    await page.click('button:has-text("Ajouter un nouveau contact")');
+
+    // Remplir les informations du nouveau contact
+    await page.fill('input[name="responsable.name"]', 'Thomas Petit');
+    await page.fill(
+      'input[name="responsable.email"]',
+      'thomas.petit@pokawa.fr'
+    );
+    await page.fill('input[name="responsable.phone"]', '0634567890');
+    await page.click('button:has-text("Suivant")');
+
+    // STEP 4: Facturation
+    await page.click('input[value="responsable"]');
+    await page.click('button:has-text("Suivant")');
+
+    // STEP 5: Livraison
+    await page.check('#useResponsableContact');
+    await page.fill(
+      'input[placeholder*="Rechercher une adresse"]',
+      '15 Avenue des Champs-Élysées, 75008 Paris'
+    );
+    await page.waitForTimeout(1000);
+    await page.keyboard.press('Enter');
+    const dateString = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split('T')[0];
+    await page.fill('input[type="date"]', dateString);
+    await page.click('button:has-text("Suivant")');
+
+    // STEP 6: Validation
+    await page.click('button:has-text("Valider la commande")');
+    await page.check('input[type="checkbox"]');
+    await page.click('button:has-text("Confirmer et envoyer")');
+
+    await expect(page.locator('text=Commande créée')).toBeVisible({
+      timeout: 10000,
+    });
+  });
+
+  /**
    * Test 5: Nouveau restaurant propre + Org mère facturation
    * Priority: P0
    */
@@ -205,6 +272,98 @@ test.describe('OrderFormUnified - 6 Step Workflow', () => {
 
     // STEP 6: Validation + Confirmation
     await page.click('button:has-text("Valider la commande")');
+    await page.check('input[type="checkbox"]');
+    await page.click('button:has-text("Confirmer et envoyer")');
+
+    await expect(page.locator('text=Commande créée')).toBeVisible({
+      timeout: 10000,
+    });
+  });
+
+  /**
+   * Test 6: Nouveau restaurant propre + Facturation custom
+   * Priority: P1
+   */
+  test('Test 6: New restaurant (propre) + Custom billing', async ({ page }) => {
+    await page.goto(`${BASE_URL}/s/[SELECTION_ID]`); // TODO: Remplacer
+
+    await page.click('button:has-text("Ajouter au panier")');
+    await page.click('button:has-text("Valider la commande")');
+
+    // STEP 1: Demandeur
+    await page.fill('input[name="requester.name"]', 'Julie Durand');
+    await page.fill('input[name="requester.email"]', 'julie.durand@pokawa.fr');
+    await page.fill('input[name="requester.phone"]', '0645123456');
+    await page.click('button:has-text("Suivant")');
+
+    // STEP 2: Restaurant
+    await page.click('text=Nouveau restaurant');
+    await page.fill('input[name="newRestaurant.tradeName"]', 'Pokawa Bastille');
+    await page.fill(
+      'input[placeholder*="Rechercher une adresse"]',
+      '5 Place de la Bastille, 75011 Paris'
+    );
+    await page.waitForTimeout(1000);
+    await page.keyboard.press('Enter');
+    await page.click('button:has-text("Restaurant propre")');
+    await page.click('button:has-text("Suivant")');
+
+    // STEP 3: Responsable
+    await page.fill('input[name="responsable.name"]', 'Marc Leroy');
+    await page.fill('input[name="responsable.email"]', 'marc.leroy@pokawa.fr');
+    await page.fill('input[name="responsable.phone"]', '0656789012');
+    await page.click('button:has-text("Suivant")');
+
+    // STEP 4: Facturation - NE PAS cocher org mère, choisir custom
+    // Vérifier que la checkbox org mère est visible
+    await expect(
+      page.locator("text=Utiliser l'organisation mère")
+    ).toBeVisible();
+    // NE PAS la cocher (laisser décoché)
+
+    // Choisir "Autre contact"
+    await page.click('input[value="custom"]');
+
+    // Remplir les informations du contact de facturation
+    await page.fill('input[name="billing.name"]', 'Comptabilité Pokawa');
+    await page.fill('input[name="billing.email"]', 'compta@pokawa.fr');
+    await page.fill('input[name="billing.phone"]', '0145678901');
+
+    // Remplir l'adresse de facturation (différente du restaurant)
+    await page.fill(
+      'input[name="billing.address"]',
+      '12 Rue de la Paix, 75002 Paris'
+    );
+    await page.fill('input[name="billing.postalCode"]', '75002');
+    await page.fill('input[name="billing.city"]', 'Paris');
+
+    await page.click('button:has-text("Suivant")');
+
+    // STEP 5: Livraison
+    await page.check('#useResponsableContact');
+    await page.fill(
+      'input[placeholder*="Rechercher une adresse"]',
+      '5 Place de la Bastille, 75011 Paris'
+    );
+    await page.waitForTimeout(1000);
+    await page.keyboard.press('Enter');
+    const dateString = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split('T')[0];
+    await page.fill('input[type="date"]', dateString);
+    await page.click('button:has-text("Suivant")');
+
+    // STEP 6: Validation
+    await page.click('button:has-text("Valider la commande")');
+
+    // Vérifier que la facturation custom s'affiche dans le modal
+    await expect(
+      page.locator('.modal-content >> text=Comptabilité Pokawa')
+    ).toBeVisible();
+    await expect(
+      page.locator('.modal-content >> text=12 Rue de la Paix')
+    ).toBeVisible();
+
     await page.check('input[type="checkbox"]');
     await page.click('button:has-text("Confirmer et envoyer")');
 
