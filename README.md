@@ -277,6 +277,79 @@ git push -u origin feature/ma-feature
 
 ---
 
+## Task Management
+
+Tasks trackées dans `.tasks/` (Git-tracked, 1 fichier par task).
+
+### Structure
+
+```
+.tasks/
+├── LM-ORD-009.md        # 1 fichier = 1 task
+├── BO-DASH-001.md
+├── INDEX.md             # Généré auto (gitignored)
+└── TEMPLATE.md          # Template
+```
+
+### Format Task ID
+
+`[APP]-[DOMAIN]-[NNN]` où APP = BO | LM | WEB
+
+| Prefixe | Application     |
+|---------|-----------------|
+| `BO-*`  | back-office     |
+| `LM-*`  | linkme          |
+| `WEB-*` | site-internet   |
+
+### Créer une Task
+
+```bash
+# Copier le template
+cp .tasks/TEMPLATE.md .tasks/LM-ORD-011.md
+
+# Éditer le frontmatter YAML
+# ---
+# id: LM-ORD-011
+# app: linkme
+# domain: ORDER
+# status: pending
+# priority: high
+# created: 2026-01-15
+# commits: []
+# ---
+
+# Ajouter au git
+git add .tasks/LM-ORD-011.md
+```
+
+### Voir toutes les Tasks
+
+```bash
+# Générer l'index
+.tasks/generate-index.sh
+
+# Afficher l'index
+cat .tasks/INDEX.md
+```
+
+### Format Commit
+
+**Obligatoire** : Task ID dans chaque commit
+
+```bash
+# Format requis
+git commit -m "[APP-DOMAIN-NNN] type: description"
+
+# Exemples valides
+git commit -m "[LM-ORD-009] feat: refonte workflow order form"
+git commit -m "[BO-DASH-001] fix: cache invalidation"
+git commit -m "[NO-TASK] chore: update dependencies"
+```
+
+**Validation automatique** : Le hook `commit-msg` bloque les commits sans Task ID valide.
+
+---
+
 ## Tech Stack
 
 | Categorie      | Technologies                                   |
