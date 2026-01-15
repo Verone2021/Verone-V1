@@ -1,30 +1,26 @@
 /**
  * API Route: POST /api/linkme/users/update-email
  * Met à jour l'email d'un utilisateur LinkMe via Supabase Admin API
+ *
+ * 🔐 SECURITE: Requiert authentification admin back-office (owner/admin)
  */
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { createClient } from '@supabase/supabase-js';
+import { createAdminClient } from '@verone/utils/supabase/server';
 
-// Fonction pour créer le client Admin Supabase (lazy initialization)
-function getSupabaseAdmin() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    }
-  );
-}
+import { requireBackofficeAdmin } from '@/lib/guards';
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  // 🔐 GUARD: Vérifier authentification admin back-office
+  const guardResult = await requireBackofficeAdmin(request);
+  if (guardResult instanceof NextResponse) {
+    return guardResult; // 401 ou 403
+  }
+
   try {
-    const supabaseAdmin = getSupabaseAdmin();
+    const supabaseAdmin = createAdminClient();
     const body = await request.json();
     const { user_id, new_email } = body;
 

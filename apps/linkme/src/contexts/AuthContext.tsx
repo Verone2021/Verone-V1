@@ -71,9 +71,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [initializing, setInitializing] = useState(true); // Verification initiale
   const [loading, setLoading] = useState(false); // Actions explicites
 
-  // Ref pour éviter les appels multiples lors de l'initialisation
-  const initializedRef = useRef(false);
-
   // Fonction pour récupérer le rôle LinkMe (ne dépend pas de supabase car c'est un singleton)
   const fetchLinkMeRole = useCallback(
     async (userId: string) => {
@@ -201,16 +198,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Initialisation et écoute des changements d'auth
   useEffect(() => {
-    // Éviter les doubles initialisations (StrictMode React)
-    if (initializedRef.current) return;
-    initializedRef.current = true;
+    let cancelled = false;
 
     // Récupérer la session initiale
     const initSession = async () => {
+      const DEBUG = process.env.NEXT_PUBLIC_DEBUG_AUTH === '1';
+      if (DEBUG) console.log('[AuthContext] initSession START');
+
       try {
         const {
           data: { session: currentSession },
         } = await supabase.auth.getSession();
+
+        if (DEBUG)
+          console.log('[AuthContext] getSession result:', {
+            hasSession: !!currentSession,
+            userId: currentSession?.user?.id,
+          });
+
+        // Vérifier cancelled AVANT setState pour éviter les fuites mémoire
+        if (cancelled) {
+          if (DEBUG) console.log('[AuthContext] initSession CANCELLED');
+          return;
+        }
 
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
@@ -219,8 +229,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
           await fetchLinkMeRole(currentSession.user.id);
         }
       } catch (error) {
-        console.error('Erreur initialisation session:', error);
+        console.error('[AuthContext] initSession ERROR:', error);
       } finally {
+        // TOUJOURS setInitializing(false) - critical pour sortir du loading
+        if (DEBUG)
+          console.log(
+            '[AuthContext] initSession DONE - setInitializing(false)'
+          );
         setInitializing(false);
       }
     };
@@ -246,7 +261,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     });
 
+    // Cleanup: marquer comme cancelled et unsub
     return () => {
+      const DEBUG = process.env.NEXT_PUBLIC_DEBUG_AUTH === '1';
+      if (DEBUG) console.log('[AuthContext] useEffect CLEANUP');
+      cancelled = true;
       subscription.unsubscribe();
     };
   }, [fetchLinkMeRole]); // supabase retiré car c'est un singleton stable
@@ -291,6 +310,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         };
       }
 
+      // Mettre a jour les states IMMEDIATEMENT avec les donnees retournees
+      // (ne pas attendre onAuthStateChange qui peut etre lent)
+      setSession(data.session);
+      setUser(data.user);
+      await fetchLinkMeRole(data.user.id);
+
       return { error: null };
     } catch (err) {
       return {
@@ -305,9 +330,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUser(null);
     setSession(null);
     setLinkMeRole(null);
-    // Toujours rediriger vers login apres deconnexion pour eviter la reconnexion auto
+    // Rediriger vers la page d'accueil apres deconnexion
     if (typeof window !== 'undefined') {
-      window.location.href = redirectTo || '/login';
+      window.location.href = redirectTo || '/';
     }
   };
 

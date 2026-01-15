@@ -30,6 +30,7 @@ export * from './select';
 export * from './checkbox';
 export * from './radio-group';
 export * from './switch';
+export * from './slider';
 
 // ========================================
 // LAYOUT COMPONENTS
@@ -124,3 +125,8 @@ export * from './room-multi-select';
 // HELP & ONBOARDING COMPONENTS
 // ========================================
 export * from './help-lexique-section';
+
+// ========================================
+// ADDRESS COMPONENTS
+// ========================================
+export * from './address-autocomplete';

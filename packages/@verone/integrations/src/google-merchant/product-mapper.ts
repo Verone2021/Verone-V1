@@ -5,8 +5,8 @@
  * Spec: https://developers.google.com/merchant/api/reference/rest/products_v1beta/ProductInput
  */
 
-import { logger } from '@verone/utils/logger';
 import type { Database } from '@verone/types';
+import { logger } from '@verone/utils/logger';
 
 // Types Supabase
 type Product = Database['public']['Tables']['products']['Row'];

@@ -15,7 +15,7 @@ interface PublicLayoutProps {
 export function PublicLayout({ children }: PublicLayoutProps) {
   return (
     <div
-      className={`${inter.className} min-h-screen bg-white text-black antialiased`}
+      className={`${inter.className} flex items-center justify-center min-h-screen bg-white text-black antialiased`}
     >
       {children}
     </div>
