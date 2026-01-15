@@ -15,7 +15,8 @@
 | LM-ORD-004 | Pré-remplissage contacts - Phases 1-4 (code terminé) | 880af835, 9329ba7e | ~100 |
 | LM-AUTH-001 | Fix spinner infini LinkMe | 20658534 | ~50 |
 | Sentry Config | Migration Next.js 15 instrumentation | 8184e314, 125f3ee8 | ~80 |
-| WEB-DEV-001 | Fix symlink node_modules/next | 1237dab9 | ~0 |
+| WEB-DEV-001 | Fix symlink node_modules/next | 25f97a3d | ~0 |
+| LM-ORG-003 | Popup carte organisations (MapPopupCard) | 8a44b70f | ~100 |
 
 **Temps total session**: ~6h
 **Tests requis**: LM-SEL-003 (tests visuels par utilisateur)
@@ -37,10 +38,7 @@
 - Statut: Code terminé phases 1-4 ✅
 - Reste: Tests manuels uniquement
 
-**3. LM-ORG-003** - Popup Carte Organisations (~45 min)
-- 8 tâches pour `/organisations?tab=map`
-
-**4. site-internet/.env.local** - Action manuelle
+**3. site-internet/.env.local** - Action manuelle
 - `cp apps/back-office/.env.local apps/site-internet/.env.local`
 
 ---
@@ -104,22 +102,6 @@
 - [ ] **LM-ORD-004-8**: Tester CreateOrderModal
 - [ ] **LM-ORD-004-9**: Tester OrderFormUnified
 - [ ] **LM-ORD-004-10**: Tester cache localStorage
-
----
-
-## 📋 TASK: LM-ORG-003 — Popup Carte Organisations
-
-**Contexte**: Popup `/organisations?tab=map` trop basique
-
-**Tâches** (~45 min):
-- [ ] **LM-ORG-003-1**: Étendre interface Organisation
-- [ ] **LM-ORG-003-2**: Créer composant MapPopupCard
-- [ ] **LM-ORG-003-3**: Design détaillé du popup
-- [ ] **LM-ORG-003-4**: Intégrer MapPopupCard dans MapLibreMapView
-- [ ] **LM-ORG-003-5**: Fallback logo intelligent
-- [ ] **LM-ORG-003-6**: Fonction utilitaire formatAddress
-- [ ] **LM-ORG-003-7**: Tester le popup
-- [ ] **LM-ORG-003-8**: Tester responsive
 
 ---
 
