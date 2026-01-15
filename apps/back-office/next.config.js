@@ -4,7 +4,6 @@ const { getSecurityHeaders } = require('./src/lib/security/headers.ts');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Next.js 15 App Router configuration
-  // Sentry Pro 2026 configured - requires deployment (2026-01-15)
   reactStrictMode: true,
 
   // WORKAROUND (2025-10-17): Désactiver export statique pour résoudre Html import error
