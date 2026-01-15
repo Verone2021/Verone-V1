@@ -860,7 +860,21 @@ export function OrderFormUnified({
             />
           )}
           {currentStep === 4 && (
-            <OpeningStep4
+            <OpeningStep4Billing
+              data={data}
+              errors={errors}
+              updateData={updateData}
+            />
+          )}
+          {currentStep === 5 && (
+            <OpeningStep5Delivery
+              data={data}
+              errors={errors}
+              updateData={updateData}
+            />
+          )}
+          {currentStep === 6 && (
+            <OpeningStep6Validation
               data={data}
               errors={errors}
               updateData={updateData}
@@ -874,8 +888,8 @@ export function OrderFormUnified({
           )}
         </div>
 
-        {/* Footer - masqué en step 4 car le bouton est dans OpeningStep4 */}
-        {currentStep < 4 && (
+        {/* Footer - masqué en step 6 car le bouton est dans OpeningStep6Validation */}
+        {currentStep < 6 && (
           <Footer
             onBack={handleBack}
             onNext={handleNext}
@@ -2651,10 +2665,10 @@ function OpeningStep4Billing({ data, errors, updateData }: StepProps) {
 }
 
 // =====================================================================
-// ÉTAPE 4 - VALIDATION PANIER
+// STEP 6 : VALIDATION & PANIER
 // =====================================================================
 
-interface Step4Props extends StepProps {
+interface Step6Props extends StepProps {
   cart: CartItem[];
   cartTotals: {
     totalHt: number;
@@ -2668,7 +2682,7 @@ interface Step4Props extends StepProps {
   onOpenConfirmation: () => void;
 }
 
-function OpeningStep4({
+function OpeningStep6Validation({
   data,
   errors,
   cart,
@@ -2677,7 +2691,7 @@ function OpeningStep4({
   onUpdateQuantity,
   onRemoveItem,
   onOpenConfirmation,
-}: Step4Props) {
+}: Step6Props) {
   return (
     <div className="space-y-6">
       {/* Récapitulatif panier */}
