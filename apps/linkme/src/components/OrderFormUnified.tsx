@@ -3108,6 +3108,50 @@ function ConfirmationModal({
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {/* Demandeur */}
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+              <User className="h-4 w-4 text-blue-600" />
+              Demandeur
+            </h3>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div>
+                <span className="text-gray-500">Nom :</span>
+                <span className="ml-2 text-gray-900 font-medium">
+                  {data.requester.name}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-500">Email :</span>
+                <span className="ml-2 text-gray-900">
+                  {data.requester.email}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-500">Téléphone :</span>
+                <span className="ml-2 text-gray-900">
+                  {data.requester.phone}
+                </span>
+              </div>
+              {data.requester.position && (
+                <div>
+                  <span className="text-gray-500">Fonction :</span>
+                  <span className="ml-2 text-gray-900">
+                    {data.requester.position}
+                  </span>
+                </div>
+              )}
+              {data.requester.notes && (
+                <div className="col-span-2">
+                  <span className="text-gray-500">Notes :</span>
+                  <span className="ml-2 text-gray-900">
+                    {data.requester.notes}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Restaurant */}
           <div className="p-4 bg-gray-50 rounded-lg">
             <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
@@ -3127,6 +3171,16 @@ function ConfirmationModal({
                   {data.newRestaurant.city}
                 </span>
               </div>
+              {data.newRestaurant.ownershipType && (
+                <div>
+                  <span className="text-gray-500">Type :</span>
+                  <span className="ml-2 text-gray-900">
+                    {data.newRestaurant.ownershipType === 'franchise'
+                      ? 'Franchise'
+                      : 'Restaurant propre'}
+                  </span>
+                </div>
+              )}
               {data.newRestaurant.address && (
                 <div className="col-span-2">
                   <span className="text-gray-500">Adresse :</span>
@@ -3143,21 +3197,13 @@ function ConfirmationModal({
           {/* Responsable */}
           <div className="p-4 bg-gray-50 rounded-lg">
             <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
-              <User className="h-4 w-4 text-blue-600" />
+              <UserCircle className="h-4 w-4 text-blue-600" />
               Responsable
             </h3>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div>
-                <span className="text-gray-500">Type :</span>
-                <span className="ml-2 text-gray-900 font-medium">
-                  {data.responsable.type === 'franchise'
-                    ? 'Franchise'
-                    : 'Restaurant propre'}
-                </span>
-              </div>
-              <div>
                 <span className="text-gray-500">Nom :</span>
-                <span className="ml-2 text-gray-900">
+                <span className="ml-2 text-gray-900 font-medium">
                   {data.responsable.name}
                 </span>
               </div>
@@ -3248,6 +3294,117 @@ function ConfirmationModal({
                   <span className="text-gray-500">SIRET :</span>
                   <span className="ml-2 text-gray-900 font-mono">
                     {data.billing.siret}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Livraison */}
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+              <Truck className="h-4 w-4 text-blue-600" />
+              Livraison
+            </h3>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              {/* Contact livraison */}
+              {data.delivery.useResponsableContact ? (
+                <div className="col-span-2">
+                  <span className="text-gray-500">Contact :</span>
+                  <span className="ml-2 text-gray-900">
+                    Identique au responsable
+                  </span>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <span className="text-gray-500">Contact :</span>
+                    <span className="ml-2 text-gray-900">
+                      {data.delivery.contactName}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Email :</span>
+                    <span className="ml-2 text-gray-900">
+                      {data.delivery.contactEmail}
+                    </span>
+                  </div>
+                  {data.delivery.contactPhone && (
+                    <div>
+                      <span className="text-gray-500">Tél :</span>
+                      <span className="ml-2 text-gray-900">
+                        {data.delivery.contactPhone}
+                      </span>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Adresse livraison */}
+              {data.delivery.address && (
+                <div className="col-span-2">
+                  <span className="text-gray-500">Adresse :</span>
+                  <span className="ml-2 text-gray-900">
+                    {data.delivery.address}, {data.delivery.postalCode}{' '}
+                    {data.delivery.city}
+                  </span>
+                </div>
+              )}
+
+              {/* Date livraison */}
+              {data.delivery.deliveryDate && (
+                <div>
+                  <span className="text-gray-500">Date souhaitée :</span>
+                  <span className="ml-2 text-gray-900">
+                    {new Date(data.delivery.deliveryDate).toLocaleDateString(
+                      'fr-FR'
+                    )}
+                  </span>
+                </div>
+              )}
+
+              {/* Centre commercial */}
+              {data.delivery.isMallDelivery && (
+                <>
+                  <div className="col-span-2">
+                    <span className="text-gray-500">Centre commercial :</span>
+                    <span className="ml-2 text-gray-900">Oui</span>
+                  </div>
+                  {data.delivery.mallEmail && (
+                    <div className="col-span-2">
+                      <span className="text-gray-500">Email CC :</span>
+                      <span className="ml-2 text-gray-900">
+                        {data.delivery.mallEmail}
+                      </span>
+                    </div>
+                  )}
+                  {data.delivery.accessFormRequired && (
+                    <div className="col-span-2">
+                      <span className="text-gray-500">Formulaire accès :</span>
+                      <span className="ml-2 text-gray-900">
+                        {data.delivery.accessFormUrl ? 'Fourni' : 'Requis'}
+                      </span>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Semi-remorque */}
+              <div>
+                <span className="text-gray-500">Semi-remorque :</span>
+                <span className="ml-2 text-gray-900">
+                  {data.delivery.semiTrailerAccessible
+                    ? 'Accessible'
+                    : 'Non accessible'}
+                </span>
+              </div>
+
+              {/* Notes livraison */}
+              {data.delivery.notes && (
+                <div className="col-span-2">
+                  <span className="text-gray-500">Notes :</span>
+                  <span className="ml-2 text-gray-900">
+                    {data.delivery.notes}
                   </span>
                 </div>
               )}
