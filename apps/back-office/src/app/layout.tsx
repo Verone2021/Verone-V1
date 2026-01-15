@@ -16,17 +16,13 @@ const inter = Inter({ subsets: ['latin'] });
 /**
  * Configuration Next.js 15 - Dynamic Rendering
  *
- * Force le rendering dynamique pour toutes les pages de l'application.
- * Nécessaire pour éviter les erreurs SSR avec :
- * - ActivityTrackerProvider (useContext browser APIs)
- * - AuthWrapper (Supabase auth state)
- * - Composants utilisant des contexts React
+ * Force le rendering dynamique pour l'authentification Supabase.
+ * Nécessaire car le middleware et AuthWrapper accèdent aux cookies/session.
  *
- * Impact performance : +100-200ms latence (acceptable pour back-office)
- * Avantages : Build production stable, aucune erreur SSR
+ * TODO PERF: Migrer vers un pattern où seules les routes authentifiées
+ * sont dynamiques, permettant le cache sur les pages publiques.
  */
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 export const metadata = {
   title: 'Vérone Back Office',
