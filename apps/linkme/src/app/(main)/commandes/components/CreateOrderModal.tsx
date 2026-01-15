@@ -41,6 +41,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { useAuth } from '@/contexts/AuthContext';
+
 import { ContactsSection } from '../../../../components/ContactsSection';
 import {
   useCreateAffiliateOrder,
@@ -171,10 +173,20 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
   const [notes, setNotes] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Demandeur = utilisateur authentifié qui passe la commande
+  const [requester, setRequester] = useState({
+    type: 'responsable_enseigne',
+    name: '',
+    email: '',
+    phone: '',
+    position: null,
+  });
+
   // ============================================
   // HOOKS
   // ============================================
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const { data: affiliate, isLoading: affiliateLoading } = useUserAffiliate();
   const { data: selections, isLoading: selectionsLoading } =
     useUserSelections();
@@ -199,6 +211,19 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
   // ============================================
   // EFFECTS - Pré-remplissage automatique
   // ============================================
+
+  // Initialiser le demandeur depuis l'utilisateur authentifié
+  useEffect(() => {
+    if (user) {
+      setRequester({
+        type: 'responsable_enseigne',
+        name: user.user_metadata?.full_name || user.email || '',
+        email: user.email || '',
+        phone: user.user_metadata?.phone || '',
+        position: user.user_metadata?.position || null,
+      });
+    }
+  }, [user]);
 
   // Pré-remplir les données du propriétaire quand un client est sélectionné
   useEffect(() => {
@@ -457,14 +482,8 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
         id: item.selectionItemId,
       }));
 
-      // Demandeur = Propriétaire
-      const p_requester = {
-        type: 'responsable_enseigne',
-        name: `${newRestaurantForm.ownerFirstName} ${newRestaurantForm.ownerLastName}`,
-        email: newRestaurantForm.ownerEmail,
-        phone: newRestaurantForm.ownerPhone || null,
-        position: null,
-      };
+      // Demandeur = Utilisateur authentifié qui passe la commande
+      const p_requester = requester;
 
       // Organisation nouvelle
       const p_organisation = {
@@ -1984,6 +2003,34 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                       {newRestaurantForm.postalCode} {newRestaurantForm.city}
                     </p>
                   </div>
+                </div>
+              </div>
+
+              {/* Récap Demandeur */}
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-2">
+                <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                  <User className="h-4 w-4 text-blue-600" />
+                  Demandeur de la commande
+                </h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-500">Nom complet</p>
+                    <p className="font-medium">{requester.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Email</p>
+                    <p className="font-medium">{requester.email}</p>
+                  </div>
+                  {requester.phone && (
+                    <div>
+                      <p className="text-gray-500">Téléphone</p>
+                      <p className="font-medium">{requester.phone}</p>
+                    </div>
+                  )}
+                </div>
+                <div className="mt-2 p-2 bg-blue-100 rounded text-xs text-blue-700">
+                  ℹ️ Cette personne sera enregistrée comme le demandeur de la
+                  commande
                 </div>
               </div>
 
