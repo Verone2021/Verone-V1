@@ -12,6 +12,25 @@
  * @module CreateOrderModal
  * @since 2025-12-19
  * @updated 2026-01-11 - Refonte workflow avec question initiale
+ *
+ * TODO [LM-ORD-009 Phase 8]: Migrer vers OrderFormUnified
+ * ========================================================
+ * Ce composant doit être aligné avec OrderFormUnified pour utiliser le workflow 6 étapes:
+ * 1. Demandeur (auto-rempli depuis profil utilisateur: name, email, phone, position)
+ * 2. Restaurant (recherche + cartes OU nouveau avec ownership_type)
+ * 3. Responsable (contacts existants + nouveau)
+ * 4. Facturation (option org mère + custom)
+ * 5. Livraison (contact, adresse, date, centre commercial, formulaire accès, semi-remorque)
+ * 6. Validation (récap 6 sections + panier)
+ *
+ * Référence: apps/linkme/src/app/(public)/s/[id]/page.tsx (utilise OrderFormUnified)
+ * RPC: create_public_linkme_order (8 paramètres) - voir use-submit-unified-order.ts
+ *
+ * Migration steps:
+ * 1. Remplacer le contenu du modal par <OrderFormUnified />
+ * 2. Auto-remplir étape 1 (Demandeur) depuis useAuth()
+ * 3. Passer cart, organisations, handlers
+ * 4. Tester workflow complet (restaurant existant + nouveau)
  */
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
