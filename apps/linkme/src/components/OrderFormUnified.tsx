@@ -58,7 +58,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { useEnseigneId } from '../lib/hooks/use-enseigne-id';
+import { useEnseigneIdFromAffiliate } from '../lib/hooks/use-enseigne-id-from-affiliate';
 import { useEnseigneOrganisations } from '../lib/hooks/use-enseigne-organisations';
 import { useEnseigneParentOrganisation } from '../lib/hooks/use-enseigne-parent-organisation';
 import { useOrganisationContacts } from '../lib/hooks/use-organisation-contacts';
@@ -325,7 +325,7 @@ const OPENING_STEPS = [
 // =====================================================================
 
 export function OrderFormUnified({
-  affiliateId: _affiliateId,
+  affiliateId,
   selectionId: _selectionId,
   cart,
   onUpdateQuantity,
@@ -971,6 +971,7 @@ export function OrderFormUnified({
               data={data}
               errors={errors}
               updateData={updateData}
+              affiliateId={affiliateId}
             />
           )}
           {currentStep === 2 && (
@@ -978,6 +979,7 @@ export function OrderFormUnified({
               data={data}
               errors={errors}
               updateData={updateData}
+              affiliateId={affiliateId}
             />
           )}
           {currentStep === 3 && (
@@ -985,6 +987,7 @@ export function OrderFormUnified({
               data={data}
               errors={errors}
               updateData={updateData}
+              affiliateId={affiliateId}
             />
           )}
           {currentStep === 4 && (
@@ -992,6 +995,7 @@ export function OrderFormUnified({
               data={data}
               errors={errors}
               updateData={updateData}
+              affiliateId={affiliateId}
             />
           )}
           {currentStep === 5 && (
@@ -999,6 +1003,7 @@ export function OrderFormUnified({
               data={data}
               errors={errors}
               updateData={updateData}
+              affiliateId={affiliateId}
             />
           )}
           {currentStep === 6 && (
@@ -1006,6 +1011,7 @@ export function OrderFormUnified({
               data={data}
               errors={errors}
               updateData={updateData}
+              affiliateId={affiliateId}
               cart={cart}
               cartTotals={cartTotals}
               formatPrice={formatPrice}
@@ -1351,6 +1357,7 @@ interface StepProps {
   data: OrderFormUnifiedData;
   errors: Record<string, string>;
   updateData: (updates: Partial<OrderFormUnifiedData>) => void;
+  affiliateId: string;
 }
 
 /**
@@ -1504,9 +1511,13 @@ function OpeningStep1Requester({ data, errors, updateData }: StepProps) {
  * ÉTAPE 2 : RESTAURANT
  * Sélection restaurant existant OU création nouveau restaurant
  */
-function OpeningStep2Restaurant({ data, errors, updateData }: StepProps) {
-  const enseigneId = useEnseigneId();
-  const { data: organisations } = useEnseigneOrganisations(enseigneId);
+function OpeningStep2Restaurant({
+  data,
+  errors,
+  updateData,
+  affiliateId,
+}: StepProps) {
+  const { data: organisations } = useEnseigneOrganisations(affiliateId);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Filtrer organisations par recherche
@@ -2500,9 +2511,14 @@ function OpeningStep5Delivery({ data, errors, updateData }: StepProps) {
 // STEP 4 : FACTURATION
 // =====================================================================
 
-function OpeningStep4Billing({ data, errors, updateData }: StepProps) {
-  const enseigneId = useEnseigneId();
-  const { data: parentOrg } = useEnseigneParentOrganisation(enseigneId);
+function OpeningStep4Billing({
+  data,
+  errors,
+  updateData,
+  affiliateId,
+}: StepProps) {
+  const { data: enseigneId } = useEnseigneIdFromAffiliate(affiliateId);
+  const { data: parentOrg } = useEnseigneParentOrganisation(enseigneId ?? null);
   const isPropre =
     !data.isNewRestaurant || data.newRestaurant.ownershipType === 'succursale';
 
