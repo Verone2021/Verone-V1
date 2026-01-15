@@ -11,7 +11,7 @@
  * @since 2026-01-10
  */
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, Suspense } from 'react';
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
@@ -66,7 +66,7 @@ const ITEMS_PER_PAGE = 18; // 3 colonnes x 6 lignes
 // Rôles autorisés à voir cette page
 const ALLOWED_ROLES = ['enseigne_admin', 'organisation_admin'];
 
-export default function OrganisationsPage(): JSX.Element | null {
+function OrganisationsPageContent(): JSX.Element | null {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, linkMeRole, loading, initializing } = useAuth();
@@ -615,5 +615,19 @@ export default function OrganisationsPage(): JSX.Element | null {
         onClose={() => setOwnershipTypeModalOrg(null)}
       />
     </div>
+  );
+}
+
+export default function OrganisationsPage(): JSX.Element {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-linkme-turquoise" />
+        </div>
+      }
+    >
+      <OrganisationsPageContent />
+    </Suspense>
   );
 }

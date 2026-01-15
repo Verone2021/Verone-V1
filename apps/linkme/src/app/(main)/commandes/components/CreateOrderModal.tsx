@@ -1431,8 +1431,15 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
           {newRestaurantStep === 2 && (
             <div className="max-w-xl mx-auto space-y-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Propriétaire / Responsable
+                {newRestaurantForm.ownerType === 'franchise'
+                  ? 'Propriétaire du restaurant (Franchisé)'
+                  : 'Responsable du restaurant'}
               </h3>
+              <p className="text-sm text-gray-500 mb-4">
+                {newRestaurantForm.ownerType === 'franchise'
+                  ? 'Informations du propriétaire franchisé'
+                  : 'Informations du responsable de ce restaurant'}
+              </p>
 
               {/* Badge données pré-remplies */}
               {selectedCustomerContacts?.primaryContact && (
@@ -2220,6 +2227,19 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
                 />
               </div>
+
+              {/* Preview Notes en temps réel */}
+              {notes && notes.trim() !== '' && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-2">
+                  <h4 className="text-xs font-medium text-blue-700 uppercase tracking-wide flex items-center gap-1.5">
+                    <FileText className="h-3.5 w-3.5" />
+                    Aperçu de vos notes
+                  </h4>
+                  <p className="text-sm text-gray-900 whitespace-pre-wrap leading-relaxed">
+                    {notes}
+                  </p>
+                </div>
+              )}
 
               {/* Avertissement validation */}
               <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
