@@ -168,6 +168,45 @@
 - [ ] Pas de requêtes N+1
 - [ ] Indexes DB ajoutés si nécessaire
 - [ ] Images optimisées si applicable
+- [ ] Budgets respectés (si page critique modifiée, voir ci-dessous)
+
+#### Performance Impact (si UI/Data/DB modifié)
+
+**Pages critiques modifiées:**
+
+- [ ] `/dashboard` (budget: <3000ms, <15 requests)
+- [ ] `/stocks/alertes` (budget: <3000ms, <20 requests)
+- [ ] `/produits/catalogue` (budget: <3500ms, <25 requests)
+- [ ] Autre: ****\_****
+
+**Mesures avant/après:**
+
+```
+Page load time: ___ms → ___ms
+Network requests: ___ → ___
+Console errors: ___ → ___ (MUST be 0)
+Bundle size delta: +/- ___KB
+```
+
+**Preuves build/validation:**
+
+```bash
+npm run build
+# Output:
+
+npm run type-check
+# Output:
+
+npm run test:e2e:performance
+# Output (si applicable):
+```
+
+**Stop-the-line check:**
+
+- [ ] Console errors = 0 (vérifié manuellement)
+- [ ] Page load < 2x budget
+- [ ] Pas de N+1 queries (network tab vérifié)
+- [ ] Pas de memory leak (heap stable après navigation)
 
 ### Documentation
 

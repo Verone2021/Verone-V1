@@ -1,3 +1,4 @@
+const { withSentryConfig } = require('@sentry/nextjs');
 const { getSecurityHeaders } = require('./src/lib/security/headers.ts');
 
 /** @type {import('next').NextConfig} */
@@ -201,4 +202,28 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+// Sentry configuration
+const sentryWebpackPluginOptions = {
+  // Organisation et projet Sentry
+  org: 'verone-4q',
+  project: 'javascript-nextjs',
+
+  // Silence sourcemap upload logs
+  silent: !process.env.CI,
+
+  // Upload sourcemaps mais les supprimer du bundle client
+  hideSourceMaps: true,
+
+  // Tunnel pour contourner ad-blockers
+  tunnelRoute: '/monitoring',
+
+  // ✅ FIXED: Migrate automaticVercelMonitors to webpack config (Sentry v8+ requirement)
+  webpack: {
+    automaticVercelMonitors: true,
+  },
+
+  // Desactiver telemetrie Sentry
+  telemetry: false,
+};
+
+module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);

@@ -5,13 +5,13 @@
 
 'use client';
 
-import { createBrowserClient } from '@supabase/ssr';
+import { useMemo } from 'react';
+
+import { createClient } from '@verone/utils/supabase/client';
 
 export function useUserMetrics() {
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  // ✅ FIX: Use singleton client via useMemo
+  const supabase = useMemo(() => createClient(), []);
 
   const fetch = async () => {
     try {
@@ -27,8 +27,9 @@ export function useUserMetrics() {
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
       const newUsers =
-        profiles?.filter(p => new Date(p.created_at) > sevenDaysAgo).length ||
-        0;
+        profiles?.filter(
+          p => p.created_at && new Date(p.created_at) > sevenDaysAgo
+        ).length || 0;
 
       // Récupération des utilisateurs actifs (connectés dans les 30 derniers jours)
       const thirtyDaysAgo = new Date();

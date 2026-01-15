@@ -200,7 +200,7 @@ export default function StatistiquesPage() {
 
         {/* Footer info */}
         <div className="text-center text-xs text-gray-400 pb-6">
-          <p>
+          <p suppressHydrationWarning>
             Les données sont actualisées en temps réel. Dernière mise à jour :{' '}
             {new Date().toLocaleString('fr-FR')}
           </p>

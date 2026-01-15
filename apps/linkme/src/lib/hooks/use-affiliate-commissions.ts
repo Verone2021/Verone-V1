@@ -15,25 +15,32 @@ import { createClient } from '@verone/utils/supabase/client';
 const supabase = createClient();
 
 import { useUserAffiliate } from './use-user-selection';
-import type { CommissionItem, CommissionStatus } from '../../types/analytics';
+import type {
+  AnalyticsPeriod,
+  CommissionItem,
+  CommissionStatus,
+} from '../../types/analytics';
+import { getPeriodStartDate } from '../../types/analytics';
 
 interface UseAffiliateCommissionsOptions {
   status?: CommissionStatus | 'all';
+  /** Filtrer par période (pour synchroniser avec les KPIs) */
+  period?: AnalyticsPeriod;
 }
 
 export function useAffiliateCommissions(
   options: UseAffiliateCommissionsOptions = {}
 ) {
-  const { status = 'all' } = options;
+  const { status = 'all', period = 'all' } = options;
   const { data: affiliate } = useUserAffiliate();
 
   return useQuery({
-    queryKey: ['affiliate-commissions', affiliate?.id, status],
+    queryKey: ['affiliate-commissions', affiliate?.id, status, period],
     queryFn: async (): Promise<CommissionItem[]> => {
       if (!affiliate) return [];
 
       // Construction de la requête
-      let query = supabase
+      const query = supabase
         .from('linkme_commissions')
         .select(
           `
@@ -58,21 +65,56 @@ export function useAffiliateCommissions(
         .eq('affiliate_id', affiliate.id)
         .order('created_at', { ascending: false });
 
-      // Filtrage par statut si spécifié
-      if (status !== 'all') {
-        query = query.eq('status', status);
+      // Récupérer les order_ids pour chercher les noms clients
+      const { data: commissionsData, error: commissionsError } = await query;
+
+      if (commissionsError) {
+        console.error('Erreur fetch commissions list:', commissionsError);
+        throw commissionsError;
       }
 
-      const { data, error } = await query;
+      // Filtrer par période si spécifiée
+      let filteredByPeriod = commissionsData || [];
+      if (period !== 'all') {
+        const periodStart = getPeriodStartDate(period);
+        if (periodStart) {
+          const periodStartISO = periodStart.toISOString();
+          filteredByPeriod = filteredByPeriod.filter(
+            c => c.created_at && c.created_at >= periodStartISO
+          );
+        }
+      }
 
-      if (error) {
-        console.error('Erreur fetch commissions list:', error);
-        throw error;
+      // Récupérer les noms des clients depuis linkme_orders_enriched
+      const orderIds = filteredByPeriod.map(c => c.order_id).filter(Boolean);
+      let customerNameMap = new Map<string, string>();
+
+      if (orderIds.length > 0) {
+        const { data: ordersData } = await supabase
+          .from('linkme_orders_enriched')
+          .select('id, customer_name')
+          .in('id', orderIds);
+
+        customerNameMap = new Map(
+          (ordersData || []).map(o => [
+            o.id!,
+            o.customer_name || 'Client inconnu',
+          ])
+        );
+      }
+
+      // Filtrer par statut si nécessaire (déjà filtré par période)
+      let filteredData = filteredByPeriod;
+      if (status !== 'all') {
+        filteredData = filteredData.filter(c => c.status === status);
       }
 
       // Transformer les données
-      return (data || []).map(item => {
+      return filteredData.map(item => {
         const selection = item.linkme_selections as unknown as { name: string };
+        const customerName =
+          customerNameMap.get(item.order_id) || 'Client inconnu';
+
         return {
           id: item.id,
           orderNumber: item.order_number || '',
@@ -86,6 +128,7 @@ export function useAffiliateCommissions(
           validatedAt: item.validated_at,
           paidAt: item.paid_at,
           selectionName: selection?.name || 'Sélection inconnue',
+          customerName,
         };
       });
     },
