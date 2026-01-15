@@ -11,7 +11,7 @@
 |---------|-------------|--------|--------|
 | LM-ORG-004 | Refonte gestion organisations (édition inline, filtres, routing) | cf890814 | ~400 |
 | LM-SEL-003 | Optimisation UX sélections publiques (category bar, dropdown) | 8e482ddb | ~300 |
-| LM-ORD-005 | Workflow création commande - Phases 1-3 (bug requester corrigé) | 8ef01629 | ~120 |
+| LM-ORD-005 | Workflow création commande - Phases 1-5 (complet) | 8ef01629, 67b776e7 | ~150 |
 | LM-ORD-004 | Pré-remplissage contacts - Phases 1-4 (code terminé) | 880af835, 9329ba7e | ~100 |
 | LM-AUTH-001 | Fix spinner infini LinkMe | 20658534 | ~50 |
 | Sentry Config | Migration Next.js 15 instrumentation | 8184e314, 125f3ee8 | ~80 |
@@ -25,119 +25,25 @@
 
 ### 🔥 HAUTE PRIORITÉ
 
-**1. LM-ORD-005 (Phases 4-8)** - Workflow Création Commande (~45 min)
-- Statut: Phases critiques 1-3 ✅ terminées
-- Reste: Labels conditionnels + Section Notes + Tests
-- Optionnel mais améliore l'UX
-
-**2. LM-ORD-006** - Refonte UX Sélection Produits (~6h)
+**1. LM-ORD-006** - Refonte UX Sélection Produits (~6h)
 - Statut: 📋 PLAN COMPLET prêt
 - Plan: `.claude/work/PLAN-LM-ORD-006-PRODUCT-SELECTION-UX.md`
 - Grande feature: Layout 2 colonnes + filtres + pagination
 
 ### MOYENNE PRIORITÉ
 
-**3. LM-ORD-004 (Phase 5)** - Tests Pré-remplissage (~10-15 min)
+**2. LM-ORD-004 (Phase 5)** - Tests Pré-remplissage (~10-15 min)
 - Statut: Code terminé phases 1-4 ✅
 - Reste: Tests manuels uniquement
 
-**4. LM-ORG-003** - Popup Carte Organisations (~45 min)
+**3. LM-ORG-003** - Popup Carte Organisations (~45 min)
 - 8 tâches pour `/organisations?tab=map`
 
-**5. WEB-DEV-001** - Fix Symlink (~10 min)
+**4. WEB-DEV-001** - Fix Symlink (~10 min)
 - `pnpm install --force`
 
-**6. site-internet/.env.local** - Action manuelle
+**5. site-internet/.env.local** - Action manuelle
 - `cp apps/back-office/.env.local apps/site-internet/.env.local`
-
----
-
-## 📋 TASK: LM-ORD-005 — Workflow Création Commande (Phases 4-8)
-
-**Contexte**: Phases critiques 1-3 déjà complétées (commit 8ef01629)
-- ✅ Phase 1: Import useAuth + state requester
-- ✅ Phase 2: Correction handleSubmitNew (p_requester = requester)
-- ✅ Phase 3: Section Demandeur dans récapitulatif
-
-**Reste à faire** (optionnel, amélioration UX):
-
-### Phase 4: Labels conditionnels étape 2 (~15 min)
-
-**Objectif**: Afficher "Propriétaire" si franchise, "Responsable" si restaurant propre
-
-**Fichier**: `apps/linkme/src/app/(main)/commandes/components/CreateOrderModal.tsx`
-
-**Localisation**: Ligne ~1420 (dans `{newRestaurantStep === 2 && (`)
-
-**Modification**:
-```typescript
-// REMPLACER le titre actuel
-<h3 className="text-lg font-semibold text-gray-900 mb-4">
-  {newRestaurantForm.ownerType === 'franchise'
-    ? 'Propriétaire du restaurant (Franchisé)'
-    : 'Responsable du restaurant'}
-</h3>
-<p className="text-sm text-gray-500 mb-4">
-  {newRestaurantForm.ownerType === 'franchise'
-    ? 'Informations du propriétaire franchisé'
-    : 'Informations du responsable de ce restaurant'}
-</p>
-```
-
-### Phase 5: Section Notes dans récapitulatif (~10 min)
-
-**Objectif**: Afficher preview des notes en temps réel sous le champ textarea
-
-**Fichier**: `apps/linkme/src/app/(main)/commandes/components/CreateOrderModal.tsx`
-
-**Localisation**: Après ligne 2175 (après champ textarea Notes, avant message validation)
-
-**Code à insérer**:
-```typescript
-{/* Preview Notes en temps réel */}
-{notes && notes.trim() !== '' && (
-  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-2">
-    <h4 className="text-xs font-medium text-blue-700 uppercase tracking-wide flex items-center gap-1.5">
-      <FileText className="h-3.5 w-3.5" />
-      Aperçu de vos notes
-    </h4>
-    <p className="text-sm text-gray-900 whitespace-pre-wrap leading-relaxed">{notes}</p>
-  </div>
-)}
-```
-
-**Import requis**: Ajouter `FileText` depuis `lucide-react` (ligne 48)
-
-### Phase 6-8: Tests complets (~20 min)
-
-**Tests à effectuer**:
-1. Nouveau restaurant franchisé:
-   - Se connecter avec Pokawa (pokawa-test@verone.io)
-   - Créer commande → Nouveau restaurant → Type Franchisé
-   - Vérifier étape 2: Label "Propriétaire du restaurant (Franchisé)"
-   - Vérifier étape 5: Section Demandeur = utilisateur Pokawa
-   - Ajouter notes → Vérifier preview temps réel
-   - Valider → Vérifier en DB `p_requester`
-
-2. Restaurant existant:
-   - Sélectionner restaurant
-   - Ajouter produits + notes
-   - Valider → Vérifier en DB `p_requester`
-
-3. Validation technique:
-   - `pnpm type-check` → 0 erreurs
-   - `pnpm build` → Build réussi
-   - Console: 0 erreurs
-
-### Checklist
-
-- [ ] **LM-ORD-005-7**: Modifier labels étape 2 (conditionnels franchise/propre)
-- [ ] **LM-ORD-005-8**: Ajouter preview notes temps réel
-- [ ] **LM-ORD-005-9**: `pnpm type-check` → 0 erreurs
-- [ ] **LM-ORD-005-10**: `pnpm build` → Build réussi
-- [ ] **LM-ORD-005-11**: Tests manuels complets
-
-**Effort total**: ~45 min
 
 ---
 
@@ -275,4 +181,4 @@ cp apps/back-office/.env.local apps/site-internet/.env.local
 - `.claude/work/AUDIT-LM-ORD-005.md`
 - `.claude/work/UX-NOTES-ANALYSIS.md`
 
-**Priorité recommandée**: LM-ORD-005 phases 4-8 (~45 min) → Complète le workflow commande
+**Priorité recommandée**: LM-ORD-004 phase 5 (~10-15 min) → Tests pré-remplissage contacts
