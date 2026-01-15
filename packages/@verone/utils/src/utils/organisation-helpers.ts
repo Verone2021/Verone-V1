@@ -5,9 +5,14 @@
  * organisation.name → legal_name + trade_name
  */
 
-import type { Database } from '@verone/types';
-
-type Organisation = Database['public']['Tables']['organisations']['Row'];
+/**
+ * Type simplifié Organisation pour ce helper
+ * Contient uniquement les champs nécessaires
+ */
+interface Organisation {
+  legal_name: string;
+  trade_name: string | null;
+}
 
 /**
  * Retourne le nom d'affichage préféré d'une organisation

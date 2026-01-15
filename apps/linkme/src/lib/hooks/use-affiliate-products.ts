@@ -133,6 +133,7 @@ export function useAffiliateProducts() {
 
 /**
  * Hook: recupere un produit affilie par son ID
+ * Utilise le RPC get_affiliate_product_by_id pour bypasser RLS
  */
 export function useAffiliateProduct(productId: string | undefined) {
   const { linkMeRole } = useAuth();
@@ -147,37 +148,23 @@ export function useAffiliateProduct(productId: string | undefined) {
 
       const supabase = createClient();
 
-      const { data, error } = await (supabase.from('products') as any)
-        .select(
-          `
-          id,
-          name,
-          sku,
-          description,
-          affiliate_payout_ht,
-          affiliate_commission_rate,
-          affiliate_approval_status,
-          affiliate_rejection_reason,
-          dimensions,
-          created_at,
-          updated_at
-        `
-        )
-        .eq('id', productId)
-        .eq('enseigne_id', enseigneId)
-        .not('created_by_affiliate', 'is', null)
-        .single();
+      // Use RPC to bypass RLS (LinkMe users don't have SELECT policy on products)
+      const { data, error } = await (supabase.rpc as any)(
+        'get_affiliate_product_by_id',
+        {
+          p_product_id: productId,
+          p_enseigne_id: enseigneId,
+        }
+      );
 
       if (error) {
-        if (error.code === 'PGRST116') {
-          // Not found
-          return null;
-        }
         console.error('Error fetching affiliate product:', error);
         throw error;
       }
 
-      return data as AffiliateProduct;
+      // RPC returns array, get first element
+      const product = Array.isArray(data) ? data[0] : data;
+      return product || null;
     },
     enabled: !!productId && !!enseigneId,
   });
