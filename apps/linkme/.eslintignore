@@ -1,0 +1,17 @@
+# Sentry configuration files (no type information needed)
+sentry.*.config.ts
+instrumentation*.ts
+
+# Build outputs
+.next
+out
+dist
+build
+
+# Dependencies
+node_modules
+
+# Environment files
+.env
+.env.*
+!.env.example

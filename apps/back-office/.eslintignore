@@ -1,0 +1,22 @@
+# Sentry configuration files (no type information needed)
+sentry.*.config.ts
+instrumentation*.ts
+
+# Generated TypeScript declarations
+**/supabase.d.ts
+**/supabase.d.ts.map
+**/supabase.js
+
+# Build outputs
+.next
+out
+dist
+build
+
+# Dependencies
+node_modules
+
+# Environment files
+.env
+.env.*
+!.env.example
