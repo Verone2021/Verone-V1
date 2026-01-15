@@ -1,14 +1,75 @@
 # Plan Actif
 
 **Branche**: `fix/multi-bugs-2026-01`
-**Last sync**: 2026-01-14 (8e482ddb)
+**Last sync**: 2026-01-15 (8ef01629)
 
-## 📋 Session 2026-01-14 (22:00-23:00) - LM-ORG-004 Complété
+## 📋 Session 2026-01-14 (22:00-00:00) - LM-ORG-004 + LM-SEL-003 Complétés
 
-### ✅ Nouveau : LM-ORG-004 — Refonte Gestion Organisations (3 Phases)
+### ✅ LM-ORG-004 — Refonte Gestion Organisations (3 Phases)
 
-**Statut** : ✅ TERMINÉ (type-check passed, 0 erreurs)
-**Commit** : À créer avec Task ID `[LM-ORG-004]`
+**Statut** : ✅ TERMINÉ (8e482ddb)
+**Temps réel** : ~90 minutes
+
+### ✅ LM-SEL-003 — Optimiser UX Sélections Publiques (5 Phases)
+
+**Statut** : ✅ CODE TERMINÉ (8e482ddb) - Tests visuels requis
+**Commit** : `[LM-SEL-003]` (8e482ddb)
+**Temps réel** : ~60 minutes
+
+#### Phases Complétées
+
+**Phase 1: Corrections rapides** ✅
+- Pagination: Confirmée à 12 produits/page
+- Bouton "Ajouter": Réduit (h-3.5 w-3.5 text-xs, gap-1, px-2.5)
+
+**Phase 2: Données** ✅
+- Interface ICategory: Supporte déjà subcategories
+- Aucune modification RPC nécessaire
+
+**Phase 3: Composants créés** ✅
+- `SelectionCategoryBar.tsx` (140 lignes) - Barre sticky avec badges
+- `SelectionCategoryDropdown.tsx` (155 lignes) - Dropdown élégant
+- Exports mis à jour dans index.ts
+
+**Phase 4: Intégration** ✅
+- Remplacé CategoryTabs par SelectionCategoryBar
+- Ajouté SelectionCategoryDropdown conditionnel
+- ESLint: 0 erreurs, 0 warnings
+
+**Phase 5: Validation** ✅
+- Type-check: 0 erreurs (30/30 tasks)
+- Tests visuels: À faire par l'utilisateur
+
+**Fichiers**:
+- Modifiés: 2 (page.tsx, index.ts)
+- Créés: 2 (SelectionCategoryBar, SelectionCategoryDropdown)
+- Total: ~300 lignes
+
+---
+
+### ⚠️ site-internet/.env.local Obsolète
+
+**Statut** : Documentation fournie (permissions bloquent auto-sync)
+**Fichier** : Backup créé `.env.local.backup-20260114-*`
+
+**Variables manquantes** (depuis 9 nov 2024):
+- `NEXT_PUBLIC_GEOAPIFY_API_KEY`
+- `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`
+- `NEXT_PUBLIC_SENTRY_DSN`
+- `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `RESEND_REPLY_TO`
+- `PACKLINK_ENVIRONMENT`, `QONTO_AUTH_MODE`
+- `VERCEL_*` (mis à jour)
+
+**Action manuelle requise**:
+```bash
+cp apps/back-office/.env.local apps/site-internet/.env.local
+```
+
+---
+
+## 📋 LM-ORG-004 — Détails Techniques
+
+**Statut** : ✅ TERMINÉ
 **Temps réel** : ~90 minutes
 
 #### Phase 1 : Refonte OrganisationDetailSheet → Édition Inline
@@ -106,15 +167,202 @@ if (highlightParam && organisations) {
 
 ---
 
-## 🔄 Tâches Prioritaires (À traiter maintenant)
+## 🔄 Tâches Restantes (Par Ordre de Priorité)
 
-- **LM-ORD-006** 🔥 : Refonte UX Sélection Produits (CreateOrderModal) - PLAN COMPLET
-- **LM-ORD-005** 🔥 : Workflow création commande (Contact & Facturation) - 8 phases détaillées
-- **LM-ORD-004** : Pré-remplissage contacts (Phase 3-5)
-- **LM-ORG-003** : Popup carte organisations
-- **LM-SEL-003** : UX sélections publiques
-- **site-internet/.env.local obsolète** : Manque variables récentes (Geoapify, Sentry, Resend)
-- **WEB-DEV-001** : Symlink cassé node_modules/next
+### 🔥 HAUTE PRIORITÉ
+
+1. **LM-ORD-006** : Refonte UX Sélection Produits (CreateOrderModal)
+   - Statut: 📋 PLAN COMPLET prêt
+   - Effort: ~6h
+   - Plan: `.claude/work/PLAN-LM-ORD-006-PRODUCT-SELECTION-UX.md`
+
+2. **LM-ORD-005** : Workflow Création Commande (Contact & Facturation)
+   - Statut: 📋 PLAN DÉTAILLÉ (8 phases)
+   - Effort: ~50 min (phases critiques) à 2h30 (complet)
+   - Audit: `.claude/work/AUDIT-LM-ORD-005.md`
+
+### MOYENNE PRIORITÉ
+
+3. **LM-ORD-004** : Pré-remplissage Contacts (Phase 3-5)
+   - Contexte: Phases 1-2 terminées
+   - Reste: OrderFormUnified + Tests
+   - Effort: ~30-45 min
+
+4. **LM-ORG-003** : Améliorer Popup Carte Organisations
+   - Effort: ~45 min (8 tâches)
+   - Route: `/organisations?tab=map`
+
+5. **WEB-DEV-001** : Symlink cassé node_modules/next
+   - Impact: Empêche démarrage site-internet
+   - Effort: ~10 min (pnpm install --force)
+
+---
+
+## 📋 PLAN GLOBAL DES TÂCHES RESTANTES
+
+### Vue d'ensemble
+
+**Total tâches**: 5
+**Effort total estimé**: ~9h30 à 12h
+**Prochaine action recommandée**: LM-ORD-005 (phases critiques, 50 min)
+
+---
+
+### TASK 1: LM-ORD-006 — Refonte UX Sélection Produits 🔥
+
+**Contexte**: CreateOrderModal (utilisateurs authentifiés) a une UX insuffisante vs page publique
+
+**Problèmes**:
+- ❌ Pas de filtres par catégories
+- ❌ Pas de pagination (tous les produits chargés)
+- ❌ Liste verticale (pas de grille)
+- ❌ Panier en dessous (scroll nécessaire)
+- ⚠️ Recherche basique
+
+**Solution**: Refonte complète Step 4 avec:
+- Réutilisation composants publics (ProductFilters, CategoryTabs, Pagination)
+- Layout 2 colonnes: Catalogue 60% + Panier sticky 40%
+- Grille responsive (3 cols desktop → 1 mobile)
+- Pagination 12 produits/page
+- Filtrage multi-critères
+
+**Fichier principal**: `apps/linkme/src/app/(main)/commandes/components/CreateOrderModal.tsx` (lignes 870-1950)
+
+**Plan détaillé**: `.claude/work/PLAN-LM-ORD-006-PRODUCT-SELECTION-UX.md`
+
+**Effort**: ~6h
+
+**Priorité**: 🔥 HAUTE (UX critique pour utilisateurs)
+
+---
+
+### TASK 2: LM-ORD-005 — Workflow Création Commande 🔥
+
+**Contexte**: Correction workflow de création commande dans LinkMe
+
+**Problèmes critiques**:
+1. ❌ **CRITIQUE**: Demandeur (p_requester) = Propriétaire au lieu de l'utilisateur authentifié
+2. ❌ **MAJEUR**: useAuth() non utilisé - pas de récupération données utilisateur
+3. ❌ **MAJEUR**: Section "Demandeur" absente du récapitulatif étape 5
+4. ⚠️ **MOYEN**: Labels étape 2 non conditionnels (Propriétaire/Responsable)
+
+**Audit complet**: `.claude/work/AUDIT-LM-ORD-005.md` (860 lignes analysées)
+
+**Plan d'implémentation** (8 phases):
+
+**Phase 1: Récupération utilisateur authentifié** (CRITIQUE - 15 min)
+
+**Phase 2: Corriger handleSubmitNew** (CRITIQUE - 5 min)
+
+**Phase 3: Section Demandeur dans récapitulatif** (MAJEUR - 30 min)
+
+**Phase 4: Labels conditionnels étape 2** (MOYEN - 15 min)
+
+**Phase 5: Section Notes dans récapitulatif** (MAJEUR - 10 min)
+
+**Phase 6-8: Vérification & Tests** (20 min)
+
+**Fichier principal**: `apps/linkme/src/app/(main)/commandes/components/CreateOrderModal.tsx`
+
+**Effort**: ~50 min (phases critiques 1-3) à 2h30 (complet)
+
+**Priorité**: 🔥 HAUTE (bug critique - mauvais demandeur enregistré)
+
+**Recommendation**: Commencer par phases 1-3 (50 min) pour corriger le bug critique
+
+---
+
+### TASK 3: LM-ORD-004 — Pré-remplissage Contacts (Phase 3-5)
+
+**Contexte**: Feature pré-remplissage automatique des contacts depuis DB
+
+**Statut**: Phases 1-2 terminées (CreateOrderModal)
+
+**Reste à faire**:
+
+**Phase 3: Modifier OrderFormUnified** (sélection publique)
+- [ ] LM-ORD-004-5: Importer et utiliser hook `useOrganisationContacts`
+- [ ] LM-ORD-004-6: Pré-remplir quand organisation existante sélectionnée
+
+**Phase 4: LocalStorage cache** (optionnel)
+- [ ] LM-ORD-004-7: Ajouter cache localStorage dans OrderFormUnified
+
+**Phase 5: Tests**
+- [ ] LM-ORD-004-8: Tester CreateOrderModal (utilisateur authentifié)
+- [ ] LM-ORD-004-9: Tester OrderFormUnified (sélection publique)
+- [ ] LM-ORD-004-10: Tester cache localStorage
+
+**Fichier principal**: `apps/linkme/src/components/OrderFormUnified.tsx`
+
+**Effort**: ~30-45 min
+
+**Priorité**: MOYENNE (amélioration UX)
+
+---
+
+### TASK 4: LM-ORG-003 — Améliorer Popup Carte Organisations
+
+**Contexte**: Le popup de la carte `/organisations?tab=map` est trop basique
+
+**Plan d'implémentation** (8 tâches):
+- [ ] LM-ORG-003-1: Étendre interface Organisation
+- [ ] LM-ORG-003-2: Créer composant MapPopupCard
+- [ ] LM-ORG-003-3: Design détaillé du popup
+- [ ] LM-ORG-003-4: Intégrer MapPopupCard dans MapLibreMapView
+- [ ] LM-ORG-003-5: Fallback logo intelligent
+- [ ] LM-ORG-003-6: Fonction utilitaire formatAddress
+- [ ] LM-ORG-003-7: Tester le popup
+- [ ] LM-ORG-003-8: Tester responsive
+
+**Route**: `http://localhost:3002/organisations?tab=map`
+
+**Effort**: ~45 min
+
+**Priorité**: MOYENNE (amélioration visuelle)
+
+---
+
+### TASK 5: WEB-DEV-001 — Symlink cassé node_modules/next
+
+**Contexte**: Symlink cassé empêche démarrage site-internet
+
+**Plan**:
+- [ ] WEB-DEV-001-1: Réinstaller les dépendances (`pnpm install --force`)
+- [ ] WEB-DEV-001-2: Vérifier symlink
+- [ ] WEB-DEV-001-3: Tester démarrage des 3 apps
+
+**Commandes**:
+```bash
+cd /Users/romeodossantos/verone-back-office-V1
+pnpm install --force
+pnpm dev
+```
+
+**Effort**: ~10 min
+
+**Priorité**: MOYENNE (bloque site-internet uniquement)
+
+---
+
+## Ordre Recommandé d'Exécution
+
+### Option A: Fixes Critiques en Premier (Recommandé)
+1. ✅ **LM-ORD-005** (50 min) - Phases 1-3 critiques → Bug demandeur corrigé
+2. ✅ **LM-ORD-004** (30-45 min) - Pré-remplissage contacts
+3. ✅ **WEB-DEV-001** (10 min) - Fix symlink
+4. ⏸️ **LM-ORG-003** (45 min) - Popup carte
+5. ⏸️ **LM-ORD-006** (6h) - Refonte UX produits (grande feature)
+
+**Temps total**: ~2h30 pour corriger tous les bugs critiques
+
+### Option B: Feature Prioritaire en Premier
+1. ✅ **LM-ORD-006** (6h) - Refonte UX produits
+2. ✅ **LM-ORD-005** (50 min) - Fix demandeur
+3. ✅ **LM-ORD-004** (30-45 min) - Pré-remplissage
+4. ✅ **LM-ORG-003** (45 min) - Popup carte
+5. ✅ **WEB-DEV-001** (10 min) - Fix symlink
+
+**Temps total**: ~8h30 pour tout terminer
 
 ---
 
