@@ -468,75 +468,196 @@ export function OrderFormUnified({
     return Object.keys(newErrors).length === 0;
   }, [data.existingOrganisationId, cart.length]);
 
+  // Validation Step 1 : Demandeur
   const validateStep1 = useCallback((): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!data.newRestaurant.tradeName.trim()) {
-      newErrors['newRestaurant.tradeName'] = 'Le nom commercial est requis';
+    if (!data.requester.name.trim()) {
+      newErrors['requester.name'] = 'Le nom est requis';
     }
-    if (!data.newRestaurant.city.trim()) {
-      newErrors['newRestaurant.city'] = 'La ville est requise';
+    if (!data.requester.email.trim()) {
+      newErrors['requester.email'] = "L'email est requis";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.requester.email)) {
+      newErrors['requester.email'] = 'Email invalide';
+    }
+    if (!data.requester.phone.trim()) {
+      newErrors['requester.phone'] = 'Le téléphone est requis';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [data.newRestaurant]);
+  }, [data.requester]);
 
+  // Validation Step 2 : Restaurant
   const validateStep2 = useCallback((): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!data.responsable.type) {
-      newErrors['responsable.type'] = 'Veuillez choisir le type de restaurant';
-    }
-    if (!data.responsable.name.trim()) {
-      newErrors['responsable.name'] = 'Le nom du responsable est requis';
-    }
-    if (!data.responsable.email.trim()) {
-      newErrors['responsable.email'] = "L'email est requis";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.responsable.email)) {
-      newErrors['responsable.email'] = 'Email invalide';
-    }
-
-    if (
-      data.responsable.type === 'franchise' &&
-      !data.responsable.companyLegalName.trim()
-    ) {
-      newErrors['responsable.companyLegalName'] =
-        'La raison sociale est requise';
+    if (data.isNewRestaurant === false) {
+      // Restaurant existant : doit avoir sélectionné un restaurant
+      if (!data.existingOrganisationId) {
+        newErrors['existingOrganisationId'] =
+          'Veuillez sélectionner un restaurant';
+      }
+    } else if (data.isNewRestaurant === true) {
+      // Nouveau restaurant : validation formulaire complet
+      if (!data.newRestaurant.tradeName.trim()) {
+        newErrors['newRestaurant.tradeName'] = 'Le nom commercial est requis';
+      }
+      if (!data.newRestaurant.ownershipType) {
+        newErrors['newRestaurant.ownershipType'] =
+          'Veuillez choisir le type de restaurant';
+      }
+      if (!data.newRestaurant.address.trim()) {
+        newErrors['newRestaurant.address'] = "L'adresse est requise";
+      }
+      if (!data.newRestaurant.city.trim()) {
+        newErrors['newRestaurant.city'] = 'La ville est requise';
+      }
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [data.responsable]);
+  }, [data.isNewRestaurant, data.existingOrganisationId, data.newRestaurant]);
 
+  // Validation Step 3 : Responsable
   const validateStep3 = useCallback((): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (data.billing.contactSource === 'custom') {
-      if (!data.billing.name.trim()) {
-        newErrors['billing.name'] = 'Le nom est requis';
+    if (data.isNewRestaurant === false) {
+      // Restaurant existant : doit avoir sélectionné un contact OU rempli formulaire nouveau
+      if (
+        !data.existingContact.selectedContactId ||
+        data.existingContact.selectedContactId === ''
+      ) {
+        newErrors['existingContact.selectedContactId'] =
+          'Veuillez sélectionner un contact';
       }
-      if (!data.billing.email.trim()) {
-        newErrors['billing.email'] = "L'email est requis";
+      // Si "nouveau" sélectionné, valider le formulaire
+      if (data.existingContact.isNewContact) {
+        if (!data.responsable.name.trim()) {
+          newErrors['responsable.name'] = 'Le nom est requis';
+        }
+        if (!data.responsable.email.trim()) {
+          newErrors['responsable.email'] = "L'email est requis";
+        }
+        if (!data.responsable.phone.trim()) {
+          newErrors['responsable.phone'] = 'Le téléphone est requis';
+        }
+      }
+    } else if (data.isNewRestaurant === true) {
+      // Nouveau restaurant : formulaire obligatoire
+      if (!data.responsable.name.trim()) {
+        newErrors['responsable.name'] = 'Le nom du responsable est requis';
+      }
+      if (!data.responsable.email.trim()) {
+        newErrors['responsable.email'] = "L'email est requis";
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.responsable.email)) {
+        newErrors['responsable.email'] = 'Email invalide';
+      }
+      if (!data.responsable.phone.trim()) {
+        newErrors['responsable.phone'] = 'Le téléphone est requis';
+      }
+
+      // Si franchise : valider société
+      if (
+        data.newRestaurant.ownershipType === 'franchise' &&
+        !data.responsable.companyLegalName.trim()
+      ) {
+        newErrors['responsable.companyLegalName'] =
+          'La raison sociale est requise';
+      }
+      if (
+        data.newRestaurant.ownershipType === 'franchise' &&
+        !data.responsable.siret.trim()
+      ) {
+        newErrors['responsable.siret'] = 'Le SIRET est requis';
       }
     }
 
-    // Validation adresse de facturation
-    if (!data.billing.address.trim()) {
-      newErrors['billing.address'] = "L'adresse est requise";
-    }
-    if (!data.billing.postalCode.trim()) {
-      newErrors['billing.postalCode'] = 'Le code postal est requis';
-    }
-    if (!data.billing.city.trim()) {
-      newErrors['billing.city'] = 'La ville est requise';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }, [
+    data.isNewRestaurant,
+    data.existingContact,
+    data.responsable,
+    data.newRestaurant.ownershipType,
+  ]);
+
+  // Validation Step 4 : Facturation
+  const validateStep4 = useCallback((): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    // Si n'utilise pas l'org mère, valider formulaire
+    if (!data.billing.useParentOrganisation) {
+      // Contact facturation
+      if (data.billing.contactSource === 'custom') {
+        if (!data.billing.name.trim()) {
+          newErrors['billing.name'] = 'Le nom est requis';
+        }
+        if (!data.billing.email.trim()) {
+          newErrors['billing.email'] = "L'email est requis";
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.billing.email)) {
+          newErrors['billing.email'] = 'Email invalide';
+        }
+      }
+
+      // Adresse de facturation
+      if (!data.billing.address.trim()) {
+        newErrors['billing.address'] = "L'adresse est requise";
+      }
+      if (!data.billing.postalCode.trim()) {
+        newErrors['billing.postalCode'] = 'Le code postal est requis';
+      }
+      if (!data.billing.city.trim()) {
+        newErrors['billing.city'] = 'La ville est requise';
+      }
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }, [data.billing]);
 
-  const validateStep4 = useCallback((): boolean => {
+  // Validation Step 5 : Livraison
+  const validateStep5 = useCallback((): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    // Contact livraison (si pas le responsable)
+    if (!data.delivery.useResponsableContact) {
+      if (!data.delivery.contactName.trim()) {
+        newErrors['delivery.contactName'] = 'Le nom est requis';
+      }
+      if (!data.delivery.contactEmail.trim()) {
+        newErrors['delivery.contactEmail'] = "L'email est requis";
+      } else if (
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.delivery.contactEmail)
+      ) {
+        newErrors['delivery.contactEmail'] = 'Email invalide';
+      }
+      if (!data.delivery.contactPhone.trim()) {
+        newErrors['delivery.contactPhone'] = 'Le téléphone est requis';
+      }
+    }
+
+    // Adresse livraison
+    if (!data.delivery.address.trim()) {
+      newErrors['delivery.address'] = "L'adresse de livraison est requise";
+    }
+    if (!data.delivery.deliveryDate) {
+      newErrors['delivery.deliveryDate'] = 'La date de livraison est requise';
+    }
+
+    // Si centre commercial
+    if (data.delivery.isMallDelivery && !data.delivery.mallEmail.trim()) {
+      newErrors['delivery.mallEmail'] =
+        "L'email du centre commercial est requis";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }, [data.delivery]);
+
+  // Validation Step 6 : Validation panier
+  const validateStep6 = useCallback((): boolean => {
     const newErrors: Record<string, string> = {};
 
     if (cart.length === 0) {
@@ -553,12 +674,17 @@ export function OrderFormUnified({
 
   const handleNext = useCallback(() => {
     if (data.isNewRestaurant) {
+      // Validation de chaque étape avant de passer à la suivante
       if (currentStep === 1 && !validateStep1()) return;
       if (currentStep === 2 && !validateStep2()) return;
       if (currentStep === 3 && !validateStep3()) return;
-      // Step 4 : le bouton "Valider le panier" gère la confirmation
-      if (currentStep === 4) return;
-      setCurrentStep(prev => Math.min(prev + 1, 4));
+      if (currentStep === 4 && !validateStep4()) return;
+      if (currentStep === 5 && !validateStep5()) return;
+      // Step 6 : le bouton "Valider la commande" gère la confirmation
+      if (currentStep === 6) return;
+
+      // Passer à l'étape suivante (max 6)
+      setCurrentStep(prev => Math.min(prev + 1, 6));
     }
   }, [
     currentStep,
@@ -566,6 +692,8 @@ export function OrderFormUnified({
     validateStep1,
     validateStep2,
     validateStep3,
+    validateStep4,
+    validateStep5,
   ]);
 
   const handleBack = useCallback(() => {
