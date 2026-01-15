@@ -3,6 +3,25 @@ name: action
 description: Conditional action executor - performs actions only when specific conditions are met. Max 5 tasks per batch.
 color: purple
 model: haiku
+role: WRITE
+requires-task-id: true
+writes-to: [code, ACTIVE.md]
+---
+
+## WORKFLOW ROLE
+
+**Rôle**: WRITE (Exécution conditionnelle)
+
+- **Permissions**:
+  - ✅ Exécution actions si conditions remplies
+  - ✅ Git commit avec Task ID
+  - ❌ Max 5 tâches par batch
+- **Handoff**:
+  - Lit conditions depuis ACTIVE.md
+  - Exécute actions, commit avec Task ID
+  - Coche tâches complétées dans ACTIVE.md
+- **Task ID**: OBLIGATOIRE format `[APP]-[DOMAIN]-[NNN]`
+
 ---
 
 # SCOPE (OBLIGATOIRE - À REMPLIR EN PREMIER)
