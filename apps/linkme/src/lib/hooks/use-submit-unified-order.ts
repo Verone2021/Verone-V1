@@ -93,8 +93,17 @@ export function useSubmitUnifiedOrder() {
           });
 
           if (rpcError) {
+            console.error(
+              '[useSubmitUnifiedOrder] RPC Error (existing org):',
+              rpcError
+            );
             throw new Error(`Erreur création commande: ${rpcError.message}`);
           }
+
+          console.log(
+            '[useSubmitUnifiedOrder] Order created (existing org):',
+            orderId
+          );
 
           // Invalider les caches
           queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
@@ -109,6 +118,8 @@ export function useSubmitUnifiedOrder() {
           return {
             success: true,
             orderId: orderId as string,
+            orderNumber: undefined, // Explicitly undefined for consistency
+            customerId: data.existingOrganisationId,
           };
         }
 
@@ -195,10 +206,21 @@ export function useSubmitUnifiedOrder() {
           );
 
           if (rpcError) {
+            console.error('[useSubmitUnifiedOrder] RPC Error (new org):', {
+              code: rpcError.code,
+              message: rpcError.message,
+              details: rpcError.details,
+              hint: rpcError.hint,
+            });
             throw new Error(`Erreur création commande: ${rpcError.message}`);
           }
 
           const rpcResult = result as RpcResponse;
+
+          console.log(
+            '[useSubmitUnifiedOrder] Order created (new org):',
+            rpcResult
+          );
 
           if (!rpcResult?.success) {
             throw new Error(

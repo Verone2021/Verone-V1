@@ -762,8 +762,23 @@ export default function PublicSelectionPage({
                     cart: cartItems,
                     data,
                   });
-                  if (result.success && result.orderNumber) {
-                    setOrderNumber(result.orderNumber);
+
+                  if (result.success) {
+                    // Fermer le modal dans tous les cas de succès
+                    setIsOrderFormOpen(false);
+
+                    // Afficher le numéro de commande si disponible (nouveau restaurant uniquement)
+                    if (result.orderNumber) {
+                      setOrderNumber(result.orderNumber);
+                    }
+
+                    // Toast de succès déjà géré par le hook
+                  } else {
+                    // Erreur déjà affichée par le hook via toast
+                    console.error(
+                      '[Page] Order submission failed:',
+                      result.error
+                    );
                   }
                 }}
                 isSubmitting={isSubmitting}
