@@ -160,6 +160,7 @@ export function useOrganisationContacts(
 
       return {
         contacts,
+        allContacts: contacts, // Alias pour compatibilité avec sélection contacts existants (LM-ORD-009)
         primaryContact,
         billingContact,
         otherContacts,

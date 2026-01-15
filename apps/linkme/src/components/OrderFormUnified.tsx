@@ -19,7 +19,19 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 
 import Image from 'next/image';
 
-import { AddressAutocomplete, type AddressResult } from '@verone/ui';
+import {
+  AddressAutocomplete,
+  type AddressResult,
+  Card,
+  CardContent,
+  Badge,
+  RadioGroup,
+  RadioGroupItem,
+  Label,
+  Separator,
+  Input,
+  cn,
+} from '@verone/ui';
 import {
   X,
   Loader2,
@@ -30,14 +42,20 @@ import {
   Building2,
   Store,
   User,
+  UserCircle,
   FileText,
+  Truck,
   AlertCircle,
   Check,
   Trash2,
   ChevronLeft,
   ChevronRight,
+  Search,
+  CheckCircle,
 } from 'lucide-react';
 
+import { useEnseigneId } from '../lib/hooks/use-enseigne-id';
+import { useEnseigneOrganisations } from '../lib/hooks/use-enseigne-organisations';
 import { useOrganisationContacts } from '../lib/hooks/use-organisation-contacts';
 
 // =====================================================================
@@ -57,54 +75,113 @@ export interface CartItem {
 }
 
 export interface OrderFormUnifiedData {
-  // QUESTION 1 - Obligatoire
+  // QUESTION INITIALE - Obligatoire
   isNewRestaurant: boolean | null;
 
-  // SI RESTAURANT EXISTANT
-  existingOrganisationId: string | null;
-
-  // SI NOUVEAU RESTAURANT - STEP 1
-  newRestaurant: {
-    tradeName: string;
-    city: string;
-    address: string;
-    postalCode: string;
-    latitude: number | null;
-    longitude: number | null;
-  };
-
-  // SI NOUVEAU RESTAURANT - STEP 2: Propriétaire
-  owner: {
-    type: 'succursale' | 'franchise' | null;
-    contactSameAsRequester: boolean;
+  // ========================================
+  // ÉTAPE 1 : DEMANDEUR
+  // ========================================
+  requester: {
     name: string;
     email: string;
     phone: string;
+    position: string; // Rôle/Fonction
+    notes: string; // Notes optionnelles
+  };
+
+  // ========================================
+  // ÉTAPE 2 : RESTAURANT
+  // ========================================
+  // Si restaurant existant
+  existingOrganisationId: string | null;
+
+  // Si nouveau restaurant
+  newRestaurant: {
+    ownershipType: 'succursale' | 'franchise' | null; // DÉPLACÉ ICI (était en étape 3)
+    tradeName: string;
+    address: string;
+    postalCode: string;
+    city: string;
+    latitude: number | null;
+    longitude: number | null;
+    optionalContactName: string; // Contact responsable optionnel (créé automatiquement)
+  };
+
+  // ========================================
+  // ÉTAPE 3 : RESPONSABLE (ex "Responsable")
+  // ========================================
+  // Sélection contact existant (si restaurant existant)
+  existingContact: {
+    selectedContactId: string | null; // ID du contact sélectionné OU 'new'
+    isNewContact: boolean; // true si on crée un nouveau contact
+  };
+
+  // Contact responsable (nouveau ou data à créer)
+  responsable: {
+    type: 'succursale' | 'franchise' | null; // Redondant avec newRestaurant.ownershipType mais gardé pour compatibilité code
+    name: string;
+    email: string;
+    phone: string;
+    // Si franchisé uniquement
     companyLegalName: string;
     companyTradeName: string;
     siret: string;
-    kbisUrl: string | null;
+    kbisFile: File | null; // Upload KBis
+    kbisUrl: string | null; // URL KBis (legacy)
   };
 
-  // SI NOUVEAU RESTAURANT - STEP 3: Facturation
+  // ========================================
+  // ÉTAPE 4 : FACTURATION
+  // ========================================
   billing: {
-    contactSource: 'owner' | 'custom';
+    useParentOrganisation: boolean; // NOUVEAU : utiliser organisation mère (propre uniquement)
+    contactSource: 'responsable' | 'custom'; // Renommé de 'owner'
+    // Si custom
     name: string;
     email: string;
-    phone: string;
-    // Adresse de facturation
+    phone: string; // OPTIONNEL pour facturation
+    // Adresse facturation
+    companyLegalName: string;
     address: string;
     postalCode: string;
     city: string;
     latitude: number | null;
     longitude: number | null;
-    companyLegalName: string;
     siret: string;
   };
-  deliveryTermsAccepted: boolean;
 
-  // NOTES - Optionnel
-  notes: string;
+  // ========================================
+  // ÉTAPE 5 : LIVRAISON (NOUVEAU)
+  // ========================================
+  delivery: {
+    useResponsableContact: boolean; // Contact livraison = responsable
+    // Si non coché
+    contactName: string;
+    contactEmail: string;
+    contactPhone: string;
+    // Adresse
+    address: string;
+    postalCode: string;
+    city: string;
+    latitude: number | null;
+    longitude: number | null;
+    deliveryDate: string; // Format ISO
+    // Centre commercial
+    isMallDelivery: boolean;
+    mallEmail: string;
+    accessFormRequired: boolean;
+    accessFormUrl: string | null; // URL Supabase Storage
+    // Semi-remorque
+    semiTrailerAccessible: boolean;
+    // Notes
+    notes: string;
+  };
+
+  // ========================================
+  // ÉTAPE 6 : VALIDATION
+  // ========================================
+  deliveryTermsAccepted: boolean;
+  finalNotes: string; // Renommé de 'notes'
 }
 
 interface Organisation {
@@ -148,48 +225,94 @@ const CACHE_TTL_DAYS = 7;
 
 const INITIAL_DATA: OrderFormUnifiedData = {
   isNewRestaurant: null,
+
+  // Étape 1 : Demandeur
+  requester: {
+    name: '',
+    email: '',
+    phone: '',
+    position: '',
+    notes: '',
+  },
+
+  // Étape 2 : Restaurant
   existingOrganisationId: null,
   newRestaurant: {
+    ownershipType: null,
     tradeName: '',
-    city: '',
     address: '',
     postalCode: '',
+    city: '',
     latitude: null,
     longitude: null,
+    optionalContactName: '',
   },
-  owner: {
+
+  // Étape 3 : Responsable
+  existingContact: {
+    selectedContactId: null,
+    isNewContact: false,
+  },
+  responsable: {
     type: null,
-    contactSameAsRequester: false,
     name: '',
     email: '',
     phone: '',
     companyLegalName: '',
     companyTradeName: '',
     siret: '',
+    kbisFile: null,
     kbisUrl: null,
   },
+
+  // Étape 4 : Facturation
   billing: {
-    contactSource: 'owner',
+    useParentOrganisation: true, // Pré-coché par défaut si propre
+    contactSource: 'responsable',
     name: '',
     email: '',
     phone: '',
+    companyLegalName: '',
     address: '',
     postalCode: '',
     city: '',
     latitude: null,
     longitude: null,
-    companyLegalName: '',
     siret: '',
   },
+
+  // Étape 5 : Livraison
+  delivery: {
+    useResponsableContact: true, // Pré-coché par défaut
+    contactName: '',
+    contactEmail: '',
+    contactPhone: '',
+    address: '',
+    postalCode: '',
+    city: '',
+    latitude: null,
+    longitude: null,
+    deliveryDate: '',
+    isMallDelivery: false,
+    mallEmail: '',
+    accessFormRequired: false,
+    accessFormUrl: null,
+    semiTrailerAccessible: true,
+    notes: '',
+  },
+
+  // Étape 6 : Validation
   deliveryTermsAccepted: false,
-  notes: '',
+  finalNotes: '',
 };
 
 const OPENING_STEPS = [
-  { id: 1, title: 'Restaurant', icon: Store },
-  { id: 2, title: 'Propriétaire', icon: Building2 },
-  { id: 3, title: 'Facturation', icon: FileText },
-  { id: 4, title: 'Validation', icon: ShoppingCart },
+  { id: 1, title: 'Demandeur', icon: User },
+  { id: 2, title: 'Restaurant', icon: Store },
+  { id: 3, title: 'Responsable', icon: UserCircle },
+  { id: 4, title: 'Facturation', icon: FileText },
+  { id: 5, title: 'Livraison', icon: Truck },
+  { id: 6, title: 'Validation', icon: ShoppingCart },
 ];
 
 // =====================================================================
@@ -197,8 +320,8 @@ const OPENING_STEPS = [
 // =====================================================================
 
 export function OrderFormUnified({
-  affiliateId,
-  selectionId,
+  affiliateId: _affiliateId,
+  selectionId: _selectionId,
   cart,
   onUpdateQuantity,
   onRemoveItem,
@@ -241,15 +364,15 @@ export function OrderFormUnified({
 
       setData(prev => ({
         ...prev,
-        owner: {
-          ...prev.owner,
+        responsable: {
+          ...prev.responsable,
           name: `${primary.firstName} ${primary.lastName}`,
           email: primary.email || '',
           phone: primary.phone || primary.mobile || '',
         },
         billing: {
           ...prev.billing,
-          contactSource: 'owner',
+          contactSource: 'responsable',
           name: `${primary.firstName} ${primary.lastName}`,
           email: primary.email || '',
           phone: primary.phone || primary.mobile || '',
@@ -273,8 +396,8 @@ export function OrderFormUnified({
           if (parsedCache.expiresAt > Date.now()) {
             setData(prev => ({
               ...prev,
-              owner: {
-                ...prev.owner,
+              responsable: {
+                ...prev.responsable,
                 name: parsedCache.name,
                 email: parsedCache.email,
                 phone: parsedCache.phone,
@@ -297,6 +420,7 @@ export function OrderFormUnified({
         localStorage.removeItem(REQUESTER_CACHE_KEY);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Exécuter uniquement au montage
 
   // Mise à jour des données
@@ -356,28 +480,29 @@ export function OrderFormUnified({
   const validateStep2 = useCallback((): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!data.owner.type) {
-      newErrors['owner.type'] = 'Veuillez choisir le type de restaurant';
+    if (!data.responsable.type) {
+      newErrors['responsable.type'] = 'Veuillez choisir le type de restaurant';
     }
-    if (!data.owner.name.trim()) {
-      newErrors['owner.name'] = 'Le nom du propriétaire est requis';
+    if (!data.responsable.name.trim()) {
+      newErrors['responsable.name'] = 'Le nom du responsable est requis';
     }
-    if (!data.owner.email.trim()) {
-      newErrors['owner.email'] = "L'email est requis";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.owner.email)) {
-      newErrors['owner.email'] = 'Email invalide';
+    if (!data.responsable.email.trim()) {
+      newErrors['responsable.email'] = "L'email est requis";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.responsable.email)) {
+      newErrors['responsable.email'] = 'Email invalide';
     }
 
     if (
-      data.owner.type === 'franchise' &&
-      !data.owner.companyLegalName.trim()
+      data.responsable.type === 'franchise' &&
+      !data.responsable.companyLegalName.trim()
     ) {
-      newErrors['owner.companyLegalName'] = 'La raison sociale est requise';
+      newErrors['responsable.companyLegalName'] =
+        'La raison sociale est requise';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [data.owner]);
+  }, [data.responsable]);
 
   const validateStep3 = useCallback((): boolean => {
     const newErrors: Record<string, string> = {};
@@ -453,12 +578,16 @@ export function OrderFormUnified({
 
       // Sauvegarder dans localStorage pour pré-remplissage futur (utilisateurs publics uniquement)
       // Seulement si c'est un nouveau restaurant (pas une org existante)
-      if (data.isNewRestaurant && data.owner.name && data.owner.email) {
+      if (
+        data.isNewRestaurant &&
+        data.responsable.name &&
+        data.responsable.email
+      ) {
         try {
           const cache: RequesterCache = {
-            name: data.owner.name,
-            email: data.owner.email,
-            phone: data.owner.phone,
+            name: data.responsable.name,
+            email: data.responsable.email,
+            phone: data.responsable.phone,
             expiresAt: Date.now() + CACHE_TTL_DAYS * 24 * 60 * 60 * 1000, // 7 jours
           };
           localStorage.setItem(REQUESTER_CACHE_KEY, JSON.stringify(cache));
@@ -467,7 +596,7 @@ export function OrderFormUnified({
           console.error('Impossible de sauvegarder le cache:', storageError);
         }
       }
-    } catch (error) {
+    } catch (_error) {
       setErrors({ submit: 'Erreur lors de la soumission' });
     }
   }, [data, cart, onSubmit]);
@@ -641,8 +770,8 @@ export function OrderFormUnified({
                   Notes (optionnel)
                 </label>
                 <textarea
-                  value={data.notes}
-                  onChange={e => updateData({ notes: e.target.value })}
+                  value={data.finalNotes}
+                  onChange={e => updateData({ finalNotes: e.target.value })}
                   placeholder="Instructions spéciales, commentaires..."
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -672,7 +801,7 @@ export function OrderFormUnified({
 
           <Footer
             onBack={() => updateData({ isNewRestaurant: null })}
-            onNext={handleSubmitExisting}
+            onNext={() => void handleSubmitExisting()}
             nextLabel="Créer le brouillon"
             isSubmitting={isSubmitting}
             cartTotals={cartTotals}
@@ -705,10 +834,18 @@ export function OrderFormUnified({
 
         <div className="flex-1 overflow-y-auto p-6">
           {currentStep === 1 && (
-            <OpeningStep1 data={data} errors={errors} updateData={updateData} />
+            <OpeningStep1Requester
+              data={data}
+              errors={errors}
+              updateData={updateData}
+            />
           )}
           {currentStep === 2 && (
-            <OpeningStep2 data={data} errors={errors} updateData={updateData} />
+            <OpeningStep2Restaurant
+              data={data}
+              errors={errors}
+              updateData={updateData}
+            />
           )}
           {currentStep === 3 && (
             <OpeningStep3 data={data} errors={errors} updateData={updateData} />
@@ -760,7 +897,7 @@ export function OrderFormUnified({
       <ConfirmationModal
         isOpen={showConfirmation}
         onClose={() => setShowConfirmation(false)}
-        onConfirm={handleConfirmOrder}
+        onConfirm={() => void handleConfirmOrder()}
         isSubmitting={isSubmitting}
         data={data}
         cart={cart}
@@ -1065,25 +1202,327 @@ interface StepProps {
   updateData: (updates: Partial<OrderFormUnifiedData>) => void;
 }
 
-function OpeningStep1({ data, errors, updateData }: StepProps) {
+/**
+ * ÉTAPE 1 : DEMANDEUR
+ * Collecte les informations de la personne qui passe la commande
+ */
+function OpeningStep1Requester({ data, errors, updateData }: StepProps) {
   return (
     <div className="max-w-lg space-y-6">
-      <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-        <div className="flex items-start gap-2">
-          <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-amber-800">
-            Un nouveau restaurant nécessite une validation préalable par notre
-            équipe avant traitement de la commande.
-          </p>
-        </div>
+      <div>
+        <h3 className="text-lg font-medium text-gray-900">
+          Personne qui passe la commande
+        </h3>
+        <p className="text-sm text-gray-500 mt-1">
+          Vos coordonnées en tant que demandeur
+        </p>
       </div>
 
+      {/* Nom complet */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Nom commercial *
+        <label
+          htmlFor="requesterName"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
+          Nom complet <span className="text-red-500">*</span>
         </label>
         <input
+          id="requesterName"
           type="text"
+          value={data.requester.name}
+          onChange={e =>
+            updateData({
+              requester: { ...data.requester, name: e.target.value },
+            })
+          }
+          placeholder="Jean Dupont"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+        {errors['requester.name'] && (
+          <p className="text-sm text-red-600 mt-1">
+            {errors['requester.name']}
+          </p>
+        )}
+      </div>
+
+      {/* Email */}
+      <div>
+        <label
+          htmlFor="requesterEmail"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
+          Email <span className="text-red-500">*</span>
+        </label>
+        <input
+          id="requesterEmail"
+          type="email"
+          value={data.requester.email}
+          onChange={e =>
+            updateData({
+              requester: { ...data.requester, email: e.target.value },
+            })
+          }
+          placeholder="jean.dupont@pokawa.fr"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+        {errors['requester.email'] && (
+          <p className="text-sm text-red-600 mt-1">
+            {errors['requester.email']}
+          </p>
+        )}
+      </div>
+
+      {/* Téléphone */}
+      <div>
+        <label
+          htmlFor="requesterPhone"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
+          Téléphone <span className="text-red-500">*</span>
+        </label>
+        <input
+          id="requesterPhone"
+          type="tel"
+          value={data.requester.phone}
+          onChange={e =>
+            updateData({
+              requester: { ...data.requester, phone: e.target.value },
+            })
+          }
+          placeholder="06 12 34 56 78"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+        {errors['requester.phone'] && (
+          <p className="text-sm text-red-600 mt-1">
+            {errors['requester.phone']}
+          </p>
+        )}
+      </div>
+
+      {/* Rôle/Fonction */}
+      <div>
+        <label
+          htmlFor="requesterPosition"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
+          Rôle/Fonction
+        </label>
+        <input
+          id="requesterPosition"
+          type="text"
+          value={data.requester.position}
+          onChange={e =>
+            updateData({
+              requester: { ...data.requester, position: e.target.value },
+            })
+          }
+          placeholder="Directeur régional"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      {/* Notes */}
+      <div>
+        <label
+          htmlFor="requesterNotes"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
+          Notes (optionnel)
+        </label>
+        <textarea
+          id="requesterNotes"
+          value={data.requester.notes}
+          onChange={e =>
+            updateData({
+              requester: { ...data.requester, notes: e.target.value },
+            })
+          }
+          placeholder="Ex: Architecte pour le projet de rénovation..."
+          rows={3}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+        />
+        <p className="text-xs text-gray-400 mt-1">
+          Informations complémentaires pertinentes
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * ÉTAPE 2 : RESTAURANT
+ * Sélection restaurant existant OU création nouveau restaurant
+ */
+function OpeningStep2Restaurant({ data, errors, updateData }: StepProps) {
+  const enseigneId = useEnseigneId();
+  const { data: organisations } = useEnseigneOrganisations(enseigneId);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Filtrer organisations par recherche
+  const filteredOrgs = organisations?.filter(
+    org =>
+      org.trade_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      org.legal_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      org.city?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  if (data.isNewRestaurant === false) {
+    // ========================================
+    // RESTAURANT EXISTANT : Recherche + Cartes
+    // ========================================
+    return (
+      <div className="max-w-2xl space-y-6">
+        <div>
+          <h3 className="text-lg font-medium text-gray-900">
+            Sélection du restaurant
+          </h3>
+          <p className="text-sm text-gray-500 mt-1">
+            Recherchez et sélectionnez le restaurant concerné
+          </p>
+        </div>
+
+        {/* Barre de recherche */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            type="search"
+            placeholder="Rechercher par nom, ville..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
+        {/* Liste cartes restaurants */}
+        <div className="space-y-3 max-h-96 overflow-y-auto">
+          {filteredOrgs?.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <Store className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+              <p>Aucun restaurant trouvé</p>
+            </div>
+          ) : (
+            filteredOrgs?.map(org => (
+              <Card
+                key={org.id}
+                className={cn(
+                  'cursor-pointer transition-all hover:shadow-md',
+                  data.existingOrganisationId === org.id &&
+                    'ring-2 ring-blue-500 bg-blue-50'
+                )}
+                onClick={() => updateData({ existingOrganisationId: org.id })}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-medium">
+                          {org.trade_name || org.legal_name}
+                        </h4>
+                        {org.ownership_type && (
+                          <Badge
+                            variant={
+                              org.ownership_type === 'succursale'
+                                ? 'default'
+                                : 'secondary'
+                            }
+                          >
+                            {org.ownership_type === 'succursale'
+                              ? 'Propre'
+                              : 'Franchisé'}
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {org.shipping_address_line1 || 'Adresse non renseignée'}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {org.postal_code} {org.city}
+                      </p>
+                    </div>
+                    {data.existingOrganisationId === org.id && (
+                      <CheckCircle className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+
+        {errors['existingOrganisationId'] && (
+          <p className="text-sm text-red-600">
+            {errors['existingOrganisationId']}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  // ========================================
+  // NOUVEAU RESTAURANT : Formulaire complet
+  // ========================================
+  return (
+    <div className="max-w-lg space-y-6">
+      <div>
+        <h3 className="text-lg font-medium text-gray-900">
+          Informations du restaurant
+        </h3>
+        <p className="text-sm text-gray-500 mt-1">
+          Création d'un nouveau restaurant
+        </p>
+      </div>
+
+      {/* Type de restaurant - DÉPLACÉ ICI (étape 2 au lieu de 3) */}
+      <div>
+        <Label>
+          Type de restaurant <span className="text-red-500">*</span>
+        </Label>
+        <RadioGroup
+          value={data.newRestaurant.ownershipType || ''}
+          onValueChange={(value: 'succursale' | 'franchise') =>
+            updateData({
+              newRestaurant: {
+                ...data.newRestaurant,
+                ownershipType: value,
+              },
+            })
+          }
+        >
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="succursale" id="type-propre" />
+            <Label htmlFor="type-propre" className="cursor-pointer font-normal">
+              Restaurant propre (succursale)
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="franchise" id="type-franchise" />
+            <Label
+              htmlFor="type-franchise"
+              className="cursor-pointer font-normal"
+            >
+              Restaurant franchisé
+            </Label>
+          </div>
+        </RadioGroup>
+        {errors['newRestaurant.ownershipType'] && (
+          <p className="text-sm text-red-600 mt-1">
+            {errors['newRestaurant.ownershipType']}
+          </p>
+        )}
+        <p className="text-xs text-gray-500 mt-2">
+          Cette information détermine les champs requis aux étapes suivantes
+        </p>
+      </div>
+
+      <Separator />
+
+      {/* Nom commercial */}
+      <div>
+        <Label htmlFor="tradeName">
+          Nom commercial <span className="text-red-500">*</span>
+        </Label>
+        <Input
+          id="tradeName"
           value={data.newRestaurant.tradeName}
           onChange={e =>
             updateData({
@@ -1093,61 +1532,81 @@ function OpeningStep1({ data, errors, updateData }: StepProps) {
               },
             })
           }
-          className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-            errors['newRestaurant.tradeName']
-              ? 'border-red-500'
-              : 'border-gray-300'
-          }`}
-          placeholder="Restaurant Exemple"
+          placeholder="Pokawa Paris Rivoli"
         />
         {errors['newRestaurant.tradeName'] && (
-          <p className="mt-1 text-xs text-red-600">
+          <p className="text-sm text-red-600 mt-1">
             {errors['newRestaurant.tradeName']}
           </p>
         )}
       </div>
 
+      {/* Adresse autocomplete */}
       <div>
+        <Label>
+          Adresse du restaurant <span className="text-red-500">*</span>
+        </Label>
         <AddressAutocomplete
-          label="Adresse du restaurant *"
-          placeholder="Rechercher une adresse..."
           value={
             data.newRestaurant.address
               ? `${data.newRestaurant.address}, ${data.newRestaurant.postalCode} ${data.newRestaurant.city}`
               : ''
           }
-          onChange={value => {
-            if (!value) {
-              updateData({
-                newRestaurant: {
-                  ...data.newRestaurant,
-                  address: '',
-                  city: '',
-                  postalCode: '',
-                  latitude: null,
-                  longitude: null,
-                },
-              });
-            }
-          }}
-          onSelect={(address: AddressResult) => {
+          onSelect={(address: AddressResult) =>
             updateData({
               newRestaurant: {
                 ...data.newRestaurant,
                 address: address.streetAddress,
-                city: address.city,
                 postalCode: address.postalCode,
+                city: address.city,
                 latitude: address.latitude,
                 longitude: address.longitude,
               },
-            });
-          }}
+            })
+          }
+          placeholder="123 Rue de Rivoli, 75001 Paris"
         />
-        {errors['newRestaurant.city'] && (
-          <p className="mt-1 text-xs text-red-600">
-            {errors['newRestaurant.city']}
+        {errors['newRestaurant.address'] && (
+          <p className="text-sm text-red-600 mt-1">
+            {errors['newRestaurant.address']}
           </p>
         )}
+      </div>
+
+      <Separator />
+
+      {/* Contact responsable optionnel */}
+      <div>
+        <h4 className="font-medium text-sm mb-3">
+          Contact responsable (optionnel)
+        </h4>
+        <p className="text-xs text-gray-500 mb-4">
+          Vous pouvez ajouter dès maintenant un contact responsable. Sinon, vous
+          pourrez le faire à l'étape suivante.
+        </p>
+
+        <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+          <div>
+            <Label htmlFor="optionalContactName">Nom complet</Label>
+            <Input
+              id="optionalContactName"
+              value={data.newRestaurant.optionalContactName}
+              onChange={e =>
+                updateData({
+                  newRestaurant: {
+                    ...data.newRestaurant,
+                    optionalContactName: e.target.value,
+                  },
+                })
+              }
+              placeholder="Sophie Martin"
+            />
+          </div>
+
+          <p className="text-xs text-gray-400">
+            Ce contact sera automatiquement créé et associé au restaurant
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -1165,10 +1624,12 @@ function OpeningStep2({ data, errors, updateData }: StepProps) {
           <button
             type="button"
             onClick={() =>
-              updateData({ owner: { ...data.owner, type: 'succursale' } })
+              updateData({
+                responsable: { ...data.responsable, type: 'succursale' },
+              })
             }
             className={`flex-1 py-3 px-4 rounded-lg border-2 transition-colors ${
-              data.owner.type === 'succursale'
+              data.responsable.type === 'succursale'
                 ? 'bg-blue-50 border-blue-500 text-blue-700'
                 : 'border-gray-300 text-gray-700 hover:bg-gray-50'
             }`}
@@ -1178,10 +1639,12 @@ function OpeningStep2({ data, errors, updateData }: StepProps) {
           <button
             type="button"
             onClick={() =>
-              updateData({ owner: { ...data.owner, type: 'franchise' } })
+              updateData({
+                responsable: { ...data.responsable, type: 'franchise' },
+              })
             }
             className={`flex-1 py-3 px-4 rounded-lg border-2 transition-colors ${
-              data.owner.type === 'franchise'
+              data.responsable.type === 'franchise'
                 ? 'bg-blue-50 border-blue-500 text-blue-700'
                 : 'border-gray-300 text-gray-700 hover:bg-gray-50'
             }`}
@@ -1189,30 +1652,36 @@ function OpeningStep2({ data, errors, updateData }: StepProps) {
             Franchise
           </button>
         </div>
-        {errors['owner.type'] && (
-          <p className="mt-1 text-xs text-red-600">{errors['owner.type']}</p>
+        {errors['responsable.type'] && (
+          <p className="mt-1 text-xs text-red-600">
+            {errors['responsable.type']}
+          </p>
         )}
       </div>
 
-      {/* Contact propriétaire */}
+      {/* Contact responsable */}
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Nom du propriétaire *
+            Nom du responsable *
           </label>
           <input
             type="text"
-            value={data.owner.name}
+            value={data.responsable.name}
             onChange={e =>
-              updateData({ owner: { ...data.owner, name: e.target.value } })
+              updateData({
+                responsable: { ...data.responsable, name: e.target.value },
+              })
             }
             className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-              errors['owner.name'] ? 'border-red-500' : 'border-gray-300'
+              errors['responsable.name'] ? 'border-red-500' : 'border-gray-300'
             }`}
             placeholder="Jean Dupont"
           />
-          {errors['owner.name'] && (
-            <p className="mt-1 text-xs text-red-600">{errors['owner.name']}</p>
+          {errors['responsable.name'] && (
+            <p className="mt-1 text-xs text-red-600">
+              {errors['responsable.name']}
+            </p>
           )}
         </div>
         <div>
@@ -1221,17 +1690,21 @@ function OpeningStep2({ data, errors, updateData }: StepProps) {
           </label>
           <input
             type="email"
-            value={data.owner.email}
+            value={data.responsable.email}
             onChange={e =>
-              updateData({ owner: { ...data.owner, email: e.target.value } })
+              updateData({
+                responsable: { ...data.responsable, email: e.target.value },
+              })
             }
             className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-              errors['owner.email'] ? 'border-red-500' : 'border-gray-300'
+              errors['responsable.email'] ? 'border-red-500' : 'border-gray-300'
             }`}
             placeholder="jean@exemple.com"
           />
-          {errors['owner.email'] && (
-            <p className="mt-1 text-xs text-red-600">{errors['owner.email']}</p>
+          {errors['responsable.email'] && (
+            <p className="mt-1 text-xs text-red-600">
+              {errors['responsable.email']}
+            </p>
           )}
         </div>
       </div>
@@ -1242,9 +1715,11 @@ function OpeningStep2({ data, errors, updateData }: StepProps) {
         </label>
         <input
           type="tel"
-          value={data.owner.phone}
+          value={data.responsable.phone}
           onChange={e =>
-            updateData({ owner: { ...data.owner, phone: e.target.value } })
+            updateData({
+              responsable: { ...data.responsable, phone: e.target.value },
+            })
           }
           className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
           placeholder="06 12 34 56 78"
@@ -1252,7 +1727,7 @@ function OpeningStep2({ data, errors, updateData }: StepProps) {
       </div>
 
       {/* Si franchise */}
-      {data.owner.type === 'franchise' && (
+      {data.responsable.type === 'franchise' && (
         <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
           <h4 className="font-medium text-gray-900">Société franchisée</h4>
           <div className="grid grid-cols-2 gap-4">
@@ -1262,21 +1737,24 @@ function OpeningStep2({ data, errors, updateData }: StepProps) {
               </label>
               <input
                 type="text"
-                value={data.owner.companyLegalName}
+                value={data.responsable.companyLegalName}
                 onChange={e =>
                   updateData({
-                    owner: { ...data.owner, companyLegalName: e.target.value },
+                    responsable: {
+                      ...data.responsable,
+                      companyLegalName: e.target.value,
+                    },
                   })
                 }
                 className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                  errors['owner.companyLegalName']
+                  errors['responsable.companyLegalName']
                     ? 'border-red-500'
                     : 'border-gray-300'
                 }`}
               />
-              {errors['owner.companyLegalName'] && (
+              {errors['responsable.companyLegalName'] && (
                 <p className="mt-1 text-xs text-red-600">
-                  {errors['owner.companyLegalName']}
+                  {errors['responsable.companyLegalName']}
                 </p>
               )}
             </div>
@@ -1286,10 +1764,13 @@ function OpeningStep2({ data, errors, updateData }: StepProps) {
               </label>
               <input
                 type="text"
-                value={data.owner.companyTradeName}
+                value={data.responsable.companyTradeName}
                 onChange={e =>
                   updateData({
-                    owner: { ...data.owner, companyTradeName: e.target.value },
+                    responsable: {
+                      ...data.responsable,
+                      companyTradeName: e.target.value,
+                    },
                   })
                 }
                 className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -1302,11 +1783,11 @@ function OpeningStep2({ data, errors, updateData }: StepProps) {
             </label>
             <input
               type="text"
-              value={data.owner.siret}
+              value={data.responsable.siret}
               onChange={e =>
                 updateData({
-                  owner: {
-                    ...data.owner,
+                  responsable: {
+                    ...data.responsable,
                     siret: e.target.value.replace(/\D/g, '').slice(0, 14),
                   },
                 })
@@ -1314,12 +1795,14 @@ function OpeningStep2({ data, errors, updateData }: StepProps) {
               placeholder="12345678901234"
               maxLength={14}
               className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                errors['owner.siret'] ? 'border-red-500' : 'border-gray-300'
+                errors['responsable.siret']
+                  ? 'border-red-500'
+                  : 'border-gray-300'
               }`}
             />
-            {errors['owner.siret'] && (
+            {errors['responsable.siret'] && (
               <p className="mt-1 text-xs text-red-600">
-                {errors['owner.siret']}
+                {errors['responsable.siret']}
               </p>
             )}
             <p className="mt-1 text-xs text-gray-400">14 chiffres</p>
@@ -1330,10 +1813,13 @@ function OpeningStep2({ data, errors, updateData }: StepProps) {
             </label>
             <input
               type="text"
-              value={data.owner.kbisUrl || ''}
+              value={data.responsable.kbisUrl || ''}
               onChange={e =>
                 updateData({
-                  owner: { ...data.owner, kbisUrl: e.target.value || null },
+                  responsable: {
+                    ...data.responsable,
+                    kbisUrl: e.target.value || null,
+                  },
                 })
               }
               placeholder="https://..."
@@ -1359,16 +1845,16 @@ function OpeningStep3({ data, errors, updateData }: StepProps) {
             <input
               type="radio"
               name="billingSource"
-              checked={data.billing.contactSource === 'owner'}
+              checked={data.billing.contactSource === 'responsable'}
               onChange={() =>
                 updateData({
-                  billing: { ...data.billing, contactSource: 'owner' },
+                  billing: { ...data.billing, contactSource: 'responsable' },
                 })
               }
               className="h-4 w-4 text-blue-600"
             />
             <span className="text-sm text-gray-700">
-              Même que le propriétaire (Étape 2)
+              Même que le responsable (Étape 2)
             </span>
           </label>
           <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
@@ -1551,8 +2037,8 @@ function OpeningStep3({ data, errors, updateData }: StepProps) {
           Notes (optionnel)
         </label>
         <textarea
-          value={data.notes}
-          onChange={e => updateData({ notes: e.target.value })}
+          value={data.finalNotes}
+          onChange={e => updateData({ finalNotes: e.target.value })}
           placeholder="Instructions spéciales, commentaires..."
           rows={3}
           className="w-full px-3 py-2.5 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500"
@@ -1910,48 +2396,54 @@ function ConfirmationModal({
             </div>
           </div>
 
-          {/* Propriétaire */}
+          {/* Responsable */}
           <div className="p-4 bg-gray-50 rounded-lg">
             <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
               <User className="h-4 w-4 text-blue-600" />
-              Propriétaire
+              Responsable
             </h3>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div>
                 <span className="text-gray-500">Type :</span>
                 <span className="ml-2 text-gray-900 font-medium">
-                  {data.owner.type === 'franchise'
+                  {data.responsable.type === 'franchise'
                     ? 'Franchise'
                     : 'Restaurant propre'}
                 </span>
               </div>
               <div>
                 <span className="text-gray-500">Nom :</span>
-                <span className="ml-2 text-gray-900">{data.owner.name}</span>
+                <span className="ml-2 text-gray-900">
+                  {data.responsable.name}
+                </span>
               </div>
               <div>
                 <span className="text-gray-500">Email :</span>
-                <span className="ml-2 text-gray-900">{data.owner.email}</span>
+                <span className="ml-2 text-gray-900">
+                  {data.responsable.email}
+                </span>
               </div>
-              {data.owner.phone && (
+              {data.responsable.phone && (
                 <div>
                   <span className="text-gray-500">Tél :</span>
-                  <span className="ml-2 text-gray-900">{data.owner.phone}</span>
+                  <span className="ml-2 text-gray-900">
+                    {data.responsable.phone}
+                  </span>
                 </div>
               )}
-              {data.owner.type === 'franchise' && (
+              {data.responsable.type === 'franchise' && (
                 <>
                   <div className="col-span-2">
                     <span className="text-gray-500">Société :</span>
                     <span className="ml-2 text-gray-900">
-                      {data.owner.companyLegalName}
+                      {data.responsable.companyLegalName}
                     </span>
                   </div>
-                  {data.owner.siret && (
+                  {data.responsable.siret && (
                     <div>
                       <span className="text-gray-500">SIRET :</span>
                       <span className="ml-2 text-gray-900 font-mono">
-                        {data.owner.siret}
+                        {data.responsable.siret}
                       </span>
                     </div>
                   )}
@@ -1986,7 +2478,7 @@ function ConfirmationModal({
                 <div className="col-span-2">
                   <span className="text-gray-500">Contact :</span>
                   <span className="ml-2 text-gray-900">
-                    Identique au propriétaire
+                    Identique au responsable
                   </span>
                 </div>
               )}
@@ -2050,10 +2542,10 @@ function ConfirmationModal({
           </div>
 
           {/* Notes */}
-          {data.notes && (
+          {data.finalNotes && (
             <div className="p-4 bg-gray-50 rounded-lg">
               <h3 className="font-medium text-gray-900 mb-2">Notes</h3>
-              <p className="text-sm text-gray-600">{data.notes}</p>
+              <p className="text-sm text-gray-600">{data.finalNotes}</p>
             </div>
           )}
 

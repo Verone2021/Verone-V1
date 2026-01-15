@@ -89,7 +89,7 @@ export function useSubmitUnifiedOrder() {
             p_customer_type: 'organization',
             p_selection_id: selectionId,
             p_items: items,
-            p_notes: data.notes || null,
+            p_notes: data.finalNotes || null,
           });
 
           if (rpcError) {
@@ -138,9 +138,9 @@ export function useSubmitUnifiedOrder() {
           // Demandeur = Propriétaire pour le nouveau formulaire
           const p_requester = {
             type: 'responsable_enseigne', // Valeur par défaut (plus demandé dans le formulaire)
-            name: data.owner.name,
-            email: data.owner.email,
-            phone: data.owner.phone || null,
+            name: data.responsable.name,
+            email: data.responsable.email,
+            phone: data.responsable.phone || null,
             position: null,
           };
 
@@ -149,8 +149,8 @@ export function useSubmitUnifiedOrder() {
             is_new: true,
             trade_name: data.newRestaurant.tradeName,
             legal_name:
-              data.owner.type === 'franchise'
-                ? data.owner.companyLegalName
+              data.responsable.type === 'franchise'
+                ? data.responsable.companyLegalName
                 : data.newRestaurant.tradeName,
             city: data.newRestaurant.city,
             postal_code: data.newRestaurant.postalCode || null,
@@ -161,22 +161,22 @@ export function useSubmitUnifiedOrder() {
 
           // Propriétaire
           const p_owner = {
-            type: data.owner.type,
+            type: data.responsable.type,
             same_as_requester: false,
-            name: data.owner.name,
-            email: data.owner.email,
-            phone: data.owner.phone || null,
+            name: data.responsable.name,
+            email: data.responsable.email,
+            phone: data.responsable.phone || null,
           };
 
           // Facturation
           const billingName =
             data.billing.contactSource === 'custom'
               ? data.billing.name
-              : data.owner.name;
+              : data.responsable.name;
           const billingEmail =
             data.billing.contactSource === 'custom'
               ? data.billing.email
-              : data.owner.email;
+              : data.responsable.email;
 
           const p_billing = {
             contact_source:
@@ -186,7 +186,7 @@ export function useSubmitUnifiedOrder() {
             phone:
               data.billing.contactSource === 'custom'
                 ? data.billing.phone
-                : data.owner.phone,
+                : data.responsable.phone,
             delivery_date: null, // Sera rempli au Step 4 post-approbation
             mall_form_required: false, // Sera rempli au Step 4 post-approbation
           };
@@ -247,8 +247,8 @@ export function useSubmitUnifiedOrder() {
               body: JSON.stringify({
                 orderNumber,
                 orderId,
-                requesterName: data.owner.name,
-                requesterEmail: data.owner.email,
+                requesterName: data.responsable.name,
+                requesterEmail: data.responsable.email,
                 requesterType: 'responsable_enseigne',
                 organisationName: data.newRestaurant.tradeName,
                 isNewRestaurant: true,
