@@ -4,16 +4,16 @@
  * OrganisationDetailSheet
  *
  * Fiche détaillée d'une organisation avec onglets :
- * - Infos : Adresses livraison/facturation (éditable inline)
+ * - Infos : Toutes les informations avec édition section par section
  * - Contacts : Téléphone, emails, site web
  * - Activité : Stats + 5 dernières commandes
  *
  * Mode view : Lecture seule (pour /reseau)
- * Mode edit : Édition inline avec formulaire (pour /organisations)
+ * Mode edit : Édition section par section avec bouton modifier inline
  *
  * @module OrganisationDetailSheet
  * @since 2026-01-12
- * @updated 2026-01-14 - Refonte avec édition inline
+ * @updated 2026-01-15 - Refonte édition section par section (LM-ORG-005)
  */
 
 import { useMemo, useState, useEffect } from 'react';
@@ -36,11 +36,9 @@ import {
   Label,
   AddressAutocomplete,
   type AddressResult,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  RadioGroup,
+  RadioGroupItem,
+  Textarea,
 } from '@verone/ui';
 import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
@@ -61,6 +59,9 @@ import {
   Save,
   X,
   Loader2,
+  AlertCircle,
+  Globe,
+  CreditCard,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -83,18 +84,6 @@ interface OrganisationDetailSheetProps {
   onOpenChange: (open: boolean) => void;
   mode: 'view' | 'edit';
   onEdit?: () => void; // Deprecated - kept for compatibility
-}
-
-interface FormData {
-  trade_name: string;
-  shipping_address_line1: string;
-  shipping_address_line2: string;
-  shipping_city: string;
-  shipping_postal_code: string;
-  shipping_country: string;
-  latitude: number | null;
-  longitude: number | null;
-  ownership_type: 'propre' | 'succursale' | 'franchise' | null;
 }
 
 // =====================================================================
@@ -142,70 +131,106 @@ function getStatusBadge(status: string) {
 // SUB-COMPONENTS
 // =====================================================================
 
-function AddressCard({
+/**
+ * EditableSection: Wrapper pour section éditable avec son propre état
+ */
+function EditableSection({
   title,
-  address,
   icon: Icon,
+  isIncomplete,
+  children,
+  editContent,
+  isEditing,
+  onEdit,
+  onSave,
+  onCancel,
+  isSaving,
+  mode,
 }: {
   title: string;
-  address: string | null;
-  icon: React.ElementType;
+  icon?: React.ElementType;
+  isIncomplete?: boolean;
+  children: React.ReactNode;
+  editContent: React.ReactNode;
+  isEditing: boolean;
+  onEdit: () => void;
+  onSave: () => void;
+  onCancel: () => void;
+  isSaving?: boolean;
+  mode: 'view' | 'edit';
 }) {
-  if (!address) return null;
-
   return (
-    <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-      <Icon className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
-      <div>
-        <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
-          {title}
-        </p>
-        <p className="text-sm text-gray-900 whitespace-pre-line">{address}</p>
+    <div
+      className={cn(
+        'p-4 rounded-lg border-2 transition-colors',
+        isIncomplete
+          ? 'bg-orange-50/50 border-orange-200'
+          : 'bg-gray-50 border-gray-200'
+      )}
+    >
+      {/* Header de la section */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          {Icon && <Icon className="h-5 w-5 text-gray-500" />}
+          <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+          {isIncomplete && (
+            <Badge
+              variant="outline"
+              className="text-xs bg-orange-100 text-orange-700 border-orange-300"
+            >
+              <AlertCircle className="h-3 w-3 mr-1" />À compléter
+            </Badge>
+          )}
+        </div>
+
+        {/* Boutons d'action - seulement en mode edit */}
+        {mode === 'edit' && (
+          <div className="flex items-center gap-2">
+            {!isEditing ? (
+              <Button
+                onClick={onEdit}
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2"
+              >
+                <Edit className="h-3.5 w-3.5 mr-1" />
+                Modifier
+              </Button>
+            ) : (
+              <>
+                <Button
+                  onClick={onCancel}
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2"
+                  disabled={isSaving}
+                >
+                  <X className="h-3.5 w-3.5 mr-1" />
+                  Annuler
+                </Button>
+                <Button
+                  onClick={onSave}
+                  size="sm"
+                  className="h-7 px-2 bg-linkme-turquoise hover:bg-linkme-turquoise/90 text-white"
+                  disabled={isSaving}
+                >
+                  {isSaving ? (
+                    <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                  ) : (
+                    <Save className="h-3.5 w-3.5 mr-1" />
+                  )}
+                  Enregistrer
+                </Button>
+              </>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* Contenu de la section */}
+      <div className="space-y-3">{isEditing ? editContent : children}</div>
     </div>
   );
-}
-
-function ContactItem({
-  icon: Icon,
-  label,
-  value,
-  href,
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: string | null;
-  href?: string;
-}) {
-  if (!value) return null;
-
-  const content = (
-    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-      <Icon className="h-5 w-5 text-gray-400 flex-shrink-0" />
-      <div className="flex-1 min-w-0">
-        <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-          {label}
-        </p>
-        <p className="text-sm text-gray-900 truncate">{value}</p>
-      </div>
-      {href && <ExternalLink className="h-4 w-4 text-gray-400" />}
-    </div>
-  );
-
-  if (href) {
-    return (
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="block"
-      >
-        {content}
-      </a>
-    );
-  }
-
-  return content;
 }
 
 function ContactCard({ contact }: { contact: OrganisationContact }) {
@@ -362,15 +387,11 @@ export function OrganisationDetailSheet({
   open,
   onOpenChange,
   mode,
-  onEdit,
 }: OrganisationDetailSheetProps) {
   const { data, isLoading, error } = useOrganisationDetail(
     open ? organisationId : null
   );
 
-  // Hook pour les contacts de l'organisation
-  // Passe aussi l'enseigne_id et is_enseigne_parent pour afficher les contacts enseigne
-  // uniquement pour la maison mère (is_enseigne_parent = true)
   const { data: contactsData, isLoading: contactsLoading } =
     useOrganisationContacts(
       open ? organisationId : null,
@@ -378,28 +399,50 @@ export function OrganisationDetailSheet({
       open ? (data?.organisation?.is_enseigne_parent ?? false) : false
     );
 
-  // États pour l'édition inline
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState<FormData>({
-    trade_name: '',
+  // États pour l'édition de chaque section
+  const [editingSection, setEditingSection] = useState<string | null>(null);
+
+  // États des formulaires par section
+  const [ownershipTypeForm, setOwnershipTypeForm] = useState<
+    'succursale' | 'franchise' | null
+  >(null);
+
+  const [shippingForm, setShippingForm] = useState({
     shipping_address_line1: '',
     shipping_address_line2: '',
     shipping_city: '',
     shipping_postal_code: '',
     shipping_country: 'France',
-    latitude: null,
-    longitude: null,
-    ownership_type: null,
+    latitude: null as number | null,
+    longitude: null as number | null,
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // QueryClient pour invalidation
+  const [billingForm, setBillingForm] = useState({
+    billing_address_line1: '',
+    billing_address_line2: '',
+    billing_city: '',
+    billing_postal_code: '',
+    billing_country: 'France',
+  });
+
+  const [contactsForm, setContactsForm] = useState({
+    phone: '',
+    email: '',
+    website: '',
+  });
+
+  const [legalForm, setLegalForm] = useState({
+    siren: '',
+    siret: '',
+    vat_number: '',
+  });
+
   const queryClient = useQueryClient();
   const supabase = createClient();
 
-  // Mutation pour sauvegarder les modifications
+  // Mutation générique pour mettre à jour n'importe quel champ
   const updateMutation = useMutation({
-    mutationFn: async (updates: Partial<FormData>) => {
+    mutationFn: async (updates: Record<string, any>) => {
       if (!organisationId) throw new Error('No organisation ID');
 
       const { error } = await supabase
@@ -414,8 +457,8 @@ export function OrganisationDetailSheet({
         queryKey: ['organisation-detail', organisationId],
       });
       queryClient.invalidateQueries({ queryKey: ['enseigne-organisations'] });
-      toast.success('Organisation mise à jour avec succès');
-      setIsEditing(false);
+      toast.success('Modifications enregistrées');
+      setEditingSection(null);
     },
     onError: error => {
       console.error('Error updating organisation:', error);
@@ -423,85 +466,73 @@ export function OrganisationDetailSheet({
     },
   });
 
-  // Initialiser le formulaire quand les données changent
+  // Initialiser les formulaires quand les données changent
   useEffect(() => {
-    if (data?.organisation && !isEditing) {
-      setFormData({
-        trade_name: data.organisation.trade_name || '',
-        shipping_address_line1: data.organisation.shipping_address_line1 || '',
-        shipping_address_line2: data.organisation.shipping_address_line2 || '',
-        shipping_city: data.organisation.shipping_city || '',
-        shipping_postal_code: data.organisation.shipping_postal_code || '',
-        shipping_country: data.organisation.shipping_country || 'France',
-        latitude: (data.organisation as any).latitude || null,
-        longitude: (data.organisation as any).longitude || null,
-        ownership_type: data.organisation.ownership_type || null,
+    if (data?.organisation) {
+      const org = data.organisation;
+      // Mapper 'propre' vers 'succursale' (propre est obsolète)
+      const mappedOwnershipType =
+        org.ownership_type === 'propre' ? 'succursale' : org.ownership_type;
+      setOwnershipTypeForm(mappedOwnershipType);
+      setShippingForm({
+        shipping_address_line1: org.shipping_address_line1 || '',
+        shipping_address_line2: org.shipping_address_line2 || '',
+        shipping_city: org.shipping_city || '',
+        shipping_postal_code: org.shipping_postal_code || '',
+        shipping_country: org.shipping_country || 'France',
+        latitude: org.latitude,
+        longitude: org.longitude,
+      });
+      setBillingForm({
+        billing_address_line1: org.billing_address_line1 || '',
+        billing_address_line2: org.billing_address_line2 || '',
+        billing_city: org.billing_city || '',
+        billing_postal_code: org.billing_postal_code || '',
+        billing_country: org.billing_country || 'France',
+      });
+      setContactsForm({
+        phone: org.phone || '',
+        email: org.email || '',
+        website: org.website || '',
+      });
+      setLegalForm({
+        siren: org.siren || '',
+        siret: org.siret || '',
+        vat_number: org.vat_number || '',
       });
     }
-  }, [data?.organisation, isEditing]);
+  }, [data?.organisation]);
 
   // Reset editing state when sheet closes
   useEffect(() => {
     if (!open) {
-      setIsEditing(false);
-      setErrors({});
+      setEditingSection(null);
     }
   }, [open]);
 
-  // Validation simple
-  const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.trade_name.trim()) {
-      newErrors.trade_name = 'Le nom commercial est obligatoire';
-    }
-
-    if (!formData.shipping_address_line1.trim()) {
-      newErrors.shipping_address_line1 =
-        "L'adresse de livraison est obligatoire";
-    }
-
-    if (!formData.shipping_city.trim()) {
-      newErrors.shipping_city = 'La ville est obligatoire';
-    }
-
-    if (!formData.shipping_postal_code.trim()) {
-      newErrors.shipping_postal_code = 'Le code postal est obligatoire';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  // Handlers pour chaque section
+  const handleSaveOwnershipType = () => {
+    updateMutation.mutate({ ownership_type: ownershipTypeForm });
   };
 
-  // Handler pour sauvegarder
-  const handleSave = async () => {
-    if (!validateForm()) return;
-
-    await updateMutation.mutateAsync(formData);
+  const handleSaveShipping = () => {
+    updateMutation.mutate(shippingForm);
   };
 
-  // Handler pour annuler
-  const handleCancel = () => {
-    if (data?.organisation) {
-      setFormData({
-        trade_name: data.organisation.trade_name || '',
-        shipping_address_line1: data.organisation.shipping_address_line1 || '',
-        shipping_address_line2: data.organisation.shipping_address_line2 || '',
-        shipping_city: data.organisation.shipping_city || '',
-        shipping_postal_code: data.organisation.shipping_postal_code || '',
-        shipping_country: data.organisation.shipping_country || 'France',
-        latitude: (data.organisation as any).latitude || null,
-        longitude: (data.organisation as any).longitude || null,
-        ownership_type: data.organisation.ownership_type || null,
-      });
-    }
-    setIsEditing(false);
-    setErrors({});
+  const handleSaveBilling = () => {
+    updateMutation.mutate(billingForm);
   };
 
-  // Handler pour AddressAutocomplete
-  const handleAddressSelect = (address: AddressResult) => {
-    setFormData(prev => ({
+  const handleSaveContacts = () => {
+    updateMutation.mutate(contactsForm);
+  };
+
+  const handleSaveLegal = () => {
+    updateMutation.mutate(legalForm);
+  };
+
+  const handleShippingAddressSelect = (address: AddressResult) => {
+    setShippingForm(prev => ({
       ...prev,
       shipping_address_line1: address.streetAddress,
       shipping_city: address.city,
@@ -510,10 +541,16 @@ export function OrganisationDetailSheet({
       latitude: address.latitude,
       longitude: address.longitude,
     }));
-    // Clear errors
-    if (errors.shipping_address_line1) {
-      setErrors(prev => ({ ...prev, shipping_address_line1: '' }));
-    }
+  };
+
+  const handleBillingAddressSelect = (address: AddressResult) => {
+    setBillingForm(prev => ({
+      ...prev,
+      billing_address_line1: address.streetAddress,
+      billing_city: address.city,
+      billing_postal_code: address.postalCode,
+      billing_country: address.country || 'France',
+    }));
   };
 
   // Adresses formatées
@@ -549,16 +586,15 @@ export function OrganisationDetailSheet({
     data?.organisation?.trade_name || data?.organisation?.legal_name || '';
 
   const ownershipType = data?.organisation?.ownership_type;
-  const isPropre = ownershipType === 'propre' || ownershipType === 'succursale';
+  const isPropre = ownershipType === 'succursale';
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto bg-white">
-        {/* Header avec boutons d'action */}
+        {/* Header */}
         <SheetHeader className="pb-4 border-b">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3 flex-1 min-w-0">
-              {/* Logo avec composant unifié (gère les URLs Supabase Storage) */}
               <OrganisationLogo
                 logoUrl={data?.organisation?.logo_url}
                 organisationName={displayName}
@@ -577,59 +613,8 @@ export function OrganisationDetailSheet({
                       {data.organisation.legal_name}
                     </p>
                   )}
-                {ownershipType && (
-                  <Badge
-                    variant={isPropre ? 'default' : 'secondary'}
-                    className={`mt-1 ${isPropre ? 'bg-blue-500' : 'bg-orange-500'}`}
-                  >
-                    {isPropre ? 'Restaurant propre' : 'Franchise'}
-                  </Badge>
-                )}
               </div>
             </div>
-
-            {/* Boutons d'action (mode edit uniquement) */}
-            {mode === 'edit' && data && !isLoading && (
-              <div className="flex items-center gap-2">
-                {!isEditing ? (
-                  <Button
-                    onClick={() => setIsEditing(true)}
-                    variant="outline"
-                    size="sm"
-                    className="shrink-0"
-                  >
-                    <Edit className="h-4 w-4 mr-1" />
-                    Modifier
-                  </Button>
-                ) : (
-                  <>
-                    <Button
-                      onClick={handleCancel}
-                      variant="outline"
-                      size="sm"
-                      className="shrink-0"
-                      disabled={updateMutation.isPending}
-                    >
-                      <X className="h-4 w-4 mr-1" />
-                      Annuler
-                    </Button>
-                    <Button
-                      onClick={handleSave}
-                      size="sm"
-                      className="bg-linkme-turquoise hover:bg-linkme-turquoise/90 text-white shrink-0"
-                      disabled={updateMutation.isPending}
-                    >
-                      {updateMutation.isPending ? (
-                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                      ) : (
-                        <Save className="h-4 w-4 mr-1" />
-                      )}
-                      Enregistrer
-                    </Button>
-                  </>
-                )}
-              </div>
-            )}
           </div>
         </SheetHeader>
 
@@ -669,240 +654,463 @@ export function OrganisationDetailSheet({
                 value="activite"
                 className="data-[state=active]:bg-linkme-turquoise data-[state=active]:text-white"
               >
-                Activite
+                Activité
               </TabsTrigger>
             </TabsList>
 
-            {/* Onglet Infos - Mode lecture ou édition */}
+            {/* Onglet Infos - Sections éditables */}
             <TabsContent value="infos" className="mt-4 space-y-3">
-              {!isEditing ? (
-                <>
-                  {/* Mode lecture */}
-                  <AddressCard
-                    title="Adresse de livraison"
-                    address={shippingAddress}
-                    icon={MapPin}
-                  />
-                  <AddressCard
-                    title="Adresse de facturation"
-                    address={billingAddress}
-                    icon={MapPin}
-                  />
-
-                  {/* Infos légales */}
-                  {(data.organisation.siren ||
-                    data.organisation.siret ||
-                    data.organisation.vat_number) && (
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
-                        Informations legales
-                      </p>
-                      <div className="space-y-1 text-sm text-gray-700">
-                        {data.organisation.siren && (
-                          <p>
-                            <span className="text-gray-500">SIREN :</span>{' '}
-                            {data.organisation.siren}
-                          </p>
-                        )}
-                        {data.organisation.siret && (
-                          <p>
-                            <span className="text-gray-500">SIRET :</span>{' '}
-                            {data.organisation.siret}
-                          </p>
-                        )}
-                        {data.organisation.vat_number && (
-                          <p>
-                            <span className="text-gray-500">TVA :</span>{' '}
-                            {data.organisation.vat_number}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <>
-                  {/* Mode édition - Formulaire inline */}
-                  <div className="space-y-4">
-                    {/* Nom commercial */}
-                    <div className="space-y-2">
+              {/* Section Type de propriété */}
+              <EditableSection
+                title="Type de propriété"
+                icon={Building2}
+                isIncomplete={!data.organisation.ownership_type}
+                isEditing={editingSection === 'ownership_type'}
+                onEdit={() => setEditingSection('ownership_type')}
+                onSave={handleSaveOwnershipType}
+                onCancel={() => {
+                  // Mapper 'propre' vers 'succursale' (propre est obsolète)
+                  const mappedOwnershipType =
+                    data.organisation.ownership_type === 'propre'
+                      ? 'succursale'
+                      : data.organisation.ownership_type;
+                  setOwnershipTypeForm(mappedOwnershipType);
+                  setEditingSection(null);
+                }}
+                isSaving={updateMutation.isPending}
+                mode={mode}
+                editContent={
+                  <RadioGroup
+                    value={ownershipTypeForm || ''}
+                    onValueChange={value =>
+                      setOwnershipTypeForm(value as 'succursale' | 'franchise')
+                    }
+                    className="space-y-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="succursale" id="succursale" />
                       <Label
-                        htmlFor="trade-name"
-                        className="text-sm font-medium"
+                        htmlFor="succursale"
+                        className="font-normal cursor-pointer"
                       >
-                        Nom commercial *
+                        Succursale (Restaurant propre)
                       </Label>
-                      <Input
-                        id="trade-name"
-                        value={formData.trade_name}
-                        onChange={e => {
-                          setFormData(prev => ({
-                            ...prev,
-                            trade_name: e.target.value,
-                          }));
-                          if (errors.trade_name) {
-                            setErrors(prev => ({ ...prev, trade_name: '' }));
-                          }
-                        }}
-                        placeholder="Nom affiché"
-                        className={cn(
-                          errors.trade_name &&
-                            'border-red-300 focus:border-red-500'
-                        )}
-                      />
-                      {errors.trade_name && (
-                        <p className="text-xs text-red-600">
-                          {errors.trade_name}
-                        </p>
-                      )}
                     </div>
-
-                    {/* Type de propriété */}
-                    <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="franchise" id="franchise" />
                       <Label
-                        htmlFor="ownership-type"
-                        className="text-sm font-medium"
+                        htmlFor="franchise"
+                        className="font-normal cursor-pointer"
                       >
-                        Type de propriété
+                        Franchise
                       </Label>
-                      <Select
-                        value={formData.ownership_type || ''}
-                        onValueChange={value => {
-                          setFormData(prev => ({
-                            ...prev,
-                            ownership_type: value as
-                              | 'propre'
-                              | 'succursale'
-                              | 'franchise'
-                              | null,
-                          }));
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Sélectionner un type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="propre">Propre</SelectItem>
-                          <SelectItem value="succursale">Succursale</SelectItem>
-                          <SelectItem value="franchise">Franchise</SelectItem>
-                        </SelectContent>
-                      </Select>
                     </div>
+                  </RadioGroup>
+                }
+              >
+                {ownershipType ? (
+                  <Badge
+                    variant={isPropre ? 'default' : 'secondary'}
+                    className={isPropre ? 'bg-blue-500' : 'bg-orange-500'}
+                  >
+                    {isPropre ? 'Succursale (Restaurant propre)' : 'Franchise'}
+                  </Badge>
+                ) : (
+                  <p className="text-sm text-gray-500">Non défini</p>
+                )}
+              </EditableSection>
 
-                    {/* Adresse de livraison */}
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">
-                        Adresse de livraison *
-                      </Label>
+              {/* Section Adresse de livraison */}
+              <EditableSection
+                title="Adresse de livraison"
+                icon={MapPin}
+                isIncomplete={!data.organisation.shipping_address_line1}
+                isEditing={editingSection === 'shipping'}
+                onEdit={() => setEditingSection('shipping')}
+                onSave={handleSaveShipping}
+                onCancel={() => {
+                  setShippingForm({
+                    shipping_address_line1:
+                      data.organisation.shipping_address_line1 || '',
+                    shipping_address_line2:
+                      data.organisation.shipping_address_line2 || '',
+                    shipping_city: data.organisation.shipping_city || '',
+                    shipping_postal_code:
+                      data.organisation.shipping_postal_code || '',
+                    shipping_country:
+                      data.organisation.shipping_country || 'France',
+                    latitude: data.organisation.latitude,
+                    longitude: data.organisation.longitude,
+                  });
+                  setEditingSection(null);
+                }}
+                isSaving={updateMutation.isPending}
+                mode={mode}
+                editContent={
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-sm">Adresse *</Label>
                       <AddressAutocomplete
-                        value={formData.shipping_address_line1}
-                        onChange={value => {
-                          setFormData(prev => ({
+                        value={shippingForm.shipping_address_line1}
+                        onChange={value =>
+                          setShippingForm(prev => ({
                             ...prev,
                             shipping_address_line1: value,
-                          }));
-                        }}
-                        onSelect={handleAddressSelect}
+                          }))
+                        }
+                        onSelect={handleShippingAddressSelect}
                         defaultCountry="FR"
                         placeholder="Rechercher une adresse..."
-                        error={errors.shipping_address_line1}
                       />
                     </div>
-
-                    {/* Complément d'adresse */}
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="address-line2"
-                        className="text-sm font-medium"
-                      >
-                        Complément d'adresse
-                      </Label>
+                    <div>
+                      <Label className="text-sm">Complément</Label>
                       <Input
-                        id="address-line2"
-                        value={formData.shipping_address_line2}
+                        value={shippingForm.shipping_address_line2}
                         onChange={e =>
-                          setFormData(prev => ({
+                          setShippingForm(prev => ({
                             ...prev,
                             shipping_address_line2: e.target.value,
                           }))
                         }
-                        placeholder="Bâtiment, étage, etc."
+                        placeholder="Bâtiment, étage..."
                       />
                     </div>
-
-                    {/* Ville (affichée, non éditable directement - vient de l'autocomplete) */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label htmlFor="city" className="text-sm font-medium">
-                          Ville *
-                        </Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-sm">Ville *</Label>
                         <Input
-                          id="city"
-                          value={formData.shipping_city}
-                          onChange={e => {
-                            setFormData(prev => ({
+                          value={shippingForm.shipping_city}
+                          onChange={e =>
+                            setShippingForm(prev => ({
                               ...prev,
                               shipping_city: e.target.value,
-                            }));
-                            if (errors.shipping_city) {
-                              setErrors(prev => ({
-                                ...prev,
-                                shipping_city: '',
-                              }));
-                            }
-                          }}
-                          className={cn(
-                            errors.shipping_city && 'border-red-300'
-                          )}
+                            }))
+                          }
                         />
-                        {errors.shipping_city && (
-                          <p className="text-xs text-red-600">
-                            {errors.shipping_city}
-                          </p>
-                        )}
                       </div>
-
-                      <div className="space-y-2">
-                        <Label
-                          htmlFor="postal-code"
-                          className="text-sm font-medium"
-                        >
-                          Code postal *
-                        </Label>
+                      <div>
+                        <Label className="text-sm">Code postal *</Label>
                         <Input
-                          id="postal-code"
-                          value={formData.shipping_postal_code}
-                          onChange={e => {
-                            setFormData(prev => ({
+                          value={shippingForm.shipping_postal_code}
+                          onChange={e =>
+                            setShippingForm(prev => ({
                               ...prev,
                               shipping_postal_code: e.target.value,
-                            }));
-                            if (errors.shipping_postal_code) {
-                              setErrors(prev => ({
-                                ...prev,
-                                shipping_postal_code: '',
-                              }));
-                            }
-                          }}
-                          className={cn(
-                            errors.shipping_postal_code && 'border-red-300'
-                          )}
+                            }))
+                          }
                         />
-                        {errors.shipping_postal_code && (
-                          <p className="text-xs text-red-600">
-                            {errors.shipping_postal_code}
-                          </p>
-                        )}
                       </div>
                     </div>
                   </div>
-                </>
-              )}
+                }
+              >
+                {shippingAddress ? (
+                  <p className="text-sm text-gray-900 whitespace-pre-line">
+                    {shippingAddress}
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-500">Non renseignée</p>
+                )}
+              </EditableSection>
+
+              {/* Section Adresse de facturation */}
+              <EditableSection
+                title="Adresse de facturation"
+                icon={CreditCard}
+                isIncomplete={!data.organisation.billing_address_line1}
+                isEditing={editingSection === 'billing'}
+                onEdit={() => setEditingSection('billing')}
+                onSave={handleSaveBilling}
+                onCancel={() => {
+                  setBillingForm({
+                    billing_address_line1:
+                      data.organisation.billing_address_line1 || '',
+                    billing_address_line2:
+                      data.organisation.billing_address_line2 || '',
+                    billing_city: data.organisation.billing_city || '',
+                    billing_postal_code:
+                      data.organisation.billing_postal_code || '',
+                    billing_country:
+                      data.organisation.billing_country || 'France',
+                  });
+                  setEditingSection(null);
+                }}
+                isSaving={updateMutation.isPending}
+                mode={mode}
+                editContent={
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-sm">Adresse *</Label>
+                      <AddressAutocomplete
+                        value={billingForm.billing_address_line1}
+                        onChange={value =>
+                          setBillingForm(prev => ({
+                            ...prev,
+                            billing_address_line1: value,
+                          }))
+                        }
+                        onSelect={handleBillingAddressSelect}
+                        defaultCountry="FR"
+                        placeholder="Rechercher une adresse..."
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm">Complément</Label>
+                      <Input
+                        value={billingForm.billing_address_line2}
+                        onChange={e =>
+                          setBillingForm(prev => ({
+                            ...prev,
+                            billing_address_line2: e.target.value,
+                          }))
+                        }
+                        placeholder="Bâtiment, étage..."
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-sm">Ville *</Label>
+                        <Input
+                          value={billingForm.billing_city}
+                          onChange={e =>
+                            setBillingForm(prev => ({
+                              ...prev,
+                              billing_city: e.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-sm">Code postal *</Label>
+                        <Input
+                          value={billingForm.billing_postal_code}
+                          onChange={e =>
+                            setBillingForm(prev => ({
+                              ...prev,
+                              billing_postal_code: e.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                }
+              >
+                {billingAddress ? (
+                  <p className="text-sm text-gray-900 whitespace-pre-line">
+                    {billingAddress}
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-500">Non renseignée</p>
+                )}
+              </EditableSection>
+
+              {/* Section Coordonnées */}
+              <EditableSection
+                title="Coordonnées"
+                icon={Phone}
+                isIncomplete={
+                  !data.organisation.phone && !data.organisation.email
+                }
+                isEditing={editingSection === 'contacts'}
+                onEdit={() => setEditingSection('contacts')}
+                onSave={handleSaveContacts}
+                onCancel={() => {
+                  setContactsForm({
+                    phone: data.organisation.phone || '',
+                    email: data.organisation.email || '',
+                    website: data.organisation.website || '',
+                  });
+                  setEditingSection(null);
+                }}
+                isSaving={updateMutation.isPending}
+                mode={mode}
+                editContent={
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-sm">Téléphone</Label>
+                      <Input
+                        type="tel"
+                        value={contactsForm.phone}
+                        onChange={e =>
+                          setContactsForm(prev => ({
+                            ...prev,
+                            phone: e.target.value,
+                          }))
+                        }
+                        placeholder="01 23 45 67 89"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm">Email</Label>
+                      <Input
+                        type="email"
+                        value={contactsForm.email}
+                        onChange={e =>
+                          setContactsForm(prev => ({
+                            ...prev,
+                            email: e.target.value,
+                          }))
+                        }
+                        placeholder="contact@restaurant.fr"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm">Site web</Label>
+                      <Input
+                        type="url"
+                        value={contactsForm.website}
+                        onChange={e =>
+                          setContactsForm(prev => ({
+                            ...prev,
+                            website: e.target.value,
+                          }))
+                        }
+                        placeholder="https://www.restaurant.fr"
+                      />
+                    </div>
+                  </div>
+                }
+              >
+                <div className="space-y-2">
+                  {data.organisation.phone && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Phone className="h-4 w-4 text-gray-400" />
+                      <span className="text-gray-900">
+                        {data.organisation.phone}
+                      </span>
+                    </div>
+                  )}
+                  {data.organisation.email && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Mail className="h-4 w-4 text-gray-400" />
+                      <span className="text-gray-900">
+                        {data.organisation.email}
+                      </span>
+                    </div>
+                  )}
+                  {data.organisation.website && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Globe className="h-4 w-4 text-gray-400" />
+                      <a
+                        href={data.organisation.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-linkme-turquoise hover:underline"
+                      >
+                        {data.organisation.website}
+                      </a>
+                    </div>
+                  )}
+                  {!data.organisation.phone &&
+                    !data.organisation.email &&
+                    !data.organisation.website && (
+                      <p className="text-sm text-gray-500">Non renseignées</p>
+                    )}
+                </div>
+              </EditableSection>
+
+              {/* Section Informations légales */}
+              <EditableSection
+                title="Informations légales"
+                icon={FileText}
+                isIncomplete={!data.organisation.siret}
+                isEditing={editingSection === 'legal'}
+                onEdit={() => setEditingSection('legal')}
+                onSave={handleSaveLegal}
+                onCancel={() => {
+                  setLegalForm({
+                    siren: data.organisation.siren || '',
+                    siret: data.organisation.siret || '',
+                    vat_number: data.organisation.vat_number || '',
+                  });
+                  setEditingSection(null);
+                }}
+                isSaving={updateMutation.isPending}
+                mode={mode}
+                editContent={
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-sm">SIREN (9 chiffres)</Label>
+                      <Input
+                        value={legalForm.siren}
+                        onChange={e =>
+                          setLegalForm(prev => ({
+                            ...prev,
+                            siren: e.target.value,
+                          }))
+                        }
+                        placeholder="123456789"
+                        maxLength={9}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm">SIRET (14 chiffres)</Label>
+                      <Input
+                        value={legalForm.siret}
+                        onChange={e =>
+                          setLegalForm(prev => ({
+                            ...prev,
+                            siret: e.target.value,
+                          }))
+                        }
+                        placeholder="12345678901234"
+                        maxLength={14}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm">Numéro de TVA</Label>
+                      <Input
+                        value={legalForm.vat_number}
+                        onChange={e =>
+                          setLegalForm(prev => ({
+                            ...prev,
+                            vat_number: e.target.value,
+                          }))
+                        }
+                        placeholder="FR12345678901"
+                      />
+                    </div>
+                  </div>
+                }
+              >
+                <div className="space-y-2 text-sm">
+                  {data.organisation.siren && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">SIREN :</span>
+                      <span className="text-gray-900 font-medium">
+                        {data.organisation.siren}
+                      </span>
+                    </div>
+                  )}
+                  {data.organisation.siret && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">SIRET :</span>
+                      <span className="text-gray-900 font-medium">
+                        {data.organisation.siret}
+                      </span>
+                    </div>
+                  )}
+                  {data.organisation.vat_number && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">TVA :</span>
+                      <span className="text-gray-900 font-medium">
+                        {data.organisation.vat_number}
+                      </span>
+                    </div>
+                  )}
+                  {!data.organisation.siren &&
+                    !data.organisation.siret &&
+                    !data.organisation.vat_number && (
+                      <p className="text-gray-500">Non renseignées</p>
+                    )}
+                </div>
+              </EditableSection>
             </TabsContent>
 
             {/* Onglet Contacts */}
             <TabsContent value="contacts" className="mt-4 space-y-3">
-              {/* Loading state for contacts */}
               {contactsLoading && (
                 <div className="space-y-2">
                   <Skeleton className="h-24 w-full" />
@@ -910,7 +1118,6 @@ export function OrganisationDetailSheet({
                 </div>
               )}
 
-              {/* Liste des contacts */}
               {!contactsLoading &&
                 contactsData?.contacts &&
                 contactsData.contacts.length > 0 && (
@@ -921,13 +1128,12 @@ export function OrganisationDetailSheet({
                   </div>
                 )}
 
-              {/* Aucun contact */}
               {!contactsLoading &&
                 (!contactsData?.contacts ||
                   contactsData.contacts.length === 0) && (
                   <div className="text-center py-8 text-gray-400">
                     <User className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    <p>Aucun contact renseigne</p>
+                    <p>Aucun contact renseigné</p>
                   </div>
                 )}
             </TabsContent>
@@ -959,7 +1165,7 @@ export function OrganisationDetailSheet({
               {/* Dernières commandes */}
               <div>
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
-                  Dernieres commandes
+                  Dernières commandes
                 </p>
                 {data.recentOrders.length > 0 ? (
                   <div className="bg-gray-50 rounded-lg p-2">
