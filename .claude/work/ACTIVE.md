@@ -15,8 +15,9 @@
 | LM-ORD-004 | Pré-remplissage contacts - Phases 1-4 (code terminé) | 880af835, 9329ba7e | ~100 |
 | LM-AUTH-001 | Fix spinner infini LinkMe | 20658534 | ~50 |
 | Sentry Config | Migration Next.js 15 instrumentation | 8184e314, 125f3ee8 | ~80 |
+| WEB-DEV-001 | Fix symlink node_modules/next | 1237dab9 | ~0 |
 
-**Temps total session**: ~5h30
+**Temps total session**: ~6h
 **Tests requis**: LM-SEL-003 (tests visuels par utilisateur)
 
 ---
@@ -39,10 +40,7 @@
 **3. LM-ORG-003** - Popup Carte Organisations (~45 min)
 - 8 tâches pour `/organisations?tab=map`
 
-**4. WEB-DEV-001** - Fix Symlink (~10 min)
-- `pnpm install --force`
-
-**5. site-internet/.env.local** - Action manuelle
+**4. site-internet/.env.local** - Action manuelle
 - `cp apps/back-office/.env.local apps/site-internet/.env.local`
 
 ---
@@ -122,24 +120,6 @@
 - [ ] **LM-ORG-003-6**: Fonction utilitaire formatAddress
 - [ ] **LM-ORG-003-7**: Tester le popup
 - [ ] **LM-ORG-003-8**: Tester responsive
-
----
-
-## 📋 TASK: WEB-DEV-001 — Fix Symlink node_modules/next
-
-**Contexte**: Symlink cassé empêche démarrage site-internet
-
-**Commandes** (~10 min):
-```bash
-cd /Users/romeodossantos/verone-back-office-V1
-pnpm install --force
-pnpm dev
-```
-
-**Vérifications**:
-- [ ] **WEB-DEV-001-1**: Réinstaller dépendances
-- [ ] **WEB-DEV-001-2**: Vérifier symlink créé
-- [ ] **WEB-DEV-001-3**: Tester démarrage 3 apps (ports 3000, 3001, 3002)
 
 ---
 
