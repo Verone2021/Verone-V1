@@ -1,7 +1,7 @@
 # Documentation Verone Back Office
 
-**Version** : 5.0 - Post-cleanup
-**Date** : 2025-12-17
+**Version** : 6.0 - Post-cleanup 2026-01
+**Date** : 2026-01-09
 
 ---
 
@@ -9,41 +9,45 @@
 
 **Commencer ici** - Ces docs sont verifiees et a jour :
 
-| Doc | Description |
-|-----|-------------|
-| [01-Quickstart](./current/01-quickstart.md) | Demarrage rapide |
-| [02-Architecture](./current/02-architecture.md) | Turborepo, apps, packages |
-| [03-Database](./current/03-database.md) | Supabase, triggers, RLS |
-| [04-Auth](./current/04-auth.md) | Roles, permissions |
-| [05-API](./current/05-api.md) | REST, RPC, webhooks |
-| [06-Business-Rules](./current/06-business-rules.md) | Regles metier |
-| [07-Deployment](./current/07-deployment.md) | Vercel, CI/CD |
-| [08-Integrations](./current/08-integrations.md) | Google Merchant, Qonto, Abby |
-| [09-Design-System](./current/09-design-system.md) | Composants shadcn |
-| [10-Testing](./current/10-testing.md) | Playwright E2E |
-| [11-Monitoring](./current/11-monitoring.md) | Observabilite |
-| [12-Security](./current/12-security.md) | RLS, secrets, RGPD |
+| Doc                                                         | Description               |
+| ----------------------------------------------------------- | ------------------------- |
+| [index](./current/index.md)                                 | Table des matieres        |
+| [stack](./current/stack.md)                                 | Technologies actives      |
+| [dev-workflow](./current/dev-workflow.md)                   | Workflow developpement    |
+| [architecture](./current/architecture.md)                   | Turborepo, apps, packages |
+| [database](./current/database.md)                           | Supabase, migrations, RLS |
+| [security-auth](./current/security-auth.md)                 | Auth, roles, permissions  |
+| [integrations](./current/integrations.md)                   | Qonto, Sentry, etc.       |
+| [deploy-runbooks](./current/deploy-runbooks.md)             | Vercel, CI/CD             |
+| [business-rules-linkme](./current/business-rules-linkme.md) | Workflows LinkMe          |
 
 ---
 
-## Autres ressources
+## Structure
 
-| Section | Description |
-|---------|-------------|
-| [auth/](./auth/) | Roles, permissions, RLS detaille |
-| [architecture/decisions/](./architecture/decisions/) | ADRs (Architecture Decision Records) |
-| [guides/](./guides/) | Guides pratiques par categorie |
-| [workflows/](./workflows/) | Workflows metier (owner, admin) |
-| [legal/](./legal/) | RGPD, notices legales |
+```
+docs/
+├── current/          # Source de verite (9 fichiers)
+├── archive/2026-01/  # Documentation archivee
+└── assets/           # Images, schemas
+```
 
 ---
 
 ## Regles
 
-- **Source de verite** : `docs/current/*.md`
+- **Source de verite** : `docs/current/*.md` uniquement
 - **Code > Docs** : En cas de conflit, le code gagne
 - **Pas de duplication** : 1 sujet = 1 doc
+- **Max 10 fichiers** dans docs/current/
 
 ---
 
-*Verone Back Office 2025 - Turborepo Monorepo*
+## Archives
+
+Documentation archivee disponible dans `docs/archive/2026-01/`.
+Voir le [manifest d'archive](./archive/2026-01/ARCHIVE_MANIFEST.md) pour retrouver les anciennes infos.
+
+---
+
+_Verone Back Office 2026 - Turborepo Monorepo_

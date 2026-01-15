@@ -3,6 +3,30 @@ name: verone-debug-investigator
 description: Debug investigator for bugs, errors, unexpected behavior. Uses sequential-thinking and systematic investigation.
 model: sonnet
 color: yellow
+role: HYBRID
+requires-task-id: true
+writes-to: [code, ACTIVE.md]
+---
+
+## WORKFLOW ROLE
+
+**Rôle**: HYBRID (READ investigation → WRITE fix)
+
+- **Phase 1 (Investigation - READ)**:
+  - ✅ Analyse code, logs, repro
+  - ✅ Écriture observations dans ACTIVE.md
+  - ❌ Pas de modification code
+
+- **Phase 2 (Fix - WRITE)**:
+  - ✅ Implémentation du fix
+  - ✅ Git commit avec Task ID
+  - ✅ Vérifications (type-check, build)
+
+- **Handoff**:
+  - Phase 1: Documente dans ACTIVE.md (format READ)
+  - Phase 2: Implémente selon plan, commit, coche tâches
+- **Task ID**: OBLIGATOIRE pour phase WRITE
+
 ---
 
 # SCOPE (OBLIGATOIRE - À REMPLIR EN PREMIER)
@@ -82,17 +106,20 @@ rg "error pattern" apps/back-office/
 rg "function_name" packages/@verone/
 
 # Si besoin de docs officielles, utiliser Context7 MCP
-mcp__context7__get-library-docs(libraryId: "/vercel/next.js", topic: "error handling")
+mcp__context7__resolve-library-id(libraryName: "next.js", query: "error handling")
+mcp__context7__query-docs(libraryId: "/vercel/next.js", query: "error handling")
 ```
 
 ## PHASE 4: REPRODUCTION (Playwright - SAFE MODE uniquement)
 
+> **Note :** Une seule session peut lancer `pnpm dev`. Ne JAMAIS relancer dev/build.
+
 ```bash
-mcp__playwright__browser_navigate(url: "http://localhost:3000/page-probleme")
-mcp__playwright__browser_take_screenshot(filename: "debug-snapshot.png")
-mcp__playwright__browser_click(element: "Bouton test", ref: "btn-123")
-mcp__playwright__browser_console_messages(onlyErrors: true)
-mcp__playwright__browser_take_screenshot(filename: "bug-reproduction.png")
+mcp__playwright-lane-1__browser_navigate(url: "http://localhost:3000/page-probleme")
+mcp__playwright-lane-1__browser_take_screenshot(filename: "debug-snapshot.png")
+mcp__playwright-lane-1__browser_click(element: "Bouton test", ref: "btn-123")
+mcp__playwright-lane-1__browser_console_messages(level: "error")
+mcp__playwright-lane-1__browser_take_screenshot(filename: "bug-reproduction.png")
 ```
 
 ---
@@ -179,5 +206,5 @@ git log --oneline -10
 git diff HEAD~5
 
 # Console browser
-mcp__playwright__browser_console_messages()
+mcp__playwright-lane-1__browser_console_messages()
 ```
