@@ -35,10 +35,17 @@ import {
   MapPin,
   Wallet,
   Calendar,
+  Pencil,
 } from 'lucide-react';
 
 import { CreateOrderModal } from './components/CreateOrderModal';
-import { useLinkMeOrders } from '../../../hooks/use-linkme-orders';
+import { EditOrderModal } from './components/EditOrderModal';
+import { OrderDetailModal } from './components/OrderDetailModal';
+import {
+  useLinkMeOrders,
+  type LinkMeOrder,
+} from '../../../hooks/use-linkme-orders';
+import { useAffiliateCommissionStats } from '../../../lib/hooks/use-affiliate-commission-stats';
 import { useUserAffiliate } from '../../../lib/hooks/use-user-selection';
 
 // Mapping des statuts DB → Labels
@@ -62,13 +69,23 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
 };
 
 // Onglets alignes avec Back-Office (source de verite)
-type TabType = 'all' | 'draft' | 'validated' | 'shipped' | 'cancelled';
+type TabType =
+  | 'all'
+  | 'pending_approval'
+  | 'draft'
+  | 'validated'
+  | 'shipped'
+  | 'cancelled';
 
 export default function CommandesPage(): JSX.Element {
   // State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<LinkMeOrder | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [orderToEdit, setOrderToEdit] = useState<LinkMeOrder | null>(null);
 
   // Data - Affilié et ses commandes
   const { data: affiliate, isLoading: affiliateLoading } = useUserAffiliate();
@@ -84,12 +101,18 @@ export default function CommandesPage(): JSX.Element {
     enabled: !!affiliate?.id,
   });
 
-  const isLoading = affiliateLoading || ordersLoading || kpisLoading;
+  // SOURCE DE VÉRITÉ: Statistiques commissions depuis linkme_commissions
+  const { data: commissionStats, isLoading: commissionStatsLoading } =
+    useAffiliateCommissionStats();
+
+  const isLoading =
+    affiliateLoading || ordersLoading || kpisLoading || commissionStatsLoading;
 
   // KPIs par statut (comptages locaux depuis les commandes)
   const statusKpis = useMemo(() => {
     const defaults = {
       total: 0,
+      pendingApproval: 0,
       draft: 0,
       validated: 0,
       shipped: 0,
@@ -100,6 +123,8 @@ export default function CommandesPage(): JSX.Element {
 
     return {
       total: orders.length,
+      pendingApproval: orders.filter(o => o.pending_admin_validation === true)
+        .length,
       draft: orders.filter(o => o.status === 'draft').length,
       validated: orders.filter(o => o.status === 'validated').length,
       shipped: orders.filter(o =>
@@ -114,6 +139,8 @@ export default function CommandesPage(): JSX.Element {
     if (!orders) return [];
 
     switch (activeTab) {
+      case 'pending_approval':
+        return orders.filter(o => o.pending_admin_validation === true);
       case 'draft':
         return orders.filter(o => o.status === 'draft');
       case 'validated':
@@ -131,6 +158,29 @@ export default function CommandesPage(): JSX.Element {
 
   const toggleOrder = (orderId: string) => {
     setExpandedOrderId(prev => (prev === orderId ? null : orderId));
+  };
+
+  const openDetailModal = (order: LinkMeOrder, e: React.MouseEvent) => {
+    e.stopPropagation(); // Empecher le toggle expand
+    setSelectedOrder(order);
+    setIsDetailModalOpen(true);
+  };
+
+  const closeDetailModal = () => {
+    setIsDetailModalOpen(false);
+    setSelectedOrder(null);
+  };
+
+  // Handler pour ouvrir le modal d'édition (commandes brouillon uniquement)
+  const openEditModal = (order: LinkMeOrder, e: React.MouseEvent) => {
+    e.stopPropagation(); // Empêcher le toggle expand
+    setOrderToEdit(order);
+    setIsEditModalOpen(true);
+  };
+
+  const closeEditModal = () => {
+    setIsEditModalOpen(false);
+    setOrderToEdit(null);
   };
 
   return (
@@ -155,9 +205,9 @@ export default function CommandesPage(): JSX.Element {
       </div>
 
       <div className="p-6 space-y-6">
-        {/* KPIs Dashboard - Mois en cours avec variations */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {/* Commandes ce mois */}
+        {/* KPIs Dashboard - Totaux */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* Commandes totales */}
           <div className="bg-white rounded-xl border p-5 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-blue-100 rounded-lg">
@@ -166,19 +216,13 @@ export default function CommandesPage(): JSX.Element {
               <div>
                 <p className="text-sm text-gray-500">Commandes</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {monthlyKPIs?.currentMonth.ordersCount ?? 0}
-                </p>
-                <p
-                  className={`text-xs ${getVariationColor(monthlyKPIs?.variations.ordersCount ?? 0)}`}
-                >
-                  {formatVariation(monthlyKPIs?.variations.ordersCount ?? 0)} vs
-                  mois dernier
+                  {monthlyKPIs?.allTime.ordersCount ?? 0}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* CA TTC ce mois */}
+          {/* CA TTC total */}
           <div className="bg-white rounded-xl border p-5 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-indigo-100 rounded-lg">
@@ -187,20 +231,11 @@ export default function CommandesPage(): JSX.Element {
               <div>
                 <p className="text-sm text-gray-500">CA TTC</p>
                 <p className="text-2xl font-bold text-indigo-600">
-                  {(monthlyKPIs?.currentMonth.caTTC ?? 0).toLocaleString(
-                    'fr-FR',
-                    {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    }
-                  )}{' '}
+                  {(monthlyKPIs?.allTime.caTTC ?? 0).toLocaleString('fr-FR', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                  })}{' '}
                   €
-                </p>
-                <p
-                  className={`text-xs ${getVariationColor(monthlyKPIs?.variations.caTTC ?? 0)}`}
-                >
-                  {formatVariation(monthlyKPIs?.variations.caTTC ?? 0)} vs mois
-                  dernier
                 </p>
               </div>
             </div>
@@ -215,72 +250,38 @@ export default function CommandesPage(): JSX.Element {
               <div>
                 <p className="text-sm text-gray-500">Panier Moyen</p>
                 <p className="text-2xl font-bold text-purple-600">
-                  {(monthlyKPIs?.currentMonth.panierMoyen ?? 0).toLocaleString(
-                    'fr-FR',
-                    {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    }
-                  )}{' '}
+                  {monthlyKPIs?.allTime.ordersCount
+                    ? (
+                        (monthlyKPIs?.allTime.caTTC ?? 0) /
+                        monthlyKPIs.allTime.ordersCount
+                      ).toLocaleString('fr-FR', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                      })
+                    : 0}{' '}
                   €
-                </p>
-                <p
-                  className={`text-xs ${getVariationColor(monthlyKPIs?.variations.panierMoyen ?? 0)}`}
-                >
-                  {formatVariation(monthlyKPIs?.variations.panierMoyen ?? 0)} vs
-                  mois dernier
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Commissions ce mois */}
+          {/* Commissions totales (TTC) - SOURCE DE VÉRITÉ: linkme_commissions */}
           <div className="bg-white rounded-xl border p-5 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-emerald-100 rounded-lg">
                 <Wallet className="h-6 w-6 text-emerald-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">Commissions</p>
+                <p className="text-sm text-gray-500">Commissions TTC</p>
                 <p className="text-2xl font-bold text-emerald-600">
-                  {(
-                    monthlyKPIs?.currentMonth.commissionsHT ?? 0
-                  ).toLocaleString('fr-FR', {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0,
-                  })}{' '}
-                  €
-                </p>
-                <p
-                  className={`text-xs ${getVariationColor(monthlyKPIs?.variations.commissionsHT ?? 0)}`}
-                >
-                  {formatVariation(monthlyKPIs?.variations.commissionsHT ?? 0)}{' '}
-                  vs mois dernier
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Total historique */}
-          <div className="bg-white rounded-xl border p-5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-gray-100 rounded-lg">
-                <Calendar className="h-6 w-6 text-gray-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Total historique</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {monthlyKPIs?.allTime.ordersCount ?? 0}
-                </p>
-                <p className="text-xs text-gray-400">
-                  {(monthlyKPIs?.allTime.commissionsHT ?? 0).toLocaleString(
+                  {(commissionStats?.total.amountTTC ?? 0).toLocaleString(
                     'fr-FR',
                     {
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 0,
                     }
                   )}{' '}
-                  € gagnés
+                  €
                 </p>
               </div>
             </div>
@@ -297,6 +298,12 @@ export default function CommandesPage(): JSX.Element {
                   label: 'Toutes',
                   count: statusKpis.total,
                   color: 'blue',
+                },
+                {
+                  id: 'pending_approval' as const,
+                  label: 'En approbation',
+                  count: statusKpis.pendingApproval,
+                  color: 'teal',
                 },
                 {
                   id: 'draft' as const,
@@ -328,13 +335,15 @@ export default function CommandesPage(): JSX.Element {
                 const badgeColor =
                   tab.color === 'orange'
                     ? 'bg-amber-100 text-amber-600'
-                    : tab.color === 'green'
-                      ? 'bg-green-100 text-green-600'
-                      : tab.color === 'gray'
-                        ? 'bg-gray-100 text-gray-500'
-                        : isActive
-                          ? 'bg-blue-100 text-blue-600'
-                          : 'bg-gray-100 text-gray-500';
+                    : tab.color === 'teal'
+                      ? 'bg-teal-100 text-teal-600'
+                      : tab.color === 'green'
+                        ? 'bg-green-100 text-green-600'
+                        : tab.color === 'gray'
+                          ? 'bg-gray-100 text-gray-500'
+                          : isActive
+                            ? 'bg-blue-100 text-blue-600'
+                            : 'bg-gray-100 text-gray-500';
 
                 return (
                   <button
@@ -470,6 +479,32 @@ export default function CommandesPage(): JSX.Element {
                                 +{order.total_affiliate_margin.toFixed(2)} €
                               </p>
                             </div>
+
+                            {/* Badge En attente validation (si en attente) */}
+                            {order.pending_admin_validation && (
+                              <span className="px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-100 rounded-full">
+                                En attente validation Vérone
+                              </span>
+                            )}
+
+                            {/* Bouton Modifier (brouillon uniquement) */}
+                            {order.status === 'draft' && (
+                              <button
+                                onClick={e => openEditModal(order, e)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-amber-600 hover:text-white hover:bg-amber-500 border border-amber-400 rounded-lg transition-colors"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                                Modifier
+                              </button>
+                            )}
+
+                            {/* Bouton Details */}
+                            <button
+                              onClick={e => openDetailModal(order, e)}
+                              className="px-3 py-1.5 text-sm font-medium text-[#5DBEBB] hover:text-white hover:bg-[#5DBEBB] border border-[#5DBEBB] rounded-lg transition-colors"
+                            >
+                              Détails
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -599,6 +634,20 @@ export default function CommandesPage(): JSX.Element {
       <CreateOrderModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+      />
+
+      {/* Modal detail commande */}
+      <OrderDetailModal
+        order={selectedOrder}
+        isOpen={isDetailModalOpen}
+        onClose={closeDetailModal}
+      />
+
+      {/* Modal édition commande brouillon */}
+      <EditOrderModal
+        order={orderToEdit}
+        isOpen={isEditModalOpen}
+        onClose={closeEditModal}
       />
     </div>
   );

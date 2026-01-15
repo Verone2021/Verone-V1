@@ -82,6 +82,10 @@ export interface LinkMeCatalogProduct {
   is_sourced: boolean;
   /** ID affilié créateur (produit créé par affilié) */
   created_by_affiliate: string | null;
+  /** Commission Vérone sur produit affilié (%) */
+  affiliate_commission_rate: number | null;
+  /** Payout affilié par unité vendue (HT) */
+  affiliate_payout_ht: number | null;
 }
 
 /**
@@ -156,7 +160,9 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
         supplier_id,
         enseigne_id,
         assigned_client_id,
-        created_by_affiliate
+        created_by_affiliate,
+        affiliate_commission_rate,
+        affiliate_payout_ht
       )
     `
     )
@@ -338,6 +344,9 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
             cp.products?.enseigne_id || cp.products?.assigned_client_id
           ),
           created_by_affiliate: cp.products?.created_by_affiliate || null,
+          affiliate_commission_rate:
+            cp.products?.affiliate_commission_rate ?? null,
+          affiliate_payout_ht: cp.products?.affiliate_payout_ht ?? null,
         };
       })
       // Filtre: exclure les produits sourcés sans affiliés actifs
@@ -884,6 +893,7 @@ async function fetchLinkMeProductDetail(
         selling_points,
         created_by_affiliate,
         affiliate_commission_rate,
+        affiliate_payout_ht,
         affiliate_approval_status
       )
     `
@@ -1018,6 +1028,7 @@ async function fetchLinkMeProductDetail(
     created_by_affiliate: product.created_by_affiliate || null,
     affiliate_name: affiliateName,
     affiliate_commission_rate: product.affiliate_commission_rate ?? null,
+    affiliate_payout_ht: product.affiliate_payout_ht ?? null,
     affiliate_approval_status: product.affiliate_approval_status ?? null,
     subcategory_id: product.subcategory_id,
     supplier_id: product.supplier_id,

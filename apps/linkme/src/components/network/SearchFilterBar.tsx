@@ -4,7 +4,7 @@ import { Search, X, Filter, ChevronDown } from 'lucide-react';
 
 import type { AffiliateCustomer } from '@/lib/hooks/use-affiliate-orders';
 
-export type NetworkFilterType = 'all' | 'propre' | 'franchise';
+export type NetworkFilterType = 'all' | 'succursale' | 'franchise';
 
 interface SearchFilterBarProps {
   searchQuery: string;
@@ -64,7 +64,7 @@ export function SearchFilterBar({
           className="w-full sm:w-[160px] pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white cursor-pointer"
         >
           <option value="all">Tous</option>
-          <option value="propre">Propres</option>
+          <option value="succursale">Propres (Succursales)</option>
           <option value="franchise">Franchises</option>
         </select>
         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
@@ -138,7 +138,7 @@ export function filterOrganisations(
     }
 
     // Filtre type
-    if (filterType === 'propre' && org.is_franchisee) {
+    if (filterType === 'succursale' && org.is_franchisee) {
       return false;
     }
     if (filterType === 'franchise' && !org.is_franchisee) {

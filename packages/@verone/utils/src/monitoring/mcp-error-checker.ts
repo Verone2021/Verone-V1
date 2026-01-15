@@ -5,10 +5,10 @@
  * Compatible avec Console Error Tracker global
  *
  * Usage (MCP Playwright Browser uniquement) :
- * 1. mcp__playwright__browser_navigate(url)
- * 2. mcp__playwright__browser_wait_for(time: 2)
- * 3. mcp__playwright__browser_evaluate({ function: "() => window.__consoleErrorTracker?.getErrors() || []" })
- * 4. mcp__playwright__browser_console_messages({ onlyErrors: true })
+ * 1. mcp__playwright-lane-1__browser_navigate(url)
+ * 2. mcp__playwright-lane-1__browser_wait_for(time: 2)
+ * 3. mcp__playwright-lane-1__browser_evaluate({ function: "() => window.__consoleErrorTracker?.getErrors() || []" })
+ * 4. mcp__playwright-lane-1__browser_console_messages(level: "error")
  */
 
 export interface MCPErrorCheckResult {
@@ -123,21 +123,21 @@ export const MCP_ERROR_CHECK_WORKFLOW = `
 # MCP Playwright Error Checking Workflow
 
 ## 1. Naviguer vers la page
-mcp__playwright__browser_navigate({ url: "http://localhost:3000/page" })
+mcp__playwright-lane-1__browser_navigate({ url: "http://localhost:3000/page" })
 
 ## 2. Attendre chargement complet
-mcp__playwright__browser_wait_for({ time: 2 })
+mcp__playwright-lane-1__browser_wait_for({ time: 2 })
 
 ## 3. Récupérer erreurs console (trackées)
-mcp__playwright__browser_evaluate({
+mcp__playwright-lane-1__browser_evaluate({
   function: "() => window.__consoleErrorTracker?.getErrors() || []"
 })
 
 ## 4. Récupérer console messages bruts
-mcp__playwright__browser_console_messages({ onlyErrors: true })
+mcp__playwright-lane-1__browser_console_messages({ level: "error" })
 
 ## 5. Prendre screenshot si erreurs
-mcp__playwright__browser_take_screenshot({
+mcp__playwright-lane-1__browser_take_screenshot({
   filename: "error-screenshot.png"
 })
 `;
