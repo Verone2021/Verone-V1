@@ -2,6 +2,7 @@ const { withSentryConfig } = require('@sentry/nextjs');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Sentry Pro 2026 configured - requires deployment (2026-01-15)
   reactStrictMode: true,
   eslint: {
     // Warnings ESLint sont traités pendant le dev, pas le build
