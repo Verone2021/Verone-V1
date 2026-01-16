@@ -50,3 +50,11 @@ docs/**/*.ts
 # Scripts (special config)
 scripts/**/*.ts
 scripts/**/*.mjs
+
+# Sentry config files (LinkMe + Back-Office)
+apps/linkme/sentry.edge.config.ts
+apps/linkme/sentry.client.config.ts
+apps/linkme/sentry.server.config.ts
+apps/back-office/sentry.edge.config.ts
+apps/back-office/sentry.client.config.ts
+apps/back-office/sentry.server.config.ts
