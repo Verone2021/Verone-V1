@@ -1,0 +1,8 @@
+# Sentry configuration files
+sentry.edge.config.ts
+sentry.client.config.ts
+sentry.server.config.ts
+
+# Supabase generated types
+src/types/supabase.d.ts
+**/*.d.ts
