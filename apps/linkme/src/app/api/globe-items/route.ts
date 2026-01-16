@@ -20,7 +20,7 @@ type GlobeItem = {
 type ProductRow = {
   id: string;
   name: string;
-  image_url: string | null;
+  product_images: Array<{ public_url: string }>;
 };
 
 type OrganisationRow = {
@@ -33,70 +33,32 @@ export async function GET(): Promise<NextResponse> {
   try {
     const supabase = await createServerClient();
 
-    // Essayer d'abord la vue (si migration appliquée)
+    // Utiliser la vue linkme_globe_items (créée par migration 20260106)
     const { data: viewData, error: viewError } = await supabase
       .from('linkme_globe_items')
       .select('item_type, id, name, image_url')
       .limit(50);
 
-    if (!viewError && viewData && viewData.length > 0) {
-      return NextResponse.json({
-        items: viewData as GlobeItem[],
-        count: viewData.length,
-      });
-    }
+    console.log('[API GLOBE] Vue linkme_globe_items:', {
+      error: viewError?.message || null,
+      count: viewData?.length ?? 0,
+      sample: viewData?.[0] || null,
+    });
 
-    // Fallback: requêtes séparées si la vue n'existe pas
-    const [productsResult, orgsResult] = await Promise.all([
-      supabase
-        .from('products')
-        .select('id, name, image_url')
-        .eq('show_on_linkme_globe', true)
-        .not('image_url', 'is', null)
-        .limit(25),
-      supabase
-        .from('organisations')
-        .select('id, name, logo_url')
-        .eq('show_on_linkme_globe', true)
-        .not('logo_url', 'is', null)
-        .limit(25),
-    ]);
-
-    const items: GlobeItem[] = [];
-
-    // Ajouter les produits
-    if (productsResult.data) {
-      const products = productsResult.data as ProductRow[];
-      products.forEach(p => {
-        if (p.image_url) {
-          items.push({
-            item_type: 'product',
-            id: p.id,
-            name: p.name,
-            image_url: p.image_url,
-          });
-        }
-      });
-    }
-
-    // Ajouter les organisations
-    if (orgsResult.data) {
-      const orgs = orgsResult.data as OrganisationRow[];
-      orgs.forEach(o => {
-        if (o.logo_url) {
-          items.push({
-            item_type: 'organisation',
-            id: o.id,
-            name: o.name,
-            image_url: o.logo_url,
-          });
-        }
-      });
+    if (viewError) {
+      console.error('[API GLOBE] View error:', viewError);
+      return NextResponse.json(
+        {
+          error: 'Vue linkme_globe_items not found. Run migration 20260106.',
+          items: [],
+        },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({
-      items,
-      count: items.length,
+      items: viewData as GlobeItem[],
+      count: viewData?.length ?? 0,
     });
   } catch (error) {
     console.error('Error fetching globe items:', error);
