@@ -6,16 +6,19 @@
  *
  * Comportement:
  * - Routes protégées → Redirige vers /login si non connecté
- * - /login → Accessible sans auth (redirection côté client si connecté)
+ * - /login → Redirige vers /dashboard si déjà connecté
  * - / → Redirige vers /login
  *
  * @module middleware
  * @since 2026-01-07
- * @updated 2026-01-16 - Pattern officiel Supabase SSR
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
+
+import {
+  createMiddlewareClient,
+  updateSession,
+} from '@/lib/supabase-middleware';
 
 // Routes PUBLIQUES (whitelist) - TOUTES les autres sont protégées
 const PUBLIC_PAGES = ['/login'];
@@ -61,51 +64,38 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // Créer client Supabase avec pattern officiel SSR
-  // ⚠️ IMPORTANT: setAll() DOIT créer et RETOURNER le response (pattern officiel)
-  let response = NextResponse.next({
-    request,
-  });
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          // Mettre à jour les cookies sur la requête
-          cookiesToSet.forEach(({ name, value }) => {
-            request.cookies.set(name, value);
-          });
-
-          // Créer nouvelle response avec requête mise à jour
-          response = NextResponse.next({
-            request,
-          });
-
-          // Mettre à jour les cookies sur la réponse
-          cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, options);
-          });
-        },
-      },
-    }
-  );
-
-  // Vérifier l'authentification (rafraîchit automatiquement la session si expirée)
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Mettre à jour la session Supabase (rafraîchir le token si nécessaire)
+  const response = await updateSession(request);
 
   // Route publique → laisser passer
   if (isPublicRoute(pathname)) {
+    // Si sur /login et déjà connecté → rediriger vers dashboard
+    if (pathname === '/login') {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const { supabase } = createMiddlewareClient(request);
+      const {
+        data: { user },
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      } = await (supabase.auth.getUser() as Promise<{
+        data: { user: unknown };
+      }>);
+
+      if (user) {
+        return NextResponse.redirect(new URL('/dashboard', request.url));
+      }
+    }
     return response;
   }
 
-  // Route PROTÉGÉE → vérifier si user connecté
+  // Route PROTÉGÉE → vérifier l'authentification
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const { supabase, response: middlewareResponse } =
+    createMiddlewareClient(request);
+  const {
+    data: { user },
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+  } = await (supabase.auth.getUser() as Promise<{ data: { user: unknown } }>);
+
   if (!user) {
     // Non authentifié → rediriger vers /login avec URL de retour
     const loginUrl = new URL('/login', request.url);
@@ -114,7 +104,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   }
 
   // Authentifié → accès autorisé
-  return response;
+  return middlewareResponse;
 }
 
 // Matcher: exclut les assets statiques et fichiers Next.js
