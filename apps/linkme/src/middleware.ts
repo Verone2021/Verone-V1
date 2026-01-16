@@ -28,6 +28,8 @@ const PUBLIC_PAGES = [
 const PUBLIC_API_PREFIXES = [
   '/api/auth', // Callbacks OAuth Supabase
   '/api/health', // Health check monitoring
+  '/api/globe-items', // Sphère 3D produits (utilisée sur page login)
+  '/api/page-config', // Configuration pages publiques (login, home)
 ];
 
 /**
