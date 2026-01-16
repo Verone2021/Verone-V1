@@ -45,6 +45,7 @@ import {
   convertToSourcing,
   convertToContact,
 } from './actions';
+import { FormSubmissionMessages } from '@/components/form-submission-messages';
 
 // Types
 type FormSubmission = {
@@ -607,6 +608,13 @@ export default function SubmissionDetailPage({
                 </p>
               )}
             </div>
+
+            {/* Historique des échanges */}
+            <FormSubmissionMessages
+              submissionId={submission.id}
+              contactEmail={submission.email}
+              contactName={`${submission.first_name} ${submission.last_name}`}
+            />
           </div>
 
           {/* Sidebar */}
