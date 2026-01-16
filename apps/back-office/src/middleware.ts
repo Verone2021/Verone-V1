@@ -6,18 +6,16 @@
  *
  * Comportement:
  * - Routes protégées → Redirige vers /login si non connecté
- * - /login → Redirige vers /dashboard si déjà connecté
+ * - /login → Accessible sans auth (redirection côté client si connecté)
  * - / → Redirige vers /login
  *
  * @module middleware
  * @since 2026-01-07
+ * @updated 2026-01-16 - Pattern officiel Supabase SSR
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
-
-import {
-  updateSessionAndGetUser,
-} from '@/lib/supabase-middleware';
+import { createServerClient } from '@supabase/ssr';
 
 // Routes PUBLIQUES (whitelist) - TOUTES les autres sont protégées
 const PUBLIC_PAGES = ['/login'];
@@ -63,18 +61,51 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // Mettre à jour la session Supabase ET récupérer le user
-  // ⚠️ IMPORTANT: Créer le client Supabase UNE SEULE FOIS pour éviter erreur 500
-  // (Edge Runtime limite: multiple instantiations → memory leak → 500 error)
-  const { user, response } = await updateSessionAndGetUser(request);
+  // Créer client Supabase avec pattern officiel SSR
+  // ⚠️ IMPORTANT: setAll() DOIT créer et RETOURNER le response (pattern officiel)
+  let response = NextResponse.next({
+    request,
+  });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          // Mettre à jour les cookies sur la requête
+          cookiesToSet.forEach(({ name, value }) => {
+            request.cookies.set(name, value);
+          });
+
+          // Créer nouvelle response avec requête mise à jour
+          response = NextResponse.next({
+            request,
+          });
+
+          // Mettre à jour les cookies sur la réponse
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options);
+          });
+        },
+      },
+    }
+  );
+
+  // Vérifier l'authentification (rafraîchit automatiquement la session si expirée)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   // Route publique → laisser passer
   if (isPublicRoute(pathname)) {
-    // Pour /login: laisser passer (user sera redirigé côté client si connecté)
     return response;
   }
 
-  // Route PROTÉGÉE → vérifier l'authentification
+  // Route PROTÉGÉE → vérifier si user connecté
   if (!user) {
     // Non authentifié → rediriger vers /login avec URL de retour
     const loginUrl = new URL('/login', request.url);
