@@ -174,4 +174,55 @@ Archives: `.claude/archive/plans-YYYY-MM/`
 
 ---
 
-_Version 1.0.0 - 2026-01-13_
+## Deploiement Vercel - IMPORTANT
+
+### ⛔ INTERDIT - Vercel CLI
+
+**NE JAMAIS utiliser `vercel` CLI pour ce projet.**
+
+- Monorepo trop gros (>100 MB) - erreur "File size limit exceeded"
+- Configuration incorrecte - erreur "path does not exist"
+- N'a JAMAIS fonctionne et ne fonctionnera JAMAIS
+
+**Refuser immediatement toute suggestion d'utiliser Vercel CLI.**
+
+### Forcer un deploiement
+
+Modifier le fichier `.vercel-trigger` dans l'app concernee:
+
+```bash
+# LinkMe
+echo "# Force deploy $(date)" > apps/linkme/.vercel-trigger
+
+# Back-Office
+echo "# Force deploy $(date)" > apps/back-office/.vercel-trigger
+```
+
+Puis commit et push sur `main`.
+
+### Pourquoi ca fonctionne
+
+L'`ignoreCommand` dans `vercel.json` surveille les paths:
+- `apps/linkme` ou `apps/back-office`
+- `packages`
+- `package.json`, `pnpm-lock.yaml`, `turbo.json`
+
+Si aucun fichier dans ces paths n'est modifie entre HEAD^ et HEAD, le build est **skippe**.
+
+### Deploy Hooks (Vercel Dashboard)
+
+Les Deploy Hooks font des **Redeploy** du meme commit, pas de nouveaux builds.
+Pour un nouveau build, il faut un **nouveau commit** sur `main` qui modifie les paths surveilles.
+
+### Troubleshooting Deploiement
+
+| Probleme | Cause | Solution |
+|----------|-------|----------|
+| Deploiement "Canceled" | Build concurrent (Plan Hobby) | Attendre ou upgrader |
+| Deploiement "Ignored" | ignoreCommand skip | Modifier `.vercel-trigger` |
+| Deploiement disparait | ignoreCommand skip au demarrage | Modifier fichier dans paths surveilles |
+| Redeploy meme commit | Deploy Hook | Faire un nouveau commit |
+
+---
+
+_Version 1.1.0 - 2026-01-16_
