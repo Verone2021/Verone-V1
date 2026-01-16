@@ -19,7 +19,10 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { createMiddlewareClient, updateSession } from '@/lib/supabase-server';
 
 // Routes PUBLIQUES (whitelist) - TOUTES les autres sont protégées
-const PUBLIC_PAGES = ['/login'];
+const PUBLIC_PAGES = [
+  '/',      // Landing page française
+  '/login',
+];
 
 // API publiques (webhooks, health checks)
 const PUBLIC_API_PREFIXES = [
@@ -34,6 +37,14 @@ function isPublicRoute(pathname: string): boolean {
   // Pages publiques exactes
   if (PUBLIC_PAGES.includes(pathname)) {
     return true;
+  }
+
+  // Routes dynamiques publiques (white-label catalogues, delivery links)
+  if (/^\/s\/[^/]+$/.test(pathname)) {
+    return true; // /s/[id]
+  }
+  if (/^\/delivery-info\/[^/]+$/.test(pathname)) {
+    return true; // /delivery-info/[token]
   }
 
   // API publiques (préfixes)
@@ -53,11 +64,6 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     pathname.includes('.') // fichiers statiques (favicon, images, etc.)
   ) {
     return NextResponse.next();
-  }
-
-  // Route racine "/" → toujours rediriger vers /login
-  if (pathname === '/') {
-    return NextResponse.redirect(new URL('/login', request.url));
   }
 
   // Mettre à jour la session Supabase (rafraîchir le token si nécessaire)

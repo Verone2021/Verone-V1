@@ -69,21 +69,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
 
   // Route publique → laisser passer
   if (isPublicRoute(pathname)) {
-    // Si sur /login et déjà connecté → rediriger vers dashboard
-    if (pathname === '/login') {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const { supabase } = createMiddlewareClient(request);
-      const {
-        data: { user },
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      } = await (supabase.auth.getUser() as Promise<{
-        data: { user: unknown };
-      }>);
-
-      if (user) {
-        return NextResponse.redirect(new URL('/dashboard', request.url));
-      }
-    }
+    // Pour /login: laisser passer (user sera redirigé côté client si connecté)
     return response;
   }
 
