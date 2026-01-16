@@ -50,35 +50,6 @@ export function createMiddlewareClient(request: NextRequest): {
 }
 
 /**
- * Mettre à jour la session dans le middleware ET vérifier l'authentification
- * Rafraîchit le token si nécessaire et retourne le user
- *
- * Cette fonction combine la mise à jour de session ET la vérification d'auth
- * pour éviter de créer plusieurs instances du client Supabase (cause erreur 500)
- */
-export async function updateSessionAndGetUser(
-  request: NextRequest
-): Promise<{
-  supabase: ReturnType<typeof createSSRServerClient>;
-  response: NextResponse;
-  user: unknown;
-}> {
-  const result = createMiddlewareClient(request);
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const supabase = result.supabase;
-  const response = result.response;
-
-  // Récupérer le user (cela va automatiquement rafraîchir la session si nécessaire)
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-  const { data } = await (supabase.auth.getUser() as Promise<{
-    data: { user: unknown };
-  }>);
-
-  return { supabase, response, user: data.user };
-}
-
-/**
- * @deprecated Use updateSessionAndGetUser() instead to avoid multiple client instantiations
  * Mettre à jour la session dans le middleware
  * Rafraîchit le token si nécessaire
  */

@@ -16,7 +16,8 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import {
-  updateSessionAndGetUser,
+  createMiddlewareClient,
+  updateSession,
 } from '@/lib/supabase-middleware';
 
 // Routes PUBLIQUES (whitelist) - TOUTES les autres sont protégées
@@ -63,18 +64,38 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // Mettre à jour la session Supabase ET récupérer le user
-  // ⚠️ IMPORTANT: Créer le client Supabase UNE SEULE FOIS pour éviter erreur 500
-  // (Edge Runtime limite: multiple instantiations → memory leak → 500 error)
-  const { user, response } = await updateSessionAndGetUser(request);
+  // Mettre à jour la session Supabase (rafraîchir le token si nécessaire)
+  const response = await updateSession(request);
 
   // Route publique → laisser passer
   if (isPublicRoute(pathname)) {
-    // Pour /login: laisser passer (user sera redirigé côté client si connecté)
+    // Si sur /login et déjà connecté → rediriger vers dashboard
+    if (pathname === '/login') {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const { supabase } = createMiddlewareClient(request);
+      const {
+        data: { user },
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      } = await (supabase.auth.getUser() as Promise<{
+        data: { user: unknown };
+      }>);
+
+      if (user) {
+        return NextResponse.redirect(new URL('/dashboard', request.url));
+      }
+    }
     return response;
   }
 
   // Route PROTÉGÉE → vérifier l'authentification
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const { supabase, response: middlewareResponse } =
+    createMiddlewareClient(request);
+  const {
+    data: { user },
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+  } = await (supabase.auth.getUser() as Promise<{ data: { user: unknown } }>);
+
   if (!user) {
     // Non authentifié → rediriger vers /login avec URL de retour
     const loginUrl = new URL('/login', request.url);
@@ -83,7 +104,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   }
 
   // Authentifié → accès autorisé
-  return response;
+  return middlewareResponse;
 }
 
 // Matcher: exclut les assets statiques et fichiers Next.js
