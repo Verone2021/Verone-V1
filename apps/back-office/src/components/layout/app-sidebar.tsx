@@ -51,6 +51,9 @@ import {
   LayoutDashboard,
   ArrowLeftRight,
   BookOpenCheck,
+  Mail,
+  Webhook,
+  Bell,
 } from 'lucide-react';
 
 import {
@@ -298,6 +301,33 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
     title: 'Trésorerie',
     href: '/tresorerie',
     icon: Banknote,
+  },
+  {
+    title: 'Paramètres',
+    href: '/parametres',
+    icon: Settings,
+    children: [
+      {
+        title: 'Général',
+        href: '/parametres',
+        icon: Settings,
+      },
+      {
+        title: 'Templates Email',
+        href: '/parametres/emails',
+        icon: Mail,
+      },
+      {
+        title: 'Webhooks',
+        href: '/parametres/webhooks',
+        icon: Webhook,
+      },
+      {
+        title: 'Notifications',
+        href: '/parametres/notifications',
+        icon: Bell,
+      },
+    ],
   },
 ];
 
