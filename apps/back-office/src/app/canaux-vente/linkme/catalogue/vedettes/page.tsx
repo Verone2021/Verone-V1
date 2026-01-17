@@ -3,14 +3,14 @@
 import { useMemo } from 'react';
 
 import Link from 'next/link';
-import { Star, Loader2, Eye, StarOff, Package } from 'lucide-react';
-import { toast } from 'sonner';
 
 import { ProductThumbnail } from '@verone/products/components/images/ProductThumbnail';
 import { Badge, Progress } from '@verone/ui';
 import { Card, CardContent } from '@verone/ui';
 import { IconButton } from '@verone/ui';
 import { cn } from '@verone/utils';
+import { Star, Loader2, Eye, StarOff, Package } from 'lucide-react';
+import { toast } from 'sonner';
 
 import {
   useLinkMeCatalogProducts,

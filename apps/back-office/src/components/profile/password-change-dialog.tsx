@@ -20,9 +20,8 @@ import {
 } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { cn } from '@verone/utils';
-import { Eye, EyeOff, Key, AlertCircle, CheckCircle2 } from 'lucide-react';
-
 import { createClient } from '@verone/utils/supabase/client';
+import { Eye, EyeOff, Key, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 interface PasswordChangeDialogProps {
   open: boolean;

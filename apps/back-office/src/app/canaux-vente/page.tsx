@@ -65,7 +65,7 @@ const ACTIVE_CHANNELS = [
   {
     id: 'linkme',
     name: 'LinkMe',
-    description: 'Plateforme d\'affiliation B2B2C - Apporteurs d\'affaires',
+    description: "Plateforme d'affiliation B2B2C - Apporteurs d'affaires",
     icon: Users,
     status: 'active',
     products_synced: 0,

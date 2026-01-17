@@ -4,6 +4,13 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 
 import Link from 'next/link';
 
+import { useFamilies } from '@verone/categories';
+import { useCategories } from '@verone/categories';
+import { useSubcategories } from '@verone/categories';
+import { useToast } from '@verone/common';
+import { useOrganisations } from '@verone/organisations';
+import { useVariantGroups } from '@verone/products';
+import { normalizeForSKU } from '@verone/products/utils/sku-generator';
 import { COLLECTION_STYLE_OPTIONS } from '@verone/types';
 import type { RoomType } from '@verone/types';
 import type { VariantGroup, VariantType } from '@verone/types';
@@ -28,14 +35,6 @@ import {
 } from '@verone/ui';
 import { cn } from '@verone/utils';
 import { X, Plus, ExternalLink } from 'lucide-react';
-
-import { useFamilies } from '@verone/categories';
-import { useCategories } from '@verone/categories';
-import { useSubcategories } from '@verone/categories';
-import { useToast } from '@verone/common';
-import { useOrganisations } from '@verone/organisations';
-import { useVariantGroups } from '@verone/products';
-import { normalizeForSKU } from '@verone/products/utils/sku-generator';
 
 interface VariantGroupFormProps {
   isOpen: boolean;

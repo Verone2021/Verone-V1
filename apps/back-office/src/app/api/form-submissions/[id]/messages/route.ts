@@ -30,7 +30,7 @@ export async function POST(
     const body: AddMessageRequest = await request.json();
 
     // Validation
-    if (!body.message || !body.message.trim()) {
+    if (!body.message?.trim()) {
       return NextResponse.json(
         { success: false, error: 'Le message ne peut pas être vide' },
         { status: 400 }

@@ -28,9 +28,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
-import { Loader2 } from 'lucide-react';
-
 import { createClient } from '@verone/utils/supabase/client';
+import { Loader2 } from 'lucide-react';
 
 import { ChannelBadge } from './ChannelBadge';
 import { type ChannelCode } from './types';

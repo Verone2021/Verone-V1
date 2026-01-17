@@ -1,7 +1,5 @@
 'use client';
 
-import { Info, Tag, FolderTree } from 'lucide-react';
-
 import {
   Card,
   CardContent,
@@ -18,6 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
+import { Info, Tag, FolderTree } from 'lucide-react';
+
 import { CategorySelector } from '../category-selector';
 import type { WizardFormData } from '../complete-product-wizard';
 

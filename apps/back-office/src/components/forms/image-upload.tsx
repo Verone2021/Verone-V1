@@ -8,11 +8,9 @@ import { ButtonV2 } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { Textarea } from '@verone/ui';
-import { Upload, X, Image as ImageIcon, Loader2, FileText } from 'lucide-react';
-
-import { createClient } from '@verone/utils/supabase/client';
-
 import { cn } from '@verone/utils';
+import { createClient } from '@verone/utils/supabase/client';
+import { Upload, X, Image as ImageIcon, Loader2, FileText } from 'lucide-react';
 
 type DocumentCategory =
   | 'product_image'

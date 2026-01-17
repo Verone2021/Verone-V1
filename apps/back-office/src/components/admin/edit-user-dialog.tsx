@@ -9,6 +9,7 @@
 
 import React, { useState } from 'react';
 
+import { updateUserProfile } from '@verone/admin/actions/user-management';
 import { ButtonV2 } from '@verone/ui';
 import {
   Dialog,
@@ -31,7 +32,6 @@ import { cn } from '@verone/utils';
 import { Edit, Save, X, User } from 'lucide-react';
 
 import type { UserWithProfile } from '@/app/admin/users/page';
-import { updateUserProfile } from '@verone/admin/actions/user-management';
 
 interface EditUserDialogProps {
   open: boolean;

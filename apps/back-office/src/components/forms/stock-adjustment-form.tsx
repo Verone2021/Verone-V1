@@ -25,10 +25,9 @@ import {
   SelectValue,
 } from '@verone/ui';
 import { Textarea } from '@verone/ui';
+import { createClient } from '@verone/utils/supabase/client';
 import { format } from 'date-fns';
 import { Loader2, Save, AlertCircle } from 'lucide-react';
-
-import { createClient } from '@verone/utils/supabase/client';
 
 // =====================================================================
 // TYPES

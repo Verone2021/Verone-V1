@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 
-import { Plus, X, FileText, List, Sparkles } from 'lucide-react';
-
 import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
 import {
@@ -16,6 +14,8 @@ import {
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { Textarea } from '@verone/ui';
+import { Plus, X, FileText, List, Sparkles } from 'lucide-react';
+
 import type { WizardFormData } from '../complete-product-wizard';
 
 interface DescriptionsSectionProps {

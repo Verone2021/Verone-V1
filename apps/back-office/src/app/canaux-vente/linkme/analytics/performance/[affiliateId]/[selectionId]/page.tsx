@@ -17,6 +17,7 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
+import { ProductThumbnail } from '@verone/products';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import { Badge } from '@verone/ui';
 import { Skeleton } from '@verone/ui';
@@ -31,8 +32,6 @@ import {
   ChevronLeft,
   Star,
 } from 'lucide-react';
-
-import { ProductThumbnail } from '@verone/products';
 
 import {
   AnalyticsDateFilter,

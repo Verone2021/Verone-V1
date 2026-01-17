@@ -2,11 +2,10 @@
 
 import { useState } from 'react';
 
-import { ButtonV2 } from '@verone/ui';
-import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
-
 import type { SelectedProduct } from '@verone/products';
 import { UniversalProductSelectorV2 } from '@verone/products';
+import { ButtonV2 } from '@verone/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 
 export default function DemoUniversalSelectorPage() {
   const [showModal, setShowModal] = useState(false);

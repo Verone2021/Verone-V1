@@ -4,10 +4,21 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import type { Collection } from '@verone/collections';
+import {
+  useCollections,
+  CollectionFilters,
+  CreateCollectionData,
+} from '@verone/collections';
+import type { CreateCollectionInput } from '@verone/common';
+import { CollectionCreationWizard } from '@verone/common';
+import { useToast } from '@verone/common';
+import type { SelectedProduct } from '@verone/products';
+import { UniversalProductSelectorV2 } from '@verone/products';
 import { getRoomLabel, type RoomType } from '@verone/types';
-import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
 import { KPICardUnified } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import { Badge } from '@verone/ui';
 import { cn } from '@verone/utils';
 import {
   Search,
@@ -21,18 +32,6 @@ import {
   Layers,
   Eye,
 } from 'lucide-react';
-
-import type { Collection } from '@verone/collections';
-import {
-  useCollections,
-  CollectionFilters,
-  CreateCollectionData,
-} from '@verone/collections';
-import type { CreateCollectionInput } from '@verone/common';
-import { CollectionCreationWizard } from '@verone/common';
-import { useToast } from '@verone/common';
-import type { SelectedProduct } from '@verone/products';
-import { UniversalProductSelectorV2 } from '@verone/products';
 
 // Interface filtres collections
 interface LocalCollectionFilters {

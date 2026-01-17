@@ -2,6 +2,13 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 
+import { useCatalogue } from '@verone/categories';
+import { useToast } from '@verone/common';
+import { ProductStockHistoryModal } from '@verone/products';
+import { GeneralStockMovementModal } from '@verone/stock';
+import { StockMovementModal } from '@verone/stock';
+import { StockDisplay, StockSummaryCard } from '@verone/stock';
+import { useStock } from '@verone/stock';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -48,14 +55,6 @@ import {
   Clock,
   Boxes,
 } from 'lucide-react';
-
-import { useCatalogue } from '@verone/categories';
-import { useToast } from '@verone/common';
-import { ProductStockHistoryModal } from '@verone/products';
-import { GeneralStockMovementModal } from '@verone/stock';
-import { StockMovementModal } from '@verone/stock';
-import { StockDisplay, StockSummaryCard } from '@verone/stock';
-import { useStock } from '@verone/stock';
 
 interface StockFilters {
   search: string;

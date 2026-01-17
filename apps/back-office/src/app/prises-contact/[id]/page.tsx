@@ -38,6 +38,8 @@ import {
   X,
 } from 'lucide-react';
 
+import { FormSubmissionMessages } from '@/components/form-submission-messages';
+
 import {
   markAsResolved,
   convertToOrder,
@@ -45,7 +47,6 @@ import {
   convertToSourcing,
   convertToContact,
 } from './actions';
-import { FormSubmissionMessages } from '@/components/form-submission-messages';
 
 // Types
 type FormSubmission = {

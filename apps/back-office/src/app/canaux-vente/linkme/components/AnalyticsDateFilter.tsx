@@ -16,8 +16,8 @@ import { useCallback } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@verone/ui';
 import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
-import { CalendarDays, RefreshCw, Check } from 'lucide-react';
 import { cn } from '@verone/utils';
+import { CalendarDays, RefreshCw, Check } from 'lucide-react';
 
 // ============================================================================
 // Types
