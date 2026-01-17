@@ -13,6 +13,43 @@ npm run e2e:smoke    # Smoke tests UI
 
 ---
 
+## Autonomie de Claude
+
+**RÈGLE ABSOLUE**: Claude fait TOUTES les actions techniques de manière autonome.
+
+### Responsabilités de Claude
+✅ Explorer le codebase (Glob, Grep, Read)
+✅ Planifier les implémentations (EnterPlanMode)
+✅ Écrire/modifier le code (Edit, Write)
+✅ Vérifier (type-check, build, tests)
+✅ Créer les commits avec format convention
+✅ Créer les PRs via `gh pr create`
+✅ **Merger les PRs** via `gh pr merge`
+✅ **Configurer Vercel** via MCP Playwright ou API
+✅ **Vérifier la production** via tests automatisés
+✅ Documenter les changements
+
+### Responsabilités de l'Utilisateur
+- Donner des instructions et directions
+- Répondre aux questions de clarification de Claude
+- Être la source de vérité quand Claude ne sait pas
+- Recevoir et valider la documentation/explications
+
+### Ce que Claude NE DOIT JAMAIS faire
+❌ Demander à l'utilisateur de merger une PR
+❌ Demander à l'utilisateur d'aller sur Vercel Dashboard
+❌ Demander à l'utilisateur de configurer des variables d'env
+❌ Demander à l'utilisateur de redéployer
+❌ Demander à l'utilisateur de faire des actions CLI/techniques
+
+### Outils Autonomes Disponibles
+- **gh CLI**: `gh pr merge`, `gh pr create`, `gh issue create`
+- **MCP Playwright**: Automatiser navigation Vercel Dashboard
+- **Vercel CLI**: `vercel env add`, `vercel deploy`
+- **Bash**: Tous les outils CLI (git, npm, curl, etc.)
+
+---
+
 ## Workflow Standard Anthropic
 
 ### 1. Explorer
