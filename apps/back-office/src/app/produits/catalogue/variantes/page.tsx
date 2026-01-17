@@ -4,6 +4,12 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { CategoryFilterCombobox } from '@verone/categories';
+import { useToast } from '@verone/common';
+import { VariantAddProductModal } from '@verone/products';
+import { VariantGroupEditModal } from '@verone/products';
+import { VariantGroupCreationWizard } from '@verone/products';
+import { useVariantGroups } from '@verone/products';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { KPICardUnified } from '@verone/ui';
@@ -29,12 +35,6 @@ import {
 } from 'lucide-react';
 
 import { PageHeader } from '@/components/layout/page-header';
-import { CategoryFilterCombobox } from '@verone/categories';
-import { useToast } from '@verone/common';
-import { VariantAddProductModal } from '@verone/products';
-import { VariantGroupEditModal } from '@verone/products';
-import { VariantGroupCreationWizard } from '@verone/products';
-import { useVariantGroups } from '@verone/products';
 
 // Interface filtres variantes
 interface LocalVariantFilters {

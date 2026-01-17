@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 
-import { Settings, Plus, X, Ruler } from 'lucide-react';
-
 import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
 import {
@@ -22,6 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
+import { Settings, Plus, X, Ruler } from 'lucide-react';
+
 import type { WizardFormData } from '../complete-product-wizard';
 
 interface TechnicalSectionProps {

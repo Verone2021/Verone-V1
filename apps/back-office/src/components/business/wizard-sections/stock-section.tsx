@@ -1,13 +1,5 @@
 'use client';
 
-import {
-  Package,
-  TrendingUp,
-  TrendingDown,
-  AlertTriangle,
-  Info,
-} from 'lucide-react';
-
 import { Alert, AlertDescription } from '@verone/ui';
 import {
   Card,
@@ -18,6 +10,14 @@ import {
 } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
+import {
+  Package,
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle,
+  Info,
+} from 'lucide-react';
+
 import type { WizardFormData } from '../complete-product-wizard';
 
 interface StockSectionProps {

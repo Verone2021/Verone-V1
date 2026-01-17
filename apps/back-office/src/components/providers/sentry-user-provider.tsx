@@ -13,12 +13,16 @@
 
 import { useEffect, useState } from 'react';
 
-import type { User } from '@supabase/supabase-js';
 import * as Sentry from '@sentry/nextjs';
+import type { User } from '@supabase/supabase-js';
 
 import { useSupabase } from './supabase-provider';
 
-export function SentryUserProvider({ children }: { children: React.ReactNode }) {
+export function SentryUserProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const supabase = useSupabase();
   const [user, setUser] = useState<User | null>(null);
 

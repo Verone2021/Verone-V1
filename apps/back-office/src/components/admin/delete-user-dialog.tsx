@@ -9,6 +9,7 @@
 
 import React, { useState } from 'react';
 
+import { deleteUser } from '@verone/admin/actions/user-management';
 import { ButtonV2 } from '@verone/ui';
 import {
   Dialog,
@@ -23,7 +24,6 @@ import { cn } from '@verone/utils';
 import { AlertTriangle, Trash2, X } from 'lucide-react';
 
 import type { UserWithProfile } from '@/app/admin/users/page';
-import { deleteUser } from '@verone/admin/actions/user-management';
 
 interface DeleteUserDialogProps {
   open: boolean;

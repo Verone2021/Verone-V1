@@ -9,6 +9,7 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+
 import { Resend } from 'resend';
 
 interface FormReplyRequest {
@@ -150,7 +151,9 @@ export async function POST(request: NextRequest) {
 
     // Vérifier que Resend est configuré
     if (!resend) {
-      console.warn('[API Form Reply] Resend not configured (RESEND_API_KEY missing)');
+      console.warn(
+        '[API Form Reply] Resend not configured (RESEND_API_KEY missing)'
+      );
       return NextResponse.json(
         {
           success: false,

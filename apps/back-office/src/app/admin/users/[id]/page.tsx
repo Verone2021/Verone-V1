@@ -12,6 +12,10 @@ import { redirect, notFound } from 'next/navigation';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
 import {
+  createServerClient,
+  createAdminClient,
+} from '@verone/utils/supabase/server';
+import {
   ArrowLeft,
   User,
   Calendar,
@@ -19,11 +23,6 @@ import {
   Shield,
   Activity,
 } from 'lucide-react';
-
-import {
-  createServerClient,
-  createAdminClient,
-} from '@verone/utils/supabase/server';
 
 import { UserActivityTab } from './components/user-activity-tab';
 import { UserHeader } from './components/user-header';

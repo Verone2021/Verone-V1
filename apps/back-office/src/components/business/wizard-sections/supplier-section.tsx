@@ -1,7 +1,5 @@
 'use client';
 
-import { Building2, ExternalLink } from 'lucide-react';
-
 import {
   Card,
   CardContent,
@@ -11,6 +9,8 @@ import {
 } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
+import { Building2, ExternalLink } from 'lucide-react';
+
 import type { WizardFormData } from '../complete-product-wizard';
 import { SupplierSelector } from '../supplier-selector';
 

@@ -24,6 +24,7 @@ import { useState, useMemo } from 'react';
 
 import Link from 'next/link';
 
+import { ProductThumbnail } from '@verone/products';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import { Badge } from '@verone/ui';
 import { Skeleton } from '@verone/ui';
@@ -39,8 +40,6 @@ import {
   Users,
   TrendingUp,
 } from 'lucide-react';
-
-import { ProductThumbnail } from '@verone/products';
 
 import {
   AnalyticsDateFilter,

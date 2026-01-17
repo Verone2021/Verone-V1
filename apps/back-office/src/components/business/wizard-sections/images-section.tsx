@@ -2,18 +2,7 @@
 
 import { useRef, useState } from 'react';
 
-import {
-  Upload,
-  X,
-  Image as ImageIcon,
-  AlertCircle,
-  Camera,
-  Plus,
-} from 'lucide-react';
-
 import { useToast } from '@verone/common/hooks';
-
-import { cn } from '@verone/utils';
 import { Alert, AlertDescription } from '@verone/ui';
 import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
@@ -25,6 +14,16 @@ import {
   CardTitle,
 } from '@verone/ui';
 import { Label } from '@verone/ui';
+import { cn } from '@verone/utils';
+import {
+  Upload,
+  X,
+  Image as ImageIcon,
+  AlertCircle,
+  Camera,
+  Plus,
+} from 'lucide-react';
+
 import type { WizardFormData } from '../complete-product-wizard';
 
 interface ImagesSectionProps {

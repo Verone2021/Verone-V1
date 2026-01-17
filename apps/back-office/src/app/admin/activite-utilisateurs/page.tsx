@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { ButtonV2 } from '@verone/ui';
+import { createClient } from '@verone/utils/supabase/client';
 import {
   Activity,
   User,
@@ -17,8 +18,6 @@ import {
   ArrowRight,
   CheckCircle,
 } from 'lucide-react';
-
-import { createClient } from '@verone/utils/supabase/client';
 
 interface UserActivityStats {
   user_id: string;

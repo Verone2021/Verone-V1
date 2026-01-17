@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from 'react';
 
-import { DollarSign, Calculator, Info } from 'lucide-react';
-
 import { Alert, AlertDescription } from '@verone/ui';
 import { Badge } from '@verone/ui';
 import {
@@ -15,6 +13,8 @@ import {
 } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
+import { DollarSign, Calculator, Info } from 'lucide-react';
+
 import type { WizardFormData } from '../complete-product-wizard';
 
 interface PricingSectionProps {

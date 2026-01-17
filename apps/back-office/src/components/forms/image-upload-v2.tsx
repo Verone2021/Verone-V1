@@ -11,9 +11,12 @@ import React, { useRef, useState } from 'react';
 
 import Image from 'next/image';
 
+import { useImageUpload, type UseImageUploadProps } from '@verone/common';
 import { Alert, AlertDescription } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Progress } from '@verone/ui';
+import { cn } from '@verone/utils';
+import type { BucketType } from '@verone/utils/upload/validation';
 import {
   Upload,
   X,
@@ -23,11 +26,6 @@ import {
   AlertCircle,
   RefreshCw,
 } from 'lucide-react';
-
-import { useImageUpload, type UseImageUploadProps } from '@verone/common';
-import type { BucketType } from '@verone/utils/upload/validation';
-
-import { cn } from '@verone/utils';
 
 interface ImageUploadV2Props
   extends Omit<UseImageUploadProps, 'onUploadSuccess' | 'onUploadError'> {

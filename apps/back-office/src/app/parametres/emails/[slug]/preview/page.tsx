@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+
 import { useParams, useRouter } from 'next/navigation';
 
 import { ButtonUnified, Input } from '@verone/ui';
@@ -61,7 +62,7 @@ export default function PreviewEmailTemplatePage() {
       if (error) throw error;
 
       const variables = Array.isArray(data.variables)
-        ? (data.variables.filter(v => typeof v === 'string') as string[])
+        ? data.variables.filter(v => typeof v === 'string')
         : [];
 
       const templateData = {
@@ -115,7 +116,7 @@ export default function PreviewEmailTemplatePage() {
   if (loading) {
     return (
       <div className="text-center py-12">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-black"></div>
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-black" />
         <p className="mt-4 text-gray-600">Chargement du template...</p>
       </div>
     );
@@ -169,11 +170,7 @@ export default function PreviewEmailTemplatePage() {
               <Code className="h-4 w-4" />
               {showRawHtml ? 'Aperçu' : 'HTML'}
             </ButtonUnified>
-            <ButtonUnified
-              variant="outline"
-              size="sm"
-              onClick={renderTemplate}
-            >
+            <ButtonUnified variant="outline" size="sm" onClick={renderTemplate}>
               <RefreshCw className="h-4 w-4" />
               Actualiser
             </ButtonUnified>

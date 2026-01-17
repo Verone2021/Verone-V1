@@ -9,14 +9,13 @@
 
 import { useState, useEffect } from 'react';
 
+import { useToast } from '@verone/common';
+import { useVariantProducts } from '@verone/products';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Search, Package, Plus, Loader2, Check } from 'lucide-react';
-
-import { useToast } from '@verone/common';
-import { useVariantProducts } from '@verone/products';
 
 interface Product {
   id: string;

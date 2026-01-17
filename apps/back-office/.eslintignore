@@ -1,0 +1,6 @@
+# Sentry config files (Edge runtime, no type information available)
+sentry.*.config.ts
+sentry.*.config.js
+
+# TypeScript declaration files (auto-generated, no type-checking needed)
+*.d.ts

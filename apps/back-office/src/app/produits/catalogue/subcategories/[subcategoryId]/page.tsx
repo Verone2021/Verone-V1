@@ -11,6 +11,10 @@ import { useEffect, useState } from 'react';
 
 import { useParams, useRouter } from 'next/navigation';
 
+import { useFamilies } from '@verone/categories';
+import { useCategories } from '@verone/categories';
+import { useSubcategories } from '@verone/categories';
+import { useProducts } from '@verone/products';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -21,6 +25,7 @@ import {
   CardTitle,
 } from '@verone/ui';
 import { VéroneCard } from '@verone/ui';
+import type { Database } from '@verone/utils/supabase/types';
 import {
   ArrowLeft,
   Plus,
@@ -31,12 +36,6 @@ import {
   Tag,
   Clock,
 } from 'lucide-react';
-
-import { useFamilies } from '@verone/categories';
-import { useCategories } from '@verone/categories';
-import { useSubcategories } from '@verone/categories';
-import { useProducts } from '@verone/products';
-import type { Database } from '@verone/utils/supabase/types';
 
 type Family = Database['public']['Tables']['families']['Row'];
 type Category = Database['public']['Tables']['categories']['Row'];

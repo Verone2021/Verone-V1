@@ -2,6 +2,11 @@
 
 import { useState, useEffect } from 'react';
 
+import { useContacts } from '@verone/organisations';
+import {
+  getOrganisationDisplayName,
+  type Organisation,
+} from '@verone/organisations';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
@@ -19,12 +24,6 @@ import {
   ArchiveRestore,
   Eye,
 } from 'lucide-react';
-
-import { useContacts } from '@verone/organisations';
-import {
-  getOrganisationDisplayName,
-  type Organisation,
-} from '@verone/organisations';
 
 interface ContactStats {
   totalContacts: number;

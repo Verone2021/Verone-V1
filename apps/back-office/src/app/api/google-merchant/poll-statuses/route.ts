@@ -28,9 +28,8 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { z } from 'zod';
-
 import { createServerClient } from '@verone/utils/supabase/server';
+import { z } from 'zod';
 
 // Validation schema
 const StatusItemSchema = z.object({

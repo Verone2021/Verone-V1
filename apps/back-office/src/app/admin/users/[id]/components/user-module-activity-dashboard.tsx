@@ -12,6 +12,11 @@
 import React from 'react';
 
 import {
+  useUserModuleMetrics,
+  formatModuleTime,
+  getProgressBarColor,
+} from '@verone/dashboard';
+import {
   Home,
   BookOpen,
   Package,
@@ -26,12 +31,6 @@ import {
   AlertCircle,
   TrendingUp,
 } from 'lucide-react';
-
-import {
-  useUserModuleMetrics,
-  formatModuleTime,
-  getProgressBarColor,
-} from '@verone/dashboard';
 
 interface UserModuleActivityDashboardProps {
   userId: string;

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, Suspense } from 'react';
+
 import { ClientOrEnseigneSelector } from '@verone/products';
 import { Card, CardHeader, CardTitle, CardContent } from '@verone/ui';
 import { Loader2 } from 'lucide-react';
@@ -23,10 +24,7 @@ function TestClientOrEnseigneSelectorContent() {
     setParentOrgId(parentId);
   };
 
-  const handleOrganisationChange = (
-    id: string | null,
-    name: string | null
-  ) => {
+  const handleOrganisationChange = (id: string | null, name: string | null) => {
     setOrganisationId(id);
     setOrganisationName(name);
   };

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+
 import { useRouter } from 'next/navigation';
 
 import { ButtonUnified, Input } from '@verone/ui';
@@ -54,9 +55,7 @@ export default function NewWebhookPage() {
 
   function toggleEvent(event: string) {
     setSelectedEvents(prev =>
-      prev.includes(event)
-        ? prev.filter(e => e !== event)
-        : [...prev, event]
+      prev.includes(event) ? prev.filter(e => e !== event) : [...prev, event]
     );
   }
 

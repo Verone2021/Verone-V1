@@ -5,9 +5,8 @@ import { useState } from 'react';
 import { ButtonV2 } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
-import { Upload, Loader2, CheckCircle, XCircle } from 'lucide-react';
-
 import { createClient } from '@verone/utils/supabase/client';
+import { Upload, Loader2, CheckCircle, XCircle } from 'lucide-react';
 
 interface SimpleProductFormProps {
   onSuccess?: (product: any) => void;
