@@ -28,7 +28,7 @@ import { Textarea } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
 import { ArrowLeft, Send, Upload, Calendar, AlertCircle } from 'lucide-react';
 
-import { createConsultation as createConsultationAction } from '../../actions/consultations';
+import { createConsultation as createConsultationAction } from '@/app/actions/consultations';
 
 // Interface pour le formulaire
 interface ConsultationFormData {

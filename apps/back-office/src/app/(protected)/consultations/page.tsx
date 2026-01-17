@@ -46,8 +46,8 @@ import {
   Camera,
 } from 'lucide-react';
 
-import { ConsultationImageViewerModal } from '../../components/business/consultation-image-viewer-modal';
-import { ConsultationOrderInterface } from '../../components/business/consultation-order-interface';
+import { ConsultationImageViewerModal } from '@/components/business/consultation-image-viewer-modal';
+import { ConsultationOrderInterface } from '@/components/business/consultation-order-interface';
 
 // Helper pour récupérer le nom du client (enseigne ou organisation)
 function getClientName(consultation: any): string {

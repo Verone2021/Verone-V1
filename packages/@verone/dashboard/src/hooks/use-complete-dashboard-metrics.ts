@@ -45,6 +45,7 @@ export interface CompleteDashboardMetrics {
     inStock: number;
     outOfStock: number;
     critical: number;
+    trend: number;
   };
 
   orders: {
@@ -435,6 +436,7 @@ export function useCompleteDashboardMetrics() {
     inStock: stockMetrics.inStock,
     outOfStock: stockMetrics.outOfStock,
     critical: stockMetrics.critical,
+    trend: 0, // Pas de trend disponible pour stocks (données statiques)
   };
 
   const ordersData = {
