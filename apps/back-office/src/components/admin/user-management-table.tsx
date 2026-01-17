@@ -40,7 +40,7 @@ import {
   Eye,
 } from 'lucide-react';
 
-import type { UserWithProfile } from '@/app/admin/users/page';
+import type { UserWithProfile } from '@/app/(protected)/admin/users/page';
 
 import { DeleteUserDialog } from './delete-user-dialog';
 import { EditUserDialog } from './edit-user-dialog';

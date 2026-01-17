@@ -30,7 +30,7 @@ import {
 import { cn } from '@verone/utils';
 import { Edit, Save, X, User } from 'lucide-react';
 
-import type { UserWithProfile } from '@/app/admin/users/page';
+import type { UserWithProfile } from '@/app/(protected)/admin/users/page';
 import { updateUserProfile } from '@verone/admin/actions/user-management';
 
 interface EditUserDialogProps {

@@ -104,7 +104,7 @@ export const CHART_CATALOG: Record<string, ChartDefinition> = {
     type: 'line',
     size: 'large',
     defaultTabs: ['apercu', 'finances'],
-    hookName: 'useCashFlowForecast',
+    hookName: 'useTreasuryStats',
     dataKey: 'balance',
     xAxisKey: 'month',
     colors: [CHART_COLORS.success, CHART_COLORS.danger],

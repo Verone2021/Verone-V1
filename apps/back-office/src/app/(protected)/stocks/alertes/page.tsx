@@ -49,8 +49,8 @@ import {
   BarChart3,
 } from 'lucide-react';
 
-import { QuickPurchaseOrderModal } from '../../../components/business/quick-purchase-order-modal';
-import { StockAlertCard } from '../../../components/business/stock-alert-card';
+import { QuickPurchaseOrderModal } from '@/components/business/quick-purchase-order-modal';
+import { StockAlertCard } from '@/components/business/stock-alert-card';
 
 type AlertSeverity = 'critical' | 'warning' | 'info';
 type AlertCategory = 'stock' | 'movement' | 'forecast' | 'system';
