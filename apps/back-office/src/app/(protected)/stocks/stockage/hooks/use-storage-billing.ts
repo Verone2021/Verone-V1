@@ -33,7 +33,7 @@ export {
   type StorageOverviewItem,
   type StorageSummary,
   type StorageAllocation,
-} from '@/app/canaux-vente/linkme/hooks/use-linkme-storage';
+} from '@/app/(protected)/canaux-vente/linkme/hooks/use-linkme-storage';
 
 // Additional types for billing
 export interface WeightedAverageResult {
