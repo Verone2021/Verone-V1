@@ -1,0 +1,62 @@
+name: Cleanup Screenshots
+
+on:
+  schedule:
+    # Every Sunday at midnight UTC
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+    # Allow manual execution
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Delete screenshots older than 30 days
+        run: |
+          echo "🧹 Starting screenshot cleanup..."
+
+          # Count before cleanup
+          BEFORE_COUNT=$(find .playwright-mcp -maxdepth 1 -name "*.png" -type f 2>/dev/null | wc -l)
+          BEFORE_SIZE=$(du -sh .playwright-mcp 2>/dev/null | cut -f1)
+
+          echo "📊 Before: $BEFORE_COUNT files, $BEFORE_SIZE"
+
+          # Delete PNG screenshots older than 30 days
+          find .playwright-mcp -maxdepth 1 -name "*.png" -type f -mtime +30 -delete 2>/dev/null || true
+          find .playwright-mcp -maxdepth 1 -name "*.jpg" -type f -mtime +30 -delete 2>/dev/null || true
+          find .playwright-mcp -maxdepth 1 -name "*.jpeg" -type f -mtime +30 -delete 2>/dev/null || true
+
+          # Count after cleanup
+          AFTER_COUNT=$(find .playwright-mcp -maxdepth 1 -name "*.png" -type f 2>/dev/null | wc -l)
+          AFTER_SIZE=$(du -sh .playwright-mcp 2>/dev/null | cut -f1)
+          DELETED_COUNT=$((BEFORE_COUNT - AFTER_COUNT))
+
+          echo "📊 After: $AFTER_COUNT files, $AFTER_SIZE"
+          echo "🗑️  Deleted: $DELETED_COUNT files"
+
+          # Report to job summary
+          echo "## 🧹 Screenshot Cleanup Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Before**: $BEFORE_COUNT files, $BEFORE_SIZE" >> $GITHUB_STEP_SUMMARY
+          echo "- **After**: $AFTER_COUNT files, $AFTER_SIZE" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deleted**: $DELETED_COUNT files older than 30 days" >> $GITHUB_STEP_SUMMARY
+
+      - name: Commit cleanup changes (if any)
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+          if git status --porcelain | grep -q ".playwright-mcp"; then
+            git add .playwright-mcp
+            git commit -m "[NO-TASK] chore: automated screenshot cleanup (30+ days old)"
+            git push
+            echo "✅ Changes committed and pushed"
+          else
+            echo "ℹ️  No screenshots to delete"
+          fi
