@@ -1,9 +1,0 @@
-2026/01/18-03:42:06.563 c77852 Reusing MANIFEST /Users/romeodossantos/verone-back-office-V1/.playwright-mcp/profiles/lane-1/Default/Local Storage/leveldb/MANIFEST-000001
-2026/01/18-03:42:06.568 c77852 Recovering log #3
-2026/01/18-03:42:06.569 c77852 Reusing old log /Users/romeodossantos/verone-back-office-V1/.playwright-mcp/profiles/lane-1/Default/Local Storage/leveldb/000003.log 
-2026/01/18-04:09:33.576 c77855 Level-0 table #5: started
-2026/01/18-04:09:33.580 c77855 Level-0 table #5: 35237 bytes OK
-2026/01/18-04:09:33.583 c77855 Delete type=0 #3
-2026/01/18-04:26:33.602 c77855 Level-0 table #7: started
-2026/01/18-04:26:33.604 c77855 Level-0 table #7: 34053 bytes OK
-2026/01/18-04:26:33.606 c77855 Delete type=0 #4
