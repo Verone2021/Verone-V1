@@ -53,14 +53,9 @@ function maskIban(iban: string): string {
 export async function GET(): Promise<NextResponse<BalanceResponse>> {
   const lastUpdated = new Date().toISOString();
 
-  // Déterminer le mode d'auth
-  const authMode =
-    process.env.QONTO_AUTH_MODE?.toLowerCase() === 'api_key'
-      ? 'api_key'
-      : 'oauth';
-
   try {
-    const client = new QontoClient({ authMode });
+    // QontoClient résout automatiquement le mode d'auth via resolveAuthMode()
+    const client = new QontoClient();
     const bankAccounts: QontoBankAccount[] = await client.getBankAccounts();
 
     // Filtrer uniquement les comptes actifs
@@ -101,9 +96,19 @@ export async function GET(): Promise<NextResponse<BalanceResponse>> {
     });
   } catch (error) {
     let errorMessage = 'Erreur inconnue';
+    let statusCode = 500;
 
     if (error instanceof QontoError) {
       errorMessage = `${error.code}: ${error.message}`;
+
+      // Config manquante/invalide = 503 Service Unavailable (pas 500)
+      if (
+        error.code === 'AUTH_CONFIG_MISSING' ||
+        error.code === 'AUTH_CONFIG_CONFLICT' ||
+        error.code === 'AUTH_CONFIG_ERROR'
+      ) {
+        statusCode = 503;
+      }
     } else if (error instanceof Error) {
       errorMessage = error.message;
     }
@@ -120,7 +125,7 @@ export async function GET(): Promise<NextResponse<BalanceResponse>> {
         lastUpdated,
         error: errorMessage,
       },
-      { status: 500 }
+      { status: statusCode }
     );
   }
 }
