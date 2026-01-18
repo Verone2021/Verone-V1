@@ -1,30 +1,28 @@
-import { ConfigurableDashboard } from './components/configurable-dashboard';
-
 /**
- * Dashboard Principal Verone - Version Configurable
+ * Minimal Dashboard Page - Debugging Vercel 404
  *
- * Features:
- * - Navigation par onglets (Aperçu, Ventes, Stock, Finances, LinkMe)
- * - KPIs configurables par utilisateur
- * - Période modifiable par KPI (jour/semaine/mois/trimestre/année)
- * - Présets par rôle (Direction, Commercial, Logistique, Comptabilité, LinkMe)
- *
- * @see /dashboard/lib/kpi-catalog.ts - Catalogue des 25+ KPIs disponibles
- * @see /dashboard/lib/role-presets.ts - Présets par rôle
- * @see /dashboard/hooks/use-dashboard-preferences.ts - Gestion des préférences
- *
- * IMPORTANT: This page is a Server Component (no 'use client').
- * The dynamic rendering is already handled by the (protected)/layout.tsx.
- * ConfigurableDashboard is the Client Component that handles all interactivity.
+ * This is a minimal version to test if the problem is:
+ * - Route registration issue
+ * - Import resolution issue
+ * - Component complexity issue
  */
 
-/**
- * Force dynamic rendering at request time.
- * This ensures the route is included in Vercel builds.
- * Without this, Next.js might skip this route during build due to auth checks in the layout.
- */
 export const dynamic = 'force-dynamic';
 
 export default function DashboardPage() {
-  return <ConfigurableDashboard />;
+  return (
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold text-black mb-4">
+          ✅ Dashboard Loaded!
+        </h1>
+        <p className="text-slate-600">
+          If you see this, the route registration works.
+        </p>
+        <p className="text-slate-500 text-sm mt-2">
+          Minimal version - no imports, no dependencies
+        </p>
+      </div>
+    </div>
+  );
 }

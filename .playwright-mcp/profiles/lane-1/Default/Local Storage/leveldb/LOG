@@ -1,0 +1,33 @@
+2026/01/18-06:23:46.950 cd2ab8 Reusing MANIFEST /Users/romeodossantos/verone-back-office-V1/.playwright-mcp/profiles/lane-1/Default/Local Storage/leveldb/MANIFEST-000001
+2026/01/18-06:23:46.953 cd2ab8 Recovering log #6
+2026/01/18-06:23:46.954 cd2ab8 Reusing old log /Users/romeodossantos/verone-back-office-V1/.playwright-mcp/profiles/lane-1/Default/Local Storage/leveldb/000006.log 
+2026/01/18-06:24:14.597 cd2abb Level-0 table #10: started
+2026/01/18-06:24:14.600 cd2abb Level-0 table #10: 33818 bytes OK
+2026/01/18-06:24:14.603 cd2abb Delete type=0 #6
+2026/01/18-06:32:49.246 cd2abb Level-0 table #12: started
+2026/01/18-06:32:49.252 cd2abb Level-0 table #12: 46537 bytes OK
+2026/01/18-06:32:49.256 cd2abb Delete type=0 #9
+2026/01/18-06:36:49.248 cd2abb Level-0 table #14: started
+2026/01/18-06:36:49.252 cd2abb Level-0 table #14: 41126 bytes OK
+2026/01/18-06:36:49.254 cd2abb Delete type=0 #11
+2026/01/18-06:49:36.624 cd2abb Level-0 table #16: started
+2026/01/18-06:49:36.629 cd2abb Level-0 table #16: 33812 bytes OK
+2026/01/18-06:49:36.631 cd2abb Delete type=0 #13
+2026/01/18-06:49:36.631 cd2abb Compacting 4@0 + 1@1 files
+2026/01/18-06:49:36.636 cd2abb Generated table #17@0: 109 keys, 21877 bytes
+2026/01/18-06:49:36.636 cd2abb Compacted 4@0 + 1@1 files => 21877 bytes
+2026/01/18-06:49:36.637 cd2abb compacted to: files[ 0 1 1 0 0 0 0 ]
+2026/01/18-06:49:36.638 cd2abb Delete type=2 #14
+2026/01/18-06:49:36.638 cd2abb Delete type=2 #16
+2026/01/18-06:49:36.639 cd2abb Delete type=2 #7
+2026/01/18-06:49:36.639 cd2abb Delete type=2 #12
+2026/01/18-06:49:36.639 cd2abb Delete type=2 #10
+2026/01/18-07:01:49.241 cd2ab8 Level-0 table #19: started
+2026/01/18-07:01:49.282 cd2ab8 Level-0 table #19: 41075 bytes OK
+2026/01/18-07:01:49.343 cd2ab8 Delete type=0 #15
+2026/01/18-07:05:49.223 cd2abb Level-0 table #21: started
+2026/01/18-07:05:49.226 cd2abb Level-0 table #21: 40766 bytes OK
+2026/01/18-07:05:49.229 cd2abb Delete type=0 #18
+2026/01/18-07:14:56.090 cd2abb Level-0 table #23: started
+2026/01/18-07:14:56.094 cd2abb Level-0 table #23: 41228 bytes OK
+2026/01/18-07:14:56.096 cd2abb Delete type=0 #20
