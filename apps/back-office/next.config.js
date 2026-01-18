@@ -137,6 +137,9 @@ const nextConfig = {
     BUILD_TIME: new Date().toISOString(),
     // ✅ FIX: Supprimer warning "Using edge runtime" (message informatif)
     NEXT_HIDE_MIDDLEWARE_MESSAGE: '1',
+    // Allow builds with cached fonts when network unavailable (CI/CD)
+    NEXT_FONT_GOOGLE_MOCKED_RESPONSES:
+      process.env.CI === 'true' ? '[]' : undefined,
   },
 
   // Webpack optimizations for large files performance

@@ -64,6 +64,16 @@ jobs:
       - name: 📦 Install dependencies
         run: pnpm install
 
+      - name: 📝 Cache Google Fonts
+        uses: actions/cache@v4
+        with:
+          path: |
+            apps/back-office/.next/cache
+            apps/site-internet/.next/cache
+          key: ${{ runner.os }}-nextjs-fonts-${{ hashFiles('apps/*/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-fonts-
+
       - name: 🔧 TypeScript validation
         run: npm run type-check
         env:
@@ -110,6 +120,16 @@ jobs:
 
       - name: 📦 Install dependencies
         run: pnpm install
+
+      - name: 📝 Cache Google Fonts
+        uses: actions/cache@v4
+        with:
+          path: |
+            apps/back-office/.next/cache
+            apps/site-internet/.next/cache
+          key: ${{ runner.os }}-nextjs-fonts-${{ hashFiles('apps/*/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-fonts-
 
       - name: 🎭 Install Playwright browsers
         run: npx playwright install chromium
