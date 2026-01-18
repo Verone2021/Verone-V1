@@ -7,6 +7,7 @@
 export type QontoErrorCode =
   | 'AUTH_ERROR' // 401: Credentials invalides
   | 'AUTH_CONFIG_ERROR' // 0: Configuration auth manquante/invalide
+  | 'AUTH_CONFIG_MISSING' // 0: Aucune variable env Qonto configurée
   | 'AUTH_CONFIG_CONFLICT' // 0: Conflit OAuth + API Key simultanes
   | 'PERMISSION_ERROR' // 403: Permissions insuffisantes
   | 'NOT_FOUND' // 404: Ressource introuvable
@@ -80,6 +81,10 @@ export class QontoError extends Error {
         return "Erreur d'authentification Qonto. Vérifiez vos identifiants.";
       case 'AUTH_CONFIG_ERROR':
         return "Configuration Qonto manquante. Vérifiez vos variables d'environnement.";
+      case 'AUTH_CONFIG_MISSING':
+        return "Configuration Qonto non trouvée. Consultez la documentation (docs/integrations/vercel-env-qonto-setup.md).";
+      case 'AUTH_CONFIG_CONFLICT':
+        return "Conflit de configuration Qonto. Définissez QONTO_AUTH_MODE explicitement.";
       case 'PERMISSION_ERROR':
         return 'Permissions insuffisantes pour accéder à cette ressource Qonto.';
       case 'NOT_FOUND':
