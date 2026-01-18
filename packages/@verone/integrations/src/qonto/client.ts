@@ -42,7 +42,15 @@ function generateIdempotencyKey(): string {
 
 /**
  * Détermine le mode d'auth à partir des env vars
- * GUARDRAIL: Si les deux modes sont configurés simultanément → throw
+ * GUARDRAIL: Config explicite requise pour éviter pannes silencieuses
+ *
+ * Ordre de priorité:
+ * 1. QONTO_AUTH_MODE explicite (api_key ou oauth)
+ * 2. Auto-détection: API Key si présente, sinon OAuth
+ * 3. Erreur si aucune config
+ *
+ * @throws {QontoError} AUTH_CONFIG_MISSING si aucune variable configurée
+ * @throws {QontoError} AUTH_CONFIG_CONFLICT si les deux modes configurés sans QONTO_AUTH_MODE
  */
 function resolveAuthMode(): QontoAuthMode {
   const hasOAuthToken = !!process.env.QONTO_ACCESS_TOKEN;
@@ -56,21 +64,28 @@ function resolveAuthMode(): QontoAuthMode {
       'AUTH CONFLICT: Both OAuth (QONTO_ACCESS_TOKEN) and API Key ' +
         '(QONTO_ORGANIZATION_ID + QONTO_API_KEY) are configured. ' +
         'Set QONTO_AUTH_MODE=oauth OR QONTO_AUTH_MODE=api_key explicitly, ' +
-        'or remove one set of credentials. Recommended: use OAuth only.',
+        'or remove one set of credentials. See docs/integrations/vercel-env-qonto-setup.md',
       'AUTH_CONFIG_CONFLICT',
       0
     );
   }
 
-  // Mode explicite
+  // Mode explicite (priorité absolue)
   if (envMode === 'api_key') return 'api_key';
   if (envMode === 'oauth') return 'oauth';
 
-  // Auto-détection (un seul mode configuré)
-  if (hasOAuthToken) return 'oauth';
+  // Auto-détection: priorité API Key (cohérent avec doc 2026-01-17)
   if (hasApiKey) return 'api_key';
+  if (hasOAuthToken) return 'oauth';
 
-  return 'oauth'; // Défaut OAuth si rien n'est configuré
+  // GUARDRAIL: Config manquante = erreur explicite (pas de défaut silencieux)
+  throw new QontoError(
+    'Qonto configuration missing. Set QONTO_AUTH_MODE=api_key with QONTO_ORGANIZATION_ID + QONTO_API_KEY, ' +
+      'or QONTO_AUTH_MODE=oauth with QONTO_ACCESS_TOKEN. ' +
+      'See docs/integrations/vercel-env-qonto-setup.md for setup instructions.',
+    'AUTH_CONFIG_MISSING',
+    0
+  );
 }
 
 // =====================================================================
