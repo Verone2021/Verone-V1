@@ -9,7 +9,7 @@ module.exports = {
     './node_modules/@tremor/**/*.{js,ts,jsx,tsx}',
     // Verone UI package components
     '../../packages/@verone/ui/src/**/*.{js,ts,jsx,tsx}',
-    '../../packages/@verone/**/src/**/*.{js,ts,jsx,tsx}',
+    '../../packages/@verone/*/src/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
     extend: {
