@@ -92,6 +92,7 @@ next-env.d.ts
 .playwright-mcp/*.jpg
 .playwright-mcp/*.jpeg
 .playwright-mcp/lane-*/**
+.playwright-mcp/profiles/
 
 # Keep Playwright MCP documentation
 !.playwright-mcp/README.md
