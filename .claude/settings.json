@@ -5,7 +5,6 @@
     "playwright-lane-1",
     "playwright-lane-2"
   ],
-  "forceLoginMethod": "claudeai",
   "statusLine": {
     "type": "command",
     "command": "npx ccusage@latest statusline --visual-burn-rate emoji --no-offline",
