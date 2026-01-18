@@ -24,6 +24,7 @@
  * Ref: https://supabase.com/docs/guides/auth/server-side/nextjs
  */
 
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 import { createServerClient } from '@verone/utils/supabase/server';
@@ -40,6 +41,10 @@ export default async function ProtectedLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Calling headers() opts this layout into dynamic rendering at request time
+  // This prevents the auth check from running at build time
+  await headers();
+
   const supabase = await createServerClient();
   const {
     data: { session },
