@@ -18,6 +18,10 @@ const securityHeaders = {
         'https://aorroydfjsrygmosnzrl.supabase.co',
         'https://va.vercel-scripts.com', // Vercel Analytics
       ],
+      workerSrc: [
+        "'self'",
+        'blob:', // Required for Sentry Session Replay workers
+      ],
       styleSrc: [
         "'self'",
         "'unsafe-inline'", // Required for Tailwind CSS
