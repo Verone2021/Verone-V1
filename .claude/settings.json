@@ -1,10 +1,12 @@
 {
   "enableAllProjectMcpServers": true,
   "enabledMcpServers": [
+    "context7",
     "serena",
     "playwright-lane-1",
     "playwright-lane-2"
   ],
+  "forceLoginMethod": "claudeai",
   "statusLine": {
     "type": "command",
     "command": "npx ccusage@latest statusline --visual-burn-rate emoji --no-offline",
@@ -14,32 +16,201 @@
     "mode": "rules",
     "allow": [
       "mcp__*",
-      "Bash(git:*)",
-      "Bash(npm:*)",
+      "mcp__serena__*",
+      "mcp__context7__*",
+      "mcp__playwright-lane-1__*",
+      "mcp__playwright-lane-2__*",
+      "mcp__ide__*",
+
+      "Read",
+      "Read(/Users/romeodossantos/verone-back-office-V1/**)",
+      "Write",
+      "Write(/Users/romeodossantos/verone-back-office-V1/apps/**)",
+      "Write(/Users/romeodossantos/verone-back-office-V1/packages/**)",
+      "Write(/Users/romeodossantos/verone-back-office-V1/docs/**)",
+      "Write(/Users/romeodossantos/verone-back-office-V1/.vscode/**)",
+      "Write(/Users/romeodossantos/verone-back-office-V1/.claude/**)",
+      "Write(/Users/romeodossantos/verone-back-office-V1/supabase/**)",
+      "Edit",
+      "Edit(/Users/romeodossantos/verone-back-office-V1/apps/**)",
+      "Edit(/Users/romeodossantos/verone-back-office-V1/packages/**)",
+      "Edit(/Users/romeodossantos/verone-back-office-V1/docs/**)",
+      "Edit(/Users/romeodossantos/verone-back-office-V1/.vscode/**)",
+      "Edit(/Users/romeodossantos/verone-back-office-V1/supabase/**)",
+      "MultiEdit",
+      "MultiEdit(/Users/romeodossantos/verone-back-office-V1/apps/**)",
+      "MultiEdit(/Users/romeodossantos/verone-back-office-V1/packages/**)",
+      "MultiEdit(/Users/romeodossantos/verone-back-office-V1/docs/**)",
+
+      "Bash(npm run:*)",
+      "Bash(npm install:*)",
+      "Bash(npm ci)",
+      "Bash(npx:*)",
       "Bash(pnpm:*)",
-      "Bash(node:*)"
+      "Bash(bun:*)",
+
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)",
+      "Bash(git show:*)",
+      "Bash(git stash:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git checkout:*)",
+      "Bash(git pull:*)",
+      "Bash(git fetch:*)",
+
+      "Bash(gh:*)",
+
+      "Bash(supabase:*)",
+
+      "Bash(node:*)",
+      "Bash(tsx:*)",
+
+      "Bash(ls:*)",
+      "Bash(pwd)",
+      "Bash(date:*)",
+      "Bash(echo:*)",
+      "Bash(cat:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(tree:*)",
+      "Bash(whoami)",
+      "Bash(which:*)",
+      "Bash(ps:*)",
+      "Bash(lsof:*)",
+
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)",
+      "Bash(touch:*)",
+      "Bash(rm:*)",
+      "Bash(curl:*)",
+      "Bash(sleep:*)",
+      "Bash(chmod:*)",
+
+      "Glob",
+      "Grep",
+      "TodoWrite",
+      "WebSearch",
+      "WebFetch",
+      "NotebookEdit",
+      "Task",
+      "ExitPlanMode"
+    ],
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(rm -rf /*)",
+      "Bash(rm -rf /etc*)",
+      "Bash(rm -rf /usr*)",
+      "Bash(rm -rf /bin*)",
+      "Bash(rm -rf /home/*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(sudo:*)",
+      "Bash(chmod 777:*)",
+      "Write(*.env*)",
+      "Write(*credentials*)",
+      "Write(*secret*)",
+      "Edit(*.env*)",
+      "Edit(*credentials*)",
+      "Edit(*secret*)"
     ]
   },
-  "PreToolUse": [
-    {
-      "matcher": "Bash(git commit:*)",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "bash -c 'if ! echo \"$TOOL_INPUT\" | grep -qE \"\\[(BO|LM|WEB)-[A-Z0-9]+-[0-9]{3}\\]|\\[NO-TASK\\]\"; then echo \"❌ Task ID manquant. Format: [APP-XXX-001] ou [NO-TASK]\"; exit 1; fi'"
-        }
-      ]
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun $CLAUDE_PROJECT_DIR/.claude/scripts/validate-command.js"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun $CLAUDE_PROJECT_DIR/.claude/scripts/hook-post-file.ts"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"$TOOL_INPUT\" | grep -q 'git commit'; then node $CLAUDE_PROJECT_DIR/.claude/scripts/plan-sync.js 2>/dev/null || true; fi"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/task-completed.sh"
+          },
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/session-token-report.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/scripts/handoff-export.sh || true"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/validation-required.sh"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/agent-finished.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "project": {
+    "name": "Verone Back Office",
+    "description": "CRM/ERP modulaire pour Verone - Decoration et mobilier d'interieur",
+    "type": "next-js-supabase-crm",
+    "stack": [
+      "Next.js 15",
+      "React 18",
+      "TypeScript",
+      "Supabase",
+      "Tailwind CSS",
+      "shadcn/ui",
+      "Playwright"
+    ]
+  },
+  "token_monitoring": {
+    "enabled": true,
+    "budgets": {
+      "daily": 5.0,
+      "weekly": 30.0,
+      "monthly": 100.0
     }
-  ],
-  "PostToolUse": [],
-  "Stop": [
-    {
-      "hooks": [
-        {
-          "type": "command",
-          "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/task-completed.sh"
-        }
-      ]
-    }
-  ]
+  }
 }
