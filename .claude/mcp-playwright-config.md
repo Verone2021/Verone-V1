@@ -1,24 +1,26 @@
-# Configuration MCP Playwright Recommandée
+# Configuration MCP Playwright - Verone Back Office
 
-Ce document décrit la configuration optimale pour MCP Playwright basée sur les meilleures pratiques officielles Microsoft 2026.
+Documentation de la configuration Playwright MCP basée sur les emplacements officiels Claude Code.
 
-## État Actuel
+---
 
-Les serveurs MCP Playwright sont déjà activés dans `.claude/settings.json` :
+## Emplacements de Configuration Officiels
 
-```json
-{
-  "enabledMcpServers": [
-    "serena",
-    "playwright-lane-1",
-    "playwright-lane-2"
-  ]
-}
-```
+### Project Scope (Recommandé)
+**Fichier**: `.mcp.json` (racine du projet)
+**Usage**: Configuration spécifique au projet, versionnée dans Git
+**Activation**: `.claude/settings.json` avec `"enableAllProjectMcpServers": true`
 
-## Configuration Recommandée (Niveau Global)
+### User/Local Scope
+**Fichier**: `~/.claude.json` (home directory)
+**Usage**: Configuration globale utilisateur, non versionnée
+**Priorité**: Overrides project scope
 
-Pour configurer les paramètres détaillés des lanes Playwright, ajouter dans les **settings globaux de Claude Code** (`~/.claude/mcp-config.json` ou équivalent) :
+---
+
+## Configuration Actuelle (Project Scope)
+
+Notre configuration dans `.mcp.json`:
 
 ```json
 {
@@ -26,154 +28,165 @@ Pour configurer les paramètres détaillés des lanes Playwright, ajouter dans l
     "playwright-lane-1": {
       "command": "npx",
       "args": [
+        "-y",
         "@playwright/mcp@latest",
-        "--isolated",
-        "--timeout-action=3000",
-        "--timeout-navigation=30000",
-        "--viewport-size=1280x720",
-        "--output-dir=/Users/romeodossantos/verone-back-office-V1/.playwright-mcp/lane-1",
-        "--user-data-dir=~/.playwright-mcp/lane-1-profile"
+        "--browser",
+        "chrome",
+        "--user-data-dir=.playwright-mcp/profiles/lane-1",
+        "--output-dir=.playwright-mcp/output/lane-1"
       ]
     },
     "playwright-lane-2": {
       "command": "npx",
       "args": [
+        "-y",
         "@playwright/mcp@latest",
+        "--browser",
+        "chrome",
         "--isolated",
-        "--timeout-action=3000",
-        "--timeout-navigation=30000",
-        "--viewport-size=1280x720",
-        "--output-dir=/Users/romeodossantos/verone-back-office-V1/.playwright-mcp/lane-2",
-        "--user-data-dir=~/.playwright-mcp/lane-2-profile"
+        "--output-dir=.playwright-mcp/output/lane-2"
       ]
     }
   }
 }
 ```
 
-## Explications des Paramètres
+### Stratégie des Lanes
 
-### Paramètres de Base
+| Lane | Type | Profil | Use Case |
+|------|------|--------|----------|
+| **lane-1** | Persistant | `.playwright-mcp/profiles/lane-1` | Sessions avec login (Vercel Dashboard, Supabase, etc.) |
+| **lane-2** | Isolated | Aucun (--isolated) | Tests reproductibles, sessions clean |
 
-| Paramètre | Valeur | Justification |
-|-----------|--------|---------------|
-| `--isolated` | (flag) | Sessions clean et reproductibles (recommandé tests) |
-| `--timeout-action` | 3000ms | Optimisation performance (-40% vs défaut 5000ms) |
-| `--timeout-navigation` | 30000ms | Optimisation chargement pages (-50% vs défaut 60000ms) |
-| `--viewport-size` | 1280x720 | Résolution standard, pas de resize dynamique |
+**Pourquoi 2 lanes ?**
+- Évite les conflits "fighting over the same tab" ([Microsoft Issue #893](https://github.com/microsoft/playwright-mcp/issues/893))
+- Permet tests parallèles sans interférence
+- Chaque lane = instance navigateur isolée
 
-### Gestion Stockage
+---
 
-| Paramètre | Valeur | Justification |
-|-----------|--------|---------------|
-| `--output-dir` | `.playwright-mcp/lane-X` | Screenshots organisés par lane |
-| `--user-data-dir` | `~/.playwright-mcp/lane-X-profile` | Profils séparés évitent conflits |
+## Activation dans .claude/settings.json
 
-### Pourquoi 2 Lanes ?
-
-D'après [Microsoft Issue #893](https://github.com/microsoft/playwright-mcp/issues/893) :
-
-- ✅ Évite conflits "fighting over the same tab"
-- ✅ Permet tests parallèles sans interférence
-- ✅ Chaque lane = instance isolée avec son propre profil
-
-**⚠️ Recommandation Microsoft** : Maximum 2-3 lanes pour éviter overload système.
-
-## Paramètres Avancés Disponibles
-
-### Contrôle Navigateur
-
-```bash
---browser=chromium       # chromium|firefox|webkit|msedge
---headless              # Mode sans interface (défaut: headed)
---executable-path       # Chemin custom du navigateur
---device="iPhone 15"    # Émulation device mobile
+```json
+{
+  "enableAllProjectMcpServers": true,
+  "forceLoginMethod": "claudeai"
+}
 ```
 
-### Réseau & Sécurité
+**Note**: `forceLoginMethod` résout le conflit auth token + API key.
 
+---
+
+## Paramètres Disponibles
+
+### Navigateur
+```bash
+--browser=chromium       # chromium|firefox|webkit|chrome|msedge
+--headless              # Mode sans interface (défaut: headed)
+--executable-path       # Chemin custom du navigateur
+```
+
+### Session & Stockage
+```bash
+--user-data-dir=<path>  # Profil persistant (cookies, sessions)
+--isolated              # Session clean, pas de profil (⚠️ incompatible avec --user-data-dir)
+--output-dir=<path>     # Dossier screenshots/traces
+```
+
+### Réseau
 ```bash
 --allowed-hosts=example.com,*.github.com  # Hosts autorisés
 --blocked-origins=https://ads.example.com # Bloquer domaines
 --proxy-server=http://proxy:3128         # Proxy HTTP
---ignore-https-errors                    # Bypass SSL (⚠️ DEV ONLY)
 ```
 
-### Debug & Output
-
+### Debug
 ```bash
---output-dir=./playwright-output  # Dossier outputs
---save-session             # Sauvegarder session
---save-trace              # Enregistrer Playwright trace
---save-video=800x600      # Capturer vidéo (⚠️ Lourd)
---console-level=error     # error|warning|info|debug
+--save-trace            # Enregistrer Playwright trace (⚠️ Fichiers volumineux)
+--save-video=800x600    # Capturer vidéo (⚠️ Très lourd)
+--console-level=error   # error|warning|info|debug
 ```
-
-## Benchmarks Performance
-
-D'après [Fast Playwright MCP](https://github.com/tontoko/fast-playwright-mcp) :
-
-| Métrique | Défaut | Optimisé | Gain |
-|----------|--------|----------|------|
-| Action timeout | 5000ms | 3000ms | -40% |
-| Navigation timeout | 60000ms | 30000ms | -50% |
-| Mémoire utilisée | ~180 MB | ~55 MB | -70% |
-
-## Vérification Installation
-
-```bash
-# Vérifier version Playwright MCP
-npx @playwright/mcp@latest --version
-
-# Tester connexion
-claude mcp list | grep playwright
-
-# Vérifier création profils
-ls -la ~/.playwright-mcp/
-```
-
-## Bonnes Pratiques
-
-### À Faire ✅
-
-- Utiliser `--isolated` pour tests automatisés
-- Limiter à 2-3 lanes maximum
-- Spécifier `--output-dir` dans le projet
-- Timeouts courts pour feedback rapide
-
-### À Éviter ❌
-
-- Lancer > 3 lanes (overload système)
-- Utiliser `--save-trace` en production (fichiers énormes)
-- Ignorer `--isolated` pour tests (résultats non-reproductibles)
-- Capturer vidéos systématiquement (très lourd)
-
-## Maintenance
-
-Le nettoyage automatique des screenshots est géré par :
-- **Workflow** : `.github/workflows/cleanup-screenshots.yml`
-- **Fréquence** : Chaque dimanche à minuit UTC
-- **Rétention** : 30 jours
-
-## Sources & Références
-
-Toutes les recommandations sont basées sur :
-
-1. **Documentation Officielle Microsoft** :
-   - [Playwright MCP GitHub](https://github.com/microsoft/playwright-mcp)
-   - [Issue #23644 - Cleanup obsolete snapshots](https://github.com/microsoft/playwright/issues/23644)
-   - [Issue #893 - Parallel agents interference](https://github.com/microsoft/playwright-mcp/issues/893)
-
-2. **Best Practices Communautaires** :
-   - [Supatest Performance Guide](https://supatest.ai/blog/playwright-mcp-setup-guide)
-   - [Fast Playwright MCP](https://github.com/tontoko/fast-playwright-mcp)
-
-3. **Automation Standards** :
-   - [GitHub Actions Artifact Cleaner](https://github.com/marketplace/actions/github-actions-artifact-cleaner)
-   - [Microsoft Azure DevOps Retention Policies](https://learn.microsoft.com/en-us/azure/devops/pipelines/policies/retention)
 
 ---
 
-**Date de Création** : 2026-01-17
-**Auteur** : Configuration basée sur plan détaillé avec sources officielles
-**Maintenance** : Mettre à jour si nouvelles recommandations Microsoft
+## Bonnes Pratiques
+
+### ✅ À Faire
+- Utiliser `.mcp.json` (project scope) pour config versionnée
+- Limiter à 2-3 lanes maximum (évite surcharge système)
+- Spécifier `--output-dir` dans le projet (`.playwright-mcp/`)
+- Garder timeouts par défaut (fiabilité > speed)
+- Séparer lane persistante (login) et lane isolated (tests)
+
+### ❌ À Éviter
+- Mélanger `--isolated` avec `--user-data-dir` (incompatible)
+- Lancer > 3 lanes (overload système)
+- Optimiser timeouts agressivement (risque de flakiness)
+- Utiliser `--save-trace` systématiquement (fichiers énormes)
+- Référencer `~/.claude/mcp-config.json` (n'existe pas officiellement)
+
+---
+
+## Vérification & Debug
+
+### Lister les serveurs MCP actifs
+```bash
+claude mcp list
+```
+
+### Vérifier les profils créés
+```bash
+ls -la .playwright-mcp/profiles/
+ls -la .playwright-mcp/output/
+```
+
+### Tester une lane
+```bash
+# Dans Claude Code, utiliser une commande simple:
+# "Navigate to https://example.com using lane-1"
+```
+
+---
+
+## Maintenance Screenshots
+
+### Stratégie Actuelle
+- **Gitignore**: Tout `.playwright-mcp/*` sauf README
+- **Cleanup manuel**: `rm -rf .playwright-mcp/output/*` si besoin
+- **Guard CI** (optionnel): Job qui échoue si un PNG est commité
+
+### Workflow GitHub Optionnel
+Le workflow `.github/workflows/cleanup-screenshots.yml` peut être utilisé pour cleanup automatique, mais n'est pas requis si gitignore est bien configuré.
+
+---
+
+## Résolution Auth Conflict
+
+Si erreur "Auth conflict: token + API key":
+
+1. Ajouter dans `.claude/settings.json`:
+```json
+{
+  "forceLoginMethod": "claudeai"  // OU "console"
+}
+```
+
+2. Nettoyer la session:
+```bash
+claude /logout
+claude /login
+```
+
+---
+
+## Sources & Références
+
+- [Claude Code MCP Docs](https://docs.claudecode.com/mcp)
+- [Playwright MCP GitHub](https://github.com/microsoft/playwright-mcp)
+- [Issue #893 - Parallel agents interference](https://github.com/microsoft/playwright-mcp/issues/893)
+
+---
+
+**Date**: 2026-01-18
+**Version**: 2.0 (Config officielle alignée avec Claude Code)
