@@ -133,17 +133,6 @@ main() {
     # Export rapport journalier JSON
     local daily_report="${REPORTS_DIR}/daily-$(date +%Y-%m-%d).json"
     echo "$daily_data" > "$daily_report"
-
-    # WORKAROUND: Display statusLine info at session end
-    # (Bug #17020 prevents real-time statusLine display)
-    echo ""
-    echo -e "${CYAN}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${CYAN}${BOLD}  📊 Session Summary (StatusLine Workaround)${NC}"
-    echo -e "${CYAN}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    npx --yes ccusage@latest statusline --visual-burn-rate emoji --no-offline 2>/dev/null || \
-      echo -e "${YELLOW}⚠  ccusage unavailable (install with: npm install -g ccusage@latest)${NC}"
-    echo -e "${CYAN}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo ""
 }
 
 # Exécution silencieuse (pas d'erreur si outils manquants)

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://storage.googleapis.com/anthropic-assets/claude-desktop/mcp-server-schema-v1.json",
+  "permissions": {
+    "allow": [
+      "mcp__playwright-lane-1__browser_click",
+      "mcp__playwright-lane-1__browser_navigate",
+      "mcp__playwright-lane-1__browser_snapshot",
+      "mcp__serena__find_symbol",
+      "mcp__serena__search_for_pattern",
+      "Bash(npm run:*)",
+      "Bash(git status)",
+      "Bash(git diff)"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "enableAllProjectMcpServers": true
+}
