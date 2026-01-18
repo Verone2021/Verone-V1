@@ -28,6 +28,13 @@ import { redirect } from 'next/navigation';
 
 import { createServerClient } from '@verone/utils/supabase/server';
 
+/**
+ * Force dynamic rendering for all protected routes.
+ * This prevents build-time errors when auth check fails (no session at build time).
+ * Without this, Next.js skips these routes during build, causing 404 in production.
+ */
+export const dynamic = 'force-dynamic';
+
 export default async function ProtectedLayout({
   children,
 }: {
