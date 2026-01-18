@@ -28,10 +28,6 @@ import { redirect } from 'next/navigation';
 
 import { createServerClient } from '@verone/utils/supabase/server';
 
-// Force dynamic rendering for all protected routes
-// Prevents build-time errors when auth check fails (no session at build time)
-export const dynamic = 'force-dynamic';
-
 export default async function ProtectedLayout({
   children,
 }: {
