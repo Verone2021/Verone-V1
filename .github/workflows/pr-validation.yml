@@ -65,6 +65,16 @@ jobs:
       - name: 📦 Install Dependencies
         run: pnpm install
 
+      - name: 📝 Cache Google Fonts
+        uses: actions/cache@v4
+        with:
+          path: |
+            apps/back-office/.next/cache
+            apps/site-internet/.next/cache
+          key: ${{ runner.os }}-nextjs-fonts-${{ hashFiles('apps/*/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-fonts-
+
       - name: 🏗️ Build PR Changes
         run: npm run build
 
@@ -118,6 +128,16 @@ jobs:
       - name: 📦 Install Dependencies
         run: pnpm install
 
+      - name: 📝 Cache Google Fonts
+        uses: actions/cache@v4
+        with:
+          path: |
+            apps/back-office/.next/cache
+            apps/site-internet/.next/cache
+          key: ${{ runner.os }}-nextjs-fonts-${{ hashFiles('apps/*/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-fonts-
+
       - name: 🧪 Run Critical Tests (PR Validation)
         run: |
           echo "🧪 TESTS CRITIQUES PR - Revolution 2025"
@@ -158,6 +178,16 @@ jobs:
 
       - name: 📦 Install Dependencies
         run: pnpm install
+
+      - name: 📝 Cache Google Fonts
+        uses: actions/cache@v4
+        with:
+          path: |
+            apps/back-office/.next/cache
+            apps/site-internet/.next/cache
+          key: ${{ runner.os }}-nextjs-fonts-${{ hashFiles('apps/*/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-fonts-
 
       - name: 🏗️ Production Build Validation
         run: |
