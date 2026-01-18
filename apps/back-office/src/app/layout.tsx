@@ -1,5 +1,4 @@
 import './globals.css';
-import { Inter } from 'next/font/google';
 import Script from 'next/script';
 
 import { Analytics } from '@vercel/analytics/react';
@@ -11,8 +10,7 @@ import { ClientOnlyActivityTracker } from '../components/providers/client-only-a
 import { ReactQueryProvider } from '../components/providers/react-query-provider';
 import { SentryUserProvider } from '../components/providers/sentry-user-provider';
 import { SupabaseProvider } from '../components/providers/supabase-provider';
-
-const inter = Inter({ subsets: ['latin'] });
+import { inter } from '../lib/fonts';
 
 /**
  * Configuration Next.js 15 - Dynamic Rendering

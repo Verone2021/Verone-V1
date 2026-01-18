@@ -3,7 +3,7 @@
   "name": "verone-back-office",
   "alias": ["verone-backoffice.vercel.app"],
   "framework": "nextjs",
-  "ignoreCommand": "exit 1",
+  "ignoreCommand": "bash apps/back-office/scripts/should-deploy.sh",
   "buildCommand": "turbo run build --filter=@verone/back-office",
   "devCommand": "npm run dev",
   "installCommand": "pnpm install",

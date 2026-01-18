@@ -32,6 +32,7 @@ build/
 # MCP Server credentials (DO NOT COMMIT)
 .mcp.env
 .mcp.local.json
+.mcp.json
 
 # Logs
 logs

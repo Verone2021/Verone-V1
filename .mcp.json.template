@@ -38,13 +38,6 @@
         "--isolated",
         "--output-dir=.playwright-mcp/output/lane-2"
       ]
-    },
-    "magic": {
-      "command": "npx",
-      "args": ["-y", "@21st-dev/magic@latest"],
-      "env": {
-        "API_KEY": "074681bb85ef44f8af962585911fd868ad9ca8fc2277485b464d8f690110b27e"
-      }
     }
   }
 }
