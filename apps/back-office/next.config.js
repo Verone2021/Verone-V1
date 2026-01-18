@@ -46,6 +46,14 @@ const nextConfig = {
         destination: '/login',
         permanent: false, // 307 redirect (temporaire)
       },
+      // 🔧 DASHBOARD REDIRECT: "/dashboard" → "/accueil" (Vercel 404 workaround)
+      // Root cause: Le nom "/dashboard" cause un 404 mystérieux sur Vercel uniquement
+      // Solution temporaire: Renommer la route et rediriger
+      {
+        source: '/dashboard',
+        destination: '/accueil',
+        permanent: false, // 307 redirect (temporaire, à investiguer avec Vercel)
+      },
       {
         source: '/catalogue',
         destination: '/produits/catalogue',
