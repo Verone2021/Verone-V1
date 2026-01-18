@@ -1,0 +1,4 @@
+2026/01/18-20:16:34.540 b00f4 Creating DB /Users/romeodossantos/verone-back-office-V1/.playwright-mcp/profiles/lane-1/Default/shared_proto_db since it was missing.
+2026/01/18-20:16:34.544 b00f4 Reusing MANIFEST /Users/romeodossantos/verone-back-office-V1/.playwright-mcp/profiles/lane-1/Default/shared_proto_db/MANIFEST-000001
+2026/01/18-20:16:34.544 b00f4 Recovering log #3
+2026/01/18-20:16:34.545 b00f4 Reusing old log /Users/romeodossantos/verone-back-office-V1/.playwright-mcp/profiles/lane-1/Default/shared_proto_db/000003.log 

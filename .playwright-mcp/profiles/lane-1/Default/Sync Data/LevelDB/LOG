@@ -1,0 +1,4 @@
+2026/01/18-20:16:33.682 b00e8 Creating DB /Users/romeodossantos/verone-back-office-V1/.playwright-mcp/profiles/lane-1/Default/Sync Data/LevelDB since it was missing.
+2026/01/18-20:16:33.696 b00e8 Reusing MANIFEST /Users/romeodossantos/verone-back-office-V1/.playwright-mcp/profiles/lane-1/Default/Sync Data/LevelDB/MANIFEST-000001
+2026/01/18-20:16:33.697 b00e8 Recovering log #3
+2026/01/18-20:16:33.698 b00e8 Reusing old log /Users/romeodossantos/verone-back-office-V1/.playwright-mcp/profiles/lane-1/Default/Sync Data/LevelDB/000003.log 
