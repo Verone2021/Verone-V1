@@ -1,0 +1,6 @@
+2026/01/18-07:15:44.008 cd2a66 Creating DB /Users/romeodossantos/verone-back-office-V1/.playwright-mcp/profiles/lane-1/Default/IndexedDB/https_github.com_0.indexeddb.leveldb since it was missing.
+2026/01/18-07:15:44.011 cd2a66 Reusing MANIFEST /Users/romeodossantos/verone-back-office-V1/.playwright-mcp/profiles/lane-1/Default/IndexedDB/https_github.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/01/18-07:16:10.382 cd2a66 Level-0 table #5: started
+2026/01/18-07:16:10.383 cd2a66 Level-0 table #5: 887 bytes OK
+2026/01/18-07:16:10.384 cd2a66 Delete type=0 #3
+2026/01/18-07:16:10.385 cd2a66 Manual compaction at level-0 from (begin) .. (end); will stop at (end)
