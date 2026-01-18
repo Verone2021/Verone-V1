@@ -24,7 +24,8 @@
         "@playwright/mcp@latest",
         "--browser",
         "chrome",
-        "--user-data-dir=/Users/romeodossantos/.claude/playwright-profiles/lane-1"
+        "--user-data-dir=.playwright-mcp/profiles/lane-1",
+        "--output-dir=.playwright-mcp/output/lane-1"
       ]
     },
     "playwright-lane-2": {
@@ -34,7 +35,8 @@
         "@playwright/mcp@latest",
         "--browser",
         "chrome",
-        "--user-data-dir=/Users/romeodossantos/.claude/playwright-profiles/lane-2"
+        "--isolated",
+        "--output-dir=.playwright-mcp/output/lane-2"
       ]
     },
     "magic": {
