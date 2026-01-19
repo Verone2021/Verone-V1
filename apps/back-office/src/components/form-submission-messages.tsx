@@ -13,7 +13,7 @@
 
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { ButtonUnified } from '@verone/ui';
 import { spacing, colors } from '@verone/ui/design-system';
 import { cn } from '@verone/utils';

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+
 import { useParams, useRouter } from 'next/navigation';
 
 import { ButtonUnified } from '@verone/ui';
@@ -134,7 +135,7 @@ export default function EditEmailTemplatePage() {
   if (loading) {
     return (
       <div className="text-center py-12">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-black"></div>
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-black" />
         <p className="mt-4 text-gray-600">Chargement du template...</p>
       </div>
     );
@@ -181,9 +182,7 @@ export default function EditEmailTemplatePage() {
             <ButtonUnified
               variant="outline"
               size="sm"
-              onClick={() =>
-                router.push(`/parametres/emails/${slug}/preview`)
-              }
+              onClick={() => router.push(`/parametres/emails/${slug}/preview`)}
             >
               <Eye className="h-4 w-4" />
               Aperçu
@@ -272,8 +271,8 @@ export default function EditEmailTemplatePage() {
               placeholder="HTML du template..."
             />
             <p className="text-xs text-gray-500 mt-2">
-              Utilisez {`{{variableName}}`} pour insérer des variables.
-              Syntaxe Handlebars supportée: {`{{#if condition}}...{{/if}}`}
+              Utilisez {`{{variableName}}`} pour insérer des variables. Syntaxe
+              Handlebars supportée: {`{{#if condition}}...{{/if}}`}
             </p>
           </div>
         </div>
