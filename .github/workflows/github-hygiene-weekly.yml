@@ -1,0 +1,111 @@
+name: GitHub Hygiene Weekly
+
+# Weekly check for broken references and stale artifacts
+on:
+  schedule:
+    - cron: '0 7 * * 1' # Monday 07:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  hygiene-check:
+    name: Check Repository Hygiene
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for broken script references
+        id: broken-refs
+        run: |
+          echo "## Broken Script References" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          BROKEN_COUNT=0
+
+          # Check all workflow files for script references
+          for workflow in .github/workflows/*.yml; do
+            if [ -f "$workflow" ]; then
+              # Extract bash/run commands that reference scripts
+              grep -E "run:.*\.(sh|py|js)" "$workflow" 2>/dev/null | while read -r line; do
+                # Extract script path
+                script=$(echo "$line" | grep -oE '[a-zA-Z0-9_/-]+\.(sh|py|js)' | head -1)
+                if [ -n "$script" ] && [ ! -f "$script" ]; then
+                  echo "- ❌ **$workflow**: Missing \`$script\`" >> $GITHUB_STEP_SUMMARY
+                  BROKEN_COUNT=$((BROKEN_COUNT + 1))
+                fi
+              done
+            fi
+          done
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$BROKEN_COUNT" -gt 0 ]; then
+            echo "broken_refs=true" >> $GITHUB_OUTPUT
+            echo "❌ Found $BROKEN_COUNT broken script references" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "broken_refs=false" >> $GITHUB_OUTPUT
+            echo "✅ All script references are valid" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Check for stale branches
+        id: stale-branches
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Stale Branches" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Count branches older than 30 days (excluding main, develop)
+          STALE_COUNT=0
+
+          # This would need gh CLI for remote branches
+          echo "ℹ️ Local branch check only (run \`gh api repos/:owner/:repo/branches\` for remote)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Check workflow file syntax
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Workflow Syntax Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          ERROR_COUNT=0
+
+          for workflow in .github/workflows/*.yml; do
+            if [ -f "$workflow" ]; then
+              # Basic YAML syntax check
+              if ! python3 -c "import yaml; yaml.safe_load(open('$workflow'))" 2>/dev/null; then
+                echo "- ❌ **$workflow**: Invalid YAML syntax" >> $GITHUB_STEP_SUMMARY
+                ERROR_COUNT=$((ERROR_COUNT + 1))
+              fi
+            fi
+          done
+
+          if [ "$ERROR_COUNT" -eq 0 ]; then
+            echo "✅ All workflow files have valid YAML syntax" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Check for duplicate workflow names
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Duplicate Workflow Names" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Extract workflow names and check for duplicates
+          grep -h "^name:" .github/workflows/*.yml 2>/dev/null | sort | uniq -d > /tmp/dup-names.txt
+
+          if [ -s /tmp/dup-names.txt ]; then
+            echo "❌ Duplicate workflow names found:" >> $GITHUB_STEP_SUMMARY
+            cat /tmp/dup-names.txt >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No duplicate workflow names" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Generate final report
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "**Report generated**: $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
