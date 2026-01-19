@@ -8,14 +8,15 @@
  * - Fail-closed: erreur middleware = redirect /login (routes protégées)
  *
  * Pattern adapté de apps/linkme/src/middleware.ts
+ *
+ * NOTE: Sentry Edge SDK désactivé temporairement (TypeError: Cannot read 'default')
+ * Les erreurs sont loggées via console.error pour Vercel Runtime Logs
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
-import * as Sentry from '@sentry/nextjs';
 import {
   createMiddlewareClient,
   updateSession,
-  SupabaseEnvError,
 } from './lib/supabase-middleware';
 
 // Routes publiques accessibles sans authentification
@@ -52,21 +53,7 @@ function handleMiddlewareError(
   const errorMessage = error instanceof Error ? error.message : String(error);
   const errorName = error instanceof Error ? error.name : 'UnknownError';
 
-  // Capturer dans Sentry avec contexte Edge
-  Sentry.captureException(error, {
-    tags: {
-      middleware: 'auth',
-      pathname,
-      isPublic: String(isPublicRoute(pathname)),
-    },
-    extra: {
-      errorName,
-      errorMessage,
-      url: request.url,
-    },
-  });
-
-  // Console log pour Vercel Runtime Logs
+  // Console log pour Vercel Runtime Logs (Sentry Edge désactivé)
   console.error(`[Middleware Error] ${errorName}: ${errorMessage}`, {
     pathname,
     url: request.url,
