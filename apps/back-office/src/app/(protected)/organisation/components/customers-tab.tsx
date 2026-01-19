@@ -4,11 +4,22 @@ import { useState, useMemo, useEffect } from 'react';
 
 import Link from 'next/link';
 
-import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
-import { Card, CardContent } from '@verone/ui';
+import { CustomerFormModal } from '@verone/customers';
+import { OrganisationListView } from '@verone/customers';
+import { OrganisationLogo } from '@verone/organisations';
+import { OrganisationCard } from '@verone/organisations';
+import {
+  useOrganisations,
+  getOrganisationDisplayName,
+  type Organisation,
+} from '@verone/organisations';
 import { Input } from '@verone/ui';
+import { Card, CardContent } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import { Badge } from '@verone/ui';
+import { spacing, colors } from '@verone/ui/design-system';
 import { cn } from '@verone/utils';
+import { createClient } from '@verone/utils/supabase/client';
 import {
   Search,
   Plus,
@@ -21,18 +32,6 @@ import {
   LayoutGrid,
   List,
 } from 'lucide-react';
-
-import { CustomerFormModal } from '@verone/customers';
-import { OrganisationListView } from '@verone/customers';
-import { OrganisationLogo } from '@verone/organisations';
-import { OrganisationCard } from '@verone/organisations';
-import {
-  useOrganisations,
-  getOrganisationDisplayName,
-  type Organisation,
-} from '@verone/organisations';
-import { spacing, colors } from '@verone/ui/design-system';
-import { createClient } from '@verone/utils/supabase/client';
 
 // ✅ FIX TypeScript: Utiliser type Organisation (pas de Customer local)
 // IMPORTANT: Organisation utilise "legal_name" (pas "name")
