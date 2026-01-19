@@ -83,6 +83,12 @@ next-env.d.ts
 .claude/reports/**
 .claude/playwright-profiles/
 **/sessions.jsonl
+.claude/audits/generated/
+.claude/backups/
+.claude/settings.local.json
+.claude/plans/*-agent-*.md
+.claude/*-temp*
+.claude/*.log
 
 # Husky
 .husky/_
