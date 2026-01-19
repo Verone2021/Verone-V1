@@ -33,16 +33,21 @@ jobs:
         run: pnpm install
 
       - name: Run TypeScript type check
-        run: npm run type-check
-        continue-on-error: true
         id: typecheck
-
-      - name: Count TypeScript errors
-        if: always()
         run: |
-          ERROR_COUNT=$(npm run type-check 2>&1 | grep -c "error TS" || true)
+          # Run type-check ONCE and capture output
+          npm run type-check 2>&1 | tee /tmp/typecheck-output.txt || true
+
+          # Count errors from captured output
+          ERROR_COUNT=$(grep -c "error TS" /tmp/typecheck-output.txt || echo "0")
           echo "TYPESCRIPT_ERRORS=$ERROR_COUNT" >> $GITHUB_ENV
           echo "📊 TypeScript errors found: $ERROR_COUNT"
+
+          # Show first 50 errors for context
+          if [ "$ERROR_COUNT" -gt 0 ]; then
+            echo "First 50 errors:"
+            grep "error TS" /tmp/typecheck-output.txt | head -50
+          fi
 
       - name: Comment on PR
         if: github.event_name == 'pull_request' && always()
