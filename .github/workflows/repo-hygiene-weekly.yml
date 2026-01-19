@@ -1,0 +1,43 @@
+name: repo-hygiene-weekly
+
+on:
+  schedule:
+    - cron: "0 8 * * 1" # Lundi 08:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run repo hygiene script
+        run: |
+          chmod +x scripts/maintenance/repo-hygiene.sh
+          bash scripts/maintenance/repo-hygiene.sh
+
+      - name: Create PR if changes
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: chore/repo-hygiene-auto
+          delete-branch: true
+          title: "chore: weekly repo hygiene (auto)"
+          commit-message: "chore: weekly repo hygiene"
+          body: |
+            ## Weekly Hygiene PR (Automated)
+
+            This PR was created automatically by the repo-hygiene-weekly workflow.
+
+            **Actions performed:**
+            - Moved noise out of `.claude/` to proper locations
+            - Archived non-core items
+            - Updated `.gitignore` if needed
+
+            **Policy:** No destructive deletes — only moves with git history preserved.
+
+            Review the diff and merge if OK.

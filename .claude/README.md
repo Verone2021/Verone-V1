@@ -1,124 +1,99 @@
-# Configuration Claude Code - Verone Back Office
+# Claude Code Configuration - Verone Back Office
 
-Configuration optimisee basee sur Anthropic Best Practices 2025.
+**Version**: 4.1.0 (Kit Perso Exclusif)
+**Date**: 2026-01-19
 
-**Version** : 3.0.0
-**Date** : 2025-12-19
+## Philosophie
 
----
+**Règle**: Tout le kit Claude perso vit **exclusivement dans `.claude/`** de ce repo.
+- Pas de dépendance à `~/.claude/` (portable, copiable entre repos)
+- Wrappers de compatibilité pour les hooks (jamais de casse)
+- Automatisation safe (moves only, no deletes)
 
 ## Structure
 
 ```
 .claude/
-├── settings.json           # Configuration principale (hooks, permissions, MCP)
-├── settings.local.json     # Overrides locaux (optionnel)
+├── settings.json           # Permissions MCP
 ├── README.md               # Ce fichier
-│
-├── agents/                 # Agents specialises (5)
-│   ├── database-architect.md       # Migrations & schema DB
-│   ├── verone-debug-investigator.md # Investigation bugs systematique
-│   ├── verone-orchestrator.md      # Coordination multi-domaines
-│   ├── frontend-architect.md       # UI/UX & composants
-│   └── action.md                   # Executeur conditionnel
-│
-├── commands/               # Commandes slash (8)
-│   ├── implement.md               # /implement - Explore-Code-Verify
-│   ├── commit.md                  # /commit - Git commit rapide
-│   ├── pr.md                      # /pr - Creer Pull Request
-│   ├── explore.md                 # /explore - Exploration codebase
-│   ├── db.md                      # /db - Operations database
-│   ├── arch.md                    # /arch - Audit architecture
-│   ├── update-docs.md             # /update-docs - Mise a jour doc
-│   └── senior-stabilization-protocol.md  # Protocole urgence
-│
-├── contexts/               # Contextes charges a la demande (2)
-│   ├── design-system.md    # UI/UX patterns
-│   └── monorepo.md         # Architecture Turborepo
-│
-├── scripts/                # Scripts automatisation
-│   ├── validate-command.js # Hook securite pre-execution
-│   ├── hook-post-file.ts   # Auto-format TypeScript
-│   ├── repo-audit.sh       # Audit contradictions
-│   └── [autres scripts]
-│
-└── logs/                   # Logs securite
-    └── security.log
+├── scripts/                # Wrappers de compatibilité
+│   ├── task-completed.sh   # Stop hook wrapper
+│   └── session-token-report.sh
+├── agents/                 # 4 agents core
+│   ├── database-architect.md
+│   ├── frontend-architect.md
+│   ├── verone-debug-investigator.md
+│   └── verone-orchestrator.md
+└── commands/               # 5 commands core
+    ├── db.md
+    ├── explore.md
+    ├── implement.md
+    ├── plan.md
+    └── pr.md
 ```
 
----
+## Règles "Expert"
 
-## Commandes Disponibles
+### Wrappers de compatibilité
+Les scripts dans `.claude/scripts/` sont des **wrappers** qui:
+1. Cherchent le script réel dans `scripts/claude/`
+2. Si trouvé et exécutable → l'appellent
+3. Sinon → log "SKIP" et `exit 0`
 
-| Commande     | Description                    | Usage                  |
-| ------------ | ------------------------------ | ---------------------- |
-| `/implement` | Explore-Code-Verify (unifie)   | Features               |
-| `/commit`    | Commit rapide Conventional     | Apres modifications    |
-| `/pr`        | Creer PR avec checks           | Avant merge            |
-| `/explore`   | Exploration parallele codebase | Recherche code         |
-| `/db`        | Operations Supabase            | Requetes, migrations   |
-| `/arch`      | Audit architecture Turborepo   | Verification structure |
+**Résultat**: Jamais de "hook error", même si le script cible n'existe pas.
 
----
+### Portabilité
+- **Pas de chemins absolus** (`/Users/...`) dans les scripts
+- Utiliser `$SCRIPT_DIR`, `$PROJECT_ROOT`, `$CLAUDE_PROJECT_DIR`
+- Tester avec `bash -n script.sh` avant commit
 
-## Agents Specialises
+### Safe by default
+- `set -euo pipefail` en haut de chaque script
+- Fallback `|| true` pour les opérations non critiques
+- `exit 0` si prérequis manquant (pas d'échec silencieux)
 
-| Agent                         | Role                                       | Verification                     |
-| ----------------------------- | ------------------------------------------ | -------------------------------- |
-| **database-architect**        | Schema DB, migrations, triggers, RLS       | type-check + build               |
-| **frontend-architect**        | Composants UI, pages, forms                | type-check + build + smoke tests |
-| **verone-debug-investigator** | Investigation bugs systematique            | type-check                       |
-| **verone-orchestrator**       | Coordination features multi-domaines       | type-check                       |
-| **action**                    | Executeur conditionnel (verify before act) | type-check                       |
+## Où les choses vivent
 
----
+| Item | Location |
+|------|----------|
+| Permissions MCP | `.claude/settings.json` |
+| Wrappers hooks | `.claude/scripts/` |
+| Agents core | `.claude/agents/` |
+| Commands core | `.claude/commands/` |
+| Scripts projet | `scripts/claude/` |
+| Workflow docs | `docs/claude/` |
+| Plans | `.tasks/plans/` |
+| Archives | `archive/YYYY-MM/claude/` |
 
-## Workflow Obligatoire
+## Hygiène hebdomadaire
 
-**Voir [CLAUDE.md](../CLAUDE.md)** pour le workflow complet en 5 etapes.
+**Workflow**: `.github/workflows/repo-hygiene-weekly.yml`
 
-### Quand utiliser quel agent?
+```bash
+# Déclencher manuellement
+gh workflow run repo-hygiene-weekly
 
-| Besoin                          | Agent/Command               |
-| ------------------------------- | --------------------------- |
-| Feature multi-domaines          | `verone-orchestrator`       |
-| Audit, cleanup, dette technique | `audit-governor`            |
-| Bug investigation               | `verone-debug-investigator` |
-| UI/UX, composants               | `frontend-architect`        |
-| Database, migrations            | `database-architect`        |
-| Exploration code                | `/explore` command          |
+# Cron automatique: Lundi 08:00 UTC
+```
 
----
+**Script**: `scripts/maintenance/repo-hygiene.sh`
+- Moves only, no deletes
+- Skip si fichier absent
+- Crée PR automatiquement
 
-## MCP Servers
+## Copier ce kit vers un autre repo
 
-**Source de verite** : `.mcp.json`
+```bash
+# Depuis le repo source
+cp -r .claude/ /path/to/new-repo/.claude/
+cp -r scripts/claude/ /path/to/new-repo/scripts/claude/
+cp scripts/maintenance/repo-hygiene.sh /path/to/new-repo/scripts/maintenance/
 
-| Server         | Usage                   | Outils Principaux                         |
-| -------------- | ----------------------- | ----------------------------------------- |
-| **context7**   | Documentation libraries | resolve_library_id, get_library_docs      |
-| **serena**     | Analyse semantique code | find_symbol, search_for_pattern, memories |
-| **playwright** | Browser automation      | navigate, screenshot, console_messages    |
+# Adapter settings.json si MCP différents
+```
 
----
+## See Also
 
-## Changelog
-
-### v3.0.0 (2025-12-19) - Optimisation Anthropic Best Practices
-
-- **CLAUDE.md** : Reecrit v6.0 (174 → 90 lignes)
-- **Commandes** : Fusionne `/epct` + `/oneshot` → `/implement`
-- **Agents** : Supprime `explore-codebase` (doublon avec `/explore`)
-- **Contextes** : Supprime `database.md`, `deployment.md` (doublons memories Serena)
-- **Workflows** : Supprime PDCA.md, universal-workflow.md (integres dans CLAUDE.md)
-- **Verification** : Smoke tests obligatoires pour TOUTE modification UI
-
-### v2.0.0 (2025-12-10) - Migration AIBlueprint
-
-- Ajout commandes (/commit, /pr, /epct, /oneshot, /explore)
-- Ajout agents (explore-codebase, action)
-- Ajout hooks securite (validate-command.js)
-
-### v1.0.0 (2025-11)
-
-- Configuration initiale Verone
+- `CLAUDE.md` - Instructions principales
+- `docs/claude/` - Workflow et MCP docs
+- `scripts/claude/` - Scripts projet
