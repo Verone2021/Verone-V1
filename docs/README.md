@@ -1,53 +1,88 @@
-# Documentation Verone Back Office
+# Documentation Verone - Source de Verite
 
-**Version** : 6.0 - Post-cleanup 2026-01
-**Date** : 2026-01-09
+**Derniere mise a jour:** 2026-01-19
 
----
-
-## Documentation Canonique (Source of Truth)
-
-**Commencer ici** - Ces docs sont verifiees et a jour :
-
-| Doc                                                         | Description               |
-| ----------------------------------------------------------- | ------------------------- |
-| [index](./current/index.md)                                 | Table des matieres        |
-| [stack](./current/stack.md)                                 | Technologies actives      |
-| [dev-workflow](./current/dev-workflow.md)                   | Workflow developpement    |
-| [architecture](./current/architecture.md)                   | Turborepo, apps, packages |
-| [database](./current/database.md)                           | Supabase, migrations, RLS |
-| [security-auth](./current/security-auth.md)                 | Auth, roles, permissions  |
-| [integrations](./current/integrations.md)                   | Qonto, Sentry, etc.       |
-| [deploy-runbooks](./current/deploy-runbooks.md)             | Vercel, CI/CD             |
-| [business-rules-linkme](./current/business-rules-linkme.md) | Workflows LinkMe          |
+Cette documentation est la **source unique de verite** pour le projet Verone.
+Architecture basee sur le code reel, non sur des plans ou audits temporels.
 
 ---
 
-## Structure
+## Table des Matieres
 
+### Core Documentation
+
+| Doc                                        | Description                      |
+| ------------------------------------------ | -------------------------------- |
+| [stack.md](./stack.md)                     | Technologies et versions         |
+| [architecture.md](./architecture.md)       | Turborepo, apps, packages        |
+| [database.md](./database.md)               | Supabase, migrations, RLS, stats |
+| [security-auth.md](./security-auth.md)     | Auth, roles, permissions         |
+
+### Applications
+
+| Doc                                        | Description                   |
+| ------------------------------------------ | ----------------------------- |
+| [apps/back-office.md](./apps/back-office.md) | CRM/ERP - Structure & modules |
+| [apps/linkme.md](./apps/linkme.md)         | Plateforme affiliation B2B    |
+
+### Integrations
+
+| Doc                                             | Description            |
+| ----------------------------------------------- | ---------------------- |
+| [integrations/qonto.md](./integrations/qonto.md) | Facturation, PDF       |
+| [integrations/sentry.md](./integrations/sentry.md) | Monitoring erreurs     |
+| [integrations/resend.md](./integrations/resend.md) | Emails LinkMe          |
+
+### Runbooks
+
+| Doc                                                   | Description                |
+| ----------------------------------------------------- | -------------------------- |
+| [runbooks/deploy.md](./runbooks/deploy.md)            | Vercel, GitHub CI/CD       |
+| [runbooks/development.md](./runbooks/development.md)  | Workflow dev quotidien     |
+
+---
+
+## Principes
+
+### Source de Verite
+
+- **Code reel > Docs** : En cas de conflit, le code gagne
+- **Migrations DB > Docs** : Supabase migrations = source verite schema
+- **Git history > Archives** : Pour retrouver anciennes versions
+
+### Organisation
+
+- **Pas de duplication** : 1 sujet = 1 fichier
+- **Basee sur code** : Docs generees depuis codebase reelle
+- **Concision** : Max 200 lignes par doc, liens vers code source
+
+### Maintenance
+
+1. Modifier le fichier concerne
+2. Mettre a jour date en haut du fichier
+3. Commit: `docs: update [fichier] - [description]`
+
+---
+
+## Ancienne Documentation
+
+Les anciennes versions sont disponibles dans l'historique Git:
+
+```bash
+# Retrouver doc obsolete
+git log -- docs/
+git show <commit>:docs/fichier.md
 ```
-docs/
-├── current/          # Source de verite (9 fichiers)
-├── archive/2026-01/  # Documentation archivee
-└── assets/           # Images, schemas
-```
 
 ---
 
-## Regles
+## Liens Rapides
 
-- **Source de verite** : `docs/current/*.md` uniquement
-- **Code > Docs** : En cas de conflit, le code gagne
-- **Pas de duplication** : 1 sujet = 1 doc
-- **Max 10 fichiers** dans docs/current/
-
----
-
-## Archives
-
-Documentation archivee disponible dans `docs/archive/2026-01/`.
-Voir le [manifest d'archive](./archive/2026-01/ARCHIVE_MANIFEST.md) pour retrouver les anciennes infos.
+- **CLAUDE.md** - Instructions Claude Code (racine)
+- **README.md** - Presentation projet (racine)
+- **packages/README.md** - 25 packages @verone/*
+- **supabase/migrations/** - Schema DB source verite
 
 ---
 
-_Verone Back Office 2026 - Turborepo Monorepo_
+_Version 2.0.0 - 2026-01-19 - Cleanroom from code (tolerance zero)_

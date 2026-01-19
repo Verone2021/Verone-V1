@@ -5,7 +5,7 @@ ROOT="${1:-$(pwd)}"
 DOCS="$ROOT/docs"
 DAYS_STALE="${DAYS_STALE:-60}"
 TS="$(date +%Y%m%d-%H%M%S)"
-OUT_DIR="$ROOT/reports"
+OUT_DIR="$ROOT/tools/reports"
 REPORT="$OUT_DIR/docs-audit-v4-$TS.md"
 JSON_OUT="$OUT_DIR/docs-audit-v4-$TS.json"
 

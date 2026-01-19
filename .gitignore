@@ -108,6 +108,19 @@ next-env.d.ts
 
 # Audit reports (generated, not source)
 /reports/
+/tools/reports/
+
+# Documentation - Tolerance Zero (archives, audits, deliverables)
+archive/**
+docs/archive/**
+docs/_archive/**
+docs/audit*/**
+docs/*-investigation-*.md
+docs/*-warnings-*.md
+docs/**/DELIVERABLES.md
+docs/**/*PLAN*.md
+docs/**/*_PLAN.md
+docs/**/AUDIT-*.md
 
 # Data exports (sensitive, not source code)
 docs/assets/*.csv
