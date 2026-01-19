@@ -1,4 +1,4 @@
-name: TypeScript Quality Check
+name: TypeScript Quality Check (NON-BLOQUANT)
 
 on:
   push:

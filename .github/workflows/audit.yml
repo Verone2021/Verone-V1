@@ -1,4 +1,4 @@
-name: Code Audit & Quality Checks
+name: Code Audit & Quality Checks (NON-BLOQUANT)
 
 on:
   pull_request:

@@ -4,7 +4,7 @@
 # GitHub Flow: feature → main avec validation complète
 # Zero tolerance: console errors = PR blocked
 
-name: 🔍 PR Validation & Deploy Check
+name: 🔍 PR Validation & Deploy Check (NON-BLOQUANT)
 
 on:
   pull_request:
