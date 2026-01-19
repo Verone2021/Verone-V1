@@ -82,6 +82,8 @@ next-env.d.ts
 .claude/scratch/
 .claude/reports/**
 .claude/playwright-profiles/
+.claude/logs/
+.claude/settings.local.json
 **/sessions.jsonl
 
 # Husky
