@@ -70,16 +70,36 @@ Les scripts dans `.claude/scripts/` sont des **wrappers** qui:
 **Workflow**: `.github/workflows/repo-hygiene-weekly.yml`
 
 ```bash
-# Déclencher manuellement
-gh workflow run repo-hygiene-weekly
+# Déclencher manuellement UNIQUEMENT
+gh workflow run repo-hygiene-weekly --field dry_run=false
 
-# Cron automatique: Lundi 08:00 UTC
+# ❌ SCHEDULE DISABLED: Plus de PR automatique
 ```
 
 **Script**: `scripts/maintenance/repo-hygiene.sh`
 - Moves only, no deletes
 - Skip si fichier absent
-- Crée PR automatiquement
+- **Mode manuel uniquement** (workflow_dispatch)
+
+## Règles de Génération de Fichiers
+
+**INTERDIT** d'écrire directement sous `.claude/`:
+- ❌ Rapports/audits temporels
+- ❌ Backups JSON
+- ❌ Logs de session
+
+**Destinations autorisées**:
+- ✅ Rapports sessions → `.claude/audits/generated/` (ignoré)
+- ✅ Backups JSON → `.claude/backups/` (ignoré)
+- ✅ Plans session → `.claude/plans/` (auto-ignorés `*-agent-*.md`)
+- ✅ Docs historiques → `docs/_archive/claude/YYYY-MM/`
+- ✅ Docs stables → `docs/claude/`
+
+**Fichiers trackés autorisés uniquement**:
+- README.md, MANUAL_MODE.md, settings.json
+- agents/*.md, commands/*.md, scripts/*.sh
+- plans/README.md, plans/*-template.md
+- audits/README.md (doc règles uniquement)
 
 ## Copier ce kit vers un autre repo
 
