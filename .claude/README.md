@@ -96,7 +96,7 @@ gh workflow run repo-hygiene-weekly --field dry_run=false
 - ✅ Docs stables → `docs/claude/`
 
 **Fichiers trackés autorisés uniquement**:
-- README.md, MANUAL_MODE.md, settings.json
+- README.md, MANUAL_MODE.md, PR_PLAYBOOK.md, settings.json
 - agents/*.md, commands/*.md, scripts/*.sh
 - plans/README.md, plans/*-template.md
 - audits/README.md (doc règles uniquement)
@@ -115,5 +115,7 @@ cp scripts/maintenance/repo-hygiene.sh /path/to/new-repo/scripts/maintenance/
 ## See Also
 
 - `CLAUDE.md` - Instructions principales
+- `.claude/PR_PLAYBOOK.md` - PR Playbook (MANUAL MODE)
+- `.claude/MANUAL_MODE.md` - Règles mode manuel
 - `docs/claude/` - Workflow et MCP docs
 - `scripts/claude/` - Scripts projet

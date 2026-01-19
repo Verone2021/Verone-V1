@@ -13,6 +13,16 @@ npm run e2e:smoke    # Smoke tests UI
 
 ---
 
+## PRs (MANUAL MODE)
+
+**Référence obligatoire**: `.claude/PR_PLAYBOOK.md`
+
+- Aucune PR automatique.
+- L'agent peut préparer la PR (titre/body/tests) mais ne merge jamais sans "MERGE" explicite.
+- En cas de nombreux commits: split via cherry-pick (voir playbook).
+
+---
+
 ## 🔄 Workflow de Développement Professionnel
 
 ### Méthodologie Standard (Research-Plan-Execute)
