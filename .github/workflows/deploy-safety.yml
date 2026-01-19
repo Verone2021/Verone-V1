@@ -250,13 +250,16 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
-  # Job 6: Deploy to Preview (Auto)
+  # Job 6: Deploy to Preview (Auto) - NON-BLOQUANT
+  # Note: Vercel Git Integration gère déjà les previews automatiques
+  # Ce job est optionnel et ne doit pas bloquer les merges
   deploy-preview:
     name: 🚀 Deploy to Preview
     runs-on: ubuntu-latest
     needs: [tests-unit, tests-e2e, type-check, build]
     if: github.event.pull_request.draft == false
     timeout-minutes: 10
+    continue-on-error: true  # Non-bloquant - Vercel Git Integration est le fallback
 
     steps:
       - name: 📥 Checkout code
@@ -264,6 +267,7 @@ jobs:
 
       - name: 🚀 Deploy to Vercel Preview
         uses: amondnet/vercel-action@v25
+        continue-on-error: true  # Ne pas bloquer si token/scope invalide
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
