@@ -2,8 +2,21 @@
 
 Configuration optimisee basee sur Anthropic Best Practices 2025.
 
-**Version** : 3.0.0
-**Date** : 2025-12-19
+**Version** : 3.1.0
+**Date** : 2026-01-19
+
+---
+
+## ⚠️ MODE MANUEL ACTIF
+
+**Règle officielle** : Claude ne crée ni ne merge de PR sans instruction explicite.
+
+📖 **Documentation complète** : [.claude/MANUAL_MODE.md](.claude/MANUAL_MODE.md)
+
+**En bref** :
+- ✅ Claude développe, teste, commit, push sur feature branches
+- ⚠️ Claude **DEMANDE** avant de créer/merger une PR
+- 🚫 Aucun workflow GitHub ne crée de PR automatiquement
 
 ---
 
