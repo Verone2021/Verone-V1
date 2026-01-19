@@ -1,0 +1,10 @@
+# Sentry config files (not part of tsconfig)
+sentry.edge.config.ts
+sentry.server.config.ts
+
+# Generated type declarations (not part of tsconfig)
+**/*.d.ts
+
+# Build outputs
+.next/
+out/
