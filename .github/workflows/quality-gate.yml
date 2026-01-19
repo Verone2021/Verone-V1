@@ -1,0 +1,69 @@
+name: Quality Gate
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  quality-gate:
+    name: quality-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Pour Turbo filter diff
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.13.1
+
+      - name: ⚡ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: 📦 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🎨 Lint (errors only)
+        run: pnpm lint
+        continue-on-error: false
+
+      - name: 📝 TypeScript check
+        run: pnpm type-check
+        continue-on-error: false
+
+      - name: 🏗️ Build (Turbo targeted)
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            # SAFE: Build affected apps depuis base branch
+            pnpm turbo build --filter=...[origin/${{ github.base_ref }}] || \
+            # FALLBACK: Build explicit si détection échoue
+            pnpm turbo build --filter="apps/back-office..." --filter="apps/linkme..." --filter="apps/site-internet..."
+          else
+            # Build all on push to main
+            pnpm turbo build
+          fi
+        env:
+          # Skip env validation for build (no secrets needed for type/lint/build)
+          SKIP_ENV_VALIDATION: true
+
+      - name: ✅ Quality Gate passed
+        run: |
+          echo "✅ Quality Gate SUCCESS"
+          echo "- Lint: passed"
+          echo "- TypeScript: passed"
+          echo "- Build: passed"

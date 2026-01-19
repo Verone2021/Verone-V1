@@ -98,77 +98,16 @@ gh pr create --title "[APP-DOMAIN-NNN] feat: description" \
 
 ---
 
-## 🤖 Autonomie de Claude
+## 🔧 Mode de Travail
 
-### Principe de Base
+**MODE MANUEL** : Claude ne crée ni ne merge de PR sans instruction explicite.
 
-Claude travaille **autonome pour maximiser productivité**, avec **validation humaine pour actions critiques**.
+**Documentation complète** : Voir `.claude/MANUAL_MODE.md`
 
-### ✅ Actions Autonomes (90% du travail)
-
-Claude fait SEUL :
-
-**Développement** :
-- Explorer codebase (Glob, Grep, Read, Serena)
-- Planifier implémentation (EnterPlanMode)
-- Écrire/modifier code (Edit, Write)
-- Créer/exécuter tests (Playwright, Jest)
-- Vérifier qualité (type-check, build, lint)
-- Créer commits (format convention respecté)
-- Créer PRs (via `gh pr create`)
-- Documenter changements (README, CLAUDE.md)
-
-**Investigation** :
-- Analyser bugs (logs, stack traces)
-- Proposer solutions (plusieurs approches)
-- Rechercher best practices (WebSearch)
-- Lire documentation externe (WebFetch)
-
-### 🤝 Actions Nécessitant Validation (10% - Critiques)
-
-Claude **propose**, utilisateur **approuve** :
-
-**Déploiement** :
-- ⚠️ Merger PR vers main/production
-- ⚠️ Déployer en environnement production
-- ⚠️ Modifier variables env production (Vercel, Supabase)
-- ⚠️ Modifier configuration production (feature flags)
-
-**Données** :
-- ⚠️ Supprimer tables/colonnes en production
-- ⚠️ Modifier schéma database production
-- ⚠️ Exécuter migrations irréversibles
-- ⚠️ Supprimer ressources cloud (S3, etc.)
-
-**Pourquoi ces checkpoints ?**
-> "Actions avec conséquences réelles nécessitent validation humaine"
-> — [AI Agent Deployment Best Practices 2026](https://blog.n8n.io/best-practices-for-deploying-ai-agents-in-production/)
-
-### ❌ Ce que Claude NE DOIT JAMAIS Demander
-
-Ne **PAS** demander à l'utilisateur de :
-- Lire des fichiers du projet
-- Exécuter des commandes CLI basiques (npm install, git add)
-- Écrire du code que Claude peut écrire
-- Chercher de la documentation
-- Créer des commits/PRs
-
-**Règle** : Si Claude peut le faire, Claude le fait.
-
-### 🛡️ Sécurité et Rollback
-
-**Checkpoints automatiques** :
-- Chaque commit = save point
-- CI/CD bloque si tests échouent
-- Feature flags pour rollback rapide
-- Logs détaillés des actions critiques
-
-### 🛠️ Outils Disponibles
-
-- **gh CLI**: `gh pr create`, `gh issue create`, `gh pr view`
-- **MCP Playwright**: Automatiser navigation web (Vercel Dashboard)
-- **Vercel CLI**: `vercel env pull`, `vercel logs`
-- **Bash**: Tous les outils CLI (git, npm, curl, etc.)
+**En bref** :
+- ✅ Claude développe, teste, commit, push autonome
+- ⚠️ Claude **DEMANDE** avant de créer/merger PR
+- ⚠️ Claude **DEMANDE** avant toute action critique (déploiement, migration DB, etc.)
 
 ---
 
