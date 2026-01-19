@@ -80,16 +80,18 @@ next-env.d.ts
 
 # Claude Code specific
 .claude/scratch/
-.claude/reports/**
 .claude/playwright-profiles/
 **/sessions.jsonl
-.claude/audits/generated/
-.claude/backups/
 .claude/memories/
 .claude/settings.local.json
 .claude/plans/*-agent-*.md
 .claude/*-temp*
 .claude/*.log
+
+# Claude Code outputs (tolerance zero)
+.claude/audits/**
+.claude/backups/**
+.claude/reports/**
 
 # Husky
 .husky/_
