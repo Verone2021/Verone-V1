@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+
 import Link from 'next/link';
 
 import { ButtonUnified } from '@verone/ui';
@@ -77,7 +78,9 @@ export default function EmailTemplatesPage() {
   });
 
   const categories = Array.from(
-    new Set(templates.map(t => t.category).filter((c): c is string => c !== null))
+    new Set(
+      templates.map(t => t.category).filter((c): c is string => c !== null)
+    )
   );
 
   return (
@@ -88,9 +91,7 @@ export default function EmailTemplatesPage() {
           <div className="flex items-center space-x-3">
             <Mail className="h-8 w-8 text-black" />
             <div>
-              <h1 className="text-2xl font-bold text-black">
-                Templates Email
-              </h1>
+              <h1 className="text-2xl font-bold text-black">Templates Email</h1>
               <p className="text-gray-600">
                 Gérer les modèles d'emails automatiques
               </p>
@@ -145,7 +146,7 @@ export default function EmailTemplatesPage() {
       {/* Templates list */}
       {loading ? (
         <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-black"></div>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-black" />
           <p className="mt-4 text-gray-600">Chargement des templates...</p>
         </div>
       ) : filteredTemplates.length === 0 ? (
@@ -181,12 +182,16 @@ export default function EmailTemplatesPage() {
                   </div>
 
                   <p className="text-sm text-gray-600 mb-3">
-                    Sujet: <span className="font-medium">{template.subject}</span>
+                    Sujet:{' '}
+                    <span className="font-medium">{template.subject}</span>
                   </p>
 
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-xs text-gray-500">
-                      Slug: <code className="bg-gray-100 px-2 py-0.5 rounded">{template.slug}</code>
+                      Slug:{' '}
+                      <code className="bg-gray-100 px-2 py-0.5 rounded">
+                        {template.slug}
+                      </code>
                     </span>
                   </div>
 
@@ -209,7 +214,9 @@ export default function EmailTemplatesPage() {
                   <p className="text-xs text-gray-400">
                     Mis à jour le{' '}
                     {template.updated_at
-                      ? new Date(template.updated_at).toLocaleDateString('fr-FR')
+                      ? new Date(template.updated_at).toLocaleDateString(
+                          'fr-FR'
+                        )
                       : 'N/A'}
                   </p>
                 </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+
 import Link from 'next/link';
 
 import { ButtonUnified, Input } from '@verone/ui';
@@ -154,9 +155,7 @@ export default function WebhooksPage() {
         response_body: await response.text(),
       });
 
-      alert(
-        `Test envoyé! Status: ${response.status} ${response.statusText}`
-      );
+      alert(`Test envoyé! Status: ${response.status} ${response.statusText}`);
       await loadRecentLogs(webhook.id);
     } catch (error) {
       console.error('Error testing webhook:', error);
@@ -164,9 +163,10 @@ export default function WebhooksPage() {
     }
   }
 
-  const filteredWebhooks = webhooks.filter(webhook =>
-    webhook.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    webhook.url.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredWebhooks = webhooks.filter(
+    webhook =>
+      webhook.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      webhook.url.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -221,16 +221,14 @@ export default function WebhooksPage() {
       {/* Webhooks list */}
       {loading ? (
         <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-black"></div>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-black" />
           <p className="mt-4 text-gray-600">Chargement des webhooks...</p>
         </div>
       ) : filteredWebhooks.length === 0 ? (
         <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
           <Webhook className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600 mb-4">
-            {searchQuery
-              ? 'Aucun webhook trouvé'
-              : 'Aucun webhook configuré'}
+            {searchQuery ? 'Aucun webhook trouvé' : 'Aucun webhook configuré'}
           </p>
           {!searchQuery && (
             <Link href="/parametres/webhooks/new">
@@ -308,7 +306,9 @@ export default function WebhooksPage() {
                           <Activity className="h-3 w-3" />
                           Dernier appel:{' '}
                           {lastLog.created_at
-                            ? new Date(lastLog.created_at).toLocaleString('fr-FR')
+                            ? new Date(lastLog.created_at).toLocaleString(
+                                'fr-FR'
+                              )
                             : 'N/A'}
                           {lastLog.status_code && (
                             <span
@@ -356,7 +356,9 @@ export default function WebhooksPage() {
                     <ButtonUnified
                       variant="outline"
                       size="sm"
-                      onClick={() => toggleWebhook(webhook.id, webhook.active ?? false)}
+                      onClick={() =>
+                        toggleWebhook(webhook.id, webhook.active ?? false)
+                      }
                     >
                       <Power
                         className={`h-4 w-4 ${webhook.active ? 'text-green-600' : 'text-gray-400'}`}
