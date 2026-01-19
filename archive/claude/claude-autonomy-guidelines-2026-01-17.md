@@ -1,3 +1,11 @@
+---
+⚠️ **DEPRECATED — 2026-01-19**
+
+**Raison** : Autonomy disabled. All PR/merge operations now require manual approval.
+
+**Migration** : See `.claude/MANUAL_MODE.md` for new workflow.
+---
+
 # Claude Autonomy Guidelines - 2026-01-17
 
 ## Context
