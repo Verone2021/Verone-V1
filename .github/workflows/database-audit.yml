@@ -9,8 +9,8 @@ on:
   pull_request:
     # No paths filter - workflow always runs to report required check
   workflow_dispatch:
-  schedule:
-    - cron: '0 0 * * 0' # Dimanche 00:00 UTC
+  # schedule DISABLED - manual workflow_dispatch only to prevent auto actions
+  # - cron: '0 0 * * 0' # Dimanche 00:00 UTC
 
 jobs:
   # Check if relevant files changed - reports check status even when skipped
