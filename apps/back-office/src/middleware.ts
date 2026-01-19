@@ -47,42 +47,49 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     return NextResponse.next();
   }
 
-  // Rafraîchir la session Supabase (gère auto le refresh token)
-  const response = await updateSession(request);
+  try {
+    // Rafraîchir la session Supabase (gère auto le refresh token)
+    const response = await updateSession(request);
 
-  // Route publique
-  if (isPublicRoute(pathname)) {
-    // Si déjà authentifié et accès à /login → redirect /dashboard
-    if (pathname === '/login') {
-      const { supabase } = createMiddlewareClient(request);
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+    // Route publique
+    if (isPublicRoute(pathname)) {
+      // Si déjà authentifié et accès à /login → redirect /dashboard
+      if (pathname === '/login') {
+        const { supabase } = createMiddlewareClient(request);
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
 
-      if (user) {
-        return NextResponse.redirect(new URL('/dashboard', request.url));
+        if (user) {
+          return NextResponse.redirect(new URL('/dashboard', request.url));
+        }
       }
+
+      return response;
     }
 
-    return response;
+    // Route protégée - vérifier authentification
+    const { supabase, response: middlewareResponse } =
+      createMiddlewareClient(request);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    // Non authentifié → redirect /login avec redirect param
+    if (!user) {
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // Authentifié → laisser passer (inclut requêtes RSC avec ?_rsc)
+    return middlewareResponse;
+  } catch (error) {
+    // Log error for debugging but don't block the request
+    console.error('[Middleware Error]', error);
+    // Return next() to allow request through when middleware fails
+    return NextResponse.next();
   }
-
-  // Route protégée - vérifier authentification
-  const { supabase, response: middlewareResponse } =
-    createMiddlewareClient(request);
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // Non authentifié → redirect /login avec redirect param
-  if (!user) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  // Authentifié → laisser passer (inclut requêtes RSC avec ?_rsc)
-  return middlewareResponse;
 }
 
 /**
