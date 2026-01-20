@@ -31,6 +31,7 @@ export interface EnseigneOrganisation {
   ownership_type: OrganisationOwnershipType | null;
   latitude: number | null;
   longitude: number | null;
+  country: string | null; // Pour calcul TVA (FR=20%, autres=0%)
 }
 
 interface UseEnseigneOrganisationsOptions {
@@ -88,7 +89,7 @@ export function useEnseigneOrganisations(
       const { data: organisations, error: orgError } = await supabase
         .from('organisations')
         .select(
-          'id, legal_name, trade_name, city, postal_code, shipping_address_line1, shipping_city, shipping_postal_code, logo_url, ownership_type, latitude, longitude'
+          'id, legal_name, trade_name, city, postal_code, shipping_address_line1, shipping_city, shipping_postal_code, logo_url, ownership_type, latitude, longitude, country'
         )
         .eq('enseigne_id', affiliate.enseigne_id)
         .eq('approval_status', 'approved')

@@ -56,6 +56,7 @@ import {
   Sparkles,
   Globe,
   AlertCircle,
+  UserCircle2,
 } from 'lucide-react';
 
 // Champs obligatoires pour un produit complet
@@ -162,6 +163,17 @@ interface Product {
     id: string;
     legal_name: string;
     trade_name: string | null;
+  } | null;
+  // Colonnes affiliés
+  created_by_affiliate: string | null;
+  affiliate_approval_status: string | null;
+  affiliate_commission_rate: number | null;
+  affiliate_payout_ht: number | null;
+  affiliate_creator?: {
+    id: string;
+    display_name: string;
+    enseigne?: { id: string; name: string } | null;
+    organisation?: { id: string; legal_name: string; trade_name: string | null } | null;
   } | null;
   supplier?: {
     id: string;
@@ -297,6 +309,12 @@ export default function ProductDetailPage() {
             suitable_rooms,
             has_common_supplier,
             supplier_id
+          ),
+          affiliate_creator:linkme_affiliates!products_created_by_affiliate_fkey(
+            id,
+            display_name,
+            enseigne:enseignes(id, name),
+            organisation:organisations(id, legal_name, trade_name)
           )
         `
         )
@@ -408,14 +426,28 @@ export default function ProductDetailPage() {
     ]
   );
 
-  // Calcul sourcing (interne vs client/sur mesure)
-  // Logique: enseigne_id OU assigned_client_id = produit sur mesure
+  // Calcul sourcing (interne vs client/sur mesure vs affilié)
+  // PRIORITÉ: 1. Affilié (created_by_affiliate) → 2. Sur mesure (enseigne/client) → 3. Interne
   const sourcing = useMemo((): {
-    type: 'interne' | 'client';
+    type: 'interne' | 'client' | 'affiliate';
     clientType?: 'enseigne' | 'organisation';
     clientName?: string;
     clientId?: string;
+    affiliateName?: string;
+    affiliateDisplayName?: string;
   } => {
+    // PRIORITÉ 1: Produit affilié (NE PEUT PAS être sur mesure)
+    if (product?.created_by_affiliate) {
+      return {
+        type: 'affiliate',
+        affiliateName: product.affiliate_creator?.enseigne?.name
+          || product.affiliate_creator?.organisation?.trade_name
+          || product.affiliate_creator?.organisation?.legal_name
+          || 'Affilié inconnu',
+        affiliateDisplayName: product.affiliate_creator?.display_name || undefined,
+      };
+    }
+    // PRIORITÉ 2: Sur mesure enseigne
     if (product?.enseigne) {
       return {
         type: 'client',
@@ -424,6 +456,7 @@ export default function ProductDetailPage() {
         clientId: product.enseigne.id,
       };
     }
+    // PRIORITÉ 3: Sur mesure organisation
     if (product?.assigned_client) {
       return {
         type: 'client',
@@ -434,8 +467,9 @@ export default function ProductDetailPage() {
         clientId: product.assigned_client.id,
       };
     }
+    // DÉFAUT: Catalogue interne
     return { type: 'interne' };
-  }, [product?.enseigne, product?.assigned_client]);
+  }, [product?.created_by_affiliate, product?.affiliate_creator, product?.enseigne, product?.assigned_client]);
 
   // État de chargement
   if (loading) {
@@ -492,7 +526,15 @@ export default function ProductDetailPage() {
                 {breadcrumbParts.join(' › ')}
               </nav>
               {/* Badge Sourcing */}
-              {sourcing.type === 'client' && sourcing.clientId ? (
+              {sourcing.type === 'affiliate' ? (
+                <Badge
+                  variant="outline"
+                  className="flex items-center gap-1 bg-purple-50 border-purple-300 text-purple-700"
+                >
+                  <UserCircle2 className="h-3 w-3" />
+                  Produit affilié ({sourcing.affiliateName})
+                </Badge>
+              ) : sourcing.type === 'client' && sourcing.clientId ? (
                 <Link
                   href={
                     sourcing.clientType === 'enseigne'
@@ -628,6 +670,27 @@ export default function ProductDetailPage() {
 
             {/* Section: Attribution client (produit sur mesure) */}
             <div className="mt-6 pt-6 border-t border-neutral-200">
+              {/* Bannière informative pour les produits affiliés */}
+              {product.created_by_affiliate && (
+                <div className="mb-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <UserCircle2 className="h-5 w-5 text-purple-600 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-purple-900">Produit affilié</p>
+                      <p className="text-xs text-purple-700">
+                        Canal de vente: LinkMe
+                      </p>
+                      <p className="text-xs text-purple-700">
+                        Créé par: {product.affiliate_creator?.display_name || sourcing.affiliateName || 'Affilié inconnu'}
+                      </p>
+                      <p className="text-xs text-purple-600 mt-1">
+                        Ce produit ne peut pas être marqué comme &quot;sur mesure&quot; car il appartient à l&apos;affilié.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <h4 className="text-sm font-medium text-neutral-900 flex items-center gap-2">
@@ -635,17 +698,30 @@ export default function ProductDetailPage() {
                     Attribution client (produit sur mesure)
                   </h4>
                   <p className="text-xs text-neutral-500 mt-0.5">
-                    Assignez ce produit à une enseigne ou organisation pour le
-                    rendre exclusif
+                    {product.created_by_affiliate
+                      ? 'Ce produit affilié ne peut pas être assigné à un autre client'
+                      : 'Assignez ce produit à une enseigne ou organisation pour le rendre exclusif'}
                   </p>
                 </div>
                 <Badge
                   variant={
-                    sourcing.type === 'client' ? 'customer' : 'secondary'
+                    sourcing.type === 'affiliate'
+                      ? 'outline'
+                      : sourcing.type === 'client'
+                        ? 'customer'
+                        : 'secondary'
                   }
-                  className="flex items-center gap-1"
+                  className={cn(
+                    "flex items-center gap-1",
+                    sourcing.type === 'affiliate' && "bg-purple-50 border-purple-300 text-purple-700"
+                  )}
                 >
-                  {sourcing.type === 'client' ? (
+                  {sourcing.type === 'affiliate' ? (
+                    <>
+                      <UserCircle2 className="h-3 w-3" />
+                      Produit affilié
+                    </>
+                  ) : sourcing.type === 'client' ? (
                     <>
                       <Sparkles className="h-3 w-3" />
                       Sur mesure
@@ -674,6 +750,7 @@ export default function ProductDetailPage() {
                     enseigne_id: null, // Reset l'autre si on sélectionne une organisation
                   });
                 }}
+                disabled={!!product.created_by_affiliate}
                 label=""
                 className="max-w-md"
               />
