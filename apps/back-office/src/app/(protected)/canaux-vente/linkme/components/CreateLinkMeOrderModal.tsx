@@ -44,6 +44,10 @@ import {
   useLinkMeSelection,
   type SelectionItem,
 } from '../hooks/use-linkme-selections';
+import {
+  ContactsAddressesSection,
+  type ContactsAddressesData,
+} from './contacts';
 
 interface CreateLinkMeOrderModalProps {
   isOpen: boolean;
@@ -115,6 +119,17 @@ export function CreateLinkMeOrderModal({
   const [newCustomerEmail, setNewCustomerEmail] = useState('');
   const [newCustomerPhone, setNewCustomerPhone] = useState('');
 
+  // Contacts & Addresses (Step 5)
+  const [contactsAddressesData, setContactsAddressesData] =
+    useState<ContactsAddressesData>({
+      billingContact: null,
+      billingAddress: null,
+      deliveryContact: null,
+      deliverySameAsBillingContact: false,
+      deliveryAddress: null,
+      deliverySameAsBillingAddress: false,
+    });
+
   // Hooks data
   const { data: affiliates, isLoading: affiliatesLoading } =
     useLinkMeAffiliates(affiliateType || undefined);
@@ -165,6 +180,14 @@ export function CreateLinkMeOrderModal({
       setNewCustomerLastName('');
       setNewCustomerEmail('');
       setNewCustomerPhone('');
+      setContactsAddressesData({
+        billingContact: null,
+        billingAddress: null,
+        deliveryContact: null,
+        deliverySameAsBillingContact: false,
+        deliveryAddress: null,
+        deliverySameAsBillingAddress: false,
+      });
     }
   }, [isOpen, preselectedAffiliateId]);
 
@@ -187,6 +210,18 @@ export function CreateLinkMeOrderModal({
   useEffect(() => {
     setCart([]);
   }, [selectedSelectionId]);
+
+  // Reset contacts & addresses quand le client change
+  useEffect(() => {
+    setContactsAddressesData({
+      billingContact: null,
+      billingAddress: null,
+      deliveryContact: null,
+      deliverySameAsBillingContact: false,
+      deliveryAddress: null,
+      deliverySameAsBillingAddress: false,
+    });
+  }, [selectedCustomerId]);
 
   // Client sélectionné
   const selectedCustomer = useMemo(() => {
@@ -1012,6 +1047,18 @@ export function CreateLinkMeOrderModal({
                   </button>
                 </div>
               </div>
+            )}
+
+            {/* Section 5: Contacts & Adresses */}
+            {selectedCustomerId && customerType === 'organization' && (
+              <ContactsAddressesSection
+                organisationId={selectedCustomerId}
+                data={contactsAddressesData}
+                onUpdate={updates =>
+                  setContactsAddressesData(prev => ({ ...prev, ...updates }))
+                }
+                visible={true}
+              />
             )}
 
             {/* Section 4 ter: Frais additionnels */}
