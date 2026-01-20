@@ -17,6 +17,8 @@
 
 import { useState, useMemo } from 'react';
 
+import Link from 'next/link';
+
 // Import direct du hook pour éviter les exports problématiques
 import {
   useMonthlyKPIs,
@@ -34,11 +36,8 @@ import {
   User,
   MapPin,
   Wallet,
-  Calendar,
   Pencil,
 } from 'lucide-react';
-
-import { CreateOrderModal } from './components/CreateOrderModal';
 import { EditOrderModal } from './components/EditOrderModal';
 import { OrderDetailModal } from './components/OrderDetailModal';
 import {
@@ -79,7 +78,6 @@ type TabType =
 
 export default function CommandesPage(): JSX.Element {
   // State
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<LinkMeOrder | null>(null);
@@ -194,13 +192,13 @@ export default function CommandesPage(): JSX.Element {
               Gérez vos commandes clients et suivez vos ventes
             </p>
           </div>
-          <button
-            onClick={() => setIsModalOpen(true)}
+          <Link
+            href="/commandes/nouvelle"
             className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm"
           >
             <Plus className="h-5 w-5" />
             Nouvelle vente
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -393,13 +391,13 @@ export default function CommandesPage(): JSX.Element {
                     : `Aucune commande dans cette catégorie`}
                 </p>
                 {activeTab === 'all' && (
-                  <button
-                    onClick={() => setIsModalOpen(true)}
+                  <Link
+                    href="/commandes/nouvelle"
                     className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
                   >
                     <Plus className="h-4 w-4" />
                     Nouvelle vente
-                  </button>
+                  </Link>
                 )}
               </div>
             )}
@@ -629,12 +627,6 @@ export default function CommandesPage(): JSX.Element {
           </div>
         </div>
       </div>
-
-      {/* Modal création commande */}
-      <CreateOrderModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
 
       {/* Modal detail commande */}
       <OrderDetailModal

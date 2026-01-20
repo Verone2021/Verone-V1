@@ -41,7 +41,9 @@ interface ISelectionItem {
   selling_price_ttc: number;
   margin_rate: number;
   stock_quantity: number;
-  category: string | null;
+  category_name: string | null;
+  subcategory_id: string | null;
+  subcategory_name: string | null;
   is_featured: boolean;
 }
 
@@ -179,17 +181,36 @@ export default function PublicSelectionPage({
     []
   );
 
-  // Extract categories from items
+  // Extract categories with subcategories from items
   const categories: ICategory[] = useMemo(() => {
-    const categoryMap = new Map<string, { count: number }>();
+    const categoryMap = new Map<
+      string,
+      {
+        count: number;
+        subcategories: Map<string, { id: string; name: string; count: number }>;
+      }
+    >();
 
     for (const item of items) {
-      const cat = item.category ?? 'Autres';
-      const existing = categoryMap.get(cat);
-      if (existing) {
-        existing.count++;
-      } else {
-        categoryMap.set(cat, { count: 1 });
+      const catName = item.category_name ?? 'Autres';
+      const subId = item.subcategory_id;
+      const subName = item.subcategory_name;
+
+      if (!categoryMap.has(catName)) {
+        categoryMap.set(catName, { count: 0, subcategories: new Map() });
+      }
+
+      const category = categoryMap.get(catName)!;
+      category.count++;
+
+      // Add subcategory if present
+      if (subId && subName) {
+        const existingSub = category.subcategories.get(subId);
+        if (existingSub) {
+          existingSub.count++;
+        } else {
+          category.subcategories.set(subId, { id: subId, name: subName, count: 1 });
+        }
       }
     }
 
@@ -198,11 +219,14 @@ export default function PublicSelectionPage({
         id: name.toLowerCase().replace(/\s+/g, '-'),
         name,
         count: data.count,
+        subcategories: Array.from(data.subcategories.values()).sort((a, b) =>
+          a.name.localeCompare(b.name)
+        ),
       }))
       .sort((a, b) => b.count - a.count);
   }, [items]);
 
-  // Filter items based on search and category
+  // Filter items based on search, category, and subcategory
   const filteredItems = useMemo(() => {
     let filtered = items;
 
@@ -223,13 +247,20 @@ export default function PublicSelectionPage({
       )?.name;
       if (categoryName) {
         filtered = filtered.filter(
-          item => (item.category ?? 'Autres') === categoryName
+          item => (item.category_name ?? 'Autres') === categoryName
         );
       }
     }
 
+    // Filter by subcategory
+    if (selectedSubcategory) {
+      filtered = filtered.filter(
+        item => item.subcategory_id === selectedSubcategory
+      );
+    }
+
     return filtered;
-  }, [items, searchQuery, selectedCategory, categories]);
+  }, [items, searchQuery, selectedCategory, selectedSubcategory, categories]);
 
   // Pagination constants and calculations
   const PRODUCTS_PER_PAGE = 12; // 3 rows × 4 columns
