@@ -220,36 +220,29 @@ ${hasIssues ? '⚠️ **Attention:** Some docs may need cleanup. Review the repo
             echo "changes_made=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: 📝 Create Pull Request
+      - name: 📊 Report changes (MANUAL MODE - No auto-PR)
         if: steps.apply.outputs.changes_made == 'true'
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: 'chore(docs): auto-archive stale documentation'
-          title: '[Manual] Archive Stale Documentation'
-          body: |
-            ## 📚 Manual Documentation Cleanup
-
-            This PR was created via **workflow_dispatch** (manual trigger).
-
-            ⚠️ **MANUAL MODE** : This workflow NO LONGER runs on schedule.
-            It must be triggered manually via GitHub Actions UI.
-
-            ### What happened?
-            - Stale, unreferenced, or duplicate documentation files were detected
-            - Files were moved to `docs/archives/stale-YYYY-MM/`
-            - No files were permanently deleted
-
-            ### Review checklist
-            - [ ] Verify archived files are truly obsolete
-            - [ ] Check if any content should be merged into `docs/current/`
-            - [ ] Ensure no critical documentation was archived by mistake
-
-            ---
-
-            📊 See workflow run for full triage report.
-          branch: chore/docs-manual-archive
-          delete-branch: true
-          labels: |
-            documentation
-            manual-trigger
+        run: |
+          echo "========================================"
+          echo "📚 Docs Governance Report"
+          echo "========================================"
+          echo ""
+          echo "⚠️  Documentation changes detected:"
+          echo ""
+          git status --short
+          echo ""
+          echo "========================================"
+          echo "🚨 MANUAL MODE ENABLED"
+          echo "========================================"
+          echo ""
+          echo "No PR created automatically."
+          echo ""
+          echo "To apply these changes:"
+          echo "  1. Review the changes above"
+          echo "  2. Create branch: git checkout -b chore/docs-archive-YYYY-MM-DD"
+          echo "  3. Commit: git add . && git commit -m '[NO-TASK] chore(docs): archive stale documentation'"
+          echo "  4. Push: git push origin chore/docs-archive-YYYY-MM-DD"
+          echo "  5. Create PR manually: gh pr create"
+          echo ""
+          echo "See workflow artifacts for full triage report."
+          echo ""

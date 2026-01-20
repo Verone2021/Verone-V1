@@ -1,27 +1,16 @@
 name: repo-hygiene-weekly
 
 on:
-  workflow_dispatch:
-    inputs:
-      dry_run:
-        description: 'Dry run (no PR creation)'
-        required: false
-        default: 'true'
-        type: choice
-        options:
-          - 'true'
-          - 'false'
+  workflow_dispatch:  # Manual execution only (MANUAL MODE)
 
 permissions:
   contents: read
-  pull-requests: read
 
 jobs:
   hygiene:
     runs-on: ubuntu-latest
     permissions:
-      contents: write      # Uniquement si PR créée
-      pull-requests: write # Uniquement si PR créée
+      contents: read  # Read-only (MANUAL MODE - no auto-commit/PR)
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,24 +20,31 @@ jobs:
           chmod +x scripts/maintenance/repo-hygiene.sh
           bash scripts/maintenance/repo-hygiene.sh
 
-      - name: Create PR if changes
-        if: github.event.inputs.dry_run != 'true'
-        uses: peter-evans/create-pull-request@v6
-        with:
-          branch: chore/repo-hygiene-auto
-          delete-branch: true
-          title: "chore: weekly repo hygiene (auto)"
-          commit-message: "chore: weekly repo hygiene"
-          body: |
-            ## Weekly Hygiene PR (Automated)
-
-            This PR was created automatically by the repo-hygiene-weekly workflow.
-
-            **Actions performed:**
-            - Moved noise out of `.claude/` to proper locations
-            - Archived non-core items
-            - Updated `.gitignore` if needed
-
-            **Policy:** No destructive deletes — only moves with git history preserved.
-
-            Review the diff and merge if OK.
+      - name: Report changes (MANUAL MODE - No auto-PR)
+        run: |
+          echo "========================================"
+          echo "📊 Repo Hygiene Report"
+          echo "========================================"
+          echo ""
+          if git diff --quiet; then
+            echo "✅ No changes detected - repository is clean"
+          else
+            echo "⚠️  Changes detected by repo-hygiene.sh:"
+            echo ""
+            git status --short
+            echo ""
+            echo "========================================"
+            echo "🚨 MANUAL MODE ENABLED"
+            echo "========================================"
+            echo ""
+            echo "No PR created automatically."
+            echo ""
+            echo "To apply these changes:"
+            echo "  1. Review the changes above"
+            echo "  2. Run locally: ./scripts/maintenance/repo-hygiene.sh"
+            echo "  3. Create branch: git checkout -b chore/repo-hygiene-YYYY-MM-DD"
+            echo "  4. Commit: git add . && git commit -m '[NO-TASK] chore: repo hygiene'"
+            echo "  5. Push: git push origin chore/repo-hygiene-YYYY-MM-DD"
+            echo "  6. Create PR manually: gh pr create"
+            echo ""
+          fi
