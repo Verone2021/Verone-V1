@@ -39,6 +39,7 @@ import {
   X,
   LayoutGrid,
   Camera,
+  Euro,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -48,6 +49,7 @@ import {
   useUserAffiliate,
   useUserSelections,
   useToggleSelectionPublished,
+  useUpdateSelectionPriceDisplayMode,
 } from '../../../../lib/hooks/use-user-selection';
 
 // Rôles autorisés
@@ -63,9 +65,11 @@ export default function SelectionDetailPage(): React.JSX.Element | null {
     useUserSelections();
 
   const togglePublishedMutation = useToggleSelectionPublished();
+  const updatePriceDisplayModeMutation = useUpdateSelectionPriceDisplayMode();
 
   // State
   const [linkCopied, setLinkCopied] = useState(false);
+  const [priceDisplayMode, setPriceDisplayMode] = useState<'HT' | 'TTC'>('TTC');
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
@@ -84,6 +88,7 @@ export default function SelectionDetailPage(): React.JSX.Element | null {
     if (selection) {
       setEditName(selection.name);
       setEditDescription(selection.description ?? '');
+      setPriceDisplayMode(selection.price_display_mode ?? 'TTC');
     }
   }, [selection]);
 
@@ -129,6 +134,34 @@ export default function SelectionDetailPage(): React.JSX.Element | null {
   // Handler suppression (placeholder)
   const handleDelete = (): void => {
     toast.info('Suppression à implémenter');
+  };
+
+  // Handler changement mode affichage prix
+  const handlePriceDisplayModeChange = async (
+    mode: 'HT' | 'TTC'
+  ): Promise<void> => {
+    if (!selection || mode === priceDisplayMode) return;
+
+    setPriceDisplayMode(mode); // Update local state immediately for UX
+    try {
+      await updatePriceDisplayModeMutation.mutateAsync({
+        selectionId: selection.id,
+        priceDisplayMode: mode,
+      });
+      toast.success(
+        mode === 'HT'
+          ? 'Prix affichés hors taxes'
+          : 'Prix affichés toutes taxes comprises'
+      );
+    } catch (error: unknown) {
+      // Revert on error
+      setPriceDisplayMode(priceDisplayMode === 'HT' ? 'TTC' : 'HT');
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Erreur lors de la mise à jour';
+      toast.error(errorMessage);
+    }
   };
 
   // Chargement
@@ -473,6 +506,63 @@ export default function SelectionDetailPage(): React.JSX.Element | null {
           </div>
 
           {togglePublishedMutation.isPending && (
+            <div className="flex items-center justify-center gap-2 mt-4 text-linkme-turquoise text-sm">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Mise à jour...</span>
+            </div>
+          )}
+        </div>
+
+        {/* Card Affichage des prix */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Euro className="h-5 w-5 text-linkme-turquoise" />
+            <h2 className="text-sm font-semibold text-linkme-marine">
+              Affichage des prix
+            </h2>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-linkme-marine/70">
+              Afficher les prix sur cette sélection en :
+            </span>
+            <div className="flex rounded-xl border border-gray-200 overflow-hidden">
+              <button
+                type="button"
+                onClick={() => void handlePriceDisplayModeChange('HT')}
+                disabled={updatePriceDisplayModeMutation.isPending}
+                className={`px-5 py-2.5 text-sm font-medium transition-all duration-200 ${
+                  priceDisplayMode === 'HT'
+                    ? 'bg-linkme-turquoise text-white'
+                    : 'bg-white text-linkme-marine/60 hover:bg-gray-50'
+                }`}
+              >
+                HT
+              </button>
+              <button
+                type="button"
+                onClick={() => void handlePriceDisplayModeChange('TTC')}
+                disabled={updatePriceDisplayModeMutation.isPending}
+                className={`px-5 py-2.5 text-sm font-medium transition-all duration-200 ${
+                  priceDisplayMode === 'TTC'
+                    ? 'bg-linkme-turquoise text-white'
+                    : 'bg-white text-linkme-marine/60 hover:bg-gray-50'
+                }`}
+              >
+                TTC
+              </button>
+            </div>
+          </div>
+
+          <p className="mt-3 text-xs text-linkme-marine/50">
+            Les prix seront affichés{' '}
+            {priceDisplayMode === 'TTC'
+              ? 'toutes taxes comprises'
+              : 'hors taxes'}{' '}
+            sur cette sélection
+          </p>
+
+          {updatePriceDisplayModeMutation.isPending && (
             <div className="flex items-center justify-center gap-2 mt-4 text-linkme-turquoise text-sm">
               <Loader2 className="h-4 w-4 animate-spin" />
               <span>Mise à jour...</span>

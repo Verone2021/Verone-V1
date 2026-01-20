@@ -90,6 +90,8 @@ export interface SelectionDetail {
   published_at: string | null;
   created_at: string | null;
   updated_at: string | null;
+  /** Mode d'affichage des prix: HT ou TTC (défaut: TTC) */
+  price_display_mode?: 'HT' | 'TTC' | null;
   affiliate?: {
     id: string;
     display_name: string;
@@ -118,6 +120,7 @@ export interface UpdateSelectionData {
   name?: string;
   description?: string | null;
   archived_at?: string | null;
+  price_display_mode?: 'HT' | 'TTC' | null;
 }
 
 export interface AddProductData {
