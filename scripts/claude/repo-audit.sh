@@ -28,8 +28,8 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-REPORTS_DIR="${REPO_ROOT}/reports"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+REPORTS_DIR="${REPO_ROOT}/scripts/reports"
 REPORT_MD="${REPORTS_DIR}/repo-audit-report.md"
 REPORT_JSON="${REPORTS_DIR}/repo-audit-report.json"
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
