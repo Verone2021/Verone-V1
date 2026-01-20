@@ -150,3 +150,9 @@ storybook-static
 .claude/DIAGNOSTIC-*.md
 .cursor/
 .tasks/INDEX.md
+
+# MCP Playwright cache
+.playwright-mcp/
+
+# TypeScript build cache
+tsconfig.tsbuildinfo
