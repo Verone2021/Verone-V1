@@ -152,6 +152,9 @@ export default function PublicSelectionPage({
   const [affiliateInfo, setAffiliateInfo] = useState<IAffiliateInfo | null>(
     null
   );
+
+  // Hover state for category overlay
+  const [hoveredProductId, setHoveredProductId] = useState<string | null>(null);
   const [organisations, setOrganisations] = useState<IOrganisation[]>([]);
 
 
@@ -497,6 +500,7 @@ export default function PublicSelectionPage({
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {paginatedItems.map(item => {
                   const inCart = cart.find(c => c.id === item.id);
+                  const isHovered = hoveredProductId === item.id;
                   return (
                     <div
                       key={item.id}
@@ -506,6 +510,8 @@ export default function PublicSelectionPage({
                           ? { boxShadow: `0 0 0 2px ${branding.accent_color}` }
                           : undefined
                       }
+                      onMouseEnter={() => setHoveredProductId(item.id)}
+                      onMouseLeave={() => setHoveredProductId(null)}
                     >
                       {/* Product Image */}
                       <div className="relative h-48 bg-gray-100 overflow-hidden group">
@@ -519,6 +525,35 @@ export default function PublicSelectionPage({
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-gray-300">
                             <Package className="h-16 w-16" />
+                          </div>
+                        )}
+
+                        {/* Gradient Overlay on Hover */}
+                        <div
+                          className={`absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-300 ${
+                            isHovered ? 'opacity-100' : 'opacity-0'
+                          }`}
+                        />
+
+                        {/* Category on Hover */}
+                        {(item.category_name || item.subcategory_name) && (
+                          <div
+                            className={`absolute bottom-0 left-0 right-0 p-4 transition-all duration-300 ${
+                              isHovered
+                                ? 'opacity-100 translate-y-0'
+                                : 'opacity-0 translate-y-4'
+                            }`}
+                          >
+                            {item.category_name && (
+                              <p className="text-white/80 text-xs uppercase tracking-wide">
+                                {item.category_name}
+                              </p>
+                            )}
+                            {item.subcategory_name && (
+                              <p className="text-white font-semibold text-sm mt-0.5">
+                                {item.subcategory_name}
+                              </p>
+                            )}
                           </div>
                         )}
 
