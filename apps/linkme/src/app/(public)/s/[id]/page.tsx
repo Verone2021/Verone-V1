@@ -154,8 +154,6 @@ export default function PublicSelectionPage({
   );
   const [organisations, setOrganisations] = useState<IOrganisation[]>([]);
 
-  // Hover states for animations
-  const [hoveredProductId, setHoveredProductId] = useState<string | null>(null);
 
   // Hooks for unified order form
   const { submitOrder, isSubmitting } = useSubmitUnifiedOrder();
@@ -499,7 +497,6 @@ export default function PublicSelectionPage({
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {paginatedItems.map(item => {
                   const inCart = cart.find(c => c.id === item.id);
-                  const isHovered = hoveredProductId === item.id;
                   return (
                     <div
                       key={item.id}
@@ -509,46 +506,21 @@ export default function PublicSelectionPage({
                           ? { boxShadow: `0 0 0 2px ${branding.accent_color}` }
                           : undefined
                       }
-                      onMouseEnter={() => setHoveredProductId(item.id)}
-                      onMouseLeave={() => setHoveredProductId(null)}
                     >
-                      {/* Product Image with Hover Overlay */}
+                      {/* Product Image */}
                       <div className="relative h-48 bg-gray-100 overflow-hidden group">
                         {item.product_image ? (
                           <Image
                             src={item.product_image}
                             alt={item.product_name}
                             fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-500"
+                            className="object-cover group-hover:scale-102 transition-transform duration-500"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-gray-300">
                             <Package className="h-16 w-16" />
                           </div>
                         )}
-
-                        {/* Gradient Overlay on Hover */}
-                        <div
-                          className={`absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-300 ${
-                            isHovered ? 'opacity-100' : 'opacity-0'
-                          }`}
-                        />
-
-                        {/* Product Name + SKU on Hover (slide-up) */}
-                        <div
-                          className={`absolute bottom-0 left-0 right-0 p-4 transition-all duration-300 ${
-                            isHovered
-                              ? 'opacity-100 translate-y-0'
-                              : 'opacity-0 translate-y-4'
-                          }`}
-                        >
-                          <h3 className="text-white font-semibold line-clamp-2">
-                            {item.product_name}
-                          </h3>
-                          <p className="text-white/70 text-xs mt-1">
-                            {item.product_sku}
-                          </p>
-                        </div>
 
                         {/* Badges Container */}
                         <div className="absolute top-3 left-3 right-3 flex justify-between items-start">
@@ -582,8 +554,19 @@ export default function PublicSelectionPage({
                         </div>
                       </div>
 
-                      {/* Product Info - Reduced (Price + Actions only) */}
+                      {/* Product Info */}
                       <div className="p-4">
+                        {/* Product Name - Always visible */}
+                        <h3
+                          className="font-semibold text-sm line-clamp-2 mb-2"
+                          style={{ color: branding.text_color }}
+                        >
+                          {item.product_name}
+                        </h3>
+                        <p className="text-xs text-gray-400 mb-3">
+                          {item.product_sku}
+                        </p>
+
                         <div className="flex items-center justify-between">
                           {/* Price */}
                           <div>
