@@ -113,6 +113,7 @@ export default function SelectionDetailPage({
     name: '',
     description: '',
     archived_at: null as string | null,
+    price_display_mode: 'TTC' as 'HT' | 'TTC',
   });
   const [isDirty, setIsDirty] = useState(false);
 
@@ -152,6 +153,7 @@ export default function SelectionDetailPage({
         name: selection.name || '',
         description: selection.description || '',
         archived_at: selection.archived_at || null,
+        price_display_mode: selection.price_display_mode || 'TTC',
       });
     }
   }, [selection]);
@@ -426,6 +428,36 @@ export default function SelectionDetailPage({
                 }}
                 rows={3}
               />
+            </div>
+
+            {/* Toggle affichage prix HT/TTC */}
+            <div className="flex items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <Label htmlFor="price-mode" className="font-medium">
+                  Affichage des prix
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Choisissez comment les prix sont affichés aux clients
+                </p>
+              </div>
+              <Select
+                value={formData.price_display_mode}
+                onValueChange={(value: 'HT' | 'TTC') => {
+                  setFormData(prev => ({
+                    ...prev,
+                    price_display_mode: value,
+                  }));
+                  setIsDirty(true);
+                }}
+              >
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="TTC">TTC</SelectItem>
+                  <SelectItem value="HT">HT</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
