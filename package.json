@@ -30,6 +30,7 @@
     "test:button": "playwright test -c playwright-ct.config.ts tests/components/button-unified.spec.ts",
     "test:button:ui": "playwright test -c playwright-ct.config.ts tests/components/button-unified.spec.ts --ui",
     "test:button:debug": "playwright test -c playwright-ct.config.ts tests/components/button-unified.spec.ts --debug",
+    "clean:test-artifacts": "./scripts/maintenance/clean-test-artifacts.sh",
     "playwright:install": "npx playwright install",
     "playwright:codegen": "npx playwright codegen localhost:3000",
     "playwright:show-report": "npx playwright show-report .playwright-mcp/reports",
