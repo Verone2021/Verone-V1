@@ -1,6 +1,6 @@
 # Documentation Verone - Source de Verite
 
-**Derniere mise a jour:** 2026-01-19
+**Derniere mise a jour:** 2026-01-20
 
 Cette documentation est la **source unique de verite** pour le projet Verone.
 Architecture basee sur le code reel, non sur des plans ou audits temporels.
@@ -23,25 +23,19 @@ Architecture basee sur le code reel, non sur des plans ou audits temporels.
 | Doc                                        | Description                   |
 | ------------------------------------------ | ----------------------------- |
 | [apps/back-office.md](./apps/back-office.md) | CRM/ERP - Structure & modules |
-| [apps/linkme.md](./apps/linkme.md)         | Plateforme affiliation B2B    |
+| [apps/linkme.md](./apps/linkme.md)         | Plateforme affiliation B2B - Hub central |
 
 #### Documentation Complète LinkMe
 
+**Consolidation 2026-01-20** : Documentation rationalisée, source de vérité unique par sujet (5 fichiers).
+
 | Doc                                                                  | Description                                                     |
 | -------------------------------------------------------------------- | --------------------------------------------------------------- |
-| **[apps/linkme.md](./apps/linkme.md)**                               | 📘 Documentation principale (213 lignes)                        |
-| **[apps/linkme/AUDIT-COMPLET-2025-12.md](./apps/linkme/AUDIT-COMPLET-2025-12.md)** | 🏆 Audit exhaustif (640 lignes) - CMS + App Affiliés          |
+| **[apps/linkme/linkme.md](./apps/linkme/linkme.md)**                 | 📘 Hub central - Vue d'ensemble, navigation, statut (400 lignes)|
 | [apps/linkme/architecture.md](./apps/linkme/architecture.md)         | 📐 Architecture technique (2 tables, RLS, triggers)             |
-| [apps/linkme/commissions.md](./apps/linkme/commissions.md)           | 💰 Modèle de commission définitif (formules, sources de vérité) |
-| [apps/linkme/commission-model.md](./apps/linkme/commission-model.md) | 💰 Complément modèle commission (2 types produits)             |
-| [apps/linkme/workflows.md](./apps/linkme/workflows.md)               | 🔄 Workflows décembre 2025 (17 routes, 12 hooks)               |
-
-#### Audits Historiques LinkMe
-
-| Doc                                                                      | Description                        |
-| ------------------------------------------------------------------------ | ---------------------------------- |
-| [apps/linkme/audits/globe-3d-2026-01-16.md](./apps/linkme/audits/globe-3d-2026-01-16.md) | Audit sphère 3D (RLS, résolu)      |
-| [apps/linkme/audits/presentation-figma.md](./apps/linkme/audits/presentation-figma.md)   | Designs Figma, maquettes UI        |
+| [apps/linkme/commissions.md](./apps/linkme/commissions.md)           | 💰 Modèle commission consolidé (formules, sources de vérité)   |
+| [apps/linkme/workflows.md](./apps/linkme/workflows.md)               | 🔄 Workflows détaillés (5 workflows complets, hooks)           |
+| [apps/linkme/presentation-figma.md](./apps/linkme/presentation-figma.md) | 🎨 Designs Figma, maquettes UI                                |
 
 ### Integrations
 
@@ -103,4 +97,4 @@ git show <commit>:docs/fichier.md
 
 ---
 
-_Version 2.0.0 - 2026-01-19 - Cleanroom from code (tolerance zero)_
+_Version 2.1.0 - 2026-01-20 - Consolidation LinkMe (source verite unique)_

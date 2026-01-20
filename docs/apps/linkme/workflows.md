@@ -29,36 +29,9 @@
 
 ---
 
-## 2. Architecture LinkMe (Décembre 2025)
+## 2. Architecture
 
-### Architecture 2 Tables
-
-```
-AUTHENTIFICATION                    DONNÉES BUSINESS
-┌─────────────────────┐            ┌─────────────────────────────┐
-│ user_app_roles      │            │ linkme_affiliates           │
-│ - app='linkme'      │ ──JOIN──▶  │ - enseigne_id XOR org_id    │
-│ - enseigne_id       │            │ - default_margin_rate (15%) │
-│ - organisation_id   │            │ - linkme_commission_rate(5%)│
-└─────────────────────┘            └─────────────────────────────┘
-```
-
-### Rôles Actifs
-
-| Rôle               | Description                     |
-| ------------------ | ------------------------------- |
-| `enseigne_admin`   | Admin d'une chaîne (ex: Pokawa) |
-| `org_independante` | Organisation autonome           |
-
-### Tables Principales
-
-- `linkme_affiliates` - Profils business (marges, commissions)
-- `linkme_selections` - Mini-boutiques affiliés
-- `linkme_selection_items` - Produits dans sélections
-- `linkme_commissions` - Commissions générées
-- `linkme_orders` / `linkme_order_items` - Commandes
-- `linkme_payment_requests` - Demandes versement
-- `user_app_roles` - Rôles utilisateurs multi-app
+Pour l'architecture technique complète (tables, rôles, RLS), voir [architecture.md](./architecture.md).
 
 ---
 

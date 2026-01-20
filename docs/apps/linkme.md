@@ -1,212 +1,58 @@
-# Business Rules LinkMe
+# LinkMe - Plateforme Affiliation B2B2C
 
-**Derniere mise a jour:** 2026-01-09
+**Dernière mise à jour:** 2026-01-20
 
-Plateforme d'affiliation B2B2C - Regles metier et workflows.
+Plateforme d'affiliation permettant aux organisations (enseignes, indépendants) de créer des mini-boutiques et percevoir des commissions.
 
----
-
-## Vue d'Ensemble
-
-LinkMe est une plateforme d'affiliation permettant aux organisations (enseignes, independants) de creer des mini-boutiques et percevoir des commissions.
-
-**Status:** Operationnel a 85%
+**Status:** Opérationnel à 85%
 
 ---
 
-## Architecture
+## Documentation Complète
 
-### Tables Principales
+La documentation LinkMe a été consolidée et organisée en 5 fichiers thématiques :
 
-```
-AUTHENTIFICATION                    DONNEES BUSINESS
-┌─────────────────────┐            ┌─────────────────────────────┐
-│ user_app_roles      │            │ linkme_affiliates           │
-│ - app='linkme'      │ ──JOIN──>  │ - enseigne_id XOR org_id    │
-│ - enseigne_id       │            │ - default_margin_rate (15%) │
-│ - organisation_id   │            │ - linkme_commission_rate(5%)│
-└─────────────────────┘            └─────────────────────────────┘
-```
+| Document | Description |
+|----------|-------------|
+| **[linkme/linkme.md](./linkme/linkme.md)** | 📘 Hub central - Vue d'ensemble, navigation, statut |
+| [linkme/architecture.md](./linkme/architecture.md) | 📐 Architecture technique (tables, RLS, triggers) |
+| [linkme/commissions.md](./linkme/commissions.md) | 💰 Modèle commission consolidé (formules, sources de vérité) |
+| [linkme/workflows.md](./linkme/workflows.md) | 🔄 Workflows détaillés (5 workflows complets) |
+| [linkme/presentation-figma.md](./linkme/presentation-figma.md) | 🎨 Designs Figma, maquettes UI |
 
-### Roles
-
-| Role               | Description                     |
-| ------------------ | ------------------------------- |
-| `enseigne_admin`   | Admin d'une chaine (ex: Pokawa) |
-| `org_independante` | Organisation autonome           |
+**Principe:** Une seule source de vérité par sujet, pas de duplication.
 
 ---
 
-## Workflows Critiques
+## Vue Rapide
 
-### 1. Connexion Affilie
+### Applications
 
-```
-Login (/login)
-    │
-    ▼
-Auth Supabase (cookie isole sb-linkme-auth)
-    │
-    ▼
-Query user_app_roles WHERE app='linkme'
-    │
-    ▼
-Liaison linkme_affiliates (via enseigne_id ou org_id)
-    │
-    ▼
-Redirection Dashboard
-```
+- **App Affiliés** : `http://localhost:3002` - Interface front pour enseignes/organisations
+- **CMS Back-Office** : `http://localhost:3000/canaux-vente/linkme` - Administration Vérone
 
-### 2. Creation Selection
+### Workflows Critiques
 
-```
-/ma-selection
-    │
-    ▼
-Nouvelle selection (nom, description)
-    │
-    ▼
-Ajout produits depuis catalogue
-    │
-    ▼
-Configuration marge (slider feux tricolores)
-    │
-    ▼
-Publication (toggle is_public)
-    │
-    ▼
-URL publique: /s/{slug}
-```
+1. **Connexion Affilié** : Login → Auth → user_app_roles → linkme_affiliates → Dashboard
+2. **Création Sélection** : Nouvelle sélection → Ajout produits → Configuration marges → Publication
+3. **Commande Client** : Page publique → Panier → Checkout → Validation → Virement → Commission
+4. **Cycle Commissions** : pending → validated → Demande versement → Upload facture → paid
 
-### 3. Commande Client (B2B)
+### Statuts Principaux
 
-```
-Page publique /s/[slug]
-    │
-    ▼
-Ajout panier (localStorage)
-    │
-    ▼
-Checkout (formulaire entreprise + adresses)
-    │
-    ▼
-Confirmation commande (status: draft)
-    │
-    ▼
-Validation Back-Office (draft → validated)
-    │
-    ▼
-Virement bancaire recu
-    │
-    ▼
-Expedition + Creation commission auto
-```
-
-### 4. Cycle Commissions
-
-```
-Commande livree
-    │
-    ▼
-Trigger SQL → Insert linkme_commissions (pending)
-    │
-    ▼
-Validation Verone (pending → validated)
-    │
-    ▼
-Affilie demande versement (selection commissions validated)
-    │
-    ▼
-Upload facture PDF
-    │
-    ▼
-Virement Verone + status: paid
-```
+- **Sélection** : draft → active → archived
+- **Commande** : draft → validated → shipped → delivered
+- **Commission** : pending → validated → in_payment → paid
 
 ---
 
-## Statuts
+## Liens Rapides
 
-### Selection
-
-```
-draft ──────────> active (publication)
-  │                  │
-  └───── archived <──┘ (archivage)
-```
-
-### Commande
-
-```
-draft → validated → partially_shipped → shipped → delivered
-         │                               │
-         └────────── cancelled <─────────┘
-```
-
-### Commission
-
-```
-pending ──> validated ──> in_payment ──> paid
-              │
-              └──> cancelled
-```
-
-### Demande Paiement
-
-```
-pending ──> invoice_received ──> paid
-    │              │
-    └─── cancelled <┘
-```
+- **Documentation complète** : Voir [linkme/linkme.md](./linkme/linkme.md)
+- **Code source App** : `apps/linkme/src/`
+- **Code source CMS** : `apps/back-office/src/app/canaux-vente/linkme/`
+- **Migrations DB** : `supabase/migrations/2025120*_linkme*.sql`
 
 ---
 
-## Fichiers Critiques
-
-### App LinkMe
-
-```
-apps/linkme/src/
-├── contexts/AuthContext.tsx           # Auth + linkMeRole
-├── lib/hooks/use-user-selection.ts    # Liaison user→affiliate
-├── lib/hooks/use-affiliate-*.ts       # Hooks affilies
-├── components/commissions/            # Composants modulaires
-└── app/(main)/layout.tsx              # Layout authentifie
-```
-
-### CMS Back-Office
-
-```
-apps/back-office/src/app/canaux-vente/linkme/
-├── layout.tsx                         # Layout sidebar
-├── components/LinkMeSidebar.tsx       # Navigation
-├── hooks/use-linkme-*.ts              # Hooks CMS
-└── utilisateurs/                      # Gestion users LinkMe
-```
-
----
-
-## KPIs Commissions (Affiche TTC)
-
-| KPI        | Description            |
-| ---------- | ---------------------- |
-| En attente | Commissions pending    |
-| Payables   | Commissions validated  |
-| En cours   | Commissions in_payment |
-| Payees     | Commissions paid       |
-
----
-
-## Points de Vigilance
-
-1. **Sessions isolees** - Back-office et LinkMe ont des cookies separes
-2. **Marges feux tricolores** - Vert (competitif), Orange (equilibre), Rouge (proche public)
-3. **B2B seulement** - Clients = organisations, paiement par virement
-4. **TVA 20%** - Calculs TTC = HT × 1.20
-
----
-
-## Source
-
-Ce document consolide les audits LinkMe de janvier 2026.
-Les workflows decrits ci-dessus constituent la source de verite pour le fonctionnement actuel de LinkMe.
+**Consolidation 2026-01-20** : Documentation rationalisée, 8 fichiers → 5 fichiers
