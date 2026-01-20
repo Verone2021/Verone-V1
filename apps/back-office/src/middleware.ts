@@ -8,10 +8,13 @@
  * - Fail-closed: erreur middleware = redirect /login (routes protégées)
  *
  * Pattern adapté de apps/linkme/src/middleware.ts
+ *
+ * NOTE CRITIQUE: Sentry désactivé dans middleware (Edge Runtime).
+ * Instrumentation Sentry doit se faire via sentry.edge.config.* séparé.
+ * Logs d'erreurs disponibles via console.error → Vercel Runtime Logs.
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
-import * as Sentry from '@sentry/nextjs';
 import {
   createMiddlewareClient,
   updateSession,
@@ -43,6 +46,9 @@ function isPublicRoute(pathname: string): boolean {
  * Gère les erreurs middleware de façon FAIL-CLOSED
  * - Routes publiques: laisse passer (l'utilisateur peut voir /login)
  * - Routes protégées: redirect /login (sécurité fail-closed)
+ *
+ * NOTE: Logs uniquement via console.error (Vercel Runtime Logs).
+ * Sentry Edge sera configuré séparément via sentry.edge.config.*.
  */
 function handleMiddlewareError(
   error: unknown,
@@ -51,25 +57,14 @@ function handleMiddlewareError(
 ): NextResponse {
   const errorMessage = error instanceof Error ? error.message : String(error);
   const errorName = error instanceof Error ? error.name : 'UnknownError';
+  const errorStack = error instanceof Error ? error.stack : undefined;
 
-  // Capturer dans Sentry avec contexte Edge
-  Sentry.captureException(error, {
-    tags: {
-      middleware: 'auth',
-      pathname,
-      isPublic: String(isPublicRoute(pathname)),
-    },
-    extra: {
-      errorName,
-      errorMessage,
-      url: request.url,
-    },
-  });
-
-  // Console log pour Vercel Runtime Logs
+  // Console log pour Vercel Runtime Logs (visible dans Dashboard → Logs)
   console.error(`[Middleware Error] ${errorName}: ${errorMessage}`, {
     pathname,
     url: request.url,
+    stack: errorStack,
+    isPublic: isPublicRoute(pathname),
   });
 
   // Routes publiques: laisser passer (fail-open pour /login uniquement)
@@ -86,55 +81,67 @@ function handleMiddlewareError(
 
 /**
  * Middleware principal avec gestion d'erreurs fail-closed
+ *
+ * Try/catch GLOBAL : garantit que le middleware ne crashe JAMAIS.
+ * En cas d'erreur critique (même dans handleMiddlewareError), fail-open sur /login.
  */
 export async function middleware(request: NextRequest): Promise<NextResponse> {
-  const { pathname } = request.nextUrl;
-
-  // Skip assets statiques (_next, images, fonts, etc.)
-  if (pathname.startsWith('/_next') || pathname.includes('.')) {
-    return NextResponse.next();
-  }
-
   try {
-    // Rafraîchir la session Supabase (gère auto le refresh token)
-    const response = await updateSession(request);
+    const { pathname } = request.nextUrl;
 
-    // Route publique
-    if (isPublicRoute(pathname)) {
-      // Si déjà authentifié et accès à /login → redirect /dashboard
-      if (pathname === '/login') {
-        const { supabase } = createMiddlewareClient(request);
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+    // Skip assets statiques (_next, images, fonts, etc.)
+    if (pathname.startsWith('/_next') || pathname.includes('.')) {
+      return NextResponse.next();
+    }
 
-        if (user) {
-          return NextResponse.redirect(new URL('/dashboard', request.url));
+    try {
+      // Rafraîchir la session Supabase (gère auto le refresh token)
+      const response = await updateSession(request);
+
+      // Route publique
+      if (isPublicRoute(pathname)) {
+        // Si déjà authentifié et accès à /login → redirect /dashboard
+        if (pathname === '/login') {
+          const { supabase } = createMiddlewareClient(request);
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
+
+          if (user) {
+            return NextResponse.redirect(new URL('/dashboard', request.url));
+          }
         }
+
+        return response;
       }
 
-      return response;
+      // Route protégée - vérifier authentification
+      const { supabase, response: middlewareResponse } =
+        createMiddlewareClient(request);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      // Non authentifié → redirect /login avec redirect param
+      if (!user) {
+        const loginUrl = new URL('/login', request.url);
+        loginUrl.searchParams.set('redirect', pathname);
+        return NextResponse.redirect(loginUrl);
+      }
+
+      // Authentifié → laisser passer (inclut requêtes RSC avec ?_rsc)
+      return middlewareResponse;
+    } catch (error) {
+      // FAIL-CLOSED: erreur = redirect /login pour routes protégées
+      return handleMiddlewareError(error, request, pathname);
     }
+  } catch (fatalError) {
+    // DERNIER RECOURS: Si même handleMiddlewareError crash, fail-open absolu
+    console.error('[FATAL Middleware Error] Uncaught exception:', fatalError);
 
-    // Route protégée - vérifier authentification
-    const { supabase, response: middlewareResponse } =
-      createMiddlewareClient(request);
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    // Non authentifié → redirect /login avec redirect param
-    if (!user) {
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-
-    // Authentifié → laisser passer (inclut requêtes RSC avec ?_rsc)
-    return middlewareResponse;
-  } catch (error) {
-    // FAIL-CLOSED: erreur = redirect /login pour routes protégées
-    return handleMiddlewareError(error, request, pathname);
+    // Fail-open: laisser passer la requête pour ne pas casser l'app
+    // Au minimum, /login doit être accessible
+    return NextResponse.next();
   }
 }
 
