@@ -273,7 +273,7 @@ check_hardcoded_project_ids() {
 
     # Known project ID pattern
     local project_id="aorroydfjsrygmosnzrl"
-    local count=$(grep -r "$project_id" "${REPO_ROOT}/.claude/" "${REPO_ROOT}/docs/" 2>/dev/null | wc -l || echo "0")
+    local count=$(grep -r "$project_id" "${REPO_ROOT}/.claude/" "${REPO_ROOT}/docs/" 2>/dev/null | wc -l | tr -d ' \n' || echo "0")
 
     if [[ "$count" -gt 0 ]]; then
         add_finding "INFO" "I-02" \
