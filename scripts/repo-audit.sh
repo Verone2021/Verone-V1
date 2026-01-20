@@ -28,8 +28,8 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-REPORTS_DIR="${REPO_ROOT}/reports"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+REPORTS_DIR="${REPO_ROOT}/scripts/reports"
 REPORT_MD="${REPORTS_DIR}/repo-audit-report.md"
 REPORT_JSON="${REPORTS_DIR}/repo-audit-report.json"
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
@@ -273,7 +273,7 @@ check_hardcoded_project_ids() {
 
     # Known project ID pattern
     local project_id="aorroydfjsrygmosnzrl"
-    local count=$(grep -r "$project_id" "${REPO_ROOT}/.claude/" "${REPO_ROOT}/docs/" 2>/dev/null | wc -l || echo "0")
+    local count=$(grep -r "$project_id" "${REPO_ROOT}/.claude/" "${REPO_ROOT}/docs/" 2>/dev/null | wc -l | tr -d ' \n' || echo "0")
 
     if [[ "$count" -gt 0 ]]; then
         add_finding "INFO" "I-02" \
