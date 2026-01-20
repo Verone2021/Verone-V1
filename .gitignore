@@ -71,6 +71,9 @@ next-env.d.ts
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+apps/*/test-results/
+apps/*/playwright-report/
+apps/*/screenshots/
 
 # Jest coverage
 /coverage/
@@ -80,15 +83,18 @@ next-env.d.ts
 
 # Claude Code specific
 .claude/scratch/
-.claude/reports/**
 .claude/playwright-profiles/
 **/sessions.jsonl
-.claude/audits/generated/
-.claude/backups/
+.claude/memories/
 .claude/settings.local.json
 .claude/plans/*-agent-*.md
 .claude/*-temp*
 .claude/*.log
+
+# Claude Code outputs (tolerance zero)
+.claude/audits/**
+.claude/backups/**
+.claude/reports/**
 
 # Husky
 .husky/_
@@ -105,6 +111,19 @@ next-env.d.ts
 
 # Audit reports (generated, not source)
 /reports/
+/tools/reports/
+
+# Documentation - Tolerance Zero (archives, audits, deliverables)
+archive/**
+docs/archive/**
+docs/_archive/**
+docs/audit*/**
+docs/*-investigation-*.md
+docs/*-warnings-*.md
+docs/**/DELIVERABLES.md
+docs/**/*PLAN*.md
+docs/**/*_PLAN.md
+docs/**/AUDIT-*.md
 
 # Data exports (sensitive, not source code)
 docs/assets/*.csv
@@ -131,3 +150,9 @@ storybook-static
 .claude/DIAGNOSTIC-*.md
 .cursor/
 .tasks/INDEX.md
+
+# MCP Playwright cache
+.playwright-mcp/
+
+# TypeScript build cache
+tsconfig.tsbuildinfo

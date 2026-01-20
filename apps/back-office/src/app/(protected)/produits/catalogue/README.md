@@ -287,8 +287,8 @@ COMMENT ON TABLE families IS 'RLS ENABLED - Fixed 2025-10-16';
 
 ## Documentation Connexe
 
-- **Business Rules**: `/manifests/business-rules/WORKFLOWS.md`
-- **PRD Catalogue**: `/manifests/prd/` (si existant)
+- **Business Rules**: `/docs/engineering/business-rules/WORKFLOWS.md`
+- **PRD Catalogue**: `/docs/prd/` (si existant)
 - **Tests**: `/TASKS/completed/testing/GROUPE-2-*.md`
 - **Code Review**: `/MEMORY-BANK/sessions/RAPPORT-PHASE-3-CODE-REVIEW-2025-10-16.md`
 - **Performance**: `/MEMORY-BANK/sessions/RAPPORT-PHASE-4-PERFORMANCE-2025-10-16.md`
