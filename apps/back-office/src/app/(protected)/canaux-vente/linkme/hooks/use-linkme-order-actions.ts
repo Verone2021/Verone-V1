@@ -251,6 +251,7 @@ async function approveOrder(
     .from('sales_orders')
     .update({
       status: 'validated',
+      pending_admin_validation: false,
       updated_at: new Date().toISOString(),
     })
     .eq('id', input.orderId);

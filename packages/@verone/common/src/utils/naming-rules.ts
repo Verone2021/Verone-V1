@@ -1,6 +1,6 @@
 /**
  * Règles de nommage automatique selon les business rules Vérone
- * Basé sur R022-R024 des manifests/business-rules/catalogue-variants-rules.md
+ * Basé sur R022-R024 des docs/engineering/business-rules/catalogue-variants-rules.md
  */
 
 interface VariantAttributes {

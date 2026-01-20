@@ -265,7 +265,7 @@ purchase_orders.supplier_id → organisations (type: supplier)
 
 ## Documentation Connexe
 
-- **Business Rules**: `/manifests/business-rules/` (si existant)
+- **Business Rules**: `/docs/engineering/business-rules/` (si existant)
 - **Code Review**: `/MEMORY-BANK/sessions/RAPPORT-PHASE-3-CODE-REVIEW-2025-10-16.md`
 - **Rapports Sessions**: `/MEMORY-BANK/sessions/` (sessions CRM)
 
