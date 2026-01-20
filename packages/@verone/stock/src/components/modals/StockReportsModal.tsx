@@ -51,7 +51,7 @@ interface StockReportsModalProps {
   onClose: () => void;
 }
 
-// Catalogue des 8 rapports essentiels (basé sur manifests/features/SYSTEME-RAPPORTS-STOCK-COMPLET.md)
+// Catalogue des 8 rapports essentiels (basé sur docs/features/SYSTEME-RAPPORTS-STOCK-COMPLET.md)
 const AVAILABLE_REPORTS = [
   {
     id: 'aging',
