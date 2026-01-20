@@ -3,7 +3,7 @@
   "name": "verone-back-office",
   "alias": ["verone-backoffice.vercel.app"],
   "framework": "nextjs",
-  "ignoreCommand": "exit 1",
+  "ignoreCommand": "npx turbo-ignore --fallback=HEAD^1",
   "buildCommand": "turbo run build --filter=@verone/back-office",
   "devCommand": "npm run dev",
   "installCommand": "pnpm install",

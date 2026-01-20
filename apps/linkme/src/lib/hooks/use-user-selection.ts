@@ -83,6 +83,10 @@ export interface SelectionItem {
   product_reference: string;
   product_image_url: string | null;
   product_stock_real: number;
+  // Données pour produits affiliés
+  category_name: string | null;
+  is_affiliate_product: boolean;
+  affiliate_commission_rate: number | null;
 }
 
 /**
@@ -252,7 +256,10 @@ export function useSelectionItems(selectionId: string | null) {
           product:products(
             name,
             sku,
-            stock_real
+            stock_real,
+            subcategory:subcategories(name),
+            created_by_affiliate,
+            affiliate_commission_rate
           )
         `
         )
@@ -294,6 +301,10 @@ export function useSelectionItems(selectionId: string | null) {
         product_reference: item.product?.sku || '',
         product_image_url: imageMap.get(item.product_id) || null,
         product_stock_real: item.product?.stock_real || 0,
+        // Données pour produits affiliés
+        category_name: item.product?.subcategory?.name ?? null,
+        is_affiliate_product: !!item.product?.created_by_affiliate,
+        affiliate_commission_rate: item.product?.affiliate_commission_rate ?? null,
       }));
     },
     enabled: !!selectionId,
@@ -745,6 +756,38 @@ export function useReorderProducts() {
       if (errors.length > 0) {
         throw new Error('Erreur lors de la réorganisation');
       }
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['selection-items', variables.selectionId],
+      });
+    },
+  });
+}
+
+/**
+ * Hook: mettre à jour le prix de vente d'un produit affilié
+ * Permet à l'affilié de modifier le prix de ses propres produits
+ */
+export function useUpdateAffiliateProductPrice() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: {
+      itemId: string;
+      selectionId: string;
+      newPriceHt: number;
+    }) => {
+      const supabase = createClient();
+      const { error } = await (supabase as any)
+        .from('linkme_selection_items')
+        .update({
+          selling_price_ht: input.newPriceHt,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', input.itemId);
+
+      if (error) throw error;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
