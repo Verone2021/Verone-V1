@@ -221,7 +221,7 @@ type ProductStatus =
 3. Prix canal (`channel_price_lists`)
 4. Prix liste défaut (`price_list_items`)
 
-**Business Rules File**: `manifests/business-rules/catalogue.md`
+**Business Rules File**: `docs/engineering/business-rules/catalogue.md`
 
 ---
 
@@ -289,7 +289,7 @@ type ProductStatus =
 
 - **Composant**: `src/app/catalogue/page.tsx`
 - **Hooks**: `src/hooks/use-catalogue.ts`, `use-pricing.ts`, `use-product-*.ts`
-- **Business Rules**: `manifests/business-rules/catalogue.md`
+- **Business Rules**: `docs/engineering/business-rules/catalogue.md`
 
 ### Sessions
 

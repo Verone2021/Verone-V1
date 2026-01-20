@@ -299,7 +299,7 @@ order_total_ttc = total_ht * (1 + tax_rate / 100);
 amount_due = total_ttc - paid_amount;
 ```
 
-**Business Rules File** : `manifests/business-rules/orders-lifecycle-management.md`
+**Business Rules File** : `docs/engineering/business-rules/orders-lifecycle-management.md`
 
 ---
 
@@ -376,7 +376,7 @@ amount_due = total_ttc - paid_amount;
 - **Page** : `src/app/commandes/clients/page.tsx`
 - **Hook** : `src/hooks/use-sales-orders.ts`
 - **Composants** : `src/components/business/shipping-manager-modal.tsx`
-- **Business Rules** : `manifests/business-rules/orders-lifecycle-management.md`
+- **Business Rules** : `docs/engineering/business-rules/orders-lifecycle-management.md`
 
 ### Sessions
 

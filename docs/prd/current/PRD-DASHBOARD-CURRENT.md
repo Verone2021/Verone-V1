@@ -342,8 +342,8 @@ WHERE (stock_quantity <= min_stock_threshold)
 
 ### Business Rules
 
-- `manifests/business-rules/WORKFLOWS.md` - Navigation globale
-- `manifests/business-rules/catalogue.md` - Règles produits actifs
+- `docs/engineering/business-rules/WORKFLOWS.md` - Navigation globale
+- `docs/engineering/business-rules/catalogue.md` - Règles produits actifs
 
 ### Sessions Documentation
 

@@ -37,6 +37,21 @@ Architecture basee sur le code reel, non sur des plans ou audits temporels.
 | [apps/linkme/workflows.md](./apps/linkme/workflows.md)               | 🔄 Workflows détaillés (5 workflows complets, hooks)           |
 | [apps/linkme/presentation-figma.md](./apps/linkme/presentation-figma.md) | 🎨 Designs Figma, maquettes UI                                |
 
+### Product Requirements & Features
+
+| Doc                                        | Description                          |
+| ------------------------------------------ | ------------------------------------ |
+| [prd/current/](./prd/current/)             | Product Requirements Documents (PRD) |
+| [features/](./features/)                   | Feature specifications               |
+
+### Engineering Standards & Business Rules
+
+| Doc                                                      | Description                          |
+| -------------------------------------------------------- | ------------------------------------ |
+| [engineering/standards/](./engineering/standards/)       | Database, UI, code standards         |
+| [engineering/business-rules/](./engineering/business-rules/) | Business logic documentation (WIP)   |
+| [engineering/performance/](./engineering/performance/)   | Performance targets                  |
+
 ### Integrations
 
 | Doc                                             | Description            |
@@ -44,6 +59,7 @@ Architecture basee sur le code reel, non sur des plans ou audits temporels.
 | [integrations/qonto.md](./integrations/qonto.md) | Facturation, PDF       |
 | [integrations/sentry.md](./integrations/sentry.md) | Monitoring erreurs     |
 | [integrations/resend.md](./integrations/resend.md) | Emails LinkMe          |
+| [integrations/google-merchant/](./integrations/google-merchant/) | Google Merchant setup  |
 
 ### Runbooks
 

@@ -219,8 +219,8 @@ GROUP BY product_id, location_id
 
 **Business Rules Files**:
 
-- `manifests/business-rules/stock-movements-workflow.md`
-- `manifests/business-rules/stock-traceability-rules.md`
+- `docs/engineering/business-rules/stock-movements-workflow.md`
+- `docs/engineering/business-rules/stock-traceability-rules.md`
 
 ---
 
@@ -281,7 +281,7 @@ GROUP BY product_id, location_id
 
 - **Page**: `src/app/stocks/mouvements/page.tsx`
 - **Hook**: `src/hooks/use-stock-movements.ts`
-- **Business Rules**: `manifests/business-rules/stock-movements-workflow.md`
+- **Business Rules**: `docs/engineering/business-rules/stock-movements-workflow.md`
 
 ---
 

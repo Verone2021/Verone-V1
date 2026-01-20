@@ -694,7 +694,7 @@ COMMENT ON TABLE organisations IS
 This table links to user_profiles via organisation_id.
 Breaking this table affects multi-tenant functionality.
 
-See: manifests/database-standards/CRITICAL-TABLES-PROTECTION.md';
+See: docs/engineering/standards/database/CRITICAL-TABLES-PROTECTION.md';
 ```
 
 ---

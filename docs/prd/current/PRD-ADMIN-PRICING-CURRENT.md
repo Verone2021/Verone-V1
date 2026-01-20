@@ -395,7 +395,7 @@ retail → Liste Retail (pas accès b2b)
 - Garantit résolution prix TOUJOURS réussie
 ```
 
-**Business Rules File** : `manifests/business-rules/pricing-multi-canaux-clients.md`
+**Business Rules File** : `docs/engineering/business-rules/pricing-multi-canaux-clients.md`
 
 ---
 
@@ -471,7 +471,7 @@ retail → Liste Retail (pas accès b2b)
 - **Page** : `src/app/admin/pricing/lists/[id]/page.tsx`
 - **Hook** : `src/hooks/use-pricing-system.ts`
 - **Composants** : `src/components/business/channel-selector.tsx`
-- **Business Rules** : `manifests/business-rules/pricing-multi-canaux-clients.md`
+- **Business Rules** : `docs/engineering/business-rules/pricing-multi-canaux-clients.md`
 
 ### Sessions
 
