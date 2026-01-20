@@ -56,13 +56,13 @@ export interface UpdateContactsInput {
  *
  * @param organisationId - ID de l'organisation
  * @param enseigneId - ID de l'enseigne (optionnel) - pour chercher aussi les contacts liés à l'enseigne
- * @param ownershipType - Type de propriété de l'organisation ('succursale' | 'franchise' | null)
+ * @param ownershipType - Type de propriété de l'organisation ('propre' | 'succursale' | 'franchise' | null)
  * @param includeEnseigneContacts - true pour inclure contacts enseigne (pour succursales uniquement)
  */
 export function useOrganisationContacts(
   organisationId: string | null,
   enseigneId?: string | null,
-  ownershipType?: 'succursale' | 'franchise' | null,
+  ownershipType?: 'propre' | 'succursale' | 'franchise' | null,
   includeEnseigneContacts?: boolean
 ) {
   return useQuery({

@@ -14,9 +14,9 @@
 
 import { Badge } from '@verone/ui';
 import { cn } from '@verone/utils';
-import { Store, Map, Users } from 'lucide-react';
+import { Store, Map, Users, Contact } from 'lucide-react';
 
-type TabType = 'all' | 'succursale' | 'franchise' | 'incomplete' | 'map';
+type TabType = 'all' | 'succursale' | 'franchise' | 'incomplete' | 'map' | 'contacts';
 
 interface ITabStats {
   all: number;
@@ -29,12 +29,18 @@ interface IOrganisationFilterTabsProps {
   activeTab: TabType;
   onTabChange: (tab: TabType) => void;
   stats: ITabStats;
+  /** Afficher l'onglet Contacts (enseigne admin uniquement) */
+  showContactsTab?: boolean;
+  /** Nombre de contacts enseigne (pour le badge) */
+  contactsCount?: number;
 }
 
 export function OrganisationFilterTabs({
   activeTab,
   onTabChange,
   stats,
+  showContactsTab = false,
+  contactsCount = 0,
 }: IOrganisationFilterTabsProps): JSX.Element {
   const tabs = [
     {
@@ -67,6 +73,17 @@ export function OrganisationFilterTabs({
       icon: Map,
       count: undefined,
     },
+    // Onglet Contacts (conditionnel)
+    ...(showContactsTab
+      ? [
+          {
+            id: 'contacts' as const,
+            label: 'Contacts Enseigne',
+            icon: Contact,
+            count: contactsCount,
+          },
+        ]
+      : []),
   ];
 
   return (

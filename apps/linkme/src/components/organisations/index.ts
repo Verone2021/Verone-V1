@@ -6,6 +6,7 @@
  * @module organisations
  * @since 2026-01-10
  * @updated 2026-01-12 - Ajout des modals de quick edit
+ * @updated 2026-01-21 - Ajout gestion contacts enseigne
  */
 
 export { OrganisationCard } from './OrganisationCard';
@@ -18,3 +19,7 @@ export { OrganisationFilterTabs } from './OrganisationFilterTabs';
 export { QuickEditShippingAddressModal } from './QuickEditShippingAddressModal';
 export { QuickEditBillingAddressModal } from './QuickEditBillingAddressModal';
 export { QuickEditOwnershipTypeModal } from './QuickEditOwnershipTypeModal';
+
+// Enseigne Contacts
+export { EnseigneContactsTab } from './EnseigneContactsTab';
+export { CreateEnseigneContactModal } from './CreateEnseigneContactModal';

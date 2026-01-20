@@ -4,11 +4,14 @@
  * OrganisationDetailModal
  *
  * Modal de visualisation des détails d'une organisation
- * Affiche toutes les infos, CA et commissions
+ * Affiche toutes les infos, CA et commissions + Contacts groupés par rôle
  *
  * @module OrganisationDetailModal
  * @since 2026-01-10
+ * @updated 2026-01-21 - Ajout liste contacts
  */
+
+import { useMemo } from 'react';
 
 import {
   Dialog,
@@ -16,8 +19,13 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  Badge,
+  Button,
 } from '@verone/ui';
-import { Building2, MapPin, Euro, Coins, Package } from 'lucide-react';
+import { Building2, MapPin, Euro, Coins, Package, Users, Loader2, UserX } from 'lucide-react';
+
+import { useOrganisationContacts } from '../../lib/hooks/use-organisation-contacts';
+import { ContactDisplayCard } from '../contacts/ContactDisplayCard';
 
 import type { EnseigneOrganisation } from '../../lib/hooks/use-enseigne-organisations';
 import type { OrganisationStats } from '../../lib/hooks/use-organisation-stats';
@@ -59,6 +67,41 @@ export function OrganisationDetailModal({
   if (!organisation) return null;
 
   const displayName = organisation.trade_name || organisation.legal_name;
+
+  // Fetch contacts
+  const { data: contactsData, isLoading: contactsLoading } = useOrganisationContacts(
+    organisation.id
+  );
+
+  // Group contacts by role
+  const groupedContacts = useMemo(() => {
+    const contacts = contactsData?.contacts || [];
+    return {
+      primary: contacts.filter((c) => c.isPrimaryContact),
+      billing: contacts.filter(
+        (c) => c.isBillingContact && !c.isPrimaryContact
+      ),
+      commercial: contacts.filter(
+        (c) =>
+          c.isCommercialContact &&
+          !c.isPrimaryContact &&
+          !c.isBillingContact
+      ),
+      technical: contacts.filter(
+        (c) =>
+          c.isTechnicalContact &&
+          !c.isPrimaryContact &&
+          !c.isBillingContact
+      ),
+      others: contacts.filter(
+        (c) =>
+          !c.isPrimaryContact &&
+          !c.isBillingContact &&
+          !c.isCommercialContact &&
+          !c.isTechnicalContact
+      ),
+    };
+  }, [contactsData]);
 
   // Construire l'adresse complète
   const shippingAddress = [
@@ -149,6 +192,124 @@ export function OrganisationDetailModal({
                 {stats?.orderCount ?? 0}
               </p>
             </div>
+          </div>
+
+          {/* Section Contacts */}
+          <div className="space-y-3 pt-4 border-t">
+            <div className="flex items-center justify-between">
+              <h4 className="font-semibold flex items-center gap-2">
+                <Users className="h-5 w-5 text-gray-600" />
+                Contacts
+              </h4>
+              <Badge variant="outline">
+                {contactsData?.contacts.length || 0} contact(s)
+              </Badge>
+            </div>
+
+            {contactsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+              </div>
+            ) : contactsData?.contacts.length === 0 ? (
+              // Empty state
+              <div className="text-center py-8 border-2 border-dashed rounded-lg bg-gray-50">
+                <UserX className="h-12 w-12 mx-auto text-gray-300 mb-2" />
+                <p className="text-sm text-gray-500 mb-4">
+                  Aucun contact enregistré
+                </p>
+                <p className="text-xs text-gray-400">
+                  Les contacts peuvent être ajoutés depuis la fiche organisation
+                </p>
+              </div>
+            ) : (
+              // Contacts grouped by role
+              <div className="space-y-4">
+                {/* Primary Contact */}
+                {groupedContacts.primary.length > 0 && (
+                  <div>
+                    <h5 className="text-sm font-medium text-gray-600 mb-2">
+                      Contact Principal
+                    </h5>
+                    <div className="space-y-2">
+                      {groupedContacts.primary.map((contact) => (
+                        <ContactDisplayCard
+                          key={contact.id}
+                          contact={contact}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Billing Contact */}
+                {groupedContacts.billing.length > 0 && (
+                  <div>
+                    <h5 className="text-sm font-medium text-gray-600 mb-2">
+                      Contact Facturation
+                    </h5>
+                    <div className="space-y-2">
+                      {groupedContacts.billing.map((contact) => (
+                        <ContactDisplayCard
+                          key={contact.id}
+                          contact={contact}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Commercial Contact */}
+                {groupedContacts.commercial.length > 0 && (
+                  <div>
+                    <h5 className="text-sm font-medium text-gray-600 mb-2">
+                      Contact Commercial
+                    </h5>
+                    <div className="space-y-2">
+                      {groupedContacts.commercial.map((contact) => (
+                        <ContactDisplayCard
+                          key={contact.id}
+                          contact={contact}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Technical Contact */}
+                {groupedContacts.technical.length > 0 && (
+                  <div>
+                    <h5 className="text-sm font-medium text-gray-600 mb-2">
+                      Contact Technique
+                    </h5>
+                    <div className="space-y-2">
+                      {groupedContacts.technical.map((contact) => (
+                        <ContactDisplayCard
+                          key={contact.id}
+                          contact={contact}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Others */}
+                {groupedContacts.others.length > 0 && (
+                  <div>
+                    <h5 className="text-sm font-medium text-gray-600 mb-2">
+                      Autres Contacts
+                    </h5>
+                    <div className="space-y-2">
+                      {groupedContacts.others.map((contact) => (
+                        <ContactDisplayCard
+                          key={contact.id}
+                          contact={contact}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </DialogContent>
