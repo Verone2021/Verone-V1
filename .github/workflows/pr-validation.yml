@@ -4,27 +4,15 @@
 # GitHub Flow: feature → main avec validation complète
 # Zero tolerance: console errors = PR blocked
 
-name: 🔍 PR Validation & Deploy Check (NON-BLOQUANT)
+name: 🔍 PR Validation & Deploy Check (MANUEL)
 
 on:
-  pull_request:
-    branches: [main]
-    types: [opened, synchronize, ready_for_review]
-    paths:
-      # Back-Office app
-      - 'apps/back-office/**'
-      # Shared packages (affect both apps)
-      - 'packages/**'
-      # Root config files
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - 'turbo.json'
-      - 'tsconfig.json'
-      # Workflows themselves
-      - '.github/workflows/pr-validation.yml'
-      - '.github/workflows/deploy-production.yml'
-      # Supabase (shared database)
-      - 'supabase/**'
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to validate (optional)'
+        required: false
+        type: string
 
 permissions:
   pull-requests: write

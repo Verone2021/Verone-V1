@@ -1,0 +1,5615 @@
+{
+  "generated_at": "2026-01-19T23:20:52.209Z",
+  "summary": {
+    "total": 527,
+    "by_location": {
+      "packages": 329,
+      "apps": 198
+    },
+    "by_category": {
+      "ui-primitive": 96,
+      "badge": 15,
+      "domain-specific": 152,
+      "modal": 102,
+      "composite": 46,
+      "layout": 23,
+      "section": 52,
+      "form": 31,
+      "widget": 10
+    },
+    "duplicates": 36
+  },
+  "components": [
+    {
+      "name": "ABCAnalysisChart",
+      "file": "/apps/back-office/src/app/(protected)/dashboard/components/charts/abc-analysis-chart.tsx",
+      "lineNumber": 86,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "ABCAnalysisView",
+      "file": "/packages/@verone/finance/src/components/reports/ABCAnalysisView.tsx",
+      "lineNumber": 44,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "ABCAnalysisView",
+      "file": "/packages/@verone/stock/src/components/reports/ABCAnalysisView.tsx",
+      "lineNumber": 44,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "ActionCell",
+      "file": "/apps/back-office/src/app/(protected)/factures/components/ActionCell.tsx",
+      "lineNumber": 78,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "ActionsRequiredDropdown",
+      "file": "/apps/linkme/src/components/layout/ActionsRequiredDropdown.tsx",
+      "lineNumber": 58,
+      "hasPropsInterface": false,
+      "category": "layout",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "ActiveFilters",
+      "file": "/apps/linkme/src/app/(main)/catalogue/components/CategoryBar.tsx",
+      "lineNumber": 139,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "ActivityTimeline",
+      "file": "/packages/@verone/ui/src/components/ui/activity-timeline.tsx",
+      "lineNumber": 21,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ActivityTrackerProvider",
+      "file": "/apps/back-office/src/components/providers/activity-tracker-provider.tsx",
+      "lineNumber": 23,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "AddProductToOrderModal",
+      "file": "/packages/@verone/orders/src/components/modals/AddProductToOrderModal.tsx",
+      "lineNumber": 48,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "AddressAutocomplete",
+      "file": "/packages/@verone/ui/src/components/ui/address-autocomplete.tsx",
+      "lineNumber": 264,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 4,
+      "location": "packages"
+    },
+    {
+      "name": "AddressEditSection",
+      "file": "/packages/@verone/common/src/components/address/AddressEditSection.tsx",
+      "lineNumber": 61,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "AddressInput",
+      "file": "/packages/@verone/common/src/components/address/AddressInput.tsx",
+      "lineNumber": 25,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "AddressSelector",
+      "file": "/packages/@verone/common/src/components/address/AddressSelector.tsx",
+      "lineNumber": 29,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "AddToSelectionModal",
+      "file": "/apps/linkme/src/components/catalogue/AddToSelectionModal.tsx",
+      "lineNumber": 52,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "AffiliateKPIGrid",
+      "file": "/apps/linkme/src/components/analytics/AffiliateKPIGrid.tsx",
+      "lineNumber": 117,
+      "hasPropsInterface": true,
+      "category": "layout",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "AffiliateReceptionModal",
+      "file": "/packages/@verone/orders/src/components/modals/AffiliateReceptionModal.tsx",
+      "lineNumber": 55,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "AffiliatesSection",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/components/AffiliatesSection.tsx",
+      "lineNumber": 143,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "AgingReportChart",
+      "file": "/apps/back-office/src/app/(protected)/dashboard/components/charts/aging-report-chart.tsx",
+      "lineNumber": 88,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "AgingReportView",
+      "file": "/packages/@verone/finance/src/components/reports/AgingReportView.tsx",
+      "lineNumber": 50,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "AgingReportView",
+      "file": "/packages/@verone/stock/src/components/reports/AgingReportView.tsx",
+      "lineNumber": 49,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "AlertKPICard",
+      "file": "/packages/@verone/common/src/components/kpi/KPICard.tsx",
+      "lineNumber": 183,
+      "hasPropsInterface": false,
+      "category": "composite",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ALL_YEARS_VALUE",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/components/AnalyticsDateFilter.tsx",
+      "lineNumber": 29,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "AnalyticsDateFilter",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/components/AnalyticsDateFilter.tsx",
+      "lineNumber": 181,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "AppHeader",
+      "file": "/apps/back-office/src/components/layout/app-header.tsx",
+      "lineNumber": 24,
+      "hasPropsInterface": true,
+      "category": "layout",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "ApplyExistingWizard",
+      "file": "/packages/@verone/finance/src/components/ApplyExistingWizard.tsx",
+      "lineNumber": 87,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "ApproveOrderDialog",
+      "file": "/apps/linkme/src/app/(main)/commandes/components/ApproveOrderDialog.tsx",
+      "lineNumber": 27,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "AppSidebar",
+      "file": "/apps/back-office/src/components/layout/app-sidebar.tsx",
+      "lineNumber": 691,
+      "hasPropsInterface": false,
+      "category": "layout",
+      "usageCount": 2,
+      "location": "apps"
+    },
+    {
+      "name": "AppSidebar",
+      "file": "/apps/linkme/src/components/layout/AppSidebar.tsx",
+      "lineNumber": 51,
+      "hasPropsInterface": false,
+      "category": "layout",
+      "usageCount": 2,
+      "location": "apps"
+    },
+    {
+      "name": "AssignOrganisationsModal",
+      "file": "/packages/@verone/organisations/src/components/modals/AssignOrganisationsModal.tsx",
+      "lineNumber": 61,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "AuthWrapper",
+      "file": "/apps/back-office/src/components/layout/auth-wrapper.tsx",
+      "lineNumber": 29,
+      "hasPropsInterface": true,
+      "category": "layout",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "BadgeLuxury",
+      "file": "/apps/site-internet/src/components/ui/BadgeLuxury.tsx",
+      "lineNumber": 50,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "BankAccountsCard",
+      "file": "/packages/@verone/finance/src/components/treasury/BankAccountsCard.tsx",
+      "lineNumber": 33,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "BFAReportModal",
+      "file": "/packages/@verone/finance/src/components/modals/BFAReportModal.tsx",
+      "lineNumber": 75,
+      "hasPropsInterface": false,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "Breadcrumb",
+      "file": "/packages/@verone/ui/src/components/ui/breadcrumb.tsx",
+      "lineNumber": 19,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "Button",
+      "file": "/packages/@verone/ui/src/components/ui/button.tsx",
+      "lineNumber": 312,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 340,
+      "location": "packages"
+    },
+    {
+      "name": "ButtonLuxury",
+      "file": "/apps/site-internet/src/components/ui/ButtonLuxury.tsx",
+      "lineNumber": 55,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "ButtonV2",
+      "file": "/packages/@verone/ui/src/components/ui/button.tsx",
+      "lineNumber": 128,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 211,
+      "location": "packages"
+    },
+    {
+      "name": "CancelMovementModal",
+      "file": "/packages/@verone/stock/src/components/modals/CancelMovementModal.tsx",
+      "lineNumber": 32,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "CancelRemainderModal",
+      "file": "/packages/@verone/orders/src/components/modals/CancelRemainderModal.tsx",
+      "lineNumber": 36,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "CardProductLuxury",
+      "file": "/apps/site-internet/src/components/ui/CardProductLuxury.tsx",
+      "lineNumber": 27,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "CarrierSelector",
+      "file": "/packages/@verone/common/src/components/carrier/CarrierSelector.tsx",
+      "lineNumber": 68,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "CartDrawer",
+      "file": "/apps/linkme/src/components/cart/CartDrawer.tsx",
+      "lineNumber": 17,
+      "hasPropsInterface": false,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "CartProvider",
+      "file": "/apps/linkme/src/components/cart/CartProvider.tsx",
+      "lineNumber": 34,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 6,
+      "location": "apps"
+    },
+    {
+      "name": "CashFlowChart",
+      "file": "/packages/@verone/finance/src/components/charts/CashFlowChart.tsx",
+      "lineNumber": 79,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "CatalogTabs",
+      "file": "/apps/linkme/src/app/(main)/catalogue/components/CatalogTabs.tsx",
+      "lineNumber": 21,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "CatalogueFilterPanel",
+      "file": "/apps/back-office/src/components/catalogue/CatalogueFilterPanel.tsx",
+      "lineNumber": 120,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "CategoriesSection",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/components/CategoriesSection.tsx",
+      "lineNumber": 169,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "CategoryAccordion",
+      "file": "/apps/linkme/src/app/(main)/catalogue/components/CategoryAccordion.tsx",
+      "lineNumber": 34,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "CategoryBar",
+      "file": "/apps/linkme/src/app/(main)/catalogue/components/CategoryBar.tsx",
+      "lineNumber": 24,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "CategoryCardGrid",
+      "file": "/packages/@verone/finance/src/components/CategoryCardGrid.tsx",
+      "lineNumber": 29,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "CategoryDropdown",
+      "file": "/apps/linkme/src/app/(main)/catalogue/components/CategoryDropdown.tsx",
+      "lineNumber": 34,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "CategoryFilterCombobox",
+      "file": "/packages/@verone/categories/src/components/filters/CategoryFilterCombobox.tsx",
+      "lineNumber": 59,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 4,
+      "location": "packages"
+    },
+    {
+      "name": "CategoryForm",
+      "file": "/apps/back-office/src/components/forms/category-form.tsx",
+      "lineNumber": 67,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "CategoryHierarchyFilter",
+      "file": "/packages/@verone/categories/src/components/filters/CategoryHierarchyFilter.tsx",
+      "lineNumber": 44,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "CategoryHierarchyFilterV2",
+      "file": "/packages/@verone/categories/src/components/filters/CategoryHierarchyFilterV2.tsx",
+      "lineNumber": 89,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "CategoryHierarchyModal",
+      "file": "/packages/@verone/categories/src/components/modals/CategorizeModal.tsx",
+      "lineNumber": 17,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "CategoryHierarchySelector",
+      "file": "/packages/@verone/categories/src/components/selectors/CategoryHierarchySelector.tsx",
+      "lineNumber": 38,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "CategorySelector",
+      "file": "/packages/@verone/categories/src/components/CategorySelector.tsx",
+      "lineNumber": 46,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "CategorySelector",
+      "file": "/packages/@verone/categories/src/components/selectors/CategorySelector.tsx",
+      "lineNumber": 46,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "CategoryTabs",
+      "file": "/apps/linkme/src/components/public-selection/CategoryTabs.tsx",
+      "lineNumber": 37,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "CategoryTreeFilter",
+      "file": "/packages/@verone/categories/src/components/filters/CategoryTreeFilter.tsx",
+      "lineNumber": 94,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ChannelPieChart",
+      "file": "/apps/back-office/src/app/(protected)/dashboard/components/charts/channel-pie-chart.tsx",
+      "lineNumber": 75,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "ChannelSelector",
+      "file": "/packages/@verone/ui-business/src/components/selectors/ChannelSelector.tsx",
+      "lineNumber": 37,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "CharacteristicsEditSection",
+      "file": "/packages/@verone/products/src/components/sections/CharacteristicsEditSection.tsx",
+      "lineNumber": 59,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ChartCard",
+      "file": "/apps/back-office/src/app/(protected)/dashboard/components/charts/chart-card.tsx",
+      "lineNumber": 36,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "ChartSelectorModal",
+      "file": "/apps/back-office/src/app/(protected)/dashboard/components/charts/chart-selector-modal.tsx",
+      "lineNumber": 45,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "ChronotruckShipmentForm",
+      "file": "/packages/@verone/logistics/src/components/shipment-forms/ChronotruckShipmentForm.tsx",
+      "lineNumber": 22,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ClientAssignmentSelector",
+      "file": "/packages/@verone/products/src/components/sourcing/client-assignment-selector.tsx",
+      "lineNumber": 28,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ClientOnlyActivityTracker",
+      "file": "/apps/back-office/src/components/providers/client-only-activity-tracker.tsx",
+      "lineNumber": 18,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "ClientOrEnseigneSelector",
+      "file": "/packages/@verone/products/src/components/sourcing/ClientOrEnseigneSelector.tsx",
+      "lineNumber": 47,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 4,
+      "location": "packages"
+    },
+    {
+      "name": "CloseOrderModal",
+      "file": "/packages/@verone/orders/src/components/modals/CloseOrderModal.tsx",
+      "lineNumber": 29,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "CollectionCreationWizard",
+      "file": "/packages/@verone/common/src/components/collections/CollectionCreationWizard.tsx",
+      "lineNumber": 46,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "CollectionEditModal",
+      "file": "/packages/@verone/common/src/components/collections/CollectionEditModal.tsx",
+      "lineNumber": 44,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "CollectionFormModal",
+      "file": "/packages/@verone/common/src/components/collections/CollectionFormModal.tsx",
+      "lineNumber": 120,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "CollectionGrid",
+      "file": "/packages/@verone/common/src/components/collections/CollectionGrid.tsx",
+      "lineNumber": 99,
+      "hasPropsInterface": true,
+      "category": "layout",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "CollectionImageUpload",
+      "file": "/packages/@verone/common/src/components/collections/CollectionImageUpload.tsx",
+      "lineNumber": 36,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "CollectionImageUpload",
+      "file": "/apps/back-office/src/components/business/collection-image-upload.tsx",
+      "lineNumber": 18,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 2,
+      "location": "apps"
+    },
+    {
+      "name": "CollectionsSection",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/components/CollectionsSection.tsx",
+      "lineNumber": 56,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "ColorMaterialSelector",
+      "file": "/packages/@verone/ui-business/src/components/selectors/ColorMaterialSelector.tsx",
+      "lineNumber": 264,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ColorSelector",
+      "file": "/packages/@verone/ui-business/src/components/selectors/ColorMaterialSelector.tsx",
+      "lineNumber": 89,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "Combobox",
+      "file": "/packages/@verone/ui/src/components/ui/combobox.tsx",
+      "lineNumber": 38,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 5,
+      "location": "packages"
+    },
+    {
+      "name": "CommandPalette",
+      "file": "/packages/@verone/ui/src/components/ui/command-palette.tsx",
+      "lineNumber": 261,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "CommandPaletteSearch",
+      "file": "/packages/@verone/ui-business/src/components/utils/CommandPaletteSearch.tsx",
+      "lineNumber": 112,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "CommercialEditSection",
+      "file": "/packages/@verone/organisations/src/components/sections/CommercialEditSection.tsx",
+      "lineNumber": 37,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "CommercialEditSection",
+      "file": "/packages/@verone/products/src/components/sections/CommercialEditSection.tsx",
+      "lineNumber": 37,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "CommissionKPICard",
+      "file": "/apps/linkme/src/components/commissions/CommissionKPICard.tsx",
+      "lineNumber": 26,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "CommissionKPICard",
+      "file": "/apps/linkme/src/components/dashboard/CommissionKPICard.tsx",
+      "lineNumber": 66,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "CommissionsChart",
+      "file": "/apps/linkme/src/components/commissions/CommissionsChart.tsx",
+      "lineNumber": 22,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "CommissionSelectionModal",
+      "file": "/apps/linkme/src/components/commissions/CommissionSelectionModal.tsx",
+      "lineNumber": 31,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "CommissionsOverview",
+      "file": "/apps/linkme/src/components/analytics/CommissionsOverview.tsx",
+      "lineNumber": 21,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "CommissionsSection",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/components/CommissionsSection.tsx",
+      "lineNumber": 103,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "CommissionsStatusCard",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/components/CommissionsStatusCard.tsx",
+      "lineNumber": 28,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "CommissionsTable",
+      "file": "/apps/linkme/src/components/commissions/CommissionsTable.tsx",
+      "lineNumber": 305,
+      "hasPropsInterface": false,
+      "category": "composite",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "CompactQuickActions",
+      "file": "/packages/@verone/ui/src/components/ui/compact-quick-actions.tsx",
+      "lineNumber": 31,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "CompleteProductWizard",
+      "file": "/packages/@verone/products/src/components/wizards/CompleteProductWizard.tsx",
+      "lineNumber": 114,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 8,
+      "location": "packages"
+    },
+    {
+      "name": "CompletionStatusCompact",
+      "file": "/packages/@verone/products/src/components/badges/CompletionStatusCompact.tsx",
+      "lineNumber": 29,
+      "hasPropsInterface": true,
+      "category": "badge",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "CompletionStatusSection",
+      "file": "/packages/@verone/products/src/components/badges/CompletionStatusSection.tsx",
+      "lineNumber": 25,
+      "hasPropsInterface": true,
+      "category": "badge",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ConfidenceBadge",
+      "file": "/packages/@verone/ui-business/src/components/finance/ConfidenceMeter.tsx",
+      "lineNumber": 150,
+      "hasPropsInterface": false,
+      "category": "badge",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ConfidenceMeter",
+      "file": "/packages/@verone/ui-business/src/components/finance/ConfidenceMeter.tsx",
+      "lineNumber": 82,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ConfirmDeleteModal",
+      "file": "/packages/@verone/ui-business/src/components/modals/ConfirmDeleteModal.tsx",
+      "lineNumber": 20,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ConfirmDeleteOrganisationModal",
+      "file": "/packages/@verone/organisations/src/components/modals/ConfirmDeleteOrganisationModal.tsx",
+      "lineNumber": 33,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "ConfirmDialog",
+      "file": "/packages/@verone/ui/src/components/ui/confirm-dialog.tsx",
+      "lineNumber": 100,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "ConfirmSubmitModal",
+      "file": "/packages/@verone/ui-business/src/components/modals/ConfirmSubmitModal.tsx",
+      "lineNumber": 41,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ConsoleErrorTrackerProvider",
+      "file": "/apps/back-office/src/components/providers/console-error-tracker-provider.tsx",
+      "lineNumber": 13,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "ConsultationImageGallery",
+      "file": "/packages/@verone/consultations/src/components/images/ConsultationImageGallery.tsx",
+      "lineNumber": 33,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "ConsultationImageViewerModal",
+      "file": "/packages/@verone/consultations/src/components/images/ConsultationImageViewerModal.tsx",
+      "lineNumber": 58,
+      "hasPropsInterface": false,
+      "category": "modal",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "ConsultationOrderInterface",
+      "file": "/packages/@verone/consultations/src/components/interfaces/ConsultationOrderInterface.tsx",
+      "lineNumber": 46,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "ConsultationOrderInterface",
+      "file": "/apps/back-office/src/components/business/consultation-order-interface.tsx",
+      "lineNumber": 18,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 2,
+      "location": "apps"
+    },
+    {
+      "name": "ConsultationPhotosModal",
+      "file": "/packages/@verone/consultations/src/components/modals/ConsultationPhotosModal.tsx",
+      "lineNumber": 50,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "ConsultationPhotosModal",
+      "file": "/apps/back-office/src/components/business/consultation-photos-modal.tsx",
+      "lineNumber": 19,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "ConsultationProductAssociation",
+      "file": "/packages/@verone/consultations/src/components/associations/ConsultationProductAssociation.tsx",
+      "lineNumber": 44,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ConsultationSuggestions",
+      "file": "/packages/@verone/consultations/src/components/suggestions/ConsultationSuggestions.tsx",
+      "lineNumber": 27,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "ContactDetailsEditSection",
+      "file": "/packages/@verone/customers/src/components/sections/ContactDetailsEditSection.tsx",
+      "lineNumber": 19,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "ContactEditSection",
+      "file": "/packages/@verone/customers/src/components/sections/ContactEditSection.tsx",
+      "lineNumber": 31,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "ContactForm",
+      "file": "/apps/linkme/src/components/public-selection/ContactForm.tsx",
+      "lineNumber": 42,
+      "hasPropsInterface": false,
+      "category": "form",
+      "usageCount": 5,
+      "location": "apps"
+    },
+    {
+      "name": "ContactFormModal",
+      "file": "/packages/@verone/customers/src/components/modals/contact-form-modal.tsx",
+      "lineNumber": 74,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 5,
+      "location": "packages"
+    },
+    {
+      "name": "ContactFormModalWrapper",
+      "file": "/packages/@verone/organisations/src/components/modals/ContactFormModalWrapper.tsx",
+      "lineNumber": 40,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "ContactFormModalWrapper",
+      "file": "/apps/back-office/src/components/business/contact-form-modal-wrapper.tsx",
+      "lineNumber": 40,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "ContactPersonalEditSection",
+      "file": "/packages/@verone/customers/src/components/sections/ContactPersonalEditSection.tsx",
+      "lineNumber": 19,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "ContactPreferencesEditSection",
+      "file": "/packages/@verone/customers/src/components/sections/ContactPreferencesEditSection.tsx",
+      "lineNumber": 31,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "ContactRolesEditSection",
+      "file": "/packages/@verone/customers/src/components/sections/ContactRolesEditSection.tsx",
+      "lineNumber": 29,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "ContactsManagementSection",
+      "file": "/packages/@verone/customers/src/components/sections/ContactsManagementSection.tsx",
+      "lineNumber": 45,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "ContactsSection",
+      "file": "/apps/linkme/src/components/ContactsSection.tsx",
+      "lineNumber": 64,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "ContactsTab",
+      "file": "/apps/back-office/src/app/(protected)/organisation/components/contacts-tab.tsx",
+      "lineNumber": 35,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "CreateIndividualCustomerModal",
+      "file": "/packages/@verone/orders/src/components/modals/create-individual-customer-modal.tsx",
+      "lineNumber": 61,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "CreateLinkMeOrderModal",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/components/CreateLinkMeOrderModal.tsx",
+      "lineNumber": 67,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "CreateOrderModal",
+      "file": "/apps/linkme/src/app/(main)/commandes/components/CreateOrderModal.tsx",
+      "lineNumber": 167,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "CreateOrganisationModal",
+      "file": "/packages/@verone/orders/src/components/modals/create-organisation-modal.tsx",
+      "lineNumber": 45,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "CreateProductInGroupModal",
+      "file": "/packages/@verone/products/src/components/modals/CreateProductInGroupModal.tsx",
+      "lineNumber": 49,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "CreateUserDialog",
+      "file": "/apps/back-office/src/components/admin/create-user-dialog.tsx",
+      "lineNumber": 71,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "CreditNoteCreateModal",
+      "file": "/packages/@verone/finance/src/components/CreditNoteCreateModal.tsx",
+      "lineNumber": 104,
+      "hasPropsInterface": false,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "CustomerBadge",
+      "file": "/packages/@verone/customers/src/components/badges/CustomerBadge.tsx",
+      "lineNumber": 47,
+      "hasPropsInterface": true,
+      "category": "badge",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "CustomerFormModal",
+      "file": "/packages/@verone/customers/src/components/modals/CustomerFormModal.tsx",
+      "lineNumber": 112,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "CustomerSamplesSection",
+      "file": "/packages/@verone/orders/src/components/sections/CustomerSamplesSection.tsx",
+      "lineNumber": 81,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "CustomerSelector",
+      "file": "/packages/@verone/orders/src/components/modals/customer-selector.tsx",
+      "lineNumber": 69,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "CustomersTab",
+      "file": "/apps/back-office/src/app/(protected)/organisation/components/customers-tab.tsx",
+      "lineNumber": 40,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "DashboardSection",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/components/DashboardSection.tsx",
+      "lineNumber": 215,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "DashboardTabs",
+      "file": "/apps/back-office/src/app/(protected)/dashboard/components/dashboard-tabs.tsx",
+      "lineNumber": 40,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "DataStatusBadge",
+      "file": "/packages/@verone/ui/src/components/ui/data-status-badge.tsx",
+      "lineNumber": 68,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "DataTableToolbar",
+      "file": "/packages/@verone/ui-business/src/components/finance/DataTableToolbar.tsx",
+      "lineNumber": 113,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "DateRangeFilter",
+      "file": "/packages/@verone/ui-business/src/components/finance/DataTableToolbar.tsx",
+      "lineNumber": 325,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "DeleteUserDialog",
+      "file": "/apps/back-office/src/components/admin/delete-user-dialog.tsx",
+      "lineNumber": 35,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 2,
+      "location": "apps"
+    },
+    {
+      "name": "DescriptionsSection",
+      "file": "/apps/back-office/src/components/business/wizard-sections/descriptions-section.tsx",
+      "lineNumber": 27,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "DocumentBadge",
+      "file": "/packages/@verone/ui-business/src/components/finance/DocumentLink.tsx",
+      "lineNumber": 260,
+      "hasPropsInterface": false,
+      "category": "badge",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "DocumentLink",
+      "file": "/packages/@verone/ui-business/src/components/finance/DocumentLink.tsx",
+      "lineNumber": 127,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "DraggableProductGrid",
+      "file": "/packages/@verone/ui-business/src/components/utils/DraggableProductGrid.tsx",
+      "lineNumber": 37,
+      "hasPropsInterface": true,
+      "category": "layout",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "DynamicColorSelector",
+      "file": "/packages/@verone/ui-business/src/components/selectors/DynamicColorSelector.tsx",
+      "lineNumber": 39,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "EcoTaxVatInput",
+      "file": "/packages/@verone/ui/src/components/forms/EcoTaxVatInput.tsx",
+      "lineNumber": 23,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "EcoTaxVatInput",
+      "file": "/apps/back-office/src/components/forms/eco-tax-vat-input.tsx",
+      "lineNumber": 22,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 3,
+      "location": "apps"
+    },
+    {
+      "name": "EditableOrderItemRow",
+      "file": "/packages/@verone/orders/src/components/tables/EditableOrderItemRow.tsx",
+      "lineNumber": 61,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "EditConsultationModal",
+      "file": "/packages/@verone/consultations/src/components/modals/EditConsultationModal.tsx",
+      "lineNumber": 44,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "EditLinkMeOrderModal",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/components/EditLinkMeOrderModal.tsx",
+      "lineNumber": 39,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "EditMarginModal",
+      "file": "/apps/linkme/src/components/selection/EditMarginModal.tsx",
+      "lineNumber": 49,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "EditOrderModal",
+      "file": "/apps/linkme/src/app/(main)/commandes/components/EditOrderModal.tsx",
+      "lineNumber": 90,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "EditProductVariantModal",
+      "file": "/packages/@verone/products/src/components/modals/EditProductVariantModal.tsx",
+      "lineNumber": 62,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "EditSiteInternetProductModal",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/components/EditSiteInternetProductModal.tsx",
+      "lineNumber": 169,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "EditUserDialog",
+      "file": "/apps/back-office/src/components/admin/edit-user-dialog.tsx",
+      "lineNumber": 50,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "EnseigneDetailHeader",
+      "file": "/packages/@verone/organisations/src/components/sections/EnseigneDetailHeader.tsx",
+      "lineNumber": 47,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "EnseigneGeographySection",
+      "file": "/packages/@verone/organisations/src/components/sections/EnseigneGeographySection.tsx",
+      "lineNumber": 83,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "EnseigneKPIGrid",
+      "file": "/packages/@verone/organisations/src/components/sections/EnseigneKPIGrid.tsx",
+      "lineNumber": 61,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "EnseigneLogoUploadButton",
+      "file": "/packages/@verone/organisations/src/components/buttons/EnseigneLogoUploadButton.tsx",
+      "lineNumber": 41,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "EnseigneOrganisationsTable",
+      "file": "/packages/@verone/organisations/src/components/sections/EnseigneOrganisationsTable.tsx",
+      "lineNumber": 103,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "EnseignesSection",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/components/EnseignesSection.tsx",
+      "lineNumber": 83,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "EnseigneStepper",
+      "file": "/apps/linkme/src/components/checkout/EnseigneStepper.tsx",
+      "lineNumber": 144,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "ErrorReportModal",
+      "file": "/packages/@verone/ui-business/src/components/modals/ErrorReportModal.tsx",
+      "lineNumber": 166,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ErrorStateCard",
+      "file": "/packages/@verone/ui/src/components/ui/error-state-card.tsx",
+      "lineNumber": 87,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 4,
+      "location": "packages"
+    },
+    {
+      "name": "ExpenseDonutChart",
+      "file": "/packages/@verone/finance/src/components/charts/ExpenseDonutChart.tsx",
+      "lineNumber": 111,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ExpenseForm",
+      "file": "/apps/back-office/src/components/forms/expense-form.tsx",
+      "lineNumber": 82,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "FamilyCrudForm",
+      "file": "/apps/back-office/src/components/forms/family-crud-form.tsx",
+      "lineNumber": 73,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 2,
+      "location": "apps"
+    },
+    {
+      "name": "FamilyForm",
+      "file": "/apps/back-office/src/components/forms/family-form.tsx",
+      "lineNumber": 58,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "FAQSection",
+      "file": "/apps/linkme/src/components/public-selection/FAQSection.tsx",
+      "lineNumber": 67,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "FavoriteToggleButton",
+      "file": "/packages/@verone/ui-business/src/components/buttons/FavoriteToggleButton.tsx",
+      "lineNumber": 26,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "FilterCombobox",
+      "file": "/packages/@verone/ui-business/src/components/selectors/FilterCombobox.tsx",
+      "lineNumber": 94,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 4,
+      "location": "packages"
+    },
+    {
+      "name": "FilterDrawer",
+      "file": "/apps/linkme/src/app/(main)/catalogue/components/FilterDrawer.tsx",
+      "lineNumber": 47,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "FinanceDashboard",
+      "file": "/packages/@verone/finance/src/components/dashboard/FinanceDashboard.tsx",
+      "lineNumber": 239,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "FinancialPaymentForm",
+      "file": "/packages/@verone/finance/src/components/forms/FinancialPaymentForm.tsx",
+      "lineNumber": 93,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "Footer",
+      "file": "/apps/linkme/src/components/layout/Footer.tsx",
+      "lineNumber": 3,
+      "hasPropsInterface": false,
+      "category": "layout",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "Footer",
+      "file": "/apps/site-internet/src/components/layout/Footer.tsx",
+      "lineNumber": 32,
+      "hasPropsInterface": false,
+      "category": "layout",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "ForecastBreakdownModal",
+      "file": "/packages/@verone/ui-business/src/components/modals/ForecastBreakdownModal.tsx",
+      "lineNumber": 34,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ForecastSummaryWidget",
+      "file": "/packages/@verone/ui-business/src/components/utils/ForecastSummaryWidget.tsx",
+      "lineNumber": 50,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "FormSubmissionMessages",
+      "file": "/apps/back-office/src/components/form-submission-messages.tsx",
+      "lineNumber": 38,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "FranceMap",
+      "file": "/apps/linkme/src/components/network/FranceMap.tsx",
+      "lineNumber": 42,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "GeneralInfoEditSection",
+      "file": "/packages/@verone/products/src/components/sections/GeneralInfoEditSection.tsx",
+      "lineNumber": 29,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "GeneralInfoSection",
+      "file": "/packages/@verone/products/src/components/wizards/sections/GeneralInfoSection.tsx",
+      "lineNumber": 35,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "GeneralInfoSection",
+      "file": "/apps/back-office/src/components/business/wizard-sections/general-info-section.tsx",
+      "lineNumber": 30,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "GeneralStockMovementModal",
+      "file": "/packages/@verone/stock/src/components/modals/GeneralStockMovementModal.tsx",
+      "lineNumber": 38,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "GenerateInvoiceButton",
+      "file": "/packages/@verone/finance/src/components/buttons/GenerateInvoiceButton.tsx",
+      "lineNumber": 49,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "GoogleMerchantConfigModal",
+      "file": "/packages/@verone/channels/src/components/google-merchant/GoogleMerchantConfigModal.tsx",
+      "lineNumber": 42,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "GoogleMerchantMetadataEditor",
+      "file": "/packages/@verone/channels/src/components/google-merchant/GoogleMerchantMetadataEditor.tsx",
+      "lineNumber": 72,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "GoogleMerchantPriceEditor",
+      "file": "/packages/@verone/channels/src/components/google-merchant/GoogleMerchantPriceEditor.tsx",
+      "lineNumber": 67,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "GoogleMerchantPriceEditor",
+      "file": "/packages/@verone/common/src/components/pricing/GoogleMerchantPriceEditor.tsx",
+      "lineNumber": 67,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "GoogleMerchantProductCard",
+      "file": "/packages/@verone/channels/src/components/google-merchant/GoogleMerchantProductCard.tsx",
+      "lineNumber": 111,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "GoogleMerchantProductManager",
+      "file": "/packages/@verone/channels/src/components/google-merchant/GoogleMerchantProductManager.tsx",
+      "lineNumber": 130,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "GroupNavigation",
+      "file": "/packages/@verone/ui/src/components/ui/group-navigation.tsx",
+      "lineNumber": 18,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "Header",
+      "file": "/apps/linkme/src/components/layout/Header.tsx",
+      "lineNumber": 39,
+      "hasPropsInterface": false,
+      "category": "layout",
+      "usageCount": 85,
+      "location": "apps"
+    },
+    {
+      "name": "Header",
+      "file": "/apps/site-internet/src/components/layout/Header.tsx",
+      "lineNumber": 12,
+      "hasPropsInterface": false,
+      "category": "layout",
+      "usageCount": 85,
+      "location": "apps"
+    },
+    {
+      "name": "HeartBadge",
+      "file": "/packages/@verone/organisations/src/components/badges/HeartBadge.tsx",
+      "lineNumber": 31,
+      "hasPropsInterface": true,
+      "category": "badge",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "HeartBadge",
+      "file": "/packages/@verone/ui-business/src/components/badges/HeartBadge.tsx",
+      "lineNumber": 31,
+      "hasPropsInterface": true,
+      "category": "badge",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "HELP_COMMANDES",
+      "file": "/packages/@verone/ui/src/components/ui/help-lexique-section.tsx",
+      "lineNumber": 247,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "HELP_DEPENSES",
+      "file": "/packages/@verone/ui/src/components/ui/help-lexique-section.tsx",
+      "lineNumber": 204,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "HELP_TRANSACTIONS",
+      "file": "/packages/@verone/ui/src/components/ui/help-lexique-section.tsx",
+      "lineNumber": 161,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "HelpLexiqueSection",
+      "file": "/packages/@verone/ui/src/components/ui/help-lexique-section.tsx",
+      "lineNumber": 54,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "HeroSection",
+      "file": "/apps/site-internet/src/components/home/HeroSection.tsx",
+      "lineNumber": 7,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "HierarchicalCategorySelector",
+      "file": "/packages/@verone/finance/src/components/HierarchicalCategorySelector.tsx",
+      "lineNumber": 43,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "HowToGetPaidBanner",
+      "file": "/apps/linkme/src/components/commissions/HowToGetPaidBanner.tsx",
+      "lineNumber": 61,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "IconButton",
+      "file": "/packages/@verone/ui/src/components/ui/icon-button.tsx",
+      "lineNumber": 136,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 19,
+      "location": "packages"
+    },
+    {
+      "name": "IdentifiersCompleteEditSection",
+      "file": "/packages/@verone/common/src/components/sections/IdentifiersCompleteEditSection.tsx",
+      "lineNumber": 30,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "IdentifiersCompleteEditSection",
+      "file": "/packages/@verone/products/src/components/sections/IdentifiersCompleteEditSection.tsx",
+      "lineNumber": 30,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "IdentifiersEditSection",
+      "file": "/packages/@verone/products/src/components/sections/IdentifiersEditSection.tsx",
+      "lineNumber": 39,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ImageSphere",
+      "file": "/apps/linkme/src/components/ui/ImageSphere.tsx",
+      "lineNumber": 37,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "ImagesSection",
+      "file": "/packages/@verone/products/src/components/wizards/sections/ImagesSection.tsx",
+      "lineNumber": 28,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "ImagesSection",
+      "file": "/apps/back-office/src/components/business/wizard-sections/images-section.tsx",
+      "lineNumber": 37,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "ImageUpload",
+      "file": "/packages/@verone/ui-business/src/components/inputs/ImageUpload.tsx",
+      "lineNumber": 29,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 9,
+      "location": "packages"
+    },
+    {
+      "name": "ImageUpload",
+      "file": "/apps/back-office/src/components/forms/image-upload.tsx",
+      "lineNumber": 55,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 9,
+      "location": "apps"
+    },
+    {
+      "name": "ImageUploadV2",
+      "file": "/apps/back-office/src/components/forms/image-upload-v2.tsx",
+      "lineNumber": 41,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "ImageUploadZone",
+      "file": "/packages/@verone/ui/src/components/ui/image-upload-zone.tsx",
+      "lineNumber": 83,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "InactiveModuleWrapper",
+      "file": "/apps/back-office/src/components/ui/phase-indicator.tsx",
+      "lineNumber": 103,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "InventoryAdjustmentModal",
+      "file": "/packages/@verone/stock/src/components/modals/InventoryAdjustmentModal.tsx",
+      "lineNumber": 146,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "InvoiceCreateFromOrderModal",
+      "file": "/packages/@verone/finance/src/components/InvoiceCreateFromOrderModal.tsx",
+      "lineNumber": 74,
+      "hasPropsInterface": false,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "InvoiceCreateServiceModal",
+      "file": "/packages/@verone/finance/src/components/InvoiceCreateServiceModal.tsx",
+      "lineNumber": 80,
+      "hasPropsInterface": false,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "InvoiceTemplate",
+      "file": "/apps/linkme/src/components/commissions/InvoiceTemplate.tsx",
+      "lineNumber": 44,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "InvoiceUploadModal",
+      "file": "/packages/@verone/finance/src/components/InvoiceUploadModal.tsx",
+      "lineNumber": 65,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "KpiCard",
+      "file": "/packages/@verone/finance/src/components/dashboard/KpiCard.tsx",
+      "lineNumber": 45,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "KpiCard",
+      "file": "/packages/@verone/ui-business/src/components/finance/KpiCard.tsx",
+      "lineNumber": 86,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "KPICard",
+      "file": "/packages/@verone/common/src/components/kpi/KPICard.tsx",
+      "lineNumber": 42,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 16,
+      "location": "packages"
+    },
+    {
+      "name": "KPICard",
+      "file": "/apps/linkme/src/components/dashboard/KPICard.tsx",
+      "lineNumber": 82,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 16,
+      "location": "apps"
+    },
+    {
+      "name": "KPICardUnified",
+      "file": "/packages/@verone/ui/src/components/ui/kpi-card-unified.tsx",
+      "lineNumber": 140,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 7,
+      "location": "packages"
+    },
+    {
+      "name": "KpiGrid",
+      "file": "/packages/@verone/ui-business/src/components/finance/KpiCard.tsx",
+      "lineNumber": 230,
+      "hasPropsInterface": false,
+      "category": "layout",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "KPIGrid",
+      "file": "/apps/back-office/src/app/(protected)/dashboard/components/kpi-grid.tsx",
+      "lineNumber": 65,
+      "hasPropsInterface": true,
+      "category": "layout",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "KpiHeader",
+      "file": "/packages/@verone/finance/src/components/dashboard/KpiHeader.tsx",
+      "lineNumber": 29,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "KPISelectorModal",
+      "file": "/apps/back-office/src/app/(protected)/dashboard/components/kpi-selector-modal.tsx",
+      "lineNumber": 66,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "LandingCTA",
+      "file": "/apps/linkme/src/components/landing/CTA.tsx",
+      "lineNumber": 19,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "LandingFeatures",
+      "file": "/apps/linkme/src/components/landing/Features.tsx",
+      "lineNumber": 45,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "LandingFooter",
+      "file": "/apps/linkme/src/components/landing/Footer.tsx",
+      "lineNumber": 52,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "LandingHeader",
+      "file": "/apps/linkme/src/components/landing/Header.tsx",
+      "lineNumber": 31,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "LandingHero",
+      "file": "/apps/linkme/src/components/landing/Hero.tsx",
+      "lineNumber": 36,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "LeafletMapView",
+      "file": "/apps/linkme/src/components/shared/LeafletMapView.tsx",
+      "lineNumber": 121,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "LegalIdentityEditSection",
+      "file": "/packages/@verone/organisations/src/components/sections/LegalIdentityEditSection.tsx",
+      "lineNumber": 29,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "LinkMeDeleteUserDialog",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/components/LinkMeDeleteUserDialog.tsx",
+      "lineNumber": 36,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "LinkMeOrderDetailModal",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/components/LinkMeOrderDetailModal.tsx",
+      "lineNumber": 121,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "LinkMeResetPasswordDialog",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/components/LinkMeResetPasswordDialog.tsx",
+      "lineNumber": 37,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "LinkMeRevenueChart",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/components/charts/LinkMeRevenueChart.tsx",
+      "lineNumber": 62,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "LinkMeSidebar",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/components/LinkMeSidebar.tsx",
+      "lineNumber": 293,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "LogoUploadButton",
+      "file": "/packages/@verone/organisations/src/components/buttons/LogoUploadButton.tsx",
+      "lineNumber": 44,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "ManualShipmentForm",
+      "file": "/packages/@verone/logistics/src/components/shipment-forms/ManualShipmentForm.tsx",
+      "lineNumber": 22,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "MapLibreMapView",
+      "file": "/apps/linkme/src/components/shared/MapLibreMapView.tsx",
+      "lineNumber": 168,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "MapPopupCard",
+      "file": "/apps/linkme/src/components/shared/MapPopupCard.tsx",
+      "lineNumber": 35,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "MarginSlider",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/components/MarginSlider.tsx",
+      "lineNumber": 34,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 3,
+      "location": "apps"
+    },
+    {
+      "name": "MarginSliderCompact",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/components/MarginSlider.tsx",
+      "lineNumber": 199,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "MaterialSelector",
+      "file": "/packages/@verone/ui-business/src/components/selectors/ColorMaterialSelector.tsx",
+      "lineNumber": 172,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "MetricCard",
+      "file": "/apps/linkme/src/components/dashboard/MetricCard.tsx",
+      "lineNumber": 97,
+      "hasPropsInterface": false,
+      "category": "composite",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "MinimalHeader",
+      "file": "/apps/linkme/src/components/layout/MinimalHeader.tsx",
+      "lineNumber": 13,
+      "hasPropsInterface": false,
+      "category": "layout",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "MobileNav",
+      "file": "/apps/site-internet/src/components/layout/MobileNav.tsx",
+      "lineNumber": 22,
+      "hasPropsInterface": true,
+      "category": "layout",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "MondialRelayShipmentForm",
+      "file": "/packages/@verone/logistics/src/components/shipment-forms/MondialRelayShipmentForm.tsx",
+      "lineNumber": 22,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "Money",
+      "file": "/packages/@verone/ui-business/src/components/finance/Money.tsx",
+      "lineNumber": 44,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "MoneyCompact",
+      "file": "/packages/@verone/ui-business/src/components/finance/Money.tsx",
+      "lineNumber": 130,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "MonthlyFlowChart",
+      "file": "/packages/@verone/finance/src/components/charts/MonthlyFlowChart.tsx",
+      "lineNumber": 105,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "MovementDetailsModal",
+      "file": "/packages/@verone/stock/src/components/modals/MovementDetailsModal.tsx",
+      "lineNumber": 34,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "MovementsFilters",
+      "file": "/packages/@verone/stock/src/components/filters/MovementsFilters.tsx",
+      "lineNumber": 51,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "MovementsListView",
+      "file": "/apps/back-office/src/app/(protected)/stocks/mouvements/components/MovementsListView.tsx",
+      "lineNumber": 65,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "MovementsStatsCards",
+      "file": "/packages/@verone/stock/src/components/stats/MovementsStats.tsx",
+      "lineNumber": 17,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "MovementsTable",
+      "file": "/packages/@verone/stock/src/components/tables/MovementsTable.tsx",
+      "lineNumber": 39,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "NetworkCard",
+      "file": "/apps/linkme/src/components/network/NetworkCard.tsx",
+      "lineNumber": 27,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "NetworkStatsGrid",
+      "file": "/apps/linkme/src/components/network/NetworkStatsGrid.tsx",
+      "lineNumber": 13,
+      "hasPropsInterface": true,
+      "category": "layout",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "NotificationBell",
+      "file": "/packages/@verone/ui/src/components/ui/notification-system.tsx",
+      "lineNumber": 268,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "NotificationHelpers",
+      "file": "/packages/@verone/ui/src/components/ui/notification-system.tsx",
+      "lineNumber": 666,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "NotificationProvider",
+      "file": "/packages/@verone/ui/src/components/ui/notification-system.tsx",
+      "lineNumber": 104,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "NotificationsDropdown",
+      "file": "/packages/@verone/notifications/src/components/dropdowns/NotificationsDropdown.tsx",
+      "lineNumber": 243,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "NotificationToast",
+      "file": "/packages/@verone/notifications/src/components/widgets/NotificationWidget.tsx",
+      "lineNumber": 270,
+      "hasPropsInterface": false,
+      "category": "widget",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "NotificationToasts",
+      "file": "/packages/@verone/ui/src/components/ui/notification-system.tsx",
+      "lineNumber": 587,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "NotificationWidget",
+      "file": "/packages/@verone/notifications/src/components/widgets/NotificationWidget.tsx",
+      "lineNumber": 81,
+      "hasPropsInterface": true,
+      "category": "widget",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "OrderDetailModal",
+      "file": "/packages/@verone/orders/src/components/modals/OrderDetailModal.tsx",
+      "lineNumber": 90,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 4,
+      "location": "packages"
+    },
+    {
+      "name": "OrderDetailModal",
+      "file": "/apps/linkme/src/app/(main)/commandes/components/OrderDetailModal.tsx",
+      "lineNumber": 124,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 4,
+      "location": "apps"
+    },
+    {
+      "name": "OrderFormUnified",
+      "file": "/apps/linkme/src/components/OrderFormUnified.tsx",
+      "lineNumber": 327,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "OrderHeaderEditSection",
+      "file": "/packages/@verone/orders/src/components/sections/OrderHeaderEditSection.tsx",
+      "lineNumber": 27,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "OrderItemsTable",
+      "file": "/packages/@verone/orders/src/components/tables/OrderItemsTable.tsx",
+      "lineNumber": 36,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "OrderSelectModal",
+      "file": "/packages/@verone/finance/src/components/OrderSelectModal.tsx",
+      "lineNumber": 103,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "OrganisationActionsBar",
+      "file": "/apps/linkme/src/components/organisations/OrganisationActionsBar.tsx",
+      "lineNumber": 22,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "OrganisationCard",
+      "file": "/packages/@verone/organisations/src/components/cards/OrganisationCard.tsx",
+      "lineNumber": 104,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "OrganisationCard",
+      "file": "/apps/linkme/src/components/organisations/OrganisationCard.tsx",
+      "lineNumber": 117,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 3,
+      "location": "apps"
+    },
+    {
+      "name": "OrganisationContactsManager",
+      "file": "/packages/@verone/customers/src/components/sections/OrganisationContactsManager.tsx",
+      "lineNumber": 35,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "OrganisationContactsManager",
+      "file": "/packages/@verone/organisations/src/components/forms/organisation-contacts-manager.tsx",
+      "lineNumber": 35,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "OrganisationDetailModal",
+      "file": "/apps/linkme/src/components/organisations/OrganisationDetailModal.tsx",
+      "lineNumber": 53,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "OrganisationDetailSheet",
+      "file": "/apps/linkme/src/components/organisations/OrganisationDetailSheet.tsx",
+      "lineNumber": 385,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "OrganisationFilterTabs",
+      "file": "/apps/linkme/src/components/organisations/OrganisationFilterTabs.tsx",
+      "lineNumber": 34,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "OrganisationLinkingModal",
+      "file": "/packages/@verone/finance/src/components/OrganisationLinkingModal.tsx",
+      "lineNumber": 84,
+      "hasPropsInterface": false,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "OrganisationListView",
+      "file": "/packages/@verone/customers/src/components/sections/OrganisationListView.tsx",
+      "lineNumber": 98,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "OrganisationLogo",
+      "file": "/packages/@verone/organisations/src/components/OrganisationLogo.tsx",
+      "lineNumber": 69,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 16,
+      "location": "packages"
+    },
+    {
+      "name": "OrganisationLogo",
+      "file": "/packages/@verone/organisations/src/components/display/OrganisationLogo.tsx",
+      "lineNumber": 63,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 16,
+      "location": "packages"
+    },
+    {
+      "name": "OrganisationLogoCard",
+      "file": "/packages/@verone/organisations/src/components/cards/OrganisationLogoCard.tsx",
+      "lineNumber": 39,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "OrganisationProductsSection",
+      "file": "/packages/@verone/organisations/src/components/sections/OrganisationProductsSection.tsx",
+      "lineNumber": 35,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "OrganisationPurchaseOrdersSection",
+      "file": "/packages/@verone/orders/src/components/sections/OrganisationPurchaseOrdersSection.tsx",
+      "lineNumber": 46,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "OrganisationSalesOrdersSection",
+      "file": "/packages/@verone/orders/src/components/sections/OrganisationSalesOrdersSection.tsx",
+      "lineNumber": 47,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "OrganisationSelectorModal",
+      "file": "/packages/@verone/organisations/src/components/modals/OrganisationSelectorModal.tsx",
+      "lineNumber": 281,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "OrganisationStatsCard",
+      "file": "/packages/@verone/organisations/src/components/cards/OrganisationStatsCard.tsx",
+      "lineNumber": 19,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "OrganisationTransactionsSection",
+      "file": "/packages/@verone/finance/src/components/OrganisationTransactionsSection.tsx",
+      "lineNumber": 44,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "PageHeader",
+      "file": "/apps/back-office/src/components/layout/page-header.tsx",
+      "lineNumber": 35,
+      "hasPropsInterface": true,
+      "category": "layout",
+      "usageCount": 3,
+      "location": "apps"
+    },
+    {
+      "name": "PagesConfigurationSection",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/components/PagesConfigurationSection.tsx",
+      "lineNumber": 138,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "Pagination",
+      "file": "/apps/linkme/src/components/public-selection/Pagination.tsx",
+      "lineNumber": 25,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "PartnerChip",
+      "file": "/packages/@verone/ui-business/src/components/finance/PartnerChip.tsx",
+      "lineNumber": 128,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "PartnerChipMini",
+      "file": "/packages/@verone/ui-business/src/components/finance/PartnerChip.tsx",
+      "lineNumber": 234,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "PartnerFormModal",
+      "file": "/packages/@verone/organisations/src/components/forms/PartnerFormModal.tsx",
+      "lineNumber": 20,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "PartnersTab",
+      "file": "/apps/back-office/src/app/(protected)/organisation/components/partners-tab.tsx",
+      "lineNumber": 32,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "PasswordChangeDialog",
+      "file": "/apps/back-office/src/components/profile/password-change-dialog.tsx",
+      "lineNumber": 45,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "PaymentForm",
+      "file": "/packages/@verone/finance/src/components/forms/PaymentForm.tsx",
+      "lineNumber": 82,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "PaymentRecordModal",
+      "file": "/packages/@verone/finance/src/components/PaymentRecordModal.tsx",
+      "lineNumber": 58,
+      "hasPropsInterface": false,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "PaymentRequestModal",
+      "file": "/apps/linkme/src/components/commissions/PaymentRequestModal.tsx",
+      "lineNumber": 54,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "PaymentRequestModalAdmin",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/components/PaymentRequestModalAdmin.tsx",
+      "lineNumber": 89,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "PaymentRequestsPanel",
+      "file": "/apps/linkme/src/components/commissions/PaymentRequestsPanel.tsx",
+      "lineNumber": 287,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "PerformanceEditSection",
+      "file": "/packages/@verone/organisations/src/components/sections/PerformanceEditSection.tsx",
+      "lineNumber": 34,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "PerformanceKPICard",
+      "file": "/packages/@verone/common/src/components/kpi/KPICard.tsx",
+      "lineNumber": 147,
+      "hasPropsInterface": false,
+      "category": "composite",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "PhaseIndicator",
+      "file": "/apps/back-office/src/components/ui/phase-indicator.tsx",
+      "lineNumber": 26,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "PreferredBadge",
+      "file": "/packages/@verone/ui-business/src/components/badges/PreferredBadge.tsx",
+      "lineNumber": 51,
+      "hasPropsInterface": true,
+      "category": "badge",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "PreferredBadgeWithTooltip",
+      "file": "/packages/@verone/ui-business/src/components/badges/PreferredBadge.tsx",
+      "lineNumber": 88,
+      "hasPropsInterface": false,
+      "category": "badge",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "PriceListFormModal",
+      "file": "/packages/@verone/common/src/components/pricing/PriceListFormModal.tsx",
+      "lineNumber": 39,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "PriceListItemFormModal",
+      "file": "/packages/@verone/common/src/components/pricing/PriceListItemFormModal.tsx",
+      "lineNumber": 57,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "PricingGridReadOnly",
+      "file": "/apps/linkme/src/components/storage/PricingGridReadOnly.tsx",
+      "lineNumber": 38,
+      "hasPropsInterface": true,
+      "category": "layout",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "PricingSection",
+      "file": "/packages/@verone/products/src/components/wizards/sections/PricingSection.tsx",
+      "lineNumber": 27,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "PricingSection",
+      "file": "/apps/back-office/src/components/business/wizard-sections/pricing-section.tsx",
+      "lineNumber": 26,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 2,
+      "location": "apps"
+    },
+    {
+      "name": "PrimaryImageUpload",
+      "file": "/packages/@verone/products/src/components/images/PrimaryImageUpload.tsx",
+      "lineNumber": 39,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ProductAccordions",
+      "file": "/apps/site-internet/src/app/produit/[id]/components/ProductAccordions.tsx",
+      "lineNumber": 49,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "ProductCard",
+      "file": "/packages/@verone/products/src/components/cards/ProductCard.tsx",
+      "lineNumber": 64,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 4,
+      "location": "packages"
+    },
+    {
+      "name": "ProductCard",
+      "file": "/apps/linkme/src/app/(main)/catalogue/components/ProductCard.tsx",
+      "lineNumber": 49,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 4,
+      "location": "apps"
+    },
+    {
+      "name": "ProductCardV2",
+      "file": "/packages/@verone/products/src/components/cards/ProductCardV2.tsx",
+      "lineNumber": 51,
+      "hasPropsInterface": false,
+      "category": "composite",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "ProductCharacteristicsModal",
+      "file": "/packages/@verone/products/src/components/modals/ProductCharacteristicsModal.tsx",
+      "lineNumber": 115,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "ProductConsultationManager",
+      "file": "/packages/@verone/products/src/components/wizards/ProductConsultationManager.tsx",
+      "lineNumber": 48,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ProductCreationModal",
+      "file": "/packages/@verone/products/src/components/modals/ProductCreationModal.tsx",
+      "lineNumber": 36,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ProductCreationWizard",
+      "file": "/packages/@verone/products/src/components/wizards/ProductCreationWizard.tsx",
+      "lineNumber": 40,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ProductCrossSell",
+      "file": "/apps/site-internet/src/app/produit/[id]/components/ProductCrossSell.tsx",
+      "lineNumber": 64,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "ProductDescriptionsEditSection",
+      "file": "/packages/@verone/products/src/components/sections/ProductDescriptionsEditSection.tsx",
+      "lineNumber": 27,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "ProductDescriptionsModal",
+      "file": "/packages/@verone/products/src/components/modals/ProductDescriptionsModal.tsx",
+      "lineNumber": 72,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "ProductDetailAccordion",
+      "file": "/packages/@verone/products/src/components/sections/ProductDetailAccordion.tsx",
+      "lineNumber": 20,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "ProductDetailHeader",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/components/ProductDetailHeader.tsx",
+      "lineNumber": 16,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "ProductDualMode",
+      "file": "/packages/@verone/products/src/components/sections/ProductDualMode.tsx",
+      "lineNumber": 28,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ProductEditMode",
+      "file": "/packages/@verone/products/src/components/sections/ProductEditMode.tsx",
+      "lineNumber": 46,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "ProductFilters",
+      "file": "/apps/linkme/src/components/public-selection/ProductFilters.tsx",
+      "lineNumber": 25,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "ProductFixedCharacteristics",
+      "file": "/packages/@verone/products/src/components/images/ProductFixedCharacteristics.tsx",
+      "lineNumber": 206,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "ProductGallery",
+      "file": "/apps/site-internet/src/app/produit/[id]/components/ProductGallery.tsx",
+      "lineNumber": 24,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "ProductHistoryModal",
+      "file": "/packages/@verone/products/src/components/modals/ProductHistoryModal.tsx",
+      "lineNumber": 58,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "ProductImageGallery",
+      "file": "/packages/@verone/products/src/components/images/ProductImageGallery.tsx",
+      "lineNumber": 39,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "ProductImageManagement",
+      "file": "/packages/@verone/products/src/components/images/ProductImageManagement.tsx",
+      "lineNumber": 43,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ProductImagesModal",
+      "file": "/packages/@verone/products/src/components/modals/ProductImagesModal.tsx",
+      "lineNumber": 17,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "ProductImageUpload",
+      "file": "/apps/linkme/src/components/forms/ProductImageUpload.tsx",
+      "lineNumber": 42,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "ProductImageViewerModal",
+      "file": "/packages/@verone/products/src/components/images/ProductImageViewerModal.tsx",
+      "lineNumber": 55,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "ProductInfoCard",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/components/ProductInfoCard.tsx",
+      "lineNumber": 38,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "ProductInfoSection",
+      "file": "/packages/@verone/products/src/components/sections/ProductInfoSection.tsx",
+      "lineNumber": 60,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "ProductListItem",
+      "file": "/apps/linkme/src/app/(main)/catalogue/components/ProductCard.tsx",
+      "lineNumber": 211,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "ProductMarginEditor",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/components/ProductMarginEditor.tsx",
+      "lineNumber": 70,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "ProductNameEditSection",
+      "file": "/packages/@verone/products/src/components/sections/ProductNameEditSection.tsx",
+      "lineNumber": 30,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ProductPhotosModal",
+      "file": "/packages/@verone/products/src/components/modals/ProductPhotosModal.tsx",
+      "lineNumber": 52,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "ProductPreviewModal",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/components/ProductPreviewModal.tsx",
+      "lineNumber": 23,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "ProductPricingCard",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/components/ProductPricingCard.tsx",
+      "lineNumber": 95,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "ProductReadOnlyCard",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/components/ProductReadOnlyCard.tsx",
+      "lineNumber": 33,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "ProductsChart",
+      "file": "/packages/@verone/products/src/components/charts/ProductsChart.tsx",
+      "lineNumber": 47,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ProductSelector",
+      "file": "/packages/@verone/products/src/components/selectors/ProductSelector.tsx",
+      "lineNumber": 43,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 12,
+      "location": "packages"
+    },
+    {
+      "name": "ProductSelector",
+      "file": "/apps/back-office/src/components/forms/product-selector.tsx",
+      "lineNumber": 38,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 12,
+      "location": "apps"
+    },
+    {
+      "name": "ProductSidebar",
+      "file": "/apps/site-internet/src/app/produit/[id]/components/ProductSidebar.tsx",
+      "lineNumber": 58,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "ProductsSection",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/components/ProductsSection.tsx",
+      "lineNumber": 69,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 3,
+      "location": "apps"
+    },
+    {
+      "name": "ProductStatsCard",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/components/ProductStatsCard.tsx",
+      "lineNumber": 12,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "ProductStatsTable",
+      "file": "/apps/linkme/src/components/analytics/ProductStatsTable.tsx",
+      "lineNumber": 68,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "ProductStatusCompact",
+      "file": "/packages/@verone/products/src/components/badges/ProductStatusCompact.tsx",
+      "lineNumber": 29,
+      "hasPropsInterface": true,
+      "category": "badge",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "ProductStatusEditSection",
+      "file": "/packages/@verone/products/src/components/sections/ProductStatusEditSection.tsx",
+      "lineNumber": 32,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ProductStatusSelector",
+      "file": "/packages/@verone/products/src/components/selectors/ProductStatusSelector.tsx",
+      "lineNumber": 39,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ProductStockHistoryModal",
+      "file": "/packages/@verone/products/src/components/modals/ProductStockHistoryModal.tsx",
+      "lineNumber": 46,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "ProductThumbnail",
+      "file": "/packages/@verone/products/src/components/images/ProductThumbnail.tsx",
+      "lineNumber": 50,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 27,
+      "location": "packages"
+    },
+    {
+      "name": "ProductTypeSelector",
+      "file": "/packages/@verone/products/src/components/selectors/ProductTypeSelector.tsx",
+      "lineNumber": 17,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ProductVariantGridCard",
+      "file": "/packages/@verone/products/src/components/cards/ProductVariantGridCard.tsx",
+      "lineNumber": 44,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "ProductVariantsCard",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/components/ProductVariantsCard.tsx",
+      "lineNumber": 24,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "ProductVariantsGrid",
+      "file": "/packages/@verone/products/src/components/grids/ProductVariantsGrid.tsx",
+      "lineNumber": 22,
+      "hasPropsInterface": true,
+      "category": "layout",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "ProductVariantsSection",
+      "file": "/packages/@verone/products/src/components/sections/ProductVariantsSection.tsx",
+      "lineNumber": 99,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ProductViewMode",
+      "file": "/packages/@verone/products/src/components/sections/ProductViewMode.tsx",
+      "lineNumber": 36,
+      "hasPropsInterface": false,
+      "category": "section",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "Providers",
+      "file": "/apps/linkme/src/components/providers/Providers.tsx",
+      "lineNumber": 17,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 4,
+      "location": "apps"
+    },
+    {
+      "name": "PublicLayout",
+      "file": "/apps/back-office/src/components/layout/public-layout.tsx",
+      "lineNumber": 15,
+      "hasPropsInterface": true,
+      "category": "layout",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "PublicProviders",
+      "file": "/apps/linkme/src/components/providers/PublicProviders.tsx",
+      "lineNumber": 17,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "PurchaseOrderDetailModal",
+      "file": "/packages/@verone/orders/src/components/modals/PurchaseOrderDetailModal.tsx",
+      "lineNumber": 80,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "PurchaseOrderFormModal",
+      "file": "/packages/@verone/orders/src/components/modals/PurchaseOrderFormModal.tsx",
+      "lineNumber": 102,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "PurchaseOrderReceptionForm",
+      "file": "/packages/@verone/orders/src/components/forms/PurchaseOrderReceptionForm.tsx",
+      "lineNumber": 51,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "PurchaseOrderReceptionModal",
+      "file": "/packages/@verone/orders/src/components/modals/PurchaseOrderReceptionModal.tsx",
+      "lineNumber": 24,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "PurchaseOrdersChart",
+      "file": "/packages/@verone/orders/src/components/charts/PurchaseOrdersChart.tsx",
+      "lineNumber": 52,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "QuantityBreaksDisplay",
+      "file": "/packages/@verone/suppliers/src/components/pricing/QuantityBreaksDisplay.tsx",
+      "lineNumber": 45,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "QuickActionModal",
+      "file": "/packages/@verone/ui-business/src/components/modals/QuickActionModal.tsx",
+      "lineNumber": 56,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "QuickActionsList",
+      "file": "/packages/@verone/ui/src/components/ui/quick-actions-list.tsx",
+      "lineNumber": 38,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "QuickClassificationModal",
+      "file": "/packages/@verone/finance/src/components/QuickClassificationModal.tsx",
+      "lineNumber": 317,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "QuickEditBillingAddressModal",
+      "file": "/apps/linkme/src/components/organisations/QuickEditBillingAddressModal.tsx",
+      "lineNumber": 45,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "QuickEditOwnershipTypeModal",
+      "file": "/apps/linkme/src/components/organisations/QuickEditOwnershipTypeModal.tsx",
+      "lineNumber": 47,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "QuickEditShippingAddressModal",
+      "file": "/apps/linkme/src/components/organisations/QuickEditShippingAddressModal.tsx",
+      "lineNumber": 45,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "QuickErrorReport",
+      "file": "/packages/@verone/ui-business/src/components/modals/ErrorReportModal.tsx",
+      "lineNumber": 766,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "QuickOrderModal",
+      "file": "/packages/@verone/ui-business/src/components/modals/QuickActionModal.tsx",
+      "lineNumber": 419,
+      "hasPropsInterface": false,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "QuickPurchaseOrderModal",
+      "file": "/packages/@verone/orders/src/components/modals/QuickPurchaseOrderModal.tsx",
+      "lineNumber": 65,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "QuickSourcingModal",
+      "file": "/packages/@verone/products/src/components/modals/QuickSourcingModal.tsx",
+      "lineNumber": 29,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "QuickStockMovementModal",
+      "file": "/packages/@verone/stock/src/components/modals/QuickStockMovementModal.tsx",
+      "lineNumber": 39,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "QuickVariantForm",
+      "file": "/apps/back-office/src/components/forms/quick-variant-form.tsx",
+      "lineNumber": 57,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "QuoteCreateFromOrderModal",
+      "file": "/packages/@verone/finance/src/components/QuoteCreateFromOrderModal.tsx",
+      "lineNumber": 82,
+      "hasPropsInterface": false,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "QuoteCreateServiceModal",
+      "file": "/packages/@verone/finance/src/components/QuoteCreateServiceModal.tsx",
+      "lineNumber": 80,
+      "hasPropsInterface": false,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "RapprochementFromOrderModal",
+      "file": "/packages/@verone/finance/src/components/RapprochementFromOrderModal.tsx",
+      "lineNumber": 209,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "RapprochementModal",
+      "file": "/packages/@verone/finance/src/components/RapprochementModal.tsx",
+      "lineNumber": 185,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ReactQueryProvider",
+      "file": "/apps/back-office/src/components/providers/react-query-provider.tsx",
+      "lineNumber": 26,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "RecentActivityWidget",
+      "file": "/apps/back-office/src/app/(protected)/dashboard/components/widgets/recent-activity-widget.tsx",
+      "lineNumber": 22,
+      "hasPropsInterface": true,
+      "category": "widget",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "RecentOrdersWidget",
+      "file": "/apps/back-office/src/app/(protected)/dashboard/components/widgets/recent-orders-widget.tsx",
+      "lineNumber": 47,
+      "hasPropsInterface": true,
+      "category": "widget",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "ReconcileTransactionModal",
+      "file": "/packages/@verone/finance/src/components/ReconcileTransactionModal.tsx",
+      "lineNumber": 63,
+      "hasPropsInterface": false,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "RelationsEditSection",
+      "file": "/packages/@verone/ui-business/src/components/sections/RelationsEditSection.tsx",
+      "lineNumber": 73,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "ResetPasswordDialog",
+      "file": "/apps/back-office/src/components/admin/reset-password-dialog.tsx",
+      "lineNumber": 37,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 2,
+      "location": "apps"
+    },
+    {
+      "name": "RevenueChart",
+      "file": "/packages/@verone/orders/src/components/charts/RevenueChart.tsx",
+      "lineNumber": 52,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "RevenueChart",
+      "file": "/apps/back-office/src/app/(protected)/dashboard/components/charts/revenue-chart.tsx",
+      "lineNumber": 63,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 2,
+      "location": "apps"
+    },
+    {
+      "name": "RevenueChart",
+      "file": "/apps/linkme/src/components/analytics/RevenueChart.tsx",
+      "lineNumber": 23,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 2,
+      "location": "apps"
+    },
+    {
+      "name": "RoleBadge",
+      "file": "/packages/@verone/ui/src/components/ui/role-badge.tsx",
+      "lineNumber": 137,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 7,
+      "location": "packages"
+    },
+    {
+      "name": "RoomMultiSelect",
+      "file": "/packages/@verone/ui/src/components/ui/room-multi-select.tsx",
+      "lineNumber": 30,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 6,
+      "location": "packages"
+    },
+    {
+      "name": "RuleModal",
+      "file": "/packages/@verone/finance/src/components/RuleModal.tsx",
+      "lineNumber": 264,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "SalesOrderFormModal",
+      "file": "/packages/@verone/orders/src/components/modals/SalesOrderFormModal.tsx",
+      "lineNumber": 155,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "SalesOrderShipmentForm",
+      "file": "/packages/@verone/orders/src/components/forms/SalesOrderShipmentForm.tsx",
+      "lineNumber": 41,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "SalesOrderShipmentModal",
+      "file": "/packages/@verone/orders/src/components/modals/SalesOrderShipmentModal.tsx",
+      "lineNumber": 26,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "SalesOrdersTable",
+      "file": "/packages/@verone/orders/src/components/SalesOrdersTable.tsx",
+      "lineNumber": 247,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "SampleHistoryCompact",
+      "file": "/packages/@verone/products/src/components/compact/SampleHistoryCompact.tsx",
+      "lineNumber": 24,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "SampleOrderButton",
+      "file": "/packages/@verone/ui-business/src/components/buttons/SampleOrderButton.tsx",
+      "lineNumber": 31,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "SampleOrderValidation",
+      "file": "/packages/@verone/ui-business/src/components/validation/SampleOrderValidation.tsx",
+      "lineNumber": 103,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "SampleRequirementSection",
+      "file": "/packages/@verone/products/src/components/sections/SampleRequirementSection.tsx",
+      "lineNumber": 49,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "SampleValidationSimple",
+      "file": "/packages/@verone/ui-business/src/components/validation/SampleValidationSimple.tsx",
+      "lineNumber": 40,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "SearchFilterBar",
+      "file": "/apps/linkme/src/components/network/SearchFilterBar.tsx",
+      "lineNumber": 21,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "SelectionCategoryBar",
+      "file": "/apps/linkme/src/components/public-selection/SelectionCategoryBar.tsx",
+      "lineNumber": 40,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "SelectionCategoryDropdown",
+      "file": "/apps/linkme/src/components/public-selection/SelectionCategoryDropdown.tsx",
+      "lineNumber": 39,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "SelectionHeader",
+      "file": "/apps/linkme/src/components/public-selection/SelectionHeader.tsx",
+      "lineNumber": 37,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "SelectionHero",
+      "file": "/apps/linkme/src/components/public-selection/SelectionHero.tsx",
+      "lineNumber": 24,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "SelectionImageUpload",
+      "file": "/apps/linkme/src/components/selection/SelectionImageUpload.tsx",
+      "lineNumber": 32,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "SelectionImageUploadDialog",
+      "file": "/apps/linkme/src/components/selection/SelectionImageUploadDialog.tsx",
+      "lineNumber": 56,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "SelectionPerformanceCard",
+      "file": "/apps/linkme/src/components/analytics/SelectionPerformanceCard.tsx",
+      "lineNumber": 37,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "SelectionProductDetailModal",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/components/SelectionProductDetailModal.tsx",
+      "lineNumber": 70,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "SelectionsPerformanceTable",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/components/SelectionsPerformanceTable.tsx",
+      "lineNumber": 32,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "SelectionsSection",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/components/SelectionsSection.tsx",
+      "lineNumber": 120,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "SentryUserContext",
+      "file": "/apps/linkme/src/components/SentryUserContext.tsx",
+      "lineNumber": 22,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "SentryUserProvider",
+      "file": "/apps/back-office/src/components/providers/sentry-user-provider.tsx",
+      "lineNumber": 21,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "SidebarContent",
+      "file": "/packages/@verone/ui/src/components/ui/sidebar.tsx",
+      "lineNumber": 147,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "SidebarFooter",
+      "file": "/packages/@verone/ui/src/components/ui/sidebar.tsx",
+      "lineNumber": 361,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "SidebarGroup",
+      "file": "/packages/@verone/ui/src/components/ui/sidebar.tsx",
+      "lineNumber": 165,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "SidebarGroupContent",
+      "file": "/packages/@verone/ui/src/components/ui/sidebar.tsx",
+      "lineNumber": 200,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "SidebarGroupLabel",
+      "file": "/packages/@verone/ui/src/components/ui/sidebar.tsx",
+      "lineNumber": 180,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "SidebarHeader",
+      "file": "/packages/@verone/ui/src/components/ui/sidebar.tsx",
+      "lineNumber": 346,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "SidebarInput",
+      "file": "/packages/@verone/ui/src/components/ui/sidebar.tsx",
+      "lineNumber": 413,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "SidebarMenu",
+      "file": "/packages/@verone/ui/src/components/ui/sidebar.tsx",
+      "lineNumber": 213,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "SidebarMenuButton",
+      "file": "/packages/@verone/ui/src/components/ui/sidebar.tsx",
+      "lineNumber": 261,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "SidebarMenuItem",
+      "file": "/packages/@verone/ui/src/components/ui/sidebar.tsx",
+      "lineNumber": 226,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "SidebarMenuSub",
+      "file": "/packages/@verone/ui/src/components/ui/sidebar.tsx",
+      "lineNumber": 295,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "SidebarMenuSubButton",
+      "file": "/packages/@verone/ui/src/components/ui/sidebar.tsx",
+      "lineNumber": 317,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "SidebarMenuSubItem",
+      "file": "/packages/@verone/ui/src/components/ui/sidebar.tsx",
+      "lineNumber": 311,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "SidebarProvider",
+      "file": "/packages/@verone/ui/src/components/ui/sidebar.tsx",
+      "lineNumber": 40,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 4,
+      "location": "packages"
+    },
+    {
+      "name": "SidebarProvider",
+      "file": "/apps/back-office/src/components/layout/sidebar-provider.tsx",
+      "lineNumber": 28,
+      "hasPropsInterface": true,
+      "category": "layout",
+      "usageCount": 4,
+      "location": "apps"
+    },
+    {
+      "name": "SidebarProvider",
+      "file": "/apps/linkme/src/components/layout/SidebarProvider.tsx",
+      "lineNumber": 34,
+      "hasPropsInterface": true,
+      "category": "layout",
+      "usageCount": 4,
+      "location": "apps"
+    },
+    {
+      "name": "SidebarTrigger",
+      "file": "/packages/@verone/ui/src/components/ui/sidebar.tsx",
+      "lineNumber": 376,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "SimpleProductForm",
+      "file": "/apps/back-office/src/components/forms/simple-product-form.tsx",
+      "lineNumber": 23,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "SmartSuggestionsPanel",
+      "file": "/packages/@verone/ui-business/src/components/panels/SmartSuggestionsPanel.tsx",
+      "lineNumber": 41,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "SourcingProductEditCard",
+      "file": "/packages/@verone/products/src/components/cards/SourcingProductEditCard.tsx",
+      "lineNumber": 78,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "SourcingProductModal",
+      "file": "/packages/@verone/products/src/components/sourcing/SourcingProductModal.tsx",
+      "lineNumber": 25,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "SourcingQuickForm",
+      "file": "/packages/@verone/products/src/components/sourcing/SourcingQuickForm.tsx",
+      "lineNumber": 27,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "StatPill",
+      "file": "/packages/@verone/ui/src/components/ui/stat-pill.tsx",
+      "lineNumber": 12,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "StatusPill",
+      "file": "/packages/@verone/ui-business/src/components/finance/StatusPill.tsx",
+      "lineNumber": 92,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "StockAdjustmentForm",
+      "file": "/apps/back-office/src/components/forms/stock-adjustment-form.tsx",
+      "lineNumber": 89,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "StockAdjustmentModal",
+      "file": "/packages/@verone/ui-business/src/components/modals/QuickActionModal.tsx",
+      "lineNumber": 381,
+      "hasPropsInterface": false,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "StockAlertCard",
+      "file": "/packages/@verone/stock/src/components/cards/StockAlertCard.tsx",
+      "lineNumber": 43,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "StockAlertsWidget",
+      "file": "/apps/back-office/src/app/(protected)/dashboard/components/widgets/stock-alerts-widget.tsx",
+      "lineNumber": 24,
+      "hasPropsInterface": true,
+      "category": "widget",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "StockDisplay",
+      "file": "/packages/@verone/stock/src/components/sections/StockDisplay.tsx",
+      "lineNumber": 26,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "StockEditSection",
+      "file": "/packages/@verone/stock/src/components/sections/StockEditSection.tsx",
+      "lineNumber": 33,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "StockKPICard",
+      "file": "/packages/@verone/common/src/components/kpi/KPICard.tsx",
+      "lineNumber": 114,
+      "hasPropsInterface": false,
+      "category": "composite",
+      "usageCount": 6,
+      "location": "packages"
+    },
+    {
+      "name": "StockMovementModal",
+      "file": "/packages/@verone/stock/src/components/modals/StockMovementModal.tsx",
+      "lineNumber": 52,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "StockMovementsChart",
+      "file": "/packages/@verone/stock/src/components/charts/StockMovementsChart.tsx",
+      "lineNumber": 72,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "StockMovementsWidget",
+      "file": "/apps/back-office/src/app/(protected)/dashboard/components/widgets/stock-movements-widget.tsx",
+      "lineNumber": 48,
+      "hasPropsInterface": true,
+      "category": "widget",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "StockReportsModal",
+      "file": "/packages/@verone/stock/src/components/modals/StockReportsModal.tsx",
+      "lineNumber": 160,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "StockSection",
+      "file": "/packages/@verone/products/src/components/wizards/sections/StockSection.tsx",
+      "lineNumber": 25,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "StockSection",
+      "file": "/apps/back-office/src/components/business/wizard-sections/stock-section.tsx",
+      "lineNumber": 29,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 2,
+      "location": "apps"
+    },
+    {
+      "name": "StockStatusBadge",
+      "file": "/packages/@verone/stock/src/components/badges/StockStatusBadge.tsx",
+      "lineNumber": 12,
+      "hasPropsInterface": true,
+      "category": "badge",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "StockStatusCompact",
+      "file": "/packages/@verone/stock/src/components/badges/StockStatusCompact.tsx",
+      "lineNumber": 22,
+      "hasPropsInterface": true,
+      "category": "badge",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "StockStatusSection",
+      "file": "/packages/@verone/stock/src/components/sections/StockStatusSection.tsx",
+      "lineNumber": 25,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "StockSummaryCard",
+      "file": "/packages/@verone/stock/src/components/sections/StockDisplay.tsx",
+      "lineNumber": 227,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "StockViewSection",
+      "file": "/packages/@verone/stock/src/components/sections/StockViewSection.tsx",
+      "lineNumber": 45,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "StorageKPICard",
+      "file": "/apps/linkme/src/components/storage/StorageKPICard.tsx",
+      "lineNumber": 43,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "StorageProductCard",
+      "file": "/apps/linkme/src/components/storage/StorageProductCard.tsx",
+      "lineNumber": 26,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "StoreLocatorMap",
+      "file": "/apps/linkme/src/components/public-selection/StoreLocatorMap.tsx",
+      "lineNumber": 46,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "SubcategoryForm",
+      "file": "/apps/back-office/src/components/forms/subcategory-form.tsx",
+      "lineNumber": 73,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 2,
+      "location": "apps"
+    },
+    {
+      "name": "SubcategorySearchSelector",
+      "file": "/packages/@verone/categories/src/components/selectors/SubcategorySearchSelector.tsx",
+      "lineNumber": 31,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "SupabaseProvider",
+      "file": "/apps/back-office/src/components/providers/supabase-provider.tsx",
+      "lineNumber": 45,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "SupplierCategoryBadge",
+      "file": "/packages/@verone/categories/src/components/badges/SupplierCategoryBadge.tsx",
+      "lineNumber": 143,
+      "hasPropsInterface": true,
+      "category": "badge",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "SupplierCategorySelect",
+      "file": "/packages/@verone/categories/src/components/selectors/SupplierCategorySelect.tsx",
+      "lineNumber": 140,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "SupplierCell",
+      "file": "/packages/@verone/finance/src/components/SupplierCell.tsx",
+      "lineNumber": 58,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "SupplierCellReadOnly",
+      "file": "/packages/@verone/finance/src/components/SupplierCell.tsx",
+      "lineNumber": 233,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "SupplierEditSection",
+      "file": "/packages/@verone/products/src/components/sections/SupplierEditSection.tsx",
+      "lineNumber": 43,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "SupplierFormModal",
+      "file": "/packages/@verone/organisations/src/components/forms/SupplierFormModal.tsx",
+      "lineNumber": 24,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "SupplierSection",
+      "file": "/packages/@verone/products/src/components/wizards/sections/SupplierSection.tsx",
+      "lineNumber": 25,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "SupplierSection",
+      "file": "/apps/back-office/src/components/business/wizard-sections/supplier-section.tsx",
+      "lineNumber": 23,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "SupplierSegmentBadge",
+      "file": "/packages/@verone/suppliers/src/components/badges/SupplierSegmentBadge.tsx",
+      "lineNumber": 86,
+      "hasPropsInterface": true,
+      "category": "badge",
+      "usageCount": 7,
+      "location": "packages"
+    },
+    {
+      "name": "SupplierSegmentBadgeWithTooltip",
+      "file": "/packages/@verone/suppliers/src/components/badges/SupplierSegmentBadge.tsx",
+      "lineNumber": 131,
+      "hasPropsInterface": false,
+      "category": "badge",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "SupplierSegmentSelect",
+      "file": "/packages/@verone/organisations/src/components/forms/supplier-segment-select.tsx",
+      "lineNumber": 67,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "SupplierSegmentSelect",
+      "file": "/packages/@verone/suppliers/src/components/selectors/SupplierSegmentSelect.tsx",
+      "lineNumber": 67,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "SupplierSelector",
+      "file": "/packages/@verone/products/src/components/sourcing/supplier-selector.tsx",
+      "lineNumber": 8,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 7,
+      "location": "packages"
+    },
+    {
+      "name": "SupplierSelector",
+      "file": "/packages/@verone/suppliers/src/components/selectors/SupplierSelector.tsx",
+      "lineNumber": 31,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 7,
+      "location": "packages"
+    },
+    {
+      "name": "SuppliersTab",
+      "file": "/apps/back-office/src/app/(protected)/organisation/components/suppliers-tab.tsx",
+      "lineNumber": 34,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "SupplierVsPricingEditSection",
+      "file": "/packages/@verone/common/src/components/pricing/SupplierVsPricingEditSection.tsx",
+      "lineNumber": 46,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "SyncButton",
+      "file": "/packages/@verone/ui-business/src/components/finance/SyncButton.tsx",
+      "lineNumber": 72,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "TabContent",
+      "file": "/packages/@verone/ui/src/components/ui/tabs-navigation.tsx",
+      "lineNumber": 85,
+      "hasPropsInterface": false,
+      "category": "ui-primitive",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "TabsNavigation",
+      "file": "/packages/@verone/ui/src/components/ui/tabs-navigation.tsx",
+      "lineNumber": 23,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "TechnicalSection",
+      "file": "/packages/@verone/products/src/components/wizards/sections/TechnicalSection.tsx",
+      "lineNumber": 24,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "TechnicalSection",
+      "file": "/apps/back-office/src/components/business/wizard-sections/technical-section.tsx",
+      "lineNumber": 33,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "TopAffiliatesChart",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/components/charts/TopAffiliatesChart.tsx",
+      "lineNumber": 76,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "TopProductsTable",
+      "file": "/apps/linkme/src/components/analytics/TopProductsTable.tsx",
+      "lineNumber": 26,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "TopProductsWidget",
+      "file": "/apps/back-office/src/app/(protected)/dashboard/components/widgets/top-products-widget.tsx",
+      "lineNumber": 22,
+      "hasPropsInterface": true,
+      "category": "widget",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "TreasuryChart",
+      "file": "/apps/back-office/src/app/(protected)/dashboard/components/charts/treasury-chart.tsx",
+      "lineNumber": 74,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "TreasuryDashboard",
+      "file": "/packages/@verone/finance/src/components/treasury/TreasuryDashboard.tsx",
+      "lineNumber": 12,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "TreasuryForecastChart",
+      "file": "/packages/@verone/finance/src/components/treasury/TreasuryForecastChart.tsx",
+      "lineNumber": 58,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "TreasuryKPICards",
+      "file": "/packages/@verone/finance/src/components/treasury/TreasuryKPICards.tsx",
+      "lineNumber": 42,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "TreasuryKPIs",
+      "file": "/packages/@verone/finance/src/components/kpis/TreasuryKPIs.tsx",
+      "lineNumber": 49,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "UnifiedDescriptionEditSection",
+      "file": "/packages/@verone/ui-business/src/components/sections/UnifiedDescriptionEditSection.tsx",
+      "lineNumber": 33,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "UnifiedOrganisationForm",
+      "file": "/packages/@verone/organisations/src/components/forms/unified-organisation-form.tsx",
+      "lineNumber": 247,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "UnifiedOrganisationForm",
+      "file": "/packages/@verone/ui-business/src/components/forms/UnifiedOrganisationForm.tsx",
+      "lineNumber": 321,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "UniversalOrderDetailsModal",
+      "file": "/packages/@verone/orders/src/components/modals/UniversalOrderDetailsModal.tsx",
+      "lineNumber": 91,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "UniversalProductSelectorV2",
+      "file": "/packages/@verone/products/src/components/selectors/UniversalProductSelectorV2.tsx",
+      "lineNumber": 789,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 11,
+      "location": "packages"
+    },
+    {
+      "name": "UnpaidInvoicesWidget",
+      "file": "/apps/back-office/src/app/(protected)/dashboard/components/widgets/unpaid-invoices-widget.tsx",
+      "lineNumber": 22,
+      "hasPropsInterface": true,
+      "category": "widget",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "UpcomingPaymentsCard",
+      "file": "/packages/@verone/finance/src/components/treasury/UpcomingPaymentsCard.tsx",
+      "lineNumber": 22,
+      "hasPropsInterface": true,
+      "category": "composite",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "VariantAddProductModal",
+      "file": "/packages/@verone/products/src/components/modals/VariantAddProductModal.tsx",
+      "lineNumber": 33,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "VariantCreationModal",
+      "file": "/packages/@verone/products/src/components/modals/VariantCreationModal.tsx",
+      "lineNumber": 43,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "VariantGroupCreateModal",
+      "file": "/packages/@verone/products/src/components/modals/VariantGroupCreateModal.tsx",
+      "lineNumber": 46,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "VariantGroupCreationWizard",
+      "file": "/packages/@verone/products/src/components/wizards/VariantGroupCreationWizard.tsx",
+      "lineNumber": 98,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "VariantGroupEditModal",
+      "file": "/packages/@verone/products/src/components/modals/VariantGroupEditModal.tsx",
+      "lineNumber": 50,
+      "hasPropsInterface": true,
+      "category": "modal",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "VariantGroupForm",
+      "file": "/apps/back-office/src/components/forms/variant-group-form.tsx",
+      "lineNumber": 116,
+      "hasPropsInterface": true,
+      "category": "form",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "VariantSiblings",
+      "file": "/packages/@verone/products/src/components/sections/VariantSiblings.tsx",
+      "lineNumber": 38,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "VariantsSection",
+      "file": "/apps/site-internet/src/app/produit/[id]/components/VariantsSection.tsx",
+      "lineNumber": 41,
+      "hasPropsInterface": true,
+      "category": "domain-specific",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "VercelAnalyticsDashboard",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/components/VercelAnalyticsDashboard.tsx",
+      "lineNumber": 156,
+      "hasPropsInterface": false,
+      "category": "domain-specific",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "ViewModeToggle",
+      "file": "/packages/@verone/ui/src/components/ui/view-mode-toggle.tsx",
+      "lineNumber": 59,
+      "hasPropsInterface": true,
+      "category": "ui-primitive",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "WeightEditSection",
+      "file": "/packages/@verone/products/src/components/sections/WeightEditSection.tsx",
+      "lineNumber": 48,
+      "hasPropsInterface": true,
+      "category": "section",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "WidgetCard",
+      "file": "/apps/back-office/src/app/(protected)/dashboard/components/widgets/widget-card.tsx",
+      "lineNumber": 38,
+      "hasPropsInterface": true,
+      "category": "widget",
+      "usageCount": 3,
+      "location": "apps"
+    },
+    {
+      "name": "WidgetSelectorModal",
+      "file": "/apps/back-office/src/app/(protected)/dashboard/components/widgets/widget-selector-modal.tsx",
+      "lineNumber": 43,
+      "hasPropsInterface": true,
+      "category": "widget",
+      "usageCount": 0,
+      "location": "apps"
+    }
+  ],
+  "duplicates": [
+    {
+      "name": "CategorySelector",
+      "implementations": [
+        {
+          "name": "CategorySelector",
+          "file": "/packages/@verone/categories/src/components/CategorySelector.tsx",
+          "lineNumber": 46,
+          "hasPropsInterface": true,
+          "category": "ui-primitive",
+          "usageCount": 1,
+          "location": "packages"
+        },
+        {
+          "name": "CategorySelector",
+          "file": "/packages/@verone/categories/src/components/selectors/CategorySelector.tsx",
+          "lineNumber": 46,
+          "hasPropsInterface": true,
+          "category": "ui-primitive",
+          "usageCount": 1,
+          "location": "packages"
+        }
+      ]
+    },
+    {
+      "name": "GoogleMerchantPriceEditor",
+      "implementations": [
+        {
+          "name": "GoogleMerchantPriceEditor",
+          "file": "/packages/@verone/channels/src/components/google-merchant/GoogleMerchantPriceEditor.tsx",
+          "lineNumber": 67,
+          "hasPropsInterface": true,
+          "category": "domain-specific",
+          "usageCount": 1,
+          "location": "packages"
+        },
+        {
+          "name": "GoogleMerchantPriceEditor",
+          "file": "/packages/@verone/common/src/components/pricing/GoogleMerchantPriceEditor.tsx",
+          "lineNumber": 67,
+          "hasPropsInterface": true,
+          "category": "domain-specific",
+          "usageCount": 1,
+          "location": "packages"
+        }
+      ]
+    },
+    {
+      "name": "CollectionImageUpload",
+      "implementations": [
+        {
+          "name": "CollectionImageUpload",
+          "file": "/packages/@verone/common/src/components/collections/CollectionImageUpload.tsx",
+          "lineNumber": 36,
+          "hasPropsInterface": true,
+          "category": "domain-specific",
+          "usageCount": 2,
+          "location": "packages"
+        },
+        {
+          "name": "CollectionImageUpload",
+          "file": "/apps/back-office/src/components/business/collection-image-upload.tsx",
+          "lineNumber": 18,
+          "hasPropsInterface": true,
+          "category": "domain-specific",
+          "usageCount": 2,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "KPICard",
+      "implementations": [
+        {
+          "name": "KPICard",
+          "file": "/packages/@verone/common/src/components/kpi/KPICard.tsx",
+          "lineNumber": 42,
+          "hasPropsInterface": true,
+          "category": "composite",
+          "usageCount": 16,
+          "location": "packages"
+        },
+        {
+          "name": "KPICard",
+          "file": "/apps/linkme/src/components/dashboard/KPICard.tsx",
+          "lineNumber": 82,
+          "hasPropsInterface": true,
+          "category": "composite",
+          "usageCount": 16,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "IdentifiersCompleteEditSection",
+      "implementations": [
+        {
+          "name": "IdentifiersCompleteEditSection",
+          "file": "/packages/@verone/common/src/components/sections/IdentifiersCompleteEditSection.tsx",
+          "lineNumber": 30,
+          "hasPropsInterface": true,
+          "category": "section",
+          "usageCount": 1,
+          "location": "packages"
+        },
+        {
+          "name": "IdentifiersCompleteEditSection",
+          "file": "/packages/@verone/products/src/components/sections/IdentifiersCompleteEditSection.tsx",
+          "lineNumber": 30,
+          "hasPropsInterface": true,
+          "category": "section",
+          "usageCount": 1,
+          "location": "packages"
+        }
+      ]
+    },
+    {
+      "name": "ConsultationOrderInterface",
+      "implementations": [
+        {
+          "name": "ConsultationOrderInterface",
+          "file": "/packages/@verone/consultations/src/components/interfaces/ConsultationOrderInterface.tsx",
+          "lineNumber": 46,
+          "hasPropsInterface": true,
+          "category": "domain-specific",
+          "usageCount": 2,
+          "location": "packages"
+        },
+        {
+          "name": "ConsultationOrderInterface",
+          "file": "/apps/back-office/src/components/business/consultation-order-interface.tsx",
+          "lineNumber": 18,
+          "hasPropsInterface": true,
+          "category": "domain-specific",
+          "usageCount": 2,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "ConsultationPhotosModal",
+      "implementations": [
+        {
+          "name": "ConsultationPhotosModal",
+          "file": "/packages/@verone/consultations/src/components/modals/ConsultationPhotosModal.tsx",
+          "lineNumber": 50,
+          "hasPropsInterface": true,
+          "category": "modal",
+          "usageCount": 1,
+          "location": "packages"
+        },
+        {
+          "name": "ConsultationPhotosModal",
+          "file": "/apps/back-office/src/components/business/consultation-photos-modal.tsx",
+          "lineNumber": 19,
+          "hasPropsInterface": true,
+          "category": "modal",
+          "usageCount": 1,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "OrganisationContactsManager",
+      "implementations": [
+        {
+          "name": "OrganisationContactsManager",
+          "file": "/packages/@verone/customers/src/components/sections/OrganisationContactsManager.tsx",
+          "lineNumber": 35,
+          "hasPropsInterface": true,
+          "category": "section",
+          "usageCount": 2,
+          "location": "packages"
+        },
+        {
+          "name": "OrganisationContactsManager",
+          "file": "/packages/@verone/organisations/src/components/forms/organisation-contacts-manager.tsx",
+          "lineNumber": 35,
+          "hasPropsInterface": true,
+          "category": "form",
+          "usageCount": 2,
+          "location": "packages"
+        }
+      ]
+    },
+    {
+      "name": "KpiCard",
+      "implementations": [
+        {
+          "name": "KpiCard",
+          "file": "/packages/@verone/finance/src/components/dashboard/KpiCard.tsx",
+          "lineNumber": 45,
+          "hasPropsInterface": true,
+          "category": "composite",
+          "usageCount": 2,
+          "location": "packages"
+        },
+        {
+          "name": "KpiCard",
+          "file": "/packages/@verone/ui-business/src/components/finance/KpiCard.tsx",
+          "lineNumber": 86,
+          "hasPropsInterface": true,
+          "category": "composite",
+          "usageCount": 2,
+          "location": "packages"
+        }
+      ]
+    },
+    {
+      "name": "ABCAnalysisView",
+      "implementations": [
+        {
+          "name": "ABCAnalysisView",
+          "file": "/packages/@verone/finance/src/components/reports/ABCAnalysisView.tsx",
+          "lineNumber": 44,
+          "hasPropsInterface": true,
+          "category": "domain-specific",
+          "usageCount": 1,
+          "location": "packages"
+        },
+        {
+          "name": "ABCAnalysisView",
+          "file": "/packages/@verone/stock/src/components/reports/ABCAnalysisView.tsx",
+          "lineNumber": 44,
+          "hasPropsInterface": true,
+          "category": "domain-specific",
+          "usageCount": 1,
+          "location": "packages"
+        }
+      ]
+    },
+    {
+      "name": "AgingReportView",
+      "implementations": [
+        {
+          "name": "AgingReportView",
+          "file": "/packages/@verone/finance/src/components/reports/AgingReportView.tsx",
+          "lineNumber": 50,
+          "hasPropsInterface": true,
+          "category": "domain-specific",
+          "usageCount": 1,
+          "location": "packages"
+        },
+        {
+          "name": "AgingReportView",
+          "file": "/packages/@verone/stock/src/components/reports/AgingReportView.tsx",
+          "lineNumber": 49,
+          "hasPropsInterface": true,
+          "category": "domain-specific",
+          "usageCount": 1,
+          "location": "packages"
+        }
+      ]
+    },
+    {
+      "name": "RevenueChart",
+      "implementations": [
+        {
+          "name": "RevenueChart",
+          "file": "/packages/@verone/orders/src/components/charts/RevenueChart.tsx",
+          "lineNumber": 52,
+          "hasPropsInterface": true,
+          "category": "domain-specific",
+          "usageCount": 2,
+          "location": "packages"
+        },
+        {
+          "name": "RevenueChart",
+          "file": "/apps/back-office/src/app/(protected)/dashboard/components/charts/revenue-chart.tsx",
+          "lineNumber": 63,
+          "hasPropsInterface": true,
+          "category": "domain-specific",
+          "usageCount": 2,
+          "location": "apps"
+        },
+        {
+          "name": "RevenueChart",
+          "file": "/apps/linkme/src/components/analytics/RevenueChart.tsx",
+          "lineNumber": 23,
+          "hasPropsInterface": true,
+          "category": "domain-specific",
+          "usageCount": 2,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "OrderDetailModal",
+      "implementations": [
+        {
+          "name": "OrderDetailModal",
+          "file": "/packages/@verone/orders/src/components/modals/OrderDetailModal.tsx",
+          "lineNumber": 90,
+          "hasPropsInterface": true,
+          "category": "modal",
+          "usageCount": 4,
+          "location": "packages"
+        },
+        {
+          "name": "OrderDetailModal",
+          "file": "/apps/linkme/src/app/(main)/commandes/components/OrderDetailModal.tsx",
+          "lineNumber": 124,
+          "hasPropsInterface": true,
+          "category": "modal",
+          "usageCount": 4,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "OrganisationLogo",
+      "implementations": [
+        {
+          "name": "OrganisationLogo",
+          "file": "/packages/@verone/organisations/src/components/OrganisationLogo.tsx",
+          "lineNumber": 69,
+          "hasPropsInterface": true,
+          "category": "domain-specific",
+          "usageCount": 16,
+          "location": "packages"
+        },
+        {
+          "name": "OrganisationLogo",
+          "file": "/packages/@verone/organisations/src/components/display/OrganisationLogo.tsx",
+          "lineNumber": 63,
+          "hasPropsInterface": true,
+          "category": "domain-specific",
+          "usageCount": 16,
+          "location": "packages"
+        }
+      ]
+    },
+    {
+      "name": "HeartBadge",
+      "implementations": [
+        {
+          "name": "HeartBadge",
+          "file": "/packages/@verone/organisations/src/components/badges/HeartBadge.tsx",
+          "lineNumber": 31,
+          "hasPropsInterface": true,
+          "category": "badge",
+          "usageCount": 3,
+          "location": "packages"
+        },
+        {
+          "name": "HeartBadge",
+          "file": "/packages/@verone/ui-business/src/components/badges/HeartBadge.tsx",
+          "lineNumber": 31,
+          "hasPropsInterface": true,
+          "category": "badge",
+          "usageCount": 3,
+          "location": "packages"
+        }
+      ]
+    },
+    {
+      "name": "OrganisationCard",
+      "implementations": [
+        {
+          "name": "OrganisationCard",
+          "file": "/packages/@verone/organisations/src/components/cards/OrganisationCard.tsx",
+          "lineNumber": 104,
+          "hasPropsInterface": true,
+          "category": "composite",
+          "usageCount": 3,
+          "location": "packages"
+        },
+        {
+          "name": "OrganisationCard",
+          "file": "/apps/linkme/src/components/organisations/OrganisationCard.tsx",
+          "lineNumber": 117,
+          "hasPropsInterface": true,
+          "category": "composite",
+          "usageCount": 3,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "SupplierSegmentSelect",
+      "implementations": [
+        {
+          "name": "SupplierSegmentSelect",
+          "file": "/packages/@verone/organisations/src/components/forms/supplier-segment-select.tsx",
+          "lineNumber": 67,
+          "hasPropsInterface": true,
+          "category": "form",
+          "usageCount": 1,
+          "location": "packages"
+        },
+        {
+          "name": "SupplierSegmentSelect",
+          "file": "/packages/@verone/suppliers/src/components/selectors/SupplierSegmentSelect.tsx",
+          "lineNumber": 67,
+          "hasPropsInterface": true,
+          "category": "ui-primitive",
+          "usageCount": 1,
+          "location": "packages"
+        }
+      ]
+    },
+    {
+      "name": "UnifiedOrganisationForm",
+      "implementations": [
+        {
+          "name": "UnifiedOrganisationForm",
+          "file": "/packages/@verone/organisations/src/components/forms/unified-organisation-form.tsx",
+          "lineNumber": 247,
+          "hasPropsInterface": true,
+          "category": "form",
+          "usageCount": 2,
+          "location": "packages"
+        },
+        {
+          "name": "UnifiedOrganisationForm",
+          "file": "/packages/@verone/ui-business/src/components/forms/UnifiedOrganisationForm.tsx",
+          "lineNumber": 321,
+          "hasPropsInterface": true,
+          "category": "form",
+          "usageCount": 2,
+          "location": "packages"
+        }
+      ]
+    },
+    {
+      "name": "ContactFormModalWrapper",
+      "implementations": [
+        {
+          "name": "ContactFormModalWrapper",
+          "file": "/packages/@verone/organisations/src/components/modals/ContactFormModalWrapper.tsx",
+          "lineNumber": 40,
+          "hasPropsInterface": true,
+          "category": "modal",
+          "usageCount": 1,
+          "location": "packages"
+        },
+        {
+          "name": "ContactFormModalWrapper",
+          "file": "/apps/back-office/src/components/business/contact-form-modal-wrapper.tsx",
+          "lineNumber": 40,
+          "hasPropsInterface": true,
+          "category": "modal",
+          "usageCount": 1,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "CommercialEditSection",
+      "implementations": [
+        {
+          "name": "CommercialEditSection",
+          "file": "/packages/@verone/organisations/src/components/sections/CommercialEditSection.tsx",
+          "lineNumber": 37,
+          "hasPropsInterface": true,
+          "category": "section",
+          "usageCount": 3,
+          "location": "packages"
+        },
+        {
+          "name": "CommercialEditSection",
+          "file": "/packages/@verone/products/src/components/sections/CommercialEditSection.tsx",
+          "lineNumber": 37,
+          "hasPropsInterface": true,
+          "category": "section",
+          "usageCount": 3,
+          "location": "packages"
+        }
+      ]
+    },
+    {
+      "name": "ProductCard",
+      "implementations": [
+        {
+          "name": "ProductCard",
+          "file": "/packages/@verone/products/src/components/cards/ProductCard.tsx",
+          "lineNumber": 64,
+          "hasPropsInterface": true,
+          "category": "composite",
+          "usageCount": 4,
+          "location": "packages"
+        },
+        {
+          "name": "ProductCard",
+          "file": "/apps/linkme/src/app/(main)/catalogue/components/ProductCard.tsx",
+          "lineNumber": 49,
+          "hasPropsInterface": true,
+          "category": "composite",
+          "usageCount": 4,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "ProductSelector",
+      "implementations": [
+        {
+          "name": "ProductSelector",
+          "file": "/packages/@verone/products/src/components/selectors/ProductSelector.tsx",
+          "lineNumber": 43,
+          "hasPropsInterface": true,
+          "category": "ui-primitive",
+          "usageCount": 12,
+          "location": "packages"
+        },
+        {
+          "name": "ProductSelector",
+          "file": "/apps/back-office/src/components/forms/product-selector.tsx",
+          "lineNumber": 38,
+          "hasPropsInterface": true,
+          "category": "form",
+          "usageCount": 12,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "SupplierSelector",
+      "implementations": [
+        {
+          "name": "SupplierSelector",
+          "file": "/packages/@verone/products/src/components/sourcing/supplier-selector.tsx",
+          "lineNumber": 8,
+          "hasPropsInterface": false,
+          "category": "ui-primitive",
+          "usageCount": 7,
+          "location": "packages"
+        },
+        {
+          "name": "SupplierSelector",
+          "file": "/packages/@verone/suppliers/src/components/selectors/SupplierSelector.tsx",
+          "lineNumber": 31,
+          "hasPropsInterface": true,
+          "category": "ui-primitive",
+          "usageCount": 7,
+          "location": "packages"
+        }
+      ]
+    },
+    {
+      "name": "GeneralInfoSection",
+      "implementations": [
+        {
+          "name": "GeneralInfoSection",
+          "file": "/packages/@verone/products/src/components/wizards/sections/GeneralInfoSection.tsx",
+          "lineNumber": 35,
+          "hasPropsInterface": true,
+          "category": "section",
+          "usageCount": 1,
+          "location": "packages"
+        },
+        {
+          "name": "GeneralInfoSection",
+          "file": "/apps/back-office/src/components/business/wizard-sections/general-info-section.tsx",
+          "lineNumber": 30,
+          "hasPropsInterface": true,
+          "category": "domain-specific",
+          "usageCount": 1,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "ImagesSection",
+      "implementations": [
+        {
+          "name": "ImagesSection",
+          "file": "/packages/@verone/products/src/components/wizards/sections/ImagesSection.tsx",
+          "lineNumber": 28,
+          "hasPropsInterface": true,
+          "category": "section",
+          "usageCount": 1,
+          "location": "packages"
+        },
+        {
+          "name": "ImagesSection",
+          "file": "/apps/back-office/src/components/business/wizard-sections/images-section.tsx",
+          "lineNumber": 37,
+          "hasPropsInterface": true,
+          "category": "domain-specific",
+          "usageCount": 1,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "PricingSection",
+      "implementations": [
+        {
+          "name": "PricingSection",
+          "file": "/packages/@verone/products/src/components/wizards/sections/PricingSection.tsx",
+          "lineNumber": 27,
+          "hasPropsInterface": true,
+          "category": "section",
+          "usageCount": 2,
+          "location": "packages"
+        },
+        {
+          "name": "PricingSection",
+          "file": "/apps/back-office/src/components/business/wizard-sections/pricing-section.tsx",
+          "lineNumber": 26,
+          "hasPropsInterface": true,
+          "category": "domain-specific",
+          "usageCount": 2,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "StockSection",
+      "implementations": [
+        {
+          "name": "StockSection",
+          "file": "/packages/@verone/products/src/components/wizards/sections/StockSection.tsx",
+          "lineNumber": 25,
+          "hasPropsInterface": true,
+          "category": "section",
+          "usageCount": 2,
+          "location": "packages"
+        },
+        {
+          "name": "StockSection",
+          "file": "/apps/back-office/src/components/business/wizard-sections/stock-section.tsx",
+          "lineNumber": 29,
+          "hasPropsInterface": true,
+          "category": "domain-specific",
+          "usageCount": 2,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "SupplierSection",
+      "implementations": [
+        {
+          "name": "SupplierSection",
+          "file": "/packages/@verone/products/src/components/wizards/sections/SupplierSection.tsx",
+          "lineNumber": 25,
+          "hasPropsInterface": true,
+          "category": "section",
+          "usageCount": 1,
+          "location": "packages"
+        },
+        {
+          "name": "SupplierSection",
+          "file": "/apps/back-office/src/components/business/wizard-sections/supplier-section.tsx",
+          "lineNumber": 23,
+          "hasPropsInterface": true,
+          "category": "domain-specific",
+          "usageCount": 1,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "TechnicalSection",
+      "implementations": [
+        {
+          "name": "TechnicalSection",
+          "file": "/packages/@verone/products/src/components/wizards/sections/TechnicalSection.tsx",
+          "lineNumber": 24,
+          "hasPropsInterface": true,
+          "category": "section",
+          "usageCount": 1,
+          "location": "packages"
+        },
+        {
+          "name": "TechnicalSection",
+          "file": "/apps/back-office/src/components/business/wizard-sections/technical-section.tsx",
+          "lineNumber": 33,
+          "hasPropsInterface": true,
+          "category": "domain-specific",
+          "usageCount": 1,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "EcoTaxVatInput",
+      "implementations": [
+        {
+          "name": "EcoTaxVatInput",
+          "file": "/packages/@verone/ui/src/components/forms/EcoTaxVatInput.tsx",
+          "lineNumber": 23,
+          "hasPropsInterface": true,
+          "category": "ui-primitive",
+          "usageCount": 3,
+          "location": "packages"
+        },
+        {
+          "name": "EcoTaxVatInput",
+          "file": "/apps/back-office/src/components/forms/eco-tax-vat-input.tsx",
+          "lineNumber": 22,
+          "hasPropsInterface": true,
+          "category": "form",
+          "usageCount": 3,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "SidebarProvider",
+      "implementations": [
+        {
+          "name": "SidebarProvider",
+          "file": "/packages/@verone/ui/src/components/ui/sidebar.tsx",
+          "lineNumber": 40,
+          "hasPropsInterface": true,
+          "category": "ui-primitive",
+          "usageCount": 4,
+          "location": "packages"
+        },
+        {
+          "name": "SidebarProvider",
+          "file": "/apps/back-office/src/components/layout/sidebar-provider.tsx",
+          "lineNumber": 28,
+          "hasPropsInterface": true,
+          "category": "layout",
+          "usageCount": 4,
+          "location": "apps"
+        },
+        {
+          "name": "SidebarProvider",
+          "file": "/apps/linkme/src/components/layout/SidebarProvider.tsx",
+          "lineNumber": 34,
+          "hasPropsInterface": true,
+          "category": "layout",
+          "usageCount": 4,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "ImageUpload",
+      "implementations": [
+        {
+          "name": "ImageUpload",
+          "file": "/packages/@verone/ui-business/src/components/inputs/ImageUpload.tsx",
+          "lineNumber": 29,
+          "hasPropsInterface": true,
+          "category": "domain-specific",
+          "usageCount": 9,
+          "location": "packages"
+        },
+        {
+          "name": "ImageUpload",
+          "file": "/apps/back-office/src/components/forms/image-upload.tsx",
+          "lineNumber": 55,
+          "hasPropsInterface": true,
+          "category": "form",
+          "usageCount": 9,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "AppSidebar",
+      "implementations": [
+        {
+          "name": "AppSidebar",
+          "file": "/apps/back-office/src/components/layout/app-sidebar.tsx",
+          "lineNumber": 691,
+          "hasPropsInterface": false,
+          "category": "layout",
+          "usageCount": 2,
+          "location": "apps"
+        },
+        {
+          "name": "AppSidebar",
+          "file": "/apps/linkme/src/components/layout/AppSidebar.tsx",
+          "lineNumber": 51,
+          "hasPropsInterface": false,
+          "category": "layout",
+          "usageCount": 2,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "CommissionKPICard",
+      "implementations": [
+        {
+          "name": "CommissionKPICard",
+          "file": "/apps/linkme/src/components/commissions/CommissionKPICard.tsx",
+          "lineNumber": 26,
+          "hasPropsInterface": true,
+          "category": "composite",
+          "usageCount": 1,
+          "location": "apps"
+        },
+        {
+          "name": "CommissionKPICard",
+          "file": "/apps/linkme/src/components/dashboard/CommissionKPICard.tsx",
+          "lineNumber": 66,
+          "hasPropsInterface": true,
+          "category": "composite",
+          "usageCount": 1,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "Footer",
+      "implementations": [
+        {
+          "name": "Footer",
+          "file": "/apps/linkme/src/components/layout/Footer.tsx",
+          "lineNumber": 3,
+          "hasPropsInterface": false,
+          "category": "layout",
+          "usageCount": 1,
+          "location": "apps"
+        },
+        {
+          "name": "Footer",
+          "file": "/apps/site-internet/src/components/layout/Footer.tsx",
+          "lineNumber": 32,
+          "hasPropsInterface": false,
+          "category": "layout",
+          "usageCount": 1,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "Header",
+      "implementations": [
+        {
+          "name": "Header",
+          "file": "/apps/linkme/src/components/layout/Header.tsx",
+          "lineNumber": 39,
+          "hasPropsInterface": false,
+          "category": "layout",
+          "usageCount": 85,
+          "location": "apps"
+        },
+        {
+          "name": "Header",
+          "file": "/apps/site-internet/src/components/layout/Header.tsx",
+          "lineNumber": 12,
+          "hasPropsInterface": false,
+          "category": "layout",
+          "usageCount": 85,
+          "location": "apps"
+        }
+      ]
+    }
+  ]
+}

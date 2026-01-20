@@ -1,0 +1,344 @@
+{
+  "generated_at": "2026-01-19T23:30:00Z",
+  "source": "git_migrations_and_typescript_types",
+  "summary": {
+    "tables_in_typescript_types": 101,
+    "tables_in_git_migrations": 39,
+    "functions": 297,
+    "views": 58,
+    "policies": 180,
+    "triggers": 87,
+    "indexes": 197,
+    "drift_detected": true,
+    "drift_explanation": "Base schema (62 tables) created outside Git migrations. Only incremental changes (39 tables) are in migrations folder. This indicates initial schema was imported from a database dump or created manually."
+  },
+  "expected_db_structure": {
+    "app_schema": {
+      "name": "public",
+      "tables": 101,
+      "description": "App tables visible in generated TypeScript types"
+    },
+    "system_schemas": [
+      {
+        "name": "auth",
+        "tables": 15,
+        "description": "Supabase Auth (users, sessions, identities, etc.)"
+      },
+      {
+        "name": "storage",
+        "tables": 8,
+        "description": "Supabase Storage (buckets, objects, migrations)"
+      },
+      {
+        "name": "realtime",
+        "tables": 3,
+        "description": "Supabase Realtime (subscriptions, messages)"
+      },
+      {
+        "name": "extensions",
+        "tables": 5,
+        "description": "PostgreSQL extensions metadata"
+      }
+    ],
+    "total_expected": 132,
+    "note": "Real DB may show ~132 tables: 101 app + ~31 system"
+  },
+  "drift_analysis": {
+    "base_schema_tables_not_in_git": [
+      "audit_logs",
+      "categories",
+      "category_translations",
+      "channel_price_lists",
+      "channel_pricing",
+      "channel_pricing_history",
+      "channel_product_metadata",
+      "channel_product_pricing",
+      "client_consultations",
+      "collection_images",
+      "collection_products",
+      "collection_shares",
+      "collection_translations",
+      "collections",
+      "consultation_images",
+      "consultation_products",
+      "contacts",
+      "customer_group_members",
+      "customer_groups",
+      "customer_price_lists",
+      "customer_pricing",
+      "enseignes",
+      "families",
+      "feed_configs",
+      "feed_exports",
+      "feed_performance_metrics",
+      "financial_document_lines",
+      "google_merchant_syncs",
+      "group_price_lists",
+      "individual_customers",
+      "invoice_status_history",
+      "invoices",
+      "linkme_affiliates",
+      "linkme_channel_suppliers",
+      "linkme_commissions",
+      "linkme_selection_items",
+      "linkme_selections",
+      "linkme_tracking",
+      "mcp_resolution_queue",
+      "mcp_resolution_strategies",
+      "notifications",
+      "order_discounts",
+      "organisations",
+      "payments",
+      "price_list_history",
+      "price_list_items",
+      "price_lists",
+      "product_colors",
+      "product_drafts",
+      "product_group_members",
+      "product_groups",
+      "product_images",
+      "product_packages",
+      "product_status_changes",
+      "products",
+      "purchase_order_items",
+      "purchase_order_receptions",
+      "purchase_orders",
+      "sales_channels",
+      "sales_order_items",
+      "sales_order_shipments",
+      "sales_orders",
+      "sample_order_items",
+      "sample_orders",
+      "stock_alert_tracking",
+      "stock_movements",
+      "stock_reservations",
+      "storage_allocations",
+      "subcategories",
+      "user_activity_logs",
+      "user_profiles",
+      "user_sessions",
+      "variant_groups"
+    ],
+    "base_schema_count": 71,
+    "incremental_tables_in_git": [
+      "affiliate_archive_requests",
+      "affiliate_storage_allocations",
+      "app_settings",
+      "bank_transaction_matches",
+      "bank_transactions",
+      "bank_transactions_enrichment_audit",
+      "counterparties",
+      "counterparty_bank_accounts",
+      "email_templates",
+      "expenses",
+      "finance_settings",
+      "financial_document_items",
+      "financial_documents",
+      "financial_payments",
+      "form_submission_messages",
+      "form_submissions",
+      "form_types",
+      "linkme_catalog_products",
+      "linkme_contact_requests",
+      "linkme_page_configurations",
+      "linkme_payment_request_items",
+      "linkme_payment_requests",
+      "linkme_showcase_collection_items",
+      "linkme_showcase_collections",
+      "matching_rules",
+      "organisation_roles",
+      "pcg_categories",
+      "product_commission_history",
+      "qonto_clients",
+      "qonto_sync_logs",
+      "sales_order_linkme_details",
+      "storage_billing_events",
+      "storage_pricing_tiers",
+      "sync_runs",
+      "transaction_document_links",
+      "user_app_roles",
+      "user_dashboard_preferences",
+      "webhook_configs",
+      "webhook_logs"
+    ],
+    "incremental_count": 39
+  },
+  "most_referenced_tables_in_code": [
+    {
+      "table": "products",
+      "references": 190,
+      "category": "core"
+    },
+    {
+      "table": "organisations",
+      "references": 112,
+      "category": "core"
+    },
+    {
+      "table": "sales_orders",
+      "references": 84,
+      "category": "core"
+    },
+    {
+      "table": "linkme_affiliates",
+      "references": 55,
+      "category": "linkme"
+    },
+    {
+      "table": "linkme_selections",
+      "references": 46,
+      "category": "linkme"
+    },
+    {
+      "table": "product_images",
+      "references": 44,
+      "category": "products"
+    },
+    {
+      "table": "user_profiles",
+      "references": 43,
+      "category": "users"
+    },
+    {
+      "table": "purchase_orders",
+      "references": 43,
+      "category": "core"
+    },
+    {
+      "table": "stock_movements",
+      "references": 39,
+      "category": "stock"
+    },
+    {
+      "table": "bank_transactions",
+      "references": 35,
+      "category": "finance"
+    }
+  ],
+  "most_called_rpc_functions": [
+    {
+      "function": "get_site_internet_products",
+      "calls": 7
+    },
+    {
+      "function": "set_current_user_id",
+      "calls": 3
+    },
+    {
+      "function": "get_linkme_orders",
+      "calls": 3
+    },
+    {
+      "function": "generate_so_number",
+      "calls": 3
+    },
+    {
+      "function": "search_organisations_unaccent",
+      "calls": 2
+    }
+  ],
+  "issues": {
+    "critical": [
+      {
+        "severity": "CRITICAL",
+        "type": "source_of_truth_violation",
+        "description": "71 base schema tables exist in DB but NOT in Git migrations",
+        "impact": "Cannot reproduce database from Git alone",
+        "tables_affected": 71,
+        "recommendation": "Export base schema to Git migrations OR document that initial schema was imported from external source"
+      }
+    ],
+    "warnings": [
+      {
+        "severity": "WARNING",
+        "type": "incomplete_migration_history",
+        "description": "Migration history only contains incremental changes (39 tables), not complete schema",
+        "impact": "New developers cannot understand full DB structure from migrations alone",
+        "recommendation": "Create a comprehensive base schema migration or document the initial setup process"
+      }
+    ],
+    "performance": []
+  },
+  "table_categories": {
+    "core_business": [
+      "products",
+      "organisations",
+      "sales_orders",
+      "purchase_orders",
+      "categories",
+      "subcategories",
+      "families"
+    ],
+    "linkme": [
+      "linkme_affiliates",
+      "linkme_selections",
+      "linkme_selection_items",
+      "linkme_commissions",
+      "linkme_orders_enriched",
+      "linkme_catalog_products",
+      "linkme_showcase_collections",
+      "linkme_payment_requests"
+    ],
+    "finance": [
+      "bank_transactions",
+      "financial_documents",
+      "financial_document_items",
+      "expenses",
+      "payments",
+      "invoices",
+      "pcg_categories"
+    ],
+    "stock": [
+      "stock_movements",
+      "stock_reservations",
+      "stock_alert_tracking",
+      "storage_allocations",
+      "purchase_order_receptions",
+      "sales_order_shipments"
+    ],
+    "users_auth": [
+      "user_profiles",
+      "user_app_roles",
+      "user_sessions",
+      "user_activity_logs",
+      "user_dashboard_preferences"
+    ],
+    "pricing": [
+      "channel_pricing",
+      "customer_pricing",
+      "price_lists",
+      "price_list_items",
+      "customer_price_lists"
+    ],
+    "content": [
+      "collections",
+      "collection_products",
+      "product_images",
+      "collection_images"
+    ],
+    "integrations": [
+      "qonto_clients",
+      "qonto_sync_logs",
+      "google_merchant_syncs",
+      "webhook_configs",
+      "webhook_logs",
+      "sync_runs"
+    ],
+    "admin": [
+      "app_settings",
+      "audit_logs",
+      "notifications",
+      "organisation_roles",
+      "form_submissions",
+      "form_types"
+    ]
+  },
+  "sql_verification_queries": {
+    "count_tables_by_schema": "SELECT schemaname, COUNT(*) FROM pg_tables WHERE schemaname NOT IN ('pg_catalog', 'information_schema') GROUP BY schemaname ORDER BY schemaname;",
+    "list_public_tables": "SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename;",
+    "count_public_tables": "SELECT COUNT(*) FROM pg_tables WHERE schemaname = 'public';",
+    "tables_without_rls": "SELECT tablename FROM pg_tables t LEFT JOIN pg_policies p ON t.tablename = p.tablename WHERE t.schemaname = 'public' AND p.policyname IS NULL GROUP BY t.tablename;",
+    "tables_with_rls_count": "SELECT tablename, COUNT(policyname) as policy_count FROM pg_policies WHERE schemaname = 'public' GROUP BY tablename ORDER BY policy_count DESC;",
+    "missing_indexes_on_fk": "SELECT conrelid::regclass AS table_name, conname AS constraint_name, pg_get_constraintdef(oid) AS constraint_def FROM pg_constraint WHERE contype = 'f' AND NOT EXISTS (SELECT 1 FROM pg_index WHERE indrelid = conrelid AND indkey::int[] @> conkey::int[]);"
+  }
+}

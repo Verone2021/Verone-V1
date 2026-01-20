@@ -227,4 +227,8 @@ const sentryWebpackPluginOptions = {
   telemetry: false,
 };
 
-module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);
+// TEMPORARY: Sentry disabled - sourcemap upload failures blocking production
+// Build was failing with: [@sentry/nextjs - Node.js] Error: An error occurred. Couldn't finish all operations
+// Directive: "il faut que tout soit vert. Sinon on supprime Sentry, c'est très clair"
+module.exports = nextConfig;
+// module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);

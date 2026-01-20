@@ -1,0 +1,4357 @@
+{
+  "generated_at": "2026-01-19T23:20:52.191Z",
+  "summary": {
+    "total": 415,
+    "by_location": {
+      "packages": 177,
+      "apps": 238
+    },
+    "by_domain": {
+      "common": 68,
+      "products": 81,
+      "mutation": 14,
+      "finance": 41,
+      "query": 4,
+      "customers": 12,
+      "dashboard": 10,
+      "orders": 40,
+      "stock": 15,
+      "utility": 6,
+      "notifications": 5,
+      "linkme": 119
+    },
+    "duplicates": 25
+  },
+  "hooks": [
+    {
+      "name": "useABCAnalysis",
+      "file": "/packages/@verone/finance/src/hooks/use-abc-analysis.ts",
+      "lineNumber": 91,
+      "signature": "useABCAnalysis() {",
+      "domain": "finance",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useActiveAffiliates",
+      "file": "/apps/linkme/src/lib/hooks/use-linkme-public.ts",
+      "lineNumber": 53,
+      "signature": "useActiveAffiliates() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useActiveEnseignes",
+      "file": "/packages/@verone/organisations/src/hooks/use-enseignes.ts",
+      "lineNumber": 464,
+      "signature": "useActiveEnseignes() {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useActivityMetrics",
+      "file": "/packages/@verone/dashboard/src/hooks/metrics/use-activity-metrics.ts",
+      "lineNumber": 19,
+      "signature": "useActivityMetrics() {",
+      "domain": "dashboard",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useAddProductsToCatalog",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-catalog.ts",
+      "lineNumber": 458,
+      "signature": "useAddProductsToCatalog() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useAddProductsToGoogleMerchant",
+      "file": "/packages/@verone/channels/src/hooks/google-merchant/use-add-products-to-google-merchant.ts",
+      "lineNumber": 37,
+      "signature": "useAddProductsToGoogleMerchant() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useAddProductsToSiteInternet",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-site-internet-products.ts",
+      "lineNumber": 112,
+      "signature": "useAddProductsToSiteInternet() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useAddProductToSelection",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-selections.ts",
+      "lineNumber": 376,
+      "signature": "useAddProductToSelection() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useAddToSelection",
+      "file": "/apps/linkme/src/lib/hooks/use-user-selection.ts",
+      "lineNumber": 357,
+      "signature": "useAddToSelection() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useAddToSelectionWithMargin",
+      "file": "/apps/linkme/src/lib/hooks/use-user-selection.ts",
+      "lineNumber": 462,
+      "signature": "useAddToSelectionWithMargin() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useAffiliateAnalytics",
+      "file": "/apps/linkme/src/lib/hooks/use-affiliate-analytics.ts",
+      "lineNumber": 72,
+      "signature": "useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {",
+      "domain": "linkme",
+      "usageCount": 5,
+      "location": "apps"
+    },
+    {
+      "name": "useAffiliateBillableStorage",
+      "file": "/apps/linkme/src/lib/hooks/use-affiliate-storage.ts",
+      "lineNumber": 132,
+      "signature": "useAffiliateBillableStorage() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useAffiliateBranding",
+      "file": "/apps/linkme/src/lib/hooks/use-affiliate-branding.ts",
+      "lineNumber": 39,
+      "signature": "useAffiliateBranding( affiliateId: string | null, options: IUseAffiliateBrandingOptions = {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useAffiliateBySlug",
+      "file": "/apps/linkme/src/lib/hooks/use-linkme-public.ts",
+      "lineNumber": 78,
+      "signature": "useAffiliateBySlug(slug: string) {",
+      "domain": "linkme",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useAffiliateCommissions",
+      "file": "/apps/linkme/src/lib/hooks/use-affiliate-commissions.ts",
+      "lineNumber": 31,
+      "signature": "useAffiliateCommissions( options: UseAffiliateCommissionsOptions = {",
+      "domain": "linkme",
+      "usageCount": 2,
+      "location": "apps"
+    },
+    {
+      "name": "useAffiliateCommissionStats",
+      "file": "/apps/linkme/src/lib/hooks/use-affiliate-commission-stats.ts",
+      "lineNumber": 44,
+      "signature": "useAffiliateCommissionStats() {",
+      "domain": "linkme",
+      "usageCount": 2,
+      "location": "apps"
+    },
+    {
+      "name": "useAffiliateCustomers",
+      "file": "/apps/linkme/src/lib/hooks/use-affiliate-orders.ts",
+      "lineNumber": 133,
+      "signature": "useAffiliateCustomers(affiliateId: string | null) {",
+      "domain": "customers",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useAffiliateNetwork",
+      "file": "/apps/linkme/src/lib/hooks/use-affiliate-network.ts",
+      "lineNumber": 158,
+      "signature": "useAffiliateNetwork(affiliateId: string | null) {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useAffiliatePaymentRequests",
+      "file": "/apps/linkme/src/lib/hooks/use-payment-requests.ts",
+      "lineNumber": 42,
+      "signature": "useAffiliatePaymentRequests() {",
+      "domain": "finance",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useAffiliateProduct",
+      "file": "/apps/linkme/src/lib/hooks/use-affiliate-products.ts",
+      "lineNumber": 138,
+      "signature": "useAffiliateProduct(productId: string | undefined) {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useAffiliateProductPrice",
+      "file": "/apps/linkme/src/lib/hooks/use-affiliate-products.ts",
+      "lineNumber": 368,
+      "signature": "useAffiliateProductPrice( productId: string | undefined, marginRate?: number ) {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useAffiliateProducts",
+      "file": "/apps/linkme/src/lib/hooks/use-affiliate-products.ts",
+      "lineNumber": 76,
+      "signature": "useAffiliateProducts() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useAffiliateSelections",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-performance-analytics.ts",
+      "lineNumber": 486,
+      "signature": "useAffiliateSelections(affiliateId: string | null) {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useAffiliatesList",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-performance-analytics.ts",
+      "lineNumber": 456,
+      "signature": "useAffiliatesList() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useAffiliateStorageDetail",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-storage.ts",
+      "lineNumber": 97,
+      "signature": "useAffiliateStorageDetail( ownerType: 'enseigne' | 'organisation', ownerId: string | undefined ) {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useAffiliateStorageDetails",
+      "file": "/apps/linkme/src/lib/hooks/use-affiliate-storage.ts",
+      "lineNumber": 94,
+      "signature": "useAffiliateStorageDetails() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useAffiliateStorageSummary",
+      "file": "/apps/linkme/src/lib/hooks/use-affiliate-storage.ts",
+      "lineNumber": 47,
+      "signature": "useAffiliateStorageSummary() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useAgingReport",
+      "file": "/packages/@verone/finance/src/hooks/use-aging-report.ts",
+      "lineNumber": 74,
+      "signature": "useAgingReport() {",
+      "domain": "finance",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useAllAffiliateProducts",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-product-approvals.ts",
+      "lineNumber": 122,
+      "signature": "useAllAffiliateProducts( status?: AffiliateProductApprovalStatus ) {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useAllLinkMeOrders",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-order-actions.ts",
+      "lineNumber": 896,
+      "signature": "useAllLinkMeOrders(status?: OrderValidationStatus) {",
+      "domain": "orders",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useAllOrganisationsWithApproval",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-organisation-approvals.ts",
+      "lineNumber": 177,
+      "signature": "useAllOrganisationsWithApproval( status?: OrganisationApprovalStatus ) {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useAllProductsStats",
+      "file": "/apps/linkme/src/lib/hooks/use-all-products-stats.ts",
+      "lineNumber": 56,
+      "signature": "useAllProductsStats(): ReturnType< typeof useQuery<AllProductsStatsResult | null> > {",
+      "domain": "products",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useApproveOrder",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-order-actions.ts",
+      "lineNumber": 473,
+      "signature": "useApproveOrder() {",
+      "domain": "orders",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useApproveOrder",
+      "file": "/apps/linkme/src/hooks/use-approve-order.ts",
+      "lineNumber": 86,
+      "signature": "useApproveOrder() {",
+      "domain": "orders",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useApproveOrganisation",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-organisation-approvals.ts",
+      "lineNumber": 261,
+      "signature": "useApproveOrganisation() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useApproveProduct",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-product-approvals.ts",
+      "lineNumber": 229,
+      "signature": "useApproveProduct() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useArchivedProducts",
+      "file": "/packages/@verone/products/src/hooks/use-archived-products.ts",
+      "lineNumber": 37,
+      "signature": "useArchivedProducts() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useArchiveNotifications",
+      "file": "/apps/back-office/src/hooks/use-archive-notifications.ts",
+      "lineNumber": 48,
+      "signature": "useArchiveNotifications() {",
+      "domain": "notifications",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useArchiveNotificationsCount",
+      "file": "/apps/back-office/src/hooks/use-archive-notifications.ts",
+      "lineNumber": 84,
+      "signature": "useArchiveNotificationsCount() {",
+      "domain": "notifications",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useArchiveOrganisation",
+      "file": "/apps/linkme/src/lib/hooks/use-affiliate-network.ts",
+      "lineNumber": 244,
+      "signature": "useArchiveOrganisation() {",
+      "domain": "linkme",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useArchiveOrganisation",
+      "file": "/apps/linkme/src/lib/hooks/use-archive-organisation.ts",
+      "lineNumber": 31,
+      "signature": "useArchiveOrganisation() {",
+      "domain": "linkme",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useAutoClassification",
+      "file": "/packages/@verone/finance/src/hooks/use-auto-classification.ts",
+      "lineNumber": 144,
+      "signature": "useAutoClassification< T extends Record<string, unknown> & {",
+      "domain": "finance",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useAutomationTriggers",
+      "file": "/packages/@verone/admin/src/hooks/use-automation-triggers.ts",
+      "lineNumber": 245,
+      "signature": "useAutomationTriggers() {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useBankReconciliation",
+      "file": "/packages/@verone/finance/src/hooks/use-bank-reconciliation.ts",
+      "lineNumber": 124,
+      "signature": "useBankReconciliation() {",
+      "domain": "finance",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useBankTransactionStats",
+      "file": "/packages/@verone/finance/src/hooks/use-bank-transaction-stats.ts",
+      "lineNumber": 101,
+      "signature": "useBankTransactionStats( options: BankTransactionStatsOptions = {",
+      "domain": "finance",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useBaseHook",
+      "file": "/packages/@verone/common/src/hooks/use-base-hook.ts",
+      "lineNumber": 54,
+      "signature": "useBaseHook<T>( initialData: T ): BaseHookState<T> & BaseHookActions {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useBaseListHook",
+      "file": "/packages/@verone/common/src/hooks/use-base-hook.ts",
+      "lineNumber": 96,
+      "signature": "useBaseListHook<T>(initialData: T[] = []): BaseHookState<T[]> & BaseHookActions & {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useBatchPricing",
+      "file": "/packages/@verone/finance/src/hooks/use-pricing.ts",
+      "lineNumber": 155,
+      "signature": "useBatchPricing() {",
+      "domain": "finance",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useBoolean",
+      "file": "/packages/@verone/hooks/src/use-boolean.ts",
+      "lineNumber": 30,
+      "signature": "useBoolean(initialValue: boolean = false): UseBooleanReturn {",
+      "domain": "common",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useCalculateLinkMeMargins",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-margin-calculator.ts",
+      "lineNumber": 47,
+      "signature": "useCalculateLinkMeMargins( basePriceHT: number | null | undefined, publicPriceHT: number | null | undefined, commissionRatePercent: number | null | undefined, bufferRate: number = LINKME_MARGIN_DEFAULTS.bufferRate ): MarginCalculationResult | null {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useCancelPaymentRequest",
+      "file": "/apps/linkme/src/lib/hooks/use-payment-requests.ts",
+      "lineNumber": 357,
+      "signature": "useCancelPaymentRequest() {",
+      "domain": "finance",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useCancelPaymentRequestAdmin",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-payment-requests-admin.ts",
+      "lineNumber": 215,
+      "signature": "useCancelPaymentRequestAdmin() {",
+      "domain": "finance",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useCatalogProduct",
+      "file": "/apps/linkme/src/lib/hooks/use-linkme-catalog.ts",
+      "lineNumber": 285,
+      "signature": "useCatalogProduct(catalogId: string | null) {",
+      "domain": "products",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useCatalogue",
+      "file": "/packages/@verone/categories/src/hooks/use-catalogue.ts",
+      "lineNumber": 111,
+      "signature": "useCatalogue = () => {",
+      "domain": "common",
+      "usageCount": 4,
+      "location": "packages"
+    },
+    {
+      "name": "useCatalogueProducts",
+      "file": "/apps/site-internet/src/hooks/use-catalogue-products.ts",
+      "lineNumber": 91,
+      "signature": "useCatalogueProducts( options: UseCatalogueProductsOptions = {",
+      "domain": "products",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useCategories",
+      "file": "/packages/@verone/categories/src/hooks/use-categories.ts",
+      "lineNumber": 22,
+      "signature": "useCategories() {",
+      "domain": "common",
+      "usageCount": 7,
+      "location": "packages"
+    },
+    {
+      "name": "useCategories",
+      "file": "/apps/site-internet/src/hooks/use-categories.ts",
+      "lineNumber": 19,
+      "signature": "useCategories() {",
+      "domain": "common",
+      "usageCount": 7,
+      "location": "apps"
+    },
+    {
+      "name": "useCategorizedCatalogProducts",
+      "file": "/apps/linkme/src/lib/hooks/use-linkme-catalog.ts",
+      "lineNumber": 466,
+      "signature": "useCategorizedCatalogProducts( userEnseigneId: string | null, userOrganisationId: string | null ) {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useChannelPricing",
+      "file": "/packages/@verone/finance/src/hooks/use-pricing.ts",
+      "lineNumber": 329,
+      "signature": "useChannelPricing(productId: string) {",
+      "domain": "finance",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useClickOutside",
+      "file": "/packages/@verone/hooks/src/use-click-outside.ts",
+      "lineNumber": 25,
+      "signature": "useClickOutside<T extends HTMLElement = HTMLElement>( ref: RefObject<T>, handler: (event: MouseEvent | TouchEvent) => void ): void {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useCollection",
+      "file": "/packages/@verone/collections/src/hooks/use-collections.ts",
+      "lineNumber": 624,
+      "signature": "useCollection(id: string) {",
+      "domain": "common",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "useCollectionImages",
+      "file": "/packages/@verone/collections/src/hooks/use-collection-images.ts",
+      "lineNumber": 41,
+      "signature": "useCollectionImages({",
+      "domain": "common",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useCollectionProducts",
+      "file": "/packages/@verone/collections/src/hooks/use-collection-products.ts",
+      "lineNumber": 36,
+      "signature": "useCollectionProducts( collectionId: string ): UseCollectionProductsReturn {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useCollections",
+      "file": "/packages/@verone/collections/src/hooks/use-collections.ts",
+      "lineNumber": 66,
+      "signature": "useCollections(filters?: CollectionFilters) {",
+      "domain": "common",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useColorSelection",
+      "file": "/packages/@verone/products/src/hooks/use-color-selection.ts",
+      "lineNumber": 19,
+      "signature": "useColorSelection( value?: string, excludeColors: string[] = [] ) {",
+      "domain": "products",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useCommissionsCounts",
+      "file": "/apps/linkme/src/lib/hooks/use-affiliate-commissions.ts",
+      "lineNumber": 144,
+      "signature": "useCommissionsCounts() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useCompleteDashboardMetrics",
+      "file": "/packages/@verone/dashboard/src/hooks/use-complete-dashboard-metrics.ts",
+      "lineNumber": 111,
+      "signature": "useCompleteDashboardMetrics() {",
+      "domain": "dashboard",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "useCompletionStatus",
+      "file": "/packages/@verone/products/src/hooks/use-completion-status.ts",
+      "lineNumber": 31,
+      "signature": "useCompletionStatus( product: CompletionStatusData ): CompletionStatusResult {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useConsultationImages",
+      "file": "/packages/@verone/consultations/src/hooks/use-consultation-images.ts",
+      "lineNumber": 47,
+      "signature": "useConsultationImages({",
+      "domain": "common",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "useConsultationItems",
+      "file": "/packages/@verone/consultations/src/hooks/use-consultations.ts",
+      "lineNumber": 580,
+      "signature": "useConsultationItems(consultationId?: string) {",
+      "domain": "common",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "useConsultationProducts",
+      "file": "/packages/@verone/consultations/src/hooks/use-consultations.ts",
+      "lineNumber": 516,
+      "signature": "useConsultationProducts(consultationId?: string) {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useConsultations",
+      "file": "/packages/@verone/consultations/src/hooks/use-consultations.ts",
+      "lineNumber": 140,
+      "signature": "useConsultations() {",
+      "domain": "common",
+      "usageCount": 4,
+      "location": "packages"
+    },
+    {
+      "name": "useContacts",
+      "file": "/packages/@verone/organisations/src/hooks/use-contacts.ts",
+      "lineNumber": 80,
+      "signature": "useContacts() {",
+      "domain": "common",
+      "usageCount": 4,
+      "location": "packages"
+    },
+    {
+      "name": "useCopyToClipboard",
+      "file": "/packages/@verone/hooks/src/use-copy-to-clipboard.ts",
+      "lineNumber": 31,
+      "signature": "useCopyToClipboard(): CopyToClipboardReturn {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useCounter",
+      "file": "/packages/@verone/hooks/src/use-counter.ts",
+      "lineNumber": 32,
+      "signature": "useCounter( initialValue: number = 0, min?: number, max?: number ): UseCounterReturn {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useCounterparties",
+      "file": "/packages/@verone/finance/src/hooks/use-counterparties.ts",
+      "lineNumber": 59,
+      "signature": "useCounterparties(): UseCounterpartiesReturn {",
+      "domain": "finance",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useCreateAffiliateOrder",
+      "file": "/apps/linkme/src/lib/hooks/use-affiliate-orders.ts",
+      "lineNumber": 79,
+      "signature": "useCreateAffiliateOrder() {",
+      "domain": "orders",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useCreateAffiliateProduct",
+      "file": "/apps/linkme/src/lib/hooks/use-affiliate-products.ts",
+      "lineNumber": 176,
+      "signature": "useCreateAffiliateProduct() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useCreateCustomerIndividual",
+      "file": "/apps/linkme/src/lib/hooks/use-affiliate-orders.ts",
+      "lineNumber": 210,
+      "signature": "useCreateCustomerIndividual() {",
+      "domain": "customers",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useCreateCustomerOrganisation",
+      "file": "/apps/linkme/src/lib/hooks/use-affiliate-orders.ts",
+      "lineNumber": 163,
+      "signature": "useCreateCustomerOrganisation() {",
+      "domain": "customers",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useCreateEnseigne",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-enseignes.ts",
+      "lineNumber": 287,
+      "signature": "useCreateEnseigne() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useCreateEnseigneIndividualCustomer",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-enseigne-customers.ts",
+      "lineNumber": 402,
+      "signature": "useCreateEnseigneIndividualCustomer() {",
+      "domain": "customers",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useCreateEnseigneOrganisation",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-enseigne-customers.ts",
+      "lineNumber": 360,
+      "signature": "useCreateEnseigneOrganisation() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useCreateLinkMeOrder",
+      "file": "/packages/@verone/orders/src/hooks/linkme/use-linkme-orders.ts",
+      "lineNumber": 248,
+      "signature": "useCreateLinkMeOrder() {",
+      "domain": "orders",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useCreateLinkMeOrder",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-orders.ts",
+      "lineNumber": 507,
+      "signature": "useCreateLinkMeOrder() {",
+      "domain": "orders",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useCreateLinkMeUser",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-users.ts",
+      "lineNumber": 332,
+      "signature": "useCreateLinkMeUser() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useCreateOrganisationContacts",
+      "file": "/apps/linkme/src/lib/hooks/use-organisation-contacts.ts",
+      "lineNumber": 312,
+      "signature": "useCreateOrganisationContacts() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useCreatePaymentRequest",
+      "file": "/apps/linkme/src/lib/hooks/use-payment-requests.ts",
+      "lineNumber": 179,
+      "signature": "useCreatePaymentRequest() {",
+      "domain": "finance",
+      "usageCount": 2,
+      "location": "apps"
+    },
+    {
+      "name": "useCreatePaymentRequestAdmin",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-payment-requests-admin.ts",
+      "lineNumber": 250,
+      "signature": "useCreatePaymentRequestAdmin() {",
+      "domain": "finance",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useCreatePriceList",
+      "file": "/packages/@verone/finance/src/hooks/use-price-lists.ts",
+      "lineNumber": 313,
+      "signature": "useCreatePriceList() {",
+      "domain": "finance",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useCreatePriceListItem",
+      "file": "/packages/@verone/finance/src/hooks/use-price-lists.ts",
+      "lineNumber": 526,
+      "signature": "useCreatePriceListItem() {",
+      "domain": "finance",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useCreatePricingTier",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-storage.ts",
+      "lineNumber": 400,
+      "signature": "useCreatePricingTier() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useCreateProductVariant",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-product-variants.ts",
+      "lineNumber": 92,
+      "signature": "useCreateProductVariant() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useCreateSelection",
+      "file": "/apps/linkme/src/lib/hooks/use-user-selection.ts",
+      "lineNumber": 307,
+      "signature": "useCreateSelection() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useCreateStorageAllocation",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-storage.ts",
+      "lineNumber": 215,
+      "signature": "useCreateStorageAllocation() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useCriticalTesting",
+      "file": "/packages/@verone/testing/src/hooks/use-critical-testing.ts",
+      "lineNumber": 51,
+      "signature": "useCriticalTesting(options: UseCriticalTestingOptions = {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useCurrentUser",
+      "file": "/packages/@verone/common/src/hooks/use-current-user.ts",
+      "lineNumber": 55,
+      "signature": "useCurrentUser(): CurrentUserResult {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useCurrentUserId",
+      "file": "/packages/@verone/common/src/hooks/use-current-user.ts",
+      "lineNumber": 126,
+      "signature": "useCurrentUserId(): string | null {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useCustomerPricing",
+      "file": "/packages/@verone/finance/src/hooks/use-pricing.ts",
+      "lineNumber": 402,
+      "signature": "useCustomerPricing( customerId: string, customerType: 'organization' | 'individual' ) {",
+      "domain": "customers",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useCustomers",
+      "file": "/packages/@verone/customers/src/hooks/use-customers.ts",
+      "lineNumber": 54,
+      "signature": "useCustomers(filters?: CustomerFilters) {",
+      "domain": "customers",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "useCustomers",
+      "file": "/packages/@verone/organisations/src/hooks/use-organisations.ts",
+      "lineNumber": 767,
+      "signature": "useCustomers(filters?: Omit<OrganisationFilters, 'type'>) {",
+      "domain": "customers",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "useCustomerSamples",
+      "file": "/packages/@verone/customers/src/hooks/use-customer-samples.ts",
+      "lineNumber": 102,
+      "signature": "useCustomerSamples(filters?: SampleFilters) {",
+      "domain": "customers",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useDashboardAnalytics",
+      "file": "/packages/@verone/dashboard/src/hooks/use-dashboard-analytics.ts",
+      "lineNumber": 48,
+      "signature": "useDashboardAnalytics() {",
+      "domain": "dashboard",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useDashboardNotifications",
+      "file": "/packages/@verone/dashboard/src/hooks/use-dashboard-notifications.ts",
+      "lineNumber": 44,
+      "signature": "useDashboardNotifications( limit = 10 ): UseDashboardNotificationsResult {",
+      "domain": "dashboard",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useDashboardPreferences",
+      "file": "/apps/back-office/src/app/(protected)/dashboard/hooks/use-dashboard-preferences.ts",
+      "lineNumber": 54,
+      "signature": "useDashboardPreferences( tab: DashboardTab ): UseDashboardPreferencesReturn {",
+      "domain": "dashboard",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useDatabaseNotifications",
+      "file": "/packages/@verone/notifications/src/hooks/use-database-notifications.ts",
+      "lineNumber": 96,
+      "signature": "useDatabaseNotifications(): DatabaseNotificationsHook {",
+      "domain": "notifications",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useDebounce",
+      "file": "/packages/@verone/hooks/src/use-debounce.ts",
+      "lineNumber": 24,
+      "signature": "useDebounce<T>(value: T, delay: number = 500): T {",
+      "domain": "utility",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "useDeleteEnseigne",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-enseignes.ts",
+      "lineNumber": 355,
+      "signature": "useDeleteEnseigne() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useDeleteLinkMeUser",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-users.ts",
+      "lineNumber": 481,
+      "signature": "useDeleteLinkMeUser() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useDeletePriceList",
+      "file": "/packages/@verone/finance/src/hooks/use-price-lists.ts",
+      "lineNumber": 468,
+      "signature": "useDeletePriceList() {",
+      "domain": "finance",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useDeletePriceListItem",
+      "file": "/packages/@verone/finance/src/hooks/use-price-lists.ts",
+      "lineNumber": 684,
+      "signature": "useDeletePriceListItem() {",
+      "domain": "finance",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useDeletePricingTier",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-storage.ts",
+      "lineNumber": 442,
+      "signature": "useDeletePricingTier() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useDeleteProductImage",
+      "file": "/apps/linkme/src/lib/hooks/use-product-images.ts",
+      "lineNumber": 186,
+      "signature": "useDeleteProductImage() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useDeleteProductVariant",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-product-variants.ts",
+      "lineNumber": 152,
+      "signature": "useDeleteProductVariant() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useDeleteSelection",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-selections.ts",
+      "lineNumber": 609,
+      "signature": "useDeleteSelection() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useDeleteSelectionImage",
+      "file": "/apps/linkme/src/lib/hooks/use-selection-image.ts",
+      "lineNumber": 145,
+      "signature": "useDeleteSelectionImage() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useDraftPurchaseOrder",
+      "file": "/packages/@verone/orders/src/hooks/use-draft-purchase-order.ts",
+      "lineNumber": 25,
+      "signature": "useDraftPurchaseOrder() {",
+      "domain": "orders",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useEligibleProducts",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-catalog.ts",
+      "lineNumber": 446,
+      "signature": "useEligibleProducts() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useEnseigne",
+      "file": "/packages/@verone/organisations/src/hooks/use-enseignes.ts",
+      "lineNumber": 390,
+      "signature": "useEnseigne(id: string) {",
+      "domain": "common",
+      "usageCount": 5,
+      "location": "packages"
+    },
+    {
+      "name": "useEnseigneId",
+      "file": "/apps/linkme/src/lib/hooks/use-enseigne-id.ts",
+      "lineNumber": 26,
+      "signature": "useEnseigneId(): string | null {",
+      "domain": "linkme",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useEnseigneIdFromAffiliate",
+      "file": "/apps/linkme/src/lib/hooks/use-enseigne-id-from-affiliate.ts",
+      "lineNumber": 28,
+      "signature": "useEnseigneIdFromAffiliate(affiliateId: string | null) {",
+      "domain": "linkme",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useEnseigneOrganisations",
+      "file": "/apps/linkme/src/lib/hooks/use-enseigne-organisations.ts",
+      "lineNumber": 57,
+      "signature": "useEnseigneOrganisations( affiliateId: string | null, options: UseEnseigneOrganisationsOptions = {",
+      "domain": "linkme",
+      "usageCount": 4,
+      "location": "apps"
+    },
+    {
+      "name": "useEnseigneParentOrganisation",
+      "file": "/apps/linkme/src/lib/hooks/use-enseigne-parent-organisation.ts",
+      "lineNumber": 34,
+      "signature": "useEnseigneParentOrganisation(enseigneId: string | null) {",
+      "domain": "linkme",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useEnseignes",
+      "file": "/packages/@verone/organisations/src/hooks/use-enseignes.ts",
+      "lineNumber": 65,
+      "signature": "useEnseignes(filters?: EnseigneFilters) {",
+      "domain": "common",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useEnseigneSourcedProducts",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-selections.ts",
+      "lineNumber": 742,
+      "signature": "useEnseigneSourcedProducts(enseigneId: string | null) {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useEnseigneStats",
+      "file": "/packages/@verone/organisations/src/hooks/use-enseigne-stats.ts",
+      "lineNumber": 54,
+      "signature": "useEnseigneStats(enseigneId: string | null) {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useErrorReporting",
+      "file": "/packages/@verone/testing/src/hooks/use-error-reporting.ts",
+      "lineNumber": 68,
+      "signature": "useErrorReporting(options: UseErrorReportingOptions = {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useEventListener",
+      "file": "/packages/@verone/hooks/src/use-event-listener.ts",
+      "lineNumber": 24,
+      "signature": "useEventListener<K extends keyof WindowEventMap>( eventName: K, handler: (event: WindowEventMap[K]) => void, element?: HTMLElement | Window | null ): void {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useExpenses",
+      "file": "/packages/@verone/finance/src/hooks/use-expenses.ts",
+      "lineNumber": 102,
+      "signature": "useExpenses( initialFilters: ExpenseFilters = {",
+      "domain": "finance",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useFamilies",
+      "file": "/packages/@verone/categories/src/hooks/use-families.ts",
+      "lineNumber": 17,
+      "signature": "useFamilies() {",
+      "domain": "common",
+      "usageCount": 7,
+      "location": "packages"
+    },
+    {
+      "name": "useFeaturedCatalogProducts",
+      "file": "/apps/linkme/src/lib/hooks/use-linkme-catalog.ts",
+      "lineNumber": 271,
+      "signature": "useFeaturedCatalogProducts() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useFeaturedSelections",
+      "file": "/apps/linkme/src/lib/hooks/use-linkme-public.ts",
+      "lineNumber": 18,
+      "signature": "useFeaturedSelections() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useFinancialDocuments",
+      "file": "/packages/@verone/finance/src/hooks/use-financial-documents.ts",
+      "lineNumber": 98,
+      "signature": "useFinancialDocuments(filters?: FinancialDocumentFilters) {",
+      "domain": "finance",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useFinancialPayments",
+      "file": "/packages/@verone/finance/src/hooks/use-financial-payments.ts",
+      "lineNumber": 59,
+      "signature": "useFinancialPayments(documentId?: string) {",
+      "domain": "finance",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useFormMessages",
+      "file": "/apps/back-office/src/hooks/use-form-messages.ts",
+      "lineNumber": 43,
+      "signature": "useFormMessages(submissionId: string): UseFormMessagesReturn {",
+      "domain": "common",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useGlobalStorageOverview",
+      "file": "/apps/back-office/src/app/(protected)/stocks/stockage/hooks/use-storage-billing.ts",
+      "lineNumber": 119,
+      "signature": "useGlobalStorageOverview() {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useGlobalStorageTotals",
+      "file": "/apps/back-office/src/app/(protected)/stocks/stockage/hooks/use-storage-billing.ts",
+      "lineNumber": 82,
+      "signature": "useGlobalStorageTotals() {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useGlobeStats",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-page-config.ts",
+      "lineNumber": 186,
+      "signature": "useGlobeStats() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useGoogleMerchantConfig",
+      "file": "/packages/@verone/channels/src/hooks/use-google-merchant-config.ts",
+      "lineNumber": 48,
+      "signature": "useGoogleMerchantConfig() {",
+      "domain": "common",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useGoogleMerchantEligibleProducts",
+      "file": "/packages/@verone/channels/src/hooks/google-merchant/use-google-merchant-eligible-products.ts",
+      "lineNumber": 38,
+      "signature": "useGoogleMerchantEligibleProducts() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useGoogleMerchantProducts",
+      "file": "/packages/@verone/channels/src/hooks/use-google-merchant-products.ts",
+      "lineNumber": 63,
+      "signature": "useGoogleMerchantProducts() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useGoogleMerchantStats",
+      "file": "/packages/@verone/channels/src/hooks/use-google-merchant-products.ts",
+      "lineNumber": 105,
+      "signature": "useGoogleMerchantStats() {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useGoogleMerchantStats",
+      "file": "/packages/@verone/channels/src/hooks/use-google-merchant-stats.ts",
+      "lineNumber": 40,
+      "signature": "useGoogleMerchantStats() {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useGoogleMerchantSync",
+      "file": "/packages/@verone/channels/src/hooks/use-google-merchant-sync.ts",
+      "lineNumber": 55,
+      "signature": "useGoogleMerchantSync() {",
+      "domain": "common",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useGroupUsedColors",
+      "file": "/packages/@verone/products/src/hooks/use-product-colors.ts",
+      "lineNumber": 11,
+      "signature": "useGroupUsedColors( groupId: string, variantType: 'color' | 'material' | 'size' | 'pattern' = 'color' ) {",
+      "domain": "products",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useHover",
+      "file": "/packages/@verone/hooks/src/use-hover.ts",
+      "lineNumber": 25,
+      "signature": "useHover<T extends HTMLElement = HTMLElement>( ref: RefObject<T> ): boolean {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useImageUpload",
+      "file": "/packages/@verone/common/src/hooks/use-image-upload.ts",
+      "lineNumber": 83,
+      "signature": "useImageUpload({",
+      "domain": "common",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useIncompleteItems",
+      "file": "/apps/linkme/src/lib/hooks/use-incomplete-items.ts",
+      "lineNumber": 42,
+      "signature": "useIncompleteItems() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useIncrementSelectionViews",
+      "file": "/apps/linkme/src/lib/hooks/use-linkme-public.ts",
+      "lineNumber": 231,
+      "signature": "useIncrementSelectionViews() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useInlineEdit",
+      "file": "/packages/@verone/common/src/hooks/use-inline-edit.ts",
+      "lineNumber": 55,
+      "signature": "useInlineEdit(options: UseInlineEditOptions) {",
+      "domain": "common",
+      "usageCount": 6,
+      "location": "packages"
+    },
+    {
+      "name": "useIntersectionObserver",
+      "file": "/packages/@verone/hooks/src/use-intersection-observer.ts",
+      "lineNumber": 38,
+      "signature": "useIntersectionObserver<T extends HTMLElement = HTMLElement>( ref: RefObject<T>, options: UseIntersectionObserverOptions = {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useInterval",
+      "file": "/packages/@verone/hooks/src/use-interval.ts",
+      "lineNumber": 30,
+      "signature": "useInterval(callback: () => void, delay: number | null): void {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useInvalidatePricing",
+      "file": "/packages/@verone/finance/src/hooks/use-pricing.ts",
+      "lineNumber": 485,
+      "signature": "useInvalidatePricing() {",
+      "domain": "finance",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useIsMobile",
+      "file": "/packages/@verone/ui-business/src/hooks/use-mobile.tsx",
+      "lineNumber": 7,
+      "signature": "useIsMobile() {",
+      "domain": "utility",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useLinkMeAffiliate",
+      "file": "/packages/@verone/orders/src/hooks/linkme/use-linkme-affiliates.ts",
+      "lineNumber": 220,
+      "signature": "useLinkMeAffiliate(affiliateId: string | null) {",
+      "domain": "orders",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useLinkMeAffiliate",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-affiliates.ts",
+      "lineNumber": 220,
+      "signature": "useLinkMeAffiliate(affiliateId: string | null) {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeAffiliateCustomers",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-enseigne-customers.ts",
+      "lineNumber": 293,
+      "signature": "useLinkMeAffiliateCustomers( affiliate: LinkMeAffiliateInfo | null ) {",
+      "domain": "customers",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeAffiliates",
+      "file": "/packages/@verone/orders/src/hooks/linkme/use-linkme-affiliates.ts",
+      "lineNumber": 208,
+      "signature": "useLinkMeAffiliates(type?: AffiliateType) {",
+      "domain": "orders",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useLinkMeAffiliates",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-affiliates.ts",
+      "lineNumber": 208,
+      "signature": "useLinkMeAffiliates(type?: AffiliateType) {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeAffiliatesForStorage",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-affiliates-for-storage.ts",
+      "lineNumber": 33,
+      "signature": "useLinkMeAffiliatesForStorage() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeAnalytics",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-analytics.ts",
+      "lineNumber": 137,
+      "signature": "useLinkMeAnalytics( period: AnalyticsPeriod = 'month', dateOptions?: DateOptions ) {",
+      "domain": "linkme",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeCatalogProducts",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-catalog.ts",
+      "lineNumber": 434,
+      "signature": "useLinkMeCatalogProducts() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeCatalogProducts",
+      "file": "/apps/linkme/src/lib/hooks/use-linkme-catalog.ts",
+      "lineNumber": 258,
+      "signature": "useLinkMeCatalogProducts() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeCatalogStats",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-catalog.ts",
+      "lineNumber": 812,
+      "signature": "useLinkMeCatalogStats() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeDashboard",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-dashboard.ts",
+      "lineNumber": 127,
+      "signature": "useLinkMeDashboard() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeEnseigne",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-enseignes.ts",
+      "lineNumber": 263,
+      "signature": "useLinkMeEnseigne(enseigneId: string | null) {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeEnseigneCustomers",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-enseigne-customers.ts",
+      "lineNumber": 237,
+      "signature": "useLinkMeEnseigneCustomers(enseigneId: string | null) {",
+      "domain": "customers",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeEnseigneIndividualCustomers",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-enseigne-customers.ts",
+      "lineNumber": 222,
+      "signature": "useLinkMeEnseigneIndividualCustomers( enseigneId: string | null ) {",
+      "domain": "customers",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeEnseigneOrganisations",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-enseigne-customers.ts",
+      "lineNumber": 210,
+      "signature": "useLinkMeEnseigneOrganisations(enseigneId: string | null) {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeEnseigneOrganisations",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-enseignes.ts",
+      "lineNumber": 275,
+      "signature": "useLinkMeEnseigneOrganisations(enseigneId: string | null) {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeEnseignes",
+      "file": "/packages/@verone/orders/src/hooks/linkme/use-linkme-enseignes.ts",
+      "lineNumber": 122,
+      "signature": "useLinkMeEnseignes() {",
+      "domain": "orders",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useLinkMeEnseignes",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-enseignes.ts",
+      "lineNumber": 251,
+      "signature": "useLinkMeEnseignes() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeEnseignesSelect",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-users.ts",
+      "lineNumber": 304,
+      "signature": "useLinkMeEnseignesSelect() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeEnseignesStats",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-enseignes.ts",
+      "lineNumber": 453,
+      "signature": "useLinkMeEnseignesStats() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeOrder",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-orders.ts",
+      "lineNumber": 523,
+      "signature": "useLinkMeOrder(orderId: string | null) {",
+      "domain": "orders",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeOrders",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-orders.ts",
+      "lineNumber": 496,
+      "signature": "useLinkMeOrders() {",
+      "domain": "orders",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeOrders",
+      "file": "/apps/linkme/src/hooks/use-linkme-orders.ts",
+      "lineNumber": 106,
+      "signature": "useLinkMeOrders( affiliateId: string | null, fetchAll: boolean = false ) {",
+      "domain": "orders",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeOrganisationIndividualCustomers",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-enseigne-customers.ts",
+      "lineNumber": 257,
+      "signature": "useLinkMeOrganisationIndividualCustomers( organisationId: string | null, affiliateId?: string | null ) {",
+      "domain": "customers",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeOrganisationsSelect",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-users.ts",
+      "lineNumber": 317,
+      "signature": "useLinkMeOrganisationsSelect( enseigneId?: string, forOrgIndependante: boolean = false ) {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeOwners",
+      "file": "/apps/back-office/src/app/(protected)/stocks/stockage/hooks/use-linkme-owners.ts",
+      "lineNumber": 21,
+      "signature": "useLinkMeOwners(searchTerm?: string) {",
+      "domain": "linkme",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMePageConfig",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-page-config.ts",
+      "lineNumber": 147,
+      "signature": "useLinkMePageConfig(pageId: string) {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMePageConfigurations",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-page-config.ts",
+      "lineNumber": 135,
+      "signature": "useLinkMePageConfigurations() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeProductDetail",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-catalog.ts",
+      "lineNumber": 1048,
+      "signature": "useLinkMeProductDetail(catalogProductId: string | null) {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeProductVariants",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-catalog.ts",
+      "lineNumber": 1223,
+      "signature": "useLinkMeProductVariants(productId: string | null) {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeSelection",
+      "file": "/packages/@verone/orders/src/hooks/linkme/use-linkme-selections.ts",
+      "lineNumber": 301,
+      "signature": "useLinkMeSelection(selectionId: string | null) {",
+      "domain": "orders",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useLinkMeSelection",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-selections.ts",
+      "lineNumber": 314,
+      "signature": "useLinkMeSelection(selectionId: string | null) {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeSelectionsByAffiliate",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-affiliates.ts",
+      "lineNumber": 233,
+      "signature": "useLinkMeSelectionsByAffiliate(affiliateId: string | null) {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeSelectionsByEnseigne",
+      "file": "/packages/@verone/orders/src/hooks/linkme/use-linkme-selections.ts",
+      "lineNumber": 314,
+      "signature": "useLinkMeSelectionsByEnseigne(enseigneId: string | null) {",
+      "domain": "orders",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useLinkMeSelectionsByEnseigne",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-selections.ts",
+      "lineNumber": 840,
+      "signature": "useLinkMeSelectionsByEnseigne(enseigneId: string | null) {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeSuppliers",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-suppliers.ts",
+      "lineNumber": 86,
+      "signature": "useLinkMeSuppliers() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeUser",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-users.ts",
+      "lineNumber": 280,
+      "signature": "useLinkMeUser(userId: string | null) {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeUsers",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-users.ts",
+      "lineNumber": 268,
+      "signature": "useLinkMeUsers() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeUsersByEnseigne",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-users.ts",
+      "lineNumber": 292,
+      "signature": "useLinkMeUsersByEnseigne(enseigneId: string | null) {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLinkMeUsersStats",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-users.ts",
+      "lineNumber": 507,
+      "signature": "useLinkMeUsersStats() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useLocalStorage",
+      "file": "/packages/@verone/hooks/src/use-local-storage.ts",
+      "lineNumber": 21,
+      "signature": "useLocalStorage<T>( key: string, initialValue: T ): [T, (value: SetValue<T>) => void] {",
+      "domain": "utility",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "useLogoUpload",
+      "file": "/packages/@verone/common/src/hooks/use-logo-upload.ts",
+      "lineNumber": 39,
+      "signature": "useLogoUpload({",
+      "domain": "common",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "useMarkAsPaid",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-payment-requests-admin.ts",
+      "lineNumber": 179,
+      "signature": "useMarkAsPaid() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useMarkNotificationReviewed",
+      "file": "/apps/back-office/src/hooks/use-archive-notifications.ts",
+      "lineNumber": 111,
+      "signature": "useMarkNotificationReviewed() {",
+      "domain": "notifications",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useMatchingRules",
+      "file": "/packages/@verone/finance/src/hooks/use-matching-rules.ts",
+      "lineNumber": 133,
+      "signature": "useMatchingRules(): UseMatchingRulesReturn {",
+      "domain": "finance",
+      "usageCount": 4,
+      "location": "packages"
+    },
+    {
+      "name": "useMCPResolution",
+      "file": "/packages/@verone/admin/src/hooks/use-mcp-resolution.ts",
+      "lineNumber": 159,
+      "signature": "useMCPResolution() {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useMediaQuery",
+      "file": "/packages/@verone/hooks/src/use-media-query.ts",
+      "lineNumber": 19,
+      "signature": "useMediaQuery(query: string): boolean {",
+      "domain": "query",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useMissingInvoices",
+      "file": "/packages/@verone/finance/src/hooks/use-missing-invoices.ts",
+      "lineNumber": 70,
+      "signature": "useMissingInvoices(): UseMissingInvoicesResult {",
+      "domain": "finance",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useMobile",
+      "file": "/packages/@verone/hooks/src/use-mobile.ts",
+      "lineNumber": 22,
+      "signature": "useMobile(): boolean {",
+      "domain": "utility",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useMonthlyKPIs",
+      "file": "/packages/@verone/orders/src/hooks/use-monthly-kpis.ts",
+      "lineNumber": 131,
+      "signature": "useMonthlyKPIs(options: UseMonthlyKPIsOptions = {",
+      "domain": "orders",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useMovementsHistory",
+      "file": "/packages/@verone/stock/src/hooks/use-movements-history.ts",
+      "lineNumber": 102,
+      "signature": "useMovementsHistory(options?: UseMovementsHistoryOptions) {",
+      "domain": "stock",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "useNetworkStats",
+      "file": "/apps/linkme/src/lib/hooks/use-affiliate-network.ts",
+      "lineNumber": 191,
+      "signature": "useNetworkStats(affiliateId: string | null) {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useOrderItems",
+      "file": "/packages/@verone/orders/src/hooks/use-order-items.ts",
+      "lineNumber": 99,
+      "signature": "useOrderItems({",
+      "domain": "orders",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "useOrderMetrics",
+      "file": "/packages/@verone/dashboard/src/hooks/metrics/use-order-metrics.ts",
+      "lineNumber": 24,
+      "signature": "useOrderMetrics() {",
+      "domain": "orders",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useOrdersStatus",
+      "file": "/packages/@verone/orders/src/hooks/use-orders-status.ts",
+      "lineNumber": 58,
+      "signature": "useOrdersStatus(): UseOrdersStatusResult {",
+      "domain": "orders",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useOrderStats",
+      "file": "/apps/linkme/src/hooks/use-linkme-orders.ts",
+      "lineNumber": 216,
+      "signature": "useOrderStats(orders: LinkMeOrder[]): OrderStats {",
+      "domain": "orders",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useOrganisation",
+      "file": "/packages/@verone/organisations/src/hooks/use-organisations.ts",
+      "lineNumber": 771,
+      "signature": "useOrganisation(id: string) {",
+      "domain": "common",
+      "usageCount": 20,
+      "location": "packages"
+    },
+    {
+      "name": "useOrganisationContacts",
+      "file": "/apps/linkme/src/lib/hooks/use-organisation-contacts.ts",
+      "lineNumber": 62,
+      "signature": "useOrganisationContacts( organisationId: string | null, enseigneId?: string | null, isEnseigneParent?: boolean ) {",
+      "domain": "linkme",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useOrganisationDetail",
+      "file": "/apps/linkme/src/lib/hooks/use-organisation-detail.ts",
+      "lineNumber": 102,
+      "signature": "useOrganisationDetail(organisationId: string | null) {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useOrganisations",
+      "file": "/packages/@verone/organisations/src/hooks/use-organisations.ts",
+      "lineNumber": 190,
+      "signature": "useOrganisations(filters?: OrganisationFilters) {",
+      "domain": "common",
+      "usageCount": 13,
+      "location": "packages"
+    },
+    {
+      "name": "useOrganisationStats",
+      "file": "/apps/linkme/src/lib/hooks/use-organisation-stats.ts",
+      "lineNumber": 46,
+      "signature": "useOrganisationStats(enseigneId: string | null) {",
+      "domain": "linkme",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useOrganisationTabCounts",
+      "file": "/packages/@verone/organisations/src/hooks/use-organisation-tab-counts.ts",
+      "lineNumber": 30,
+      "signature": "useOrganisationTabCounts({",
+      "domain": "common",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "useOrganisationTransactions",
+      "file": "/packages/@verone/finance/src/hooks/use-organisation-transactions.ts",
+      "lineNumber": 57,
+      "signature": "useOrganisationTransactions( organisationId: string | null ): UseOrganisationTransactionsReturn {",
+      "domain": "finance",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "usePaymentRequestDetail",
+      "file": "/apps/linkme/src/lib/hooks/use-payment-requests.ts",
+      "lineNumber": 92,
+      "signature": "usePaymentRequestDetail(requestId: string | null) {",
+      "domain": "finance",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "usePaymentRequestsAdmin",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-payment-requests-admin.ts",
+      "lineNumber": 124,
+      "signature": "usePaymentRequestsAdmin(statusFilter?: string) {",
+      "domain": "finance",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "usePaymentRequestsCounts",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-payment-requests-admin.ts",
+      "lineNumber": 77,
+      "signature": "usePaymentRequestsCounts() {",
+      "domain": "finance",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "usePcgCategories",
+      "file": "/packages/@verone/finance/src/hooks/use-pcg-categories.ts",
+      "lineNumber": 56,
+      "signature": "usePcgCategories(): UsePcgCategoriesReturn {",
+      "domain": "finance",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "usePendingApprovals",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-product-approvals.ts",
+      "lineNumber": 69,
+      "signature": "usePendingApprovals() {",
+      "domain": "linkme",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "usePendingApprovalsCount",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-product-approvals.ts",
+      "lineNumber": 45,
+      "signature": "usePendingApprovalsCount() {",
+      "domain": "linkme",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "usePendingOrders",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-order-actions.ts",
+      "lineNumber": 692,
+      "signature": "usePendingOrders() {",
+      "domain": "orders",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "usePendingOrdersCount",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-order-actions.ts",
+      "lineNumber": 664,
+      "signature": "usePendingOrdersCount() {",
+      "domain": "orders",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "usePendingOrganisations",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-organisation-approvals.ts",
+      "lineNumber": 100,
+      "signature": "usePendingOrganisations() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "usePendingOrganisationsCount",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-organisation-approvals.ts",
+      "lineNumber": 51,
+      "signature": "usePendingOrganisationsCount() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "usePerformanceAnalytics",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-performance-analytics.ts",
+      "lineNumber": 130,
+      "signature": "usePerformanceAnalytics(filters: PerformanceFilters) {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "usePollGoogleMerchantStatuses",
+      "file": "/packages/@verone/channels/src/hooks/google-merchant/use-poll-google-merchant-statuses.ts",
+      "lineNumber": 39,
+      "signature": "usePollGoogleMerchantStatuses() {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "usePriceList",
+      "file": "/packages/@verone/finance/src/hooks/use-price-lists.ts",
+      "lineNumber": 190,
+      "signature": "usePriceList(priceListId: string | null) {",
+      "domain": "finance",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "usePriceListItems",
+      "file": "/packages/@verone/finance/src/hooks/use-price-lists.ts",
+      "lineNumber": 233,
+      "signature": "usePriceListItems(priceListId: string | null) {",
+      "domain": "finance",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "usePriceLists",
+      "file": "/packages/@verone/finance/src/hooks/use-price-lists.ts",
+      "lineNumber": 133,
+      "signature": "usePriceLists(filters?: {",
+      "domain": "finance",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useProduct",
+      "file": "/packages/@verone/products/src/hooks/use-products.ts",
+      "lineNumber": 455,
+      "signature": "useProduct(id: string) {",
+      "domain": "products",
+      "usageCount": 24,
+      "location": "packages"
+    },
+    {
+      "name": "useProductColors",
+      "file": "/packages/@verone/products/src/hooks/use-product-colors.ts",
+      "lineNumber": 96,
+      "signature": "useProductColors() {",
+      "domain": "products",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useProductCommissionHistory",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-product-approvals.ts",
+      "lineNumber": 394,
+      "signature": "useProductCommissionHistory(productId: string | undefined) {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useProductDetail",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-product-detail.ts",
+      "lineNumber": 13,
+      "signature": "useProductDetail(productId: string | null) {",
+      "domain": "products",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useProductDetail",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-product-variants.ts",
+      "lineNumber": 40,
+      "signature": "useProductDetail(productId: string) {",
+      "domain": "products",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useProductDetail",
+      "file": "/apps/site-internet/src/hooks/use-product-detail.ts",
+      "lineNumber": 13,
+      "signature": "useProductDetail(slug: string | null) {",
+      "domain": "products",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useProductImages",
+      "file": "/packages/@verone/products/src/hooks/use-product-images.ts",
+      "lineNumber": 30,
+      "signature": "useProductImages({",
+      "domain": "products",
+      "usageCount": 9,
+      "location": "packages"
+    },
+    {
+      "name": "useProductImages",
+      "file": "/apps/linkme/src/lib/hooks/use-product-images.ts",
+      "lineNumber": 32,
+      "signature": "useProductImages(productId: string | undefined) {",
+      "domain": "products",
+      "usageCount": 9,
+      "location": "apps"
+    },
+    {
+      "name": "useProductImagesBatch",
+      "file": "/packages/@verone/products/src/hooks/use-product-images.ts",
+      "lineNumber": 447,
+      "signature": "useProductImagesBatch(productIds: string[]) {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useProductMetrics",
+      "file": "/packages/@verone/dashboard/src/hooks/metrics/use-product-metrics.ts",
+      "lineNumber": 12,
+      "signature": "useProductMetrics() {",
+      "domain": "products",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useProductPackages",
+      "file": "/packages/@verone/products/src/hooks/use-product-packages.ts",
+      "lineNumber": 20,
+      "signature": "useProductPackages({",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useProductPrice",
+      "file": "/packages/@verone/finance/src/hooks/use-pricing.ts",
+      "lineNumber": 83,
+      "signature": "useProductPrice(params: PricingParams) {",
+      "domain": "products",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "useProductPrimaryImage",
+      "file": "/packages/@verone/products/src/hooks/use-product-primary-image.ts",
+      "lineNumber": 19,
+      "signature": "useProductPrimaryImage(productId: string | undefined) {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useProductPrimaryImages",
+      "file": "/packages/@verone/products/src/hooks/use-product-primary-image.ts",
+      "lineNumber": 73,
+      "signature": "useProductPrimaryImages(productIds: string[]) {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useProducts",
+      "file": "/packages/@verone/products/src/hooks/use-products.ts",
+      "lineNumber": 274,
+      "signature": "useProducts(filters?: ProductFilters, page: number = 0) {",
+      "domain": "products",
+      "usageCount": 10,
+      "location": "packages"
+    },
+    {
+      "name": "useProductsForAffiliate",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-products-for-affiliate.ts",
+      "lineNumber": 57,
+      "signature": "useProductsForAffiliate( affiliateId: string | null, enseigneId: string | null, organisationId: string | null = null, searchTerm?: string ) {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useProductsForStorage",
+      "file": "/apps/back-office/src/app/(protected)/stocks/stockage/hooks/use-products-for-storage.ts",
+      "lineNumber": 50,
+      "signature": "useProductsForStorage( searchTerm?: string ): UseQueryResult<ProductForStorage[]> {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useProductStatus",
+      "file": "/packages/@verone/products/src/hooks/use-product-status.ts",
+      "lineNumber": 82,
+      "signature": "useProductStatus({",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useProductVariantEditing",
+      "file": "/packages/@verone/products/src/hooks/use-variant-groups.ts",
+      "lineNumber": 1342,
+      "signature": "useProductVariantEditing() {",
+      "domain": "products",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useProductVariants",
+      "file": "/packages/@verone/products/src/hooks/use-product-variants.ts",
+      "lineNumber": 15,
+      "signature": "useProductVariants(productId: string) {",
+      "domain": "products",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useProductVariants",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-product-variants.ts",
+      "lineNumber": 60,
+      "signature": "useProductVariants(productId: string) {",
+      "domain": "products",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "usePurchaseOrders",
+      "file": "/packages/@verone/orders/src/hooks/use-purchase-orders.ts",
+      "lineNumber": 182,
+      "signature": "usePurchaseOrders() {",
+      "domain": "orders",
+      "usageCount": 7,
+      "location": "packages"
+    },
+    {
+      "name": "usePurchaseReceptions",
+      "file": "/packages/@verone/orders/src/hooks/use-purchase-receptions.ts",
+      "lineNumber": 69,
+      "signature": "usePurchaseReceptions() {",
+      "domain": "orders",
+      "usageCount": 5,
+      "location": "packages"
+    },
+    {
+      "name": "useQuantityBreaks",
+      "file": "/packages/@verone/finance/src/hooks/use-pricing.ts",
+      "lineNumber": 548,
+      "signature": "useQuantityBreaks(params: QuantityBreaksParams) {",
+      "domain": "finance",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useReadLocalStorage",
+      "file": "/packages/@verone/hooks/src/use-read-local-storage.ts",
+      "lineNumber": 20,
+      "signature": "useReadLocalStorage<T>(key: string): T | null {",
+      "domain": "utility",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useRealDashboardMetrics",
+      "file": "/packages/@verone/dashboard/src/hooks/use-real-dashboard-metrics.ts",
+      "lineNumber": 106,
+      "signature": "useRealDashboardMetrics() {",
+      "domain": "dashboard",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useRecentActivity",
+      "file": "/packages/@verone/dashboard/src/hooks/use-recent-activity.ts",
+      "lineNumber": 47,
+      "signature": "useRecentActivity(limit = 10): UseRecentActivityResult {",
+      "domain": "dashboard",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useRecentActivity",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-dashboard.ts",
+      "lineNumber": 239,
+      "signature": "useRecentActivity(limit: number = 5) {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useRecentConversions",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-tracking-stats.ts",
+      "lineNumber": 148,
+      "signature": "useRecentConversions(limit = 10) {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useRecentPaymentRequests",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-payment-requests-admin.ts",
+      "lineNumber": 373,
+      "signature": "useRecentPaymentRequests(limit: number = 5) {",
+      "domain": "finance",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useRefreshGoogleMerchantStats",
+      "file": "/packages/@verone/channels/src/hooks/use-google-merchant-products.ts",
+      "lineNumber": 156,
+      "signature": "useRefreshGoogleMerchantStats() {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useRejectOrder",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-order-actions.ts",
+      "lineNumber": 504,
+      "signature": "useRejectOrder() {",
+      "domain": "orders",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useRejectOrganisation",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-organisation-approvals.ts",
+      "lineNumber": 305,
+      "signature": "useRejectOrganisation() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useRejectProduct",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-product-approvals.ts",
+      "lineNumber": 265,
+      "signature": "useRejectProduct() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useRemoveFromGoogleMerchant",
+      "file": "/packages/@verone/channels/src/hooks/google-merchant/use-remove-from-google-merchant.ts",
+      "lineNumber": 31,
+      "signature": "useRemoveFromGoogleMerchant() {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useRemoveFromSelection",
+      "file": "/apps/linkme/src/lib/hooks/use-user-selection.ts",
+      "lineNumber": 577,
+      "signature": "useRemoveFromSelection() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useRemoveProductFromCatalog",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-catalog.ts",
+      "lineNumber": 489,
+      "signature": "useRemoveProductFromCatalog() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useRemoveProductFromSelection",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-selections.ts",
+      "lineNumber": 439,
+      "signature": "useRemoveProductFromSelection() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useRemoveProductFromSiteInternet",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-site-internet-products.ts",
+      "lineNumber": 164,
+      "signature": "useRemoveProductFromSiteInternet() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useReorderProducts",
+      "file": "/apps/linkme/src/lib/hooks/use-user-selection.ts",
+      "lineNumber": 721,
+      "signature": "useReorderProducts() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useRequestInfo",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-order-actions.ts",
+      "lineNumber": 489,
+      "signature": "useRequestInfo() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useRestoreOrganisation",
+      "file": "/apps/linkme/src/lib/hooks/use-affiliate-network.ts",
+      "lineNumber": 290,
+      "signature": "useRestoreOrganisation() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useRevenueMetrics",
+      "file": "/packages/@verone/dashboard/src/hooks/metrics/use-revenue-metrics.ts",
+      "lineNumber": 18,
+      "signature": "useRevenueMetrics() {",
+      "domain": "dashboard",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useRevertToDraft",
+      "file": "/apps/linkme/src/lib/hooks/use-affiliate-products.ts",
+      "lineNumber": 408,
+      "signature": "useRevertToDraft() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useSalesChannels",
+      "file": "/packages/@verone/finance/src/hooks/use-pricing.ts",
+      "lineNumber": 271,
+      "signature": "useSalesChannels() {",
+      "domain": "finance",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useSalesDashboard",
+      "file": "/packages/@verone/orders/src/hooks/use-sales-dashboard.ts",
+      "lineNumber": 49,
+      "signature": "useSalesDashboard() {",
+      "domain": "orders",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useSalesOrders",
+      "file": "/packages/@verone/orders/src/hooks/use-sales-orders.ts",
+      "lineNumber": 305,
+      "signature": "useSalesOrders() {",
+      "domain": "orders",
+      "usageCount": 6,
+      "location": "packages"
+    },
+    {
+      "name": "useSalesShipments",
+      "file": "/packages/@verone/orders/src/hooks/use-sales-shipments.ts",
+      "lineNumber": 90,
+      "signature": "useSalesShipments() {",
+      "domain": "orders",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "useSampleEligibilityRule",
+      "file": "/packages/@verone/orders/src/hooks/use-sample-eligibility-rule.ts",
+      "lineNumber": 30,
+      "signature": "useSampleEligibilityRule() {",
+      "domain": "orders",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useSampleOrder",
+      "file": "/packages/@verone/orders/src/hooks/use-sample-order.ts",
+      "lineNumber": 17,
+      "signature": "useSampleOrder() {",
+      "domain": "orders",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useSectionLocking",
+      "file": "/packages/@verone/common/src/hooks/use-section-locking.ts",
+      "lineNumber": 167,
+      "signature": "useSectionLocking( sections: TestSection[], getSectionMetrics: (sectionId: string) => TestMetrics, options: UseSectionLockingOptions = {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useSelectionItems",
+      "file": "/apps/linkme/src/lib/hooks/use-user-selection.ts",
+      "lineNumber": 230,
+      "signature": "useSelectionItems(selectionId: string | null) {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useSelectionProductIds",
+      "file": "/apps/linkme/src/lib/hooks/use-user-selection.ts",
+      "lineNumber": 692,
+      "signature": "useSelectionProductIds(selectionId: string | null) {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useSelectionProducts",
+      "file": "/apps/linkme/src/lib/hooks/use-affiliate-orders.ts",
+      "lineNumber": 258,
+      "signature": "useSelectionProducts(selectionId: string | null) {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useSelectionTopProducts",
+      "file": "/apps/linkme/src/lib/hooks/use-affiliate-analytics.ts",
+      "lineNumber": 486,
+      "signature": "useSelectionTopProducts(selectionId: string | null) {",
+      "domain": "products",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useSelectionWithProducts",
+      "file": "/apps/linkme/src/lib/hooks/use-linkme-public.ts",
+      "lineNumber": 128,
+      "signature": "useSelectionWithProducts( affiliateSlug: string, selectionSlug: string ) {",
+      "domain": "products",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useSessionStorage",
+      "file": "/packages/@verone/hooks/src/use-session-storage.ts",
+      "lineNumber": 21,
+      "signature": "useSessionStorage<T>( key: string, initialValue: T ): [T, (value: SetValue<T>) => void] {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useSetPrimaryImage",
+      "file": "/apps/linkme/src/lib/hooks/use-product-images.ts",
+      "lineNumber": 226,
+      "signature": "useSetPrimaryImage() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useSimpleImageUpload",
+      "file": "/packages/@verone/common/src/hooks/use-simple-image-upload.ts",
+      "lineNumber": 27,
+      "signature": "useSimpleImageUpload( options: UseSimpleImageUploadOptions = {",
+      "domain": "common",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useSiteInternetCategories",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-site-internet-categories.ts",
+      "lineNumber": 33,
+      "signature": "useSiteInternetCategories() {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useSiteInternetCategoriesStats",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-site-internet-categories.ts",
+      "lineNumber": 145,
+      "signature": "useSiteInternetCategoriesStats() {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useSiteInternetCollections",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-site-internet-collections.ts",
+      "lineNumber": 33,
+      "signature": "useSiteInternetCollections() {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useSiteInternetCollectionsStats",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-site-internet-collections.ts",
+      "lineNumber": 246,
+      "signature": "useSiteInternetCollectionsStats() {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useSiteInternetConfig",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-site-internet-config.ts",
+      "lineNumber": 30,
+      "signature": "useSiteInternetConfig() {",
+      "domain": "common",
+      "usageCount": 3,
+      "location": "apps"
+    },
+    {
+      "name": "useSiteInternetProducts",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-site-internet-products.ts",
+      "lineNumber": 32,
+      "signature": "useSiteInternetProducts() {",
+      "domain": "products",
+      "usageCount": 2,
+      "location": "apps"
+    },
+    {
+      "name": "useSiteInternetProductsStats",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-site-internet-products.ts",
+      "lineNumber": 238,
+      "signature": "useSiteInternetProductsStats() {",
+      "domain": "products",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useSmartSuggestions",
+      "file": "/packages/@verone/common/src/hooks/use-smart-suggestions.ts",
+      "lineNumber": 47,
+      "signature": "useSmartSuggestions() {",
+      "domain": "common",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useSourcingProducts",
+      "file": "/packages/@verone/products/src/hooks/use-sourcing-products.ts",
+      "lineNumber": 63,
+      "signature": "useSourcingProducts(filters?: SourcingFilters) {",
+      "domain": "products",
+      "usageCount": 4,
+      "location": "packages"
+    },
+    {
+      "name": "useSourcingProducts",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-catalog.ts",
+      "lineNumber": 1572,
+      "signature": "useSourcingProducts() {",
+      "domain": "products",
+      "usageCount": 4,
+      "location": "apps"
+    },
+    {
+      "name": "useStock",
+      "file": "/packages/@verone/stock/src/hooks/use-stock.ts",
+      "lineNumber": 49,
+      "signature": "useStock() {",
+      "domain": "stock",
+      "usageCount": 23,
+      "location": "packages"
+    },
+    {
+      "name": "useStockAlerts",
+      "file": "/packages/@verone/stock/src/hooks/use-stock-alerts.ts",
+      "lineNumber": 68,
+      "signature": "useStockAlerts() {",
+      "domain": "stock",
+      "usageCount": 4,
+      "location": "packages"
+    },
+    {
+      "name": "useStockAlertsCount",
+      "file": "/packages/@verone/stock/src/hooks/use-stock-alerts-count.ts",
+      "lineNumber": 9,
+      "signature": "useStockAlertsCount() {",
+      "domain": "stock",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useStockAnalytics",
+      "file": "/packages/@verone/stock/src/hooks/use-stock-analytics.ts",
+      "lineNumber": 184,
+      "signature": "useStockAnalytics() {",
+      "domain": "stock",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useStockCore",
+      "file": "/packages/@verone/stock/src/hooks/core/use-stock-core.ts",
+      "lineNumber": 198,
+      "signature": "useStockCore({",
+      "domain": "stock",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useStockCore",
+      "file": "/apps/back-office/src/hooks/core/use-stock-core.ts",
+      "lineNumber": 198,
+      "signature": "useStockCore({",
+      "domain": "stock",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useStockDashboard",
+      "file": "/packages/@verone/stock/src/hooks/use-stock-dashboard.ts",
+      "lineNumber": 93,
+      "signature": "useStockDashboard() {",
+      "domain": "stock",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "useStockInventory",
+      "file": "/packages/@verone/stock/src/hooks/use-stock-inventory.ts",
+      "lineNumber": 30,
+      "signature": "useStockInventory() {",
+      "domain": "stock",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useStockMetrics",
+      "file": "/packages/@verone/dashboard/src/hooks/metrics/use-stock-metrics.ts",
+      "lineNumber": 20,
+      "signature": "useStockMetrics() {",
+      "domain": "stock",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useStockMovements",
+      "file": "/packages/@verone/stock/src/hooks/use-stock-movements.ts",
+      "lineNumber": 113,
+      "signature": "useStockMovements() {",
+      "domain": "stock",
+      "usageCount": 12,
+      "location": "packages"
+    },
+    {
+      "name": "useStockOptimized",
+      "file": "/packages/@verone/stock/src/hooks/use-stock-optimized.ts",
+      "lineNumber": 70,
+      "signature": "useStockOptimized(filters: StockFilters = {",
+      "domain": "stock",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useStockOrdersMetrics",
+      "file": "/packages/@verone/stock/src/hooks/use-stock-orders-metrics.ts",
+      "lineNumber": 89,
+      "signature": "useStockOrdersMetrics(): UseStockOrdersMetricsReturn {",
+      "domain": "orders",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useStockReservations",
+      "file": "/packages/@verone/stock/src/hooks/use-stock-reservations.ts",
+      "lineNumber": 66,
+      "signature": "useStockReservations() {",
+      "domain": "stock",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useStockStatus",
+      "file": "/packages/@verone/stock/src/hooks/use-stock-status.ts",
+      "lineNumber": 31,
+      "signature": "useStockStatus(product: StockStatusData): StockStatusResult {",
+      "domain": "stock",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useStockUI",
+      "file": "/packages/@verone/stock/src/hooks/use-stock-ui.ts",
+      "lineNumber": 94,
+      "signature": "useStockUI(config: UseStockUIConfig = {",
+      "domain": "stock",
+      "usageCount": 2,
+      "location": "packages"
+    },
+    {
+      "name": "useStorageEventsHistory",
+      "file": "/apps/back-office/src/app/(protected)/stocks/stockage/hooks/use-storage-billing.ts",
+      "lineNumber": 220,
+      "signature": "useStorageEventsHistory( ownerType: 'enseigne' | 'organisation' | null, ownerId: string | null, limit = 50, offset = 0 ) {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useStorageOverview",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-storage.ts",
+      "lineNumber": 46,
+      "signature": "useStorageOverview() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useStoragePricingTiers",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-storage.ts",
+      "lineNumber": 327,
+      "signature": "useStoragePricingTiers() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useStoragePricingTiers",
+      "file": "/apps/linkme/src/lib/hooks/use-affiliate-storage.ts",
+      "lineNumber": 181,
+      "signature": "useStoragePricingTiers() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useStorageTotals",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-storage.ts",
+      "lineNumber": 72,
+      "signature": "useStorageTotals() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useStorageWeightedAverage",
+      "file": "/apps/back-office/src/app/(protected)/stocks/stockage/hooks/use-storage-billing.ts",
+      "lineNumber": 148,
+      "signature": "useStorageWeightedAverage( ownerType: 'enseigne' | 'organisation' | null, ownerId: string | null, startDate?: string, endDate?: string ) {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useSubcategories",
+      "file": "/packages/@verone/categories/src/hooks/use-subcategories.ts",
+      "lineNumber": 23,
+      "signature": "useSubcategories(categoryId?: string) {",
+      "domain": "common",
+      "usageCount": 8,
+      "location": "packages"
+    },
+    {
+      "name": "useSubmitEnseigneOrder",
+      "file": "/apps/linkme/src/lib/hooks/use-submit-enseigne-order.ts",
+      "lineNumber": 58,
+      "signature": "useSubmitEnseigneOrder(): UseSubmitEnseigneOrderReturn {",
+      "domain": "orders",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useSubmitForApproval",
+      "file": "/apps/linkme/src/lib/hooks/use-affiliate-products.ts",
+      "lineNumber": 340,
+      "signature": "useSubmitForApproval() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useSubmitUnifiedOrder",
+      "file": "/apps/linkme/src/lib/hooks/use-submit-unified-order.ts",
+      "lineNumber": 58,
+      "signature": "useSubmitUnifiedOrder() {",
+      "domain": "orders",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useSupabaseCRUD",
+      "file": "/apps/back-office/src/hooks/base/use-supabase-crud.ts",
+      "lineNumber": 20,
+      "signature": "useSupabaseCRUD<T>(options: CRUDOptions<T>) {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useSupabaseMutation",
+      "file": "/packages/@verone/common/src/hooks/use-supabase-query.ts",
+      "lineNumber": 146,
+      "signature": "useSupabaseMutation<T = any>( mutationFn: ( supabase: ReturnType<typeof createClient>, variables: any ) => Promise<{",
+      "domain": "mutation",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useSupabaseMutation",
+      "file": "/apps/back-office/src/hooks/base/use-supabase-mutation.ts",
+      "lineNumber": 29,
+      "signature": "useSupabaseMutation<T>( options: MutationOptions<T> ): MutationState<T> {",
+      "domain": "mutation",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useSupabaseQuery",
+      "file": "/packages/@verone/common/src/hooks/use-supabase-query-builder.ts",
+      "lineNumber": 31,
+      "signature": "useSupabaseQuery<T>(options: QueryOptions<T>): QueryState<T> {",
+      "domain": "query",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "useSupabaseQuery",
+      "file": "/packages/@verone/common/src/hooks/use-supabase-query.ts",
+      "lineNumber": 39,
+      "signature": "useSupabaseQuery<T = any>( queryKey: string, queryFn: ( supabase: ReturnType<typeof createClient> ) => Promise<{",
+      "domain": "query",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "useSupabaseQuery",
+      "file": "/apps/back-office/src/hooks/base/use-supabase-query.ts",
+      "lineNumber": 31,
+      "signature": "useSupabaseQuery<T>(options: QueryOptions<T>): QueryState<T> {",
+      "domain": "query",
+      "usageCount": 3,
+      "location": "apps"
+    },
+    {
+      "name": "useSupabaseTable",
+      "file": "/packages/@verone/common/src/hooks/use-supabase-query.ts",
+      "lineNumber": 209,
+      "signature": "useSupabaseTable<T = any>( tableName: string, filters: Record<string, any> = {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useSuppliers",
+      "file": "/packages/@verone/organisations/src/hooks/use-organisations.ts",
+      "lineNumber": 763,
+      "signature": "useSuppliers(filters?: Omit<OrganisationFilters, 'type'>) {",
+      "domain": "common",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "useSuppliers",
+      "file": "/packages/@verone/organisations/src/hooks/use-suppliers.ts",
+      "lineNumber": 37,
+      "signature": "useSuppliers() {",
+      "domain": "common",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "useTestPersistence",
+      "file": "/packages/@verone/testing/src/hooks/use-test-persistence.ts",
+      "lineNumber": 40,
+      "signature": "useTestPersistence() {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useTimeout",
+      "file": "/packages/@verone/hooks/src/use-timeout.ts",
+      "lineNumber": 26,
+      "signature": "useTimeout(callback: () => void, delay: number | null): void {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useToast",
+      "file": "/packages/@verone/common/src/hooks/use-toast.ts",
+      "lineNumber": 51,
+      "signature": "useToast() {",
+      "domain": "common",
+      "usageCount": 106,
+      "location": "packages"
+    },
+    {
+      "name": "useToggle",
+      "file": "/packages/@verone/hooks/src/use-toggle.ts",
+      "lineNumber": 21,
+      "signature": "useToggle( initialValue: boolean = false ): [boolean, () => void, (value: boolean) => void] {",
+      "domain": "mutation",
+      "usageCount": 7,
+      "location": "packages"
+    },
+    {
+      "name": "useToggleCategoryVisibility",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-site-internet-categories.ts",
+      "lineNumber": 44,
+      "signature": "useToggleCategoryVisibility() {",
+      "domain": "mutation",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useToggleCollectionVisibility",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-site-internet-collections.ts",
+      "lineNumber": 68,
+      "signature": "useToggleCollectionVisibility() {",
+      "domain": "mutation",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useToggleEnseigneActive",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-enseignes.ts",
+      "lineNumber": 396,
+      "signature": "useToggleEnseigneActive() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useToggleFavorite",
+      "file": "/packages/@verone/common/src/hooks/use-toggle-favorite.ts",
+      "lineNumber": 25,
+      "signature": "useToggleFavorite({",
+      "domain": "mutation",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useToggleGoogleMerchantVisibility",
+      "file": "/packages/@verone/channels/src/hooks/google-merchant/use-toggle-google-merchant-visibility.ts",
+      "lineNumber": 32,
+      "signature": "useToggleGoogleMerchantVisibility() {",
+      "domain": "mutation",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useToggleLinkMeProductField",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-catalog.ts",
+      "lineNumber": 1167,
+      "signature": "useToggleLinkMeProductField() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useToggleLinkMeSupplierVisibility",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-suppliers.ts",
+      "lineNumber": 97,
+      "signature": "useToggleLinkMeSupplierVisibility() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useToggleLinkMeUserActive",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-users.ts",
+      "lineNumber": 426,
+      "signature": "useToggleLinkMeUserActive() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useToggleProductEnabled",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-catalog.ts",
+      "lineNumber": 511,
+      "signature": "useToggleProductEnabled() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useToggleProductFeatured",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-catalog.ts",
+      "lineNumber": 629,
+      "signature": "useToggleProductFeatured() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useToggleProductPublication",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-site-internet-products.ts",
+      "lineNumber": 44,
+      "signature": "useToggleProductPublication() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useToggleProductShowcase",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-catalog.ts",
+      "lineNumber": 570,
+      "signature": "useToggleProductShowcase() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useTogglePublish",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-toggle-publish.ts",
+      "lineNumber": 17,
+      "signature": "useTogglePublish() {",
+      "domain": "mutation",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useToggleSelectionPublished",
+      "file": "/apps/linkme/src/lib/hooks/use-user-selection.ts",
+      "lineNumber": 662,
+      "signature": "useToggleSelectionPublished() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useToggleShowSupplier",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-catalog.ts",
+      "lineNumber": 689,
+      "signature": "useToggleShowSupplier() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useToggleVariantActivation",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-product-variants.ts",
+      "lineNumber": 72,
+      "signature": "useToggleVariantActivation() {",
+      "domain": "mutation",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useTopProducts",
+      "file": "/packages/@verone/products/src/hooks/use-top-products.ts",
+      "lineNumber": 35,
+      "signature": "useTopProducts(days = 30, limit = 5): UseTopProductsResult {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useTrackingKPIs",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-tracking-stats.ts",
+      "lineNumber": 107,
+      "signature": "useTrackingKPIs() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useTrackingStats",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-tracking-stats.ts",
+      "lineNumber": 48,
+      "signature": "useTrackingStats() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useTransactionActions",
+      "file": "/packages/@verone/finance/src/hooks/use-unified-transactions.ts",
+      "lineNumber": 569,
+      "signature": "useTransactionActions(): TransactionActions {",
+      "domain": "finance",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useTreasuryStats",
+      "file": "/packages/@verone/finance/src/hooks/use-treasury-stats.ts",
+      "lineNumber": 100,
+      "signature": "useTreasuryStats(startDate?: string, endDate?: string) {",
+      "domain": "finance",
+      "usageCount": 3,
+      "location": "packages"
+    },
+    {
+      "name": "useUnifiedSampleEligibility",
+      "file": "/packages/@verone/orders/src/hooks/use-unified-sample-eligibility.ts",
+      "lineNumber": 41,
+      "signature": "useUnifiedSampleEligibility() {",
+      "domain": "orders",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useUnifiedTransactions",
+      "file": "/packages/@verone/finance/src/hooks/use-unified-transactions.ts",
+      "lineNumber": 221,
+      "signature": "useUnifiedTransactions( options: UseUnifiedTransactionsOptions = {",
+      "domain": "finance",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useUniqueLabels",
+      "file": "/packages/@verone/finance/src/hooks/use-unique-labels.ts",
+      "lineNumber": 30,
+      "signature": "useUniqueLabels(): UseUniqueLabelsReturn {",
+      "domain": "finance",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useUnreconciledOrders",
+      "file": "/packages/@verone/finance/src/hooks/use-unreconciled-orders.ts",
+      "lineNumber": 32,
+      "signature": "useUnreconciledOrders(): UnreconciledOrdersStats & {",
+      "domain": "orders",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useUpdateAffiliateCommission",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-catalog.ts",
+      "lineNumber": 1136,
+      "signature": "useUpdateAffiliateCommission() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdateAffiliateProduct",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-product-approvals.ts",
+      "lineNumber": 330,
+      "signature": "useUpdateAffiliateProduct() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdateAffiliateProduct",
+      "file": "/apps/linkme/src/lib/hooks/use-affiliate-products.ts",
+      "lineNumber": 284,
+      "signature": "useUpdateAffiliateProduct() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdateAllocationBillable",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-storage.ts",
+      "lineNumber": 180,
+      "signature": "useUpdateAllocationBillable() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdateCategoryOrder",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-site-internet-categories.ts",
+      "lineNumber": 113,
+      "signature": "useUpdateCategoryOrder() {",
+      "domain": "orders",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdateCollectionOrder",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-site-internet-collections.ts",
+      "lineNumber": 214,
+      "signature": "useUpdateCollectionOrder() {",
+      "domain": "orders",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdateCustomMetadata",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-catalog.ts",
+      "lineNumber": 780,
+      "signature": "useUpdateCustomMetadata() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdateDraftOrder",
+      "file": "/apps/linkme/src/lib/hooks/use-update-draft-order.ts",
+      "lineNumber": 263,
+      "signature": "useUpdateDraftOrder() {",
+      "domain": "orders",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdateEnseigne",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-enseignes.ts",
+      "lineNumber": 317,
+      "signature": "useUpdateEnseigne() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdateGoogleMerchantMetadata",
+      "file": "/packages/@verone/channels/src/hooks/google-merchant/use-update-google-merchant-metadata.ts",
+      "lineNumber": 34,
+      "signature": "useUpdateGoogleMerchantMetadata() {",
+      "domain": "mutation",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useUpdateGoogleMerchantPrice",
+      "file": "/packages/@verone/channels/src/hooks/google-merchant/use-update-google-merchant-price.ts",
+      "lineNumber": 34,
+      "signature": "useUpdateGoogleMerchantPrice() {",
+      "domain": "finance",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useUpdateItemMargin",
+      "file": "/apps/linkme/src/lib/hooks/use-user-selection.ts",
+      "lineNumber": 616,
+      "signature": "useUpdateItemMargin() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdateLinkMeDetails",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-order-actions.ts",
+      "lineNumber": 591,
+      "signature": "useUpdateLinkMeDetails() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdateLinkMeMetadata",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-catalog.ts",
+      "lineNumber": 1100,
+      "signature": "useUpdateLinkMeMetadata() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdateLinkMeOrder",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-orders.ts",
+      "lineNumber": 535,
+      "signature": "useUpdateLinkMeOrder() {",
+      "domain": "orders",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdateLinkMePageConfig",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-page-config.ts",
+      "lineNumber": 162,
+      "signature": "useUpdateLinkMePageConfig() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdateLinkMePricing",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-catalog.ts",
+      "lineNumber": 1061,
+      "signature": "useUpdateLinkMePricing() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdateLinkMeSupplierOrder",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-suppliers.ts",
+      "lineNumber": 124,
+      "signature": "useUpdateLinkMeSupplierOrder() {",
+      "domain": "orders",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdateLinkMeUser",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-users.ts",
+      "lineNumber": 360,
+      "signature": "useUpdateLinkMeUser() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdateMarginSettings",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-catalog.ts",
+      "lineNumber": 748,
+      "signature": "useUpdateMarginSettings() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdateMetadata",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-update-metadata.ts",
+      "lineNumber": 23,
+      "signature": "useUpdateMetadata() {",
+      "domain": "mutation",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdateOrganisationContacts",
+      "file": "/apps/linkme/src/lib/hooks/use-organisation-contacts.ts",
+      "lineNumber": 183,
+      "signature": "useUpdateOrganisationContacts() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdatePriceList",
+      "file": "/packages/@verone/finance/src/hooks/use-price-lists.ts",
+      "lineNumber": 391,
+      "signature": "useUpdatePriceList() {",
+      "domain": "finance",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useUpdatePriceListItem",
+      "file": "/packages/@verone/finance/src/hooks/use-price-lists.ts",
+      "lineNumber": 609,
+      "signature": "useUpdatePriceListItem() {",
+      "domain": "finance",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useUpdatePricing",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-update-pricing.ts",
+      "lineNumber": 26,
+      "signature": "useUpdatePricing() {",
+      "domain": "mutation",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdatePricingTier",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-storage.ts",
+      "lineNumber": 354,
+      "signature": "useUpdatePricingTier() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdateProductMargin",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-selections.ts",
+      "lineNumber": 496,
+      "signature": "useUpdateProductMargin() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdateProductMetadata",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-site-internet-products.ts",
+      "lineNumber": 192,
+      "signature": "useUpdateProductMetadata() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdateProductVariant",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-product-variants.ts",
+      "lineNumber": 120,
+      "signature": "useUpdateProductVariant() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdateProfile",
+      "file": "/apps/linkme/src/lib/hooks/use-user-profile.ts",
+      "lineNumber": 76,
+      "signature": "useUpdateProfile() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdateSelection",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-selections.ts",
+      "lineNumber": 329,
+      "signature": "useUpdateSelection() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdateSelectionItem",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-selections.ts",
+      "lineNumber": 561,
+      "signature": "useUpdateSelectionItem() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdateSiteInternetConfig",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-site-internet-config.ts",
+      "lineNumber": 42,
+      "signature": "useUpdateSiteInternetConfig() {",
+      "domain": "mutation",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdateSiteInternetConfigJSON",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-site-internet-config.ts",
+      "lineNumber": 109,
+      "signature": "useUpdateSiteInternetConfigJSON() {",
+      "domain": "mutation",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUpdateStorageQuantity",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-storage.ts",
+      "lineNumber": 267,
+      "signature": "useUpdateStorageQuantity() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUploadInvoice",
+      "file": "/apps/linkme/src/lib/hooks/use-payment-requests.ts",
+      "lineNumber": 286,
+      "signature": "useUploadInvoice() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUploadProductImage",
+      "file": "/apps/linkme/src/lib/hooks/use-product-images.ts",
+      "lineNumber": 59,
+      "signature": "useUploadProductImage() {",
+      "domain": "products",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUploadSelectionImage",
+      "file": "/apps/linkme/src/lib/hooks/use-selection-image.ts",
+      "lineNumber": 21,
+      "signature": "useUploadSelectionImage() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUploadSiteLogo",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-site-internet-config.ts",
+      "lineNumber": 66,
+      "signature": "useUploadSiteLogo() {",
+      "domain": "common",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUserActivityTracker",
+      "file": "/packages/@verone/notifications/src/hooks/use-user-activity-tracker.ts",
+      "lineNumber": 62,
+      "signature": "useUserActivityTracker() {",
+      "domain": "notifications",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useUserAffiliate",
+      "file": "/apps/linkme/src/lib/hooks/use-user-selection.ts",
+      "lineNumber": 91,
+      "signature": "useUserAffiliate() {",
+      "domain": "linkme",
+      "usageCount": 11,
+      "location": "apps"
+    },
+    {
+      "name": "useUserMetrics",
+      "file": "/packages/@verone/dashboard/src/hooks/metrics/use-user-metrics.ts",
+      "lineNumber": 12,
+      "signature": "useUserMetrics() {",
+      "domain": "dashboard",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useUserModuleMetrics",
+      "file": "/packages/@verone/dashboard/src/hooks/metrics/use-user-module-metrics.ts",
+      "lineNumber": 75,
+      "signature": "useUserModuleMetrics( userId: string, days: number = 30 ): UserModuleMetricsData {",
+      "domain": "dashboard",
+      "usageCount": 0,
+      "location": "packages"
+    },
+    {
+      "name": "useUserProfile",
+      "file": "/apps/linkme/src/lib/hooks/use-user-profile.ts",
+      "lineNumber": 23,
+      "signature": "useUserProfile() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useUserSelections",
+      "file": "/apps/linkme/src/lib/hooks/use-user-selection.ts",
+      "lineNumber": 183,
+      "signature": "useUserSelections() {",
+      "domain": "linkme",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useVariantGroup",
+      "file": "/packages/@verone/products/src/hooks/use-variant-groups.ts",
+      "lineNumber": 1489,
+      "signature": "useVariantGroup(groupId: string) {",
+      "domain": "products",
+      "usageCount": 4,
+      "location": "packages"
+    },
+    {
+      "name": "useVariantGroups",
+      "file": "/packages/@verone/products/src/hooks/use-variant-groups.ts",
+      "lineNumber": 20,
+      "signature": "useVariantGroups(filters?: VariantGroupFilters) {",
+      "domain": "products",
+      "usageCount": 4,
+      "location": "packages"
+    },
+    {
+      "name": "useVariantProducts",
+      "file": "/packages/@verone/products/src/hooks/use-variant-products.ts",
+      "lineNumber": 49,
+      "signature": "useVariantProducts() {",
+      "domain": "products",
+      "usageCount": 1,
+      "location": "packages"
+    },
+    {
+      "name": "useVercelAnalytics",
+      "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-vercel-analytics.ts",
+      "lineNumber": 77,
+      "signature": "useVercelAnalytics() {",
+      "domain": "common",
+      "usageCount": 1,
+      "location": "apps"
+    },
+    {
+      "name": "useVisibleSuppliers",
+      "file": "/apps/linkme/src/lib/hooks/use-linkme-public.ts",
+      "lineNumber": 276,
+      "signature": "useVisibleSuppliers() {",
+      "domain": "linkme",
+      "usageCount": 0,
+      "location": "apps"
+    },
+    {
+      "name": "useWindowSize",
+      "file": "/packages/@verone/hooks/src/use-window-size.ts",
+      "lineNumber": 24,
+      "signature": "useWindowSize(): WindowSize {",
+      "domain": "utility",
+      "usageCount": 0,
+      "location": "packages"
+    }
+  ],
+  "duplicates": [
+    {
+      "name": "useCategories",
+      "implementations": [
+        {
+          "name": "useCategories",
+          "file": "/packages/@verone/categories/src/hooks/use-categories.ts",
+          "lineNumber": 22,
+          "signature": "useCategories() {",
+          "domain": "common",
+          "usageCount": 7,
+          "location": "packages"
+        },
+        {
+          "name": "useCategories",
+          "file": "/apps/site-internet/src/hooks/use-categories.ts",
+          "lineNumber": 19,
+          "signature": "useCategories() {",
+          "domain": "common",
+          "usageCount": 7,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "useGoogleMerchantStats",
+      "implementations": [
+        {
+          "name": "useGoogleMerchantStats",
+          "file": "/packages/@verone/channels/src/hooks/use-google-merchant-products.ts",
+          "lineNumber": 105,
+          "signature": "useGoogleMerchantStats() {",
+          "domain": "common",
+          "usageCount": 0,
+          "location": "packages"
+        },
+        {
+          "name": "useGoogleMerchantStats",
+          "file": "/packages/@verone/channels/src/hooks/use-google-merchant-stats.ts",
+          "lineNumber": 40,
+          "signature": "useGoogleMerchantStats() {",
+          "domain": "common",
+          "usageCount": 0,
+          "location": "packages"
+        }
+      ]
+    },
+    {
+      "name": "useSupabaseQuery",
+      "implementations": [
+        {
+          "name": "useSupabaseQuery",
+          "file": "/packages/@verone/common/src/hooks/use-supabase-query-builder.ts",
+          "lineNumber": 31,
+          "signature": "useSupabaseQuery<T>(options: QueryOptions<T>): QueryState<T> {",
+          "domain": "query",
+          "usageCount": 3,
+          "location": "packages"
+        },
+        {
+          "name": "useSupabaseQuery",
+          "file": "/packages/@verone/common/src/hooks/use-supabase-query.ts",
+          "lineNumber": 39,
+          "signature": "useSupabaseQuery<T = any>( queryKey: string, queryFn: ( supabase: ReturnType<typeof createClient> ) => Promise<{",
+          "domain": "query",
+          "usageCount": 3,
+          "location": "packages"
+        },
+        {
+          "name": "useSupabaseQuery",
+          "file": "/apps/back-office/src/hooks/base/use-supabase-query.ts",
+          "lineNumber": 31,
+          "signature": "useSupabaseQuery<T>(options: QueryOptions<T>): QueryState<T> {",
+          "domain": "query",
+          "usageCount": 3,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "useSupabaseMutation",
+      "implementations": [
+        {
+          "name": "useSupabaseMutation",
+          "file": "/packages/@verone/common/src/hooks/use-supabase-query.ts",
+          "lineNumber": 146,
+          "signature": "useSupabaseMutation<T = any>( mutationFn: ( supabase: ReturnType<typeof createClient>, variables: any ) => Promise<{",
+          "domain": "mutation",
+          "usageCount": 1,
+          "location": "packages"
+        },
+        {
+          "name": "useSupabaseMutation",
+          "file": "/apps/back-office/src/hooks/base/use-supabase-mutation.ts",
+          "lineNumber": 29,
+          "signature": "useSupabaseMutation<T>( options: MutationOptions<T> ): MutationState<T> {",
+          "domain": "mutation",
+          "usageCount": 1,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "useCustomers",
+      "implementations": [
+        {
+          "name": "useCustomers",
+          "file": "/packages/@verone/customers/src/hooks/use-customers.ts",
+          "lineNumber": 54,
+          "signature": "useCustomers(filters?: CustomerFilters) {",
+          "domain": "customers",
+          "usageCount": 2,
+          "location": "packages"
+        },
+        {
+          "name": "useCustomers",
+          "file": "/packages/@verone/organisations/src/hooks/use-organisations.ts",
+          "lineNumber": 767,
+          "signature": "useCustomers(filters?: Omit<OrganisationFilters, 'type'>) {",
+          "domain": "customers",
+          "usageCount": 2,
+          "location": "packages"
+        }
+      ]
+    },
+    {
+      "name": "useRecentActivity",
+      "implementations": [
+        {
+          "name": "useRecentActivity",
+          "file": "/packages/@verone/dashboard/src/hooks/use-recent-activity.ts",
+          "lineNumber": 47,
+          "signature": "useRecentActivity(limit = 10): UseRecentActivityResult {",
+          "domain": "dashboard",
+          "usageCount": 0,
+          "location": "packages"
+        },
+        {
+          "name": "useRecentActivity",
+          "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-dashboard.ts",
+          "lineNumber": 239,
+          "signature": "useRecentActivity(limit: number = 5) {",
+          "domain": "linkme",
+          "usageCount": 0,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "useLinkMeAffiliates",
+      "implementations": [
+        {
+          "name": "useLinkMeAffiliates",
+          "file": "/packages/@verone/orders/src/hooks/linkme/use-linkme-affiliates.ts",
+          "lineNumber": 208,
+          "signature": "useLinkMeAffiliates(type?: AffiliateType) {",
+          "domain": "orders",
+          "usageCount": 0,
+          "location": "packages"
+        },
+        {
+          "name": "useLinkMeAffiliates",
+          "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-affiliates.ts",
+          "lineNumber": 208,
+          "signature": "useLinkMeAffiliates(type?: AffiliateType) {",
+          "domain": "linkme",
+          "usageCount": 0,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "useLinkMeAffiliate",
+      "implementations": [
+        {
+          "name": "useLinkMeAffiliate",
+          "file": "/packages/@verone/orders/src/hooks/linkme/use-linkme-affiliates.ts",
+          "lineNumber": 220,
+          "signature": "useLinkMeAffiliate(affiliateId: string | null) {",
+          "domain": "orders",
+          "usageCount": 0,
+          "location": "packages"
+        },
+        {
+          "name": "useLinkMeAffiliate",
+          "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-affiliates.ts",
+          "lineNumber": 220,
+          "signature": "useLinkMeAffiliate(affiliateId: string | null) {",
+          "domain": "linkme",
+          "usageCount": 0,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "useLinkMeEnseignes",
+      "implementations": [
+        {
+          "name": "useLinkMeEnseignes",
+          "file": "/packages/@verone/orders/src/hooks/linkme/use-linkme-enseignes.ts",
+          "lineNumber": 122,
+          "signature": "useLinkMeEnseignes() {",
+          "domain": "orders",
+          "usageCount": 0,
+          "location": "packages"
+        },
+        {
+          "name": "useLinkMeEnseignes",
+          "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-enseignes.ts",
+          "lineNumber": 251,
+          "signature": "useLinkMeEnseignes() {",
+          "domain": "linkme",
+          "usageCount": 0,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "useCreateLinkMeOrder",
+      "implementations": [
+        {
+          "name": "useCreateLinkMeOrder",
+          "file": "/packages/@verone/orders/src/hooks/linkme/use-linkme-orders.ts",
+          "lineNumber": 248,
+          "signature": "useCreateLinkMeOrder() {",
+          "domain": "orders",
+          "usageCount": 0,
+          "location": "packages"
+        },
+        {
+          "name": "useCreateLinkMeOrder",
+          "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-orders.ts",
+          "lineNumber": 507,
+          "signature": "useCreateLinkMeOrder() {",
+          "domain": "orders",
+          "usageCount": 0,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "useLinkMeSelection",
+      "implementations": [
+        {
+          "name": "useLinkMeSelection",
+          "file": "/packages/@verone/orders/src/hooks/linkme/use-linkme-selections.ts",
+          "lineNumber": 301,
+          "signature": "useLinkMeSelection(selectionId: string | null) {",
+          "domain": "orders",
+          "usageCount": 0,
+          "location": "packages"
+        },
+        {
+          "name": "useLinkMeSelection",
+          "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-selections.ts",
+          "lineNumber": 314,
+          "signature": "useLinkMeSelection(selectionId: string | null) {",
+          "domain": "linkme",
+          "usageCount": 0,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "useLinkMeSelectionsByEnseigne",
+      "implementations": [
+        {
+          "name": "useLinkMeSelectionsByEnseigne",
+          "file": "/packages/@verone/orders/src/hooks/linkme/use-linkme-selections.ts",
+          "lineNumber": 314,
+          "signature": "useLinkMeSelectionsByEnseigne(enseigneId: string | null) {",
+          "domain": "orders",
+          "usageCount": 0,
+          "location": "packages"
+        },
+        {
+          "name": "useLinkMeSelectionsByEnseigne",
+          "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-selections.ts",
+          "lineNumber": 840,
+          "signature": "useLinkMeSelectionsByEnseigne(enseigneId: string | null) {",
+          "domain": "linkme",
+          "usageCount": 0,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "useSuppliers",
+      "implementations": [
+        {
+          "name": "useSuppliers",
+          "file": "/packages/@verone/organisations/src/hooks/use-organisations.ts",
+          "lineNumber": 763,
+          "signature": "useSuppliers(filters?: Omit<OrganisationFilters, 'type'>) {",
+          "domain": "common",
+          "usageCount": 3,
+          "location": "packages"
+        },
+        {
+          "name": "useSuppliers",
+          "file": "/packages/@verone/organisations/src/hooks/use-suppliers.ts",
+          "lineNumber": 37,
+          "signature": "useSuppliers() {",
+          "domain": "common",
+          "usageCount": 3,
+          "location": "packages"
+        }
+      ]
+    },
+    {
+      "name": "useProductImages",
+      "implementations": [
+        {
+          "name": "useProductImages",
+          "file": "/packages/@verone/products/src/hooks/use-product-images.ts",
+          "lineNumber": 30,
+          "signature": "useProductImages({",
+          "domain": "products",
+          "usageCount": 9,
+          "location": "packages"
+        },
+        {
+          "name": "useProductImages",
+          "file": "/apps/linkme/src/lib/hooks/use-product-images.ts",
+          "lineNumber": 32,
+          "signature": "useProductImages(productId: string | undefined) {",
+          "domain": "products",
+          "usageCount": 9,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "useProductVariants",
+      "implementations": [
+        {
+          "name": "useProductVariants",
+          "file": "/packages/@verone/products/src/hooks/use-product-variants.ts",
+          "lineNumber": 15,
+          "signature": "useProductVariants(productId: string) {",
+          "domain": "products",
+          "usageCount": 1,
+          "location": "packages"
+        },
+        {
+          "name": "useProductVariants",
+          "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-product-variants.ts",
+          "lineNumber": 60,
+          "signature": "useProductVariants(productId: string) {",
+          "domain": "products",
+          "usageCount": 1,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "useSourcingProducts",
+      "implementations": [
+        {
+          "name": "useSourcingProducts",
+          "file": "/packages/@verone/products/src/hooks/use-sourcing-products.ts",
+          "lineNumber": 63,
+          "signature": "useSourcingProducts(filters?: SourcingFilters) {",
+          "domain": "products",
+          "usageCount": 4,
+          "location": "packages"
+        },
+        {
+          "name": "useSourcingProducts",
+          "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-catalog.ts",
+          "lineNumber": 1572,
+          "signature": "useSourcingProducts() {",
+          "domain": "products",
+          "usageCount": 4,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "useStockCore",
+      "implementations": [
+        {
+          "name": "useStockCore",
+          "file": "/packages/@verone/stock/src/hooks/core/use-stock-core.ts",
+          "lineNumber": 198,
+          "signature": "useStockCore({",
+          "domain": "stock",
+          "usageCount": 0,
+          "location": "packages"
+        },
+        {
+          "name": "useStockCore",
+          "file": "/apps/back-office/src/hooks/core/use-stock-core.ts",
+          "lineNumber": 198,
+          "signature": "useStockCore({",
+          "domain": "stock",
+          "usageCount": 0,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "useLinkMeCatalogProducts",
+      "implementations": [
+        {
+          "name": "useLinkMeCatalogProducts",
+          "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-catalog.ts",
+          "lineNumber": 434,
+          "signature": "useLinkMeCatalogProducts() {",
+          "domain": "products",
+          "usageCount": 0,
+          "location": "apps"
+        },
+        {
+          "name": "useLinkMeCatalogProducts",
+          "file": "/apps/linkme/src/lib/hooks/use-linkme-catalog.ts",
+          "lineNumber": 258,
+          "signature": "useLinkMeCatalogProducts() {",
+          "domain": "products",
+          "usageCount": 0,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "useLinkMeEnseigneOrganisations",
+      "implementations": [
+        {
+          "name": "useLinkMeEnseigneOrganisations",
+          "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-enseigne-customers.ts",
+          "lineNumber": 210,
+          "signature": "useLinkMeEnseigneOrganisations(enseigneId: string | null) {",
+          "domain": "linkme",
+          "usageCount": 0,
+          "location": "apps"
+        },
+        {
+          "name": "useLinkMeEnseigneOrganisations",
+          "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-enseignes.ts",
+          "lineNumber": 275,
+          "signature": "useLinkMeEnseigneOrganisations(enseigneId: string | null) {",
+          "domain": "linkme",
+          "usageCount": 0,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "useApproveOrder",
+      "implementations": [
+        {
+          "name": "useApproveOrder",
+          "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-order-actions.ts",
+          "lineNumber": 473,
+          "signature": "useApproveOrder() {",
+          "domain": "orders",
+          "usageCount": 0,
+          "location": "apps"
+        },
+        {
+          "name": "useApproveOrder",
+          "file": "/apps/linkme/src/hooks/use-approve-order.ts",
+          "lineNumber": 86,
+          "signature": "useApproveOrder() {",
+          "domain": "orders",
+          "usageCount": 0,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "useLinkMeOrders",
+      "implementations": [
+        {
+          "name": "useLinkMeOrders",
+          "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-orders.ts",
+          "lineNumber": 496,
+          "signature": "useLinkMeOrders() {",
+          "domain": "orders",
+          "usageCount": 1,
+          "location": "apps"
+        },
+        {
+          "name": "useLinkMeOrders",
+          "file": "/apps/linkme/src/hooks/use-linkme-orders.ts",
+          "lineNumber": 106,
+          "signature": "useLinkMeOrders( affiliateId: string | null, fetchAll: boolean = false ) {",
+          "domain": "orders",
+          "usageCount": 1,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "useStoragePricingTiers",
+      "implementations": [
+        {
+          "name": "useStoragePricingTiers",
+          "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-linkme-storage.ts",
+          "lineNumber": 327,
+          "signature": "useStoragePricingTiers() {",
+          "domain": "linkme",
+          "usageCount": 0,
+          "location": "apps"
+        },
+        {
+          "name": "useStoragePricingTiers",
+          "file": "/apps/linkme/src/lib/hooks/use-affiliate-storage.ts",
+          "lineNumber": 181,
+          "signature": "useStoragePricingTiers() {",
+          "domain": "linkme",
+          "usageCount": 0,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "useUpdateAffiliateProduct",
+      "implementations": [
+        {
+          "name": "useUpdateAffiliateProduct",
+          "file": "/apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/use-product-approvals.ts",
+          "lineNumber": 330,
+          "signature": "useUpdateAffiliateProduct() {",
+          "domain": "products",
+          "usageCount": 0,
+          "location": "apps"
+        },
+        {
+          "name": "useUpdateAffiliateProduct",
+          "file": "/apps/linkme/src/lib/hooks/use-affiliate-products.ts",
+          "lineNumber": 284,
+          "signature": "useUpdateAffiliateProduct() {",
+          "domain": "products",
+          "usageCount": 0,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "useProductDetail",
+      "implementations": [
+        {
+          "name": "useProductDetail",
+          "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-product-detail.ts",
+          "lineNumber": 13,
+          "signature": "useProductDetail(productId: string | null) {",
+          "domain": "products",
+          "usageCount": 1,
+          "location": "apps"
+        },
+        {
+          "name": "useProductDetail",
+          "file": "/apps/back-office/src/app/(protected)/canaux-vente/site-internet/hooks/use-product-variants.ts",
+          "lineNumber": 40,
+          "signature": "useProductDetail(productId: string) {",
+          "domain": "products",
+          "usageCount": 1,
+          "location": "apps"
+        },
+        {
+          "name": "useProductDetail",
+          "file": "/apps/site-internet/src/hooks/use-product-detail.ts",
+          "lineNumber": 13,
+          "signature": "useProductDetail(slug: string | null) {",
+          "domain": "products",
+          "usageCount": 1,
+          "location": "apps"
+        }
+      ]
+    },
+    {
+      "name": "useArchiveOrganisation",
+      "implementations": [
+        {
+          "name": "useArchiveOrganisation",
+          "file": "/apps/linkme/src/lib/hooks/use-affiliate-network.ts",
+          "lineNumber": 244,
+          "signature": "useArchiveOrganisation() {",
+          "domain": "linkme",
+          "usageCount": 1,
+          "location": "apps"
+        },
+        {
+          "name": "useArchiveOrganisation",
+          "file": "/apps/linkme/src/lib/hooks/use-archive-organisation.ts",
+          "lineNumber": 31,
+          "signature": "useArchiveOrganisation() {",
+          "domain": "linkme",
+          "usageCount": 1,
+          "location": "apps"
+        }
+      ]
+    }
+  ]
+}
