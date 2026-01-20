@@ -24,7 +24,7 @@ import {
   CollapsibleTrigger,
   cn,
 } from '@verone/ui';
-import { User, ChevronDown, Check, AlertCircle, FileText } from 'lucide-react';
+import { User, ChevronDown, Check, AlertCircle, FileText, Building2 } from 'lucide-react';
 
 import { useOrganisationContacts } from '@/lib/hooks/use-organisation-contacts';
 import { useEnseigneId } from '@/lib/hooks/use-enseigne-id';
@@ -163,6 +163,7 @@ export function ContactsStep({ formData, errors, onUpdate }: ContactsStepProps) 
   const [showResponsableForm, setShowResponsableForm] = useState(
     !formData.contacts.existingResponsableId
   );
+  const [showEnseigneContacts, setShowEnseigneContacts] = useState(false);
 
   // Get enseigne ID
   const enseigneId = useEnseigneId();
@@ -173,9 +174,21 @@ export function ContactsStep({ formData, errors, onUpdate }: ContactsStepProps) 
       ? formData.restaurant.existingId || null
       : null;
 
+  // Determine ownership type
+  const ownershipType = useMemo(() => {
+    if (formData.restaurant.mode === 'new') {
+      return formData.restaurant.newRestaurant?.ownershipType || null;
+    }
+    return formData.restaurant.existingOwnershipType || null;
+  }, [formData.restaurant]);
+
+  const canShowEnseigneContacts = ownershipType === 'succursale' && !!enseigneId;
+
   const { data: contactsData } = useOrganisationContacts(
     organisationId,
-    enseigneId || null
+    enseigneId || null,
+    ownershipType,
+    showEnseigneContacts
   );
 
   // Toggle section
@@ -396,12 +409,12 @@ export function ContactsStep({ formData, errors, onUpdate }: ContactsStepProps) 
         onOpenChange={() => toggleSection('responsable')}
       >
         <Card className="overflow-hidden">
-          <CollapsibleTrigger asChild>
-            <button
-              type="button"
-              className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex items-center gap-3">
+          <div className="p-4 flex items-center justify-between border-b">
+            <CollapsibleTrigger asChild>
+              <button
+                type="button"
+                className="flex items-center gap-3 flex-1 hover:opacity-80 transition-opacity"
+              >
                 <div
                   className={cn(
                     'w-10 h-10 rounded-full flex items-center justify-center',
@@ -416,7 +429,7 @@ export function ContactsStep({ formData, errors, onUpdate }: ContactsStepProps) 
                     <User className="h-5 w-5" />
                   )}
                 </div>
-                <div className="text-left">
+                <div className="text-left flex-1">
                   <h3 className="font-semibold text-gray-900">
                     Responsable Commande
                     <span className="text-red-500 ml-1">*</span>
@@ -425,15 +438,32 @@ export function ContactsStep({ formData, errors, onUpdate }: ContactsStepProps) 
                     Contact principal pour cette commande
                   </p>
                 </div>
-              </div>
-              <ChevronDown
+                <ChevronDown
+                  className={cn(
+                    'h-5 w-5 text-gray-400 transition-transform',
+                    openSections.includes('responsable') && 'rotate-180'
+                  )}
+                />
+              </button>
+            </CollapsibleTrigger>
+
+            {/* Bouton Contacts Enseigne */}
+            {canShowEnseigneContacts && (
+              <button
+                type="button"
+                onClick={() => setShowEnseigneContacts(!showEnseigneContacts)}
                 className={cn(
-                  'h-5 w-5 text-gray-400 transition-transform',
-                  openSections.includes('responsable') && 'rotate-180'
+                  'ml-4 px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2',
+                  showEnseigneContacts
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 )}
-              />
-            </button>
-          </CollapsibleTrigger>
+              >
+                <Building2 className="h-4 w-4" />
+                {showEnseigneContacts ? 'Contacts Enseigne' : 'Voir Enseigne'}
+              </button>
+            )}
+          </div>
           <CollapsibleContent>
             <div className="p-4 pt-0 border-t space-y-4">
               {/* Contact grid if contacts exist */}

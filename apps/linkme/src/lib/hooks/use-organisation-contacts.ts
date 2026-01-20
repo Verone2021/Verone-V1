@@ -56,13 +56,14 @@ export interface UpdateContactsInput {
  *
  * @param organisationId - ID de l'organisation
  * @param enseigneId - ID de l'enseigne (optionnel) - pour chercher aussi les contacts liés à l'enseigne
- * @param isEnseigneParent - true si c'est la maison mère (is_enseigne_parent = true)
- *                          Seule la maison mère affiche les contacts de l'enseigne
+ * @param ownershipType - Type de propriété de l'organisation ('succursale' | 'franchise' | null)
+ * @param includeEnseigneContacts - true pour inclure contacts enseigne (pour succursales uniquement)
  */
 export function useOrganisationContacts(
   organisationId: string | null,
   enseigneId?: string | null,
-  isEnseigneParent?: boolean
+  ownershipType?: 'succursale' | 'franchise' | null,
+  includeEnseigneContacts?: boolean
 ) {
   return useQuery({
     queryKey: ['organisation-contacts', organisationId, enseigneId],
@@ -87,20 +88,32 @@ export function useOrganisationContacts(
           is_billing_contact,
           is_commercial_contact,
           is_technical_contact,
-          notes
+          notes,
+          organisation_id,
+          enseigne_id
         `
         )
         .eq('is_active', true);
 
-      // Filtrer selon le contexte
-      // Bug fix: Les contacts enseigne ne doivent s'afficher QUE pour la maison mère
-      if (organisationId && enseigneId && isEnseigneParent) {
-        // Maison mère : contacts de l'org + contacts enseigne (sans org)
+      // Filtrer selon ownership_type et mode d'affichage
+      if (ownershipType === 'franchise' && organisationId) {
+        // FRANCHISE : Seulement contacts restaurant (jamais enseigne)
+        query = query.eq('organisation_id', organisationId);
+
+      } else if (ownershipType === 'succursale' && includeEnseigneContacts && enseigneId && organisationId) {
+        // SUCCURSALE + Bouton cliqué : Contacts enseigne uniquement
         query = query.or(
-          `organisation_id.eq.${organisationId},and(enseigne_id.eq.${enseigneId},organisation_id.is.null)`
+          `enseigne_id.eq.${enseigneId},and(organisation_id.eq.${organisationId},enseigne_id.eq.${enseigneId})`
         );
+
+      } else if (ownershipType === 'succursale' && enseigneId && organisationId) {
+        // SUCCURSALE (défaut) : Contacts restaurant + partagés enseigne/restaurant
+        query = query.or(
+          `organisation_id.eq.${organisationId},and(organisation_id.eq.${organisationId},enseigne_id.eq.${enseigneId})`
+        );
+
       } else if (organisationId) {
-        // Organisation normale : seulement ses propres contacts
+        // Fallback : seulement contacts organisation
         query = query.eq('organisation_id', organisationId);
       } else if (enseigneId) {
         // Fallback : contacts enseigne uniquement
@@ -158,9 +171,23 @@ export function useOrganisationContacts(
       // Si pas de billing distinct, le primary fait office de billing
       const hasBilling = !!billingContact || isPrimaryComplete;
 
+      // Grouper contacts par appartenance (utiliser data brut avant mapping)
+      const restaurantContacts = (data || []).filter(c =>
+        c.organisation_id === organisationId
+      );
+      const enseigneContacts = (data || []).filter(c =>
+        c.enseigne_id === enseigneId && !c.organisation_id
+      );
+      const sharedContacts = (data || []).filter(c =>
+        c.organisation_id && c.enseigne_id
+      );
+
       return {
         contacts,
         allContacts: contacts, // Alias pour compatibilité avec sélection contacts existants (LM-ORD-009)
+        restaurantContacts,
+        enseigneContacts,
+        sharedContacts,
         primaryContact,
         billingContact,
         otherContacts,
