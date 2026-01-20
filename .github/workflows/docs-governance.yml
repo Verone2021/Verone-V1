@@ -56,7 +56,7 @@ jobs:
           python-version: '3.11'
 
       - name: 📁 Ensure reports directory exists
-        run: mkdir -p reports
+        run: mkdir -p tools/reports
 
       - name: 🔍 Run Docs Audit v4.1
         id: audit
@@ -64,7 +64,7 @@ jobs:
           bash tools/scripts/docs-audit-v4.sh
 
           # Find the latest JSON report
-          REPORT=$(ls -t reports/docs-audit-v4-*.json 2>/dev/null | head -1)
+          REPORT=$(ls -t tools/reports/docs-audit-v4-*.json 2>/dev/null | head -1)
 
           if [ -z "$REPORT" ]; then
             echo "No report generated"
@@ -95,8 +95,8 @@ jobs:
         with:
           name: docs-triage-report
           path: |
-            reports/docs-audit-v4-*.md
-            reports/docs-audit-v4-*.json
+            tools/reports/docs-audit-v4-*.md
+            tools/reports/docs-audit-v4-*.json
           retention-days: 30
 
       - name: 💬 Comment PR with Audit Summary
@@ -105,7 +105,7 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const reportsDir = 'reports';
+            const reportsDir = 'tools/reports';
 
             if (!fs.existsSync(reportsDir)) {
               console.log('Reports directory does not exist');
@@ -180,7 +180,7 @@ ${hasIssues ? '⚠️ **Attention:** Some docs may need cleanup. Review the repo
           python-version: '3.11'
 
       - name: 📁 Ensure reports directory exists
-        run: mkdir -p reports
+        run: mkdir -p tools/reports
 
       - name: 🔍 Run Docs Audit
         run: bash tools/scripts/docs-audit-v4.sh
@@ -188,7 +188,7 @@ ${hasIssues ? '⚠️ **Attention:** Some docs may need cleanup. Review the repo
       - name: 📦 Apply Archive Actions
         id: apply
         run: |
-          REPORT=$(ls -t reports/docs-audit-v4-*.json 2>/dev/null | head -1)
+          REPORT=$(ls -t tools/reports/docs-audit-v4-*.json 2>/dev/null | head -1)
 
           if [ -z "$REPORT" ]; then
             echo "No report found"
