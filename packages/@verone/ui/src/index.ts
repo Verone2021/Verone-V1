@@ -14,7 +14,7 @@ export * from './theme-v2';
 export * from './components/ui';
 
 // UI Components - Business specific
-export * from './components/stock';
+// TODO: export * from './components/stock'; (directory not yet created)
 
 // UI Components - Forms
 export * from './components/forms';

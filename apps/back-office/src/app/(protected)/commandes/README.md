@@ -283,7 +283,7 @@ stateDiagram-v2
 
 ## Documentation Connexe
 
-- **Business Rules**: `/manifests/business-rules/WORKFLOWS.md`
+- **Business Rules**: `/docs/engineering/business-rules/WORKFLOWS.md`
 - **Rapports Sessions**: `/MEMORY-BANK/sessions/RAPPORT-SESSION-*-COMMANDES-*.md`
 - **Code Review**: `/MEMORY-BANK/sessions/RAPPORT-PHASE-3-CODE-REVIEW-2025-10-16.md`
 

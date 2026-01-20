@@ -87,10 +87,9 @@ gh workflow run repo-hygiene-weekly --field dry_run=false
 - ❌ Rapports/audits temporels
 - ❌ Backups JSON
 - ❌ Logs de session
+- ❌ Outputs (audits/, backups/, reports/)
 
 **Destinations autorisées**:
-- ✅ Rapports sessions → `.claude/audits/generated/` (ignoré)
-- ✅ Backups JSON → `.claude/backups/` (ignoré)
 - ✅ Plans session → `.claude/plans/` (auto-ignorés `*-agent-*.md`)
 - ✅ Docs historiques → `docs/_archive/claude/YYYY-MM/`
 - ✅ Docs stables → `docs/claude/`
@@ -99,7 +98,6 @@ gh workflow run repo-hygiene-weekly --field dry_run=false
 - README.md, MANUAL_MODE.md, settings.json
 - agents/*.md, commands/*.md, scripts/*.sh
 - plans/README.md, plans/*-template.md
-- audits/README.md (doc règles uniquement)
 
 ## Copier ce kit vers un autre repo
 
