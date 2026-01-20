@@ -9,7 +9,7 @@
   ],
   "statusLine": {
     "type": "command",
-    "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/statusline-fixed.sh",
+    "command": "bun x ccusage@17.2.1 statusline --visual-burn-rate emoji",
     "padding": 0
   },
   "permissions": {
