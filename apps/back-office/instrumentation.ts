@@ -1,35 +1,26 @@
 /**
  * Next.js Instrumentation
- * Charge la config Sentry selon le runtime (Node.js ou Edge)
+ * HOTFIX 2026-01-20: Sentry désactivé pour corriger MIDDLEWARE_INVOCATION_FAILED
+ * Le projet Sentry 'javascript-nextjs' est invalide/introuvable causant un crash Edge Runtime
+ * Réactiver après avoir corrigé la configuration du projet sur sentry.io
  */
-import * as Sentry from '@sentry/nextjs';
 
 export async function register() {
-  if (process.env.NEXT_RUNTIME === 'nodejs') {
-    await import('./sentry.server.config');
-  }
-
-  if (process.env.NEXT_RUNTIME === 'edge') {
-    await import('./sentry.edge.config');
-  }
+  // DISABLED: Sentry initialization causes MIDDLEWARE_INVOCATION_FAILED
+  // Original code:
+  // if (process.env.NEXT_RUNTIME === 'nodejs') {
+  //   await import('./sentry.server.config');
+  // }
+  // if (process.env.NEXT_RUNTIME === 'edge') {
+  //   await import('./sentry.edge.config');
+  // }
 }
 
-/**
- * Hook Next.js 15 pour capturer les erreurs RSC
- * @see https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/#errors-from-nested-react-server-components
- */
 export async function onRequestError(
-  err: unknown,
-  request: { path: string; method: string; headers: Headers }
+  _err: unknown,
+  _request: { path: string; method: string; headers: Headers }
 ) {
-  Sentry.captureException(err, {
-    contexts: {
-      nextjs: {
-        request: {
-          path: request.path,
-          method: request.method,
-        },
-      },
-    },
-  });
+  // DISABLED: Sentry error capture
+  // Original code:
+  // Sentry.captureException(err, { ... });
 }

@@ -227,4 +227,7 @@ const sentryWebpackPluginOptions = {
   telemetry: false,
 };
 
-module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);
+// HOTFIX 2026-01-20: Disable Sentry to fix MIDDLEWARE_INVOCATION_FAILED in production
+// Sentry project 'javascript-nextjs' is invalid/not found causing Edge Runtime crash
+// Re-enable after fixing Sentry project configuration on sentry.io
+module.exports = nextConfig;
