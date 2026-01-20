@@ -1,156 +1,132 @@
 /**
- * 🔐 Middleware Auth Protection - Vérone Back Office
+ * Middleware Back-Office - Protection des routes
  *
- * Middleware Next.js pour :
- * - Protection des routes authentifiées
- * - Rafraîchissement automatique de la session Supabase
- * - Gestion correcte des requêtes RSC (React Server Components)
- * - Fail-closed: erreur middleware = redirect /login (routes protégées)
+ * SÉCURITÉ CRITIQUE : Ce middleware protège TOUTES les 121 pages du back-office.
+ * Seule la page /login est accessible sans authentification.
  *
- * Pattern adapté de apps/linkme/src/middleware.ts
+ * Comportement:
+ * - Routes protégées → Redirige vers /login si non connecté
+ * - /login → Accessible sans auth (redirection côté client si connecté)
+ * - / → Redirige vers /login
  *
- * NOTE CRITIQUE: Sentry désactivé dans middleware (Edge Runtime).
- * Instrumentation Sentry doit se faire via sentry.edge.config.* séparé.
- * Logs d'erreurs disponibles via console.error → Vercel Runtime Logs.
+ * @module middleware
+ * @since 2026-01-07
+ * @updated 2026-01-16 - Pattern officiel Supabase SSR
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
-import {
-  createMiddlewareClient,
-  updateSession,
-  SupabaseEnvError,
-} from './lib/supabase-middleware';
+import { createServerClient } from '@supabase/ssr';
 
-// Routes publiques accessibles sans authentification
+// Routes PUBLIQUES (whitelist) - TOUTES les autres sont protégées
 const PUBLIC_PAGES = ['/login'];
 
-// Préfixes d'API publiques
+// API publiques (webhooks, cron, health checks)
 const PUBLIC_API_PREFIXES = [
-  '/api/auth', // Endpoints auth Supabase
-  '/api/health', // Health checks
+  '/api/auth', // Callbacks OAuth Supabase
+  '/api/health', // Health check monitoring
   '/api/cron', // Cron jobs Vercel
-  '/api/emails', // Webhooks emails
+  '/api/emails', // Webhooks emails entrants
 ];
 
 /**
- * Vérifie si le chemin est une route publique
+ * Vérifie si une route est publique
  */
 function isPublicRoute(pathname: string): boolean {
-  return (
-    PUBLIC_PAGES.includes(pathname) ||
-    PUBLIC_API_PREFIXES.some((prefix) => pathname.startsWith(prefix))
-  );
+  // Pages publiques exactes
+  if (PUBLIC_PAGES.includes(pathname)) {
+    return true;
+  }
+
+  // API publiques (préfixes)
+  if (PUBLIC_API_PREFIXES.some(prefix => pathname.startsWith(prefix))) {
+    return true;
+  }
+
+  return false;
 }
 
-/**
- * Gère les erreurs middleware de façon FAIL-CLOSED
- * - Routes publiques: laisse passer (l'utilisateur peut voir /login)
- * - Routes protégées: redirect /login (sécurité fail-closed)
- *
- * NOTE: Logs uniquement via console.error (Vercel Runtime Logs).
- * Sentry Edge sera configuré séparément via sentry.edge.config.*.
- */
-function handleMiddlewareError(
-  error: unknown,
-  request: NextRequest,
-  pathname: string
-): NextResponse {
-  const errorMessage = error instanceof Error ? error.message : String(error);
-  const errorName = error instanceof Error ? error.name : 'UnknownError';
-  const errorStack = error instanceof Error ? error.stack : undefined;
+export async function middleware(request: NextRequest): Promise<NextResponse> {
+  const { pathname } = request.nextUrl;
 
-  // Console log pour Vercel Runtime Logs (visible dans Dashboard → Logs)
-  console.error(`[Middleware Error] ${errorName}: ${errorMessage}`, {
-    pathname,
-    url: request.url,
-    stack: errorStack,
-    isPublic: isPublicRoute(pathname),
+  // Skip pour les assets statiques et fichiers Next.js
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.includes('.') // fichiers statiques (favicon, images, etc.)
+  ) {
+    return NextResponse.next();
+  }
+
+  // Route racine "/" → toujours rediriger vers /login
+  if (pathname === '/') {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  // Créer client Supabase avec pattern officiel SSR
+  // ⚠️ IMPORTANT: setAll() DOIT créer et RETOURNER le response (pattern officiel)
+  let response = NextResponse.next({
+    request,
   });
 
-  // Routes publiques: laisser passer (fail-open pour /login uniquement)
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          // Mettre à jour les cookies sur la requête
+          cookiesToSet.forEach(({ name, value }) => {
+            request.cookies.set(name, value);
+          });
+
+          // Créer nouvelle response avec requête mise à jour
+          response = NextResponse.next({
+            request,
+          });
+
+          // Mettre à jour les cookies sur la réponse
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options);
+          });
+        },
+      },
+    }
+  );
+
+  // Vérifier l'authentification (rafraîchit automatiquement la session si expirée)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Route publique → laisser passer
   if (isPublicRoute(pathname)) {
-    return NextResponse.next();
+    return response;
   }
 
-  // Routes protégées: redirect /login (FAIL-CLOSED sécurisé)
-  const loginUrl = new URL('/login', request.url);
-  loginUrl.searchParams.set('redirect', pathname);
-  loginUrl.searchParams.set('error', 'middleware_error');
-  return NextResponse.redirect(loginUrl);
-}
-
-/**
- * Middleware principal avec gestion d'erreurs fail-closed
- *
- * Try/catch GLOBAL : garantit que le middleware ne crashe JAMAIS.
- * En cas d'erreur critique (même dans handleMiddlewareError), fail-open sur /login.
- */
-export async function middleware(request: NextRequest): Promise<NextResponse> {
-  try {
-    const { pathname } = request.nextUrl;
-
-    // Skip assets statiques (_next, images, fonts, etc.)
-    if (pathname.startsWith('/_next') || pathname.includes('.')) {
-      return NextResponse.next();
-    }
-
-    try {
-      // Rafraîchir la session Supabase (gère auto le refresh token)
-      const response = await updateSession(request);
-
-      // Route publique
-      if (isPublicRoute(pathname)) {
-        // Si déjà authentifié et accès à /login → redirect /dashboard
-        if (pathname === '/login') {
-          const { supabase } = createMiddlewareClient(request);
-          const {
-            data: { user },
-          } = await supabase.auth.getUser();
-
-          if (user) {
-            return NextResponse.redirect(new URL('/dashboard', request.url));
-          }
-        }
-
-        return response;
-      }
-
-      // Route protégée - vérifier authentification
-      const { supabase, response: middlewareResponse } =
-        createMiddlewareClient(request);
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      // Non authentifié → redirect /login avec redirect param
-      if (!user) {
-        const loginUrl = new URL('/login', request.url);
-        loginUrl.searchParams.set('redirect', pathname);
-        return NextResponse.redirect(loginUrl);
-      }
-
-      // Authentifié → laisser passer (inclut requêtes RSC avec ?_rsc)
-      return middlewareResponse;
-    } catch (error) {
-      // FAIL-CLOSED: erreur = redirect /login pour routes protégées
-      return handleMiddlewareError(error, request, pathname);
-    }
-  } catch (fatalError) {
-    // DERNIER RECOURS: Si même handleMiddlewareError crash, fail-open absolu
-    console.error('[FATAL Middleware Error] Uncaught exception:', fatalError);
-
-    // Fail-open: laisser passer la requête pour ne pas casser l'app
-    // Au minimum, /login doit être accessible
-    return NextResponse.next();
+  // Route PROTÉGÉE → vérifier si user connecté
+  if (!user) {
+    // Non authentifié → rediriger vers /login avec URL de retour
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('redirect', pathname);
+    return NextResponse.redirect(loginUrl);
   }
+
+  // Authentifié → accès autorisé
+  return response;
 }
 
-/**
- * Configuration matcher
- * Exclut les assets statiques Next.js et fichiers médias
- */
+// Matcher: exclut les assets statiques et fichiers Next.js
 export const config = {
   matcher: [
+    /*
+     * Match tous les chemins SAUF :
+     * - _next/static (fichiers statiques Next.js)
+     * - _next/image (optimisation images)
+     * - favicon.ico
+     * - Assets statiques (images, fonts, etc.)
+     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
   ],
 };
