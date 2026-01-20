@@ -341,9 +341,9 @@ turbo lint -- --fix
 - [`CLAUDE.md`](../CLAUDE.md) § Architecture Turborepo Phase 4
 - [`docs/architecture/MONOREPO-STRUCTURE.md`](../docs/architecture/MONOREPO-STRUCTURE.md) (si créé)
 
-### Archives Migration
+### Migration History
 
-- [`docs/archives/migration-turborepo/`](../docs/archives/migration-turborepo/) - Documentation historique migration Phase 4
+Migration to Turborepo Phase 4 completed on 2025-11-08. For historical context, see git history.
 
 ### Composants Catalogue
 

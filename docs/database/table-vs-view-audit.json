@@ -1,0 +1,41 @@
+{
+  "generated_at": "2026-01-20T12:00:00Z",
+  "summary": {
+    "dashboard_supabase_count": 101,
+    "explanation": "Dashboard shows '101 tables' which are actually 101 TABLES only (views not included in that count)",
+    "db_tables_actual": 101,
+    "db_views_actual": 23,
+    "db_total_objects": 124,
+    "git_tables_count": 37,
+    "git_views_count": 23,
+    "git_total_objects": 60
+  },
+  "source_1_typescript_types": {
+    "tables_count": 101,
+    "views_count": 23,
+    "note": "Full lists in separate section for brevity"
+  },
+  "source_2_git_migrations": {
+    "tables_count": 37,
+    "views_count": 23,
+    "note": "Excludes backup tables (_backup_*, _stock_audit_)"
+  },
+  "set_diff": {
+    "tables_in_db_not_in_git_count": 75,
+    "tables_in_git_not_in_db_count": 11,
+    "views_in_db_not_in_git_count": 4,
+    "views_in_git_not_in_db_count": 4,
+    "common_tables_count": 26,
+    "common_views_count": 19
+  },
+  "conclusion": {
+    "dashboard_mystery_solved": true,
+    "dashboard_shows_tables_only": "101 tables (excludes 23 views from count)",
+    "base_schema_drift_tables": 75,
+    "base_schema_drift_explanation": "75 tables exist in DB but not in Git migrations (base schema not imported)",
+    "git_tables_not_in_db": 11,
+    "git_tables_not_in_db_explanation": "11 tables in Git but not in DB (likely renamed, dropped, or converted to views)",
+    "views_mostly_aligned": true,
+    "views_alignment_note": "19/23 views match between DB and Git; 4 views created outside Git; 4 views in Git dropped"
+  }
+}
