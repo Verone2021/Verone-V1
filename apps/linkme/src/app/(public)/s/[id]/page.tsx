@@ -520,7 +520,7 @@ export default function PublicSelectionPage({
                             src={item.product_image}
                             alt={item.product_name}
                             fill
-                            className="object-cover group-hover:scale-102 transition-transform duration-500"
+                            className="object-contain group-hover:scale-105 transition-transform duration-500"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-gray-300">
