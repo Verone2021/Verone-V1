@@ -24,7 +24,7 @@ import {
   CollapsibleTrigger,
   cn,
 } from '@verone/ui';
-import { User, ChevronDown, Check, AlertCircle, FileText, Building2 } from 'lucide-react';
+import { User, ChevronDown, Check, AlertCircle, AlertTriangle, FileText, Building2 } from 'lucide-react';
 
 import { useOrganisationContacts } from '@/lib/hooks/use-organisation-contacts';
 import { useEnseigneId } from '@/lib/hooks/use-enseigne-id';
@@ -182,7 +182,9 @@ export function ContactsStep({ formData, errors, onUpdate }: ContactsStepProps) 
     return formData.restaurant.existingOwnershipType || null;
   }, [formData.restaurant]);
 
-  const canShowEnseigneContacts = ownershipType === 'succursale' && !!enseigneId;
+  // Franchises ET succursales peuvent voir contacts enseigne (pour responsable uniquement côté franchise)
+  const canShowEnseigneContacts = !!enseigneId &&
+    (ownershipType === 'succursale' || ownershipType === 'franchise');
 
   const { data: contactsData } = useOrganisationContacts(
     organisationId,
@@ -236,6 +238,33 @@ export function ContactsStep({ formData, errors, onUpdate }: ContactsStepProps) 
 
   // Existing contacts
   const existingContacts = contactsData?.allContacts || [];
+
+  // ==================================================
+  // FILTRAGE CONTACTS POUR FRANCHISES (Phase 8.1)
+  // Contacts enseigne disponibles UNIQUEMENT pour responsable commande
+  // ==================================================
+
+  // Contacts disponibles pour FACTURATION (franchise = exclure contacts enseigne purs)
+  const billingAvailableContacts = useMemo(() => {
+    if (isFranchise) {
+      // FRANCHISE : Seulement contacts du restaurant (pas contacts enseigne purs)
+      return existingContacts.filter(c =>
+        c.organisationId === organisationId
+      );
+    }
+    return existingContacts;
+  }, [existingContacts, isFranchise, organisationId]);
+
+  // Contacts disponibles pour LIVRAISON (franchise = exclure contacts enseigne purs)
+  const deliveryAvailableContacts = useMemo(() => {
+    if (isFranchise) {
+      // FRANCHISE : Seulement contacts du restaurant
+      return existingContacts.filter(c =>
+        c.organisationId === organisationId
+      );
+    }
+    return existingContacts;
+  }, [existingContacts, isFranchise, organisationId]);
 
   // ========================================
   // RESPONSABLE HANDLERS
@@ -540,9 +569,21 @@ export function ContactsStep({ formData, errors, onUpdate }: ContactsStepProps) 
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="p-4 pt-0 border-t space-y-4">
+              {/* Message avertissement franchise + contacts enseigne visibles */}
+              {isFranchise && showEnseigneContacts && (
+                <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-md">
+                  <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0" />
+                  <span className="text-sm text-amber-700">
+                    Les contacts enseigne peuvent uniquement etre selectionnes comme{' '}
+                    <strong>responsable de commande</strong>. La facturation doit etre geree
+                    par le proprietaire du restaurant ou ses employes.
+                  </span>
+                </div>
+              )}
+
               {/* Contact grid with "Same as responsable" option */}
               <ContactGrid
-                contacts={existingContacts}
+                contacts={billingAvailableContacts}
                 selectedId={formData.contacts.billingContact.existingContactId || null}
                 onSelect={handleBillingContactSelect}
                 onCreateNew={handleBillingContactCreateNew}
@@ -608,7 +649,7 @@ export function ContactsStep({ formData, errors, onUpdate }: ContactsStepProps) 
       <DeliverySection
         delivery={formData.contacts.delivery}
         onUpdate={handleDeliveryUpdate}
-        existingContacts={existingContacts}
+        existingContacts={deliveryAvailableContacts}
         restaurantAddress={restaurantAddress}
         defaultOpen={openSections.includes('delivery')}
       />

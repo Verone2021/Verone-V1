@@ -30,6 +30,9 @@ export interface OrganisationContact {
   isCommercialContact: boolean;
   isTechnicalContact: boolean;
   isUser: boolean; // Contact lié à un utilisateur (auto-sync/backfill)
+  // IDs pour filtrage UI (Phase 8.1 - franchises)
+  organisationId: string | null;
+  enseigneId: string | null;
 }
 
 export interface ContactFormData {
@@ -96,8 +99,15 @@ export function useOrganisationContacts(
         .eq('is_active', true);
 
       // Filtrer selon ownership_type et mode d'affichage
-      if (ownershipType === 'franchise' && organisationId) {
-        // FRANCHISE : Seulement contacts restaurant (jamais enseigne)
+      if (ownershipType === 'franchise' && includeEnseigneContacts && enseigneId && organisationId) {
+        // FRANCHISE + Bouton cliqué : Contacts restaurant + contacts enseigne
+        // Note: Le filtrage billing/delivery sera fait côté UI (contacts enseigne = responsable commande uniquement)
+        query = query.or(
+          `organisation_id.eq.${organisationId},enseigne_id.eq.${enseigneId}`
+        );
+
+      } else if (ownershipType === 'franchise' && organisationId) {
+        // FRANCHISE (défaut) : Seulement contacts restaurant
         query = query.eq('organisation_id', organisationId);
 
       } else if (ownershipType === 'succursale' && includeEnseigneContacts && enseigneId && organisationId) {
@@ -146,6 +156,9 @@ export function useOrganisationContacts(
           c.notes?.includes('auto-sync') ||
           c.notes?.includes('backfill') ||
           false,
+        // IDs pour filtrage UI (Phase 8.1 - franchises)
+        organisationId: c.organisation_id,
+        enseigneId: c.enseigne_id,
       }));
 
       // Identifier les contacts clés
