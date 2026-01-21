@@ -5,7 +5,8 @@
     "playwright-lane-1",
     "playwright-lane-2",
     "context7",
-    "magic"
+    "magic",
+    "supabase"
   ],
   "statusLine": {
     "type": "command",

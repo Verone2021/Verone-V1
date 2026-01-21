@@ -30,6 +30,7 @@ build/
 .env.production.local
 
 # MCP Server credentials (DO NOT COMMIT)
+.mcp.json
 .mcp.env
 .mcp.local.json
 
