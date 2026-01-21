@@ -5,8 +5,14 @@
     "playwright-lane-1",
     "playwright-lane-2",
     "context7",
-    "magic"
+    "magic",
+    "supabase"
   ],
+  "statusLine": {
+    "type": "command",
+    "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/statusline.sh",
+    "padding": 0
+  },
   "permissions": {
     "allow": [
       "Bash(git *)",

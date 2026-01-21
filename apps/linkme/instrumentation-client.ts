@@ -51,6 +51,6 @@ Sentry.init({
   // Environnement (Vercel auto-injecte)
   environment: process.env.NEXT_PUBLIC_VERCEL_ENV || 'development',
 
-  // Désactiver en dev local
-  enabled: process.env.NODE_ENV === 'production',
+  // Activer en dev pour tester l'intégration Sentry
+  enabled: true,
 });

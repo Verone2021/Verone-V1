@@ -147,6 +147,8 @@ const nextConfig = {
       /A Node\.js API is used \(process\.(versions?|version) at line: \d+\) which is not supported in the Edge Runtime/,
       // Warning serialization big strings (déjà géré avec memory cache mais on filtre le message)
       /Serializing big strings \(\d+kiB\) impacts deserialization performance/,
+      // Sentry OpenTelemetry dynamic require (faux positif documenté)
+      { module: /require-in-the-middle/ },
     ];
 
     // Optimize performance for large files (like use-manual-tests.ts)
@@ -227,7 +229,5 @@ const sentryWebpackPluginOptions = {
   telemetry: false,
 };
 
-// HOTFIX 2026-01-20: Disable Sentry to fix MIDDLEWARE_INVOCATION_FAILED in production
-// Sentry project 'javascript-nextjs' is invalid/not found causing Edge Runtime crash
-// Re-enable after fixing Sentry project configuration on sentry.io
-module.exports = nextConfig;
+// Sentry réactivé 2026-01-21 après migration routes Edge → Node.js
+module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);

@@ -392,11 +392,16 @@ export function OrganisationDetailSheet({
     open ? organisationId : null
   );
 
+  // Map ownership_type: 'propre' -> 'succursale' for compatibility
+  const contactOwnershipType = data?.organisation?.ownership_type === 'propre'
+    ? 'succursale'
+    : (data?.organisation?.ownership_type as 'succursale' | 'franchise' | null);
+
   const { data: contactsData, isLoading: contactsLoading } =
     useOrganisationContacts(
       open ? organisationId : null,
       open ? data?.organisation?.enseigne_id : null,
-      open ? (data?.organisation?.is_enseigne_parent ?? false) : false
+      open ? contactOwnershipType : null
     );
 
   // États pour l'édition de chaque section

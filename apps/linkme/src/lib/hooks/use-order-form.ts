@@ -389,6 +389,25 @@ export function useOrderForm(): UseOrderFormReturn {
         quantity: item.quantity,
       }));
 
+      // Étape 2.5: Extraire les IDs de contacts
+      const responsableContactId = formData.contacts.existingResponsableId || null;
+
+      let billingContactId: string | null = null;
+      if (formData.contacts.billingContact.mode === 'same_as_responsable') {
+        billingContactId = responsableContactId;
+      } else if (formData.contacts.billingContact.mode === 'existing') {
+        billingContactId = formData.contacts.billingContact.existingContactId || null;
+      }
+      // Si mode = 'new' : contact sera créé plus tard (inline), pour l'instant null
+
+      let deliveryContactId: string | null = null;
+      if (formData.contacts.delivery.sameAsResponsable) {
+        deliveryContactId = responsableContactId;
+      } else if (formData.contacts.delivery.existingContactId) {
+        deliveryContactId = formData.contacts.delivery.existingContactId;
+      }
+      // Si pas de contact existant : contact inline (null pour l'instant)
+
       // Étape 3: Créer la commande via RPC
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: orderId, error: orderError } = await (supabase.rpc as any)(
@@ -400,6 +419,10 @@ export function useOrderForm(): UseOrderFormReturn {
           p_selection_id: formData.selection.selectionId,
           p_items: orderItems,
           p_notes: formData.delivery.notes || null,
+          // NEW: Contact IDs
+          p_responsable_contact_id: responsableContactId,
+          p_billing_contact_id: billingContactId,
+          p_delivery_contact_id: deliveryContactId,
         }
       );
 

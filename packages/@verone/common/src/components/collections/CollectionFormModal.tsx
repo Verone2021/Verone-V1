@@ -16,7 +16,8 @@ import {
 } from '@radix-ui/react-icons';
 import { X, Tag, Plus } from 'lucide-react';
 
-import { CollectionImageUpload } from '@/components/business/collection-image-upload';
+// TODO: Déplacer CollectionImageUpload vers @verone/common
+// import { CollectionImageUpload } from '@/components/business/collection-image-upload';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -235,6 +236,7 @@ export function CollectionFormModal({
             </div>
 
             {/* Image de couverture - ALIGNÉE SUR LARGEUR FORMULAIRE */}
+            {/* TODO: Réactiver quand CollectionImageUpload sera dans @verone/common
             <div>
               <Label className="text-sm font-medium">Image de couverture</Label>
               <div className="mt-2 w-full">
@@ -249,6 +251,7 @@ export function CollectionFormModal({
                 />
               </div>
             </div>
+            */}
           </div>
 
           {/* Style - UNE SEULE FOIS */}

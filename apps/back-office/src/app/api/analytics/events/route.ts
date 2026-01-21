@@ -11,7 +11,7 @@ import { NextResponse } from 'next/server';
 import { anonymizeIP, simplifyUserAgent } from '@verone/utils/analytics';
 import { createClient } from '@verone/utils/supabase/server';
 
-export const runtime = 'edge';
+// Node.js runtime (suppression Edge pour compatibilité Sentry)
 export const dynamic = 'force-dynamic';
 
 interface ActivityEvent {
