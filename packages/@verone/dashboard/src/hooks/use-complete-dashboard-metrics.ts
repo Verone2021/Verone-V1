@@ -219,12 +219,12 @@ export function useCompleteDashboardMetrics() {
           .gte('created_at', startOfMonth.toISOString()),
 
         // 2. Factures (mois précédent + mois en cours) - FUSIONNÉE
+        // Note: Colonne 'type' supprimée - table invoices contient uniquement des factures
         supabase
           .from('invoices')
           .select('total_ht, status, created_at')
           .gte('created_at', startOfPrevMonth.toISOString())
-          .eq('type', 'invoice')
-          .not('status', 'eq', 'cancelled'),
+          .neq('status', 'cancelled'),
 
         // 3. Produits pour stock (fix: archived_at au lieu de archived)
         supabase
