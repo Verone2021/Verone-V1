@@ -263,6 +263,39 @@ cat .tasks/INDEX.md
 
 ---
 
+## Structure `.claude/` (Standards Anthropic 2026)
+
+### Dossiers Requis
+
+- **`agents/`** - Agents spécialisés (4 agents core)
+- **`commands/`** - Commandes slash (5 commandes actives)
+- **`rules/`** - Règles comportement (nouveau 2026)
+- **`scripts/`** - Scripts hooks (statusline, task-completed, etc.)
+- **`audits/`** - Documentation audit + rapports générés
+
+### Fichiers Configuration
+
+- **`settings.json`** - Config MCP + permissions (tracké Git)
+- **`settings.local.json`** - Overrides locaux (gitignored)
+- **`README.md`** - Documentation structure kit
+- **`MANUAL_MODE.md`** - Règles workflow manuel
+
+### ❌ À NE PAS METTRE dans `.claude/`
+
+- **Mémoires** → `.serena/memories/` (MCP Serena)
+- **Plans** → `.tasks/plans/` (Task management)
+- **Documentation** → `docs/` (canonique) ou `docs/claude/` (spécifique)
+- **Archives** → `docs/archive/YYYY-MM/`
+
+### Portabilité
+
+Cette structure `.claude/` est portable entre repos :
+1. Copier dossier `.claude/` complet
+2. Adapter `settings.json` (chemins absolus → `$CLAUDE_PROJECT_DIR`)
+3. Installer dépendances globales : `bun install -g ccusage@17.2.1`
+
+---
+
 ## Ports
 
 | Application | Port |

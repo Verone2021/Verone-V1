@@ -32,6 +32,20 @@
     └── pr.md
 ```
 
+## Dossier `rules/` (Standards 2026)
+
+Règles de comportement pour Claude Code, organisées par domaine.
+
+**Structure** :
+- `rules/general.md` - Règles cross-cutting
+- `rules/frontend/` - Next.js, React, UI
+- `rules/backend/` - API, middleware, auth
+- `rules/database/` - Supabase, migrations, RLS
+
+**Utilisation** : Tous fichiers `.md` sont auto-découverts récursivement.
+
+**Symlinks** : Supportés pour partager règles entre projets.
+
 ## Règles "Expert"
 
 ### Wrappers de compatibilité
