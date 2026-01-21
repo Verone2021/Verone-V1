@@ -45,8 +45,16 @@
     },
     "test:e2e": {
       "dependsOn": ["build"],
-      "outputs": [".playwright-mcp/reports/**"],
-      "cache": false
+      "outputs": [
+        ".playwright-mcp/reports/**",
+        "playwright-report/**",
+        "test-results/**"
+      ],
+      "cache": false,
+      "env": [
+        "NEXT_PUBLIC_SUPABASE_URL",
+        "SUPABASE_SERVICE_ROLE_KEY"
+      ]
     },
     "storybook": {
       "cache": false,

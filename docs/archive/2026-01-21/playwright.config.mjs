@@ -1,11 +1,11 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Playwright configuration for LinkMe smoke tests
+ * Playwright configuration for LinkMe E2E tests
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
-  testDir: './tests',
+  testDir: './e2e',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -28,6 +28,10 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
+
+  // Global setup and teardown
+  globalSetup: './e2e/global-setup.ts',
+  globalTeardown: './e2e/global-teardown.ts',
 
   // Run local dev server before tests (if not already running)
   webServer: {
