@@ -41,7 +41,9 @@ interface ISelectionItem {
   selling_price_ttc: number;
   margin_rate: number;
   stock_quantity: number;
-  category: string | null;
+  category_name: string | null;
+  subcategory_id: string | null;
+  subcategory_name: string | null;
   is_featured: boolean;
 }
 
@@ -150,10 +152,11 @@ export default function PublicSelectionPage({
   const [affiliateInfo, setAffiliateInfo] = useState<IAffiliateInfo | null>(
     null
   );
+
+  // Hover state for category overlay
+  const [hoveredProductId, setHoveredProductId] = useState<string | null>(null);
   const [organisations, setOrganisations] = useState<IOrganisation[]>([]);
 
-  // Hover states for animations
-  const [hoveredProductId, setHoveredProductId] = useState<string | null>(null);
 
   // Hooks for unified order form
   const { submitOrder, isSubmitting } = useSubmitUnifiedOrder();
@@ -179,17 +182,36 @@ export default function PublicSelectionPage({
     []
   );
 
-  // Extract categories from items
+  // Extract categories with subcategories from items
   const categories: ICategory[] = useMemo(() => {
-    const categoryMap = new Map<string, { count: number }>();
+    const categoryMap = new Map<
+      string,
+      {
+        count: number;
+        subcategories: Map<string, { id: string; name: string; count: number }>;
+      }
+    >();
 
     for (const item of items) {
-      const cat = item.category ?? 'Autres';
-      const existing = categoryMap.get(cat);
-      if (existing) {
-        existing.count++;
-      } else {
-        categoryMap.set(cat, { count: 1 });
+      const catName = item.category_name ?? 'Autres';
+      const subId = item.subcategory_id;
+      const subName = item.subcategory_name;
+
+      if (!categoryMap.has(catName)) {
+        categoryMap.set(catName, { count: 0, subcategories: new Map() });
+      }
+
+      const category = categoryMap.get(catName)!;
+      category.count++;
+
+      // Add subcategory if present
+      if (subId && subName) {
+        const existingSub = category.subcategories.get(subId);
+        if (existingSub) {
+          existingSub.count++;
+        } else {
+          category.subcategories.set(subId, { id: subId, name: subName, count: 1 });
+        }
       }
     }
 
@@ -198,11 +220,14 @@ export default function PublicSelectionPage({
         id: name.toLowerCase().replace(/\s+/g, '-'),
         name,
         count: data.count,
+        subcategories: Array.from(data.subcategories.values()).sort((a, b) =>
+          a.name.localeCompare(b.name)
+        ),
       }))
       .sort((a, b) => b.count - a.count);
   }, [items]);
 
-  // Filter items based on search and category
+  // Filter items based on search, category, and subcategory
   const filteredItems = useMemo(() => {
     let filtered = items;
 
@@ -223,13 +248,20 @@ export default function PublicSelectionPage({
       )?.name;
       if (categoryName) {
         filtered = filtered.filter(
-          item => (item.category ?? 'Autres') === categoryName
+          item => (item.category_name ?? 'Autres') === categoryName
         );
       }
     }
 
+    // Filter by subcategory
+    if (selectedSubcategory) {
+      filtered = filtered.filter(
+        item => item.subcategory_id === selectedSubcategory
+      );
+    }
+
     return filtered;
-  }, [items, searchQuery, selectedCategory, categories]);
+  }, [items, searchQuery, selectedCategory, selectedSubcategory, categories]);
 
   // Pagination constants and calculations
   const PRODUCTS_PER_PAGE = 12; // 3 rows × 4 columns
@@ -481,14 +513,14 @@ export default function PublicSelectionPage({
                       onMouseEnter={() => setHoveredProductId(item.id)}
                       onMouseLeave={() => setHoveredProductId(null)}
                     >
-                      {/* Product Image with Hover Overlay */}
+                      {/* Product Image */}
                       <div className="relative h-48 bg-gray-100 overflow-hidden group">
                         {item.product_image ? (
                           <Image
                             src={item.product_image}
                             alt={item.product_name}
                             fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-500"
+                            className="object-contain group-hover:scale-105 transition-transform duration-500"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-gray-300">
@@ -503,21 +535,27 @@ export default function PublicSelectionPage({
                           }`}
                         />
 
-                        {/* Product Name + SKU on Hover (slide-up) */}
-                        <div
-                          className={`absolute bottom-0 left-0 right-0 p-4 transition-all duration-300 ${
-                            isHovered
-                              ? 'opacity-100 translate-y-0'
-                              : 'opacity-0 translate-y-4'
-                          }`}
-                        >
-                          <h3 className="text-white font-semibold line-clamp-2">
-                            {item.product_name}
-                          </h3>
-                          <p className="text-white/70 text-xs mt-1">
-                            {item.product_sku}
-                          </p>
-                        </div>
+                        {/* Category on Hover */}
+                        {(item.category_name || item.subcategory_name) && (
+                          <div
+                            className={`absolute bottom-0 left-0 right-0 p-4 transition-all duration-300 ${
+                              isHovered
+                                ? 'opacity-100 translate-y-0'
+                                : 'opacity-0 translate-y-4'
+                            }`}
+                          >
+                            {item.category_name && (
+                              <p className="text-white/80 text-xs uppercase tracking-wide">
+                                {item.category_name}
+                              </p>
+                            )}
+                            {item.subcategory_name && (
+                              <p className="text-white font-semibold text-sm mt-0.5">
+                                {item.subcategory_name}
+                              </p>
+                            )}
+                          </div>
+                        )}
 
                         {/* Badges Container */}
                         <div className="absolute top-3 left-3 right-3 flex justify-between items-start">
@@ -551,8 +589,19 @@ export default function PublicSelectionPage({
                         </div>
                       </div>
 
-                      {/* Product Info - Reduced (Price + Actions only) */}
+                      {/* Product Info */}
                       <div className="p-4">
+                        {/* Product Name - Always visible */}
+                        <h3
+                          className="font-semibold text-sm line-clamp-2 mb-2"
+                          style={{ color: branding.text_color }}
+                        >
+                          {item.product_name}
+                        </h3>
+                        <p className="text-xs text-gray-400 mb-3">
+                          {item.product_sku}
+                        </p>
+
                         <div className="flex items-center justify-between">
                           {/* Price */}
                           <div>

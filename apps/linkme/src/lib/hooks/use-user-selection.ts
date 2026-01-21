@@ -61,6 +61,8 @@ export interface UserSelection {
   orders_count: number;
   total_revenue: number;
   published_at: string | null;
+  /** Mode d'affichage des prix pour cette sélection (HT ou TTC) */
+  price_display_mode: 'HT' | 'TTC';
   created_at: string;
   updated_at: string;
 }
@@ -83,6 +85,10 @@ export interface SelectionItem {
   product_reference: string;
   product_image_url: string | null;
   product_stock_real: number;
+  // Données pour produits affiliés
+  category_name: string | null;
+  is_affiliate_product: boolean;
+  affiliate_commission_rate: number | null;
 }
 
 /**
@@ -215,6 +221,7 @@ export function useUserSelections() {
         orders_count: s.orders_count || 0,
         total_revenue: s.total_revenue || 0,
         published_at: s.published_at,
+        price_display_mode: s.price_display_mode || 'TTC',
         created_at: s.created_at,
         updated_at: s.updated_at,
       }));
@@ -252,7 +259,10 @@ export function useSelectionItems(selectionId: string | null) {
           product:products(
             name,
             sku,
-            stock_real
+            stock_real,
+            subcategory:subcategories(name),
+            created_by_affiliate,
+            affiliate_commission_rate
           )
         `
         )
@@ -294,6 +304,10 @@ export function useSelectionItems(selectionId: string | null) {
         product_reference: item.product?.sku || '',
         product_image_url: imageMap.get(item.product_id) || null,
         product_stock_real: item.product?.stock_real || 0,
+        // Données pour produits affiliés
+        category_name: item.product?.subcategory?.name ?? null,
+        is_affiliate_product: !!item.product?.created_by_affiliate,
+        affiliate_commission_rate: item.product?.affiliate_commission_rate ?? null,
       }));
     },
     enabled: !!selectionId,
@@ -686,6 +700,36 @@ export function useToggleSelectionPublished() {
 }
 
 /**
+ * Hook: mettre à jour le mode d'affichage des prix (HT/TTC) d'une sélection
+ * Permet à l'affilié de choisir comment afficher les prix sur cette sélection spécifique
+ */
+export function useUpdateSelectionPriceDisplayMode() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: {
+      selectionId: string;
+      priceDisplayMode: 'HT' | 'TTC';
+    }) => {
+      const supabase = createClient();
+
+      const { error } = await (supabase as any)
+        .from('linkme_selections')
+        .update({
+          price_display_mode: input.priceDisplayMode,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', input.selectionId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-selections'] });
+    },
+  });
+}
+
+/**
  * Hook: récupère uniquement les product_id d'une sélection (pour filtrage)
  * Utilisé par le catalogue pour masquer les produits déjà dans la sélection
  */
@@ -745,6 +789,38 @@ export function useReorderProducts() {
       if (errors.length > 0) {
         throw new Error('Erreur lors de la réorganisation');
       }
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['selection-items', variables.selectionId],
+      });
+    },
+  });
+}
+
+/**
+ * Hook: mettre à jour le prix de vente d'un produit affilié
+ * Permet à l'affilié de modifier le prix de ses propres produits
+ */
+export function useUpdateAffiliateProductPrice() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: {
+      itemId: string;
+      selectionId: string;
+      newPriceHt: number;
+    }) => {
+      const supabase = createClient();
+      const { error } = await (supabase as any)
+        .from('linkme_selection_items')
+        .update({
+          selling_price_ht: input.newPriceHt,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', input.itemId);
+
+      if (error) throw error;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({

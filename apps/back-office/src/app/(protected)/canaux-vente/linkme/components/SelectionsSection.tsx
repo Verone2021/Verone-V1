@@ -203,8 +203,7 @@ export function SelectionsSection() {
           public_price_ht,
           products:product_id (
             name,
-            sku,
-            primary_image_url
+            sku
           )
         `
         )
@@ -215,6 +214,21 @@ export function SelectionsSection() {
         console.error('Error fetching catalog:', catalogError);
       }
 
+      // Fetch images primaires depuis product_images
+      const productIds = (catalogData || []).map(
+        (item: any) => item.product_id
+      );
+      const { data: imagesData } = await supabase
+        .from('product_images')
+        .select('product_id, public_url')
+        .in('product_id', productIds)
+        .eq('is_primary', true);
+
+      // Créer map des images par product_id
+      const imageMap = new Map(
+        (imagesData || []).map((img: any) => [img.product_id, img.public_url])
+      );
+
       // Transformer les données pour correspondre à l'interface CatalogProduct
       const transformedCatalog: CatalogProduct[] = (catalogData || []).map(
         (item: any) => ({
@@ -223,7 +237,7 @@ export function SelectionsSection() {
           product_name: item.products?.name || 'Produit inconnu',
           product_reference: item.products?.sku || '',
           product_price_ht: Number(item.public_price_ht) || 0,
-          product_image_url: item.products?.primary_image_url || null,
+          product_image_url: imageMap.get(item.product_id) || null,
           max_margin_rate: Number(item.max_margin_rate) || 30,
           min_margin_rate: Number(item.min_margin_rate) || 5,
           suggested_margin_rate: Number(item.suggested_margin_rate) || 15,

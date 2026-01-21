@@ -1,23 +1,19 @@
 /**
- * Next.js Instrumentation
- * Charge la config Sentry selon le runtime (Node.js ou Edge)
+ * Next.js Instrumentation - Sentry Integration
+ * Réactivé 2026-01-21 après migration routes Edge → Node.js
  */
+
 import * as Sentry from '@sentry/nextjs';
 
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     await import('./sentry.server.config');
   }
-
   if (process.env.NEXT_RUNTIME === 'edge') {
     await import('./sentry.edge.config');
   }
 }
 
-/**
- * Hook Next.js 15 pour capturer les erreurs RSC
- * @see https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/#errors-from-nested-react-server-components
- */
 export async function onRequestError(
   err: unknown,
   request: { path: string; method: string; headers: Headers }

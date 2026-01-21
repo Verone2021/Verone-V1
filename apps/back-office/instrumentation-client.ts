@@ -1,6 +1,6 @@
 /**
- * Sentry Client Configuration (Next.js 15 + Turbopack)
- * Nouveau format compatible Turbopack
+ * Sentry Client Configuration - Back-Office (Next.js 15 + Turbopack)
+ * Réactivé 2026-01-21 après migration routes Edge → Node.js
  * @see https://docs.sentry.io/platforms/javascript/guides/nextjs/
  */
 import * as Sentry from '@sentry/nextjs';
@@ -51,6 +51,6 @@ Sentry.init({
   // Environnement (Vercel auto-injecte)
   environment: process.env.NEXT_PUBLIC_VERCEL_ENV || 'development',
 
-  // Désactiver en dev local
-  enabled: process.env.NODE_ENV === 'production',
+  // Activer en dev pour tester l'intégration Sentry
+  enabled: true,
 });

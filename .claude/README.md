@@ -112,6 +112,50 @@ cp scripts/maintenance/repo-hygiene.sh /path/to/new-repo/scripts/maintenance/
 # Adapter settings.json si MCP différents
 ```
 
+## Status Line Configuration
+
+**Requirement**: bun installé globalement
+
+```bash
+curl -fsSL https://bun.sh/install | bash
+```
+
+**Configuration actuelle**: `.claude/settings.json` (lignes 10-14)
+
+```json
+"statusLine": {
+  "type": "command",
+  "command": "bun x ccusage@17.2.1 statusline --visual-burn-rate emoji",
+  "padding": 0
+}
+```
+
+**Pourquoi bun x ccusage@17.2.1** :
+- Version stable pinnée (évite instabilité de 18.x)
+- Commande directe (pas de path resolution nécessaire)
+- Performance optimale avec caching bun
+- Prouvé fonctionnel (Jan 19, 2026)
+
+**Troubleshooting**: Si Status Line n'apparaît pas
+
+```bash
+# Vérifier bun disponible
+which bun
+
+# Tester manuellement
+echo '{}' | bun x ccusage@17.2.1 statusline --visual-burn-rate emoji
+# Note: Erreur "Invalid input format" est NORMALE (JSON incomplet)
+
+# Fallback: installer ccusage globalement
+npm install -g ccusage@17.2.1
+# Puis modifier settings.json: "command": "ccusage statusline --visual-burn-rate emoji"
+```
+
+**⚠️ Important** :
+- `$CLAUDE_PROJECT_DIR` ne fonctionne PAS dans `statusLine.command` (unsupported, GitHub #7925)
+- Toujours utiliser commande directe ou chemin absolu
+- Restart Claude Code requis après modification de `settings.json`
+
 ## See Also
 
 - `CLAUDE.md` - Instructions principales

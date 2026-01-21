@@ -27,6 +27,7 @@ import {
   Banknote,
   ClipboardCheck,
   Warehouse,
+  Bell,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -99,6 +100,11 @@ const LINKME_NAV: LinkMeNavItem[] = [
     title: 'Approbations',
     href: '/canaux-vente/linkme/approbations',
     icon: ClipboardCheck,
+  },
+  {
+    title: 'Messages',
+    href: '/canaux-vente/linkme/messages',
+    icon: Bell,
   },
   {
     title: 'Stockage',

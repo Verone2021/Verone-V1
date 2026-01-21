@@ -32,10 +32,12 @@ Claude peut faire SANS demander :
 Claude **DOIT DEMANDER** avant :
 
 ### Git & GitHub
-- ⚠️ Créer Pull Request (`gh pr create`)
+- ⚠️ **Créer Pull Request (`gh pr create`)** ← **JAMAIS sans demander !**
 - ⚠️ Merger Pull Request (`gh pr merge`)
 - ⚠️ Supprimer branches distantes
 - ⚠️ Force push (`git push --force`)
+
+**🚨 RÈGLE ABSOLUE : Claude NE DOIT JAMAIS exécuter `gh pr create` sans avoir reçu une confirmation explicite de l'utilisateur.**
 
 ### Déploiement
 - ⚠️ Merger vers main/production
@@ -62,20 +64,33 @@ git push origin feat/APP-DOMAIN-NNN-description
 ```
 
 ### 2. Pull Request (DEMANDER d'abord)
+
+**❌ CE QUE CLAUDE NE DOIT JAMAIS FAIRE** :
 ```bash
-# ❌ Claude NE FAIT PAS seul
-# ✅ Claude PROPOSE à l'utilisateur
+# ❌ INTERDIT - Ne jamais exécuter directement
+gh pr create --title "..." --body "..."
 ```
 
-**Claude dit** :
-> "J'ai terminé l'implémentation et tous les tests passent. La branche `feat/APP-DOMAIN-NNN-description` est prête.
->
-> Veux-tu que je crée une Pull Request maintenant ?"
+**✅ CE QUE CLAUDE DOIT FAIRE** :
+```
+Claude propose à l'utilisateur:
+"J'ai terminé l'implémentation et tous les tests passent.
+La branche `feat/APP-DOMAIN-NNN-description` est prête et poussée sur origin.
 
-**Utilisateur approuve** → Claude exécute :
+Tous les checks sont verts:
+- ✅ TypeScript compile
+- ✅ Build production réussit
+- ✅ Tests E2E passent
+
+Veux-tu que je crée une Pull Request maintenant ?"
+```
+
+**Utilisateur répond "oui"** → Alors seulement Claude exécute :
 ```bash
 gh pr create --title "[APP-DOMAIN-NNN] feat: description" --body "..."
 ```
+
+**Si l'utilisateur ne répond pas ou dit "non"** → Claude NE FAIT RIEN
 
 ### 3. Merge (DEMANDER d'abord)
 
