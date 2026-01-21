@@ -16,6 +16,8 @@ import { useState, useMemo } from 'react';
 
 import { Calculator, Info, CheckCircle2 } from 'lucide-react';
 
+import { calculateMargin, LINKME_CONSTANTS } from '@verone/utils';
+
 const EXAMPLES = [
   {
     marginRate: 10,
@@ -37,30 +39,22 @@ const EXAMPLES = [
   },
 ];
 
-// Calcul avec taux de marque (SSOT)
-function calculateSellingPrice(basePrice: number, marginRate: number): number {
-  if (marginRate >= 100) return basePrice * 10; // Protection
-  return basePrice / (1 - marginRate / 100);
-}
-
-function calculateGain(basePrice: number, marginRate: number): number {
-  const sellingPrice = calculateSellingPrice(basePrice, marginRate);
-  return sellingPrice - basePrice;
-}
-
 export function LandingPricingModels() {
   const [selectedMargin, setSelectedMargin] = useState(15);
   const [basePrice] = useState(100);
 
   const calculation = useMemo(() => {
-    const sellingPrice = calculateSellingPrice(basePrice, selectedMargin);
-    const gain = calculateGain(basePrice, selectedMargin);
-    const platformFee = sellingPrice * 0.05; // 5% commission plateforme
-    const finalPrice = sellingPrice + platformFee;
+    // ✅ SSOT: Utiliser calculateMargin de @verone/utils
+    const { sellingPriceHt, gainEuros } = calculateMargin({
+      basePriceHt: basePrice,
+      marginRate: selectedMargin,
+    });
+    const platformFee = sellingPriceHt * (LINKME_CONSTANTS.PLATFORM_COMMISSION_RATE / 100);
+    const finalPrice = sellingPriceHt + platformFee;
 
     return {
-      sellingPrice: Math.round(sellingPrice * 100) / 100,
-      gain: Math.round(gain * 100) / 100,
+      sellingPrice: sellingPriceHt,
+      gain: gainEuros,
       platformFee: Math.round(platformFee * 100) / 100,
       finalPrice: Math.round(finalPrice * 100) / 100,
     };
@@ -128,8 +122,11 @@ export function LandingPricingModels() {
               </h3>
               <div className="grid grid-cols-3 gap-4">
                 {EXAMPLES.map((ex) => {
-                  const selling = calculateSellingPrice(ex.basePrice, ex.marginRate);
-                  const gain = calculateGain(ex.basePrice, ex.marginRate);
+                  // ✅ SSOT: Utiliser calculateMargin
+                  const { sellingPriceHt: selling, gainEuros: gain } = calculateMargin({
+                    basePriceHt: ex.basePrice,
+                    marginRate: ex.marginRate,
+                  });
                   return (
                     <button
                       key={ex.marginRate}

@@ -269,13 +269,13 @@ function ProductRow({ product }: { product: AffiliateProduct }): JSX.Element {
   const canEdit = product.affiliate_approval_status === 'draft';
   const isRejected = product.affiliate_approval_status === 'rejected';
 
-  // Calcul du prix de vente HT à partir de l'encaissement et du taux de commission
-  // Formule: prixVente = encaissement / (1 - commissionRate/100)
+  // Calcul du prix de vente HT pour les produits AFFILIÉS
+  // Le modèle est: l'affilié fixe son payout, Vérone AJOUTE sa commission
+  // Formule correcte: prixVente = payout × (1 + commissionRate/100)
   const commissionRate = product.affiliate_commission_rate || 0;
   const payoutHt = product.affiliate_payout_ht || 0;
-  const prixVenteHt =
-    commissionRate < 100 ? payoutHt / (1 - commissionRate / 100) : payoutHt;
-  const commissionMontant = prixVenteHt - payoutHt;
+  const prixVenteHt = payoutHt * (1 + commissionRate / 100);
+  const commissionMontant = payoutHt * (commissionRate / 100);
 
   return (
     <tr className="hover:bg-gray-50/50 transition-colors">
