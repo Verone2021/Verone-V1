@@ -82,6 +82,7 @@ import {
   useUserSelections,
   useUserAffiliate,
 } from '../../../../lib/hooks/use-user-selection';
+import { calculateMargin } from '@verone/utils';
 
 interface CreateOrderModalProps {
   isOpen: boolean;
@@ -361,7 +362,13 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
     cart.forEach(item => {
       const lineHt = item.unitPriceHt * item.quantity;
       totalHt += lineHt;
-      totalMargin += item.basePriceHt * (item.marginRate / 100) * item.quantity;
+      // Calcul du gain avec la SSOT (taux de marque)
+      // Le gain = selling_price - base_price (calculé par la formule taux de marque)
+      const { gainEuros } = calculateMargin({
+        basePriceHt: item.basePriceHt,
+        marginRate: item.marginRate,
+      });
+      totalMargin += gainEuros * item.quantity;
       const tvaAmount = lineHt * item.taxRate;
       tvaByRate.set(
         item.taxRate,
@@ -1195,39 +1202,40 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                               </div>
 
                               <div className="space-y-2 mb-4 max-h-96 overflow-y-auto">
-                                {cart.map(item => (
-                                  <div
-                                    key={item.selectionItemId}
-                                    className="flex items-center justify-between bg-white rounded-lg p-3 text-sm"
-                                  >
-                                    <div className="flex-1 min-w-0 mr-2">
-                                      <p className="font-medium text-gray-900 truncate">
-                                        {item.productName}
-                                      </p>
-                                      <p className="text-xs text-gray-500">
-                                        x{item.quantity} •{' '}
-                                        {item.unitPriceHt.toFixed(2)} €
-                                      </p>
+                                {cart.map(item => {
+                                  // Calcul du gain avec la SSOT (taux de marque)
+                                  const { gainEuros } = calculateMargin({
+                                    basePriceHt: item.basePriceHt,
+                                    marginRate: item.marginRate,
+                                  });
+                                  return (
+                                    <div
+                                      key={item.selectionItemId}
+                                      className="flex items-center justify-between bg-white rounded-lg p-3 text-sm"
+                                    >
+                                      <div className="flex-1 min-w-0 mr-2">
+                                        <p className="font-medium text-gray-900 truncate">
+                                          {item.productName}
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                          x{item.quantity} •{' '}
+                                          {item.unitPriceHt.toFixed(2)} €
+                                        </p>
+                                      </div>
+                                      <div className="text-right">
+                                        <p className="font-semibold text-gray-900">
+                                          {(
+                                            item.quantity * item.unitPriceHt
+                                          ).toFixed(2)}{' '}
+                                          €
+                                        </p>
+                                        <p className="text-xs text-green-600">
+                                          +{(gainEuros * item.quantity).toFixed(2)} €
+                                        </p>
+                                      </div>
                                     </div>
-                                    <div className="text-right">
-                                      <p className="font-semibold text-gray-900">
-                                        {(
-                                          item.quantity * item.unitPriceHt
-                                        ).toFixed(2)}{' '}
-                                        €
-                                      </p>
-                                      <p className="text-xs text-green-600">
-                                        +
-                                        {(
-                                          item.quantity *
-                                          item.basePriceHt *
-                                          (item.marginRate / 100)
-                                        ).toFixed(2)}{' '}
-                                        €
-                                      </p>
-                                    </div>
-                                  </div>
-                                ))}
+                                  );
+                                })}
                               </div>
 
                               {/* Totaux */}
@@ -1333,10 +1341,12 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                           <tbody className="divide-y">
                             {cart.map(item => {
                               const lineHt = item.quantity * item.unitPriceHt;
-                              const lineMargin =
-                                item.quantity *
-                                item.basePriceHt *
-                                (item.marginRate / 100);
+                              // Calcul du gain avec la SSOT (taux de marque)
+                              const { gainEuros } = calculateMargin({
+                                basePriceHt: item.basePriceHt,
+                                marginRate: item.marginRate,
+                              });
+                              const lineMargin = gainEuros * item.quantity;
                               return (
                                 <tr
                                   key={item.selectionItemId}
@@ -2320,39 +2330,37 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                           </div>
 
                           <div className="space-y-2 mb-4 max-h-96 overflow-y-auto">
-                            {cart.map(item => (
-                              <div
-                                key={item.selectionItemId}
-                                className="flex items-center justify-between bg-white rounded-lg p-3 text-sm"
-                              >
-                                <div className="flex-1 min-w-0 mr-2">
-                                  <p className="font-medium text-gray-900 truncate">
-                                    {item.productName}
-                                  </p>
-                                  <p className="text-xs text-gray-500">
-                                    x{item.quantity} •{' '}
-                                    {item.unitPriceHt.toFixed(2)} €
-                                  </p>
+                            {cart.map(item => {
+                              // Calcul du gain avec la SSOT (taux de marque)
+                              const { gainEuros } = calculateMargin({
+                                basePriceHt: item.basePriceHt,
+                                marginRate: item.marginRate,
+                              });
+                              return (
+                                <div
+                                  key={item.selectionItemId}
+                                  className="flex items-center justify-between bg-white rounded-lg p-3 text-sm"
+                                >
+                                  <div className="flex-1 min-w-0 mr-2">
+                                    <p className="font-medium text-gray-900 truncate">
+                                      {item.productName}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      x{item.quantity} •{' '}
+                                      {item.unitPriceHt.toFixed(2)} €
+                                    </p>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="font-semibold text-gray-900">
+                                      {(item.quantity * item.unitPriceHt).toFixed(2)} €
+                                    </p>
+                                    <p className="text-xs text-green-600">
+                                      +{(gainEuros * item.quantity).toFixed(2)} €
+                                    </p>
+                                  </div>
                                 </div>
-                                <div className="text-right">
-                                  <p className="font-semibold text-gray-900">
-                                    {(item.quantity * item.unitPriceHt).toFixed(
-                                      2
-                                    )}{' '}
-                                    €
-                                  </p>
-                                  <p className="text-xs text-green-600">
-                                    +
-                                    {(
-                                      item.quantity *
-                                      item.basePriceHt *
-                                      (item.marginRate / 100)
-                                    ).toFixed(2)}{' '}
-                                    €
-                                  </p>
-                                </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
 
                           {/* Totaux */}
@@ -2585,10 +2593,12 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                   <tbody className="divide-y">
                     {cart.map(item => {
                       const lineHt = item.quantity * item.unitPriceHt;
-                      const lineMargin =
-                        item.quantity *
-                        item.basePriceHt *
-                        (item.marginRate / 100);
+                      // Calcul du gain avec la SSOT (taux de marque)
+                      const { gainEuros } = calculateMargin({
+                        basePriceHt: item.basePriceHt,
+                        marginRate: item.marginRate,
+                      });
+                      const lineMargin = gainEuros * item.quantity;
                       return (
                         <tr key={item.selectionItemId}>
                           <td className="px-4 py-2">

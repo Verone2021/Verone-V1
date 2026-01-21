@@ -19,6 +19,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
+import { calculateMargin } from '@verone/utils';
 
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -419,7 +420,8 @@ export function useAddToSelection() {
       const basePriceHt = catalogProduct.custom_price_ht ?? calculatedPrice;
       const marginRate =
         catalogProduct.suggested_margin_rate ?? affiliate.default_margin_rate;
-      const sellingPriceHt = basePriceHt * (1 + marginRate / 100);
+      // Note: selling_price_ht est calculé côté DB (colonne GENERATED avec formule taux de marque)
+      // Le calcul ici n'est pas nécessaire car l'API n'utilise que base_price_ht et margin_rate
 
       // Récupérer le prochain display_order
       const { data: existingItems } = await supabase
@@ -533,10 +535,8 @@ export function useAddToSelectionWithMargin() {
 
       const basePriceHt = catalogProduct.custom_price_ht ?? calculatedPrice;
 
-      // Utiliser la marge fournie par l'utilisateur
-      const commissionRate = affiliate.linkme_commission_rate || 5;
-      const sellingPriceHt =
-        basePriceHt * (1 + commissionRate / 100 + input.marginRate / 100);
+      // Note: selling_price_ht est calculé côté DB (colonne GENERATED avec formule taux de marque)
+      // Le calcul ici n'est pas nécessaire car l'API n'utilise que base_price_ht et margin_rate
 
       // Récupérer le prochain display_order
       const { data: existingItems } = await supabase
@@ -637,22 +637,15 @@ export function useUpdateItemMargin() {
       marginRate: number;
     }) => {
       const supabase = createClient();
-      // Récupérer le prix de base actuel
-      const { data: item, error: fetchError } = await (supabase as any)
-        .from('linkme_selection_items')
-        .select('base_price_ht')
-        .eq('id', input.itemId)
-        .single();
 
-      if (fetchError) throw fetchError;
-
-      const sellingPriceHt = item.base_price_ht * (1 + input.marginRate / 100);
-
+      // Note: selling_price_ht est une colonne GENERATED en DB
+      // Elle est calculée automatiquement avec la formule taux de marque:
+      // selling_price_ht = base_price_ht / (1 - margin_rate / 100)
+      // On ne met à jour que margin_rate, le reste est calculé automatiquement
       const { error } = await (supabase as any)
         .from('linkme_selection_items')
         .update({
           margin_rate: input.marginRate,
-          selling_price_ht: sellingPriceHt,
           updated_at: new Date().toISOString(),
         })
         .eq('id', input.itemId);
