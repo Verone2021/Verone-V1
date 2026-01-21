@@ -78,24 +78,6 @@
           "command": "bash -c 'if echo \"$TOOL_INPUT\" | grep -qE \"origin (main|master)\"; then echo \"❌ INTERDIT: Push direct sur main. Créer une PR via: gh pr create\"; exit 1; fi'"
         }
       ]
-    },
-    {
-      "matcher": "Bash(gh pr create*)",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "bash -c 'echo \"⚠️ STOP: Demander confirmation utilisateur avant de créer une PR.\"; echo \"📋 Workflow: 1) Résumer changements 2) Demander confirmation 3) Exécuter gh pr create\"; exit 1'"
-        }
-      ]
-    },
-    {
-      "matcher": "Bash(gh pr merge*)",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "bash -c 'echo \"⚠️ STOP: Demander confirmation utilisateur avant de merger une PR.\"; echo \"📋 Workflow: 1) Afficher résumé PR 2) Demander confirmation 3) Exécuter gh pr merge\"; exit 1'"
-        }
-      ]
     }
   ],
   "PostToolUse": [],
