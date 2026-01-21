@@ -2,6 +2,22 @@
 
 CRM/ERP modulaire pour décoration et mobilier d'intérieur haut de gamme.
 
+---
+
+## AVANT DE COMMENCER (OBLIGATOIRE)
+
+**Consulter SYSTEMATIQUEMENT:**
+
+1. **Credentials**: `.serena/memories/` → Chercher `*-credentials-*.md`
+2. **Context metier**: `docs/current/serena/INDEX.md`
+3. **Database**: `.mcp.env` → DATABASE_URL
+
+**Voir `AGENTS.md` pour instructions detaillees.**
+
+**Regle d'or:** JAMAIS inventer credentials. TOUJOURS chercher dans `.serena/memories/`.
+
+---
+
 ## Commandes
 
 ```bash

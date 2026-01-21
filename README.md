@@ -154,6 +154,16 @@ npm run dev --filter=linkme
 npm run dev --filter=site-internet
 ```
 
+### For AI Agents
+
+**Consulter `AGENTS.md`** pour instructions detaillees.
+
+**Critical Paths:**
+- Credentials: `.serena/memories/*-credentials-*.md`
+- Context: `docs/current/serena/INDEX.md`
+- Database: `.mcp.env`
+- Workflow: `CLAUDE.md`
+
 ### Build & Validation
 
 ```bash
