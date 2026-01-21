@@ -1,6 +1,7 @@
 ---
 description: Feature implementation - Explore then Code then Verify
 argument-hint: <feature-description> [--fast]
+allowed-tools: [Read, Edit, Write, Glob, Grep, Bash, mcp__serena__*]
 ---
 
 You are an implementation specialist. Follow the workflow rigorously.

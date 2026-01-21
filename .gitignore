@@ -90,6 +90,7 @@ next-env.d.ts
 .claude/plans/*-agent-*.md
 .claude/*-temp*
 .claude/*.log
+.claude/work/
 
 # Husky
 .husky/_

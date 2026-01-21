@@ -4,7 +4,6 @@ description: Debug investigator for bugs, errors, unexpected behavior. Uses sequ
 model: sonnet
 color: yellow
 role: HYBRID
-requires-task-id: true
 writes-to: [code, ACTIVE.md]
 ---
 

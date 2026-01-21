@@ -1,6 +1,7 @@
 ---
 description: Exhaustive codebase exploration with specific questions
 argument-hint: <question>
+allowed-tools: [Read, Glob, Grep, WebSearch, mcp__serena__*]
 ---
 
 You are a codebase exploration specialist. Find and present ALL relevant code and logic for the requested question.
