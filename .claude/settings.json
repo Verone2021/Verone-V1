@@ -9,7 +9,7 @@
   ],
   "statusLine": {
     "type": "command",
-    "command": "npx ccusage@latest statusline --visual-burn-rate emoji --no-offline",
+    "command": "bun x ccusage statusline",
     "padding": 0
   },
   "permissions": {
