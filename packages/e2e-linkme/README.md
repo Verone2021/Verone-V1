@@ -14,6 +14,16 @@ This package contains comprehensive E2E tests using Playwright that validate:
 
 **Total: 18 E2E tests** across 5 test suites.
 
+## 🚀 Guide de Démarrage Rapide
+
+**Nouveau dans les tests E2E ?** Commencez par le guide rapide : [`QUICKSTART.md`](./QUICKSTART.md) 📖
+
+Ce guide vous permet de lancer les tests en ~10 minutes avec instructions pas-à-pas pour :
+- ✅ Installation dépendances (pnpm + Chromium)
+- ✅ Démarrage applications (Turborepo automatique)
+- ✅ Lancement tests E2E (18 tests)
+- ✅ Déboggage avec MCP Playwright Browser
+
 ## 🏗️ Architecture
 
 ### Best Practices 2026

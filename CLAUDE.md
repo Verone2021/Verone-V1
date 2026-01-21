@@ -21,10 +21,28 @@ CRM/ERP modulaire pour décoration et mobilier d'intérieur haut de gamme.
 ## Commandes
 
 ```bash
-npm run dev          # Dev (localhost:3000)
-npm run build        # Production build
-npm run type-check   # TypeScript validation
-npm run e2e:smoke    # Smoke tests UI
+pnpm dev             # Dev (localhost:3000)
+pnpm build           # Production build
+pnpm type-check      # TypeScript validation
+```
+
+### Tests E2E
+
+**Guide rapide**: `packages/e2e-linkme/QUICKSTART.md` 📖
+
+```bash
+# Démarrer apps (un seul terminal - Turborepo démarre tout)
+pnpm dev
+
+# Lancer tests E2E LinkMe (depuis root OU depuis packages/e2e-linkme)
+cd packages/e2e-linkme
+pnpm test:e2e
+
+# Mode UI pour déboguer
+pnpm test:e2e:ui
+
+# Voir le guide complet
+cat packages/e2e-linkme/QUICKSTART.md
 ```
 
 ---
