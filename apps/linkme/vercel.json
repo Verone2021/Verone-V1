@@ -1,11 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "git": {
-    "deploymentEnabled": {
-      "*": false,
-      "main": true
-    }
-  },
   "framework": "nextjs",
   "ignoreCommand": "npx turbo-ignore --fallback=HEAD^1",
   "buildCommand": "cd ../.. && pnpm turbo run build --filter=@verone/linkme",
