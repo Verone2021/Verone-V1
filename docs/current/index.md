@@ -16,7 +16,7 @@ Toute autre documentation doit etre consideree comme archive.
 | [architecture.md](./architecture.md)                   | Structure monorepo Turborepo     | Comprendre le code  |
 | [database.md](./database.md)                           | Supabase, migrations, RLS        | Queries, migrations |
 | [security-auth.md](./security-auth.md)                 | Auth, roles, permissions, RLS    | Securite            |
-| [integrations.md](./integrations.md)                   | Qonto, Sentry, Google Merchant   | APIs externes       |
+| [integrations.md](./integrations.md)                   | Qonto, Google OAuth, Supabase    | APIs externes       |
 | [deploy-runbooks.md](./deploy-runbooks.md)             | Vercel, GitHub CI/CD, rollback   | Deploiement         |
 | [business-rules-linkme.md](./business-rules-linkme.md) | Workflows LinkMe B2B             | Business logic      |
 

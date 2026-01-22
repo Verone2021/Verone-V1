@@ -3,7 +3,7 @@
 /**
  * 🔍 Console Error Tracker - Simple & Professional
  *
- * Remplace Sentry par une solution légère basée sur console.log structuré
+ * Solution légère basée sur console.log structuré
  * Compatible avec MCP Playwright Browser pour récupération automatique
  *
  * Features :

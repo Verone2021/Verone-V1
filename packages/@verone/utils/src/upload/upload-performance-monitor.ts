@@ -1,7 +1,7 @@
 /**
  * 📊 MONITORING PERFORMANCE UPLOAD - Vérone 2025
  * Système de monitoring avancé pour uploads optimisés
- * Intégration Sentry + Upstash + Analytics GDPR
+ * Intégration Analytics GDPR
  */
 
 import { gdprAnalytics } from '../analytics/gdpr-analytics';

@@ -43,7 +43,6 @@ npm run lint:fix     # ESLint auto-fix
 |-----|------|
 | Back-Office | `.serena/memories/back-office-login-credentials-2026-01.md` |
 | LinkMe | `.serena/memories/linkme-test-credentials-2026-01.md` |
-| Sentry | `.serena/memories/sentry-auth-token-2026-01.md` |
 
 **JAMAIS inventer. TOUJOURS chercher dans `.serena/memories/`.**
 

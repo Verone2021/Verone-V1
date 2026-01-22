@@ -37,28 +37,6 @@ const qontoClient = new QontoClient({
 
 ---
 
-### Sentry (Monitoring)
-
-| Element   | Valeur                                  |
-| --------- | --------------------------------------- |
-| Status    | **ACTIF**                               |
-| Usage     | Erreurs frontend/backend                |
-| Dashboard | https://sentry.io/organizations/verone/ |
-
-#### Configuration
-
-```typescript
-// next.config.ts
-import * as Sentry from '@sentry/nextjs';
-
-Sentry.init({
-  dsn: process.env.SENTRY_DSN,
-  environment: process.env.NODE_ENV,
-});
-```
-
----
-
 ### Google OAuth
 
 | Element | Valeur                                |
@@ -106,10 +84,6 @@ Sentry.init({
 # Qonto
 QONTO_API_KEY=
 QONTO_ORGANIZATION_ID=
-
-# Sentry
-SENTRY_DSN=
-SENTRY_AUTH_TOKEN=
 
 # Google
 GOOGLE_CLIENT_ID=
