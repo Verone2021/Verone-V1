@@ -10,6 +10,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { QontoClient } from '@verone/integrations/qonto';
+import { createServerClient } from '@verone/utils/supabase/server';
 
 function getQontoClient(): QontoClient {
   return new QontoClient({
@@ -88,15 +89,33 @@ export async function PATCH(
     const { id } = await params;
     const body = (await request.json()) as IPatchRequestBody;
     const client = getQontoClient();
+    const supabase = await createServerClient();
 
-    // Vérifier que la facture est en brouillon
+    // Vérifier que la facture est en brouillon dans Qonto
     const currentInvoice = await client.getClientInvoiceById(id);
 
     if (currentInvoice.status !== 'draft') {
       return NextResponse.json(
         {
           success: false,
-          error: 'Only draft invoices can be modified',
+          error: 'Only draft invoices can be modified in Qonto',
+        },
+        { status: 400 }
+      );
+    }
+
+    // Vérifier le workflow_status local (permet modification seulement si synchronized ou draft_validated)
+    const { data: localInvoice } = await supabase
+      .from('financial_documents')
+      .select('workflow_status')
+      .eq('qonto_invoice_id', id)
+      .single();
+
+    if (localInvoice && !['synchronized', 'draft_validated'].includes(localInvoice.workflow_status)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Cannot modify invoice with workflow_status ${localInvoice.workflow_status}. Only synchronized or draft_validated invoices are editable.`,
         },
         { status: 400 }
       );
