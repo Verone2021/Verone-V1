@@ -8,6 +8,53 @@
 | site-internet | 3001 |
 | linkme | 3002 |
 
+## Qui Peut Lancer les Serveurs ?
+
+### RÈGLE STRICTE
+
+**SEUL L'UTILISATEUR peut lancer les serveurs de développement.**
+
+Claude **NE DOIT JAMAIS** exécuter:
+- `pnpm dev`
+- `turbo dev`
+- `npm run dev`
+- `next dev`
+- Toute commande démarrant des serveurs
+
+### Pourquoi ?
+
+Lancer plusieurs instances simultanées cause:
+- Conflits de ports (3000-3002)
+- Caches corrompus (.turbo, .next)
+- Processus zombies (daemon Turbo)
+- État incohérent du build
+
+### Que Doit Faire Claude ?
+
+Si les serveurs doivent être relancés:
+1. **Informer l'utilisateur** qu'un redémarrage est nécessaire
+2. **Proposer les commandes** à exécuter (utilisateur les lance)
+3. **NE JAMAIS exécuter automatiquement**
+
+### Exceptions
+
+Aucune. Cette règle est absolue.
+
+### Scripts Recommandés
+
+Utiliser les scripts existants pour un workflow sécurisé:
+
+```bash
+pnpm dev:stop   # Arrête serveurs + libère ports (scripts/dev-stop.sh)
+pnpm dev:clean  # Stop + nettoie caches + relance (scripts/dev-clean.sh)
+pnpm dev:safe   # Valide env + démarre (scripts/validate-env.sh)
+```
+
+**Workflow quotidien recommandé:**
+```bash
+pnpm dev:safe   # Toujours utiliser en priorité (vérifie ports avant)
+```
+
 ## Gestion des conflits de port
 
 ### Interdit

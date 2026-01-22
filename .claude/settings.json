@@ -6,7 +6,8 @@
     "playwright-lane-2",
     "context7",
     "magic",
-    "supabase"
+    "supabase",
+    "chrome-devtools"
   ],
   "statusLine": {
     "type": "command",
@@ -76,6 +77,15 @@
         {
           "type": "command",
           "command": "bash -c 'if echo \"$TOOL_INPUT\" | grep -qE \"origin (main|master)\"; then echo \"❌ INTERDIT: Push direct sur main. Créer une PR via: gh pr create\"; exit 1; fi'"
+        }
+      ]
+    },
+    {
+      "matcher": "Bash(*)",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash -c 'if echo \"$TOOL_INPUT\" | grep -qE \"(pnpm|npm|yarn|turbo)\\s+(dev|start)\"; then echo \"❌ INTERDIT: Seul l'utilisateur peut lancer les serveurs. Demandez à l'utilisateur d'exécuter: pnpm dev:safe\"; exit 1; fi'"
         }
       ]
     }

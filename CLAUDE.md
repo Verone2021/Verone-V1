@@ -19,6 +19,37 @@ CRM/ERP modulaire pour décoration et mobilier d'intérieur haut de gamme.
 
 ---
 
+## 🌐 MCP Browsers (Playwright + Chrome DevTools)
+
+**Configuration** : Les deux MCP sont ACTIFS simultanément.
+
+**⚠️ IMPORTANT** : Toujours préciser QUEL MCP utiliser pour éviter confusion.
+
+### Quand Utiliser Quel MCP ?
+
+| Tâche | MCP à Utiliser | Raison |
+|-------|---------------|--------|
+| Tests E2E automatisés | **PLAYWRIGHT** | Cross-browser, accessibility tree |
+| Debug bugs critiques (500s) | **CHROME DEVTOOLS** | Network tab, console errors détaillés |
+| Performance audit (LCP, CLS) | **CHROME DEVTOOLS** | Performance profiler |
+| Automation workflows | **PLAYWRIGHT** | Multi-étapes fiable |
+| Scraping données | **PLAYWRIGHT** | Structured data via accessibility |
+
+### Gestion des Conflits
+
+**Si confusion détectée** : Désactiver temporairement un MCP dans `.claude/settings.json` (commenter la ligne), puis redémarrer Claude Code.
+
+**Documentation complète** : `.serena/memories/mcp-chrome-devtools-playwright-cohabitation.md`
+
+### Prérequis Chrome DevTools
+
+```bash
+# Lancer Chrome avec remote debugging (obligatoire)
+/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222
+```
+
+---
+
 ## Commandes
 
 ```bash

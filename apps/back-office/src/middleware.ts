@@ -1,35 +1,31 @@
 /**
- * Middleware Linkme - Protection des routes
+ * Middleware Back Office - Protection des routes
  *
- * SÉCURITÉ CRITIQUE : Ce middleware protège TOUTES les pages de LinkMe.
+ * SÉCURITÉ CRITIQUE : Ce middleware protège TOUTES les pages du Back Office.
  * Seules les pages explicitement publiques sont accessibles sans authentification.
  *
  * Comportement:
  * - Routes protégées → Redirige vers /login si non connecté
  * - /login → Redirige vers /dashboard si déjà connecté
- * - / → Redirige vers /login (landing page publique ou login)
+ * - / → Géré par ce middleware (redirect vers /dashboard ou /login)
  *
  * @module middleware
- * @since 2025-12-01
- * @updated 2026-01-08 - Passage à l'approche WHITELIST pour sécurité
+ * @since 2026-01-22
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { createMiddlewareClient, updateSession } from '@/lib/supabase-server';
+import { createMiddlewareClient, updateSession } from '@/lib/supabase-middleware';
 
 // Routes PUBLIQUES (whitelist) - TOUTES les autres sont protégées
-const PUBLIC_PAGES = [
-  '/',      // Landing page française
-  '/login',
-];
+const PUBLIC_PAGES = ['/login'];
 
 // API publiques (webhooks, health checks)
 const PUBLIC_API_PREFIXES = [
   '/api/auth', // Callbacks OAuth Supabase
   '/api/health', // Health check monitoring
-  '/api/globe-items', // Sphère 3D produits (utilisée sur page login)
-  '/api/page-config', // Configuration pages publiques (login, home)
+  '/api/cron', // Cron jobs
+  '/api/emails', // Webhooks emails
 ];
 
 /**
@@ -39,14 +35,6 @@ function isPublicRoute(pathname: string): boolean {
   // Pages publiques exactes
   if (PUBLIC_PAGES.includes(pathname)) {
     return true;
-  }
-
-  // Routes dynamiques publiques (white-label catalogues, delivery links)
-  if (/^\/s\/[^/]+$/.test(pathname)) {
-    return true; // /s/[id]
-  }
-  if (/^\/delivery-info\/[^/]+$/.test(pathname)) {
-    return true; // /delivery-info/[token]
   }
 
   // API publiques (préfixes)
@@ -73,7 +61,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
 
   // Route publique → laisser passer
   if (isPublicRoute(pathname)) {
-    // Si sur /login et déjà connecté → rediriger vers landing
+    // Si sur /login et déjà connecté → dashboard
     if (pathname === '/login') {
       const { supabase } = createMiddlewareClient(request);
       const {
@@ -81,10 +69,24 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
       } = await supabase.auth.getUser();
 
       if (user) {
-        return NextResponse.redirect(new URL('/', request.url));
+        return NextResponse.redirect(new URL('/dashboard', request.url));
       }
     }
     return response;
+  }
+
+  // Gestion spéciale de la racine "/"
+  if (pathname === '/') {
+    const { supabase } = createMiddlewareClient(request);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    } else {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
   }
 
   // Route PROTÉGÉE → vérifier l'authentification

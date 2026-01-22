@@ -326,13 +326,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Déconnexion avec redirection
   const signOut = async (redirectTo?: string) => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
-    setLinkMeRole(null);
-    // Rediriger vers la page d'accueil apres deconnexion
-    if (typeof window !== 'undefined') {
-      window.location.href = redirectTo || '/';
+    try {
+      // CRITIQUE: Attendre signOut AVANT redirection
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('[AuthContext] signOut ERROR:', error);
+      }
+
+      setUser(null);
+      setSession(null);
+      setLinkMeRole(null);
+
+      // Délai pour propagation cookies (pattern Supabase SSR)
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      if (typeof window !== 'undefined') {
+        window.location.href = redirectTo || '/';
+      }
+    } catch (err) {
+      console.error('[AuthContext] signOut EXCEPTION:', err);
+      // Rediriger quand même pour éviter blocage UX
+      if (typeof window !== 'undefined') {
+        window.location.href = redirectTo || '/';
+      }
     }
   };
 

@@ -42,6 +42,9 @@ export default function LoginPage() {
       }
 
       if (data.user) {
+        // Attendre propagation des cookies (sécurité supplémentaire)
+        await new Promise(resolve => setTimeout(resolve, 100));
+
         // Succès - redirection vers dashboard
         const redirectUrl =
           new URLSearchParams(window.location.search).get('redirect') ||
