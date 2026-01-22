@@ -58,8 +58,12 @@ import {
   PhaseIndicator,
 } from '@/components/ui/phase-indicator';
 
-// Phase 1: use-stock-alerts-count hook désactivé (Phase 2+)
-// import { useStockAlertsCount } from '@verone/stock'
+// Hooks pour badges dynamiques (Phase 2 - 2026-01-23)
+import {
+  useStockAlertsCount,
+  useConsultationsCount,
+  useLinkmePendingCount,
+} from '@verone/notifications';
 
 // Interface pour les éléments de navigation
 interface NavItem {
@@ -321,10 +325,10 @@ function SidebarContent() {
   // Hover expansion UX 2026 (Linear pattern)
   const { isExpanded, onMouseEnter, onMouseLeave, onFocus } = useHoverExpand(150);
 
-  // Phase 1 : Badges désactivés (Phase 2+)
-  const stockAlertsCount = 0; // TODO Phase 2: useStockAlertsCount()
-  const consultationsCount = 0; // TODO Phase 2: useConsultationsCount()
-  const linkmePendingCount = 0; // TODO Phase 2: useLinkmePendingCount()
+  // Phase 2 : Badges dynamiques avec Realtime (2026-01-23)
+  const { count: stockAlertsCount } = useStockAlertsCount();
+  const { count: consultationsCount } = useConsultationsCount();
+  const { count: linkmePendingCount } = useLinkmePendingCount();
 
   // State local pour les items expandés (pas besoin de persistence cross-tab)
   const [expandedItems, setExpandedItems] = useState<string[]>([
