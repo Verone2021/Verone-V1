@@ -83,6 +83,8 @@ import {
   Send,
   Trash2,
   Loader2,
+  Archive,
+  ArchiveRestore,
 } from 'lucide-react';
 
 // =====================================================================
@@ -152,6 +154,7 @@ interface Invoice {
   local_pdf_path?: string | null;
   local_document_id?: string | null;
   has_local_pdf?: boolean;
+  deleted_at?: string | null;
 }
 
 // =====================================================================
@@ -318,11 +321,17 @@ function InvoicesTable({
   loading,
   onView,
   onDownloadPdf,
+  isArchived,
+  onArchive,
+  onUnarchive,
 }: {
   invoices: Invoice[];
   loading: boolean;
   onView: (id: string) => void;
   onDownloadPdf: (invoice: Invoice) => void;
+  isArchived?: boolean;
+  onArchive?: (invoice: Invoice) => Promise<void>;
+  onUnarchive?: (invoice: Invoice) => Promise<void>;
 }) {
   if (loading) {
     return (
@@ -423,6 +432,30 @@ function InvoicesTable({
                 >
                   <Download className="h-4 w-4" />
                 </Button>
+                {!isArchived &&
+                  ['draft_validated', 'finalized', 'sent', 'paid'].includes(
+                    invoice.workflow_status || ''
+                  ) &&
+                  onArchive && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => void onArchive(invoice)}
+                      title="Archiver"
+                    >
+                      <Archive className="h-4 w-4" />
+                    </Button>
+                  )}
+                {isArchived && onUnarchive && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => void onUnarchive(invoice)}
+                    title="Désarchiver"
+                  >
+                    <ArchiveRestore className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </TableCell>
           </TableRow>
@@ -552,6 +585,9 @@ function MissingInvoicesTable({
 
 export default function FacturationPage() {
   const [activeTab, setActiveTab] = useState<TabType>('factures');
+  const [invoiceView, setInvoiceView] = useState<'active' | 'archived'>(
+    'active'
+  );
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -1218,13 +1254,63 @@ export default function FacturationPage() {
         )}
 
         {/* Contenu des tabs */}
-        <TabsContent value="factures" className="mt-4">
-          <InvoicesTable
-            invoices={invoices}
-            loading={loadingInvoices}
-            onView={handleView}
-            onDownloadPdf={handleDownloadInvoicePdf}
-          />
+        <TabsContent value="factures" className="mt-4 space-y-4">
+          {/* Sub-tabs for Active/Archived invoices */}
+          <Tabs
+            value={invoiceView}
+            onValueChange={v => setInvoiceView(v as 'active' | 'archived')}
+          >
+            <TabsList>
+              <TabsTrigger value="active">Factures actives</TabsTrigger>
+              <TabsTrigger value="archived">Archives</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="active" className="mt-4">
+              <InvoicesTable
+                invoices={invoices.filter(inv => !inv.deleted_at)}
+                loading={loadingInvoices}
+                onView={handleView}
+                onDownloadPdf={handleDownloadInvoicePdf}
+                isArchived={false}
+                onArchive={async invoice => {
+                  try {
+                    const response = await fetch(
+                      `/api/financial-documents/${invoice.id}/archive`,
+                      { method: 'POST' }
+                    );
+                    const data = await response.json();
+                    if (!data.success) throw new Error(data.error);
+                    void fetchInvoices();
+                  } catch (error) {
+                    console.error('Archive error:', error);
+                  }
+                }}
+              />
+            </TabsContent>
+
+            <TabsContent value="archived" className="mt-4">
+              <InvoicesTable
+                invoices={invoices.filter(inv => inv.deleted_at)}
+                loading={loadingInvoices}
+                onView={handleView}
+                onDownloadPdf={handleDownloadInvoicePdf}
+                isArchived={true}
+                onUnarchive={async invoice => {
+                  try {
+                    const response = await fetch(
+                      `/api/financial-documents/${invoice.id}/unarchive`,
+                      { method: 'POST' }
+                    );
+                    const data = await response.json();
+                    if (!data.success) throw new Error(data.error);
+                    void fetchInvoices();
+                  } catch (error) {
+                    console.error('Unarchive error:', error);
+                  }
+                }}
+              />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
 
         <TabsContent value="devis" className="mt-4">

@@ -54,6 +54,7 @@ import {
   XCircle,
   Pencil,
   Landmark,
+  Archive,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -254,6 +255,7 @@ export default function DocumentDetailPage({
   const [showDeclineDialog, setShowDeclineDialog] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showReconcileModal, setShowReconcileModal] = useState(false);
+  const [showArchiveDialog, setShowArchiveDialog] = useState(false);
 
   // Fetch document data
   useEffect(() => {
@@ -525,6 +527,30 @@ export default function DocumentDetailPage({
     }
   };
 
+  const handleArchive = async () => {
+    if (!document) return;
+    setActionLoading('archive');
+    setShowArchiveDialog(false);
+
+    try {
+      const response = await fetch(`/api/financial-documents/${id}/archive`, {
+        method: 'POST',
+      });
+      const data = await response.json();
+
+      if (!data.success) throw new Error(data.error);
+
+      toast.success('Facture archivée avec succès');
+      router.push('/factures');
+    } catch (err) {
+      toast.error(
+        `Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`
+      );
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   // ===== COMPUTED VALUES =====
 
   const isDraft = document?.status === 'draft';
@@ -535,6 +561,7 @@ export default function DocumentDetailPage({
     document?.status === 'overdue' ||
     document?.status === 'pending';
   const isPaid = document?.status === 'paid';
+  const isCancelled = document?.status === 'cancelled';
   const isOverdue =
     documentType === 'invoice' &&
     document?.payment_deadline &&
@@ -789,6 +816,26 @@ export default function DocumentDetailPage({
               Créer un avoir
             </Button>
           )}
+
+          {/* Archive (validated invoices only) */}
+          {documentType === 'invoice' &&
+            !isCancelled &&
+            ['draft_validated', 'finalized', 'sent', 'paid'].includes(
+              (document as any)?.workflow_status || ''
+            ) && (
+              <Button
+                variant="outline"
+                onClick={() => setShowArchiveDialog(true)}
+                disabled={actionLoading === 'archive'}
+              >
+                {actionLoading === 'archive' ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Archive className="h-4 w-4 mr-2" />
+                )}
+                Archiver
+              </Button>
+            )}
 
           {/* Delete (drafts only) */}
           {isDraft && (
@@ -1212,6 +1259,34 @@ export default function DocumentDetailPage({
               onClick={handleDeclineQuote}
             >
               Marquer refusé
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Archive dialog */}
+      <AlertDialog open={showArchiveDialog} onOpenChange={setShowArchiveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Archive className="h-5 w-5" />
+              Archiver cette facture ?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                Cette facture sera masquée de la liste principale et déplacée
+                dans les archives.
+              </p>
+              <p>
+                Vous pourrez la restaurer depuis l&apos;onglet
+                &quot;Archives&quot; si nécessaire.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleArchive}>
+              Archiver
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
