@@ -83,6 +83,7 @@ export async function GET(request: NextRequest): Promise<
       workflow_status: string | null;
       local_pdf_path: string | null;
       local_document_id: string;
+      deleted_at: string | null;
     }
 
     let localDataMap: Record<string, ILocalDocData> = {};
@@ -91,7 +92,7 @@ export async function GET(request: NextRequest): Promise<
       // Note: local_pdf_path sera disponible après migration 20260122_005
       const { data: localDocs } = await supabase
         .from('financial_documents')
-        .select('id, qonto_invoice_id, workflow_status')
+        .select('id, qonto_invoice_id, workflow_status, deleted_at')
         .in('qonto_invoice_id', qontoInvoiceIds);
 
       if (localDocs) {
@@ -101,6 +102,7 @@ export async function GET(request: NextRequest): Promise<
           qonto_invoice_id: string | null;
           workflow_status: string | null;
           local_pdf_path?: string | null;
+          deleted_at: string | null;
         };
 
         localDataMap = (localDocs as DocWithExtras[]).reduce((acc, doc) => {
@@ -109,6 +111,7 @@ export async function GET(request: NextRequest): Promise<
               workflow_status: doc.workflow_status,
               local_pdf_path: doc.local_pdf_path ?? null,
               local_document_id: doc.id,
+              deleted_at: doc.deleted_at,
             };
           }
           return acc;
@@ -124,6 +127,7 @@ export async function GET(request: NextRequest): Promise<
       local_pdf_path: localDataMap[invoice.id]?.local_pdf_path || null,
       local_document_id: localDataMap[invoice.id]?.local_document_id || null,
       has_local_pdf: !!localDataMap[invoice.id]?.local_pdf_path,
+      deleted_at: localDataMap[invoice.id]?.deleted_at || null,
     }));
 
     return NextResponse.json({
