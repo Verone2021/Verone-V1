@@ -5,10 +5,10 @@
 
 'use server';
 
-import { createClient } from '@/lib/supabase-server';
+import { createServerClient } from '@verone/utils/supabase/server';
 
 export async function getDashboardData() {
-  const supabase = await createClient();
+  const supabase = createServerClient();
 
   // Fetch all data in parallel
   const [organisations, orders, contacts, channels] = await Promise.all([

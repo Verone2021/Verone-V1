@@ -4,14 +4,14 @@
  */
 
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { Button } from '@verone/ui/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
+} from '@verone/ui/components/ui/card';
 import { KPICard } from './kpi-card';
 
 interface SectionCardProps {
