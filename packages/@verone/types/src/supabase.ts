@@ -4157,56 +4157,6 @@ export type Database = {
           },
         ]
       }
-      linkme_page_configurations: {
-        Row: {
-          config: Json | null
-          created_at: string | null
-          globe_enabled: boolean | null
-          globe_rotation_speed: number | null
-          id: string
-          page_description: string | null
-          page_icon: string | null
-          page_id: string
-          page_name: string
-          updated_at: string | null
-          updated_by: string | null
-        }
-        Insert: {
-          config?: Json | null
-          created_at?: string | null
-          globe_enabled?: boolean | null
-          globe_rotation_speed?: number | null
-          id?: string
-          page_description?: string | null
-          page_icon?: string | null
-          page_id: string
-          page_name: string
-          updated_at?: string | null
-          updated_by?: string | null
-        }
-        Update: {
-          config?: Json | null
-          created_at?: string | null
-          globe_enabled?: boolean | null
-          globe_rotation_speed?: number | null
-          id?: string
-          page_description?: string | null
-          page_icon?: string | null
-          page_id?: string
-          page_name?: string
-          updated_at?: string | null
-          updated_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "linkme_page_configurations_updated_by_fkey"
-            columns: ["updated_by"]
-            isOneToOne: false
-            referencedRelation: "v_linkme_users"
-            referencedColumns: ["user_id"]
-          },
-        ]
-      }
       linkme_payment_request_items: {
         Row: {
           commission_amount_ttc: number
@@ -8808,41 +8758,6 @@ export type Database = {
           },
           {
             foreignKeyName: "user_app_roles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "v_linkme_users"
-            referencedColumns: ["user_id"]
-          },
-        ]
-      }
-      user_dashboard_preferences: {
-        Row: {
-          created_at: string
-          id: string
-          tab: string
-          updated_at: string
-          user_id: string
-          widgets: Json
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          tab?: string
-          updated_at?: string
-          user_id: string
-          widgets?: Json
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          tab?: string
-          updated_at?: string
-          user_id?: string
-          widgets?: Json
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_dashboard_preferences_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "v_linkme_users"
