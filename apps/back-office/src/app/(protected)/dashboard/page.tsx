@@ -3,7 +3,7 @@
  * Fixed simple dashboard with key metrics
  */
 
-import { Building2, ShoppingCart, Users, Store } from 'lucide-react';
+import { Building2, ShoppingCart, Users } from 'lucide-react';
 import { DashboardHeader } from './components/dashboard-header';
 import { SectionCard } from './components/section-card';
 import { getDashboardData } from './actions/get-dashboard-data';
@@ -48,17 +48,6 @@ export default async function DashboardPage() {
           kpis={[
             { label: 'Total', value: data.contacts.total },
             { label: 'Nouveaux (30j)', value: data.contacts.new_month },
-          ]}
-        />
-
-        {/* Section Canaux de vente */}
-        <SectionCard
-          title="Canaux de Vente"
-          icon={<Store className="h-5 w-5" />}
-          href="/canaux-vente"
-          kpis={[
-            { label: 'LinkMe', value: `${data.channels.linkme}%` },
-            { label: 'Direct', value: `${data.channels.direct}%` },
           ]}
         />
       </div>
