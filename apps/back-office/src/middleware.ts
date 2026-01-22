@@ -45,6 +45,33 @@ function isPublicRoute(pathname: string): boolean {
   return false;
 }
 
+// Redirections URL (ancien chemin → nouveau chemin)
+// Backward compatibility pour migration sidebar optimisée (2026-01-22)
+const URL_REDIRECTS: Record<string, string> = {
+  // LinkMe promu top-level
+  '/canaux-vente/linkme': '/linkme',
+  '/canaux-vente/linkme/dashboard': '/linkme',
+  '/canaux-vente/linkme/enseignes': '/linkme/enseignes',
+  '/canaux-vente/linkme/selections': '/linkme/selections',
+  '/canaux-vente/linkme/commandes': '/linkme/commandes',
+  '/canaux-vente/linkme/commandes/a-traiter': '/linkme/commandes/a-traiter',
+  '/canaux-vente/linkme/catalogue': '/linkme/catalogue',
+  '/canaux-vente/linkme/commissions': '/linkme/commissions',
+
+  // Site Internet et Google Merchant promues top-level
+  '/canaux-vente/site-internet': '/site-internet',
+  '/canaux-vente/google-merchant': '/google-merchant',
+
+  // Finance fusionné (Comptabilité + Facturation + Trésorerie)
+  '/comptabilite': '/finance',
+  '/comptabilite/transactions': '/finance/transactions',
+  '/comptabilite/depenses': '/finance/depenses',
+  '/comptabilite/livres': '/finance/livres',
+  '/facturation': '/finance/factures',
+  '/factures': '/finance/factures',
+  '/tresorerie': '/finance/tresorerie',
+};
+
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
@@ -54,6 +81,27 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     pathname.includes('.') // fichiers statiques (favicon, images, etc.)
   ) {
     return NextResponse.next();
+  }
+
+  // Redirections URL (avant vérification auth pour transparence)
+  // Chercher redirection exacte OU par préfixe
+  let redirectTarget: string | null = null;
+
+  // 1. Redirection exacte
+  if (URL_REDIRECTS[pathname]) {
+    redirectTarget = URL_REDIRECTS[pathname];
+  } else {
+    // 2. Redirection par préfixe (pour /canaux-vente/linkme/selections/123 → /linkme/selections/123)
+    for (const [oldPath, newPath] of Object.entries(URL_REDIRECTS)) {
+      if (pathname.startsWith(oldPath + '/')) {
+        redirectTarget = pathname.replace(oldPath, newPath);
+        break;
+      }
+    }
+  }
+
+  if (redirectTarget) {
+    return NextResponse.redirect(new URL(redirectTarget, request.url));
   }
 
   // Mettre à jour la session Supabase (rafraîchir le token si nécessaire)

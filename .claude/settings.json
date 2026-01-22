@@ -6,8 +6,7 @@
     "playwright-lane-2",
     "context7",
     "magic",
-    "supabase",
-    "chrome-devtools"
+    "supabase"
   ],
   "statusLine": {
     "type": "command",

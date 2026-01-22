@@ -73,7 +73,12 @@ interface NavItem {
 }
 
 // Navigation principale - Dashboard + Modules
-const getNavItems = (stockAlertsCount: number): NavItem[] => [
+// Structure optimisée 2026-01-22: 14 items top-level, max 2 niveaux
+const getNavItems = (
+  stockAlertsCount: number,
+  consultationsCount: number,
+  linkmePendingCount: number
+): NavItem[] => [
   {
     title: 'Dashboard',
     href: '/dashboard',
@@ -101,7 +106,7 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
       },
     ],
   },
-  // ============ PHASE 2+ MODULES ============
+  // ============ MODULES ============
   {
     title: 'Produits',
     href: '/produits',
@@ -127,37 +132,27 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
         href: '/produits/catalogue/categories',
         icon: Tags,
       },
-      {
-        title: 'Variantes',
-        href: '/produits/catalogue/variantes',
-        icon: Grid3x3,
-      },
+      // Variantes supprimé - accès via Catalogue
     ],
   },
   {
     title: 'Stocks',
     href: '/stocks',
     icon: Layers,
+    badge: stockAlertsCount,
+    badgeVariant: stockAlertsCount > 0 ? 'urgent' : undefined,
     children: [
       {
         title: 'Alertes',
         href: '/stocks/alertes',
         icon: Activity,
+        badge: stockAlertsCount,
+        badgeVariant: stockAlertsCount > 0 ? 'urgent' : undefined,
       },
       {
         title: 'Inventaire',
         href: '/stocks/inventaire',
         icon: Package,
-      },
-      {
-        title: 'Stockage',
-        href: '/stocks/stockage',
-        icon: Warehouse,
-      },
-      {
-        title: 'Mouvements de stock',
-        href: '/stocks/mouvements',
-        icon: RefreshCw,
       },
       {
         title: 'Réceptions',
@@ -169,6 +164,7 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
         href: '/stocks/expeditions',
         icon: Truck,
       },
+      // Stockage et Mouvements supprimés - accès via Inventaire
     ],
   },
   {
@@ -197,68 +193,60 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
     title: 'Consultations',
     href: '/consultations',
     icon: MessageCircle,
+    badge: consultationsCount,
+    badgeVariant: consultationsCount > 0 ? 'urgent' : undefined,
   },
+  // ============ CANAUX DE VENTE (PROMUS TOP-LEVEL) ============
   {
-    title: 'Canaux Vente',
-    href: '/canaux-vente',
-    icon: Grid3x3,
+    title: 'LinkMe',
+    href: '/linkme',
+    icon: Link2,
+    badge: linkmePendingCount,
+    badgeVariant: linkmePendingCount > 0 ? 'urgent' : undefined,
     children: [
       {
-        title: 'Google Merchant',
-        href: '/canaux-vente/google-merchant',
+        title: 'Commandes',
+        href: '/linkme/commandes',
         icon: ShoppingBag,
+        badge: linkmePendingCount,
+        badgeVariant: linkmePendingCount > 0 ? 'urgent' : undefined,
       },
       {
-        title: 'Site Internet',
-        href: '/canaux-vente/site-internet',
-        icon: Globe,
+        title: 'À traiter',
+        href: '/linkme/commandes/a-traiter',
+        icon: CheckCircle,
       },
       {
-        title: 'LinkMe',
-        href: '/canaux-vente/linkme',
-        icon: Link2,
-        children: [
-          {
-            title: 'Dashboard',
-            href: '/canaux-vente/linkme',
-            icon: LayoutDashboard,
-          },
-          {
-            title: 'Enseignes',
-            href: '/canaux-vente/linkme/enseignes',
-            icon: Building2,
-          },
-          {
-            title: 'Sélections',
-            href: '/canaux-vente/linkme/selections',
-            icon: Layers,
-          },
-          {
-            title: 'Commandes',
-            href: '/canaux-vente/linkme/commandes',
-            icon: ShoppingBag,
-          },
-          {
-            title: 'À traiter',
-            href: '/canaux-vente/linkme/commandes/a-traiter',
-            icon: CheckCircle,
-          },
-          {
-            title: 'Catalogue',
-            href: '/canaux-vente/linkme/catalogue',
-            icon: BookOpen,
-          },
-          {
-            title: 'Commissions',
-            href: '/canaux-vente/linkme/commissions',
-            icon: Wallet,
-          },
-        ],
+        title: 'Sélections',
+        href: '/linkme/selections',
+        icon: Layers,
       },
+      {
+        title: 'Catalogue',
+        href: '/linkme/catalogue',
+        icon: BookOpen,
+      },
+      {
+        title: 'Commissions',
+        href: '/linkme/commissions',
+        icon: Wallet,
+      },
+      // Dashboard et Enseignes supprimés - accès via sous-pages
     ],
   },
   {
-    title: 'Comptabilité',
+    title: 'Site Internet',
+    href: '/site-internet',
+    icon: Globe,
+  },
+  {
+    title: 'Google Merchant',
+    href: '/google-merchant',
+    icon: ShoppingBag,
+  },
+  // ============ FINANCE (FUSIONNÉ) ============
+  {
+    title: 'Finance',
     href: '/finance',
     icon: Calculator,
     children: [
@@ -273,21 +261,17 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
         icon: ArrowLeftRight,
       },
       {
-        title: 'Catégorisation',
-        href: '/finance/depenses',
-        icon: Banknote,
+        title: 'Factures',
+        href: '/finance/factures',
+        icon: FileText,
       },
       {
-        title: 'Livres comptables',
-        href: '/finance/livres',
-        icon: BookOpenCheck,
+        title: 'Trésorerie',
+        href: '/finance/tresorerie',
+        icon: Banknote,
       },
+      // Livres et Catégorisation - accès via Dashboard
     ],
-  },
-  {
-    title: 'Facturation',
-    href: '/factures',
-    icon: FileText,
   },
   {
     title: 'Livraisons',
@@ -295,9 +279,9 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
     icon: Truck,
   },
   {
-    title: 'Trésorerie',
-    href: '/tresorerie',
-    icon: Banknote,
+    title: 'Paramètres',
+    href: '/parametres',
+    icon: Settings,
   },
 ];
 
@@ -306,8 +290,10 @@ function SidebarContent() {
   // Sidebar toujours compacte - tooltips au survol
   const isCollapsed = true;
 
-  // Phase 1 : Alertes stock désactivées (Phase 2+)
-  const stockAlertsCount = 0; // Anciennement : useStockAlertsCount()
+  // Phase 1 : Badges désactivés (Phase 2+)
+  const stockAlertsCount = 0; // TODO Phase 2: useStockAlertsCount()
+  const consultationsCount = 0; // TODO Phase 2: useConsultationsCount()
+  const linkmePendingCount = 0; // TODO Phase 2: useLinkmePendingCount()
 
   // State local pour les items expandés (pas besoin de persistence cross-tab)
   const [expandedItems, setExpandedItems] = useState<string[]>([
@@ -361,16 +347,15 @@ function SidebarContent() {
   // Nav items (avec count dynamique pour badges)
   // Filtrer les modules Finance si désactivés
   const navItems = useMemo(() => {
-    const items = getNavItems(stockAlertsCount);
+    const items = getNavItems(stockAlertsCount, consultationsCount, linkmePendingCount);
 
-    // Masquer Comptabilité/Facturation/Trésorerie si financeEnabled = false
+    // Masquer Finance si financeEnabled = false (module fusionné)
     if (!featureFlags.financeEnabled) {
-      const financeModules = ['Comptabilité', 'Facturation', 'Trésorerie'];
-      return items.filter(item => !financeModules.includes(item.title));
+      return items.filter(item => item.title !== 'Finance');
     }
 
     return items;
-  }, [stockAlertsCount]);
+  }, [stockAlertsCount, consultationsCount, linkmePendingCount]);
 
   // Fonction récursive pour rendre les enfants (support multi-niveaux)
   const renderChildNavItem = (
