@@ -14,7 +14,7 @@ interface ValidateToDraftResponse {
   success: boolean;
   invoice?: {
     id: string;
-    workflow_status: string;
+    workflow_status: string | null;
     validated_to_draft_at: string | null;
     validated_by: string | null;
   };

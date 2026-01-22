@@ -3,8 +3,9 @@
 import { useState } from 'react';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { InvoiceDetailModal } from '@verone/finance';
 import { Badge, Button, Card, CardHeader, CardTitle, CardContent } from '@verone/ui';
-import { FileText, Download, Check, Send, Loader2, AlertCircle } from 'lucide-react';
+import { FileText, Download, Check, Send, Loader2, AlertCircle, Eye } from 'lucide-react';
 
 interface InvoiceLinked {
   id: string;
@@ -40,6 +41,8 @@ const WORKFLOW_STATUS_LABELS: Record<
 export function InvoicesSection({ orderId }: { orderId: string }) {
   const queryClient = useQueryClient();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   // Fetch factures liées
   const { data, isLoading } = useQuery<InvoicesByOrderResponse>({
@@ -65,6 +68,7 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['invoices-by-order', orderId] });
+      void queryClient.invalidateQueries({ queryKey: ['invoice-details', selectedInvoiceId] });
       setActionLoading(null);
     },
     onError: (error: Error) => {
@@ -87,6 +91,7 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['invoices-by-order', orderId] });
+      void queryClient.invalidateQueries({ queryKey: ['invoice-details', selectedInvoiceId] });
       setActionLoading(null);
     },
     onError: (error: Error) => {
@@ -217,25 +222,43 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
                     </Button>
                   )}
 
-                  {/* Bouton "Modifier" si synchronized ou draft_validated */}
-                  {['synchronized', 'draft_validated'].includes(invoice.workflow_status) && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        // TODO: Ouvrir modal édition facture
-                        alert('Modal édition à implémenter');
-                      }}
-                    >
-                      Modifier
-                    </Button>
-                  )}
+                  {/* Bouton "Voir détails" - toujours visible */}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedInvoiceId(invoice.id);
+                      setIsDetailModalOpen(true);
+                    }}
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    Voir détails
+                  </Button>
                 </div>
               </div>
             ))}
           </div>
         )}
       </CardContent>
+
+      {/* Modal de détail de facture */}
+      <InvoiceDetailModal
+        invoiceId={selectedInvoiceId}
+        open={isDetailModalOpen}
+        onOpenChange={(open) => {
+          setIsDetailModalOpen(open);
+          if (!open) setSelectedInvoiceId(null);
+        }}
+        onValidateToDraft={(invoiceId) => {
+          setActionLoading(invoiceId);
+          validateToDraft.mutate(invoiceId);
+        }}
+        onFinalize={(invoiceId) => {
+          setActionLoading(invoiceId);
+          finalizeWorkflow.mutate(invoiceId);
+        }}
+        isActionLoading={actionLoading === selectedInvoiceId}
+      />
     </Card>
   );
 }

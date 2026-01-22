@@ -48,6 +48,7 @@ function getQontoClient(): QontoClient {
 /**
  * GET /api/qonto/invoices
  * Liste les factures avec filtre optionnel par status
+ * Enrichit les factures Qonto avec les données locales (workflow_status, local_pdf_path)
  */
 export async function GET(request: NextRequest): Promise<
   NextResponse<{
@@ -73,10 +74,62 @@ export async function GET(request: NextRequest): Promise<
       status ? { status } : undefined
     );
 
+    // Enrichir avec les données locales de financial_documents
+    const supabase = createAdminClient();
+    const qontoInvoiceIds = result.client_invoices.map((inv: { id: string }) => inv.id);
+
+    // Type pour les données locales enrichies
+    interface ILocalDocData {
+      workflow_status: string | null;
+      local_pdf_path: string | null;
+      local_document_id: string;
+    }
+
+    let localDataMap: Record<string, ILocalDocData> = {};
+
+    if (qontoInvoiceIds.length > 0) {
+      // Note: local_pdf_path sera disponible après migration 20260122_005
+      const { data: localDocs } = await supabase
+        .from('financial_documents')
+        .select('id, qonto_invoice_id, workflow_status')
+        .in('qonto_invoice_id', qontoInvoiceIds);
+
+      if (localDocs) {
+        // Cast pour accéder aux colonnes (certaines ajoutées par migration)
+        type DocWithExtras = {
+          id: string;
+          qonto_invoice_id: string | null;
+          workflow_status: string | null;
+          local_pdf_path?: string | null;
+        };
+
+        localDataMap = (localDocs as DocWithExtras[]).reduce((acc, doc) => {
+          if (doc.qonto_invoice_id) {
+            acc[doc.qonto_invoice_id] = {
+              workflow_status: doc.workflow_status,
+              local_pdf_path: doc.local_pdf_path ?? null,
+              local_document_id: doc.id,
+            };
+          }
+          return acc;
+        }, {} as Record<string, ILocalDocData>);
+      }
+    }
+
+    // Fusionner les données
+    const enrichedInvoices = result.client_invoices.map((invoice: { id: string }) => ({
+      ...invoice,
+      // Données locales
+      workflow_status: localDataMap[invoice.id]?.workflow_status || null,
+      local_pdf_path: localDataMap[invoice.id]?.local_pdf_path || null,
+      local_document_id: localDataMap[invoice.id]?.local_document_id || null,
+      has_local_pdf: !!localDataMap[invoice.id]?.local_pdf_path,
+    }));
+
     return NextResponse.json({
       success: true,
-      invoices: result.client_invoices,
-      count: result.client_invoices.length,
+      invoices: enrichedInvoices,
+      count: enrichedInvoices.length,
       meta: result.meta,
     });
   } catch (error) {
@@ -224,17 +277,37 @@ export async function POST(request: NextRequest): Promise<
     }
 
     if (customerEmail) {
-      // Construire une adresse valide pour Qonto (fallbacks si données manquantes)
+      // Construire une adresse valide pour Qonto
       // Note: billing_address peut avoir différents formats (legacy vs nouveau)
       const billingAddress = typedOrder.billing_address as Record<
         string,
         string
       > | null;
 
+      // Valider que l'adresse de facturation est présente
+      const city = billingAddress?.city;
+      const zipCode = billingAddress?.postal_code;
+
+      if (!city || !zipCode) {
+        console.warn('[API Qonto Invoices] Missing billing address for order:', salesOrderId);
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Adresse de facturation incomplète. Ville et code postal requis.',
+            details: {
+              hasCity: !!city,
+              hasZipCode: !!zipCode,
+              billingAddress: billingAddress,
+            }
+          },
+          { status: 400 }
+        );
+      }
+
       const qontoAddress = {
         streetAddress: billingAddress?.street ?? billingAddress?.address ?? '',
-        city: billingAddress?.city ?? 'Paris', // Fallback requis par Qonto
-        zipCode: billingAddress?.postal_code ?? '75001',
+        city,
+        zipCode,
         countryCode: billingAddress?.country ?? 'FR',
       };
 
@@ -282,7 +355,22 @@ export async function POST(request: NextRequest): Promise<
     }
 
     // Mapper les lignes de commande vers items facture
-    const items = (typedOrder.sales_order_items ?? []).map(item => ({
+    // Et préparer les données pour l'INSERT dans financial_document_items
+    interface IInvoiceItem {
+      title: string;
+      description?: string;
+      quantity: string;
+      unit: string;
+      unitPrice: { value: string; currency: string };
+      vatRate: string;
+      // Pour stockage local
+      product_id?: string;
+      unit_price_ht: number;
+      quantity_num: number;
+      vat_rate_num: number;
+    }
+
+    const items: IInvoiceItem[] = (typedOrder.sales_order_items ?? []).map(item => ({
       title: item.products?.name ?? 'Article',
       description: item.notes ?? undefined,
       quantity: String(item.quantity ?? 1),
@@ -292,6 +380,11 @@ export async function POST(request: NextRequest): Promise<
         currency: 'EUR',
       },
       vatRate: String(item.tax_rate ?? 0.2), // tax_rate est déjà en decimal (0.2 = 20%)
+      // Pour stockage local
+      product_id: item.products?.id,
+      unit_price_ht: item.unit_price_ht ?? 0,
+      quantity_num: item.quantity ?? 1,
+      vat_rate_num: item.tax_rate ?? 0.2,
     }));
 
     // Déterminer la TVA des frais (priorité: body > commande > défaut 20%)
@@ -311,6 +404,9 @@ export async function POST(request: NextRequest): Promise<
           currency: 'EUR',
         },
         vatRate: String(feesVatRate),
+        unit_price_ht: shippingCost,
+        quantity_num: 1,
+        vat_rate_num: feesVatRate,
       });
     }
 
@@ -328,6 +424,9 @@ export async function POST(request: NextRequest): Promise<
           currency: 'EUR',
         },
         vatRate: String(feesVatRate),
+        unit_price_ht: handlingCost,
+        quantity_num: 1,
+        vat_rate_num: feesVatRate,
       });
     }
 
@@ -345,6 +444,9 @@ export async function POST(request: NextRequest): Promise<
           currency: 'EUR',
         },
         vatRate: String(feesVatRate),
+        unit_price_ht: insuranceCost,
+        quantity_num: 1,
+        vat_rate_num: feesVatRate,
       });
     }
 
@@ -361,6 +463,9 @@ export async function POST(request: NextRequest): Promise<
             currency: 'EUR',
           },
           vatRate: String(line.vat_rate),
+          unit_price_ht: line.unit_price_ht,
+          quantity_num: line.quantity,
+          vat_rate_num: line.vat_rate,
         });
       }
     }
@@ -414,12 +519,113 @@ export async function POST(request: NextRequest): Promise<
       finalizedInvoice = await qontoClient.finalizeClientInvoice(invoice.id);
     }
 
-    // TODO: Optionnel - stocker la référence dans financial_documents
-    // (nécessite d'adapter le schema ou d'utiliser un autre mécanisme)
+    // ========================================
+    // STOCKAGE LOCAL DANS FINANCIAL_DOCUMENTS
+    // ========================================
+
+    // Calculer les totaux
+    let totalHt = 0;
+    let totalVat = 0;
+    for (const item of items) {
+      const lineHt = (item.unit_price_ht ?? 0) * (item.quantity_num ?? 1);
+      const lineVat = lineHt * (item.vat_rate_num ?? 0.2);
+      totalHt += lineHt;
+      totalVat += lineVat;
+    }
+    const totalTtc = totalHt + totalVat;
+
+    // Déterminer le partner_id (organisation uniquement pour l'instant)
+    let partnerId: string | null = null;
+    if (typedOrder.customer_type === 'organisation' && typedOrder.customer_id) {
+      partnerId = typedOrder.customer_id;
+    }
+
+    // Récupérer l'utilisateur connecté (via cookies, si disponible)
+    // Dans une API route, on n'a pas toujours l'auth - utiliser un ID système
+    const systemUserId = '00000000-0000-0000-0000-000000000000'; // TODO: remplacer par vraie auth
+
+    // INSERT dans financial_documents (avec données sync de la commande)
+    let localDocumentId: string | null = null;
+    if (partnerId) {
+      const { data: insertedDoc, error: insertDocError } = await supabase
+        .from('financial_documents')
+        .insert({
+          document_type: 'customer_invoice',
+          document_direction: 'inbound',
+          document_number: finalizedInvoice.invoice_number,
+          partner_id: partnerId,
+          partner_type: 'customer',
+          document_date: issueDate,
+          due_date: dueDate,
+          total_ht: totalHt,
+          total_ttc: totalTtc,
+          tva_amount: totalVat,
+          amount_paid: 0,
+          status: autoFinalize ? 'sent' : 'draft',
+          sales_order_id: salesOrderId,
+          qonto_invoice_id: finalizedInvoice.id,
+          qonto_pdf_url: finalizedInvoice.pdf_url || null,
+          qonto_public_url: finalizedInvoice.public_url || null,
+          qonto_sync_status: 'synced',
+          workflow_status: autoFinalize ? 'finalized' : 'synchronized',
+          synchronized_at: new Date().toISOString(),
+          created_by: systemUserId,
+          // Données synchronisées depuis la commande (Phase 5)
+          billing_address: typedOrder.billing_address,
+          shipping_address: typedOrder.shipping_address,
+          shipping_cost_ht: shippingCost,
+          handling_cost_ht: handlingCost,
+          insurance_cost_ht: insuranceCost,
+          fees_vat_rate: feesVatRate,
+          billing_contact_id: typedOrder.billing_contact_id ?? null,
+          delivery_contact_id: typedOrder.delivery_contact_id ?? null,
+          responsable_contact_id: typedOrder.responsable_contact_id ?? null,
+        })
+        .select('id')
+        .single();
+
+      if (insertDocError) {
+        console.error('[API Qonto Invoices] Failed to insert financial_document:', insertDocError);
+        // Ne pas échouer la requête - la facture Qonto est créée
+      } else if (insertedDoc) {
+        localDocumentId = insertedDoc.id;
+        console.log(`[API Qonto Invoices] Saved to financial_documents: ${localDocumentId}`);
+
+        // INSERT dans financial_document_items
+        // Note: Cette table existe dans la DB mais peut ne pas être dans les types générés
+        const documentItems = items.map((item, index) => ({
+          document_id: localDocumentId,
+          product_id: item.product_id || null,
+          description: item.title + (item.description ? ` - ${item.description}` : ''),
+          quantity: item.quantity_num ?? 1,
+          unit_price_ht: item.unit_price_ht ?? 0,
+          total_ht: (item.unit_price_ht ?? 0) * (item.quantity_num ?? 1),
+          tva_rate: (item.vat_rate_num ?? 0.2) * 100, // Stocké en % (20.00)
+          tva_amount: (item.unit_price_ht ?? 0) * (item.quantity_num ?? 1) * (item.vat_rate_num ?? 0.2),
+          total_ttc: (item.unit_price_ht ?? 0) * (item.quantity_num ?? 1) * (1 + (item.vat_rate_num ?? 0.2)),
+          sort_order: index,
+        }));
+
+        // Utiliser any pour bypasser les types obsolètes (table existe dans la DB)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error: insertItemsError } = await (supabase as any)
+          .from('financial_document_items')
+          .insert(documentItems);
+
+        if (insertItemsError) {
+          console.error('[API Qonto Invoices] Failed to insert document items:', insertItemsError);
+        } else {
+          console.log(`[API Qonto Invoices] Saved ${documentItems.length} items to financial_document_items`);
+        }
+      }
+    } else {
+      console.warn('[API Qonto Invoices] Skipping local storage - no organisation partner_id (individual customer)');
+    }
 
     return NextResponse.json({
       success: true,
       invoice: finalizedInvoice,
+      localDocumentId,
       message: autoFinalize
         ? 'Invoice created and finalized'
         : 'Invoice created as draft',

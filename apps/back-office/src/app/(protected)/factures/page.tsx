@@ -147,6 +147,11 @@ interface Invoice {
     name: string;
   };
   purchase_order?: string;
+  // Données locales enrichies depuis financial_documents
+  workflow_status?: string | null;
+  local_pdf_path?: string | null;
+  local_document_id?: string | null;
+  has_local_pdf?: boolean;
 }
 
 // =====================================================================
@@ -249,6 +254,61 @@ function InvoiceStatusBadge({ status }: { status: string }): React.ReactNode {
   );
 }
 
+/**
+ * Badge pour afficher le workflow local (synchronized → draft_validated → finalized)
+ */
+function WorkflowStatusBadge({ status, hasLocalPdf }: { status: string | null | undefined; hasLocalPdf?: boolean }): React.ReactNode {
+  if (!status) return null;
+
+  const config: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
+    synchronized: {
+      label: 'Synchronisé',
+      className: 'bg-blue-100 text-blue-700 border-blue-200',
+      icon: <RefreshCw className="h-3 w-3 mr-1" />,
+    },
+    draft_validated: {
+      label: 'Brouillon validé',
+      className: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+      icon: <Clock className="h-3 w-3 mr-1" />,
+    },
+    finalized: {
+      label: 'Définitif',
+      className: 'bg-green-100 text-green-700 border-green-200',
+      icon: <CheckCircle className="h-3 w-3 mr-1" />,
+    },
+    sent: {
+      label: 'Envoyé',
+      className: 'bg-purple-100 text-purple-700 border-purple-200',
+      icon: <Send className="h-3 w-3 mr-1" />,
+    },
+    paid: {
+      label: 'Payé',
+      className: 'bg-green-100 text-green-700 border-green-200',
+      icon: <CheckCircle className="h-3 w-3 mr-1" />,
+    },
+  };
+
+  const currentConfig = config[status] || {
+    label: status,
+    className: 'bg-gray-100 text-gray-700',
+    icon: null,
+  };
+
+  return (
+    <div className="flex items-center gap-1">
+      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${currentConfig.className}`}>
+        {currentConfig.icon}
+        {currentConfig.label}
+      </span>
+      {hasLocalPdf && (
+        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-emerald-100 text-emerald-700 border border-emerald-200" title="PDF stocké localement">
+          <Lock className="h-3 w-3" />
+        </span>
+      )}
+    </div>
+  );
+}
+
 // =====================================================================
 // COMPOSANT: TABLEAU DE FACTURES (Qonto)
 // =====================================================================
@@ -295,6 +355,7 @@ function InvoicesTable({
           <TableHead>Date</TableHead>
           <TableHead>Échéance</TableHead>
           <TableHead>Statut</TableHead>
+          <TableHead>Workflow</TableHead>
           <TableHead className="text-right">Montant</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
@@ -320,6 +381,9 @@ function InvoicesTable({
             </TableCell>
             <TableCell>
               <InvoiceStatusBadge status={invoice.status} />
+            </TableCell>
+            <TableCell>
+              <WorkflowStatusBadge status={invoice.workflow_status} hasLocalPdf={invoice.has_local_pdf} />
             </TableCell>
             <TableCell className="text-right font-medium">
               {formatAmount(

@@ -1595,6 +1595,29 @@ export function useSalesOrders() {
           console.log(
             `✅ [DEVALIDATION] Aucune expédition, dévalidation autorisée`
           );
+
+          // ✅ DÉVALIDATION: Bloquer si facture finalisée/payée existe
+          const { data: invoices } = await supabase
+            .from('financial_documents')
+            .select('id, document_number, workflow_status')
+            .eq('sales_order_id', orderId)
+            .eq('document_type', 'customer_invoice')
+            .in('workflow_status', ['finalized', 'paid'])
+            .is('deleted_at', null)
+            .limit(1);
+
+          if (invoices && invoices.length > 0) {
+            const invoice = invoices[0];
+            const statusLabel =
+              invoice.workflow_status === 'paid' ? 'payée' : 'définitive';
+            throw new Error(
+              `Impossible de dévalider : la facture ${invoice.document_number} est ${statusLabel}. ` +
+                `Créez d'abord un avoir pour annuler cette facture.`
+            );
+          }
+          console.log(
+            `✅ [DEVALIDATION] Aucune facture finalisée, dévalidation autorisée`
+          );
         }
 
         // ✅ Mettre à jour le statut dans la base de données

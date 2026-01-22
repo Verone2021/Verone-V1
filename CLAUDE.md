@@ -11,6 +11,7 @@ CRM/ERP modulaire pour décoration et mobilier d'intérieur haut de gamme.
 1. **Credentials**: `.serena/memories/` → Chercher `*-credentials-*.md`
 2. **Context metier**: `docs/current/serena/INDEX.md`
 3. **Database**: `.mcp.env` → DATABASE_URL
+4. **Supabase Cloud**: `.serena/memories/supabase-*.md` → OBLIGATOIRE avant toute migration
 
 **Voir `AGENTS.md` pour instructions detaillees.**
 

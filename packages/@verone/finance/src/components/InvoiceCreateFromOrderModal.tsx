@@ -277,7 +277,7 @@ export function InvoiceCreateFromOrderModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
@@ -290,6 +290,7 @@ export function InvoiceCreateFromOrderModal({
           </DialogDescription>
         </DialogHeader>
 
+        <div className="flex-1 overflow-y-auto pr-2">
         {status === 'success' && createdInvoice ? (
           // Vue succès avec actions
           <div className="space-y-4">
@@ -629,45 +630,93 @@ export function InvoiceCreateFromOrderModal({
               </CardContent>
             </Card>
 
-            {/* Totaux avec TVA groupée par taux */}
-            <div className="flex justify-end">
-              <div className="w-64 space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Total HT</span>
-                  <span>{formatAmount(order.total_ht)}</span>
-                </div>
-                {/* Calculer TVA par taux */}
+            {/* Totaux avec TVA groupée par taux - incluant frais et lignes personnalisées */}
+            <Card className="bg-muted/50">
+              <CardContent className="pt-4">
+                <div className="space-y-2 text-sm">
                 {(() => {
+                  // Calculer les totaux incluant frais et lignes personnalisées
                   const vatByRate: Record<number, number> = {};
+                  let totalHt = 0;
+
+                  // 1. Articles de la commande
                   order.sales_order_items?.forEach(item => {
                     const rate = item.tax_rate || 0;
                     const lineHt = item.quantity * item.unit_price_ht;
                     const lineVat = lineHt * rate;
+                    totalHt += lineHt;
                     vatByRate[rate] = (vatByRate[rate] || 0) + lineVat;
                   });
-                  return Object.entries(vatByRate)
-                    .sort(([a], [b]) => Number(b) - Number(a))
-                    .map(([rate, amount]) => (
-                      <div key={rate} className="flex justify-between">
-                        <span className="text-muted-foreground">
-                          TVA {Math.round(Number(rate) * 100)}%
-                        </span>
-                        <span>{formatAmount(amount)}</span>
+
+                  // 2. Frais de service
+                  const totalFees = shippingCostHt + handlingCostHt + insuranceCostHt;
+                  if (totalFees > 0) {
+                    totalHt += totalFees;
+                    const feesVat = totalFees * feesVatRate;
+                    vatByRate[feesVatRate] = (vatByRate[feesVatRate] || 0) + feesVat;
+                  }
+
+                  // 3. Lignes personnalisées
+                  customLines.forEach(line => {
+                    const lineHt = line.quantity * line.unit_price_ht;
+                    const lineVat = lineHt * line.vat_rate;
+                    totalHt += lineHt;
+                    vatByRate[line.vat_rate] = (vatByRate[line.vat_rate] || 0) + lineVat;
+                  });
+
+                  // Calculer total TVA et TTC
+                  const totalVat = Object.values(vatByRate).reduce((sum, v) => sum + v, 0);
+                  const totalTtc = totalHt + totalVat;
+
+                  return (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Articles commande</span>
+                        <span>{formatAmount(order.total_ht)}</span>
                       </div>
-                    ));
+                      {totalFees > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Frais de service</span>
+                          <span>{formatAmount(totalFees)}</span>
+                        </div>
+                      )}
+                      {customLines.length > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Lignes personnalisées</span>
+                          <span>{formatAmount(customLines.reduce((sum, l) => sum + l.quantity * l.unit_price_ht, 0))}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between border-t pt-2 mt-2">
+                        <span className="font-medium">Total HT</span>
+                        <span className="font-medium">{formatAmount(totalHt)}</span>
+                      </div>
+                      {Object.entries(vatByRate)
+                        .sort(([a], [b]) => Number(b) - Number(a))
+                        .map(([rate, amount]) => (
+                          <div key={rate} className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              TVA {Math.round(Number(rate) * 100)}%
+                            </span>
+                            <span>{formatAmount(amount)}</span>
+                          </div>
+                        ))}
+                      <div className="flex justify-between border-t pt-2 mt-2 font-bold text-base">
+                        <span>Total TTC</span>
+                        <span>{formatAmount(totalTtc)}</span>
+                      </div>
+                    </>
+                  );
                 })()}
-                <div className="flex justify-between border-t pt-1 font-bold">
-                  <span>Total TTC</span>
-                  <span>{formatAmount(order.total_ttc)}</span>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
             {/* SUPPRIMÉ: Checkbox autoFinalize - Les factures sont TOUJOURS créées en brouillon */}
           </div>
         )}
+        </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0 border-t pt-4 mt-4">
           {status === 'success' ? (
             <Button onClick={handleClose}>Fermer</Button>
           ) : (
