@@ -6,19 +6,25 @@
  * Header responsive avec:
  * - Logo a gauche
  * - Navigation centrale (desktop)
- * - CTAs a droite (Se connecter + Devenir partenaire)
+ * - CTAs a droite (Se connecter/Mon Dashboard + Devenir partenaire)
  * - Menu mobile avec Sheet
+ *
+ * Note: N'utilise pas AuthContext car la page marketing peut être rendue
+ * statiquement. Utilise directement le client Supabase pour détecter la session.
  *
  * @module LandingHeader
  * @since 2026-01-07
+ * @updated 2026-01-23 - Bouton conditionnel selon état connexion (sans AuthContext)
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { Menu, X, LogIn, ArrowRight } from 'lucide-react';
+import { Menu, X, LogIn, ArrowRight, LayoutDashboard } from 'lucide-react';
+
+import { createClient } from '@verone/utils/supabase/client';
 
 // Navigation items
 const NAV_ITEMS = [
@@ -30,6 +36,19 @@ const NAV_ITEMS = [
 
 export function LandingHeader(): JSX.Element {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Vérifier la session côté client (sans bloquer le rendu SSG)
+  useEffect(() => {
+    const checkSession = async () => {
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      setIsLoggedIn(!!session?.user);
+    };
+    checkSession();
+  }, []);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
@@ -62,13 +81,23 @@ export function LandingHeader(): JSX.Element {
 
           {/* Desktop CTAs */}
           <div className="hidden md:flex items-center gap-3">
-            <Link
-              href="/login"
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#183559] border border-[#183559]/20 rounded-lg hover:bg-[#183559]/5 transition-colors"
-            >
-              <LogIn className="h-4 w-4" />
-              Se connecter
-            </Link>
+            {isLoggedIn ? (
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#183559] border border-[#183559]/20 rounded-lg hover:bg-[#183559]/5 transition-colors"
+              >
+                <LayoutDashboard className="h-4 w-4" />
+                Mon Dashboard
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#183559] border border-[#183559]/20 rounded-lg hover:bg-[#183559]/5 transition-colors"
+              >
+                <LogIn className="h-4 w-4" />
+                Se connecter
+              </Link>
+            )}
             <Link
               href="/contact"
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-[#5DBEBB] to-[#5DBEBB]/80 rounded-lg hover:from-[#4CA9A6] hover:to-[#4CA9A6]/80 transition-all shadow-sm hover:shadow-md"
@@ -109,14 +138,25 @@ export function LandingHeader(): JSX.Element {
               </Link>
             ))}
             <div className="pt-3 border-t border-gray-100 space-y-2">
-              <Link
-                href="/login"
-                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-medium text-[#183559] border border-[#183559]/20 rounded-lg hover:bg-[#183559]/5 transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <LogIn className="h-4 w-4" />
-                Se connecter
-              </Link>
+              {isLoggedIn ? (
+                <Link
+                  href="/dashboard"
+                  className="flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-medium text-[#183559] border border-[#183559]/20 rounded-lg hover:bg-[#183559]/5 transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                  Mon Dashboard
+                </Link>
+              ) : (
+                <Link
+                  href="/login"
+                  className="flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-medium text-[#183559] border border-[#183559]/20 rounded-lg hover:bg-[#183559]/5 transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <LogIn className="h-4 w-4" />
+                  Se connecter
+                </Link>
+              )}
               <Link
                 href="/contact"
                 className="flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#5DBEBB] to-[#5DBEBB]/80 rounded-lg hover:from-[#4CA9A6] hover:to-[#4CA9A6]/80 transition-all"
