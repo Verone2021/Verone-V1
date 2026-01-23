@@ -105,13 +105,14 @@ export const getDashboardMetrics = unstable_cache(
   async (): Promise<DashboardMetrics> => {
     const supabase = await createServerClient();
 
-    // Calculate date 30 days ago
-    const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const thirtyDaysAgoISO = thirtyDaysAgo.toISOString();
+    try {
+      // Calculate date 30 days ago
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const thirtyDaysAgoISO = thirtyDaysAgo.toISOString();
 
-    // Fetch all metrics in parallel (12 queries)
-    const [
+      // Fetch all metrics in parallel (12 queries)
+      const [
       alertsStock,
       ordersPending,
       ordersLinkme,
@@ -245,56 +246,108 @@ export const getDashboardMetrics = unstable_cache(
         status: order.status!,
       }));
 
-    return {
-      // NEW: Structured sections
-      hero: {
-        ordersPending: ordersPending.count || 0,
-        stockAlerts: alertsStock.count || 0,
-        revenue30Days: revenueSum,
-        consultations: consultations.count || 0,
-      },
-      sales: {
-        ordersLinkme: ordersLinkme.count || 0,
-        commissions: commissions.count || 0,
-      },
-      stock: {
-        products: {
-          total: products.count || 0,
-          new_month: productsNewMonth,
+      return {
+        // NEW: Structured sections
+        hero: {
+          ordersPending: ordersPending.count || 0,
+          stockAlerts: alertsStock.count || 0,
+          revenue30Days: revenueSum,
+          consultations: consultations.count || 0,
         },
-        outOfStock: outOfStock.count || 0,
-        alerts: stockAlertsFormatted,
-      },
-      finance: {
-        revenue30Days: revenueSum,
-      },
-      activity: {
-        recentOrders: recentOrdersFormatted,
-      },
+        sales: {
+          ordersLinkme: ordersLinkme.count || 0,
+          commissions: commissions.count || 0,
+        },
+        stock: {
+          products: {
+            total: products.count || 0,
+            new_month: productsNewMonth,
+          },
+          outOfStock: outOfStock.count || 0,
+          alerts: stockAlertsFormatted,
+        },
+        finance: {
+          revenue30Days: revenueSum,
+        },
+        activity: {
+          recentOrders: recentOrdersFormatted,
+        },
 
-      // LEGACY: Backward compatibility
-      kpis: {
-        alertsStock: alertsStock.count || 0,
-        ordersPending: ordersPending.count || 0,
-        ordersLinkme: ordersLinkme.count || 0,
-        products: {
-          total: products.count || 0,
-          new_month: productsNewMonth,
+        // LEGACY: Backward compatibility
+        kpis: {
+          alertsStock: alertsStock.count || 0,
+          ordersPending: ordersPending.count || 0,
+          ordersLinkme: ordersLinkme.count || 0,
+          products: {
+            total: products.count || 0,
+            new_month: productsNewMonth,
+          },
+          consultations: consultations.count || 0,
+          customers: customers.count || 0,
+          organisations: {
+            total: organisations.count || 0,
+            new_month: organisationsNewMonth,
+          },
+          commissions: commissions.count || 0,
+          outOfStock: outOfStock.count || 0,
         },
-        consultations: consultations.count || 0,
-        customers: customers.count || 0,
-        organisations: {
-          total: organisations.count || 0,
-          new_month: organisationsNewMonth,
+        widgets: {
+          stockAlerts: stockAlertsFormatted,
+          recentOrders: recentOrdersFormatted,
         },
-        commissions: commissions.count || 0,
-        outOfStock: outOfStock.count || 0,
-      },
-      widgets: {
-        stockAlerts: stockAlertsFormatted,
-        recentOrders: recentOrdersFormatted,
-      },
-    };
+      };
+    } catch (error) {
+      console.error('[getDashboardMetrics] Error fetching metrics:', error);
+
+      // Return default values on error (graceful degradation)
+      return {
+        hero: {
+          ordersPending: 0,
+          stockAlerts: 0,
+          revenue30Days: 0,
+          consultations: 0,
+        },
+        sales: {
+          ordersLinkme: 0,
+          commissions: 0,
+        },
+        stock: {
+          products: {
+            total: 0,
+            new_month: 0,
+          },
+          outOfStock: 0,
+          alerts: [],
+        },
+        finance: {
+          revenue30Days: 0,
+        },
+        activity: {
+          recentOrders: [],
+        },
+        kpis: {
+          alertsStock: 0,
+          ordersPending: 0,
+          ordersLinkme: 0,
+          products: {
+            total: 0,
+            new_month: 0,
+          },
+          consultations: 0,
+          customers: 0,
+          organisations: {
+            total: 0,
+            new_month: 0,
+          },
+          commissions: 0,
+          outOfStock: 0,
+        },
+        widgets: {
+          stockAlerts: [],
+          recentOrders: [],
+        },
+      };
+    }
   },
   ['dashboard-metrics'],
   {
