@@ -15,14 +15,16 @@
  *
  * Performance:
  * - Cached data (1 minute TTL)
- * - Suspense boundaries for optimal loading
- * - Parallel data fetching
+ * - Client Component for interactivity (icons, collapsible sections)
+ * - Data fetching via server action
  *
  * @see CLAUDE.md - Dashboard section
  * @see .tasks/plans/dashboard-refonte-design-moderne.md
  */
 
-import { Suspense } from 'react';
+'use client';
+
+import { Suspense, use, useEffect, useState } from 'react';
 import { Separator } from '@verone/ui/components/ui/separator';
 import { Skeleton } from '@verone/ui/components/ui/skeleton';
 import {
@@ -53,10 +55,26 @@ import { ActivityWidget } from './components/activity-widget';
 import { RoadmapWidgetWrapper } from './components/roadmap-widget-wrapper';
 
 // Actions
-import { getDashboardMetrics } from './actions/get-dashboard-metrics';
+import { getDashboardMetrics, type DashboardMetrics } from './actions/get-dashboard-metrics';
 
-export default async function DashboardPage() {
-  const data = await getDashboardMetrics();
+export default function DashboardPage() {
+  const [data, setData] = useState<DashboardMetrics | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    getDashboardMetrics()
+      .then(setData)
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  if (isLoading || !data) {
+    return (
+      <div className="container mx-auto p-6 space-y-6">
+        <DashboardHeader />
+        <HeroKPISkeleton />
+      </div>
+    );
+  }
 
   // Format revenue for display (EUR with thousands separator)
   const formatRevenue = (value: number) => {

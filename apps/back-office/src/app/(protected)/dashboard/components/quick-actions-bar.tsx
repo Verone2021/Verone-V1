@@ -7,6 +7,8 @@
  *
  * Replaces: quick-actions-grid.tsx (vertical grid with 8 actions)
  *
+ * NOTE: Server Component (no 'use client') to avoid icon serialization issues
+ *
  * @example
  * ```tsx
  * <QuickActionsBar
@@ -22,8 +24,6 @@
  * />
  * ```
  */
-
-'use client';
 
 import React from 'react';
 import Link from 'next/link';

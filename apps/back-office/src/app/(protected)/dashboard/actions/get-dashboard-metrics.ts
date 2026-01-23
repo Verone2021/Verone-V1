@@ -10,7 +10,7 @@
  * - Activity section: Recent orders
  *
  * Performance:
- * - Cached for 1 minute (unstable_cache)
+ * - Cached with React cache() for request deduplication
  * - Parallel queries (Promise.all)
  * - Structured return by section
  *
@@ -19,7 +19,7 @@
 
 'use server';
 
-import { unstable_cache } from 'next/cache';
+import { cache } from 'react';
 import { createServerClient } from '@verone/utils/supabase/server';
 
 export interface DashboardMetrics {
@@ -98,10 +98,10 @@ export interface DashboardMetrics {
 }
 
 /**
- * Fetch dashboard metrics with caching
- * Cache TTL: 1 minute
+ * Fetch dashboard metrics with React cache
+ * Deduplicates requests within the same render cycle
  */
-export const getDashboardMetrics = unstable_cache(
+export const getDashboardMetrics = cache(
   async (): Promise<DashboardMetrics> => {
     const supabase = await createServerClient();
 
@@ -348,10 +348,5 @@ export const getDashboardMetrics = unstable_cache(
         },
       };
     }
-  },
-  ['dashboard-metrics'],
-  {
-    revalidate: 60, // Cache for 1 minute
-    tags: ['dashboard'],
   }
 );

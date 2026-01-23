@@ -9,6 +9,9 @@
  * - Hover effects (scale + shadow) for interactivity
  * - Responsive: 4 cols → 2 cols → 1 col
  *
+ * NOTE: Server Component (no 'use client') to avoid icon serialization issues
+ * For onClick handlers, wrap this component in a Client Component wrapper
+ *
  * @example
  * ```tsx
  * <CompactKPIGrid
@@ -27,8 +30,6 @@
  *
  * @see /docs/audits/2025-11/ARCHITECTURE-COMPOSANTS-GENERIQUES-V2.md
  */
-
-'use client';
 
 import React from 'react';
 import { cn } from '@verone/utils';
