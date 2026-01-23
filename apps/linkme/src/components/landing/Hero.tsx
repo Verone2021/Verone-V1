@@ -8,32 +8,48 @@
  * - Sous-titre explicatif
  * - 2 CTAs (Devenir partenaire + En savoir plus)
  * - Logos partenaires (Trusted by)
- * - Statistiques cles
+ * - Statistiques en temps réel depuis Supabase
  * - Illustration/Image
  *
  * @module LandingHero
  * @since 2026-01-07
+ * @updated 2026-01-23 - Utilisation de vraies stats via usePublicStats
  */
 
-import Image from 'next/image';
 import Link from 'next/link';
 
-import { ArrowRight, TrendingUp, Users, Wallet } from 'lucide-react';
+import { ArrowRight, TrendingUp, Users, Wallet, Loader2 } from 'lucide-react';
 
-// Statistiques cles
-const STATS = [
-  { label: 'Affilies actifs', value: '500+', icon: Users },
-  { label: 'Commissions versees', value: '150K+', icon: Wallet },
-  { label: 'Croissance mensuelle', value: '+25%', icon: TrendingUp },
-];
-
-// Logos partenaires (placeholder - a remplacer par vrais logos)
-const PARTNER_LOGOS = [
-  { name: 'Pokawa', logo: '/partners/pokawa.png' },
-  { name: 'Black & White', logo: '/partners/blackwhite.png' },
-];
+import {
+  usePublicStats,
+  formatPublicStat,
+  formatPublicAmount,
+} from '@/lib/hooks/use-public-stats';
 
 export function LandingHero() {
+  const { data: stats, isLoading } = usePublicStats();
+
+  // Stats à afficher avec vraies données ou fallback
+  const displayStats = [
+    {
+      label: 'Affilies actifs',
+      value: stats ? formatPublicStat(stats.totalAffiliates) : '-',
+      icon: Users,
+    },
+    {
+      label: 'Commissions versees',
+      value: stats
+        ? `${formatPublicAmount(stats.totalCommissionsPaid)}€`
+        : '-',
+      icon: Wallet,
+    },
+    {
+      label: 'Selections creees',
+      value: stats ? formatPublicStat(stats.totalSelections) : '-',
+      icon: TrendingUp,
+    },
+  ];
+
   return (
     <section className="relative pt-24 pb-16 lg:pt-32 lg:pb-24 overflow-hidden">
       {/* Background gradient */}
@@ -70,7 +86,7 @@ export function LandingHero() {
             {/* CTAs */}
             <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <Link
-                href="#contact"
+                href="/contact"
                 className="inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold text-white bg-gradient-to-r from-[#5DBEBB] to-[#5DBEBB]/80 rounded-xl hover:from-[#4CA9A6] hover:to-[#4CA9A6]/80 transition-all shadow-lg hover:shadow-xl hover:scale-[1.02]"
               >
                 Devenir partenaire
@@ -84,16 +100,20 @@ export function LandingHero() {
               </Link>
             </div>
 
-            {/* Stats */}
+            {/* Stats - Vraies données depuis Supabase */}
             <div className="mt-12 grid grid-cols-3 gap-4">
-              {STATS.map(stat => (
+              {displayStats.map(stat => (
                 <div
                   key={stat.label}
                   className="text-center lg:text-left p-3 rounded-xl bg-white/60 backdrop-blur-sm border border-gray-100"
                 >
                   <stat.icon className="h-5 w-5 text-[#5DBEBB] mx-auto lg:mx-0 mb-1" />
                   <div className="text-2xl font-bold text-[#183559]">
-                    {stat.value}
+                    {isLoading ? (
+                      <Loader2 className="h-5 w-5 animate-spin inline" />
+                    ) : (
+                      stat.value
+                    )}
                   </div>
                   <div className="text-xs text-[#183559]/60">{stat.label}</div>
                 </div>
@@ -106,7 +126,6 @@ export function LandingHero() {
                 Ils nous font confiance
               </p>
               <div className="flex items-center gap-6 justify-center lg:justify-start opacity-60">
-                {/* Placeholder logos - a remplacer */}
                 <div className="h-8 px-4 py-1 bg-gray-200 rounded-md flex items-center justify-center">
                   <span className="text-xs font-semibold text-gray-500">
                     POKAWA
