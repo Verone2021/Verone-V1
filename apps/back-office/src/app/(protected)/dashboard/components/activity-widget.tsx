@@ -89,7 +89,7 @@ export function ActivityWidget({ orders }: ActivityWidgetProps) {
                 <Link
                   key={order.id}
                   href={`/commandes/clients/${order.id}`}
-                  className="flex items-start justify-between gap-3 p-3 rounded-lg border border-neutral-100 hover:bg-neutral-50 transition-colors block"
+                  className="flex items-start justify-between gap-3 p-3 rounded-lg border border-neutral-100 hover:bg-neutral-50 transition-colors"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">

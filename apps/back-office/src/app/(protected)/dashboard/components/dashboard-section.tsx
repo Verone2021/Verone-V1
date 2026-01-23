@@ -84,12 +84,16 @@ export function DashboardSection({
   const key =
     storageKey || `dashboard-section-${title.toLowerCase().replace(/\s/g, '-')}`;
 
-  // Initialize state from localStorage or defaultOpen
-  const [isOpen, setIsOpen] = useState(() => {
-    if (typeof window === 'undefined') return defaultOpen;
+  // Initialize state with defaultOpen (SSR-safe)
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  // Load state from localStorage after hydration (client-only)
+  useEffect(() => {
     const stored = localStorage.getItem(key);
-    return stored !== null ? stored === 'true' : defaultOpen;
-  });
+    if (stored !== null) {
+      setIsOpen(stored === 'true');
+    }
+  }, [key]);
 
   // Persist state to localStorage when it changes
   useEffect(() => {

@@ -80,8 +80,8 @@ export function CompactKPIGrid({ kpis, className }: CompactKPIGridProps) {
         className
       )}
     >
-      {kpis.map((kpi, index) => (
-        <CompactKPICard key={index} {...kpi} />
+      {kpis.map((kpi) => (
+        <CompactKPICard key={kpi.title} {...kpi} />
       ))}
     </div>
   );
