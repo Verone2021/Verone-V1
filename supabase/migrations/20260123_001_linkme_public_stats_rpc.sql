@@ -28,20 +28,20 @@ BEGIN
     WHERE ls.affiliate_id = la.id
   );
 
-  -- Nombre de sélections publiées
+  -- Nombre de sélections publiées (published_at non null et non archivée)
   SELECT COUNT(*) INTO v_total_selections
   FROM linkme_selections
-  WHERE status = 'published';
+  WHERE published_at IS NOT NULL
+    AND archived_at IS NULL;
 
   -- Total des commissions payées aux affiliés (en euros)
   SELECT COALESCE(SUM(affiliate_commission), 0) INTO v_total_commissions_paid
   FROM linkme_commissions
   WHERE status = 'paid';
 
-  -- Nombre total de commandes LinkMe
+  -- Nombre total de commandes LinkMe (via table de détails)
   SELECT COUNT(*) INTO v_total_orders
-  FROM sales_orders
-  WHERE source = 'linkme';
+  FROM sales_order_linkme_details;
 
   RETURN json_build_object(
     'total_affiliates', v_total_affiliates,
