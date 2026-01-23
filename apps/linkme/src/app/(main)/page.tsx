@@ -20,6 +20,9 @@ import {
   LandingHeader,
   LandingHero,
   LandingFeatures,
+  LandingHowItWorks,
+  LandingPricing,
+  LandingMarketplace,
   LandingCTA,
   LandingFooter,
 } from '@/components/landing';
@@ -61,6 +64,9 @@ export default function HomePage(): JSX.Element {
       <main>
         <LandingHero />
         <LandingFeatures />
+        <LandingHowItWorks />
+        <LandingPricing />
+        <LandingMarketplace />
         <LandingCTA />
       </main>
       <LandingFooter />

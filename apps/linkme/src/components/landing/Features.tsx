@@ -44,7 +44,7 @@ const FEATURES = [
 
 export function LandingFeatures() {
   return (
-    <section id="how-it-works" className="py-16 lg:py-24 bg-gray-50/50">
+    <section id="features" className="py-16 lg:py-24 bg-gray-50/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section header */}
         <div className="text-center mb-12 lg:mb-16">
@@ -105,7 +105,7 @@ export function LandingFeatures() {
         {/* Additional info */}
         <div className="mt-12 text-center">
           <p className="text-sm text-[#183559]/50">
-            Rejoignez plus de 500 affilies qui nous font deja confiance
+            Rejoignez notre reseau de partenaires professionnels
           </p>
         </div>
       </div>
