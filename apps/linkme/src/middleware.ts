@@ -76,19 +76,19 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   // Mettre à jour la session Supabase (rafraîchir le token si nécessaire)
   const response = await updateSession(request);
 
-  // Route publique → laisser passer
+  // Route publique → vérifier si l'utilisateur est connecté
   if (isPublicRoute(pathname)) {
-    // Si sur /login et déjà connecté → rediriger vers dashboard
-    if (pathname === '/login') {
-      const { supabase } = createMiddlewareClient(request);
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+    const { supabase } = createMiddlewareClient(request);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-      if (user) {
-        return NextResponse.redirect(new URL('/dashboard', request.url));
-      }
+    // Si connecté sur une page marketing → rediriger vers dashboard
+    // Les pages marketing ne sont accessibles qu'aux visiteurs non connectés
+    if (user && PUBLIC_PAGES.includes(pathname)) {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
     }
+
     return response;
   }
 
