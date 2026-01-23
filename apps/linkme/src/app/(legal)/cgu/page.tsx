@@ -5,20 +5,25 @@
  * @since 2026-01-23
  */
 
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: "Conditions Generales d'Utilisation | LinkMe",
+  title: "Conditions Generales d'Utilisation",
   description: "Conditions Generales d'Utilisation de la plateforme LinkMe.",
+  robots: {
+    index: true,
+    follow: false,
+  },
+  alternates: {
+    canonical: '/cgu',
+  },
 };
 
 export default function CGUPage() {
   return (
     <article className="prose prose-lg max-w-none">
       <h1>Conditions Generales d&apos;Utilisation</h1>
-      <p className="lead text-gray-600">
-        Derniere mise a jour : Janvier 2026
-      </p>
+      <p className="lead text-gray-600">Derniere mise a jour : Janvier 2026</p>
 
       <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 my-8">
         <p className="text-amber-800 m-0">
@@ -29,9 +34,10 @@ export default function CGUPage() {
 
       <h2>1. Objet</h2>
       <p>
-        Les presentes Conditions Generales d&apos;Utilisation (ci-apres &quot;CGU&quot;)
-        ont pour objet de definir les modalites et conditions d&apos;utilisation
-        de la plateforme LinkMe (ci-apres &quot;la Plateforme&quot;).
+        Les presentes Conditions Generales d&apos;Utilisation (ci-apres
+        &quot;CGU&quot;) ont pour objet de definir les modalites et conditions
+        d&apos;utilisation de la plateforme LinkMe (ci-apres &quot;la
+        Plateforme&quot;).
       </p>
 
       <h2>2. Acceptation des CGU</h2>

@@ -5,20 +5,25 @@
  * @since 2026-01-23
  */
 
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Politique Cookies | LinkMe',
+  title: 'Politique Cookies',
   description: 'Politique d utilisation des cookies sur la plateforme LinkMe.',
+  robots: {
+    index: true,
+    follow: false,
+  },
+  alternates: {
+    canonical: '/cookies',
+  },
 };
 
 export default function CookiesPage() {
   return (
     <article className="prose prose-lg max-w-none">
       <h1>Politique Cookies</h1>
-      <p className="lead text-gray-600">
-        Derniere mise a jour : Janvier 2026
-      </p>
+      <p className="lead text-gray-600">Derniere mise a jour : Janvier 2026</p>
 
       <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 my-8">
         <p className="text-amber-800 m-0">
@@ -81,7 +86,9 @@ export default function CookiesPage() {
             </td>
           </tr>
           <tr>
-            <td className="border border-gray-300 px-4 py-2">Authentification</td>
+            <td className="border border-gray-300 px-4 py-2">
+              Authentification
+            </td>
             <td className="border border-gray-300 px-4 py-2">30 jours</td>
           </tr>
           <tr>

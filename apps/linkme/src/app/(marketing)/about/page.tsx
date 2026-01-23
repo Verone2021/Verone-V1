@@ -7,7 +7,6 @@
  * @since 2026-01-23
  */
 
-import { Metadata } from 'next';
 import Link from 'next/link';
 
 import {
@@ -18,11 +17,21 @@ import {
   ArrowRight,
   CheckCircle2,
 } from 'lucide-react';
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'A propos | LinkMe by Verone',
+  title: 'A propos',
   description:
     "Decouvrez LinkMe, la plateforme d'affiliation B2B nouvelle generation pour les professionnels de la decoration et du mobilier d'interieur.",
+  openGraph: {
+    title: 'A propos de LinkMe',
+    description:
+      "LinkMe democratise l'affiliation B2B pour les professionnels du mobilier et de la decoration d'interieur.",
+    url: '/about',
+  },
+  alternates: {
+    canonical: '/about',
+  },
 };
 
 const VALUES = [

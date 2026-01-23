@@ -5,21 +5,26 @@
  * @since 2026-01-23
  */
 
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Politique de Confidentialite | LinkMe',
+  title: 'Politique de Confidentialite',
   description:
     'Politique de confidentialite et protection des donnees personnelles de LinkMe.',
+  robots: {
+    index: true,
+    follow: false,
+  },
+  alternates: {
+    canonical: '/privacy',
+  },
 };
 
 export default function PrivacyPage() {
   return (
     <article className="prose prose-lg max-w-none">
       <h1>Politique de Confidentialite</h1>
-      <p className="lead text-gray-600">
-        Derniere mise a jour : Janvier 2026
-      </p>
+      <p className="lead text-gray-600">Derniere mise a jour : Janvier 2026</p>
 
       <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 my-8">
         <p className="text-amber-800 m-0">
@@ -30,8 +35,8 @@ export default function PrivacyPage() {
 
       <h2>1. Introduction</h2>
       <p>
-        LinkMe by Verone (ci-apres &quot;nous&quot;) s&apos;engage a proteger la vie
-        privee des utilisateurs de sa plateforme. Cette politique de
+        LinkMe by Verone (ci-apres &quot;nous&quot;) s&apos;engage a proteger la
+        vie privee des utilisateurs de sa plateforme. Cette politique de
         confidentialite explique comment nous collectons, utilisons et
         protegeons vos donnees personnelles.
       </p>
@@ -92,8 +97,8 @@ export default function PrivacyPage() {
 
       <h2>7. Vos droits</h2>
       <p>
-        Conformement au RGPD, vous disposez des droits suivants sur vos
-        donnees :
+        Conformement au RGPD, vous disposez des droits suivants sur vos donnees
+        :
       </p>
       <ul>
         <li>Droit d&apos;acces</li>
@@ -107,8 +112,8 @@ export default function PrivacyPage() {
       <h2>8. Securite</h2>
       <p>
         Nous mettons en oeuvre des mesures techniques et organisationnelles
-        appropriees pour proteger vos donnees contre les acces non autorises,
-        la perte ou la destruction.
+        appropriees pour proteger vos donnees contre les acces non autorises, la
+        perte ou la destruction.
       </p>
 
       <h2>9. Contact DPO</h2>
