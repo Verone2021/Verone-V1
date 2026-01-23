@@ -1,0 +1,68 @@
+{
+  "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "workspaces": {
+    "apps/back-office": {
+      "entry": [
+        "src/app/**/*.{ts,tsx}",
+        "src/middleware.ts",
+        "src/app/api/**/*.ts"
+      ],
+      "project": ["src/**/*.{ts,tsx}"]
+    },
+    "apps/linkme": {
+      "entry": [
+        "src/app/**/*.{ts,tsx}",
+        "src/middleware.ts",
+        "src/app/api/**/*.ts"
+      ],
+      "project": ["src/**/*.{ts,tsx}"]
+    },
+    "apps/site-internet": {
+      "entry": [
+        "src/app/**/*.{ts,tsx}",
+        "src/middleware.ts",
+        "src/app/api/**/*.ts"
+      ],
+      "project": ["src/**/*.{ts,tsx}"]
+    },
+    "packages/@verone/*": {
+      "entry": ["src/index.{ts,tsx}", "src/**/*.{ts,tsx}"],
+      "project": ["src/**/*.{ts,tsx}"]
+    }
+  },
+  "ignore": [
+    "**/*.test.{ts,tsx}",
+    "**/*.spec.{ts,tsx}",
+    "**/test-*.{ts,tsx}",
+    "**/*.stories.{ts,tsx}",
+    "**/playwright.config.ts",
+    "**/playwright-ct.config.ts",
+    "**/.next/**",
+    "**/.turbo/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/node_modules/**",
+    "**/.claude/**",
+    "**/.serena/**",
+    "**/docs/**",
+    "**/.github/**",
+    "scripts/**/*.{ts,tsx}",
+    ".tasks/**"
+  ],
+  "ignoreDependencies": [
+    "@types/*",
+    "typescript",
+    "eslint",
+    "prettier",
+    "turbo",
+    "@playwright/test",
+    "playwright"
+  ],
+  "ignoreBinaries": [
+    "tsx",
+    "playwright",
+    "turbo",
+    "pnpm"
+  ],
+  "includeEntryExports": false
+}
