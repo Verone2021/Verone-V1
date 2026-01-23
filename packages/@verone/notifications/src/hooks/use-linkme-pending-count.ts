@@ -78,12 +78,12 @@ export function useLinkmePendingCount(options?: {
       setError(null);
 
       // Query commandes LinkMe actives
-      // Actives = NOT delivered AND NOT cancelled
-      // (draft, validated, partially_shipped, shipped)
+      // Actives = draft, validated, partially_shipped, shipped
+      // (filtre positif optimisé pour performance vs filtre négatif)
       const { count: totalCount, error: countError } = await supabase
         .from('linkme_orders_enriched' as any)
         .select('*', { count: 'exact', head: true })
-        .not('status', 'in', '(delivered,cancelled)');
+        .in('status', ['draft', 'validated', 'partially_shipped', 'shipped']);
 
       if (countError) {
         throw new Error(`Count error: ${countError.message}`);

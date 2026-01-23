@@ -75,7 +75,7 @@ export function useProductsIncompleteCount(options?: {
       const { count: totalCount, error: countError } = await supabase
         .from('products')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'catalogue')
+        .eq('product_status', 'active')
         .or('description.is.null,description.eq.');
 
       if (countError) {
@@ -111,7 +111,7 @@ export function useProductsIncompleteCount(options?: {
             event: '*',
             schema: 'public',
             table: 'products',
-            filter: 'status=eq.catalogue',
+            filter: 'product_status=eq.active',
           },
           payload => {
             console.log(

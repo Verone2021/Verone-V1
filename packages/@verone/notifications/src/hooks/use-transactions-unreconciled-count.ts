@@ -70,11 +70,11 @@ export function useTransactionsUnreconciledCount(options?: {
       setError(null);
 
       // Query transactions non rapprochées
-      // is_reconciled = false ou NULL
+      // matching_status = 'unmatched' (ENUM remplace is_reconciled boolean)
       const { count: totalCount, error: countError } = await supabase
         .from('bank_transactions')
         .select('*', { count: 'exact', head: true })
-        .or('is_reconciled.is.null,is_reconciled.eq.false');
+        .eq('matching_status', 'unmatched');
 
       if (countError) {
         throw new Error(`Count error: ${countError.message}`);
