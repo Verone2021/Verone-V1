@@ -2,10 +2,11 @@
  * Supabase Server Client - Pour SSR et Middleware
  *
  * Utilise @supabase/ssr pour la gestion des cookies
- * Cookie distinct 'sb-linkme-auth' pour isoler la session de LinkMe
+ * Utilise le préfixe cookie standard de Supabase (sb-{project-id}-auth-token)
  *
  * @module supabase-server
  * @since 2025-12-01
+ * @updated 2026-01-23 - Suppression préfixe personnalisé pour compatibilité
  */
 
 import { cookies } from 'next/headers';
@@ -16,9 +17,6 @@ import { createServerClient as createSSRServerClient } from '@supabase/ssr';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-// Préfixe cookie distinct pour LinkMe (isolation des sessions)
-const COOKIE_PREFIX = 'sb-linkme-auth';
-
 /**
  * Créer un client Supabase pour les Server Components
  * Utilise les cookies pour maintenir la session
@@ -27,15 +25,9 @@ export async function createServerClient() {
   const cookieStore = await cookies();
 
   return createSSRServerClient(supabaseUrl, supabaseAnonKey, {
-    cookieOptions: {
-      name: COOKIE_PREFIX,
-    },
     cookies: {
       getAll() {
-        // Filtrer pour ne retourner que les cookies LinkMe
-        return cookieStore
-          .getAll()
-          .filter(c => c.name.startsWith(COOKIE_PREFIX));
+        return cookieStore.getAll();
       },
       setAll(cookiesToSet) {
         try {
@@ -62,15 +54,9 @@ export function createMiddlewareClient(request: NextRequest) {
   });
 
   const supabase = createSSRServerClient(supabaseUrl, supabaseAnonKey, {
-    cookieOptions: {
-      name: COOKIE_PREFIX,
-    },
     cookies: {
       getAll() {
-        // Filtrer pour ne retourner que les cookies LinkMe
-        return request.cookies
-          .getAll()
-          .filter(c => c.name.startsWith(COOKIE_PREFIX));
+        return request.cookies.getAll();
       },
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value }) => {
