@@ -18,6 +18,7 @@ import { QuickActionsGrid } from './components/quick-actions-grid';
 import { KPIsGrid } from './components/kpis-grid';
 import { AlertesWidget } from './components/alertes-widget';
 import { ActivityWidget } from './components/activity-widget';
+import { RoadmapWidgetWrapper } from './components/roadmap-widget-wrapper';
 import { getDashboardMetrics } from './actions/get-dashboard-metrics';
 
 export default async function DashboardPage() {
@@ -55,12 +56,15 @@ export default async function DashboardPage() {
         <h2 className="text-sm font-semibold text-neutral-700 mb-3">
           Vue d'ensemble
         </h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Suspense fallback={<WidgetSkeleton />}>
             <AlertesWidget alerts={data.widgets.stockAlerts} />
           </Suspense>
           <Suspense fallback={<WidgetSkeleton />}>
             <ActivityWidget orders={data.widgets.recentOrders} />
+          </Suspense>
+          <Suspense fallback={<WidgetSkeleton />}>
+            <RoadmapWidgetWrapper />
           </Suspense>
         </div>
       </section>

@@ -15,6 +15,7 @@
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.57.4",
+    "@verone/roadmap": "workspace:*",
     "@verone/types": "workspace:*",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.3",
