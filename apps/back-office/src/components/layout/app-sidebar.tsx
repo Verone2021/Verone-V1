@@ -58,11 +58,14 @@ import {
   PhaseIndicator,
 } from '@/components/ui/phase-indicator';
 
-// Hooks pour badges dynamiques (Phase 2 - 2026-01-23)
+// Hooks et Dropdowns pour badges dynamiques (Phase 2 - 2026-01-23)
 import {
   useStockAlertsCount,
   useConsultationsCount,
   useLinkmePendingCount,
+  StockAlertsDropdown,
+  ConsultationsDropdown,
+  LinkmePendingDropdown,
 } from '@verone/notifications';
 
 // Interface pour les éléments de navigation
@@ -330,6 +333,58 @@ function SidebarContent() {
   const { count: consultationsCount } = useConsultationsCount();
   const { count: linkmePendingCount } = useLinkmePendingCount();
 
+  /**
+   * Render badge avec dropdown interactif selon le module
+   * Click sur badge = ouvre dropdown avec liste détaillée
+   */
+  const renderBadgeWithDropdown = (
+    title: string,
+    count: number,
+    className?: string
+  ) => {
+    if (count === 0) return null;
+
+    const badgeContent = (
+      <span
+        className={cn(
+          'bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-semibold cursor-pointer',
+          'hover:bg-red-600 transition-colors',
+          className
+        )}
+        aria-label={`${count} notification${count > 1 ? 's' : ''}`}
+        onClick={e => e.stopPropagation()} // Prevent parent click
+      >
+        {count > 9 ? '9+' : count}
+      </span>
+    );
+
+    // Wrapper avec dropdown selon module
+    switch (title) {
+      case 'Stocks':
+      case 'Alertes':
+        return (
+          <StockAlertsDropdown side="right" align="start">
+            {badgeContent}
+          </StockAlertsDropdown>
+        );
+      case 'Consultations':
+        return (
+          <ConsultationsDropdown side="right" align="start">
+            {badgeContent}
+          </ConsultationsDropdown>
+        );
+      case 'LinkMe':
+      case 'Commandes': // Sous-menu LinkMe
+        return (
+          <LinkmePendingDropdown side="right" align="start">
+            {badgeContent}
+          </LinkmePendingDropdown>
+        );
+      default:
+        return badgeContent;
+    }
+  };
+
   // State local pour les items expandés (pas besoin de persistence cross-tab)
   const [expandedItems, setExpandedItems] = useState<string[]>([
     'Administration',
@@ -545,14 +600,7 @@ function SidebarContent() {
               >
                 <item.icon className="h-4 w-4 flex-shrink-0" />
                 <span className="font-medium flex-1 text-left">{item.title}</span>
-                {item.badge && item.badge > 0 && (
-                  <span
-                    className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
-                    aria-label={`${item.badge} notification${item.badge > 1 ? 's' : ''}`}
-                  >
-                    {item.badge > 9 ? '9+' : item.badge}
-                  </span>
-                )}
+                {item.badge && item.badge > 0 && renderBadgeWithDropdown(item.title, item.badge)}
                 <ChevronRight
                   className={cn(
                     'h-4 w-4 transition-transform duration-200',
@@ -581,14 +629,7 @@ function SidebarContent() {
                       >
                         <child.icon className="h-4 w-4 flex-shrink-0" />
                         <span className="font-medium">{child.title}</span>
-                        {child.badge && child.badge > 0 && (
-                          <span
-                            className="ml-auto bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
-                            aria-label={`${child.badge} notification${child.badge > 1 ? 's' : ''}`}
-                          >
-                            {child.badge > 9 ? '9+' : child.badge}
-                          </span>
-                        )}
+                        {child.badge && child.badge > 0 && renderBadgeWithDropdown(child.title, child.badge, 'ml-auto')}
                       </Link>
                     </li>
                   );
@@ -614,14 +655,7 @@ function SidebarContent() {
         >
           <item.icon className="h-4 w-4 flex-shrink-0" />
           <span className="font-medium">{item.title}</span>
-          {item.badge && item.badge > 0 && (
-            <span
-              className="ml-auto bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
-              aria-label={`${item.badge} notification${item.badge > 1 ? 's' : ''}`}
-            >
-              {item.badge > 9 ? '9+' : item.badge}
-            </span>
-          )}
+          {item.badge && item.badge > 0 && renderBadgeWithDropdown(item.title, item.badge, 'ml-auto')}
         </Link>
       </li>
     );
