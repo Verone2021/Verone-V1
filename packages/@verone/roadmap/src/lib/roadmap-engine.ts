@@ -9,7 +9,7 @@
  */
 
 // Types de badges source
-export type BadgeSource = 'stock' | 'consultations' | 'linkme' | 'organisations' | 'commandes' | 'finance';
+export type BadgeSource = 'stock' | 'consultations' | 'linkme' | 'organisations' | 'commandes' | 'finance' | 'produits' | 'expeditions';
 export type BadgeSeverity = 'urgent' | 'warning' | 'info';
 
 // Input : Données des badges
@@ -243,6 +243,85 @@ const AUTO_ROADMAP_RULES: TaskRule[] = [
         impact: 3, // High - cash flow
         confidence: 0.9,
         effortHours: 1,
+      },
+    },
+  },
+  {
+    id: 'finance-unreconciled',
+    trigger: {
+      source: 'finance',
+      minCount: 10,
+      severity: ['warning'],
+    },
+    task: {
+      titleTemplate: 'Rapprocher {{count}} transaction(s) bancaire(s)',
+      descriptionTemplate: '{{count}} transaction(s) non rapprochées. Catégoriser pour une comptabilité à jour.',
+      actionUrl: '/finance/transactions?reconciled=false',
+      actionLabel: 'Rapprocher',
+      rice: {
+        impact: 1, // Low - admin
+        confidence: 0.8,
+        effortHours: 2,
+      },
+    },
+  },
+
+  // === PRODUITS ===
+  {
+    id: 'produits-incomplete',
+    trigger: {
+      source: 'produits',
+      minCount: 5,
+      severity: ['warning'],
+    },
+    task: {
+      titleTemplate: 'Compléter {{count}} fiche(s) produit',
+      descriptionTemplate: '{{count}} produit(s) ont des fiches incomplètes (description, images, prix). Améliorer pour le SEO et les ventes.',
+      actionUrl: '/produits/catalogue?incomplete=true',
+      actionLabel: 'Compléter',
+      rice: {
+        impact: 2, // Medium - SEO + conversion
+        confidence: 0.8,
+        effortHours: 3,
+      },
+    },
+  },
+
+  // === EXPÉDITIONS ===
+  {
+    id: 'expeditions-pending',
+    trigger: {
+      source: 'expeditions',
+      minCount: 1,
+      severity: ['urgent', 'warning'],
+    },
+    task: {
+      titleTemplate: 'Expédier {{count}} commande(s) validée(s)',
+      descriptionTemplate: '{{count}} commande(s) sont validées et prêtes à expédier. Traiter pour respecter les délais.',
+      actionUrl: '/stocks/expeditions',
+      actionLabel: 'Expédier',
+      rice: {
+        impact: 3, // High - satisfaction client
+        confidence: 0.95,
+        effortHours: 1,
+      },
+    },
+  },
+  {
+    id: 'expeditions-backlog',
+    trigger: {
+      source: 'expeditions',
+      minCount: 10,
+    },
+    task: {
+      titleTemplate: 'Réduire le backlog expéditions ({{count}})',
+      descriptionTemplate: 'Le backlog d\'expéditions est important. Planifier des ressources supplémentaires.',
+      actionUrl: '/stocks/expeditions',
+      actionLabel: 'Voir backlog',
+      rice: {
+        impact: 2,
+        confidence: 0.7,
+        effortHours: 4,
       },
     },
   },

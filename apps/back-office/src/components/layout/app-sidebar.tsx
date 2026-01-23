@@ -63,9 +63,19 @@ import {
   useStockAlertsCount,
   useConsultationsCount,
   useLinkmePendingCount,
+  useProductsIncompleteCount,
+  useOrdersPendingCount,
+  useExpeditionsPendingCount,
+  useTransactionsUnreconciledCount,
+  useLinkmeApprovalsCount,
   StockAlertsDropdown,
   ConsultationsDropdown,
   LinkmePendingDropdown,
+  ProductsIncompleteDropdown,
+  OrdersPendingDropdown,
+  ExpeditionsPendingDropdown,
+  TransactionsUnreconciledDropdown,
+  LinkmeApprovalsDropdown,
 } from '@verone/notifications';
 
 // Interface pour les éléments de navigation
@@ -84,7 +94,12 @@ interface NavItem {
 const getNavItems = (
   stockAlertsCount: number,
   consultationsCount: number,
-  linkmePendingCount: number
+  linkmePendingCount: number,
+  productsIncompleteCount: number,
+  ordersPendingCount: number,
+  expeditionsPendingCount: number,
+  transactionsUnreconciledCount: number,
+  linkmeApprovalsCount: number
 ): NavItem[] => [
   {
     title: 'Dashboard',
@@ -118,11 +133,15 @@ const getNavItems = (
     title: 'Produits',
     href: '/produits',
     icon: Package,
+    badge: productsIncompleteCount,
+    badgeVariant: productsIncompleteCount > 0 ? 'urgent' : undefined,
     children: [
       {
         title: 'Catalogue',
         href: '/produits/catalogue',
         icon: BookOpen,
+        badge: productsIncompleteCount,
+        badgeVariant: productsIncompleteCount > 0 ? 'urgent' : undefined,
       },
       {
         title: 'Sourcing',
@@ -146,8 +165,8 @@ const getNavItems = (
     title: 'Stocks',
     href: '/stocks',
     icon: Layers,
-    badge: stockAlertsCount,
-    badgeVariant: stockAlertsCount > 0 ? 'urgent' : undefined,
+    badge: stockAlertsCount + expeditionsPendingCount,
+    badgeVariant: (stockAlertsCount + expeditionsPendingCount) > 0 ? 'urgent' : undefined,
     children: [
       {
         title: 'Alertes',
@@ -170,6 +189,8 @@ const getNavItems = (
         title: 'Expéditions',
         href: '/stocks/expeditions',
         icon: Truck,
+        badge: expeditionsPendingCount,
+        badgeVariant: expeditionsPendingCount > 0 ? 'urgent' : undefined,
       },
       // Stockage et Mouvements supprimés - accès via Inventaire
     ],
@@ -178,11 +199,15 @@ const getNavItems = (
     title: 'Commandes',
     href: '/commandes',
     icon: ShoppingBag,
+    badge: ordersPendingCount,
+    badgeVariant: ordersPendingCount > 0 ? 'urgent' : undefined,
     children: [
       {
         title: 'Clients',
         href: '/commandes/clients',
         icon: Users,
+        badge: ordersPendingCount,
+        badgeVariant: ordersPendingCount > 0 ? 'urgent' : undefined,
       },
       {
         title: 'Fournisseurs',
@@ -256,6 +281,8 @@ const getNavItems = (
     title: 'Finance',
     href: '/finance',
     icon: Calculator,
+    badge: transactionsUnreconciledCount,
+    badgeVariant: transactionsUnreconciledCount > 0 ? 'urgent' : undefined,
     children: [
       {
         title: 'Tableau de bord',
@@ -266,6 +293,8 @@ const getNavItems = (
         title: 'Transactions',
         href: '/finance/transactions',
         icon: ArrowLeftRight,
+        badge: transactionsUnreconciledCount,
+        badgeVariant: transactionsUnreconciledCount > 0 ? 'urgent' : undefined,
       },
       {
         title: 'Factures',
@@ -332,6 +361,12 @@ function SidebarContent() {
   const { count: stockAlertsCount } = useStockAlertsCount();
   const { count: consultationsCount } = useConsultationsCount();
   const { count: linkmePendingCount } = useLinkmePendingCount();
+  // Phase 2b : Nouveaux badges (2026-01-23)
+  const { count: productsIncompleteCount } = useProductsIncompleteCount();
+  const { count: ordersPendingCount } = useOrdersPendingCount();
+  const { count: expeditionsPendingCount } = useExpeditionsPendingCount();
+  const { count: transactionsUnreconciledCount } = useTransactionsUnreconciledCount();
+  const { count: linkmeApprovalsCount } = useLinkmeApprovalsCount();
 
   /**
    * Render badge avec dropdown interactif selon le module
@@ -367,6 +402,26 @@ function SidebarContent() {
             {badgeContent}
           </StockAlertsDropdown>
         );
+      case 'Expéditions':
+        return (
+          <ExpeditionsPendingDropdown side="right" align="start">
+            {badgeContent}
+          </ExpeditionsPendingDropdown>
+        );
+      case 'Produits':
+      case 'Catalogue':
+        return (
+          <ProductsIncompleteDropdown side="right" align="start">
+            {badgeContent}
+          </ProductsIncompleteDropdown>
+        );
+      case 'Commandes':
+      case 'Clients': // Sous-menu Commandes
+        return (
+          <OrdersPendingDropdown side="right" align="start">
+            {badgeContent}
+          </OrdersPendingDropdown>
+        );
       case 'Consultations':
         return (
           <ConsultationsDropdown side="right" align="start">
@@ -374,11 +429,17 @@ function SidebarContent() {
           </ConsultationsDropdown>
         );
       case 'LinkMe':
-      case 'Commandes': // Sous-menu LinkMe
         return (
           <LinkmePendingDropdown side="right" align="start">
             {badgeContent}
           </LinkmePendingDropdown>
+        );
+      case 'Finance':
+      case 'Transactions':
+        return (
+          <TransactionsUnreconciledDropdown side="right" align="start">
+            {badgeContent}
+          </TransactionsUnreconciledDropdown>
         );
       default:
         return badgeContent;
@@ -437,7 +498,16 @@ function SidebarContent() {
   // Nav items (avec count dynamique pour badges)
   // Filtrer les modules Finance si désactivés
   const navItems = useMemo(() => {
-    const items = getNavItems(stockAlertsCount, consultationsCount, linkmePendingCount);
+    const items = getNavItems(
+      stockAlertsCount,
+      consultationsCount,
+      linkmePendingCount,
+      productsIncompleteCount,
+      ordersPendingCount,
+      expeditionsPendingCount,
+      transactionsUnreconciledCount,
+      linkmeApprovalsCount
+    );
 
     // Masquer Finance si financeEnabled = false (module fusionné)
     if (!featureFlags.financeEnabled) {
@@ -445,7 +515,16 @@ function SidebarContent() {
     }
 
     return items;
-  }, [stockAlertsCount, consultationsCount, linkmePendingCount]);
+  }, [
+    stockAlertsCount,
+    consultationsCount,
+    linkmePendingCount,
+    productsIncompleteCount,
+    ordersPendingCount,
+    expeditionsPendingCount,
+    transactionsUnreconciledCount,
+    linkmeApprovalsCount,
+  ]);
 
   // Fonction récursive pour rendre les enfants (support multi-niveaux)
   const renderChildNavItem = (
