@@ -1,19 +1,66 @@
 /**
  * Server Action: Get Dashboard Metrics
- * Fetches all dashboard metrics (9 KPIs + 2 widgets) in parallel
+ * Optimized version with caching and structured sections
  *
  * Architecture:
- * - 9 KPIs: Stock Alerts, Orders Pending, LinkMe Orders, Products, Consultations, Customers, Organisations, Commissions, Out of Stock
- * - 2 Widgets: Top 5 Stock Alerts, Last 10 Recent Orders
+ * - Hero section: 4 essential KPIs (always visible)
+ * - Sales section: LinkMe orders, commissions, revenue chart data
+ * - Stock section: Products, out of stock, alerts
+ * - Finance section: Revenue 30 days
+ * - Activity section: Recent orders
+ *
+ * Performance:
+ * - Cached for 1 minute (unstable_cache)
+ * - Parallel queries (Promise.all)
+ * - Structured return by section
  *
  * @see CLAUDE.md - Dashboard section
  */
 
 'use server';
 
+import { unstable_cache } from 'next/cache';
 import { createServerClient } from '@verone/utils/supabase/server';
 
 export interface DashboardMetrics {
+  hero: {
+    ordersPending: number;
+    stockAlerts: number;
+    revenue30Days: number;
+    consultations: number;
+  };
+  sales: {
+    ordersLinkme: number;
+    commissions: number;
+  };
+  stock: {
+    products: {
+      total: number;
+      new_month: number;
+    };
+    outOfStock: number;
+    alerts: Array<{
+      product_id: string;
+      product_name: string;
+      severity: string;
+      min_stock: number;
+      stock_real: number;
+    }>;
+  };
+  finance: {
+    revenue30Days: number;
+  };
+  activity: {
+    recentOrders: Array<{
+      id: string;
+      order_number: string;
+      created_at: string;
+      total_ttc: number;
+      customer_type: string;
+      status: string;
+    }>;
+  };
+  // Legacy KPIs (for backward compatibility)
   kpis: {
     alertsStock: number;
     ordersPending: number;
@@ -50,151 +97,208 @@ export interface DashboardMetrics {
   };
 }
 
-export async function getDashboardMetrics(): Promise<DashboardMetrics> {
-  const supabase = await createServerClient();
+/**
+ * Fetch dashboard metrics with caching
+ * Cache TTL: 1 minute
+ */
+export const getDashboardMetrics = unstable_cache(
+  async (): Promise<DashboardMetrics> => {
+    const supabase = await createServerClient();
 
-  // Calculate date 30 days ago
-  const now = new Date();
-  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  const thirtyDaysAgoISO = thirtyDaysAgo.toISOString();
+    // Calculate date 30 days ago
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgoISO = thirtyDaysAgo.toISOString();
 
-  // Fetch all metrics in parallel (11 queries)
-  const [
-    alertsStock,
-    ordersPending,
-    ordersLinkme,
-    products,
-    consultations,
-    customers,
-    organisations,
-    commissions,
-    outOfStock,
-    alertsDetails,
-    recentOrders,
-  ] = await Promise.all([
-    // 1. Stock Alerts Critical
-    supabase
-      .from('stock_alerts_unified_view')
-      .select('id', { count: 'exact' })
-      .eq('severity', 'critical'),
+    // Fetch all metrics in parallel (12 queries)
+    const [
+      alertsStock,
+      ordersPending,
+      ordersLinkme,
+      products,
+      consultations,
+      customers,
+      organisations,
+      commissions,
+      outOfStock,
+      alertsDetails,
+      recentOrders,
+      revenue30Days,
+    ] = await Promise.all([
+      // 1. Stock Alerts Critical
+      supabase
+        .from('stock_alerts_unified_view')
+        .select('id', { count: 'exact' })
+        .eq('severity', 'critical'),
 
-    // 2. Pending Orders (all channels) - draft + validated non livrées
-    supabase
-      .from('sales_orders')
-      .select('id', { count: 'exact' })
-      .in('status', ['draft', 'validated', 'partially_shipped'])
-      .is('delivered_at', null)
-      .is('cancelled_at', null),
+      // 2. Pending Orders (all channels) - draft + validated non livrées
+      supabase
+        .from('sales_orders')
+        .select('id', { count: 'exact' })
+        .in('status', ['draft', 'validated', 'partially_shipped'])
+        .is('delivered_at', null)
+        .is('cancelled_at', null),
 
-    // 3. LinkMe Pending Orders - draft seulement
-    supabase
-      .from('sales_orders')
-      .select('id', { count: 'exact' })
-      .eq('status', 'draft')
-      .not('created_by_affiliate_id', 'is', null),
+      // 3. LinkMe Pending Orders - draft seulement
+      supabase
+        .from('sales_orders')
+        .select('id', { count: 'exact' })
+        .eq('status', 'draft')
+        .not('created_by_affiliate_id', 'is', null),
 
-    // 4. Total Products + New 30 days
-    supabase
-      .from('products')
-      .select('id, created_at', { count: 'exact' })
-      .is('deleted_at', null),
+      // 4. Total Products + New 30 days
+      supabase
+        .from('products')
+        .select('id, created_at', { count: 'exact' })
+        .is('deleted_at', null),
 
-    // 5. Active Consultations
-    supabase
-      .from('client_consultations')
-      .select('id', { count: 'exact' })
-      .in('status', ['pending', 'in_progress']),
+      // 5. Active Consultations
+      supabase
+        .from('client_consultations')
+        .select('id', { count: 'exact' })
+        .in('status', ['pending', 'in_progress']),
 
-    // 6. Active Customers
-    supabase
-      .from('individual_customers')
-      .select('id', { count: 'exact' })
-      .eq('is_active', true),
+      // 6. Active Customers
+      supabase
+        .from('individual_customers')
+        .select('id', { count: 'exact' })
+        .eq('is_active', true),
 
-    // 7. Organisations + New 30 days
-    supabase
-      .from('organisations')
-      .select('id, created_at', { count: 'exact' })
-      .is('deleted_at', null),
+      // 7. Organisations + New 30 days
+      supabase
+        .from('organisations')
+        .select('id, created_at', { count: 'exact' })
+        .is('deleted_at', null),
 
-    // 8. Pending Commissions
-    supabase
-      .from('linkme_commissions')
-      .select('id', { count: 'exact' })
-      .eq('status', 'pending'),
+      // 8. Pending Commissions
+      supabase
+        .from('linkme_commissions')
+        .select('id', { count: 'exact' })
+        .eq('status', 'pending'),
 
-    // 9. Out of Stock Products
-    supabase
-      .from('products')
-      .select('id', { count: 'exact' })
-      .eq('current_stock_real', 0)
-      .is('deleted_at', null),
+      // 9. Out of Stock Products
+      supabase
+        .from('products')
+        .select('id', { count: 'exact' })
+        .eq('current_stock_real', 0)
+        .is('deleted_at', null),
 
-    // Widget 1: Top 5 Stock Alerts Details
-    supabase
-      .from('stock_alerts_unified_view')
-      .select('product_id, product_name, severity, min_stock, stock_real')
-      .eq('severity', 'critical')
-      .order('stock_real', { ascending: true })
-      .limit(5),
+      // 10. Top 5 Stock Alerts Details
+      supabase
+        .from('stock_alerts_unified_view')
+        .select('product_id, product_name, severity, min_stock, stock_real')
+        .eq('severity', 'critical')
+        .order('stock_real', { ascending: true })
+        .limit(5),
 
-    // Widget 2: Last 10 Recent Orders
-    supabase
-      .from('sales_orders')
-      .select('id, order_number, created_at, total_ttc, customer_type, status')
-      .order('created_at', { ascending: false })
-      .limit(10),
-  ]);
+      // 11. Last 10 Recent Orders
+      supabase
+        .from('sales_orders')
+        .select('id, order_number, created_at, total_ttc, customer_type, status')
+        .order('created_at', { ascending: false })
+        .limit(10),
 
-  // Calculate new products/organisations in last 30 days
-  const productsNewMonth =
-    products.data?.filter(
-      (p) => p.created_at && new Date(p.created_at) > thirtyDaysAgo
-    ).length || 0;
+      // 12. Revenue Last 30 Days (delivered orders only)
+      supabase
+        .from('sales_orders')
+        .select('total_ttc')
+        .not('delivered_at', 'is', null)
+        .gte('delivered_at', thirtyDaysAgoISO)
+        .is('cancelled_at', null),
+    ]);
 
-  const organisationsNewMonth =
-    organisations.data?.filter(
-      (o) => o.created_at && new Date(o.created_at) > thirtyDaysAgo
-    ).length || 0;
+    // Calculate new products/organisations in last 30 days
+    const productsNewMonth =
+      products.data?.filter(
+        (p) => p.created_at && new Date(p.created_at) > thirtyDaysAgo
+      ).length || 0;
 
-  return {
-    kpis: {
-      alertsStock: alertsStock.count || 0,
-      ordersPending: ordersPending.count || 0,
-      ordersLinkme: ordersLinkme.count || 0,
-      products: {
-        total: products.count || 0,
-        new_month: productsNewMonth,
+    const organisationsNewMonth =
+      organisations.data?.filter(
+        (o) => o.created_at && new Date(o.created_at) > thirtyDaysAgo
+      ).length || 0;
+
+    // Calculate revenue 30 days (sum of delivered orders)
+    const revenueSum =
+      revenue30Days.data?.reduce((sum, order) => sum + (order.total_ttc || 0), 0) || 0;
+
+    // Format stock alerts
+    const stockAlertsFormatted = (alertsDetails.data || [])
+      .filter((alert) => alert.product_id && alert.product_name)
+      .map((alert) => ({
+        product_id: alert.product_id!,
+        product_name: alert.product_name!,
+        severity: alert.severity || 'critical',
+        min_stock: alert.min_stock || 0,
+        stock_real: alert.stock_real || 0,
+      }));
+
+    // Format recent orders
+    const recentOrdersFormatted = (recentOrders.data || [])
+      .filter((order) => order.id && order.order_number)
+      .map((order) => ({
+        id: order.id!,
+        order_number: order.order_number!,
+        created_at: order.created_at!,
+        total_ttc: order.total_ttc || 0,
+        customer_type: order.customer_type || 'organization',
+        status: order.status!,
+      }));
+
+    return {
+      // NEW: Structured sections
+      hero: {
+        ordersPending: ordersPending.count || 0,
+        stockAlerts: alertsStock.count || 0,
+        revenue30Days: revenueSum,
+        consultations: consultations.count || 0,
       },
-      consultations: consultations.count || 0,
-      customers: customers.count || 0,
-      organisations: {
-        total: organisations.count || 0,
-        new_month: organisationsNewMonth,
+      sales: {
+        ordersLinkme: ordersLinkme.count || 0,
+        commissions: commissions.count || 0,
       },
-      commissions: commissions.count || 0,
-      outOfStock: outOfStock.count || 0,
-    },
-    widgets: {
-      stockAlerts: (alertsDetails.data || [])
-        .filter((alert) => alert.product_id && alert.product_name)
-        .map((alert) => ({
-          product_id: alert.product_id!,
-          product_name: alert.product_name!,
-          severity: alert.severity || 'critical',
-          min_stock: alert.min_stock || 0,
-          stock_real: alert.stock_real || 0,
-        })),
-      recentOrders: (recentOrders.data || [])
-        .filter((order) => order.id && order.order_number)
-        .map((order) => ({
-          id: order.id!,
-          order_number: order.order_number!,
-          created_at: order.created_at!,
-          total_ttc: order.total_ttc || 0,
-          customer_type: order.customer_type || 'organization',
-          status: order.status!,
-        })),
-    },
-  };
-}
+      stock: {
+        products: {
+          total: products.count || 0,
+          new_month: productsNewMonth,
+        },
+        outOfStock: outOfStock.count || 0,
+        alerts: stockAlertsFormatted,
+      },
+      finance: {
+        revenue30Days: revenueSum,
+      },
+      activity: {
+        recentOrders: recentOrdersFormatted,
+      },
+
+      // LEGACY: Backward compatibility
+      kpis: {
+        alertsStock: alertsStock.count || 0,
+        ordersPending: ordersPending.count || 0,
+        ordersLinkme: ordersLinkme.count || 0,
+        products: {
+          total: products.count || 0,
+          new_month: productsNewMonth,
+        },
+        consultations: consultations.count || 0,
+        customers: customers.count || 0,
+        organisations: {
+          total: organisations.count || 0,
+          new_month: organisationsNewMonth,
+        },
+        commissions: commissions.count || 0,
+        outOfStock: outOfStock.count || 0,
+      },
+      widgets: {
+        stockAlerts: stockAlertsFormatted,
+        recentOrders: recentOrdersFormatted,
+      },
+    };
+  },
+  ['dashboard-metrics'],
+  {
+    revalidate: 60, // Cache for 1 minute
+    tags: ['dashboard'],
+  }
+);
