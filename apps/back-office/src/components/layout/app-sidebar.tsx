@@ -228,52 +228,23 @@ const getNavItems = (
     badge: consultationsCount,
     badgeVariant: consultationsCount > 0 ? 'urgent' : undefined,
   },
-  // ============ CANAUX DE VENTE (PROMUS TOP-LEVEL) ============
+  // ============ CANAUX DE VENTE ============
   {
     title: 'LinkMe',
-    href: '/linkme',
+    href: '/canaux-vente/linkme',
     icon: Link2,
     badge: linkmePendingCount,
     badgeVariant: linkmePendingCount > 0 ? 'urgent' : undefined,
-    children: [
-      {
-        title: 'Commandes',
-        href: '/linkme/commandes',
-        icon: ShoppingBag,
-        badge: linkmePendingCount,
-        badgeVariant: linkmePendingCount > 0 ? 'urgent' : undefined,
-      },
-      {
-        title: 'À traiter',
-        href: '/linkme/commandes/a-traiter',
-        icon: CheckCircle,
-      },
-      {
-        title: 'Sélections',
-        href: '/linkme/selections',
-        icon: Layers,
-      },
-      {
-        title: 'Catalogue',
-        href: '/linkme/catalogue',
-        icon: BookOpen,
-      },
-      {
-        title: 'Commissions',
-        href: '/linkme/commissions',
-        icon: Wallet,
-      },
-      // Dashboard et Enseignes supprimés - accès via sous-pages
-    ],
+    // Children removed - now handled by ChannelTabs component
   },
   {
     title: 'Site Internet',
-    href: '/site-internet',
+    href: '/canaux-vente/site-internet',
     icon: Globe,
   },
   {
     title: 'Google Merchant',
-    href: '/google-merchant',
+    href: '/canaux-vente/google-merchant',
     icon: ShoppingBag,
   },
   // ============ FINANCE (FUSIONNÉ) ============
