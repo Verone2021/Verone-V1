@@ -46,22 +46,8 @@ function isPublicRoute(pathname: string): boolean {
 }
 
 // Redirections URL (ancien chemin → nouveau chemin)
-// Backward compatibility pour migration sidebar optimisée (2026-01-22)
+// Backward compatibility pour anciennes URLs
 const URL_REDIRECTS: Record<string, string> = {
-  // LinkMe promu top-level
-  '/canaux-vente/linkme': '/linkme',
-  '/canaux-vente/linkme/dashboard': '/linkme',
-  '/canaux-vente/linkme/enseignes': '/linkme/enseignes',
-  '/canaux-vente/linkme/selections': '/linkme/selections',
-  '/canaux-vente/linkme/commandes': '/linkme/commandes',
-  '/canaux-vente/linkme/commandes/a-traiter': '/linkme/commandes/a-traiter',
-  '/canaux-vente/linkme/catalogue': '/linkme/catalogue',
-  '/canaux-vente/linkme/commissions': '/linkme/commissions',
-
-  // Site Internet et Google Merchant promues top-level
-  '/canaux-vente/site-internet': '/site-internet',
-  '/canaux-vente/google-merchant': '/google-merchant',
-
   // Finance fusionné (Comptabilité + Facturation + Trésorerie)
   '/comptabilite': '/finance',
   '/comptabilite/transactions': '/finance/transactions',
