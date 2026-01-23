@@ -29,6 +29,7 @@ import {
   Package,
   Target,
   ShoppingBag,
+  Store,
   Truck,
   Wallet,
   Building2,
@@ -230,22 +231,30 @@ const getNavItems = (
   },
   // ============ CANAUX DE VENTE ============
   {
-    title: 'LinkMe',
-    href: '/canaux-vente/linkme',
-    icon: Link2,
+    title: 'Canaux de Vente',
+    href: '/canaux-vente',
+    icon: Store,
     badge: linkmePendingCount,
     badgeVariant: linkmePendingCount > 0 ? 'urgent' : undefined,
-    // Children removed - now handled by ChannelTabs component
-  },
-  {
-    title: 'Site Internet',
-    href: '/canaux-vente/site-internet',
-    icon: Globe,
-  },
-  {
-    title: 'Google Merchant',
-    href: '/canaux-vente/google-merchant',
-    icon: ShoppingBag,
+    children: [
+      {
+        title: 'LinkMe',
+        href: '/canaux-vente/linkme',
+        icon: Link2,
+        badge: linkmePendingCount,
+        badgeVariant: linkmePendingCount > 0 ? 'urgent' : undefined,
+      },
+      {
+        title: 'Site Internet',
+        href: '/canaux-vente/site-internet',
+        icon: Globe,
+      },
+      {
+        title: 'Google Merchant',
+        href: '/canaux-vente/google-merchant',
+        icon: ShoppingBag,
+      },
+    ],
   },
   // ============ FINANCE (FUSIONNÉ) ============
   {
@@ -399,6 +408,7 @@ function SidebarContent() {
             {badgeContent}
           </ConsultationsDropdown>
         );
+      case 'Canaux de Vente':
       case 'LinkMe':
         return (
           <LinkmePendingDropdown side="right" align="start">
