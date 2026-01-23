@@ -86,7 +86,10 @@ export function useLinkmePendingCount(options?: {
         .in('status', ['draft', 'validated', 'partially_shipped', 'shipped']);
 
       if (countError) {
-        throw new Error(`Count error: ${countError.message}`);
+        console.error('[useLinkmePendingCount] Count error:', countError);
+        setError(new Error(`Count error: ${countError.message}`));
+        setCount(0); // Valeur par défaut gracieuse
+        return; // Sortie anticipée sans exception
       }
 
       setCount(totalCount || 0);

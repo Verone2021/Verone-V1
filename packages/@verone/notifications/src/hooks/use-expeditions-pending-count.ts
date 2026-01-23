@@ -77,7 +77,10 @@ export function useExpeditionsPendingCount(options?: {
         .in('status', ['validated', 'partially_shipped']);
 
       if (countError) {
-        throw new Error(`Count error: ${countError.message}`);
+        console.error('[useExpeditionsPendingCount] Count error:', countError);
+        setError(new Error(`Count error: ${countError.message}`));
+        setCount(0); // Valeur par défaut gracieuse
+        return; // Sortie anticipée sans exception
       }
 
       setCount(totalCount || 0);

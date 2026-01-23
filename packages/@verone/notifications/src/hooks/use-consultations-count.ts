@@ -94,7 +94,10 @@ export function useConsultationsCount(options?: {
         .is('deleted_at', null); // Exclure supprimées
 
       if (countError) {
-        throw new Error(`Count error: ${countError.message}`);
+        console.error('[useConsultationsCount] Count error:', countError);
+        setError(new Error(`Count error: ${countError.message}`));
+        setCount(0); // Valeur par défaut gracieuse
+        return; // Sortie anticipée sans exception
       }
 
       setCount(totalCount || 0);
