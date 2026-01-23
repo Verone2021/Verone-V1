@@ -50,10 +50,10 @@ const quickActions = [
     description: 'Liste alertes critiques',
   },
   {
-    label: 'Commandes LinkMe',
-    href: '/canaux-vente/linkme/commandes/a-traiter',
+    label: 'Approbations LinkMe',
+    href: '/canaux-vente/linkme/approbations',
     icon: Link2,
-    description: 'Commandes affiliés pending',
+    description: 'Commandes, produits & organisations',
   },
   {
     label: 'Consultations',

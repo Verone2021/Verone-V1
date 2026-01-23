@@ -73,7 +73,7 @@ export function KPIsGrid({ data }: KPIsGridProps) {
             ? `${data.ordersLinkme} commande${data.ordersLinkme > 1 ? 's' : ''} affilié${data.ordersLinkme > 1 ? 's' : ''}`
             : 'Aucune commande'
         }
-        onClick={() => router.push('/canaux-vente/linkme/commandes/a-traiter')}
+        onClick={() => router.push('/canaux-vente/linkme/approbations')}
       />
 
       {/* 4. Produits Catalogue */}
