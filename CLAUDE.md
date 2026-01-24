@@ -28,6 +28,12 @@ next dev
 gh pr create         # Demander d'abord
 gh pr merge          # Demander d'abord
 git push --force     # Demander d'abord
+
+# ❌ INTERDIT - Commandes bloquantes sans background/timeout
+pnpm build                    # Sans run_in_background=true
+pnpm e2e:smoke               # Sans timeout approprié
+# → Utiliser: Bash(command="pnpm build", run_in_background=true)
+# → Ou: Bash(command="pnpm type-check", timeout=60000)
 ```
 
 **Pourquoi ?** Le lancement de serveurs par Claude occupe les ports et empêche l'utilisateur de lancer ses propres serveurs.
