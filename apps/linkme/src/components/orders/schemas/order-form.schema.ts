@@ -345,7 +345,7 @@ export const deliveryStepSchema = z.object({
   // Options
   isMallDelivery: z.boolean().default(false),
   mallEmail: z.string().email('Email centre commercial invalide').optional().nullable(),
-  semiTrailerAccessible: z.boolean().default(false),
+  semiTrailerAccessible: z.boolean().default(true),
 
   // Upload formulaire d'accès
   accessFormUrl: z.string().url().optional().nullable(),
@@ -471,7 +471,7 @@ export const defaultDeliveryStep: DeliveryStepData = {
   desiredDate: null,
   isMallDelivery: false,
   mallEmail: null,
-  semiTrailerAccessible: false,
+  semiTrailerAccessible: true,
   accessFormUrl: null,
   accessFormFile: null,
   notes: '',

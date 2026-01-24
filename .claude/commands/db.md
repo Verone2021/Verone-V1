@@ -176,7 +176,7 @@ RLS Policies:
 **Exécution:**
 
 ```bash
-# Méthode officielle Supabase (sans Docker)
+# Méthode officielle Supabase
 # Token disponible dans .mcp.env (non committé)
 SUPABASE_ACCESS_TOKEN="${SUPABASE_ACCESS_TOKEN}" \
 npx supabase@latest gen types typescript --project-id aorroydfjsrygmosnzrl \
@@ -334,7 +334,7 @@ postgresql://postgres.aorroydfjsrygmosnzrl:[PASSWORD]@aws-1-eu-west-3.pooler.sup
 - **Mode**: Pooler Session (IPv4 + IPv6)
 - **Project**: aorroydfjsrygmosnzrl
 - **Region**: eu-west-3 (AWS Paris)
-- **JAMAIS** Docker/localhost:54322
+- **TOUJOURS** Supabase Cloud
 
 ## Error Handling
 
