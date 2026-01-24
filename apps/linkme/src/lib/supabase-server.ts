@@ -2,11 +2,11 @@
  * Supabase Server Client - Pour SSR et Middleware
  *
  * Utilise @supabase/ssr pour la gestion des cookies
- * Utilise le préfixe cookie standard de Supabase (sb-{project-id}-auth-token)
+ * Lit tous les cookies Supabase (comportement par défaut @supabase/ssr)
  *
  * @module supabase-server
  * @since 2025-12-01
- * @updated 2026-01-23 - Suppression préfixe personnalisé pour compatibilité
+ * @updated 2026-01-24 - Retour au comportement par défaut (pas de filtrage cookies)
  */
 
 import { cookies } from 'next/headers';
