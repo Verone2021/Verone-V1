@@ -40,9 +40,22 @@ npm run dev
 next dev
 ```
 
-**Pourquoi ?** Le lancement de serveurs par Claude occupe les ports (3000, 3001, 3002) et empêche l'utilisateur de lancer ses propres serveurs, causant des erreurs `EADDRINUSE`.
+### Playwright/Chrome sur Ports de Dev
+Claude ne doit **JAMAIS** utiliser Playwright ou Chrome DevTools MCP sur les ports de dev :
 
-**Règle** : *"Claude développe, teste, build, commit. L'utilisateur lance les serveurs."*
+```bash
+# ❌ INTERDIT - Playwright garde des processus zombies
+mcp__playwright__browser_navigate → localhost:3000
+mcp__playwright__browser_navigate → localhost:3001
+mcp__playwright__browser_navigate → localhost:3002
+mcp__chrome-devtools__navigate_page → localhost:300x
+```
+
+**Pourquoi ?** Ces outils gardent des processus qui occupent les ports même après fermeture, empêchant l'utilisateur de lancer ses serveurs.
+
+**Alternative pour debugger** : Analyser le code, `pnpm build`, ou demander à l'utilisateur de partager les erreurs console.
+
+**Règle** : *"Claude développe, teste, build, commit. L'utilisateur lance les serveurs ET utilise le navigateur sur ses ports."*
 
 ---
 
