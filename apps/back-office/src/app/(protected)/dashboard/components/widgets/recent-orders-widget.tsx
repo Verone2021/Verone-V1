@@ -17,10 +17,14 @@ import { formatPrice } from '@verone/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
-import { WidgetCard } from './widget-card';
-import { WIDGET_CATALOG } from '../../lib/widget-catalog';
+import { ShoppingCart } from 'lucide-react';
 
-const widget = WIDGET_CATALOG.recent_orders;
+import { WidgetCard } from './widget-card';
+
+const widget = {
+  label: 'Commandes récentes',
+  icon: ShoppingCart,
+};
 
 const STATUS_COLORS: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-800',

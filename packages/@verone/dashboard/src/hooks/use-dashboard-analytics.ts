@@ -67,7 +67,8 @@ export function useDashboardAnalytics() {
           .select('created_at, total_ttc')
           .gte('created_at', startDate)
           .not('status', 'eq', 'cancelled')
-          .order('created_at', { ascending: true });
+          .order('created_at', { ascending: true })
+          .limit(5000);
 
         if (salesError) throw salesError;
 
@@ -100,7 +101,8 @@ export function useDashboardAnalytics() {
           .from('products')
           .select('created_at')
           .gte('created_at', startDate)
-          .order('created_at', { ascending: true });
+          .order('created_at', { ascending: true })
+          .limit(5000);
 
         if (productsError) throw productsError;
 
@@ -131,7 +133,8 @@ export function useDashboardAnalytics() {
           .from('stock_movements')
           .select('created_at, quantity_change, movement_type')
           .gte('created_at', startDate)
-          .order('created_at', { ascending: true });
+          .order('created_at', { ascending: true })
+          .limit(5000);
 
         if (movementsError) throw movementsError;
 
@@ -171,7 +174,8 @@ export function useDashboardAnalytics() {
           .select('created_at, total_ht')
           .gte('created_at', startDate)
           .not('status', 'eq', 'cancelled')
-          .order('created_at', { ascending: true });
+          .order('created_at', { ascending: true })
+          .limit(5000);
 
         if (purchaseError) throw purchaseError;
 

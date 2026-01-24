@@ -11,9 +11,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import { FileText } from 'lucide-react';
 
-import { WIDGET_CATALOG } from '../../lib/widget-catalog';
-
-const widget = WIDGET_CATALOG.unpaid_invoices;
+const widget = {
+  label: 'Factures impayées',
+  icon: FileText,
+};
 
 interface UnpaidInvoicesWidgetProps {
   onRemove?: () => void;

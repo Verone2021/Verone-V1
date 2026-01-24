@@ -11,11 +11,14 @@ import Link from 'next/link';
 
 import { useStockAlerts } from '@verone/stock/hooks';
 import { Badge } from '@verone/ui';
+import { AlertTriangle } from 'lucide-react';
 
 import { WidgetCard } from './widget-card';
-import { WIDGET_CATALOG } from '../../lib/widget-catalog';
 
-const widget = WIDGET_CATALOG.stock_alerts;
+const widget = {
+  label: 'Alertes stock',
+  icon: AlertTriangle,
+};
 
 interface StockAlertsWidgetProps {
   onRemove?: () => void;

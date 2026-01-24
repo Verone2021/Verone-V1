@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * NewOrderForm - Formulaire de commande en 7 étapes
+ * NewOrderForm - Formulaire de commande en 8 étapes
  *
  * Composant orchestrateur qui :
  * - Affiche le stepper sidebar
@@ -10,6 +10,7 @@
  *
  * @module NewOrderForm
  * @since 2026-01-20
+ * @updated 2026-01-24 - Refonte 7→8 étapes
  */
 
 import { useCallback } from 'react';
@@ -33,8 +34,9 @@ import { RestaurantStep } from './steps/RestaurantStep';
 import { SelectionStep } from './steps/SelectionStep';
 import { ProductsStep } from './steps/ProductsStep';
 import { CartStep } from './steps/CartStep';
-import { ContactsStep } from './steps/ContactsStep';
-import { DeliveryStep } from './steps/DeliveryStep';
+import { ResponsableStep } from './steps/ResponsableStep';
+import { BillingStep } from './steps/BillingStep';
+import { ShippingStep } from './steps/ShippingStep';
 import { ValidationStep } from './steps/ValidationStep';
 
 // ============================================================================
@@ -123,19 +125,27 @@ export function NewOrderForm() {
         );
       case 5:
         return (
-          <ContactsStep
+          <ResponsableStep
             {...commonProps}
             onUpdate={updateContacts}
           />
         );
       case 6:
         return (
-          <DeliveryStep
+          <BillingStep
             {...commonProps}
-            onUpdate={updateDelivery}
+            onUpdate={updateContacts}
           />
         );
       case 7:
+        return (
+          <ShippingStep
+            {...commonProps}
+            onUpdate={updateContacts}
+            onUpdateDelivery={updateDelivery}
+          />
+        );
+      case 8:
         return (
           <ValidationStep
             {...commonProps}
@@ -206,7 +216,7 @@ export function NewOrderForm() {
               </button>
 
               {/* Bouton Suivant / Confirmer */}
-              {currentStep < 7 ? (
+              {currentStep < 8 ? (
                 <button
                   type="button"
                   onClick={nextStep}

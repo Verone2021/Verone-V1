@@ -22,9 +22,7 @@ import {
   Legend,
 } from 'recharts';
 
-import { CHART_CATALOG } from '../../lib/chart-catalog';
-
-const chart = CHART_CATALOG.treasury_12m;
+const CHART_LABEL = 'Tresorerie 12 mois';
 
 interface TreasuryChartProps {
   onRemove?: () => void;
@@ -94,7 +92,7 @@ export function TreasuryChart({ onRemove }: TreasuryChartProps) {
             <div className="p-1.5 rounded-md bg-muted">
               <Wallet className="h-4 w-4 text-muted-foreground" />
             </div>
-            <CardTitle className="text-sm font-medium">{chart.label}</CardTitle>
+            <CardTitle className="text-sm font-medium">{CHART_LABEL}</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="flex-1 pt-0">
@@ -114,7 +112,7 @@ export function TreasuryChart({ onRemove }: TreasuryChartProps) {
             <div className="p-1.5 rounded-md bg-muted">
               <Wallet className="h-4 w-4 text-muted-foreground" />
             </div>
-            <CardTitle className="text-sm font-medium">{chart.label}</CardTitle>
+            <CardTitle className="text-sm font-medium">{CHART_LABEL}</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="flex-1 pt-0">
@@ -136,7 +134,7 @@ export function TreasuryChart({ onRemove }: TreasuryChartProps) {
           <div className="p-1.5 rounded-md bg-muted">
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </div>
-          <CardTitle className="text-sm font-medium">{chart.label}</CardTitle>
+          <CardTitle className="text-sm font-medium">{CHART_LABEL}</CardTitle>
         </div>
       </CardHeader>
 

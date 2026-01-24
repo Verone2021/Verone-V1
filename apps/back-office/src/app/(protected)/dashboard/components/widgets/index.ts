@@ -12,6 +12,3 @@ export { StockAlertsWidget } from './stock-alerts-widget';
 export { RecentActivityWidget } from './recent-activity-widget';
 export { TopProductsWidget } from './top-products-widget';
 export { StockMovementsWidget } from './stock-movements-widget';
-
-// Modal de sélection
-export { WidgetSelectorModal } from './widget-selector-modal';

@@ -11,6 +11,3 @@ export { TreasuryChart } from './treasury-chart';
 export { ChannelPieChart } from './channel-pie-chart';
 export { ABCAnalysisChart } from './abc-analysis-chart';
 export { AgingReportChart } from './aging-report-chart';
-
-// Modal de sélection
-export { ChartSelectorModal } from './chart-selector-modal';

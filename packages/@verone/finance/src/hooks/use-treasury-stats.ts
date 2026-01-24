@@ -85,6 +85,40 @@ export interface BankBalanceData {
   error?: string;
 }
 
+// =====================================================================
+// CACHE MODULE-LEVEL (évite appels API Qonto répétés)
+// Pattern: Cache avec timestamp, durée 5 minutes
+// =====================================================================
+
+const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+
+interface QontoCacheEntry {
+  data: BankBalanceData;
+  timestamp: number;
+}
+
+let qontoBalanceCache: QontoCacheEntry | null = null;
+
+function isCacheValid(): boolean {
+  if (!qontoBalanceCache) return false;
+  const now = Date.now();
+  return now - qontoBalanceCache.timestamp < CACHE_DURATION_MS;
+}
+
+function getCachedBalance(): BankBalanceData | null {
+  if (isCacheValid()) {
+    return qontoBalanceCache!.data;
+  }
+  return null;
+}
+
+function setCachedBalance(data: BankBalanceData): void {
+  qontoBalanceCache = {
+    data,
+    timestamp: Date.now(),
+  };
+}
+
 // Métriques calculées
 export interface TreasuryMetrics {
   burnRate: number; // Dépenses moyennes mensuelles
@@ -139,20 +173,31 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
     if (!featureFlags.financeEnabled) return;
 
     const fetchAllData = async () => {
-      // 1. Fetch bank balance first
+      // 1. Fetch bank balance first (avec cache module-level)
       setBankLoading(true);
       let currentTotalBalance = 0;
-      try {
-        const response = await fetch('/api/qonto/balance');
-        if (response.ok) {
-          const data: BankBalanceData = await response.json();
-          setBankData(data);
-          currentTotalBalance = data.totalBalance || 0;
-        }
-      } catch (err) {
-        console.warn('Failed to fetch bank balance:', err);
-      } finally {
+
+      // Vérifier le cache d'abord
+      const cachedData = getCachedBalance();
+      if (cachedData) {
+        setBankData(cachedData);
+        currentTotalBalance = cachedData.totalBalance || 0;
         setBankLoading(false);
+      } else {
+        // Pas de cache valide, faire l'appel API
+        try {
+          const response = await fetch('/api/qonto/balance');
+          if (response.ok) {
+            const data: BankBalanceData = await response.json();
+            setCachedBalance(data); // Mettre en cache
+            setBankData(data);
+            currentTotalBalance = data.totalBalance || 0;
+          }
+        } catch (err) {
+          console.warn('Failed to fetch bank balance:', err);
+        } finally {
+          setBankLoading(false);
+        }
       }
 
       // 2. Fetch transactions and calculate stats
@@ -622,15 +667,25 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
   };
 
   // ===================================================================
-  // FETCH BANK BALANCE (via API Qonto)
+  // FETCH BANK BALANCE (via API Qonto - avec invalidation cache)
   // ===================================================================
 
-  const fetchBankBalance = async () => {
+  const fetchBankBalance = async (forceRefresh = false) => {
+    // Si pas de forceRefresh, vérifier le cache d'abord
+    if (!forceRefresh) {
+      const cachedData = getCachedBalance();
+      if (cachedData) {
+        setBankData(cachedData);
+        return;
+      }
+    }
+
     setBankLoading(true);
     try {
       const response = await fetch('/api/qonto/balance');
       if (response.ok) {
         const data: BankBalanceData = await response.json();
+        setCachedBalance(data); // Mettre en cache
         setBankData(data);
       }
     } catch (err) {
@@ -666,6 +721,6 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
 
     // Actions
     refresh: fetchStats,
-    refreshBankBalance: fetchBankBalance,
+    refreshBankBalance: () => fetchBankBalance(true), // Force refresh pour bouton "Actualiser"
   };
 }

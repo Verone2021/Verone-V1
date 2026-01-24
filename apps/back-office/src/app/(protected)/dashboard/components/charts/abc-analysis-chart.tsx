@@ -24,9 +24,7 @@ import {
   Cell,
 } from 'recharts';
 
-import { CHART_CATALOG } from '../../lib/chart-catalog';
-
-const chart = CHART_CATALOG.abc_analysis;
+const CHART_LABEL = 'Classification ABC';
 
 interface ABCAnalysisChartProps {
   onRemove?: () => void;
@@ -99,7 +97,7 @@ export function ABCAnalysisChart({ onRemove }: ABCAnalysisChartProps) {
             <div className="p-1.5 rounded-md bg-muted">
               <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </div>
-            <CardTitle className="text-sm font-medium">{chart.label}</CardTitle>
+            <CardTitle className="text-sm font-medium">{CHART_LABEL}</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="flex-1 pt-0">
@@ -119,7 +117,7 @@ export function ABCAnalysisChart({ onRemove }: ABCAnalysisChartProps) {
             <div className="p-1.5 rounded-md bg-muted">
               <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </div>
-            <CardTitle className="text-sm font-medium">{chart.label}</CardTitle>
+            <CardTitle className="text-sm font-medium">{CHART_LABEL}</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="flex-1 pt-0">
@@ -148,7 +146,7 @@ export function ABCAnalysisChart({ onRemove }: ABCAnalysisChartProps) {
           <div className="p-1.5 rounded-md bg-muted">
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </div>
-          <CardTitle className="text-sm font-medium">{chart.label}</CardTitle>
+          <CardTitle className="text-sm font-medium">{CHART_LABEL}</CardTitle>
         </div>
         <div className="text-xs text-muted-foreground">
           {report.summary.total_products} produits

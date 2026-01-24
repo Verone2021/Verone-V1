@@ -21,9 +21,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-import { CHART_CATALOG } from '../../lib/chart-catalog';
-
-const chart = CHART_CATALOG.revenue_30d;
+const CHART_LABEL = 'CA 30 jours';
 
 interface RevenueChartProps {
   onRemove?: () => void;
@@ -73,7 +71,7 @@ export function RevenueChart({ onRemove }: RevenueChartProps) {
             <div className="p-1.5 rounded-md bg-muted">
               <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </div>
-            <CardTitle className="text-sm font-medium">{chart.label}</CardTitle>
+            <CardTitle className="text-sm font-medium">{CHART_LABEL}</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="flex-1 pt-0">
@@ -93,7 +91,7 @@ export function RevenueChart({ onRemove }: RevenueChartProps) {
             <div className="p-1.5 rounded-md bg-muted">
               <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </div>
-            <CardTitle className="text-sm font-medium">{chart.label}</CardTitle>
+            <CardTitle className="text-sm font-medium">{CHART_LABEL}</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="flex-1 pt-0">
@@ -115,7 +113,7 @@ export function RevenueChart({ onRemove }: RevenueChartProps) {
           <div className="p-1.5 rounded-md bg-muted">
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </div>
-          <CardTitle className="text-sm font-medium">{chart.label}</CardTitle>
+          <CardTitle className="text-sm font-medium">{CHART_LABEL}</CardTitle>
         </div>
       </CardHeader>
 

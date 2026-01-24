@@ -13,12 +13,14 @@ import { useStockMovements } from '@verone/stock/hooks';
 import { Badge } from '@verone/ui';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ArrowUpCircle, ArrowDownCircle, RefreshCw } from 'lucide-react';
+import { ArrowUpCircle, ArrowDownCircle, RefreshCw, ArrowUpDown } from 'lucide-react';
 
 import { WidgetCard } from './widget-card';
-import { WIDGET_CATALOG } from '../../lib/widget-catalog';
 
-const widget = WIDGET_CATALOG.stock_movements;
+const widget = {
+  label: 'Mouvements stock',
+  icon: ArrowUpDown,
+};
 
 const MOVEMENT_TYPES: Record<
   string,

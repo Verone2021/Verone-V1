@@ -195,15 +195,10 @@ export function useCompleteDashboardMetrics() {
 
       // ========================================
       // OPTIMISATION: Toutes les requêtes en parallèle
-      // 10 requêtes séquentielles → 7 requêtes parallèles
+      // RPC + 7 requêtes parallèles (au lieu de séquentielles)
       // ========================================
-      // Appel RPC pour les alertes stock (source de vérité)
-      const { data: stockAlertsCount } = await supabase.rpc(
-        'get_stock_alerts_count'
-      );
-      setStockAlertsFromRPC(stockAlertsCount || 0);
-
       const [
+        { data: stockAlertsCount },
         { data: monthOrders },
         { data: allInvoices }, // Fusionnée: récupère mois + mois précédent
         { data: products },
@@ -212,6 +207,9 @@ export function useCompleteDashboardMetrics() {
         { data: affiliates },
         { data: selections },
       ] = await Promise.all([
+        // 0. Appel RPC pour les alertes stock (source de vérité) - INCLUS dans Promise.all
+        supabase.rpc('get_stock_alerts_count'),
+
         // 1. Commandes du mois (pour stats de statut)
         supabase
           .from('sales_orders')
@@ -255,6 +253,8 @@ export function useCompleteDashboardMetrics() {
           .select('id')
           .gte('created_at', startOfMonth.toISOString()),
       ]);
+
+      setStockAlertsFromRPC(stockAlertsCount || 0);
 
       // ========================================
       // Filtrage client-side des factures (rapide)

@@ -19,12 +19,16 @@ import {
   DropdownMenuTrigger,
   Skeleton,
 } from '@verone/ui';
-import { MoreVertical, RefreshCw, Maximize2 } from 'lucide-react';
+import { MoreVertical, RefreshCw, Maximize2, type LucideIcon } from 'lucide-react';
 
-import type { ChartDefinition } from '../../lib/chart-catalog';
+interface ChartConfig {
+  label: string;
+  description: string;
+  icon: LucideIcon;
+}
 
 export interface ChartCardProps {
-  chart: ChartDefinition;
+  chart: ChartConfig;
   isLoading?: boolean;
   error?: string | null;
   onRefresh?: () => void;

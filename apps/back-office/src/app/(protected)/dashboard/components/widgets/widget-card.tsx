@@ -21,12 +21,15 @@ import {
   DropdownMenuTrigger,
   Skeleton,
 } from '@verone/ui';
-import { ExternalLink, MoreVertical, RefreshCw } from 'lucide-react';
+import { ExternalLink, MoreVertical, RefreshCw, type LucideIcon } from 'lucide-react';
 
-import type { WidgetDefinition } from '../../lib/widget-catalog';
+interface WidgetConfig {
+  label: string;
+  icon: LucideIcon;
+}
 
 export interface WidgetCardProps {
-  widget: WidgetDefinition;
+  widget: WidgetConfig;
   isLoading?: boolean;
   error?: string | null;
   onRefresh?: () => void;

@@ -11,9 +11,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import { Activity } from 'lucide-react';
 
-import { WIDGET_CATALOG } from '../../lib/widget-catalog';
-
-const widget = WIDGET_CATALOG.recent_activity;
+const widget = {
+  label: 'Activité récente',
+  icon: Activity,
+};
 
 interface RecentActivityWidgetProps {
   onRemove?: () => void;

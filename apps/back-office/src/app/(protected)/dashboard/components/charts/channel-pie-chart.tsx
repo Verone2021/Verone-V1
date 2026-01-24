@@ -22,9 +22,7 @@ import {
   Legend,
 } from 'recharts';
 
-import { CHART_CATALOG } from '../../lib/chart-catalog';
-
-const chart = CHART_CATALOG.channel_split;
+const CHART_LABEL = 'Repartition par canal';
 
 interface ChannelPieChartProps {
   onRemove?: () => void;
@@ -104,7 +102,7 @@ export function ChannelPieChart({ onRemove }: ChannelPieChartProps) {
             <div className="p-1.5 rounded-md bg-muted">
               <PieChart className="h-4 w-4 text-muted-foreground" />
             </div>
-            <CardTitle className="text-sm font-medium">{chart.label}</CardTitle>
+            <CardTitle className="text-sm font-medium">{CHART_LABEL}</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="flex-1 pt-0">
@@ -124,7 +122,7 @@ export function ChannelPieChart({ onRemove }: ChannelPieChartProps) {
             <div className="p-1.5 rounded-md bg-muted">
               <PieChart className="h-4 w-4 text-muted-foreground" />
             </div>
-            <CardTitle className="text-sm font-medium">{chart.label}</CardTitle>
+            <CardTitle className="text-sm font-medium">{CHART_LABEL}</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="flex-1 pt-0">
@@ -146,7 +144,7 @@ export function ChannelPieChart({ onRemove }: ChannelPieChartProps) {
           <div className="p-1.5 rounded-md bg-muted">
             <PieChart className="h-4 w-4 text-muted-foreground" />
           </div>
-          <CardTitle className="text-sm font-medium">{chart.label}</CardTitle>
+          <CardTitle className="text-sm font-medium">{CHART_LABEL}</CardTitle>
         </div>
       </CardHeader>
 

@@ -1,10 +1,14 @@
-const { withSentryConfig } = require('@sentry/nextjs');
 const { getSecurityHeaders } = require('./src/lib/security/headers.ts');
+
+// ✅ Dev vs Build detection (2026-01-23)
+// - Development: Uses Turbopack (next dev --turbo) → webpack config ignored
+// - Production build: Uses Webpack (next build) → webpack config needed
+// This prevents the warning "Webpack is configured while Turbopack is not"
+const isDev = process.env.NODE_ENV === 'development';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Next.js 15 App Router configuration
-  // Sentry Pro 2026 configured - requires deployment (2026-01-15)
   reactStrictMode: true,
 
   // WORKAROUND (2025-10-17): Désactiver export statique pour résoudre Html import error
@@ -139,95 +143,75 @@ const nextConfig = {
     NEXT_HIDE_MIDDLEWARE_MESSAGE: '1',
   },
 
-  // Webpack optimizations for large files performance
-  webpack: (config, { isServer, dev }) => {
-    // ✅ FIX: Supprimer warnings Supabase Edge Runtime (ZERO WARNING policy)
-    config.ignoreWarnings = [
-      // Warnings Supabase realtime-js et supabase-js avec process.versions/process.version en Edge Runtime
-      /A Node\.js API is used \(process\.(versions?|version) at line: \d+\) which is not supported in the Edge Runtime/,
-      // Warning serialization big strings (déjà géré avec memory cache mais on filtre le message)
-      /Serializing big strings \(\d+kiB\) impacts deserialization performance/,
-      // Sentry OpenTelemetry dynamic require (faux positif documenté)
-      { module: /require-in-the-middle/ },
-    ];
+  // ✅ Webpack config: Only included for production build (2026-01-23)
+  // In dev, Turbopack is used and ignores webpack config
+  // In build, Webpack is used and needs this config for optimizations
+  // This prevents warning: "Webpack is configured while Turbopack is not"
+  ...(isDev
+    ? {}
+    : {
+        webpack: (config, { isServer, dev }) => {
+          // ✅ FIX: Supprimer warnings Supabase Edge Runtime (ZERO WARNING policy)
+          config.ignoreWarnings = [
+            // Warnings Supabase realtime-js et supabase-js avec process.versions/process.version en Edge Runtime
+            /A Node\.js API is used \(process\.(versions?|version) at line: \d+\) which is not supported in the Edge Runtime/,
+            // Warning serialization big strings (déjà géré avec memory cache mais on filtre le message)
+            /Serializing big strings \(\d+kiB\) impacts deserialization performance/,
+          ];
 
-    // Optimize performance for large files (like use-manual-tests.ts)
-    if (!dev) {
-      // ✅ FIX: Utiliser memory cache en production aussi pour éviter warning "Serializing big strings"
-      config.cache = Object.freeze({
-        type: 'memory',
-      });
+          // Optimize performance for large files (like use-manual-tests.ts)
+          if (!dev) {
+            // ✅ FIX: Utiliser memory cache en production aussi pour éviter warning "Serializing big strings"
+            config.cache = Object.freeze({
+              type: 'memory',
+            });
 
-      config.optimization.splitChunks = {
-        ...config.optimization.splitChunks,
-        chunks: 'all',
-        maxSize: 200000, // ✅ FIX: Augmenter maxSize pour éviter big strings warnings
-        cacheGroups: {
-          ...config.optimization.splitChunks.cacheGroups,
-          // Separate large hooks/utils into their own chunks
-          largeHooks: {
-            name: 'large-hooks',
-            chunks: 'all',
-            test: /use-manual-tests|use-.*-optimized|.*-history/,
-            priority: 30,
-            minSize: 100000, // 100KB minimum
-          },
-          // Separate business components
-          businessComponents: {
-            name: 'business-components',
-            chunks: 'all',
-            test: /business\/.*\.tsx?$/,
-            priority: 25,
-            minSize: 50000, // 50KB minimum
-          },
+            config.optimization.splitChunks = {
+              ...config.optimization.splitChunks,
+              chunks: 'all',
+              maxSize: 200000, // ✅ FIX: Augmenter maxSize pour éviter big strings warnings
+              cacheGroups: {
+                ...config.optimization.splitChunks.cacheGroups,
+                // Separate large hooks/utils into their own chunks
+                largeHooks: {
+                  name: 'large-hooks',
+                  chunks: 'all',
+                  test: /use-manual-tests|use-.*-optimized|.*-history/,
+                  priority: 30,
+                  minSize: 100000, // 100KB minimum
+                },
+                // Separate business components
+                businessComponents: {
+                  name: 'business-components',
+                  chunks: 'all',
+                  test: /business\/.*\.tsx?$/,
+                  priority: 25,
+                  minSize: 50000, // 50KB minimum
+                },
+              },
+            };
+          }
+
+          // Development optimizations to eliminate webpack cache warnings
+          if (dev) {
+            // SOLUTION OFFICIELLE Next.js: Utiliser memory cache en dev pour éliminer warnings
+            // Source: https://nextjs.org/docs/app/guides/memory-usage
+            config.cache = Object.freeze({
+              type: 'memory',
+            });
+
+            // Optimize module resolution for large files
+            config.optimization.splitChunks = {
+              ...config.optimization.splitChunks,
+              chunks: 'all',
+              minSize: 20000,
+              maxSize: 244000, // Reduce max size to avoid large string warnings
+            };
+          }
+
+          return config;
         },
-      };
-    }
-
-    // Development optimizations to eliminate webpack cache warnings
-    if (dev) {
-      // SOLUTION OFFICIELLE Next.js: Utiliser memory cache en dev pour éliminer warnings
-      // Source: https://nextjs.org/docs/app/guides/memory-usage
-      config.cache = Object.freeze({
-        type: 'memory',
-      });
-
-      // Optimize module resolution for large files
-      config.optimization.splitChunks = {
-        ...config.optimization.splitChunks,
-        chunks: 'all',
-        minSize: 20000,
-        maxSize: 244000, // Reduce max size to avoid large string warnings
-      };
-    }
-
-    return config;
-  },
+      }),
 };
 
-// Sentry configuration
-const sentryWebpackPluginOptions = {
-  // Organisation et projet Sentry
-  org: 'verone-4q',
-  project: 'javascript-nextjs',
-
-  // Silence sourcemap upload logs
-  silent: !process.env.CI,
-
-  // Upload sourcemaps mais les supprimer du bundle client
-  hideSourceMaps: true,
-
-  // Tunnel pour contourner ad-blockers
-  tunnelRoute: '/monitoring',
-
-  // ✅ FIXED: Migrate automaticVercelMonitors to webpack config (Sentry v8+ requirement)
-  webpack: {
-    automaticVercelMonitors: true,
-  },
-
-  // Desactiver telemetrie Sentry
-  telemetry: false,
-};
-
-// Sentry réactivé 2026-01-21 après migration routes Edge → Node.js
-module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);
+module.exports = nextConfig;

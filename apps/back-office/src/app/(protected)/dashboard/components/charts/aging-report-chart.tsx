@@ -24,9 +24,7 @@ import {
   Cell,
 } from 'recharts';
 
-import { CHART_CATALOG } from '../../lib/chart-catalog';
-
-const chart = CHART_CATALOG.aging_report;
+const CHART_LABEL = 'Vieillissement stock';
 
 interface AgingReportChartProps {
   onRemove?: () => void;
@@ -101,7 +99,7 @@ export function AgingReportChart({ onRemove }: AgingReportChartProps) {
             <div className="p-1.5 rounded-md bg-muted">
               <Clock className="h-4 w-4 text-muted-foreground" />
             </div>
-            <CardTitle className="text-sm font-medium">{chart.label}</CardTitle>
+            <CardTitle className="text-sm font-medium">{CHART_LABEL}</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="flex-1 pt-0">
@@ -121,7 +119,7 @@ export function AgingReportChart({ onRemove }: AgingReportChartProps) {
             <div className="p-1.5 rounded-md bg-muted">
               <Clock className="h-4 w-4 text-muted-foreground" />
             </div>
-            <CardTitle className="text-sm font-medium">{chart.label}</CardTitle>
+            <CardTitle className="text-sm font-medium">{CHART_LABEL}</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="flex-1 pt-0">
@@ -150,7 +148,7 @@ export function AgingReportChart({ onRemove }: AgingReportChartProps) {
           <div className="p-1.5 rounded-md bg-muted">
             <Clock className="h-4 w-4 text-muted-foreground" />
           </div>
-          <CardTitle className="text-sm font-medium">{chart.label}</CardTitle>
+          <CardTitle className="text-sm font-medium">{CHART_LABEL}</CardTitle>
         </div>
         <div className="text-xs text-muted-foreground">
           Moy. {report.summary.average_age_days}j

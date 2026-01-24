@@ -1,55 +1,69 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useCompleteDashboardMetrics } from '@verone/dashboard';
 import { cn } from '@verone/ui';
 import { Button } from '@verone/ui';
-import { Settings, RotateCcw, AlertCircle, AlertTriangle } from 'lucide-react';
+import { RotateCcw, AlertCircle, Loader2 } from 'lucide-react';
 
-import { RevenueChart, TreasuryChart } from './charts';
 import { DashboardTabs, type DashboardTab } from './dashboard-tabs';
 import { KPIGrid } from './kpi-grid';
-import { KPISelectorModal } from './kpi-selector-modal';
-import {
-  RecentOrdersWidget,
-  StockAlertsWidget,
-  StockMovementsWidget,
-} from './widgets';
-import { useDashboardPreferences } from '../hooks/use-dashboard-preferences';
-import type { KPIPeriod } from '../lib/kpi-catalog';
+
+// OPTIMISATION: Lazy loading des widgets et graphiques
+// Réduit le bundle initial et charge les composants uniquement quand nécessaires
+const RevenueChart = lazy(() =>
+  import('./charts').then(mod => ({ default: mod.RevenueChart }))
+);
+const TreasuryChart = lazy(() =>
+  import('./charts').then(mod => ({ default: mod.TreasuryChart }))
+);
+const RecentOrdersWidget = lazy(() =>
+  import('./widgets').then(mod => ({ default: mod.RecentOrdersWidget }))
+);
+const StockAlertsWidget = lazy(() =>
+  import('./widgets').then(mod => ({ default: mod.StockAlertsWidget }))
+);
+const StockMovementsWidget = lazy(() =>
+  import('./widgets').then(mod => ({ default: mod.StockMovementsWidget }))
+);
+
+// Skeleton loader pour les composants lazy
+function ChartSkeleton(): React.ReactElement {
+  return (
+    <div className="bg-white rounded-lg border border-slate-200 p-4 h-[300px] flex items-center justify-center">
+      <div className="text-center">
+        <Loader2 className="h-8 w-8 animate-spin text-slate-400 mx-auto mb-2" />
+        <p className="text-sm text-slate-500">Chargement du graphique...</p>
+      </div>
+    </div>
+  );
+}
+
+function WidgetSkeleton(): React.ReactElement {
+  return (
+    <div className="bg-white rounded-lg border border-slate-200 p-4 h-[300px] flex items-center justify-center">
+      <div className="text-center">
+        <Loader2 className="h-6 w-6 animate-spin text-slate-400 mx-auto mb-2" />
+        <p className="text-sm text-slate-500">Chargement...</p>
+      </div>
+    </div>
+  );
+}
 
 export function ConfigurableDashboard(): React.ReactElement {
-  // Query client pour rafraîchissement global
   const queryClient = useQueryClient();
 
-  // État local
   const [activeTab, setActiveTab] = useState<DashboardTab>('apercu');
-  const [isConfigMode, setIsConfigMode] = useState(false);
-  const [isKpiModalOpen, setIsKpiModalOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Hook métriques
   const {
     metrics,
-    isLoading: metricsLoading,
+    isLoading,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     error: metricsError,
   } = useCompleteDashboardMetrics();
-
-  // Hook préférences dashboard
-  const {
-    widgets,
-    isLoading: prefsLoading,
-    updateWidgetPeriod,
-    removeWidget,
-    addWidget,
-    resetToDefaults,
-  } = useDashboardPreferences(activeTab);
-
-  // États de chargement combinés
-  const isLoading = metricsLoading || prefsLoading;
 
   // Gestion des erreurs
   if (metricsError) {
@@ -81,30 +95,6 @@ export function ConfigurableDashboard(): React.ReactElement {
     );
   }
 
-  // Handlers
-  const handlePeriodChange = (kpiId: string, period: KPIPeriod): void => {
-    void updateWidgetPeriod(kpiId, period);
-  };
-
-  const handleRemoveWidget = (kpiId: string): void => {
-    void removeWidget(kpiId);
-  };
-
-  const handleAddWidget = (): void => {
-    if (widgets.length < 6) {
-      setIsKpiModalOpen(true);
-    }
-  };
-
-  const handleSelectKpi = (kpiId: string): void => {
-    void addWidget(kpiId);
-  };
-
-  const handleResetToDefaults = (): void => {
-    void resetToDefaults();
-    setIsConfigMode(false);
-  };
-
   // Rafraîchir toutes les données du dashboard
   const handleRefreshAll = async (): Promise<void> => {
     setIsRefreshing(true);
@@ -122,7 +112,6 @@ export function ConfigurableDashboard(): React.ReactElement {
 
             {/* Actions */}
             <div className="flex items-center gap-2">
-              {/* Bouton Actualiser tout (toujours visible) */}
               <Button
                 variant="outline"
                 size="sm"
@@ -135,28 +124,6 @@ export function ConfigurableDashboard(): React.ReactElement {
                 />
                 Actualiser
               </Button>
-
-              {isConfigMode && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleResetToDefaults}
-                  className="text-slate-600"
-                >
-                  <RotateCcw className="h-4 w-4 mr-2" />
-                  Réinitialiser
-                </Button>
-              )}
-
-              <Button
-                variant={isConfigMode ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setIsConfigMode(!isConfigMode)}
-                className={cn(isConfigMode && 'bg-blue-600 hover:bg-blue-700')}
-              >
-                <Settings className="h-4 w-4 mr-2" />
-                {isConfigMode ? 'Terminer' : 'Configurer'}
-              </Button>
             </div>
           </div>
 
@@ -167,96 +134,56 @@ export function ConfigurableDashboard(): React.ReactElement {
 
       {/* Contenu principal */}
       <div className="p-6 space-y-6">
-        {/* Message mode configuration */}
-        {isConfigMode && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
-            <Settings className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium text-blue-900">
-                Mode configuration actif
-              </p>
-              <p className="text-sm text-blue-700">
-                Utilisez le menu (⋮) de chaque carte pour modifier la période ou
-                retirer le KPI. Cliquez sur &quot;Terminer&quot; pour
-                sauvegarder.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Message si maximum atteint (en mode config) */}
-        {isConfigMode && widgets.length >= 6 && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium text-amber-900">
-                Maximum de 6 KPIs atteint
-              </p>
-              <p className="text-sm text-amber-700">
-                Retirez un KPI existant pour pouvoir en ajouter un autre.
-              </p>
-            </div>
-          </div>
-        )}
-
         {/* Grille KPIs */}
         <section>
-          <h2 className="text-sm font-semibold text-slate-700 mb-3">
-            KPIs{' '}
-            <span className="text-slate-400 font-normal">
-              ({widgets.length}/6)
-            </span>
-          </h2>
+          <h2 className="text-sm font-semibold text-slate-700 mb-3">KPIs</h2>
           <KPIGrid
-            widgets={widgets}
+            activeTab={activeTab}
             metrics={metrics as unknown as Record<string, unknown>}
-            isConfigMode={isConfigMode}
-            onPeriodChange={handlePeriodChange}
-            onRemoveWidget={handleRemoveWidget}
-            onAddWidget={isConfigMode ? handleAddWidget : undefined}
           />
         </section>
 
-        {/* Graphiques */}
+        {/* Graphiques - OPTIMISATION: Lazy loading avec Suspense */}
         <section>
           <h2 className="text-sm font-semibold text-slate-700 mb-3">
             Graphiques
           </h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="min-h-[300px]">
-              <RevenueChart />
+              <Suspense fallback={<ChartSkeleton />}>
+                <RevenueChart />
+              </Suspense>
             </div>
             <div className="min-h-[300px]">
-              <TreasuryChart />
+              <Suspense fallback={<ChartSkeleton />}>
+                <TreasuryChart />
+              </Suspense>
             </div>
           </div>
         </section>
 
-        {/* Widgets */}
+        {/* Widgets - OPTIMISATION: Lazy loading avec Suspense */}
         <section>
           <h2 className="text-sm font-semibold text-slate-700 mb-3">Widgets</h2>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="min-h-[300px]">
-              <RecentOrdersWidget />
+              <Suspense fallback={<WidgetSkeleton />}>
+                <RecentOrdersWidget />
+              </Suspense>
             </div>
             <div className="min-h-[300px]">
-              <StockAlertsWidget />
+              <Suspense fallback={<WidgetSkeleton />}>
+                <StockAlertsWidget />
+              </Suspense>
             </div>
             <div className="min-h-[300px]">
-              <StockMovementsWidget />
+              <Suspense fallback={<WidgetSkeleton />}>
+                <StockMovementsWidget />
+              </Suspense>
             </div>
           </div>
         </section>
       </div>
-
-      {/* Modal sélection KPI */}
-      <KPISelectorModal
-        open={isKpiModalOpen}
-        onOpenChange={setIsKpiModalOpen}
-        currentTab={activeTab}
-        existingKpiIds={widgets.map(w => w.kpi_id)}
-        onAddKpi={handleSelectKpi}
-      />
     </div>
   );
 }

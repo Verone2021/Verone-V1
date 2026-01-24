@@ -2,11 +2,9 @@
 
 /**
  * Global Error Handler - LinkMe
- * Capture les erreurs non-catchees et les envoie a Sentry
+ * Capture les erreurs non-catchees et les log
  */
 import { useEffect } from 'react';
-
-import * as Sentry from '@sentry/nextjs';
 
 export default function GlobalError({
   error,
@@ -16,9 +14,6 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Envoyer l'erreur a Sentry
-    Sentry.captureException(error);
-
     // Console log for debugging
     console.error('Global Error:', error);
   }, [error]);
@@ -47,8 +42,7 @@ export default function GlobalError({
               Une erreur est survenue
             </h1>
             <p className="text-gray-600 mb-6">
-              Notre equipe a ete notifiee automatiquement. Veuillez reessayer ou
-              contacter le support si le probleme persiste.
+              Veuillez reessayer ou contacter le support si le probleme persiste.
             </p>
             {error.digest && (
               <p className="text-sm text-gray-400 mb-4">

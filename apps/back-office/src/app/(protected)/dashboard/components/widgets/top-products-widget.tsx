@@ -11,9 +11,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import { TrendingUp } from 'lucide-react';
 
-import { WIDGET_CATALOG } from '../../lib/widget-catalog';
-
-const widget = WIDGET_CATALOG.top_products;
+const widget = {
+  label: 'Top produits',
+  icon: TrendingUp,
+};
 
 interface TopProductsWidgetProps {
   onRemove?: () => void;
