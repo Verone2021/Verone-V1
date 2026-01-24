@@ -39,19 +39,19 @@ import {
 
 import { CommissionKPICard } from '../../../components/dashboard';
 import { useAuth } from '../../../contexts/AuthContext';
-import { useAffiliateAnalytics } from '../../../lib/hooks/use-affiliate-analytics';
-import { useUserAffiliate } from '../../../lib/hooks/use-user-selection';
+import { useAffiliateDashboard } from '../../../lib/hooks/use-affiliate-dashboard';
 
 export default function DashboardPage(): JSX.Element | null {
   const router = useRouter();
   const { user, linkMeRole, loading, initializing } = useAuth();
 
-  // Affiliate ID pour les requêtes
-  const { data: _affiliate, isLoading: affiliateLoading } = useUserAffiliate();
-
-  // Analytics pour commissions + top produits (all-time via commissionsByStatus)
-  const { data: analytics, isLoading: analyticsLoading } =
-    useAffiliateAnalytics('all');
+  // Dashboard data (RPC optimisé - 1 requête au lieu de 6+)
+  const {
+    data,
+    isLoading: dashboardLoading,
+    affiliateLoading,
+    affiliate,
+  } = useAffiliateDashboard();
 
   // Rediriger si non connecté
   useEffect(() => {
@@ -74,6 +74,38 @@ export default function DashboardPage(): JSX.Element | null {
     return null;
   }
 
+  // FIX: Afficher loader pendant chargement affiliate
+  if (affiliateLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50/50">
+        <Loader2 className="h-8 w-8 animate-spin text-[#5DBEBB]" />
+        <p className="mt-4 text-sm text-gray-500">Chargement du profil...</p>
+      </div>
+    );
+  }
+
+  // FIX: Gestion explicite du cas affiliate null (bug critique)
+  if (!affiliate) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50/50">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Package className="h-8 w-8 text-red-400" />
+          </div>
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">
+            Compte affilié non trouvé
+          </h1>
+          <p className="text-gray-600">
+            Votre compte n&apos;est pas configuré comme affilié LinkMe.
+          </p>
+          <p className="text-sm text-gray-400 mt-4">
+            Contactez votre administrateur si le problème persiste.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Obtenir le prénom
   const firstName: string =
     (user.user_metadata?.first_name as string | undefined) ??
@@ -82,13 +114,13 @@ export default function DashboardPage(): JSX.Element | null {
     'vous';
 
   // Loading state combiné
-  const isLoading = affiliateLoading || analyticsLoading;
+  const isLoading = affiliateLoading || dashboardLoading;
 
   // Données des commissions par statut
-  const commissionsByStatus = analytics?.commissionsByStatus;
+  const commissionsByStatus = data?.commissionsByStatus;
 
   // Séparer les top produits: Catalogue (marge gagnée) vs Revendeur (encaissement)
-  const allTopProducts = analytics?.topProducts ?? [];
+  const allTopProducts = data?.topProducts ?? [];
   const topProductsCatalogue = allTopProducts
     .filter(p => !p.isRevendeur)
     .slice(0, 5);
