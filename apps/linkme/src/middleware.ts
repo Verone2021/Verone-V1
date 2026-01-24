@@ -90,12 +90,26 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Route publique → vérifier si l'utilisateur est connecté
+  // Route publique → vérifier si l'utilisateur est connecté ET a un rôle LinkMe
   if (isPublicRoute(pathname)) {
-    // Si connecté sur une page marketing → rediriger vers dashboard
-    // Les pages marketing ne sont accessibles qu'aux visiteurs non connectés
+    // Si connecté sur une page marketing → vérifier le rôle LinkMe avant de rediriger
+    // IMPORTANT: Ne pas rediriger si l'utilisateur n'a pas de rôle LinkMe
+    // (cas où l'utilisateur est connecté au back-office mais pas à LinkMe)
     if (user && PUBLIC_PAGES.includes(pathname)) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+      // Vérifier si l'utilisateur a un rôle LinkMe actif
+      const { data: linkmeRole } = await supabase
+        .from('user_app_roles')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('app', 'linkme')
+        .eq('is_active', true)
+        .maybeSingle();
+
+      // Rediriger vers dashboard SEULEMENT si rôle LinkMe actif
+      if (linkmeRole) {
+        return NextResponse.redirect(new URL('/dashboard', request.url));
+      }
+      // Sinon: laisser sur la page publique (login) pour se connecter avec un autre compte
     }
 
     return response;

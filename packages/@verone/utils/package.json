@@ -96,6 +96,16 @@
       "types": "./src/business-rules/naming-rules.ts",
       "import": "./src/business-rules/naming-rules.ts",
       "require": "./src/business-rules/naming-rules.ts"
+    },
+    "./security": {
+      "types": "./src/security/index.ts",
+      "import": "./src/security/index.ts",
+      "require": "./src/security/index.ts"
+    },
+    "./hooks": {
+      "types": "./src/hooks/index.ts",
+      "import": "./src/hooks/index.ts",
+      "require": "./src/hooks/index.ts"
     }
   }
 }

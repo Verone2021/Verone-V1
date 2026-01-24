@@ -6,6 +6,11 @@
     "tsconfig.json",
     "turbo.json"
   ],
+  "globalPassThroughEnv": [
+    "TURBO_TOKEN",
+    "TURBO_TEAM",
+    "VERCEL_URL"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
@@ -26,11 +31,13 @@
     },
     "lint": {
       "dependsOn": ["^build"],
-      "outputs": []
+      "outputs": [],
+      "inputs": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", ".eslintrc*", "eslint.config.*"]
     },
     "type-check": {
       "dependsOn": ["^build"],
-      "outputs": []
+      "outputs": [],
+      "inputs": ["**/*.ts", "**/*.tsx", "tsconfig.json", "tsconfig.*.json"]
     },
     "format": {
       "outputs": []
