@@ -179,7 +179,8 @@ export function useUserAffiliate() {
       };
     },
     enabled: !!user && !!linkMeRole,
-    staleTime: 60000,
+    // PERF: Increased cache time from 60s to 5min (affiliate data rarely changes)
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
 
@@ -227,7 +228,8 @@ export function useUserSelections() {
       }));
     },
     enabled: !!affiliate,
-    staleTime: 30000,
+    // PERF: Increased cache time from 30s to 2min
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 
@@ -311,7 +313,8 @@ export function useSelectionItems(selectionId: string | null) {
       }));
     },
     enabled: !!selectionId,
-    staleTime: 30000,
+    // PERF: Increased cache time from 30s to 2min
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 
@@ -755,7 +758,8 @@ export function useSelectionProductIds(selectionId: string | null) {
       );
     },
     enabled: !!selectionId,
-    staleTime: 30000,
+    // PERF: Increased cache time from 30s to 2min
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 

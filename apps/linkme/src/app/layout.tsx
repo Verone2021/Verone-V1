@@ -104,6 +104,16 @@ export default function RootLayout({
 }): React.ReactElement {
   return (
     <html lang="fr">
+      <head>
+        <link
+          rel="preconnect"
+          href="https://aorroydfjsrygmosnzrl.supabase.co"
+        />
+        <link
+          rel="dns-prefetch"
+          href="https://aorroydfjsrygmosnzrl.supabase.co"
+        />
+      </head>
       <body className="min-h-screen bg-gray-50/50">{children}</body>
     </html>
   );
