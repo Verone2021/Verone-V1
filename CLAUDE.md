@@ -5,11 +5,36 @@ CRM/ERP modulaire pour décoration et mobilier d'intérieur haut de gamme.
 ## Commandes
 
 ```bash
-npm run dev          # Dev (localhost:3000)
-npm run build        # Production build
-npm run type-check   # TypeScript validation
-npm run e2e:smoke    # Smoke tests UI
+pnpm dev             # Dev (UTILISATEUR UNIQUEMENT - voir section interdictions)
+pnpm build           # Production build
+pnpm type-check      # TypeScript validation
+pnpm e2e:smoke       # Smoke tests UI
 ```
+
+---
+
+## 🚫 Actions Interdites pour Claude
+
+**Claude ne doit JAMAIS exécuter ces commandes :**
+
+```bash
+# ❌ INTERDIT - Lancement serveurs de développement
+pnpm dev
+pnpm --filter <app> dev
+npm run dev
+next dev
+
+# ❌ INTERDIT - Sans validation explicite de l'utilisateur
+gh pr create         # Demander d'abord
+gh pr merge          # Demander d'abord
+git push --force     # Demander d'abord
+```
+
+**Pourquoi ?** Le lancement de serveurs par Claude occupe les ports et empêche l'utilisateur de lancer ses propres serveurs.
+
+**Règle simple** : *"Claude développe, teste, build, commit. L'utilisateur lance les serveurs."*
+
+**Documentation complète** : Voir `.claude/MANUAL_MODE.md`
 
 ---
 
@@ -273,4 +298,4 @@ cat .tasks/INDEX.md
 
 ---
 
-**Version**: 9.0.0 (Refonte Workflow Professionnel 2026-01-17)
+**Version**: 9.1.0 (Ajout section Interdictions Claude 2026-01-24)

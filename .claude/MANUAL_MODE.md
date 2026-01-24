@@ -17,7 +17,7 @@ Claude peut faire SANS demander :
 - Planifier implémentations (EnterPlanMode)
 - Écrire/modifier code (Edit, Write)
 - Créer tests (Playwright, Jest)
-- Vérifier qualité (type-check, build, lint)
+- Vérifier qualité (`pnpm type-check`, `pnpm build`, `pnpm lint`)
 - Créer commits locaux (format convention)
 - Pousser sur feature branch (`git push origin feature-branch`)
 
@@ -26,6 +26,25 @@ Claude peut faire SANS demander :
 - Proposer solutions
 - Rechercher documentation (WebSearch, WebFetch)
 - Vérifier production (curl, logs Vercel)
+
+## 🚫 Actions INTERDITES (Claude ne doit JAMAIS faire)
+
+### Serveurs de Développement
+Claude ne doit **JAMAIS** lancer de serveurs de développement :
+
+```bash
+# ❌ INTERDIT - Occupe les ports et bloque l'utilisateur
+pnpm dev
+pnpm --filter <app> dev
+npm run dev
+next dev
+```
+
+**Pourquoi ?** Le lancement de serveurs par Claude occupe les ports (3000, 3001, 3002) et empêche l'utilisateur de lancer ses propres serveurs, causant des erreurs `EADDRINUSE`.
+
+**Règle** : *"Claude développe, teste, build, commit. L'utilisateur lance les serveurs."*
+
+---
 
 ## 🤝 Actions Nécessitant Validation Humaine
 
@@ -145,6 +164,7 @@ on:
 
 ---
 
-**Version** : 1.0.0
-**Date** : 2026-01-19
+**Version** : 1.1.0
+**Date** : 2026-01-24
 **Auteur** : Romeo + Claude
+**Changement** : Ajout section "Actions INTERDITES" (serveurs de dev)
