@@ -94,7 +94,7 @@ export const ORDER_STEPS: OrderStep[] = [
   },
   {
     id: 7,
-    label: 'Adresse et Options',
+    label: 'Adresse de contact de livraison',
     shortLabel: 'Livraison',
     icon: MapPin,
     description: 'Contact livraison, adresse et options',

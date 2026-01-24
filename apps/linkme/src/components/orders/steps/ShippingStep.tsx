@@ -59,6 +59,7 @@ import {
 import { useOrganisationContacts } from '@/lib/hooks/use-organisation-contacts';
 import { useEnseigneId } from '@/lib/hooks/use-enseigne-id';
 import { useEntityAddresses, type Address } from '@/lib/hooks/use-entity-addresses';
+import { useParentOrganisationAddresses } from '@/lib/hooks/use-parent-organisation-addresses';
 
 import type {
   OrderFormData,
@@ -152,66 +153,6 @@ function ContactForm({ contact, onChange }: ContactFormProps) {
   );
 }
 
-// ============================================================================
-// SUB-COMPONENT: Responsable Card (Meme que responsable - FRANCHISE only)
-// ============================================================================
-
-interface ResponsableCardProps {
-  onClick: () => void;
-  isActive: boolean;
-  responsable: ContactBase;
-}
-
-function ResponsableCard({ onClick, isActive, responsable }: ResponsableCardProps) {
-  return (
-    <Card
-      className={cn(
-        'p-3 cursor-pointer transition-all hover:shadow-md',
-        isActive
-          ? 'border-2 border-green-500 bg-green-50/50'
-          : 'hover:border-green-300'
-      )}
-      onClick={onClick}
-    >
-      <div className="flex items-start gap-2.5">
-        <div
-          className={cn(
-            'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
-            isActive ? 'bg-green-100' : 'bg-gray-100'
-          )}
-        >
-          <User
-            className={cn('h-4 w-4', isActive ? 'text-green-600' : 'text-gray-500')}
-          />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <h3 className="font-semibold text-gray-900 text-sm leading-tight">
-              Meme que responsable
-            </h3>
-            <Badge variant="outline" size="sm" className="text-green-600 border-green-300 bg-green-50 flex-shrink-0">
-              Responsable
-            </Badge>
-            {isActive && (
-              <Check className="h-4 w-4 text-green-500 flex-shrink-0 ml-auto" />
-            )}
-          </div>
-          <p className="text-xs font-medium text-gray-700 mt-0.5 truncate">
-            {responsable.firstName} {responsable.lastName}
-          </p>
-          <p className="text-xs text-gray-500 truncate">
-            {responsable.email}
-          </p>
-          {responsable.phone && (
-            <p className="text-xs text-gray-400 truncate">
-              {responsable.phone}
-            </p>
-          )}
-        </div>
-      </div>
-    </Card>
-  );
-}
 
 // ============================================================================
 // SUB-COMPONENT: Create New Card
@@ -251,75 +192,6 @@ function CreateNewCard({ onClick, isActive, label = 'Nouveau contact livraison' 
   );
 }
 
-// ============================================================================
-// SUB-COMPONENT: Restaurant Address Card (for shipping)
-// ============================================================================
-
-interface RestaurantShippingCardProps {
-  onClick: () => void;
-  isActive: boolean;
-  restaurantName: string | null;
-  addressLine1?: string | null;
-  postalCode?: string | null;
-  city?: string | null;
-}
-
-function RestaurantShippingCard({
-  onClick,
-  isActive,
-  restaurantName,
-  addressLine1,
-  postalCode,
-  city,
-}: RestaurantShippingCardProps) {
-  return (
-    <Card
-      className={cn(
-        'p-3 cursor-pointer transition-all',
-        isActive
-          ? 'border-2 border-purple-400 bg-purple-50/30 shadow-md'
-          : 'hover:border-purple-300 hover:bg-purple-50/20 hover:shadow-sm'
-      )}
-      onClick={onClick}
-    >
-      <div className="flex items-start gap-2.5">
-        <div
-          className={cn(
-            'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
-            isActive ? 'bg-purple-100' : 'bg-gray-100'
-          )}
-        >
-          <Building2
-            className={cn('h-4 w-4', isActive ? 'text-purple-600' : 'text-gray-500')}
-          />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <h3 className="font-semibold text-gray-900 text-sm leading-tight truncate">
-              Adresse du restaurant
-            </h3>
-            {isActive && (
-              <Check className="h-4 w-4 text-purple-500 flex-shrink-0 ml-auto" />
-            )}
-          </div>
-          <p className="text-xs font-medium text-gray-700 mt-0.5 truncate">
-            {restaurantName || 'Restaurant'}
-          </p>
-          {addressLine1 && (
-            <p className="text-xs text-gray-500 truncate">
-              {addressLine1}
-            </p>
-          )}
-          {(postalCode || city) && (
-            <p className="text-xs text-gray-500 truncate">
-              {[postalCode, city].filter(Boolean).join(' ')}
-            </p>
-          )}
-        </div>
-      </div>
-    </Card>
-  );
-}
 
 // ============================================================================
 // MAIN COMPONENT
@@ -372,20 +244,115 @@ export function ShippingStep({
     'shipping'
   );
 
+  // Fetch parent organisation addresses (si non-franchise)
+  const {
+    parentOrg,
+    primaryAddress: parentPrimaryAddress,
+    isLoading: parentLoading
+  } = useParentOrganisationAddresses(!isFranchise ? enseigneId : null);
+
   // Shipping addresses
   const shippingAddresses = addressesData?.shipping || [];
 
-  // Restaurant info
+  // Restaurant info (enrichi avec adresse complète)
   const restaurantInfo = useMemo(() => {
-    if (formData.restaurant.mode !== 'existing' || !formData.restaurant.existingId) {
-      return null;
+    const resto = formData.restaurant;
+    if (resto.mode === 'new' && resto.newRestaurant) {
+      return {
+        id: 'new',
+        tradeName: resto.newRestaurant.tradeName || null,
+        addressLine1: resto.newRestaurant.address || null,
+        postalCode: resto.newRestaurant.postalCode || null,
+        city: resto.newRestaurant.city || null,
+        country: resto.newRestaurant.country || 'FR',
+      };
+    } else if (resto.mode === 'existing' && resto.existingId) {
+      return {
+        id: resto.existingId,
+        tradeName: resto.existingName || null,
+        addressLine1: null, // Non disponible pour restaurant existant
+        postalCode: null,   // Non disponible pour restaurant existant
+        city: resto.existingCity || null,
+        country: resto.existingCountry || 'FR',
+      };
     }
-    return {
-      id: formData.restaurant.existingId,
-      name: formData.restaurant.existingName || null,
-      city: formData.restaurant.existingCity || null,
-    };
+    return null;
   }, [formData.restaurant]);
+
+  // Convertir restaurantInfo en format Address pour réutiliser AddressCard
+  const restaurantAddress: Address | null = useMemo(() => {
+    if (!restaurantInfo) return null;
+
+    // Seulement créer l'objet Address si on a au moins la ville
+    if (!restaurantInfo.city) return null;
+
+    const now = new Date().toISOString();
+
+    return {
+      id: 'restaurant',
+      ownerType: 'organisation' as const,
+      ownerId: organisationId || 'unknown',
+      addressType: 'shipping' as const,
+      sourceApp: 'linkme',
+      label: 'Adresse du restaurant',
+      legalName: null,
+      tradeName: restaurantInfo.tradeName,
+      siret: null,
+      vatNumber: null,
+      addressLine1: restaurantInfo.addressLine1 || '',
+      addressLine2: null,
+      postalCode: restaurantInfo.postalCode || '',
+      city: restaurantInfo.city,
+      region: null,
+      country: restaurantInfo.country,
+      latitude: null,
+      longitude: null,
+      contactName: null,
+      contactEmail: null,
+      contactPhone: null,
+      isDefault: false,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+      archivedAt: null,
+    };
+  }, [restaurantInfo, organisationId]);
+
+  // Convertir parentPrimaryAddress en format Address pour réutiliser AddressCard
+  const parentAddress: Address | null = useMemo(() => {
+    if (!parentPrimaryAddress || !parentOrg) return null;
+
+    const now = new Date().toISOString();
+
+    return {
+      id: 'parent',
+      ownerType: 'organisation' as const,
+      ownerId: parentOrg.id,
+      addressType: 'shipping' as const,
+      sourceApp: 'linkme',
+      label: `Adresse du siège - ${parentOrg.trade_name}`,
+      legalName: parentPrimaryAddress.legalName,
+      tradeName: parentPrimaryAddress.tradeName,
+      siret: parentPrimaryAddress.siret,
+      vatNumber: null,
+      addressLine1: parentPrimaryAddress.addressLine1 || '',
+      addressLine2: null,
+      postalCode: parentPrimaryAddress.postalCode || '',
+      city: parentPrimaryAddress.city || '',
+      region: null,
+      country: 'FR',
+      latitude: null,
+      longitude: null,
+      contactName: null,
+      contactEmail: null,
+      contactPhone: null,
+      isDefault: false,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+      archivedAt: null,
+    };
+  }, [parentPrimaryAddress, parentOrg]);
 
   // Contacts disponibles (locaux uniquement - ceux qui sont SUR PLACE)
   const localContacts = useMemo(() => {
@@ -451,9 +418,6 @@ export function ShippingStep({
   // ========================================
 
   const isContactComplete = useMemo(() => {
-    if (formData.contacts.delivery.sameAsResponsable) {
-      return true;
-    }
     const hasContact =
       formData.contacts.delivery.existingContactId ||
       (formData.contacts.delivery.contact?.firstName &&
@@ -465,7 +429,6 @@ export function ShippingStep({
   // Determine if contact form is in edit mode
   const isContactEditMode = useMemo(() => {
     return (
-      formData.contacts.delivery.sameAsResponsable ||
       formData.contacts.delivery.existingContactId ||
       showContactForm
     );
@@ -508,33 +471,40 @@ export function ShippingStep({
   );
 
   const handleSelectRestaurantAddress = useCallback(() => {
-    // Use restaurant's address from form data
-    const resto = formData.restaurant;
-    if (resto.mode === 'new' && resto.newRestaurant) {
-      const addr = resto.newRestaurant.address || '';
-      const postal = resto.newRestaurant.postalCode || '';
-      const city = resto.newRestaurant.city || '';
+    if (restaurantAddress) {
       setSelectedAddressId('restaurant');
       setShowAddressForm(false);
       setAddressFormData({
-        addressLine1: addr,
-        postalCode: postal,
-        city: city,
-        country: resto.newRestaurant.country || 'FR',
+        addressLine1: restaurantAddress.addressLine1 || '',
+        postalCode: restaurantAddress.postalCode || '',
+        city: restaurantAddress.city || '',
+        country: restaurantAddress.country || 'FR',
       });
       onUpdateDelivery({
-        address: addr,
-        postalCode: postal,
-        city: city,
+        address: restaurantAddress.addressLine1 || '',
+        postalCode: restaurantAddress.postalCode || '',
+        city: restaurantAddress.city || '',
       });
-    } else if (resto.existingCity) {
-      // For existing restaurant, we'll use what's available
-      setSelectedAddressId('restaurant');
-      setShowAddressForm(false);
-      // City is available, but address/postal may not be
-      // The form will need to be filled
     }
-  }, [formData.restaurant, onUpdateDelivery]);
+  }, [restaurantAddress, onUpdateDelivery]);
+
+  const handleSelectParentAddress = useCallback(() => {
+    if (parentPrimaryAddress) {
+      setSelectedAddressId('parent');
+      setShowAddressForm(false);
+      setAddressFormData({
+        addressLine1: parentPrimaryAddress.addressLine1 || '',
+        postalCode: parentPrimaryAddress.postalCode || '',
+        city: parentPrimaryAddress.city || '',
+        country: 'FR',
+      });
+      onUpdateDelivery({
+        address: parentPrimaryAddress.addressLine1 || '',
+        postalCode: parentPrimaryAddress.postalCode || '',
+        city: parentPrimaryAddress.city || '',
+      });
+    }
+  }, [parentPrimaryAddress, onUpdateDelivery]);
 
   const handleCreateNewAddress = useCallback(() => {
     setSelectedAddressId(null);
@@ -568,38 +538,10 @@ export function ShippingStep({
     [formData.contacts.delivery, onUpdate]
   );
 
-  // Pour franchises - Meme que responsable
-  const handleSameAsResponsable = useCallback(() => {
-    const resp = formData.contacts.responsable;
-    handleDeliveryContactUpdate({
-      sameAsResponsable: true,
-      existingContactId: null,
-      contact: {
-        firstName: resp.firstName,
-        lastName: resp.lastName,
-        email: resp.email,
-        phone: resp.phone || '',
-        position: resp.position || '',
-      },
-    });
-    setShowContactForm(false);
-  }, [formData.contacts.responsable, handleDeliveryContactUpdate]);
-
-  // Deselectionner "Meme que responsable"
-  const handleDeselectSameAsResponsable = useCallback(() => {
-    handleDeliveryContactUpdate({
-      sameAsResponsable: false,
-      existingContactId: null,
-      contact: null,
-    });
-    setShowContactForm(false);
-  }, [handleDeliveryContactUpdate]);
-
   // Pour selection d'un contact existant
   const handleContactSelect = useCallback(
     (contact: OrganisationContact) => {
       handleDeliveryContactUpdate({
-        sameAsResponsable: false,
         existingContactId: contact.id,
         contact: {
           firstName: contact.firstName,
@@ -618,7 +560,6 @@ export function ShippingStep({
   const handleCreateNew = useCallback(() => {
     setShowContactForm(true);
     handleDeliveryContactUpdate({
-      sameAsResponsable: false,
       existingContactId: null,
       contact: defaultContact,
     });
@@ -748,13 +689,27 @@ export function ShippingStep({
 
             {!addressesLoading && (
               <div className="space-y-3">
-                {/* Adresse du restaurant */}
-                {restaurantInfo && (
-                  <RestaurantShippingCard
+                {/* Adresse du restaurant - Réutilise AddressCard */}
+                {restaurantAddress && (
+                  <AddressCard
+                    address={restaurantAddress}
+                    isSelected={selectedAddressId === 'restaurant'}
                     onClick={handleSelectRestaurantAddress}
-                    isActive={selectedAddressId === 'restaurant'}
-                    restaurantName={restaurantInfo.name}
-                    city={restaurantInfo.city}
+                    badge={
+                      !restaurantAddress.addressLine1 || !restaurantAddress.postalCode
+                        ? 'Incomplet'
+                        : 'Restaurant'
+                    }
+                  />
+                )}
+
+                {/* Adresse du siège (si succursale) - Réutilise AddressCard */}
+                {parentAddress && !isFranchise && (
+                  <AddressCard
+                    address={parentAddress}
+                    isSelected={selectedAddressId === 'parent'}
+                    onClick={handleSelectParentAddress}
+                    badge="Siège"
                   />
                 )}
 
@@ -814,9 +769,7 @@ export function ShippingStep({
               Contact Livraison / Reception
             </h3>
             <p className="text-sm text-gray-500">
-              {isFranchise
-                ? 'Personne qui receptionnera la livraison (souvent le responsable)'
-                : 'Personne SUR PLACE qui receptionnera la livraison'}
+              Personne SUR PLACE qui receptionnera la livraison
             </p>
           </div>
         </div>
@@ -855,42 +808,8 @@ export function ShippingStep({
               </div>
             )}
 
-            {/* Affichage contact selectionne (sameAsResponsable) */}
-            {formData.contacts.delivery.sameAsResponsable && (
-              <div className="space-y-4">
-                <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <div className="flex items-start gap-2">
-                    <Check className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
-                    <div className="text-sm text-green-700">
-                      <p className="font-medium">
-                        Contact identique au responsable commande
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <Label className="text-xs text-gray-500">Prenom</Label>
-                    <p className="text-sm font-medium">{formData.contacts.responsable.firstName}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-gray-500">Nom</Label>
-                    <p className="text-sm font-medium">{formData.contacts.responsable.lastName}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-gray-500">Email</Label>
-                    <p className="text-sm font-medium">{formData.contacts.responsable.email}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-gray-500">Telephone</Label>
-                    <p className="text-sm font-medium">{formData.contacts.responsable.phone || '-'}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Affichage contact existant selectionne */}
-            {formData.contacts.delivery.existingContactId && !formData.contacts.delivery.sameAsResponsable && (
+            {formData.contacts.delivery.existingContactId && (
               <div className="space-y-4">
                 <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="flex items-start gap-2">
@@ -922,7 +841,7 @@ export function ShippingStep({
             )}
 
             {/* Formulaire nouveau contact */}
-            {showContactForm && !formData.contacts.delivery.sameAsResponsable && !formData.contacts.delivery.existingContactId && (
+            {showContactForm && !formData.contacts.delivery.existingContactId && (
               <div className="space-y-4">
                 <h5 className="text-sm font-medium text-gray-700">
                   Nouveau contact livraison
@@ -950,27 +869,13 @@ export function ShippingStep({
 
             {!isLoading && (
               <div className="space-y-3">
-                {/* FRANCHISE: Option "Meme que responsable" */}
-                {isFranchise && (
-                  <ResponsableCard
-                    onClick={
-                      formData.contacts.delivery.sameAsResponsable
-                        ? handleDeselectSameAsResponsable
-                        : handleSameAsResponsable
-                    }
-                    isActive={formData.contacts.delivery.sameAsResponsable}
-                    responsable={formData.contacts.responsable}
-                  />
-                )}
-
                 {/* TOUS: Contacts locaux du restaurant (SUR PLACE) */}
                 {localContacts.map((contact) => (
                   <ContactCard
                     key={contact.id}
                     contact={contact}
                     isSelected={
-                      formData.contacts.delivery.existingContactId === contact.id &&
-                      !formData.contacts.delivery.sameAsResponsable
+                      formData.contacts.delivery.existingContactId === contact.id
                     }
                     onClick={() => handleContactSelect(contact)}
                   />
@@ -979,7 +884,7 @@ export function ShippingStep({
                 {/* TOUS: Nouveau contact */}
                 <CreateNewCard
                   onClick={handleCreateNew}
-                  isActive={showContactForm && !formData.contacts.delivery.existingContactId && !formData.contacts.delivery.sameAsResponsable}
+                  isActive={showContactForm && !formData.contacts.delivery.existingContactId}
                   label="Nouveau contact livraison"
                 />
 
