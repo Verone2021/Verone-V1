@@ -7,9 +7,9 @@
  *
  * SECTION 1: ADRESSE FACTURATION (Split-Screen)
  * | GAUCHE (50%)                    | DROITE (50%)                        |
- * | Formulaire nouvelle adresse     | Adresses existantes:                |
- * | + Checkbox "Remplacer existant" | - Adresse du restaurant             |
- * |                                 | - Adresse maison mère (si propre)   |
+ * | Formulaire pre-rempli           | Adresses existantes:                |
+ * | + Design distinctif             | - Adresse du restaurant             |
+ * | + Bouton Sauvegarder (si modif) | - Adresse maison mère (si propre)   |
  *
  * SECTION 2: CONTACT FACTURATION (Split-Screen)
  * | GAUCHE (50%)                    | DROITE (50%)                        |
@@ -19,9 +19,10 @@
  *
  * @module BillingStep
  * @since 2026-01-24
+ * @updated 2026-01-24 - Refonte UX: auto-remplissage, bouton sauvegarde, design distinctif
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 
 import {
   Card,
@@ -30,6 +31,7 @@ import {
   Checkbox,
   cn,
   Badge,
+  Button,
 } from '@verone/ui';
 import {
   FileText,
@@ -40,12 +42,16 @@ import {
   Check,
   AlertCircle,
   AlertTriangle,
+  Save,
+  Loader2,
 } from 'lucide-react';
 
 import { useOrganisationContacts } from '@/lib/hooks/use-organisation-contacts';
 import { useEnseigneId } from '@/lib/hooks/use-enseigne-id';
 import { useEntityAddresses, type Address } from '@/lib/hooks/use-entity-addresses';
 import { useParentOrganisationAddresses } from '@/lib/hooks/use-parent-organisation-addresses';
+import { useOrganisationDetail } from '@/lib/hooks/use-organisation-detail';
+import { useUpdateOrganisationAddress } from '@/lib/hooks/use-update-organisation-address';
 
 import type {
   OrderFormData,
@@ -71,6 +77,18 @@ interface BillingStepProps {
   formData: OrderFormData;
   errors: string[];
   onUpdate: (data: Partial<ContactsStepData>) => void;
+}
+
+/** Type pour stocker les valeurs initiales et détecter les modifications */
+interface InitialAddressValues {
+  tradeName: string;
+  legalName: string;
+  siret: string;
+  vatNumber: string;
+  addressLine1: string;
+  postalCode: string;
+  city: string;
+  country: string;
 }
 
 // ============================================================================
@@ -238,29 +256,39 @@ function SameAsCard({ onClick, isActive }: SameAsCardProps) {
 }
 
 // ============================================================================
-// SUB-COMPONENT: Restaurant Address Card
+// SUB-COMPONENT: Restaurant Address Card (Simplified - no check icon)
 // ============================================================================
 
 interface RestaurantAddressCardProps {
   onClick: () => void;
   isActive: boolean;
   restaurantName: string | null;
-  restaurantCity: string | null;
+  legalName?: string | null;
+  addressLine1?: string | null;
+  postalCode?: string | null;
+  city?: string | null;
+  siret?: string | null;
+  isIncomplete?: boolean;
 }
 
 function RestaurantAddressCard({
   onClick,
   isActive,
   restaurantName,
-  restaurantCity,
+  legalName,
+  addressLine1,
+  postalCode,
+  city,
+  siret,
+  isIncomplete,
 }: RestaurantAddressCardProps) {
   return (
     <Card
       className={cn(
-        'p-3 cursor-pointer transition-all hover:shadow-md',
+        'p-3 cursor-pointer transition-all',
         isActive
-          ? 'border-2 border-green-500 bg-green-50/50'
-          : 'hover:border-gray-300'
+          ? 'border-2 border-blue-400 bg-blue-50/30 shadow-md'
+          : 'hover:border-blue-300 hover:bg-blue-50/20 hover:shadow-sm'
       )}
       onClick={onClick}
     >
@@ -268,11 +296,11 @@ function RestaurantAddressCard({
         <div
           className={cn(
             'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
-            isActive ? 'bg-green-100' : 'bg-gray-100'
+            isActive ? 'bg-blue-100' : 'bg-gray-100'
           )}
         >
           <Building2
-            className={cn('h-4 w-4', isActive ? 'text-green-600' : 'text-gray-500')}
+            className={cn('h-4 w-4', isActive ? 'text-blue-600' : 'text-gray-500')}
           />
         </div>
         <div className="min-w-0 flex-1">
@@ -280,14 +308,30 @@ function RestaurantAddressCard({
             <h3 className="font-semibold text-gray-900 text-sm leading-tight truncate">
               Adresse restaurant
             </h3>
-            {isActive && (
-              <Check className="h-4 w-4 text-green-500 flex-shrink-0 ml-auto" />
+            {isIncomplete && (
+              <Badge variant="outline" size="sm" className="text-amber-600 border-amber-300 bg-amber-50 flex-shrink-0">
+                Incomplet
+              </Badge>
             )}
           </div>
-          <p className="text-xs text-gray-500 mt-0.5 truncate">
-            {restaurantName || 'Restaurant'}
-            {restaurantCity && ` - ${restaurantCity}`}
+          <p className="text-xs font-medium text-gray-700 mt-0.5 truncate">
+            {legalName || restaurantName || 'Restaurant'}
           </p>
+          {addressLine1 && (
+            <p className="text-xs text-gray-500 truncate">
+              {addressLine1}
+            </p>
+          )}
+          {(postalCode || city) && (
+            <p className="text-xs text-gray-500 truncate">
+              {[postalCode, city].filter(Boolean).join(' ')}
+            </p>
+          )}
+          {siret && (
+            <p className="text-xs text-gray-400 mt-0.5 truncate">
+              SIRET: {siret}
+            </p>
+          )}
         </div>
       </div>
     </Card>
@@ -295,31 +339,39 @@ function RestaurantAddressCard({
 }
 
 // ============================================================================
-// SUB-COMPONENT: Parent Address Card
+// SUB-COMPONENT: Parent Address Card (Simplified - no check icon)
 // ============================================================================
 
 interface ParentAddressCardProps {
   onClick: () => void;
   isActive: boolean;
   parentName: string | null;
+  legalName?: string | null;
   addressLine1: string | null;
+  postalCode?: string | null;
   city: string | null;
+  siret?: string | null;
+  isIncomplete?: boolean;
 }
 
 function ParentAddressCard({
   onClick,
   isActive,
   parentName,
+  legalName,
   addressLine1,
+  postalCode,
   city,
+  siret,
+  isIncomplete,
 }: ParentAddressCardProps) {
   return (
     <Card
       className={cn(
-        'p-3 cursor-pointer transition-all hover:shadow-md',
+        'p-3 cursor-pointer transition-all',
         isActive
-          ? 'border-2 border-green-500 bg-green-50/50'
-          : 'hover:border-gray-300'
+          ? 'border-2 border-purple-400 bg-purple-50/30 shadow-md'
+          : 'hover:border-purple-300 hover:bg-purple-50/20 hover:shadow-sm'
       )}
       onClick={onClick}
     >
@@ -339,20 +391,31 @@ function ParentAddressCard({
             <h3 className="font-semibold text-gray-900 text-sm leading-tight truncate">
               Maison mere
             </h3>
-            <Badge variant="outline" size="sm" className="text-purple-600 border-purple-300 bg-purple-50 ml-auto flex-shrink-0">
+            <Badge variant="outline" size="sm" className="text-purple-600 border-purple-300 bg-purple-50 flex-shrink-0">
               Siege
             </Badge>
-            {isActive && (
-              <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+            {isIncomplete && (
+              <Badge variant="outline" size="sm" className="text-amber-600 border-amber-300 bg-amber-50 flex-shrink-0">
+                Incomplet
+              </Badge>
             )}
           </div>
-          <p className="text-xs text-gray-500 mt-0.5 truncate">
-            {parentName || 'Organisation mere'}
+          <p className="text-xs font-medium text-gray-700 mt-0.5 truncate">
+            {legalName || parentName || 'Organisation mere'}
           </p>
           {addressLine1 && (
-            <p className="text-xs text-gray-400 mt-0.5 truncate">
+            <p className="text-xs text-gray-500 truncate">
               {addressLine1}
-              {city && `, ${city}`}
+            </p>
+          )}
+          {(postalCode || city) && (
+            <p className="text-xs text-gray-500 truncate">
+              {[postalCode, city].filter(Boolean).join(' ')}
+            </p>
+          )}
+          {siret && (
+            <p className="text-xs text-gray-400 mt-0.5 truncate">
+              SIRET: {siret}
             </p>
           )}
         </div>
@@ -369,6 +432,9 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
   const [showContactForm, setShowContactForm] = useState(
     formData.contacts.billingContact.mode === 'new'
   );
+
+  // Ref pour stocker les valeurs initiales (pour détecter les modifications)
+  const initialAddressRef = useRef<InitialAddressValues | null>(null);
 
   // Get enseigne ID
   const enseigneId = useEnseigneId();
@@ -412,6 +478,13 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
     isLoading: parentLoading,
   } = useParentOrganisationAddresses(!isFranchise ? enseigneId : null);
 
+  // Fetch full restaurant organisation details (for address, SIRET, etc.)
+  const { data: restaurantDetail, isLoading: restaurantDetailLoading } =
+    useOrganisationDetail(organisationId);
+
+  // Hook pour sauvegarder les modifications
+  const { mutate: updateOrganisation, isPending: isSaving } = useUpdateOrganisationAddress();
+
   // Contacts disponibles - Séparés en locaux et enseigne
   const allContacts = contactsData?.allContacts || [];
 
@@ -426,24 +499,57 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
     return billingOnly.length > 0 ? billingOnly : enseigne;
   }, [allContacts, organisationId]);
 
-  // Restaurant info for display
+  // Restaurant info for display (enhanced with full details)
   const restaurantInfo = useMemo(() => {
     if (formData.restaurant.mode !== 'existing' || !formData.restaurant.existingId) {
       return null;
     }
+    const org = restaurantDetail?.organisation;
     return {
       id: formData.restaurant.existingId,
       name: formData.restaurant.existingName || null,
       city: formData.restaurant.existingCity || null,
       country: formData.restaurant.existingCountry || null,
+      // Enhanced data from useOrganisationDetail
+      legalName: org?.legal_name || null,
+      tradeName: org?.trade_name || null,
+      addressLine1: org?.billing_address_line1 || org?.shipping_address_line1 || null,
+      postalCode: org?.billing_postal_code || org?.shipping_postal_code || null,
+      billingCity: org?.billing_city || org?.shipping_city || null,
+      siret: org?.siret || null,
+      vatNumber: org?.vat_number || null,
     };
-  }, [formData.restaurant]);
+  }, [formData.restaurant, restaurantDetail]);
 
   // Existing billing addresses
   const billingAddresses = addressesData?.billing || [];
 
   // Show parent address only for non-franchises with valid parent data
   const showParentAddress = !isFranchise && parentOrg && parentPrimaryAddress;
+
+  // ========================================
+  // DETECTION DES MODIFICATIONS
+  // ========================================
+
+  const hasUnsavedChanges = useMemo(() => {
+    if (!initialAddressRef.current) return false;
+
+    const current = formData.contacts.billingAddress.customAddress;
+    if (!current) return false;
+
+    const initial = initialAddressRef.current;
+
+    return (
+      (current.tradeName || '') !== initial.tradeName ||
+      (current.legalName || '') !== initial.legalName ||
+      (current.siret || '') !== initial.siret ||
+      (current.vatNumber || '') !== initial.vatNumber ||
+      (current.addressLine1 || '') !== initial.addressLine1 ||
+      (current.postalCode || '') !== initial.postalCode ||
+      (current.city || '') !== initial.city ||
+      (current.country || 'FR') !== initial.country
+    );
+  }, [formData.contacts.billingAddress.customAddress]);
 
   // ========================================
   // COMPLETION CHECKS
@@ -563,21 +669,71 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
     [formData.contacts.billingAddress, onUpdate]
   );
 
+  // Auto-remplissage: Adresse restaurant
   const handleSelectRestaurantAddress = useCallback(() => {
+    const newAddress: PartialAddressData = {
+      tradeName: restaurantInfo?.tradeName || restaurantInfo?.name || '',
+      legalName: restaurantInfo?.legalName || '',
+      addressLine1: restaurantInfo?.addressLine1 || '',
+      postalCode: restaurantInfo?.postalCode || '',
+      city: restaurantInfo?.billingCity || restaurantInfo?.city || '',
+      country: restaurantInfo?.country || 'FR',
+      siret: restaurantInfo?.siret || '',
+      vatNumber: restaurantInfo?.vatNumber || '',
+    };
+
+    // Stocker les valeurs initiales
+    initialAddressRef.current = {
+      tradeName: newAddress.tradeName || '',
+      legalName: newAddress.legalName || '',
+      siret: newAddress.siret || '',
+      vatNumber: newAddress.vatNumber || '',
+      addressLine1: newAddress.addressLine1 || '',
+      postalCode: newAddress.postalCode || '',
+      city: newAddress.city || '',
+      country: newAddress.country || 'FR',
+    };
+
     handleBillingAddressUpdate({
       mode: 'restaurant_address',
       existingAddressId: null,
-      customAddress: null,
+      customAddress: newAddress,
+      sourceOrganisationId: restaurantInfo?.id || null,
     });
-  }, [handleBillingAddressUpdate]);
+  }, [handleBillingAddressUpdate, restaurantInfo]);
 
+  // Auto-remplissage: Adresse maison mère
   const handleSelectParentAddress = useCallback(() => {
+    const newAddress: PartialAddressData = {
+      tradeName: parentOrg?.trade_name || '',
+      legalName: parentOrg?.legal_name || '',
+      addressLine1: parentPrimaryAddress?.addressLine1 || '',
+      postalCode: parentPrimaryAddress?.postalCode || '',
+      city: parentPrimaryAddress?.city || '',
+      country: 'FR', // Défaut FR pour la maison mère
+      siret: parentPrimaryAddress?.siret || '',
+      vatNumber: '', // Non disponible dans le parent address
+    };
+
+    // Stocker les valeurs initiales
+    initialAddressRef.current = {
+      tradeName: newAddress.tradeName || '',
+      legalName: newAddress.legalName || '',
+      siret: newAddress.siret || '',
+      vatNumber: '',
+      addressLine1: newAddress.addressLine1 || '',
+      postalCode: newAddress.postalCode || '',
+      city: newAddress.city || '',
+      country: 'FR',
+    };
+
     handleBillingAddressUpdate({
       mode: 'parent_address',
       existingAddressId: null,
-      customAddress: null,
+      customAddress: newAddress,
+      sourceOrganisationId: parentOrg?.id || null,
     });
-  }, [handleBillingAddressUpdate]);
+  }, [handleBillingAddressUpdate, parentOrg, parentPrimaryAddress]);
 
   const handleSelectExistingAddress = useCallback(
     (address: Address) => {
@@ -586,20 +742,32 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
         existingAddressId: address.id,
         customAddress: null,
       });
+      // Reset initial values
+      initialAddressRef.current = null;
     },
     [handleBillingAddressUpdate]
   );
 
   const handleCreateNewAddress = useCallback(() => {
+    const emptyAddress: PartialAddressData = {
+      addressLine1: '',
+      postalCode: '',
+      city: '',
+      country: restaurantInfo?.country || 'FR',
+      tradeName: '',
+      legalName: '',
+      siret: '',
+      vatNumber: '',
+    };
+
+    // Pour nouvelle adresse, pas de valeurs initiales (tout est "modifié")
+    initialAddressRef.current = null;
+
     handleBillingAddressUpdate({
       mode: 'new_billing',
       existingAddressId: null,
-      customAddress: {
-        addressLine1: '',
-        postalCode: '',
-        city: '',
-        country: restaurantInfo?.country || 'FR',
-      },
+      customAddress: emptyAddress,
+      sourceOrganisationId: null,
     });
   }, [handleBillingAddressUpdate, restaurantInfo?.country]);
 
@@ -624,7 +792,74 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
     [handleBillingAddressUpdate]
   );
 
-  const isLoading = contactsLoading || addressesLoading || parentLoading;
+  // ========================================
+  // SAUVEGARDE DES MODIFICATIONS
+  // ========================================
+
+  const handleSaveAddress = useCallback(() => {
+    const sourceId = formData.contacts.billingAddress.sourceOrganisationId;
+    const currentAddress = formData.contacts.billingAddress.customAddress;
+
+    if (!sourceId || !currentAddress) return;
+
+    updateOrganisation({
+      organisationId: sourceId,
+      addressData: {
+        billing_address_line1: currentAddress.addressLine1 || null,
+        billing_postal_code: currentAddress.postalCode || null,
+        billing_city: currentAddress.city || null,
+        billing_country: currentAddress.country || 'FR',
+        siret: currentAddress.siret || null,
+        vat_number: currentAddress.vatNumber || null,
+        legal_name: currentAddress.legalName || null,
+        trade_name: currentAddress.tradeName || null,
+      },
+    }, {
+      onSuccess: () => {
+        // Mettre à jour les valeurs initiales après sauvegarde réussie
+        if (currentAddress) {
+          initialAddressRef.current = {
+            tradeName: currentAddress.tradeName || '',
+            legalName: currentAddress.legalName || '',
+            siret: currentAddress.siret || '',
+            vatNumber: currentAddress.vatNumber || '',
+            addressLine1: currentAddress.addressLine1 || '',
+            postalCode: currentAddress.postalCode || '',
+            city: currentAddress.city || '',
+            country: currentAddress.country || 'FR',
+          };
+        }
+      },
+    });
+  }, [formData.contacts.billingAddress, updateOrganisation]);
+
+  // ========================================
+  // EFFETS
+  // ========================================
+
+  // Auto-sélection de l'adresse restaurant au montage si aucune sélection
+  useEffect(() => {
+    if (
+      restaurantInfo &&
+      !restaurantDetailLoading &&
+      formData.contacts.billingAddress.mode === 'restaurant_address' &&
+      !formData.contacts.billingAddress.customAddress
+    ) {
+      handleSelectRestaurantAddress();
+    }
+  }, [
+    restaurantInfo,
+    restaurantDetailLoading,
+    formData.contacts.billingAddress.mode,
+    formData.contacts.billingAddress.customAddress,
+    handleSelectRestaurantAddress,
+  ]);
+
+  const isLoading = contactsLoading || addressesLoading || parentLoading || restaurantDetailLoading;
+
+  // Déterminer si le formulaire est en mode édition (pas new_billing)
+  const isEditMode = formData.contacts.billingAddress.mode !== 'new_billing' &&
+    formData.contacts.billingAddress.customAddress !== null;
 
   return (
     <div className="space-y-8">
@@ -658,56 +893,101 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* GAUCHE: Formulaire nouvelle adresse */}
-          <Card className="p-4 border-dashed border-gray-300">
-            <div className="flex items-center gap-2 pb-3 border-b mb-4">
-              <Plus className="h-4 w-4 text-gray-500" />
-              <h4 className="font-medium text-gray-700">Nouvelle adresse</h4>
-            </div>
-
-            <AddressForm
-              address={formData.contacts.billingAddress.customAddress}
-              onChange={handleAddressChange}
-              showLegalFields
-              idPrefix="billingAddress"
-              disabled={formData.contacts.billingAddress.mode !== 'new_billing'}
-            />
-
-            {formData.contacts.billingAddress.mode === 'new_billing' && (
-              <div className="mt-4 pt-4 border-t space-y-3">
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="replaceExistingAddress"
-                    checked={formData.contacts.billingAddress.replaceExistingAddress}
-                    onCheckedChange={handleReplaceExistingChange}
-                  />
-                  <Label htmlFor="replaceExistingAddress" className="text-sm font-normal cursor-pointer">
-                    Remplacer l&apos;adresse existante du restaurant
-                  </Label>
+          {/* GAUCHE: Formulaire avec design distinctif */}
+          <Card className={cn(
+            'p-4 transition-all',
+            isEditMode || formData.contacts.billingAddress.mode === 'new_billing'
+              ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200'
+              : 'bg-gray-50 border-dashed border-gray-300'
+          )}>
+            {/* En-tête distinctif */}
+            {(isEditMode || formData.contacts.billingAddress.mode === 'new_billing') && (
+              <div className="flex items-center gap-3 pb-4 border-b border-blue-200 mb-4">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-blue-600" />
                 </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="setAsDefaultAddress"
-                    checked={formData.contacts.billingAddress.setAsDefault}
-                    onCheckedChange={handleSetAsDefaultChange}
-                  />
-                  <Label htmlFor="setAsDefaultAddress" className="text-sm font-normal cursor-pointer">
-                    Definir comme adresse par defaut
-                  </Label>
+                <div>
+                  <h4 className="font-semibold text-blue-900">Adresse de facturation</h4>
+                  <p className="text-xs text-blue-600">Ces informations seront utilisees pour la facture</p>
                 </div>
               </div>
             )}
 
-            {formData.contacts.billingAddress.mode !== 'new_billing' && (
-              <div className="mt-4 text-center">
-                <button
-                  type="button"
-                  onClick={handleCreateNewAddress}
-                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-                >
-                  Cliquez pour saisir une nouvelle adresse
-                </button>
+            {/* Message si aucune sélection */}
+            {!isEditMode && formData.contacts.billingAddress.mode !== 'new_billing' && (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+                  <MapPin className="h-6 w-6 text-gray-400" />
+                </div>
+                <p className="text-sm text-gray-500 mb-1">Aucune adresse selectionnee</p>
+                <p className="text-xs text-gray-400">
+                  Cliquez sur une adresse a droite pour la selectionner
+                </p>
               </div>
+            )}
+
+            {/* Formulaire d'adresse */}
+            {(isEditMode || formData.contacts.billingAddress.mode === 'new_billing') && (
+              <>
+                <AddressForm
+                  address={formData.contacts.billingAddress.customAddress}
+                  onChange={handleAddressChange}
+                  showLegalFields
+                  idPrefix="billingAddress"
+                />
+
+                {/* Checkboxes pour nouvelle adresse */}
+                {formData.contacts.billingAddress.mode === 'new_billing' && (
+                  <div className="mt-4 pt-4 border-t border-blue-200 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="replaceExistingAddress"
+                        checked={formData.contacts.billingAddress.replaceExistingAddress}
+                        onCheckedChange={handleReplaceExistingChange}
+                      />
+                      <Label htmlFor="replaceExistingAddress" className="text-sm font-normal cursor-pointer">
+                        Remplacer l&apos;adresse existante du restaurant
+                      </Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="setAsDefaultAddress"
+                        checked={formData.contacts.billingAddress.setAsDefault}
+                        onCheckedChange={handleSetAsDefaultChange}
+                      />
+                      <Label htmlFor="setAsDefaultAddress" className="text-sm font-normal cursor-pointer">
+                        Definir comme adresse par defaut
+                      </Label>
+                    </div>
+                  </div>
+                )}
+
+                {/* Bouton Sauvegarder - UNIQUEMENT si modifications détectées */}
+                {hasUnsavedChanges && formData.contacts.billingAddress.sourceOrganisationId && (
+                  <div className="mt-4 pt-4 border-t border-blue-200">
+                    <Button
+                      onClick={handleSaveAddress}
+                      disabled={isSaving}
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                    >
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          Sauvegarde en cours...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4 mr-2" />
+                          Sauvegarder les modifications
+                        </>
+                      )}
+                    </Button>
+                    <p className="text-xs text-blue-600 mt-2 text-center">
+                      Les modifications seront enregistrees dans la fiche restaurant
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </Card>
 
@@ -731,8 +1011,13 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
                   <RestaurantAddressCard
                     onClick={handleSelectRestaurantAddress}
                     isActive={formData.contacts.billingAddress.mode === 'restaurant_address'}
-                    restaurantName={restaurantInfo.name}
-                    restaurantCity={restaurantInfo.city}
+                    restaurantName={restaurantInfo.tradeName || restaurantInfo.name}
+                    legalName={restaurantInfo.legalName}
+                    addressLine1={restaurantInfo.addressLine1}
+                    postalCode={restaurantInfo.postalCode}
+                    city={restaurantInfo.billingCity || restaurantInfo.city}
+                    siret={restaurantInfo.siret}
+                    isIncomplete={!restaurantInfo.siret}
                   />
                 )}
 
@@ -741,9 +1026,13 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
                   <ParentAddressCard
                     onClick={handleSelectParentAddress}
                     isActive={formData.contacts.billingAddress.mode === 'parent_address'}
-                    parentName={parentOrg?.legal_name || parentOrg?.trade_name || null}
+                    parentName={parentOrg?.trade_name || null}
+                    legalName={parentOrg?.legal_name || null}
                     addressLine1={parentPrimaryAddress?.addressLine1 || null}
+                    postalCode={parentPrimaryAddress?.postalCode || null}
                     city={parentPrimaryAddress?.city || null}
+                    siret={parentPrimaryAddress?.siret || null}
+                    isIncomplete={!parentPrimaryAddress?.siret}
                   />
                 )}
 
@@ -774,36 +1063,6 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
                     Aucune adresse de facturation enregistree
                   </p>
                 )}
-              </div>
-            )}
-
-            {/* Selected address info */}
-            {formData.contacts.billingAddress.mode === 'restaurant_address' && (
-              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <div className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-green-700">
-                    <p className="font-medium">Adresse du restaurant selectionnee</p>
-                    <p className="text-xs mt-1">
-                      {restaurantInfo?.name} - {restaurantInfo?.city}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {formData.contacts.billingAddress.mode === 'parent_address' && showParentAddress && (
-              <div className="mt-4 p-3 bg-purple-50 border border-purple-200 rounded-lg">
-                <div className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-purple-600 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-purple-700">
-                    <p className="font-medium">Adresse maison mere selectionnee</p>
-                    <p className="text-xs mt-1">
-                      {parentOrg?.legal_name || parentOrg?.trade_name}
-                      {parentPrimaryAddress?.city && ` - ${parentPrimaryAddress.city}`}
-                    </p>
-                  </div>
-                </div>
               </div>
             )}
           </Card>

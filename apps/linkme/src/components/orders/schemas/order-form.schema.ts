@@ -251,6 +251,8 @@ export const billingAddressSchema = z.object({
   setAsDefault: z.boolean().default(false),
   /** Si true, remplace l'adresse du restaurant par la nouvelle adresse */
   replaceExistingAddress: z.boolean().default(false),
+  /** ID de l'organisation source pour la sauvegarde des modifications */
+  sourceOrganisationId: z.string().uuid().optional().nullable(),
 });
 
 export type BillingAddressData = z.infer<typeof billingAddressSchema>;
