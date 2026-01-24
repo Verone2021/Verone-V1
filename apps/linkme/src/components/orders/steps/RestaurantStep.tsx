@@ -31,12 +31,14 @@ import {
   MapPin,
   CheckCircle,
   Loader2,
+  AlertTriangle,
 } from 'lucide-react';
 
 import type { OrderFormData, RestaurantStepData } from '../schemas/order-form.schema';
 import type { EnseigneOrganisation } from '../../../lib/hooks/use-enseigne-organisations';
 import { useEnseigneOrganisations } from '../../../lib/hooks/use-enseigne-organisations';
 import { useUserAffiliate } from '../../../lib/hooks/use-user-selection';
+import { useUpdateOrganisationOwnershipType } from '../../../lib/hooks/use-update-organisation-ownership-type';
 
 // ============================================================================
 // TYPES
@@ -89,6 +91,9 @@ export function RestaurantStep({ formData, errors, onUpdate }: RestaurantStepPro
   const { data: organisations, isLoading: orgsLoading } = useEnseigneOrganisations(
     affiliate?.id ?? null
   );
+
+  // Mutation pour persister le ownership_type en BD
+  const { mutateAsync: updateOwnershipType, isPending: isUpdatingType } = useUpdateOrganisationOwnershipType();
 
   const isLoading = affiliateLoading || orgsLoading;
   const mode = formData.restaurant.mode;
@@ -440,6 +445,81 @@ export function RestaurantStep({ formData, errors, onUpdate }: RestaurantStepPro
                   <span className="text-green-600">
                     ({formData.restaurant.existingCity})
                   </span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Validation ownership_type si manquant - OBLIGATOIRE pour continuer */}
+          {formData.restaurant.existingId && !formData.restaurant.existingOwnershipType && (
+            <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="space-y-3">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-amber-800">
+                      Type de restaurant requis
+                    </p>
+                    <p className="text-sm text-amber-700 mt-1">
+                      Ce restaurant n&apos;a pas de type défini. Veuillez le spécifier pour continuer.
+                    </p>
+                  </div>
+                </div>
+                <RadioGroup
+                  value={formData.restaurant.existingOwnershipType || ''}
+                  onValueChange={async (value) => {
+                    const organisationId = formData.restaurant.existingId;
+                    if (!organisationId) return;
+
+                    const ownershipType = value as 'succursale' | 'franchise';
+                    try {
+                      // 1. Sauvegarder en BD immédiatement
+                      await updateOwnershipType({ organisationId, ownershipType });
+                      // 2. Mettre à jour le state local
+                      onUpdate({ existingOwnershipType: ownershipType });
+                    } catch {
+                      // Erreur gérée par le hook (toast d'erreur)
+                    }
+                  }}
+                  disabled={isUpdatingType}
+                  className="flex gap-4 ml-7"
+                >
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="succursale" id="existing-type-succursale" disabled={isUpdatingType} />
+                    <Label
+                      htmlFor="existing-type-succursale"
+                      className={cn(
+                        'flex items-center gap-2 cursor-pointer',
+                        isUpdatingType && 'opacity-50 cursor-not-allowed'
+                      )}
+                    >
+                      <div className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">
+                        Propre
+                      </div>
+                      <span className="text-sm text-gray-600">Succursale de l&apos;enseigne</span>
+                    </Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="franchise" id="existing-type-franchise" disabled={isUpdatingType} />
+                    <Label
+                      htmlFor="existing-type-franchise"
+                      className={cn(
+                        'flex items-center gap-2 cursor-pointer',
+                        isUpdatingType && 'opacity-50 cursor-not-allowed'
+                      )}
+                    >
+                      <div className="px-2 py-1 bg-amber-100 text-amber-700 text-xs font-medium rounded">
+                        Franchise
+                      </div>
+                      <span className="text-sm text-gray-600">Restaurant franchisé</span>
+                    </Label>
+                  </div>
+                </RadioGroup>
+                {isUpdatingType && (
+                  <div className="flex items-center gap-2 ml-7 text-sm text-amber-700">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Enregistrement en cours...</span>
+                  </div>
                 )}
               </div>
             </div>

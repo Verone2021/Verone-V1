@@ -113,14 +113,16 @@ export const restaurantStepSchema = z.object({
 }).refine(
   (data) => {
     if (data.mode === 'existing') {
-      return !!data.existingId;
+      // Restaurant existant : ID requis ET type requis (persisté en BD)
+      return !!data.existingId && !!data.existingOwnershipType;
     }
+    // Nouveau restaurant : validation standard
     return data.newRestaurant &&
            data.newRestaurant.tradeName.length >= 2 &&
            data.newRestaurant.city.length >= 2 &&
            !!data.newRestaurant.ownershipType;
   },
-  { message: 'Sélectionnez un restaurant ou créez-en un nouveau' }
+  { message: 'Veuillez sélectionner le type du restaurant (franchise ou succursale)' }
 );
 
 export type RestaurantStepData = z.infer<typeof restaurantStepSchema>;
@@ -569,10 +571,22 @@ export function validateStep(step: number, data: Partial<OrderFormData>): boolea
 export function getStepErrors(step: number, data: Partial<OrderFormData>): string[] {
   try {
     switch (step) {
-      case 1:
+      case 1: {
         if (!data.restaurant) return ['Données restaurant manquantes'];
+        const errors: string[] = [];
+        // Vérification spécifique pour restaurant existant
+        if (data.restaurant.mode === 'existing') {
+          if (!data.restaurant.existingId) {
+            errors.push('Veuillez sélectionner un restaurant');
+          }
+          if (!data.restaurant.existingOwnershipType) {
+            errors.push('Veuillez définir le type du restaurant (franchise ou succursale)');
+          }
+          if (errors.length > 0) return errors;
+        }
         restaurantStepSchema.parse(data.restaurant);
         return [];
+      }
       case 2:
         if (!data.selection) return ['Données sélection manquantes'];
         selectionStepSchema.parse(data.selection);
