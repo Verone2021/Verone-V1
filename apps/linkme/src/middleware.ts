@@ -16,7 +16,7 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { createMiddlewareClient, updateSession } from '@/lib/supabase-server';
+import { createMiddlewareClient } from '@/lib/supabase-server';
 
 // Routes PUBLIQUES (whitelist) - TOUTES les autres sont protégées
 const PUBLIC_PAGES = [
@@ -73,16 +73,25 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     return NextResponse.next();
   }
 
-  // Mettre à jour la session Supabase (rafraîchir le token si nécessaire)
-  const response = await updateSession(request);
+  // Créer UNE SEULE instance Supabase pour toute la requête
+  const { supabase, response } = createMiddlewareClient(request);
+
+  // Rafraîchir session UNE FOIS au début (déclenche refresh si nécessaire)
+  try {
+    await supabase.auth.getSession();
+  } catch (error) {
+    // Log server-side uniquement (pas dans browser console)
+    console.error('[Middleware] Session refresh failed:', error);
+    // Continue silencieusement → user sera redirigé vers /login si nécessaire
+  }
+
+  // Récupérer l'utilisateur (réutilise la même instance)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   // Route publique → vérifier si l'utilisateur est connecté
   if (isPublicRoute(pathname)) {
-    const { supabase } = createMiddlewareClient(request);
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
     // Si connecté sur une page marketing → rediriger vers dashboard
     // Les pages marketing ne sont accessibles qu'aux visiteurs non connectés
     if (user && PUBLIC_PAGES.includes(pathname)) {
@@ -93,12 +102,6 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   }
 
   // Route PROTÉGÉE → vérifier l'authentification
-  const { supabase, response: middlewareResponse } =
-    createMiddlewareClient(request);
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
   if (!user) {
     // Non authentifié → rediriger vers /login avec URL de retour
     const loginUrl = new URL('/login', request.url);
@@ -107,7 +110,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   }
 
   // Authentifié → accès autorisé
-  return middlewareResponse;
+  return response;
 }
 
 // Matcher: exclut les assets statiques et fichiers Next.js

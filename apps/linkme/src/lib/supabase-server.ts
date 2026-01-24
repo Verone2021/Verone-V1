@@ -75,16 +75,3 @@ export function createMiddlewareClient(request: NextRequest) {
   return { supabase, response };
 }
 
-/**
- * Mettre à jour la session dans le middleware
- * Rafraîchit le token si nécessaire
- */
-export async function updateSession(request: NextRequest) {
-  const { supabase, response } = createMiddlewareClient(request);
-
-  // Rafraîchir la session (important pour SSR)
-  // Cela va automatiquement rafraîchir le token si expiré
-  await supabase.auth.getSession();
-
-  return response;
-}
