@@ -51,7 +51,7 @@ interface RestaurantStepProps {
 type TabFilter = 'all' | 'succursale' | 'franchise';
 
 // Pagination
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 9;
 
 // ============================================================================
 // HELPERS
