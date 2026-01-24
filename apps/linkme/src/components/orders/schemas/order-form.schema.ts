@@ -1,17 +1,19 @@
 /**
  * Schémas Zod pour le formulaire de commande unifié
  *
- * Structure en 7 étapes :
+ * Structure en 8 étapes :
  * 1. Restaurant (existant ou nouveau)
  * 2. Sélection (choix si plusieurs)
  * 3. Produits (ajout au panier)
  * 4. Panier (récapitulatif modifiable)
- * 5. Contacts (responsable, facturation, livraison)
- * 6. Livraison (adresse, date, options)
- * 7. Validation (récapitulatif final)
+ * 5. Contact Responsable (responsable de la commande)
+ * 6. Facturation (contact + adresse facturation)
+ * 7. Adresse et Options (contact livraison + adresse + date + options)
+ * 8. Validation (récapitulatif final)
  *
  * @module order-form.schema
  * @since 2026-01-20
+ * @updated 2026-01-24 - Refonte 7→8 étapes
  */
 
 import { z } from 'zod';
@@ -235,12 +237,20 @@ export type BillingOrgData = z.infer<typeof billingOrgSchema>;
  *
  * IMPORTANT: L'organisation est FIXE (= restaurant de l'étape 1)
  * On gère uniquement les ADRESSES de facturation
+ *
+ * Modes disponibles:
+ * - 'restaurant_address': Utilise l'adresse du restaurant (défaut)
+ * - 'existing_billing': Utilise une adresse existante de la table addresses
+ * - 'new_billing': Crée une nouvelle adresse
+ * - 'parent_address': Utilise l'adresse de la maison mère (succursales uniquement)
  */
 export const billingAddressSchema = z.object({
-  mode: z.enum(['restaurant_address', 'existing_billing', 'new_billing']),
+  mode: z.enum(['restaurant_address', 'existing_billing', 'new_billing', 'parent_address']),
   existingAddressId: z.string().uuid().nullable(),
   customAddress: partialAddressSchema.nullable(),
   setAsDefault: z.boolean().default(false),
+  /** Si true, remplace l'adresse du restaurant par la nouvelle adresse */
+  replaceExistingAddress: z.boolean().default(false),
 });
 
 export type BillingAddressData = z.infer<typeof billingAddressSchema>;
@@ -298,7 +308,7 @@ export const contactsStepSchema = z.object({
     if (data.billingAddress.mode === 'existing_billing') {
       return !!data.billingAddress.existingAddressId;
     }
-    // 'restaurant_address' is always valid
+    // 'restaurant_address' and 'parent_address' are always valid
     return true;
   },
   { message: 'Adresse de facturation requise', path: ['billingAddress'] }
@@ -430,6 +440,7 @@ export const defaultContactsStep: ContactsStepData = {
     existingAddressId: null,
     customAddress: null,
     setAsDefault: false,
+    replaceExistingAddress: false,
   },
   // Legacy billing (pour compatibilité)
   billing: {
@@ -474,6 +485,31 @@ export const defaultOrderFormData: OrderFormData = {
 // HELPERS DE VALIDATION PAR ÉTAPE
 // ============================================================================
 
+/**
+ * Schéma de validation pour l'étape 5 : Contact Responsable uniquement
+ */
+export const responsableStepSchema = z.object({
+  responsable: contactBaseSchema,
+  existingResponsableId: z.string().uuid().optional().nullable(),
+});
+
+/**
+ * Schéma de validation pour l'étape 6 : Contact + Adresse Facturation
+ */
+export const billingStepValidationSchema = z.object({
+  billingContact: billingContactSchema,
+  billingAddress: billingAddressSchema,
+});
+
+/**
+ * Schéma de validation pour l'étape 7 : Contact Livraison + Adresse + Options
+ * Combine les données de contacts.delivery et delivery
+ */
+export const shippingStepValidationSchema = z.object({
+  contactDelivery: deliverySectionSchema,
+  delivery: deliveryStepSchema,
+});
+
 export function validateStep(step: number, data: Partial<OrderFormData>): boolean {
   try {
     switch (step) {
@@ -493,14 +529,30 @@ export function validateStep(step: number, data: Partial<OrderFormData>): boolea
         cartStepSchema.parse(data.cart);
         return true;
       case 5:
+        // Step 5: Contact Responsable uniquement
         if (!data.contacts) return false;
-        contactsStepSchema.parse(data.contacts);
+        responsableStepSchema.parse({
+          responsable: data.contacts.responsable,
+          existingResponsableId: data.contacts.existingResponsableId,
+        });
         return true;
       case 6:
-        if (!data.delivery) return false;
-        deliveryStepSchema.parse(data.delivery);
+        // Step 6: Contact + Adresse Facturation
+        if (!data.contacts) return false;
+        billingStepValidationSchema.parse({
+          billingContact: data.contacts.billingContact,
+          billingAddress: data.contacts.billingAddress,
+        });
         return true;
       case 7:
+        // Step 7: Contact Livraison + Adresse + Date + Options
+        if (!data.contacts || !data.delivery) return false;
+        shippingStepValidationSchema.parse({
+          contactDelivery: data.contacts.delivery,
+          delivery: data.delivery,
+        });
+        return true;
+      case 8:
         // Validation finale
         orderFormSchema.parse(data);
         return true;
@@ -528,14 +580,31 @@ export function getStepErrors(step: number, data: Partial<OrderFormData>): strin
         cartStepSchema.parse(data.cart);
         return [];
       case 5:
+        // Step 5: Contact Responsable uniquement
         if (!data.contacts) return ['Données contacts manquantes'];
-        contactsStepSchema.parse(data.contacts);
+        responsableStepSchema.parse({
+          responsable: data.contacts.responsable,
+          existingResponsableId: data.contacts.existingResponsableId,
+        });
         return [];
       case 6:
-        if (!data.delivery) return ['Données livraison manquantes'];
-        deliveryStepSchema.parse(data.delivery);
+        // Step 6: Contact + Adresse Facturation
+        if (!data.contacts) return ['Données contacts manquantes'];
+        billingStepValidationSchema.parse({
+          billingContact: data.contacts.billingContact,
+          billingAddress: data.contacts.billingAddress,
+        });
         return [];
       case 7:
+        // Step 7: Contact Livraison + Adresse + Date + Options
+        if (!data.contacts) return ['Données contact livraison manquantes'];
+        if (!data.delivery) return ['Données livraison manquantes'];
+        shippingStepValidationSchema.parse({
+          contactDelivery: data.contacts.delivery,
+          delivery: data.delivery,
+        });
+        return [];
+      case 8:
         orderFormSchema.parse(data);
         return [];
       default:
