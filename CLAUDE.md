@@ -44,6 +44,37 @@ pnpm e2e:smoke               # Sans timeout approprié
 
 ---
 
+## 🔑 Environment Setup & Credentials (READ FIRST)
+
+**CRITIQUE**: Lire `.claude/env.md` au début de CHAQUE session.
+
+### Quick Reference
+
+**Supabase Database Connection (TOUJOURS utiliser celle-ci):**
+```bash
+# Location: .mcp.env (line 1)
+psql "postgresql://postgres.aorroydfjsrygmosnzrl:ADFVKDJCJDNC934@aws-1-eu-west-3.pooler.supabase.com:5432/postgres" -c "SELECT ..."
+```
+
+### Règles Absolues
+
+1. **NE JAMAIS demander credentials** à l'utilisateur
+   - DATABASE_URL est dans `.mcp.env` (ligne 1)
+   - Lire automatiquement: `grep DATABASE_URL .mcp.env`
+
+2. **TOUJOURS appliquer migrations via psql**
+   - Créer fichier SQL → Appliquer immédiatement
+   - Ne JAMAIS laisser migrations non-appliquées
+
+3. **Vérifier connexion en cas de doute**
+   ```bash
+   psql "postgresql://postgres.aorroydfjsrygmosnzrl:..." -c "SELECT version();"
+   ```
+
+**Documentation complète**: `.claude/env.md`
+
+---
+
 ## 🔄 Workflow de Développement Professionnel
 
 ### Méthodologie Standard (Research-Plan-Execute)
@@ -304,4 +335,53 @@ cat .tasks/INDEX.md
 
 ---
 
-**Version**: 9.1.0 (Ajout section Interdictions Claude 2026-01-24)
+## 🗄️ Migrations Supabase - Workflow Automatique
+
+**RÈGLE ABSOLUE** : Claude applique AUTOMATIQUEMENT les migrations via `psql` direct.
+
+### Workflow Standard (TOUJOURS suivre)
+
+```bash
+# 1. Créer migration
+Write(file_path="supabase/migrations/YYYYMMDD_NNN_description.sql", content="...")
+
+# 2. Appliquer IMMÉDIATEMENT via psql (DATABASE_URL depuis .mcp.env)
+Bash(command='psql "postgresql://postgres.aorroydfjsrygmosnzrl:ADFVKDJCJDNC934@aws-1-eu-west-3.pooler.supabase.com:5432/postgres" -f supabase/migrations/YYYYMMDD_NNN_description.sql')
+
+# 3. Vérifier succès
+Bash(command='psql "postgresql://..." -c "SELECT COUNT(*) FROM _supabase_migrations;"')
+
+# 4. Commit
+Bash(command='git add supabase/migrations/ && git commit -m "[APP-DOMAIN-NNN] feat(db): description"')
+```
+
+### Règles Critiques
+
+1. **NE JAMAIS** créer migration sans l'appliquer immédiatement
+2. **NE JAMAIS** demander à l'utilisateur d'appliquer manuellement
+3. **TOUJOURS** utiliser connection string complète depuis `.mcp.env`
+4. **TOUJOURS** vérifier que la migration s'est appliquée avec succès
+
+### Vérification Rapide
+
+```bash
+# Tester connexion
+psql "postgresql://postgres.aorroydfjsrygmosnzrl:..." -c "SELECT version();"
+
+# Lister migrations appliquées
+psql "postgresql://postgres.aorroydfjsrygmosnzrl:..." -c "SELECT name FROM _supabase_migrations ORDER BY inserted_at DESC LIMIT 10;"
+```
+
+### Générer types TypeScript
+
+```bash
+# Après migration appliquée
+SUPABASE_ACCESS_TOKEN="..." npx supabase@latest gen types typescript \
+  --project-id aorroydfjsrygmosnzrl > packages/@verone/types/src/supabase.ts
+```
+
+**Documentation complète**: `.claude/env.md`
+
+---
+
+**Version**: 9.2.0 (Ajout workflow migrations Supabase Cloud 2026-01-24)
