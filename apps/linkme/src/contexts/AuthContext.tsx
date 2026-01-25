@@ -94,8 +94,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
             hint: error.hint,
           });
 
-          // Si la vue n'existe pas, essayer directement la table user_app_roles
-          if (error.code === 'PGRST116' || error.code === '42P01') {
+          // PGRST116 = not found - l'utilisateur n'existe pas dans v_linkme_users
+          // Cela peut arriver si la session est corrompue ou l'utilisateur a été supprimé
+          if (error.code === 'PGRST116') {
+            console.warn('[AuthContext] User not found in v_linkme_users - clearing corrupted session');
+            // Nettoyer la session corrompue
+            await supabase.auth.signOut();
+            setUser(null);
+            setSession(null);
+            setLinkMeRole(null);
+            return;
+          }
+
+          // Si la vue n'existe pas (42P01), essayer directement la table user_app_roles
+          if (error.code === '42P01') {
             if (DEBUG)
               console.log('[AuthContext] Fallback to user_app_roles table...');
             const { data: roleData, error: roleError } = await (supabase as any)
@@ -124,6 +136,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 message: roleError?.message,
                 status: roleError?.status,
               });
+              // Si l'utilisateur n'a pas de rôle LinkMe actif, nettoyer la session
+              if (roleError?.code === 'PGRST116' || !roleData) {
+                console.warn('[AuthContext] No active LinkMe role - clearing session');
+                await supabase.auth.signOut();
+                setUser(null);
+                setSession(null);
+              }
               setLinkMeRole(null);
               return;
             }
