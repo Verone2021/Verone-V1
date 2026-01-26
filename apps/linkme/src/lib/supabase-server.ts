@@ -75,3 +75,14 @@ export function createMiddlewareClient(request: NextRequest) {
   return { supabase, response };
 }
 
+/**
+ * Rafraîchit la session Supabase et retourne la réponse avec cookies mis à jour
+ */
+export async function updateSession(request: NextRequest) {
+  const { supabase, response } = createMiddlewareClient(request);
+
+  // getSession rafraîchit automatiquement le token si expiré
+  await supabase.auth.getSession();
+
+  return response;
+}

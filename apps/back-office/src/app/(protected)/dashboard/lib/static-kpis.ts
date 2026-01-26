@@ -15,7 +15,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
-import type { DashboardTab } from '../components/dashboard-tabs';
+// Types des onglets du dashboard (définis ici car dashboard-tabs.tsx a été supprimé)
+export type DashboardTab = 'apercu' | 'ventes' | 'stock' | 'finances' | 'linkme';
 
 export type KPIFormat = 'currency' | 'number' | 'percent';
 export type KPICategory = 'sales' | 'stock' | 'finance' | 'linkme' | 'general';
