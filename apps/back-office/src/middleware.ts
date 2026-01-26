@@ -18,7 +18,8 @@ import { createServerClient } from '@supabase/ssr';
  * Routes that don't require authentication
  */
 const PUBLIC_ROUTES = [
-  '/login',  // Seule page publique existante
+  '/',       // Page d'accueil (logo + bouton)
+  '/login',  // Page de connexion
 ];
 
 /**
