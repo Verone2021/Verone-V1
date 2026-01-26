@@ -34,6 +34,10 @@ import {
   useUserAffiliate,
   type SelectionItem,
 } from '../../lib/hooks/use-user-selection';
+import {
+  calculateMargin,
+  LINKME_CONSTANTS,
+} from '@verone/utils';
 
 interface EditMarginModalProps {
   item: SelectionItem;
@@ -41,10 +45,8 @@ interface EditMarginModalProps {
   onClose: () => void;
 }
 
-// Constantes (alignées avec AddToSelectionModal)
-const MIN_MARGIN = 1;
-const BUFFER_RATE = 5;
-const LINKME_COMMISSION = 5;
+// Constantes centralisées (SSOT)
+const { MIN_MARGIN, BUFFER_RATE, PLATFORM_COMMISSION_RATE } = LINKME_CONSTANTS;
 
 export function EditMarginModal({
   item,
@@ -63,7 +65,7 @@ export function EditMarginModal({
     // Prix public estimé = base × 1.5 (estimation conservative)
     const publicPriceHt = basePriceHt * 1.5;
     const commissionRate =
-      affiliate?.linkme_commission_rate || LINKME_COMMISSION;
+      affiliate?.linkme_commission_rate || PLATFORM_COMMISSION_RATE;
 
     // Prix LinkMe = prix base × (1 + commission)
     const prixLinkMe = basePriceHt * (1 + commissionRate / 100);
@@ -90,22 +92,25 @@ export function EditMarginModal({
     };
   }, [item.base_price_ht, affiliate]);
 
-  // Calculer prix vente et gain
+  // Calculer prix vente et gain avec la SSOT (taux de marque)
   const calculations = useMemo(() => {
     const basePriceHt = item.base_price_ht;
     const commissionRate =
-      affiliate?.linkme_commission_rate || LINKME_COMMISSION;
+      affiliate?.linkme_commission_rate || PLATFORM_COMMISSION_RATE;
 
-    // Prix vente = base × (1 + commission + marge)
-    const sellingPrice =
-      basePriceHt * (1 + commissionRate / 100 + marginRate / 100);
+    // Calcul avec la SSOT - formule TAUX DE MARQUE
+    // selling_price = base_price / (1 - margin_rate/100)
+    const { sellingPriceHt, gainEuros } = calculateMargin({
+      basePriceHt,
+      marginRate,
+    });
 
-    // Gain = base × marge
-    const gain = basePriceHt * (marginRate / 100);
+    // Prix final incluant la commission plateforme
+    const finalPrice = sellingPriceHt * (1 + commissionRate / 100);
 
     return {
-      sellingPrice: Math.round(sellingPrice * 100) / 100,
-      gain: Math.round(gain * 100) / 100,
+      sellingPrice: Math.round(finalPrice * 100) / 100,
+      gain: gainEuros,
     };
   }, [item.base_price_ht, marginRate, affiliate]);
 

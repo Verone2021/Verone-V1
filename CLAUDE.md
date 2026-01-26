@@ -2,97 +2,151 @@
 
 CRM/ERP modulaire pour décoration et mobilier d'intérieur haut de gamme.
 
-## Commandes
+---
+
+## AVANT DE COMMENCER (OBLIGATOIRE)
+
+**Consulter SYSTEMATIQUEMENT:**
+
+1. **Credentials**: `.serena/memories/` → Chercher `*-credentials-*.md`
+2. **Context metier**: `docs/current/serena/INDEX.md`
+3. **Database**: `.mcp.env` → DATABASE_URL
+4. **Supabase Cloud**: `.serena/memories/supabase-*.md` → OBLIGATOIRE avant toute migration
+
+**Voir `AGENTS.md` pour instructions detaillees.**
+
+**Regle d'or:** JAMAIS inventer credentials. TOUJOURS chercher dans `.serena/memories/`.
+
+---
+
+## 🌐 MCP Browsers (Playwright + Chrome DevTools)
+
+**Configuration** : Les deux MCP sont ACTIFS simultanément.
+
+**⚠️ IMPORTANT** : Toujours préciser QUEL MCP utiliser pour éviter confusion.
+
+### Quand Utiliser Quel MCP ?
+
+| Tâche | MCP à Utiliser | Raison |
+|-------|---------------|--------|
+| Tests E2E automatisés | **PLAYWRIGHT** | Cross-browser, accessibility tree |
+| Debug bugs critiques (500s) | **CHROME DEVTOOLS** | Network tab, console errors détaillés |
+| Performance audit (LCP, CLS) | **CHROME DEVTOOLS** | Performance profiler |
+| Automation workflows | **PLAYWRIGHT** | Multi-étapes fiable |
+| Scraping données | **PLAYWRIGHT** | Structured data via accessibility |
+
+### Gestion des Conflits
+
+**Si confusion détectée** : Désactiver temporairement un MCP dans `.claude/settings.json` (commenter la ligne), puis redémarrer Claude Code.
+
+**Documentation complète** : `.serena/memories/mcp-chrome-devtools-playwright-cohabitation.md`
+
+### Prérequis Chrome DevTools
 
 ```bash
-npm run dev          # Dev (localhost:3000)
-npm run build        # Production build
-npm run type-check   # TypeScript validation
-npm run e2e:smoke    # Smoke tests UI
+# Lancer Chrome avec remote debugging (obligatoire)
+/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222
 ```
 
 ---
 
-## 🔄 Workflow de Développement Professionnel
+## Commandes
 
-### Méthodologie Standard (Research-Plan-Execute)
+```bash
+pnpm dev             # Dev (localhost:3000)
+pnpm build           # Production build
+pnpm type-check      # TypeScript validation
+```
+
+### Tests E2E
+
+**Guide rapide**: `packages/e2e-linkme/QUICKSTART.md` 📖
+
+```bash
+# Démarrer apps (un seul terminal - Turborepo démarre tout)
+pnpm dev
+
+# Lancer tests E2E LinkMe (depuis root OU depuis packages/e2e-linkme)
+cd packages/e2e-linkme
+pnpm test:e2e
+
+# Mode UI pour déboguer
+pnpm test:e2e:ui
+
+# Voir le guide complet
+cat packages/e2e-linkme/QUICKSTART.md
+```
+
+---
+
+## 🔄 Workflow de Développement (5 Étapes)
+
+### Méthodologie Standard
 
 **TOUJOURS suivre cet ordre** :
 
-#### 1. 🔍 RESEARCH (Audit de l'existant)
+#### 1. 🔍 RESEARCH (Comprendre l'existant)
 
 Lire fichiers pertinents SANS coder :
 - Comprendre architecture actuelle
 - Identifier patterns existants
 - Localiser fichiers critiques
-- Documenter dépendances
 
 **Outils** : Glob, Grep, Read, Serena (symbolic search)
 
-#### 2. 📝 PLAN (Conception)
+#### 2. 📝 PLAN (Concevoir la solution)
 
 Créer plan détaillé AVANT de coder :
-- Utiliser EnterPlanMode pour tasks complexes
-- Tester plusieurs approches (au moins 2)
-- Identifier edge cases
-- Estimer impact (fichiers touchés, breaking changes)
+- Utiliser EnterPlanMode ou `/plan` pour tasks complexes
+- Recommander LA meilleure solution (pas d'options multiples)
+- Identifier edge cases et risques
 
 **Outils** : EnterPlanMode, AskUserQuestion (pour clarifications)
 
-#### 3. 🧪 TEST (TDD - Test-Driven Development)
+#### 3. 🧪 TEST (TDD si applicable)
 
-Écrire tests AVANT le code :
+Écrire tests AVANT le code (quand pertinent) :
 ```bash
 npm run test:e2e          # Tests E2E avec Playwright
-npm run test:unit         # Tests unitaires (si disponibles)
 npm run type-check        # Validation TypeScript
 ```
 
-**Pattern TDD** :
-1. Écrire test qui échoue (RED)
-2. Écrire code minimal pour passer (GREEN)
-3. Refactorer (REFACTOR)
+**Pattern TDD** : RED (test échoue) → GREEN (code minimal) → REFACTOR
 
-> "TDD est un superpower quand on travaille avec des AI agents"
-> — Kent Beck, [TDD, AI agents and coding](https://newsletter.pragmaticengineer.com/p/tdd-ai-agents-and-coding-with-kent)
+> "TDD est un superpower quand on travaille avec des AI agents" — Kent Beck
 
-#### 4. ⚙️ EXECUTE (Implémentation)
+#### 4. ⚙️ EXECUTE (Implémenter le minimum)
 
 Coder en suivant le plan :
 - Suivre patterns existants
-- Commits petits et fréquents (save points)
 - Minimum nécessaire (pas de sur-engineering)
+- Commits petits et fréquents (save points)
 
-#### 5. ✅ VERIFY (Vérification)
+#### 5. ✅ VERIFY (Valider)
 
-Valider à chaque étape :
+Valider à chaque modification :
 ```bash
 npm run type-check        # TypeScript sans erreurs
 npm run build             # Build production réussit
 npm run e2e:smoke         # Tests UI si modification frontend
 ```
 
-#### 6. 📦 COMMIT (Sauvegarde continue)
+---
 
-Commits fréquents sur feature branch :
+### Actions Git (après VERIFY réussi)
+
+**COMMIT** - Sauvegardes fréquentes sur feature branch :
 ```bash
-# Commits atomiques à chaque étape logique
-git add .
 git commit -m "[APP-DOMAIN-NNN] step: description"
-git push origin feature-branch
-
-# Chaque push = backup + CI check
+git push  # Backup + CI check
 ```
 
-#### 7. 🔀 PULL REQUEST (À la fin seulement)
-
-UNE SEULE PR pour toute la feature :
+**PR** - Une seule PR à la fin de la feature :
 ```bash
-gh pr create --title "[APP-DOMAIN-NNN] feat: description" \
-             --body "Résumé des commits + test plan"
-
-# PR doit être traitée rapidement (< 1 heure idéalement)
+gh pr create --title "[APP-DOMAIN-NNN] feat: description"
 ```
+
+**Règle d'or** : 1 feature = 1 branche = N commits = **1 PR**
 
 **Source** : [Claude Code: Best practices for agentic coding](https://www.anthropic.com/engineering/claude-code-best-practices)
 
@@ -263,6 +317,39 @@ cat .tasks/INDEX.md
 
 ---
 
+## Structure `.claude/` (Standards Anthropic 2026)
+
+### Dossiers Requis
+
+- **`agents/`** - Agents spécialisés (4 agents core)
+- **`commands/`** - Commandes slash (5 commandes actives)
+- **`rules/`** - Règles comportement (nouveau 2026)
+- **`scripts/`** - Scripts hooks (statusline, task-completed, etc.)
+- **`audits/`** - Documentation audit + rapports générés
+
+### Fichiers Configuration
+
+- **`settings.json`** - Config MCP + permissions (tracké Git)
+- **`settings.local.json`** - Overrides locaux (gitignored)
+- **`README.md`** - Documentation structure kit
+- **`MANUAL_MODE.md`** - Règles workflow manuel
+
+### ❌ À NE PAS METTRE dans `.claude/`
+
+- **Mémoires** → `.serena/memories/` (MCP Serena)
+- **Plans** → `.tasks/plans/` (Task management)
+- **Documentation** → `docs/` (canonique) ou `docs/claude/` (spécifique)
+- **Archives** → `docs/archive/YYYY-MM/`
+
+### Portabilité
+
+Cette structure `.claude/` est portable entre repos :
+1. Copier dossier `.claude/` complet
+2. Adapter `settings.json` (chemins absolus → `$CLAUDE_PROJECT_DIR`)
+3. Installer dépendances globales : `bun install -g ccusage@17.2.1`
+
+---
+
 ## Ports
 
 | Application | Port |
@@ -273,4 +360,4 @@ cat .tasks/INDEX.md
 
 ---
 
-**Version**: 9.0.0 (Refonte Workflow Professionnel 2026-01-17)
+**Version**: 9.1.0 (Audit Conformité 2026-01-21)

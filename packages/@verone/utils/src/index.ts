@@ -86,4 +86,5 @@ export * from './middleware/app-isolation';
 // LINKME
 // ========================================
 
-export * from './linkme/margin-calculation';
+// Export tous les utilitaires LinkMe (calculs de marge, constantes)
+export * from './linkme';

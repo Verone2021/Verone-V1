@@ -73,7 +73,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
 
   // Route publique → laisser passer
   if (isPublicRoute(pathname)) {
-    // Si sur /login et déjà connecté → rediriger vers dashboard
+    // Si sur /login et déjà connecté → rediriger vers landing
     if (pathname === '/login') {
       const { supabase } = createMiddlewareClient(request);
       const {
@@ -81,7 +81,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
       } = await supabase.auth.getUser();
 
       if (user) {
-        return NextResponse.redirect(new URL('/dashboard', request.url));
+        return NextResponse.redirect(new URL('/', request.url));
       }
     }
     return response;

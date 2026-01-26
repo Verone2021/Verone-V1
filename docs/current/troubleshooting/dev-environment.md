@@ -183,18 +183,11 @@ echo "node_modules/" >> .gitignore
 ### 6. Console pleine d'erreurs
 
 **Symptômes**:
-- Erreurs Sentry non critiques
 - Warnings Next.js DevTools
 - Deprecation warnings
 
 **Erreurs normales (non-bloquantes)**:
 ```
-[@sentry/nextjs] Could not find `onRequestError` hook
-→ Warning normal, Sentry fonctionne quand même
-
-[@sentry/nextjs] DEPRECATION WARNING: rename sentry.client.config.ts
-→ À faire plus tard, non urgent
-
 [baseline-browser-mapping] Data over two months old
 → Cosmétique, non bloquant
 ```

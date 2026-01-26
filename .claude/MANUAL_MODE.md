@@ -6,7 +6,23 @@
 
 ## 🛑 Règle Fondamentale
 
-**Claude NE DOIT JAMAIS créer de PR automatiquement ni merger sans instruction explicite.**
+**Approche équilibrée** : Protection contre accidents + Workflow fluide sur demandes explicites
+
+### 🔒 Protections Techniques (Hooks)
+
+**BLOQUÉ automatiquement** :
+- ❌ `git commit` sur branche main/master (hook PreToolUse)
+- ❌ `git push origin main` (hook PreToolUse)
+
+**Effet** : Impossible de commit/push accidentellement sur main. Force passage par feature branch + PR.
+
+### 💡 Bonnes Pratiques (Recommandations)
+
+**Recommandé** (mais pas bloqué) :
+- 💡 Demander avant `gh pr create` (sauf si user demande explicitement)
+- 💡 Demander avant `gh pr merge` (sauf si user demande explicitement)
+
+**Effet** : Claude propose et demande confirmation, MAIS peut exécuter directement si l'utilisateur le demande.
 
 ## ✅ Actions Autorisées (Claude autonome)
 
@@ -29,15 +45,17 @@ Claude peut faire SANS demander :
 
 ## 🤝 Actions Nécessitant Validation Humaine
 
-Claude **DOIT DEMANDER** avant :
+Claude **DEVRAIT DEMANDER** avant (recommandé, mais pas bloqué techniquement) :
 
 ### Git & GitHub
-- ⚠️ **Créer Pull Request (`gh pr create`)** ← **JAMAIS sans demander !**
-- ⚠️ Merger Pull Request (`gh pr merge`)
+- 💡 **Créer Pull Request (`gh pr create`)** ← Recommandé de demander d'abord
+- 💡 Merger Pull Request (`gh pr merge`)
 - ⚠️ Supprimer branches distantes
 - ⚠️ Force push (`git push --force`)
 
-**🚨 RÈGLE ABSOLUE : Claude NE DOIT JAMAIS exécuter `gh pr create` sans avoir reçu une confirmation explicite de l'utilisateur.**
+**📋 BONNES PRATIQUES : Claude devrait proposer et demander confirmation avant de créer/merger des PR, sauf si l'utilisateur demande explicitement.**
+
+**⚠️ Note** : Si l'utilisateur dit "crée une PR" ou "merge sur main", Claude peut le faire directement sans friction supplémentaire.
 
 ### Déploiement
 - ⚠️ Merger vers main/production
@@ -63,15 +81,9 @@ git commit -m "[APP-DOMAIN-NNN] feat: description"
 git push origin feat/APP-DOMAIN-NNN-description
 ```
 
-### 2. Pull Request (DEMANDER d'abord)
+### 2. Pull Request (Workflow Recommandé)
 
-**❌ CE QUE CLAUDE NE DOIT JAMAIS FAIRE** :
-```bash
-# ❌ INTERDIT - Ne jamais exécuter directement
-gh pr create --title "..." --body "..."
-```
-
-**✅ CE QUE CLAUDE DOIT FAIRE** :
+**✅ WORKFLOW RECOMMANDÉ** :
 ```
 Claude propose à l'utilisateur:
 "J'ai terminé l'implémentation et tous les tests passent.
@@ -85,16 +97,19 @@ Tous les checks sont verts:
 Veux-tu que je crée une Pull Request maintenant ?"
 ```
 
-**Utilisateur répond "oui"** → Alors seulement Claude exécute :
+**Utilisateur répond "oui"** → Claude exécute :
 ```bash
 gh pr create --title "[APP-DOMAIN-NNN] feat: description" --body "..."
 ```
 
-**Si l'utilisateur ne répond pas ou dit "non"** → Claude NE FAIT RIEN
+**OU si l'utilisateur demande directement** : "crée une PR maintenant"
+```bash
+Claude exécute directement gh pr create (pas de friction supplémentaire)
+```
 
-### 3. Merge (DEMANDER d'abord)
+### 3. Merge (Workflow Recommandé)
 
-**Claude dit** :
+**WORKFLOW RECOMMANDÉ** :
 > "La PR #123 a été approuvée et tous les checks passent.
 >
 > Veux-tu que je merge cette PR ?"
@@ -102,6 +117,11 @@ gh pr create --title "[APP-DOMAIN-NNN] feat: description" --body "..."
 **Utilisateur approuve** → Claude exécute :
 ```bash
 gh pr merge 123 --squash --delete-branch
+```
+
+**OU si l'utilisateur demande directement** : "merge sur main" ou "merge la PR #123"
+```bash
+Claude exécute directement gh pr merge (pas de friction supplémentaire)
 ```
 
 ## 🚫 GitHub Actions - Aucune PR Automatique
@@ -145,6 +165,6 @@ on:
 
 ---
 
-**Version** : 1.0.0
-**Date** : 2026-01-19
-**Auteur** : Romeo + Claude
+**Version** : 2.0.0 (Approche Simplifiée)
+**Date** : 2026-01-21
+**Auteur** : Romeo + Claude Sonnet 4.5

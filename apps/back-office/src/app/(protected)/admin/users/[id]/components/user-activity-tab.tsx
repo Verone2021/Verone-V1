@@ -29,7 +29,6 @@ import {
 } from 'lucide-react';
 
 import type { UserDetailData } from '../page';
-import { UserModuleActivityDashboard } from './user-module-activity-dashboard';
 
 interface UserActivityTabProps {
   user: UserDetailData;
@@ -333,9 +332,9 @@ export function UserActivityTab({ user }: UserActivityTabProps) {
       </div>
 
       {/* Dashboard modules avec barres de progression */}
-      <div className="space-y-2">
+      {/* <div className="space-y-2">
         <UserModuleActivityDashboard userId={user.id} days={30} />
-      </div>
+      </div> */}
 
       {/* Sessions actives */}
       {activityData.active_sessions.length > 0 && (

@@ -1,5 +1,5 @@
 ---
-allowed-tools: Bash(git :*), Bash(gh :*), Bash(npm run :*)
+allowed-tools: Bash(git :*), Bash(gh :*), Bash(pnpm :*), Bash(npm run :*)
 description: Create and push PR with auto-generated title and description
 ---
 
@@ -50,21 +50,21 @@ git log --oneline origin/main..HEAD
 
 ```bash
 # 5. Type-check
-npm run type-check
+pnpm run type-check
 ```
 
 → Si erreur → **STOP** + afficher les erreurs TypeScript
 
 ```bash
 # 6. Lint
-npm run lint
+pnpm run lint
 ```
 
 → Si erreur → **STOP** + afficher les erreurs ESLint
 
 ```bash
 # 7. Build (au minimum back-office)
-npm run build
+pnpm run build
 ```
 
 → Si erreur → **STOP** + afficher l'erreur de build

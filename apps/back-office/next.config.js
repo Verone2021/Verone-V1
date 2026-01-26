@@ -1,10 +1,8 @@
-const { withSentryConfig } = require('@sentry/nextjs');
 const { getSecurityHeaders } = require('./src/lib/security/headers.ts');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Next.js 15 App Router configuration
-  // Sentry Pro 2026 configured - requires deployment (2026-01-15)
   reactStrictMode: true,
 
   // WORKAROUND (2025-10-17): Désactiver export statique pour résoudre Html import error
@@ -37,15 +35,9 @@ const nextConfig = {
     ];
   },
 
-  // Redirections - Root redirect + Migration structure
+  // Redirections - Migration structure (Root redirect géré par middleware.ts)
   async redirects() {
     return [
-      // 🚀 ROOT REDIRECT: "/" → "/login" (remplace le middleware Edge)
-      {
-        source: '/',
-        destination: '/login',
-        permanent: false, // 307 redirect (temporaire)
-      },
       {
         source: '/catalogue',
         destination: '/produits/catalogue',
@@ -147,8 +139,6 @@ const nextConfig = {
       /A Node\.js API is used \(process\.(versions?|version) at line: \d+\) which is not supported in the Edge Runtime/,
       // Warning serialization big strings (déjà géré avec memory cache mais on filtre le message)
       /Serializing big strings \(\d+kiB\) impacts deserialization performance/,
-      // Sentry OpenTelemetry dynamic require (faux positif documenté)
-      { module: /require-in-the-middle/ },
     ];
 
     // Optimize performance for large files (like use-manual-tests.ts)
@@ -205,29 +195,4 @@ const nextConfig = {
   },
 };
 
-// Sentry configuration
-const sentryWebpackPluginOptions = {
-  // Organisation et projet Sentry
-  org: 'verone-4q',
-  project: 'javascript-nextjs',
-
-  // Silence sourcemap upload logs
-  silent: !process.env.CI,
-
-  // Upload sourcemaps mais les supprimer du bundle client
-  hideSourceMaps: true,
-
-  // Tunnel pour contourner ad-blockers
-  tunnelRoute: '/monitoring',
-
-  // ✅ FIXED: Migrate automaticVercelMonitors to webpack config (Sentry v8+ requirement)
-  webpack: {
-    automaticVercelMonitors: true,
-  },
-
-  // Desactiver telemetrie Sentry
-  telemetry: false,
-};
-
-// Sentry réactivé 2026-01-21 après migration routes Edge → Node.js
-module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);
+module.exports = nextConfig;

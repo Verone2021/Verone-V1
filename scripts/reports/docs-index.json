@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "generated": "2026-01-21T04:27:21+01:00",
-    "total_files": 221,
+    "generated": "2026-01-22T09:31:27+01:00",
+    "total_files": 227,
     "version": "1.0.0"
   },
   "files": [
@@ -281,6 +281,11 @@
       "pattern": "audit"
     },
     {
+      "path": "docs/archive/2026-01/DEPLOYMENT_TRUTH.md",
+      "filename": "DEPLOYMENT_TRUTH.md",
+      "pattern": "unknown"
+    },
+    {
       "path": "docs/archive/2026-01/database/migrations/applying-changes.md",
       "filename": "applying-changes.md",
       "pattern": "serena_memory"
@@ -414,6 +419,16 @@
       "path": "docs/archive/2026-01/design-resources/21st-dev-components-catalog.md",
       "filename": "21st-dev-components-catalog.md",
       "pattern": "unknown"
+    },
+    {
+      "path": "docs/archive/2026-01/AUDIT_GLOBE_LINKME_2026-01-16.md",
+      "filename": "AUDIT_GLOBE_LINKME_2026-01-16.md",
+      "pattern": "unknown"
+    },
+    {
+      "path": "docs/archive/2026-01/claude/agents-restauration.md",
+      "filename": "agents-restauration.md",
+      "pattern": "serena_memory"
     },
     {
       "path": "docs/archive/2026-01/middleware-investigation-2026-01-16.md",
@@ -761,6 +776,31 @@
       "pattern": "unknown"
     },
     {
+      "path": "docs/archive/2026-01/VERCEL_DEPLOY_FIX_2026-01-16.md",
+      "filename": "VERCEL_DEPLOY_FIX_2026-01-16.md",
+      "pattern": "unknown"
+    },
+    {
+      "path": "docs/archive/2026-01/VALIDATION_FIXES_2026-01-16.md",
+      "filename": "VALIDATION_FIXES_2026-01-16.md",
+      "pattern": "unknown"
+    },
+    {
+      "path": "docs/audits/2026-01-21-sql-gaps.md",
+      "filename": "2026-01-21-sql-gaps.md",
+      "pattern": "unknown"
+    },
+    {
+      "path": "docs/audits/2026-01-21-implementation-gaps.md",
+      "filename": "2026-01-21-implementation-gaps.md",
+      "pattern": "unknown"
+    },
+    {
+      "path": "docs/audits/2026-01-21-todo-checklist.md",
+      "filename": "2026-01-21-todo-checklist.md",
+      "pattern": "unknown"
+    },
+    {
       "path": "docs/linkme/margin-calculation.md",
       "filename": "margin-calculation.md",
       "pattern": "serena_memory"
@@ -774,6 +814,11 @@
       "path": "docs/claude/mcp-playwright-config.md",
       "filename": "mcp-playwright-config.md",
       "pattern": "serena_memory"
+    },
+    {
+      "path": "docs/claude/STATUSLINE.md",
+      "filename": "STATUSLINE.md",
+      "pattern": "unknown"
     },
     {
       "path": "docs/runbooks/incident.md",
@@ -861,21 +906,6 @@
       "pattern": "unknown"
     },
     {
-      "path": "docs/integrations/sentry-configuration-complete.md",
-      "filename": "sentry-configuration-complete.md",
-      "pattern": "serena_memory"
-    },
-    {
-      "path": "docs/integrations/sentry-alerts-github.md",
-      "filename": "sentry-alerts-github.md",
-      "pattern": "serena_memory"
-    },
-    {
-      "path": "docs/integrations/sentry-projects-setup.md",
-      "filename": "sentry-projects-setup.md",
-      "pattern": "serena_memory"
-    },
-    {
       "path": "docs/integrations/qonto-env-setup.md",
       "filename": "qonto-env-setup.md",
       "pattern": "serena_memory"
@@ -886,19 +916,14 @@
       "pattern": "serena_memory"
     },
     {
-      "path": "docs/integrations/sentry-runbook.md",
-      "filename": "sentry-runbook.md",
-      "pattern": "serena_memory"
-    },
-    {
-      "path": "docs/integrations/sentry-validation-checklist.md",
-      "filename": "sentry-validation-checklist.md",
-      "pattern": "serena_memory"
-    },
-    {
       "path": "docs/integrations/resend-dns-setup.md",
       "filename": "resend-dns-setup.md",
       "pattern": "serena_memory"
+    },
+    {
+      "path": "docs/architecture/COMPOSANTS-CATALOGUE.md",
+      "filename": "COMPOSANTS-CATALOGUE.md",
+      "pattern": "unknown"
     },
     {
       "path": "docs/architecture/README.md",
@@ -909,26 +934,6 @@
       "path": "docs/architecture/notifications-et-approbations.md",
       "filename": "notifications-et-approbations.md",
       "pattern": "serena_memory"
-    },
-    {
-      "path": "docs/audit/DEPLOYMENT_TRUTH.md",
-      "filename": "DEPLOYMENT_TRUTH.md",
-      "pattern": "unknown"
-    },
-    {
-      "path": "docs/audit/AUDIT_GLOBE_LINKME_2026-01-16.md",
-      "filename": "AUDIT_GLOBE_LINKME_2026-01-16.md",
-      "pattern": "unknown"
-    },
-    {
-      "path": "docs/audit/VERCEL_DEPLOY_FIX_2026-01-16.md",
-      "filename": "VERCEL_DEPLOY_FIX_2026-01-16.md",
-      "pattern": "unknown"
-    },
-    {
-      "path": "docs/audit/VALIDATION_FIXES_2026-01-16.md",
-      "filename": "VALIDATION_FIXES_2026-01-16.md",
-      "pattern": "unknown"
     },
     {
       "path": "docs/current/AUDIT-FACTURATION-QONTO-2026-01.md",
@@ -946,6 +951,11 @@
       "pattern": "serena_memory"
     },
     {
+      "path": "docs/current/linkme-traffic-lights.md",
+      "filename": "linkme-traffic-lights.md",
+      "pattern": "serena_memory"
+    },
+    {
       "path": "docs/current/architecture.md",
       "filename": "architecture.md",
       "pattern": "serena_memory"
@@ -953,6 +963,11 @@
     {
       "path": "docs/current/business-rules-linkme.md",
       "filename": "business-rules-linkme.md",
+      "pattern": "serena_memory"
+    },
+    {
+      "path": "docs/current/linkme-storage.md",
+      "filename": "linkme-storage.md",
       "pattern": "serena_memory"
     },
     {
@@ -973,6 +988,11 @@
     {
       "path": "docs/current/serena/project-decisions.md",
       "filename": "project-decisions.md",
+      "pattern": "serena_memory"
+    },
+    {
+      "path": "docs/current/serena/e2e-tests-quickstart.md",
+      "filename": "e2e-tests-quickstart.md",
       "pattern": "serena_memory"
     },
     {
@@ -1061,6 +1081,11 @@
       "pattern": "serena_memory"
     },
     {
+      "path": "docs/current/linkme-webhooks.md",
+      "filename": "linkme-webhooks.md",
+      "pattern": "serena_memory"
+    },
+    {
       "path": "docs/current/security-auth.md",
       "filename": "security-auth.md",
       "pattern": "serena_memory"
@@ -1068,6 +1093,11 @@
     {
       "path": "docs/current/index.md",
       "filename": "index.md",
+      "pattern": "serena_memory"
+    },
+    {
+      "path": "docs/current/finance/invoice-workflow-implementation.md",
+      "filename": "invoice-workflow-implementation.md",
       "pattern": "serena_memory"
     },
     {

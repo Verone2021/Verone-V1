@@ -83,6 +83,8 @@ import {
   Send,
   Trash2,
   Loader2,
+  Archive,
+  ArchiveRestore,
 } from 'lucide-react';
 
 // =====================================================================
@@ -147,6 +149,12 @@ interface Invoice {
     name: string;
   };
   purchase_order?: string;
+  // Données locales enrichies depuis financial_documents
+  workflow_status?: string | null;
+  local_pdf_path?: string | null;
+  local_document_id?: string | null;
+  has_local_pdf?: boolean;
+  deleted_at?: string | null;
 }
 
 // =====================================================================
@@ -249,6 +257,61 @@ function InvoiceStatusBadge({ status }: { status: string }): React.ReactNode {
   );
 }
 
+/**
+ * Badge pour afficher le workflow local (synchronized → draft_validated → finalized)
+ */
+function WorkflowStatusBadge({ status, hasLocalPdf }: { status: string | null | undefined; hasLocalPdf?: boolean }): React.ReactNode {
+  if (!status) return null;
+
+  const config: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
+    synchronized: {
+      label: 'Synchronisé',
+      className: 'bg-blue-100 text-blue-700 border-blue-200',
+      icon: <RefreshCw className="h-3 w-3 mr-1" />,
+    },
+    draft_validated: {
+      label: 'Brouillon validé',
+      className: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+      icon: <Clock className="h-3 w-3 mr-1" />,
+    },
+    finalized: {
+      label: 'Définitif',
+      className: 'bg-green-100 text-green-700 border-green-200',
+      icon: <CheckCircle className="h-3 w-3 mr-1" />,
+    },
+    sent: {
+      label: 'Envoyé',
+      className: 'bg-purple-100 text-purple-700 border-purple-200',
+      icon: <Send className="h-3 w-3 mr-1" />,
+    },
+    paid: {
+      label: 'Payé',
+      className: 'bg-green-100 text-green-700 border-green-200',
+      icon: <CheckCircle className="h-3 w-3 mr-1" />,
+    },
+  };
+
+  const currentConfig = config[status] || {
+    label: status,
+    className: 'bg-gray-100 text-gray-700',
+    icon: null,
+  };
+
+  return (
+    <div className="flex items-center gap-1">
+      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${currentConfig.className}`}>
+        {currentConfig.icon}
+        {currentConfig.label}
+      </span>
+      {hasLocalPdf && (
+        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-emerald-100 text-emerald-700 border border-emerald-200" title="PDF stocké localement">
+          <Lock className="h-3 w-3" />
+        </span>
+      )}
+    </div>
+  );
+}
+
 // =====================================================================
 // COMPOSANT: TABLEAU DE FACTURES (Qonto)
 // =====================================================================
@@ -258,11 +321,17 @@ function InvoicesTable({
   loading,
   onView,
   onDownloadPdf,
+  isArchived,
+  onArchive,
+  onUnarchive,
 }: {
   invoices: Invoice[];
   loading: boolean;
   onView: (id: string) => void;
   onDownloadPdf: (invoice: Invoice) => void;
+  isArchived?: boolean;
+  onArchive?: (invoice: Invoice) => Promise<void>;
+  onUnarchive?: (invoice: Invoice) => Promise<void>;
 }) {
   if (loading) {
     return (
@@ -295,6 +364,7 @@ function InvoicesTable({
           <TableHead>Date</TableHead>
           <TableHead>Échéance</TableHead>
           <TableHead>Statut</TableHead>
+          <TableHead>Workflow</TableHead>
           <TableHead className="text-right">Montant</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
@@ -320,6 +390,9 @@ function InvoicesTable({
             </TableCell>
             <TableCell>
               <InvoiceStatusBadge status={invoice.status} />
+            </TableCell>
+            <TableCell>
+              <WorkflowStatusBadge status={invoice.workflow_status} hasLocalPdf={invoice.has_local_pdf} />
             </TableCell>
             <TableCell className="text-right font-medium">
               {formatAmount(
@@ -359,6 +432,30 @@ function InvoicesTable({
                 >
                   <Download className="h-4 w-4" />
                 </Button>
+                {!isArchived &&
+                  ['draft_validated', 'finalized', 'sent', 'paid'].includes(
+                    invoice.workflow_status || ''
+                  ) &&
+                  onArchive && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => void onArchive(invoice)}
+                      title="Archiver"
+                    >
+                      <Archive className="h-4 w-4" />
+                    </Button>
+                  )}
+                {isArchived && onUnarchive && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => void onUnarchive(invoice)}
+                    title="Désarchiver"
+                  >
+                    <ArchiveRestore className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </TableCell>
           </TableRow>
@@ -488,6 +585,9 @@ function MissingInvoicesTable({
 
 export default function FacturationPage() {
   const [activeTab, setActiveTab] = useState<TabType>('factures');
+  const [invoiceView, setInvoiceView] = useState<'active' | 'archived'>(
+    'active'
+  );
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -1154,13 +1254,63 @@ export default function FacturationPage() {
         )}
 
         {/* Contenu des tabs */}
-        <TabsContent value="factures" className="mt-4">
-          <InvoicesTable
-            invoices={invoices}
-            loading={loadingInvoices}
-            onView={handleView}
-            onDownloadPdf={handleDownloadInvoicePdf}
-          />
+        <TabsContent value="factures" className="mt-4 space-y-4">
+          {/* Sub-tabs for Active/Archived invoices */}
+          <Tabs
+            value={invoiceView}
+            onValueChange={v => setInvoiceView(v as 'active' | 'archived')}
+          >
+            <TabsList>
+              <TabsTrigger value="active">Factures actives</TabsTrigger>
+              <TabsTrigger value="archived">Archives</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="active" className="mt-4">
+              <InvoicesTable
+                invoices={invoices.filter(inv => !inv.deleted_at)}
+                loading={loadingInvoices}
+                onView={handleView}
+                onDownloadPdf={handleDownloadInvoicePdf}
+                isArchived={false}
+                onArchive={async invoice => {
+                  try {
+                    const response = await fetch(
+                      `/api/financial-documents/${invoice.id}/archive`,
+                      { method: 'POST' }
+                    );
+                    const data = await response.json();
+                    if (!data.success) throw new Error(data.error);
+                    void fetchInvoices();
+                  } catch (error) {
+                    console.error('Archive error:', error);
+                  }
+                }}
+              />
+            </TabsContent>
+
+            <TabsContent value="archived" className="mt-4">
+              <InvoicesTable
+                invoices={invoices.filter(inv => inv.deleted_at)}
+                loading={loadingInvoices}
+                onView={handleView}
+                onDownloadPdf={handleDownloadInvoicePdf}
+                isArchived={true}
+                onUnarchive={async invoice => {
+                  try {
+                    const response = await fetch(
+                      `/api/financial-documents/${invoice.id}/unarchive`,
+                      { method: 'POST' }
+                    );
+                    const data = await response.json();
+                    if (!data.success) throw new Error(data.error);
+                    void fetchInvoices();
+                  } catch (error) {
+                    console.error('Unarchive error:', error);
+                  }
+                }}
+              />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
 
         <TabsContent value="devis" className="mt-4">

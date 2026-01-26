@@ -95,7 +95,7 @@ function LoginContent(): JSX.Element {
     },
   ];
 
-  const redirectUrl = searchParams.get('redirect') ?? '/';
+  const redirectUrl = searchParams.get('redirect') ?? '/dashboard';
 
   type GlobeApiItem = {
     id: string;

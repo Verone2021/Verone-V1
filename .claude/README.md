@@ -32,6 +32,63 @@
     └── pr.md
 ```
 
+## Dossier `rules/` (Standards 2026)
+
+Règles de comportement pour Claude Code, organisées par domaine.
+
+**Structure** :
+- `rules/general.md` - Règles cross-cutting
+- `rules/frontend/` - Next.js, React, UI
+- `rules/backend/` - API, middleware, auth
+- `rules/database/` - Supabase, migrations, RLS
+
+**Utilisation** : Tous fichiers `.md` sont auto-découverts récursivement.
+
+**Symlinks** : Supportés pour partager règles entre projets.
+
+## Hooks (Protection Branch)
+
+### PreToolUse: Protection `main`
+
+Le hook PreToolUse dans `settings.json` empêche les commits sur `main`:
+
+```json
+{
+  "PreToolUse": [{
+    "matcher": "Bash(git commit*)",
+    "hooks": [{
+      "type": "command",
+      "command": "bash -c '...if [ \"$BRANCH\" = \"main\" ]...exit 1...'"
+    }]
+  }]
+}
+```
+
+**Comportement:**
+- ❌ Bloque `git commit` sur `main` ou `master`
+- ❌ Bloque commits sans Task ID valide
+- ✅ Autorise commits sur feature branches avec format `[APP-XXX-NNN]` ou `[NO-TASK]`
+
+**Message d'erreur:**
+```
+❌ INTERDIT de commit sur main. Créer une feature branch: git checkout -b feat/XXX
+```
+
+### Stop: Task Completed
+
+Le hook Stop notifie quand une tâche Claude Code est terminée:
+
+```json
+{
+  "Stop": [{
+    "hooks": [{
+      "type": "command",
+      "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/task-completed.sh"
+    }]
+  }]
+}
+```
+
 ## Règles "Expert"
 
 ### Wrappers de compatibilité
@@ -62,7 +119,7 @@ Les scripts dans `.claude/scripts/` sont des **wrappers** qui:
 | Commands core | `.claude/commands/` |
 | Scripts projet | `scripts/claude/` |
 | Workflow docs | `docs/claude/` |
-| Plans | `.tasks/plans/` |
+| Plans | `.claude/work/` |
 | Archives | `archive/YYYY-MM/claude/` |
 
 ## Hygiène hebdomadaire

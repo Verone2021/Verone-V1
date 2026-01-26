@@ -31,6 +31,7 @@ import {
   Label,
   Separator,
 } from '@verone/ui';
+import { calculateMargin, LINKME_CONSTANTS } from '@verone/utils';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
@@ -125,11 +126,12 @@ export function EditOrderModal({
         productsHt = roundMoney(
           productsHt + item.quantity * item.unit_price_ht
         );
-        // Commission = base_price_ht * margin_rate * quantity
-        totalCommission = roundMoney(
-          totalCommission +
-            item.quantity * item.base_price_ht * item.margin_rate
-        );
+        // ✅ SSOT: Utiliser calculateMargin pour obtenir le gain correct
+        const { gainEuros } = calculateMargin({
+          basePriceHt: item.base_price_ht,
+          marginRate: item.margin_rate,
+        });
+        totalCommission = roundMoney(totalCommission + gainEuros * item.quantity);
       }
     }
 
@@ -446,10 +448,10 @@ export function EditOrderModal({
                 </div>
                 <div className="flex justify-between pt-2 border-t border-emerald-200 bg-emerald-50 -mx-4 px-4 py-2 rounded-b-lg">
                   <span className="text-emerald-700 font-medium">
-                    Votre commission
+                    Votre commission TTC
                   </span>
                   <span className="text-lg font-bold text-emerald-600">
-                    +{formatPrice(totals.totalCommission * 1.2)}
+                    +{formatPrice(totals.totalCommission * (1 + LINKME_CONSTANTS.DEFAULT_TAX_RATE))}
                   </span>
                 </div>
               </div>

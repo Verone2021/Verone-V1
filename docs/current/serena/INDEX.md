@@ -5,7 +5,7 @@
 
 ---
 
-## 15 Memories CRITICAL
+## 16 Memories CRITICAL
 
 Ces memories sont **stables, transverses, et essentielles** pour le bon fonctionnement de Claude Code.
 
@@ -26,6 +26,7 @@ Ces memories sont **stables, transverses, et essentielles** pour le bon fonction
 | 13  | `vercel-no-docker.md`         | Deploy      | JAMAIS Docker, toujours Vercel         | OK     |
 | 14  | `qonto-never-finalize.md`     | Back-office | JAMAIS finaliser factures              | OK     |
 | 15  | `user-expectations.md`        | Tooling     | Pas d'options, resoudre directement    | OK     |
+| 16  | `e2e-tests-quickstart.md`     | Testing     | Guide rapide tests E2E LinkMe          | OK     |
 
 ---
 
@@ -67,6 +68,7 @@ Updated: YYYY-MM-DD
 | `vercel-workflow-no-docker.md`                      | `vercel-no-docker.md`              |
 | `qonto-invoices-never-finalize-2026-01-07.md`       | `qonto-never-finalize.md`          |
 | `user-expectations-no-options.md`                   | `user-expectations.md`             |
+| `packages/e2e-linkme/QUICKSTART.md`                 | `e2e-tests-quickstart.md`          |
 
 ---
 

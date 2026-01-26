@@ -17,7 +17,7 @@
 | [architecture](./current/architecture.md)                   | Turborepo, apps, packages |
 | [database](./current/database.md)                           | Supabase, migrations, RLS |
 | [security-auth](./current/security-auth.md)                 | Auth, roles, permissions  |
-| [integrations](./current/integrations.md)                   | Qonto, Sentry, etc.       |
+| [integrations](./current/integrations.md)                   | Qonto, Google OAuth, etc. |
 | [deploy-runbooks](./current/deploy-runbooks.md)             | Vercel, CI/CD             |
 | [business-rules-linkme](./current/business-rules-linkme.md) | Workflows LinkMe          |
 

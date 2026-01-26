@@ -18,9 +18,9 @@ import { Percent, Activity, CreditCard } from 'lucide-react';
 const FEATURES = [
   {
     icon: Percent,
-    title: 'Commissions attractives',
+    title: 'Marges configurables',
     description:
-      "Gagnez jusqu'a 15% de commission sur chaque vente generee. Taux competitifs et transparents pour maximiser vos revenus.",
+      'Configurez vos marges produit par produit selon votre strategie. Transparence totale sur vos gains avec notre systeme de calcul en temps reel.',
     color: '#5DBEBB',
     bgGradient: 'from-[#5DBEBB]/10 to-[#5DBEBB]/5',
   },

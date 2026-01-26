@@ -75,7 +75,6 @@ npm run build         # Build reussi
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Cle anonyme  | Vercel Dashboard |
 | `SUPABASE_SERVICE_ROLE_KEY`     | Cle service  | Vercel Dashboard |
 | `QONTO_API_KEY`                 | API Qonto    | Vercel Dashboard |
-| `SENTRY_DSN`                    | Sentry DSN   | Vercel Dashboard |
 
 **Acces:** Vercel Dashboard > Settings > Environment Variables
 
@@ -126,7 +125,6 @@ git push origin main
 ## Monitoring Post-Deploy
 
 - **Vercel Dashboard:** Logs, Functions, Analytics
-- **Sentry:** Erreurs runtime
 - **Supabase Dashboard:** Queries, RLS errors
 
 ---

@@ -2,11 +2,9 @@
 
 /**
  * Global Error Handler - LinkMe
- * Capture les erreurs non-catchees et les envoie a Sentry
+ * Capture les erreurs non-catchees et les affiche
  */
 import { useEffect } from 'react';
-
-import * as Sentry from '@sentry/nextjs';
 
 export default function GlobalError({
   error,
@@ -16,9 +14,6 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Envoyer l'erreur a Sentry
-    Sentry.captureException(error);
-
     // Console log for debugging
     console.error('Global Error:', error);
   }, [error]);

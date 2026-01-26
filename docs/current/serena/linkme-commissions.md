@@ -135,8 +135,109 @@ if (isAffiliateProduct) {
 
 ---
 
+## Commission HT vs TTC
+
+### Principe
+
+**Tous les calculs de commission sont effectues en HT.**
+
+| Element | Base de calcul | TVA |
+|---------|---------------|-----|
+| Prix de base | HT | Non incluse |
+| Prix de vente affilié | HT | Non incluse |
+| Marge affilié (gain) | HT | Non incluse |
+| Commission plateforme | HT | Non incluse |
+
+### Formule commission HT
+
+```sql
+-- Commission = prix de vente HT × taux de marque
+commission_ht = selling_price_ht × (margin_rate / 100)
+
+-- Exemple: selling_price = 117.65€ HT, margin_rate = 15%
+-- commission_ht = 117.65 × 0.15 = 17.65€ HT
+```
+
+### TVA sur commissions
+
+| Question | Réponse |
+|----------|---------|
+| La TVA s'applique-t-elle sur la commission? | **NON** |
+| La commission est calculée sur quel montant? | Prix de vente **HT** |
+| L'affilié reçoit sa commission en? | **HT** (il déclare ensuite selon son régime fiscal) |
+
+### Affichage pour les affiliés
+
+| Interface | Affichage par défaut | Configurable |
+|-----------|---------------------|--------------|
+| Dashboard commissions | **HT** | Non |
+| Détail commande | HT | Non |
+| Page sélection | HT ou TTC | Oui (`price_display_mode`) |
+| Checkout client | **TTC** | Non |
+
+La selection a un champ `price_display_mode` ('HT' ou 'TTC') qui permet à l'affilié de choisir comment afficher les prix à ses clients, mais les calculs internes restent toujours en HT.
+
+---
+
+## Exemples Concrets
+
+### Exemple 1: Pokawa - Plateau bois 20x30
+
+```
+Produit catalogue Vérone:
+- base_price_ht = 20.19€
+- margin_rate = 15%
+
+Calcul (taux de marque):
+- selling_price_ht = 20.19 / (1 - 0.15) = 20.19 / 0.85 = 23.75€
+- gain_affilie_ht = 23.75 - 20.19 = 3.56€
+
+Vérification:
+- 23.75 × 15% = 3.56€ ✓
+
+Commission plateforme (5%):
+- prix_client_ht = 23.75 × 1.05 = 24.94€ HT
+- prix_client_ttc = 24.94 × 1.20 = 29.93€ TTC
+```
+
+### Exemple 2: Black & White - Meuble sur mesure
+
+```
+Produit affilié (créé par l'affilié):
+- prix_vente_defini = 500€ HT
+- affiliate_commission_rate = 10%
+
+Calcul:
+- commission_linkme = 500 × 10% = 50€ HT
+- payout_affilie = 500 - 50 = 450€ HT
+
+Le client paie:
+- prix_ttc = 500 × 1.20 = 600€ TTC
+```
+
+### Exemple 3: Commande multi-produits
+
+```
+Panier:
+1. Plateau bois × 2 (catalogue, marge 15%)
+   - base: 20.19€, selling: 23.75€, gain: 3.56€ × 2 = 7.12€
+2. Chaise design × 1 (catalogue, marge 20%)
+   - base: 80€, selling: 100€, gain: 20€ × 1 = 20€
+3. Meuble custom × 1 (affilié, commission 10%)
+   - prix: 500€, commission LinkMe: 50€, payout: 450€
+
+Totaux affilié:
+- Gains produits catalogue: 7.12 + 20 = 27.12€ HT
+- Payout produit affilié: 450€ HT
+- Total reçu: 477.12€ HT (avant impôts affilié)
+```
+
+---
+
 ## References
 
 - `apps/linkme/src/lib/hooks/use-affiliate-analytics.ts` - Analytics
 - `packages/@verone/orders/src/hooks/linkme/use-linkme-orders.ts` - Hook commandes
+- `packages/@verone/utils/src/linkme/margin-calculation.ts` - SSOT calculs
+- `packages/@verone/utils/src/linkme/constants.ts` - Constantes centralisées
 - `supabase/migrations/20260109_004_recalculate_pokawa_commissions.sql` - Recalcul

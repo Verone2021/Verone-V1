@@ -35,6 +35,10 @@ import {
   useAddToSelectionWithMargin,
   useUserAffiliate,
 } from '../../lib/hooks/use-user-selection';
+import {
+  calculateMargin,
+  LINKME_CONSTANTS,
+} from '@verone/utils';
 
 interface AddToSelectionModalProps {
   isOpen: boolean;
@@ -44,10 +48,8 @@ interface AddToSelectionModalProps {
   preselectedSelectionId?: string | null;
 }
 
-// Constantes pour calculs marge
-const MIN_MARGIN = 1; // 1% minimum
-const BUFFER_RATE = 5; // 5% buffer
-const LINKME_COMMISSION = 5; // 5% commission LinkMe par défaut
+// Constantes centralisées (SSOT)
+const { MIN_MARGIN, BUFFER_RATE, PLATFORM_COMMISSION_RATE } = LINKME_CONSTANTS;
 
 export function AddToSelectionModal({
   isOpen,
@@ -90,7 +92,7 @@ export function AddToSelectionModal({
     const basePriceHt = product.selling_price_ht;
     const publicPriceHt = product.public_price_ht || basePriceHt * 1.5;
     const commissionRate =
-      affiliate?.linkme_commission_rate || LINKME_COMMISSION;
+      affiliate?.linkme_commission_rate || PLATFORM_COMMISSION_RATE;
 
     // Prix LinkMe = prix base × (1 + commission)
     const prixLinkMe = basePriceHt * (1 + commissionRate / 100);
@@ -144,26 +146,29 @@ export function AddToSelectionModal({
     }
   }, [preselectedSelectionId, isOpen, selections, selectionsLoading]);
 
-  // Calculer le gain et le prix final
+  // Calculer le gain et le prix final avec la SSOT (taux de marque)
   const calculations = useMemo(() => {
     if (!product) return { gain: 0, finalPrice: 0, prixLinkMe: 0 };
 
     const basePriceHt = product.selling_price_ht;
     const commissionRate =
-      affiliate?.linkme_commission_rate || LINKME_COMMISSION;
+      affiliate?.linkme_commission_rate || PLATFORM_COMMISSION_RATE;
 
-    // Prix LinkMe = prix base × (1 + commission LinkMe)
-    const prixLinkMe = basePriceHt * (1 + commissionRate / 100);
+    // Calcul avec la SSOT - formule TAUX DE MARQUE
+    // selling_price = base_price / (1 - margin_rate/100)
+    const { sellingPriceHt, gainEuros } = calculateMargin({
+      basePriceHt,
+      marginRate,
+    });
 
-    // Prix final = prix base × (1 + commission + marge affilié)
-    const finalPrice =
-      basePriceHt * (1 + commissionRate / 100 + marginRate / 100);
+    // Prix LinkMe = prix de vente affilié × (1 + commission LinkMe)
+    const prixLinkMe = sellingPriceHt * (1 + commissionRate / 100);
 
-    // Gain affilié = prix base × marge affilié
-    const gain = basePriceHt * (marginRate / 100);
+    // Prix final = prix de vente affilié (le prixLinkMe inclut la commission plateforme)
+    const finalPrice = prixLinkMe;
 
     return {
-      gain: Math.round(gain * 100) / 100,
+      gain: gainEuros,
       finalPrice: Math.round(finalPrice * 100) / 100,
       prixLinkMe: Math.round(prixLinkMe * 100) / 100,
     };

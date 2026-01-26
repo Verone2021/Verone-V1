@@ -9,7 +9,6 @@ import { Toaster } from 'sonner';
 import { AuthWrapper } from '../components/layout/auth-wrapper';
 import { ClientOnlyActivityTracker } from '../components/providers/client-only-activity-tracker';
 import { ReactQueryProvider } from '../components/providers/react-query-provider';
-import { SentryUserProvider } from '../components/providers/sentry-user-provider';
 import { SupabaseProvider } from '../components/providers/supabase-provider';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -54,13 +53,11 @@ export default function RootLayout({
         <TooltipProvider>
           <ReactQueryProvider>
             <SupabaseProvider>
-              <SentryUserProvider>
-                <AuthWrapper>
-                  <ClientOnlyActivityTracker>
-                    {children}
-                  </ClientOnlyActivityTracker>
-                </AuthWrapper>
-              </SentryUserProvider>
+              <AuthWrapper>
+                <ClientOnlyActivityTracker>
+                  {children}
+                </ClientOnlyActivityTracker>
+              </AuthWrapper>
             </SupabaseProvider>
           </ReactQueryProvider>
         </TooltipProvider>

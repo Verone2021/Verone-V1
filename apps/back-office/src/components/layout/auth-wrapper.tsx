@@ -16,6 +16,7 @@ import { TooltipProvider } from '@verone/ui';
 
 import { AppHeader } from './app-header';
 import { AppSidebar } from './app-sidebar';
+import { ChannelTabs } from './channel-tabs';
 import { PublicLayout } from './public-layout';
 import { useSupabase } from '../providers/supabase-provider';
 
@@ -87,6 +88,7 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
         {/* Contenu principal avec scroll localisé */}
         <div className="flex flex-1 flex-col min-h-0">
           <AppHeader />
+          <ChannelTabs />
           <main className="flex-1 overflow-auto p-6">{children}</main>
         </div>
       </SidebarProvider>

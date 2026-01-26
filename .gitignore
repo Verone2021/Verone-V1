@@ -47,6 +47,11 @@ logs
 # AI/Claude memory (local only)
 .aim/
 
+# Audit reports (generated on-demand, baselines are tracked)
+knip-report.json
+.audit-component.log
+reports/audit-*/
+
 # OS generated files
 .DS_Store
 .DS_Store?
@@ -90,6 +95,7 @@ next-env.d.ts
 .claude/plans/*-agent-*.md
 .claude/*-temp*
 .claude/*.log
+.claude/work/
 
 # Husky
 .husky/_

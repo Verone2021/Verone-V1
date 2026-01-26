@@ -4,7 +4,6 @@ description: Database architect for Supabase tables, migrations, triggers, RLS p
 model: sonnet
 color: blue
 role: WRITE
-requires-task-id: true
 writes-to: [migrations, ACTIVE.md]
 ---
 

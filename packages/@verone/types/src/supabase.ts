@@ -1827,6 +1827,7 @@ export type Database = {
         Row: {
           accepts_marketing: boolean | null
           accepts_notifications: boolean | null
+          contact_type: string | null
           created_at: string | null
           created_by: string | null
           department: string | null
@@ -1852,10 +1853,12 @@ export type Database = {
           secondary_email: string | null
           title: string | null
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           accepts_marketing?: boolean | null
           accepts_notifications?: boolean | null
+          contact_type?: string | null
           created_at?: string | null
           created_by?: string | null
           department?: string | null
@@ -1881,10 +1884,12 @@ export type Database = {
           secondary_email?: string | null
           title?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           accepts_marketing?: boolean | null
           accepts_notifications?: boolean | null
+          contact_type?: string | null
           created_at?: string | null
           created_by?: string | null
           department?: string | null
@@ -1910,6 +1915,7 @@ export type Database = {
           secondary_email?: string | null
           title?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -1939,6 +1945,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organisations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contacts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_linkme_users"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -2767,19 +2780,29 @@ export type Database = {
           document_number: string
           document_type: Database["public"]["Enums"]["document_type"]
           due_date: string | null
+          finalized_at: string | null
+          finalized_by: string | null
           id: string
           invoice_source: string | null
           last_synced_from_abby_at: string | null
+          local_pdf_path: string | null
+          local_pdf_url: string | null
           notes: string | null
           partner_id: string
           partner_type: string
           pcg_code: string | null
+          pdf_stored_at: string | null
           purchase_order_id: string | null
           qonto_attachment_id: string | null
+          qonto_invoice_id: string | null
+          qonto_pdf_url: string | null
+          qonto_public_url: string | null
           sales_order_id: string | null
+          sent_at: string | null
           status: Database["public"]["Enums"]["document_status"]
           sync_errors: Json | null
           synced_to_abby_at: string | null
+          synchronized_at: string | null
           total_ht: number
           total_ttc: number
           tva_amount: number
@@ -2789,6 +2812,9 @@ export type Database = {
           uploaded_by: string | null
           uploaded_file_name: string | null
           uploaded_file_url: string | null
+          validated_by: string | null
+          validated_to_draft_at: string | null
+          workflow_status: string | null
         }
         Insert: {
           abby_invoice_id?: string | null
@@ -2805,19 +2831,29 @@ export type Database = {
           document_number: string
           document_type: Database["public"]["Enums"]["document_type"]
           due_date?: string | null
+          finalized_at?: string | null
+          finalized_by?: string | null
           id?: string
           invoice_source?: string | null
           last_synced_from_abby_at?: string | null
+          local_pdf_path?: string | null
+          local_pdf_url?: string | null
           notes?: string | null
           partner_id: string
           partner_type: string
           pcg_code?: string | null
+          pdf_stored_at?: string | null
           purchase_order_id?: string | null
           qonto_attachment_id?: string | null
+          qonto_invoice_id?: string | null
+          qonto_pdf_url?: string | null
+          qonto_public_url?: string | null
           sales_order_id?: string | null
+          sent_at?: string | null
           status?: Database["public"]["Enums"]["document_status"]
           sync_errors?: Json | null
           synced_to_abby_at?: string | null
+          synchronized_at?: string | null
           total_ht: number
           total_ttc: number
           tva_amount: number
@@ -2827,6 +2863,9 @@ export type Database = {
           uploaded_by?: string | null
           uploaded_file_name?: string | null
           uploaded_file_url?: string | null
+          validated_by?: string | null
+          validated_to_draft_at?: string | null
+          workflow_status?: string | null
         }
         Update: {
           abby_invoice_id?: string | null
@@ -2843,19 +2882,29 @@ export type Database = {
           document_number?: string
           document_type?: Database["public"]["Enums"]["document_type"]
           due_date?: string | null
+          finalized_at?: string | null
+          finalized_by?: string | null
           id?: string
           invoice_source?: string | null
           last_synced_from_abby_at?: string | null
+          local_pdf_path?: string | null
+          local_pdf_url?: string | null
           notes?: string | null
           partner_id?: string
           partner_type?: string
           pcg_code?: string | null
+          pdf_stored_at?: string | null
           purchase_order_id?: string | null
           qonto_attachment_id?: string | null
+          qonto_invoice_id?: string | null
+          qonto_pdf_url?: string | null
+          qonto_public_url?: string | null
           sales_order_id?: string | null
+          sent_at?: string | null
           status?: Database["public"]["Enums"]["document_status"]
           sync_errors?: Json | null
           synced_to_abby_at?: string | null
+          synchronized_at?: string | null
           total_ht?: number
           total_ttc?: number
           tva_amount?: number
@@ -2865,11 +2914,21 @@ export type Database = {
           uploaded_by?: string | null
           uploaded_file_name?: string | null
           uploaded_file_url?: string | null
+          validated_by?: string | null
+          validated_to_draft_at?: string | null
+          workflow_status?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "financial_documents_created_by_fkey"
             columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_linkme_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "financial_documents_finalized_by_fkey"
+            columns: ["finalized_by"]
             isOneToOne: false
             referencedRelation: "v_linkme_users"
             referencedColumns: ["user_id"]
@@ -2926,6 +2985,13 @@ export type Database = {
           {
             foreignKeyName: "financial_documents_uploaded_by_fkey"
             columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "v_linkme_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "financial_documents_validated_by_fkey"
+            columns: ["validated_by"]
             isOneToOne: false
             referencedRelation: "v_linkme_users"
             referencedColumns: ["user_id"]
@@ -4085,56 +4151,6 @@ export type Database = {
           {
             foreignKeyName: "linkme_commissions_validated_by_fkey"
             columns: ["validated_by"]
-            isOneToOne: false
-            referencedRelation: "v_linkme_users"
-            referencedColumns: ["user_id"]
-          },
-        ]
-      }
-      linkme_page_configurations: {
-        Row: {
-          config: Json | null
-          created_at: string | null
-          globe_enabled: boolean | null
-          globe_rotation_speed: number | null
-          id: string
-          page_description: string | null
-          page_icon: string | null
-          page_id: string
-          page_name: string
-          updated_at: string | null
-          updated_by: string | null
-        }
-        Insert: {
-          config?: Json | null
-          created_at?: string | null
-          globe_enabled?: boolean | null
-          globe_rotation_speed?: number | null
-          id?: string
-          page_description?: string | null
-          page_icon?: string | null
-          page_id: string
-          page_name: string
-          updated_at?: string | null
-          updated_by?: string | null
-        }
-        Update: {
-          config?: Json | null
-          created_at?: string | null
-          globe_enabled?: boolean | null
-          globe_rotation_speed?: number | null
-          id?: string
-          page_description?: string | null
-          page_icon?: string | null
-          page_id?: string
-          page_name?: string
-          updated_at?: string | null
-          updated_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "linkme_page_configurations_updated_by_fkey"
-            columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "v_linkme_users"
             referencedColumns: ["user_id"]
@@ -7264,6 +7280,7 @@ export type Database = {
           affiliate_total_ttc: number | null
           applied_discount_codes: string[] | null
           billing_address: Json | null
+          billing_contact_id: string | null
           cancellation_reason: string | null
           cancelled_at: string | null
           cancelled_by: string | null
@@ -7280,6 +7297,7 @@ export type Database = {
           customer_type: string
           delivered_at: string | null
           delivered_by: string | null
+          delivery_contact_id: string | null
           eco_tax_total: number
           eco_tax_vat_rate: number | null
           expected_delivery_date: string | null
@@ -7308,6 +7326,7 @@ export type Database = {
             | null
           pending_admin_validation: boolean | null
           ready_for_shipment: boolean | null
+          responsable_contact_id: string | null
           shipped_at: string | null
           shipped_by: string | null
           shipping_address: Json | null
@@ -7326,6 +7345,7 @@ export type Database = {
           affiliate_total_ttc?: number | null
           applied_discount_codes?: string[] | null
           billing_address?: Json | null
+          billing_contact_id?: string | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
           cancelled_by?: string | null
@@ -7342,6 +7362,7 @@ export type Database = {
           customer_type: string
           delivered_at?: string | null
           delivered_by?: string | null
+          delivery_contact_id?: string | null
           eco_tax_total?: number
           eco_tax_vat_rate?: number | null
           expected_delivery_date?: string | null
@@ -7370,6 +7391,7 @@ export type Database = {
             | null
           pending_admin_validation?: boolean | null
           ready_for_shipment?: boolean | null
+          responsable_contact_id?: string | null
           shipped_at?: string | null
           shipped_by?: string | null
           shipping_address?: Json | null
@@ -7388,6 +7410,7 @@ export type Database = {
           affiliate_total_ttc?: number | null
           applied_discount_codes?: string[] | null
           billing_address?: Json | null
+          billing_contact_id?: string | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
           cancelled_by?: string | null
@@ -7404,6 +7427,7 @@ export type Database = {
           customer_type?: string
           delivered_at?: string | null
           delivered_by?: string | null
+          delivery_contact_id?: string | null
           eco_tax_total?: number
           eco_tax_vat_rate?: number | null
           expected_delivery_date?: string | null
@@ -7432,6 +7456,7 @@ export type Database = {
             | null
           pending_admin_validation?: boolean | null
           ready_for_shipment?: boolean | null
+          responsable_contact_id?: string | null
           shipped_at?: string | null
           shipped_by?: string | null
           shipping_address?: Json | null
@@ -7446,6 +7471,13 @@ export type Database = {
           warehouse_exit_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "sales_orders_billing_contact_id_fkey"
+            columns: ["billing_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sales_orders_cancelled_by_fkey"
             columns: ["cancelled_by"]
@@ -7496,6 +7528,13 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
           {
+            foreignKeyName: "sales_orders_delivery_contact_id_fkey"
+            columns: ["delivery_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "sales_orders_linkme_selection_id_fkey"
             columns: ["linkme_selection_id"]
             isOneToOne: false
@@ -7522,6 +7561,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_linkme_users"
             referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "sales_orders_responsable_contact_id_fkey"
+            columns: ["responsable_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "sales_orders_shipped_by_fkey"
@@ -8712,41 +8758,6 @@ export type Database = {
           },
           {
             foreignKeyName: "user_app_roles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "v_linkme_users"
-            referencedColumns: ["user_id"]
-          },
-        ]
-      }
-      user_dashboard_preferences: {
-        Row: {
-          created_at: string
-          id: string
-          tab: string
-          updated_at: string
-          user_id: string
-          widgets: Json
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          tab?: string
-          updated_at?: string
-          user_id: string
-          widgets?: Json
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          tab?: string
-          updated_at?: string
-          user_id?: string
-          widgets?: Json
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_dashboard_preferences_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "v_linkme_users"
@@ -10693,17 +10704,6 @@ export type Database = {
         Returns: Json
       }
       count_owners: { Args: never; Returns: number }
-      create_affiliate_order: {
-        Args: {
-          p_affiliate_id: string
-          p_customer_id: string
-          p_customer_type: string
-          p_items: Json
-          p_notes?: string
-          p_selection_id: string
-        }
-        Returns: string
-      }
       create_color_if_not_exists: {
         Args: { color_hex?: string; color_name: string }
         Returns: string
@@ -10738,19 +10738,29 @@ export type Database = {
           document_number: string
           document_type: Database["public"]["Enums"]["document_type"]
           due_date: string | null
+          finalized_at: string | null
+          finalized_by: string | null
           id: string
           invoice_source: string | null
           last_synced_from_abby_at: string | null
+          local_pdf_path: string | null
+          local_pdf_url: string | null
           notes: string | null
           partner_id: string
           partner_type: string
           pcg_code: string | null
+          pdf_stored_at: string | null
           purchase_order_id: string | null
           qonto_attachment_id: string | null
+          qonto_invoice_id: string | null
+          qonto_pdf_url: string | null
+          qonto_public_url: string | null
           sales_order_id: string | null
+          sent_at: string | null
           status: Database["public"]["Enums"]["document_status"]
           sync_errors: Json | null
           synced_to_abby_at: string | null
+          synchronized_at: string | null
           total_ht: number
           total_ttc: number
           tva_amount: number
@@ -10760,6 +10770,9 @@ export type Database = {
           uploaded_by: string | null
           uploaded_file_name: string | null
           uploaded_file_url: string | null
+          validated_by: string | null
+          validated_to_draft_at: string | null
+          workflow_status: string | null
         }
         SetofOptions: {
           from: "*"
@@ -10969,19 +10982,29 @@ export type Database = {
           document_number: string
           document_type: Database["public"]["Enums"]["document_type"]
           due_date: string | null
+          finalized_at: string | null
+          finalized_by: string | null
           id: string
           invoice_source: string | null
           last_synced_from_abby_at: string | null
+          local_pdf_path: string | null
+          local_pdf_url: string | null
           notes: string | null
           partner_id: string
           partner_type: string
           pcg_code: string | null
+          pdf_stored_at: string | null
           purchase_order_id: string | null
           qonto_attachment_id: string | null
+          qonto_invoice_id: string | null
+          qonto_pdf_url: string | null
+          qonto_public_url: string | null
           sales_order_id: string | null
+          sent_at: string | null
           status: Database["public"]["Enums"]["document_status"]
           sync_errors: Json | null
           synced_to_abby_at: string | null
+          synchronized_at: string | null
           total_ht: number
           total_ttc: number
           tva_amount: number
@@ -10991,6 +11014,9 @@ export type Database = {
           uploaded_by: string | null
           uploaded_file_name: string | null
           uploaded_file_url: string | null
+          validated_by: string | null
+          validated_to_draft_at: string | null
+          workflow_status: string | null
         }
         SetofOptions: {
           from: "*"
@@ -11618,6 +11644,7 @@ export type Database = {
         Returns: {
           accepts_marketing: boolean | null
           accepts_notifications: boolean | null
+          contact_type: string | null
           created_at: string | null
           created_by: string | null
           department: string | null
@@ -11643,6 +11670,7 @@ export type Database = {
           secondary_email: string | null
           title: string | null
           updated_at: string | null
+          user_id: string | null
         }
         SetofOptions: {
           from: "*"

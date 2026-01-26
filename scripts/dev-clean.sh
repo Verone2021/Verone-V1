@@ -13,12 +13,12 @@ echo "   → Arrêt des processus existants..."
 ./scripts/dev-stop.sh
 
 # 2. Nettoyer les caches Next.js (optionnel, commenté par défaut)
-# echo "   → Nettoyage des caches Next.js..."
-# rm -rf apps/back-office/.next apps/linkme/.next apps/site-internet/.next
+echo "   → Nettoyage des caches Next.js..."
+rm -rf apps/back-office/.next apps/linkme/.next apps/site-internet/.next
 
 # 3. Nettoyer le cache Turbo (optionnel, commenté par défaut)
-# echo "   → Nettoyage du cache Turbo..."
-# rm -rf .turbo
+echo "   → Nettoyage du cache Turbo..."
+rm -rf .turbo
 
 echo "✅ Nettoyage terminé"
 echo ""

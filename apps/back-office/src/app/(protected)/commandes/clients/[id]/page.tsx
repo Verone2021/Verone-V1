@@ -30,6 +30,7 @@ import {
 
 import { CopyButton } from './CopyButton';
 import { FeesSection } from './FeesSection';
+import { InvoicesSection } from './InvoicesSection';
 import { PaymentSection } from './PaymentSection';
 
 interface OrderDetailPageProps {
@@ -397,6 +398,9 @@ export default async function OrderDetailPage({
                 products: item.products ? { name: item.products.name } : null,
               }))}
             />
+
+            {/* Section Factures liées - Workflow 3 statuts */}
+            <InvoicesSection orderId={order.id} />
           </div>
         </div>
 

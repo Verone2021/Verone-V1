@@ -56,7 +56,7 @@ async function fetchPageConfigurations(): Promise<LinkMePageConfiguration[]> {
 
   if (error) {
     // Si la table n'existe pas encore, retourner les valeurs par défaut
-    if (error.code === '42P01') {
+    if (error.code === '42P01' || error.code === 'PGRST116') {
       return getDefaultConfigurations();
     }
     console.error('Erreur fetch page configurations:', error);
