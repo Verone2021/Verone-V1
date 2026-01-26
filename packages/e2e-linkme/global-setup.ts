@@ -41,9 +41,7 @@ export default async function globalSetup() {
       const linkmeResponse = await fetch('http://localhost:3002', {
         method: 'HEAD',
       });
-      console.log(
-        `✅ LinkMe is running (status: ${linkmeResponse.status})`
-      );
+      console.log(`✅ LinkMe is running (status: ${linkmeResponse.status})`);
     } catch (error) {
       console.warn(
         '⚠️  LinkMe is not running at http://localhost:3002. Please start it with: npm run dev'

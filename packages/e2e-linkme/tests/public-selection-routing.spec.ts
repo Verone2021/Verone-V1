@@ -26,13 +26,17 @@ test.describe('LinkMe - Public Selection Routing', () => {
     // await page.click('button[type="submit"]');
   });
 
-  test('should redirect from /s/[id] to /s/[id]/catalogue', async ({ page }) => {
+  test('should redirect from /s/[id] to /s/[id]/catalogue', async ({
+    page,
+  }) => {
     // Naviguer vers la route racine
     await page.goto(`${BASE_URL}/s/${TEST_SELECTION_SLUG}`);
 
     // Vérifier le redirect automatique
     await page.waitForURL(`${BASE_URL}/s/${TEST_SELECTION_SLUG}/catalogue`);
-    await expect(page).toHaveURL(new RegExp(`/s/${TEST_SELECTION_SLUG}/catalogue$`));
+    await expect(page).toHaveURL(
+      new RegExp(`/s/${TEST_SELECTION_SLUG}/catalogue$`)
+    );
 
     // Vérifier que l'onglet "Catalogue" est actif
     const catalogueTab = page.locator('nav button:has-text("Catalogue")');
@@ -140,7 +144,9 @@ test.describe('LinkMe - Public Selection Routing', () => {
     await expect(faqContent).toBeVisible();
   });
 
-  test('should highlight active tab based on current route', async ({ page }) => {
+  test('should highlight active tab based on current route', async ({
+    page,
+  }) => {
     // Aller sur catalogue
     await page.goto(`${BASE_URL}/s/${TEST_SELECTION_SLUG}/catalogue`);
 
@@ -176,14 +182,18 @@ test.describe('LinkMe - Public Selection Routing', () => {
     await expect(modal).toContainText(/restaurant/i);
   });
 
-  test('should show Points de vente tab only for enseignes', async ({ page }) => {
+  test('should show Points de vente tab only for enseignes', async ({
+    page,
+  }) => {
     await page.goto(`${BASE_URL}/s/${TEST_SELECTION_SLUG}/catalogue`);
 
     // Le test dépend du type d'affilié
     // Si enseigne : l'onglet "Points de vente" doit être visible
     // Sinon : seulement Catalogue, FAQ, Contact
 
-    const pointsDeVenteTab = page.locator('nav button:has-text("Points de vente")');
+    const pointsDeVenteTab = page.locator(
+      'nav button:has-text("Points de vente")'
+    );
     const isEnseigne = await pointsDeVenteTab.isVisible().catch(() => false);
 
     if (isEnseigne) {
@@ -202,15 +212,13 @@ test.describe('LinkMe - Public Selection Routing', () => {
 });
 
 test.describe('LinkMe - Performance (Code Splitting)', () => {
-  test('should load only necessary JavaScript for each route', async ({ page }) => {
+  test('should load only necessary JavaScript for each route', async ({
+    page,
+  }) => {
     // Cette vérification nécessite des outils de monitoring réseau
     // On peut vérifier que les routes chargent rapidement
 
-    const routes = [
-      'catalogue',
-      'faq',
-      'contact',
-    ];
+    const routes = ['catalogue', 'faq', 'contact'];
 
     for (const route of routes) {
       const startTime = Date.now();

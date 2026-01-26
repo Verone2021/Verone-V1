@@ -1,26 +1,18 @@
 {
   "name": "@verone/eslint-config",
-  "version": "1.0.0",
-  "description": "Configuration ESLint partagée pour le monorepo Vérone (Strict TypeScript + Prettier)",
+  "version": "2.0.0",
+  "description": "DEPRECATED - Configuration ESLint migree vers eslint.config.mjs (Flat Config)",
   "main": "index.js",
   "exports": "./index.js",
   "author": "Romeo Dos Santos",
   "license": "MIT",
+  "deprecated": "Ce package est obsolete. Utilisez eslint.config.mjs a la racine du projet.",
   "keywords": [
     "eslint",
     "eslintconfig",
-    "typescript",
-    "nextjs",
-    "prettier",
-    "verone"
+    "deprecated"
   ],
   "peerDependencies": {
-    "eslint": "^8.57.0",
-    "eslint-config-next": "^15.0.0",
-    "eslint-config-prettier": "^10.0.0",
-    "eslint-plugin-prettier": "^5.0.0",
-    "eslint-plugin-storybook": "^9.0.0",
-    "prettier": "^3.0.0",
-    "typescript": "^5.0.0"
+    "eslint": ">=8.0.0"
   }
 }

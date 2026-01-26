@@ -274,7 +274,7 @@ export const test = base.extend<DatabaseTestFixtures, DatabaseWorkerFixtures>({
           if (await condition()) {
             return true;
           }
-          await new Promise((resolve) => setTimeout(resolve, interval));
+          await new Promise(resolve => setTimeout(resolve, interval));
         }
 
         throw new Error(`Condition not met within ${timeout}ms`);

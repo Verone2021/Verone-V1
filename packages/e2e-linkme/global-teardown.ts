@@ -40,9 +40,7 @@ export default async function globalTeardown() {
     if (productsError) {
       console.warn('⚠️  Error cleaning up test products:', productsError);
     } else {
-      console.log(
-        `✅ Cleaned up ${products?.length || 0} test product(s)`
-      );
+      console.log(`✅ Cleaned up ${products?.length || 0} test product(s)`);
     }
 
     if (ordersError) {

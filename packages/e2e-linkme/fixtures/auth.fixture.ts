@@ -151,7 +151,9 @@ export const test = base.extend<AuthFixtures>({
     await page.goto('http://localhost:3002/login');
     await page.waitForLoadState('networkidle');
 
-    const testAccountsButton = page.locator('button:has-text("Comptes de test")');
+    const testAccountsButton = page.locator(
+      'button:has-text("Comptes de test")'
+    );
     const isTestAccountsVisible = await testAccountsButton.isVisible();
 
     if (isTestAccountsVisible) {
@@ -190,7 +192,10 @@ export const test = base.extend<AuthFixtures>({
     await page.waitForLoadState('networkidle');
 
     await page.fill('[data-testid="email"]', CREDENTIALS.backOffice.email);
-    await page.fill('[data-testid="password"]', CREDENTIALS.backOffice.password);
+    await page.fill(
+      '[data-testid="password"]',
+      CREDENTIALS.backOffice.password
+    );
     await page.click('button[type="submit"]');
 
     await page.waitForURL('**/dashboard', { timeout: 15000 });

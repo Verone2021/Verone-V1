@@ -32,7 +32,7 @@ function safeString(options?: { min?: number; max?: number }) {
 
   return schema
     .transform(sanitizeInput)
-    .refine((val) => !/<[^>]*>/.test(val), 'HTML tags not allowed');
+    .refine(val => !/<[^>]*>/.test(val), 'HTML tags not allowed');
 }
 
 /** Default safe string (no length constraints) */
@@ -97,7 +97,7 @@ export const dateRangeSchema = z
     endDate: isoDateSchema.optional(),
   })
   .refine(
-    (data) => {
+    data => {
       if (data.startDate && data.endDate) {
         return new Date(data.startDate) <= new Date(data.endDate);
       }
@@ -330,8 +330,7 @@ export async function validateRequestBody<T>(
   request: Request,
   schema: z.ZodSchema<T>
 ): Promise<
-  | { success: true; data: T }
-  | { success: false; response: Response }
+  { success: true; data: T } | { success: false; response: Response }
 > {
   try {
     const body = await request.json();

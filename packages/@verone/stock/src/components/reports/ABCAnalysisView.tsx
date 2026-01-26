@@ -41,7 +41,7 @@ interface ABCAnalysisViewProps {
   // Future : dateFrom, dateTo si on veut filtrer par période
 }
 
-export function ABCAnalysisView({}: ABCAnalysisViewProps) {
+export function ABCAnalysisView(_props: ABCAnalysisViewProps) {
   const { report, loading, error, generateReport } = useABCAnalysis();
   const { toast } = useToast();
 

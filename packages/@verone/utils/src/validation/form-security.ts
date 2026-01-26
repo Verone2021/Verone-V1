@@ -12,7 +12,7 @@ import { z } from 'zod';
  */
 export const VALIDATION_PATTERNS = {
   // Empêche injection SQL
-  NO_SQL_INJECTION: /^[^';"\-\-\/\*\*\/]+$/,
+  NO_SQL_INJECTION: /^[^';"/*-]+$/,
 
   // Email valide
   EMAIL: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
@@ -24,17 +24,17 @@ export const VALIDATION_PATTERNS = {
   POSTAL_CODE_FR: /^(0[1-9]|[1-8]\d|9[0-8])\d{3}$/,
 
   // SKU produit
-  PRODUCT_SKU: /^[A-Z0-9\-_]{3,50}$/,
+  PRODUCT_SKU: /^[A-Z0-9_-]{3,50}$/,
 
   // Nom sécurisé (pas de caractères spéciaux dangereux)
-  SAFE_NAME: /^[a-zA-ZÀ-ÿ\s\-'\.]{2,100}$/,
+  SAFE_NAME: /^[a-zA-ZÀ-ÿ\s'.-]{2,100}$/,
 
   // Texte sécurisé (pas de scripts)
   SAFE_TEXT: /^[^<>{}\\]+$/,
 
   // URL sécurisée
   SAFE_URL:
-    /^https?:\/\/([\w\-]+\.)+[\w\-]+(\/[\w\-._~:/?#[\]@!$&'()*+,;=]*)?$/,
+    /^https?:\/\/([\w-]+\.)+[\w-]+(\/[\w._~:/?#[\]@!$&'()*+,;=-]*)?$/,
 };
 
 /**
@@ -89,7 +89,7 @@ export function validateEmail(email: string): boolean {
  * Validation de téléphone
  */
 export function validatePhone(phone: string): boolean {
-  const cleaned = phone.replace(/[\s\-\.\(\)]/g, '');
+  const cleaned = phone.replace(/[\s.()-]/g, '');
   return VALIDATION_PATTERNS.PHONE_FR.test(cleaned);
 }
 
