@@ -95,14 +95,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
           });
 
           // PGRST116 = not found - l'utilisateur n'existe pas dans v_linkme_users
-          // Cela peut arriver si la session est corrompue ou l'utilisateur a été supprimé
+          // Comportement normal si c'est un utilisateur back-office (pas de rôle LinkMe)
           if (error.code === 'PGRST116') {
-            console.warn('[AuthContext] User not found in v_linkme_users - clearing corrupted session');
-            // Nettoyer la session corrompue
-            await supabase.auth.signOut();
-            setUser(null);
-            setSession(null);
-            setLinkMeRole(null);
+            // Log silencieux - comportement normal si utilisateur back-office
+            if (DEBUG) {
+              console.log('[AuthContext] User not in v_linkme_users - not a LinkMe user');
+            }
+            // Attendre que signOut soit complet avant de modifier les états
+            try {
+              await supabase.auth.signOut();
+            } finally {
+              setUser(null);
+              setSession(null);
+              setLinkMeRole(null);
+            }
             return;
           }
 
