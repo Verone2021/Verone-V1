@@ -9,7 +9,15 @@
  */
 
 // Types de badges source
-export type BadgeSource = 'stock' | 'consultations' | 'linkme' | 'organisations' | 'commandes' | 'finance' | 'produits' | 'expeditions';
+export type BadgeSource =
+  | 'stock'
+  | 'consultations'
+  | 'linkme'
+  | 'organisations'
+  | 'commandes'
+  | 'finance'
+  | 'produits'
+  | 'expeditions';
 export type BadgeSeverity = 'urgent' | 'warning' | 'info';
 
 // Input : Données des badges
@@ -76,7 +84,8 @@ const AUTO_ROADMAP_RULES: TaskRule[] = [
     },
     task: {
       titleTemplate: 'Réapprovisionner {{count}} produit(s) en rupture',
-      descriptionTemplate: '{{count}} produit(s) sont en rupture de stock. Action immédiate requise pour éviter la perte de ventes.',
+      descriptionTemplate:
+        '{{count}} produit(s) sont en rupture de stock. Action immédiate requise pour éviter la perte de ventes.',
       actionUrl: '/stocks/alertes?severity=critical',
       actionLabel: 'Voir les alertes',
       rice: {
@@ -95,7 +104,8 @@ const AUTO_ROADMAP_RULES: TaskRule[] = [
     },
     task: {
       titleTemplate: 'Surveiller {{count}} produit(s) à stock faible',
-      descriptionTemplate: '{{count}} produit(s) ont un stock inférieur au seuil d\'alerte. Planifier un réapprovisionnement.',
+      descriptionTemplate:
+        "{{count}} produit(s) ont un stock inférieur au seuil d'alerte. Planifier un réapprovisionnement.",
       actionUrl: '/stocks/alertes?severity=low',
       actionLabel: 'Planifier réappro',
       rice: {
@@ -116,7 +126,8 @@ const AUTO_ROADMAP_RULES: TaskRule[] = [
     },
     task: {
       titleTemplate: 'Traiter {{count}} consultation(s) en attente',
-      descriptionTemplate: '{{count}} demande(s) client en attente de réponse. Répondre rapidement pour améliorer la satisfaction.',
+      descriptionTemplate:
+        '{{count}} demande(s) client en attente de réponse. Répondre rapidement pour améliorer la satisfaction.',
       actionUrl: '/consultations?status=en_attente',
       actionLabel: 'Répondre',
       rice: {
@@ -134,7 +145,8 @@ const AUTO_ROADMAP_RULES: TaskRule[] = [
     },
     task: {
       titleTemplate: 'Prioriser {{count}} consultation(s) actives',
-      descriptionTemplate: 'Plusieurs consultations sont en cours. Optimiser le traitement pour accélérer les réponses.',
+      descriptionTemplate:
+        'Plusieurs consultations sont en cours. Optimiser le traitement pour accélérer les réponses.',
       actionUrl: '/consultations?status=en_attente,en_cours&sort=priority',
       actionLabel: 'Voir priorités',
       rice: {
@@ -155,7 +167,8 @@ const AUTO_ROADMAP_RULES: TaskRule[] = [
     },
     task: {
       titleTemplate: 'Valider {{count}} commande(s) LinkMe',
-      descriptionTemplate: '{{count}} commande(s) LinkMe en attente de validation. Traiter pour débloquer les expéditions.',
+      descriptionTemplate:
+        '{{count}} commande(s) LinkMe en attente de validation. Traiter pour débloquer les expéditions.',
       actionUrl: '/linkme/commandes/a-traiter',
       actionLabel: 'Traiter',
       rice: {
@@ -173,7 +186,8 @@ const AUTO_ROADMAP_RULES: TaskRule[] = [
     },
     task: {
       titleTemplate: 'Vérifier les commissions LinkMe',
-      descriptionTemplate: 'Plusieurs commandes LinkMe ont été traitées. Vérifier le calcul des commissions affiliés.',
+      descriptionTemplate:
+        'Plusieurs commandes LinkMe ont été traitées. Vérifier le calcul des commissions affiliés.',
       actionUrl: '/linkme/commissions',
       actionLabel: 'Vérifier',
       rice: {
@@ -194,7 +208,8 @@ const AUTO_ROADMAP_RULES: TaskRule[] = [
     },
     task: {
       titleTemplate: 'Compléter {{count}} fiche(s) organisation',
-      descriptionTemplate: '{{count}} organisation(s) ont des informations incomplètes (SIRET, adresse, etc.).',
+      descriptionTemplate:
+        '{{count}} organisation(s) ont des informations incomplètes (SIRET, adresse, etc.).',
       actionUrl: '/contacts-organisations?incomplete=true',
       actionLabel: 'Compléter',
       rice: {
@@ -215,7 +230,8 @@ const AUTO_ROADMAP_RULES: TaskRule[] = [
     },
     task: {
       titleTemplate: 'Finaliser {{count}} commande(s) en brouillon',
-      descriptionTemplate: '{{count}} commande(s) sont en brouillon depuis plus de 7 jours. Finaliser ou archiver.',
+      descriptionTemplate:
+        '{{count}} commande(s) sont en brouillon depuis plus de 7 jours. Finaliser ou archiver.',
       actionUrl: '/commandes/clients?status=draft',
       actionLabel: 'Finaliser',
       rice: {
@@ -236,7 +252,8 @@ const AUTO_ROADMAP_RULES: TaskRule[] = [
     },
     task: {
       titleTemplate: 'Relancer {{count}} facture(s) impayée(s)',
-      descriptionTemplate: '{{count}} facture(s) sont échues. Effectuer les relances pour améliorer la trésorerie.',
+      descriptionTemplate:
+        '{{count}} facture(s) sont échues. Effectuer les relances pour améliorer la trésorerie.',
       actionUrl: '/finance/factures?status=overdue',
       actionLabel: 'Relancer',
       rice: {
@@ -255,7 +272,8 @@ const AUTO_ROADMAP_RULES: TaskRule[] = [
     },
     task: {
       titleTemplate: 'Rapprocher {{count}} transaction(s) bancaire(s)',
-      descriptionTemplate: '{{count}} transaction(s) non rapprochées. Catégoriser pour une comptabilité à jour.',
+      descriptionTemplate:
+        '{{count}} transaction(s) non rapprochées. Catégoriser pour une comptabilité à jour.',
       actionUrl: '/finance/transactions?reconciled=false',
       actionLabel: 'Rapprocher',
       rice: {
@@ -276,7 +294,8 @@ const AUTO_ROADMAP_RULES: TaskRule[] = [
     },
     task: {
       titleTemplate: 'Compléter {{count}} fiche(s) produit',
-      descriptionTemplate: '{{count}} produit(s) ont des fiches incomplètes (description, images, prix). Améliorer pour le SEO et les ventes.',
+      descriptionTemplate:
+        '{{count}} produit(s) ont des fiches incomplètes (description, images, prix). Améliorer pour le SEO et les ventes.',
       actionUrl: '/produits/catalogue?incomplete=true',
       actionLabel: 'Compléter',
       rice: {
@@ -297,7 +316,8 @@ const AUTO_ROADMAP_RULES: TaskRule[] = [
     },
     task: {
       titleTemplate: 'Expédier {{count}} commande(s) validée(s)',
-      descriptionTemplate: '{{count}} commande(s) sont validées et prêtes à expédier. Traiter pour respecter les délais.',
+      descriptionTemplate:
+        '{{count}} commande(s) sont validées et prêtes à expédier. Traiter pour respecter les délais.',
       actionUrl: '/stocks/expeditions',
       actionLabel: 'Expédier',
       rice: {
@@ -315,7 +335,8 @@ const AUTO_ROADMAP_RULES: TaskRule[] = [
     },
     task: {
       titleTemplate: 'Réduire le backlog expéditions ({{count}})',
-      descriptionTemplate: 'Le backlog d\'expéditions est important. Planifier des ressources supplémentaires.',
+      descriptionTemplate:
+        "Le backlog d'expéditions est important. Planifier des ressources supplémentaires.",
       actionUrl: '/stocks/expeditions',
       actionLabel: 'Voir backlog',
       rice: {
@@ -357,7 +378,10 @@ function getPriority(riceScore: number): RoadmapTask['priority'] {
 /**
  * Remplace les placeholders dans un template
  */
-function interpolateTemplate(template: string, data: Record<string, unknown>): string {
+function interpolateTemplate(
+  template: string,
+  data: Record<string, unknown>
+): string {
   return template.replace(/\{\{(\w+)\}\}/g, (_, key) =>
     String(data[key] ?? '')
   );
@@ -374,7 +398,10 @@ function matchesRule(badge: BadgeData, rule: TaskRule): boolean {
   if (badge.count < rule.trigger.minCount) return false;
 
   // Vérifier la sévérité si spécifiée
-  if (rule.trigger.severity && !rule.trigger.severity.includes(badge.severity)) {
+  if (
+    rule.trigger.severity &&
+    !rule.trigger.severity.includes(badge.severity)
+  ) {
     return false;
   }
 
@@ -406,7 +433,10 @@ function createTask(badge: BadgeData, rule: TaskRule): RoadmapTask {
   return {
     id: `task_${rule.id}_${Date.now()}`,
     title: interpolateTemplate(rule.task.titleTemplate, templateData),
-    description: interpolateTemplate(rule.task.descriptionTemplate, templateData),
+    description: interpolateTemplate(
+      rule.task.descriptionTemplate,
+      templateData
+    ),
     category: badge.source,
     actionUrl: rule.task.actionUrl,
     actionLabel: rule.task.actionLabel,
@@ -456,8 +486,9 @@ export function generateRoadmap(badges: BadgeData[]): RoadmapTask[] {
   }
 
   // Trier par score RICE décroissant
-  return Array.from(uniqueTasks.values())
-    .sort((a, b) => b.rice.score - a.rice.score);
+  return Array.from(uniqueTasks.values()).sort(
+    (a, b) => b.rice.score - a.rice.score
+  );
 }
 
 /**

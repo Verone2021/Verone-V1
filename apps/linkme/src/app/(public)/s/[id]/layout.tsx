@@ -1,6 +1,7 @@
 'use client';
 
 import { use, useCallback, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext } from 'react';
 
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -96,7 +97,6 @@ const DEFAULT_BRANDING: IBranding = {
 };
 
 // Context pour partager l'état entre les pages
-import { createContext, useContext } from 'react';
 
 interface SelectionContextValue {
   selection: ISelection | null;
@@ -170,8 +170,9 @@ export default function SelectionLayout({
       setError(null);
 
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: selectionData, error: selectionError } = await (supabase as any)
+        const { data: selectionData, error: selectionError } = await (
+          supabase as any
+        )
           .from('linkme_selections')
           .select('*')
           .eq('id', id)
@@ -184,7 +185,7 @@ export default function SelectionLayout({
         }
 
         if (!selectionData.published_at) {
-          setError('Cette selection n\'est pas encore publiee');
+          setError("Cette selection n'est pas encore publiee");
           setIsLoading(false);
           return;
         }
@@ -230,11 +231,16 @@ export default function SelectionLayout({
 
         if (brandingData) {
           setBranding({
-            primary_color: brandingData.primary_color || DEFAULT_BRANDING.primary_color,
-            secondary_color: brandingData.secondary_color || DEFAULT_BRANDING.secondary_color,
-            accent_color: brandingData.accent_color || DEFAULT_BRANDING.accent_color,
+            primary_color:
+              brandingData.primary_color || DEFAULT_BRANDING.primary_color,
+            secondary_color:
+              brandingData.secondary_color || DEFAULT_BRANDING.secondary_color,
+            accent_color:
+              brandingData.accent_color || DEFAULT_BRANDING.accent_color,
             text_color: brandingData.text_color || DEFAULT_BRANDING.text_color,
-            background_color: brandingData.background_color || DEFAULT_BRANDING.background_color,
+            background_color:
+              brandingData.background_color ||
+              DEFAULT_BRANDING.background_color,
             logo_url: brandingData.logo_url,
           });
         }
@@ -389,9 +395,7 @@ export default function SelectionLayout({
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
             {error || 'Selection non trouvee'}
           </h1>
-          <p className="text-gray-600">
-            Verifiez l'URL et reessayez.
-          </p>
+          <p className="text-gray-600">Verifiez l'URL et reessayez.</p>
         </div>
       </div>
     );
@@ -422,7 +426,10 @@ export default function SelectionLayout({
         {/* Simple Header */}
         <header className="bg-white border-b border-gray-200">
           <div className="container mx-auto px-4 py-4">
-            <h1 className="text-2xl font-bold" style={{ color: branding.text_color }}>
+            <h1
+              className="text-2xl font-bold"
+              style={{ color: branding.text_color }}
+            >
               {selection.name}
             </h1>
           </div>

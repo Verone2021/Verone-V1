@@ -67,12 +67,26 @@ export function useStockAlertsCount(options?: {
       setLoading(true);
       setError(null);
 
+      // Vérifier authentification avant requête (évite erreur RLS 403)
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        // Pas connecté = pas de count, pas d'erreur
+        setCount(0);
+        setLoading(false);
+        return;
+      }
+
       const { data, error: rpcError } = await supabase.rpc(
         'get_stock_alerts_count'
       );
 
       if (rpcError) {
-        throw new Error(`RPC error: ${rpcError.message}`);
+        console.error('[useStockAlertsCount] RPC error:', rpcError);
+        setError(new Error(`RPC error: ${rpcError.message}`));
+        setCount(0); // Valeur par défaut gracieuse
+        return; // Sortie anticipée sans exception
       }
 
       setCount(data || 0);
@@ -88,53 +102,72 @@ export function useStockAlertsCount(options?: {
   }, [supabase]);
 
   /**
-   * Setup Supabase Realtime subscription
+   * Setup Supabase Realtime subscription (authentification requise)
    */
   useEffect(() => {
-    // Initial fetch
-    fetchCount();
+    let isMounted = true;
 
-    // Setup Realtime si activé
-    if (enableRealtime) {
-      // Créer channel Realtime sur stock_alerts_unified_view
-      // Note: Vue publique, pas besoin de RLS pour SELECT
-      channelRef.current = supabase
-        .channel('stock-alerts-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*', // INSERT, UPDATE, DELETE
-            schema: 'public',
-            table: 'stock_alerts_unified_view',
-          },
-          payload => {
-            console.log(
-              '[useStockAlertsCount] Realtime change detected:',
-              payload
-            );
-            // Refetch count après changement
-            fetchCount();
-          }
-        )
-        .subscribe(status => {
-          if (status === 'SUBSCRIBED') {
-            console.log('[useStockAlertsCount] Realtime subscribed ✓');
-          } else if (status === 'CHANNEL_ERROR') {
-            console.error('[useStockAlertsCount] Realtime error');
-            setError(new Error('Realtime subscription failed'));
-          }
-        });
-    }
+    const setupSubscriptions = async () => {
+      // Vérifier authentification avant setup Realtime/polling
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    // Polling fallback (si Realtime désactivé ou échec)
-    if (!enableRealtime || refetchInterval > 0) {
-      intervalRef.current = setInterval(() => {
-        fetchCount();
-      }, refetchInterval);
-    }
+      if (!user || !isMounted) {
+        // Pas connecté = pas de Realtime, juste set count à 0
+        setCount(0);
+        setLoading(false);
+        return;
+      }
+
+      // Initial fetch (authentifié)
+      fetchCount();
+
+      // Setup Realtime si activé ET authentifié
+      if (enableRealtime) {
+        channelRef.current = supabase
+          .channel('stock-alerts-changes')
+          .on(
+            'postgres_changes',
+            {
+              event: '*', // INSERT, UPDATE, DELETE
+              schema: 'public',
+              table: 'stock_alerts_unified_view',
+            },
+            payload => {
+              console.log(
+                '[useStockAlertsCount] Realtime change detected:',
+                payload
+              );
+              // Refetch count après changement
+              fetchCount();
+            }
+          )
+          .subscribe(status => {
+            if (status === 'SUBSCRIBED') {
+              console.log('[useStockAlertsCount] Realtime subscribed ✓');
+            } else if (status === 'CHANNEL_ERROR') {
+              // Log silencieux, pas setError pour éviter bruit sur page login
+              console.warn(
+                '[useStockAlertsCount] Realtime subscription failed'
+              );
+            }
+          });
+      }
+
+      // Polling fallback (seulement si authentifié)
+      if (!enableRealtime || refetchInterval > 0) {
+        intervalRef.current = setInterval(() => {
+          fetchCount();
+        }, refetchInterval);
+      }
+    };
+
+    setupSubscriptions();
 
     // Cleanup
     return () => {
+      isMounted = false;
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;

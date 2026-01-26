@@ -116,7 +116,10 @@ function SameAsCard({ onClick, isActive, disabled }: SameAsCardProps) {
           )}
         >
           <User
-            className={cn('h-4 w-4', isActive ? 'text-green-600' : 'text-gray-500')}
+            className={cn(
+              'h-4 w-4',
+              isActive ? 'text-green-600' : 'text-gray-500'
+            )}
           />
         </div>
         <div className="min-w-0 flex-1">
@@ -156,7 +159,9 @@ export function ContactGrid({
   return (
     <div className="space-y-3">
       {label && (
-        <label className="block text-sm font-medium text-gray-700">{label}</label>
+        <label className="block text-sm font-medium text-gray-700">
+          {label}
+        </label>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -170,7 +175,7 @@ export function ContactGrid({
         )}
 
         {/* Existing contacts */}
-        {contacts.map((contact) => (
+        {contacts.map(contact => (
           <ContactCard
             key={contact.id}
             contact={contact}

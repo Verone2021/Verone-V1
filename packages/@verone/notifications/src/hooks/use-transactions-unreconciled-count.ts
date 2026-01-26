@@ -69,6 +69,17 @@ export function useTransactionsUnreconciledCount(options?: {
       setLoading(true);
       setError(null);
 
+      // Vérifier authentification avant requête (évite erreur RLS 403)
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        // Pas connecté = pas de count, pas d'erreur
+        setCount(0);
+        setLoading(false);
+        return;
+      }
+
       // Query transactions non rapprochées
       // matching_status = 'unmatched' (ENUM remplace is_reconciled boolean)
       const { count: totalCount, error: countError } = await supabase
@@ -77,7 +88,10 @@ export function useTransactionsUnreconciledCount(options?: {
         .eq('matching_status', 'unmatched');
 
       if (countError) {
-        console.error('[useTransactionsUnreconciledCount] Count error:', countError);
+        console.error(
+          '[useTransactionsUnreconciledCount] Count error:',
+          countError
+        );
         setError(new Error(`Count error: ${countError.message}`));
         setCount(0); // Valeur par défaut gracieuse
         return; // Sortie anticipée sans exception
@@ -96,50 +110,73 @@ export function useTransactionsUnreconciledCount(options?: {
   }, [supabase]);
 
   /**
-   * Setup Supabase Realtime subscription
+   * Setup Supabase Realtime subscription (authentification requise)
    */
   useEffect(() => {
-    // Initial fetch
-    fetchCount();
+    let isMounted = true;
 
-    // Setup Realtime si activé
-    if (enableRealtime) {
-      channelRef.current = supabase
-        .channel('transactions-unreconciled-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'bank_transactions',
-          },
-          payload => {
-            console.log(
-              '[useTransactionsUnreconciledCount] Realtime change detected:',
-              payload.eventType
-            );
-            fetchCount();
-          }
-        )
-        .subscribe(status => {
-          if (status === 'SUBSCRIBED') {
-            console.log('[useTransactionsUnreconciledCount] Realtime subscribed');
-          } else if (status === 'CHANNEL_ERROR') {
-            console.error('[useTransactionsUnreconciledCount] Realtime error');
-            setError(new Error('Realtime subscription failed'));
-          }
-        });
-    }
+    const setupSubscriptions = async () => {
+      // Vérifier authentification avant setup Realtime/polling
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    // Polling fallback (interval plus long pour finance)
-    if (!enableRealtime || refetchInterval > 0) {
-      intervalRef.current = setInterval(() => {
-        fetchCount();
-      }, refetchInterval);
-    }
+      if (!user || !isMounted) {
+        // Pas connecté = pas de Realtime, juste set count à 0
+        setCount(0);
+        setLoading(false);
+        return;
+      }
+
+      // Initial fetch (authentifié)
+      fetchCount();
+
+      // Setup Realtime si activé ET authentifié
+      if (enableRealtime) {
+        channelRef.current = supabase
+          .channel('transactions-unreconciled-changes')
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'bank_transactions',
+            },
+            payload => {
+              console.log(
+                '[useTransactionsUnreconciledCount] Realtime change detected:',
+                payload.eventType
+              );
+              fetchCount();
+            }
+          )
+          .subscribe(status => {
+            if (status === 'SUBSCRIBED') {
+              console.log(
+                '[useTransactionsUnreconciledCount] Realtime subscribed'
+              );
+            } else if (status === 'CHANNEL_ERROR') {
+              // Log silencieux, pas setError pour éviter bruit sur page login
+              console.warn(
+                '[useTransactionsUnreconciledCount] Realtime subscription failed'
+              );
+            }
+          });
+      }
+
+      // Polling fallback (seulement si authentifié, interval plus long pour finance)
+      if (!enableRealtime || refetchInterval > 0) {
+        intervalRef.current = setInterval(() => {
+          fetchCount();
+        }, refetchInterval);
+      }
+    };
+
+    setupSubscriptions();
 
     // Cleanup
     return () => {
+      isMounted = false;
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;

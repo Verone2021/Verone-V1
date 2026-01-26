@@ -259,7 +259,7 @@ async function fetchSelectionById(
   // 5. Combiner les données (y compris données étendues pour modal)
   const itemsWithImages = (items || []).map(item => {
     const channelData = channelPricingDataByProductId[item.product_id];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const rawProduct = item.product;
     return {
       ...item,

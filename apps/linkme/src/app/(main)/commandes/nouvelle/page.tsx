@@ -32,7 +32,9 @@ export default function NouvelleCommandePage() {
                 Commandes
               </Link>
               <ChevronRight className="h-4 w-4" />
-              <span className="text-gray-900 font-medium">Nouvelle commande</span>
+              <span className="text-gray-900 font-medium">
+                Nouvelle commande
+              </span>
             </nav>
 
             <h1 className="text-2xl font-bold text-gray-900">

@@ -73,7 +73,7 @@ export function QuickActionsBar({ actions, className }: QuickActionsBarProps) {
         className
       )}
     >
-      {actions.map((action) => (
+      {actions.map(action => (
         <Link key={action.id} href={action.href}>
           <Button
             variant={action.variant || 'outline'}

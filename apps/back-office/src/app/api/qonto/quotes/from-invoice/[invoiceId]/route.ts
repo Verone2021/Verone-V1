@@ -91,7 +91,8 @@ export async function POST(
     // 1. Recuperer la facture locale
     const { data: invoice, error: invoiceError } = await supabase
       .from('financial_documents')
-      .select(`
+      .select(
+        `
         id,
         document_number,
         workflow_status,
@@ -107,7 +108,8 @@ export async function POST(
         fees_vat_rate,
         notes,
         qonto_invoice_id
-      `)
+      `
+      )
       .eq('id', invoiceId)
       .is('deleted_at', null)
       .single();
@@ -136,7 +138,7 @@ export async function POST(
     // 3. Recuperer le partenaire
     if (!typedInvoice.partner_id) {
       return NextResponse.json(
-        { success: false, error: 'La facture n\'a pas de client associe' },
+        { success: false, error: "La facture n'a pas de client associe" },
         { status: 400 }
       );
     }
@@ -158,18 +160,26 @@ export async function POST(
     const typedPartner = partner as unknown as IPartner;
 
     // 4. Recuperer les lignes de la facture
-    const { data: items, error: itemsError } = await (supabase as unknown as {
-      from: (table: string) => {
-        select: (columns: string) => {
-          eq: (column: string, value: string) => {
-            order: (column: string, options: { ascending: boolean }) => Promise<{
-              data: IInvoiceItem[] | null;
-              error: { message: string } | null;
-            }>;
+    const { data: items, error: itemsError } = await (
+      supabase as unknown as {
+        from: (table: string) => {
+          select: (columns: string) => {
+            eq: (
+              column: string,
+              value: string
+            ) => {
+              order: (
+                column: string,
+                options: { ascending: boolean }
+              ) => Promise<{
+                data: IInvoiceItem[] | null;
+                error: { message: string } | null;
+              }>;
+            };
           };
         };
-      };
-    })
+      }
+    )
       .from('financial_document_items')
       .select('description, quantity, unit_price_ht, tva_rate, product_id')
       .eq('document_id', invoiceId)
@@ -186,7 +196,8 @@ export async function POST(
     // 5. Trouver ou creer le client Qonto
     let qontoClientId: string;
     const customerEmail = typedPartner.email;
-    const customerName = typedPartner.trade_name || typedPartner.legal_name || 'Client';
+    const customerName =
+      typedPartner.trade_name || typedPartner.legal_name || 'Client';
 
     if (!customerEmail) {
       return NextResponse.json(
@@ -196,10 +207,19 @@ export async function POST(
     }
 
     // Utiliser l'adresse de facturation de la facture (copiee depuis la commande)
-    const billingAddress = typedInvoice.billing_address as { street?: string; city?: string; postal_code?: string; country?: string } | null;
+    const billingAddress = typedInvoice.billing_address as {
+      street?: string;
+      city?: string;
+      postal_code?: string;
+      country?: string;
+    } | null;
     if (!billingAddress?.city || !billingAddress?.postal_code) {
       return NextResponse.json(
-        { success: false, error: 'Adresse de facturation incomplete (ville et code postal requis). Verifiez que l\'adresse est renseignee sur la facture.' },
+        {
+          success: false,
+          error:
+            "Adresse de facturation incomplete (ville et code postal requis). Verifiez que l'adresse est renseignee sur la facture.",
+        },
         { status: 400 }
       );
     }
@@ -245,7 +265,10 @@ export async function POST(
         title: 'Frais de livraison',
         quantity: '1',
         unit: 'forfait',
-        unitPrice: { value: String(typedInvoice.shipping_cost_ht), currency: 'EUR' },
+        unitPrice: {
+          value: String(typedInvoice.shipping_cost_ht),
+          currency: 'EUR',
+        },
         vatRate: String(feesVatRate),
       });
     }
@@ -255,7 +278,10 @@ export async function POST(
         title: 'Frais de manutention',
         quantity: '1',
         unit: 'forfait',
-        unitPrice: { value: String(typedInvoice.handling_cost_ht), currency: 'EUR' },
+        unitPrice: {
+          value: String(typedInvoice.handling_cost_ht),
+          currency: 'EUR',
+        },
         vatRate: String(feesVatRate),
       });
     }
@@ -265,7 +291,10 @@ export async function POST(
         title: "Frais d'assurance",
         quantity: '1',
         unit: 'forfait',
-        unitPrice: { value: String(typedInvoice.insurance_cost_ht), currency: 'EUR' },
+        unitPrice: {
+          value: String(typedInvoice.insurance_cost_ht),
+          currency: 'EUR',
+        },
         vatRate: String(feesVatRate),
       });
     }
@@ -297,13 +326,17 @@ export async function POST(
       footer: typedInvoice.notes || undefined,
     });
 
-    console.log(`[Quote from invoice] Created quote ${quote.quote_number} for invoice ${typedInvoice.document_number}`);
+    console.log(
+      `[Quote from invoice] Created quote ${quote.quote_number} for invoice ${typedInvoice.document_number}`
+    );
 
     // 10. Finaliser le devis pour generer le PDF
     // Note: La methode finalizeClientQuote appelle /send qui genere le PDF
     const finalizedQuote = await qontoClient.finalizeClientQuote(quote.id);
 
-    console.log(`[Quote from invoice] Finalized quote ${finalizedQuote.quote_number}, PDF URL: ${finalizedQuote.pdf_url ? 'available' : 'not available'}`);
+    console.log(
+      `[Quote from invoice] Finalized quote ${finalizedQuote.quote_number}, PDF URL: ${finalizedQuote.pdf_url ? 'available' : 'not available'}`
+    );
 
     return NextResponse.json({
       success: true,
@@ -315,7 +348,8 @@ export async function POST(
       },
       pdf_url: finalizedQuote.pdf_url || null,
       expires_in: '3 minutes',
-      message: 'Devis cree et finalise. L\'URL du PDF expire dans environ 3 minutes.',
+      message:
+        "Devis cree et finalise. L'URL du PDF expire dans environ 3 minutes.",
     });
   } catch (error) {
     console.error('[Quote from invoice] Error:', error);

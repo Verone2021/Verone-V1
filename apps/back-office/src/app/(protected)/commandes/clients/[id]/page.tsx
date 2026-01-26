@@ -45,7 +45,7 @@ export default async function OrderDetailPage({
 
   // 1. Récupérer commande de base
   let order: any = null;
-  let error: any = null;
+  const error: any = null;
 
   // Essayer d'abord requête directe
   const { data: orderData, error: orderError } = await supabase
@@ -90,10 +90,9 @@ export default async function OrderDetailPage({
     order = orderData;
   } else {
     // FALLBACK: Essayer via RPC get_linkme_orders pour les commandes LinkMe
-    const { data: linkmeOrders, error: linkmeError } = await (supabase.rpc as any)(
-      'get_linkme_orders',
-      {}
-    );
+    const { data: linkmeOrders, error: linkmeError } = await (
+      supabase.rpc as any
+    )('get_linkme_orders', {});
 
     if (linkmeOrders && linkmeOrders.length > 0) {
       const linkmeOrder = linkmeOrders.find((o: any) => o.id === id);
@@ -116,7 +115,11 @@ export default async function OrderDetailPage({
           created_at: linkmeOrder.created_at,
           created_by: linkmeOrder.created_by_affiliate_id,
           channel_id: '93c68db1-5a30-4168-89ec-6383152be405', // LinkMe channel
-          sales_channels: { id: '93c68db1-5a30-4168-89ec-6383152be405', name: 'LinkMe', code: 'linkme' },
+          sales_channels: {
+            id: '93c68db1-5a30-4168-89ec-6383152be405',
+            name: 'LinkMe',
+            code: 'linkme',
+          },
           sales_order_items: (linkmeOrder.items || []).map((item: any) => ({
             id: item.id,
             product_id: item.product_id,
@@ -126,9 +129,9 @@ export default async function OrderDetailPage({
             products: {
               id: item.product_id,
               name: item.product_name,
-              sku: item.product_sku
-            }
-          }))
+              sku: item.product_sku,
+            },
+          })),
         };
       }
     }
@@ -190,11 +193,11 @@ export default async function OrderDetailPage({
   }
 
   // 4. Récupérer canal de vente
-  const salesChannel = (order as any).sales_channels;
+  const salesChannel = order.sales_channels;
   const channelName = salesChannel?.name || null;
 
   // 5. Parser adresse
-  const shippingAddr = order.shipping_address as any;
+  const shippingAddr = order.shipping_address;
   const addressText =
     typeof shippingAddr === 'string'
       ? shippingAddr

@@ -65,7 +65,11 @@ export async function GET(
     if (error) {
       // Si la table n'existe pas ou pas de données, retourner config par défaut
       // PGRST116 = row not found, PGRST205 = table not found, 42P01 = undefined table
-      if (error.code === 'PGRST116' || error.code === 'PGRST205' || error.code === '42P01') {
+      if (
+        error.code === 'PGRST116' ||
+        error.code === 'PGRST205' ||
+        error.code === '42P01'
+      ) {
         return NextResponse.json({
           page_id: pageId,
           ...DEFAULT_CONFIG,

@@ -16,7 +16,12 @@ import {
 } from 'lucide-react';
 
 // Types des onglets du dashboard (définis ici car dashboard-tabs.tsx a été supprimé)
-export type DashboardTab = 'apercu' | 'ventes' | 'stock' | 'finances' | 'linkme';
+export type DashboardTab =
+  | 'apercu'
+  | 'ventes'
+  | 'stock'
+  | 'finances'
+  | 'linkme';
 
 export type KPIFormat = 'currency' | 'number' | 'percent';
 export type KPICategory = 'sales' | 'stock' | 'finance' | 'linkme' | 'general';
@@ -141,24 +146,10 @@ export const KPIS_BY_TAB: Record<DashboardTab, string[]> = {
     'stock_alerts',
     'cash_balance',
   ],
-  ventes: [
-    'monthly_revenue',
-    'sales_orders_count',
-    'purchase_orders_count',
-  ],
-  stock: [
-    'stock_value',
-    'stock_alerts',
-  ],
-  finances: [
-    'cash_balance',
-    'monthly_revenue',
-  ],
-  linkme: [
-    'linkme_commissions',
-    'linkme_orders',
-    'linkme_affiliates_active',
-  ],
+  ventes: ['monthly_revenue', 'sales_orders_count', 'purchase_orders_count'],
+  stock: ['stock_value', 'stock_alerts'],
+  finances: ['cash_balance', 'monthly_revenue'],
+  linkme: ['linkme_commissions', 'linkme_orders', 'linkme_affiliates_active'],
 };
 
 /**

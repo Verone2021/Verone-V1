@@ -3,12 +3,7 @@
 import { X, Sparkles } from 'lucide-react';
 
 import { Button } from '@verone/ui';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@verone/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
 import { SourcingQuickForm } from '@verone/products/components/sourcing/SourcingQuickForm';
 
 interface QuickSourcingModalProps {

@@ -4,10 +4,7 @@ import { Package } from 'lucide-react';
 
 import { Badge } from '@verone/ui';
 import { cn } from '@verone/utils';
-import {
-  useStockStatus,
-  type StockStatusData,
-} from '../../hooks';
+import { useStockStatus, type StockStatusData } from '../../hooks';
 
 interface StockStatusCompactProps {
   product: StockStatusData & { id: string };

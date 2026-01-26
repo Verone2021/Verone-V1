@@ -15,6 +15,7 @@
  */
 
 import { useMemo } from 'react';
+
 import { useEnseigneParentOrganisation } from './use-enseigne-parent-organisation';
 import { useEntityAddresses, type Address } from './use-entity-addresses';
 
@@ -72,16 +73,12 @@ export function useParentOrganisationAddresses(
   enseigneId: string | null
 ): ParentOrganisationWithAddresses {
   // 1. Get parent organisation
-  const {
-    data: parentOrg,
-    isLoading: parentLoading,
-  } = useEnseigneParentOrganisation(enseigneId);
+  const { data: parentOrg, isLoading: parentLoading } =
+    useEnseigneParentOrganisation(enseigneId);
 
   // 2. Get addresses from addresses table
-  const {
-    data: addressesData,
-    isLoading: addressesLoading,
-  } = useEntityAddresses('organisation', parentOrg?.id || null, 'billing');
+  const { data: addressesData, isLoading: addressesLoading } =
+    useEntityAddresses('organisation', parentOrg?.id || null, 'billing');
 
   // 3. Build primary address from organisation fields
   const primaryAddress = useMemo(() => {

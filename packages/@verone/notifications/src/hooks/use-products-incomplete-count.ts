@@ -70,6 +70,17 @@ export function useProductsIncompleteCount(options?: {
       setLoading(true);
       setError(null);
 
+      // Vérifier authentification avant requête (évite erreur RLS 403)
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        // Pas connecté = pas de count, pas d'erreur
+        setCount(0);
+        setLoading(false);
+        return;
+      }
+
       // Query produits catalogue avec fiches incomplètes
       // Incomplet = description vide
       const { count: totalCount, error: countError } = await supabase
@@ -98,51 +109,72 @@ export function useProductsIncompleteCount(options?: {
   }, [supabase]);
 
   /**
-   * Setup Supabase Realtime subscription
+   * Setup Supabase Realtime subscription (authentification requise)
    */
   useEffect(() => {
-    // Initial fetch
-    fetchCount();
+    let isMounted = true;
 
-    // Setup Realtime si activé
-    if (enableRealtime) {
-      channelRef.current = supabase
-        .channel('products-incomplete-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'products',
-            filter: 'product_status=eq.active',
-          },
-          payload => {
-            console.log(
-              '[useProductsIncompleteCount] Realtime change detected:',
-              payload
-            );
-            fetchCount();
-          }
-        )
-        .subscribe(status => {
-          if (status === 'SUBSCRIBED') {
-            console.log('[useProductsIncompleteCount] Realtime subscribed');
-          } else if (status === 'CHANNEL_ERROR') {
-            console.error('[useProductsIncompleteCount] Realtime error');
-            setError(new Error('Realtime subscription failed'));
-          }
-        });
-    }
+    const setupSubscriptions = async () => {
+      // Vérifier authentification avant setup Realtime/polling
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    // Polling fallback
-    if (!enableRealtime || refetchInterval > 0) {
-      intervalRef.current = setInterval(() => {
-        fetchCount();
-      }, refetchInterval);
-    }
+      if (!user || !isMounted) {
+        // Pas connecté = pas de Realtime, juste set count à 0
+        setCount(0);
+        setLoading(false);
+        return;
+      }
+
+      // Initial fetch (authentifié)
+      fetchCount();
+
+      // Setup Realtime si activé ET authentifié
+      if (enableRealtime) {
+        channelRef.current = supabase
+          .channel('products-incomplete-changes')
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'products',
+              filter: 'product_status=eq.active',
+            },
+            payload => {
+              console.log(
+                '[useProductsIncompleteCount] Realtime change detected:',
+                payload
+              );
+              fetchCount();
+            }
+          )
+          .subscribe(status => {
+            if (status === 'SUBSCRIBED') {
+              console.log('[useProductsIncompleteCount] Realtime subscribed');
+            } else if (status === 'CHANNEL_ERROR') {
+              // Log silencieux, pas setError pour éviter bruit sur page login
+              console.warn(
+                '[useProductsIncompleteCount] Realtime subscription failed'
+              );
+            }
+          });
+      }
+
+      // Polling fallback (seulement si authentifié)
+      if (!enableRealtime || refetchInterval > 0) {
+        intervalRef.current = setInterval(() => {
+          fetchCount();
+        }, refetchInterval);
+      }
+    };
+
+    setupSubscriptions();
 
     // Cleanup
     return () => {
+      isMounted = false;
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;

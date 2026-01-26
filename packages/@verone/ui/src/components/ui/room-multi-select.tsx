@@ -7,11 +7,7 @@
 import { useState, useRef, useEffect } from 'react';
 
 import type { RoomType } from '@verone/types';
-import {
-  ROOM_CONFIGS,
-  ROOM_CATEGORIES,
-  getRoomLabel,
-} from '@verone/types';
+import { ROOM_CONFIGS, ROOM_CATEGORIES, getRoomLabel } from '@verone/types';
 import { cn } from '@verone/utils';
 import { Check, ChevronDown, X } from 'lucide-react';
 

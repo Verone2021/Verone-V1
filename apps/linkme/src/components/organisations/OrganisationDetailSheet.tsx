@@ -393,9 +393,13 @@ export function OrganisationDetailSheet({
   );
 
   // Map ownership_type: 'propre' -> 'succursale' for compatibility
-  const contactOwnershipType = data?.organisation?.ownership_type === 'propre'
-    ? 'succursale'
-    : (data?.organisation?.ownership_type as 'succursale' | 'franchise' | null);
+  const contactOwnershipType =
+    data?.organisation?.ownership_type === 'propre'
+      ? 'succursale'
+      : (data?.organisation?.ownership_type as
+          | 'succursale'
+          | 'franchise'
+          | null);
 
   const { data: contactsData, isLoading: contactsLoading } =
     useOrganisationContacts(

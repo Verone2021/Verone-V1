@@ -23,10 +23,7 @@ function TestClientOrEnseigneSelectorContent() {
     setParentOrgId(parentId);
   };
 
-  const handleOrganisationChange = (
-    id: string | null,
-    name: string | null
-  ) => {
+  const handleOrganisationChange = (id: string | null, name: string | null) => {
     setOrganisationId(id);
     setOrganisationName(name);
   };

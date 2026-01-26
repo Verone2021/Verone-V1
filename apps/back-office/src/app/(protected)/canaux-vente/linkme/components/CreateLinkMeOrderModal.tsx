@@ -1057,7 +1057,7 @@ export function CreateLinkMeOrderModal({
                 onUpdate={updates =>
                   setContactsAddressesData(prev => ({ ...prev, ...updates }))
                 }
-                visible={true}
+                visible
               />
             )}
 

@@ -15,20 +15,25 @@
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 
-import { Card, cn, Collapsible, CollapsibleContent, CollapsibleTrigger } from '@verone/ui';
+import {
+  Card,
+  cn,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@verone/ui';
 import { Truck, ChevronDown, Check, AlertCircle } from 'lucide-react';
 
 import type { OrganisationContact } from '@/lib/hooks/use-organisation-contacts';
 
+import { AddressForm } from './AddressForm';
+import { ContactSelector } from './ContactSelector';
 import type {
   DeliverySectionData,
   ContactBase,
   PartialAddressData,
 } from '../../schemas/order-form.schema';
 import { defaultContact } from '../../schemas/order-form.schema';
-
-import { ContactSelector } from './ContactSelector';
-import { AddressForm } from './AddressForm';
 
 // ============================================================================
 // TYPES
@@ -268,7 +273,7 @@ export function DeliverySection({
                     <input
                       type="text"
                       value={delivery.contact?.firstName || ''}
-                      onChange={(e) =>
+                      onChange={e =>
                         handleContactChange('firstName', e.target.value)
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -283,7 +288,7 @@ export function DeliverySection({
                     <input
                       type="text"
                       value={delivery.contact?.lastName || ''}
-                      onChange={(e) =>
+                      onChange={e =>
                         handleContactChange('lastName', e.target.value)
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -298,7 +303,7 @@ export function DeliverySection({
                     <input
                       type="email"
                       value={delivery.contact?.email || ''}
-                      onChange={(e) =>
+                      onChange={e =>
                         handleContactChange('email', e.target.value)
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -313,7 +318,7 @@ export function DeliverySection({
                     <input
                       type="tel"
                       value={delivery.contact?.phone || ''}
-                      onChange={(e) =>
+                      onChange={e =>
                         handleContactChange('phone', e.target.value)
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -351,8 +356,8 @@ export function DeliverySection({
                     <p>
                       La livraison sera effectuée à :{' '}
                       <strong>
-                        {delivery.address.addressLine1}, {delivery.address.postalCode}{' '}
-                        {delivery.address.city}
+                        {delivery.address.addressLine1},{' '}
+                        {delivery.address.postalCode} {delivery.address.city}
                       </strong>
                     </p>
                     {delivery.saveAddressAsDefault && (

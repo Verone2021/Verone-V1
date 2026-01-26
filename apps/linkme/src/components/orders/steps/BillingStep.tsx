@@ -24,15 +24,7 @@
 
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 
-import {
-  Card,
-  Input,
-  Label,
-  Checkbox,
-  cn,
-  Badge,
-  Button,
-} from '@verone/ui';
+import { Card, Input, Label, Checkbox, cn, Badge, Button } from '@verone/ui';
 import {
   FileText,
   MapPin,
@@ -46,11 +38,15 @@ import {
   Loader2,
 } from 'lucide-react';
 
-import { useOrganisationContacts } from '@/lib/hooks/use-organisation-contacts';
 import { useEnseigneId } from '@/lib/hooks/use-enseigne-id';
-import { useEntityAddresses, type Address } from '@/lib/hooks/use-entity-addresses';
-import { useParentOrganisationAddresses } from '@/lib/hooks/use-parent-organisation-addresses';
+import {
+  useEntityAddresses,
+  type Address,
+} from '@/lib/hooks/use-entity-addresses';
+import { useOrganisationContacts } from '@/lib/hooks/use-organisation-contacts';
+import type { OrganisationContact } from '@/lib/hooks/use-organisation-contacts';
 import { useOrganisationDetail } from '@/lib/hooks/use-organisation-detail';
+import { useParentOrganisationAddresses } from '@/lib/hooks/use-parent-organisation-addresses';
 import { useUpdateOrganisationAddress } from '@/lib/hooks/use-update-organisation-address';
 
 import type {
@@ -62,12 +58,9 @@ import type {
   PartialAddressData,
 } from '../schemas/order-form.schema';
 import { defaultContact } from '../schemas/order-form.schema';
-
-import { ContactCard } from './contacts/ContactCard';
 import { AddressCard } from './contacts/AddressCard';
 import { AddressForm } from './contacts/AddressForm';
-
-import type { OrganisationContact } from '@/lib/hooks/use-organisation-contacts';
+import { ContactCard } from './contacts/ContactCard';
 
 // ============================================================================
 // TYPES
@@ -111,7 +104,7 @@ function ContactForm({ contact, onChange }: ContactFormProps) {
           id="billingContact-firstName"
           type="text"
           value={contact.firstName}
-          onChange={(e) => onChange('firstName', e.target.value)}
+          onChange={e => onChange('firstName', e.target.value)}
           placeholder="Jean"
         />
       </div>
@@ -124,7 +117,7 @@ function ContactForm({ contact, onChange }: ContactFormProps) {
           id="billingContact-lastName"
           type="text"
           value={contact.lastName}
-          onChange={(e) => onChange('lastName', e.target.value)}
+          onChange={e => onChange('lastName', e.target.value)}
           placeholder="Dupont"
         />
       </div>
@@ -137,7 +130,7 @@ function ContactForm({ contact, onChange }: ContactFormProps) {
           id="billingContact-email"
           type="email"
           value={contact.email}
-          onChange={(e) => onChange('email', e.target.value)}
+          onChange={e => onChange('email', e.target.value)}
           placeholder="jean.dupont@example.com"
         />
       </div>
@@ -148,7 +141,7 @@ function ContactForm({ contact, onChange }: ContactFormProps) {
           id="billingContact-phone"
           type="tel"
           value={contact.phone || ''}
-          onChange={(e) => onChange('phone', e.target.value)}
+          onChange={e => onChange('phone', e.target.value)}
           placeholder="06 12 34 56 78"
         />
       </div>
@@ -159,7 +152,7 @@ function ContactForm({ contact, onChange }: ContactFormProps) {
           id="billingContact-position"
           type="text"
           value={contact.position || ''}
-          onChange={(e) => onChange('position', e.target.value)}
+          onChange={e => onChange('position', e.target.value)}
           placeholder="Comptable, DAF..."
         />
       </div>
@@ -178,7 +171,12 @@ interface CreateNewCardProps {
   icon?: 'contact' | 'address';
 }
 
-function CreateNewCard({ onClick, isActive, label = 'Nouveau', icon = 'contact' }: CreateNewCardProps) {
+function CreateNewCard({
+  onClick,
+  isActive,
+  label = 'Nouveau',
+  icon = 'contact',
+}: CreateNewCardProps) {
   return (
     <Card
       className={cn(
@@ -191,7 +189,10 @@ function CreateNewCard({ onClick, isActive, label = 'Nouveau', icon = 'contact' 
     >
       <div className="flex items-center justify-center gap-2 h-full min-h-[60px]">
         <Plus
-          className={cn('h-5 w-5', isActive ? 'text-blue-500' : 'text-gray-400')}
+          className={cn(
+            'h-5 w-5',
+            isActive ? 'text-blue-500' : 'text-gray-400'
+          )}
         />
         <span
           className={cn(
@@ -234,7 +235,10 @@ function SameAsCard({ onClick, isActive }: SameAsCardProps) {
           )}
         >
           <User
-            className={cn('h-4 w-4', isActive ? 'text-green-600' : 'text-gray-500')}
+            className={cn(
+              'h-4 w-4',
+              isActive ? 'text-green-600' : 'text-gray-500'
+            )}
           />
         </div>
         <div className="min-w-0 flex-1">
@@ -300,7 +304,10 @@ function RestaurantAddressCard({
           )}
         >
           <Building2
-            className={cn('h-4 w-4', isActive ? 'text-blue-600' : 'text-gray-500')}
+            className={cn(
+              'h-4 w-4',
+              isActive ? 'text-blue-600' : 'text-gray-500'
+            )}
           />
         </div>
         <div className="min-w-0 flex-1">
@@ -309,7 +316,11 @@ function RestaurantAddressCard({
               Adresse restaurant
             </h3>
             {isIncomplete && (
-              <Badge variant="outline" size="sm" className="text-amber-600 border-amber-300 bg-amber-50 flex-shrink-0">
+              <Badge
+                variant="outline"
+                size="sm"
+                className="text-amber-600 border-amber-300 bg-amber-50 flex-shrink-0"
+              >
                 Incomplet
               </Badge>
             )}
@@ -318,9 +329,7 @@ function RestaurantAddressCard({
             {legalName || restaurantName || 'Restaurant'}
           </p>
           {addressLine1 && (
-            <p className="text-xs text-gray-500 truncate">
-              {addressLine1}
-            </p>
+            <p className="text-xs text-gray-500 truncate">{addressLine1}</p>
           )}
           {(postalCode || city) && (
             <p className="text-xs text-gray-500 truncate">
@@ -383,7 +392,10 @@ function ParentAddressCard({
           )}
         >
           <Building2
-            className={cn('h-4 w-4', isActive ? 'text-purple-600' : 'text-gray-500')}
+            className={cn(
+              'h-4 w-4',
+              isActive ? 'text-purple-600' : 'text-gray-500'
+            )}
           />
         </div>
         <div className="min-w-0 flex-1">
@@ -391,11 +403,19 @@ function ParentAddressCard({
             <h3 className="font-semibold text-gray-900 text-sm leading-tight truncate">
               Maison mere
             </h3>
-            <Badge variant="outline" size="sm" className="text-purple-600 border-purple-300 bg-purple-50 flex-shrink-0">
+            <Badge
+              variant="outline"
+              size="sm"
+              className="text-purple-600 border-purple-300 bg-purple-50 flex-shrink-0"
+            >
               Siege
             </Badge>
             {isIncomplete && (
-              <Badge variant="outline" size="sm" className="text-amber-600 border-amber-300 bg-amber-50 flex-shrink-0">
+              <Badge
+                variant="outline"
+                size="sm"
+                className="text-amber-600 border-amber-300 bg-amber-50 flex-shrink-0"
+              >
                 Incomplet
               </Badge>
             )}
@@ -404,9 +424,7 @@ function ParentAddressCard({
             {legalName || parentName || 'Organisation mere'}
           </p>
           {addressLine1 && (
-            <p className="text-xs text-gray-500 truncate">
-              {addressLine1}
-            </p>
+            <p className="text-xs text-gray-500 truncate">{addressLine1}</p>
           )}
           {(postalCode || city) && (
             <p className="text-xs text-gray-500 truncate">
@@ -457,19 +475,17 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
   const isFranchise = ownershipType === 'franchise';
 
   // Fetch contacts - Local + Enseigne (pour afficher dans les 2 colonnes)
-  const { data: contactsData, isLoading: contactsLoading } = useOrganisationContacts(
-    organisationId,
-    enseigneId || null,
-    ownershipType,
-    true // Inclure contacts enseigne
-  );
+  const { data: contactsData, isLoading: contactsLoading } =
+    useOrganisationContacts(
+      organisationId,
+      enseigneId || null,
+      ownershipType,
+      true // Inclure contacts enseigne
+    );
 
   // Fetch billing addresses for the restaurant
-  const { data: addressesData, isLoading: addressesLoading } = useEntityAddresses(
-    'organisation',
-    organisationId,
-    'billing'
-  );
+  const { data: addressesData, isLoading: addressesLoading } =
+    useEntityAddresses('organisation', organisationId, 'billing');
 
   // Fetch parent organisation addresses (for succursales only)
   const {
@@ -483,25 +499,31 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
     useOrganisationDetail(organisationId);
 
   // Hook pour sauvegarder les modifications
-  const { mutate: updateOrganisation, isPending: isSaving } = useUpdateOrganisationAddress();
+  const { mutate: updateOrganisation, isPending: isSaving } =
+    useUpdateOrganisationAddress();
 
   // Contacts disponibles - Séparés en locaux et enseigne
   const allContacts = contactsData?.allContacts || [];
 
   const localContacts = useMemo(() => {
-    return allContacts.filter((c) => c.organisationId === organisationId);
+    return allContacts.filter(c => c.organisationId === organisationId);
   }, [allContacts, organisationId]);
 
   // Contacts enseigne - Filtrer par isBillingContact si disponibles, sinon tous
   const enseigneContacts = useMemo(() => {
-    const enseigne = allContacts.filter((c) => c.organisationId !== organisationId);
-    const billingOnly = enseigne.filter((c) => c.isBillingContact);
+    const enseigne = allContacts.filter(
+      c => c.organisationId !== organisationId
+    );
+    const billingOnly = enseigne.filter(c => c.isBillingContact);
     return billingOnly.length > 0 ? billingOnly : enseigne;
   }, [allContacts, organisationId]);
 
   // Restaurant info for display (enhanced with full details)
   const restaurantInfo = useMemo(() => {
-    if (formData.restaurant.mode !== 'existing' || !formData.restaurant.existingId) {
+    if (
+      formData.restaurant.mode !== 'existing' ||
+      !formData.restaurant.existingId
+    ) {
       return null;
     }
     const org = restaurantDetail?.organisation;
@@ -513,7 +535,8 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
       // Enhanced data from useOrganisationDetail
       legalName: org?.legal_name || null,
       tradeName: org?.trade_name || null,
-      addressLine1: org?.billing_address_line1 || org?.shipping_address_line1 || null,
+      addressLine1:
+        org?.billing_address_line1 || org?.shipping_address_line1 || null,
       postalCode: org?.billing_postal_code || org?.shipping_postal_code || null,
       billingCity: org?.billing_city || org?.shipping_city || null,
       siret: org?.siret || null,
@@ -802,35 +825,38 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
 
     if (!sourceId || !currentAddress) return;
 
-    updateOrganisation({
-      organisationId: sourceId,
-      addressData: {
-        billing_address_line1: currentAddress.addressLine1 || null,
-        billing_postal_code: currentAddress.postalCode || null,
-        billing_city: currentAddress.city || null,
-        billing_country: currentAddress.country || 'FR',
-        siret: currentAddress.siret || null,
-        vat_number: currentAddress.vatNumber || null,
-        legal_name: currentAddress.legalName || null,
-        trade_name: currentAddress.tradeName || null,
+    updateOrganisation(
+      {
+        organisationId: sourceId,
+        addressData: {
+          billing_address_line1: currentAddress.addressLine1 || null,
+          billing_postal_code: currentAddress.postalCode || null,
+          billing_city: currentAddress.city || null,
+          billing_country: currentAddress.country || 'FR',
+          siret: currentAddress.siret || null,
+          vat_number: currentAddress.vatNumber || null,
+          legal_name: currentAddress.legalName || null,
+          trade_name: currentAddress.tradeName || null,
+        },
       },
-    }, {
-      onSuccess: () => {
-        // Mettre à jour les valeurs initiales après sauvegarde réussie
-        if (currentAddress) {
-          initialAddressRef.current = {
-            tradeName: currentAddress.tradeName || '',
-            legalName: currentAddress.legalName || '',
-            siret: currentAddress.siret || '',
-            vatNumber: currentAddress.vatNumber || '',
-            addressLine1: currentAddress.addressLine1 || '',
-            postalCode: currentAddress.postalCode || '',
-            city: currentAddress.city || '',
-            country: currentAddress.country || 'FR',
-          };
-        }
-      },
-    });
+      {
+        onSuccess: () => {
+          // Mettre à jour les valeurs initiales après sauvegarde réussie
+          if (currentAddress) {
+            initialAddressRef.current = {
+              tradeName: currentAddress.tradeName || '',
+              legalName: currentAddress.legalName || '',
+              siret: currentAddress.siret || '',
+              vatNumber: currentAddress.vatNumber || '',
+              addressLine1: currentAddress.addressLine1 || '',
+              postalCode: currentAddress.postalCode || '',
+              city: currentAddress.city || '',
+              country: currentAddress.country || 'FR',
+            };
+          }
+        },
+      }
+    );
   }, [formData.contacts.billingAddress, updateOrganisation]);
 
   // ========================================
@@ -855,10 +881,15 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
     handleSelectRestaurantAddress,
   ]);
 
-  const isLoading = contactsLoading || addressesLoading || parentLoading || restaurantDetailLoading;
+  const isLoading =
+    contactsLoading ||
+    addressesLoading ||
+    parentLoading ||
+    restaurantDetailLoading;
 
   // Déterminer si le formulaire est en mode édition (pas new_billing)
-  const isEditMode = formData.contacts.billingAddress.mode !== 'new_billing' &&
+  const isEditMode =
+    formData.contacts.billingAddress.mode !== 'new_billing' &&
     formData.contacts.billingAddress.customAddress !== null;
 
   return (
@@ -894,40 +925,52 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* GAUCHE: Formulaire avec design distinctif */}
-          <Card className={cn(
-            'p-4 transition-all',
-            isEditMode || formData.contacts.billingAddress.mode === 'new_billing'
-              ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200'
-              : 'bg-gray-50 border-dashed border-gray-300'
-          )}>
+          <Card
+            className={cn(
+              'p-4 transition-all',
+              isEditMode ||
+                formData.contacts.billingAddress.mode === 'new_billing'
+                ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200'
+                : 'bg-gray-50 border-dashed border-gray-300'
+            )}
+          >
             {/* En-tête distinctif */}
-            {(isEditMode || formData.contacts.billingAddress.mode === 'new_billing') && (
+            {(isEditMode ||
+              formData.contacts.billingAddress.mode === 'new_billing') && (
               <div className="flex items-center gap-3 pb-4 border-b border-blue-200 mb-4">
                 <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
                   <FileText className="h-5 w-5 text-blue-600" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-blue-900">Adresse de facturation</h4>
-                  <p className="text-xs text-blue-600">Ces informations seront utilisees pour la facture</p>
+                  <h4 className="font-semibold text-blue-900">
+                    Adresse de facturation
+                  </h4>
+                  <p className="text-xs text-blue-600">
+                    Ces informations seront utilisees pour la facture
+                  </p>
                 </div>
               </div>
             )}
 
             {/* Message si aucune sélection */}
-            {!isEditMode && formData.contacts.billingAddress.mode !== 'new_billing' && (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
-                  <MapPin className="h-6 w-6 text-gray-400" />
+            {!isEditMode &&
+              formData.contacts.billingAddress.mode !== 'new_billing' && (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+                    <MapPin className="h-6 w-6 text-gray-400" />
+                  </div>
+                  <p className="text-sm text-gray-500 mb-1">
+                    Aucune adresse selectionnee
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    Cliquez sur une adresse a droite pour la selectionner
+                  </p>
                 </div>
-                <p className="text-sm text-gray-500 mb-1">Aucune adresse selectionnee</p>
-                <p className="text-xs text-gray-400">
-                  Cliquez sur une adresse a droite pour la selectionner
-                </p>
-              </div>
-            )}
+              )}
 
             {/* Formulaire d'adresse */}
-            {(isEditMode || formData.contacts.billingAddress.mode === 'new_billing') && (
+            {(isEditMode ||
+              formData.contacts.billingAddress.mode === 'new_billing') && (
               <>
                 <AddressForm
                   address={formData.contacts.billingAddress.customAddress}
@@ -942,10 +985,16 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
                     <div className="flex items-center gap-2">
                       <Checkbox
                         id="replaceExistingAddress"
-                        checked={formData.contacts.billingAddress.replaceExistingAddress}
+                        checked={
+                          formData.contacts.billingAddress
+                            .replaceExistingAddress
+                        }
                         onCheckedChange={handleReplaceExistingChange}
                       />
-                      <Label htmlFor="replaceExistingAddress" className="text-sm font-normal cursor-pointer">
+                      <Label
+                        htmlFor="replaceExistingAddress"
+                        className="text-sm font-normal cursor-pointer"
+                      >
                         Remplacer l&apos;adresse existante du restaurant
                       </Label>
                     </div>
@@ -955,7 +1004,10 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
                         checked={formData.contacts.billingAddress.setAsDefault}
                         onCheckedChange={handleSetAsDefaultChange}
                       />
-                      <Label htmlFor="setAsDefaultAddress" className="text-sm font-normal cursor-pointer">
+                      <Label
+                        htmlFor="setAsDefaultAddress"
+                        className="text-sm font-normal cursor-pointer"
+                      >
                         Definir comme adresse par defaut
                       </Label>
                     </div>
@@ -963,30 +1015,32 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
                 )}
 
                 {/* Bouton Sauvegarder - UNIQUEMENT si modifications détectées */}
-                {hasUnsavedChanges && formData.contacts.billingAddress.sourceOrganisationId && (
-                  <div className="mt-4 pt-4 border-t border-blue-200">
-                    <Button
-                      onClick={handleSaveAddress}
-                      disabled={isSaving}
-                      className="w-full bg-blue-600 hover:bg-blue-700"
-                    >
-                      {isSaving ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          Sauvegarde en cours...
-                        </>
-                      ) : (
-                        <>
-                          <Save className="h-4 w-4 mr-2" />
-                          Sauvegarder les modifications
-                        </>
-                      )}
-                    </Button>
-                    <p className="text-xs text-blue-600 mt-2 text-center">
-                      Les modifications seront enregistrees dans la fiche restaurant
-                    </p>
-                  </div>
-                )}
+                {hasUnsavedChanges &&
+                  formData.contacts.billingAddress.sourceOrganisationId && (
+                    <div className="mt-4 pt-4 border-t border-blue-200">
+                      <Button
+                        onClick={handleSaveAddress}
+                        disabled={isSaving}
+                        className="w-full bg-blue-600 hover:bg-blue-700"
+                      >
+                        {isSaving ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            Sauvegarde en cours...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="h-4 w-4 mr-2" />
+                            Sauvegarder les modifications
+                          </>
+                        )}
+                      </Button>
+                      <p className="text-xs text-blue-600 mt-2 text-center">
+                        Les modifications seront enregistrees dans la fiche
+                        restaurant
+                      </p>
+                    </div>
+                  )}
               </>
             )}
           </Card>
@@ -995,7 +1049,9 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
           <Card className="p-4">
             <div className="flex items-center gap-2 pb-3 border-b mb-4">
               <Building2 className="h-4 w-4 text-blue-600" />
-              <h4 className="font-medium text-gray-700">Adresses disponibles</h4>
+              <h4 className="font-medium text-gray-700">
+                Adresses disponibles
+              </h4>
             </div>
 
             {isLoading && (
@@ -1010,8 +1066,13 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
                 {restaurantInfo && (
                   <RestaurantAddressCard
                     onClick={handleSelectRestaurantAddress}
-                    isActive={formData.contacts.billingAddress.mode === 'restaurant_address'}
-                    restaurantName={restaurantInfo.tradeName || restaurantInfo.name}
+                    isActive={
+                      formData.contacts.billingAddress.mode ===
+                      'restaurant_address'
+                    }
+                    restaurantName={
+                      restaurantInfo.tradeName || restaurantInfo.name
+                    }
                     legalName={restaurantInfo.legalName}
                     addressLine1={restaurantInfo.addressLine1}
                     postalCode={restaurantInfo.postalCode}
@@ -1025,7 +1086,9 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
                 {showParentAddress && (
                   <ParentAddressCard
                     onClick={handleSelectParentAddress}
-                    isActive={formData.contacts.billingAddress.mode === 'parent_address'}
+                    isActive={
+                      formData.contacts.billingAddress.mode === 'parent_address'
+                    }
                     parentName={parentOrg?.trade_name || null}
                     legalName={parentOrg?.legal_name || null}
                     addressLine1={parentPrimaryAddress?.addressLine1 || null}
@@ -1037,13 +1100,15 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
                 )}
 
                 {/* Adresses existantes */}
-                {billingAddresses.map((address) => (
+                {billingAddresses.map(address => (
                   <AddressCard
                     key={address.id}
                     address={address}
                     isSelected={
-                      formData.contacts.billingAddress.mode === 'existing_billing' &&
-                      formData.contacts.billingAddress.existingAddressId === address.id
+                      formData.contacts.billingAddress.mode ===
+                        'existing_billing' &&
+                      formData.contacts.billingAddress.existingAddressId ===
+                        address.id
                     }
                     onClick={() => handleSelectExistingAddress(address)}
                   />
@@ -1052,7 +1117,9 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
                 {/* Carte nouvelle adresse */}
                 <CreateNewCard
                   onClick={handleCreateNewAddress}
-                  isActive={formData.contacts.billingAddress.mode === 'new_billing'}
+                  isActive={
+                    formData.contacts.billingAddress.mode === 'new_billing'
+                  }
                   label="Nouvelle adresse"
                   icon="address"
                 />
@@ -1089,9 +1156,7 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
             )}
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900">
-              Contact Facturation
-            </h3>
+            <h3 className="font-semibold text-gray-900">Contact Facturation</h3>
             <p className="text-sm text-gray-500">
               Personne a contacter pour la facturation
             </p>
@@ -1130,16 +1195,20 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
                 {/* Option "Même que responsable" */}
                 <SameAsCard
                   onClick={handleBillingContactSameAsResponsable}
-                  isActive={formData.contacts.billingContact.mode === 'same_as_responsable'}
+                  isActive={
+                    formData.contacts.billingContact.mode ===
+                    'same_as_responsable'
+                  }
                 />
 
                 {/* Contacts locaux */}
-                {localContacts.map((contact) => (
+                {localContacts.map(contact => (
                   <ContactCard
                     key={contact.id}
                     contact={contact}
                     isSelected={
-                      formData.contacts.billingContact.existingContactId === contact.id &&
+                      formData.contacts.billingContact.existingContactId ===
+                        contact.id &&
                       formData.contacts.billingContact.mode === 'existing'
                     }
                     onClick={() => handleBillingContactSelect(contact)}
@@ -1149,7 +1218,10 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
                 {/* Carte nouveau contact */}
                 <CreateNewCard
                   onClick={handleBillingContactCreateNew}
-                  isActive={showContactForm && formData.contacts.billingContact.mode === 'new'}
+                  isActive={
+                    showContactForm &&
+                    formData.contacts.billingContact.mode === 'new'
+                  }
                   label="Nouveau contact"
                   icon="contact"
                 />
@@ -1157,20 +1229,24 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
             )}
 
             {/* Formulaire nouveau contact */}
-            {showContactForm && formData.contacts.billingContact.mode === 'new' && (
-              <div className="pt-4 mt-4 border-t">
-                <h5 className="text-sm font-medium text-gray-700 mb-4">
-                  Nouveau contact facturation
-                </h5>
-                <ContactForm
-                  contact={formData.contacts.billingContact.contact || defaultContact}
-                  onChange={handleBillingContactChange}
-                />
-              </div>
-            )}
+            {showContactForm &&
+              formData.contacts.billingContact.mode === 'new' && (
+                <div className="pt-4 mt-4 border-t">
+                  <h5 className="text-sm font-medium text-gray-700 mb-4">
+                    Nouveau contact facturation
+                  </h5>
+                  <ContactForm
+                    contact={
+                      formData.contacts.billingContact.contact || defaultContact
+                    }
+                    onChange={handleBillingContactChange}
+                  />
+                </div>
+              )}
 
             {/* Same as responsable info */}
-            {formData.contacts.billingContact.mode === 'same_as_responsable' && (
+            {formData.contacts.billingContact.mode ===
+              'same_as_responsable' && (
               <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                 <div className="flex items-start gap-2">
                   <Check className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
@@ -1197,7 +1273,7 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
                 <h4 className="font-medium text-gray-700">
                   Contacts de l&apos;Enseigne
                 </h4>
-                {enseigneContacts.some((c) => c.isBillingContact) && (
+                {enseigneContacts.some(c => c.isBillingContact) && (
                   <Badge variant="info" size="sm" className="ml-auto">
                     Facturation
                   </Badge>
@@ -1212,12 +1288,13 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
 
               {!contactsLoading && enseigneContacts.length > 0 ? (
                 <div className="space-y-3">
-                  {enseigneContacts.map((contact) => (
+                  {enseigneContacts.map(contact => (
                     <ContactCard
                       key={contact.id}
                       contact={contact}
                       isSelected={
-                        formData.contacts.billingContact.existingContactId === contact.id &&
+                        formData.contacts.billingContact.existingContactId ===
+                          contact.id &&
                         formData.contacts.billingContact.mode === 'existing'
                       }
                       onClick={() => handleBillingContactSelect(contact)}
@@ -1230,7 +1307,8 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
                     <User className="h-12 w-12 mx-auto mb-2 text-gray-300" />
                     <p className="text-sm">Aucun contact enseigne disponible</p>
                     <p className="text-xs text-gray-400 mt-1">
-                      Les contacts enseigne seront affiches ici s&apos;ils existent
+                      Les contacts enseigne seront affiches ici s&apos;ils
+                      existent
                     </p>
                   </div>
                 )
@@ -1243,9 +1321,7 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
             <Card className="p-4 bg-gray-50">
               <div className="flex items-center gap-2 pb-3 border-b border-gray-200 mb-4">
                 <AlertCircle className="h-4 w-4 text-gray-400" />
-                <h4 className="font-medium text-gray-500">
-                  Contacts enseigne
-                </h4>
+                <h4 className="font-medium text-gray-500">Contacts enseigne</h4>
               </div>
               <div className="text-center py-8 text-gray-500">
                 <Building2 className="h-12 w-12 mx-auto mb-2 text-gray-300" />
@@ -1269,8 +1345,8 @@ export function BillingStep({ formData, errors, onUpdate }: BillingStepProps) {
             <p className="font-medium">Information</p>
             <p className="mt-1">
               Le contact facturation recevra les factures et autres documents
-              comptables. L&apos;adresse de facturation determine ou la facture sera
-              envoyee.
+              comptables. L&apos;adresse de facturation determine ou la facture
+              sera envoyee.
             </p>
           </div>
         </div>

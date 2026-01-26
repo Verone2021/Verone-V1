@@ -176,7 +176,9 @@ export function useEntityAddresses(
         throw error;
       }
 
-      const addresses = (data || []).map((row) => transformAddress(row as Record<string, unknown>));
+      const addresses = (data || []).map(row =>
+        transformAddress(row as Record<string, unknown>)
+      );
 
       // Group by type
       const billing = addresses.filter(a => a.addressType === 'billing');

@@ -51,7 +51,9 @@ export async function POST(
     const supabase = await createServerClient();
 
     // 1. Récupérer l'utilisateur connecté
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json(
         {
@@ -114,9 +116,10 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
-          error: qontoError instanceof Error
-            ? `Qonto error: ${qontoError.message}`
-            : 'Failed to finalize invoice in Qonto',
+          error:
+            qontoError instanceof Error
+              ? `Qonto error: ${qontoError.message}`
+              : 'Failed to finalize invoice in Qonto',
         },
         { status: 500 }
       );
@@ -140,7 +143,9 @@ export async function POST(
           const fileName = `${finalizedInvoice.invoice_number || invoiceId}.pdf`;
           localPdfPath = `customer/${year}/${fileName}`;
 
-          console.log(`[Finalize workflow] Uploading PDF to Storage: ${localPdfPath}`);
+          console.log(
+            `[Finalize workflow] Uploading PDF to Storage: ${localPdfPath}`
+          );
 
           // Upload vers Supabase Storage (bucket 'invoices')
           const { error: uploadError } = await supabase.storage
@@ -151,7 +156,10 @@ export async function POST(
             });
 
           if (uploadError) {
-            console.error('[Finalize workflow] Storage upload failed:', uploadError);
+            console.error(
+              '[Finalize workflow] Storage upload failed:',
+              uploadError
+            );
             // Ne pas échouer la requête - le PDF Qonto reste disponible
           } else {
             // Générer une URL signée (valide 1 heure)
@@ -160,10 +168,15 @@ export async function POST(
               .createSignedUrl(localPdfPath, 3600);
 
             localPdfUrl = signedUrlData?.signedUrl || null;
-            console.log(`[Finalize workflow] PDF stored locally: ${localPdfPath}`);
+            console.log(
+              `[Finalize workflow] PDF stored locally: ${localPdfPath}`
+            );
           }
         } else {
-          console.error('[Finalize workflow] Failed to download PDF:', pdfResponse.status);
+          console.error(
+            '[Finalize workflow] Failed to download PDF:',
+            pdfResponse.status
+          );
         }
       } catch (storageError) {
         console.error('[Finalize workflow] Storage error:', storageError);
@@ -191,7 +204,9 @@ export async function POST(
       .from('financial_documents')
       .update(updateData)
       .eq('id', invoiceId)
-      .select('id, workflow_status, finalized_at, finalized_by, qonto_pdf_url, qonto_public_url, status')
+      .select(
+        'id, workflow_status, finalized_at, finalized_by, qonto_pdf_url, qonto_public_url, status'
+      )
       .single();
 
     if (updateError) {
@@ -205,7 +220,9 @@ export async function POST(
       );
     }
 
-    console.log(`[Finalize workflow] Invoice ${invoiceId} finalized by user ${user.id}${localPdfPath ? ' (PDF stored locally)' : ''}`);
+    console.log(
+      `[Finalize workflow] Invoice ${invoiceId} finalized by user ${user.id}${localPdfPath ? ' (PDF stored locally)' : ''}`
+    );
 
     return NextResponse.json({
       success: true,
@@ -216,7 +233,6 @@ export async function POST(
         ? 'Invoice finalized successfully. PDF stored locally.'
         : 'Invoice finalized successfully. PDF available from Qonto.',
     });
-
   } catch (error) {
     console.error('[Finalize workflow] Error:', error);
     return NextResponse.json(

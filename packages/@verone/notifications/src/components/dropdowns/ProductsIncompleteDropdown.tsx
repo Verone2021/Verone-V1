@@ -15,11 +15,7 @@ import Link from 'next/link';
 
 import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@verone/ui';
+import { Popover, PopoverContent, PopoverTrigger } from '@verone/ui';
 import { ScrollArea } from '@verone/ui';
 import { Skeleton } from '@verone/ui';
 import { cn } from '@verone/utils';
@@ -71,9 +67,7 @@ function ProductItem({ product }: ProductItemProps) {
       {/* Contenu */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="font-medium text-sm truncate">
-            {product.name}
-          </span>
+          <span className="font-medium text-sm truncate">{product.name}</span>
         </div>
 
         <div className="flex items-center gap-2 mt-0.5 text-xs text-black/60">
@@ -158,17 +152,20 @@ export function ProductsIncompleteDropdown({
       }
 
       // Enrichir avec les champs manquants
-      const enrichedProducts: IncompleteProduct[] = (data || []).map((p: any) => {
-        const missing: string[] = [];
-        if (!p.description || p.description === '') missing.push('description');
-        return {
-          id: p.id,
-          name: p.name,
-          sku: p.sku || '',
-          description: p.description,
-          missing_fields: missing,
-        };
-      });
+      const enrichedProducts: IncompleteProduct[] = (data || []).map(
+        (p: any) => {
+          const missing: string[] = [];
+          if (!p.description || p.description === '')
+            missing.push('description');
+          return {
+            id: p.id,
+            name: p.name,
+            sku: p.sku || '',
+            description: p.description,
+            missing_fields: missing,
+          };
+        }
+      );
 
       setProducts(enrichedProducts);
     } catch (err) {
@@ -254,7 +251,9 @@ export function ProductsIncompleteDropdown({
           ) : products.length === 0 ? (
             <div className="p-6 text-center">
               <CheckCircle className="h-8 w-8 mx-auto text-green-400 mb-2" />
-              <p className="text-sm text-black/60">Toutes les fiches sont complètes</p>
+              <p className="text-sm text-black/60">
+                Toutes les fiches sont complètes
+              </p>
               <p className="text-xs text-black/40 mt-1">
                 Aucun produit à compléter
               </p>

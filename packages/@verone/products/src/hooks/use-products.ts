@@ -4,7 +4,10 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import useSWR from 'swr';
 
-import { calculateMinimumSellingPrice, formatPrice } from '@verone/finance/utils';
+import {
+  calculateMinimumSellingPrice,
+  formatPrice,
+} from '@verone/finance/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@verone/common/hooks';
 

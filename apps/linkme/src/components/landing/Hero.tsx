@@ -38,9 +38,7 @@ export function LandingHero() {
     },
     {
       label: 'Commissions versees',
-      value: stats
-        ? `${formatPublicAmount(stats.totalCommissionsPaid)}€`
-        : '-',
+      value: stats ? `${formatPublicAmount(stats.totalCommissionsPaid)}€` : '-',
       icon: Wallet,
     },
     {

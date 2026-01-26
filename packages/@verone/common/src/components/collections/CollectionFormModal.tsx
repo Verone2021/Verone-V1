@@ -33,10 +33,7 @@ import { Label } from '@verone/ui';
 // import { RoomMultiSelect } from '@verone/ui';
 import { Textarea } from '@verone/ui';
 import { cn } from '@verone/utils';
-import type {
-  Collection,
-  CreateCollectionData,
-} from '@verone/common/hooks';
+import type { Collection, CreateCollectionData } from '@verone/common/hooks';
 import type { RoomCategory, CollectionStyle } from '@verone/types';
 import type { RoomType } from '@verone/types';
 

@@ -35,7 +35,9 @@ export async function POST(
     const supabase = await createServerClient();
 
     // 1. Récupérer l'utilisateur connecté
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json(
         {
@@ -98,14 +100,15 @@ export async function POST(
       );
     }
 
-    console.log(`[Validate to draft] Invoice ${invoiceId} validated to draft by user ${user.id}`);
+    console.log(
+      `[Validate to draft] Invoice ${invoiceId} validated to draft by user ${user.id}`
+    );
 
     return NextResponse.json({
       success: true,
       invoice: updated,
       message: 'Invoice validated to draft successfully',
     });
-
   } catch (error) {
     console.error('[Validate to draft] Error:', error);
     return NextResponse.json(

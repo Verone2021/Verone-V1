@@ -50,7 +50,10 @@ import {
   X,
 } from 'lucide-react';
 
-import { CreditNoteCreateModal, IInvoiceForCreditNote } from './CreditNoteCreateModal';
+import {
+  CreditNoteCreateModal,
+  IInvoiceForCreditNote,
+} from './CreditNoteCreateModal';
 
 // Types pour l'API
 interface InvoiceItem {
@@ -111,7 +114,12 @@ interface InvoiceDetail {
   document_type: string;
   document_date: string;
   due_date: string | null;
-  workflow_status: 'synchronized' | 'draft_validated' | 'finalized' | 'sent' | 'paid';
+  workflow_status:
+    | 'synchronized'
+    | 'draft_validated'
+    | 'finalized'
+    | 'sent'
+    | 'paid';
   status: string;
   total_ht: number;
   total_ttc: number;
@@ -230,13 +238,13 @@ function formatDate(dateStr: string | null): string {
   });
 }
 
-function formatAddress(
-  address: AddressData | null
-): string {
+function formatAddress(address: AddressData | null): string {
   if (!address) return 'Adresse non renseignee';
-  const parts = [address.street, `${address.postal_code || ''} ${address.city || ''}`.trim(), address.country].filter(
-    Boolean
-  );
+  const parts = [
+    address.street,
+    `${address.postal_code || ''} ${address.city || ''}`.trim(),
+    address.country,
+  ].filter(Boolean);
   return parts.join(', ') || 'Adresse non renseignee';
 }
 
@@ -258,7 +266,11 @@ export function InvoiceDetailModal({
   const [editState, setEditState] = useState<EditState | null>(null);
   // Etats pour le devis
   const [isCreatingQuote, setIsCreatingQuote] = useState(false);
-  const [quoteData, setQuoteData] = useState<{ id: string; quote_number: string; pdf_url: string | null } | null>(null);
+  const [quoteData, setQuoteData] = useState<{
+    id: string;
+    quote_number: string;
+    pdf_url: string | null;
+  } | null>(null);
   // Etat pour le modal d'avoir
   const [showCreditNoteModal, setShowCreditNoteModal] = useState(false);
 
@@ -275,8 +287,12 @@ export function InvoiceDetailModal({
   });
 
   const invoice = data?.invoice;
-  const statusConfig = invoice ? WORKFLOW_STATUS_CONFIG[invoice.workflow_status] : null;
-  const isEditable = invoice && ['synchronized', 'draft_validated'].includes(invoice.workflow_status);
+  const statusConfig = invoice
+    ? WORKFLOW_STATUS_CONFIG[invoice.workflow_status]
+    : null;
+  const isEditable =
+    invoice &&
+    ['synchronized', 'draft_validated'].includes(invoice.workflow_status);
 
   // Initialiser l'etat d'edition quand on entre en mode edition
   const initEditState = useCallback(() => {
@@ -285,8 +301,20 @@ export function InvoiceDetailModal({
     setEditState({
       due_date: invoice.due_date || '',
       notes: invoice.notes || '',
-      billing_address: invoice.billing_address || invoice.partner?.billing_address || { street: '', city: '', postal_code: '', country: 'FR' },
-      shipping_address: invoice.shipping_address || invoice.sales_order?.shipping_address || { street: '', city: '', postal_code: '', country: 'FR' },
+      billing_address: invoice.billing_address ||
+        invoice.partner?.billing_address || {
+          street: '',
+          city: '',
+          postal_code: '',
+          country: 'FR',
+        },
+      shipping_address: invoice.shipping_address ||
+        invoice.sales_order?.shipping_address || {
+          street: '',
+          city: '',
+          postal_code: '',
+          country: 'FR',
+        },
       shipping_cost_ht: invoice.shipping_cost_ht || 0,
       handling_cost_ht: invoice.handling_cost_ht || 0,
       insurance_cost_ht: invoice.insurance_cost_ht || 0,
@@ -328,7 +356,10 @@ export function InvoiceDetailModal({
     }
 
     // Frais
-    const feesHt = editState.shipping_cost_ht + editState.handling_cost_ht + editState.insurance_cost_ht;
+    const feesHt =
+      editState.shipping_cost_ht +
+      editState.handling_cost_ht +
+      editState.insurance_cost_ht;
     const feesVat = feesHt * editState.fees_vat_rate;
     totalHt += feesHt;
     totalVat += feesVat;
@@ -397,7 +428,10 @@ export function InvoiceDetailModal({
           title: 'Frais de livraison',
           quantity: '1',
           unit: 'forfait',
-          unitPrice: { value: String(editState.shipping_cost_ht), currency: 'EUR' },
+          unitPrice: {
+            value: String(editState.shipping_cost_ht),
+            currency: 'EUR',
+          },
           vatRate: String(editState.fees_vat_rate),
         });
       }
@@ -406,7 +440,10 @@ export function InvoiceDetailModal({
           title: 'Frais de manutention',
           quantity: '1',
           unit: 'forfait',
-          unitPrice: { value: String(editState.handling_cost_ht), currency: 'EUR' },
+          unitPrice: {
+            value: String(editState.handling_cost_ht),
+            currency: 'EUR',
+          },
           vatRate: String(editState.fees_vat_rate),
         });
       }
@@ -415,35 +452,41 @@ export function InvoiceDetailModal({
           title: "Frais d'assurance",
           quantity: '1',
           unit: 'forfait',
-          unitPrice: { value: String(editState.insurance_cost_ht), currency: 'EUR' },
+          unitPrice: {
+            value: String(editState.insurance_cost_ht),
+            currency: 'EUR',
+          },
           vatRate: String(editState.fees_vat_rate),
         });
       }
 
-      const response = await fetch(`/api/qonto/invoices/${invoice.qonto_invoice_id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          dueDate: editState.due_date || undefined,
-          items: qontoItems,
-          // Donnees locales
-          notes: editState.notes,
-          billing_address: editState.billing_address,
-          shipping_address: editState.shipping_address,
-          shipping_cost_ht: editState.shipping_cost_ht,
-          handling_cost_ht: editState.handling_cost_ht,
-          insurance_cost_ht: editState.insurance_cost_ht,
-          fees_vat_rate: editState.fees_vat_rate,
-          localItems: editState.items.map(item => ({
-            description: item.description,
-            quantity: item.quantity,
-            unit_price_ht: item.unit_price_ht,
-            tva_rate: item.tva_rate,
-            product_id: item.product_id,
-          })),
-          syncToOrder: true,
-        }),
-      });
+      const response = await fetch(
+        `/api/qonto/invoices/${invoice.qonto_invoice_id}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            dueDate: editState.due_date || undefined,
+            items: qontoItems,
+            // Donnees locales
+            notes: editState.notes,
+            billing_address: editState.billing_address,
+            shipping_address: editState.shipping_address,
+            shipping_cost_ht: editState.shipping_cost_ht,
+            handling_cost_ht: editState.handling_cost_ht,
+            insurance_cost_ht: editState.insurance_cost_ht,
+            fees_vat_rate: editState.fees_vat_rate,
+            localItems: editState.items.map(item => ({
+              description: item.description,
+              quantity: item.quantity,
+              unit_price_ht: item.unit_price_ht,
+              tva_rate: item.tva_rate,
+              product_id: item.product_id,
+            })),
+            syncToOrder: true,
+          }),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -458,7 +501,9 @@ export function InvoiceDetailModal({
       setEditState(null);
     } catch (error) {
       console.error('Save error:', error);
-      alert(error instanceof Error ? error.message : 'Erreur lors de la sauvegarde');
+      alert(
+        error instanceof Error ? error.message : 'Erreur lors de la sauvegarde'
+      );
     } finally {
       setIsSaving(false);
     }
@@ -487,11 +532,14 @@ export function InvoiceDetailModal({
         client_id: invoice.partner?.id || '',
         client: invoice.partner
           ? {
-              name: invoice.partner.trade_name || invoice.partner.legal_name || 'Client',
+              name:
+                invoice.partner.trade_name ||
+                invoice.partner.legal_name ||
+                'Client',
               email: invoice.partner.email,
             }
           : null,
-        items: invoice.items.map((item) => ({
+        items: invoice.items.map(item => ({
           id: item.id,
           title: item.product?.name || item.description,
           description: item.description,
@@ -518,10 +566,13 @@ export function InvoiceDetailModal({
     setIsCreatingQuote(true);
     setQuoteData(null);
     try {
-      const response = await fetch(`/api/qonto/quotes/from-invoice/${invoice.id}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const response = await fetch(
+        `/api/qonto/quotes/from-invoice/${invoice.id}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
 
       const data = await response.json();
 
@@ -537,14 +588,22 @@ export function InvoiceDetailModal({
       }
     } catch (error) {
       console.error('Create quote error:', error);
-      alert(error instanceof Error ? error.message : 'Erreur lors de la creation du devis');
+      alert(
+        error instanceof Error
+          ? error.message
+          : 'Erreur lors de la creation du devis'
+      );
     } finally {
       setIsCreatingQuote(false);
     }
   };
 
   // Handlers pour les items
-  const handleItemChange = (index: number, field: keyof EditableItem, value: string | number): void => {
+  const handleItemChange = (
+    index: number,
+    field: keyof EditableItem,
+    value: string | number
+  ): void => {
     if (!editState) return;
     const newItems = [...editState.items];
     newItems[index] = { ...newItems[index], [field]: value };
@@ -571,9 +630,14 @@ export function InvoiceDetailModal({
   };
 
   // Handlers pour les adresses
-  const handleAddressChange = (type: 'billing' | 'shipping', field: keyof AddressData, value: string): void => {
+  const handleAddressChange = (
+    type: 'billing' | 'shipping',
+    field: keyof AddressData,
+    value: string
+  ): void => {
     if (!editState) return;
-    const addressKey = type === 'billing' ? 'billing_address' : 'shipping_address';
+    const addressKey =
+      type === 'billing' ? 'billing_address' : 'shipping_address';
     setEditState({
       ...editState,
       [addressKey]: { ...editState[addressKey], [field]: value },
@@ -588,14 +652,24 @@ export function InvoiceDetailModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            {invoice ? `Facture ${invoice.document_number}` : 'Detail de la facture'}
-            {isEditing && <Badge variant="outline" className="ml-2">Mode edition</Badge>}
+            {invoice
+              ? `Facture ${invoice.document_number}`
+              : 'Detail de la facture'}
+            {isEditing && (
+              <Badge variant="outline" className="ml-2">
+                Mode edition
+              </Badge>
+            )}
           </DialogTitle>
           <DialogDescription>
             {invoice && statusConfig && (
               <div className="flex items-center gap-2 mt-1">
-                <Badge className={statusConfig.color}>{statusConfig.label}</Badge>
-                <span className="text-sm text-muted-foreground">{statusConfig.description}</span>
+                <Badge className={statusConfig.color}>
+                  {statusConfig.label}
+                </Badge>
+                <span className="text-sm text-muted-foreground">
+                  {statusConfig.description}
+                </span>
               </div>
             )}
           </DialogDescription>
@@ -628,22 +702,30 @@ export function InvoiceDetailModal({
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-muted-foreground">Date de facture</p>
-                    <p className="font-medium">{formatDate(invoice.document_date)}</p>
+                    <p className="font-medium">
+                      {formatDate(invoice.document_date)}
+                    </p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Date d echeance</p>
-                    <p className="font-medium">{formatDate(invoice.due_date)}</p>
+                    <p className="font-medium">
+                      {formatDate(invoice.due_date)}
+                    </p>
                   </div>
                   {invoice.payment_terms && (
                     <div>
-                      <p className="text-muted-foreground">Conditions de paiement</p>
+                      <p className="text-muted-foreground">
+                        Conditions de paiement
+                      </p>
                       <p className="font-medium">{invoice.payment_terms}</p>
                     </div>
                   )}
                   {invoice.sales_order && (
                     <div>
                       <p className="text-muted-foreground">Commande liee</p>
-                      <p className="font-medium">{invoice.sales_order.order_number}</p>
+                      <p className="font-medium">
+                        {invoice.sales_order.order_number}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -663,11 +745,16 @@ export function InvoiceDetailModal({
                   <div className="space-y-3">
                     <div>
                       <p className="font-semibold text-base">
-                        {invoice.partner.trade_name || invoice.partner.legal_name || 'Client sans nom'}
+                        {invoice.partner.trade_name ||
+                          invoice.partner.legal_name ||
+                          'Client sans nom'}
                       </p>
-                      {invoice.partner.trade_name && invoice.partner.legal_name && (
-                        <p className="text-sm text-muted-foreground">{invoice.partner.legal_name}</p>
-                      )}
+                      {invoice.partner.trade_name &&
+                        invoice.partner.legal_name && (
+                          <p className="text-sm text-muted-foreground">
+                            {invoice.partner.legal_name}
+                          </p>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 text-sm">
@@ -680,7 +767,9 @@ export function InvoiceDetailModal({
                       {invoice.partner.vat_number && (
                         <div>
                           <p className="text-muted-foreground">N TVA</p>
-                          <p className="font-mono">{invoice.partner.vat_number}</p>
+                          <p className="font-mono">
+                            {invoice.partner.vat_number}
+                          </p>
                         </div>
                       )}
                       {invoice.partner.email && (
@@ -700,8 +789,15 @@ export function InvoiceDetailModal({
                     <div className="flex items-start gap-2 pt-2">
                       <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
                       <div>
-                        <p className="text-muted-foreground text-sm">Adresse de facturation</p>
-                        <p className="text-sm">{formatAddress(invoice.billing_address || invoice.partner.billing_address)}</p>
+                        <p className="text-muted-foreground text-sm">
+                          Adresse de facturation
+                        </p>
+                        <p className="text-sm">
+                          {formatAddress(
+                            invoice.billing_address ||
+                              invoice.partner.billing_address
+                          )}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -712,7 +808,8 @@ export function InvoiceDetailModal({
             </Card>
 
             {/* Adresse de livraison (si differente) */}
-            {(invoice.shipping_address || invoice.sales_order?.shipping_address) && (
+            {(invoice.shipping_address ||
+              invoice.sales_order?.shipping_address) && (
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm flex items-center gap-2">
@@ -721,7 +818,13 @@ export function InvoiceDetailModal({
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm">{formatAddress(invoice.shipping_address || invoice.sales_order?.shipping_address || null)}</p>
+                  <p className="text-sm">
+                    {formatAddress(
+                      invoice.shipping_address ||
+                        invoice.sales_order?.shipping_address ||
+                        null
+                    )}
+                  </p>
                 </CardContent>
               </Card>
             )}
@@ -740,24 +843,33 @@ export function InvoiceDetailModal({
                         <TableHead className="text-right w-20">Qte</TableHead>
                         <TableHead className="text-right w-28">PU HT</TableHead>
                         <TableHead className="text-right w-20">TVA</TableHead>
-                        <TableHead className="text-right w-28">Total TTC</TableHead>
+                        <TableHead className="text-right w-28">
+                          Total TTC
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {invoice.items.map((item) => (
+                      {invoice.items.map(item => (
                         <TableRow key={item.id}>
                           <TableCell>
                             <div>
                               <p className="font-medium">
                                 {item.product?.name || item.description}
                               </p>
-                              {item.product?.name && item.description !== item.product.name && (
-                                <p className="text-xs text-muted-foreground">{item.description}</p>
-                              )}
+                              {item.product?.name &&
+                                item.description !== item.product.name && (
+                                  <p className="text-xs text-muted-foreground">
+                                    {item.description}
+                                  </p>
+                                )}
                             </div>
                           </TableCell>
-                          <TableCell className="text-right">{item.quantity}</TableCell>
-                          <TableCell className="text-right">{formatAmount(item.unit_price_ht)}</TableCell>
+                          <TableCell className="text-right">
+                            {item.quantity}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {formatAmount(item.unit_price_ht)}
+                          </TableCell>
                           <TableCell className="text-right text-muted-foreground">
                             {Math.round(item.tva_rate)}%
                           </TableCell>
@@ -783,7 +895,9 @@ export function InvoiceDetailModal({
                   <div className="w-72 space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Total HT</span>
-                      <span className="font-medium">{formatAmount(invoice.total_ht)}</span>
+                      <span className="font-medium">
+                        {formatAmount(invoice.total_ht)}
+                      </span>
                     </div>
 
                     {vatBreakdown &&
@@ -791,7 +905,9 @@ export function InvoiceDetailModal({
                         .sort(([a], [b]) => Number(b) - Number(a))
                         .map(([rate, { totalVat }]) => (
                           <div key={rate} className="flex justify-between">
-                            <span className="text-muted-foreground">TVA {Math.round(Number(rate))}%</span>
+                            <span className="text-muted-foreground">
+                              TVA {Math.round(Number(rate))}%
+                            </span>
                             <span>{formatAmount(totalVat)}</span>
                           </div>
                         ))}
@@ -811,7 +927,11 @@ export function InvoiceDetailModal({
                         </div>
                         <div className="flex justify-between font-semibold">
                           <span>Reste a payer</span>
-                          <span>{formatAmount(invoice.total_ttc - invoice.amount_paid)}</span>
+                          <span>
+                            {formatAmount(
+                              invoice.total_ttc - invoice.amount_paid
+                            )}
+                          </span>
                         </div>
                       </>
                     )}
@@ -827,14 +947,21 @@ export function InvoiceDetailModal({
                   <CardTitle className="text-sm">Notes</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {invoice.description && <p className="text-sm mb-2">{invoice.description}</p>}
-                  {invoice.notes && <p className="text-sm text-muted-foreground">{invoice.notes}</p>}
+                  {invoice.description && (
+                    <p className="text-sm mb-2">{invoice.description}</p>
+                  )}
+                  {invoice.notes && (
+                    <p className="text-sm text-muted-foreground">
+                      {invoice.notes}
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             )}
 
             {/* Documents lies */}
-            {((invoice.related_credit_notes && invoice.related_credit_notes.length > 0) ||
+            {((invoice.related_credit_notes &&
+              invoice.related_credit_notes.length > 0) ||
               invoice.source_quote ||
               invoice.sales_order) && (
               <Card>
@@ -851,13 +978,20 @@ export function InvoiceDetailModal({
                       <div className="flex items-center gap-2">
                         <FileSignature className="h-4 w-4 text-blue-500" />
                         <span>Creee depuis devis</span>
-                        <span className="font-medium">{invoice.source_quote.quote_number}</span>
+                        <span className="font-medium">
+                          {invoice.source_quote.quote_number}
+                        </span>
                       </div>
                       <Button
                         variant="ghost"
                         size="sm"
                         className="h-7 text-xs"
-                        onClick={() => window.open(`/devis/${invoice.source_quote!.id}`, '_blank')}
+                        onClick={() =>
+                          window.open(
+                            `/devis/${invoice.source_quote!.id}`,
+                            '_blank'
+                          )
+                        }
                       >
                         Voir le devis
                         <ArrowRight className="ml-1 h-3 w-3" />
@@ -871,14 +1005,19 @@ export function InvoiceDetailModal({
                       <div className="flex items-center gap-2">
                         <Truck className="h-4 w-4 text-green-500" />
                         <span>Commande liee</span>
-                        <span className="font-medium">{invoice.sales_order.order_number}</span>
+                        <span className="font-medium">
+                          {invoice.sales_order.order_number}
+                        </span>
                       </div>
                       <Button
                         variant="ghost"
                         size="sm"
                         className="h-7 text-xs"
                         onClick={() =>
-                          window.open(`/commandes/clients/${invoice.sales_order_id}`, '_blank')
+                          window.open(
+                            `/commandes/clients/${invoice.sales_order_id}`,
+                            '_blank'
+                          )
                         }
                       >
                         Voir la commande
@@ -888,7 +1027,7 @@ export function InvoiceDetailModal({
                   )}
 
                   {/* Avoirs lies */}
-                  {invoice.related_credit_notes?.map((creditNote) => (
+                  {invoice.related_credit_notes?.map(creditNote => (
                     <div
                       key={creditNote.id}
                       className="flex items-center justify-between text-sm p-2 rounded-md bg-muted/50"
@@ -896,7 +1035,9 @@ export function InvoiceDetailModal({
                       <div className="flex items-center gap-2">
                         <FileX className="h-4 w-4 text-red-500" />
                         <span>Avoir</span>
-                        <span className="font-medium">{creditNote.credit_note_number}</span>
+                        <span className="font-medium">
+                          {creditNote.credit_note_number}
+                        </span>
                         <Badge variant="outline" className="text-xs">
                           {formatAmount(creditNote.total_ttc)}
                         </Badge>
@@ -905,7 +1046,9 @@ export function InvoiceDetailModal({
                         variant="ghost"
                         size="sm"
                         className="h-7 text-xs"
-                        onClick={() => window.open(`/avoirs/${creditNote.id}`, '_blank')}
+                        onClick={() =>
+                          window.open(`/avoirs/${creditNote.id}`, '_blank')
+                        }
                       >
                         Voir l avoir
                         <ArrowRight className="ml-1 h-3 w-3" />
@@ -937,13 +1080,17 @@ export function InvoiceDetailModal({
                       id="due_date"
                       type="date"
                       value={editState.due_date}
-                      onChange={(e) => setEditState({ ...editState, due_date: e.target.value })}
+                      onChange={e =>
+                        setEditState({ ...editState, due_date: e.target.value })
+                      }
                     />
                   </div>
                   {invoice.sales_order && (
                     <div>
                       <Label>Commande liee</Label>
-                      <p className="text-sm font-medium mt-2">{invoice.sales_order.order_number}</p>
+                      <p className="text-sm font-medium mt-2">
+                        {invoice.sales_order.order_number}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -965,7 +1112,9 @@ export function InvoiceDetailModal({
                     <Input
                       id="billing_street"
                       value={editState.billing_address.street || ''}
-                      onChange={(e) => handleAddressChange('billing', 'street', e.target.value)}
+                      onChange={e =>
+                        handleAddressChange('billing', 'street', e.target.value)
+                      }
                     />
                   </div>
                   <div>
@@ -973,7 +1122,13 @@ export function InvoiceDetailModal({
                     <Input
                       id="billing_postal_code"
                       value={editState.billing_address.postal_code || ''}
-                      onChange={(e) => handleAddressChange('billing', 'postal_code', e.target.value)}
+                      onChange={e =>
+                        handleAddressChange(
+                          'billing',
+                          'postal_code',
+                          e.target.value
+                        )
+                      }
                     />
                   </div>
                   <div>
@@ -981,7 +1136,9 @@ export function InvoiceDetailModal({
                     <Input
                       id="billing_city"
                       value={editState.billing_address.city || ''}
-                      onChange={(e) => handleAddressChange('billing', 'city', e.target.value)}
+                      onChange={e =>
+                        handleAddressChange('billing', 'city', e.target.value)
+                      }
                     />
                   </div>
                   <div>
@@ -989,7 +1146,13 @@ export function InvoiceDetailModal({
                     <Input
                       id="billing_country"
                       value={editState.billing_address.country || 'FR'}
-                      onChange={(e) => handleAddressChange('billing', 'country', e.target.value)}
+                      onChange={e =>
+                        handleAddressChange(
+                          'billing',
+                          'country',
+                          e.target.value
+                        )
+                      }
                     />
                   </div>
                 </div>
@@ -1011,7 +1174,13 @@ export function InvoiceDetailModal({
                     <Input
                       id="shipping_street"
                       value={editState.shipping_address.street || ''}
-                      onChange={(e) => handleAddressChange('shipping', 'street', e.target.value)}
+                      onChange={e =>
+                        handleAddressChange(
+                          'shipping',
+                          'street',
+                          e.target.value
+                        )
+                      }
                     />
                   </div>
                   <div>
@@ -1019,7 +1188,13 @@ export function InvoiceDetailModal({
                     <Input
                       id="shipping_postal_code"
                       value={editState.shipping_address.postal_code || ''}
-                      onChange={(e) => handleAddressChange('shipping', 'postal_code', e.target.value)}
+                      onChange={e =>
+                        handleAddressChange(
+                          'shipping',
+                          'postal_code',
+                          e.target.value
+                        )
+                      }
                     />
                   </div>
                   <div>
@@ -1027,7 +1202,9 @@ export function InvoiceDetailModal({
                     <Input
                       id="shipping_city"
                       value={editState.shipping_address.city || ''}
-                      onChange={(e) => handleAddressChange('shipping', 'city', e.target.value)}
+                      onChange={e =>
+                        handleAddressChange('shipping', 'city', e.target.value)
+                      }
                     />
                   </div>
                   <div>
@@ -1035,7 +1212,13 @@ export function InvoiceDetailModal({
                     <Input
                       id="shipping_country"
                       value={editState.shipping_address.country || 'FR'}
-                      onChange={(e) => handleAddressChange('shipping', 'country', e.target.value)}
+                      onChange={e =>
+                        handleAddressChange(
+                          'shipping',
+                          'country',
+                          e.target.value
+                        )
+                      }
                     />
                   </div>
                 </div>
@@ -1059,7 +1242,9 @@ export function InvoiceDetailModal({
                       <TableHead className="text-right w-20">Qte</TableHead>
                       <TableHead className="text-right w-28">PU HT</TableHead>
                       <TableHead className="text-right w-20">TVA %</TableHead>
-                      <TableHead className="text-right w-28">Total HT</TableHead>
+                      <TableHead className="text-right w-28">
+                        Total HT
+                      </TableHead>
                       <TableHead className="w-12"></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -1069,7 +1254,13 @@ export function InvoiceDetailModal({
                         <TableCell>
                           <Input
                             value={item.description}
-                            onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                            onChange={e =>
+                              handleItemChange(
+                                index,
+                                'description',
+                                e.target.value
+                              )
+                            }
                           />
                         </TableCell>
                         <TableCell>
@@ -1078,7 +1269,13 @@ export function InvoiceDetailModal({
                             min="1"
                             className="text-right"
                             value={item.quantity}
-                            onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
+                            onChange={e =>
+                              handleItemChange(
+                                index,
+                                'quantity',
+                                Number(e.target.value)
+                              )
+                            }
                           />
                         </TableCell>
                         <TableCell>
@@ -1088,7 +1285,13 @@ export function InvoiceDetailModal({
                             step="0.01"
                             className="text-right"
                             value={item.unit_price_ht}
-                            onChange={(e) => handleItemChange(index, 'unit_price_ht', Number(e.target.value))}
+                            onChange={e =>
+                              handleItemChange(
+                                index,
+                                'unit_price_ht',
+                                Number(e.target.value)
+                              )
+                            }
                           />
                         </TableCell>
                         <TableCell>
@@ -1098,7 +1301,13 @@ export function InvoiceDetailModal({
                             max="100"
                             className="text-right"
                             value={item.tva_rate}
-                            onChange={(e) => handleItemChange(index, 'tva_rate', Number(e.target.value))}
+                            onChange={e =>
+                              handleItemChange(
+                                index,
+                                'tva_rate',
+                                Number(e.target.value)
+                              )
+                            }
                           />
                         </TableCell>
                         <TableCell className="text-right font-medium">
@@ -1136,7 +1345,12 @@ export function InvoiceDetailModal({
                       min="0"
                       step="0.01"
                       value={editState.shipping_cost_ht}
-                      onChange={(e) => setEditState({ ...editState, shipping_cost_ht: Number(e.target.value) })}
+                      onChange={e =>
+                        setEditState({
+                          ...editState,
+                          shipping_cost_ht: Number(e.target.value),
+                        })
+                      }
                     />
                   </div>
                   <div>
@@ -1147,7 +1361,12 @@ export function InvoiceDetailModal({
                       min="0"
                       step="0.01"
                       value={editState.handling_cost_ht}
-                      onChange={(e) => setEditState({ ...editState, handling_cost_ht: Number(e.target.value) })}
+                      onChange={e =>
+                        setEditState({
+                          ...editState,
+                          handling_cost_ht: Number(e.target.value),
+                        })
+                      }
                     />
                   </div>
                   <div>
@@ -1158,7 +1377,12 @@ export function InvoiceDetailModal({
                       min="0"
                       step="0.01"
                       value={editState.insurance_cost_ht}
-                      onChange={(e) => setEditState({ ...editState, insurance_cost_ht: Number(e.target.value) })}
+                      onChange={e =>
+                        setEditState({
+                          ...editState,
+                          insurance_cost_ht: Number(e.target.value),
+                        })
+                      }
                     />
                   </div>
                   <div>
@@ -1170,7 +1394,12 @@ export function InvoiceDetailModal({
                       max="1"
                       step="0.01"
                       value={editState.fees_vat_rate}
-                      onChange={(e) => setEditState({ ...editState, fees_vat_rate: Number(e.target.value) })}
+                      onChange={e =>
+                        setEditState({
+                          ...editState,
+                          fees_vat_rate: Number(e.target.value),
+                        })
+                      }
                     />
                   </div>
                 </div>
@@ -1185,7 +1414,9 @@ export function InvoiceDetailModal({
                     <div className="w-72 space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Total HT</span>
-                        <span className="font-medium">{formatAmount(editTotals.totalHt)}</span>
+                        <span className="font-medium">
+                          {formatAmount(editTotals.totalHt)}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Total TVA</span>
@@ -1210,7 +1441,9 @@ export function InvoiceDetailModal({
               <CardContent>
                 <Textarea
                   value={editState.notes}
-                  onChange={(e) => setEditState({ ...editState, notes: e.target.value })}
+                  onChange={e =>
+                    setEditState({ ...editState, notes: e.target.value })
+                  }
                   placeholder="Notes internes..."
                   rows={3}
                 />
@@ -1232,19 +1465,20 @@ export function InvoiceDetailModal({
               )}
 
               {/* Bouton Valider brouillon - visible si synchronized */}
-              {invoice.workflow_status === 'synchronized' && onValidateToDraft && (
-                <Button
-                  onClick={() => onValidateToDraft(invoice.id)}
-                  disabled={isActionLoading}
-                >
-                  {isActionLoading ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Check className="mr-2 h-4 w-4" />
-                  )}
-                  Valider brouillon
-                </Button>
-              )}
+              {invoice.workflow_status === 'synchronized' &&
+                onValidateToDraft && (
+                  <Button
+                    onClick={() => onValidateToDraft(invoice.id)}
+                    disabled={isActionLoading}
+                  >
+                    {isActionLoading ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Check className="mr-2 h-4 w-4" />
+                    )}
+                    Valider brouillon
+                  </Button>
+                )}
 
               {/* Bouton Finaliser - visible si draft_validated */}
               {invoice.workflow_status === 'draft_validated' && onFinalize && (
@@ -1289,20 +1523,28 @@ export function InvoiceDetailModal({
               )}
 
               {/* Bouton Creer un avoir - visible si finalisee/envoyee/payee */}
-              {['finalized', 'sent', 'paid'].includes(invoice.workflow_status) && (
-                <Button variant="outline" onClick={() => setShowCreditNoteModal(true)}>
+              {['finalized', 'sent', 'paid'].includes(
+                invoice.workflow_status
+              ) && (
+                <Button
+                  variant="outline"
+                  onClick={() => setShowCreditNoteModal(true)}
+                >
                   <FileX className="mr-2 h-4 w-4" />
                   Creer un avoir
                 </Button>
               )}
 
               {/* Bouton Telecharger PDF - visible si finalise */}
-              {['finalized', 'sent', 'paid'].includes(invoice.workflow_status) && invoice.qonto_pdf_url && (
-                <Button variant="outline" onClick={handleDownloadPdf}>
-                  <Download className="mr-2 h-4 w-4" />
-                  Telecharger PDF
-                </Button>
-              )}
+              {['finalized', 'sent', 'paid'].includes(
+                invoice.workflow_status
+              ) &&
+                invoice.qonto_pdf_url && (
+                  <Button variant="outline" onClick={handleDownloadPdf}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Telecharger PDF
+                  </Button>
+                )}
 
               {/* Bouton Voir sur Qonto - visible si finalise et URL publique */}
               {invoice.qonto_public_url && (
@@ -1317,7 +1559,11 @@ export function InvoiceDetailModal({
           {/* Mode edition */}
           {isEditing && (
             <>
-              <Button variant="outline" onClick={handleCancelEdit} disabled={isSaving}>
+              <Button
+                variant="outline"
+                onClick={handleCancelEdit}
+                disabled={isSaving}
+              >
                 <X className="mr-2 h-4 w-4" />
                 Annuler
               </Button>

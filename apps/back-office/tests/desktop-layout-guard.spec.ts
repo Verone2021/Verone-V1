@@ -18,8 +18,8 @@ test.describe('Desktop Layout Guard - Anti-Régression', () => {
   });
 
   test('html should NOT have transform or zoom applied', async ({ page }) => {
-    const htmlTransform = await page.evaluate(() =>
-      getComputedStyle(document.documentElement).transform
+    const htmlTransform = await page.evaluate(
+      () => getComputedStyle(document.documentElement).transform
     );
     const htmlZoom = await page.evaluate(
       () => getComputedStyle(document.documentElement).zoom || '1'
@@ -30,8 +30,8 @@ test.describe('Desktop Layout Guard - Anti-Régression', () => {
   });
 
   test('body should NOT have transform or zoom applied', async ({ page }) => {
-    const bodyTransform = await page.evaluate(() =>
-      getComputedStyle(document.body).transform
+    const bodyTransform = await page.evaluate(
+      () => getComputedStyle(document.body).transform
     );
     const bodyZoom = await page.evaluate(
       () => getComputedStyle(document.body).zoom || '1'
@@ -65,7 +65,11 @@ test.describe('Desktop Layout Guard - Anti-Régression', () => {
     // Le ratio devrait être entre 40% et 60% (tolérance pour marges/padding)
     expect(ratio).toBeGreaterThan(0.4);
     expect(ratio).toBeLessThan(0.6);
-    console.log('✓ Left side ratio:', (ratio * 100).toFixed(1), '% (expected ~50%)');
+    console.log(
+      '✓ Left side ratio:',
+      (ratio * 100).toFixed(1),
+      '% (expected ~50%)'
+    );
   });
 
   test('login container should NOT be limited by flex justify-center', async ({
@@ -102,7 +106,11 @@ test.describe('Desktop Layout Guard - Anti-Régression', () => {
     // Si le parent est compressé, la card sera beaucoup plus petite que 448px
     // On vérifie qu'elle fait au moins 400px (tolérance padding)
     expect(cardWidth).toBeGreaterThan(400);
-    console.log('✓ Card width:', cardWidth, 'px (expected ~448px with max-w-md)');
+    console.log(
+      '✓ Card width:',
+      cardWidth,
+      'px (expected ~448px with max-w-md)'
+    );
   });
 });
 

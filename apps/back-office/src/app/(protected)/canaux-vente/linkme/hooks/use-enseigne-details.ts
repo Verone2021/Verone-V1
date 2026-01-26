@@ -122,7 +122,7 @@ export function useOrganisationWithEnseigne(organisationId: string | null) {
         tradeName: data.trade_name,
         legalName: data.legal_name,
         logoUrl: data.logo_url,
-        ownershipType: data.ownership_type as 'succursale' | 'franchise' | null,
+        ownershipType: data.ownership_type,
         address: {
           line1: data.shipping_address_line1 || data.billing_address_line1,
           line2: data.billing_address_line2,

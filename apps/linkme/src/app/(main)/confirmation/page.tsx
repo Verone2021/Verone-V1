@@ -1,8 +1,10 @@
 'use client';
 
 import { Suspense } from 'react';
+
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+
 import { CheckCircle, Package, ArrowRight, Mail, Phone } from 'lucide-react';
 
 function ConfirmationContent() {

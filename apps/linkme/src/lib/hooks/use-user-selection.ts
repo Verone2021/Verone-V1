@@ -18,8 +18,8 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { createClient } from '@verone/utils/supabase/client';
 import { calculateMargin } from '@verone/utils';
+import { createClient } from '@verone/utils/supabase/client';
 
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -310,7 +310,8 @@ export function useSelectionItems(selectionId: string | null) {
         // Données pour produits affiliés
         category_name: item.product?.subcategory?.name ?? null,
         is_affiliate_product: !!item.product?.created_by_affiliate,
-        affiliate_commission_rate: item.product?.affiliate_commission_rate ?? null,
+        affiliate_commission_rate:
+          item.product?.affiliate_commission_rate ?? null,
       }));
     },
     enabled: !!selectionId,

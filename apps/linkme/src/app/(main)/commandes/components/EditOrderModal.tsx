@@ -131,7 +131,9 @@ export function EditOrderModal({
           basePriceHt: item.base_price_ht,
           marginRate: item.margin_rate,
         });
-        totalCommission = roundMoney(totalCommission + gainEuros * item.quantity);
+        totalCommission = roundMoney(
+          totalCommission + gainEuros * item.quantity
+        );
       }
     }
 
@@ -451,7 +453,11 @@ export function EditOrderModal({
                     Votre commission TTC
                   </span>
                   <span className="text-lg font-bold text-emerald-600">
-                    +{formatPrice(totals.totalCommission * (1 + LINKME_CONSTANTS.DEFAULT_TAX_RATE))}
+                    +
+                    {formatPrice(
+                      totals.totalCommission *
+                        (1 + LINKME_CONSTANTS.DEFAULT_TAX_RATE)
+                    )}
                   </span>
                 </div>
               </div>

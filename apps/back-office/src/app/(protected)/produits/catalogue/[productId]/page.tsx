@@ -173,7 +173,11 @@ interface Product {
     id: string;
     display_name: string;
     enseigne?: { id: string; name: string } | null;
-    organisation?: { id: string; legal_name: string; trade_name: string | null } | null;
+    organisation?: {
+      id: string;
+      legal_name: string;
+      trade_name: string | null;
+    } | null;
   } | null;
   supplier?: {
     id: string;
@@ -440,11 +444,13 @@ export default function ProductDetailPage() {
     if (product?.created_by_affiliate) {
       return {
         type: 'affiliate',
-        affiliateName: product.affiliate_creator?.enseigne?.name
-          || product.affiliate_creator?.organisation?.trade_name
-          || product.affiliate_creator?.organisation?.legal_name
-          || 'Affilié inconnu',
-        affiliateDisplayName: product.affiliate_creator?.display_name || undefined,
+        affiliateName:
+          product.affiliate_creator?.enseigne?.name ||
+          product.affiliate_creator?.organisation?.trade_name ||
+          product.affiliate_creator?.organisation?.legal_name ||
+          'Affilié inconnu',
+        affiliateDisplayName:
+          product.affiliate_creator?.display_name || undefined,
       };
     }
     // PRIORITÉ 2: Sur mesure enseigne
@@ -469,7 +475,12 @@ export default function ProductDetailPage() {
     }
     // DÉFAUT: Catalogue interne
     return { type: 'interne' };
-  }, [product?.created_by_affiliate, product?.affiliate_creator, product?.enseigne, product?.assigned_client]);
+  }, [
+    product?.created_by_affiliate,
+    product?.affiliate_creator,
+    product?.enseigne,
+    product?.assigned_client,
+  ]);
 
   // État de chargement
   if (loading) {
@@ -676,15 +687,21 @@ export default function ProductDetailPage() {
                   <div className="flex items-center gap-2">
                     <UserCircle2 className="h-5 w-5 text-purple-600 flex-shrink-0" />
                     <div>
-                      <p className="text-sm font-medium text-purple-900">Produit affilié</p>
+                      <p className="text-sm font-medium text-purple-900">
+                        Produit affilié
+                      </p>
                       <p className="text-xs text-purple-700">
                         Canal de vente: LinkMe
                       </p>
                       <p className="text-xs text-purple-700">
-                        Créé par: {product.affiliate_creator?.display_name || sourcing.affiliateName || 'Affilié inconnu'}
+                        Créé par:{' '}
+                        {product.affiliate_creator?.display_name ||
+                          sourcing.affiliateName ||
+                          'Affilié inconnu'}
                       </p>
                       <p className="text-xs text-purple-600 mt-1">
-                        Ce produit ne peut pas être marqué comme &quot;sur mesure&quot; car il appartient à l&apos;affilié.
+                        Ce produit ne peut pas être marqué comme &quot;sur
+                        mesure&quot; car il appartient à l&apos;affilié.
                       </p>
                     </div>
                   </div>
@@ -712,8 +729,9 @@ export default function ProductDetailPage() {
                         : 'secondary'
                   }
                   className={cn(
-                    "flex items-center gap-1",
-                    sourcing.type === 'affiliate' && "bg-purple-50 border-purple-300 text-purple-700"
+                    'flex items-center gap-1',
+                    sourcing.type === 'affiliate' &&
+                      'bg-purple-50 border-purple-300 text-purple-700'
                   )}
                 >
                   {sourcing.type === 'affiliate' ? (

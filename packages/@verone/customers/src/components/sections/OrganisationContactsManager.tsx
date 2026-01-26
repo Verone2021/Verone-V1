@@ -39,7 +39,9 @@ export function OrganisationContactsManager({
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedContact, setSelectedContact] = useState<Contact | null | undefined>(null);
+  const [selectedContact, setSelectedContact] = useState<
+    Contact | null | undefined
+  >(null);
 
   useEffect(() => {
     if (mode === 'edit' && organisationId) {

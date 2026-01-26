@@ -23,7 +23,10 @@ export function ActivityWidget({ orders }: ActivityWidgetProps) {
   const statusConfig = {
     draft: { label: 'Brouillon', color: 'bg-yellow-100 text-yellow-800' },
     validated: { label: 'Validée', color: 'bg-blue-100 text-blue-800' },
-    partially_shipped: { label: 'Partiellement expédiée', color: 'bg-purple-100 text-purple-800' },
+    partially_shipped: {
+      label: 'Partiellement expédiée',
+      color: 'bg-purple-100 text-purple-800',
+    },
     shipped: { label: 'Expédiée', color: 'bg-indigo-100 text-indigo-800' },
     delivered: { label: 'Livrée', color: 'bg-green-100 text-green-800' },
     cancelled: { label: 'Annulée', color: 'bg-red-100 text-red-800' },
@@ -80,7 +83,7 @@ export function ActivityWidget({ orders }: ActivityWidgetProps) {
           </div>
         ) : (
           <div className="space-y-3">
-            {orders.map((order) => {
+            {orders.map(order => {
               const statusLabel =
                 statusConfig[order.status as keyof typeof statusConfig] ||
                 statusConfig.draft;
@@ -96,15 +99,14 @@ export function ActivityWidget({ orders }: ActivityWidgetProps) {
                       <span className="font-medium text-sm text-neutral-900">
                         {order.order_number}
                       </span>
-                      <Badge
-                        className={statusLabel.color}
-                        variant="secondary"
-                      >
+                      <Badge className={statusLabel.color} variant="secondary">
                         {statusLabel.label}
                       </Badge>
                     </div>
                     <div className="text-xs text-neutral-500 truncate">
-                      {order.customer_type === 'organization' ? 'Organisation' : 'Particulier'}
+                      {order.customer_type === 'organization'
+                        ? 'Organisation'
+                        : 'Particulier'}
                     </div>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-xs font-semibold text-neutral-900">

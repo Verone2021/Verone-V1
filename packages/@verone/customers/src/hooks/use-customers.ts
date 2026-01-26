@@ -55,7 +55,8 @@ export interface CustomerFilters {
 export const customerKeys = {
   all: ['customers'] as const,
   lists: () => [...customerKeys.all, 'list'] as const,
-  list: (filters?: CustomerFilters) => [...customerKeys.lists(), filters] as const,
+  list: (filters?: CustomerFilters) =>
+    [...customerKeys.lists(), filters] as const,
   details: () => [...customerKeys.all, 'detail'] as const,
   detail: (id: string, type: CustomerType) =>
     [...customerKeys.details(), id, type] as const,
@@ -101,7 +102,7 @@ async function fetchCustomers(
     }
 
     const professionalCustomers: UnifiedCustomer[] = (orgData || []).map(
-      (org) => ({
+      org => ({
         id: org.id,
         type: 'professional' as CustomerType,
         displayName: getOrganisationDisplayName(org),
@@ -151,7 +152,7 @@ async function fetchCustomers(
     }
 
     const individualCustomers: UnifiedCustomer[] = (individualData || []).map(
-      (individual) => ({
+      individual => ({
         id: individual.id,
         type: 'individual' as CustomerType,
         displayName:
@@ -285,7 +286,7 @@ export function useCustomers(filters?: CustomerFilters) {
         customerKeys.list(filters)
       );
       const cachedCustomer = cachedList?.find(
-        (c) => c.id === id && c.type === type
+        c => c.id === id && c.type === type
       );
       if (cachedCustomer) {
         return cachedCustomer;

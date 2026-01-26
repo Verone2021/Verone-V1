@@ -20,11 +20,11 @@ import { createMiddlewareClient } from '@/lib/supabase-server';
 
 // Routes PUBLIQUES (whitelist) - TOUTES les autres sont protégées
 const PUBLIC_PAGES = [
-  '/',        // Landing page
-  '/login',   // Connexion
-  '/about',   // À propos
+  '/', // Landing page
+  '/login', // Connexion
+  '/about', // À propos
   '/contact', // Contact
-  '/cgu',     // CGU
+  '/cgu', // CGU
   '/privacy', // Confidentialité
   '/cookies', // Cookies
 ];

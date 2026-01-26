@@ -1,15 +1,16 @@
 /**
  * Hook LinkMe Pending Count - Vérone Back Office
- * Compte les commandes LinkMe en attente de validation
+ * Compte les commandes LinkMe nécessitant une action
  *
  * Utilise:
  * - Vue: linkme_orders_enriched (basée sur sales_orders)
  * - Channel ID: 93c68db1-5a30-4168-89ec-6383152be405 (LinkMe)
- * - Statuts comptés: 'pending', 'confirmed'
+ * - Statuts comptés: 'draft', 'validated' (commandes nécessitant action)
+ * - Exclut: partially_shipped, shipped (en cours de traitement logistique)
  * - Realtime: Supabase subscriptions sur sales_orders
  *
  * @author Romeo Dos Santos
- * @date 2026-01-23
+ * @date 2026-01-26 (v2: statuts ajustés)
  */
 
 'use client';
@@ -28,11 +29,15 @@ export interface LinkmePendingCountHook {
 }
 
 /**
- * Hook pour compter les commandes LinkMe actives (en attente de traitement)
+ * Hook pour compter les commandes LinkMe nécessitant une action
  *
- * Compte les commandes LinkMe avec status ACTIF :
- * - draft, validated, partially_shipped, shipped
- * Exclut : delivered, cancelled
+ * Compte les commandes LinkMe avec status :
+ * - draft : brouillons à valider
+ * - validated : validées, en attente préparation
+ *
+ * Exclut :
+ * - partially_shipped, shipped : déjà en cours de traitement logistique
+ * - delivered, cancelled : terminées
  *
  * Utilise la vue linkme_orders_enriched pour performance optimale
  *
@@ -77,17 +82,33 @@ export function useLinkmePendingCount(options?: {
       setLoading(true);
       setError(null);
 
-      // Query commandes LinkMe actives
-      // Actives = draft, validated, partially_shipped, shipped
-      // (filtre positif optimisé pour performance vs filtre négatif)
+      // Vérifier authentification avant requête (évite erreur RLS 403)
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        // Pas connecté = pas de count, pas d'erreur
+        setCount(0);
+        setLoading(false);
+        return;
+      }
+
+      // Query commandes LinkMe nécessitant action
+      // Actionnables = draft (à valider), validated (à préparer)
+      // Exclut partially_shipped/shipped (en cours logistique)
       const { count: totalCount, error: countError } = await supabase
         .from('linkme_orders_enriched' as any)
         .select('*', { count: 'exact', head: true })
-        .in('status', ['draft', 'validated', 'partially_shipped', 'shipped']);
+        .in('status', ['draft', 'validated']);
 
       if (countError) {
-        console.error('[useLinkmePendingCount] Count error:', countError);
-        setError(new Error(`Count error: ${countError.message}`));
+        console.error('[useLinkmePendingCount] Count error:', {
+          message: countError.message,
+          code: countError.code,
+          details: countError.details,
+          hint: countError.hint,
+        });
+        setError(new Error(`Count error: ${countError.message || 'Unknown'}`));
         setCount(0); // Valeur par défaut gracieuse
         return; // Sortie anticipée sans exception
       }
@@ -105,75 +126,96 @@ export function useLinkmePendingCount(options?: {
   }, [supabase]);
 
   /**
-   * Setup Supabase Realtime subscription
+   * Setup Supabase Realtime subscription (authentification requise)
    */
   useEffect(() => {
-    // Initial fetch
-    fetchCount();
+    let isMounted = true;
 
-    // Setup Realtime si activé
-    // NOTE: Realtime sur sales_orders (table source, pas la vue)
-    if (enableRealtime) {
-      const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
+    const setupSubscriptions = async () => {
+      // Vérifier authentification avant setup Realtime/polling
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-      channelRef.current = supabase
-        .channel('linkme-orders-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*', // INSERT, UPDATE, DELETE
-            schema: 'public',
-            table: 'sales_orders',
-            filter: `channel_id=eq.${LINKME_CHANNEL_ID}`,
-          },
-          payload => {
-            console.log(
-              '[useLinkmePendingCount] Realtime change detected:',
-              payload
-            );
-            // Refetch seulement si changement impact status pending/confirmed
-            const eventType = payload.eventType;
-            const newRow = payload.new as any;
-            const oldRow = payload.old as any;
+      if (!user || !isMounted) {
+        // Pas connecté = pas de Realtime, juste set count à 0
+        setCount(0);
+        setLoading(false);
+        return;
+      }
 
-            const activeStatuses = ['draft', 'validated', 'partially_shipped', 'shipped'];
-            const inactiveStatuses = ['delivered', 'cancelled'];
+      // Initial fetch (authentifié)
+      fetchCount();
 
-            // Refetch si:
-            // - INSERT avec status actif
-            // - UPDATE changement status (vers/depuis actif)
-            // - DELETE d'une commande active
-            const shouldRefetch =
-              eventType === 'INSERT' && activeStatuses.includes(newRow?.status) ||
-              eventType === 'UPDATE' &&
-              (activeStatuses.includes(newRow?.status) ||
-                activeStatuses.includes(oldRow?.status)) ||
-              eventType === 'DELETE' && activeStatuses.includes(oldRow?.status);
+      // Setup Realtime si activé ET authentifié
+      // NOTE: Realtime sur sales_orders (table source, pas la vue)
+      if (enableRealtime) {
+        const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
 
-            if (shouldRefetch) {
-              fetchCount();
+        channelRef.current = supabase
+          .channel('linkme-orders-changes')
+          .on(
+            'postgres_changes',
+            {
+              event: '*', // INSERT, UPDATE, DELETE
+              schema: 'public',
+              table: 'sales_orders',
+              filter: `channel_id=eq.${LINKME_CHANNEL_ID}`,
+            },
+            payload => {
+              console.log(
+                '[useLinkmePendingCount] Realtime change detected:',
+                payload
+              );
+              // Refetch seulement si changement impact statuts actionnables
+              const eventType = payload.eventType;
+              const newRow = payload.new as any;
+              const oldRow = payload.old as any;
+
+              // Statuts actionnables (nécessitant action)
+              const actionableStatuses = ['draft', 'validated'];
+
+              // Refetch si:
+              // - INSERT avec status actionnable
+              // - UPDATE changement status (vers/depuis actionnable)
+              // - DELETE d'une commande actionnable
+              const shouldRefetch =
+                (eventType === 'INSERT' &&
+                  actionableStatuses.includes(newRow?.status)) ||
+                (eventType === 'UPDATE' &&
+                  (actionableStatuses.includes(newRow?.status) ||
+                    actionableStatuses.includes(oldRow?.status))) ||
+                (eventType === 'DELETE' &&
+                  actionableStatuses.includes(oldRow?.status));
+
+              if (shouldRefetch) {
+                fetchCount();
+              }
             }
-          }
-        )
-        .subscribe(status => {
-          if (status === 'SUBSCRIBED') {
-            console.log('[useLinkmePendingCount] Realtime subscribed ✓');
-          } else if (status === 'CHANNEL_ERROR') {
-            console.error('[useLinkmePendingCount] Realtime error');
-            setError(new Error('Realtime subscription failed'));
-          }
-        });
-    }
+          )
+          .subscribe(status => {
+            if (status === 'SUBSCRIBED') {
+              console.log('[useLinkmePendingCount] Realtime subscribed ✓');
+            } else if (status === 'CHANNEL_ERROR') {
+              console.error('[useLinkmePendingCount] Realtime error');
+              // Ne pas setError pour éviter bruit sur page login
+            }
+          });
+      }
 
-    // Polling fallback
-    if (!enableRealtime || refetchInterval > 0) {
-      intervalRef.current = setInterval(() => {
-        fetchCount();
-      }, refetchInterval);
-    }
+      // Polling fallback (seulement si authentifié)
+      if (!enableRealtime || refetchInterval > 0) {
+        intervalRef.current = setInterval(() => {
+          fetchCount();
+        }, refetchInterval);
+      }
+    };
+
+    setupSubscriptions();
 
     // Cleanup
     return () => {
+      isMounted = false;
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;

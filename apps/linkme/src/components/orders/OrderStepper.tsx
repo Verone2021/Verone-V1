@@ -120,7 +120,11 @@ export function OrderStepper({
 }: OrderStepperProps) {
   const canNavigateTo = (step: number) => {
     // Peut naviguer vers les étapes complétées ou l'étape courante
-    return completedSteps.includes(step) || step === currentStep || step < currentStep;
+    return (
+      completedSteps.includes(step) ||
+      step === currentStep ||
+      step < currentStep
+    );
   };
 
   return (
@@ -140,10 +144,14 @@ export function OrderStepper({
             className={cn(
               'flex items-start gap-3 p-3 rounded-lg text-left transition-all',
               'focus:outline-none focus:ring-2 focus:ring-linkme-turquoise/50',
-              isActive && 'bg-linkme-turquoise/10 border border-linkme-turquoise/30',
+              isActive &&
+                'bg-linkme-turquoise/10 border border-linkme-turquoise/30',
               !isActive && isCompleted && 'bg-green-50 hover:bg-green-100',
-              !isActive && !isCompleted && !isClickable && 'opacity-50 cursor-not-allowed',
-              !isActive && !isCompleted && isClickable && 'hover:bg-gray-50',
+              !isActive &&
+                !isCompleted &&
+                !isClickable &&
+                'opacity-50 cursor-not-allowed',
+              !isActive && !isCompleted && isClickable && 'hover:bg-gray-50'
             )}
           >
             {/* Indicateur numéroté */}

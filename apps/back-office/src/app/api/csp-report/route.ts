@@ -66,8 +66,7 @@ function shouldIgnoreViolation(report: CSPReport['csp-report']): boolean {
   const sourceFile = report['source-file'] || '';
 
   return IGNORED_VIOLATIONS.some(
-    (pattern) =>
-      blockedUri.includes(pattern) || sourceFile.includes(pattern)
+    pattern => blockedUri.includes(pattern) || sourceFile.includes(pattern)
   );
 }
 

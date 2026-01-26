@@ -15,11 +15,7 @@ import Link from 'next/link';
 
 import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@verone/ui';
+import { Popover, PopoverContent, PopoverTrigger } from '@verone/ui';
 import { ScrollArea } from '@verone/ui';
 import { Skeleton } from '@verone/ui';
 import { cn } from '@verone/utils';
@@ -51,13 +47,16 @@ interface PendingOrder {
 /**
  * Configuration des statuts
  */
-const STATUS_CONFIG: Record<string, {
-  label: string;
-  color: string;
-  bgColor: string;
-  borderColor: string;
-  icon: any;
-}> = {
+const STATUS_CONFIG: Record<
+  string,
+  {
+    label: string;
+    color: string;
+    bgColor: string;
+    borderColor: string;
+    icon: any;
+  }
+> = {
   draft: {
     label: 'Brouillon',
     color: 'text-gray-600',
@@ -188,14 +187,16 @@ export function OrdersPendingDropdown({
 
       const { data, error: queryError } = await supabase
         .from('sales_orders')
-        .select(`
+        .select(
+          `
           id,
           order_number,
           status,
           total_ttc,
           created_at,
           organisation:organisations(name)
-        `)
+        `
+        )
         .eq('status', 'draft')
         .order('created_at', { ascending: false })
         .limit(maxItems);
@@ -297,7 +298,9 @@ export function OrdersPendingDropdown({
           ) : orders.length === 0 ? (
             <div className="p-6 text-center">
               <CheckCircle className="h-8 w-8 mx-auto text-green-400 mb-2" />
-              <p className="text-sm text-black/60">Aucune commande en attente</p>
+              <p className="text-sm text-black/60">
+                Aucune commande en attente
+              </p>
               <p className="text-xs text-black/40 mt-1">
                 Toutes les commandes sont traitées
               </p>

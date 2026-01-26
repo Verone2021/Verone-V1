@@ -59,8 +59,14 @@ async function fetchPageConfigurations(): Promise<LinkMePageConfiguration[]> {
     // PGRST205 = table not found in schema cache (PostgREST)
     // 42P01 = undefined_table (PostgreSQL)
     // PGRST116 = relation does not exist
-    if (error.code === '42P01' || error.code === 'PGRST116' || error.code === 'PGRST205') {
-      console.warn('Table linkme_page_configurations not found, using defaults');
+    if (
+      error.code === '42P01' ||
+      error.code === 'PGRST116' ||
+      error.code === 'PGRST205'
+    ) {
+      console.warn(
+        'Table linkme_page_configurations not found, using defaults'
+      );
       return getDefaultConfigurations();
     }
     console.error('Erreur fetch page configurations:', error);

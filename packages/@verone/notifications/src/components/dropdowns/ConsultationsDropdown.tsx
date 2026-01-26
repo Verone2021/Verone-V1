@@ -15,11 +15,7 @@ import Link from 'next/link';
 
 import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@verone/ui';
+import { Popover, PopoverContent, PopoverTrigger } from '@verone/ui';
 import { ScrollArea } from '@verone/ui';
 import { Skeleton } from '@verone/ui';
 import { cn } from '@verone/utils';
@@ -104,7 +100,8 @@ interface ConsultationItemProps {
  */
 function ConsultationItem({ consultation }: ConsultationItemProps) {
   const config = STATUS_CONFIG[consultation.status] || STATUS_CONFIG.en_attente;
-  const priorityConfig = PRIORITY_CONFIG[consultation.priority_level] || PRIORITY_CONFIG[2];
+  const priorityConfig =
+    PRIORITY_CONFIG[consultation.priority_level] || PRIORITY_CONFIG[2];
   const Icon = config.icon;
 
   const timeAgo = formatDistanceToNow(new Date(consultation.created_at), {
@@ -112,7 +109,8 @@ function ConsultationItem({ consultation }: ConsultationItemProps) {
     locale: fr,
   });
 
-  const clientName = consultation.organisation?.trade_name ||
+  const clientName =
+    consultation.organisation?.trade_name ||
     consultation.organisation?.legal_name ||
     consultation.client_email.split('@')[0];
 
@@ -230,7 +228,8 @@ export function ConsultationsDropdown({
 
       const { data, error: queryError } = await supabase
         .from('client_consultations')
-        .select(`
+        .select(
+          `
           id,
           client_email,
           descriptif,
@@ -239,7 +238,8 @@ export function ConsultationsDropdown({
           source_channel,
           created_at,
           organisation:organisations(legal_name, trade_name)
-        `)
+        `
+        )
         .in('status', ['en_attente', 'en_cours'])
         .is('archived_at', null)
         .is('deleted_at', null)
@@ -341,7 +341,9 @@ export function ConsultationsDropdown({
           ) : consultations.length === 0 ? (
             <div className="p-6 text-center">
               <MessageCircle className="h-8 w-8 mx-auto text-green-400 mb-2" />
-              <p className="text-sm text-black/60">Aucune consultation active</p>
+              <p className="text-sm text-black/60">
+                Aucune consultation active
+              </p>
               <p className="text-xs text-black/40 mt-1">
                 Toutes les consultations sont traitées
               </p>

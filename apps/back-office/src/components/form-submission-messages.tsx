@@ -19,13 +19,7 @@ import { spacing, colors } from '@verone/ui/design-system';
 import { cn } from '@verone/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import {
-  Mail,
-  Lock,
-  CheckCircle,
-  AlertCircle,
-  Loader2,
-} from 'lucide-react';
+import { Mail, Lock, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
 import { useFormMessages } from '@/hooks/use-form-messages';
 
@@ -40,7 +34,8 @@ export function FormSubmissionMessages({
   contactEmail,
   contactName,
 }: FormSubmissionMessagesProps) {
-  const { messages, loading, error, addMessage } = useFormMessages(submissionId);
+  const { messages, loading, error, addMessage } =
+    useFormMessages(submissionId);
 
   const [newMessage, setNewMessage] = useState('');
   const [isInternal, setIsInternal] = useState(false);
@@ -76,11 +71,11 @@ export function FormSubmissionMessages({
         // Clear success message after 3 seconds
         setTimeout(() => setSuccessMessage(null), 3000);
       } else {
-        setSendError('Erreur lors de l\'envoi du message');
+        setSendError("Erreur lors de l'envoi du message");
       }
     } catch (err) {
       console.error('[FormSubmissionMessages] Error submitting message:', err);
-      setSendError('Erreur inattendue lors de l\'envoi');
+      setSendError("Erreur inattendue lors de l'envoi");
     } finally {
       setSending(false);
     }
@@ -95,7 +90,10 @@ export function FormSubmissionMessages({
           padding: spacing[8],
         }}
       >
-        <Loader2 className="h-6 w-6 animate-spin" style={{ color: colors.primary[600] }} />
+        <Loader2
+          className="h-6 w-6 animate-spin"
+          style={{ color: colors.primary[600] }}
+        />
         <span className="ml-2" style={{ color: colors.text.muted }}>
           Chargement des messages...
         </span>
@@ -123,7 +121,10 @@ export function FormSubmissionMessages({
           className="mb-4 p-3 rounded flex items-start gap-2"
           style={{ backgroundColor: colors.danger[50] }}
         >
-          <AlertCircle className="h-5 w-5 flex-shrink-0" style={{ color: colors.danger[600] }} />
+          <AlertCircle
+            className="h-5 w-5 flex-shrink-0"
+            style={{ color: colors.danger[600] }}
+          />
           <p className="text-sm" style={{ color: colors.danger[700] }}>
             {error}
           </p>
@@ -148,20 +149,28 @@ export function FormSubmissionMessages({
         </div>
       ) : (
         <div className="space-y-4 mb-6 max-h-96 overflow-y-auto">
-          {messages.map((msg) => (
+          {messages.map(msg => (
             <div
               key={msg.id}
               className={cn(
                 'p-3 rounded',
-                msg.is_internal ? 'bg-gray-50 border border-gray-200' : 'bg-blue-50 border border-blue-200'
+                msg.is_internal
+                  ? 'bg-gray-50 border border-gray-200'
+                  : 'bg-blue-50 border border-blue-200'
               )}
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   {msg.is_internal ? (
-                    <Lock className="h-4 w-4" style={{ color: colors.text.muted }} />
+                    <Lock
+                      className="h-4 w-4"
+                      style={{ color: colors.text.muted }}
+                    />
                   ) : (
-                    <Mail className="h-4 w-4" style={{ color: colors.primary[600] }} />
+                    <Mail
+                      className="h-4 w-4"
+                      style={{ color: colors.primary[600] }}
+                    />
                   )}
                   <span
                     className="text-sm font-medium"
@@ -169,7 +178,10 @@ export function FormSubmissionMessages({
                   >
                     {msg.is_internal ? 'Note interne' : 'Email envoyé'}
                   </span>
-                  <span className="text-xs" style={{ color: colors.text.muted }}>
+                  <span
+                    className="text-xs"
+                    style={{ color: colors.text.muted }}
+                  >
                     par {msg.user?.full_name || 'Utilisateur'}
                   </span>
                 </div>
@@ -189,7 +201,8 @@ export function FormSubmissionMessages({
               {msg.email_id && (
                 <div className="mt-2 flex items-center gap-1 text-xs text-green-600">
                   <CheckCircle className="h-3 w-3" />
-                  Email envoyé avec succès (ID: {msg.email_id.substring(0, 8)}...)
+                  Email envoyé avec succès (ID: {msg.email_id.substring(0, 8)}
+                  ...)
                 </div>
               )}
             </div>
@@ -204,7 +217,10 @@ export function FormSubmissionMessages({
             className="p-3 rounded flex items-start gap-2"
             style={{ backgroundColor: colors.danger[50] }}
           >
-            <AlertCircle className="h-5 w-5 flex-shrink-0" style={{ color: colors.danger[600] }} />
+            <AlertCircle
+              className="h-5 w-5 flex-shrink-0"
+              style={{ color: colors.danger[600] }}
+            />
             <p className="text-sm" style={{ color: colors.danger[700] }}>
               {sendError}
             </p>
@@ -216,7 +232,10 @@ export function FormSubmissionMessages({
             className="p-3 rounded flex items-start gap-2"
             style={{ backgroundColor: colors.success[50] }}
           >
-            <CheckCircle className="h-5 w-5 flex-shrink-0" style={{ color: colors.success[600] }} />
+            <CheckCircle
+              className="h-5 w-5 flex-shrink-0"
+              style={{ color: colors.success[600] }}
+            />
             <p className="text-sm" style={{ color: colors.success[700] }}>
               {successMessage}
             </p>
@@ -232,7 +251,7 @@ export function FormSubmissionMessages({
           </label>
           <textarea
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+            onChange={e => setNewMessage(e.target.value)}
             rows={4}
             className="w-full border rounded p-2 text-sm"
             style={{
@@ -241,7 +260,7 @@ export function FormSubmissionMessages({
             }}
             placeholder={
               isInternal
-                ? 'Rédigez une note interne (visible uniquement par l\'équipe)...'
+                ? "Rédigez une note interne (visible uniquement par l'équipe)..."
                 : `Rédigez votre réponse à ${contactName} (${contactEmail})...`
             }
             disabled={sending}
@@ -253,7 +272,7 @@ export function FormSubmissionMessages({
             <input
               type="checkbox"
               checked={isInternal}
-              onChange={(e) => setIsInternal(e.target.checked)}
+              onChange={e => setIsInternal(e.target.checked)}
               disabled={sending}
               className="cursor-pointer"
             />

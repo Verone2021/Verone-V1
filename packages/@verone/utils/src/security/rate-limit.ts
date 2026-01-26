@@ -30,10 +30,7 @@ export interface RateLimitResult {
 
 // In-memory store for development/single-instance
 // In production with multiple instances, use Upstash Redis
-const memoryStore = new Map<
-  string,
-  { tokens: number; lastRefill: number }
->();
+const memoryStore = new Map<string, { tokens: number; lastRefill: number }>();
 
 // Default configurations per endpoint type
 export const RATE_LIMIT_PRESETS = {
@@ -72,9 +69,7 @@ export function checkRateLimit(
 
   // Calculate tokens to add based on time elapsed (sliding window)
   const elapsed = now - bucket.lastRefill;
-  const tokensToAdd = Math.floor(
-    (elapsed / windowMs) * config.limit
-  );
+  const tokensToAdd = Math.floor((elapsed / windowMs) * config.limit);
 
   if (tokensToAdd > 0) {
     bucket.tokens = Math.min(config.limit, bucket.tokens + tokensToAdd);
@@ -171,14 +166,16 @@ export function withRateLimit(
   request: Request,
   config: RateLimitConfig = RATE_LIMIT_PRESETS.api,
   userId?: string | null
-): {
-  success: true;
-  result: RateLimitResult;
-} | {
-  success: false;
-  response: Response;
-  result: RateLimitResult;
-} {
+):
+  | {
+      success: true;
+      result: RateLimitResult;
+    }
+  | {
+      success: false;
+      response: Response;
+      result: RateLimitResult;
+    } {
   const identifier = getClientIdentifier(request, userId);
   const result = checkRateLimit(identifier, config);
 

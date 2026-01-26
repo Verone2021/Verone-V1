@@ -15,7 +15,10 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { createMiddlewareClient, updateSession } from '@/lib/supabase-middleware';
+import {
+  createMiddlewareClient,
+  updateSession,
+} from '@/lib/supabase-middleware';
 
 // Routes PUBLIQUES (whitelist) - TOUTES les autres sont protégées
 const PUBLIC_PAGES = ['/login'];

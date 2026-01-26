@@ -352,7 +352,7 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
         .filter((id): id is string => !!id);
 
       let topProducts: TopProductData[] = [];
-      // eslint-disable-next-line prefer-const -- modifié dans le bloc if
+
       let totalQuantitySoldAllTime = 0;
 
       if (orderIds.length > 0) {

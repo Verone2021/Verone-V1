@@ -50,11 +50,6 @@ jobs:
         with:
           fetch-depth: 0 # Full history for git dates
 
-      - name: 🐍 Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
       - name: 📁 Ensure reports directory exists
         run: mkdir -p reports
 
@@ -174,51 +169,19 @@ ${hasIssues ? '⚠️ **Attention:** Some docs may need cleanup. Review the repo
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 🐍 Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
       - name: 📁 Ensure reports directory exists
         run: mkdir -p reports
 
       - name: 🔍 Run Docs Audit
         run: bash tools/scripts/docs-audit-v4.sh
 
-      - name: 📦 Apply Archive Actions
-        id: apply
+      # ❌ REMOVED: docs-audit-apply.py script removed (Python dependency eliminated)
+      # Auto-archive step disabled - manual cleanup recommended
+      - name: 📦 Archive Actions Disabled
         run: |
-          REPORT=$(ls -t reports/docs-audit-v4-*.json 2>/dev/null | head -1)
-
-          if [ -z "$REPORT" ]; then
-            echo "No report found"
-            echo "changes_made=false" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          # Check if there are candidates
-          ARCHIVE_COUNT=$(jq '.stats.by_action.ARCHIVE // 0' "$REPORT")
-          DELETE_COUNT=$(jq '.stats.by_action.DELETE_CANDIDATE // 0' "$REPORT")
-
-          if [ "$ARCHIVE_COUNT" -eq 0 ] && [ "$DELETE_COUNT" -eq 0 ]; then
-            echo "No files to archive"
-            echo "changes_made=false" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          # Apply changes (archive only, not delete)
-          python3 tools/scripts/docs-audit-apply.py \
-            --report "$REPORT" \
-            --mode archive \
-            --apply \
-            --actions "ARCHIVE,DELETE_CANDIDATE"
-
-          # Check if any files were actually moved
-          if git status --porcelain | grep -q .; then
-            echo "changes_made=true" >> $GITHUB_OUTPUT
-          else
-            echo "changes_made=false" >> $GITHUB_OUTPUT
-          fi
+          echo "⚠️  Auto-archive disabled (Python script removed)"
+          echo "Manual cleanup required for stale docs"
+          echo "changes_made=false" >> $GITHUB_OUTPUT
 
       - name: 📊 Report changes (MANUAL MODE - No auto-PR)
         if: steps.apply.outputs.changes_made == 'true'

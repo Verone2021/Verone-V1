@@ -29,8 +29,8 @@ import {
   ArrowDownCircle,
 } from 'lucide-react';
 
-import type { OrderFormData } from '../schemas/order-form.schema';
 import { useAffiliateCommissionTotal } from '../../../lib/hooks/use-affiliate-commission';
+import type { OrderFormData } from '../schemas/order-form.schema';
 
 // ============================================================================
 // TYPES
@@ -104,7 +104,7 @@ export function CartStep({
         </h3>
 
         <div className="space-y-3">
-          {items.map((item) => {
+          {items.map(item => {
             const lineTotal = item.unitPriceHt * item.quantity;
             const lineTotalTTC = lineTotal * (1 + cartTotals.effectiveTaxRate);
 
@@ -135,7 +135,9 @@ export function CartStep({
                           {item.productName}
                         </h4>
                         {item.productSku && (
-                          <p className="text-xs text-gray-400">Réf: {item.productSku}</p>
+                          <p className="text-xs text-gray-400">
+                            Réf: {item.productSku}
+                          </p>
                         )}
                         <div className="flex items-center gap-3 mt-1">
                           <span className="text-sm text-gray-600">
@@ -182,7 +184,10 @@ export function CartStep({
                         <button
                           type="button"
                           onClick={() =>
-                            onUpdateQuantity(item.selectionItemId, item.quantity - 1)
+                            onUpdateQuantity(
+                              item.selectionItemId,
+                              item.quantity - 1
+                            )
                           }
                           disabled={item.quantity <= 1}
                           className={cn(
@@ -198,16 +203,22 @@ export function CartStep({
                           type="number"
                           min={1}
                           value={item.quantity}
-                          onChange={(e) => {
+                          onChange={e => {
                             const val = parseInt(e.target.value) || 1;
-                            onUpdateQuantity(item.selectionItemId, Math.max(1, val));
+                            onUpdateQuantity(
+                              item.selectionItemId,
+                              Math.max(1, val)
+                            );
                           }}
                           className="w-14 text-center border-x py-1.5 text-sm focus:outline-none"
                         />
                         <button
                           type="button"
                           onClick={() =>
-                            onUpdateQuantity(item.selectionItemId, item.quantity + 1)
+                            onUpdateQuantity(
+                              item.selectionItemId,
+                              item.quantity + 1
+                            )
                           }
                           className="px-3 py-1.5 text-gray-500 hover:bg-gray-100 transition-colors"
                         >
@@ -296,8 +307,12 @@ export function CartStep({
                 <div className="flex items-center gap-2 mb-1">
                   <ArrowDownCircle className="h-4 w-4 text-blue-600" />
                   <span className="text-sm font-medium text-blue-800">
-                    Commission prélevée ({affiliateCommission.affiliateItemsCount} produit
-                    {affiliateCommission.affiliateItemsCount > 1 ? 's' : ''} affilié
+                    Commission prélevée (
+                    {affiliateCommission.affiliateItemsCount} produit
+                    {affiliateCommission.affiliateItemsCount > 1
+                      ? 's'
+                      : ''}{' '}
+                    affilié
                     {affiliateCommission.affiliateItemsCount > 1 ? 's' : ''})
                   </span>
                 </div>
@@ -324,8 +339,8 @@ export function CartStep({
 
           {/* Nombre d'articles */}
           <div className="mt-4 pt-4 border-t text-center text-sm text-gray-500">
-            {cartTotals.itemsCount} article{cartTotals.itemsCount > 1 ? 's' : ''} dans
-            le panier
+            {cartTotals.itemsCount} article
+            {cartTotals.itemsCount > 1 ? 's' : ''} dans le panier
           </div>
         </Card>
       </div>

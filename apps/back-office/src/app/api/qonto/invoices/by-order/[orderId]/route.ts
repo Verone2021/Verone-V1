@@ -65,7 +65,8 @@ export async function GET(
     // Récupérer factures liées à la commande
     const { data: invoices, error } = await supabase
       .from('financial_documents')
-      .select(`
+      .select(
+        `
         id,
         document_number,
         workflow_status,
@@ -80,7 +81,8 @@ export async function GET(
         validated_to_draft_at,
         finalized_at,
         sent_at
-      `)
+      `
+      )
       .eq('sales_order_id', orderId)
       .eq('document_type', 'customer_invoice')
       .is('deleted_at', null)
@@ -97,14 +99,15 @@ export async function GET(
       );
     }
 
-    console.log(`[Invoices by order] Found ${invoices?.length ?? 0} invoices for order ${orderId}`);
+    console.log(
+      `[Invoices by order] Found ${invoices?.length ?? 0} invoices for order ${orderId}`
+    );
 
     return NextResponse.json({
       success: true,
       invoices: invoices as Invoice[],
       count: invoices?.length ?? 0,
     });
-
   } catch (error) {
     console.error('[Invoices by order] Error:', error);
     return NextResponse.json(

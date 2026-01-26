@@ -124,7 +124,10 @@ function RestaurantAddressCard({
           )}
         >
           <Building2
-            className={cn('h-4 w-4', isActive ? 'text-green-600' : 'text-gray-500')}
+            className={cn(
+              'h-4 w-4',
+              isActive ? 'text-green-600' : 'text-gray-500'
+            )}
           />
         </div>
         <div className="min-w-0 flex-1">
@@ -165,7 +168,9 @@ export function AddressGrid({
   return (
     <div className="space-y-3">
       {label && (
-        <label className="block text-sm font-medium text-gray-700">{label}</label>
+        <label className="block text-sm font-medium text-gray-700">
+          {label}
+        </label>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -180,11 +185,15 @@ export function AddressGrid({
         )}
 
         {/* Existing addresses */}
-        {addresses.map((address) => (
+        {addresses.map(address => (
           <AddressCard
             key={address.id}
             address={address}
-            isSelected={selectedId === address.id && !isRestaurantAddressActive && !isCreatingNew}
+            isSelected={
+              selectedId === address.id &&
+              !isRestaurantAddressActive &&
+              !isCreatingNew
+            }
             onClick={() => onSelect(address)}
             disabled={disabled}
           />

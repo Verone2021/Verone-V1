@@ -46,7 +46,7 @@ export function AlertesWidget({ alerts }: AlertesWidgetProps) {
           </div>
         ) : (
           <div className="space-y-3">
-            {alerts.map((alert) => {
+            {alerts.map(alert => {
               const severityLabel =
                 severityConfig[alert.severity as keyof typeof severityConfig] ||
                 severityConfig.info;

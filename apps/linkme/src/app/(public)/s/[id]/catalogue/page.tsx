@@ -23,14 +23,8 @@ function formatPrice(price: number): string {
 }
 
 export default function CataloguePage() {
-  const {
-    items,
-    branding,
-    cart,
-    categories,
-    addToCart,
-    updateQuantity,
-  } = useSelection();
+  const { items, branding, cart, categories, addToCart, updateQuantity } =
+    useSelection();
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -56,7 +50,9 @@ export default function CataloguePage() {
 
     // Category filter
     if (selectedCategory) {
-      filtered = filtered.filter(item => item.category_name === selectedCategory);
+      filtered = filtered.filter(
+        item => item.category_name === selectedCategory
+      );
       if (selectedSubcategory) {
         filtered = filtered.filter(
           item => item.subcategory_id === selectedSubcategory
@@ -109,7 +105,8 @@ export default function CataloguePage() {
           {/* Results Count */}
           <div className="mb-4 flex items-center justify-between">
             <p className="text-sm text-gray-600">
-              {filteredItems.length} produit{filteredItems.length > 1 ? 's' : ''}
+              {filteredItems.length} produit
+              {filteredItems.length > 1 ? 's' : ''}
             </p>
           </div>
 

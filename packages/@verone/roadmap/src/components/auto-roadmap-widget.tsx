@@ -19,7 +19,13 @@ import Link from 'next/link';
 
 import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@verone/ui';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@verone/ui';
 import { ScrollArea } from '@verone/ui';
 import { Skeleton } from '@verone/ui';
 import { cn } from '@verone/utils';
@@ -40,7 +46,10 @@ import {
   TrendingUp,
 } from 'lucide-react';
 
-import { useAutoRoadmap, type UseAutoRoadmapOptions } from '../hooks/use-auto-roadmap';
+import {
+  useAutoRoadmap,
+  type UseAutoRoadmapOptions,
+} from '../hooks/use-auto-roadmap';
 import type { RoadmapTask } from '../lib/roadmap-engine';
 
 /**
@@ -58,12 +67,15 @@ const CATEGORY_ICONS: Record<string, typeof Package> = {
 /**
  * Configuration des couleurs par priorité
  */
-const PRIORITY_CONFIG: Record<string, {
-  label: string;
-  color: string;
-  bgColor: string;
-  borderColor: string;
-}> = {
+const PRIORITY_CONFIG: Record<
+  string,
+  {
+    label: string;
+    color: string;
+    bgColor: string;
+    borderColor: string;
+  }
+> = {
   critical: {
     label: 'Critique',
     color: 'text-red-600',
@@ -100,7 +112,8 @@ interface RoadmapTaskItemProps {
  */
 function RoadmapTaskItem({ task, index }: RoadmapTaskItemProps) {
   const Icon = CATEGORY_ICONS[task.category] || Package;
-  const priorityConfig = PRIORITY_CONFIG[task.priority] || PRIORITY_CONFIG.medium;
+  const priorityConfig =
+    PRIORITY_CONFIG[task.priority] || PRIORITY_CONFIG.medium;
 
   return (
     <Link
@@ -196,16 +209,11 @@ export function AutoRoadmapWidget({
   className,
   ...options
 }: AutoRoadmapWidgetProps) {
-  const {
-    tasks,
-    totalCount,
-    loading,
-    error,
-    stats,
-    refetch,
-  } = useAutoRoadmap(options);
+  const { tasks, totalCount, loading, error, stats, refetch } =
+    useAutoRoadmap(options);
 
-  const dynamicDescription = description ||
+  const dynamicDescription =
+    description ||
     (tasks.length > 0
       ? `${tasks.length} tâche${tasks.length > 1 ? 's' : ''} prioritaire${tasks.length > 1 ? 's' : ''} basée${tasks.length > 1 ? 's' : ''} sur vos alertes`
       : 'Aucune action requise');
@@ -313,7 +321,8 @@ export function AutoRoadmapWidget({
               Score RICE total: {stats.totalRiceScore.toFixed(1)}
             </span>
             <span>
-              {totalCount} tâche{totalCount > 1 ? 's' : ''} générée{totalCount > 1 ? 's' : ''}
+              {totalCount} tâche{totalCount > 1 ? 's' : ''} générée
+              {totalCount > 1 ? 's' : ''}
             </span>
           </div>
         )}

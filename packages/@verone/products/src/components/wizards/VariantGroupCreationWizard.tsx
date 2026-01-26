@@ -54,10 +54,7 @@ import { CategoryFilterCombobox } from '@verone/categories/components/filters/Ca
 import { useOrganisations } from '@verone/organisations/hooks';
 import { useVariantGroups } from '@verone/products/hooks';
 import { ROOM_TYPES } from '@verone/types';
-import {
-  DECORATIVE_STYLES,
-  type DecorativeStyle,
-} from '@verone/types';
+import { DECORATIVE_STYLES, type DecorativeStyle } from '@verone/types';
 
 // =====================================================================
 // TYPES

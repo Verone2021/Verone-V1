@@ -15,10 +15,7 @@ import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
 import { cn } from '@verone/utils';
-import {
-  useInlineEdit,
-  type EditableSection,
-} from '@verone/common/hooks';
+import { useInlineEdit, type EditableSection } from '@verone/common/hooks';
 
 interface Product {
   id: string;

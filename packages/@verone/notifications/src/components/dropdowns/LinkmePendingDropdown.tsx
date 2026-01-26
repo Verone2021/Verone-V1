@@ -15,11 +15,7 @@ import Link from 'next/link';
 
 import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@verone/ui';
+import { Popover, PopoverContent, PopoverTrigger } from '@verone/ui';
 import { ScrollArea } from '@verone/ui';
 import { Skeleton } from '@verone/ui';
 import { cn } from '@verone/utils';
@@ -55,13 +51,16 @@ interface LinkmeOrder {
 /**
  * Configuration des statuts de commandes
  */
-const STATUS_CONFIG: Record<string, {
-  label: string;
-  color: string;
-  bgColor: string;
-  borderColor: string;
-  icon: any;
-}> = {
+const STATUS_CONFIG: Record<
+  string,
+  {
+    label: string;
+    color: string;
+    bgColor: string;
+    borderColor: string;
+    icon: any;
+  }
+> = {
   draft: {
     label: 'Brouillon',
     color: 'text-gray-600',
@@ -253,7 +252,8 @@ export function LinkmePendingDropdown({
       // Utiliser la vue enrichie pour performance
       const { data, error: queryError } = await supabase
         .from('linkme_orders_enriched' as any)
-        .select(`
+        .select(
+          `
           id,
           order_number,
           status,
@@ -262,7 +262,8 @@ export function LinkmePendingDropdown({
           customer_city,
           affiliate_name,
           created_at
-        `)
+        `
+        )
         .not('status', 'in', '(delivered,cancelled)')
         .order('created_at', { ascending: false })
         .limit(maxItems);

@@ -10,12 +10,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@verone/ui';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@verone/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import {
@@ -29,10 +24,7 @@ import { Textarea } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@verone/common/hooks';
 import { useStock } from '../../hooks';
-import {
-  useStockMovements,
-  type StockReasonCode,
-} from '../../hooks';
+import { useStockMovements, type StockReasonCode } from '../../hooks';
 
 interface StockMovementModalProps {
   product?: {

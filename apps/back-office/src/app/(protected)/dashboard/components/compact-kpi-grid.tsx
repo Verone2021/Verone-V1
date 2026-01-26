@@ -81,7 +81,7 @@ export function CompactKPIGrid({ kpis, className }: CompactKPIGridProps) {
         className
       )}
     >
-      {kpis.map((kpi) => (
+      {kpis.map(kpi => (
         <CompactKPICard key={kpi.title} {...kpi} />
       ))}
     </div>
@@ -162,7 +162,10 @@ function CompactKPICard({
       {/* Value */}
       <div className="flex items-baseline gap-2">
         <span
-          className={cn('text-3xl font-bold tracking-tight', valueColors[color])}
+          className={cn(
+            'text-3xl font-bold tracking-tight',
+            valueColors[color]
+          )}
         >
           {value}
         </span>

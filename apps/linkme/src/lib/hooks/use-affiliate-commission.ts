@@ -47,11 +47,18 @@ export interface AffiliateCommissionResult {
  * ```
  */
 export function useAffiliateCommissionTotal(
-  cartItems: Array<CartItem & { isAffiliateProduct?: boolean; affiliateCommissionRate?: number | null }>
+  cartItems: Array<
+    CartItem & {
+      isAffiliateProduct?: boolean;
+      affiliateCommissionRate?: number | null;
+    }
+  >
 ): AffiliateCommissionResult {
   return useMemo(() => {
     // Filtrer les produits affiliés
-    const affiliateItems = cartItems.filter((item) => item.isAffiliateProduct === true);
+    const affiliateItems = cartItems.filter(
+      item => item.isAffiliateProduct === true
+    );
 
     if (affiliateItems.length === 0) {
       return {
@@ -66,7 +73,9 @@ export function useAffiliateCommissionTotal(
     // Note: Ceci est un PRÉLÈVEMENT (pas une marge), donc la formule simple % est correcte
     const totalCommission = affiliateItems.reduce((sum, item) => {
       // Taux de commission par défaut (centralisé dans SSOT)
-      const commissionRate = item.affiliateCommissionRate ?? LINKME_CONSTANTS.DEFAULT_AFFILIATE_PRODUCT_COMMISSION;
+      const commissionRate =
+        item.affiliateCommissionRate ??
+        LINKME_CONSTANTS.DEFAULT_AFFILIATE_PRODUCT_COMMISSION;
       return sum + item.unitPriceHt * (commissionRate / 100) * item.quantity;
     }, 0);
 

@@ -4,6 +4,7 @@
  */
 
 import * as crypto from 'crypto';
+
 import type {
   RevolutConfig,
   RevolutEnvironment,

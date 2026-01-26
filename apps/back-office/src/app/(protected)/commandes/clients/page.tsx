@@ -90,6 +90,8 @@ export default function SalesOrdersClientsPage() {
         allowDelete
         allowEdit
         updateStatusAction={updateSalesOrderStatus}
+        enablePagination
+        defaultItemsPerPage={20}
       />
     </div>
   );

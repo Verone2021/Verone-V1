@@ -67,9 +67,12 @@ export async function POST(
     }
 
     // 3. Vérifier que la facture est validée (archivage autorisé)
-    const canArchive = ['draft_validated', 'finalized', 'sent', 'paid'].includes(
-      document.workflow_status || ''
-    );
+    const canArchive = [
+      'draft_validated',
+      'finalized',
+      'sent',
+      'paid',
+    ].includes(document.workflow_status || '');
 
     if (!canArchive) {
       return NextResponse.json(

@@ -29,11 +29,7 @@
  */
 
 import { useEffect } from 'react';
-import {
-  useQuery,
-  useQueryClient,
-  useMutation,
-} from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import type { User, AuthError } from '@supabase/supabase-js';
 
 import { createClient } from '../supabase/client';
@@ -50,7 +46,10 @@ export const authKeys = {
  */
 async function fetchCurrentUser(): Promise<User | null> {
   const supabase = createClient();
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
   if (error) {
     // Don't throw on auth errors (user not logged in)
@@ -76,18 +75,18 @@ export function useCurrentUser() {
 
   // Subscribe to auth state changes
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          // Update cache with new user data
-          queryClient.setQueryData(authKeys.currentUser(), session?.user ?? null);
-        } else if (event === 'SIGNED_OUT') {
-          // Clear cache on logout
-          queryClient.setQueryData(authKeys.currentUser(), null);
-          queryClient.removeQueries({ queryKey: authKeys.all });
-        }
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        // Update cache with new user data
+        queryClient.setQueryData(authKeys.currentUser(), session?.user ?? null);
+      } else if (event === 'SIGNED_OUT') {
+        // Clear cache on logout
+        queryClient.setQueryData(authKeys.currentUser(), null);
+        queryClient.removeQueries({ queryKey: authKeys.all });
       }
-    );
+    });
 
     return () => {
       subscription.unsubscribe();
@@ -168,7 +167,9 @@ export function useInvalidateAuth() {
 /**
  * Prefetch current user (useful for SSR/initial load)
  */
-export async function prefetchCurrentUser(queryClient: ReturnType<typeof useQueryClient>) {
+export async function prefetchCurrentUser(
+  queryClient: ReturnType<typeof useQueryClient>
+) {
   await queryClient.prefetchQuery({
     queryKey: authKeys.currentUser(),
     queryFn: fetchCurrentUser,

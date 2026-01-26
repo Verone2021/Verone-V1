@@ -13,15 +13,15 @@
  * @see /Users/romeodossantos/.claude/plans/greedy-chasing-hinton.md
  */
 
-'use client'
+'use client';
 
-import { usePathname } from 'next/navigation'
-import Link from 'next/link'
-import { cn } from '@verone/utils'
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
+import { cn } from '@verone/utils';
 
 interface Tab {
-  label: string
-  href: string
+  label: string;
+  href: string;
 }
 
 /**
@@ -53,7 +53,7 @@ const CHANNEL_TABS: Record<string, Tab[]> = {
     { label: 'Flux', href: '/canaux-vente/google-merchant/flux' },
     { label: 'Synchronisation', href: '/canaux-vente/google-merchant/sync' },
   ],
-}
+};
 
 /**
  * Channel display names for breadcrumbs
@@ -62,7 +62,7 @@ const CHANNEL_NAMES: Record<string, string> = {
   linkme: 'LinkMe',
   'site-internet': 'Site Internet',
   'google-merchant': 'Google Merchant',
-}
+};
 
 /**
  * ChannelTabs - Horizontal tab navigation for sales channels
@@ -71,27 +71,27 @@ const CHANNEL_NAMES: Record<string, string> = {
  * Includes breadcrumbs and back button for easy navigation
  */
 export function ChannelTabs() {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
   // Detect which channel is active
-  let activeChannel: string | null = null
-  let tabs: Tab[] = []
+  let activeChannel: string | null = null;
+  let tabs: Tab[] = [];
 
   if (pathname.startsWith('/canaux-vente/linkme')) {
-    activeChannel = 'linkme'
-    tabs = CHANNEL_TABS.linkme
+    activeChannel = 'linkme';
+    tabs = CHANNEL_TABS.linkme;
   } else if (pathname.startsWith('/canaux-vente/site-internet')) {
-    activeChannel = 'site-internet'
-    tabs = CHANNEL_TABS['site-internet']
+    activeChannel = 'site-internet';
+    tabs = CHANNEL_TABS['site-internet'];
   } else if (pathname.startsWith('/canaux-vente/google-merchant')) {
-    activeChannel = 'google-merchant'
-    tabs = CHANNEL_TABS['google-merchant']
+    activeChannel = 'google-merchant';
+    tabs = CHANNEL_TABS['google-merchant'];
   }
 
   // Only render tabs if user is in a sales channel
-  if (!activeChannel) return null
+  if (!activeChannel) return null;
 
-  const channelName = CHANNEL_NAMES[activeChannel]
+  const channelName = CHANNEL_NAMES[activeChannel];
 
   return (
     <div className="border-b border-neutral-200 bg-white">
@@ -110,8 +110,8 @@ export function ChannelTabs() {
 
         {/* Tabs Navigation */}
         <div className="flex gap-8 overflow-x-auto scrollbar-thin scrollbar-thumb-neutral-300 scrollbar-track-transparent">
-          {tabs.map((tab) => {
-            const isActive = pathname === tab.href
+          {tabs.map(tab => {
+            const isActive = pathname === tab.href;
             return (
               <Link
                 key={tab.href}
@@ -125,10 +125,10 @@ export function ChannelTabs() {
               >
                 {tab.label}
               </Link>
-            )
+            );
           })}
         </div>
       </div>
     </div>
-  )
+  );
 }

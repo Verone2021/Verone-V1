@@ -15,11 +15,7 @@ import Link from 'next/link';
 
 import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@verone/ui';
+import { Popover, PopoverContent, PopoverTrigger } from '@verone/ui';
 import { ScrollArea } from '@verone/ui';
 import { Skeleton } from '@verone/ui';
 import { cn } from '@verone/utils';
@@ -52,13 +48,16 @@ interface PendingExpedition {
 /**
  * Configuration des statuts
  */
-const STATUS_CONFIG: Record<string, {
-  label: string;
-  color: string;
-  bgColor: string;
-  borderColor: string;
-  icon: any;
-}> = {
+const STATUS_CONFIG: Record<
+  string,
+  {
+    label: string;
+    color: string;
+    bgColor: string;
+    borderColor: string;
+    icon: any;
+  }
+> = {
   validated: {
     label: 'À expédier',
     color: 'text-blue-600',
@@ -140,7 +139,8 @@ function ExpeditionItem({ expedition }: ExpeditionItemProps) {
 
         <div className="flex items-center gap-2 mt-1 text-[10px] text-black/40">
           <span className="font-semibold text-black/60">
-            {expedition.items_count} article{expedition.items_count > 1 ? 's' : ''}
+            {expedition.items_count} article
+            {expedition.items_count > 1 ? 's' : ''}
           </span>
           <span>•</span>
           <span>Validée {timeAgo}</span>
@@ -199,14 +199,16 @@ export function ExpeditionsPendingDropdown({
 
       const { data, error: queryError } = await supabase
         .from('sales_orders')
-        .select(`
+        .select(
+          `
           id,
           order_number,
           status,
           validated_at,
           organisation:organisations(name, city),
           items:sales_order_items(count)
-        `)
+        `
+        )
         .in('status', ['validated', 'partially_shipped'])
         .order('validated_at', { ascending: true }) // Plus anciennes d'abord
         .limit(maxItems);
@@ -215,15 +217,17 @@ export function ExpeditionsPendingDropdown({
         throw new Error(queryError.message);
       }
 
-      const enrichedExpeditions: PendingExpedition[] = (data || []).map((o: any) => ({
-        id: o.id,
-        order_number: o.order_number || 'N/A',
-        status: o.status,
-        customer_name: o.organisation?.name || 'Client inconnu',
-        customer_city: o.organisation?.city || null,
-        items_count: o.items?.length || 0,
-        validated_at: o.validated_at || o.created_at,
-      }));
+      const enrichedExpeditions: PendingExpedition[] = (data || []).map(
+        (o: any) => ({
+          id: o.id,
+          order_number: o.order_number || 'N/A',
+          status: o.status,
+          customer_name: o.organisation?.name || 'Client inconnu',
+          customer_city: o.organisation?.city || null,
+          items_count: o.items?.length || 0,
+          validated_at: o.validated_at || o.created_at,
+        })
+      );
 
       setExpeditions(enrichedExpeditions);
     } catch (err) {
@@ -309,7 +313,9 @@ export function ExpeditionsPendingDropdown({
           ) : expeditions.length === 0 ? (
             <div className="p-6 text-center">
               <CheckCircle className="h-8 w-8 mx-auto text-green-400 mb-2" />
-              <p className="text-sm text-black/60">Aucune expédition en attente</p>
+              <p className="text-sm text-black/60">
+                Aucune expédition en attente
+              </p>
               <p className="text-xs text-black/40 mt-1">
                 Toutes les commandes sont expédiées
               </p>

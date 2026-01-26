@@ -85,6 +85,17 @@ export function useConsultationsCount(options?: {
       setLoading(true);
       setError(null);
 
+      // Vérifier authentification avant requête (évite erreur RLS 403)
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        // Pas connecté = pas de count, pas d'erreur
+        setCount(0);
+        setLoading(false);
+        return;
+      }
+
       // Query consultations actives (en_attente + en_cours)
       const { count: totalCount, error: countError } = await supabase
         .from('client_consultations')
@@ -138,70 +149,91 @@ export function useConsultationsCount(options?: {
   }, [supabase, includeBreakdown]);
 
   /**
-   * Setup Supabase Realtime subscription
+   * Setup Supabase Realtime subscription (authentification requise)
    */
   useEffect(() => {
-    // Initial fetch
-    fetchCount();
+    let isMounted = true;
 
-    // Setup Realtime si activé
-    if (enableRealtime) {
-      channelRef.current = supabase
-        .channel('consultations-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*', // INSERT, UPDATE, DELETE
-            schema: 'public',
-            table: 'client_consultations',
-          },
-          payload => {
-            console.log(
-              '[useConsultationsCount] Realtime change detected:',
-              payload
-            );
-            // Refetch seulement si changement impact statut actif
-            const eventType = payload.eventType;
-            const newRow = payload.new as any;
-            const oldRow = payload.old as any;
+    const setupSubscriptions = async () => {
+      // Vérifier authentification avant setup Realtime/polling
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-            // Refetch si:
-            // - INSERT avec status actif
-            // - UPDATE changement status
-            // - DELETE (décrémente count)
-            const shouldRefetch =
-              eventType === 'INSERT' &&
-              ['en_attente', 'en_cours'].includes(newRow?.status) ||
-              eventType === 'UPDATE' &&
-              (newRow?.status !== oldRow?.status ||
-                newRow?.archived_at !== oldRow?.archived_at ||
-                newRow?.deleted_at !== oldRow?.deleted_at) ||
-              eventType === 'DELETE';
+      if (!user || !isMounted) {
+        // Pas connecté = pas de Realtime, juste set count à 0
+        setCount(0);
+        setLoading(false);
+        return;
+      }
 
-            if (shouldRefetch) {
-              fetchCount();
+      // Initial fetch (authentifié)
+      fetchCount();
+
+      // Setup Realtime si activé ET authentifié
+      if (enableRealtime) {
+        channelRef.current = supabase
+          .channel('consultations-changes')
+          .on(
+            'postgres_changes',
+            {
+              event: '*', // INSERT, UPDATE, DELETE
+              schema: 'public',
+              table: 'client_consultations',
+            },
+            payload => {
+              console.log(
+                '[useConsultationsCount] Realtime change detected:',
+                payload
+              );
+              // Refetch seulement si changement impact statut actif
+              const eventType = payload.eventType;
+              const newRow = payload.new as any;
+              const oldRow = payload.old as any;
+
+              // Refetch si:
+              // - INSERT avec status actif
+              // - UPDATE changement status
+              // - DELETE (décrémente count)
+              const shouldRefetch =
+                (eventType === 'INSERT' &&
+                  ['en_attente', 'en_cours'].includes(newRow?.status)) ||
+                (eventType === 'UPDATE' &&
+                  (newRow?.status !== oldRow?.status ||
+                    newRow?.archived_at !== oldRow?.archived_at ||
+                    newRow?.deleted_at !== oldRow?.deleted_at)) ||
+                eventType === 'DELETE';
+
+              if (shouldRefetch) {
+                fetchCount();
+              }
             }
-          }
-        )
-        .subscribe(status => {
-          if (status === 'SUBSCRIBED') {
-            console.log('[useConsultationsCount] Realtime subscribed ✓');
-          } else if (status === 'CHANNEL_ERROR') {
-            console.error('[useConsultationsCount] Realtime error');
-            setError(new Error('Realtime subscription failed'));
-          }
-        });
-    }
+          )
+          .subscribe(status => {
+            if (status === 'SUBSCRIBED') {
+              console.log('[useConsultationsCount] Realtime subscribed ✓');
+            } else if (status === 'CHANNEL_ERROR') {
+              // Log silencieux, pas setError pour éviter bruit sur page login
+              console.warn(
+                '[useConsultationsCount] Realtime subscription failed'
+              );
+            }
+          });
+      }
 
-    // Polling fallback
-    if (!enableRealtime || refetchInterval > 0) {
-      intervalRef.current = setInterval(() => {
-        fetchCount();
-      }, refetchInterval);
-    }
+      // Polling fallback (seulement si authentifié)
+      if (!enableRealtime || refetchInterval > 0) {
+        intervalRef.current = setInterval(() => {
+          fetchCount();
+        }, refetchInterval);
+      }
+    };
+
+    setupSubscriptions();
 
     // Cleanup
     return () => {
+      isMounted = false;
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;

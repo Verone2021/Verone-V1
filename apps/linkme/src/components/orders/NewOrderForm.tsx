@@ -18,26 +18,21 @@ import { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { cn } from '@verone/ui';
-import {
-  ChevronLeft,
-  ChevronRight,
-  Loader2,
-  AlertCircle,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { useOrderForm } from '../../lib/hooks/use-order-form';
 import { OrderStepper, ORDER_STEPS } from './OrderStepper';
 
 // Steps components
+import { BillingStep } from './steps/BillingStep';
+import { CartStep } from './steps/CartStep';
+import { ProductsStep } from './steps/ProductsStep';
+import { ResponsableStep } from './steps/ResponsableStep';
 import { RestaurantStep } from './steps/RestaurantStep';
 import { SelectionStep } from './steps/SelectionStep';
-import { ProductsStep } from './steps/ProductsStep';
-import { CartStep } from './steps/CartStep';
-import { ResponsableStep } from './steps/ResponsableStep';
-import { BillingStep } from './steps/BillingStep';
 import { ShippingStep } from './steps/ShippingStep';
 import { ValidationStep } from './steps/ValidationStep';
+import { useOrderForm } from '../../lib/hooks/use-order-form';
 
 // ============================================================================
 // COMPONENT
@@ -93,12 +88,7 @@ export function NewOrderForm() {
 
     switch (currentStep) {
       case 1:
-        return (
-          <RestaurantStep
-            {...commonProps}
-            onUpdate={updateRestaurant}
-          />
-        );
+        return <RestaurantStep {...commonProps} onUpdate={updateRestaurant} />;
       case 2:
         return (
           <SelectionStep
@@ -124,19 +114,9 @@ export function NewOrderForm() {
           />
         );
       case 5:
-        return (
-          <ResponsableStep
-            {...commonProps}
-            onUpdate={updateContacts}
-          />
-        );
+        return <ResponsableStep {...commonProps} onUpdate={updateContacts} />;
       case 6:
-        return (
-          <BillingStep
-            {...commonProps}
-            onUpdate={updateContacts}
-          />
-        );
+        return <BillingStep {...commonProps} onUpdate={updateContacts} />;
       case 7:
         return (
           <ShippingStep
@@ -158,7 +138,7 @@ export function NewOrderForm() {
     }
   };
 
-  const currentStepInfo = ORDER_STEPS.find((s) => s.id === currentStep);
+  const currentStepInfo = ORDER_STEPS.find(s => s.id === currentStep);
 
   return (
     <div className="flex min-h-[calc(100vh-120px)]">
@@ -286,7 +266,8 @@ export function NewOrderForm() {
         {currentStep >= 3 && cartTotals.itemsCount > 0 && (
           <div className="bg-white border-t px-6 py-3">
             <div className="flex items-center justify-center text-sm text-gray-600">
-              <span className="font-medium">{cartTotals.itemsCount}</span>&nbsp;produit
+              <span className="font-medium">{cartTotals.itemsCount}</span>
+              &nbsp;produit
               {cartTotals.itemsCount > 1 ? 's' : ''}&nbsp;•&nbsp;
               <span className="font-semibold text-gray-900 ml-1">
                 {cartTotals.totalTTC.toLocaleString('fr-FR', {

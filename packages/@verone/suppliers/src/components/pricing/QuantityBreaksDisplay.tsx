@@ -6,11 +6,7 @@ import { Package, TrendingDown, Info } from 'lucide-react';
 
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@verone/ui';
+import { Popover, PopoverContent, PopoverTrigger } from '@verone/ui';
 import { cn } from '@verone/utils';
 import { formatPrice } from '@verone/finance/hooks';
 

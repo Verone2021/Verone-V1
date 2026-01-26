@@ -32,15 +32,7 @@
 
 import { useEffect, useMemo, useCallback, useState } from 'react';
 
-import {
-  Card,
-  Input,
-  Label,
-  Textarea,
-  Switch,
-  Badge,
-  cn,
-} from '@verone/ui';
+import { Card, Input, Label, Textarea, Switch, Badge, cn } from '@verone/ui';
 import {
   Truck,
   MapPin,
@@ -56,9 +48,13 @@ import {
   Package,
 } from 'lucide-react';
 
-import { useOrganisationContacts } from '@/lib/hooks/use-organisation-contacts';
 import { useEnseigneId } from '@/lib/hooks/use-enseigne-id';
-import { useEntityAddresses, type Address } from '@/lib/hooks/use-entity-addresses';
+import {
+  useEntityAddresses,
+  type Address,
+} from '@/lib/hooks/use-entity-addresses';
+import { useOrganisationContacts } from '@/lib/hooks/use-organisation-contacts';
+import type { OrganisationContact } from '@/lib/hooks/use-organisation-contacts';
 import { useParentOrganisationAddresses } from '@/lib/hooks/use-parent-organisation-addresses';
 
 import type {
@@ -70,12 +66,9 @@ import type {
   PartialAddressData,
 } from '../schemas/order-form.schema';
 import { defaultContact } from '../schemas/order-form.schema';
-
-import { ContactCard } from './contacts/ContactCard';
 import { AddressCard } from './contacts/AddressCard';
 import { AddressForm } from './contacts/AddressForm';
-
-import type { OrganisationContact } from '@/lib/hooks/use-organisation-contacts';
+import { ContactCard } from './contacts/ContactCard';
 
 // ============================================================================
 // TYPES
@@ -108,7 +101,7 @@ function ContactForm({ contact, onChange }: ContactFormProps) {
           id="delivery-firstName"
           type="text"
           value={contact.firstName}
-          onChange={(e) => onChange('firstName', e.target.value)}
+          onChange={e => onChange('firstName', e.target.value)}
           placeholder="Jean"
         />
       </div>
@@ -121,7 +114,7 @@ function ContactForm({ contact, onChange }: ContactFormProps) {
           id="delivery-lastName"
           type="text"
           value={contact.lastName}
-          onChange={(e) => onChange('lastName', e.target.value)}
+          onChange={e => onChange('lastName', e.target.value)}
           placeholder="Dupont"
         />
       </div>
@@ -134,7 +127,7 @@ function ContactForm({ contact, onChange }: ContactFormProps) {
           id="delivery-email"
           type="email"
           value={contact.email}
-          onChange={(e) => onChange('email', e.target.value)}
+          onChange={e => onChange('email', e.target.value)}
           placeholder="jean.dupont@example.com"
         />
       </div>
@@ -145,14 +138,13 @@ function ContactForm({ contact, onChange }: ContactFormProps) {
           id="delivery-phone"
           type="tel"
           value={contact.phone || ''}
-          onChange={(e) => onChange('phone', e.target.value)}
+          onChange={e => onChange('phone', e.target.value)}
           placeholder="06 12 34 56 78"
         />
       </div>
     </div>
   );
 }
-
 
 // ============================================================================
 // SUB-COMPONENT: Create New Card
@@ -164,7 +156,11 @@ interface CreateNewCardProps {
   label?: string;
 }
 
-function CreateNewCard({ onClick, isActive, label = 'Nouveau contact livraison' }: CreateNewCardProps) {
+function CreateNewCard({
+  onClick,
+  isActive,
+  label = 'Nouveau contact livraison',
+}: CreateNewCardProps) {
   return (
     <Card
       className={cn(
@@ -177,7 +173,10 @@ function CreateNewCard({ onClick, isActive, label = 'Nouveau contact livraison' 
     >
       <div className="flex items-center justify-center gap-2 h-full min-h-[60px]">
         <Plus
-          className={cn('h-5 w-5', isActive ? 'text-blue-500' : 'text-gray-400')}
+          className={cn(
+            'h-5 w-5',
+            isActive ? 'text-blue-500' : 'text-gray-400'
+          )}
         />
         <span
           className={cn(
@@ -192,7 +191,6 @@ function CreateNewCard({ onClick, isActive, label = 'Nouveau contact livraison' 
   );
 }
 
-
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
@@ -205,7 +203,9 @@ export function ShippingStep({
 }: ShippingStepProps) {
   const [showContactForm, setShowContactForm] = useState(false);
   const [showAddressForm, setShowAddressForm] = useState(false);
-  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
+    null
+  );
 
   const delivery = formData.delivery;
 
@@ -238,17 +238,14 @@ export function ShippingStep({
   );
 
   // Fetch shipping addresses
-  const { data: addressesData, isLoading: addressesLoading } = useEntityAddresses(
-    'organisation',
-    organisationId,
-    'shipping'
-  );
+  const { data: addressesData, isLoading: addressesLoading } =
+    useEntityAddresses('organisation', organisationId, 'shipping');
 
   // Fetch parent organisation addresses (si non-franchise)
   const {
     parentOrg,
     primaryAddress: parentPrimaryAddress,
-    isLoading: parentLoading
+    isLoading: parentLoading,
   } = useParentOrganisationAddresses(!isFranchise ? enseigneId : null);
 
   // Shipping addresses
@@ -271,7 +268,7 @@ export function ShippingStep({
         id: resto.existingId,
         tradeName: resto.existingName || null,
         addressLine1: null, // Non disponible pour restaurant existant
-        postalCode: null,   // Non disponible pour restaurant existant
+        postalCode: null, // Non disponible pour restaurant existant
         city: resto.existingCity || null,
         country: resto.existingCountry || 'FR',
       };
@@ -358,7 +355,7 @@ export function ShippingStep({
   const localContacts = useMemo(() => {
     const allContacts = contactsData?.allContacts || [];
     // Pour tous les types, on ne montre que les contacts locaux du restaurant
-    return allContacts.filter((c) => c.organisationId === organisationId);
+    return allContacts.filter(c => c.organisationId === organisationId);
   }, [contactsData?.allContacts, organisationId]);
 
   // Auto-remplir adresse depuis le restaurant (si nouveau)
@@ -428,11 +425,12 @@ export function ShippingStep({
 
   // Determine if contact form is in edit mode
   const isContactEditMode = useMemo(() => {
-    return (
-      formData.contacts.delivery.existingContactId ||
-      showContactForm
-    );
-  }, [formData.contacts.delivery.sameAsResponsable, formData.contacts.delivery.existingContactId, showContactForm]);
+    return formData.contacts.delivery.existingContactId || showContactForm;
+  }, [
+    formData.contacts.delivery.sameAsResponsable,
+    formData.contacts.delivery.existingContactId,
+    showContactForm,
+  ]);
 
   // ========================================
   // ADDRESS HANDLERS
@@ -581,7 +579,10 @@ export function ShippingStep({
   // DELIVERY HANDLERS
   // ========================================
 
-  const handleDeliveryChange = (field: keyof DeliveryStepData, value: unknown) => {
+  const handleDeliveryChange = (
+    field: keyof DeliveryStepData,
+    value: unknown
+  ) => {
     onUpdateDelivery({ [field]: value });
   };
 
@@ -631,12 +632,14 @@ export function ShippingStep({
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* GAUCHE: Formulaire adresse avec design distinctif */}
-          <Card className={cn(
-            'p-4 transition-all',
-            isAddressEditMode
-              ? 'bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200'
-              : 'bg-gray-50 border-dashed border-gray-300'
-          )}>
+          <Card
+            className={cn(
+              'p-4 transition-all',
+              isAddressEditMode
+                ? 'bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200'
+                : 'bg-gray-50 border-dashed border-gray-300'
+            )}
+          >
             {/* En-tete distinctif */}
             {isAddressEditMode && (
               <div className="flex items-center gap-3 pb-4 border-b border-purple-200 mb-4">
@@ -644,8 +647,12 @@ export function ShippingStep({
                   <MapPin className="h-5 w-5 text-purple-600" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-purple-900">Adresse de livraison</h4>
-                  <p className="text-xs text-purple-600">Lieu de reception de la commande</p>
+                  <h4 className="font-semibold text-purple-900">
+                    Adresse de livraison
+                  </h4>
+                  <p className="text-xs text-purple-600">
+                    Lieu de reception de la commande
+                  </p>
                 </div>
               </div>
             )}
@@ -656,7 +663,9 @@ export function ShippingStep({
                 <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
                   <MapPin className="h-6 w-6 text-gray-400" />
                 </div>
-                <p className="text-sm text-gray-500 mb-1">Aucune adresse selectionnee</p>
+                <p className="text-sm text-gray-500 mb-1">
+                  Aucune adresse selectionnee
+                </p>
                 <p className="text-xs text-gray-400">
                   Cliquez sur une adresse a droite pour la selectionner
                 </p>
@@ -678,7 +687,9 @@ export function ShippingStep({
           <Card className="p-4">
             <div className="flex items-center gap-2 pb-3 border-b mb-4">
               <MapPin className="h-4 w-4 text-purple-600" />
-              <h4 className="font-medium text-gray-700">Adresses disponibles</h4>
+              <h4 className="font-medium text-gray-700">
+                Adresses disponibles
+              </h4>
             </div>
 
             {addressesLoading && (
@@ -696,7 +707,8 @@ export function ShippingStep({
                     isSelected={selectedAddressId === 'restaurant'}
                     onClick={handleSelectRestaurantAddress}
                     badge={
-                      !restaurantAddress.addressLine1 || !restaurantAddress.postalCode
+                      !restaurantAddress.addressLine1 ||
+                      !restaurantAddress.postalCode
                         ? 'Incomplet'
                         : 'Restaurant'
                     }
@@ -714,7 +726,7 @@ export function ShippingStep({
                 )}
 
                 {/* Adresses shipping existantes */}
-                {shippingAddresses.map((address) => (
+                {shippingAddresses.map(address => (
                   <AddressCard
                     key={address.id}
                     address={address}
@@ -735,7 +747,8 @@ export function ShippingStep({
                   <div className="flex items-start gap-2">
                     <AlertCircle className="h-4 w-4 text-purple-600 flex-shrink-0 mt-0.5" />
                     <p className="text-xs text-purple-700">
-                      Les adresses de livraison sont conservees pour vos prochaines commandes.
+                      Les adresses de livraison sont conservees pour vos
+                      prochaines commandes.
                     </p>
                   </div>
                 </div>
@@ -776,12 +789,14 @@ export function ShippingStep({
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* GAUCHE: Formulaire avec design distinctif */}
-          <Card className={cn(
-            'p-4 transition-all',
-            isContactEditMode
-              ? 'bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200'
-              : 'bg-gray-50 border-dashed border-gray-300'
-          )}>
+          <Card
+            className={cn(
+              'p-4 transition-all',
+              isContactEditMode
+                ? 'bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200'
+                : 'bg-gray-50 border-dashed border-gray-300'
+            )}
+          >
             {/* En-tete distinctif */}
             {isContactEditMode && (
               <div className="flex items-center gap-3 pb-4 border-b border-purple-200 mb-4">
@@ -789,8 +804,12 @@ export function ShippingStep({
                   <Package className="h-5 w-5 text-purple-600" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-purple-900">Contact livraison</h4>
-                  <p className="text-xs text-purple-600">Personne a contacter pour la livraison</p>
+                  <h4 className="font-semibold text-purple-900">
+                    Contact livraison
+                  </h4>
+                  <p className="text-xs text-purple-600">
+                    Personne a contacter pour la livraison
+                  </p>
                 </div>
               </div>
             )}
@@ -801,7 +820,9 @@ export function ShippingStep({
                 <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
                   <User className="h-6 w-6 text-gray-400" />
                 </div>
-                <p className="text-sm text-gray-500 mb-1">Aucun contact selectionne</p>
+                <p className="text-sm text-gray-500 mb-1">
+                  Aucun contact selectionne
+                </p>
                 <p className="text-xs text-gray-400">
                   Cliquez sur un contact a droite pour le selectionner
                 </p>
@@ -822,43 +843,56 @@ export function ShippingStep({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <Label className="text-xs text-gray-500">Prenom</Label>
-                    <p className="text-sm font-medium">{formData.contacts.delivery.contact?.firstName || '-'}</p>
+                    <p className="text-sm font-medium">
+                      {formData.contacts.delivery.contact?.firstName || '-'}
+                    </p>
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs text-gray-500">Nom</Label>
-                    <p className="text-sm font-medium">{formData.contacts.delivery.contact?.lastName || '-'}</p>
+                    <p className="text-sm font-medium">
+                      {formData.contacts.delivery.contact?.lastName || '-'}
+                    </p>
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs text-gray-500">Email</Label>
-                    <p className="text-sm font-medium">{formData.contacts.delivery.contact?.email || '-'}</p>
+                    <p className="text-sm font-medium">
+                      {formData.contacts.delivery.contact?.email || '-'}
+                    </p>
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs text-gray-500">Telephone</Label>
-                    <p className="text-sm font-medium">{formData.contacts.delivery.contact?.phone || '-'}</p>
+                    <p className="text-sm font-medium">
+                      {formData.contacts.delivery.contact?.phone || '-'}
+                    </p>
                   </div>
                 </div>
               </div>
             )}
 
             {/* Formulaire nouveau contact */}
-            {showContactForm && !formData.contacts.delivery.existingContactId && (
-              <div className="space-y-4">
-                <h5 className="text-sm font-medium text-gray-700">
-                  Nouveau contact livraison
-                </h5>
-                <ContactForm
-                  contact={formData.contacts.delivery.contact || defaultContact}
-                  onChange={handleContactChange}
-                />
-              </div>
-            )}
+            {showContactForm &&
+              !formData.contacts.delivery.existingContactId && (
+                <div className="space-y-4">
+                  <h5 className="text-sm font-medium text-gray-700">
+                    Nouveau contact livraison
+                  </h5>
+                  <ContactForm
+                    contact={
+                      formData.contacts.delivery.contact || defaultContact
+                    }
+                    onChange={handleContactChange}
+                  />
+                </div>
+              )}
           </Card>
 
           {/* DROITE: Contacts filtres */}
           <Card className="p-4">
             <div className="flex items-center gap-2 pb-3 border-b mb-4">
               <User className="h-4 w-4 text-purple-600" />
-              <h4 className="font-medium text-gray-700">Contacts disponibles</h4>
+              <h4 className="font-medium text-gray-700">
+                Contacts disponibles
+              </h4>
             </div>
 
             {isLoading && (
@@ -870,12 +904,13 @@ export function ShippingStep({
             {!isLoading && (
               <div className="space-y-3">
                 {/* TOUS: Contacts locaux du restaurant (SUR PLACE) */}
-                {localContacts.map((contact) => (
+                {localContacts.map(contact => (
                   <ContactCard
                     key={contact.id}
                     contact={contact}
                     isSelected={
-                      formData.contacts.delivery.existingContactId === contact.id
+                      formData.contacts.delivery.existingContactId ===
+                      contact.id
                     }
                     onClick={() => handleContactSelect(contact)}
                   />
@@ -884,7 +919,10 @@ export function ShippingStep({
                 {/* TOUS: Nouveau contact */}
                 <CreateNewCard
                   onClick={handleCreateNew}
-                  isActive={showContactForm && !formData.contacts.delivery.existingContactId}
+                  isActive={
+                    showContactForm &&
+                    !formData.contacts.delivery.existingContactId
+                  }
                   label="Nouveau contact livraison"
                 />
 
@@ -903,8 +941,9 @@ export function ShippingStep({
                       <div className="text-xs text-blue-700">
                         <p className="font-medium">Restaurant en propre</p>
                         <p className="mt-0.5">
-                          Seuls les contacts locaux (presents sur place) sont affiches.
-                          Le responsable et les contacts enseigne sont au bureau.
+                          Seuls les contacts locaux (presents sur place) sont
+                          affiches. Le responsable et les contacts enseigne sont
+                          au bureau.
                         </p>
                       </div>
                     </div>
@@ -925,7 +964,9 @@ export function ShippingStep({
             <Truck className="h-5 w-5 text-amber-600" />
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900">Options de livraison</h3>
+            <h3 className="font-semibold text-gray-900">
+              Options de livraison
+            </h3>
             <p className="text-sm text-gray-500">
               Informations complementaires pour faciliter la livraison
             </p>
@@ -950,7 +991,9 @@ export function ShippingStep({
               <Switch
                 id="isMallDelivery"
                 checked={delivery.isMallDelivery}
-                onCheckedChange={(checked) => handleDeliveryChange('isMallDelivery', checked)}
+                onCheckedChange={checked =>
+                  handleDeliveryChange('isMallDelivery', checked)
+                }
               />
             </div>
 
@@ -960,13 +1003,16 @@ export function ShippingStep({
                 {/* Email centre commercial */}
                 <div className="space-y-2">
                   <Label htmlFor="mallEmail">
-                    Email du centre commercial <span className="text-red-500">*</span>
+                    Email du centre commercial{' '}
+                    <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="mallEmail"
                     type="email"
                     value={delivery.mallEmail || ''}
-                    onChange={(e) => handleDeliveryChange('mallEmail', e.target.value)}
+                    onChange={e =>
+                      handleDeliveryChange('mallEmail', e.target.value)
+                    }
                     placeholder="livraison@centre-commercial.fr"
                   />
                   <p className="text-xs text-amber-700">
@@ -981,14 +1027,15 @@ export function ShippingStep({
                     <div>
                       <Label>Formulaire d&apos;acces (optionnel)</Label>
                       <p className="text-xs text-amber-700">
-                        Telechargez le formulaire d&apos;acces du centre si disponible (PDF, max 5Mo)
+                        Telechargez le formulaire d&apos;acces du centre si
+                        disponible (PDF, max 5Mo)
                       </p>
                     </div>
                   </div>
                   <input
                     type="file"
                     accept=".pdf"
-                    onChange={(e) => {
+                    onChange={e => {
                       const file = e.target.files?.[0];
                       if (file) {
                         if (file.size > 5 * 1024 * 1024) {
@@ -1002,7 +1049,8 @@ export function ShippingStep({
                   />
                   {delivery.accessFormFile && (
                     <p className="mt-2 text-sm text-green-600">
-                      Fichier selectionne : {(delivery.accessFormFile as File).name}
+                      Fichier selectionne :{' '}
+                      {(delivery.accessFormFile as File).name}
                     </p>
                   )}
                 </div>
@@ -1016,7 +1064,10 @@ export function ShippingStep({
               <div className="flex items-center gap-3">
                 <Truck className="h-5 w-5 text-gray-400" />
                 <div>
-                  <Label htmlFor="semiTrailerAccessible" className="cursor-pointer">
+                  <Label
+                    htmlFor="semiTrailerAccessible"
+                    className="cursor-pointer"
+                  >
                     Acces semi-remorque possible
                   </Label>
                   <p className="text-xs text-gray-500">
@@ -1027,7 +1078,7 @@ export function ShippingStep({
               <Switch
                 id="semiTrailerAccessible"
                 checked={delivery.semiTrailerAccessible}
-                onCheckedChange={(checked) =>
+                onCheckedChange={checked =>
                   handleDeliveryChange('semiTrailerAccessible', checked)
                 }
               />
@@ -1040,8 +1091,9 @@ export function ShippingStep({
                 <div className="flex items-start gap-2">
                   <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
                   <p className="text-xs text-blue-700">
-                    Une verification sera effectuee. Si l&apos;acces semi-remorque n&apos;est pas
-                    reellement possible, le prix de livraison du devis pourra etre revise.
+                    Une verification sera effectuee. Si l&apos;acces
+                    semi-remorque n&apos;est pas reellement possible, le prix de
+                    livraison du devis pourra etre revise.
                   </p>
                 </div>
               </div>
@@ -1053,12 +1105,14 @@ export function ShippingStep({
                   <div className="text-xs text-amber-700">
                     <p className="font-semibold">Surcouts de livraison</p>
                     <p className="mt-1">
-                      Sans acces semi-remorque, la livraison necessite un transbordement
-                      (semi → entrepot → petit vehicule), ce qui engendre des frais supplementaires.
+                      Sans acces semi-remorque, la livraison necessite un
+                      transbordement (semi → entrepot → petit vehicule), ce qui
+                      engendre des frais supplementaires.
                     </p>
                     <p className="mt-2 font-medium">
-                      Plus vous anticipez, plus nous pouvons optimiser les couts.
-                      Un changement de derniere minute entraine des surcouts significatifs.
+                      Plus vous anticipez, plus nous pouvons optimiser les
+                      couts. Un changement de derniere minute entraine des
+                      surcouts significatifs.
                     </p>
                   </div>
                 </div>
@@ -1077,8 +1131,12 @@ export function ShippingStep({
             <Calendar className="h-5 w-5 text-blue-600" />
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900">Date de livraison souhaitee</h3>
-            <p className="text-sm text-gray-500">Optionnel - Sous reserve de disponibilite</p>
+            <h3 className="font-semibold text-gray-900">
+              Date de livraison souhaitee
+            </h3>
+            <p className="text-sm text-gray-500">
+              Optionnel - Sous reserve de disponibilite
+            </p>
           </div>
         </div>
 
@@ -1091,7 +1149,8 @@ export function ShippingStep({
             min={new Date().toISOString().split('T')[0]}
           />
           <p className="text-xs text-gray-500">
-            La date finale sera confirmee par notre equipe apres validation de la commande.
+            La date finale sera confirmee par notre equipe apres validation de
+            la commande.
           </p>
         </div>
       </Card>
@@ -1105,7 +1164,9 @@ export function ShippingStep({
             <MessageSquare className="h-5 w-5 text-gray-600" />
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900">Notes complementaires</h3>
+            <h3 className="font-semibold text-gray-900">
+              Notes complementaires
+            </h3>
             <p className="text-sm text-gray-500">
               Instructions particulieres pour la livraison
             </p>
@@ -1115,7 +1176,7 @@ export function ShippingStep({
         <Textarea
           id="notes"
           value={delivery.notes || ''}
-          onChange={(e) => handleDeliveryChange('notes', e.target.value)}
+          onChange={e => handleDeliveryChange('notes', e.target.value)}
           placeholder="Ex: Livraison par l'entree de service, interphone code 1234..."
           rows={4}
         />

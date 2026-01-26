@@ -18,7 +18,11 @@ export { ContactSelector } from './ContactSelector';
 export { AddressForm } from './AddressForm';
 
 // Section components (V2)
-export { BillingAddressSection, type BillingAddressData, type BillingAddressMode } from './BillingAddressSection';
+export {
+  BillingAddressSection,
+  type BillingAddressData,
+  type BillingAddressMode,
+} from './BillingAddressSection';
 export { DeliverySection } from './DeliverySection';
 
 // Legacy (deprecated - kept for reference, do not use)

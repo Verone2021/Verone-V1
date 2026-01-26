@@ -16,8 +16,9 @@ import { useState, useCallback, useMemo } from 'react';
 import { Card, Input, Label, cn } from '@verone/ui';
 import { User, Building2, Plus, Check, AlertCircle } from 'lucide-react';
 
-import { useOrganisationContacts } from '@/lib/hooks/use-organisation-contacts';
 import { useEnseigneId } from '@/lib/hooks/use-enseigne-id';
+import { useOrganisationContacts } from '@/lib/hooks/use-organisation-contacts';
+import type { OrganisationContact } from '@/lib/hooks/use-organisation-contacts';
 
 import type {
   OrderFormData,
@@ -25,10 +26,7 @@ import type {
   ContactBase,
 } from '../schemas/order-form.schema';
 import { defaultContact } from '../schemas/order-form.schema';
-
 import { ContactCard } from './contacts/ContactCard';
-
-import type { OrganisationContact } from '@/lib/hooks/use-organisation-contacts';
 
 // ============================================================================
 // TYPES
@@ -50,7 +48,11 @@ interface ContactFormProps {
   showCompany?: boolean;
 }
 
-function ContactForm({ contact, onChange, showCompany = false }: ContactFormProps) {
+function ContactForm({
+  contact,
+  onChange,
+  showCompany = false,
+}: ContactFormProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="space-y-2">
@@ -61,7 +63,7 @@ function ContactForm({ contact, onChange, showCompany = false }: ContactFormProp
           id="responsable-firstName"
           type="text"
           value={contact.firstName}
-          onChange={(e) => onChange('firstName', e.target.value)}
+          onChange={e => onChange('firstName', e.target.value)}
           placeholder="Jean"
         />
       </div>
@@ -74,7 +76,7 @@ function ContactForm({ contact, onChange, showCompany = false }: ContactFormProp
           id="responsable-lastName"
           type="text"
           value={contact.lastName}
-          onChange={(e) => onChange('lastName', e.target.value)}
+          onChange={e => onChange('lastName', e.target.value)}
           placeholder="Dupont"
         />
       </div>
@@ -87,7 +89,7 @@ function ContactForm({ contact, onChange, showCompany = false }: ContactFormProp
           id="responsable-email"
           type="email"
           value={contact.email}
-          onChange={(e) => onChange('email', e.target.value)}
+          onChange={e => onChange('email', e.target.value)}
           placeholder="jean.dupont@example.com"
         />
       </div>
@@ -98,7 +100,7 @@ function ContactForm({ contact, onChange, showCompany = false }: ContactFormProp
           id="responsable-phone"
           type="tel"
           value={contact.phone || ''}
-          onChange={(e) => onChange('phone', e.target.value)}
+          onChange={e => onChange('phone', e.target.value)}
           placeholder="06 12 34 56 78"
         />
       </div>
@@ -109,7 +111,7 @@ function ContactForm({ contact, onChange, showCompany = false }: ContactFormProp
           id="responsable-position"
           type="text"
           value={contact.position || ''}
-          onChange={(e) => onChange('position', e.target.value)}
+          onChange={e => onChange('position', e.target.value)}
           placeholder="Directeur, Gerant..."
         />
       </div>
@@ -121,7 +123,7 @@ function ContactForm({ contact, onChange, showCompany = false }: ContactFormProp
             id="responsable-company"
             type="text"
             value={contact.company || ''}
-            onChange={(e) => onChange('company', e.target.value)}
+            onChange={e => onChange('company', e.target.value)}
             placeholder="Nom de la societe"
           />
         </div>
@@ -152,7 +154,10 @@ function CreateNewCard({ onClick, isActive }: CreateNewCardProps) {
     >
       <div className="flex items-center justify-center gap-2 h-full min-h-[60px]">
         <Plus
-          className={cn('h-5 w-5', isActive ? 'text-blue-500' : 'text-gray-400')}
+          className={cn(
+            'h-5 w-5',
+            isActive ? 'text-blue-500' : 'text-gray-400'
+          )}
         />
         <span
           className={cn(
@@ -171,8 +176,14 @@ function CreateNewCard({ onClick, isActive }: CreateNewCardProps) {
 // MAIN COMPONENT
 // ============================================================================
 
-export function ResponsableStep({ formData, errors, onUpdate }: ResponsableStepProps) {
-  const [showForm, setShowForm] = useState(!formData.contacts.existingResponsableId);
+export function ResponsableStep({
+  formData,
+  errors,
+  onUpdate,
+}: ResponsableStepProps) {
+  const [showForm, setShowForm] = useState(
+    !formData.contacts.existingResponsableId
+  );
 
   // Get enseigne ID
   const enseigneId = useEnseigneId();
@@ -206,17 +217,19 @@ export function ResponsableStep({ formData, errors, onUpdate }: ResponsableStepP
   const allContacts = contactsData?.allContacts || [];
 
   const localContacts = useMemo(() => {
-    return allContacts.filter((c) => c.organisationId === organisationId);
+    return allContacts.filter(c => c.organisationId === organisationId);
   }, [allContacts, organisationId]);
 
   const enseigneContacts = useMemo(() => {
-    return allContacts.filter((c) => c.organisationId !== organisationId);
+    return allContacts.filter(c => c.organisationId !== organisationId);
   }, [allContacts, organisationId]);
 
   // Check if responsable is complete
   const isComplete = useMemo(() => {
     const r = formData.contacts.responsable;
-    return r.firstName.length >= 2 && r.lastName.length >= 2 && r.email.includes('@');
+    return (
+      r.firstName.length >= 2 && r.lastName.length >= 2 && r.email.includes('@')
+    );
   }, [formData.contacts.responsable]);
 
   // ========================================
@@ -267,10 +280,16 @@ export function ResponsableStep({ formData, errors, onUpdate }: ResponsableStepP
         <div
           className={cn(
             'w-10 h-10 rounded-full flex items-center justify-center',
-            isComplete ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'
+            isComplete
+              ? 'bg-green-100 text-green-600'
+              : 'bg-blue-100 text-blue-600'
           )}
         >
-          {isComplete ? <Check className="h-5 w-5" /> : <User className="h-5 w-5" />}
+          {isComplete ? (
+            <Check className="h-5 w-5" />
+          ) : (
+            <User className="h-5 w-5" />
+          )}
         </div>
         <div>
           <h3 className="font-semibold text-gray-900">
@@ -291,7 +310,9 @@ export function ResponsableStep({ formData, errors, onUpdate }: ResponsableStepP
           <div className="flex items-center gap-2 pb-3 border-b">
             <User className="h-4 w-4 text-gray-500" />
             <h4 className="font-medium text-gray-700">
-              {localContacts.length > 0 ? 'Contacts du restaurant' : 'Nouveau contact'}
+              {localContacts.length > 0
+                ? 'Contacts du restaurant'
+                : 'Nouveau contact'}
             </h4>
           </div>
 
@@ -305,12 +326,13 @@ export function ResponsableStep({ formData, errors, onUpdate }: ResponsableStepP
           {/* Grille de contacts locaux */}
           {!isLoading && localContacts.length > 0 && (
             <div className="grid grid-cols-1 gap-3">
-              {localContacts.map((contact) => (
+              {localContacts.map(contact => (
                 <ContactCard
                   key={contact.id}
                   contact={contact}
                   isSelected={
-                    formData.contacts.existingResponsableId === contact.id && !showForm
+                    formData.contacts.existingResponsableId === contact.id &&
+                    !showForm
                   }
                   onClick={() => handleContactSelect(contact)}
                 />
@@ -340,7 +362,9 @@ export function ResponsableStep({ formData, errors, onUpdate }: ResponsableStepP
         <Card className="p-5">
           <div className="flex items-center gap-2 pb-3 border-b mb-4">
             <Building2 className="h-4 w-4 text-blue-600" />
-            <h4 className="font-medium text-gray-700">Contacts de l&apos;Enseigne</h4>
+            <h4 className="font-medium text-gray-700">
+              Contacts de l&apos;Enseigne
+            </h4>
           </div>
 
           {/* Loading state */}
@@ -353,12 +377,13 @@ export function ResponsableStep({ formData, errors, onUpdate }: ResponsableStepP
           {/* Contacts enseigne */}
           {!isLoading && enseigneContacts.length > 0 ? (
             <div className="grid grid-cols-1 gap-3">
-              {enseigneContacts.map((contact) => (
+              {enseigneContacts.map(contact => (
                 <ContactCard
                   key={contact.id}
                   contact={contact}
                   isSelected={
-                    formData.contacts.existingResponsableId === contact.id && !showForm
+                    formData.contacts.existingResponsableId === contact.id &&
+                    !showForm
                   }
                   onClick={() => handleContactSelect(contact)}
                 />
@@ -382,9 +407,9 @@ export function ResponsableStep({ formData, errors, onUpdate }: ResponsableStepP
               <div className="flex items-start gap-2">
                 <AlertCircle className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-blue-700">
-                  En tant que franchise, vous pouvez selectionner un contact enseigne
-                  comme responsable de commande. Les contacts facturation et livraison
-                  devront etre des contacts locaux.
+                  En tant que franchise, vous pouvez selectionner un contact
+                  enseigne comme responsable de commande. Les contacts
+                  facturation et livraison devront etre des contacts locaux.
                 </p>
               </div>
             </div>
@@ -399,8 +424,8 @@ export function ResponsableStep({ formData, errors, onUpdate }: ResponsableStepP
           <div className="text-sm text-blue-700">
             <p className="font-medium">Information</p>
             <p className="mt-1">
-              Le contact responsable sera le point de contact principal pour toutes
-              les communications concernant cette commande.
+              Le contact responsable sera le point de contact principal pour
+              toutes les communications concernant cette commande.
             </p>
           </div>
         </div>

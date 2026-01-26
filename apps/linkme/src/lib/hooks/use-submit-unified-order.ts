@@ -80,7 +80,6 @@ export function useSubmitUnifiedOrder() {
             quantity: item.quantity,
           }));
 
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const { data: orderId, error: rpcError } = await (
             supabase.rpc as any
           )('create_affiliate_order', {

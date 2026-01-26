@@ -12,10 +12,10 @@ test.describe('LinkMe Smoke Tests', () => {
     const errors = [];
 
     // Capturer les page errors (exceptions non catch)
-    page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
+    page.on('pageerror', e => errors.push(`pageerror: ${e.message}`));
 
     // Capturer les console.error
-    page.on('console', (msg) => {
+    page.on('console', msg => {
       if (msg.type() === 'error') {
         // Ignorer certaines erreurs connues non-bloquantes
         const text = msg.text();
@@ -35,9 +35,9 @@ test.describe('LinkMe Smoke Tests', () => {
     await page.waitForLoadState('networkidle');
 
     // Verifier qu'un element UI cle est visible (le formulaire de login)
-    await expect(
-      page.getByRole('textbox', { name: /email/i })
-    ).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('textbox', { name: /email/i })).toBeVisible({
+      timeout: 10000,
+    });
 
     // Assert: aucune erreur
     expect(errors, `Console/page errors:\n${errors.join('\n')}`).toEqual([]);
@@ -46,8 +46,8 @@ test.describe('LinkMe Smoke Tests', () => {
   test('Page /ventes ne doit pas crasher (console clean)', async ({ page }) => {
     const errors = [];
 
-    page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
-    page.on('console', (msg) => {
+    page.on('pageerror', e => errors.push(`pageerror: ${e.message}`));
+    page.on('console', msg => {
       if (msg.type() === 'error') {
         const text = msg.text();
         if (
@@ -73,8 +73,8 @@ test.describe('LinkMe Smoke Tests', () => {
   test('Page /profil ne doit pas crasher (console clean)', async ({ page }) => {
     const errors = [];
 
-    page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
-    page.on('console', (msg) => {
+    page.on('pageerror', e => errors.push(`pageerror: ${e.message}`));
+    page.on('console', msg => {
       if (msg.type() === 'error') {
         const text = msg.text();
         if (
@@ -95,11 +95,13 @@ test.describe('LinkMe Smoke Tests', () => {
     expect(errors, `Console/page errors:\n${errors.join('\n')}`).toEqual([]);
   });
 
-  test('Page / (accueil) ne doit pas crasher (console clean)', async ({ page }) => {
+  test('Page / (accueil) ne doit pas crasher (console clean)', async ({
+    page,
+  }) => {
     const errors = [];
 
-    page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
-    page.on('console', (msg) => {
+    page.on('pageerror', e => errors.push(`pageerror: ${e.message}`));
+    page.on('console', msg => {
       if (msg.type() === 'error') {
         const text = msg.text();
         if (
@@ -123,11 +125,13 @@ test.describe('LinkMe Smoke Tests', () => {
     expect(errors, `Console/page errors:\n${errors.join('\n')}`).toEqual([]);
   });
 
-  test('Page /dashboard ne doit pas crasher (console clean)', async ({ page }) => {
+  test('Page /dashboard ne doit pas crasher (console clean)', async ({
+    page,
+  }) => {
     const errors = [];
 
-    page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
-    page.on('console', (msg) => {
+    page.on('pageerror', e => errors.push(`pageerror: ${e.message}`));
+    page.on('console', msg => {
       if (msg.type() === 'error') {
         const text = msg.text();
         if (

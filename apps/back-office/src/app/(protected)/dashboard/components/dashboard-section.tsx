@@ -82,7 +82,8 @@ export function DashboardSection({
 }: DashboardSectionProps) {
   // Generate storage key from title if not provided
   const key =
-    storageKey || `dashboard-section-${title.toLowerCase().replace(/\s/g, '-')}`;
+    storageKey ||
+    `dashboard-section-${title.toLowerCase().replace(/\s/g, '-')}`;
 
   // Initialize state with defaultOpen (SSR-safe)
   const [isOpen, setIsOpen] = useState(defaultOpen);

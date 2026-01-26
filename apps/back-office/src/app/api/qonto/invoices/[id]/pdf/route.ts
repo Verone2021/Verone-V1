@@ -36,7 +36,10 @@ export async function GET(
     const supabase = await createServerClient();
 
     // Vérifier si c'est un UUID (document local) ou un ID Qonto
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    const isUUID =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        id
+      );
 
     let localPdfPath: string | null = null;
     let documentNumber: string | null = null;
@@ -53,7 +56,9 @@ export async function GET(
 
       if (doc) {
         // Cast explicite pour les colonnes ajoutées par migration
-        const docWithLocalPdf = doc as typeof doc & { local_pdf_path?: string | null };
+        const docWithLocalPdf = doc as typeof doc & {
+          local_pdf_path?: string | null;
+        };
         localPdfPath = docWithLocalPdf.local_pdf_path ?? null;
         documentNumber = doc.document_number;
         qontoInvoiceId = doc.qonto_invoice_id;
@@ -62,7 +67,10 @@ export async function GET(
 
     // Si PDF local disponible, le servir depuis Supabase Storage
     if (localPdfPath) {
-      console.log('[API Invoice PDF] Serving from local storage:', localPdfPath);
+      console.log(
+        '[API Invoice PDF] Serving from local storage:',
+        localPdfPath
+      );
 
       const { data: pdfData, error: downloadError } = await supabase.storage
         .from('invoices')
@@ -80,7 +88,10 @@ export async function GET(
           },
         });
       } else {
-        console.warn('[API Invoice PDF] Local storage download failed:', downloadError);
+        console.warn(
+          '[API Invoice PDF] Local storage download failed:',
+          downloadError
+        );
         // Continue vers Qonto fallback
       }
     }
@@ -127,10 +138,7 @@ export async function GET(
 
     // Si toujours pas d'URL, erreur
     if (!pdfUrl) {
-      console.error(
-        '[API Invoice PDF] No PDF URL found for invoice:',
-        qontoId
-      );
+      console.error('[API Invoice PDF] No PDF URL found for invoice:', qontoId);
       return NextResponse.json(
         {
           success: false,
@@ -163,10 +171,7 @@ export async function GET(
 
     const pdfBuffer = await pdfResponse.arrayBuffer();
 
-    console.log(
-      '[API Invoice PDF] PDF buffer size:',
-      pdfBuffer.byteLength
-    );
+    console.log('[API Invoice PDF] PDF buffer size:', pdfBuffer.byteLength);
 
     // Vérifier que le PDF n'est pas vide
     if (pdfBuffer.byteLength === 0) {

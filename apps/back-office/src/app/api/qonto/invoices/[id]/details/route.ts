@@ -75,7 +75,12 @@ export interface InvoiceDetail {
   document_type: string;
   document_date: string;
   due_date: string | null;
-  workflow_status: 'synchronized' | 'draft_validated' | 'finalized' | 'sent' | 'paid';
+  workflow_status:
+    | 'synchronized'
+    | 'draft_validated'
+    | 'finalized'
+    | 'sent'
+    | 'paid';
   status: string;
   total_ht: number;
   total_ttc: number;
@@ -177,7 +182,9 @@ export async function GET(
     // Validation UUID format
     if (
       !id ||
-      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        id
+      )
     ) {
       return NextResponse.json(
         {
@@ -191,7 +198,8 @@ export async function GET(
     // Récupérer la facture avec le partenaire et la commande
     const { data: invoice, error: invoiceError } = await supabase
       .from('financial_documents')
-      .select(`
+      .select(
+        `
         id,
         document_number,
         document_type,
@@ -227,7 +235,8 @@ export async function GET(
           order_number,
           shipping_address
         )
-      `)
+      `
+      )
       .eq('id', id)
       .is('deleted_at', null)
       .single();
@@ -258,20 +267,29 @@ export async function GET(
     // Récupérer les lignes de la facture
     // Note: financial_document_items n'est pas dans les types générés,
     // donc on utilise un client non typé pour cette requête
-    const { data: items, error: itemsError } = await (supabase as unknown as {
-      from: (table: string) => {
-        select: (columns: string) => {
-          eq: (column: string, value: string) => {
-            order: (column: string, options: { ascending: boolean }) => Promise<{
-              data: RawItemData[] | null;
-              error: { message: string } | null;
-            }>;
+    const { data: items, error: itemsError } = await (
+      supabase as unknown as {
+        from: (table: string) => {
+          select: (columns: string) => {
+            eq: (
+              column: string,
+              value: string
+            ) => {
+              order: (
+                column: string,
+                options: { ascending: boolean }
+              ) => Promise<{
+                data: RawItemData[] | null;
+                error: { message: string } | null;
+              }>;
+            };
           };
         };
-      };
-    })
+      }
+    )
       .from('financial_document_items')
-      .select(`
+      .select(
+        `
         id,
         description,
         quantity,
@@ -284,7 +302,8 @@ export async function GET(
         product:products!product_id (
           name
         )
-      `)
+      `
+      )
       .eq('document_id', id)
       .order('sort_order', { ascending: true });
 
@@ -301,7 +320,7 @@ export async function GET(
 
     // Récupérer les documents liés
     let relatedCreditNotes: RelatedCreditNote[] = [];
-    let sourceQuote: RelatedQuote | null = null;
+    const sourceQuote: RelatedQuote | null = null;
 
     // Récupérer les avoirs liés depuis Qonto (si facture a un qonto_invoice_id)
     if (rawInvoice.qonto_invoice_id) {
@@ -311,10 +330,10 @@ export async function GET(
 
         // Filtrer les avoirs qui référencent cette facture
         const linkedCreditNotes = creditNotesResult.client_credit_notes.filter(
-          (cn) => cn.invoice_id === rawInvoice.qonto_invoice_id
+          cn => cn.invoice_id === rawInvoice.qonto_invoice_id
         );
 
-        relatedCreditNotes = linkedCreditNotes.map((cn) => ({
+        relatedCreditNotes = linkedCreditNotes.map(cn => ({
           id: cn.id,
           credit_note_number: cn.credit_note_number,
           status: cn.status,
@@ -322,7 +341,10 @@ export async function GET(
         }));
       } catch (qontoError) {
         // Log l'erreur mais ne pas bloquer la requête
-        console.warn('[Invoice details] Failed to fetch credit notes from Qonto:', qontoError);
+        console.warn(
+          '[Invoice details] Failed to fetch credit notes from Qonto:',
+          qontoError
+        );
       }
     }
 
@@ -337,7 +359,8 @@ export async function GET(
       document_type: rawInvoice.document_type,
       document_date: rawInvoice.document_date,
       due_date: rawInvoice.due_date,
-      workflow_status: (rawInvoice.workflow_status || 'synchronized') as InvoiceDetail['workflow_status'],
+      workflow_status: (rawInvoice.workflow_status ||
+        'synchronized') as InvoiceDetail['workflow_status'],
       status: rawInvoice.status,
       total_ht: rawInvoice.total_ht,
       total_ttc: rawInvoice.total_ttc,
@@ -355,7 +378,7 @@ export async function GET(
       sales_order_id: rawInvoice.sales_order_id,
       partner: rawInvoice.partner,
       sales_order: rawInvoice.sales_order,
-      items: (items || []).map((item) => ({
+      items: (items || []).map(item => ({
         id: item.id,
         description: item.description,
         quantity: item.quantity,

@@ -15,11 +15,7 @@ import Link from 'next/link';
 
 import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@verone/ui';
+import { Popover, PopoverContent, PopoverTrigger } from '@verone/ui';
 import { ScrollArea } from '@verone/ui';
 import { Skeleton } from '@verone/ui';
 import { cn } from '@verone/utils';
@@ -97,10 +93,13 @@ function TransactionItem({ transaction }: TransactionItemProps) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
           <span className="font-medium text-sm truncate">
-            {transaction.counterparty_name || transaction.label || 'Transaction'}
+            {transaction.counterparty_name ||
+              transaction.label ||
+              'Transaction'}
           </span>
           <span className={cn('font-semibold text-sm', colorClass)}>
-            {isCredit ? '+' : '-'}{formattedAmount}
+            {isCredit ? '+' : '-'}
+            {formattedAmount}
           </span>
         </div>
 
@@ -110,9 +109,7 @@ function TransactionItem({ transaction }: TransactionItemProps) {
           )}
         </div>
 
-        <div className="text-[10px] text-black/40 mt-1">
-          {formattedDate}
-        </div>
+        <div className="text-[10px] text-black/40 mt-1">{formattedDate}</div>
       </div>
 
       {/* Flèche hover */}
@@ -150,7 +147,9 @@ export function TransactionsUnreconciledDropdown({
   align = 'start',
 }: TransactionsUnreconciledDropdownProps) {
   const [open, setOpen] = useState(false);
-  const [transactions, setTransactions] = useState<UnreconciledTransaction[]>([]);
+  const [transactions, setTransactions] = useState<UnreconciledTransaction[]>(
+    []
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -167,7 +166,8 @@ export function TransactionsUnreconciledDropdown({
 
       const { data, error: queryError } = await supabase
         .from('bank_transactions')
-        .select(`
+        .select(
+          `
           id,
           reference,
           amount,
@@ -175,7 +175,8 @@ export function TransactionsUnreconciledDropdown({
           label,
           emitted_at,
           counterparty_name
-        `)
+        `
+        )
         .or('is_reconciled.is.null,is_reconciled.eq.false')
         .order('emitted_at', { ascending: false })
         .limit(maxItems);
@@ -276,7 +277,10 @@ export function TransactionsUnreconciledDropdown({
           ) : (
             <div className="p-2 space-y-1">
               {transactions.map(transaction => (
-                <TransactionItem key={transaction.id} transaction={transaction} />
+                <TransactionItem
+                  key={transaction.id}
+                  transaction={transaction}
+                />
               ))}
             </div>
           )}

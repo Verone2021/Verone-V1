@@ -260,10 +260,19 @@ function InvoiceStatusBadge({ status }: { status: string }): React.ReactNode {
 /**
  * Badge pour afficher le workflow local (synchronized → draft_validated → finalized)
  */
-function WorkflowStatusBadge({ status, hasLocalPdf }: { status: string | null | undefined; hasLocalPdf?: boolean }): React.ReactNode {
+function WorkflowStatusBadge({
+  status,
+  hasLocalPdf,
+}: {
+  status: string | null | undefined;
+  hasLocalPdf?: boolean;
+}): React.ReactNode {
   if (!status) return null;
 
-  const config: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
+  const config: Record<
+    string,
+    { label: string; className: string; icon: React.ReactNode }
+  > = {
     synchronized: {
       label: 'Synchronisé',
       className: 'bg-blue-100 text-blue-700 border-blue-200',
@@ -299,12 +308,17 @@ function WorkflowStatusBadge({ status, hasLocalPdf }: { status: string | null | 
 
   return (
     <div className="flex items-center gap-1">
-      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${currentConfig.className}`}>
+      <span
+        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${currentConfig.className}`}
+      >
         {currentConfig.icon}
         {currentConfig.label}
       </span>
       {hasLocalPdf && (
-        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-emerald-100 text-emerald-700 border border-emerald-200" title="PDF stocké localement">
+        <span
+          className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-emerald-100 text-emerald-700 border border-emerald-200"
+          title="PDF stocké localement"
+        >
           <Lock className="h-3 w-3" />
         </span>
       )}
@@ -392,7 +406,10 @@ function InvoicesTable({
               <InvoiceStatusBadge status={invoice.status} />
             </TableCell>
             <TableCell>
-              <WorkflowStatusBadge status={invoice.workflow_status} hasLocalPdf={invoice.has_local_pdf} />
+              <WorkflowStatusBadge
+                status={invoice.workflow_status}
+                hasLocalPdf={invoice.has_local_pdf}
+              />
             </TableCell>
             <TableCell className="text-right font-medium">
               {formatAmount(
@@ -1294,7 +1311,7 @@ export default function FacturationPage() {
                 loading={loadingInvoices}
                 onView={handleView}
                 onDownloadPdf={handleDownloadInvoicePdf}
-                isArchived={true}
+                isArchived
                 onUnarchive={async invoice => {
                   try {
                     const response = await fetch(

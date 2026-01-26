@@ -15,6 +15,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 
+import { calculateMargin, LINKME_CONSTANTS } from '@verone/utils';
 import {
   X,
   Plus,
@@ -35,10 +36,6 @@ import {
   useAddToSelectionWithMargin,
   useUserAffiliate,
 } from '../../lib/hooks/use-user-selection';
-import {
-  calculateMargin,
-  LINKME_CONSTANTS,
-} from '@verone/utils';
 
 interface AddToSelectionModalProps {
   isOpen: boolean;

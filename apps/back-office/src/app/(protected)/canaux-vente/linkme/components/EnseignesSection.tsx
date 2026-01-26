@@ -189,7 +189,7 @@ export function EnseignesSection() {
     // Charger immédiatement au montage (pas de lazy-loading)
     // pour que le compteur de l'onglet affiche la bonne valeur
     fetchOrganisationsIndependantes();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // Filtered enseignes
   const filteredEnseignes = useMemo(() => {

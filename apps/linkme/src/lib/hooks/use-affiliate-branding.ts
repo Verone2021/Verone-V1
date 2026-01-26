@@ -63,7 +63,7 @@ export function useAffiliateBranding(
       }
 
       // Note: Using type assertion because columns were added after types generation
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const { data, error: fetchError } = (await supabase
         .from('linkme_affiliates')
         .select(

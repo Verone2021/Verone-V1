@@ -77,12 +77,15 @@ export function ContactSelector({
   };
 
   // Check if any special option is active
-  const isAnySpecialOptionActive = isSameAsResponsableActive || isUseParentOrgActive;
+  const isAnySpecialOptionActive =
+    isSameAsResponsableActive || isUseParentOrgActive;
 
   return (
     <div className="space-y-3">
       {label && (
-        <label className="block text-sm font-medium text-gray-700">{label}</label>
+        <label className="block text-sm font-medium text-gray-700">
+          {label}
+        </label>
       )}
 
       {/* Special options (same as responsable, use parent org) */}
@@ -144,7 +147,7 @@ export function ContactSelector({
             Contacts existants
           </span>
           <div className="flex flex-wrap gap-2">
-            {contacts.map((contact) => {
+            {contacts.map(contact => {
               const isSelected = selectedId === contact.id;
               return (
                 <button
@@ -160,9 +163,7 @@ export function ContactSelector({
                     disabled && 'opacity-50 cursor-not-allowed'
                   )}
                 >
-                  {isSelected && (
-                    <Check className="h-4 w-4 text-blue-600" />
-                  )}
+                  {isSelected && <Check className="h-4 w-4 text-blue-600" />}
                   <span>{formatContactName(contact)}</span>
                   {/* Role badges */}
                   {contact.isPrimaryContact && (

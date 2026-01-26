@@ -291,429 +291,451 @@ export function InvoiceCreateFromOrderModal({
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto pr-2">
-        {status === 'success' && createdInvoice ? (
-          // Vue succès avec actions
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4">
-              <CheckCircle2 className="h-6 w-6 text-green-600" />
-              <div>
-                <p className="font-medium text-green-800">
-                  Facture créée avec succès
-                </p>
-                <p className="text-sm text-green-600">
-                  N° {createdInvoice.invoice_number} -{' '}
-                  {formatAmount(createdInvoice.total_amount)}
-                </p>
+          {status === 'success' && createdInvoice ? (
+            // Vue succès avec actions
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4">
+                <CheckCircle2 className="h-6 w-6 text-green-600" />
+                <div>
+                  <p className="font-medium text-green-800">
+                    Facture créée avec succès
+                  </p>
+                  <p className="text-sm text-green-600">
+                    N° {createdInvoice.invoice_number} -{' '}
+                    {formatAmount(createdInvoice.total_amount)}
+                  </p>
+                </div>
               </div>
-            </div>
 
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                onClick={handleDownloadPdf}
-                disabled={!createdInvoice.pdf_url}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Télécharger PDF
-              </Button>
-
-              <Button
-                variant="outline"
-                onClick={handleSendEmail}
-                disabled={!customerEmail || isSendingEmail || emailSent}
-              >
-                {isSendingEmail ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : emailSent ? (
-                  <CheckCircle2 className="mr-2 h-4 w-4 text-green-600" />
-                ) : (
-                  <Mail className="mr-2 h-4 w-4" />
-                )}
-                {emailSent ? 'Email envoyé' : 'Envoyer par email'}
-              </Button>
-
-              {createdInvoice.public_url && (
-                <Button variant="outline" asChild>
-                  <a
-                    href={createdInvoice.public_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <ExternalLink className="mr-2 h-4 w-4" />
-                    Voir sur Qonto
-                  </a>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleDownloadPdf}
+                  disabled={!createdInvoice.pdf_url}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Télécharger PDF
                 </Button>
+
+                <Button
+                  variant="outline"
+                  onClick={handleSendEmail}
+                  disabled={!customerEmail || isSendingEmail || emailSent}
+                >
+                  {isSendingEmail ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : emailSent ? (
+                    <CheckCircle2 className="mr-2 h-4 w-4 text-green-600" />
+                  ) : (
+                    <Mail className="mr-2 h-4 w-4" />
+                  )}
+                  {emailSent ? 'Email envoyé' : 'Envoyer par email'}
+                </Button>
+
+                {createdInvoice.public_url && (
+                  <Button variant="outline" asChild>
+                    <a
+                      href={createdInvoice.public_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      Voir sur Qonto
+                    </a>
+                  </Button>
+                )}
+              </div>
+
+              {customerEmail && (
+                <p className="text-xs text-muted-foreground">
+                  Email client: {customerEmail}
+                </p>
               )}
             </div>
+          ) : (
+            // Vue création
+            <div className="space-y-4">
+              {/* Récap client */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Client</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="font-medium">{customerName}</p>
+                  {customerEmail && (
+                    <p className="text-sm text-muted-foreground">
+                      {customerEmail}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
 
-            {customerEmail && (
-              <p className="text-xs text-muted-foreground">
-                Email client: {customerEmail}
-              </p>
-            )}
-          </div>
-        ) : (
-          // Vue création
-          <div className="space-y-4">
-            {/* Récap client */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Client</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="font-medium">{customerName}</p>
-                {customerEmail && (
-                  <p className="text-sm text-muted-foreground">
-                    {customerEmail}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Récap lignes */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Articles</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Article</TableHead>
-                      <TableHead className="text-right">Qté</TableHead>
-                      <TableHead className="text-right">Prix HT</TableHead>
-                      <TableHead className="text-right">TVA</TableHead>
-                      <TableHead className="text-right">Total HT</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {order.sales_order_items?.map(item => (
-                      <TableRow key={item.id}>
-                        <TableCell>
-                          {item.products?.name || 'Article'}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {item.quantity}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatAmount(item.unit_price_ht)}
-                        </TableCell>
-                        <TableCell className="text-right text-muted-foreground">
-                          {Math.round((item.tax_rate || 0) * 100)}%
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatAmount(item.quantity * item.unit_price_ht)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-
-            {/* Frais de service */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Truck className="h-4 w-4" />
-                  Frais de service
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="space-y-1">
-                    <Label className="text-xs">Livraison HT</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={shippingCostHt}
-                      onChange={e =>
-                        setShippingCostHt(parseFloat(e.target.value) || 0)
-                      }
-                      className="h-8"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Manutention HT</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={handlingCostHt}
-                      onChange={e =>
-                        setHandlingCostHt(parseFloat(e.target.value) || 0)
-                      }
-                      className="h-8"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Assurance HT</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={insuranceCostHt}
-                      onChange={e =>
-                        setInsuranceCostHt(parseFloat(e.target.value) || 0)
-                      }
-                      className="h-8"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">TVA sur les frais</Label>
-                  <Select
-                    value={String(feesVatRate)}
-                    onValueChange={v => setFeesVatRate(parseFloat(v))}
-                  >
-                    <SelectTrigger className="h-8">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="0.2">20%</SelectItem>
-                      <SelectItem value="0.1">10%</SelectItem>
-                      <SelectItem value="0.055">5,5%</SelectItem>
-                      <SelectItem value="0">0%</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Lignes personnalisées */}
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm">
-                    Lignes personnalisées
-                  </CardTitle>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowAddLine(!showAddLine)}
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Ajouter
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {showAddLine && (
-                  <div className="border rounded-lg p-3 space-y-3 bg-muted/50">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1 col-span-2">
-                        <Label className="text-xs">Libellé</Label>
-                        <Input
-                          value={newLineTitle}
-                          onChange={e => setNewLineTitle(e.target.value)}
-                          placeholder="Ex: Frais de conseil"
-                          className="h-8"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">Quantité</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          value={newLineQty}
-                          onChange={e =>
-                            setNewLineQty(parseInt(e.target.value) || 1)
-                          }
-                          className="h-8"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">Prix unitaire HT</Label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          value={newLinePriceHt}
-                          onChange={e =>
-                            setNewLinePriceHt(parseFloat(e.target.value) || 0)
-                          }
-                          className="h-8"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <Select
-                        value={String(newLineVatRate)}
-                        onValueChange={v => setNewLineVatRate(parseFloat(v))}
-                      >
-                        <SelectTrigger className="w-24 h-8">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="0.2">20%</SelectItem>
-                          <SelectItem value="0.1">10%</SelectItem>
-                          <SelectItem value="0.055">5,5%</SelectItem>
-                          <SelectItem value="0">0%</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled={!newLineTitle || newLinePriceHt <= 0}
-                        onClick={() => {
-                          setCustomLines([
-                            ...customLines,
-                            {
-                              id: crypto.randomUUID(),
-                              title: newLineTitle,
-                              quantity: newLineQty,
-                              unit_price_ht: newLinePriceHt,
-                              vat_rate: newLineVatRate,
-                            },
-                          ]);
-                          setNewLineTitle('');
-                          setNewLineQty(1);
-                          setNewLinePriceHt(0);
-                          setShowAddLine(false);
-                        }}
-                      >
-                        Ajouter la ligne
-                      </Button>
-                    </div>
-                  </div>
-                )}
-                {customLines.length > 0 && (
+              {/* Récap lignes */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Articles</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Libellé</TableHead>
+                        <TableHead>Article</TableHead>
                         <TableHead className="text-right">Qté</TableHead>
                         <TableHead className="text-right">Prix HT</TableHead>
                         <TableHead className="text-right">TVA</TableHead>
-                        <TableHead className="w-10" />
+                        <TableHead className="text-right">Total HT</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {customLines.map(line => (
-                        <TableRow key={line.id}>
-                          <TableCell>{line.title}</TableCell>
-                          <TableCell className="text-right">
-                            {line.quantity}
+                      {order.sales_order_items?.map(item => (
+                        <TableRow key={item.id}>
+                          <TableCell>
+                            {item.products?.name || 'Article'}
                           </TableCell>
                           <TableCell className="text-right">
-                            {formatAmount(line.unit_price_ht)}
+                            {item.quantity}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {formatAmount(item.unit_price_ht)}
                           </TableCell>
                           <TableCell className="text-right text-muted-foreground">
-                            {Math.round(line.vat_rate * 100)}%
+                            {Math.round((item.tax_rate || 0) * 100)}%
                           </TableCell>
-                          <TableCell>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                setCustomLines(
-                                  customLines.filter(l => l.id !== line.id)
-                                )
-                              }
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
+                          <TableCell className="text-right">
+                            {formatAmount(item.quantity * item.unit_price_ht)}
                           </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
-                )}
-                {customLines.length === 0 && !showAddLine && (
-                  <p className="text-sm text-muted-foreground text-center py-2">
-                    Aucune ligne personnalisée
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            {/* Totaux avec TVA groupée par taux - incluant frais et lignes personnalisées */}
-            <Card className="bg-muted/50">
-              <CardContent className="pt-4">
-                <div className="space-y-2 text-sm">
-                {(() => {
-                  // Calculer les totaux incluant frais et lignes personnalisées
-                  const vatByRate: Record<number, number> = {};
-                  let totalHt = 0;
+              {/* Frais de service */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Truck className="h-4 w-4" />
+                    Frais de service
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Livraison HT</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={shippingCostHt}
+                        onChange={e =>
+                          setShippingCostHt(parseFloat(e.target.value) || 0)
+                        }
+                        className="h-8"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Manutention HT</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={handlingCostHt}
+                        onChange={e =>
+                          setHandlingCostHt(parseFloat(e.target.value) || 0)
+                        }
+                        className="h-8"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Assurance HT</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={insuranceCostHt}
+                        onChange={e =>
+                          setInsuranceCostHt(parseFloat(e.target.value) || 0)
+                        }
+                        className="h-8"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">TVA sur les frais</Label>
+                    <Select
+                      value={String(feesVatRate)}
+                      onValueChange={v => setFeesVatRate(parseFloat(v))}
+                    >
+                      <SelectTrigger className="h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0.2">20%</SelectItem>
+                        <SelectItem value="0.1">10%</SelectItem>
+                        <SelectItem value="0.055">5,5%</SelectItem>
+                        <SelectItem value="0">0%</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
 
-                  // 1. Articles de la commande
-                  order.sales_order_items?.forEach(item => {
-                    const rate = item.tax_rate || 0;
-                    const lineHt = item.quantity * item.unit_price_ht;
-                    const lineVat = lineHt * rate;
-                    totalHt += lineHt;
-                    vatByRate[rate] = (vatByRate[rate] || 0) + lineVat;
-                  });
-
-                  // 2. Frais de service
-                  const totalFees = shippingCostHt + handlingCostHt + insuranceCostHt;
-                  if (totalFees > 0) {
-                    totalHt += totalFees;
-                    const feesVat = totalFees * feesVatRate;
-                    vatByRate[feesVatRate] = (vatByRate[feesVatRate] || 0) + feesVat;
-                  }
-
-                  // 3. Lignes personnalisées
-                  customLines.forEach(line => {
-                    const lineHt = line.quantity * line.unit_price_ht;
-                    const lineVat = lineHt * line.vat_rate;
-                    totalHt += lineHt;
-                    vatByRate[line.vat_rate] = (vatByRate[line.vat_rate] || 0) + lineVat;
-                  });
-
-                  // Calculer total TVA et TTC
-                  const totalVat = Object.values(vatByRate).reduce((sum, v) => sum + v, 0);
-                  const totalTtc = totalHt + totalVat;
-
-                  return (
-                    <>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Articles commande</span>
-                        <span>{formatAmount(order.total_ht)}</span>
-                      </div>
-                      {totalFees > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Frais de service</span>
-                          <span>{formatAmount(totalFees)}</span>
+              {/* Lignes personnalisées */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm">
+                      Lignes personnalisées
+                    </CardTitle>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowAddLine(!showAddLine)}
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Ajouter
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {showAddLine && (
+                    <div className="border rounded-lg p-3 space-y-3 bg-muted/50">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1 col-span-2">
+                          <Label className="text-xs">Libellé</Label>
+                          <Input
+                            value={newLineTitle}
+                            onChange={e => setNewLineTitle(e.target.value)}
+                            placeholder="Ex: Frais de conseil"
+                            className="h-8"
+                          />
                         </div>
-                      )}
-                      {customLines.length > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Lignes personnalisées</span>
-                          <span>{formatAmount(customLines.reduce((sum, l) => sum + l.quantity * l.unit_price_ht, 0))}</span>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Quantité</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={newLineQty}
+                            onChange={e =>
+                              setNewLineQty(parseInt(e.target.value) || 1)
+                            }
+                            className="h-8"
+                          />
                         </div>
-                      )}
-                      <div className="flex justify-between border-t pt-2 mt-2">
-                        <span className="font-medium">Total HT</span>
-                        <span className="font-medium">{formatAmount(totalHt)}</span>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Prix unitaire HT</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={newLinePriceHt}
+                            onChange={e =>
+                              setNewLinePriceHt(parseFloat(e.target.value) || 0)
+                            }
+                            className="h-8"
+                          />
+                        </div>
                       </div>
-                      {Object.entries(vatByRate)
-                        .sort(([a], [b]) => Number(b) - Number(a))
-                        .map(([rate, amount]) => (
-                          <div key={rate} className="flex justify-between">
-                            <span className="text-muted-foreground">
-                              TVA {Math.round(Number(rate) * 100)}%
-                            </span>
-                            <span>{formatAmount(amount)}</span>
-                          </div>
+                      <div className="flex items-center justify-between">
+                        <Select
+                          value={String(newLineVatRate)}
+                          onValueChange={v => setNewLineVatRate(parseFloat(v))}
+                        >
+                          <SelectTrigger className="w-24 h-8">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="0.2">20%</SelectItem>
+                            <SelectItem value="0.1">10%</SelectItem>
+                            <SelectItem value="0.055">5,5%</SelectItem>
+                            <SelectItem value="0">0%</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={!newLineTitle || newLinePriceHt <= 0}
+                          onClick={() => {
+                            setCustomLines([
+                              ...customLines,
+                              {
+                                id: crypto.randomUUID(),
+                                title: newLineTitle,
+                                quantity: newLineQty,
+                                unit_price_ht: newLinePriceHt,
+                                vat_rate: newLineVatRate,
+                              },
+                            ]);
+                            setNewLineTitle('');
+                            setNewLineQty(1);
+                            setNewLinePriceHt(0);
+                            setShowAddLine(false);
+                          }}
+                        >
+                          Ajouter la ligne
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  {customLines.length > 0 && (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Libellé</TableHead>
+                          <TableHead className="text-right">Qté</TableHead>
+                          <TableHead className="text-right">Prix HT</TableHead>
+                          <TableHead className="text-right">TVA</TableHead>
+                          <TableHead className="w-10" />
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {customLines.map(line => (
+                          <TableRow key={line.id}>
+                            <TableCell>{line.title}</TableCell>
+                            <TableCell className="text-right">
+                              {line.quantity}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {formatAmount(line.unit_price_ht)}
+                            </TableCell>
+                            <TableCell className="text-right text-muted-foreground">
+                              {Math.round(line.vat_rate * 100)}%
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  setCustomLines(
+                                    customLines.filter(l => l.id !== line.id)
+                                  )
+                                }
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
                         ))}
-                      <div className="flex justify-between border-t pt-2 mt-2 font-bold text-base">
-                        <span>Total TTC</span>
-                        <span>{formatAmount(totalTtc)}</span>
-                      </div>
-                    </>
-                  );
-                })()}
-                </div>
-              </CardContent>
-            </Card>
+                      </TableBody>
+                    </Table>
+                  )}
+                  {customLines.length === 0 && !showAddLine && (
+                    <p className="text-sm text-muted-foreground text-center py-2">
+                      Aucune ligne personnalisée
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
 
-            {/* SUPPRIMÉ: Checkbox autoFinalize - Les factures sont TOUJOURS créées en brouillon */}
-          </div>
-        )}
+              {/* Totaux avec TVA groupée par taux - incluant frais et lignes personnalisées */}
+              <Card className="bg-muted/50">
+                <CardContent className="pt-4">
+                  <div className="space-y-2 text-sm">
+                    {(() => {
+                      // Calculer les totaux incluant frais et lignes personnalisées
+                      const vatByRate: Record<number, number> = {};
+                      let totalHt = 0;
+
+                      // 1. Articles de la commande
+                      order.sales_order_items?.forEach(item => {
+                        const rate = item.tax_rate || 0;
+                        const lineHt = item.quantity * item.unit_price_ht;
+                        const lineVat = lineHt * rate;
+                        totalHt += lineHt;
+                        vatByRate[rate] = (vatByRate[rate] || 0) + lineVat;
+                      });
+
+                      // 2. Frais de service
+                      const totalFees =
+                        shippingCostHt + handlingCostHt + insuranceCostHt;
+                      if (totalFees > 0) {
+                        totalHt += totalFees;
+                        const feesVat = totalFees * feesVatRate;
+                        vatByRate[feesVatRate] =
+                          (vatByRate[feesVatRate] || 0) + feesVat;
+                      }
+
+                      // 3. Lignes personnalisées
+                      customLines.forEach(line => {
+                        const lineHt = line.quantity * line.unit_price_ht;
+                        const lineVat = lineHt * line.vat_rate;
+                        totalHt += lineHt;
+                        vatByRate[line.vat_rate] =
+                          (vatByRate[line.vat_rate] || 0) + lineVat;
+                      });
+
+                      // Calculer total TVA et TTC
+                      const totalVat = Object.values(vatByRate).reduce(
+                        (sum, v) => sum + v,
+                        0
+                      );
+                      const totalTtc = totalHt + totalVat;
+
+                      return (
+                        <>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Articles commande
+                            </span>
+                            <span>{formatAmount(order.total_ht)}</span>
+                          </div>
+                          {totalFees > 0 && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">
+                                Frais de service
+                              </span>
+                              <span>{formatAmount(totalFees)}</span>
+                            </div>
+                          )}
+                          {customLines.length > 0 && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">
+                                Lignes personnalisées
+                              </span>
+                              <span>
+                                {formatAmount(
+                                  customLines.reduce(
+                                    (sum, l) =>
+                                      sum + l.quantity * l.unit_price_ht,
+                                    0
+                                  )
+                                )}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex justify-between border-t pt-2 mt-2">
+                            <span className="font-medium">Total HT</span>
+                            <span className="font-medium">
+                              {formatAmount(totalHt)}
+                            </span>
+                          </div>
+                          {Object.entries(vatByRate)
+                            .sort(([a], [b]) => Number(b) - Number(a))
+                            .map(([rate, amount]) => (
+                              <div key={rate} className="flex justify-between">
+                                <span className="text-muted-foreground">
+                                  TVA {Math.round(Number(rate) * 100)}%
+                                </span>
+                                <span>{formatAmount(amount)}</span>
+                              </div>
+                            ))}
+                          <div className="flex justify-between border-t pt-2 mt-2 font-bold text-base">
+                            <span>Total TTC</span>
+                            <span>{formatAmount(totalTtc)}</span>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* SUPPRIMÉ: Checkbox autoFinalize - Les factures sont TOUJOURS créées en brouillon */}
+            </div>
+          )}
         </div>
 
         <DialogFooter className="flex-shrink-0 border-t pt-4 mt-4">

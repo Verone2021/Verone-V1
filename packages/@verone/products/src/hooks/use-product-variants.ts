@@ -3,10 +3,7 @@
 import { useState, useEffect } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
-import type {
-  VariantProduct,
-  ProductWithVariants,
-} from '@verone/types';
+import type { VariantProduct, ProductWithVariants } from '@verone/types';
 
 /**
  * Hook pour récupérer les variantes (siblings) d'un produit

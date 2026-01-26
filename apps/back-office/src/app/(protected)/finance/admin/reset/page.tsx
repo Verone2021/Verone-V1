@@ -83,7 +83,6 @@ export default function FinanceResetPage() {
         });
       }
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.error('Dry run error:', err);
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
@@ -131,7 +130,6 @@ export default function FinanceResetPage() {
         toast.success('Reset effectue avec succes');
       }
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.error('Reset error:', err);
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
       toast.error('Erreur lors du reset');

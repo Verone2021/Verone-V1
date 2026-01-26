@@ -28,10 +28,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@verone/ui';
-import {
-  useContacts,
-  type Contact,
-} from '@verone/organisations/hooks';
+import { useContacts, type Contact } from '@verone/organisations/hooks';
 
 import { ContactFormModal } from '../modals/contact-form-modal';
 

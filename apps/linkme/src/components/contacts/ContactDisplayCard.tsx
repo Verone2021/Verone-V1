@@ -42,7 +42,8 @@ export function ContactDisplayCard({
   showOwnershipBadge = false,
 }: ContactDisplayCardProps) {
   const displayName = `${contact.firstName} ${contact.lastName}`;
-  const initials = `${contact.firstName[0]}${contact.lastName[0]}`.toUpperCase();
+  const initials =
+    `${contact.firstName[0]}${contact.lastName[0]}`.toUpperCase();
 
   // Déterminer les rôles
   const roles: string[] = [];
@@ -93,7 +94,7 @@ export function ContactDisplayCard({
           {/* Badges rôles */}
           {roles.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mt-2">
-              {roles.map((role) => (
+              {roles.map(role => (
                 <Badge key={role} variant="secondary" size="sm">
                   {role}
                 </Badge>
@@ -104,7 +105,11 @@ export function ContactDisplayCard({
           {/* Badge appartenance (optionnel) */}
           {showOwnershipBadge && (
             <div className="mt-2">
-              <Badge variant="outline" size="sm" className="bg-purple-50 text-purple-700 border-purple-200">
+              <Badge
+                variant="outline"
+                size="sm"
+                className="bg-purple-50 text-purple-700 border-purple-200"
+              >
                 <Share2 className="mr-1 h-3 w-3" />
                 Partagé
               </Badge>

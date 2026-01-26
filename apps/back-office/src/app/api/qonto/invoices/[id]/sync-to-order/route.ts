@@ -79,7 +79,8 @@ export async function POST(
     // 1. Recuperer la facture avec ses donnees de synchronisation
     const { data: invoice, error: invoiceError } = await supabase
       .from('financial_documents')
-      .select(`
+      .select(
+        `
         id,
         sales_order_id,
         workflow_status,
@@ -97,7 +98,8 @@ export async function POST(
         responsable_contact_id,
         due_date,
         notes
-      `)
+      `
+      )
       .eq('id', invoiceId)
       .is('deleted_at', null)
       .single();
@@ -115,14 +117,20 @@ export async function POST(
     // 2. Verifier que la facture a une commande liee
     if (!typedInvoice.sales_order_id) {
       return NextResponse.json(
-        { success: false, error: 'Cette facture n\'est pas liee a une commande' },
+        {
+          success: false,
+          error: "Cette facture n'est pas liee a une commande",
+        },
         { status: 400 }
       );
     }
 
     // 3. Verifier que la facture est modifiable
     const editableStatuses = ['synchronized', 'draft_validated'];
-    if (typedInvoice.workflow_status && !editableStatuses.includes(typedInvoice.workflow_status)) {
+    if (
+      typedInvoice.workflow_status &&
+      !editableStatuses.includes(typedInvoice.workflow_status)
+    ) {
       return NextResponse.json(
         {
           success: false,
@@ -161,20 +169,30 @@ export async function POST(
     }
 
     // 5. Recuperer les lignes de la facture (sauf frais)
-    const { data: invoiceItems, error: itemsError } = await (supabase as unknown as {
-      from: (table: string) => {
-        select: (columns: string) => {
-          eq: (column: string, value: string) => {
-            order: (column: string, options: { ascending: boolean }) => Promise<{
-              data: IInvoiceItem[] | null;
-              error: { message: string } | null;
-            }>;
+    const { data: invoiceItems, error: itemsError } = await (
+      supabase as unknown as {
+        from: (table: string) => {
+          select: (columns: string) => {
+            eq: (
+              column: string,
+              value: string
+            ) => {
+              order: (
+                column: string,
+                options: { ascending: boolean }
+              ) => Promise<{
+                data: IInvoiceItem[] | null;
+                error: { message: string } | null;
+              }>;
+            };
           };
         };
-      };
-    })
+      }
+    )
       .from('financial_document_items')
-      .select('id, description, quantity, unit_price_ht, total_ht, tva_rate, tva_amount, total_ttc, product_id')
+      .select(
+        'id, description, quantity, unit_price_ht, total_ht, tva_rate, tva_amount, total_ttc, product_id'
+      )
       .eq('document_id', invoiceId)
       .order('sort_order', { ascending: true });
 
@@ -192,8 +210,14 @@ export async function POST(
     );
 
     // Calculer totaux produits uniquement (hors frais)
-    const productTotalHt = productItems.reduce((sum, item) => sum + (item.total_ht || 0), 0);
-    const productTotalVat = productItems.reduce((sum, item) => sum + (item.tva_amount || 0), 0);
+    const productTotalHt = productItems.reduce(
+      (sum, item) => sum + (item.total_ht || 0),
+      0
+    );
+    const productTotalVat = productItems.reduce(
+      (sum, item) => sum + (item.tva_amount || 0),
+      0
+    );
 
     // 7. Mettre a jour la commande
     // Note: Utiliser any pour bypasser les types stricts (colonnes existent dans la DB)
@@ -209,9 +233,18 @@ export async function POST(
       delivery_contact_id: typedInvoice.delivery_contact_id,
       responsable_contact_id: typedInvoice.responsable_contact_id,
       // Recalculer les totaux de la commande
-      total_ht: productTotalHt + (typedInvoice.shipping_cost_ht || 0) + (typedInvoice.handling_cost_ht || 0) + (typedInvoice.insurance_cost_ht || 0),
+      total_ht:
+        productTotalHt +
+        (typedInvoice.shipping_cost_ht || 0) +
+        (typedInvoice.handling_cost_ht || 0) +
+        (typedInvoice.insurance_cost_ht || 0),
       total_ttc: typedInvoice.total_ttc,
-      total_vat: productTotalVat + ((typedInvoice.shipping_cost_ht || 0) + (typedInvoice.handling_cost_ht || 0) + (typedInvoice.insurance_cost_ht || 0)) * (typedInvoice.fees_vat_rate || 0.2),
+      total_vat:
+        productTotalVat +
+        ((typedInvoice.shipping_cost_ht || 0) +
+          (typedInvoice.handling_cost_ht || 0) +
+          (typedInvoice.insurance_cost_ht || 0)) *
+          (typedInvoice.fees_vat_rate || 0.2),
       notes: typedInvoice.notes,
       updated_at: new Date().toISOString(),
     };
@@ -225,7 +258,10 @@ export async function POST(
     if (updateOrderError) {
       console.error('[Sync-to-order] Order update error:', updateOrderError);
       return NextResponse.json(
-        { success: false, error: 'Erreur lors de la mise a jour de la commande' },
+        {
+          success: false,
+          error: 'Erreur lors de la mise a jour de la commande',
+        },
         { status: 500 }
       );
     }
@@ -243,7 +279,10 @@ export async function POST(
     if (deleteItemsError) {
       console.error('[Sync-to-order] Delete items error:', deleteItemsError);
       return NextResponse.json(
-        { success: false, error: 'Erreur lors de la suppression des anciennes lignes' },
+        {
+          success: false,
+          error: 'Erreur lors de la suppression des anciennes lignes',
+        },
         { status: 500 }
       );
     }
@@ -270,13 +309,18 @@ export async function POST(
       if (insertItemsError) {
         console.error('[Sync-to-order] Insert items error:', insertItemsError);
         return NextResponse.json(
-          { success: false, error: 'Erreur lors de la creation des nouvelles lignes' },
+          {
+            success: false,
+            error: 'Erreur lors de la creation des nouvelles lignes',
+          },
           { status: 500 }
         );
       }
     }
 
-    console.log(`[Sync-to-order] Successfully synced invoice ${invoiceId} to order ${typedInvoice.sales_order_id}`);
+    console.log(
+      `[Sync-to-order] Successfully synced invoice ${invoiceId} to order ${typedInvoice.sales_order_id}`
+    );
 
     return NextResponse.json({
       success: true,

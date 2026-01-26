@@ -377,8 +377,7 @@ export async function listFiles(
   folder?: string,
   limit: number = 100
 ): Promise<
-  | { success: true; files: unknown[] }
-  | { success: false; error: UploadError }
+  { success: true; files: unknown[] } | { success: false; error: UploadError }
 > {
   const supabase = createClient();
 

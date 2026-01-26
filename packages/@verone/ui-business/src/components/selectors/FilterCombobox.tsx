@@ -15,11 +15,7 @@ import {
   CommandItem,
   CommandList,
 } from '@verone/ui';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@verone/ui';
+import { Popover, PopoverContent, PopoverTrigger } from '@verone/ui';
 import { cn } from '@verone/utils';
 
 /**

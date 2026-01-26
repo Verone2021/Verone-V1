@@ -38,10 +38,7 @@ import { type ReasonCode } from '../../hooks/core/use-stock-core';
 import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@verone/common/hooks';
 import { useStockUI } from '../../hooks';
-import {
-  useStockMovements,
-  type StockReasonCode,
-} from '../../hooks';
+import { useStockMovements, type StockReasonCode } from '../../hooks';
 
 // =====================================================================
 // TYPES & INTERFACES

@@ -49,7 +49,10 @@ export function useUpdateOrganisationOwnershipType() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ organisationId, ownershipType }: UpdateOwnershipTypeParams) => {
+    mutationFn: async ({
+      organisationId,
+      ownershipType,
+    }: UpdateOwnershipTypeParams) => {
       const supabase = createClient();
 
       const { error } = await supabase
@@ -72,7 +75,10 @@ export function useUpdateOrganisationOwnershipType() {
       toast.success('Type de restaurant enregistré');
     },
     onError: (error: Error) => {
-      console.error('[useUpdateOrganisationOwnershipType] Mutation error:', error);
+      console.error(
+        '[useUpdateOrganisationOwnershipType] Mutation error:',
+        error
+      );
       toast.error("Erreur lors de l'enregistrement du type de restaurant");
     },
   });

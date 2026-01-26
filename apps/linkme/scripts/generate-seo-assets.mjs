@@ -192,16 +192,13 @@ async function main() {
     console.log('   ✓ favicon.ico (from 32x32)');
 
     // 2. Open Graph image
-    console.log('\n2. Creation de l\'image Open Graph...');
+    console.log("\n2. Creation de l'image Open Graph...");
     const ogImage = await createOGImage();
-    await sharp(ogImage)
-      .png()
-      .toFile(path.join(PUBLIC_DIR, 'og-image.png'));
+    await sharp(ogImage).png().toFile(path.join(PUBLIC_DIR, 'og-image.png'));
     console.log('   ✓ og-image.png (1200x630)');
 
     console.log('\n✅ Tous les assets SEO ont ete generes avec succes!');
     console.log(`   Dossier: ${PUBLIC_DIR}`);
-
   } catch (error) {
     console.error('❌ Erreur:', error);
     process.exit(1);

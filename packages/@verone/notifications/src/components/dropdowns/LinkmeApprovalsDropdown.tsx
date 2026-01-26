@@ -15,11 +15,7 @@ import Link from 'next/link';
 
 import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@verone/ui';
+import { Popover, PopoverContent, PopoverTrigger } from '@verone/ui';
 import { ScrollArea } from '@verone/ui';
 import { Skeleton } from '@verone/ui';
 import { cn } from '@verone/utils';
@@ -72,13 +68,14 @@ function ApprovalItem({ approval }: ApprovalItemProps) {
   }).format(approval.total_ttc || 0);
 
   // Indicateur de marge (traffic light)
-  const marginIndicator = approval.margin_rate !== null
-    ? approval.margin_rate >= 30
-      ? 'bg-green-500'
-      : approval.margin_rate >= 20
-        ? 'bg-yellow-500'
-        : 'bg-red-500'
-    : 'bg-gray-300';
+  const marginIndicator =
+    approval.margin_rate !== null
+      ? approval.margin_rate >= 30
+        ? 'bg-green-500'
+        : approval.margin_rate >= 20
+          ? 'bg-yellow-500'
+          : 'bg-red-500'
+      : 'bg-gray-300';
 
   return (
     <Link
@@ -183,14 +180,16 @@ export function LinkmeApprovalsDropdown({
 
       const { data, error: queryError } = await supabase
         .from('sales_orders')
-        .select(`
+        .select(
+          `
           id,
           order_number,
           total_ttc,
           created_at,
           organisation:organisations(name),
           affiliate:affiliates(name)
-        `)
+        `
+        )
         .eq('channel_id', LINKME_CHANNEL_ID)
         .eq('status', 'draft')
         .order('created_at', { ascending: false })
@@ -200,15 +199,17 @@ export function LinkmeApprovalsDropdown({
         throw new Error(queryError.message);
       }
 
-      const enrichedApprovals: PendingApproval[] = (data || []).map((o: any) => ({
-        id: o.id,
-        order_number: o.order_number || 'N/A',
-        total_ttc: o.total_ttc || 0,
-        customer_name: o.organisation?.name || 'Client inconnu',
-        affiliate_name: o.affiliate?.name || null,
-        created_at: o.created_at,
-        margin_rate: null, // Calcul complexe, simplification
-      }));
+      const enrichedApprovals: PendingApproval[] = (data || []).map(
+        (o: any) => ({
+          id: o.id,
+          order_number: o.order_number || 'N/A',
+          total_ttc: o.total_ttc || 0,
+          customer_name: o.organisation?.name || 'Client inconnu',
+          affiliate_name: o.affiliate?.name || null,
+          created_at: o.created_at,
+          margin_rate: null, // Calcul complexe, simplification
+        })
+      );
 
       setApprovals(enrichedApprovals);
     } catch (err) {
@@ -294,7 +295,9 @@ export function LinkmeApprovalsDropdown({
           ) : approvals.length === 0 ? (
             <div className="p-6 text-center">
               <CheckCircle className="h-8 w-8 mx-auto text-green-400 mb-2" />
-              <p className="text-sm text-black/60">Aucune approbation en attente</p>
+              <p className="text-sm text-black/60">
+                Aucune approbation en attente
+              </p>
               <p className="text-xs text-black/40 mt-1">
                 Toutes les commandes sont validées
               </p>

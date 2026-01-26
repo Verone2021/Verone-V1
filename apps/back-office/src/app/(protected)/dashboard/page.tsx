@@ -55,7 +55,10 @@ import { ActivityWidget } from './components/activity-widget';
 import { RoadmapWidgetWrapper } from './components/roadmap-widget-wrapper';
 
 // Actions
-import { getDashboardMetrics, type DashboardMetrics } from './actions/get-dashboard-metrics';
+import {
+  getDashboardMetrics,
+  type DashboardMetrics,
+} from './actions/get-dashboard-metrics';
 
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardMetrics | null>(null);
@@ -236,7 +239,7 @@ export default function DashboardPage() {
         <DashboardSection
           title="Ventes & Commandes"
           icon={ShoppingCart}
-          defaultOpen={true}
+          defaultOpen
           badge={
             data.hero.ordersPending > 0
               ? {

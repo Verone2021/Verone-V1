@@ -121,7 +121,8 @@ export function useAutoRoadmap(
       badgeList.push({
         source: 'stock',
         count: stockCount,
-        severity: stockCount >= 5 ? 'urgent' : stockCount >= 2 ? 'warning' : 'info',
+        severity:
+          stockCount >= 5 ? 'urgent' : stockCount >= 2 ? 'warning' : 'info',
       });
     }
 
@@ -129,7 +130,12 @@ export function useAutoRoadmap(
       badgeList.push({
         source: 'consultations',
         count: consultationsCount,
-        severity: consultationsCount >= 5 ? 'urgent' : consultationsCount >= 2 ? 'warning' : 'info',
+        severity:
+          consultationsCount >= 5
+            ? 'urgent'
+            : consultationsCount >= 2
+              ? 'warning'
+              : 'info',
       });
     }
 
@@ -137,7 +143,8 @@ export function useAutoRoadmap(
       badgeList.push({
         source: 'linkme',
         count: linkmeCount,
-        severity: linkmeCount >= 5 ? 'urgent' : linkmeCount >= 2 ? 'warning' : 'info',
+        severity:
+          linkmeCount >= 5 ? 'urgent' : linkmeCount >= 2 ? 'warning' : 'info',
       });
     }
 

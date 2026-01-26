@@ -106,7 +106,10 @@ export function useOrderMetrics() {
         .filter(o => o.customer_type === 'individual' && o.customer_id)
         .map(o => o.customer_id);
 
-      let individualsMap: Record<string, { first_name: string; last_name: string }> = {};
+      let individualsMap: Record<
+        string,
+        { first_name: string; last_name: string }
+      > = {};
       if (individualCustomerIds.length > 0) {
         const { data: individuals } = await supabase
           .from('individual_customers')
@@ -114,10 +117,16 @@ export function useOrderMetrics() {
           .in('id', individualCustomerIds);
 
         if (individuals) {
-          individualsMap = individuals.reduce((acc, ind) => {
-            acc[ind.id] = { first_name: ind.first_name, last_name: ind.last_name };
-            return acc;
-          }, {} as Record<string, { first_name: string; last_name: string }>);
+          individualsMap = individuals.reduce(
+            (acc, ind) => {
+              acc[ind.id] = {
+                first_name: ind.first_name,
+                last_name: ind.last_name,
+              };
+              return acc;
+            },
+            {} as Record<string, { first_name: string; last_name: string }>
+          );
         }
       }
 
@@ -126,8 +135,12 @@ export function useOrderMetrics() {
 
         if (order.customer_type === 'organization' && order.organisations) {
           // Utilise les données jointes (JOIN fait dans la requête initiale)
-          const org = order.organisations as { legal_name?: string; trade_name?: string } | null;
-          customerName = org?.trade_name || org?.legal_name || 'Organisation inconnue';
+          const org = order.organisations as {
+            legal_name?: string;
+            trade_name?: string;
+          } | null;
+          customerName =
+            org?.trade_name || org?.legal_name || 'Organisation inconnue';
         } else if (order.customer_type === 'individual' && order.customer_id) {
           const individual = individualsMap[order.customer_id];
           if (individual) {

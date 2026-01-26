@@ -104,7 +104,11 @@ export function AddressCard({
           {/* Badges */}
           <div className="flex items-center gap-1 mt-1.5">
             {badge && (
-              <Badge variant="outline" size="sm" className="text-purple-600 border-purple-300 bg-purple-50">
+              <Badge
+                variant="outline"
+                size="sm"
+                className="text-purple-600 border-purple-300 bg-purple-50"
+              >
                 {badge}
               </Badge>
             )}

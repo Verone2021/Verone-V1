@@ -26,8 +26,14 @@ import {
   Star,
 } from 'lucide-react';
 
-import type { OrderFormData, SelectionStepData } from '../schemas/order-form.schema';
-import { useUserSelections, useUserAffiliate } from '../../../lib/hooks/use-user-selection';
+import {
+  useUserSelections,
+  useUserAffiliate,
+} from '../../../lib/hooks/use-user-selection';
+import type {
+  OrderFormData,
+  SelectionStepData,
+} from '../schemas/order-form.schema';
 
 // ============================================================================
 // TYPES
@@ -51,14 +57,15 @@ export function SelectionStep({
   onClearCart,
 }: SelectionStepProps) {
   const { data: affiliate, isLoading: affiliateLoading } = useUserAffiliate();
-  const { data: selections, isLoading: selectionsLoading } = useUserSelections();
+  const { data: selections, isLoading: selectionsLoading } =
+    useUserSelections();
 
   const isLoading = affiliateLoading || selectionsLoading;
 
   // Filtrer uniquement les sélections publiées (avec produits)
   const availableSelections = useMemo(() => {
     if (!selections) return [];
-    return selections.filter((s) => s.products_count > 0);
+    return selections.filter(s => s.products_count > 0);
   }, [selections]);
 
   // Auto-sélection si une seule sélection disponible
@@ -74,7 +81,9 @@ export function SelectionStep({
   }, [availableSelections, formData.selection.selectionId, onUpdate]);
 
   // Handler de changement de sélection
-  const handleSelectSelection = (selection: typeof availableSelections[0]) => {
+  const handleSelectSelection = (
+    selection: (typeof availableSelections)[0]
+  ) => {
     // Si changement de sélection et panier non vide, avertir
     if (
       formData.selection.selectionId &&
@@ -116,8 +125,8 @@ export function SelectionStep({
           Aucune sélection disponible
         </h3>
         <p className="text-gray-500 max-w-md mx-auto">
-          Vous devez d&apos;abord créer une sélection de produits avec au moins un
-          article avant de pouvoir créer une commande.
+          Vous devez d&apos;abord créer une sélection de produits avec au moins
+          un article avant de pouvoir créer une commande.
         </p>
       </div>
     );
@@ -157,7 +166,9 @@ export function SelectionStep({
                 <CheckCircle className="h-5 w-5 text-green-500" />
               </div>
               {selection.description && (
-                <p className="text-sm text-gray-500 mt-1">{selection.description}</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  {selection.description}
+                </p>
               )}
               <div className="flex items-center gap-4 mt-3 text-sm">
                 <div className="flex items-center gap-1 text-gray-600">
@@ -203,7 +214,7 @@ export function SelectionStep({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {availableSelections.map((selection) => {
+        {availableSelections.map(selection => {
           const isSelected = formData.selection.selectionId === selection.id;
           const isPublished = selection.published_at !== null;
 
@@ -250,7 +261,9 @@ export function SelectionStep({
               <div className="flex items-center gap-4 mt-4 pt-4 border-t text-sm">
                 <div className="flex items-center gap-1 text-gray-600">
                   <Package className="h-4 w-4" />
-                  <span className="font-medium">{selection.products_count}</span>
+                  <span className="font-medium">
+                    {selection.products_count}
+                  </span>
                   <span className="text-gray-400">produits</span>
                 </div>
                 <div className="flex items-center gap-1 text-gray-500">

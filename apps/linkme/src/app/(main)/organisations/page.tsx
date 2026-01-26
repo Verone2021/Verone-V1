@@ -44,9 +44,9 @@ import {
   useEnseigneOrganisations,
   type EnseigneOrganisation,
 } from '../../../lib/hooks/use-enseigne-organisations';
+import { useOrganisationContacts } from '../../../lib/hooks/use-organisation-contacts';
 import { useOrganisationStats } from '../../../lib/hooks/use-organisation-stats';
 import { useUserAffiliate } from '../../../lib/hooks/use-user-selection';
-import { useOrganisationContacts } from '../../../lib/hooks/use-organisation-contacts';
 
 // Import dynamique de la carte (SSR désactivé)
 const MapLibreMapView = dynamic(

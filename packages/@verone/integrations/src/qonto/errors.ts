@@ -82,9 +82,9 @@ export class QontoError extends Error {
       case 'AUTH_CONFIG_ERROR':
         return "Configuration Qonto manquante. Vérifiez vos variables d'environnement.";
       case 'AUTH_CONFIG_MISSING':
-        return "Configuration Qonto non trouvée. Consultez la documentation (docs/integrations/vercel-env-qonto-setup.md).";
+        return 'Configuration Qonto non trouvée. Consultez la documentation (docs/integrations/vercel-env-qonto-setup.md).';
       case 'AUTH_CONFIG_CONFLICT':
-        return "Conflit de configuration Qonto. Définissez QONTO_AUTH_MODE explicitement.";
+        return 'Conflit de configuration Qonto. Définissez QONTO_AUTH_MODE explicitement.';
       case 'PERMISSION_ERROR':
         return 'Permissions insuffisantes pour accéder à cette ressource Qonto.';
       case 'NOT_FOUND':

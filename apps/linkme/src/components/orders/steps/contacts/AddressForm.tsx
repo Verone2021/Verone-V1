@@ -107,7 +107,7 @@ export function AddressForm({
                 id={`${idPrefix}-legalName`}
                 type="text"
                 value={address?.legalName || ''}
-                onChange={(e) => handleFieldChange('legalName', e.target.value)}
+                onChange={e => handleFieldChange('legalName', e.target.value)}
                 placeholder="SARL Example"
                 disabled={isDisabled}
                 readOnly={readOnly}
@@ -120,7 +120,7 @@ export function AddressForm({
                 id={`${idPrefix}-tradeName`}
                 type="text"
                 value={address?.tradeName || ''}
-                onChange={(e) => handleFieldChange('tradeName', e.target.value)}
+                onChange={e => handleFieldChange('tradeName', e.target.value)}
                 placeholder="Restaurant Example"
                 disabled={isDisabled}
                 readOnly={readOnly}
@@ -135,7 +135,7 @@ export function AddressForm({
                 id={`${idPrefix}-siret`}
                 type="text"
                 value={address?.siret || ''}
-                onChange={(e) => handleFieldChange('siret', e.target.value)}
+                onChange={e => handleFieldChange('siret', e.target.value)}
                 placeholder="123 456 789 00012"
                 maxLength={17}
                 disabled={isDisabled}
@@ -149,7 +149,7 @@ export function AddressForm({
                 id={`${idPrefix}-vatNumber`}
                 type="text"
                 value={address?.vatNumber || ''}
-                onChange={(e) => handleFieldChange('vatNumber', e.target.value)}
+                onChange={e => handleFieldChange('vatNumber', e.target.value)}
                 placeholder="FR12345678901"
                 disabled={isDisabled}
                 readOnly={readOnly}
@@ -179,7 +179,7 @@ export function AddressForm({
             <AddressAutocomplete
               id={`${idPrefix}-address`}
               value={address?.addressLine1 || ''}
-              onChange={(value) => handleFieldChange('addressLine1', value)}
+              onChange={value => handleFieldChange('addressLine1', value)}
               onSelect={handleAddressSelect}
               placeholder="Rechercher une adresse..."
               disabled={isDisabled}
@@ -196,7 +196,7 @@ export function AddressForm({
             id={`${idPrefix}-addressLine2`}
             type="text"
             value={address?.addressLine2 || ''}
-            onChange={(e) => handleFieldChange('addressLine2', e.target.value)}
+            onChange={e => handleFieldChange('addressLine2', e.target.value)}
             placeholder="Bâtiment, étage, etc."
             disabled={isDisabled}
             readOnly={readOnly}
@@ -213,7 +213,7 @@ export function AddressForm({
               id={`${idPrefix}-postalCode`}
               type="text"
               value={address?.postalCode || ''}
-              onChange={(e) => handleFieldChange('postalCode', e.target.value)}
+              onChange={e => handleFieldChange('postalCode', e.target.value)}
               placeholder="75001"
               disabled={isDisabled}
               readOnly={readOnly}
@@ -228,7 +228,7 @@ export function AddressForm({
               id={`${idPrefix}-city`}
               type="text"
               value={address?.city || ''}
-              onChange={(e) => handleFieldChange('city', e.target.value)}
+              onChange={e => handleFieldChange('city', e.target.value)}
               placeholder="Paris"
               disabled={isDisabled}
               readOnly={readOnly}
@@ -257,7 +257,7 @@ export function AddressForm({
           <Checkbox
             id={`${idPrefix}-saveDefault`}
             checked={saveAsDefault}
-            onCheckedChange={(checked) =>
+            onCheckedChange={checked =>
               onSaveAsDefaultChange?.(checked as boolean)
             }
             disabled={disabled}

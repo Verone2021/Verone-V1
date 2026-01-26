@@ -37,7 +37,9 @@ function test(name: string, fn: () => void): void {
     passed++;
   } catch (error) {
     console.log(`  ❌ ${name}`);
-    console.log(`     ${error instanceof Error ? error.message : String(error)}`);
+    console.log(
+      `     ${error instanceof Error ? error.message : String(error)}`
+    );
     failed++;
   }
 }
@@ -142,7 +144,10 @@ describe('calculateMarginRateFromPrices (reverse engineering)', () => {
     // base=100, selling=117.65 → marge ~15%
     const rate = calculateMarginRateFromPrices(100, 117.65);
     // Légère imprécision due aux arrondis (15.00 ou 15.01 acceptable)
-    assert.ok(rate >= 15 && rate <= 15.02, `Taux ${rate} hors plage [15, 15.02]`);
+    assert.ok(
+      rate >= 15 && rate <= 15.02,
+      `Taux ${rate} hors plage [15, 15.02]`
+    );
   });
 
   test('retourne 0 si base >= selling', () => {
@@ -299,7 +304,10 @@ describe('Validation croisée Frontend/DB', () => {
     ];
 
     for (const tc of testCases) {
-      const result = calculateMargin({ basePriceHt: tc.base, marginRate: tc.margin });
+      const result = calculateMargin({
+        basePriceHt: tc.base,
+        marginRate: tc.margin,
+      });
       assert.strictEqual(
         result.sellingPriceHt,
         tc.expected,

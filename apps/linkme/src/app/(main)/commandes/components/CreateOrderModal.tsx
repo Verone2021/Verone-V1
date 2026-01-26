@@ -37,6 +37,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 import { AddressAutocomplete, type AddressResult } from '@verone/ui';
+import { calculateMargin } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import {
   X,
@@ -82,7 +83,6 @@ import {
   useUserSelections,
   useUserAffiliate,
 } from '../../../../lib/hooks/use-user-selection';
-import { calculateMargin } from '@verone/utils';
 
 interface CreateOrderModalProps {
   isOpen: boolean;
@@ -654,7 +654,6 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
         throw new Error(`Erreur création commande: ${rpcError.message}`);
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const rpcResult = result;
 
       if (!rpcResult?.success) {
@@ -1230,7 +1229,11 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                                           €
                                         </p>
                                         <p className="text-xs text-green-600">
-                                          +{(gainEuros * item.quantity).toFixed(2)} €
+                                          +
+                                          {(gainEuros * item.quantity).toFixed(
+                                            2
+                                          )}{' '}
+                                          €
                                         </p>
                                       </div>
                                     </div>
@@ -2352,10 +2355,14 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                                   </div>
                                   <div className="text-right">
                                     <p className="font-semibold text-gray-900">
-                                      {(item.quantity * item.unitPriceHt).toFixed(2)} €
+                                      {(
+                                        item.quantity * item.unitPriceHt
+                                      ).toFixed(2)}{' '}
+                                      €
                                     </p>
                                     <p className="text-xs text-green-600">
-                                      +{(gainEuros * item.quantity).toFixed(2)} €
+                                      +{(gainEuros * item.quantity).toFixed(2)}{' '}
+                                      €
                                     </p>
                                   </div>
                                 </div>

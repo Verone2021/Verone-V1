@@ -18,7 +18,10 @@
 import { useState, useCallback, useMemo } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { calculateCartTotals, type CartItemForCalculation } from '@verone/utils';
+import {
+  calculateCartTotals,
+  type CartItemForCalculation,
+} from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 
 import type {
@@ -45,7 +48,7 @@ import type {
  */
 function getTaxRateFromCountry(countryCode: string | undefined | null): number {
   // France = 20%, autres pays = 0% (export)
-  return countryCode === 'FR' || !countryCode ? 0.20 : 0.00;
+  return countryCode === 'FR' || !countryCode ? 0.2 : 0.0;
 }
 import {
   defaultOrderFormData,
@@ -140,17 +143,17 @@ export function useOrderForm(): UseOrderFormReturn {
   const nextStep = useCallback(() => {
     if (validateCurrentStep() && currentStep < 8) {
       // Marquer l'étape courante comme complétée
-      setCompletedSteps((prev) =>
+      setCompletedSteps(prev =>
         prev.includes(currentStep) ? prev : [...prev, currentStep]
       );
-      setCurrentStep((prev) => prev + 1);
+      setCurrentStep(prev => prev + 1);
       setErrors([]);
     }
   }, [currentStep, validateCurrentStep]);
 
   const prevStep = useCallback(() => {
     if (currentStep > 1) {
-      setCurrentStep((prev) => prev - 1);
+      setCurrentStep(prev => prev - 1);
       setErrors([]);
     }
   }, [currentStep]);
@@ -166,31 +169,31 @@ export function useOrderForm(): UseOrderFormReturn {
   // ============================================
 
   const updateRestaurant = useCallback((data: Partial<RestaurantStepData>) => {
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       restaurant: { ...prev.restaurant, ...data },
     }));
   }, []);
 
   const updateSelection = useCallback((data: Partial<SelectionStepData>) => {
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       selection: { ...prev.selection, ...data },
     }));
   }, []);
 
   const updateCart = useCallback((data: Partial<CartStepData>) => {
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       cart: { ...prev.cart, ...data },
     }));
   }, []);
 
   const addToCart = useCallback((item: CartItem) => {
-    setFormData((prev) => {
+    setFormData(prev => {
       // Vérifier si le produit existe déjà
       const existingIndex = prev.cart.items.findIndex(
-        (i) => i.selectionItemId === item.selectionItemId
+        i => i.selectionItemId === item.selectionItemId
       );
 
       if (existingIndex >= 0) {
@@ -212,10 +215,12 @@ export function useOrderForm(): UseOrderFormReturn {
   }, []);
 
   const removeFromCart = useCallback((selectionItemId: string) => {
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       cart: {
-        items: prev.cart.items.filter((i) => i.selectionItemId !== selectionItemId),
+        items: prev.cart.items.filter(
+          i => i.selectionItemId !== selectionItemId
+        ),
       },
     }));
   }, []);
@@ -227,10 +232,10 @@ export function useOrderForm(): UseOrderFormReturn {
         return;
       }
 
-      setFormData((prev) => ({
+      setFormData(prev => ({
         ...prev,
         cart: {
-          items: prev.cart.items.map((i) =>
+          items: prev.cart.items.map(i =>
             i.selectionItemId === selectionItemId ? { ...i, quantity } : i
           ),
         },
@@ -240,14 +245,14 @@ export function useOrderForm(): UseOrderFormReturn {
   );
 
   const clearCart = useCallback(() => {
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       cart: { items: [] },
     }));
   }, []);
 
   const updateContacts = useCallback((data: Partial<ContactsStepData>) => {
-    setFormData((prev) => {
+    setFormData(prev => {
       // Deep merge for billing and delivery sections
       const newContacts = { ...prev.contacts };
 
@@ -307,7 +312,7 @@ export function useOrderForm(): UseOrderFormReturn {
   }, []);
 
   const updateDelivery = useCallback((data: Partial<DeliveryStepData>) => {
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       delivery: { ...prev.delivery, ...data },
     }));
@@ -321,18 +326,20 @@ export function useOrderForm(): UseOrderFormReturn {
     const items = formData.cart.items;
 
     // Déterminer le taux TVA selon le pays du restaurant
-    let taxRate = 0.20; // Défaut France
+    let taxRate = 0.2; // Défaut France
 
     if (formData.restaurant.mode === 'new') {
       // Nouveau restaurant : utiliser le pays saisi
-      taxRate = getTaxRateFromCountry(formData.restaurant.newRestaurant?.country);
+      taxRate = getTaxRateFromCountry(
+        formData.restaurant.newRestaurant?.country
+      );
     } else {
       // Restaurant existant : utiliser le pays de l'organisation
       taxRate = getTaxRateFromCountry(formData.restaurant.existingCountry);
     }
 
     // Convertir les items du panier au format attendu par calculateCartTotals
-    const itemsForCalculation: CartItemForCalculation[] = items.map((item) => ({
+    const itemsForCalculation: CartItemForCalculation[] = items.map(item => ({
       basePriceHt: item.basePriceHt,
       marginRate: item.marginRate,
       quantity: item.quantity,
@@ -342,7 +349,12 @@ export function useOrderForm(): UseOrderFormReturn {
 
     // Utiliser le calcul centralisé (SSOT) avec le taux TVA dynamique
     return calculateCartTotals(itemsForCalculation, taxRate);
-  }, [formData.cart.items, formData.restaurant.mode, formData.restaurant.newRestaurant?.country, formData.restaurant.existingCountry]);
+  }, [
+    formData.cart.items,
+    formData.restaurant.mode,
+    formData.restaurant.newRestaurant?.country,
+    formData.restaurant.existingCountry,
+  ]);
 
   // ============================================
   // ACTIONS
@@ -375,7 +387,10 @@ export function useOrderForm(): UseOrderFormReturn {
       let customerId: string;
 
       // Étape 1: Créer ou récupérer le customer (organisation)
-      if (formData.restaurant.mode === 'new' && formData.restaurant.newRestaurant) {
+      if (
+        formData.restaurant.mode === 'new' &&
+        formData.restaurant.newRestaurant
+      ) {
         // Créer une nouvelle organisation
         const newResto = formData.restaurant.newRestaurant;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -388,7 +403,8 @@ export function useOrderForm(): UseOrderFormReturn {
             p_email: formData.contacts.responsable.email || null,
             p_phone: formData.contacts.responsable.phone || null,
             p_address: newResto.address || formData.delivery.address || null,
-            p_postal_code: newResto.postalCode || formData.delivery.postalCode || null,
+            p_postal_code:
+              newResto.postalCode || formData.delivery.postalCode || null,
             p_city: newResto.city || null,
             // Données géolocalisation pour TVA dynamique
             p_country: newResto.country || 'FR',
@@ -399,7 +415,9 @@ export function useOrderForm(): UseOrderFormReturn {
 
         if (orgError) {
           console.error('Erreur création organisation:', orgError);
-          throw new Error(orgError.message || 'Erreur lors de la création du restaurant');
+          throw new Error(
+            orgError.message || 'Erreur lors de la création du restaurant'
+          );
         }
 
         customerId = orgId as string;
@@ -409,19 +427,21 @@ export function useOrderForm(): UseOrderFormReturn {
       }
 
       // Étape 2: Préparer les items pour la commande
-      const orderItems = formData.cart.items.map((item) => ({
+      const orderItems = formData.cart.items.map(item => ({
         selection_item_id: item.selectionItemId,
         quantity: item.quantity,
       }));
 
       // Étape 2.5: Extraire les IDs de contacts
-      const responsableContactId = formData.contacts.existingResponsableId || null;
+      const responsableContactId =
+        formData.contacts.existingResponsableId || null;
 
       let billingContactId: string | null = null;
       if (formData.contacts.billingContact.mode === 'same_as_responsable') {
         billingContactId = responsableContactId;
       } else if (formData.contacts.billingContact.mode === 'existing') {
-        billingContactId = formData.contacts.billingContact.existingContactId || null;
+        billingContactId =
+          formData.contacts.billingContact.existingContactId || null;
       }
       // Si mode = 'new' : contact sera créé plus tard (inline), pour l'instant null
 
@@ -453,7 +473,9 @@ export function useOrderForm(): UseOrderFormReturn {
 
       if (orderError) {
         console.error('Erreur création commande:', orderError);
-        throw new Error(orderError.message || 'Erreur lors de la création de la commande');
+        throw new Error(
+          orderError.message || 'Erreur lors de la création de la commande'
+        );
       }
 
       // Étape 4: Mettre à jour les infos de livraison sur la commande
@@ -467,13 +489,15 @@ export function useOrderForm(): UseOrderFormReturn {
         };
 
         if (formData.delivery.desiredDate) {
-          deliveryUpdate.requested_delivery_date = formData.delivery.desiredDate;
+          deliveryUpdate.requested_delivery_date =
+            formData.delivery.desiredDate;
         }
 
         // Ajouter les infos de livraison supplémentaires si centre commercial
         if (formData.delivery.isMallDelivery && formData.delivery.mallEmail) {
           const existingNotes = deliveryUpdate.notes || '';
-          deliveryUpdate.notes = `${existingNotes}\n[Centre commercial: ${formData.delivery.mallEmail}]`.trim();
+          deliveryUpdate.notes =
+            `${existingNotes}\n[Centre commercial: ${formData.delivery.mallEmail}]`.trim();
         }
 
         const { error: updateError } = await supabase
@@ -502,7 +526,10 @@ export function useOrderForm(): UseOrderFormReturn {
       return orderId as string;
     } catch (error) {
       console.error('Error submitting order:', error);
-      const message = error instanceof Error ? error.message : 'Erreur lors de la création de la commande';
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Erreur lors de la création de la commande';
       setErrors([message]);
       return null;
     } finally {

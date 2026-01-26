@@ -4,13 +4,33 @@ import { useState } from 'react';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { InvoiceDetailModal } from '@verone/finance';
-import { Badge, Button, Card, CardHeader, CardTitle, CardContent } from '@verone/ui';
-import { FileText, Download, Check, Send, Loader2, AlertCircle, Eye } from 'lucide-react';
+import {
+  Badge,
+  Button,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from '@verone/ui';
+import {
+  FileText,
+  Download,
+  Check,
+  Send,
+  Loader2,
+  AlertCircle,
+  Eye,
+} from 'lucide-react';
 
 interface InvoiceLinked {
   id: string;
   document_number: string;
-  workflow_status: 'synchronized' | 'draft_validated' | 'finalized' | 'sent' | 'paid';
+  workflow_status:
+    | 'synchronized'
+    | 'draft_validated'
+    | 'finalized'
+    | 'sent'
+    | 'paid';
   status: string;
   total_ttc: number;
   amount_paid: number;
@@ -32,7 +52,10 @@ const WORKFLOW_STATUS_LABELS: Record<
   { label: string; color: string }
 > = {
   synchronized: { label: 'Synchronisé', color: 'bg-blue-100 text-blue-700' },
-  draft_validated: { label: 'Brouillon', color: 'bg-yellow-100 text-yellow-700' },
+  draft_validated: {
+    label: 'Brouillon',
+    color: 'bg-yellow-100 text-yellow-700',
+  },
   finalized: { label: 'Définitif', color: 'bg-green-100 text-green-700' },
   sent: { label: 'Envoyé', color: 'bg-purple-100 text-purple-700' },
   paid: { label: 'Payé', color: 'bg-emerald-100 text-emerald-700' },
@@ -41,7 +64,9 @@ const WORKFLOW_STATUS_LABELS: Record<
 export function InvoicesSection({ orderId }: { orderId: string }) {
   const queryClient = useQueryClient();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(
+    null
+  );
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   // Fetch factures liées
@@ -57,9 +82,12 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
   // Mutation validation synchronized → draft_validated
   const validateToDraft = useMutation({
     mutationFn: async (invoiceId: string) => {
-      const res = await fetch(`/api/qonto/invoices/${invoiceId}/validate-to-draft`, {
-        method: 'POST',
-      });
+      const res = await fetch(
+        `/api/qonto/invoices/${invoiceId}/validate-to-draft`,
+        {
+          method: 'POST',
+        }
+      );
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.error || 'Validation failed');
@@ -67,8 +95,12 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
       return res.json();
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['invoices-by-order', orderId] });
-      void queryClient.invalidateQueries({ queryKey: ['invoice-details', selectedInvoiceId] });
+      void queryClient.invalidateQueries({
+        queryKey: ['invoices-by-order', orderId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ['invoice-details', selectedInvoiceId],
+      });
       setActionLoading(null);
     },
     onError: (error: Error) => {
@@ -80,9 +112,12 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
   // Mutation finalisation draft_validated → finalized
   const finalizeWorkflow = useMutation({
     mutationFn: async (invoiceId: string) => {
-      const res = await fetch(`/api/qonto/invoices/${invoiceId}/finalize-workflow`, {
-        method: 'POST',
-      });
+      const res = await fetch(
+        `/api/qonto/invoices/${invoiceId}/finalize-workflow`,
+        {
+          method: 'POST',
+        }
+      );
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.error || 'Finalization failed');
@@ -90,8 +125,12 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
       return res.json();
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['invoices-by-order', orderId] });
-      void queryClient.invalidateQueries({ queryKey: ['invoice-details', selectedInvoiceId] });
+      void queryClient.invalidateQueries({
+        queryKey: ['invoices-by-order', orderId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ['invoice-details', selectedInvoiceId],
+      });
       setActionLoading(null);
     },
     onError: (error: Error) => {
@@ -136,7 +175,7 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
           </div>
         ) : (
           <div className="space-y-3">
-            {invoices.map((invoice) => (
+            {invoices.map(invoice => (
               <div
                 key={invoice.id}
                 className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
@@ -148,10 +187,16 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
                       {invoice.document_number}
                     </p>
                     <p className="text-sm text-gray-500">
-                      {new Date(invoice.document_date).toLocaleDateString('fr-FR')}
+                      {new Date(invoice.document_date).toLocaleDateString(
+                        'fr-FR'
+                      )}
                     </p>
                   </div>
-                  <Badge className={WORKFLOW_STATUS_LABELS[invoice.workflow_status].color}>
+                  <Badge
+                    className={
+                      WORKFLOW_STATUS_LABELS[invoice.workflow_status].color
+                    }
+                  >
                     {WORKFLOW_STATUS_LABELS[invoice.workflow_status].label}
                   </Badge>
                 </div>
@@ -159,10 +204,16 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
                 {/* Montants */}
                 <div className="flex items-center gap-4 mb-3 text-sm">
                   <span className="text-gray-600">
-                    Total: <span className="font-semibold">{invoice.total_ttc.toFixed(2)} €</span>
+                    Total:{' '}
+                    <span className="font-semibold">
+                      {invoice.total_ttc.toFixed(2)} €
+                    </span>
                   </span>
                   <span className="text-gray-600">
-                    Payé: <span className="font-semibold">{invoice.amount_paid.toFixed(2)} €</span>
+                    Payé:{' '}
+                    <span className="font-semibold">
+                      {invoice.amount_paid.toFixed(2)} €
+                    </span>
                   </span>
                 </div>
 
@@ -209,18 +260,22 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
                   )}
 
                   {/* Bouton "Download PDF" si finalized */}
-                  {invoice.workflow_status === 'finalized' && invoice.qonto_pdf_url && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        window.open(`/api/qonto/invoices/${invoice.id}/pdf`, '_blank');
-                      }}
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Télécharger PDF
-                    </Button>
-                  )}
+                  {invoice.workflow_status === 'finalized' &&
+                    invoice.qonto_pdf_url && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          window.open(
+                            `/api/qonto/invoices/${invoice.id}/pdf`,
+                            '_blank'
+                          );
+                        }}
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Télécharger PDF
+                      </Button>
+                    )}
 
                   {/* Bouton "Voir détails" - toujours visible */}
                   <Button
@@ -245,15 +300,15 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
       <InvoiceDetailModal
         invoiceId={selectedInvoiceId}
         open={isDetailModalOpen}
-        onOpenChange={(open) => {
+        onOpenChange={open => {
           setIsDetailModalOpen(open);
           if (!open) setSelectedInvoiceId(null);
         }}
-        onValidateToDraft={(invoiceId) => {
+        onValidateToDraft={invoiceId => {
           setActionLoading(invoiceId);
           validateToDraft.mutate(invoiceId);
         }}
-        onFinalize={(invoiceId) => {
+        onFinalize={invoiceId => {
           setActionLoading(invoiceId);
           finalizeWorkflow.mutate(invoiceId);
         }}

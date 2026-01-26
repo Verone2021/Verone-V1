@@ -10,7 +10,10 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { QontoClient } from '@verone/integrations/qonto';
-import { createServerClient, createAdminClient } from '@verone/utils/supabase/server';
+import {
+  createServerClient,
+  createAdminClient,
+} from '@verone/utils/supabase/server';
 
 function getQontoClient(): QontoClient {
   return new QontoClient({
@@ -148,7 +151,12 @@ export async function PATCH(
 
     const typedLocalInvoice = localInvoice as ILocalInvoice | null;
 
-    if (typedLocalInvoice?.workflow_status && !['synchronized', 'draft_validated'].includes(typedLocalInvoice.workflow_status)) {
+    if (
+      typedLocalInvoice?.workflow_status &&
+      !['synchronized', 'draft_validated'].includes(
+        typedLocalInvoice.workflow_status
+      )
+    ) {
       return NextResponse.json(
         {
           success: false,
@@ -159,16 +167,26 @@ export async function PATCH(
     }
 
     // 1. Mettre a jour Qonto avec les donnees compatibles
-    const qontoUpdateData: { dueDate?: string; header?: string; footer?: string; termsAndConditions?: string; items?: IQontoItem[] } = {};
+    const qontoUpdateData: {
+      dueDate?: string;
+      header?: string;
+      footer?: string;
+      termsAndConditions?: string;
+      items?: IQontoItem[];
+    } = {};
     if (body.dueDate) qontoUpdateData.dueDate = body.dueDate;
     if (body.header) qontoUpdateData.header = body.header;
     if (body.footer) qontoUpdateData.footer = body.footer;
-    if (body.termsAndConditions) qontoUpdateData.termsAndConditions = body.termsAndConditions;
+    if (body.termsAndConditions)
+      qontoUpdateData.termsAndConditions = body.termsAndConditions;
     if (body.items) qontoUpdateData.items = body.items;
 
     let updatedQontoInvoice = currentInvoice;
     if (Object.keys(qontoUpdateData).length > 0) {
-      updatedQontoInvoice = await client.updateClientInvoice(id, qontoUpdateData);
+      updatedQontoInvoice = await client.updateClientInvoice(
+        id,
+        qontoUpdateData
+      );
     }
 
     // 2. Mettre a jour les donnees locales dans financial_documents
@@ -181,12 +199,18 @@ export async function PATCH(
       // Champs editables
       if (body.dueDate) localUpdateData.due_date = body.dueDate;
       if (body.notes !== undefined) localUpdateData.notes = body.notes;
-      if (body.billing_address) localUpdateData.billing_address = body.billing_address;
-      if (body.shipping_address) localUpdateData.shipping_address = body.shipping_address;
-      if (body.shipping_cost_ht !== undefined) localUpdateData.shipping_cost_ht = body.shipping_cost_ht;
-      if (body.handling_cost_ht !== undefined) localUpdateData.handling_cost_ht = body.handling_cost_ht;
-      if (body.insurance_cost_ht !== undefined) localUpdateData.insurance_cost_ht = body.insurance_cost_ht;
-      if (body.fees_vat_rate !== undefined) localUpdateData.fees_vat_rate = body.fees_vat_rate;
+      if (body.billing_address)
+        localUpdateData.billing_address = body.billing_address;
+      if (body.shipping_address)
+        localUpdateData.shipping_address = body.shipping_address;
+      if (body.shipping_cost_ht !== undefined)
+        localUpdateData.shipping_cost_ht = body.shipping_cost_ht;
+      if (body.handling_cost_ht !== undefined)
+        localUpdateData.handling_cost_ht = body.handling_cost_ht;
+      if (body.insurance_cost_ht !== undefined)
+        localUpdateData.insurance_cost_ht = body.insurance_cost_ht;
+      if (body.fees_vat_rate !== undefined)
+        localUpdateData.fees_vat_rate = body.fees_vat_rate;
 
       // Recalculer les totaux si items fournis
       if (body.localItems && body.localItems.length > 0) {
@@ -201,7 +225,10 @@ export async function PATCH(
         }
 
         // Ajouter les frais
-        const feesHt = (body.shipping_cost_ht || 0) + (body.handling_cost_ht || 0) + (body.insurance_cost_ht || 0);
+        const feesHt =
+          (body.shipping_cost_ht || 0) +
+          (body.handling_cost_ht || 0) +
+          (body.insurance_cost_ht || 0);
         const feesVat = feesHt * (body.fees_vat_rate || 0.2);
         totalHt += feesHt;
         totalVat += feesVat;
@@ -225,11 +252,18 @@ export async function PATCH(
       // 3. Mettre a jour les lignes (financial_document_items)
       if (body.localItems && body.localItems.length > 0) {
         // Supprimer les anciennes lignes
-        await (adminSupabase as unknown as {
-          from: (table: string) => {
-            delete: () => { eq: (column: string, value: string) => Promise<{ error: { message: string } | null }> };
-          };
-        })
+        await (
+          adminSupabase as unknown as {
+            from: (table: string) => {
+              delete: () => {
+                eq: (
+                  column: string,
+                  value: string
+                ) => Promise<{ error: { message: string } | null }>;
+              };
+            };
+          }
+        )
           .from('financial_document_items')
           .delete()
           .eq('document_id', typedLocalInvoice.id);
@@ -243,16 +277,22 @@ export async function PATCH(
           unit_price_ht: item.unit_price_ht,
           total_ht: item.unit_price_ht * item.quantity,
           tva_rate: item.tva_rate, // stocke en %
-          tva_amount: item.unit_price_ht * item.quantity * (item.tva_rate / 100),
-          total_ttc: item.unit_price_ht * item.quantity * (1 + item.tva_rate / 100),
+          tva_amount:
+            item.unit_price_ht * item.quantity * (item.tva_rate / 100),
+          total_ttc:
+            item.unit_price_ht * item.quantity * (1 + item.tva_rate / 100),
           sort_order: index,
         }));
 
-        await (adminSupabase as unknown as {
-          from: (table: string) => {
-            insert: (data: unknown[]) => Promise<{ error: { message: string } | null }>;
-          };
-        })
+        await (
+          adminSupabase as unknown as {
+            from: (table: string) => {
+              insert: (
+                data: unknown[]
+              ) => Promise<{ error: { message: string } | null }>;
+            };
+          }
+        )
           .from('financial_document_items')
           .insert(newItems);
       }
@@ -262,14 +302,19 @@ export async function PATCH(
         try {
           // Appel interne a l'endpoint sync-to-order
           const baseUrl = request.nextUrl.origin;
-          const syncResponse = await fetch(`${baseUrl}/api/qonto/invoices/${typedLocalInvoice.id}/sync-to-order`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-          });
+          const syncResponse = await fetch(
+            `${baseUrl}/api/qonto/invoices/${typedLocalInvoice.id}/sync-to-order`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+            }
+          );
 
           if (syncResponse.ok) {
             synced = true;
-            console.log(`[PATCH Invoice] Synced to order ${typedLocalInvoice.sales_order_id}`);
+            console.log(
+              `[PATCH Invoice] Synced to order ${typedLocalInvoice.sales_order_id}`
+            );
           } else {
             const syncError = await syncResponse.json();
             console.warn('[PATCH Invoice] Sync to order warning:', syncError);

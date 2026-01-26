@@ -167,7 +167,8 @@ const getNavItems = (
     href: '/stocks',
     icon: Layers,
     badge: stockAlertsCount + expeditionsPendingCount,
-    badgeVariant: (stockAlertsCount + expeditionsPendingCount) > 0 ? 'urgent' : undefined,
+    badgeVariant:
+      stockAlertsCount + expeditionsPendingCount > 0 ? 'urgent' : undefined,
     children: [
       {
         title: 'Alertes',
@@ -335,7 +336,8 @@ function SidebarContent() {
   const pathname = usePathname();
 
   // Hover expansion UX 2026 (Linear pattern)
-  const { isExpanded, onMouseEnter, onMouseLeave, onFocus } = useHoverExpand(150);
+  const { isExpanded, onMouseEnter, onMouseLeave, onFocus } =
+    useHoverExpand(150);
 
   // Phase 2 : Badges dynamiques avec Realtime (2026-01-23)
   const { count: stockAlertsCount } = useStockAlertsCount();
@@ -345,7 +347,8 @@ function SidebarContent() {
   const { count: productsIncompleteCount } = useProductsIncompleteCount();
   const { count: ordersPendingCount } = useOrdersPendingCount();
   const { count: expeditionsPendingCount } = useExpeditionsPendingCount();
-  const { count: transactionsUnreconciledCount } = useTransactionsUnreconciledCount();
+  const { count: transactionsUnreconciledCount } =
+    useTransactionsUnreconciledCount();
   const { count: linkmeApprovalsCount } = useLinkmeApprovalsCount();
 
   /**
@@ -659,8 +662,12 @@ function SidebarContent() {
                 )}
               >
                 <item.icon className="h-4 w-4 flex-shrink-0" />
-                <span className="font-medium flex-1 text-left">{item.title}</span>
-                {item.badge && item.badge > 0 && renderBadgeWithDropdown(item.title, item.badge)}
+                <span className="font-medium flex-1 text-left">
+                  {item.title}
+                </span>
+                {item.badge &&
+                  item.badge > 0 &&
+                  renderBadgeWithDropdown(item.title, item.badge)}
                 <ChevronRight
                   className={cn(
                     'h-4 w-4 transition-transform duration-200',
@@ -675,7 +682,8 @@ function SidebarContent() {
                   const childHref = child.href ?? '#';
                   const isChildActive =
                     pathname === childHref ||
-                    (childHref !== '/dashboard' && pathname.startsWith(childHref));
+                    (childHref !== '/dashboard' &&
+                      pathname.startsWith(childHref));
                   return (
                     <li key={childHref}>
                       <Link
@@ -689,7 +697,13 @@ function SidebarContent() {
                       >
                         <child.icon className="h-4 w-4 flex-shrink-0" />
                         <span className="font-medium">{child.title}</span>
-                        {child.badge && child.badge > 0 && renderBadgeWithDropdown(child.title, child.badge, 'ml-auto')}
+                        {child.badge &&
+                          child.badge > 0 &&
+                          renderBadgeWithDropdown(
+                            child.title,
+                            child.badge,
+                            'ml-auto'
+                          )}
                       </Link>
                     </li>
                   );
@@ -715,7 +729,9 @@ function SidebarContent() {
         >
           <item.icon className="h-4 w-4 flex-shrink-0" />
           <span className="font-medium">{item.title}</span>
-          {item.badge && item.badge > 0 && renderBadgeWithDropdown(item.title, item.badge, 'ml-auto')}
+          {item.badge &&
+            item.badge > 0 &&
+            renderBadgeWithDropdown(item.title, item.badge, 'ml-auto')}
         </Link>
       </li>
     );

@@ -20,10 +20,7 @@ import type {
   CollectionStyle,
   RoomCategory,
 } from '@verone/types';
-import {
-  COLLECTION_STYLE_OPTIONS,
-  ROOM_CATEGORY_OPTIONS,
-} from '@verone/types';
+import { COLLECTION_STYLE_OPTIONS, ROOM_CATEGORY_OPTIONS } from '@verone/types';
 
 interface SmartSuggestionsPanelProps {
   context: {

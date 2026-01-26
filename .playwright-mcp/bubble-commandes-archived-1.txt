@@ -1,0 +1,319 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e6]:
+    - generic [ref=e7]:
+      - heading "COMMANDES" [level=4] [ref=e8]
+      - button "Ajouter une commande" [ref=e9] [cursor=pointer]
+    - generic [ref=e10]:
+      - generic [ref=e11]:
+        - generic [ref=e12] [cursor=pointer]: Tous (115)
+        - generic [ref=e13]:
+          - generic [ref=e15] [cursor=pointer]: A valider (0)
+          - generic [ref=e17] [cursor=pointer]: A traiter (2)
+          - generic [ref=e19] [cursor=pointer]: Attente de paiement (16)
+          - generic [ref=e21] [cursor=pointer]: A expédier (2)
+          - generic [ref=e23] [cursor=pointer]: Archivée (95)
+          - generic [ref=e25] [cursor=pointer]: Refusée (0)
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - combobox [ref=e28]:
+            - option "POKAWA"
+          - button "Filtrer" [ref=e29] [cursor=pointer]
+        - generic [ref=e30]:
+          - generic [ref=e31]: Nbre d'éléments par page
+          - generic [ref=e32] [cursor=pointer]: "10"
+          - generic [ref=e33] [cursor=pointer]: "20"
+    - generic [ref=e34]:
+      - generic [ref=e88]:
+        - generic [ref=e89]:
+          - generic [ref=e90]: Enseigne
+          - generic [ref=e91]: Commande
+          - generic [ref=e92]:
+            - generic [ref=e93]: Liv. souhaitée
+            - button [ref=e94] [cursor=pointer]:
+              - img [ref=e95]
+          - generic [ref=e97]: Livraison
+          - generic [ref=e98]: Total HT
+          - generic [ref=e369]: Règlement
+          - generic [ref=e99]: Facture
+          - generic [ref=e370]: DateFacture
+        - generic [ref=e102]:
+          - generic [ref=e104]:
+            - generic [ref=e105]:
+              - img [ref=e107]
+              - generic [ref=e108]:
+                - generic [ref=e109]: Pokawa Bourgoin Jallieu
+                - generic [ref=e110]: Franchise
+            - generic [ref=e111]: "créateur : Imane FRAIJA"
+          - generic [ref=e112]:
+            - generic [ref=e113]: POK - BOU - 20251029144248
+            - button [ref=e114] [cursor=pointer]:
+              - img [ref=e115]
+          - generic [ref=e117]: 15 Dec 2025
+          - generic [ref=e118]:
+            - strong [ref=e119]: Pokawa Bourgoin Jallieu
+            - text: ", 14 ESPLANADE DE LA FOLATIERE,"
+            - text: 38300 BOURGOIN-JALLIEU
+          - generic [ref=e120]: €2 002,46
+          - generic [ref=e372]:
+            - checkbox "payé" [checked] [ref=e373]
+            - text: payé
+          - generic [ref=e121] [cursor=pointer]:
+            - button [ref=e122]:
+              - img [ref=e123]
+            - generic [ref=e125]: LINK - 240075
+          - generic [ref=e374]: 13 Nov 2025
+      - generic [ref=e129]:
+        - generic [ref=e131]:
+          - generic [ref=e132]:
+            - img [ref=e134]
+            - generic [ref=e135]:
+              - generic [ref=e136]: POKAWA Aix-La-Pioline
+              - generic [ref=e137]: Franchise
+          - generic [ref=e138]: "créateur : Roméo DOS SANTOS"
+        - generic [ref=e139]:
+          - generic [ref=e140]: POK - Aix - 20250523165829
+          - button [ref=e141] [cursor=pointer]:
+            - img [ref=e142]
+        - generic [ref=e144]: 31 Dec 2025
+        - generic [ref=e145]:
+          - strong [ref=e146]: POKAWA Aix-La-Pioline
+          - text: ", Centre Commercial Aix-La-Pioline, 1175 RUE GUILLAUME DU VAIR 13290"
+          - text: 13290 Aix en Provence
+        - generic [ref=e147]: €3 188,91
+        - generic [ref=e376]:
+          - checkbox "payé" [checked] [ref=e377]
+          - text: payé
+        - generic [ref=e148] [cursor=pointer]:
+          - button [ref=e149]:
+            - img [ref=e150]
+          - generic [ref=e152]: LINK - 240074
+        - generic [ref=e378]: 07 Nov 2025
+      - generic [ref=e156]:
+        - generic [ref=e158]:
+          - generic [ref=e159]:
+            - img [ref=e161]
+            - generic [ref=e162]:
+              - generic [ref=e163]: Pokawa Aix en Provence 3
+              - generic [ref=e164]: Franchise
+          - generic [ref=e165]: "créateur : Roméo DOS SANTOS"
+        - generic [ref=e166]:
+          - generic [ref=e167]: POK - Aix - 20250904221216
+          - button [ref=e168] [cursor=pointer]:
+            - img [ref=e169]
+        - generic [ref=e171]: 30 Sep 2025
+        - generic [ref=e172]:
+          - strong [ref=e173]: Pokawa Aix en Provence 3
+          - text: 56, place Richelme
+          - text: 13100 Aix en Provence
+        - generic [ref=e174]: €2 905,53
+        - generic [ref=e380]:
+          - checkbox "payé" [checked] [ref=e381]
+          - text: payé
+        - generic [ref=e175] [cursor=pointer]:
+          - button [ref=e176]:
+            - img [ref=e177]
+          - generic [ref=e179]: LINK - 240073
+        - generic [ref=e382]: 13 Sep 2025
+      - generic [ref=e183]:
+        - generic [ref=e185]:
+          - generic [ref=e186]:
+            - img [ref=e188]
+            - generic [ref=e189]:
+              - generic [ref=e190]: Pokawa Grenoble
+              - generic [ref=e191]: Franchise
+          - generic [ref=e192]: "créateur : Roméo DOS SANTOS"
+        - generic [ref=e193]:
+          - generic [ref=e194]: POK - GRE - 20250904213523
+          - button [ref=e195] [cursor=pointer]:
+            - img [ref=e196]
+        - generic [ref=e198]: 08 Sep 2025
+        - generic [ref=e199]:
+          - strong [ref=e383]: Pokawa Grenoble
+          - text: 10, RUE DE PENTHIEVRE
+          - text: 75008 PARIS
+        - generic [ref=e201]: €385,25
+        - generic [ref=e385]:
+          - checkbox "payé" [checked] [ref=e386]
+          - text: payé
+        - generic [ref=e202] [cursor=pointer]:
+          - button [ref=e203]:
+            - img [ref=e204]
+          - generic [ref=e206]: LINK - 240071
+        - generic [ref=e387]: 04 Sep 2025
+      - generic [ref=e210]:
+        - generic [ref=e212]:
+          - generic [ref=e213]:
+            - img [ref=e215]
+            - generic [ref=e216]:
+              - generic [ref=e217]: Pokawa Châteaudun - Paris 9
+              - generic [ref=e218]: Propre
+          - generic [ref=e219]: "créateur : Roméo DOS SANTOS"
+        - generic [ref=e220]:
+          - generic [ref=e221]: POK - Par - 20250904213113
+          - button [ref=e222] [cursor=pointer]:
+            - img [ref=e223]
+        - generic [ref=e225]: 08 Sep 2025
+        - generic [ref=e226]:
+          - strong [ref=e388]: Pokawa Châteaudun - Paris 9
+          - text: 31, Rue de Châteaudun 75009 Paris
+        - generic [ref=e228]: €684,20
+        - generic [ref=e390]:
+          - checkbox "payé" [ref=e391]
+          - text: payé
+        - generic [ref=e229] [cursor=pointer]:
+          - button [ref=e230]:
+            - img [ref=e231]
+          - generic [ref=e233]: LINK - 240070
+        - generic [ref=e392]: 04 Sep 2025
+      - generic [ref=e237]:
+        - generic [ref=e239]:
+          - generic [ref=e240]:
+            - img [ref=e242]
+            - generic [ref=e243]:
+              - generic [ref=e244]: Pokawa Montesson
+              - generic [ref=e245]: Franchise
+          - generic [ref=e246]: "créateur : Roméo DOS SANTOS"
+        - generic [ref=e247]:
+          - generic [ref=e248]: POK - Mon - 20250402165043
+          - button [ref=e249] [cursor=pointer]:
+            - img [ref=e250]
+        - generic [ref=e252]: 08 Sep 2025
+        - generic [ref=e253]:
+          - strong [ref=e393]: Pokawa Montesson
+          - text: 280, Centre commercial Carrefour, Avenue Gabriel Péri
+          - text: 78360 Montesson
+        - generic [ref=e255]: €3 098,77
+        - generic [ref=e395]:
+          - checkbox "payé" [checked] [ref=e396]
+          - text: payé
+        - generic [ref=e256] [cursor=pointer]:
+          - button [ref=e257]:
+            - img [ref=e258]
+          - generic [ref=e260]: LINK - 240069
+        - generic [ref=e397]: 28 Juil 2025
+      - generic [ref=e264]:
+        - generic [ref=e266]:
+          - generic [ref=e267]:
+            - img [ref=e269]
+            - generic [ref=e270]:
+              - generic [ref=e271]: Pokawa Lyon Mercière
+              - generic [ref=e272]: Propre
+          - generic [ref=e273]: "créateur : Roméo DOS SANTOS"
+        - generic [ref=e274]:
+          - generic [ref=e275]: POK - Lyo - 20250709062044
+          - button [ref=e276] [cursor=pointer]:
+            - img [ref=e277]
+        - generic [ref=e279]: 31 Juil 2025
+        - generic [ref=e280]:
+          - strong [ref=e398]: Pokawa Lyon Mercière
+          - text: 4, Rue Grenette 69002 Lyon
+        - generic [ref=e282]: €50,76
+        - generic [ref=e400]:
+          - checkbox "payé" [ref=e401]
+          - text: payé
+        - generic [ref=e283] [cursor=pointer]:
+          - button [ref=e284]:
+            - img [ref=e285]
+          - generic [ref=e287]: LINK - 240068
+        - generic [ref=e402]: 28 Juil 2025
+      - generic [ref=e291]:
+        - generic [ref=e293]:
+          - generic [ref=e294]:
+            - img [ref=e296]
+            - generic [ref=e297]:
+              - generic [ref=e298]: Pokawa Nice
+              - generic [ref=e299]: Propre
+          - generic [ref=e300]: "créateur : Roméo DOS SANTOS"
+        - generic [ref=e301]:
+          - generic [ref=e302]: POK - Nic - 20250704065110
+          - button [ref=e303] [cursor=pointer]:
+            - img [ref=e304]
+        - generic [ref=e306]: 07 Juil 2025
+        - generic [ref=e307]:
+          - strong [ref=e403]: Pokawa Nice
+          - text: 1, Place Grimaldi 6000 Nice
+        - generic [ref=e309]: €436,00
+        - generic [ref=e405]:
+          - checkbox "payé" [ref=e406]
+          - text: payé
+        - generic [ref=e310] [cursor=pointer]:
+          - button [ref=e311]:
+            - img [ref=e312]
+          - generic [ref=e314]: LINK - 240066
+        - generic [ref=e407]: 21 Juil 2025
+      - generic [ref=e318]:
+        - generic [ref=e320]:
+          - generic [ref=e321]:
+            - img [ref=e323]
+            - generic [ref=e324]:
+              - generic [ref=e325]: Pokawa Puteaux
+              - generic [ref=e326]: Propre
+          - generic [ref=e327]: "créateur : Roméo DOS SANTOS"
+        - generic [ref=e328]:
+          - generic [ref=e329]: POK - Put - 20250701224613
+          - button [ref=e330] [cursor=pointer]:
+            - img [ref=e331]
+        - generic [ref=e333]: 07 Juil 2025
+        - generic [ref=e334]:
+          - strong [ref=e408]: Pokawa Puteaux
+          - text: ", CNIT NIVEAU C, 2 Pl. de la Défense"
+          - text: 92800 Puteaux
+        - generic [ref=e336]: €684,20
+        - generic [ref=e410]:
+          - checkbox "payé" [ref=e411]
+          - text: payé
+        - generic [ref=e337] [cursor=pointer]:
+          - button [ref=e338]:
+            - img [ref=e339]
+          - generic [ref=e341]: LINK - 240065
+        - generic [ref=e412]: 21 Juil 2025
+      - generic [ref=e345]:
+        - generic [ref=e347]:
+          - generic [ref=e348]:
+            - img [ref=e350]
+            - generic [ref=e351]:
+              - generic [ref=e352]: Pokawa Odysséum
+              - generic [ref=e353]: Franchise
+          - generic [ref=e354]: "créateur : Roméo DOS SANTOS"
+        - generic [ref=e355]:
+          - generic [ref=e356]: POK - MON - 20250722105542
+          - button [ref=e357] [cursor=pointer]:
+            - img [ref=e358]
+        - generic [ref=e360]: 25 Juil 2025
+        - generic [ref=e361]:
+          - strong [ref=e413]: Pokawa Odysséum
+          - text: ", Centro Comercial Odysseum 2, Praça de Lisboa"
+          - text: 34000 MONTPELLIER
+        - generic [ref=e363]: €525,40
+        - generic [ref=e415]:
+          - checkbox "payé" [checked] [ref=e416]
+          - text: payé
+        - generic [ref=e364] [cursor=pointer]:
+          - button [ref=e365]:
+            - img [ref=e366]
+          - generic [ref=e368]: LINK - 240064
+        - generic [ref=e417]: 21 Juil 2025
+    - button [ref=e36] [cursor=pointer]:
+      - img [ref=e37]
+  - button [ref=e43] [cursor=pointer]:
+    - img [ref=e44]
+  - generic [ref=e48]:
+    - generic [ref=e49]: Admin
+    - img [ref=e52]
+    - generic [ref=e53]:
+      - button [ref=e56]:
+        - img [ref=e57]
+      - button [ref=e60] [cursor=pointer]:
+        - img [ref=e61]
+      - button [ref=e64] [cursor=pointer]:
+        - img [ref=e65]
+      - button [ref=e68] [cursor=pointer]:
+        - img [ref=e69]
+      - button [ref=e72] [cursor=pointer]:
+        - img [ref=e73]
+      - button [ref=e76] [cursor=pointer]:
+        - img [ref=e77]
+      - button [ref=e80] [cursor=pointer]:
+        - img [ref=e81]
+      - button [ref=e84] [cursor=pointer]:
+        - img [ref=e85]

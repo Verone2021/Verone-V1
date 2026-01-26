@@ -67,9 +67,12 @@ class ConsoleErrorTracker {
     });
 
     // Unhandled promise rejections
-    window.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
-      this.trackError('error', [`Unhandled Promise: ${event.reason}`]);
-    });
+    window.addEventListener(
+      'unhandledrejection',
+      (event: PromiseRejectionEvent) => {
+        this.trackError('error', [`Unhandled Promise: ${event.reason}`]);
+      }
+    );
 
     this.isSetup = true;
     console.log('✅ [ConsoleErrorTracker] Monitoring activé');

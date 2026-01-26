@@ -20,10 +20,7 @@ import { ButtonV2 } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { cn } from '@verone/utils';
-import {
-  useInlineEdit,
-  type EditableSection,
-} from '@verone/common/hooks';
+import { useInlineEdit, type EditableSection } from '@verone/common/hooks';
 
 interface Product {
   id: string;

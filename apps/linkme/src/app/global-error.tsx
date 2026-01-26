@@ -42,7 +42,8 @@ export default function GlobalError({
               Une erreur est survenue
             </h1>
             <p className="text-gray-600 mb-6">
-              Veuillez reessayer ou contacter le support si le probleme persiste.
+              Veuillez reessayer ou contacter le support si le probleme
+              persiste.
             </p>
             {error.digest && (
               <p className="text-sm text-gray-400 mb-4">

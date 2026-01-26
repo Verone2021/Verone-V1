@@ -17,6 +17,7 @@
 
 import { useState, useMemo } from 'react';
 
+import { calculateMargin, LINKME_CONSTANTS } from '@verone/utils';
 import {
   X,
   Loader2,
@@ -34,10 +35,6 @@ import {
   useUserAffiliate,
   type SelectionItem,
 } from '../../lib/hooks/use-user-selection';
-import {
-  calculateMargin,
-  LINKME_CONSTANTS,
-} from '@verone/utils';
 
 interface EditMarginModalProps {
   item: SelectionItem;

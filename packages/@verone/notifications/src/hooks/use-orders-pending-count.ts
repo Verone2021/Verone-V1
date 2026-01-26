@@ -68,6 +68,17 @@ export function useOrdersPendingCount(options?: {
       setLoading(true);
       setError(null);
 
+      // Vérifier authentification avant requête (évite erreur RLS 403)
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        // Pas connecté = pas de count, pas d'erreur
+        setCount(0);
+        setLoading(false);
+        return;
+      }
+
       // Query commandes en brouillon
       // Note: seul 'draft' est un statut valide pour les commandes en attente
       const { count: totalCount, error: countError } = await supabase
@@ -95,62 +106,83 @@ export function useOrdersPendingCount(options?: {
   }, [supabase]);
 
   /**
-   * Setup Supabase Realtime subscription
+   * Setup Supabase Realtime subscription (authentification requise)
    */
   useEffect(() => {
-    // Initial fetch
-    fetchCount();
+    let isMounted = true;
 
-    // Setup Realtime si activé
-    if (enableRealtime) {
-      channelRef.current = supabase
-        .channel('orders-pending-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'sales_orders',
-          },
-          payload => {
-            const newRow = payload.new as any;
-            const oldRow = payload.old as any;
+    const setupSubscriptions = async () => {
+      // Vérifier authentification avant setup Realtime/polling
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-            // Refetch si changement impacte le statut draft
-            const shouldRefetch =
-              payload.eventType === 'INSERT' ||
-              payload.eventType === 'DELETE' ||
-              (payload.eventType === 'UPDATE' &&
-                (newRow?.status === 'draft' || oldRow?.status === 'draft'));
+      if (!user || !isMounted) {
+        // Pas connecté = pas de Realtime, juste set count à 0
+        setCount(0);
+        setLoading(false);
+        return;
+      }
 
-            if (shouldRefetch) {
-              console.log(
-                '[useOrdersPendingCount] Realtime change detected:',
-                payload.eventType
-              );
-              fetchCount();
+      // Initial fetch (authentifié)
+      fetchCount();
+
+      // Setup Realtime si activé ET authentifié
+      if (enableRealtime) {
+        channelRef.current = supabase
+          .channel('orders-pending-changes')
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'sales_orders',
+            },
+            payload => {
+              const newRow = payload.new as any;
+              const oldRow = payload.old as any;
+
+              // Refetch si changement impacte le statut draft
+              const shouldRefetch =
+                payload.eventType === 'INSERT' ||
+                payload.eventType === 'DELETE' ||
+                (payload.eventType === 'UPDATE' &&
+                  (newRow?.status === 'draft' || oldRow?.status === 'draft'));
+
+              if (shouldRefetch) {
+                console.log(
+                  '[useOrdersPendingCount] Realtime change detected:',
+                  payload.eventType
+                );
+                fetchCount();
+              }
             }
-          }
-        )
-        .subscribe(status => {
-          if (status === 'SUBSCRIBED') {
-            console.log('[useOrdersPendingCount] Realtime subscribed');
-          } else if (status === 'CHANNEL_ERROR') {
-            console.error('[useOrdersPendingCount] Realtime error');
-            setError(new Error('Realtime subscription failed'));
-          }
-        });
-    }
+          )
+          .subscribe(status => {
+            if (status === 'SUBSCRIBED') {
+              console.log('[useOrdersPendingCount] Realtime subscribed');
+            } else if (status === 'CHANNEL_ERROR') {
+              // Log silencieux, pas setError pour éviter bruit sur page login
+              console.warn(
+                '[useOrdersPendingCount] Realtime subscription failed'
+              );
+            }
+          });
+      }
 
-    // Polling fallback
-    if (!enableRealtime || refetchInterval > 0) {
-      intervalRef.current = setInterval(() => {
-        fetchCount();
-      }, refetchInterval);
-    }
+      // Polling fallback (seulement si authentifié)
+      if (!enableRealtime || refetchInterval > 0) {
+        intervalRef.current = setInterval(() => {
+          fetchCount();
+        }, refetchInterval);
+      }
+    };
+
+    setupSubscriptions();
 
     // Cleanup
     return () => {
+      isMounted = false;
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;

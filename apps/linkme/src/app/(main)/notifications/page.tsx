@@ -14,9 +14,13 @@
  */
 
 import { useState, useMemo } from 'react';
+
 import Link from 'next/link';
 
-import { useDatabaseNotifications, type DatabaseNotification } from '@verone/notifications';
+import {
+  useDatabaseNotifications,
+  type DatabaseNotification,
+} from '@verone/notifications';
 import { Button, Card, Badge, cn } from '@verone/ui';
 import {
   formatDistanceToNow,
@@ -62,7 +66,7 @@ function groupNotificationsByDate(notifications: DatabaseNotification[]) {
     older: [],
   };
 
-  notifications.forEach((notif) => {
+  notifications.forEach(notif => {
     const date = new Date(notif.created_at || new Date());
 
     if (isToday(date)) {
@@ -93,7 +97,11 @@ const GROUP_LABELS: Record<string, string> = {
 /**
  * Badge de sévérité avec code couleur
  */
-function SeverityBadge({ severity }: { severity: DatabaseNotification['severity'] }) {
+function SeverityBadge({
+  severity,
+}: {
+  severity: DatabaseNotification['severity'];
+}) {
   const config = {
     urgent: {
       className: 'bg-red-100 text-red-700 border-red-200',
@@ -135,11 +143,18 @@ interface NotificationCardProps {
   onDelete: (id: string) => Promise<void>;
 }
 
-function NotificationCard({ notification, onMarkAsRead, onDelete }: NotificationCardProps) {
-  const timeAgo = formatDistanceToNow(new Date(notification.created_at || new Date()), {
-    addSuffix: true,
-    locale: fr,
-  });
+function NotificationCard({
+  notification,
+  onMarkAsRead,
+  onDelete,
+}: NotificationCardProps) {
+  const timeAgo = formatDistanceToNow(
+    new Date(notification.created_at || new Date()),
+    {
+      addSuffix: true,
+      locale: fr,
+    }
+  );
 
   const hasAction = notification.action_url && notification.action_label;
   const isActionable = hasAction;
@@ -161,14 +176,18 @@ function NotificationCard({ notification, onMarkAsRead, onDelete }: Notification
         {/* Header: titre + badge */}
         <div className="flex items-start justify-between gap-3 pr-6">
           <div className="space-y-1">
-            <h3 className="font-semibold text-gray-900">{notification.title}</h3>
+            <h3 className="font-semibold text-gray-900">
+              {notification.title}
+            </h3>
             <p className="text-xs text-gray-500">{timeAgo}</p>
           </div>
           <SeverityBadge severity={notification.severity} />
         </div>
 
         {/* Message */}
-        <p className="text-sm text-gray-600 leading-relaxed">{notification.message}</p>
+        <p className="text-sm text-gray-600 leading-relaxed">
+          {notification.message}
+        </p>
 
         {/* Indicateur actionable */}
         {isActionable && (
@@ -259,18 +278,18 @@ export default function NotificationsPage() {
 
     // Filtre par tab
     if (activeTab === 'unread') {
-      filtered = filtered.filter((n) => !n.read);
+      filtered = filtered.filter(n => !n.read);
     } else if (activeTab === 'urgent') {
-      filtered = filtered.filter((n) => n.severity === 'urgent');
+      filtered = filtered.filter(n => n.severity === 'urgent');
     } else if (activeTab === 'actionable') {
-      filtered = filtered.filter((n) => n.action_url && n.action_label);
+      filtered = filtered.filter(n => n.action_url && n.action_label);
     }
 
     // Filtre par recherche
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
-        (n) =>
+        n =>
           n.title.toLowerCase().includes(query) ||
           n.message.toLowerCase().includes(query)
       );
@@ -285,15 +304,19 @@ export default function NotificationsPage() {
   }, [filteredNotifications]);
 
   // Stats
-  const urgentCount = notifications.filter((n) => n.severity === 'urgent').length;
-  const actionableCount = notifications.filter((n) => n.action_url && n.action_label).length;
+  const urgentCount = notifications.filter(n => n.severity === 'urgent').length;
+  const actionableCount = notifications.filter(
+    n => n.action_url && n.action_label
+  ).length;
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-sm text-gray-500">Chargement des notifications...</p>
+          <p className="text-sm text-gray-500">
+            Chargement des notifications...
+          </p>
         </div>
       </div>
     );
@@ -306,7 +329,10 @@ export default function NotificationsPage() {
         <div className="max-w-4xl mx-auto px-4 py-4">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-            <Link href="/dashboard" className="hover:text-gray-700 flex items-center gap-1">
+            <Link
+              href="/dashboard"
+              className="hover:text-gray-700 flex items-center gap-1"
+            >
               <ArrowLeft className="h-4 w-4" />
               Dashboard
             </Link>
@@ -321,7 +347,9 @@ export default function NotificationsPage() {
                 <Bell className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Notifications</h1>
+                <h1 className="text-xl font-bold text-gray-900">
+                  Notifications
+                </h1>
                 <p className="text-sm text-gray-500">
                   {unreadCount > 0
                     ? `${unreadCount} non ${unreadCount > 1 ? 'lues' : 'lue'}`
@@ -331,7 +359,11 @@ export default function NotificationsPage() {
             </div>
 
             {unreadCount > 0 && (
-              <Button variant="outline" size="sm" onClick={() => markAllAsRead()}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => markAllAsRead()}
+              >
                 <CheckCheck className="h-4 w-4 mr-1.5" />
                 Tout marquer lu
               </Button>
@@ -401,7 +433,7 @@ export default function NotificationsPage() {
                   type="text"
                   placeholder="Rechercher..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={e => setSearchQuery(e.target.value)}
                   className="w-full pl-9 pr-9 py-1.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 {searchQuery && (
@@ -432,38 +464,40 @@ export default function NotificationsPage() {
               {searchQuery
                 ? 'Aucun résultat pour votre recherche'
                 : activeTab === 'unread'
-                ? 'Toutes vos notifications sont lues'
-                : activeTab === 'urgent'
-                ? 'Aucune notification urgente'
-                : activeTab === 'actionable'
-                ? 'Aucune action requise'
-                : 'Vous êtes à jour !'}
+                  ? 'Toutes vos notifications sont lues'
+                  : activeTab === 'urgent'
+                    ? 'Aucune notification urgente'
+                    : activeTab === 'actionable'
+                      ? 'Aucune action requise'
+                      : 'Vous êtes à jour !'}
             </p>
           </div>
         ) : (
           <div className="space-y-6">
-            {Object.entries(groupedNotifications).map(([groupKey, groupNotifs]) => {
-              if (groupNotifs.length === 0) return null;
+            {Object.entries(groupedNotifications).map(
+              ([groupKey, groupNotifs]) => {
+                if (groupNotifs.length === 0) return null;
 
-              return (
-                <div key={groupKey}>
-                  <GroupHeader
-                    label={GROUP_LABELS[groupKey] || groupKey}
-                    count={groupNotifs.length}
-                  />
-                  <div className="space-y-3 mt-3">
-                    {groupNotifs.map((notification) => (
-                      <NotificationCard
-                        key={notification.id}
-                        notification={notification}
-                        onMarkAsRead={markAsRead}
-                        onDelete={deleteNotification}
-                      />
-                    ))}
+                return (
+                  <div key={groupKey}>
+                    <GroupHeader
+                      label={GROUP_LABELS[groupKey] || groupKey}
+                      count={groupNotifs.length}
+                    />
+                    <div className="space-y-3 mt-3">
+                      {groupNotifs.map(notification => (
+                        <NotificationCard
+                          key={notification.id}
+                          notification={notification}
+                          onMarkAsRead={markAsRead}
+                          onDelete={deleteNotification}
+                        />
+                      ))}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              }
+            )}
           </div>
         )}
       </div>
