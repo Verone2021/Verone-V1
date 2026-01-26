@@ -11,6 +11,10 @@ const nextConfig = {
   // Next.js 15 App Router configuration
   reactStrictMode: true,
 
+  // ✅ FIX (2026-01-26): Externaliser jsdom pour éviter erreur build
+  // jsdom (dépendance de isomorphic-dompurify) charge un fichier CSS incompatible avec le bundling Next.js
+  serverExternalPackages: ['jsdom', 'isomorphic-dompurify'],
+
   // WORKAROUND (2025-10-17): Désactiver export statique pour résoudre Html import error
   // Bug Next.js 15.5.4 avec prerendering pages d'erreur /_error, /404, /500
   output: 'standalone',
