@@ -18,12 +18,7 @@ import { createServerClient } from '@supabase/ssr';
  * Routes that don't require authentication
  */
 const PUBLIC_ROUTES = [
-  '/auth/login',
-  '/auth/register',
-  '/auth/forgot-password',
-  '/auth/reset-password',
-  '/auth/callback',
-  '/auth/error',
+  '/login',  // Seule page publique existante
 ];
 
 /**
@@ -189,7 +184,7 @@ export async function middleware(request: NextRequest) {
 
   // Handle page routes - redirect to login for unauthenticated
   if (error || !user) {
-    const loginUrl = new URL('/auth/login', request.url);
+    const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
   }
