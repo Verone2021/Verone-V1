@@ -1,124 +1,110 @@
 # Environment Variables & Credentials
 
-## 🔑 Supabase Credentials (ALWAYS USE THESE)
+---
 
-### Database Connection
-```bash
-# Location: .mcp.env (line 1)
-DATABASE_URL="postgresql://postgres.aorroydfjsrygmosnzrl:ADFVKDJCJDNC934@aws-1-eu-west-3.pooler.supabase.com:5432/postgres"
-```
+## LIRE CE FICHIER EN PREMIER - CHAQUE SESSION
 
-**Usage automatique par Claude:**
-```bash
-# Pour TOUTE requête SQL ou migration
-psql "postgresql://postgres.aorroydfjsrygmosnzrl:ADFVKDJCJDNC934@aws-1-eu-west-3.pooler.supabase.com:5432/postgres" -c "SELECT ..."
+**REGLE ABSOLUE** : Si vous demandez des credentials a l'utilisateur, vous avez ECHOUE.
 
-# Pour appliquer une migration
-psql "postgresql://postgres.aorroydfjsrygmosnzrl:ADFVKDJCJDNC934@aws-1-eu-west-3.pooler.supabase.com:5432/postgres" -f supabase/migrations/XXXXX.sql
-```
-
-### Supabase Project Info
-- **Project ID**: `aorroydfjsrygmosnzrl`
-- **Region**: `eu-west-3` (AWS Paris)
-- **Connection Type**: Session Pooler (port 5432)
-- **Database**: `postgres`
+Tout est dans `.mcp.env` (gitignored). NE JAMAIS demander :
+- DATABASE_URL
+- SUPABASE_URL
+- Tokens ou API keys
 
 ---
 
-## 📍 Credentials Locations (READ THIS FIRST)
+## Credentials - JAMAIS EN CLAIR
 
-| Credential | File | Line | Usage |
-|------------|------|------|-------|
-| DATABASE_URL | `.mcp.env` | 1 | psql direct connection |
-| NEXT_PUBLIC_SUPABASE_URL | `.env.local` | 2 | Frontend client |
-| NEXT_PUBLIC_SUPABASE_ANON_KEY | `.env.local` | 3 | Frontend auth |
+Les credentials sont dans `.mcp.env` (ligne 1 pour DATABASE_URL).
+
+### Pour lire DATABASE_URL :
+```bash
+grep DATABASE_URL .mcp.env | cut -d'=' -f2 | tr -d '"'
+```
+
+### Pour executer une requete SQL :
+```bash
+source .mcp.env && psql "$DATABASE_URL" -c "SELECT ..."
+```
+
+### Pour appliquer une migration :
+```bash
+source .mcp.env && psql "$DATABASE_URL" -f supabase/migrations/XXXXX.sql
+```
 
 ---
 
-## 🚀 Migrations Workflow (MANDATORY)
+## Supabase Project Info
 
-### RÈGLE ABSOLUE
+| Info | Valeur |
+|------|--------|
+| Project ID | `aorroydfjsrygmosnzrl` |
+| Region | `eu-west-3` (AWS Paris) |
+| Connection Type | Session Pooler (port 5432) |
+| Database | `postgres` |
+
+---
+
+## Credentials Locations
+
+| Credential | File | Usage |
+|------------|------|-------|
+| DATABASE_URL | `.mcp.env` (ligne 1) | psql direct connection |
+| NEXT_PUBLIC_SUPABASE_URL | `.env.local` | Frontend client |
+| NEXT_PUBLIC_SUPABASE_ANON_KEY | `.env.local` | Frontend auth |
+
+---
+
+## Migrations Workflow (MANDATORY)
+
+### REGLE ABSOLUE
 **TOUJOURS appliquer les migrations via psql + DATABASE_URL**
 
 ### Workflow Standard
 ```bash
-# 1. Créer migration
+# 1. Creer migration
 echo "-- Migration SQL" > supabase/migrations/$(date +%Y%m%d)_NNN_description.sql
 
-# 2. Appliquer IMMÉDIATEMENT via psql
-psql "postgresql://postgres.aorroydfjsrygmosnzrl:ADFVKDJCJDNC934@aws-1-eu-west-3.pooler.supabase.com:5432/postgres" \
-  -f supabase/migrations/$(date +%Y%m%d)_NNN_description.sql
+# 2. Appliquer IMMEDIATEMENT via psql
+source .mcp.env && psql "$DATABASE_URL" -f supabase/migrations/XXXXX.sql
 
-# 3. Vérifier application
-psql "postgresql://postgres.aorroydfjsrygmosnzrl:ADFVKDJCJDNC934@aws-1-eu-west-3.pooler.supabase.com:5432/postgres" \
-  -c "SELECT COUNT(*) FROM _supabase_migrations;"
+# 3. Verifier application
+source .mcp.env && psql "$DATABASE_URL" -c "SELECT COUNT(*) FROM _supabase_migrations;"
 
 # 4. Commit
-git add supabase/migrations/
-git commit -m "[APP-DOMAIN-NNN] feat(db): description"
-```
-
-### Vérification Rapide
-```bash
-# Tester connexion
-psql "postgresql://postgres.aorroydfjsrygmosnzrl:ADFVKDJCJDNC934@aws-1-eu-west-3.pooler.supabase.com:5432/postgres" -c "SELECT version();"
-
-# Lister tables
-psql "postgresql://postgres.aorroydfjsrygmosnzrl:ADFVKDJCJDNC934@aws-1-eu-west-3.pooler.supabase.com:5432/postgres" -c "\dt"
-
-# Compter commandes LinkMe
-psql "postgresql://postgres.aorroydfjsrygmosnzrl:ADFVKDJCJDNC934@aws-1-eu-west-3.pooler.supabase.com:5432/postgres" -c "SELECT COUNT(*) FROM sales_orders WHERE created_by_affiliate_id IS NOT NULL;"
+git add supabase/migrations/ && git commit -m "[APP-DOMAIN-NNN] feat(db): description"
 ```
 
 ---
 
-## ❌ ERREURS FRÉQUENTES À ÉVITER
+## Erreurs Frequentes a Eviter
 
-### 1. Ne JAMAIS demander à l'utilisateur de fournir credentials
+### 1. Ne JAMAIS demander credentials
 ```bash
-# ❌ WRONG
-"Pouvez-vous me fournir le DATABASE_URL?"
-"Avez-vous un token Supabase?"
-
-# ✅ CORRECT
-# Lire .mcp.env automatiquement
-DATABASE_URL=$(grep DATABASE_URL .mcp.env | cut -d'=' -f2 | tr -d '"')
-psql "$DATABASE_URL" -c "SELECT ..."
+# WRONG: "Pouvez-vous me fournir le DATABASE_URL?"
+# CORRECT: source .mcp.env && psql "$DATABASE_URL" ...
 ```
 
-### 2. Ne JAMAIS utiliser des commandes obsolètes
+### 2. Ne JAMAIS creer migration sans l'appliquer
 ```bash
-# ❌ WRONG
-npx supabase db push --project-ref aorroydfjsrygmosnzrl  # Flag n'existe pas
-
-# ✅ CORRECT
-psql "postgresql://postgres.aorroydfjsrygmosnzrl:..." -f migration.sql
-```
-
-### 3. Ne JAMAIS créer migration sans l'appliquer
-```bash
-# ❌ WRONG - Créer le fichier et dire "Appliquez manuellement"
-
-# ✅ CORRECT - TOUJOURS appliquer immédiatement
-Write(file_path="supabase/migrations/20260125_XXX.sql", content="...")
-Bash(command='psql "postgresql://..." -f supabase/migrations/20260125_XXX.sql')
+# WRONG: Creer fichier et dire "Appliquez manuellement"
+# CORRECT: Write(...) puis Bash(source .mcp.env && psql...)
 ```
 
 ---
 
-## 🧠 Checklist Mémoire (READ AT SESSION START)
+## Checklist Memoire (READ AT SESSION START)
 
-- [ ] Lire `.mcp.env` pour DATABASE_URL (TOUJOURS ligne 1)
-- [ ] Utiliser psql direct avec connection string complète
-- [ ] Appliquer migrations immédiatement après création
-- [ ] Vérifier avec `SELECT COUNT(*) FROM _supabase_migrations`
-- [ ] Ne JAMAIS demander credentials à l'utilisateur
+- [ ] Utiliser `source .mcp.env` pour charger DATABASE_URL
+- [ ] Appliquer migrations immediatement apres creation
+- [ ] Verifier avec `SELECT COUNT(*) FROM _supabase_migrations`
+- [ ] Ne JAMAIS demander credentials a l'utilisateur
 
 ---
 
-## 📚 Documentation Liée
+## Documentation Liee
 
-- **CLAUDE.md**: Instructions principales (référence ce fichier)
-- **.mcp.env**: Credentials réels (gitignored)
+- **CLAUDE.md**: Instructions principales
+- **.mcp.env**: Credentials reels (gitignored)
 - **.claude/commands/db.md**: Commandes shortcuts `/db`
-- **.claude/agents/database-architect.md**: Agent DB spécialisé
+- **.claude/agents/database-architect.md**: Agent DB specialise

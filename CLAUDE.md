@@ -1,6 +1,6 @@
 # Verone Back Office - Instructions Claude
 
-CRM/ERP modulaire pour décoration et mobilier d'intérieur haut de gamme.
+CRM/ERP modulaire pour decoration et mobilier d'interieur haut de gamme.
 
 ---
 
@@ -11,7 +11,6 @@ CRM/ERP modulaire pour décoration et mobilier d'intérieur haut de gamme.
 **AVANT TOUTE ACTION**, lire :
 1. `.claude/env.md` - Credentials (NE JAMAIS demander)
 2. `.claude/work/ACTIVE.md` - Travail en cours
-3. `.claude/memories/INDEX.md` - Lecons apprises
 
 ### MCP Disponibles (UTILISER)
 
@@ -38,6 +37,23 @@ CRM/ERP modulaire pour décoration et mobilier d'intérieur haut de gamme.
 3. **TOUJOURS** lancer agents specialises pour taches complexes
 4. **TOUJOURS** appliquer migrations via psql immediatement apres creation
 5. **EN MODE PLAN** : AUCUNE modification de fichier sauf le fichier plan - READ-ONLY uniquement
+6. **MEMORIES** : Toujours utiliser Serena MCP (`mcp__serena__write_memory`), jamais de fichiers `.claude/memories/`
+
+---
+
+## Memories Serena (Consulter Automatiquement)
+
+Les memories sont gerees par Serena MCP. Consulter avec :
+```bash
+mcp__serena__list_memories
+mcp__serena__read_memory("memory-name")
+```
+
+### Memories Critiques
+- `workflow-strict-rules` : Regles de modification
+- `auth-paths-immutable` : Chemins auth immuables
+- `database-migrations-convention` : Conventions migrations
+- `playwright-login-first-mandatory` : Tests E2E
 
 ---
 
@@ -47,50 +63,44 @@ CRM/ERP modulaire pour décoration et mobilier d'intérieur haut de gamme.
 pnpm dev             # Dev (UTILISATEUR UNIQUEMENT - voir section interdictions)
 pnpm build           # Production build
 pnpm type-check      # TypeScript validation
-pnpm e2e:smoke       # Smoke tests UI
+pnpm test:e2e        # Tests E2E Playwright
 ```
 
 ---
 
-## 🚫 Actions Interdites pour Claude
+## Actions Interdites pour Claude
 
-**Claude ne doit JAMAIS exécuter ces commandes :**
+**Claude ne doit JAMAIS executer ces commandes :**
 
 ```bash
-# ❌ INTERDIT - Lancement serveurs de développement
+# INTERDIT - Lancement serveurs de developpement
 pnpm dev
 pnpm --filter <app> dev
-npm run dev
-next dev
 
-# ❌ INTERDIT - Sans validation explicite de l'utilisateur
+# INTERDIT - Sans validation explicite de l'utilisateur
 gh pr create         # Demander d'abord
 gh pr merge          # Demander d'abord
 git push --force     # Demander d'abord
 
-# ❌ INTERDIT - Commandes bloquantes sans background/timeout
-pnpm build                    # Sans run_in_background=true
-pnpm e2e:smoke               # Sans timeout approprié
-# → Utiliser: Bash(command="pnpm build", run_in_background=true)
-# → Ou: Bash(command="pnpm type-check", timeout=60000)
+# INTERDIT - Commandes bloquantes sans background/timeout
+pnpm build           # Sans run_in_background=true
+pnpm test:e2e        # Sans timeout approprie
 ```
 
-**Pourquoi ?** Le lancement de serveurs par Claude occupe les ports et empêche l'utilisateur de lancer ses propres serveurs.
+**Regle simple** : *"Claude developpe, teste, build, commit. L'utilisateur lance les serveurs."*
 
-**Règle simple** : *"Claude développe, teste, build, commit. L'utilisateur lance les serveurs."*
-
-**Documentation complète** : Voir `.claude/MANUAL_MODE.md`
+**Documentation complete** : `.claude/MANUAL_MODE.md`
 
 ---
 
-## 🛡️ Protection Workflow (CRITIQUE)
+## Protection Workflow (CRITIQUE)
 
-### Règle Fondamentale
+### Regle Fondamentale
 
 **JAMAIS d'action susceptible de casser le code sans :**
-1. Lire l'existant ENTIÈREMENT
+1. Lire l'existant ENTIEREMENT
 2. Identifier les patterns actuels
-3. Analyser les risques de régression
+3. Analyser les risques de regression
 4. DEMANDER approbation si fichier critique
 
 ### Fichiers Critiques (Approbation OBLIGATOIRE)
@@ -105,224 +115,84 @@ pnpm e2e:smoke               # Sans timeout approprié
 ### Workflow OBLIGATOIRE pour Modifications
 
 ```
-1. READ    → Lire fichier existant (100%)
-2. AUDIT   → Documenter patterns actuels
-3. PLAN    → Proposer changements avec justification
-4. APPROVE → Attendre GO explicite utilisateur
-5. EXECUTE → Modifier seulement après GO
-6. VERIFY  → Type-check + build + test manuel
+1. READ    -> Lire fichier existant (100%)
+2. AUDIT   -> Documenter patterns actuels
+3. PLAN    -> Proposer changements avec justification
+4. APPROVE -> Attendre GO explicite utilisateur
+5. EXECUTE -> Modifier seulement apres GO
+6. VERIFY  -> Type-check + build + test manuel
 ```
 
-### Historique des Incidents (Ne Plus Répéter)
+### Historique des Incidents (Ne Plus Repeter)
 
-| Date | Commit | Erreur | Leçon |
+| Date | Commit | Erreur | Lecon |
 |------|--------|--------|-------|
-| 21 Jan | e17346bf | Hooks supprimés "remove friction" | Ne jamais "simplifier" les protections |
-| 24 Jan | f14e009a | Middleware recréé sans audit | Toujours lire l'existant |
+| 21 Jan | e17346bf | Hooks supprimes "remove friction" | Ne jamais "simplifier" les protections |
+| 24 Jan | f14e009a | Middleware recree sans audit | Toujours lire l'existant |
 
 ---
 
-## 🔑 Environment Setup & Credentials (READ FIRST)
+## Environment & Credentials
 
-**CRITIQUE**: Lire `.claude/env.md` au début de CHAQUE session.
+**CRITIQUE**: Lire `.claude/env.md` au debut de CHAQUE session.
 
 ### Quick Reference
 
-**Supabase Database Connection (TOUJOURS utiliser celle-ci):**
 ```bash
-# Location: .mcp.env (line 1)
-psql "postgresql://postgres.aorroydfjsrygmosnzrl:ADFVKDJCJDNC934@aws-1-eu-west-3.pooler.supabase.com:5432/postgres" -c "SELECT ..."
+# Charger DATABASE_URL depuis .mcp.env
+source .mcp.env && psql "$DATABASE_URL" -c "SELECT ..."
 ```
 
-### Règles Absolues
+### Regles
+1. **NE JAMAIS demander credentials** - tout est dans `.mcp.env`
+2. **TOUJOURS appliquer migrations via psql** immediatement
+3. **NE JAMAIS hardcoder** credentials dans fichiers trackes
 
-1. **NE JAMAIS demander credentials** à l'utilisateur
-   - DATABASE_URL est dans `.mcp.env` (ligne 1)
-   - Lire automatiquement: `grep DATABASE_URL .mcp.env`
-
-2. **TOUJOURS appliquer migrations via psql**
-   - Créer fichier SQL → Appliquer immédiatement
-   - Ne JAMAIS laisser migrations non-appliquées
-
-3. **Vérifier connexion en cas de doute**
-   ```bash
-   psql "postgresql://postgres.aorroydfjsrygmosnzrl:..." -c "SELECT version();"
-   ```
-
-**Documentation complète**: `.claude/env.md`
+**Documentation complete**: `.claude/env.md`
 
 ---
 
-## 🔄 Workflow de Développement Professionnel
+## Workflow de Developpement
 
-### Méthodologie Standard (Research-Plan-Execute)
+### Methodologie Standard (Research-Plan-Execute)
 
 **TOUJOURS suivre cet ordre** :
 
-#### 1. 🔍 RESEARCH (Audit de l'existant)
+1. **RESEARCH** : Lire fichiers pertinents SANS coder (Glob, Grep, Read, Serena)
+2. **PLAN** : EnterPlanMode pour tasks complexes
+3. **TEST** : TDD - ecrire tests AVANT le code
+4. **EXECUTE** : Coder en suivant le plan, commits frequents
+5. **VERIFY** : `pnpm type-check && pnpm build`
+6. **COMMIT** : Format `[APP-DOMAIN-NNN] type: description`
 
-Lire fichiers pertinents SANS coder :
-- Comprendre architecture actuelle
-- Identifier patterns existants
-- Localiser fichiers critiques
-- Documenter dépendances
+### Tests
 
-**Outils** : Glob, Grep, Read, Serena (symbolic search)
-
-#### 2. 📝 PLAN (Conception)
-
-Créer plan détaillé AVANT de coder :
-- Utiliser EnterPlanMode pour tasks complexes
-- Tester plusieurs approches (au moins 2)
-- Identifier edge cases
-- Estimer impact (fichiers touchés, breaking changes)
-
-**Outils** : EnterPlanMode, AskUserQuestion (pour clarifications)
-
-#### 3. 🧪 TEST (TDD - Test-Driven Development)
-
-Écrire tests AVANT le code :
 ```bash
-npm run test:e2e          # Tests E2E avec Playwright
-npm run test:unit         # Tests unitaires (si disponibles)
-npm run type-check        # Validation TypeScript
+pnpm type-check      # TypeScript sans erreurs
+pnpm build           # Build production (run_in_background=true)
+pnpm test:e2e        # Tests E2E Playwright
 ```
-
-**Pattern TDD** :
-1. Écrire test qui échoue (RED)
-2. Écrire code minimal pour passer (GREEN)
-3. Refactorer (REFACTOR)
-
-> "TDD est un superpower quand on travaille avec des AI agents"
-> — Kent Beck, [TDD, AI agents and coding](https://newsletter.pragmaticengineer.com/p/tdd-ai-agents-and-coding-with-kent)
-
-#### 4. ⚙️ EXECUTE (Implémentation)
-
-Coder en suivant le plan :
-- Suivre patterns existants
-- Commits petits et fréquents (save points)
-- Minimum nécessaire (pas de sur-engineering)
-
-#### 5. ✅ VERIFY (Vérification)
-
-Valider à chaque étape :
-```bash
-npm run type-check        # TypeScript sans erreurs
-npm run build             # Build production réussit
-npm run e2e:smoke         # Tests UI si modification frontend
-```
-
-#### 6. 📦 COMMIT (Sauvegarde continue)
-
-Commits fréquents sur feature branch :
-```bash
-# Commits atomiques à chaque étape logique
-git add .
-git commit -m "[APP-DOMAIN-NNN] step: description"
-git push origin feature-branch
-
-# Chaque push = backup + CI check
-```
-
-#### 7. 🔀 PULL REQUEST (À la fin seulement)
-
-UNE SEULE PR pour toute la feature :
-```bash
-gh pr create --title "[APP-DOMAIN-NNN] feat: description" \
-             --body "Résumé des commits + test plan"
-
-# PR doit être traitée rapidement (< 1 heure idéalement)
-```
-
-**Source** : [Claude Code: Best practices for agentic coding](https://www.anthropic.com/engineering/claude-code-best-practices)
 
 ---
 
-## 🔧 Mode de Travail
+## Mode de Travail
 
-**MODE MANUEL** : Claude ne crée ni ne merge de PR sans instruction explicite.
+**MODE MANUEL** : Claude ne cree ni ne merge de PR sans instruction explicite.
 
-**Documentation complète** : Voir `.claude/MANUAL_MODE.md`
+- Claude developpe, teste, commit, push autonome
+- Claude **DEMANDE** avant de creer/merger PR
+- Claude **DEMANDE** avant toute action critique
 
-**En bref** :
-- ✅ Claude développe, teste, commit, push autonome
-- ⚠️ Claude **DEMANDE** avant de créer/merger PR
-- ⚠️ Claude **DEMANDE** avant toute action critique (déploiement, migration DB, etc.)
+**Documentation complete** : `.claude/MANUAL_MODE.md`
 
 ---
 
-## 🌳 Stratégie Git & Pull Requests
+## Git & Pull Requests
 
-### Trunk-Based Development (TBD)
-
-**Principe** : Short-lived feature branches, intégration rapide.
-
-**Référence** : [Trunk-based Development](https://trunkbaseddevelopment.com/continuous-review/)
-
-### Workflow Standard
-
-#### 1. Créer Feature Branch
-```bash
-git checkout -b feat/APP-DOMAIN-NNN-description
-# Exemples:
-# - feat/BO-PARAMS-003-settings-menu
-# - fix/LM-ORD-042-validation-bug
-```
-
-#### 2. Commits Fréquents (Save Points)
-```bash
-# Commits petits et atomiques
-git add .
-git commit -m "[BO-PARAMS-003] step 1: add settings icon"
-git push
-
-git commit -m "[BO-PARAMS-003] step 2: create submenu"
-git push
-
-git commit -m "[BO-PARAMS-003] step 3: add tests"
-git push
-
-# Chaque push = backup + CI check
-```
-
-**Avantages** :
-- ✅ Backup continu sur GitHub
-- ✅ CI valide chaque étape
-- ✅ Facile de revenir en arrière
-- ✅ Historique clair des étapes
-
-#### 3. UNE PR à la Fin (Tous les Commits)
-```bash
-# Quand feature complète :
-gh pr create \
-  --title "[BO-PARAMS-003] feat: add settings menu with tests" \
-  --body "
-## Summary
-- Added settings icon to sidebar
-- Created submenu with 4 items
-- Added comprehensive Playwright tests
-
-## Test Plan
-- [x] Type-check passes
-- [x] Build succeeds
-- [x] E2E tests pass
-- [x] Manual testing on localhost:3000
-
-## Commits
-- step 1: add settings icon
-- step 2: create submenu
-- step 3: add tests
-"
-```
-
-**Règle d'or** : 1 feature = 1 branche = N commits = **1 PR**
-
-### Format de Commit Requis
+### Format de Commit
 
 ```
 [APP-DOMAIN-NNN] type: description courte
-
-Details optionnels...
 ```
 
 **Exemples** :
@@ -330,67 +200,37 @@ Details optionnels...
 - `[BO-DASH-001] fix: cache invalidation`
 - `[NO-TASK] chore: update dependencies`
 
-**Validation automatique** : Hook PreToolUse bloque si format invalide
-
-### Revue de PR
-
-**Délai cible** : < 1 heure (idéalement quelques minutes)
-
-**Checklist automatique** :
-- [ ] CI passe (tests, build, type-check)
-- [ ] Pas de conflits
-- [ ] Format commits respecté
-- [ ] Tests ajoutés si nouvelle feature
-
-**Checklist humaine** :
-- [ ] Code review (logique, sécurité)
-- [ ] Validation fonctionnelle
-- [ ] Approbation déploiement si prod
-
-### Merge Strategy
-
-```bash
-# Pour feature branches (User merge après validation)
-gh pr merge 123 --squash  # Squash commits en 1
-
-# Pour hotfix critique (après validation)
-gh pr merge 124 --merge --admin  # Preserve commits
-```
-
-**⚠️ Jamais de force push sur main** : Protégé en production
-
 ### Branches
 
-- `main`: Production
-- `feat/*`: Features
-- `fix/*`: Bug fixes
-- `docs/*`: Documentation
+| Branche | Usage |
+|---------|-------|
+| `main` | Production |
+| `feat/*` | Features |
+| `fix/*` | Bug fixes |
+
+**Documentation complete** : `.claude/docs/git-workflow.md`
 
 ---
 
-## Task Management (.tasks/)
+## Migrations Supabase
 
-### Structure
-```
-.tasks/
-├── LM-ORD-009.md        # 1 fichier = 1 task
-├── BO-DASH-001.md
-├── INDEX.md             # Généré auto (gitignored)
-└── TEMPLATE.md          # Template
-```
+**REGLE ABSOLUE** : Claude applique AUTOMATIQUEMENT les migrations via `psql` direct.
 
-### Créer nouvelle task
 ```bash
-cp .tasks/TEMPLATE.md .tasks/LM-ORD-XXX.md
-# Éditer frontmatter YAML
-# git add .tasks/LM-ORD-XXX.md
+# 1. Creer migration
+Write(file_path="supabase/migrations/YYYYMMDD_NNN_description.sql", content="...")
+
+# 2. Appliquer IMMEDIATEMENT
+source .mcp.env && psql "$DATABASE_URL" -f supabase/migrations/YYYYMMDD_NNN_description.sql
+
+# 3. Verifier succes
+source .mcp.env && psql "$DATABASE_URL" -c "SELECT COUNT(*) FROM _supabase_migrations;"
+
+# 4. Commit
+git add supabase/migrations/ && git commit -m "[APP-DOMAIN-NNN] feat(db): description"
 ```
 
-### Générer index
-```bash
-.tasks/generate-index.sh
-cat .tasks/INDEX.md
-```
+**Documentation complete**: `.claude/env.md`
 
 ---
 
@@ -413,53 +253,16 @@ cat .tasks/INDEX.md
 
 ---
 
-## 🗄️ Migrations Supabase - Workflow Automatique
+## Documentation Detaillee
 
-**RÈGLE ABSOLUE** : Claude applique AUTOMATIQUEMENT les migrations via `psql` direct.
-
-### Workflow Standard (TOUJOURS suivre)
-
-```bash
-# 1. Créer migration
-Write(file_path="supabase/migrations/YYYYMMDD_NNN_description.sql", content="...")
-
-# 2. Appliquer IMMÉDIATEMENT via psql (DATABASE_URL depuis .mcp.env)
-Bash(command='psql "postgresql://postgres.aorroydfjsrygmosnzrl:ADFVKDJCJDNC934@aws-1-eu-west-3.pooler.supabase.com:5432/postgres" -f supabase/migrations/YYYYMMDD_NNN_description.sql')
-
-# 3. Vérifier succès
-Bash(command='psql "postgresql://..." -c "SELECT COUNT(*) FROM _supabase_migrations;"')
-
-# 4. Commit
-Bash(command='git add supabase/migrations/ && git commit -m "[APP-DOMAIN-NNN] feat(db): description"')
-```
-
-### Règles Critiques
-
-1. **NE JAMAIS** créer migration sans l'appliquer immédiatement
-2. **NE JAMAIS** demander à l'utilisateur d'appliquer manuellement
-3. **TOUJOURS** utiliser connection string complète depuis `.mcp.env`
-4. **TOUJOURS** vérifier que la migration s'est appliquée avec succès
-
-### Vérification Rapide
-
-```bash
-# Tester connexion
-psql "postgresql://postgres.aorroydfjsrygmosnzrl:..." -c "SELECT version();"
-
-# Lister migrations appliquées
-psql "postgresql://postgres.aorroydfjsrygmosnzrl:..." -c "SELECT name FROM _supabase_migrations ORDER BY inserted_at DESC LIMIT 10;"
-```
-
-### Générer types TypeScript
-
-```bash
-# Après migration appliquée
-SUPABASE_ACCESS_TOKEN="..." npx supabase@latest gen types typescript \
-  --project-id aorroydfjsrygmosnzrl > packages/@verone/types/src/supabase.ts
-```
-
-**Documentation complète**: `.claude/env.md`
+| Sujet | Fichier |
+|-------|---------|
+| Credentials & Migrations | `.claude/env.md` |
+| Mode Manuel PR | `.claude/MANUAL_MODE.md` |
+| Git Workflow Complet | `.claude/docs/git-workflow.md` |
+| Agents Specialises | `.claude/agents/*.md` |
+| Commandes Slash | `.claude/commands/*.md` |
 
 ---
 
-**Version**: 9.2.0 (Ajout workflow migrations Supabase Cloud 2026-01-24)
+**Version**: 10.0.0 (Restructuration documentation - 2026-01-26)
