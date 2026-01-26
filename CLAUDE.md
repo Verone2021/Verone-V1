@@ -2,6 +2,45 @@
 
 CRM/ERP modulaire pour décoration et mobilier d'intérieur haut de gamme.
 
+---
+
+## CRITICAL - LIRE EN PREMIER
+
+### Checklist Debut de Session (OBLIGATOIRE)
+
+**AVANT TOUTE ACTION**, lire :
+1. `.claude/env.md` - Credentials (NE JAMAIS demander)
+2. `.claude/work/ACTIVE.md` - Travail en cours
+3. `.claude/memories/INDEX.md` - Lecons apprises
+
+### MCP Disponibles (UTILISER)
+
+| MCP | Usage | Quand Utiliser |
+|-----|-------|----------------|
+| **serena** | Recherche symboles + Memoire | `mcp__serena__*` - Code symbolique, `write_memory`/`read_memory` |
+| **supabase** | Database operations | `mcp__supabase__*` - DB queries |
+| **context7** | Documentation live | `mcp__context7__*` - Docs librairies |
+| **playwright** | Tests UI | `mcp__playwright-lane-1__*` - E2E tests |
+
+### Agents Disponibles (LANCER)
+
+| Situation | Agent | Description |
+|-----------|-------|-------------|
+| Bug/Erreur | `verone-debug-investigator` | Sequential thinking, diagnostics |
+| Migration/DB | `database-architect` | Supabase, RLS, triggers |
+| UI/Frontend | `frontend-architect` | Next.js 15, components |
+| Tache complexe | `verone-orchestrator` | Coordination, delegation |
+
+### Regles Absolues
+
+1. **NE JAMAIS** demander credentials a l'utilisateur (tout est dans `.claude/env.md`)
+2. **TOUJOURS** utiliser les MCP au lieu de commandes manuelles quand disponibles
+3. **TOUJOURS** lancer agents specialises pour taches complexes
+4. **TOUJOURS** appliquer migrations via psql immediatement apres creation
+5. **EN MODE PLAN** : AUCUNE modification de fichier sauf le fichier plan - READ-ONLY uniquement
+
+---
+
 ## Commandes
 
 ```bash
@@ -41,6 +80,45 @@ pnpm e2e:smoke               # Sans timeout approprié
 **Règle simple** : *"Claude développe, teste, build, commit. L'utilisateur lance les serveurs."*
 
 **Documentation complète** : Voir `.claude/MANUAL_MODE.md`
+
+---
+
+## 🛡️ Protection Workflow (CRITIQUE)
+
+### Règle Fondamentale
+
+**JAMAIS d'action susceptible de casser le code sans :**
+1. Lire l'existant ENTIÈREMENT
+2. Identifier les patterns actuels
+3. Analyser les risques de régression
+4. DEMANDER approbation si fichier critique
+
+### Fichiers Critiques (Approbation OBLIGATOIRE)
+
+| Pattern | Raison | Action |
+|---------|--------|--------|
+| `*/middleware.ts` | Auth routing | AskUserQuestion |
+| `*/app/login/**` | Login pages | AskUserQuestion |
+| `*_rls_*.sql` | RLS policies | AskUserQuestion |
+| `*_auth_*.sql` | Auth migrations | AskUserQuestion |
+
+### Workflow OBLIGATOIRE pour Modifications
+
+```
+1. READ    → Lire fichier existant (100%)
+2. AUDIT   → Documenter patterns actuels
+3. PLAN    → Proposer changements avec justification
+4. APPROVE → Attendre GO explicite utilisateur
+5. EXECUTE → Modifier seulement après GO
+6. VERIFY  → Type-check + build + test manuel
+```
+
+### Historique des Incidents (Ne Plus Répéter)
+
+| Date | Commit | Erreur | Leçon |
+|------|--------|--------|-------|
+| 21 Jan | e17346bf | Hooks supprimés "remove friction" | Ne jamais "simplifier" les protections |
+| 24 Jan | f14e009a | Middleware recréé sans audit | Toujours lire l'existant |
 
 ---
 
