@@ -44,7 +44,11 @@ export default async function OrderDetailPage({
   const supabase = await createClient();
 
   // 1. Récupérer commande de base
-  const { data: order, error } = await supabase
+  let order: any = null;
+  let error: any = null;
+
+  // Essayer d'abord requête directe
+  const { data: orderData, error: orderError } = await supabase
     .from('sales_orders')
     .select(
       `
@@ -82,9 +86,57 @@ export default async function OrderDetailPage({
     .eq('id', id)
     .single();
 
-  if (error || !order) {
-    console.error('[Order Detail] Error:', error);
-    notFound();
+  if (orderData) {
+    order = orderData;
+  } else {
+    // FALLBACK: Essayer via RPC get_linkme_orders pour les commandes LinkMe
+    const { data: linkmeOrders, error: linkmeError } = await (supabase.rpc as any)(
+      'get_linkme_orders',
+      {}
+    );
+
+    if (linkmeOrders && linkmeOrders.length > 0) {
+      const linkmeOrder = linkmeOrders.find((o: any) => o.id === id);
+      if (linkmeOrder) {
+        // Transformer format RPC vers format attendu
+        order = {
+          id: linkmeOrder.id,
+          order_number: linkmeOrder.order_number,
+          status: linkmeOrder.status,
+          payment_status: linkmeOrder.payment_status,
+          customer_id: linkmeOrder.customer_id,
+          customer_type: linkmeOrder.customer_type,
+          shipping_address: linkmeOrder.shipping_address,
+          total_ht: linkmeOrder.total_ht,
+          total_ttc: linkmeOrder.total_ttc,
+          shipping_cost_ht: linkmeOrder.shipping_cost_ht || 0,
+          handling_cost_ht: linkmeOrder.handling_cost_ht || 0,
+          insurance_cost_ht: linkmeOrder.insurance_cost_ht || 0,
+          fees_vat_rate: 20, // Défaut
+          created_at: linkmeOrder.created_at,
+          created_by: linkmeOrder.created_by_affiliate_id,
+          channel_id: '93c68db1-5a30-4168-89ec-6383152be405', // LinkMe channel
+          sales_channels: { id: '93c68db1-5a30-4168-89ec-6383152be405', name: 'LinkMe', code: 'linkme' },
+          sales_order_items: (linkmeOrder.items || []).map((item: any) => ({
+            id: item.id,
+            product_id: item.product_id,
+            quantity: item.quantity,
+            quantity_shipped: 0, // À calculer depuis shipments si nécessaire
+            unit_price_ht: item.unit_price_ht,
+            products: {
+              id: item.product_id,
+              name: item.product_name,
+              sku: item.product_sku
+            }
+          }))
+        };
+      }
+    }
+
+    if (!order) {
+      console.error('[Order Detail] Error:', orderError || linkmeError);
+      notFound();
+    }
   }
 
   // 2. Récupérer customer selon type

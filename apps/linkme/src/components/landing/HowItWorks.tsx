@@ -1,128 +1,178 @@
 'use client';
 
 /**
- * Landing Page - Section "Comment ca marche"
+ * Landing Page "How It Works" Section - LinkMe
  *
- * Presente les 4 etapes pour devenir affilie LinkMe:
- * 1. Creer sa selection
- * 2. Configurer ses marges
- * 3. Partager et vendre
- * 4. Suivre ses gains
+ * Section expliquant le fonctionnement en 4 etapes:
+ * - Creez vos selections
+ * - Definissez vos marges
+ * - Partagez vos liens
+ * - Suivez vos gains
  *
  * @module LandingHowItWorks
- * @since 2026-01-21
+ * @since 2026-01-23
  */
 
-import { Package, Sliders, Share2, TrendingUp } from 'lucide-react';
+import { LayoutGrid, SlidersHorizontal, Share2, BarChart3 } from 'lucide-react';
 
 const STEPS = [
   {
-    step: 1,
-    icon: Package,
-    title: 'Creez votre selection',
+    number: '01',
+    icon: LayoutGrid,
+    title: 'Creez vos selections',
     description:
-      'Choisissez des produits depuis notre catalogue de mobilier et decoration haut de gamme, ou ajoutez vos propres produits.',
+      'Parcourez notre catalogue de produits et creez des selections personnalisees pour votre audience. Chaque selection a son propre lien partageable.',
     color: '#5DBEBB',
+    bgGradient: 'from-[#5DBEBB]/10 to-[#5DBEBB]/5',
   },
   {
-    step: 2,
-    icon: Sliders,
-    title: 'Configurez vos marges',
+    number: '02',
+    icon: SlidersHorizontal,
+    title: 'Definissez vos marges',
     description:
-      'Definissez librement vos marges produit par produit selon votre strategie commerciale. Notre jauge tricolore vous guide.',
+      'Ajustez vos marges produit par produit. Notre systeme de feux tricolore vous guide pour trouver le prix optimal entre competitivite et rentabilite.',
     color: '#7E84C0',
+    bgGradient: 'from-[#7E84C0]/10 to-[#7E84C0]/5',
   },
   {
-    step: 3,
+    number: '03',
     icon: Share2,
-    title: 'Partagez et vendez',
+    title: 'Partagez vos liens',
     description:
-      'Diffusez vos liens personnalises aupres de vos clients et commencez a generer des ventes sans gestion de stock.',
+      'Diffusez vos selections sur vos reseaux sociaux, votre site web, ou par email. Chaque lien est unique et tracable.',
     color: '#3976BB',
+    bgGradient: 'from-[#3976BB]/10 to-[#3976BB]/5',
   },
   {
-    step: 4,
-    icon: TrendingUp,
+    number: '04',
+    icon: BarChart3,
     title: 'Suivez vos gains',
     description:
-      'Dashboard en temps reel pour suivre vos commissions, analyser vos performances et optimiser votre strategie.',
+      'Visualisez vos ventes et commissions en temps reel dans votre dashboard. Recevez vos paiements de maniere simple et securisee.',
     color: '#5DBEBB',
+    bgGradient: 'from-[#5DBEBB]/10 to-[#5DBEBB]/5',
   },
 ];
 
-export function LandingHowItWorks() {
+export function LandingHowItWorks(): JSX.Element {
   return (
-    <section id="etapes" className="py-16 lg:py-24 bg-white">
+    <section id="how-it-works" className="py-16 lg:py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section header */}
         <div className="text-center mb-12 lg:mb-16">
+          <span className="inline-block px-4 py-1.5 bg-[#5DBEBB]/10 rounded-full text-sm font-medium text-[#5DBEBB] mb-4">
+            Comment ca marche
+          </span>
           <h2 className="text-3xl sm:text-4xl font-bold text-[#183559]">
-            Comment ca{' '}
+            Lancez-vous en{' '}
             <span className="bg-gradient-to-r from-[#5DBEBB] to-[#7E84C0] bg-clip-text text-transparent">
-              marche
-            </span>{' '}
-            ?
+              4 etapes
+            </span>
           </h2>
           <p className="mt-4 text-lg text-[#183559]/60 max-w-2xl mx-auto">
-            Devenez affilie LinkMe en 4 etapes simples et commencez a generer
-            des revenus complementaires.
+            De la creation de votre premiere selection a votre premier paiement,
+            tout est simplifie.
           </p>
         </div>
 
-        {/* Steps grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {STEPS.map((item) => (
-            <div
-              key={item.step}
-              className="relative group"
-            >
-              {/* Connector line (hidden on mobile, shown on lg) */}
-              {item.step < 4 && (
-                <div className="hidden lg:block absolute top-10 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-gray-200 to-gray-100" />
+        {/* Steps */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-4">
+          {STEPS.map((step, index) => (
+            <div key={step.number} className="relative group">
+              {/* Connector line (desktop only) */}
+              {index < STEPS.length - 1 && (
+                <div className="hidden lg:block absolute top-10 left-[60%] w-full h-0.5 bg-gradient-to-r from-gray-200 to-gray-100 z-0" />
               )}
 
-              {/* Card */}
-              <div className="relative bg-gray-50 rounded-2xl p-6 hover:bg-white hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-gray-200">
-                {/* Step number */}
-                <div
-                  className="absolute -top-4 left-6 w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-lg"
-                  style={{ backgroundColor: item.color }}
-                >
-                  {item.step}
-                </div>
-
-                {/* Icon */}
-                <div
-                  className="w-14 h-14 rounded-xl flex items-center justify-center mt-4 mb-4"
-                  style={{ backgroundColor: `${item.color}15` }}
-                >
-                  <item.icon
-                    className="h-7 w-7"
-                    style={{ color: item.color }}
-                  />
+              <div className="relative z-10 bg-white rounded-2xl p-6 border border-gray-100 hover:border-gray-200 hover:shadow-lg transition-all duration-300">
+                {/* Step number + icon */}
+                <div className="flex items-center gap-4 mb-4">
+                  <div
+                    className={`w-12 h-12 rounded-xl bg-gradient-to-br ${step.bgGradient} flex items-center justify-center`}
+                  >
+                    <step.icon
+                      className="h-6 w-6"
+                      style={{ color: step.color }}
+                    />
+                  </div>
+                  <span
+                    className="text-3xl font-bold"
+                    style={{ color: `${step.color}30` }}
+                  >
+                    {step.number}
+                  </span>
                 </div>
 
                 {/* Content */}
                 <h3 className="text-lg font-bold text-[#183559] mb-2">
-                  {item.title}
+                  {step.title}
                 </h3>
                 <p className="text-sm text-[#183559]/60 leading-relaxed">
-                  {item.description}
+                  {step.description}
                 </p>
               </div>
             </div>
           ))}
         </div>
 
-        {/* CTA */}
-        <div className="mt-12 text-center">
-          <a
-            href="/login"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[#5DBEBB] to-[#7E84C0] text-white font-semibold rounded-full hover:opacity-90 transition-opacity shadow-lg"
-          >
-            Commencer maintenant
-            <TrendingUp className="h-5 w-5" />
-          </a>
+        {/* Bottom visual - Dashboard mockup */}
+        <div className="mt-16 relative">
+          <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent z-10 pointer-events-none" />
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-gradient-to-br from-[#7E84C0]/5 via-[#5DBEBB]/5 to-[#3976BB]/5 rounded-2xl p-6 border border-gray-100">
+              {/* Mockup header */}
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-3 h-3 rounded-full bg-red-400" />
+                <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                <div className="w-3 h-3 rounded-full bg-green-400" />
+                <span className="ml-4 text-sm text-gray-400">
+                  dashboard.linkme.verone.io
+                </span>
+              </div>
+
+              {/* Mockup content */}
+              <div className="grid md:grid-cols-3 gap-4">
+                {/* Stats cards */}
+                <div className="bg-white rounded-xl p-4 shadow-sm">
+                  <div className="text-sm text-gray-500 mb-1">
+                    Ventes ce mois
+                  </div>
+                  <div className="text-2xl font-bold text-[#183559]">--</div>
+                  <div className="text-xs text-[#5DBEBB]">
+                    Commencez a vendre
+                  </div>
+                </div>
+                <div className="bg-white rounded-xl p-4 shadow-sm">
+                  <div className="text-sm text-gray-500 mb-1">Commissions</div>
+                  <div className="text-2xl font-bold text-[#183559]">0 EUR</div>
+                  <div className="text-xs text-gray-400">En attente</div>
+                </div>
+                <div className="bg-white rounded-xl p-4 shadow-sm">
+                  <div className="text-sm text-gray-500 mb-1">Selections</div>
+                  <div className="text-2xl font-bold text-[#183559]">0</div>
+                  <div className="text-xs text-gray-400">Creez-en une !</div>
+                </div>
+              </div>
+
+              {/* Chart placeholder */}
+              <div className="mt-4 bg-white rounded-xl p-4 shadow-sm">
+                <div className="text-sm font-medium text-gray-700 mb-4">
+                  Evolution des ventes
+                </div>
+                <div className="h-32 flex items-end justify-between gap-2 px-4">
+                  {[20, 35, 25, 45, 30, 55, 40, 60, 45, 70, 50, 65].map(
+                    (h, i) => (
+                      <div
+                        key={i}
+                        className="flex-1 bg-gradient-to-t from-[#5DBEBB]/80 to-[#5DBEBB]/40 rounded-t opacity-50"
+                        style={{ height: `${h}%` }}
+                      />
+                    )
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

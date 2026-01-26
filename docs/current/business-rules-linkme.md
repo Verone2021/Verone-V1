@@ -45,7 +45,7 @@ AUTHENTIFICATION                    DONNEES BUSINESS
 Login (/login)
     │
     ▼
-Auth Supabase (cookie isole sb-linkme-auth)
+Auth Supabase (cookie partage avec Back-Office)
     │
     ▼
 Query user_app_roles WHERE app='linkme'
@@ -199,7 +199,7 @@ apps/back-office/src/app/canaux-vente/linkme/
 
 ## Points de Vigilance
 
-1. **Sessions isolees** - Back-office et LinkMe ont des cookies separes
+1. **Sessions partagees** - Back-office et LinkMe partagent le meme cookie Supabase (permissions via RLS + user_app_roles)
 2. **Marges feux tricolores** - Vert (competitif), Orange (equilibre), Rouge (proche public)
 3. **B2B seulement** - Clients = organisations, paiement par virement
 4. **TVA 20%** - Calculs TTC = HT × 1.20

@@ -3,13 +3,14 @@
 /**
  * OrderStepper - Sidebar de navigation pour le formulaire multi-étapes
  *
- * Affiche les 7 étapes avec :
+ * Affiche les 8 étapes avec :
  * - Numéro et label de chaque étape
  * - État (active, complétée, disabled)
  * - Indicateur visuel de progression
  *
  * @module OrderStepper
  * @since 2026-01-20
+ * @updated 2026-01-24 - Refonte 7→8 étapes (séparation contacts)
  */
 
 import { cn } from '@verone/ui';
@@ -17,7 +18,9 @@ import {
   Store,
   Package,
   ShoppingCart,
-  Users,
+  User,
+  FileText,
+  MapPin,
   Truck,
   CheckCircle,
   ListChecks,
@@ -77,20 +80,27 @@ export const ORDER_STEPS: OrderStep[] = [
   },
   {
     id: 5,
-    label: 'Contacts',
-    shortLabel: 'Contacts',
-    icon: Users,
-    description: 'Responsable, facturation, livraison',
+    label: 'Contact Responsable',
+    shortLabel: 'Responsable',
+    icon: User,
+    description: 'Responsable de la commande',
   },
   {
     id: 6,
-    label: 'Livraison',
-    shortLabel: 'Livraison',
-    icon: Truck,
-    description: 'Adresse et options',
+    label: 'Facturation',
+    shortLabel: 'Facturation',
+    icon: FileText,
+    description: 'Contact et adresse de facturation',
   },
   {
     id: 7,
+    label: 'Adresse de contact de livraison',
+    shortLabel: 'Livraison',
+    icon: MapPin,
+    description: 'Contact livraison, adresse et options',
+  },
+  {
+    id: 8,
     label: 'Validation',
     shortLabel: 'Validation',
     icon: CheckCircle,

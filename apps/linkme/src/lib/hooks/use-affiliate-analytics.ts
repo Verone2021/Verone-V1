@@ -8,14 +8,28 @@
  * - Top produits vendus
  * - Performance par sélection
  *
+ * Features (React Query):
+ * - Automatic caching (1 min stale, 10 min gc)
+ * - Deduplication of concurrent requests
+ * - Background refetch disabled (manual refresh)
+ *
  * @module use-affiliate-analytics
  * @since 2025-12-10
  */
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
 
 const supabase = createClient();
+
+// Query keys factory for cache management
+export const affiliateAnalyticsKeys = {
+  all: ['affiliate-analytics'] as const,
+  analytics: (affiliateId: string | undefined, period: string) =>
+    [...affiliateAnalyticsKeys.all, affiliateId, period] as const,
+  selectionProducts: (selectionId: string | null) =>
+    [...affiliateAnalyticsKeys.all, 'selection-products', selectionId] as const,
+};
 
 import { useUserAffiliate } from './use-user-selection';
 import type {
@@ -73,7 +87,7 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
   const { data: affiliate } = useUserAffiliate();
 
   return useQuery({
-    queryKey: ['affiliate-analytics', affiliate?.id, period],
+    queryKey: affiliateAnalyticsKeys.analytics(affiliate?.id, period),
     queryFn: async (): Promise<AffiliateAnalyticsData | null> => {
       if (!affiliate) {
         console.error('❌ ALERTE KPI: Aucun affilié trouvé');
@@ -91,6 +105,7 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
       // ============================================
       const [allCommissionsResult, selectionsResult] = await Promise.all([
         // 1. Commissions (sans jointure sales_orders pour éviter erreurs RLS)
+        // PERF: Limiter à 500 dernières commissions pour éviter chargement 15+ secondes
         supabase
           .from('linkme_commissions')
           .select(
@@ -111,7 +126,8 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
           `
           )
           .eq('affiliate_id', affiliate.id)
-          .order('created_at', { ascending: true }),
+          .order('created_at', { ascending: false })
+          .limit(500),
 
         // 2. Sélections de l'affilié
         supabase
@@ -342,6 +358,7 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
       if (orderIds.length > 0) {
         // Utiliser linkme_order_items_enriched qui calcule correctement affiliate_margin
         // à partir de linkme_selection_items.base_price_ht × margin_rate / 100 × quantity
+        // PERF: Limiter aux 100 dernières commandes pour top produits
         const { data: orderItemsData, error: orderItemsError } = await supabase
           .from('linkme_order_items_enriched')
           .select(
@@ -352,7 +369,7 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
             affiliate_margin
           `
           )
-          .in('sales_order_id', orderIds);
+          .in('sales_order_id', orderIds.slice(0, 100));
 
         if (orderItemsError) {
           // Erreur non bloquante - continuer avec tableau vide
@@ -475,8 +492,10 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
       };
     },
     enabled: !!affiliate,
-    staleTime: 60000, // 1 minute
+    staleTime: 60 * 1000, // 1 minute
+    gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
+    retry: 1,
   });
 }
 
@@ -487,7 +506,7 @@ export function useSelectionTopProducts(selectionId: string | null) {
   const { data: affiliate } = useUserAffiliate();
 
   return useQuery({
-    queryKey: ['selection-top-products', selectionId],
+    queryKey: affiliateAnalyticsKeys.selectionProducts(selectionId),
     queryFn: async (): Promise<TopProductData[]> => {
       if (!selectionId || !affiliate) return [];
 
@@ -578,6 +597,29 @@ export function useSelectionTopProducts(selectionId: string | null) {
         .slice(0, 5);
     },
     enabled: !!selectionId && !!affiliate,
-    staleTime: 60000,
+    staleTime: 60 * 1000, // 1 minute
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: 1,
   });
+}
+
+/**
+ * Hook to invalidate affiliate analytics cache
+ * Useful after placing orders or commission updates
+ */
+export function useInvalidateAffiliateAnalytics() {
+  const queryClient = useQueryClient();
+
+  return {
+    invalidateAll: () =>
+      queryClient.invalidateQueries({ queryKey: affiliateAnalyticsKeys.all }),
+    invalidateAnalytics: (affiliateId: string, period: string) =>
+      queryClient.invalidateQueries({
+        queryKey: affiliateAnalyticsKeys.analytics(affiliateId, period),
+      }),
+    invalidateSelectionProducts: (selectionId: string) =>
+      queryClient.invalidateQueries({
+        queryKey: affiliateAnalyticsKeys.selectionProducts(selectionId),
+      }),
+  };
 }

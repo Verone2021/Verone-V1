@@ -4,6 +4,10 @@
  *
  * GET  - Liste les factures (query params: status)
  * POST - Crée une facture depuis une commande
+ *
+ * Security:
+ * - Rate limited (60 req/min)
+ * - Input validation with Zod
  */
 
 import type { NextRequest } from 'next/server';
@@ -12,7 +16,9 @@ import { NextResponse } from 'next/server';
 import { QontoClient } from '@verone/integrations/qonto';
 import type { CreateClientInvoiceParams } from '@verone/integrations/qonto';
 import type { Database } from '@verone/types';
+import { withRateLimit, RATE_LIMIT_PRESETS } from '@verone/utils/security';
 import { createAdminClient } from '@verone/utils/supabase/server';
+import { createInvoiceSchema, validateRequestBody } from '@verone/utils/validation';
 
 type SalesOrder = Database['public']['Tables']['sales_orders']['Row'];
 type Organisation = Database['public']['Tables']['organisations']['Row'];
@@ -182,7 +188,9 @@ interface IPostRequestBody {
  *
  * Body:
  * - salesOrderId: UUID de la commande
- * - autoFinalize: boolean (défaut: true)
+ * - autoFinalize: boolean (défaut: false)
+ * - fees: optional fee overrides
+ * - customLines: optional additional invoice lines
  */
 export async function POST(request: NextRequest): Promise<
   NextResponse<{
@@ -192,16 +200,26 @@ export async function POST(request: NextRequest): Promise<
     error?: string;
   }>
 > {
-  try {
-    const body = (await request.json()) as IPostRequestBody;
-    const { salesOrderId, autoFinalize = false, fees, customLines } = body; // Défaut: brouillon pour validation
+  // Rate limiting
+  const rateLimitResult = withRateLimit(request, RATE_LIMIT_PRESETS.api);
+  if (!rateLimitResult.success) {
+    return rateLimitResult.response as NextResponse<{
+      success: boolean;
+      error?: string;
+    }>;
+  }
 
-    if (!salesOrderId) {
-      return NextResponse.json(
-        { success: false, error: 'salesOrderId is required' },
-        { status: 400 }
-      );
+  try {
+    // Validate request body with Zod
+    const validation = await validateRequestBody(request, createInvoiceSchema);
+    if (!validation.success) {
+      return validation.response as NextResponse<{
+        success: boolean;
+        error?: string;
+      }>;
     }
+
+    const { salesOrderId, autoFinalize = false, fees, customLines } = validation.data;
 
     // Récupérer la commande avec ses lignes (sans jointures polymorphiques)
     // Utilise createAdminClient pour bypasser RLS (API route sans contexte user)

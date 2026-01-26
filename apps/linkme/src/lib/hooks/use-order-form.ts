@@ -5,13 +5,14 @@
  * Gestion de l'état du formulaire de commande multi-étapes
  *
  * Features:
- * - État centralisé pour les 7 étapes
+ * - État centralisé pour les 8 étapes
  * - Navigation entre étapes avec validation
  * - Persistence locale (optionnelle)
  * - Soumission de la commande via RPC
  *
  * @module use-order-form
  * @since 2026-01-20
+ * @updated 2026-01-24 - Refonte 7→8 étapes
  */
 
 import { useState, useCallback, useMemo } from 'react';
@@ -130,14 +131,14 @@ export function useOrderForm(): UseOrderFormReturn {
   }, [currentStep, formData]);
 
   const goToStep = useCallback((step: number) => {
-    if (step >= 1 && step <= 7) {
+    if (step >= 1 && step <= 8) {
       setCurrentStep(step);
       setErrors([]);
     }
   }, []);
 
   const nextStep = useCallback(() => {
-    if (validateCurrentStep() && currentStep < 7) {
+    if (validateCurrentStep() && currentStep < 8) {
       // Marquer l'étape courante comme complétée
       setCompletedSteps((prev) =>
         prev.includes(currentStep) ? prev : [...prev, currentStep]
@@ -155,7 +156,7 @@ export function useOrderForm(): UseOrderFormReturn {
   }, [currentStep]);
 
   const canGoNext = useMemo(() => {
-    return currentStep < 7 && validateStep(currentStep, formData);
+    return currentStep < 8 && validateStep(currentStep, formData);
   }, [currentStep, formData]);
 
   const canGoPrev = currentStep > 1;
@@ -258,11 +259,35 @@ export function useOrderForm(): UseOrderFormReturn {
         newContacts.existingResponsableId = data.existingResponsableId;
       }
 
-      // Handle billing (deep merge)
+      // Handle billing (deep merge) - LEGACY
       if (data.billing !== undefined) {
         newContacts.billing = {
           ...prev.contacts.billing,
           ...data.billing,
+        };
+      }
+
+      // Handle billingContact (deep merge) - V2
+      if (data.billingContact !== undefined) {
+        newContacts.billingContact = {
+          ...prev.contacts.billingContact,
+          ...data.billingContact,
+        };
+      }
+
+      // Handle billingAddress (deep merge) - V2
+      if (data.billingAddress !== undefined) {
+        newContacts.billingAddress = {
+          ...prev.contacts.billingAddress,
+          ...data.billingAddress,
+        };
+      }
+
+      // Handle billingOrg (deep merge) - V2
+      if (data.billingOrg !== undefined) {
+        newContacts.billingOrg = {
+          ...prev.contacts.billingOrg,
+          ...data.billingOrg,
         };
       }
 
@@ -332,8 +357,8 @@ export function useOrderForm(): UseOrderFormReturn {
 
   const submit = useCallback(async (): Promise<string | null> => {
     // Valider toutes les étapes
-    if (!validateStep(7, formData)) {
-      setErrors(getStepErrors(7, formData));
+    if (!validateStep(8, formData)) {
+      setErrors(getStepErrors(8, formData));
       return null;
     }
 

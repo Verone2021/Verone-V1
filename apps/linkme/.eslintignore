@@ -1,6 +1,0 @@
-# Generated type declarations (not part of tsconfig)
-**/*.d.ts
-
-# Build outputs
-.next/
-out/

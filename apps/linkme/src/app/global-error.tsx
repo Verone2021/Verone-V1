@@ -2,7 +2,7 @@
 
 /**
  * Global Error Handler - LinkMe
- * Capture les erreurs non-catchees et les affiche
+ * Capture les erreurs non-catchees et les log
  */
 import { useEffect } from 'react';
 
@@ -42,8 +42,7 @@ export default function GlobalError({
               Une erreur est survenue
             </h1>
             <p className="text-gray-600 mb-6">
-              Notre equipe a ete notifiee automatiquement. Veuillez reessayer ou
-              contacter le support si le probleme persiste.
+              Veuillez reessayer ou contacter le support si le probleme persiste.
             </p>
             {error.digest && (
               <p className="text-sm text-gray-400 mb-4">

@@ -37,6 +37,7 @@ export function useOrderMetrics() {
       const sixtyDaysAgoISO = sixtyDaysAgo.toISOString();
 
       // Récupérer toutes les commandes des 30 derniers jours
+      // OPTIMISATION: Utilise JOIN pour éviter N+1 queries sur organisations
       const { data: recentOrders, error: recentError } = await supabase
         .from('sales_orders')
         .select(
@@ -47,11 +48,13 @@ export function useOrderMetrics() {
           total_ht,
           created_at,
           customer_type,
-          customer_id
+          customer_id,
+          organisations:customer_id(legal_name, trade_name)
         `
         )
         .gte('created_at', thirtyDaysAgoISO)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(5000);
 
       if (recentError) throw recentError;
 
@@ -94,43 +97,51 @@ export function useOrderMetrics() {
         trend = 100; // Si pas de commandes avant, 100% d'augmentation
       }
 
-      // Formater les commandes récentes avec fetch manuel des données clients
-      const formattedRecentOrders = await Promise.all(
-        (recentOrders || [])
-          .slice(0, 5) // Prendre les 5 plus récentes
-          .map(async order => {
-            let customerName = 'Client inconnu';
+      // Formater les commandes récentes - OPTIMISÉ: utilise les données jointes
+      // Le JOIN sur organisations est déjà fait dans la requête initiale
+      const ordersToFormat = (recentOrders || []).slice(0, 5);
 
-            if (order.customer_type === 'organization' && order.customer_id) {
-              const { data: org } = await supabase
-                .from('organisations')
-                .select('legal_name, trade_name')
-                .eq('id', order.customer_id)
-                .single();
-              customerName =
-                org?.trade_name || org?.legal_name || 'Organisation inconnue';
-            } else if (
-              order.customer_type === 'individual' &&
-              order.customer_id
-            ) {
-              const { data: individual } = await supabase
-                .from('individual_customers')
-                .select('first_name, last_name')
-                .eq('id', order.customer_id)
-                .single();
-              if (individual) {
-                customerName = `${individual.first_name} ${individual.last_name}`;
-              }
-            }
+      // Pour les clients individuels seulement, on fait une requête groupée (pas N+1)
+      const individualCustomerIds = ordersToFormat
+        .filter(o => o.customer_type === 'individual' && o.customer_id)
+        .map(o => o.customer_id);
 
-            return {
-              id: order.order_number,
-              customer: customerName,
-              amount: order.total_ht || 0, // Total déjà en euros
-              status: order.status,
-            };
-          })
-      );
+      let individualsMap: Record<string, { first_name: string; last_name: string }> = {};
+      if (individualCustomerIds.length > 0) {
+        const { data: individuals } = await supabase
+          .from('individual_customers')
+          .select('id, first_name, last_name')
+          .in('id', individualCustomerIds);
+
+        if (individuals) {
+          individualsMap = individuals.reduce((acc, ind) => {
+            acc[ind.id] = { first_name: ind.first_name, last_name: ind.last_name };
+            return acc;
+          }, {} as Record<string, { first_name: string; last_name: string }>);
+        }
+      }
+
+      const formattedRecentOrders = ordersToFormat.map(order => {
+        let customerName = 'Client inconnu';
+
+        if (order.customer_type === 'organization' && order.organisations) {
+          // Utilise les données jointes (JOIN fait dans la requête initiale)
+          const org = order.organisations as { legal_name?: string; trade_name?: string } | null;
+          customerName = org?.trade_name || org?.legal_name || 'Organisation inconnue';
+        } else if (order.customer_type === 'individual' && order.customer_id) {
+          const individual = individualsMap[order.customer_id];
+          if (individual) {
+            customerName = `${individual.first_name} ${individual.last_name}`;
+          }
+        }
+
+        return {
+          id: order.order_number,
+          customer: customerName,
+          amount: order.total_ht || 0,
+          status: order.status,
+        };
+      });
 
       return {
         pending,

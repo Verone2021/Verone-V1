@@ -40,6 +40,7 @@ export function useAffiliateCommissions(
       if (!affiliate) return [];
 
       // Construction de la requête
+      // PERF: Limiter à 100 commissions pour éviter chargement lent
       const query = supabase
         .from('linkme_commissions')
         .select(
@@ -63,7 +64,8 @@ export function useAffiliateCommissions(
         `
         )
         .eq('affiliate_id', affiliate.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(100);
 
       // Récupérer les order_ids pour chercher les noms clients
       const { data: commissionsData, error: commissionsError } = await query;

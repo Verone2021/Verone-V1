@@ -20,45 +20,15 @@
 --   USING (user_id = (SELECT auth.uid()))
 --
 -- Tables optimisees:
--- 1. user_dashboard_preferences
--- 2. user_app_roles
--- 3. addresses
+-- 1. user_app_roles
+-- 2. addresses
+-- 3. form_submissions
+-- 4. form_submission_messages
+-- 5. form_types et app_settings
 -- ============================================================================
 
 -- ============================================================================
--- TABLE 1: user_dashboard_preferences
--- ============================================================================
-
--- Drop existing policies
-DROP POLICY IF EXISTS "Users can view own dashboard preferences" ON user_dashboard_preferences;
-DROP POLICY IF EXISTS "Users can insert own dashboard preferences" ON user_dashboard_preferences;
-DROP POLICY IF EXISTS "Users can update own dashboard preferences" ON user_dashboard_preferences;
-DROP POLICY IF EXISTS "Users can delete own dashboard preferences" ON user_dashboard_preferences;
-
--- Recreate with optimized auth.uid() calls
-CREATE POLICY "Users can view own dashboard preferences"
-  ON user_dashboard_preferences
-  FOR SELECT
-  USING ((SELECT auth.uid()) = user_id);
-
-CREATE POLICY "Users can insert own dashboard preferences"
-  ON user_dashboard_preferences
-  FOR INSERT
-  WITH CHECK ((SELECT auth.uid()) = user_id);
-
-CREATE POLICY "Users can update own dashboard preferences"
-  ON user_dashboard_preferences
-  FOR UPDATE
-  USING ((SELECT auth.uid()) = user_id)
-  WITH CHECK ((SELECT auth.uid()) = user_id);
-
-CREATE POLICY "Users can delete own dashboard preferences"
-  ON user_dashboard_preferences
-  FOR DELETE
-  USING ((SELECT auth.uid()) = user_id);
-
--- ============================================================================
--- TABLE 2: user_app_roles
+-- TABLE 1: user_app_roles
 -- ============================================================================
 
 -- Drop existing policies
@@ -143,7 +113,7 @@ CREATE POLICY "Back-office admins can delete roles"
   );
 
 -- ============================================================================
--- TABLE 3: addresses
+-- TABLE 2: addresses
 -- ============================================================================
 
 -- Drop existing policies
@@ -188,7 +158,7 @@ CREATE POLICY "addresses_delete_policy" ON addresses
   );
 
 -- ============================================================================
--- TABLE 4: Optimiser is_backoffice_user() helper function
+-- FUNCTION: Optimiser is_backoffice_user() helper function
 -- ============================================================================
 -- Note: Cette fonction utilise auth.uid() en interne.
 -- L'optimisation ici est de s'assurer qu'elle est STABLE et SECURITY DEFINER
@@ -209,7 +179,7 @@ AS $$
 $$;
 
 -- ============================================================================
--- TABLE 5: form_submissions - Optimisation des policies
+-- TABLE 3: form_submissions - Optimisation des policies
 -- ============================================================================
 
 -- Drop existing policies
@@ -248,7 +218,7 @@ CREATE POLICY "Public can insert form_submissions" ON form_submissions
 FOR INSERT WITH CHECK (true);
 
 -- ============================================================================
--- TABLE 6: form_submission_messages - Optimisation des policies
+-- TABLE 4: form_submission_messages - Optimisation des policies
 -- ============================================================================
 
 DROP POLICY IF EXISTS "Back-office full access to messages" ON form_submission_messages;
@@ -282,7 +252,7 @@ FOR SELECT USING (
 );
 
 -- ============================================================================
--- TABLE 7: form_types et app_settings - Optimisation
+-- TABLE 5: form_types et app_settings - Optimisation
 -- ============================================================================
 
 DROP POLICY IF EXISTS "Back-office full access to form_types" ON form_types;

@@ -1,6 +1,8 @@
 /**
  * Hook pour les métriques d'activité
  * Trace l'activité récente et les tendances
+ *
+ * @optimized 2026-01-24 - Ajout cache module-level 5 minutes
  */
 
 'use client';
@@ -16,11 +18,65 @@ interface RecentAction {
   user?: string;
 }
 
+interface ActivityMetricsData {
+  today: number;
+  yesterday: number;
+  trend: number;
+  recentActions: RecentAction[];
+}
+
+// =====================================================================
+// CACHE MODULE-LEVEL (évite requêtes répétées)
+// Pattern: Cache avec timestamp, durée 5 minutes
+// =====================================================================
+
+const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+
+interface ActivityCacheEntry {
+  data: ActivityMetricsData;
+  timestamp: number;
+}
+
+let activityMetricsCache: ActivityCacheEntry | null = null;
+
+function isCacheValid(): boolean {
+  if (!activityMetricsCache) return false;
+  const now = Date.now();
+  return now - activityMetricsCache.timestamp < CACHE_DURATION_MS;
+}
+
+function getCachedMetrics(): ActivityMetricsData | null {
+  if (isCacheValid()) {
+    return activityMetricsCache!.data;
+  }
+  return null;
+}
+
+function setCachedMetrics(data: ActivityMetricsData): void {
+  activityMetricsCache = {
+    data,
+    timestamp: Date.now(),
+  };
+}
+
+// Fonction pour invalider le cache (utilisable par d'autres hooks)
+export function invalidateActivityMetricsCache(): void {
+  activityMetricsCache = null;
+}
+
 export function useActivityMetrics() {
   // ✅ FIX: Use singleton client via useMemo
   const supabase = useMemo(() => createClient(), []);
 
-  const fetch = async () => {
+  const fetch = async (forceRefresh = false): Promise<ActivityMetricsData> => {
+    // Vérifier le cache d'abord (sauf si forceRefresh)
+    if (!forceRefresh) {
+      const cachedData = getCachedMetrics();
+      if (cachedData) {
+        return cachedData;
+      }
+    }
+
     try {
       const now = new Date();
       const todayStart = new Date(now);
@@ -120,12 +176,17 @@ export function useActivityMetrics() {
           new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
       );
 
-      return {
+      const result: ActivityMetricsData = {
         today: todayActivity,
         yesterday: yesterdayActivity,
         trend: Math.round(trend * 10) / 10,
         recentActions: recentActions.slice(0, 10), // Limite à 10 actions
       };
+
+      // Mettre en cache le résultat
+      setCachedMetrics(result);
+
+      return result;
     } catch (error) {
       console.error(
         "Erreur lors de la récupération des métriques d'activité:",
@@ -140,5 +201,10 @@ export function useActivityMetrics() {
     }
   };
 
-  return { fetch };
+  // forceRefresh permet d'invalider le cache
+  const forceRefresh = async (): Promise<ActivityMetricsData> => {
+    return fetch(true);
+  };
+
+  return { fetch, forceRefresh };
 }

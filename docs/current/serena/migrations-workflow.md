@@ -77,14 +77,14 @@ source .mcp.env && psql "$DATABASE_URL" -c "\df public.*"
 
 - Demander a l'utilisateur d'appliquer via Dashboard
 - Dire "je n'ai pas le mot de passe"
-- Utiliser localhost:54322 (Docker non utilise)
+- Utiliser localhost (toujours cloud)
 - Utiliser supabase db push (necessite password interactif)
 
 ---
 
 ## Regles Absolues
 
-1. **JAMAIS** utiliser Docker pour Supabase
+1. **TOUJOURS** utiliser Supabase Cloud
 2. **TOUJOURS** utiliser psql avec DATABASE_URL
 3. **JAMAIS** demander validation manuelle
 
@@ -94,4 +94,4 @@ source .mcp.env && psql "$DATABASE_URL" -c "\df public.*"
 
 - `supabase/migrations/` - Fichiers migrations
 - `.mcp.env` - Variables environnement
-- `docs/current/serena/vercel-no-docker.md` - Workflow Vercel
+- `docs/current/serena/vercel-workflow.md` - Workflow Vercel

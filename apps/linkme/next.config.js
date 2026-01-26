@@ -6,11 +6,6 @@ const nextConfig = {
     // (linkme a beaucoup de warnings existants de formatage)
     ignoreDuringBuilds: true,
   },
-  // Experimental: Continue build even if pre-rendering fails
-  // This allows pages with `location` errors during SSG to fallback to client-side
-  experimental: {
-    fallbackNodePolyfills: false,
-  },
   // Skip trailing slash redirect
   skipTrailingSlashRedirect: true,
   transpilePackages: [

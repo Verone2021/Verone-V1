@@ -32,7 +32,8 @@ export function MinimalHeader(): JSX.Element {
             alt="LinkMe"
             width={160}
             height={44}
-            className="h-11 w-auto"
+            className="h-11"
+            style={{ width: 'auto' }}
             priority
           />
         </Link>

@@ -23,10 +23,9 @@ import {
 import type { User, Session } from '@supabase/supabase-js';
 
 // Client SSR-safe (singleton) - utilise cookies pour la session
-// Cookie distinct 'sb-linkme-auth' pour isoler la session de LinkMe
 import { createClient } from '@verone/utils/supabase/client';
 
-const supabase = createClient('linkme');
+const supabase = createClient();
 
 // Types
 export type LinkMeRole =
@@ -95,8 +94,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
             hint: error.hint,
           });
 
-          // Si la vue n'existe pas, essayer directement la table user_app_roles
-          if (error.code === 'PGRST116' || error.code === '42P01') {
+          // PGRST116 = not found - l'utilisateur n'existe pas dans v_linkme_users
+          // Comportement normal si c'est un utilisateur back-office (pas de rôle LinkMe)
+          if (error.code === 'PGRST116') {
+            // Log silencieux - comportement normal si utilisateur back-office
+            if (DEBUG) {
+              console.log('[AuthContext] User not in v_linkme_users - not a LinkMe user');
+            }
+            // Attendre que signOut soit complet avant de modifier les états
+            try {
+              await supabase.auth.signOut();
+            } finally {
+              setUser(null);
+              setSession(null);
+              setLinkMeRole(null);
+            }
+            return;
+          }
+
+          // Si la vue n'existe pas (42P01), essayer directement la table user_app_roles
+          if (error.code === '42P01') {
             if (DEBUG)
               console.log('[AuthContext] Fallback to user_app_roles table...');
             const { data: roleData, error: roleError } = await (supabase as any)
@@ -125,6 +142,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 message: roleError?.message,
                 status: roleError?.status,
               });
+              // Si l'utilisateur n'a pas de rôle LinkMe actif, nettoyer la session
+              if (roleError?.code === 'PGRST116' || !roleData) {
+                console.warn('[AuthContext] No active LinkMe role - clearing session');
+                await supabase.auth.signOut();
+                setUser(null);
+                setSession(null);
+              }
               setLinkMeRole(null);
               return;
             }
@@ -161,11 +185,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (data) {
           console.log('[AuthContext] v_linkme_users SUCCESS', {
             userId: data.user_id,
+            userRoleId: data.user_role_id,
             role: data.linkme_role,
           });
 
           setLinkMeRole({
-            id: data.id || data.user_id,
+            // FIX: Use user_role_id (from user_app_roles.id) instead of undefined data.id
+            id: data.user_role_id || data.user_id,
             user_id: data.user_id,
             role: data.linkme_role as LinkMeRole,
             enseigne_id: data.enseigne_id,
