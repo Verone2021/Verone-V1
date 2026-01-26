@@ -16,12 +16,17 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { createMiddlewareClient, updateSession } from '@/lib/supabase-server';
+import { createMiddlewareClient } from '@/lib/supabase-server';
 
 // Routes PUBLIQUES (whitelist) - TOUTES les autres sont protégées
 const PUBLIC_PAGES = [
-  '/',      // Landing page française
-  '/login',
+  '/',        // Landing page
+  '/login',   // Connexion
+  '/about',   // À propos
+  '/contact', // Contact
+  '/cgu',     // CGU
+  '/privacy', // Confidentialité
+  '/cookies', // Cookies
 ];
 
 // API publiques (webhooks, health checks)
@@ -68,32 +73,49 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     return NextResponse.next();
   }
 
-  // Mettre à jour la session Supabase (rafraîchir le token si nécessaire)
-  const response = await updateSession(request);
+  // Créer UNE SEULE instance Supabase pour toute la requête
+  const { supabase, response } = createMiddlewareClient(request);
 
-  // Route publique → laisser passer
-  if (isPublicRoute(pathname)) {
-    // Si sur /login et déjà connecté → rediriger vers landing
-    if (pathname === '/login') {
-      const { supabase } = createMiddlewareClient(request);
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (user) {
-        return NextResponse.redirect(new URL('/', request.url));
-      }
-    }
-    return response;
+  // Rafraîchir session UNE FOIS au début (déclenche refresh si nécessaire)
+  try {
+    await supabase.auth.getSession();
+  } catch (error) {
+    // Log server-side uniquement (pas dans browser console)
+    console.error('[Middleware] Session refresh failed:', error);
+    // Continue silencieusement → user sera redirigé vers /login si nécessaire
   }
 
-  // Route PROTÉGÉE → vérifier l'authentification
-  const { supabase, response: middlewareResponse } =
-    createMiddlewareClient(request);
+  // Récupérer l'utilisateur (réutilise la même instance)
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Route publique → vérifier si l'utilisateur est connecté ET a un rôle LinkMe
+  if (isPublicRoute(pathname)) {
+    // Si connecté sur une page marketing → vérifier le rôle LinkMe avant de rediriger
+    // IMPORTANT: Ne pas rediriger si l'utilisateur n'a pas de rôle LinkMe
+    // (cas où l'utilisateur est connecté au back-office mais pas à LinkMe)
+    if (user && PUBLIC_PAGES.includes(pathname)) {
+      // Vérifier si l'utilisateur a un rôle LinkMe actif
+      const { data: linkmeRole } = await supabase
+        .from('user_app_roles')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('app', 'linkme')
+        .eq('is_active', true)
+        .maybeSingle();
+
+      // Rediriger vers dashboard SEULEMENT si rôle LinkMe actif
+      if (linkmeRole) {
+        return NextResponse.redirect(new URL('/dashboard', request.url));
+      }
+      // Sinon: laisser sur la page publique (login) pour se connecter avec un autre compte
+    }
+
+    return response;
+  }
+
+  // Route PROTÉGÉE → vérifier l'authentification
   if (!user) {
     // Non authentifié → rediriger vers /login avec URL de retour
     const loginUrl = new URL('/login', request.url);
@@ -102,7 +124,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   }
 
   // Authentifié → accès autorisé
-  return middlewareResponse;
+  return response;
 }
 
 // Matcher: exclut les assets statiques et fichiers Next.js
