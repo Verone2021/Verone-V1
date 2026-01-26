@@ -55,6 +55,40 @@ mcp__serena__read_memory("memory-name")
 - `database-migrations-convention` : Conventions migrations
 - `playwright-login-first-mandatory` : Tests E2E
 
+### Index Complet
+```bash
+mcp__serena__read_memory("memories-index-2026-01")
+```
+
+---
+
+## Fichiers d'Architecture (LIRE AVANT MODIFICATION)
+
+### Database
+| Fichier | Contenu |
+|---------|---------|
+| `packages/@verone/types/src/supabase.ts` | Types generés Supabase |
+| `supabase/migrations/` | Historique migrations |
+
+### Frontend
+| Fichier | Contenu |
+|---------|---------|
+| `docs/architecture/COMPOSANTS-CATALOGUE.md` | Catalogue UI complet |
+| `packages/@verone/ui/src/` | Composants partages |
+
+### Auth (CRITIQUE - NE JAMAIS MODIFIER SANS AUDIT)
+| Fichier | Contenu |
+|---------|---------|
+| `apps/*/middleware.ts` | Routing auth - AUDIT OBLIGATOIRE |
+| `apps/*/app/login/**` | Pages login - IMMUTABLE |
+| `apps/*/app/(auth)/**` | Routes auth protegees |
+
+### Config
+| Fichier | Contenu |
+|---------|---------|
+| `.mcp.env` | Variables environnement (NE JAMAIS COMMIT) |
+| `.claude/env.md` | Documentation credentials |
+
 ---
 
 ## Commandes
@@ -260,9 +294,11 @@ git add supabase/migrations/ && git commit -m "[APP-DOMAIN-NNN] feat(db): descri
 | Credentials & Migrations | `.claude/env.md` |
 | Mode Manuel PR | `.claude/MANUAL_MODE.md` |
 | Git Workflow Complet | `.claude/docs/git-workflow.md` |
+| Prevention Incidents | `.claude/docs/incident-prevention.md` |
 | Agents Specialises | `.claude/agents/*.md` |
-| Commandes Slash | `.claude/commands/*.md` |
+| Commandes Slash | `.claude/commands/README.md` |
+| Index Memories | Memory `memories-index-2026-01` |
 
 ---
 
-**Version**: 10.0.0 (Restructuration documentation - 2026-01-26)
+**Version**: 11.0.0 (Audit systeme + Index memories + Agents enrichis - 2026-01-26)

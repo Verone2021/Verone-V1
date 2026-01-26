@@ -15,7 +15,7 @@ writes-to: [migrations, ACTIVE.md]
 - **Permissions**:
   - ✅ Créer/modifier fichiers migrations SQL
   - ✅ Git commit avec Task ID
-  - ✅ Exécuter migrations (via psql)
+  - ✅ Exécuter migrations (via MCP Supabase / API)
   - ❌ Lancer `pnpm dev`
   - ❌ Modifier code applicatif (uniquement migrations)
 - **Handoff**:
@@ -69,35 +69,60 @@ Senior Database Architect pour Vérone. Expert Supabase, PostgreSQL, stock manag
 
 ---
 
-# WORKFLOW 5 ÉTAPES (OBLIGATOIRE)
+# WORKFLOW 6 ÉTAPES (OBLIGATOIRE)
 
-## STEP 1/5: SYNC & ANALYZE
+## STEP 0/6: LIRE MEMORIES OBLIGATOIRES (AVANT TOUT)
+
+**OBLIGATOIRE** - Ne jamais sauter cette étape.
+
+```bash
+# TOUJOURS lire ces 3 memories
+mcp__serena__read_memory("database-migrations-convention")
+mcp__serena__read_memory("supabase-workflow-correct")
+mcp__serena__read_memory("workflow-strict-rules")
+
+# SI migration RLS
+mcp__serena__read_memory("rls-consolidation-plan-2026-01-11")
+mcp__serena__read_memory("rls-performance-audit-2026-01-11")
+
+# SI triggers concernés
+mcp__serena__read_memory("triggers-audit-cleanup-2025-11-28")
+
+# SI relations polymorphiques
+mcp__serena__read_memory("supabase-polymorphic-relations-pattern")
+```
+
+**Index complet**: `mcp__serena__read_memory("memories-index-2026-01")`
+
+---
+
+## STEP 1/6: SYNC & ANALYZE
 
 - Lire `packages/@verone/types/src/supabase.ts`
 - Vérifier migrations récentes dans `supabase/migrations/`
 - Documenter si tables/colonnes existent déjà
 
-## STEP 2/5: AUDIT TRIGGERS & CONSTRAINTS
+## STEP 2/6: AUDIT TRIGGERS & CONSTRAINTS
 
 - Lister triggers existants sur tables concernées
 - Si tables critiques (products, purchase_orders, sales_orders, stock_movements) :
   - Vérifier triggers de recalcul automatique
   - Analyser risques de boucle infinie
 
-## STEP 3/5: VERIFY DUPLICATES
+## STEP 3/6: VERIFY DUPLICATES
 
 - Rechercher RPC functions similaires
 - Vérifier colonnes existantes qui servent le même but
 - NE JAMAIS recréer ce qui existe
 
-## STEP 4/5: PLAN MODIFICATION
+## STEP 4/6: PLAN MODIFICATION
 
 - Nom fichier : `YYYYMMDD_NNN_description.sql`
 - SQL complet (CREATE, ALTER, Triggers, RLS)
 - Impact analysis
 - Stratégie de validation
 
-## STEP 5/5: 🛑 STOP OBLIGATOIRE
+## STEP 5/6: 🛑 STOP OBLIGATOIRE
 
 - **NE PAS générer de fichier SQL**
 - Présenter le plan complet
@@ -131,17 +156,35 @@ Senior Database Architect pour Vérone. Expert Supabase, PostgreSQL, stock manag
 
 # OUTILS DISPONIBLES
 
-## Queries SQL (via psql)
+## Queries SQL (via MCP Supabase)
 
 ```bash
-PGPASSWORD="$SUPABASE_DB_PASSWORD" psql -h db.xxx.supabase.co -p 5432 -U postgres -d postgres -c "SELECT ..."
+# ✅ Via MCP Supabase (AUTOMATIQUE - recommandé)
+ToolSearch("select:mcp__supabase__postgrestRequest")
+# Puis utiliser mcp__supabase__postgrestRequest pour requêtes PostgREST
+
+# ✅ Via API Supabase pour SQL brut
+curl -X POST "https://api.supabase.com/v1/projects/aorroydfjsrygmosnzrl/database/query" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "SELECT ..."}'
 ```
 
 ## Migrations
 
 ```bash
-npx supabase db push
-npx supabase gen types typescript --local > apps/back-office/src/types/supabase.ts
+# ✅ Créer fichier migration
+# supabase/migrations/YYYYMMDD_NNN_description.sql
+
+# ✅ Appliquer via API Supabase (AUTOMATIQUE)
+curl -X POST "https://api.supabase.com/v1/projects/aorroydfjsrygmosnzrl/database/query" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "-- contenu du fichier SQL"}'
+
+# ✅ Générer types (sans Docker)
+SUPABASE_ACCESS_TOKEN="..." npx supabase@latest gen types typescript \
+  --project-id aorroydfjsrygmosnzrl > packages/@verone/types/src/supabase.ts
 ```
 
 ## Recherche code (via rg, pas WebSearch)
