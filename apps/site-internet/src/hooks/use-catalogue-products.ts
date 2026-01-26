@@ -25,7 +25,7 @@ export interface CatalogueProduct {
   // SEO
   seo_title: string | null;
   seo_meta_description: string | null;
-  metadata: any;
+  metadata: Record<string, unknown> | null;
 
   // Prix
   price_ht: number | null;
@@ -55,7 +55,17 @@ export interface CatalogueProduct {
   technical_description: string | null;
   brand: string | null;
   selling_points: string[] | null;
-  dimensions: any;
+  dimensions: {
+    length?: number;
+    width?: number;
+    height?: number;
+    depth?: number;
+    longueur?: number;
+    largeur?: number;
+    hauteur?: number;
+    profondeur?: number;
+    unit?: string;
+  } | null;
   weight: number | null;
   suitable_rooms: string[] | null;
   subcategory_id: string | null;

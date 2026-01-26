@@ -41,7 +41,7 @@ export default function ProductPage({
 
   // ✅ Next.js 15 async params
   useEffect(() => {
-    params.then(({ id }) => setSlug(id));
+    void params.then(({ id }) => setSlug(id));
   }, [params]);
 
   // Récupérer produit par slug
@@ -94,13 +94,13 @@ export default function ProductPage({
       }
 
       // Filtrer par variant_group_id et exclure produit actuel
-      const variantsData = ((data as any[]) || [])
+      const variantsData = ((data as CatalogueProduct[]) || [])
         .filter(
-          (p: any) =>
+          (p: CatalogueProduct) =>
             p.variant_group_id === product.variant_group_id &&
             p.product_id !== product.product_id
         )
-        .map((p: any) => ({
+        .map((p: CatalogueProduct) => ({
           product_id: p.product_id,
           slug: p.slug,
           name: p.name,

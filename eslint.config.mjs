@@ -1,8 +1,10 @@
 /**
  * ESLint Flat Config - Verone Monorepo
  *
- * Configuration ESLint 9 moderne pour le monorepo Verone
- * Inclut : TypeScript strict, Next.js, Prettier
+ * Configuration ESLint 9 optimisée (Best Practices 2026)
+ * - TypeScript strict avec type-aware linting
+ * - Next.js 15 + React 18
+ * - Prettier intégré
  *
  * @see https://eslint.org/docs/latest/use/configure/configuration-files
  * @see https://typescript-eslint.io/getting-started
@@ -43,14 +45,16 @@ export default defineConfig([
       '**/coverage/**',
       '**/.turbo/**',
       '**/.cache/**',
+      '**/.vercel/**',
 
-      // Generated files
+      // Generated files (DO NOT LINT)
       '**/next-env.d.ts',
       '**/*.generated.ts',
       '**/src/types/supabase.ts',
+      '**/types/supabase.ts',
       '**/*.d.ts',
 
-      // Config files
+      // Config files (handled separately)
       '**/*.config.js',
       '**/*.config.mjs',
       '**/*.config.ts',
@@ -65,19 +69,23 @@ export default defineConfig([
 
       // Playwright
       '**/.playwright-mcp/**',
+      '**/.playwright/**',
       '**/playwright-report/**',
       '**/test-results/**',
-      '**/.playwright/**',
 
       // Package manager files
       '**/pnpm-lock.yaml',
       '**/package-lock.json',
       '**/yarn.lock',
+
+      // Legacy/backups
+      '**/backups/**',
+      '**/MEMORY-BANK/**',
     ],
   },
 
   // ==========================================================================
-  // BASE CONFIGS
+  // BASE CONFIGS (Order matters: ESLint → TypeScript → Next.js → Prettier)
   // ==========================================================================
 
   // ESLint recommended
@@ -89,11 +97,11 @@ export default defineConfig([
   // Next.js Core Web Vitals (via FlatCompat)
   ...compat.extends('next/core-web-vitals'),
 
-  // Prettier (must be last to disable conflicting rules)
+  // Prettier (MUST be last to disable conflicting rules)
   ...compat.extends('plugin:prettier/recommended'),
 
   // ==========================================================================
-  // TYPESCRIPT FILES - Apps & Packages
+  // TYPESCRIPT FILES - Apps & Packages (Main Rules)
   // ==========================================================================
   {
     files: ['apps/**/*.{ts,tsx}', 'packages/**/*.{ts,tsx}'],
@@ -105,57 +113,68 @@ export default defineConfig([
     },
     rules: {
       // =====================================================================
-      // TYPESCRIPT STRICT MODE
+      // TYPESCRIPT STRICT MODE - Type Safety (ERRORS)
       // =====================================================================
 
-      // Typage Strict (warnings pour migration progressive)
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unsafe-argument': 'warn',
-      '@typescript-eslint/no-unsafe-assignment': 'warn',
-      '@typescript-eslint/no-unsafe-call': 'warn',
-      '@typescript-eslint/no-unsafe-member-access': 'warn',
-      '@typescript-eslint/no-unsafe-return': 'warn',
+      // Type safety - STRICT
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-unsafe-argument': 'error',
+      '@typescript-eslint/no-unsafe-assignment': 'error',
+      '@typescript-eslint/no-unsafe-call': 'error',
+      '@typescript-eslint/no-unsafe-member-access': 'error',
+      '@typescript-eslint/no-unsafe-return': 'error',
 
-      // Type imports/exports
+      // Type imports/exports (auto-fixable) - ERRORS
       '@typescript-eslint/consistent-type-imports': [
-        'warn',
+        'error',
         {
           prefer: 'type-imports',
           disallowTypeAnnotations: false,
         },
       ],
       '@typescript-eslint/consistent-type-exports': [
-        'warn',
+        'error',
         {
           fixMixedExportsWithInlineTypeSpecifier: true,
         },
       ],
 
-      // Naming Convention: DISABLED
-      // Les types Supabase utilisent snake_case (convention PostgreSQL)
-      '@typescript-eslint/naming-convention': 'off',
+      // =====================================================================
+      // ASYNC/AWAIT SAFETY - CRITICAL (Prevents silent bugs)
+      // =====================================================================
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-misused-promises': 'error',
+      '@typescript-eslint/await-thenable': 'error',
 
-      // Explicit return type: Relaxed
-      '@typescript-eslint/explicit-function-return-type': 'off',
-
-      // Code Quality - Type-aware rules
-      '@typescript-eslint/no-floating-promises': 'warn',
-      '@typescript-eslint/no-misused-promises': 'warn',
-      '@typescript-eslint/await-thenable': 'warn',
-      '@typescript-eslint/no-unnecessary-type-assertion': 'warn',
+      // =====================================================================
+      // NULLISH COALESCING - Prevents bugs with 0, false, ""
+      // =====================================================================
       '@typescript-eslint/prefer-nullish-coalescing': 'warn',
       '@typescript-eslint/prefer-optional-chain': 'warn',
+
+      // =====================================================================
+      // CODE QUALITY
+      // =====================================================================
+
+      // Naming convention: OFF (Supabase types use snake_case)
+      '@typescript-eslint/naming-convention': 'off',
+
+      // Explicit return type: OFF (too verbose for React components)
+      '@typescript-eslint/explicit-function-return-type': 'off',
 
       // Allow empty object types (common in React props)
       '@typescript-eslint/no-empty-object-type': 'warn',
 
-      // Ban ts-comment: Relaxed
+      // Unnecessary assertions
+      '@typescript-eslint/no-unnecessary-type-assertion': 'warn',
+
+      // Ban ts-comment: Relaxed (sometimes needed)
       '@typescript-eslint/ban-ts-comment': 'warn',
 
       // Require imports: Relaxed for scripts
       '@typescript-eslint/no-require-imports': 'warn',
 
-      // No Unused Vars (with exceptions)
+      // No Unused Vars (with exceptions for _prefixed)
       '@typescript-eslint/no-unused-vars': [
         'warn',
         {
@@ -169,7 +188,7 @@ export default defineConfig([
       // REACT & NEXT.JS
       // =====================================================================
 
-      // Hooks Rules
+      // Hooks Rules (CRITICAL - prevents bugs)
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
 
@@ -183,16 +202,11 @@ export default defineConfig([
       '@next/next/no-img-element': 'warn',
 
       // =====================================================================
-      // CODE QUALITY
+      // GENERAL CODE QUALITY
       // =====================================================================
 
-      // Console Statements (warning only)
-      'no-console': [
-        'warn',
-        {
-          allow: ['warn', 'error'],
-        },
-      ],
+      // Console Statements (allow warn, error)
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
 
       // Debugger Statements
       'no-debugger': 'error',
@@ -213,7 +227,7 @@ export default defineConfig([
       // Disable ESLint core no-unused-vars (use TypeScript version)
       'no-unused-vars': 'off',
 
-      // Case declarations (warning for migration)
+      // Case declarations
       'no-case-declarations': 'warn',
 
       // Prettier (formatting only)
@@ -225,7 +239,12 @@ export default defineConfig([
   // SCRIPTS - Relaxed rules (no type-aware linting)
   // ==========================================================================
   {
-    files: ['scripts/**/*.{ts,js,mjs}', '.claude/**/*.{ts,js}', '**/scripts/**/*.{ts,js,mjs}'],
+    files: [
+      'scripts/**/*.{ts,js,mjs}',
+      '.claude/**/*.{ts,js}',
+      '**/scripts/**/*.{ts,js,mjs}',
+      'tools/**/*.{ts,js,mjs}',
+    ],
     languageOptions: {
       parserOptions: {
         project: null, // Disable type-aware linting
@@ -239,7 +258,7 @@ export default defineConfig([
       'no-console': 'off',
       'no-unused-vars': 'off',
 
-      // Disable ALL type-aware rules
+      // Disable ALL type-aware rules for scripts
       '@typescript-eslint/no-unsafe-argument': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-call': 'off',
@@ -298,157 +317,79 @@ export default defineConfig([
   },
 
   // ==========================================================================
-  // TEMPORARY: LinkMe hooks with heavy Supabase any casts
-  // These files heavily use `(supabase as any)` due to complex query patterns
-  // TODO: Remove after Phase 2 typed wrappers (target: Feb 2026)
-  // Ticket: Track typed Supabase wrapper implementation
+  // GRADUAL MIGRATION: back-office & linkme (7000+ errors to fix)
+  // These overrides are TEMPORARY - target removal: Q2 2026
+  //
+  // Strategy: Fix files incrementally by domain, then remove overrides
+  // Priority order:
+  //   1. API routes (security-critical)
+  //   2. Hooks (data fetching)
+  //   3. Components (UI layer)
+  //   4. Types (definitions)
+  //
+  // Track progress: Run `npx eslint <path> --format json | jq '[.[] | .errorCount] | add'`
   // ==========================================================================
   {
     files: [
-      'apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/**/*.ts',
-      'apps/back-office/src/app/(protected)/canaux-vente/linkme/hooks/**/*.tsx',
+      // Back-office - all source files (gradual migration)
+      'apps/back-office/src/**/*.ts',
+      'apps/back-office/src/**/*.tsx',
     ],
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unsafe-argument': 'off',
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-unsafe-call': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
-      '@typescript-eslint/no-unsafe-return': 'off',
+      // Type safety - WARN during migration (6000+ occurrences)
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-unsafe-argument': 'warn',
+      '@typescript-eslint/no-unsafe-assignment': 'warn',
+      '@typescript-eslint/no-unsafe-call': 'warn',
+      '@typescript-eslint/no-unsafe-member-access': 'warn',
+      '@typescript-eslint/no-unsafe-return': 'warn',
+      // Async safety - WARN during migration (800+ occurrences)
+      '@typescript-eslint/no-floating-promises': 'warn',
+      '@typescript-eslint/no-misused-promises': 'warn',
+      '@typescript-eslint/await-thenable': 'warn',
     },
   },
 
-  // ==========================================================================
-  // TEMPORARY: Base hooks with Supabase generics issues
-  // TODO: Remove after Phase 2 typed wrappers (target: Feb 2026)
-  // ==========================================================================
-  {
-    files: [
-      'apps/back-office/src/hooks/base/**/*.ts',
-      'apps/back-office/src/hooks/base/**/*.tsx',
-    ],
-    rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unsafe-argument': 'off',
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-unsafe-call': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
-      '@typescript-eslint/no-unsafe-return': 'off',
-    },
-  },
-
-  // ==========================================================================
-  // TEMPORARY: Type definition files with complex inference
-  // TODO: Remove after Phase 2 typed wrappers (target: Feb 2026)
-  // ==========================================================================
-  {
-    files: [
-      'apps/back-office/src/types/**/*.ts',
-      'apps/linkme/src/types/**/*.ts',
-    ],
-    rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unsafe-argument': 'off',
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-unsafe-call': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
-      '@typescript-eslint/no-unsafe-return': 'off',
-    },
-  },
-
-  // ==========================================================================
-  // TEMPORARY: LinkMe app hooks with Supabase queries
-  // TODO: Remove after Phase 2 typed wrappers (target: Feb 2026)
-  // ==========================================================================
+  // LinkMe - Similar gradual migration
   {
     files: [
       'apps/linkme/src/lib/hooks/**/*.ts',
-      'apps/linkme/src/lib/hooks/**/*.tsx',
-    ],
-    rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unsafe-argument': 'off',
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-unsafe-call': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
-      '@typescript-eslint/no-unsafe-return': 'off',
-    },
-  },
-
-  // ==========================================================================
-  // TEMPORARY: API Routes with FormData transforms
-  // TODO: Remove after adding proper Zod schemas (target: Feb 2026)
-  // ==========================================================================
-  {
-    files: [
-      'apps/back-office/src/app/api/**/*.ts',
+      'apps/linkme/src/hooks/**/*.ts',
+      'apps/linkme/src/contexts/**/*.tsx',
       'apps/linkme/src/app/api/**/*.ts',
+      'apps/linkme/src/types/**/*.ts',
+      'apps/linkme/src/lib/**/*.ts',
+      'apps/linkme/src/components/**/*.tsx',
+      'apps/linkme/src/app/**/*.tsx',
     ],
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unsafe-argument': 'off',
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-unsafe-call': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
-      '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-unsafe-argument': 'warn',
+      '@typescript-eslint/no-unsafe-assignment': 'warn',
+      '@typescript-eslint/no-unsafe-call': 'warn',
+      '@typescript-eslint/no-unsafe-member-access': 'warn',
+      '@typescript-eslint/no-unsafe-return': 'warn',
+      '@typescript-eslint/no-floating-promises': 'warn',
+      '@typescript-eslint/no-misused-promises': 'warn',
     },
   },
 
-  // ==========================================================================
-  // TEMPORARY: Back-office hooks directory
-  // TODO: Remove after Phase 2 typed wrappers (target: Feb 2026)
-  // ==========================================================================
+  // Packages - Similar gradual migration
   {
     files: [
-      'apps/back-office/src/hooks/**/*.ts',
-      'apps/back-office/src/hooks/**/*.tsx',
-    ],
-    rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unsafe-argument': 'off',
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-unsafe-call': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
-      '@typescript-eslint/no-unsafe-return': 'off',
-    },
-  },
-
-  // ==========================================================================
-  // TEMPORARY: Server actions with weak typing
-  // TODO: Remove after adding proper Zod schemas (target: Feb 2026)
-  // ==========================================================================
-  {
-    files: [
-      'apps/back-office/src/app/(protected)/**/actions/**/*.ts',
-      'apps/linkme/src/app/(main)/**/actions/**/*.ts',
-    ],
-    rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unsafe-argument': 'off',
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-unsafe-call': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
-      '@typescript-eslint/no-unsafe-return': 'off',
-    },
-  },
-
-  // ==========================================================================
-  // TEMPORARY: Packages with utils and shared code
-  // TODO: Remove after Phase 2 typed wrappers (target: Feb 2026)
-  // ==========================================================================
-  {
-    files: [
-      'packages/@verone/utils/src/**/*.ts',
       'packages/@verone/types/src/**/*.ts',
+      'packages/@verone/utils/src/**/*.ts',
       'packages/@verone/notifications/src/**/*.ts',
+      'packages/@verone/ui/src/**/*.tsx',
+      'packages/@verone/ui-business/src/**/*.tsx',
     ],
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unsafe-argument': 'off',
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-unsafe-call': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
-      '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-unsafe-argument': 'warn',
+      '@typescript-eslint/no-unsafe-assignment': 'warn',
+      '@typescript-eslint/no-unsafe-call': 'warn',
+      '@typescript-eslint/no-unsafe-member-access': 'warn',
+      '@typescript-eslint/no-unsafe-return': 'warn',
     },
   },
 ]);
