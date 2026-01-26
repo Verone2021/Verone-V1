@@ -278,7 +278,7 @@ const getNavItems = (
       },
       {
         title: 'Factures',
-        href: '/finance/factures',
+        href: '/factures',
         icon: FileText,
       },
       {

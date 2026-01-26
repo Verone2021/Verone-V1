@@ -53,8 +53,7 @@ const URL_REDIRECTS: Record<string, string> = {
   '/comptabilite/transactions': '/finance/transactions',
   '/comptabilite/depenses': '/finance/depenses',
   '/comptabilite/livres': '/finance/livres',
-  '/facturation': '/finance/factures',
-  '/factures': '/finance/factures',
+  // Note: /factures existe directement (pas de redirect vers /finance/factures)
   '/tresorerie': '/finance/tresorerie',
 };
 
