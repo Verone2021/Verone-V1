@@ -586,7 +586,14 @@ export function SelectionProductDetailModal({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handleDownloadPdf(true)}
+                onClick={() => {
+                  void handleDownloadPdf(true).catch(error => {
+                    console.error(
+                      '[SelectionProductDetailModal] handleDownloadPdf failed:',
+                      error
+                    );
+                  });
+                }}
                 disabled={isGeneratingPdf}
               >
                 {isGeneratingPdf ? (
@@ -599,7 +606,14 @@ export function SelectionProductDetailModal({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handleDownloadPdf(false)}
+                onClick={() => {
+                  void handleDownloadPdf(false).catch(error => {
+                    console.error(
+                      '[SelectionProductDetailModal] handleDownloadPdf (no margin) failed:',
+                      error
+                    );
+                  });
+                }}
                 disabled={isGeneratingPdf}
               >
                 {isGeneratingPdf ? (
@@ -627,7 +641,14 @@ export function SelectionProductDetailModal({
             </Button>
             {!isViewMode && (
               <Button
-                onClick={handleSave}
+                onClick={() => {
+                  void handleSave().catch(error => {
+                    console.error(
+                      '[SelectionProductDetailModal] handleSave failed:',
+                      error
+                    );
+                  });
+                }}
                 disabled={!hasChanges || isSaving}
                 className={cn(hasChanges && 'bg-primary hover:bg-primary/90')}
               >

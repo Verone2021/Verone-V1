@@ -374,7 +374,11 @@ export default function SelectionDetailPage({
             </a>
           )}
           <Button
-            onClick={handleSave}
+            onClick={() => {
+              void handleSave().catch(error => {
+                console.error('[Selections] handleSave failed:', error);
+              });
+            }}
             disabled={!isDirty || updateSelection.isPending}
           >
             {updateSelection.isPending ? (
@@ -816,7 +820,16 @@ export default function SelectionDetailPage({
                               size="icon"
                               variant="ghost"
                               className="h-8 w-8 text-destructive hover:text-destructive"
-                              onClick={() => handleRemoveProduct(item.id)}
+                              onClick={() => {
+                                void handleRemoveProduct(item.id).catch(
+                                  error => {
+                                    console.error(
+                                      '[Selections] handleRemoveProduct failed:',
+                                      error
+                                    );
+                                  }
+                                );
+                              }}
                               disabled={removeProduct.isPending}
                               title="Supprimer"
                             >
@@ -1064,7 +1077,11 @@ export default function SelectionDetailPage({
               Annuler
             </Button>
             <Button
-              onClick={handleAddProduct}
+              onClick={() => {
+                void handleAddProduct().catch(error => {
+                  console.error('[Selections] handleAddProduct failed:', error);
+                });
+              }}
               disabled={!selectedProductId || addProduct.isPending}
             >
               {addProduct.isPending ? (

@@ -267,7 +267,14 @@ export default function CreditNoteDetailPage(): React.ReactNode {
         )}
         {creditNote.status === 'finalized' && (
           <>
-            <Button variant="outline" onClick={handleDownloadPdf}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                void handleDownloadPdf().catch(error => {
+                  console.error('[Avoirs] handleDownloadPdf failed:', error);
+                });
+              }}
+            >
               <Download className="mr-2 h-4 w-4" />
               Télécharger PDF
             </Button>
@@ -358,7 +365,11 @@ export default function CreditNoteDetailPage(): React.ReactNode {
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={handleFinalize}
+              onClick={() => {
+                void handleFinalize().catch(error => {
+                  console.error('[Avoirs] handleFinalize failed:', error);
+                });
+              }}
             >
               Finaliser
             </AlertDialogAction>
@@ -378,7 +389,11 @@ export default function CreditNoteDetailPage(): React.ReactNode {
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={handleDelete}
+              onClick={() => {
+                void handleDelete().catch(error => {
+                  console.error('[Avoirs] handleDelete failed:', error);
+                });
+              }}
             >
               Supprimer
             </AlertDialogAction>

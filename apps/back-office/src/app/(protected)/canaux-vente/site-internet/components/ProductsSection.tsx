@@ -180,7 +180,11 @@ export function ProductsSection() {
             : 'Impossible de charger les produits. Veuillez réessayer.'
         }
         variant="destructive"
-        onRetry={() => refetch()}
+        onRetry={() => {
+          void refetch().catch(error => {
+            console.error('[ProductsSection] refetch failed:', error);
+          });
+        }}
       />
     );
   }
@@ -344,12 +348,17 @@ export function ProductsSection() {
                     <TableCell>
                       <Switch
                         checked={product.is_published}
-                        onCheckedChange={() =>
-                          handleTogglePublish(
+                        onCheckedChange={() => {
+                          void handleTogglePublish(
                             product.product_id,
                             product.is_published
-                          )
-                        }
+                          ).catch(error => {
+                            console.error(
+                              '[ProductsSection] handleTogglePublish failed:',
+                              error
+                            );
+                          });
+                        }}
                         disabled={togglePublication.isPending}
                       />
                     </TableCell>
@@ -429,7 +438,12 @@ export function ProductsSection() {
           }}
           product={selectedProduct}
           onSuccess={() => {
-            refetch();
+            void refetch().catch(error => {
+              console.error(
+                '[ProductsSection] refetch (onSuccess) failed:',
+                error
+              );
+            });
             toast({
               title: 'Produit mis à jour',
               description: 'Les modifications ont été enregistrées avec succès',

@@ -97,7 +97,9 @@ export function UserConfigModal({
       setActiveTab('profile');
 
       // Charger les données affilié pour l'onglet Rémunération
-      fetchAffiliateData();
+      void fetchAffiliateData().catch(error => {
+        console.error('[UserConfigModal] fetchAffiliateData failed:', error);
+      });
     }
   }, [isOpen, user]);
 
@@ -342,7 +344,17 @@ export function UserConfigModal({
 
           {/* Content */}
           {activeTab === 'profile' ? (
-            <form onSubmit={handleProfileSubmit} className="p-6 space-y-5">
+            <form
+              onSubmit={e => {
+                void handleProfileSubmit(e).catch(error => {
+                  console.error(
+                    '[UserConfigModal] handleProfileSubmit failed:',
+                    error
+                  );
+                });
+              }}
+              className="p-6 space-y-5"
+            >
               {/* Prénom */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -544,7 +556,17 @@ export function UserConfigModal({
               </div>
             </div>
           ) : (
-            <form onSubmit={handlePasswordSubmit} className="p-6 space-y-5">
+            <form
+              onSubmit={e => {
+                void handlePasswordSubmit(e).catch(error => {
+                  console.error(
+                    '[UserConfigModal] handlePasswordSubmit failed:',
+                    error
+                  );
+                });
+              }}
+              className="p-6 space-y-5"
+            >
               {/* Warning */}
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
                 <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />

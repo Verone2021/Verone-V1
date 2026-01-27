@@ -326,7 +326,9 @@ export default function EditDraftPage({ params }: IPageProps) {
       setLoading(false);
     }
 
-    loadDocument();
+    void loadDocument().catch(error => {
+      console.error('[FacturesEdit] loadDocument failed:', error);
+    });
   }, [id, typeParam]);
 
   // Item handlers
@@ -505,7 +507,14 @@ export default function EditDraftPage({ params }: IPageProps) {
             </p>
           </div>
         </div>
-        <Button onClick={handleSave} disabled={saving}>
+        <Button
+          onClick={() => {
+            void handleSave().catch(error => {
+              console.error('[FacturesEdit] handleSave failed:', error);
+            });
+          }}
+          disabled={saving}
+        >
           {saving ? (
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
           ) : (
@@ -689,7 +698,14 @@ export default function EditDraftPage({ params }: IPageProps) {
         <Button variant="outline" onClick={() => router.back()}>
           Annuler
         </Button>
-        <Button onClick={handleSave} disabled={saving}>
+        <Button
+          onClick={() => {
+            void handleSave().catch(error => {
+              console.error('[FacturesEdit] handleSave failed:', error);
+            });
+          }}
+          disabled={saving}
+        >
           {saving ? (
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
           ) : (
