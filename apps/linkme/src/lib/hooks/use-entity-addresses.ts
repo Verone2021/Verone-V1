@@ -257,7 +257,6 @@ export function useSaveAddress() {
         contact_phone: params.addressData.contactPhone,
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase.rpc as any)('upsert_address', {
         p_owner_type: params.ownerType,
         p_owner_id: params.ownerId,
@@ -306,7 +305,6 @@ export function useArchiveAddress() {
     }): Promise<boolean> => {
       const supabase = createClient();
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase.rpc as any)('archive_address', {
         p_address_id: params.addressId,
       });

@@ -59,16 +59,16 @@ Les Quick Actions sont des boutons d'accès rapide aux actions les plus fréquen
 
 ### Liste des Actions
 
-| Action | Icône | Destination | Description |
-|--------|-------|-------------|-------------|
-| **Nouveau Produit** | Package | `/produits/catalogue/nouveau` | Ajouter un produit au catalogue |
-| **Alerte Stock** | AlertTriangle | `/stocks/alertes` | Voir les alertes stock critiques |
-| **Gérer Commandes** | ShoppingBag | `/commandes/clients` | Accéder aux commandes clients |
-| **Nouvelle Consultation** | MessageCircle | `/consultations` | Créer une consultation client |
-| **Sourcing** | Target | `/produits/sourcing` | Accéder aux produits sourcing |
-| **Finance** | Calculator | `/finance` | Tableau de bord finance |
-| **LinkMe** | Link2 | `/linkme/commandes/a-traiter` | Commandes LinkMe à traiter |
-| **Facturation** | FileText | `/finance/factures` | Gérer les factures |
+| Action                    | Icône         | Destination                   | Description                      |
+| ------------------------- | ------------- | ----------------------------- | -------------------------------- |
+| **Nouveau Produit**       | Package       | `/produits/catalogue/nouveau` | Ajouter un produit au catalogue  |
+| **Alerte Stock**          | AlertTriangle | `/stocks/alertes`             | Voir les alertes stock critiques |
+| **Gérer Commandes**       | ShoppingBag   | `/commandes/clients`          | Accéder aux commandes clients    |
+| **Nouvelle Consultation** | MessageCircle | `/consultations`              | Créer une consultation client    |
+| **Sourcing**              | Target        | `/produits/sourcing`          | Accéder aux produits sourcing    |
+| **Finance**               | Calculator    | `/finance`                    | Tableau de bord finance          |
+| **LinkMe**                | Link2         | `/linkme/commandes/a-traiter` | Commandes LinkMe à traiter       |
+| **Facturation**           | FileText      | `/finance/factures`           | Gérer les factures               |
 
 ### Implémentation
 
@@ -97,17 +97,17 @@ Les KPIs affichent les indicateurs clés en temps réel avec données Supabase.
 
 ### Liste des KPIs
 
-| KPI | Source DB | Calcul | Refresh |
-|-----|-----------|--------|---------|
-| **Revenus du mois** | `commandes_clients_internal` | SUM(montant_total_ttc) WHERE status='validated' AND date >= début_mois | Temps réel |
-| **CA annuel** | `commandes_clients_internal` | SUM(montant_total_ttc) WHERE YEAR(date) = année_courante | Temps réel |
-| **Commandes en cours** | `commandes_clients_internal` | COUNT WHERE status IN ('pending', 'processing') | Temps réel |
-| **Taux remplissage** | `locations_stockage_unified_view` | (occupied / total) * 100 | Temps réel |
-| **Alertes stock** | `stock_alerts_unified_view` | COUNT WHERE severity = 'critical' | Temps réel |
-| **Consultations actives** | `consultations` | COUNT WHERE status IN ('pending', 'in_progress') | Temps réel |
-| **Clients actifs** | `organisations` | COUNT WHERE type = 'client' | Temps réel |
-| **Commandes LinkMe** | `linkme_commandes` | COUNT WHERE status = 'pending_validation' | Temps réel |
-| **Fournisseurs** | `organisations` | COUNT WHERE type = 'fournisseur' | Temps réel |
+| KPI                       | Source DB                         | Calcul                                                                 | Refresh    |
+| ------------------------- | --------------------------------- | ---------------------------------------------------------------------- | ---------- |
+| **Revenus du mois**       | `commandes_clients_internal`      | SUM(montant_total_ttc) WHERE status='validated' AND date >= début_mois | Temps réel |
+| **CA annuel**             | `commandes_clients_internal`      | SUM(montant_total_ttc) WHERE YEAR(date) = année_courante               | Temps réel |
+| **Commandes en cours**    | `commandes_clients_internal`      | COUNT WHERE status IN ('pending', 'processing')                        | Temps réel |
+| **Taux remplissage**      | `locations_stockage_unified_view` | (occupied / total) \* 100                                              | Temps réel |
+| **Alertes stock**         | `stock_alerts_unified_view`       | COUNT WHERE severity = 'critical'                                      | Temps réel |
+| **Consultations actives** | `consultations`                   | COUNT WHERE status IN ('pending', 'in_progress')                       | Temps réel |
+| **Clients actifs**        | `organisations`                   | COUNT WHERE type = 'client'                                            | Temps réel |
+| **Commandes LinkMe**      | `linkme_commandes`                | COUNT WHERE status = 'pending_validation'                              | Temps réel |
+| **Fournisseurs**          | `organisations`                   | COUNT WHERE type = 'fournisseur'                                       | Temps réel |
 
 ### Implémentation
 
@@ -128,6 +128,7 @@ Les KPIs affichent les indicateurs clés en temps réel avec données Supabase.
 **Layout** : Grid responsive 1/2/3 colonnes (mobile/tablet/desktop)
 
 **Variants** :
+
 - `success` : Vert (revenus, CA, clients)
 - `warning` : Orange (alertes stock, commandes en attente)
 - `info` : Bleu (consultations, LinkMe)
@@ -146,12 +147,14 @@ Les widgets affichent des données détaillées sous forme de listes.
 **Données** : Top 5 alertes stock critiques (severity = 'critical')
 
 **Affichage** :
+
 - Nom produit
 - Quantité actuelle
 - Badge urgence (rouge)
 - Lien vers `/stocks/alertes`
 
 **Query** :
+
 ```typescript
 const { data: alertes } = await supabase
   .from('stock_alerts_unified_view')
@@ -168,6 +171,7 @@ const { data: alertes } = await supabase
 **Données** : 10 dernières commandes clients
 
 **Affichage** :
+
 - Numéro commande
 - Client (organisation)
 - Montant TTC
@@ -175,22 +179,26 @@ const { data: alertes } = await supabase
 - Date
 
 **Query** :
+
 ```typescript
 const { data: commandes } = await supabase
   .from('commandes_clients_internal')
-  .select(`
+  .select(
+    `
     id,
     numero_commande,
     montant_total_ttc,
     status,
     date_commande,
     organisation:organisations(nom)
-  `)
+  `
+  )
   .order('date_commande', { ascending: false })
   .limit(10);
 ```
 
 **Status badges** :
+
 - `validated` → Vert (Success)
 - `pending` → Orange (Warning)
 - `cancelled` → Rouge (Destructive)
@@ -204,6 +212,7 @@ const { data: commandes } = await supabase
 **Fichier** : `src/app/(dashboard)/dashboard/actions/get-dashboard-metrics.ts`
 
 **Architecture** :
+
 ```typescript
 export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   const supabase = await createServerClient();
@@ -235,11 +244,14 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     getRecentOrders(supabase),
   ]);
 
-  return { /* ... */ };
+  return {
+    /* ... */
+  };
 }
 ```
 
 **Bénéfices** :
+
 - ✅ 11 queries en ~300ms (vs 3s+ séquentiel)
 - ✅ Cache Supabase 5min par défaut
 - ✅ Error handling robuste (fallback valeurs 0)
@@ -254,26 +266,29 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
 **Package** : `@verone/ui`
 
 **Props** :
+
 ```typescript
 interface KPICardUnifiedProps {
-  title: string;              // Ex: "Revenus du mois"
-  value: string | number;     // Ex: "125,420€" ou 42
-  change?: number;            // Ex: 12.5 (pourcentage ou absolu)
+  title: string; // Ex: "Revenus du mois"
+  value: string | number; // Ex: "125,420€" ou 42
+  change?: number; // Ex: 12.5 (pourcentage ou absolu)
   changeType?: 'percentage' | 'absolute';
-  icon?: LucideIcon;          // Ex: DollarSign
+  icon?: LucideIcon; // Ex: DollarSign
   variant?: 'default' | 'success' | 'warning' | 'info';
-  href?: string;              // Lien cliquable
+  href?: string; // Lien cliquable
   className?: string;
 }
 ```
 
 **Variants** :
+
 - `default` : Gris (border-gray-200)
 - `success` : Vert (border-green-200)
 - `warning` : Orange (border-orange-200)
 - `info` : Bleu (border-blue-200)
 
 **Exemple** :
+
 ```tsx
 <KPICardUnified
   title="Revenus du mois"
@@ -354,6 +369,7 @@ test('Widgets affichent données', async ({ page }) => {
 ```
 
 **Commandes** :
+
 ```bash
 cd packages/e2e-linkme
 pnpm test:e2e:ui    # Mode UI pour déboguer

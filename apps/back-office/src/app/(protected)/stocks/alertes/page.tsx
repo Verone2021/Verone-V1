@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from 'react';
 
-import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useToast } from '@verone/common';
@@ -35,18 +34,11 @@ import {
   Bell,
   Filter,
   Search,
-  Download,
   Package,
-  TrendingDown,
-  Clock,
-  Eye,
   RefreshCw,
-  AlertCircle,
   Info,
   XCircle,
   CheckCircle,
-  Zap,
-  BarChart3,
 } from 'lucide-react';
 
 import { QuickPurchaseOrderModal } from '@/components/business/quick-purchase-order-modal';
@@ -93,7 +85,7 @@ interface StockAlert {
 export default function StockAlertesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { toast } = useToast();
+  const { toast: _toast } = useToast(); // Reserved for future toast notifications
 
   const [filters, setFilters] = useState({
     severity: '',
@@ -106,7 +98,7 @@ export default function StockAlertesPage() {
   const [showFilters, toggleShowFilters] = useToggle(false);
   const [
     showQuickPurchaseModal,
-    toggleQuickPurchaseModal,
+    _toggleQuickPurchaseModal,
     setShowQuickPurchaseModal,
   ] = useToggle(false);
   const [selectedProductForOrder, setSelectedProductForOrder] = useState<{
@@ -119,13 +111,13 @@ export default function StockAlertesPage() {
 
   // State modal détail commande fournisseur
   const [showOrderDetailModal, setShowOrderDetailModal] = useState(false);
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [_selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
   // Hook pour récupérer commande complète
   const {
     fetchOrder,
     currentOrder,
-    loading: loadingOrder,
+    loading: _loadingOrder,
   } = usePurchaseOrders();
 
   const {
@@ -135,9 +127,9 @@ export default function StockAlertesPage() {
     criticalAlerts,
     warningAlerts,
     alertsInDraft,
-    alertsNotInDraft,
-    isProductInDraft,
-    getQuantityInDraft,
+    alertsNotInDraft: _alertsNotInDraft,
+    isProductInDraft: _isProductInDraft,
+    getQuantityInDraft: _getQuantityInDraft,
   } = useStockAlerts();
 
   // Mapper les alertes du hook vers l'interface locale
@@ -334,7 +326,8 @@ export default function StockAlertesPage() {
       );
   }, [fetchAlerts]);
 
-  const getSeverityIcon = (severity: AlertSeverity) => {
+  // Reserved for future severity badge implementations
+  const _getSeverityIcon = (severity: AlertSeverity) => {
     switch (severity) {
       case 'critical':
         return <XCircle className="h-4 w-4 text-red-600" />;
@@ -345,7 +338,7 @@ export default function StockAlertesPage() {
     }
   };
 
-  const getSeverityColor = (severity: AlertSeverity) => {
+  const _getSeverityColor = (severity: AlertSeverity) => {
     switch (severity) {
       case 'critical':
         return 'border-red-300 text-red-600 bg-red-50';

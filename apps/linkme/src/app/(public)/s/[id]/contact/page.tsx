@@ -2,7 +2,7 @@
 
 import { ContactForm } from '@/components/public-selection';
 
-import { useSelection } from '../layout';
+import { useSelection } from '../selection-context';
 
 export default function ContactPage() {
   const { selection, branding } = useSelection();

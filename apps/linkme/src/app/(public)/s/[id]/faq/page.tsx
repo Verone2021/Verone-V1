@@ -2,7 +2,7 @@
 
 import { FAQSection } from '@/components/public-selection';
 
-import { useSelection } from '../layout';
+import { useSelection } from '../selection-context';
 
 export default function FAQPage() {
   const { selection, branding } = useSelection();

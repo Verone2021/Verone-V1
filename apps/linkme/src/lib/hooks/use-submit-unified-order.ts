@@ -264,7 +264,6 @@ export function useSubmitUnifiedOrder() {
             notes: data.delivery.notes || null,
           };
 
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const { data: result, error: rpcError } = await (supabase.rpc as any)(
             'create_public_linkme_order',
             {
@@ -328,7 +327,7 @@ export function useSubmitUnifiedOrder() {
                 isNewRestaurant: true,
                 totalTtc: totalTtc,
                 source: 'unified_form',
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
                 affiliateName: (selectionData?.linkme_affiliates as any)?.name,
                 selectionName: selectionData?.name,
               }),

@@ -43,13 +43,13 @@ module.exports = {
 
       spacing: {
         // Custom spacing si besoin
-        '18': '4.5rem',  // 72px
-        '88': '22rem',   // 352px
+        18: '4.5rem', // 72px
+        88: '22rem', // 352px
       },
 
       boxShadow: {
         // Shadows luxury
-        'luxury': '0 20px 60px -10px rgba(0, 0, 0, 0.15)',
+        luxury: '0 20px 60px -10px rgba(0, 0, 0, 0.15)',
         'luxury-lg': '0 30px 80px -15px rgba(0, 0, 0, 0.25)',
         'luxury-xl': '0 40px 100px -20px rgba(0, 0, 0, 0.35)',
       },

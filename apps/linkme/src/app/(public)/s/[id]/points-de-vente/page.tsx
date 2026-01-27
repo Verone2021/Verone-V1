@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 
 import { StoreLocatorMap } from '@/components/public-selection';
 
-import { useSelection } from '../layout';
+import { useSelection } from '../selection-context';
 
 export default function PointsDeVentePage() {
   const { selection, branding, organisations, affiliateInfo } = useSelection();

@@ -1,21 +1,28 @@
 # Dependencies
-node_modules
-.pnpm-store
+node_modules/
+.pnpm-store/
 pnpm-lock.yaml
+package-lock.json
+yarn.lock
 
 # Build outputs
-.next
-dist
-build
-out
+.next/
+dist/
+build/
+out/
+coverage/
 
 # Cache
-.cache
-.turbo
+.cache/
+.turbo/
+.vercel/
 
-# Generated files
+# Generated files (DO NOT FORMAT)
 *.generated.ts
-src/types/supabase.ts
+**/types/supabase.ts
+**/types/supabase.d.ts
+next-env.d.ts
+**/next-env.d.ts
 
 # Logs
 *.log
@@ -29,17 +36,19 @@ pnpm-debug.log*
 Thumbs.db
 
 # IDE
-.vscode
-.idea
+.vscode/
+.idea/
 
 # Storybook
-storybook-static
+storybook-static/
+.storybook/
 
 # Playwright
-.playwright-mcp
-playwright-report
-test-results
+.playwright-mcp/
+.playwright/
+playwright-report/
+test-results/
 
-# Package manager files
-package-lock.json
-yarn.lock
+# Documentation (preserve formatting)
+CHANGELOG.md
+LICENSE

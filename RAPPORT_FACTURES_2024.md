@@ -92,12 +92,14 @@
 
 | N° Facture | Date | Client | Code Client | Montant HT | TVA | Montant TTC |
 |------------|------|--------|-------------|------------|-----|-------------|
+| LINK-240022 | 01/06/2024 | Pokawa (voir Bubble) | - | 4 702,43 € | 1 480,49 € | **6 182,92 €** |
 | LINK-240023 | 11/06/2024 | Pokawa Commerce - Paris 15 | POKA41 | 161,50 € | 32,30 € | **193,80 €** |
 | LINK-240024 | 11/06/2024 | Lagardère travel retail (Pokawa Lille Flandres) | 116 | 4 329,09 € | 865,82 € | **5 194,91 €** |
+| LINK-240025 | 12/06/2024 | Pokawa (voir Bubble) | - | 999,00 € | 199,80 € | **1 198,80 €** |
 | LINK-240027 | 21/06/2024 | Scoü456 (Pokawa Lorient) | POKA24 | 2 681,75 € | 536,35 € | **3 218,10 €** |
 | LINK-240029 | 21/06/2024 | ATLAS MANGO (Pokawa Luxembourg Belval) | 122 | 4 895,73 € | 90,00 € | **4 985,73 €** |
 
-**Sous-total Linkme Juin : 13 592,54 €**
+**Sous-total Linkme Juin : 20 974,26 €**
 
 ### Factures Verone
 
@@ -107,7 +109,7 @@
 
 **Sous-total Verone Juin : 162,00 €**
 
-**TOTAL JUIN 2024 : 13 754,54 €** (5 factures)
+**TOTAL JUIN 2024 : 21 136,26 €** (7 factures dont 2 depuis Bubble)
 
 ---
 
@@ -175,8 +177,9 @@
 | N° Facture | Date | Client | Code Client | Montant HT | TVA | Montant TTC |
 |------------|------|--------|-------------|------------|-----|-------------|
 | LINK-240046 | 10/12/2024 | Pokawa Chambéry (6 Place de Genève, 73000) | 127 | 2 783,76 € | 556,75 € | **3 340,51 €** |
+| LINK-240047 | 10/12/2024 | Pokawa (voir Bubble) | - | - | - | **(montant à vérifier)** |
 
-**TOTAL DECEMBRE 2024 : 3 340,51 €** (1 facture)
+**TOTAL DECEMBRE 2024 : 3 340,51 € + (240047)** (2 factures)
 
 ---
 
@@ -235,7 +238,9 @@
 ### Factures non trouvées dans Bubble
 
 Les numéros suivants n'existent pas dans Bubble (jamais créés ou annulés):
-- LINK-240020, 240022, 240025, 240026, 240041, 240042
+- LINK-240020, 240026, 240041, 240042
+
+**Note**: LINK-240022 et LINK-240025 existent bien dans Bubble et ont été ajoutées à la section JUIN 2024.
 
 ---
 
@@ -248,7 +253,7 @@ Les numéros suivants n'existent pas dans Bubble (jamais créés ou annulés):
 
 ---
 
-## SYNTHESE FACTURES LINKME (40 factures)
+## SYNTHESE FACTURES LINKME (43 factures)
 
 | N° Facture | Date | Client | Montant TTC | Source |
 |------------|------|--------|-------------|--------|
@@ -272,8 +277,10 @@ Les numéros suivants n'existent pas dans Bubble (jamais créés ou annulés):
 | LINK-240018 | 08/04/2024 | SSP BELGIUM (Pokawa Louvain) | 5 425,11 € | ✅ Welyb |
 | LINK-240019 | 08/04/2024 | Pokawa La Défense | 2 157,60 € | ✅ Welyb |
 | LINK-240021 | 11/04/2024 | Pokawa Nice Gioffredo | 3 490,28 € | ✅ Welyb |
+| LINK-240022 | 01/06/2024 | Pokawa (voir Bubble) | 6 182,92 € | ✅ **Bubble** |
 | LINK-240023 | 11/06/2024 | Pokawa Commerce - Paris 15 | 193,80 € | ✅ Welyb |
 | LINK-240024 | 11/06/2024 | Lagardère travel retail (Pokawa Lille Flandres) | 5 194,91 € | ✅ Welyb |
+| LINK-240025 | 12/06/2024 | Pokawa (voir Bubble) | 1 198,80 € | ✅ **Bubble** |
 | LINK-240027 | 21/06/2024 | Scoü456 (Pokawa Lorient) | 3 218,10 € | ✅ Welyb |
 | LINK-240028 | 21/05/2024 | Pokawa Mediacité (Liège) | 5 792,94 € | ⚠️ **Manquant** |
 | LINK-240029 | 21/06/2024 | ATLAS MANGO (Pokawa Luxembourg Belval) | 4 985,73 € | ✅ Welyb |
@@ -292,11 +299,13 @@ Les numéros suivants n'existent pas dans Bubble (jamais créés ou annulés):
 | LINK-240044 | 29/11/2024 | Pokawa Toulouse Jeanne-d'Arc | 592,80 € | ⚠️ **Manquant** |
 | LINK-240045 | 29/11/2024 | Pokawa Metz | 592,80 € | ⚠️ **Manquant** |
 | LINK-240046 | 10/12/2024 | Pokawa Chambéry | 3 340,51 € | ✅ Welyb |
+| LINK-240047 | 10/12/2024 | Pokawa (voir Bubble) | (à vérifier) | ✅ **Bubble** |
 
-**TOTAL LINKME : 86 681,38 €**
+**TOTAL LINKME : 94 063,10 € + (240047)**
 
 ### Légende
-- ✅ **Welyb** : Facture présente dans la comptabilité (29 factures)
+- ✅ **Welyb** : Facture présente dans la comptabilité Welyb (29 factures)
+- ✅ **Bubble** : Facture présente dans Bubble mais absente de Welyb (3 factures = 7 381,72 € + 240047)
 - ⚠️ **Manquant** : Facture absente de Welyb, à régulariser (11 factures = 12 546,26 €)
 
 ---

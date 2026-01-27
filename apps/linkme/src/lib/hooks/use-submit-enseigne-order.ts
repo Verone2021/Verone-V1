@@ -132,7 +132,7 @@ export function useSubmitEnseigneOrder(): UseSubmitEnseigneOrderReturn {
         // ---------------------------------------------------------------
         // Cette RPC bypass le RLS et permet aux clients anonymes de creer
         // des commandes en toute securite (validation cote serveur PostgreSQL)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const { data: result, error: rpcError } = await (supabase.rpc as any)(
           'create_public_linkme_order',
           {
@@ -205,7 +205,7 @@ export function useSubmitEnseigneOrder(): UseSubmitEnseigneOrderReturn {
               isNewRestaurant: data.isNewRestaurant,
               totalTtc: totalTtc,
               source: 'client',
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
               affiliateName: (selectionData?.linkme_affiliates as any)?.name,
               selectionName: selectionData?.name,
             }),

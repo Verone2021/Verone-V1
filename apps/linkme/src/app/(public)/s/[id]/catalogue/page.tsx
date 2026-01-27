@@ -11,7 +11,7 @@ import {
   SelectionCategoryBar,
 } from '@/components/public-selection';
 
-import { useSelection } from '../layout';
+import { useSelection } from '../selection-context';
 
 const ITEMS_PER_PAGE = 12;
 

@@ -393,7 +393,7 @@ export function useOrderForm(): UseOrderFormReturn {
       ) {
         // Créer une nouvelle organisation
         const newResto = formData.restaurant.newRestaurant;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const { data: orgId, error: orgError } = await (supabase.rpc as any)(
           'create_customer_organisation_for_affiliate',
           {
@@ -454,7 +454,7 @@ export function useOrderForm(): UseOrderFormReturn {
       // Si pas de contact existant : contact inline (null pour l'instant)
 
       // Étape 3: Créer la commande via RPC
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const { data: orderId, error: orderError } = await (supabase.rpc as any)(
         'create_affiliate_order',
         {

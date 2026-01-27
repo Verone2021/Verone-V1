@@ -1,16 +1,15 @@
 /**
- * Supabase Server Client - Pour SSR et Middleware
+ * Supabase Server Client - Pour Server Components
  *
- * Utilise @supabase/ssr pour la gestion des cookies
- * Lit tous les cookies Supabase (comportement par défaut @supabase/ssr)
+ * Utilise @supabase/ssr pour la gestion des cookies.
+ * Le middleware utilise directement @supabase/ssr (voir middleware.ts).
  *
  * @module supabase-server
  * @since 2025-12-01
- * @updated 2026-01-24 - Retour au comportement par défaut (pas de filtrage cookies)
+ * @updated 2026-01-27 - Simplifié (middleware utilise @supabase/ssr directement)
  */
 
 import { cookies } from 'next/headers';
-import { type NextRequest, NextResponse } from 'next/server';
 
 import { createServerClient as createSSRServerClient } from '@supabase/ssr';
 
@@ -42,47 +41,4 @@ export async function createServerClient() {
       },
     },
   });
-}
-
-/**
- * Créer un client Supabase pour le middleware
- * Met à jour la session et gère les cookies
- */
-export function createMiddlewareClient(request: NextRequest) {
-  let response = NextResponse.next({
-    request,
-  });
-
-  const supabase = createSSRServerClient(supabaseUrl, supabaseAnonKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) => {
-          request.cookies.set(name, value);
-        });
-        response = NextResponse.next({
-          request,
-        });
-        cookiesToSet.forEach(({ name, value, options }) => {
-          response.cookies.set(name, value, options);
-        });
-      },
-    },
-  });
-
-  return { supabase, response };
-}
-
-/**
- * Rafraîchit la session Supabase et retourne la réponse avec cookies mis à jour
- */
-export async function updateSession(request: NextRequest) {
-  const { supabase, response } = createMiddlewareClient(request);
-
-  // getSession rafraîchit automatiquement le token si expiré
-  await supabase.auth.getSession();
-
-  return response;
 }
