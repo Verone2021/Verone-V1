@@ -114,7 +114,9 @@ export default function SourcingPage() {
         console.error('Erreur chargement produits complétés:', error);
       }
     };
-    fetchCompletedCount();
+    void fetchCompletedCount().catch(error => {
+      console.error('[Sourcing] fetchCompletedCount failed:', error);
+    });
   }, []);
 
   // KPIs calculés
@@ -626,7 +628,16 @@ export default function SourcingPage() {
                               size="sm"
                               icon={CheckCircle}
                               label="Valider et ajouter au catalogue"
-                              onClick={() => handleValidateSourcing(product.id)}
+                              onClick={() => {
+                                void handleValidateSourcing(product.id).catch(
+                                  error => {
+                                    console.error(
+                                      '[Sourcing] handleValidateSourcing failed:',
+                                      error
+                                    );
+                                  }
+                                );
+                              }}
                             />
                           )}
 
@@ -637,7 +648,16 @@ export default function SourcingPage() {
                             size="sm"
                             icon={Archive}
                             label="Archiver le produit"
-                            onClick={() => handleArchiveProduct(product.id)}
+                            onClick={() => {
+                              void handleArchiveProduct(product.id).catch(
+                                error => {
+                                  console.error(
+                                    '[Sourcing] handleArchiveProduct failed:',
+                                    error
+                                  );
+                                }
+                              );
+                            }}
                           />
                         )}
 
@@ -648,7 +668,16 @@ export default function SourcingPage() {
                             size="sm"
                             icon={Trash2}
                             label="Supprimer définitivement"
-                            onClick={() => handleDeleteProduct(product.id)}
+                            onClick={() => {
+                              void handleDeleteProduct(product.id).catch(
+                                error => {
+                                  console.error(
+                                    '[Sourcing] handleDeleteProduct failed:',
+                                    error
+                                  );
+                                }
+                              );
+                            }}
                           />
                         )}
                       </div>
@@ -682,7 +711,9 @@ export default function SourcingPage() {
         open={isQuickSourcingModalOpen}
         onClose={() => setIsQuickSourcingModalOpen(false)}
         onSuccess={() => {
-          refetch();
+          void refetch().catch(error => {
+            console.error('[Sourcing] refetch failed:', error);
+          });
           setIsQuickSourcingModalOpen(false);
         }}
       />

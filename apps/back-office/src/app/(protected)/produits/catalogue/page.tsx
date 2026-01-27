@@ -213,7 +213,9 @@ export default function CataloguePage() {
   // Charger les produits archivés quand on change d'onglet
   useEffect(() => {
     if (activeTab === 'archived') {
-      loadArchivedProductsData();
+      void loadArchivedProductsData().catch(error => {
+        console.error('[Catalogue] loadArchivedProductsData failed:', error);
+      });
     }
   }, [activeTab, filters]);
 
@@ -535,8 +537,22 @@ export default function CataloguePage() {
                           } as any
                         }
                         index={index}
-                        onArchive={handleArchiveProduct}
-                        onDelete={handleDeleteProduct}
+                        onArchive={product => {
+                          void handleArchiveProduct(product).catch(error => {
+                            console.error(
+                              '[Catalogue] handleArchiveProduct failed:',
+                              error
+                            );
+                          });
+                        }}
+                        onDelete={product => {
+                          void handleDeleteProduct(product).catch(error => {
+                            console.error(
+                              '[Catalogue] handleDeleteProduct failed:',
+                              error
+                            );
+                          });
+                        }}
                         archived={!!product.archived_at}
                       />
                     ))}

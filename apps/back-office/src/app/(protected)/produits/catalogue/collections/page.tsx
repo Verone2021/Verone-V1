@@ -131,7 +131,12 @@ export default function CollectionsPage() {
   // Charger les collections archivées quand on change d'onglet
   useEffect(() => {
     if (activeTab === 'archived') {
-      loadArchivedCollectionsData();
+      void loadArchivedCollectionsData().catch(error => {
+        console.error(
+          '[Collections] loadArchivedCollectionsData failed:',
+          error
+        );
+      });
     }
   }, [activeTab]);
 
@@ -481,7 +486,14 @@ export default function CollectionsPage() {
               <ButtonV2
                 size="sm"
                 variant="ghost"
-                onClick={() => handleArchiveCollection(collection)}
+                onClick={() => {
+                  void handleArchiveCollection(collection).catch(error => {
+                    console.error(
+                      '[Collections] handleArchiveCollection failed:',
+                      error
+                    );
+                  });
+                }}
                 icon={Archive}
                 className="w-full"
                 title="Archiver"
@@ -507,7 +519,14 @@ export default function CollectionsPage() {
               <ButtonV2
                 size="sm"
                 variant="secondary"
-                onClick={() => handleArchiveCollection(collection)}
+                onClick={() => {
+                  void handleArchiveCollection(collection).catch(error => {
+                    console.error(
+                      '[Collections] handleArchiveCollection (restore) failed:',
+                      error
+                    );
+                  });
+                }}
                 icon={ArchiveRestore}
                 className="w-full"
                 title="Restaurer"
@@ -517,7 +536,14 @@ export default function CollectionsPage() {
               <ButtonV2
                 size="sm"
                 variant="destructive"
-                onClick={() => handleDeleteCollection(collection.id)}
+                onClick={() => {
+                  void handleDeleteCollection(collection.id).catch(error => {
+                    console.error(
+                      '[Collections] handleDeleteCollection failed:',
+                      error
+                    );
+                  });
+                }}
                 icon={Trash2}
                 className="w-full"
                 title="Supprimer"
@@ -659,7 +685,18 @@ export default function CollectionsPage() {
             {selectedCollections.length !== 1 ? 's' : ''} sélectionnée
             {selectedCollections.length !== 1 ? 's' : ''}
           </span>
-          <ButtonV2 variant="ghost" size="sm" onClick={handleBulkStatusToggle}>
+          <ButtonV2
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              void handleBulkStatusToggle().catch(error => {
+                console.error(
+                  '[Collections] handleBulkStatusToggle failed:',
+                  error
+                );
+              });
+            }}
+          >
             Changer le statut
           </ButtonV2>
           <ButtonV2

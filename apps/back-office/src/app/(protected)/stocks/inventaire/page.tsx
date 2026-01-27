@@ -60,7 +60,9 @@ export default function InventairePage() {
     useStockInventory();
 
   useEffect(() => {
-    fetchInventory();
+    void fetchInventory().catch(error => {
+      console.error('[Inventaire] fetchInventory failed:', error);
+    });
   }, [fetchInventory]);
 
   // Ouvrir automatiquement le modal si query param ?id= présent (venant des notifications)
@@ -76,7 +78,9 @@ export default function InventairePage() {
   }, [searchParams, inventory, isHistoryModalOpen]);
 
   const handleRefresh = () => {
-    fetchInventory(filters);
+    void fetchInventory(filters).catch(error => {
+      console.error('[Inventaire] handleRefresh failed:', error);
+    });
   };
 
   const handleExport = () => {
@@ -88,7 +92,9 @@ export default function InventairePage() {
   };
 
   const handleApplyFilters = () => {
-    fetchInventory(filters);
+    void fetchInventory(filters).catch(error => {
+      console.error('[Inventaire] handleApplyFilters failed:', error);
+    });
   };
 
   const openHistoryModal = (product: any) => {
@@ -143,7 +149,9 @@ export default function InventairePage() {
     setShowOnlyWithStock(false);
     setQuickDateFilter('all');
     setStockLevelFilter('all');
-    fetchInventory();
+    void fetchInventory().catch(error => {
+      console.error('[Inventaire] handleResetFilters failed:', error);
+    });
   };
 
   // Nombre de filtres actifs
@@ -704,7 +712,12 @@ export default function InventairePage() {
         isOpen={isAdjustmentModalOpen}
         onClose={() => setIsAdjustmentModalOpen(false)}
         onSuccess={() => {
-          fetchInventory(); // Refresh data après ajustement
+          void fetchInventory().catch(error => {
+            console.error(
+              '[Inventaire] onSuccess fetchInventory failed:',
+              error
+            );
+          }); // Refresh data après ajustement
         }}
         product={selectedProduct}
       />
