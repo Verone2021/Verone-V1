@@ -140,7 +140,9 @@ export function SelectionsSection() {
   const [productSearch, setProductSearch] = useState('');
 
   useEffect(() => {
-    fetchData();
+    void fetchData().catch(error => {
+      console.error('[SelectionsSection] Initial fetch failed:', error);
+    });
   }, []);
 
   // Filtrer les produits du catalogue par recherche
@@ -335,7 +337,9 @@ export function SelectionsSection() {
       // Reset et refresh
       setIsCreateModalOpen(false);
       resetForm();
-      fetchData();
+      void fetchData().catch(error => {
+        console.error('[SelectionsSection] Fetch after create failed:', error);
+      });
     } catch (error) {
       console.error('Error creating selection:', error);
       toast({
@@ -693,7 +697,14 @@ export function SelectionsSection() {
                             variant="outline"
                             size="icon"
                             className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
-                            onClick={() => handleArchive(selection)}
+                            onClick={() => {
+                              void handleArchive(selection).catch(error => {
+                                console.error(
+                                  '[SelectionsSection] Archive failed:',
+                                  error
+                                );
+                              });
+                            }}
                             title="Désarchiver la sélection"
                           >
                             <ArchiveRestore className="h-4 w-4" />
@@ -703,7 +714,14 @@ export function SelectionsSection() {
                             variant="outline"
                             size="icon"
                             className="h-8 w-8 text-orange-500 hover:text-orange-600 hover:bg-orange-50"
-                            onClick={() => handleArchive(selection)}
+                            onClick={() => {
+                              void handleArchive(selection).catch(error => {
+                                console.error(
+                                  '[SelectionsSection] Archive failed:',
+                                  error
+                                );
+                              });
+                            }}
                             title="Archiver la sélection"
                           >
                             <Archive className="h-4 w-4" />
@@ -716,12 +734,17 @@ export function SelectionsSection() {
                             variant="outline"
                             size="icon"
                             className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                            onClick={() =>
-                              handleDeleteSelection(
+                            onClick={() => {
+                              void handleDeleteSelection(
                                 selection.id,
                                 selection.name
-                              )
-                            }
+                              ).catch(error => {
+                                console.error(
+                                  '[SelectionsSection] Delete failed:',
+                                  error
+                                );
+                              });
+                            }}
                             title="Supprimer la sélection"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -917,7 +940,14 @@ export function SelectionsSection() {
               Annuler
             </ButtonV2>
             <ButtonV2
-              onClick={handleCreateSelection}
+              onClick={() => {
+                void handleCreateSelection().catch(error => {
+                  console.error(
+                    '[SelectionsSection] Create selection failed:',
+                    error
+                  );
+                });
+              }}
               disabled={
                 saving ||
                 !formData.affiliate_id ||
