@@ -432,7 +432,14 @@ export default function CheckoutPage() {
         <div className="lg:grid lg:grid-cols-12 lg:gap-6">
           {/* Checkout Form */}
           <div className="lg:col-span-7">
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form
+              onSubmit={e => {
+                void handleSubmit(e).catch(error => {
+                  console.error('[Checkout] Submit failed:', error);
+                });
+              }}
+              className="space-y-4"
+            >
               {/* Contact Information */}
               <div className="bg-white rounded-lg border p-4">
                 <h2 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">

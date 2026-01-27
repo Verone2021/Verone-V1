@@ -277,7 +277,14 @@ export default function ProfilPage(): JSX.Element | null {
               <div className="p-6">
                 {isEditing ? (
                   /* Mode édition */
-                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                  <form
+                    onSubmit={e => {
+                      void handleSubmit(onSubmit)(e).catch(error => {
+                        console.error('[Profile] Submit failed:', error);
+                      });
+                    }}
+                    className="space-y-4"
+                  >
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label

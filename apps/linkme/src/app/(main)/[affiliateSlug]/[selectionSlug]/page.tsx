@@ -65,7 +65,9 @@ export default function SelectionPage({ params }: SelectionPageProps) {
           console.warn('Failed to track view:', err);
         }
       };
-      trackView();
+      void trackView().catch(err => {
+        console.warn('Failed to track view:', err);
+      });
     }
   }, [selection?.id]);
 

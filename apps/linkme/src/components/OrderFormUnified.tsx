@@ -2441,7 +2441,11 @@ function OpeningStep5Delivery({ data, errors, updateData }: StepProps) {
                 id="accessFormUpload"
                 type="file"
                 accept=".pdf,.png,.jpg,.jpeg"
-                onChange={handleFileUpload}
+                onChange={e => {
+                  void handleFileUpload(e).catch(error => {
+                    console.error('[OrderForm] File upload failed:', error);
+                  });
+                }}
               />
               <p className="text-xs text-gray-500 mt-1">
                 Formats acceptés : PDF, PNG, JPG (max 5 MB)

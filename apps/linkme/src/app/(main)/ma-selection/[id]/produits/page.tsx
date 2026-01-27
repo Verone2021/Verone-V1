@@ -326,7 +326,11 @@ export default function SelectionProductsPage() {
                       key={item.id}
                       item={item}
                       onEdit={() => setEditingItem(item)}
-                      onRemove={() => handleRemoveItem(item)}
+                      onRemove={() => {
+                        void handleRemoveItem(item).catch(error => {
+                          console.error('[ProductList] Remove failed:', error);
+                        });
+                      }}
                       isDeleting={deletingItemId === item.id}
                       disabled={!!searchQuery}
                     />

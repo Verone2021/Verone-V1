@@ -492,7 +492,11 @@ export function EditOrderModal({
             Annuler
           </Button>
           <Button
-            onClick={handleSave}
+            onClick={() => {
+              void handleSave().catch(error => {
+                console.error('[EditOrderModal] Save failed:', error);
+              });
+            }}
             disabled={!hasChanges || updateOrder.isPending || !isEditable}
             className="bg-[#5DBEBB] hover:bg-[#4DAEAB] text-white"
           >

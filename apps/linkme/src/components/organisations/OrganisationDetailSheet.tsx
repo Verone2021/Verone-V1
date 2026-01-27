@@ -461,11 +461,13 @@ export function OrganisationDetailSheet({
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
         queryKey: ['organisation-detail', organisationId],
       });
-      queryClient.invalidateQueries({ queryKey: ['enseigne-organisations'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['enseigne-organisations'],
+      });
       toast.success('Modifications enregistrées');
       setEditingSection(null);
     },

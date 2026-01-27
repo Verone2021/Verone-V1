@@ -203,7 +203,14 @@ export default function NewSelectionPage() {
         </div>
 
         {/* Formulaire */}
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          onSubmit={e => {
+            void handleSubmit(e).catch(error => {
+              console.error('[NewSelection] Submit failed:', error);
+            });
+          }}
+          className="space-y-6"
+        >
           {/* Card principale */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
             {/* Image de couverture */}
