@@ -334,7 +334,12 @@ export default function SourcingEchantillonsPage() {
       setQuantity(1);
       setDeliveryAddress('');
       setNotes('');
-      refresh();
+      void refresh().catch(error => {
+        console.error(
+          '[EchantillonsPage] Refresh after creation failed:',
+          error
+        );
+      });
     } catch (error) {
       console.error('Erreur création échantillon:', error);
       toast({
@@ -450,7 +455,14 @@ export default function SourcingEchantillonsPage() {
           <CardContent>
             <p className="text-gray-600 mb-4">{error}</p>
             <Button
-              onClick={() => refresh()}
+              onClick={() => {
+                void refresh().catch(error => {
+                  console.error(
+                    '[EchantillonsPage] Refresh retry failed:',
+                    error
+                  );
+                });
+              }}
               className="bg-black hover:bg-gray-800 text-white"
             >
               Réessayer
@@ -603,7 +615,11 @@ export default function SourcingEchantillonsPage() {
 
               <Button
                 variant="outline"
-                onClick={() => refresh()}
+                onClick={() => {
+                  void refresh().catch(error => {
+                    console.error('[EchantillonsPage] Refresh failed:', error);
+                  });
+                }}
                 className="border-black text-black hover:bg-black hover:text-white"
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
@@ -757,7 +773,16 @@ export default function SourcingEchantillonsPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleArchive(sample.sample_id)}
+                            onClick={() => {
+                              void handleArchive(sample.sample_id).catch(
+                                error => {
+                                  console.error(
+                                    '[EchantillonsPage] Archive failed:',
+                                    error
+                                  );
+                                }
+                              );
+                            }}
                             className="border-red-300 text-red-600 hover:bg-red-50"
                           >
                             <Archive className="h-4 w-4 mr-2" />
@@ -903,7 +928,16 @@ export default function SourcingEchantillonsPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleReactivate(sample.sample_id)}
+                          onClick={() => {
+                            void handleReactivate(sample.sample_id).catch(
+                              error => {
+                                console.error(
+                                  '[EchantillonsPage] Reactivate failed:',
+                                  error
+                                );
+                              }
+                            );
+                          }}
                           className="border-green-300 text-green-600 hover:bg-green-50"
                         >
                           <ArchiveRestore className="h-4 w-4 mr-2" />
@@ -913,7 +947,16 @@ export default function SourcingEchantillonsPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleReinsert(sample.sample_id)}
+                          onClick={() => {
+                            void handleReinsert(sample.sample_id).catch(
+                              error => {
+                                console.error(
+                                  '[EchantillonsPage] Reinsert failed:',
+                                  error
+                                );
+                              }
+                            );
+                          }}
                           className="border-blue-300 text-blue-600 hover:bg-blue-50"
                         >
                           <RefreshCw className="h-4 w-4 mr-2" />
@@ -962,7 +1005,14 @@ export default function SourcingEchantillonsPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form
+            onSubmit={e => {
+              void handleSubmit(e).catch(error => {
+                console.error('[EchantillonsPage] Form submit failed:', error);
+              });
+            }}
+            className="space-y-6"
+          >
             <div>
               <Label className="text-base font-semibold mb-4 block">
                 Sélectionner le client *
@@ -1133,7 +1183,14 @@ export default function SourcingEchantillonsPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDeleteConfirm}
+              onClick={() => {
+                void handleDeleteConfirm().catch(error => {
+                  console.error(
+                    '[EchantillonsPage] Delete confirm failed:',
+                    error
+                  );
+                });
+              }}
               className="bg-red-600 hover:bg-red-700"
             >
               Supprimer définitivement
