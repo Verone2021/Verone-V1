@@ -401,7 +401,14 @@ export default function CategoriesPage() {
             <IconButton
               variant="danger"
               size="sm"
-              onClick={() => handleDelete('family', family.id)}
+              onClick={() => {
+                void handleDelete('family', family.id).catch(error => {
+                  console.error(
+                    '[CategoriesPage] Delete family failed:',
+                    error
+                  );
+                });
+              }}
               label="Supprimer"
               icon={Trash2}
             />
@@ -511,7 +518,14 @@ export default function CategoriesPage() {
             <IconButton
               variant="danger"
               size="sm"
-              onClick={() => handleDelete('category', category.id)}
+              onClick={() => {
+                void handleDelete('category', category.id).catch(error => {
+                  console.error(
+                    '[CategoriesPage] Delete category failed:',
+                    error
+                  );
+                });
+              }}
               label="Supprimer"
               icon={Trash2}
             />
@@ -589,7 +603,16 @@ export default function CategoriesPage() {
                   <IconButton
                     variant="danger"
                     size="sm"
-                    onClick={() => handleDelete('subcategory', subcategory.id)}
+                    onClick={() => {
+                      void handleDelete('subcategory', subcategory.id).catch(
+                        error => {
+                          console.error(
+                            '[CategoriesPage] Delete subcategory failed:',
+                            error
+                          );
+                        }
+                      );
+                    }}
                     label="Supprimer"
                     icon={Trash2}
                   />
@@ -694,7 +717,14 @@ export default function CategoriesPage() {
           <ButtonUnified
             variant="outline"
             size="sm"
-            onClick={handleBulkStatusToggle}
+            onClick={() => {
+              void handleBulkStatusToggle().catch(error => {
+                console.error(
+                  '[CategoriesPage] Bulk status toggle failed:',
+                  error
+                );
+              });
+            }}
             icon={Eye}
             iconPosition="left"
           >
@@ -703,7 +733,11 @@ export default function CategoriesPage() {
           <ButtonUnified
             variant="danger"
             size="sm"
-            onClick={handleDeleteItems}
+            onClick={() => {
+              void handleDeleteItems().catch(error => {
+                console.error('[CategoriesPage] Delete items failed:', error);
+              });
+            }}
             icon={Trash2}
             iconPosition="left"
           >
@@ -772,7 +806,14 @@ export default function CategoriesPage() {
         <FamilyForm
           isOpen={formState.isOpen}
           onClose={closeForm}
-          onSubmit={handleFormSubmit}
+          onSubmit={formData => {
+            void handleFormSubmit(formData).catch(error => {
+              console.error(
+                '[CategoriesPage] Family form submit failed:',
+                error
+              );
+            });
+          }}
           initialData={formState.data}
           mode={formState.mode}
         />
@@ -782,7 +823,14 @@ export default function CategoriesPage() {
         <CategoryForm
           isOpen={formState.isOpen}
           onClose={closeForm}
-          onSubmit={handleFormSubmit}
+          onSubmit={formData => {
+            void handleFormSubmit(formData).catch(error => {
+              console.error(
+                '[CategoriesPage] Category form submit failed:',
+                error
+              );
+            });
+          }}
           initialData={
             formState.mode === 'create' && formState.parentId
               ? ({ family_id: formState.parentId } as any)
@@ -797,7 +845,14 @@ export default function CategoriesPage() {
         <SubcategoryForm
           isOpen={formState.isOpen}
           onClose={closeForm}
-          onSubmit={handleFormSubmit}
+          onSubmit={formData => {
+            void handleFormSubmit(formData).catch(error => {
+              console.error(
+                '[CategoriesPage] Subcategory form submit failed:',
+                error
+              );
+            });
+          }}
           initialData={
             formState.mode === 'create' && formState.parentId
               ? ({ category_id: formState.parentId } as any)
