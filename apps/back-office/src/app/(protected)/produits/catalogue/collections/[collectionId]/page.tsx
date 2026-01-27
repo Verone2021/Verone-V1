@@ -1246,12 +1246,14 @@ export default function CollectionDetailPage({
                 product={product}
                 position={(product as any).position || 0}
                 onRemove={() => {
-                  void handleRemoveProduct().catch(error => {
-                    console.error(
-                      '[Collections] Remove product failed:',
-                      error
-                    );
-                  });
+                  void handleRemoveProduct(product.id, product.name).catch(
+                    error => {
+                      console.error(
+                        '[Collections] Remove product failed:',
+                        error
+                      );
+                    }
+                  );
                 }}
                 router={router}
               />
