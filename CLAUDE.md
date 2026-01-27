@@ -27,13 +27,13 @@ CRM/ERP modulaire pour décoration et mobilier d'intérieur haut de gamme.
 
 ### Quand Utiliser Quel MCP ?
 
-| Tâche | MCP à Utiliser | Raison |
-|-------|---------------|--------|
-| Tests E2E automatisés | **PLAYWRIGHT** | Cross-browser, accessibility tree |
-| Debug bugs critiques (500s) | **CHROME DEVTOOLS** | Network tab, console errors détaillés |
-| Performance audit (LCP, CLS) | **CHROME DEVTOOLS** | Performance profiler |
-| Automation workflows | **PLAYWRIGHT** | Multi-étapes fiable |
-| Scraping données | **PLAYWRIGHT** | Structured data via accessibility |
+| Tâche                        | MCP à Utiliser      | Raison                                |
+| ---------------------------- | ------------------- | ------------------------------------- |
+| Tests E2E automatisés        | **PLAYWRIGHT**      | Cross-browser, accessibility tree     |
+| Debug bugs critiques (500s)  | **CHROME DEVTOOLS** | Network tab, console errors détaillés |
+| Performance audit (LCP, CLS) | **CHROME DEVTOOLS** | Performance profiler                  |
+| Automation workflows         | **PLAYWRIGHT**      | Multi-étapes fiable                   |
+| Scraping données             | **PLAYWRIGHT**      | Structured data via accessibility     |
 
 ### Gestion des Conflits
 
@@ -80,13 +80,120 @@ pnpm lint:fix        # ESLint auto-fix
 **Documentation complète** : `docs/current/eslint-strategy-2026.md`
 
 **État actuel** :
+
 - 🔴 119 erreurs async (DOIT FIXER - bugs production)
 - 🟡 1,946 warnings type-safety (tolérés, migration graduelle)
 
 **Bypass pre-commit** (découragé) :
+
 ```bash
 git commit --no-verify
 ```
+
+---
+
+## ⚠️ RÈGLES CRITIQUES - Erreurs Async (OBLIGATOIRE)
+
+### 🎯 Les 3 Erreurs à NE JAMAIS Faire
+
+Ces erreurs causent des bugs production silencieux (commandes perdues, données obsolètes, cache corrompu).
+
+#### 1. Promesses Flottantes (no-floating-promises)
+
+**❌ INTERDIT** - Promise lancée sans gestion d'erreur :
+
+```typescript
+onClick={() => {
+  createOrder(orderData); // Promise ignorée - si ça échoue, aucune erreur visible
+}}
+```
+
+**✅ OBLIGATOIRE** - Pattern void + .catch() :
+
+```typescript
+onClick={() => {
+  void createOrder(orderData).catch((error) => {
+    console.error('[Component] Order creation failed:', error);
+    toast.error('Erreur lors de la création de la commande');
+  });
+}}
+```
+
+#### 2. Async dans Event Handlers (no-misused-promises)
+
+**❌ INTERDIT** - Fonction async directe dans handler :
+
+```typescript
+<form onSubmit={handleSubmit}>  {/* handleSubmit est async */}
+```
+
+**✅ OBLIGATOIRE** - Wrapper avec void + .catch() :
+
+```typescript
+<form onSubmit={(e) => {
+  void handleSubmit(e).catch(error => {
+    console.error('[Form] Submit failed:', error);
+  });
+}}>
+```
+
+#### 3. React Query invalidateQueries sans await
+
+**❌ INTERDIT** - invalidateQueries sans await :
+
+```typescript
+const mutation = useMutation({
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['orders'] }); // Promise ignorée
+    // L'UI peut s'afficher AVANT que le cache soit invalidé = données obsolètes
+  },
+});
+```
+
+**✅ OBLIGATOIRE** - onSuccess async avec await :
+
+```typescript
+const mutation = useMutation({
+  onSuccess: async () => {
+    await queryClient.invalidateQueries({ queryKey: ['orders'] });
+    toast.success('Commande créée avec succès');
+  },
+  onError: error => {
+    console.error('[Mutation] Failed:', error);
+    toast.error('Une erreur est survenue');
+  },
+});
+```
+
+### 📝 Checklist Avant Commit
+
+Avant **CHAQUE** commit :
+
+```bash
+# 1. Type-check DOIT passer
+pnpm type-check
+
+# 2. Build DOIT passer
+pnpm build
+
+# 3. ESLint 0 ERREUR (warnings tolérés)
+pnpm lint | grep "error"  # Doit afficher 0 errors
+```
+
+**Si ESLint bloque** : Corriger TOUTES les erreurs avant de commit.
+
+### 🎨 Template Composant
+
+**AVANT de créer un nouveau composant** :
+
+1. **Copier le template** : `.claude/templates/component.tsx`
+2. **Chercher l'existant** : Glob `**/*{nom-similaire}*.tsx`
+3. **Vérifier les packages** : @verone/ui, @verone/customers, etc.
+4. **Suivre les patterns** : ButtonV2, useMutation, toast
+
+Le template contient **TOUS** les patterns async corrects (event handlers, React Query, custom hooks).
+
+**Documentation complète** : Voir `.claude/templates/component.tsx` (header comments)
 
 ### Tests E2E
 
@@ -118,6 +225,7 @@ cat packages/e2e-linkme/QUICKSTART.md
 #### 1. 🔍 RESEARCH (Comprendre l'existant)
 
 Lire fichiers pertinents SANS coder :
+
 - Comprendre architecture actuelle
 - Identifier patterns existants
 - Localiser fichiers critiques
@@ -127,6 +235,7 @@ Lire fichiers pertinents SANS coder :
 #### 2. 📝 PLAN (Concevoir la solution)
 
 Créer plan détaillé AVANT de coder :
+
 - Utiliser EnterPlanMode ou `/plan` pour tasks complexes
 - Recommander LA meilleure solution (pas d'options multiples)
 - Identifier edge cases et risques
@@ -136,6 +245,7 @@ Créer plan détaillé AVANT de coder :
 #### 3. 🧪 TEST (TDD si applicable)
 
 Écrire tests AVANT le code (quand pertinent) :
+
 ```bash
 npm run test:e2e          # Tests E2E avec Playwright
 npm run type-check        # Validation TypeScript
@@ -148,6 +258,7 @@ npm run type-check        # Validation TypeScript
 #### 4. ⚙️ EXECUTE (Implémenter le minimum)
 
 Coder en suivant le plan :
+
 - Suivre patterns existants
 - Minimum nécessaire (pas de sur-engineering)
 - Commits petits et fréquents (save points)
@@ -155,6 +266,7 @@ Coder en suivant le plan :
 #### 5. ✅ VERIFY (Valider)
 
 Valider à chaque modification :
+
 ```bash
 npm run type-check        # TypeScript sans erreurs
 npm run build             # Build production réussit
@@ -166,12 +278,14 @@ npm run e2e:smoke         # Tests UI si modification frontend
 ### Actions Git (après VERIFY réussi)
 
 **COMMIT** - Sauvegardes fréquentes sur feature branch :
+
 ```bash
 git commit -m "[APP-DOMAIN-NNN] step: description"
 git push  # Backup + CI check
 ```
 
 **PR** - Une seule PR à la fin de la feature :
+
 ```bash
 gh pr create --title "[APP-DOMAIN-NNN] feat: description"
 ```
@@ -189,6 +303,7 @@ gh pr create --title "[APP-DOMAIN-NNN] feat: description"
 **Documentation complète** : Voir `.claude/MANUAL_MODE.md`
 
 **En bref** :
+
 - ✅ Claude développe, teste, commit, push autonome
 - ⚠️ Claude **DEMANDE** avant de créer/merger PR
 - ⚠️ Claude **DEMANDE** avant toute action critique (déploiement, migration DB, etc.)
@@ -206,6 +321,7 @@ gh pr create --title "[APP-DOMAIN-NNN] feat: description"
 ### Workflow Standard
 
 #### 1. Créer Feature Branch
+
 ```bash
 git checkout -b feat/APP-DOMAIN-NNN-description
 # Exemples:
@@ -214,6 +330,7 @@ git checkout -b feat/APP-DOMAIN-NNN-description
 ```
 
 #### 2. Commits Fréquents (Save Points)
+
 ```bash
 # Commits petits et atomiques
 git add .
@@ -230,12 +347,14 @@ git push
 ```
 
 **Avantages** :
+
 - ✅ Backup continu sur GitHub
 - ✅ CI valide chaque étape
 - ✅ Facile de revenir en arrière
 - ✅ Historique clair des étapes
 
 #### 3. UNE PR à la Fin (Tous les Commits)
+
 ```bash
 # Quand feature complète :
 gh pr create \
@@ -270,6 +389,7 @@ Details optionnels...
 ```
 
 **Exemples** :
+
 - `[LM-ORD-009] feat: refonte workflow order form`
 - `[BO-DASH-001] fix: cache invalidation`
 - `[NO-TASK] chore: update dependencies`
@@ -281,12 +401,14 @@ Details optionnels...
 **Délai cible** : < 1 heure (idéalement quelques minutes)
 
 **Checklist automatique** :
+
 - [ ] CI passe (tests, build, type-check)
 - [ ] Pas de conflits
 - [ ] Format commits respecté
 - [ ] Tests ajoutés si nouvelle feature
 
 **Checklist humaine** :
+
 - [ ] Code review (logique, sécurité)
 - [ ] Validation fonctionnelle
 - [ ] Approbation déploiement si prod
@@ -315,6 +437,7 @@ gh pr merge 124 --merge --admin  # Preserve commits
 ## Task Management (.tasks/)
 
 ### Structure
+
 ```
 .tasks/
 ├── LM-ORD-009.md        # 1 fichier = 1 task
@@ -324,6 +447,7 @@ gh pr merge 124 --merge --admin  # Preserve commits
 ```
 
 ### Créer nouvelle task
+
 ```bash
 cp .tasks/TEMPLATE.md .tasks/LM-ORD-XXX.md
 # Éditer frontmatter YAML
@@ -331,6 +455,7 @@ cp .tasks/TEMPLATE.md .tasks/LM-ORD-XXX.md
 ```
 
 ### Générer index
+
 ```bash
 .tasks/generate-index.sh
 cat .tasks/INDEX.md
@@ -374,6 +499,7 @@ cat .tasks/INDEX.md
 ### Portabilité
 
 Cette structure `.claude/` est portable entre repos :
+
 1. Copier dossier `.claude/` complet
 2. Adapter `settings.json` (chemins absolus → `$CLAUDE_PROJECT_DIR`)
 3. Installer dépendances globales : `bun install -g ccusage@17.2.1`
@@ -382,11 +508,11 @@ Cette structure `.claude/` est portable entre repos :
 
 ## Ports
 
-| Application | Port |
-|-------------|------|
-| back-office | 3000 |
+| Application   | Port |
+| ------------- | ---- |
+| back-office   | 3000 |
 | site-internet | 3001 |
-| linkme | 3002 |
+| linkme        | 3002 |
 
 ---
 
