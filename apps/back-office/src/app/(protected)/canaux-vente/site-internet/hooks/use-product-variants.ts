@@ -80,8 +80,8 @@ export function useToggleVariantActivation() {
       );
       return null;
     },
-    onSuccess: (_data, _variables) => {
-      queryClient.invalidateQueries({ queryKey: ['product-variants'] });
+    onSuccess: async (_data, _variables) => {
+      await queryClient.invalidateQueries({ queryKey: ['product-variants'] });
     },
   });
 }
@@ -106,8 +106,8 @@ export function useCreateProductVariant() {
       );
       return null;
     },
-    onSuccess: (_data, _variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_data, _variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['product-variants'],
       });
     },
@@ -138,8 +138,8 @@ export function useUpdateProductVariant() {
       );
       return null;
     },
-    onSuccess: (_data, _variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_data, _variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['product-variants'],
       });
     },
@@ -160,8 +160,8 @@ export function useDeleteProductVariant() {
       );
       return null;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
         queryKey: ['product-variants'],
       });
     },

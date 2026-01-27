@@ -48,17 +48,17 @@ export function useUpdateMetadata() {
         throw error;
       }
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
       toast({
         title: 'Métadonnées mises à jour',
         description: 'Les informations du produit ont été sauvegardées',
       });
 
       // Invalider cache pour forcer refresh
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['site-internet-product-detail', variables.product_id],
       });
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['site-internet-products'],
       });
     },

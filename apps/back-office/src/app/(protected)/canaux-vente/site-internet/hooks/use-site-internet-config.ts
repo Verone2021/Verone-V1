@@ -54,8 +54,10 @@ export function useUpdateSiteInternetConfig() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['site-internet-config'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['site-internet-config'],
+      });
     },
   });
 }
@@ -97,8 +99,10 @@ export function useUploadSiteLogo() {
 
       return publicUrl;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['site-internet-config'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['site-internet-config'],
+      });
     },
   });
 }
@@ -142,8 +146,10 @@ export function useUpdateSiteInternetConfigJSON() {
 
       return newConfig;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['site-internet-config'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['site-internet-config'],
+      });
     },
   });
 }

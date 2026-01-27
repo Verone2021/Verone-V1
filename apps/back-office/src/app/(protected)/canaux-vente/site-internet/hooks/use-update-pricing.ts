@@ -61,17 +61,17 @@ export function useUpdatePricing() {
 
       return data;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
       toast({
         title: 'Prix mis à jour',
         description: 'La tarification du produit a été sauvegardée',
       });
 
       // Invalider cache
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['site-internet-product-detail', variables.product_id],
       });
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['site-internet-products'],
       });
     },
