@@ -211,7 +211,17 @@ export function FormSubmissionMessages({
       )}
 
       {/* Formulaire ajout message */}
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form
+        onSubmit={e => {
+          void handleSubmit(e).catch(error => {
+            console.error(
+              '[FormSubmissionMessages] handleSubmit failed:',
+              error
+            );
+          });
+        }}
+        className="space-y-4"
+      >
         {sendError && (
           <div
             className="p-3 rounded flex items-start gap-2"

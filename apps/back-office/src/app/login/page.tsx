@@ -112,7 +112,14 @@ export default function LoginPage() {
           </CardHeader>
 
           <CardContent className="space-y-6 pb-8">
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form
+              onSubmit={e => {
+                void handleSubmit(e).catch(error => {
+                  console.error('[Login] handleSubmit failed:', error);
+                });
+              }}
+              className="space-y-5"
+            >
               {/* Email */}
               <div>
                 <label

@@ -54,7 +54,11 @@ export function ContactFormModalWrapper({
     <CustomerContactFormModal
       isOpen={isOpen}
       onClose={onClose}
-      onSave={handleSave}
+      onSave={contactData => {
+        void handleSave(contactData).catch(error => {
+          console.error('[ContactFormModalWrapper] handleSave failed:', error);
+        });
+      }}
       contact={contact as any}
       organisationId={organisationId}
       organisationName="Organisation" // TODO: Récupérer nom réel

@@ -44,7 +44,9 @@ export function AppHeader({ className }: AppHeaderProps) {
       }
     };
 
-    fetchUserRole();
+    void fetchUserRole().catch(error => {
+      console.error('[AppHeader] fetchUserRole failed:', error);
+    });
   }, []);
 
   const handleLogout = async () => {
@@ -116,7 +118,11 @@ export function AppHeader({ className }: AppHeaderProps) {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="cursor-pointer text-verone-black font-medium hover:bg-gray-100 focus:bg-gray-100"
-              onClick={handleLogout}
+              onClick={() => {
+                void handleLogout().catch(error => {
+                  console.error('[AppHeader] handleLogout failed:', error);
+                });
+              }}
             >
               <LogOut className="mr-2 h-4 w-4" />
               <span>Se déconnecter</span>

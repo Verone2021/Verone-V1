@@ -70,7 +70,9 @@ export function ProductSelector({
   // Charger les produits au montage et à chaque changement de recherche
   useEffect(() => {
     if (isOpen) {
-      searchProducts(searchTerm);
+      void searchProducts(searchTerm).catch(error => {
+        console.error('[ProductSelector] searchProducts failed:', error);
+      });
     }
   }, [isOpen, searchTerm]);
 
@@ -320,7 +322,14 @@ export function ProductSelector({
               Annuler
             </ButtonV2>
             <ButtonV2
-              onClick={handleAddProducts}
+              onClick={() => {
+                void handleAddProducts().catch(error => {
+                  console.error(
+                    '[ProductSelector] handleAddProducts failed:',
+                    error
+                  );
+                });
+              }}
               disabled={loading || selectedProducts.size === 0}
               className="bg-black hover:bg-gray-800 text-white"
             >

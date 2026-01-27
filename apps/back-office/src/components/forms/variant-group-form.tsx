@@ -184,7 +184,9 @@ export function VariantGroupForm({
       }
     };
 
-    loadSubcategories();
+    void loadSubcategories().catch(error => {
+      console.error('[VariantGroupForm] loadSubcategories failed:', error);
+    });
 
     return () => {
       isMounted = false;
@@ -358,7 +360,14 @@ export function VariantGroupForm({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          onSubmit={e => {
+            void handleSubmit(e).catch(error => {
+              console.error('[VariantGroupForm] handleSubmit failed:', error);
+            });
+          }}
+          className="space-y-6"
+        >
           {/* Nom du groupe */}
           <div className="space-y-2">
             <Label htmlFor="name" className="text-sm font-medium">
