@@ -339,8 +339,8 @@ export function useUpdateOrganisationContacts() {
 
       return { success: true };
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['organisation-contacts', variables.organisationId],
       });
       toast.success('Contacts mis à jour');
@@ -405,8 +405,8 @@ export function useCreateOrganisationContacts() {
 
       return { success: true };
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['organisation-contacts', variables.organisationId],
       });
     },

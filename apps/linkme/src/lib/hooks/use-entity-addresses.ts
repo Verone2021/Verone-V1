@@ -273,9 +273,9 @@ export function useSaveAddress() {
 
       return data as string;
     },
-    onSuccess: (_, params) => {
+    onSuccess: async (_, params) => {
       // Invalidate related queries
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['entity-addresses', params.ownerType, params.ownerId],
       });
       toast.success('Adresse enregistrée');
@@ -316,8 +316,8 @@ export function useArchiveAddress() {
 
       return data as boolean;
     },
-    onSuccess: (_, params) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, params) => {
+      await queryClient.invalidateQueries({
         queryKey: ['entity-addresses', params.ownerType, params.ownerId],
       });
       toast.success('Adresse archivée');

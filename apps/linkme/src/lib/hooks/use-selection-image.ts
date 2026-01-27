@@ -126,9 +126,9 @@ export function useUploadSelectionImage() {
       setProgress(100);
       return publicUrl;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       // Invalidate selections query to refetch with new image
-      queryClient.invalidateQueries({ queryKey: ['user-selections'] });
+      await queryClient.invalidateQueries({ queryKey: ['user-selections'] });
       setProgress(0);
     },
     onError: () => {
@@ -175,8 +175,8 @@ export function useDeleteSelectionImage() {
         await supabase.storage.from(BUCKET).remove([storagePath]);
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-selections'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['user-selections'] });
     },
   });
 }
