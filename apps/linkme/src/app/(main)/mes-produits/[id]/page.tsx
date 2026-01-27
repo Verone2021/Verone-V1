@@ -341,7 +341,12 @@ export default function EditProduitPage() {
                   {product.affiliate_rejection_reason}
                 </p>
                 <button
-                  onClick={handleRevertAndEdit}
+                  onClick={() => {
+                    void handleRevertAndEdit().catch(error => {
+                      console.error('[EditProduitPage] Revert failed:', error);
+                      alert('Erreur lors de la modification du statut');
+                    });
+                  }}
                   disabled={isSubmitting}
                   className="mt-3 inline-flex items-center gap-2 text-sm text-red-600 hover:text-red-700"
                 >
@@ -657,9 +662,9 @@ export default function EditProduitPage() {
                     <p className="text-sm text-gray-600">Mode consultation</p>
                     {canModify && (
                       <button
-                        onClick={() =>
-                          router.push(`/mes-produits/${productId}?edit=true`)
-                        }
+                        onClick={() => {
+                          router.push(`/mes-produits/${productId}?edit=true`);
+                        }}
                         className="mt-2 text-sm text-blue-600 hover:underline"
                       >
                         Passer en mode édition
@@ -673,7 +678,15 @@ export default function EditProduitPage() {
                   <>
                     {isDraft && (
                       <button
-                        onClick={handleSave}
+                        onClick={() => {
+                          void handleSave().catch(error => {
+                            console.error(
+                              '[EditProduitPage] Save failed:',
+                              error
+                            );
+                            alert('Erreur lors de la sauvegarde');
+                          });
+                        }}
                         disabled={isSubmitting}
                         className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
                       >
@@ -687,7 +700,19 @@ export default function EditProduitPage() {
                     )}
 
                     <button
-                      onClick={handleSubmitForApproval}
+                      onClick={() => {
+                        void handleSubmitForApproval().catch(error => {
+                          console.error(
+                            '[EditProduitPage] Submit failed:',
+                            error
+                          );
+                          const errorMessage =
+                            error instanceof Error
+                              ? error.message
+                              : 'Erreur lors de la soumission';
+                          alert(`Erreur: ${errorMessage}`);
+                        });
+                      }}
                       disabled={isSubmitting}
                       className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
                     >

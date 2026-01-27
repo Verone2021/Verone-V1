@@ -71,7 +71,11 @@ export default function StatistiquesPage() {
 
             {/* Bouton refresh */}
             <button
-              onClick={() => refetch()}
+              onClick={() => {
+                void refetch().catch(error => {
+                  console.error('[StatistiquesPage] Refetch failed:', error);
+                });
+              }}
               disabled={isLoading}
               className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
               title="Actualiser"
@@ -95,7 +99,14 @@ export default function StatistiquesPage() {
                 <p className="text-xs text-red-600">{error.message}</p>
               </div>
               <button
-                onClick={() => refetch()}
+                onClick={() => {
+                  void refetch().catch(error => {
+                    console.error(
+                      '[StatistiquesPage] Refetch retry failed:',
+                      error
+                    );
+                  });
+                }}
                 className="ml-auto px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-xs font-medium transition-colors"
               >
                 Réessayer

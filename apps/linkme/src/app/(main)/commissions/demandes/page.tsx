@@ -162,7 +162,9 @@ function PaymentRequestRow({
           </a>
         ) : request.status === 'pending' ? (
           <button
-            onClick={() => onUploadClick(request.id)}
+            onClick={() => {
+              onUploadClick(request.id);
+            }}
             className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
           >
             <Upload className="h-3.5 w-3.5" />
@@ -304,7 +306,12 @@ function UploadInvoiceModal({
             Annuler
           </button>
           <button
-            onClick={handleUpload}
+            onClick={() => {
+              void handleUpload().catch(error => {
+                console.error('[UploadInvoiceModal] Upload failed:', error);
+                setError("Erreur lors de l'upload");
+              });
+            }}
             disabled={!selectedFile || uploadMutation.isPending}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
@@ -463,7 +470,11 @@ export default function PaymentRequestsPage() {
         isOpen={!!uploadModalRequestId}
         requestId={uploadModalRequestId}
         onClose={() => setUploadModalRequestId(null)}
-        onSuccess={() => refetch()}
+        onSuccess={() => {
+          void refetch().catch(error => {
+            console.error('[PaymentRequests] Refetch failed:', error);
+          });
+        }}
       />
     </div>
   );

@@ -146,7 +146,10 @@ export function ProductImageUpload({
     setDragActive(false);
 
     if (disabled || !canAddMore) return;
-    handleFileSelect(e.dataTransfer.files);
+    void handleFileSelect(e.dataTransfer.files).catch(error => {
+      console.error('[ProductImageUpload] handleDrop failed:', error);
+      setLocalError("Erreur lors de l'upload");
+    });
   };
 
   // Si pas de productId, afficher un message
@@ -197,7 +200,17 @@ export function ProductImageUpload({
                   {!image.is_primary && (
                     <button
                       type="button"
-                      onClick={() => handleSetPrimary(image)}
+                      onClick={() => {
+                        void handleSetPrimary(image).catch(error => {
+                          console.error(
+                            '[ProductImageUpload] Set primary failed:',
+                            error
+                          );
+                          setLocalError(
+                            "Erreur lors de la définition de l'image principale"
+                          );
+                        });
+                      }}
                       className="p-2 bg-white rounded-full hover:bg-yellow-50 transition-colors"
                       title="Definir comme principale"
                     >
@@ -206,7 +219,15 @@ export function ProductImageUpload({
                   )}
                   <button
                     type="button"
-                    onClick={() => handleDelete(image)}
+                    onClick={() => {
+                      void handleDelete(image).catch(error => {
+                        console.error(
+                          '[ProductImageUpload] Delete failed:',
+                          error
+                        );
+                        setLocalError('Erreur lors de la suppression');
+                      });
+                    }}
                     className="p-2 bg-white rounded-full hover:bg-red-50 transition-colors"
                     title="Supprimer"
                   >
@@ -238,7 +259,15 @@ export function ProductImageUpload({
             type="file"
             accept={ALLOWED_TYPES.join(',')}
             multiple
-            onChange={e => handleFileSelect(e.target.files)}
+            onChange={e => {
+              void handleFileSelect(e.target.files).catch(error => {
+                console.error(
+                  '[ProductImageUpload] File select failed:',
+                  error
+                );
+                setLocalError('Erreur lors de la sélection du fichier');
+              });
+            }}
             className="hidden"
           />
 

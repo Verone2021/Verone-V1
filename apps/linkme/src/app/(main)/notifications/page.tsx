@@ -218,7 +218,14 @@ function NotificationCard({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onMarkAsRead(notification.id)}
+                onClick={() => {
+                  void onMarkAsRead(notification.id).catch(error => {
+                    console.error(
+                      '[NotificationCard] Mark as read failed:',
+                      error
+                    );
+                  });
+                }}
                 title="Marquer comme lu"
               >
                 <Check className="h-4 w-4" />
@@ -229,7 +236,11 @@ function NotificationCard({
               variant="ghost"
               size="sm"
               className="text-red-500 hover:text-red-700 hover:bg-red-50"
-              onClick={() => onDelete(notification.id)}
+              onClick={() => {
+                void onDelete(notification.id).catch(error => {
+                  console.error('[NotificationCard] Delete failed:', error);
+                });
+              }}
               title="Supprimer"
             >
               <Trash2 className="h-4 w-4" />
@@ -362,7 +373,14 @@ export default function NotificationsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => markAllAsRead()}
+                onClick={() => {
+                  void markAllAsRead().catch(error => {
+                    console.error(
+                      '[NotificationsPage] Mark all as read failed:',
+                      error
+                    );
+                  });
+                }}
               >
                 <CheckCheck className="h-4 w-4 mr-1.5" />
                 Tout marquer lu

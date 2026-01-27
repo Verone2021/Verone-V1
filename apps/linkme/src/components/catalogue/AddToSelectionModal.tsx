@@ -582,7 +582,17 @@ export function AddToSelectionModal({
                       Annuler
                     </button>
                     <button
-                      onClick={handleCreateSelection}
+                      onClick={() => {
+                        void handleCreateSelection().catch(error => {
+                          console.error(
+                            '[AddToSelectionModal] Create selection failed:',
+                            error
+                          );
+                          setError(
+                            'Erreur lors de la création de la sélection'
+                          );
+                        });
+                      }}
                       disabled={
                         !newSelectionName.trim() || createSelection.isPending
                       }
@@ -613,7 +623,15 @@ export function AddToSelectionModal({
         {!isLoading && !hasNoAffiliate && !isCreatingNew && (
           <div className="px-6 py-4 border-t bg-gray-50">
             <button
-              onClick={handleAddToSelection}
+              onClick={() => {
+                void handleAddToSelection().catch(error => {
+                  console.error(
+                    '[AddToSelectionModal] Add to selection failed:',
+                    error
+                  );
+                  setError("Erreur lors de l'ajout à la sélection");
+                });
+              }}
               disabled={!selectedSelectionId || addToSelection.isPending}
               className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >

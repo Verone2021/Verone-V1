@@ -71,7 +71,7 @@ export default function NouveauProduitPage() {
 
   // Redirect if not authenticated or not authorized
   if (!authLoading && (!user || !canCreate)) {
-    router.push('/catalogue');
+    void router.push('/catalogue');
     return null;
   }
 
@@ -550,7 +550,15 @@ export default function NouveauProduitPage() {
 
               <div className="mt-6 space-y-3">
                 <button
-                  onClick={handleSaveDraft}
+                  onClick={() => {
+                    void handleSaveDraft().catch(error => {
+                      console.error(
+                        '[NouveauProduitPage] Save draft failed:',
+                        error
+                      );
+                      alert('Erreur lors de la sauvegarde');
+                    });
+                  }}
                   disabled={isSubmitting}
                   className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
                 >
@@ -563,7 +571,19 @@ export default function NouveauProduitPage() {
                 </button>
 
                 <button
-                  onClick={handleSubmitForApproval}
+                  onClick={() => {
+                    void handleSubmitForApproval().catch(error => {
+                      console.error(
+                        '[NouveauProduitPage] Submit failed:',
+                        error
+                      );
+                      const errorMessage =
+                        error instanceof Error
+                          ? error.message
+                          : 'Erreur lors de la soumission pour approbation';
+                      alert(`Erreur: ${errorMessage}`);
+                    });
+                  }}
                   disabled={isSubmitting}
                   className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
                 >

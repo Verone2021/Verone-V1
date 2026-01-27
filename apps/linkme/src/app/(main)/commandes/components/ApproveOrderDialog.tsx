@@ -124,7 +124,11 @@ export function ApproveOrderDialog({
             Annuler
           </button>
           <button
-            onClick={onConfirm}
+            onClick={() => {
+              void onConfirm().catch(err => {
+                console.error('Error confirming approval:', err);
+              });
+            }}
             disabled={isLoading}
             className="flex items-center gap-2 px-5 py-2 text-sm font-medium text-white bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
