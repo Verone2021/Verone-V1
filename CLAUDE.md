@@ -56,6 +56,36 @@ CRM/ERP modulaire pour décoration et mobilier d'intérieur haut de gamme.
 pnpm dev             # Dev (localhost:3000)
 pnpm build           # Production build
 pnpm type-check      # TypeScript validation
+pnpm lint            # ESLint validation
+pnpm lint:fix        # ESLint auto-fix
+```
+
+### 🛡️ Prévention ESLint (Automatique)
+
+**Protection 3 couches** (Phase 0 implémentée ✅) :
+
+1. **Pre-commit Hook** (Husky + lint-staged)
+   - Valide fichiers modifiés uniquement
+   - Bloque si ERREURS (bugs async)
+   - Tolère WARNINGS (type-safety)
+
+2. **Configuration ESLint**
+   - Règles async = ERROR (no-floating-promises, no-misused-promises)
+   - Règles type-safety = WARN (migration graduelle)
+
+3. **CI/CD** (GitHub Actions)
+   - Valide chaque PR
+   - Bloque merge si erreurs
+
+**Documentation complète** : `docs/current/eslint-strategy-2026.md`
+
+**État actuel** :
+- 🔴 119 erreurs async (DOIT FIXER - bugs production)
+- 🟡 1,946 warnings type-safety (tolérés, migration graduelle)
+
+**Bypass pre-commit** (découragé) :
+```bash
+git commit --no-verify
 ```
 
 ### Tests E2E
