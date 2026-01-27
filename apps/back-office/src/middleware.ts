@@ -1,24 +1,21 @@
 /**
- * Middleware Back Office - Protection des routes
+ * Middleware Back Office - Ultra-Minimaliste (Conforme Supabase SSR 2026)
  *
  * SÉCURITÉ CRITIQUE : Ce middleware protège TOUTES les pages du Back Office.
  * Seules les pages explicitement publiques sont accessibles sans authentification.
  *
- * Comportement:
- * - Routes protégées → Redirige vers /login si non connecté
- * - /login → Redirige vers /dashboard si déjà connecté
- * - / → Géré par ce middleware (redirect vers /dashboard ou /login)
+ * Pattern officiel Supabase SSR:
+ * 1. Créer le client Supabase
+ * 2. Appeler getUser() directement (PAS getSession() avant!)
+ * 3. Retourner la response avec cookies synchronisés
  *
  * @module middleware
  * @since 2026-01-22
+ * @updated 2026-01-27 - Refonte complète selon best practices Supabase
  */
 
+import { createServerClient } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
-
-import {
-  createMiddlewareClient,
-  updateSession,
-} from '@/lib/supabase-middleware';
 
 // Routes PUBLIQUES (whitelist) - TOUTES les autres sont protégées
 const PUBLIC_PAGES = ['/login'];
@@ -92,32 +89,50 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     return NextResponse.redirect(new URL(redirectTarget, request.url));
   }
 
-  // Mettre à jour la session Supabase (rafraîchir le token si nécessaire)
-  const response = await updateSession(request);
+  // Créer la response initiale
+  let supabaseResponse = NextResponse.next({ request });
 
-  // Route publique → laisser passer
-  if (isPublicRoute(pathname)) {
-    // Si sur /login et déjà connecté → dashboard
-    if (pathname === '/login') {
-      const { supabase } = createMiddlewareClient(request);
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (user) {
-        return NextResponse.redirect(new URL('/dashboard', request.url));
-      }
+  // Créer le client Supabase avec gestion des cookies
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          // Mettre à jour les cookies de la request
+          cookiesToSet.forEach(({ name, value }) => {
+            request.cookies.set(name, value);
+          });
+          // Recréer la response avec les cookies mis à jour
+          supabaseResponse = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) => {
+            supabaseResponse.cookies.set(name, value, options);
+          });
+        },
+      },
     }
-    return response;
+  );
+
+  // CRITIQUE: Appeler getUser() directement (PAS getSession() avant!)
+  // Documentation Supabase: "Avoid writing any logic between createServerClient and getUser()"
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Route publique → laisser passer (avec cookies rafraîchis)
+  if (isPublicRoute(pathname)) {
+    // Si connecté sur /login → rediriger vers /dashboard
+    if (user && pathname === '/login') {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+    return supabaseResponse;
   }
 
   // Gestion spéciale de la racine "/"
   if (pathname === '/') {
-    const { supabase } = createMiddlewareClient(request);
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
     if (user) {
       return NextResponse.redirect(new URL('/dashboard', request.url));
     } else {
@@ -125,22 +140,15 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     }
   }
 
-  // Route PROTÉGÉE → vérifier l'authentification
-  const { supabase, response: middlewareResponse } =
-    createMiddlewareClient(request);
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  // Route PROTÉGÉE sans authentification → rediriger vers /login
   if (!user) {
-    // Non authentifié → rediriger vers /login avec URL de retour
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
   // Authentifié → accès autorisé
-  return middlewareResponse;
+  return supabaseResponse;
 }
 
 // Matcher: exclut les assets statiques et fichiers Next.js

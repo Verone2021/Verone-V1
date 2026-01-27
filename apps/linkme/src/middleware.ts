@@ -1,22 +1,23 @@
 /**
- * Middleware Linkme - Protection des routes
+ * Middleware LinkMe - Ultra-Minimaliste (Conforme Supabase SSR 2026)
  *
- * SÉCURITÉ CRITIQUE : Ce middleware protège TOUTES les pages de LinkMe.
- * Seules les pages explicitement publiques sont accessibles sans authentification.
+ * SÉCURITÉ: Ce middleware protège toutes les routes non-publiques.
+ * Il vérifie UNIQUEMENT l'authentification (pas les rôles).
  *
- * Comportement:
- * - Routes protégées → Redirige vers /login si non connecté
- * - /login → Redirige vers /dashboard si déjà connecté
- * - / → Redirige vers /login (landing page publique ou login)
+ * La vérification du rôle LinkMe se fait dans AuthContext (client-side).
+ *
+ * Pattern officiel Supabase SSR:
+ * 1. Créer le client Supabase
+ * 2. Appeler getUser() directement (PAS getSession() avant!)
+ * 3. Retourner la response avec cookies synchronisés
  *
  * @module middleware
  * @since 2025-12-01
- * @updated 2026-01-08 - Passage à l'approche WHITELIST pour sécurité
+ * @updated 2026-01-27 - Refonte complète selon best practices Supabase
  */
 
+import { createServerClient } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
-
-import { createMiddlewareClient } from '@/lib/supabase-server';
 
 // Routes PUBLIQUES (whitelist) - TOUTES les autres sont protégées
 const PUBLIC_PAGES = [
@@ -47,11 +48,11 @@ function isPublicRoute(pathname: string): boolean {
   }
 
   // Routes dynamiques publiques (white-label catalogues, delivery links)
-  if (/^\/s\/[^/]+$/.test(pathname)) {
-    return true; // /s/[id]
+  if (pathname.startsWith('/s/')) {
+    return true; // /s/[id] et toutes les sous-routes /s/[id]/*
   }
-  if (/^\/delivery-info\/[^/]+$/.test(pathname)) {
-    return true; // /delivery-info/[token]
+  if (pathname.startsWith('/delivery-info/')) {
+    return true; // /delivery-info/[token] et sous-routes
   }
 
   // API publiques (préfixes)
@@ -65,7 +66,7 @@ function isPublicRoute(pathname: string): boolean {
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
-  // Skip pour les assets statiques et fichiers Next.js
+  // Skip assets statiques et fichiers Next.js
   if (
     pathname.startsWith('/_next') ||
     pathname.includes('.') // fichiers statiques (favicon, images, etc.)
@@ -73,58 +74,58 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     return NextResponse.next();
   }
 
-  // Créer UNE SEULE instance Supabase pour toute la requête
-  const { supabase, response } = createMiddlewareClient(request);
+  // Créer la response initiale
+  let supabaseResponse = NextResponse.next({ request });
 
-  // Rafraîchir session UNE FOIS au début (déclenche refresh si nécessaire)
-  try {
-    await supabase.auth.getSession();
-  } catch (error) {
-    // Log server-side uniquement (pas dans browser console)
-    console.error('[Middleware] Session refresh failed:', error);
-    // Continue silencieusement → user sera redirigé vers /login si nécessaire
-  }
+  // Créer le client Supabase avec gestion des cookies
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          // Mettre à jour les cookies de la request
+          cookiesToSet.forEach(({ name, value }) => {
+            request.cookies.set(name, value);
+          });
+          // Recréer la response avec les cookies mis à jour
+          supabaseResponse = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) => {
+            supabaseResponse.cookies.set(name, value, options);
+          });
+        },
+      },
+    }
+  );
 
-  // Récupérer l'utilisateur (réutilise la même instance)
+  // CRITIQUE: Appeler getUser() directement (PAS getSession() avant!)
+  // Documentation Supabase: "Avoid writing any logic between createServerClient and getUser()"
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Route publique → vérifier si l'utilisateur est connecté ET a un rôle LinkMe
+  // Route publique → laisser passer (avec cookies rafraîchis)
   if (isPublicRoute(pathname)) {
-    // Si connecté sur une page marketing → vérifier le rôle LinkMe avant de rediriger
-    // IMPORTANT: Ne pas rediriger si l'utilisateur n'a pas de rôle LinkMe
-    // (cas où l'utilisateur est connecté au back-office mais pas à LinkMe)
-    if (user && PUBLIC_PAGES.includes(pathname)) {
-      // Vérifier si l'utilisateur a un rôle LinkMe actif
-      const { data: linkmeRole } = await supabase
-        .from('user_app_roles')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('app', 'linkme')
-        .eq('is_active', true)
-        .maybeSingle();
-
-      // Rediriger vers dashboard SEULEMENT si rôle LinkMe actif
-      if (linkmeRole) {
-        return NextResponse.redirect(new URL('/dashboard', request.url));
-      }
-      // Sinon: laisser sur la page publique (login) pour se connecter avec un autre compte
+    // Si connecté sur /login → rediriger vers /dashboard
+    // Note: La vérification du rôle LinkMe se fait dans AuthContext
+    if (user && pathname === '/login') {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
     }
-
-    return response;
+    return supabaseResponse;
   }
 
-  // Route PROTÉGÉE → vérifier l'authentification
+  // Route PROTÉGÉE sans authentification → rediriger vers /login
   if (!user) {
-    // Non authentifié → rediriger vers /login avec URL de retour
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
   // Authentifié → accès autorisé
-  return response;
+  return supabaseResponse;
 }
 
 // Matcher: exclut les assets statiques et fichiers Next.js

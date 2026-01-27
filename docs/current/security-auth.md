@@ -126,10 +126,12 @@ CREATE TABLE user_app_roles (
 );
 ```
 
-### Sessions Isolees
+### Sessions et Isolation Multi-App
 
-- Back-office et LinkMe ont des cookies separes
-- Un user peut etre connecte aux deux apps simultanement
+- **Cookie partage**: Back-office et LinkMe partagent le meme cookie Supabase (meme projet)
+- **Isolation par RLS**: Separation via `user_app_roles.app` (back-office vs linkme)
+- **Acces simultane**: Un user peut avoir des roles dans les deux apps
+- **Middleware**: Chaque app verifie uniquement l'authentification, pas les roles
 
 ---
 
