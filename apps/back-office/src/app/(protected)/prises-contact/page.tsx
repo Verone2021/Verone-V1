@@ -16,7 +16,7 @@ import { useState, useMemo, useEffect } from 'react';
 
 import Link from 'next/link';
 
-import { ButtonUnified, IconButton } from '@verone/ui';
+import { IconButton } from '@verone/ui';
 import { spacing, colors } from '@verone/ui/design-system';
 import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
@@ -37,9 +37,7 @@ import {
   AlertCircle,
   Clock,
   MessageSquare,
-  Building2,
   Phone,
-  User,
 } from 'lucide-react';
 
 // Types

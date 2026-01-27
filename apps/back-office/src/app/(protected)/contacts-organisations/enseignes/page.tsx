@@ -14,7 +14,7 @@ import {
 } from '@verone/organisations';
 import { Badge } from '@verone/ui';
 import { ButtonV2, IconButton } from '@verone/ui';
-import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
+import { Card, CardContent, CardHeader } from '@verone/ui';
 import { Input } from '@verone/ui';
 import {
   Pagination,
@@ -260,14 +260,14 @@ export default function EnseignesPage() {
     try {
       if (editingEnseigne) {
         // En mode édition, ne pas inclure logo_url car géré par EnseigneLogoUploadButton
-        const { logo_url, ...updateData } = formData;
+        const { logo_url: _logo_url, ...updateData } = formData;
         await updateEnseigne({
           id: editingEnseigne.id,
           ...updateData,
         });
       } else {
         // En mode création, pas de logo_url (sera ajouté après)
-        const { logo_url, ...createData } = formData;
+        const { logo_url: _logo_url2, ...createData } = formData;
         await createEnseigne(createData);
       }
       handleCloseModal();

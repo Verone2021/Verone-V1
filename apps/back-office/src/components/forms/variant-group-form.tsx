@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 
 import Link from 'next/link';
 
-import { COLLECTION_STYLE_OPTIONS } from '@verone/types';
 import type { RoomType } from '@verone/types';
 import type { VariantGroup, VariantType } from '@verone/types';
 import { ButtonV2 } from '@verone/ui';
@@ -27,7 +26,7 @@ import {
   SelectValue,
 } from '@verone/ui';
 import { cn } from '@verone/utils';
-import { X, Plus, ExternalLink } from 'lucide-react';
+import { Plus, ExternalLink } from 'lucide-react';
 
 import { useFamilies } from '@verone/categories';
 import { useCategories } from '@verone/categories';

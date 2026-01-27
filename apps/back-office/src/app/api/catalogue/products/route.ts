@@ -11,8 +11,6 @@ import { NextResponse } from 'next/server';
 import { logger, catalogueLogger } from '@verone/utils/logger';
 import {
   withApiSecurity,
-  validateInput,
-  sanitizeString,
 } from '@verone/utils/middleware/api-security';
 import { withLogging } from '@verone/utils/middleware/logging';
 
@@ -314,7 +312,7 @@ export const POST = withLogging(createProduct, {
 export async function OPTIONS(request: NextRequest) {
   return withApiSecurity(
     request,
-    async (req: NextRequest) => {
+    async (_req: NextRequest) => {
       return new NextResponse(null, { status: 204 });
     },
     {

@@ -11,7 +11,6 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
@@ -26,7 +25,7 @@ interface PricingSectionProps {
 export function PricingSection({
   formData,
   setFormData,
-  onSave,
+  onSave: _onSave,
 }: PricingSectionProps) {
   const updateField = (field: keyof WizardFormData, value: any) => {
     setFormData({

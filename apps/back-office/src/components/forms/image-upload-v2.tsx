@@ -25,7 +25,6 @@ import {
 } from 'lucide-react';
 
 import { useImageUpload, type UseImageUploadProps } from '@verone/common';
-import type { BucketType } from '@verone/utils/upload/validation';
 
 import { cn } from '@verone/utils';
 
@@ -62,11 +61,11 @@ export function ImageUploadV2({
     validationError,
     uploadResult,
     userProfile,
-    bucketConfig,
+    bucketConfig: _bucketConfig,
     uploadFile,
     validateFile,
     clearError,
-    reset,
+    reset: _reset,
     deleteUploadedFile,
     canUpload,
     supportedTypes,

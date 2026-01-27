@@ -6,8 +6,6 @@ import type { User as SupabaseUser } from '@supabase/supabase-js';
 import { ButtonUnified } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { RoleBadge, type UserRole } from '@verone/ui';
-import { themeV2 } from '@verone/ui/theme-v2';
-import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import {
   validateProfileForm,
@@ -157,7 +155,7 @@ export default function ProfilePage() {
       });
 
       // Vérifier si le profil existe avant update
-      const { data: existingProfile, error: checkError } = await supabase
+      const { data: _existingProfile, error: checkError } = await supabase
         .from('user_profiles')
         .select('user_id')
         .eq('user_id', user.id)

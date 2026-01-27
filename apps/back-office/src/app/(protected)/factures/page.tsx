@@ -53,12 +53,9 @@ import {
 } from '@verone/ui';
 import {
   Money,
-  StatusPill,
   KpiCard,
   KpiGrid,
   DataTableToolbar,
-  DocumentBadge,
-  PartnerChipMini,
   SyncButton,
 } from '@verone/ui-business';
 import { featureFlags } from '@verone/utils/feature-flags';
@@ -333,7 +330,7 @@ function WorkflowStatusBadge({
 function InvoicesTable({
   invoices,
   loading,
-  onView,
+  onView: _onView,
   onDownloadPdf,
   isArchived,
   onArchive,
