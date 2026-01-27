@@ -345,7 +345,11 @@ export function EditMarginModal({
             Annuler
           </button>
           <button
-            onClick={handleSave}
+            onClick={() => {
+              void handleSave().catch(error => {
+                console.error('[EditMarginModal] Save failed:', error);
+              });
+            }}
             disabled={updateMargin.isPending || marginRate === item.margin_rate}
             className="flex items-center gap-2 px-5 py-2.5 text-sm bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
           >

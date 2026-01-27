@@ -377,7 +377,14 @@ export function PaymentRequestModal({
               </button>
             ) : (
               <button
-                onClick={handleSubmit}
+                onClick={() => {
+                  void handleSubmit().catch(error => {
+                    console.error(
+                      '[PaymentRequestModal] Submit failed:',
+                      error
+                    );
+                  });
+                }}
                 disabled={createMutation.isPending}
                 className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg hover:from-emerald-700 hover:to-teal-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
               >

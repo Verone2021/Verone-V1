@@ -241,7 +241,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     };
 
-    initSession();
+    void initSession().catch(error => {
+      console.error('[AuthContext] initSession failed:', error);
+    });
 
     // Écouter les changements d'auth
     const {

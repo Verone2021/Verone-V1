@@ -140,9 +140,9 @@ export function useUpdateProfile() {
 
       return { success: true };
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       // Invalider le cache pour recharger les données
-      queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+      await queryClient.invalidateQueries({ queryKey: ['user-profile'] });
     },
   });
 }

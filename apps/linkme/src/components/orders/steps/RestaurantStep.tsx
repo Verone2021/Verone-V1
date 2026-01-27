@@ -494,22 +494,30 @@ export function RestaurantStep({
                   </div>
                   <RadioGroup
                     value={formData.restaurant.existingOwnershipType || ''}
-                    onValueChange={async value => {
+                    onValueChange={value => {
                       const organisationId = formData.restaurant.existingId;
                       if (!organisationId) return;
 
                       const ownershipType = value as 'succursale' | 'franchise';
-                      try {
-                        // 1. Sauvegarder en BD immédiatement
-                        await updateOwnershipType({
-                          organisationId,
-                          ownershipType,
-                        });
-                        // 2. Mettre à jour le state local
-                        onUpdate({ existingOwnershipType: ownershipType });
-                      } catch {
-                        // Erreur gérée par le hook (toast d'erreur)
-                      }
+
+                      // Wrapper async avec void + catch
+                      void (async () => {
+                        try {
+                          // 1. Sauvegarder en BD immédiatement
+                          await updateOwnershipType({
+                            organisationId,
+                            ownershipType,
+                          });
+                          // 2. Mettre à jour le state local
+                          onUpdate({ existingOwnershipType: ownershipType });
+                        } catch (error) {
+                          console.error(
+                            '[RestaurantStep] Update ownership type failed:',
+                            error
+                          );
+                          // Erreur gérée par le hook (toast d'erreur)
+                        }
+                      })();
                     }}
                     disabled={isUpdatingType}
                     className="flex gap-4 ml-7"
