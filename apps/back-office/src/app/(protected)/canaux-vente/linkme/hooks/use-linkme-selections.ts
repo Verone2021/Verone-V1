@@ -351,11 +351,13 @@ export function useUpdateSelection() {
 
       if (error) throw error;
     },
-    onSuccess: (_, { selectionId }) => {
-      queryClient.invalidateQueries({
-        queryKey: ['linkme-selection', selectionId],
-      });
-      queryClient.invalidateQueries({ queryKey: ['linkme-selections'] });
+    onSuccess: async (_, { selectionId }) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-selection', selectionId],
+        }),
+        queryClient.invalidateQueries({ queryKey: ['linkme-selections'] }),
+      ]);
       toast({
         title: 'Sélection mise à jour',
         description: 'Les modifications ont été enregistrées.',
@@ -413,11 +415,13 @@ export function useAddProductToSelection() {
 
       return data.item?.id; // Retourne l'ID du nouvel item
     },
-    onSuccess: (_, { selectionId }) => {
-      queryClient.invalidateQueries({
-        queryKey: ['linkme-selection', selectionId],
-      });
-      queryClient.invalidateQueries({ queryKey: ['linkme-selections'] });
+    onSuccess: async (_, { selectionId }) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-selection', selectionId],
+        }),
+        queryClient.invalidateQueries({ queryKey: ['linkme-selections'] }),
+      ]);
       toast({
         title: 'Produit ajouté',
         description: 'Le produit a été ajouté à la sélection.',
@@ -464,11 +468,13 @@ export function useRemoveProductFromSelection() {
         p_selection_id: selectionId,
       });
     },
-    onSuccess: (_, { selectionId }) => {
-      queryClient.invalidateQueries({
-        queryKey: ['linkme-selection', selectionId],
-      });
-      queryClient.invalidateQueries({ queryKey: ['linkme-selections'] });
+    onSuccess: async (_, { selectionId }) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-selection', selectionId],
+        }),
+        queryClient.invalidateQueries({ queryKey: ['linkme-selections'] }),
+      ]);
       toast({
         title: 'Produit retiré',
         description: 'Le produit a été retiré de la sélection.',
@@ -519,8 +525,8 @@ export function useUpdateProductMargin() {
 
       if (error) throw error;
     },
-    onSuccess: (_, { selectionId }) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, { selectionId }) => {
+      await queryClient.invalidateQueries({
         queryKey: ['linkme-selection', selectionId],
       });
       toast({
@@ -585,11 +591,13 @@ export function useUpdateSelectionItem() {
 
       if (error) throw error;
     },
-    onSuccess: (_, { selectionId }) => {
-      queryClient.invalidateQueries({
-        queryKey: ['linkme-selection', selectionId],
-      });
-      queryClient.invalidateQueries({ queryKey: ['linkme-selections'] });
+    onSuccess: async (_, { selectionId }) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-selection', selectionId],
+        }),
+        queryClient.invalidateQueries({ queryKey: ['linkme-selections'] }),
+      ]);
       toast({
         title: 'Produit mis à jour',
         description: 'Les modifications ont été enregistrées.',
@@ -623,8 +631,8 @@ export function useDeleteSelection() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-selections'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['linkme-selections'] });
       toast({
         title: 'Sélection supprimée',
         description: 'La sélection a été supprimée définitivement.',
