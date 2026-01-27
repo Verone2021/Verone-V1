@@ -95,7 +95,9 @@ export default function PartnerDetailPage() {
         console.error('Erreur chargement canaux organisation:', err);
       }
     }
-    fetchOrganisationChannels();
+    void fetchOrganisationChannels().catch(error => {
+      console.error('[PartnerDetailPage] Fetch channels failed:', error);
+    });
   }, [partnerId]);
 
   // Hook centralisé pour les compteurs d'onglets
@@ -107,11 +109,17 @@ export default function PartnerDetailPage() {
   // Gestionnaire de mise à jour des données partenaire
   const handlePartnerUpdate = (_updatedData: Partial<Organisation>) => {
     // Rafraîchir les données du partenaire immédiatement
-    refetchPartner();
+    void refetchPartner().catch(error => {
+      console.error('[PartnerDetailPage] Refetch partner failed:', error);
+    });
     // Rafraîchir la liste des organisations (cache)
-    refetch();
+    void refetch().catch(error => {
+      console.error('[PartnerDetailPage] Refetch list failed:', error);
+    });
     // Rafraîchir les compteurs
-    refreshCounts();
+    void refreshCounts().catch(error => {
+      console.error('[PartnerDetailPage] Refresh counts failed:', error);
+    });
   };
 
   // Configuration des onglets avec compteurs du hook + modules déployés
@@ -179,14 +187,24 @@ export default function PartnerDetailPage() {
       const success = await archiveOrganisation(partner.id);
       if (success) {
         console.log('✅ Partenaire archivé avec succès');
-        refetch();
+        void refetch().catch(error => {
+          console.error(
+            '[PartnerDetailPage] Refetch after archive failed:',
+            error
+          );
+        });
       }
     } else {
       // Restaurer
       const success = await unarchiveOrganisation(partner.id);
       if (success) {
         console.log('✅ Partenaire restauré avec succès');
-        refetch();
+        void refetch().catch(error => {
+          console.error(
+            '[PartnerDetailPage] Refetch after restore failed:',
+            error
+          );
+        });
       }
     }
   };
@@ -237,7 +255,14 @@ export default function PartnerDetailPage() {
         <div className="flex gap-2">
           <ButtonV2
             variant={partner.archived_at ? 'success' : 'danger'}
-            onClick={handleArchive}
+            onClick={() => {
+              void handleArchive().catch(error => {
+                console.error(
+                  '[PartnerDetailPage] Archive action failed:',
+                  error
+                );
+              });
+            }}
           >
             {partner.archived_at ? (
               <>
@@ -330,7 +355,14 @@ export default function PartnerDetailPage() {
             organisationName={partner.legal_name}
             organisationType="provider"
             currentLogoUrl={partner.logo_url}
-            onUploadSuccess={() => refetch()}
+            onUploadSuccess={() => {
+              void refetch().catch(error => {
+                console.error(
+                  '[PartnerDetailPage] Refetch after logo upload failed:',
+                  error
+                );
+              });
+            }}
           />
 
           {/* Statistiques - Composant réutilisable */}
