@@ -363,18 +363,27 @@ export default function ProductDetailPage() {
 
         if (error) {
           console.error('❌ Erreur sauvegarde produit:', error);
-          fetchProduct(); // Rollback UI si erreur
+          void fetchProduct().catch(fetchError => {
+            console.error('[ProductDetail] Rollback fetch failed:', fetchError);
+          }); // Rollback UI si erreur
         } else {
           console.log('✅ Produit sauvegardé en DB:', updatedData);
           // 3. Recharger les données complètes si champs relationnels modifiés
           // (pour mettre à jour le breadcrumb et autres données jointes)
           if ('subcategory_id' in updatedData || 'supplier_id' in updatedData) {
-            fetchProduct();
+            void fetchProduct().catch(fetchError => {
+              console.error(
+                '[ProductDetail] Fetch after update failed:',
+                fetchError
+              );
+            });
           }
         }
       } catch (err) {
         console.error('❌ Erreur sauvegarde produit:', err);
-        fetchProduct(); // Rollback UI
+        void fetchProduct().catch(fetchError => {
+          console.error('[ProductDetail] Rollback fetch failed:', fetchError);
+        }); // Rollback UI
       }
     },
     [productId, fetchProduct]
@@ -389,7 +398,9 @@ export default function ProductDetailPage() {
   };
 
   useEffect(() => {
-    fetchProduct();
+    void fetchProduct().catch(error => {
+      console.error('[ProductDetail] Initial fetch failed:', error);
+    });
   }, [productId]);
 
   // ✅ HOOKS DÉPLACÉS AVANT RETURNS CONDITIONNELS (React Rules of Hooks)
@@ -757,15 +768,25 @@ export default function ProductDetailPage() {
                 enseigneId={product.enseigne_id}
                 organisationId={product.assigned_client_id}
                 onEnseigneChange={(enseigneId, _enseigneName, _parentOrgId) => {
-                  handleProductUpdate({
+                  void handleProductUpdate({
                     enseigne_id: enseigneId,
                     assigned_client_id: null, // Reset l'autre si on sélectionne une enseigne
+                  }).catch(error => {
+                    console.error(
+                      '[ProductDetail] Enseigne update failed:',
+                      error
+                    );
                   });
                 }}
                 onOrganisationChange={(organisationId, _organisationName) => {
-                  handleProductUpdate({
+                  void handleProductUpdate({
                     assigned_client_id: organisationId,
                     enseigne_id: null, // Reset l'autre si on sélectionne une organisation
+                  }).catch(error => {
+                    console.error(
+                      '[ProductDetail] Organisation update failed:',
+                      error
+                    );
                   });
                 }}
                 disabled={!!product.created_by_affiliate}
@@ -994,7 +1015,14 @@ export default function ProductDetailPage() {
               costPrice={product.cost_price || undefined}
               disabled={(product.stock_quantity ?? 0) >= 1}
               onRequirementChange={requiresSample => {
-                handleProductUpdate({ requires_sample: requiresSample });
+                void handleProductUpdate({
+                  requires_sample: requiresSample,
+                }).catch(error => {
+                  console.error(
+                    '[ProductDetail] Sample requirement update failed:',
+                    error
+                  );
+                });
               }}
             />
           </ProductDetailAccordion>
@@ -1020,7 +1048,14 @@ export default function ProductDetailPage() {
                 <Switch
                   checked={product.show_on_linkme_globe ?? false}
                   onCheckedChange={(checked: boolean) => {
-                    handleProductUpdate({ show_on_linkme_globe: checked });
+                    void handleProductUpdate({
+                      show_on_linkme_globe: checked,
+                    }).catch(error => {
+                      console.error(
+                        '[ProductDetail] Globe visibility update failed:',
+                        error
+                      );
+                    });
                   }}
                   disabled={productImages.length === 0}
                 />
@@ -1081,7 +1116,14 @@ export default function ProductDetailPage() {
         productName={product.name}
         productType="product"
         maxImages={20}
-        onImagesUpdated={fetchProduct}
+        onImagesUpdated={() => {
+          void fetchProduct().catch(error => {
+            console.error(
+              '[ProductDetail] Fetch after images updated failed:',
+              error
+            );
+          });
+        }}
       />
 
       {/* Modal de gestion des caractéristiques */}
@@ -1097,7 +1139,14 @@ export default function ProductDetailPage() {
             | undefined,
           weight: product.weight ?? undefined,
         }}
-        onUpdate={handleProductUpdate}
+        onUpdate={data => {
+          void handleProductUpdate(data).catch(error => {
+            console.error(
+              '[ProductDetail] Characteristics update failed:',
+              error
+            );
+          });
+        }}
       />
 
       {/* Modal de gestion des descriptions */}
@@ -1113,7 +1162,11 @@ export default function ProductDetailPage() {
             | string[]
             | undefined,
         }}
-        onUpdate={handleProductUpdate}
+        onUpdate={data => {
+          void handleProductUpdate(data).catch(error => {
+            console.error('[ProductDetail] Descriptions update failed:', error);
+          });
+        }}
       />
 
       {/* Modal de modification de la catégorisation */}
@@ -1138,8 +1191,13 @@ export default function ProductDetailPage() {
               value={product.subcategory_id || ''}
               onChange={(subcategoryId, hierarchyInfo) => {
                 if (subcategoryId && hierarchyInfo) {
-                  handleProductUpdate({
+                  void handleProductUpdate({
                     subcategory_id: subcategoryId,
+                  }).catch(error => {
+                    console.error(
+                      '[ProductDetail] Subcategory update failed:',
+                      error
+                    );
                   });
                   setIsCategorizeModalOpen(false);
                 }
