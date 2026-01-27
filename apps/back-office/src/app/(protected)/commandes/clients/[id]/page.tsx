@@ -13,7 +13,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 // NOTE: ShipmentsSection supprimée - sera recréée ultérieurement
-import { Badge, Button, Card } from '@verone/ui';
+import { Badge, Card } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/server';
 import {
   ArrowLeft,
@@ -23,9 +23,6 @@ import {
   Mail,
   Phone,
   Building2,
-  CreditCard,
-  CheckCircle,
-  AlertCircle,
 } from 'lucide-react';
 
 import { CopyButton } from './CopyButton';
@@ -45,7 +42,7 @@ export default async function OrderDetailPage({
 
   // 1. Récupérer commande de base
   let order: any = null;
-  const error: any = null;
+  const _error: any = null;
 
   // Essayer d'abord requête directe
   const { data: orderData, error: orderError } = await supabase

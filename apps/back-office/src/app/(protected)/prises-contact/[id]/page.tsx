@@ -19,7 +19,6 @@ import { useRouter } from 'next/navigation';
 
 import { ButtonUnified } from '@verone/ui';
 import { spacing, colors } from '@verone/ui/design-system';
-import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import { formatDistanceToNow, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -29,10 +28,7 @@ import {
   Phone,
   Building2,
   User,
-  Clock,
-  MessageSquare,
   AlertCircle,
-  CheckCircle,
   Edit,
   Save,
   X,

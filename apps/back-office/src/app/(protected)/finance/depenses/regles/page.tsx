@@ -27,7 +27,6 @@ import {
   CardTitle,
   Input,
   Tabs,
-  TabsContent,
   TabsList,
   TabsTrigger,
 } from '@verone/ui';
@@ -63,8 +62,8 @@ export default function ReglesPage() {
   // Pré-remplissage depuis classification (query params)
   const createFromClassification = searchParams.get('create') === 'true';
   const prefillLabel = searchParams.get('label') || '';
-  const prefillCategory = searchParams.get('category') || '';
-  const prefillTva = searchParams.get('tva') || '';
+  const _prefillCategory = searchParams.get('category') || '';
+  const _prefillTva = searchParams.get('tva') || '';
 
   // Hooks de données
   const {
@@ -243,7 +242,7 @@ export default function ReglesPage() {
   };
 
   // Sauvegarder les modifications d'une règle
-  const handleSaveRule = async (
+  const _handleSaveRule = async (
     ruleId: string,
     data: {
       organisation_id?: string | null;

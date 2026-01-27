@@ -22,9 +22,6 @@ import { ButtonUnified } from '@verone/ui';
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from '@verone/ui';
 import { VéroneCard } from '@verone/ui';
 import type { Database } from '@verone/utils/supabase/types';
@@ -32,7 +29,6 @@ import {
   ArrowLeft,
   Plus,
   Edit,
-  Trash2,
   FolderOpen,
   Package,
   Tag,

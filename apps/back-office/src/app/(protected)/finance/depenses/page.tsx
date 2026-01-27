@@ -9,7 +9,6 @@ import {
   getPcgCategory,
   getPcgCategoriesByType,
   getPcgColor,
-  PCG_SUGGESTED_CATEGORIES,
 } from '@verone/finance';
 import {
   QuickClassificationModal,
@@ -40,8 +39,6 @@ import {
 import { createClient } from '@verone/utils/supabase/client';
 import {
   AlertCircle,
-  ArrowDownLeft,
-  ArrowUpRight,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
@@ -382,7 +379,7 @@ export default function DepensesPage() {
   // Dashboard stats pour les graphiques
   const {
     evolution,
-    expenseBreakdown,
+    expenseBreakdown: _expenseBreakdown,
     loading: dashboardLoading,
   } = useTreasuryStats();
 

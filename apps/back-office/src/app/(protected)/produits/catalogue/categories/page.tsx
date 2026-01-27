@@ -13,7 +13,6 @@ import type { SubcategoryWithDetails } from '@verone/categories';
 import { Badge } from '@verone/ui';
 import { ButtonUnified, IconButton } from '@verone/ui';
 import { cn } from '@verone/utils';
-import { checkSLOCompliance } from '@verone/utils';
 import {
   Search,
   Plus,
@@ -22,7 +21,6 @@ import {
   FolderPlus,
   Folder,
   Eye,
-  EyeOff,
   ChevronRight,
   ChevronDown,
   Minus,
@@ -59,11 +57,11 @@ export default function CategoriesPage() {
     createFamily,
     updateFamily,
     deleteFamily,
-    toggleFamilyStatus,
+    toggleFamilyStatus: _toggleFamilyStatus,
   } = useFamilies();
 
   const {
-    categories,
+    categories: _categories,
     allCategories, // Liste plate pour accès par family_id
     loading: categoriesLoading,
     error: categoriesError,

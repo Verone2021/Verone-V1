@@ -25,8 +25,6 @@ import {
 import type { Collection } from '@verone/collections';
 import {
   useCollections,
-  CollectionFilters,
-  CreateCollectionData,
 } from '@verone/collections';
 import type { CreateCollectionInput } from '@verone/common';
 import { CollectionCreationWizard } from '@verone/common';
@@ -58,7 +56,7 @@ const formatCollectionStyle = (style?: string): string => {
 };
 
 // Helper pour formater la catégorie de pièce
-const formatRoomCategory = (roomCategory?: string): string => {
+const _formatRoomCategory = (roomCategory?: string): string => {
   if (!roomCategory) return '';
   const roomMap: Record<string, string> = {
     chambre: 'Chambre',
@@ -164,7 +162,7 @@ export default function CollectionsPage() {
     });
   };
 
-  const formatPrice = (priceInCents: number) => {
+  const _formatPrice = (priceInCents: number) => {
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
       currency: 'EUR',

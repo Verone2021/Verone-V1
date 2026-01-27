@@ -30,16 +30,13 @@ import {
   TableHeader,
   TableRow,
 } from '@verone/ui';
-import { Money, StatusPill } from '@verone/ui-business';
+import { StatusPill } from '@verone/ui-business';
 import { featureFlags } from '@verone/utils/feature-flags';
 import {
   AlertTriangle,
   ArrowLeft,
-  ArrowRight,
-  Calendar,
   Building2,
   FileText,
-  Download,
   CreditCard,
   Clock,
   Lock,
@@ -504,7 +501,7 @@ export default function DocumentDetailPage({
     window.open(pdfPath, '_blank');
   };
 
-  const handleMarkPaid = async () => {
+  const _handleMarkPaid = async () => {
     if (!document || documentType !== 'invoice') return;
     setActionLoading('markPaid');
 

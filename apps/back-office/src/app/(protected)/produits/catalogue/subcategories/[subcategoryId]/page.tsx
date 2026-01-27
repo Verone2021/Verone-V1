@@ -16,16 +16,12 @@ import { ButtonV2 } from '@verone/ui';
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from '@verone/ui';
 import { VéroneCard } from '@verone/ui';
 import {
   ArrowLeft,
   Plus,
   Edit,
-  Trash2,
   Package,
   Grid3X3,
   Tag,

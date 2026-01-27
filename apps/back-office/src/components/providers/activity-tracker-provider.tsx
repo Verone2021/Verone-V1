@@ -54,10 +54,10 @@ export function ActivityTrackerProvider({
   // Initialiser tracker uniquement si user authentifié
   const {
     trackEvent,
-    trackFormSubmit,
-    trackSearch,
-    trackFilterApplied,
-    currentSession,
+    trackFormSubmit: _trackFormSubmit,
+    trackSearch: _trackSearch,
+    trackFilterApplied: _trackFilterApplied,
+    currentSession: _currentSession,
     flushEvents,
   } = useUserActivityTracker();
 
