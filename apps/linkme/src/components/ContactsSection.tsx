@@ -478,7 +478,11 @@ export function ContactsSection({
             )}
             <Button
               size="sm"
-              onClick={handleSave}
+              onClick={() => {
+                void handleSave().catch(error => {
+                  console.error('[ContactsSection] Save failed:', error);
+                });
+              }}
               disabled={!isFormValid || updateMutation.isPending}
             >
               {updateMutation.isPending ? (

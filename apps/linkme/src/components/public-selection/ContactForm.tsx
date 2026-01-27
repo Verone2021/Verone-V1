@@ -172,7 +172,14 @@ export function ContactForm({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          onSubmit={e => {
+            void handleSubmit(e).catch(error => {
+              console.error('[ContactForm] Submit failed:', error);
+            });
+          }}
+          className="space-y-6"
+        >
           {/* Name Row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>

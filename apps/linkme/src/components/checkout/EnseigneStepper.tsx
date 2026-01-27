@@ -241,7 +241,9 @@ export function EnseigneStepper({
     if (currentStep === 1 && !validateStep1()) return;
     if (currentStep === 3) {
       if (!validateStep3()) return;
-      handleSubmit();
+      void handleSubmit().catch(error => {
+        console.error('[EnseigneStepper] Submit failed:', error);
+      });
       return;
     }
     setCurrentStep(prev => Math.min(prev + 1, 3));
