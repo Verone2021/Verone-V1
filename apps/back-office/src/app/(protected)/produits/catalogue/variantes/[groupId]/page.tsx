@@ -526,9 +526,23 @@ export default function VariantGroupDetailPage({
                     type="text"
                     value={editedName}
                     onChange={e => setEditedName(e.target.value)}
-                    onBlur={handleSaveName}
+                    onBlur={() => {
+                      void handleSaveName().catch(error => {
+                        console.error(
+                          '[VariantGroup] Save name failed:',
+                          error
+                        );
+                      });
+                    }}
                     onKeyDown={e => {
-                      if (e.key === 'Enter') handleSaveName();
+                      if (e.key === 'Enter') {
+                        void handleSaveName().catch(error => {
+                          console.error(
+                            '[VariantGroup] Save name failed:',
+                            error
+                          );
+                        });
+                      }
                       if (e.key === 'Escape') handleCancelEditName();
                     }}
                     disabled={savingName}
@@ -680,7 +694,9 @@ export default function VariantGroupDetailPage({
                       | 'material'
                       | 'pattern';
                     setEditedType(newType);
-                    handleSaveType(newType);
+                    void handleSaveType(newType).catch(error => {
+                      console.error('[VariantGroup] Save type failed:', error);
+                    });
                   }}
                   disabled={savingType}
                   className="border border-gray-300 rounded-md px-3 py-1 text-sm"
@@ -881,7 +897,14 @@ export default function VariantGroupDetailPage({
                       } as any)
                     : null
                 }
-                onRemove={handleRemoveProduct}
+                onRemove={(id, name) => {
+                  void handleRemoveProduct(id, name).catch(error => {
+                    console.error(
+                      '[VariantGroup] Remove product failed:',
+                      error
+                    );
+                  });
+                }}
                 onEdit={handleEditProduct}
                 router={router}
               />
@@ -954,7 +977,11 @@ export default function VariantGroupDetailPage({
           onClose={handleCloseEditProductModal}
           product={selectedProductForEdit}
           variantGroup={variantGroup}
-          onSuccess={handleProductUpdated}
+          onSuccess={() => {
+            void handleProductUpdated().catch(error => {
+              console.error('[VariantGroup] Product update failed:', error);
+            });
+          }}
         />
       )}
     </div>
