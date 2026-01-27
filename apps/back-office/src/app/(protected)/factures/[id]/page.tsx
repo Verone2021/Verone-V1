@@ -293,7 +293,9 @@ export default function DocumentDetailPage({
       setLoading(false);
     }
 
-    fetchDocument();
+    void fetchDocument().catch(error => {
+      console.error('[DocumentDetail] Fetch failed:', error);
+    });
   }, [id, typeParam]);
 
   // ===== ACTION HANDLERS =====
@@ -716,7 +718,11 @@ export default function DocumentDetailPage({
           {isFinalized && (
             <Button
               variant="outline"
-              onClick={handleSendEmail}
+              onClick={() => {
+                void handleSendEmail().catch(error => {
+                  console.error('[DocumentDetail] Send email failed:', error);
+                });
+              }}
               disabled={actionLoading === 'email'}
             >
               {actionLoading === 'email' ? (
@@ -1140,7 +1146,11 @@ export default function DocumentDetailPage({
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               className="bg-amber-600 text-white hover:bg-amber-700"
-              onClick={handleFinalize}
+              onClick={() => {
+                void handleFinalize().catch(error => {
+                  console.error('[DocumentDetail] Finalize failed:', error);
+                });
+              }}
             >
               Oui, finaliser
             </AlertDialogAction>
@@ -1164,7 +1174,11 @@ export default function DocumentDetailPage({
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-600 text-white hover:bg-red-700"
-              onClick={handleDelete}
+              onClick={() => {
+                void handleDelete().catch(error => {
+                  console.error('[DocumentDetail] Delete failed:', error);
+                });
+              }}
             >
               Supprimer
             </AlertDialogAction>
@@ -1184,7 +1198,13 @@ export default function DocumentDetailPage({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConvertToInvoice}>
+            <AlertDialogAction
+              onClick={() => {
+                void handleConvertToInvoice().catch(error => {
+                  console.error('[DocumentDetail] Convert failed:', error);
+                });
+              }}
+            >
               Convertir en facture
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -1206,7 +1226,16 @@ export default function DocumentDetailPage({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleCreateCreditNote}>
+            <AlertDialogAction
+              onClick={() => {
+                void handleCreateCreditNote().catch(error => {
+                  console.error(
+                    '[DocumentDetail] Create credit note failed:',
+                    error
+                  );
+                });
+              }}
+            >
               Créer l&apos;avoir
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -1229,7 +1258,11 @@ export default function DocumentDetailPage({
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               className="bg-green-600 text-white hover:bg-green-700"
-              onClick={handleAcceptQuote}
+              onClick={() => {
+                void handleAcceptQuote().catch(error => {
+                  console.error('[DocumentDetail] Accept quote failed:', error);
+                });
+              }}
             >
               Marquer accepté
             </AlertDialogAction>
@@ -1253,7 +1286,14 @@ export default function DocumentDetailPage({
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-600 text-white hover:bg-red-700"
-              onClick={handleDeclineQuote}
+              onClick={() => {
+                void handleDeclineQuote().catch(error => {
+                  console.error(
+                    '[DocumentDetail] Decline quote failed:',
+                    error
+                  );
+                });
+              }}
             >
               Marquer refusé
             </AlertDialogAction>
@@ -1282,7 +1322,13 @@ export default function DocumentDetailPage({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleArchive}>
+            <AlertDialogAction
+              onClick={() => {
+                void handleArchive().catch(error => {
+                  console.error('[DocumentDetail] Archive failed:', error);
+                });
+              }}
+            >
               Archiver
             </AlertDialogAction>
           </AlertDialogFooter>

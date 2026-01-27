@@ -432,7 +432,9 @@ export default function DepensesPage() {
         console.error('[DepensesPage] Auto-classify error:', err);
       }
     };
-    runAutoClassify();
+    void runAutoClassify().catch(error => {
+      console.error('[DepensesPage] Auto-classify init failed:', error);
+    });
   }, [autoClassifyAll, refetch]);
 
   // Map pour accès rapide aux suggestions par ID
@@ -582,7 +584,9 @@ export default function DepensesPage() {
 
   // Charger les données du graphique au montage et quand l'année change
   useEffect(() => {
-    fetchChartData();
+    void fetchChartData().catch(error => {
+      console.error('[DepensesPage] Fetch chart data failed:', error);
+    });
   }, [fetchChartData]);
 
   // Onglets de statut avec compteurs (simplifié: 3 onglets)
@@ -722,7 +726,11 @@ export default function DepensesPage() {
             </Link>
             <Button
               variant="outline"
-              onClick={() => refetch()}
+              onClick={() => {
+                void refetch().catch(error => {
+                  console.error('[DepensesPage] Refetch failed:', error);
+                });
+              }}
               disabled={isLoading}
             >
               <RefreshCw
@@ -910,7 +918,11 @@ export default function DepensesPage() {
               <p className="text-red-600">{error}</p>
               <Button
                 variant="outline"
-                onClick={() => refetch()}
+                onClick={() => {
+                  void refetch().catch(error => {
+                    console.error('[DepensesPage] Refetch failed:', error);
+                  });
+                }}
                 className="mt-4"
               >
                 Réessayer
@@ -1126,9 +1138,26 @@ export default function DepensesPage() {
                       expense={expense}
                       onClassify={handleClassify}
                       onViewAttachment={handleViewAttachment}
-                      onLink={() => refetch()}
+                      onLink={() => {
+                        void refetch().catch(error => {
+                          console.error(
+                            '[DepensesPage] Refetch after link failed:',
+                            error
+                          );
+                        });
+                      }}
                       onViewRule={handleViewRule}
-                      onConfirmSuggestion={handleConfirmSuggestion}
+                      onConfirmSuggestion={(ruleId, organisationId) => {
+                        void handleConfirmSuggestion(
+                          ruleId,
+                          organisationId
+                        ).catch(error => {
+                          console.error(
+                            '[DepensesPage] Confirm suggestion failed:',
+                            error
+                          );
+                        });
+                      }}
                       suggestion={suggestionsMap.get(expense.id)}
                     />
                   ))}
@@ -1171,7 +1200,14 @@ export default function DepensesPage() {
         currentVatRate={selectedExpense?.vat_rate ?? undefined}
         currentVatSource={selectedExpense?.vat_source ?? undefined}
         currentVatBreakdown={selectedExpense?.vat_breakdown ?? undefined}
-        onSuccess={handleClassifySuccess}
+        onSuccess={() => {
+          void handleClassifySuccess().catch(error => {
+            console.error(
+              '[DepensesPage] Classify success callback failed:',
+              error
+            );
+          });
+        }}
       />
 
       {/* SLICE 3: Modal pour voir/modifier une règle */}
@@ -1182,7 +1218,14 @@ export default function DepensesPage() {
         onUpdate={updateMatchingRule}
         previewApply={previewApply}
         confirmApply={confirmApply}
-        onSuccess={handleRuleSuccess}
+        onSuccess={() => {
+          void handleRuleSuccess().catch(error => {
+            console.error(
+              '[DepensesPage] Rule success callback failed:',
+              error
+            );
+          });
+        }}
       />
 
       {/* Modal de liaison d'organisation (depuis la vue groupée) */}
@@ -1193,7 +1236,14 @@ export default function DepensesPage() {
           label={selectedLabelForLink.label}
           transactionCount={selectedLabelForLink.transactionCount}
           totalAmount={selectedLabelForLink.totalAmount}
-          onSuccess={handleLinkSuccess}
+          onSuccess={() => {
+            void handleLinkSuccess().catch(error => {
+              console.error(
+                '[DepensesPage] Link success callback failed:',
+                error
+              );
+            });
+          }}
         />
       )}
     </div>

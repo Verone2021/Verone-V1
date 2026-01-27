@@ -60,7 +60,7 @@ export default function ClientsParticuliersPage() {
         description: `${customerName} a été supprimé avec succès.`,
       });
 
-      refetch();
+      await refetch();
     } catch (err) {
       console.error('Erreur suppression client:', err);
       toast({
@@ -85,7 +85,7 @@ export default function ClientsParticuliersPage() {
         description: `${customerName} a été archivé.`,
       });
 
-      refetch();
+      await refetch();
     } catch (err) {
       console.error('Erreur archivage:', err);
       toast({
@@ -110,7 +110,7 @@ export default function ClientsParticuliersPage() {
         description: `${customerName} a été restauré.`,
       });
 
-      refetch();
+      await refetch();
     } catch (err) {
       console.error('Erreur restauration:', err);
       toast({
@@ -141,7 +141,11 @@ export default function ClientsParticuliersPage() {
           <p className="text-red-600">Erreur: {error}</p>
           <ButtonV2
             variant="primary"
-            onClick={() => refetch()}
+            onClick={() => {
+              void refetch().catch(error => {
+                console.error('[ClientsParticuliers] Refetch failed:', error);
+              });
+            }}
             className="mt-4"
           >
             Réessayer
@@ -166,7 +170,11 @@ export default function ClientsParticuliersPage() {
             </p>
           </div>
           <CreateIndividualCustomerModal
-            onCustomerCreated={() => refetch()}
+            onCustomerCreated={() => {
+              void refetch().catch(error => {
+                console.error('[ClientsParticuliers] Refetch failed:', error);
+              });
+            }}
             trigger={
               <ButtonV2 variant="primary" size="sm">
                 <Plus className="h-4 w-4 mr-2" />
@@ -238,7 +246,14 @@ export default function ClientsParticuliersPage() {
               </p>
               {!searchQuery && (
                 <CreateIndividualCustomerModal
-                  onCustomerCreated={() => refetch()}
+                  onCustomerCreated={() => {
+                    void refetch().catch(error => {
+                      console.error(
+                        '[ClientsParticuliers] Refetch failed:',
+                        error
+                      );
+                    });
+                  }}
                   trigger={
                     <ButtonV2 variant="primary" size="sm">
                       <Plus className="h-4 w-4 mr-2" />
@@ -342,12 +357,17 @@ export default function ClientsParticuliersPage() {
                                 size="sm"
                                 icon={Archive}
                                 label="Archiver"
-                                onClick={() =>
-                                  handleArchive(
+                                onClick={() => {
+                                  void handleArchive(
                                     customer.id,
                                     customer.displayName
-                                  )
-                                }
+                                  ).catch(error => {
+                                    console.error(
+                                      '[ClientsParticuliers] Archive failed:',
+                                      error
+                                    );
+                                  });
+                                }}
                               />
                             </>
                           ) : (
@@ -358,12 +378,17 @@ export default function ClientsParticuliersPage() {
                                 size="sm"
                                 icon={ArchiveRestore}
                                 label="Restaurer"
-                                onClick={() =>
-                                  handleUnarchive(
+                                onClick={() => {
+                                  void handleUnarchive(
                                     customer.id,
                                     customer.displayName
-                                  )
-                                }
+                                  ).catch(error => {
+                                    console.error(
+                                      '[ClientsParticuliers] Unarchive failed:',
+                                      error
+                                    );
+                                  });
+                                }}
                               />
                               {/* Bouton Supprimer */}
                               <IconButton
@@ -371,12 +396,17 @@ export default function ClientsParticuliersPage() {
                                 size="sm"
                                 icon={Trash2}
                                 label="Supprimer définitivement"
-                                onClick={() =>
-                                  handleDelete(
+                                onClick={() => {
+                                  void handleDelete(
                                     customer.id,
                                     customer.displayName
-                                  )
-                                }
+                                  ).catch(error => {
+                                    console.error(
+                                      '[ClientsParticuliers] Delete failed:',
+                                      error
+                                    );
+                                  });
+                                }}
                               />
                             </>
                           )}
