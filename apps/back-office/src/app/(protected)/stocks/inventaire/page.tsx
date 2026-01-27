@@ -9,19 +9,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ProductHistoryModal } from '@verone/products';
 import { InventoryAdjustmentModal } from '@verone/stock';
 import { StockReportsModal } from '@verone/stock';
-import { useStockMovements } from '@verone/stock';
 import { useStockInventory } from '@verone/stock';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent } from '@verone/ui';
 import { IconButton } from '@verone/ui';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@verone/ui';
 import { Input } from '@verone/ui';
 import { formatPrice } from '@verone/utils';
 import {
@@ -36,10 +28,6 @@ import {
   History,
   Settings,
   Calendar,
-  Clock,
-  User,
-  FileText,
-  ExternalLink,
   Filter,
   X,
   AlertTriangle,

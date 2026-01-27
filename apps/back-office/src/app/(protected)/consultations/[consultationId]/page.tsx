@@ -11,7 +11,6 @@ import { ConsultationImageGallery } from '@verone/consultations';
 import { ConsultationOrderInterface } from '@verone/consultations';
 import { EditConsultationModal } from '@verone/consultations';
 import { useConsultations } from '@verone/consultations';
-import { Alert, AlertDescription } from '@verone/ui';
 import { Badge } from '@verone/ui';
 import { ButtonUnified } from '@verone/ui';
 import {
@@ -21,7 +20,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@verone/ui';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
 import {
   ArrowLeft,
   Calendar,
@@ -55,7 +53,7 @@ function getClientName(consultation: ClientConsultation | null): string {
 export default function ConsultationDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const { toast } = useToast();
+  const { toast: _toast } = useToast();
   const {
     consultations,
     loading,

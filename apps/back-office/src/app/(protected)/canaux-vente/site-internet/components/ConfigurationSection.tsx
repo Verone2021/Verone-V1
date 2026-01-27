@@ -21,12 +21,10 @@ import { ErrorStateCard } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Textarea } from '@verone/ui';
 import { Label } from '@verone/ui';
-import { Switch } from '@verone/ui';
 import {
   Globe,
   Search,
   Mail,
-  Phone,
   BarChart3,
   Upload,
   Loader2,
@@ -119,7 +117,7 @@ export function ConfigurationSection() {
         title: 'Identité sauvegardée',
         description: 'Les informations du site ont été mises à jour.',
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: 'Erreur',
         description: 'Impossible de sauvegarder les informations.',
@@ -143,7 +141,7 @@ export function ConfigurationSection() {
         title: 'SEO sauvegardé',
         description: 'Les paramètres SEO par défaut ont été mis à jour.',
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: 'Erreur',
         description: 'Impossible de sauvegarder les paramètres SEO.',
@@ -163,7 +161,7 @@ export function ConfigurationSection() {
         title: 'Contact sauvegardé',
         description: 'Les informations de contact ont été mises à jour.',
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: 'Erreur',
         description: 'Impossible de sauvegarder les informations de contact.',
@@ -184,7 +182,7 @@ export function ConfigurationSection() {
         title: 'Analytics sauvegardé',
         description: 'Les identifiants de tracking ont été mis à jour.',
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: 'Erreur',
         description: 'Impossible de sauvegarder les identifiants analytics.',
@@ -224,7 +222,7 @@ export function ConfigurationSection() {
           title: 'Logo uploadé',
           description: 'Le logo du site a été mis à jour.',
         });
-      } catch (error) {
+      } catch (_error) {
         toast({
           title: 'Erreur',
           description: "Impossible d'uploader le logo.",
