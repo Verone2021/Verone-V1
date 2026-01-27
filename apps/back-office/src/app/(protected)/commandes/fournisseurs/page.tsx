@@ -44,7 +44,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
-import { Separator } from '@verone/ui';
 import {
   Table,
   TableBody,

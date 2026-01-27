@@ -21,8 +21,6 @@ import {
   ArrowLeft,
   User,
   Building2,
-  Calendar,
-  Trash2,
   MessageCircle,
   Clock,
   Archive,

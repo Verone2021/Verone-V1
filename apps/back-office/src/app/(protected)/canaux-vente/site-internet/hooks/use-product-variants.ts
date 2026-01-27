@@ -80,7 +80,7 @@ export function useToggleVariantActivation() {
       );
       return null;
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (_data, _variables) => {
       queryClient.invalidateQueries({ queryKey: ['product-variants'] });
     },
   });
