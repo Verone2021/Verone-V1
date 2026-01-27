@@ -46,12 +46,10 @@ import {
 } from '../../hooks/use-linkme-catalog';
 import {
   useLinkMeUsers,
-  type LinkMeUser,
   LINKME_ROLE_LABELS,
   LINKME_ROLE_COLORS,
 } from '../../hooks/use-linkme-users';
 import {
-  calculateLinkMeMargins,
   calculateFinalClientPrice,
   getMarginColor,
 } from '../../types';
@@ -83,7 +81,7 @@ type CatalogProduct = LinkMeCatalogProduct;
 // ============================================================================
 
 const DEFAULT_COMMISSION_RATE = 0.05; // 5%
-const DEFAULT_BUFFER_RATE = 0.05; // 5%
+const _DEFAULT_BUFFER_RATE = 0.05; // 5%
 const MIN_MARGIN_RATE = 0.01; // 1%
 const DEFAULT_MARGIN_RATE = 0.15; // 15%
 

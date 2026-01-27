@@ -5,7 +5,6 @@ import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 
 import { useToast } from '@verone/common';
-import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
   Card,
@@ -32,7 +31,6 @@ import {
   SelectValue,
 } from '@verone/ui';
 import { Skeleton } from '@verone/ui';
-import { Checkbox } from '@verone/ui';
 import {
   Table,
   TableBody,
@@ -47,7 +45,6 @@ import {
   Search,
   Layers,
   Eye,
-  ExternalLink,
   Package,
   ShoppingBag,
   Archive,

@@ -26,14 +26,11 @@ import {
   useLinkMeAffiliates,
   useLinkMeSelectionsByAffiliate,
   type AffiliateType,
-  type LinkMeAffiliate,
 } from '../hooks/use-linkme-affiliates';
 import {
   useLinkMeAffiliateCustomers,
   useCreateEnseigneOrganisation,
   useCreateEnseigneIndividualCustomer,
-  type EnseigneOrganisationCustomer,
-  type EnseigneIndividualCustomer,
 } from '../hooks/use-linkme-enseigne-customers';
 import {
   useCreateLinkMeOrder,
