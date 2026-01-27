@@ -367,7 +367,9 @@ export default function LinkMeOrderDetailPage() {
 
   useEffect(() => {
     if (orderId) {
-      fetchOrder();
+      void fetchOrder().catch(error => {
+        console.error('[LinkMeOrderDetail] Initial fetch failed:', error);
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
@@ -377,7 +379,12 @@ export default function LinkMeOrderDetailPage() {
     try {
       await approveOrder.mutateAsync({ orderId });
       setShowApproveDialog(false);
-      fetchOrder();
+      void fetchOrder().catch(error => {
+        console.error(
+          '[LinkMeOrderDetail] Refetch after approve failed:',
+          error
+        );
+      });
     } catch (err) {
       console.error('Erreur approbation:', err);
     }
@@ -389,7 +396,12 @@ export default function LinkMeOrderDetailPage() {
       await requestInfo.mutateAsync({ orderId, message: requestMessage });
       setShowRequestInfoDialog(false);
       setRequestMessage('');
-      fetchOrder();
+      void fetchOrder().catch(error => {
+        console.error(
+          '[LinkMeOrderDetail] Refetch after request info failed:',
+          error
+        );
+      });
     } catch (err) {
       console.error('Erreur demande info:', err);
     }
@@ -401,7 +413,12 @@ export default function LinkMeOrderDetailPage() {
       await rejectOrder.mutateAsync({ orderId, reason: rejectReason });
       setShowRejectDialog(false);
       setRejectReason('');
-      fetchOrder();
+      void fetchOrder().catch(error => {
+        console.error(
+          '[LinkMeOrderDetail] Refetch after reject failed:',
+          error
+        );
+      });
     } catch (err) {
       console.error('Erreur refus:', err);
     }
@@ -463,7 +480,12 @@ export default function LinkMeOrderDetailPage() {
       });
       setEditingStep(null);
       setEditForm({});
-      fetchOrder();
+      void fetchOrder().catch(error => {
+        console.error(
+          '[LinkMeOrderDetail] Refetch after save edit failed:',
+          error
+        );
+      });
     } catch (err) {
       console.error('Erreur mise à jour:', err);
     }
@@ -1304,7 +1326,14 @@ export default function LinkMeOrderDetailPage() {
             >
               Annuler
             </Button>
-            <Button onClick={handleApprove} disabled={approveOrder.isPending}>
+            <Button
+              onClick={() => {
+                void handleApprove().catch(error => {
+                  console.error('[LinkMeOrderDetail] Approve failed:', error);
+                });
+              }}
+              disabled={approveOrder.isPending}
+            >
               {approveOrder.isPending ? 'En cours...' : 'Confirmer'}
             </Button>
           </DialogFooter>
@@ -1342,7 +1371,14 @@ export default function LinkMeOrderDetailPage() {
               Annuler
             </Button>
             <Button
-              onClick={handleRequestInfo}
+              onClick={() => {
+                void handleRequestInfo().catch(error => {
+                  console.error(
+                    '[LinkMeOrderDetail] Request info failed:',
+                    error
+                  );
+                });
+              }}
               disabled={requestInfo.isPending || !requestMessage.trim()}
             >
               {requestInfo.isPending ? 'En cours...' : 'Envoyer'}
@@ -1380,7 +1416,11 @@ export default function LinkMeOrderDetailPage() {
             </Button>
             <Button
               variant="destructive"
-              onClick={handleReject}
+              onClick={() => {
+                void handleReject().catch(error => {
+                  console.error('[LinkMeOrderDetail] Reject failed:', error);
+                });
+              }}
               disabled={rejectOrder.isPending || !rejectReason.trim()}
             >
               {rejectOrder.isPending ? 'En cours...' : 'Refuser'}
@@ -1500,7 +1540,14 @@ export default function LinkMeOrderDetailPage() {
             <Button variant="outline" onClick={() => setEditingStep(null)}>
               Annuler
             </Button>
-            <Button onClick={handleSaveEdit} disabled={updateDetails.isPending}>
+            <Button
+              onClick={() => {
+                void handleSaveEdit().catch(error => {
+                  console.error('[LinkMeOrderDetail] Save edit failed:', error);
+                });
+              }}
+              disabled={updateDetails.isPending}
+            >
               {updateDetails.isPending ? 'Enregistrement...' : 'Enregistrer'}
             </Button>
           </DialogFooter>
@@ -1667,7 +1714,14 @@ export default function LinkMeOrderDetailPage() {
             <Button variant="outline" onClick={() => setEditingStep(null)}>
               Annuler
             </Button>
-            <Button onClick={handleSaveEdit} disabled={updateDetails.isPending}>
+            <Button
+              onClick={() => {
+                void handleSaveEdit().catch(error => {
+                  console.error('[LinkMeOrderDetail] Save edit failed:', error);
+                });
+              }}
+              disabled={updateDetails.isPending}
+            >
               {updateDetails.isPending ? 'Enregistrement...' : 'Enregistrer'}
             </Button>
           </DialogFooter>
@@ -1818,7 +1872,14 @@ export default function LinkMeOrderDetailPage() {
             <Button variant="outline" onClick={() => setEditingStep(null)}>
               Annuler
             </Button>
-            <Button onClick={handleSaveEdit} disabled={updateDetails.isPending}>
+            <Button
+              onClick={() => {
+                void handleSaveEdit().catch(error => {
+                  console.error('[LinkMeOrderDetail] Save edit failed:', error);
+                });
+              }}
+              disabled={updateDetails.isPending}
+            >
               {updateDetails.isPending ? 'Enregistrement...' : 'Enregistrer'}
             </Button>
           </DialogFooter>
@@ -1897,7 +1958,14 @@ export default function LinkMeOrderDetailPage() {
             <Button variant="outline" onClick={() => setEditingStep(null)}>
               Annuler
             </Button>
-            <Button onClick={handleSaveEdit} disabled={updateDetails.isPending}>
+            <Button
+              onClick={() => {
+                void handleSaveEdit().catch(error => {
+                  console.error('[LinkMeOrderDetail] Save edit failed:', error);
+                });
+              }}
+              disabled={updateDetails.isPending}
+            >
               {updateDetails.isPending ? 'Enregistrement...' : 'Enregistrer'}
             </Button>
           </DialogFooter>
