@@ -213,7 +213,7 @@ export function CategoriesSection() {
             : 'Catégorie masquée du menu',
           description: `La catégorie a été ${newVisibility ? 'rendue visible' : 'masquée'} dans la navigation du site.`,
         });
-      } catch (error) {
+      } catch (_error) {
         toast({
           title: 'Erreur',
           description: 'Impossible de modifier la visibilité de la catégorie.',

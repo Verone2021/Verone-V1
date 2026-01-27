@@ -51,7 +51,7 @@ export default function LoginPage() {
           '/dashboard';
         router.push(redirectUrl);
       }
-    } catch (err) {
+    } catch (_err) {
       setError('Une erreur est survenue lors de la connexion');
     } finally {
       setIsLoading(false);

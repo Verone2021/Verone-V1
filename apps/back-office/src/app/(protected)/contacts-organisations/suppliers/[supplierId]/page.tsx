@@ -112,7 +112,7 @@ export default function SupplierDetailPage() {
   });
 
   // Gestionnaire de mise à jour des données fournisseur
-  const handleSupplierUpdate = (updatedData: Partial<Organisation>) => {
+  const handleSupplierUpdate = (_updatedData: Partial<Organisation>) => {
     // Rafraîchir les données du fournisseur immédiatement
     refetchSupplier();
     // Rafraîchir la liste des organisations (cache)

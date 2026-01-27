@@ -121,7 +121,7 @@ export function ProductsSection() {
           title: isPublished ? 'Produit dépublié' : 'Produit publié',
           description: `Le produit a été ${isPublished ? 'retiré du' : 'ajouté au'} site internet.`,
         });
-      } catch (error) {
+      } catch (_error) {
         toast({
           title: 'Erreur',
           description: 'Impossible de modifier le statut du produit.',
@@ -149,7 +149,7 @@ export function ProductsSection() {
         title: 'Produit retiré',
         description: 'Le produit a été retiré du site internet.',
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: 'Erreur',
         description: 'Impossible de retirer le produit.',

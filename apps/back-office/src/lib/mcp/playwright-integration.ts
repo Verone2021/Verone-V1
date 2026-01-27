@@ -168,7 +168,7 @@ export function getTestUrlForTest(test: any): string {
   return moduleUrlMap[moduleKey] || '/dashboard';
 }
 
-export function getExpectedElementsForTest(test: any): string[] {
+export function getExpectedElementsForTest(_test: any): string[] {
   // Elements de base attendus selon le module
   const baseElements = ['.main-content', 'nav', 'header'];
   return baseElements;

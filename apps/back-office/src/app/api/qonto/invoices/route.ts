@@ -185,7 +185,7 @@ interface ICustomLine {
   vat_rate: number;
 }
 
-interface IPostRequestBody {
+interface _IPostRequestBody {
   salesOrderId: string;
   autoFinalize?: boolean;
   fees?: IFeesData;

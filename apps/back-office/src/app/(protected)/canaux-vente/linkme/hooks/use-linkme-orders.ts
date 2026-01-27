@@ -376,7 +376,7 @@ async function createLinkMeOrder(
   // 2. Calculer les totaux avec TVA par ligne
   let productsHt = 0;
   let totalTva = 0;
-  let totalRetrocession = 0;
+  let _totalRetrocession = 0;
 
   for (const item of input.items) {
     const lineTotal = item.quantity * item.unit_price_ht;
@@ -384,7 +384,7 @@ async function createLinkMeOrder(
     productsHt += lineTotal;
     totalTva += lineTva;
     // Commission calculee sur base_price_ht (135EUR), pas sur unit_price_ht (168.75EUR)
-    totalRetrocession +=
+    _totalRetrocession +=
       item.quantity * item.base_price_ht * item.retrocession_rate;
   }
 

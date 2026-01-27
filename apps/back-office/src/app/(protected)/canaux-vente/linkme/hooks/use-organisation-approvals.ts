@@ -308,7 +308,7 @@ export function useRejectOrganisation() {
   return useMutation({
     mutationFn: async ({
       organisationId,
-      reason,
+      reason: _reason,
     }: {
       organisationId: string;
       reason: string;

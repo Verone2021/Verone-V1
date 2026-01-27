@@ -94,7 +94,7 @@ export default function CreditNoteDetailPage(): React.ReactNode {
       }
 
       setCreditNote(data.credit_note);
-    } catch (err) {
+    } catch (_err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
       setLoading(false);
@@ -126,7 +126,7 @@ export default function CreditNoteDetailPage(): React.ReactNode {
         title: 'Avoir finalisé',
         description: 'Avoir finalisé avec succès (IRRÉVERSIBLE)',
       });
-    } catch (err) {
+    } catch (_err) {
       toast({
         title: 'Erreur',
         description: err instanceof Error ? err.message : 'Erreur',
@@ -156,7 +156,7 @@ export default function CreditNoteDetailPage(): React.ReactNode {
         description: 'Avoir supprimé avec succès',
       });
       router.push('/avoirs');
-    } catch (err) {
+    } catch (_err) {
       toast({
         title: 'Erreur',
         description: err instanceof Error ? err.message : 'Erreur',
@@ -186,7 +186,7 @@ export default function CreditNoteDetailPage(): React.ReactNode {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-    } catch (err) {
+    } catch (_err) {
       toast({
         title: 'Erreur',
         description: 'Impossible de télécharger le PDF',

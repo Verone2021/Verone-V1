@@ -105,7 +105,7 @@ export default function PartnerDetailPage() {
   });
 
   // Gestionnaire de mise à jour des données partenaire
-  const handlePartnerUpdate = (updatedData: Partial<Organisation>) => {
+  const handlePartnerUpdate = (_updatedData: Partial<Organisation>) => {
     // Rafraîchir les données du partenaire immédiatement
     refetchPartner();
     // Rafraîchir la liste des organisations (cache)

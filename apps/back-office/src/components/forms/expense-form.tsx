@@ -383,7 +383,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
   };
 
   // Handler upload fichier
-  const handleFileUpload = (url: string, fileName: string) => {
+  const handleFileUpload = (url: string, _fileName: string) => {
     setFormData({ ...formData, uploaded_file_url: url });
     setHasUploadedFile(true);
   };

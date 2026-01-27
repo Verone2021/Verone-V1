@@ -11,7 +11,7 @@ import { useState, useEffect, useMemo } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
 
-export interface QueryOptions<T = any> {
+export interface QueryOptions {
   tableName: string;
   select?: string;
   filters?: (query: any) => any;

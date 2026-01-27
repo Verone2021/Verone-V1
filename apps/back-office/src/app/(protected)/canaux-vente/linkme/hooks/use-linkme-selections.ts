@@ -568,7 +568,7 @@ export function useUpdateSelectionItem() {
   return useMutation({
     mutationFn: async ({
       itemId,
-      selectionId,
+      selectionId: _selectionId,
       data,
     }: {
       itemId: string;

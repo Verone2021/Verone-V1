@@ -321,7 +321,7 @@ export async function matchTransactionToMultipleOrders(
       return result;
     }
 
-    const txAmount = Math.abs(transaction.amount);
+    const _txAmount = Math.abs(transaction.amount);
 
     // 3. Traiter chaque commande
     for (const orderMatch of orders) {

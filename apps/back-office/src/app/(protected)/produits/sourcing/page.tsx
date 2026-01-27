@@ -219,7 +219,7 @@ export default function SourcingPage() {
     await validateSourcing(productId);
   };
 
-  const handleOrderSample = async (productId: string) => {
+  const _handleOrderSample = async (productId: string) => {
     await orderSample(productId);
   };
 

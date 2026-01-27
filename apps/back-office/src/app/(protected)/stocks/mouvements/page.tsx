@@ -56,7 +56,7 @@ export default function StockMovementsPage() {
     filters,
     applyFilters,
     resetFilters,
-    exportMovements,
+    exportMovements: _exportMovements,
     hasFilters,
     pagination,
   } = useMovementsHistory();
@@ -74,7 +74,7 @@ export default function StockMovementsPage() {
   const [showMovementDetails, setShowMovementDetails] = useState(false);
   const [movementToCancel, setMovementToCancel] =
     useState<MovementWithDetails | null>(null);
-  const [showCancelModal, toggleShowCancelModal, setShowCancelModal] =
+  const [showCancelModal, _toggleShowCancelModal, setShowCancelModal] =
     useToggle(false);
 
   // États pour filtres sidebar collapsible

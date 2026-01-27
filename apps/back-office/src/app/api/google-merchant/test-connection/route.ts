@@ -33,7 +33,7 @@ interface TestConnectionResponse {
  * GET - Teste la connexion complète à Google Merchant Center
  */
 export async function GET(
-  request: NextRequest
+  _request: NextRequest
 ): Promise<NextResponse<TestConnectionResponse>> {
   // 🔒 HARD GATE: Si flag désactivé ou absent, skip silencieux
   if (process.env.NEXT_PUBLIC_GOOGLE_MERCHANT_SYNC_ENABLED !== 'true') {

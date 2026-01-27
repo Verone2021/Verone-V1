@@ -139,7 +139,7 @@ async function approveOrder(
   }
 
   // 2b. CASCADE: Si ouverture (is_new_restaurant = true), créer organisation + contacts
-  let createdOrganisationId: string | null = null;
+  let _createdOrganisationIdDecl: string | null = null;
   if (details.is_new_restaurant) {
     // a) Créer l'organisation avec les données du formulaire
     const { data: newOrg, error: orgError } = await supabase
@@ -163,7 +163,7 @@ async function approveOrder(
       throw new Error(`Erreur création organisation: ${orgError.message}`);
     }
 
-    createdOrganisationId = newOrg.id;
+    const _createdOrganisationId = newOrg.id;
 
     // b) Lier la commande à l'organisation nouvellement créée
     const { error: linkError } = await supabase

@@ -172,7 +172,7 @@ export default function CustomerDetailPage() {
   });
 
   // Gestionnaire de mise à jour des données client
-  const handleCustomerUpdate = (updatedData: Partial<Organisation>) => {
+  const handleCustomerUpdate = (_updatedData: Partial<Organisation>) => {
     // Rafraîchir les données du customer immédiatement
     refetchCustomer();
     // Rafraîchir la liste des organisations (cache)

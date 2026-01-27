@@ -158,7 +158,7 @@ export async function GET(
       },
     });
   } catch (error: any) {
-    const duration = Date.now() - startTime;
+    const _duration = Date.now() - startTime;
 
     console.error('[CRON] Polling failed:', error);
 
