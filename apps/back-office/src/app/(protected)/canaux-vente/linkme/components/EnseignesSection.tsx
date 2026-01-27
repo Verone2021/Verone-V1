@@ -186,7 +186,12 @@ export function EnseignesSection() {
 
     // Charger immédiatement au montage (pas de lazy-loading)
     // pour que le compteur de l'onglet affiche la bonne valeur
-    fetchOrganisationsIndependantes();
+    void fetchOrganisationsIndependantes().catch(error => {
+      console.error(
+        '[EnseignesSection] fetchOrganisationsIndependantes failed:',
+        error
+      );
+    });
   }, []);
 
   // Filtered enseignes
@@ -672,7 +677,12 @@ export function EnseignesSection() {
                           size="sm"
                           onClick={e => {
                             e.stopPropagation();
-                            handleToggleActive(enseigne);
+                            void handleToggleActive(enseigne).catch(error => {
+                              console.error(
+                                '[EnseignesSection] handleToggleActive failed:',
+                                error
+                              );
+                            });
                           }}
                         />
                       </div>
@@ -898,7 +908,14 @@ export function EnseignesSection() {
               Annuler
             </ButtonV2>
             <ButtonV2
-              onClick={handleCreateEnseigne}
+              onClick={() => {
+                void handleCreateEnseigne().catch(error => {
+                  console.error(
+                    '[EnseignesSection] handleCreateEnseigne failed:',
+                    error
+                  );
+                });
+              }}
               loading={createEnseigne.isPending}
             >
               {createEnseigne.isPending ? 'Création...' : 'Créer'}
@@ -955,7 +972,14 @@ export function EnseignesSection() {
               Annuler
             </ButtonV2>
             <ButtonV2
-              onClick={handleUpdateEnseigne}
+              onClick={() => {
+                void handleUpdateEnseigne().catch(error => {
+                  console.error(
+                    '[EnseignesSection] handleUpdateEnseigne failed:',
+                    error
+                  );
+                });
+              }}
               loading={updateEnseigne.isPending}
             >
               {updateEnseigne.isPending ? 'Enregistrement...' : 'Enregistrer'}
@@ -1101,7 +1125,12 @@ export function EnseignesSection() {
               variant={selectedEnseigne?.is_active ? 'secondary' : 'default'}
               onClick={() => {
                 if (selectedEnseigne) {
-                  handleToggleActive(selectedEnseigne);
+                  void handleToggleActive(selectedEnseigne).catch(error => {
+                    console.error(
+                      '[EnseignesSection] handleToggleActive (dialog) failed:',
+                      error
+                    );
+                  });
                 }
               }}
               icon={selectedEnseigne?.is_active ? Archive : ArchiveRestore}

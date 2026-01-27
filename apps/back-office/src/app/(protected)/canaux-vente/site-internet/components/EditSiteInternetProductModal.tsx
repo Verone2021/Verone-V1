@@ -325,9 +325,11 @@ export function EditSiteInternetProductModal({
 
       console.log('🎉 Mutation COMPLETE');
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       console.log('🎉 onSuccess callback');
-      queryClient.invalidateQueries({ queryKey: ['site-internet-products'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['site-internet-products'],
+      });
       toast({
         title: 'Produit mis à jour',
         description: 'Les modifications ont été enregistrées avec succès',
@@ -844,7 +846,14 @@ export function EditSiteInternetProductModal({
                     <ButtonV2
                       variant="outline"
                       size="sm"
-                      onClick={() => fetchImages()}
+                      onClick={() => {
+                        void fetchImages().catch(error => {
+                          console.error(
+                            '[EditSiteInternetProductModal] fetchImages failed:',
+                            error
+                          );
+                        });
+                      }}
                       disabled={imagesLoading}
                     >
                       {imagesLoading ? (
@@ -910,22 +919,29 @@ export function EditSiteInternetProductModal({
                                   <ButtonV2
                                     size="sm"
                                     variant="secondary"
-                                    onClick={async () => {
-                                      try {
-                                        await setPrimaryImage(image.id);
-                                        toast({
-                                          title: 'Image principale définie',
-                                          description:
-                                            "L'image a été définie comme principale avec succès",
-                                        });
-                                      } catch (_error) {
-                                        toast({
-                                          title: 'Erreur',
-                                          description:
-                                            "Impossible de définir l'image comme principale",
-                                          variant: 'destructive',
-                                        });
-                                      }
+                                    onClick={() => {
+                                      void (async () => {
+                                        try {
+                                          await setPrimaryImage(image.id);
+                                          toast({
+                                            title: 'Image principale définie',
+                                            description:
+                                              "L'image a été définie comme principale avec succès",
+                                          });
+                                        } catch (_error) {
+                                          toast({
+                                            title: 'Erreur',
+                                            description:
+                                              "Impossible de définir l'image comme principale",
+                                            variant: 'destructive',
+                                          });
+                                        }
+                                      })().catch(error => {
+                                        console.error(
+                                          '[EditSiteInternetProductModal] setPrimaryImage failed:',
+                                          error
+                                        );
+                                      });
                                     }}
                                     className="h-9 px-3 bg-white/90 hover:bg-white text-black border-0 relative z-40"
                                   >
@@ -938,31 +954,38 @@ export function EditSiteInternetProductModal({
                                 <ButtonV2
                                   size="sm"
                                   variant="destructive"
-                                  onClick={async () => {
-                                    if (image.is_primary) {
-                                      toast({
-                                        title: 'Image principale',
-                                        description:
-                                          'Définissez une autre image comme principale avant de supprimer',
-                                        variant: 'destructive',
-                                      });
-                                      return;
-                                    }
-                                    try {
-                                      await deleteImage(image.id);
-                                      toast({
-                                        title: 'Image supprimée',
-                                        description:
-                                          "L'image a été supprimée avec succès",
-                                      });
-                                    } catch (_error) {
-                                      toast({
-                                        title: 'Erreur',
-                                        description:
-                                          "Impossible de supprimer l'image",
-                                        variant: 'destructive',
-                                      });
-                                    }
+                                  onClick={() => {
+                                    void (async () => {
+                                      if (image.is_primary) {
+                                        toast({
+                                          title: 'Image principale',
+                                          description:
+                                            'Définissez une autre image comme principale avant de supprimer',
+                                          variant: 'destructive',
+                                        });
+                                        return;
+                                      }
+                                      try {
+                                        await deleteImage(image.id);
+                                        toast({
+                                          title: 'Image supprimée',
+                                          description:
+                                            "L'image a été supprimée avec succès",
+                                        });
+                                      } catch (_error) {
+                                        toast({
+                                          title: 'Erreur',
+                                          description:
+                                            "Impossible de supprimer l'image",
+                                          variant: 'destructive',
+                                        });
+                                      }
+                                    })().catch(error => {
+                                      console.error(
+                                        '[EditSiteInternetProductModal] deleteImage failed:',
+                                        error
+                                      );
+                                    });
                                   }}
                                   className="h-9 px-3 bg-red-500/90 hover:bg-red-600 text-white border-0 relative z-40"
                                 >
@@ -1376,9 +1399,16 @@ export function EditSiteInternetProductModal({
           productType="product"
           onImagesUpdated={() => {
             // Invalider cache pour recharger les images
-            queryClient.invalidateQueries({
-              queryKey: ['site-internet-products'],
-            });
+            void queryClient
+              .invalidateQueries({
+                queryKey: ['site-internet-products'],
+              })
+              .catch(error => {
+                console.error(
+                  '[EditSiteInternetProductModal] invalidateQueries failed:',
+                  error
+                );
+              });
           }}
         />
       )}

@@ -305,8 +305,8 @@ export function useCreateEnseigne() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-enseignes'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['linkme-enseignes'] });
     },
   });
 }
@@ -339,9 +339,9 @@ export function useUpdateEnseigne() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-enseignes'] });
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({ queryKey: ['linkme-enseignes'] });
+      await queryClient.invalidateQueries({
         queryKey: ['linkme-enseigne', variables.enseigneId],
       });
     },
@@ -384,8 +384,8 @@ export function useDeleteEnseigne() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-enseignes'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['linkme-enseignes'] });
     },
   });
 }
@@ -441,8 +441,8 @@ export function useToggleEnseigneActive() {
         queryClient.setQueryData(['linkme-enseignes'], context.previousData);
       }
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-enseignes'] });
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['linkme-enseignes'] });
     },
   });
 }
