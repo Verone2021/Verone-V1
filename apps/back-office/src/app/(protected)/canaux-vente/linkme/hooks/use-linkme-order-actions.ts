@@ -475,10 +475,14 @@ export function useApproveOrder() {
 
   return useMutation({
     mutationFn: approveOrder,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
-      queryClient.invalidateQueries({ queryKey: ['linkme-orders-to-process'] });
-      queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['linkme-orders'] }),
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-orders-to-process'],
+        }),
+        queryClient.invalidateQueries({ queryKey: ['sales-orders'] }),
+      ]);
     },
   });
 }
@@ -491,9 +495,13 @@ export function useRequestInfo() {
 
   return useMutation({
     mutationFn: requestInfo,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
-      queryClient.invalidateQueries({ queryKey: ['linkme-orders-to-process'] });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['linkme-orders'] }),
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-orders-to-process'],
+        }),
+      ]);
     },
   });
 }
@@ -506,12 +514,16 @@ export function useRejectOrder() {
 
   return useMutation({
     mutationFn: rejectOrder,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
-      queryClient.invalidateQueries({ queryKey: ['linkme-orders-to-process'] });
-      queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
-      queryClient.invalidateQueries({ queryKey: ['pending-orders'] });
-      queryClient.invalidateQueries({ queryKey: ['pending-orders-count'] });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['linkme-orders'] }),
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-orders-to-process'],
+        }),
+        queryClient.invalidateQueries({ queryKey: ['sales-orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['pending-orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['pending-orders-count'] }),
+      ]);
     },
   });
 }
@@ -593,9 +605,11 @@ export function useUpdateLinkMeDetails() {
 
   return useMutation({
     mutationFn: updateLinkMeDetails,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
-      queryClient.invalidateQueries({ queryKey: ['pending-orders'] });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['linkme-orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['pending-orders'] }),
+      ]);
     },
   });
 }
