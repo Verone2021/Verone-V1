@@ -360,8 +360,8 @@ export function useCreateSelection() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-selections'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['user-selections'] });
     },
   });
 }
@@ -462,11 +462,11 @@ export function useAddToSelection() {
       // L'API gère déjà le products_count
       return result.item;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['selection-items', variables.selectionId],
       });
-      queryClient.invalidateQueries({ queryKey: ['user-selections'] });
+      await queryClient.invalidateQueries({ queryKey: ['user-selections'] });
     },
   });
 }
@@ -576,11 +576,11 @@ export function useAddToSelectionWithMargin() {
       // L'API gère déjà le products_count
       return result.item;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['selection-items', variables.selectionId],
       });
-      queryClient.invalidateQueries({ queryKey: ['user-selections'] });
+      await queryClient.invalidateQueries({ queryKey: ['user-selections'] });
     },
   });
 }
@@ -615,11 +615,11 @@ export function useRemoveFromSelection() {
         })
         .eq('id', input.selectionId);
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['selection-items', variables.selectionId],
       });
-      queryClient.invalidateQueries({ queryKey: ['user-selections'] });
+      await queryClient.invalidateQueries({ queryKey: ['user-selections'] });
     },
   });
 }
@@ -652,8 +652,8 @@ export function useUpdateItemMargin() {
 
       if (error) throw error;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['selection-items', variables.selectionId],
       });
     },
@@ -686,8 +686,8 @@ export function useToggleSelectionPublished() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-selections'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['user-selections'] });
     },
   });
 }
@@ -716,8 +716,8 @@ export function useUpdateSelectionPriceDisplayMode() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-selections'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['user-selections'] });
     },
   });
 }
@@ -784,8 +784,8 @@ export function useReorderProducts() {
         throw new Error('Erreur lors de la réorganisation');
       }
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['selection-items', variables.selectionId],
       });
     },
@@ -816,8 +816,8 @@ export function useUpdateAffiliateProductPrice() {
 
       if (error) throw error;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['selection-items', variables.selectionId],
       });
     },

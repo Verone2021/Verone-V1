@@ -266,8 +266,8 @@ export function useCreateAffiliateProduct() {
 
       return data as AffiliateProduct;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['affiliate-products'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['affiliate-products'] });
     },
   });
 }
@@ -319,9 +319,9 @@ export function useUpdateAffiliateProduct() {
 
       return data as AffiliateProduct;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['affiliate-products'] });
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({ queryKey: ['affiliate-products'] });
+      await queryClient.invalidateQueries({
         queryKey: ['affiliate-product', variables.productId],
       });
     },
@@ -350,8 +350,8 @@ export function useSubmitForApproval() {
 
       return data as boolean;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['affiliate-products'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['affiliate-products'] });
     },
   });
 }
@@ -428,8 +428,8 @@ export function useRevertToDraft() {
 
       return true;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['affiliate-products'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['affiliate-products'] });
     },
   });
 }

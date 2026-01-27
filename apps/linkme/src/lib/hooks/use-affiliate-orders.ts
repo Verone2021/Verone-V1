@@ -104,13 +104,13 @@ export function useCreateAffiliateOrder() {
 
       return data as string; // order_id
     },
-    onSuccess: (orderId, variables) => {
+    onSuccess: async (orderId, variables) => {
       // Invalider les caches pertinents
-      queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
+      await queryClient.invalidateQueries({
         queryKey: ['linkme-orders', variables.affiliateId],
       });
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['affiliate-orders', variables.affiliateId],
       });
 
@@ -190,8 +190,8 @@ export function useCreateCustomerOrganisation() {
 
       return data as string; // customer_id
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['affiliate-customers', variables.affiliateId],
       });
       toast.success('Client créé');
@@ -237,8 +237,8 @@ export function useCreateCustomerIndividual() {
 
       return data as string; // customer_id
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['affiliate-customers', variables.affiliateId],
       });
       toast.success('Client créé');

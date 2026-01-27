@@ -105,8 +105,8 @@ export function useSubmitUnifiedOrder() {
           );
 
           // Invalider les caches
-          queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
-          queryClient.invalidateQueries({
+          await queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
+          await queryClient.invalidateQueries({
             queryKey: ['affiliate-orders', affiliateId],
           });
 
@@ -337,8 +337,8 @@ export function useSubmitUnifiedOrder() {
           }
 
           // Invalider les caches
-          queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
-          queryClient.invalidateQueries({
+          await queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
+          await queryClient.invalidateQueries({
             queryKey: ['affiliate-orders', affiliateId],
           });
 

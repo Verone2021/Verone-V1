@@ -269,9 +269,11 @@ export function useArchiveOrganisation() {
 
       return organisationId;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['affiliate-network'] });
-      queryClient.invalidateQueries({ queryKey: ['affiliate-customers'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['affiliate-network'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['affiliate-customers'],
+      });
       toast.success('Organisation archivée', {
         description: "L'équipe Vérone a été notifiée.",
       });
@@ -309,9 +311,11 @@ export function useRestoreOrganisation() {
 
       return organisationId;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['affiliate-network'] });
-      queryClient.invalidateQueries({ queryKey: ['affiliate-customers'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['affiliate-network'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['affiliate-customers'],
+      });
       toast.success('Organisation restaurée');
     },
     onError: (error: Error) => {

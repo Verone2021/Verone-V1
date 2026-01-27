@@ -271,10 +271,12 @@ export function useCreatePaymentRequest() {
 
       return mapPaymentRequest(request);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       // Invalider les caches
-      queryClient.invalidateQueries({ queryKey: ['payment-requests'] });
-      queryClient.invalidateQueries({ queryKey: ['affiliate-commissions'] });
+      await queryClient.invalidateQueries({ queryKey: ['payment-requests'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['affiliate-commissions'],
+      });
     },
   });
 }
@@ -343,9 +345,11 @@ export function useUploadInvoice() {
 
       return fileUrl;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['payment-requests'] });
-      queryClient.invalidateQueries({ queryKey: ['payment-request-detail'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['payment-requests'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['payment-request-detail'],
+      });
     },
   });
 }
@@ -370,9 +374,11 @@ export function useCancelPaymentRequest() {
         throw new Error("Erreur lors de l'annulation de la demande");
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['payment-requests'] });
-      queryClient.invalidateQueries({ queryKey: ['affiliate-commissions'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['payment-requests'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['affiliate-commissions'],
+      });
     },
   });
 }
