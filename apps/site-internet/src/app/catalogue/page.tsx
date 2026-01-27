@@ -5,7 +5,13 @@ import { useState } from 'react';
 import { CardProductLuxury } from '@/components/ui/CardProductLuxury';
 import { useCatalogueProducts } from '@/hooks/use-catalogue-products';
 
-type SortOption = 'name_asc' | 'name_desc' | 'price_asc' | 'price_desc' | 'newest' | 'oldest';
+type SortOption =
+  | 'name_asc'
+  | 'name_desc'
+  | 'price_asc'
+  | 'price_desc'
+  | 'newest'
+  | 'oldest';
 
 export default function CataloguePage() {
   const [sortBy, setSortBy] = useState<SortOption>('newest');

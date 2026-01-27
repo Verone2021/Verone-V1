@@ -13,18 +13,9 @@ import { useParams, useRouter } from 'next/navigation';
 
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
-import {
-  Card,
-  CardContent,
-} from '@verone/ui';
+import { Card, CardContent } from '@verone/ui';
 import { VéroneCard } from '@verone/ui';
-import {
-  ArrowLeft,
-  Plus,
-  Edit,
-  FolderOpen,
-  Package,
-} from 'lucide-react';
+import { ArrowLeft, Plus, Edit, FolderOpen, Package } from 'lucide-react';
 
 import { FamilyCrudForm } from '@/components/forms/family-crud-form';
 import { useFamilies } from '@verone/categories';

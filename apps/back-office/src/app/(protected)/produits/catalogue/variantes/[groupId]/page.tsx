@@ -241,7 +241,8 @@ export default function VariantGroupDetailPage({
     addProductsToGroup,
     refetch,
   } = useVariantGroups();
-  const { updateProductVariantAttribute: _updateProductVariantAttribute } = useProductVariantEditing();
+  const { updateProductVariantAttribute: _updateProductVariantAttribute } =
+    useProductVariantEditing();
 
   // États pour modals
   const [showEditModal, setShowEditModal] = useState(false);

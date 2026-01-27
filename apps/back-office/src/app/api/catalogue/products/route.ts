@@ -9,9 +9,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { logger, catalogueLogger } from '@verone/utils/logger';
-import {
-  withApiSecurity,
-} from '@verone/utils/middleware/api-security';
+import { withApiSecurity } from '@verone/utils/middleware/api-security';
 import { withLogging } from '@verone/utils/middleware/logging';
 
 // Mock data pour démonstration

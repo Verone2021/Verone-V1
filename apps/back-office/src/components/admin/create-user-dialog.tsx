@@ -32,14 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
-import {
-  User,
-  Mail,
-  Phone,
-  Briefcase,
-  Eye,
-  EyeOff,
-} from 'lucide-react';
+import { User, Mail, Phone, Briefcase, Eye, EyeOff } from 'lucide-react';
 
 // import { validateProfileForm } from '@verone/utils/validation/profile-validation'
 

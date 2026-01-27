@@ -29,15 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from '@verone/ui';
-import {
-  Edit,
-  Trash2,
-  Shield,
-  Mail,
-  Calendar,
-  Key,
-  Eye,
-} from 'lucide-react';
+import { Edit, Trash2, Shield, Mail, Calendar, Key, Eye } from 'lucide-react';
 
 import type { UserWithProfile } from '@/app/(protected)/admin/users/page';
 

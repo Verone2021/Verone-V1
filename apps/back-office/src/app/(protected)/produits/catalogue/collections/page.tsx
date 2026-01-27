@@ -23,9 +23,7 @@ import {
 } from 'lucide-react';
 
 import type { Collection } from '@verone/collections';
-import {
-  useCollections,
-} from '@verone/collections';
+import { useCollections } from '@verone/collections';
 import type { CreateCollectionInput } from '@verone/common';
 import { CollectionCreationWizard } from '@verone/common';
 import { useToast } from '@verone/common';

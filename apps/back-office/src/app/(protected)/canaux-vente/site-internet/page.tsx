@@ -61,7 +61,8 @@ export default function SiteInternetPage() {
   const { data: _products, isLoading: _productsLoading } =
     useSiteInternetProducts();
   const { data: _config, isLoading: _configLoading } = useSiteInternetConfig();
-  const { data: _analytics, isLoading: _analyticsLoading } = useVercelAnalytics();
+  const { data: _analytics, isLoading: _analyticsLoading } =
+    useVercelAnalytics();
 
   return (
     <div className="flex min-h-screen flex-col">

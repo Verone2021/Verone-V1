@@ -10,13 +10,7 @@
 import React from 'react';
 
 import { RoleBadge, type UserRole } from '@verone/ui';
-import {
-  Mail,
-  Calendar,
-  Clock,
-  CheckCircle,
-  XCircle,
-} from 'lucide-react';
+import { Mail, Calendar, Clock, CheckCircle, XCircle } from 'lucide-react';
 
 import type { UserDetailData } from '../page';
 

@@ -16,13 +16,7 @@ import { ButtonV2 } from '@verone/ui';
 import { spacing, colors } from '@verone/ui/design-system';
 import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
-import {
-  Search,
-  Plus,
-  Building2,
-  LayoutGrid,
-  List,
-} from 'lucide-react';
+import { Search, Plus, Building2, LayoutGrid, List } from 'lucide-react';
 
 // ✅ FIX TypeScript: Utiliser type Organisation (pas de Customer local)
 // IMPORTANT: Organisation utilise "legal_name" (pas "name")
@@ -37,9 +31,8 @@ export function CustomersTab() {
   );
   const [archivedLoading, setArchivedLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedCustomer, _setSelectedCustomer] = useState<Organisation | null>(
-    null
-  );
+  const [selectedCustomer, _setSelectedCustomer] =
+    useState<Organisation | null>(null);
 
   const filters = useMemo(
     () => ({

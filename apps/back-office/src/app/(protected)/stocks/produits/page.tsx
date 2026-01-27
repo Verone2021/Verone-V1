@@ -11,12 +11,7 @@ import { useStockMovements } from '@verone/stock';
 import { useStockReservations } from '@verone/stock';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@verone/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
 import { Input } from '@verone/ui';
 import {
   Select,
@@ -325,8 +320,10 @@ export default function StockInventairePage() {
   const { toast: _toast } = useToast();
   const { fetchInventoryProducts } = useStock();
   const { stats: _movementStats, fetchStats } = useStockMovements();
-  const { fetchReservations, getAvailableStockForProduct: _getAvailableStockForProduct } =
-    useStockReservations();
+  const {
+    fetchReservations,
+    getAvailableStockForProduct: _getAvailableStockForProduct,
+  } = useStockReservations();
 
   // Charger les données au montage
   useEffect(() => {

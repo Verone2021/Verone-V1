@@ -12,13 +12,7 @@ import { ButtonV2 } from '@verone/ui';
 import { spacing, colors } from '@verone/ui/design-system';
 import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
-import {
-  Search,
-  Plus,
-  Building2,
-  LayoutGrid,
-  List,
-} from 'lucide-react';
+import { Search, Plus, Building2, LayoutGrid, List } from 'lucide-react';
 
 export function SuppliersTab() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -29,9 +23,8 @@ export function SuppliersTab() {
   );
   const [archivedLoading, setArchivedLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedSupplier, _setSelectedSupplier] = useState<Organisation | null>(
-    null
-  );
+  const [selectedSupplier, _setSelectedSupplier] =
+    useState<Organisation | null>(null);
 
   const filters = useMemo(
     () => ({

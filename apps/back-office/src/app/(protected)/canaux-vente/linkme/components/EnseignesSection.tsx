@@ -97,7 +97,11 @@ export function EnseignesSection() {
   const [loadingOrgs, setLoadingOrgs] = useState(false);
 
   // Hooks queries
-  const { data: enseignes, isLoading, refetch: _refetch } = useLinkMeEnseignes();
+  const {
+    data: enseignes,
+    isLoading,
+    refetch: _refetch,
+  } = useLinkMeEnseignes();
   const { data: selectedEnseigneOrgs } = useLinkMeEnseigneOrganisations(
     isDetailModalOpen ? (selectedEnseigne?.id ?? null) : null
   );

@@ -11,12 +11,7 @@ import {
 } from '@verone/organisations';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@verone/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import { Input } from '@verone/ui';
 import {
   Users,

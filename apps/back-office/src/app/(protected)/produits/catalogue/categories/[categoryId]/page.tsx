@@ -19,20 +19,10 @@ import {
 } from '@verone/categories';
 import { Badge } from '@verone/ui';
 import { ButtonUnified } from '@verone/ui';
-import {
-  Card,
-  CardContent,
-} from '@verone/ui';
+import { Card, CardContent } from '@verone/ui';
 import { VéroneCard } from '@verone/ui';
 import type { Database } from '@verone/utils/supabase/types';
-import {
-  ArrowLeft,
-  Plus,
-  Edit,
-  FolderOpen,
-  Package,
-  Tag,
-} from 'lucide-react';
+import { ArrowLeft, Plus, Edit, FolderOpen, Package, Tag } from 'lucide-react';
 
 import { FamilyCrudForm } from '@/components/forms/family-crud-form';
 import { SubcategoryForm } from '@/components/forms/subcategory-form';

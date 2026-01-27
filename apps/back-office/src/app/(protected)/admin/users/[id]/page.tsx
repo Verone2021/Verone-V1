@@ -11,12 +11,7 @@ import Link from 'next/link';
 import { redirect, notFound } from 'next/navigation';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
-import {
-  ArrowLeft,
-  User,
-  Shield,
-  Activity,
-} from 'lucide-react';
+import { ArrowLeft, User, Shield, Activity } from 'lucide-react';
 
 import {
   createServerClient,

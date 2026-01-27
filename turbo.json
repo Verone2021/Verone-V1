@@ -30,6 +30,11 @@
       "outputs": [],
       "inputs": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", ".eslintrc*", "eslint.config.*"]
     },
+    "lint:fix": {
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "inputs": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", ".eslintrc*", "eslint.config.*"]
+    },
     "type-check": {
       "dependsOn": ["^build"],
       "outputs": [],

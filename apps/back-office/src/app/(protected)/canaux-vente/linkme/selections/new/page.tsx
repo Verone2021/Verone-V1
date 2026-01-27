@@ -49,10 +49,7 @@ import {
   LINKME_ROLE_LABELS,
   LINKME_ROLE_COLORS,
 } from '../../hooks/use-linkme-users';
-import {
-  calculateFinalClientPrice,
-  getMarginColor,
-} from '../../types';
+import { calculateFinalClientPrice, getMarginColor } from '../../types';
 
 // ============================================================================
 // Types

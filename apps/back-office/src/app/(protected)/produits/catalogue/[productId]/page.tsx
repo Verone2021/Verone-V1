@@ -235,10 +235,11 @@ export default function ProductDetailPage() {
   const [isCategorizeModalOpen, setIsCategorizeModalOpen] = useState(false);
 
   // Hook pour récupérer les images du produit (table product_images)
-  const { images: productImages, primaryImage: _primaryImage } = useProductImages({
-    productId: productId || '',
-    autoFetch: true,
-  });
+  const { images: productImages, primaryImage: _primaryImage } =
+    useProductImages({
+      productId: productId || '',
+      autoFetch: true,
+    });
 
   const startTime = Date.now();
 

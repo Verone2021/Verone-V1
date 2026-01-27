@@ -476,8 +476,10 @@ export function useAddProductsToCatalog() {
 
       return data ?? 0;
     },
-    onSuccess: async (count) => {
-      await queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
+    onSuccess: async count => {
+      await queryClient.invalidateQueries({
+        queryKey: ['linkme-catalog-products'],
+      });
       console.log(`✅ ${count} produits ajoutés au catalogue LinkMe`);
     },
   });
@@ -500,7 +502,9 @@ export function useRemoveProductFromCatalog() {
       if (error) throw error;
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['linkme-catalog-products'],
+      });
     },
   });
 }
@@ -559,7 +563,9 @@ export function useToggleProductEnabled() {
       }
     },
     onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['linkme-catalog-products'],
+      });
     },
   });
 }
@@ -618,7 +624,9 @@ export function useToggleProductShowcase() {
       }
     },
     onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['linkme-catalog-products'],
+      });
     },
   });
 }
@@ -677,7 +685,9 @@ export function useToggleProductFeatured() {
       }
     },
     onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['linkme-catalog-products'],
+      });
     },
   });
 }
@@ -737,7 +747,9 @@ export function useToggleShowSupplier() {
       }
     },
     onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['linkme-catalog-products'],
+      });
     },
   });
 }
@@ -769,7 +781,9 @@ export function useUpdateMarginSettings() {
       if (error) throw error;
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['linkme-catalog-products'],
+      });
     },
   });
 }
@@ -801,7 +815,9 @@ export function useUpdateCustomMetadata() {
       if (error) throw error;
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['linkme-catalog-products'],
+      });
     },
   });
 }
@@ -1090,7 +1106,9 @@ export function useUpdateLinkMePricing() {
         queryClient.invalidateQueries({
           queryKey: ['linkme-product-detail', variables.catalogProductId],
         }),
-        queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] }),
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-catalog-products'],
+        }),
       ]);
     },
   });
@@ -1127,7 +1145,9 @@ export function useUpdateLinkMeMetadata() {
         queryClient.invalidateQueries({
           queryKey: ['linkme-product-detail', variables.catalogProductId],
         }),
-        queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] }),
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-catalog-products'],
+        }),
       ]);
     },
   });
@@ -1160,7 +1180,9 @@ export function useUpdateAffiliateCommission() {
       // Invalider le cache pour rafraîchir les données
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['linkme-product-detail'] }),
-        queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] }),
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-catalog-products'],
+        }),
       ]);
     },
   });
@@ -1204,7 +1226,9 @@ export function useToggleLinkMeProductField() {
         queryClient.invalidateQueries({
           queryKey: ['linkme-product-detail', variables.catalogProductId],
         }),
-        queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] }),
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-catalog-products'],
+        }),
       ]);
     },
   });
