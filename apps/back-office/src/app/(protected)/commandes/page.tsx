@@ -43,10 +43,18 @@ export default function CommandesOverviewPage() {
   } = usePurchaseOrders();
 
   useEffect(() => {
-    fetchSalesOrders();
-    fetchSalesStats();
-    fetchPurchaseOrders();
-    fetchPurchaseStats();
+    void fetchSalesOrders().catch(error =>
+      console.error('[CommandesPage] fetchSalesOrders failed:', error)
+    );
+    void fetchSalesStats().catch(error =>
+      console.error('[CommandesPage] fetchSalesStats failed:', error)
+    );
+    void fetchPurchaseOrders().catch(error =>
+      console.error('[CommandesPage] fetchPurchaseOrders failed:', error)
+    );
+    void fetchPurchaseStats().catch(error =>
+      console.error('[CommandesPage] fetchPurchaseStats failed:', error)
+    );
   }, [
     fetchSalesOrders,
     fetchSalesStats,
