@@ -50,7 +50,9 @@ export function ContactsTab() {
   >('all');
 
   useEffect(() => {
-    fetchContacts();
+    void fetchContacts().catch(error => {
+      console.error('[ContactsTab] fetchContacts failed:', error);
+    });
   }, [fetchContacts]);
 
   const filteredContacts = contacts.filter(contact => {
@@ -430,7 +432,14 @@ export function ContactsTab() {
                             <ButtonV2
                               variant="outline"
                               size="sm"
-                              onClick={() => handleArchive(contact)}
+                              onClick={() => {
+                                void handleArchive(contact).catch(error => {
+                                  console.error(
+                                    '[ContactsTab] handleArchive failed:',
+                                    error
+                                  );
+                                });
+                              }}
                               className={`${!contact.is_active ? 'text-blue-600 border-blue-200 hover:bg-blue-50' : 'text-black border-gray-200 hover:bg-gray-50'}`}
                             >
                               {!contact.is_active ? (
@@ -443,7 +452,14 @@ export function ContactsTab() {
                             <ButtonV2
                               variant="outline"
                               size="sm"
-                              onClick={() => handleDelete(contact)}
+                              onClick={() => {
+                                void handleDelete(contact).catch(error => {
+                                  console.error(
+                                    '[ContactsTab] handleDelete failed:',
+                                    error
+                                  );
+                                });
+                              }}
                               className="text-red-600 border-red-200 hover:bg-red-50"
                             >
                               <Trash2 className="h-4 w-4" />

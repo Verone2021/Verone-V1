@@ -201,6 +201,9 @@ importers:
       '@types/react':
         specifier: ^18.2.55
         version: 18.3.26
+      '@verone/prettier-config':
+        specifier: workspace:*
+        version: link:packages/@verone/prettier-config
       autoprefixer:
         specifier: ^10.4.17
         version: 10.4.21(postcss@8.5.6)

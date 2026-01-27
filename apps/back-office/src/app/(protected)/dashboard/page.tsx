@@ -64,8 +64,11 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    getDashboardMetrics()
+    void getDashboardMetrics()
       .then(setData)
+      .catch(error => {
+        console.error('[DashboardPage] getDashboardMetrics failed:', error);
+      })
       .finally(() => setIsLoading(false));
   }, []);
 

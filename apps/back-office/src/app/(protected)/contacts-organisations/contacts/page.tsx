@@ -55,7 +55,9 @@ export default function ContactsPage() {
 
   // Charger tous les contacts au montage
   useEffect(() => {
-    fetchContacts();
+    void fetchContacts().catch(error => {
+      console.error('[ContactsPage] fetchContacts failed:', error);
+    });
   }, [fetchContacts]);
 
   // Filtrer les contacts selon les critères
@@ -473,7 +475,14 @@ export default function ContactsPage() {
                                 !contact.is_active ? 'success' : 'danger'
                               }
                               size="sm"
-                              onClick={() => handleArchive(contact)}
+                              onClick={() => {
+                                void handleArchive(contact).catch(error => {
+                                  console.error(
+                                    '[ContactsPage] handleArchive failed:',
+                                    error
+                                  );
+                                });
+                              }}
                             >
                               {!contact.is_active ? (
                                 <ArchiveRestore className="h-4 w-4" />
@@ -486,7 +495,14 @@ export default function ContactsPage() {
                             <ButtonV2
                               variant="danger"
                               size="sm"
-                              onClick={() => handleDelete(contact)}
+                              onClick={() => {
+                                void handleDelete(contact).catch(error => {
+                                  console.error(
+                                    '[ContactsPage] handleDelete failed:',
+                                    error
+                                  );
+                                });
+                              }}
                             >
                               <Trash2 className="h-4 w-4" />
                             </ButtonV2>
