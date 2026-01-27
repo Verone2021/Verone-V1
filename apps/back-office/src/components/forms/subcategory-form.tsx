@@ -315,7 +315,14 @@ export function SubcategoryForm({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          onSubmit={e => {
+            void handleSubmit(e).catch(error => {
+              console.error('[SubcategoryForm] handleSubmit failed:', error);
+            });
+          }}
+          className="space-y-6"
+        >
           {/* Catégorie parent */}
           <div className="space-y-2">
             <Label className="text-black">Catégorie parent*</Label>
@@ -337,7 +344,14 @@ export function SubcategoryForm({
             ) : (
               <Select
                 value={formData.parent_id}
-                onValueChange={handleCategoryChange}
+                onValueChange={value => {
+                  void handleCategoryChange(value).catch(error => {
+                    console.error(
+                      '[SubcategoryForm] handleCategoryChange failed:',
+                      error
+                    );
+                  });
+                }}
                 required
               >
                 <SelectTrigger className="border-gray-300 focus:border-black">
@@ -434,7 +448,12 @@ export function SubcategoryForm({
                       onChange={e => {
                         const file = e.target.files?.[0];
                         if (file && file.size <= 5 * 1024 * 1024) {
-                          handleImageUpload(file);
+                          void handleImageUpload(file).catch(error => {
+                            console.error(
+                              '[SubcategoryForm] handleImageUpload failed:',
+                              error
+                            );
+                          });
                         } else {
                           toast({
                             title: '❌ Fichier trop volumineux',

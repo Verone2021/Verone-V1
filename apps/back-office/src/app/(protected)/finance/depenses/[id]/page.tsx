@@ -133,7 +133,9 @@ export default function ExpenseDetailPage(props: PageProps) {
   };
 
   useEffect(() => {
-    fetchDocument();
+    void fetchDocument().catch(error => {
+      console.error('[Depenses] fetchDocument failed:', error);
+    });
   }, [params.id]);
 
   // Badge status helper
@@ -170,8 +172,12 @@ export default function ExpenseDetailPage(props: PageProps) {
   // Handle payment success
   const handlePaymentSuccess = () => {
     setShowPaymentForm(false);
-    fetchDocument(); // Refresh document (amount_paid updated)
-    refreshPayments(); // Refresh payments list
+    void fetchDocument().catch(error => {
+      console.error('[Depenses] fetchDocument (payment) failed:', error);
+    }); // Refresh document (amount_paid updated)
+    void refreshPayments().catch(error => {
+      console.error('[Depenses] refreshPayments failed:', error);
+    }); // Refresh payments list
   };
 
   if (loading) {

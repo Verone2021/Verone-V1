@@ -375,7 +375,9 @@ export default function StockagePage() {
         onClose={() => setShowAddDialog(false)}
         onSuccess={() => {
           setShowAddDialog(false);
-          refetch();
+          void refetch().catch(error => {
+            console.error('[Stockage] refetch failed:', error);
+          });
         }}
       />
     </div>
@@ -584,12 +586,17 @@ function OwnerStorageDetail({
                             <div className="flex justify-center">
                               <Switch
                                 checked={allocation.billable_in_storage}
-                                onCheckedChange={() =>
-                                  handleToggleBillable(
+                                onCheckedChange={() => {
+                                  void handleToggleBillable(
                                     allocation.allocation_id,
                                     allocation.billable_in_storage
-                                  )
-                                }
+                                  ).catch(error => {
+                                    console.error(
+                                      '[Stockage] handleToggleBillable failed:',
+                                      error
+                                    );
+                                  });
+                                }}
                                 disabled={updateBillable.isPending}
                               />
                             </div>
@@ -1055,7 +1062,11 @@ function AddAllocationDialog({
             Annuler
           </Button>
           <Button
-            onClick={handleSubmit}
+            onClick={() => {
+              void handleSubmit().catch(error => {
+                console.error('[Stockage] handleSubmit failed:', error);
+              });
+            }}
             disabled={
               !selectedOwner ||
               !selectedProduct ||

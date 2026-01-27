@@ -1,48 +1,102 @@
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
+import path from 'path';
+import { config } from 'dotenv';
+
+// Load environment variables from .env.local
+config({ path: path.join(process.cwd(), '.env.local') });
 
 async function generateReports() {
   // ============================================
   // 1. CONNEXION SUPABASE
   // ============================================
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    console.error("❌ Erreur: Variables d'environnement manquantes");
+  if (!supabaseUrl) {
     console.error(
-      '   Assurez-vous que NEXT_PUBLIC_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_ANON_KEY sont dans .env.local'
+      '❌ Erreur: NEXT_PUBLIC_SUPABASE_URL manquant dans .env.local'
     );
     process.exit(1);
   }
 
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  // Utiliser service_role en priorité (bypasse RLS), sinon anon
+  const supabaseKey = serviceRoleKey || anonKey;
+  const keyType = serviceRoleKey
+    ? 'service_role (bypasse RLS)'
+    : 'anon (avec RLS)';
+
+  if (!supabaseKey) {
+    console.error('❌ Erreur: Aucune clé Supabase disponible');
+    console.error(
+      '   Vérifiez .env.local pour SUPABASE_SERVICE_ROLE_KEY ou NEXT_PUBLIC_SUPABASE_ANON_KEY'
+    );
+    process.exit(1);
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
   console.log('🔄 Extraction des commandes LinkMe...');
+  console.log('📊 URL Supabase:', supabaseUrl);
+  console.log('🔑 Type de clé:', keyType);
 
   // ============================================
   // 2. EXTRACTION DONNÉES (Vue linkme_orders_with_margins + items)
   // ============================================
-  const { data: rawOrders, error: ordersError } = await supabase
+  const {
+    data: rawOrders,
+    error: ordersError,
+    count,
+  } = await supabase
     .from('linkme_orders_with_margins')
     .select(
-      'id, order_number, created_at, total_ht, total_ttc, customer_name, status'
+      'id, order_number, created_at, total_ht, total_ttc, customer_name, status',
+      { count: 'exact' }
     )
     .order('created_at', { ascending: true });
+
+  console.log('📊 Nombre total de commandes (count):', count);
+  console.log(
+    '📊 Commandes retournées avant filtrage:',
+    rawOrders?.length || 0
+  );
+
+  // Filtrer pour ne garder QUE les commandes expédiées (shipped)
+  // Exclure les commandes en attente de validation (draft, pending_validation, etc.)
+  const pendingOrders =
+    rawOrders?.filter(order => order.status !== 'shipped') || [];
+
+  const filteredOrders =
+    rawOrders?.filter(order => order.status === 'shipped') || [];
+
+  if (pendingOrders.length > 0) {
+    console.log('\n⚠️  Commandes non expédiées exclues:', pendingOrders.length);
+    pendingOrders.forEach(order => {
+      console.log(
+        `   - ${order.order_number} : ${order.customer_name} (status: ${order.status})`
+      );
+    });
+  }
+
+  console.log(
+    '✅ Commandes expédiées (après filtrage):',
+    filteredOrders.length
+  );
 
   if (ordersError) {
     console.error('❌ Erreur extraction commandes:', ordersError);
     process.exit(1);
   }
 
-  if (!rawOrders || rawOrders.length === 0) {
-    console.error('❌ Aucune commande trouvée');
+  if (!filteredOrders || filteredOrders.length === 0) {
+    console.error('❌ Aucune commande valide trouvée après filtrage');
     process.exit(1);
   }
 
   // Récupérer les items pour chaque commande
   const ordersWithItems = await Promise.all(
-    rawOrders.map(async order => {
+    filteredOrders.map(async order => {
       const { data: items } = await supabase
         .from('sales_order_items')
         .select(
@@ -53,7 +107,7 @@ async function generateReports() {
           product:products(sku, name)
         `
         )
-        .eq('order_id', order.id);
+        .eq('sales_order_id', order.id);
 
       return {
         ...order,

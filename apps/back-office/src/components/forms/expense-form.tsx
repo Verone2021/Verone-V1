@@ -132,7 +132,9 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
       }
     }
 
-    fetchData();
+    void fetchData().catch(error => {
+      console.error('[ExpenseForm] fetchData failed:', error);
+    });
   }, []);
 
   // Auto-générer numéro dépense
@@ -162,7 +164,9 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
       }
     }
 
-    generateDocumentNumber();
+    void generateDocumentNumber().catch(error => {
+      console.error('[ExpenseForm] generateDocumentNumber failed:', error);
+    });
   }, []);
 
   // Calcul automatique TVA et TTC
@@ -389,7 +393,14 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form
+      onSubmit={e => {
+        void handleSubmit(e).catch(error => {
+          console.error('[ExpenseForm] handleSubmit failed:', error);
+        });
+      }}
+      className="space-y-6"
+    >
       <Card>
         <CardHeader>
           <CardTitle>Informations Dépense</CardTitle>

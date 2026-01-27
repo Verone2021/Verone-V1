@@ -400,9 +400,17 @@ export default function CategoryDetailPage() {
                   iconPosition="top-right"
                   onClick={() => handleSubcategoryClick(subcategory.id)}
                   onEdit={() => handleEditSubcategory(subcategory)}
-                  onDelete={() =>
-                    handleDeleteSubcategory(subcategory.id, subcategory.name)
-                  }
+                  onDelete={() => {
+                    void handleDeleteSubcategory(
+                      subcategory.id,
+                      subcategory.name
+                    ).catch(error => {
+                      console.error(
+                        '[Categories] handleDeleteSubcategory failed:',
+                        error
+                      );
+                    });
+                  }}
                 />
               ))}
             </div>
@@ -448,13 +456,18 @@ export default function CategoryDetailPage() {
         }
         onSubmit={subcategory => {
           // Adapter la réponse pour le hook useSubcategories
-          handleSubmitNewSubcategory({
+          void handleSubmitNewSubcategory({
             name: subcategory.name,
             description: subcategory.description,
             category_id: subcategory.category_id,
             is_active: subcategory.is_active,
             display_order: subcategory.display_order,
             image_url: subcategory.image_url,
+          }).catch(error => {
+            console.error(
+              '[Categories] handleSubmitNewSubcategory failed:',
+              error
+            );
           });
         }}
       />
@@ -492,12 +505,17 @@ export default function CategoryDetailPage() {
         }
         onSubmit={subcategory => {
           // Adapter la réponse pour le hook useSubcategories
-          handleSubmitEditSubcategory({
+          void handleSubmitEditSubcategory({
             name: subcategory.name,
             description: subcategory.description,
             is_active: subcategory.is_active,
             display_order: subcategory.display_order,
             image_url: subcategory.image_url,
+          }).catch(error => {
+            console.error(
+              '[Categories] handleSubmitEditSubcategory failed:',
+              error
+            );
           });
         }}
       />
