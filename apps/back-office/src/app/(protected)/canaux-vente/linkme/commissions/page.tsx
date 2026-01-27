@@ -179,7 +179,9 @@ export default function LinkMeCommissionsPage() {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   useEffect(() => {
-    fetchData();
+    void fetchData().catch(error => {
+      console.error('[CommissionsPage] fetchData failed:', error);
+    });
   }, []);
 
   async function fetchData() {
@@ -299,7 +301,9 @@ export default function LinkMeCommissionsPage() {
       description: `Demande de paiement créée avec succès`,
     });
     setSelectedIds([]);
-    fetchData();
+    void fetchData().catch(error => {
+      console.error('[CommissionsPage] fetchData after create failed:', error);
+    });
   }
 
   async function handleMarkPaid(ids: string[]) {
@@ -323,7 +327,12 @@ export default function LinkMeCommissionsPage() {
       });
 
       setSelectedIds([]);
-      fetchData();
+      void fetchData().catch(error => {
+        console.error(
+          '[CommissionsPage] fetchData after mark paid failed:',
+          error
+        );
+      });
     } catch (error) {
       console.error('Error marking paid:', error);
       toast({
@@ -565,7 +574,14 @@ export default function LinkMeCommissionsPage() {
                     )}
                     {tab === 'en_cours' && selectedIds.length > 0 && (
                       <ButtonV2
-                        onClick={() => handleMarkPaid(selectedIds)}
+                        onClick={() => {
+                          void handleMarkPaid(selectedIds).catch(error => {
+                            console.error(
+                              '[CommissionsPage] handleMarkPaid failed:',
+                              error
+                            );
+                          });
+                        }}
                         disabled={processing}
                       >
                         <CheckCircle className="h-4 w-4 mr-2" />
