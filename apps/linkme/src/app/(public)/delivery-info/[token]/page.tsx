@@ -300,7 +300,9 @@ export default function DeliveryInfoPage() {
     }
 
     if (token) {
-      validateToken();
+      void validateToken().catch(error => {
+        console.error('[DeliveryInfo] Validation failed:', error);
+      });
     }
   }, [token]);
 
@@ -558,7 +560,14 @@ export default function DeliveryInfoPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form
+              onSubmit={e => {
+                void handleSubmit(e).catch(error => {
+                  console.error('[DeliveryInfo] Submit failed:', error);
+                });
+              }}
+              className="space-y-4"
+            >
               <div className="space-y-2">
                 <Label
                   htmlFor="receptionName"
