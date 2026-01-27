@@ -224,7 +224,9 @@ export default function LinkMeAnalyticsPage() {
 
   // Handler for refresh button
   const handleRefresh = useCallback(() => {
-    refetch();
+    void refetch().catch(error => {
+      console.error('[LinkMeAnalytics] refetch failed:', error);
+    });
   }, [refetch]);
 
   return (

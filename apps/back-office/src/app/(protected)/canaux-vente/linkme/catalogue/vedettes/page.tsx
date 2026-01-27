@@ -201,7 +201,16 @@ export default function VedettesPage() {
                         size="sm"
                         icon={StarOff}
                         label="Retirer des vedettes"
-                        onClick={() => handleRemoveFromFeatured(product)}
+                        onClick={() => {
+                          void handleRemoveFromFeatured(product).catch(
+                            error => {
+                              console.error(
+                                '[LinkMeFeatured] handleRemoveFromFeatured failed:',
+                                error
+                              );
+                            }
+                          );
+                        }}
                         className="text-yellow-600 hover:text-yellow-700 hover:bg-yellow-100"
                       />
                       <Link
