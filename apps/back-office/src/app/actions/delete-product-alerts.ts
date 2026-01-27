@@ -12,7 +12,7 @@ import { createClient } from '@verone/utils/supabase/server';
  * @returns Success status
  */
 export async function deleteProductAlerts(productId: string) {
-  const supabase = await createClient();
+  const supabase = createClient();
 
   try {
     // Vérifier d'abord combien d'alertes existent

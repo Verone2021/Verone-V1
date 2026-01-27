@@ -110,7 +110,9 @@ export default function ProfilePage() {
       setLoading(false);
     };
 
-    loadUserData();
+    void loadUserData().catch(error => {
+      console.error('[ProfilePage] useEffect loadUserData failed:', error);
+    });
   }, []);
 
   const handleSaveProfile = async () => {
@@ -267,7 +269,14 @@ export default function ProfilePage() {
             {isEditing ? (
               <>
                 <ButtonUnified
-                  onClick={handleSaveProfile}
+                  onClick={() => {
+                    void handleSaveProfile().catch(error => {
+                      console.error(
+                        '[ProfilePage] handleSaveProfile failed:',
+                        error
+                      );
+                    });
+                  }}
                   disabled={saveLoading}
                   loading={saveLoading}
                   variant="success"

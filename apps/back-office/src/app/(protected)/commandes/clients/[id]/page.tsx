@@ -38,7 +38,7 @@ export default async function OrderDetailPage({
   params,
 }: OrderDetailPageProps) {
   const { id } = await params;
-  const supabase = await createClient();
+  const supabase = createClient();
 
   // 1. Récupérer commande de base
   let order: any = null;

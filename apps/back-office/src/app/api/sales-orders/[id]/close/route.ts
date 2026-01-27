@@ -14,7 +14,7 @@ export async function POST(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const params = await context.params;
     const orderId = params.id;
 

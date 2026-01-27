@@ -158,7 +158,11 @@ export function DeleteUserDialog({
             type="button"
             variant="destructive"
             icon={Trash2}
-            onClick={handleDelete}
+            onClick={() => {
+              void handleDelete().catch(error => {
+                console.error('[DeleteUserDialog] handleDelete failed:', error);
+              });
+            }}
             loading={isDeleting}
             disabled={isDeleting}
           >

@@ -137,7 +137,14 @@ export function ResetPasswordDialog({
           </div>
         </div>
 
-        <form onSubmit={handleReset} className="space-y-4">
+        <form
+          onSubmit={e => {
+            void handleReset(e).catch(error => {
+              console.error('[ResetPasswordDialog] handleReset failed:', error);
+            });
+          }}
+          className="space-y-4"
+        >
           {/* Nouveau mot de passe */}
           <div className="space-y-2">
             <Label

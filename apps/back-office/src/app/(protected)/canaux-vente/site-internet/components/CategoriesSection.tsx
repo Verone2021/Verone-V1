@@ -248,7 +248,11 @@ export function CategoriesSection() {
             : 'Impossible de charger les catégories. Veuillez réessayer.'
         }
         variant="destructive"
-        onRetry={() => refetch()}
+        onRetry={() => {
+          void refetch().catch(error => {
+            console.error('[CategoriesSection] refetch failed:', error);
+          });
+        }}
       />
     );
   }
@@ -343,7 +347,14 @@ export function CategoriesSection() {
                     key={category.id}
                     category={category}
                     level={0}
-                    onToggleVisibility={handleToggleVisibility}
+                    onToggleVisibility={categoryId => {
+                      void handleToggleVisibility(categoryId).catch(error => {
+                        console.error(
+                          '[CategoriesSection] handleToggleVisibility failed:',
+                          error
+                        );
+                      });
+                    }}
                     isTogglingId={togglingId}
                   />
                 ))

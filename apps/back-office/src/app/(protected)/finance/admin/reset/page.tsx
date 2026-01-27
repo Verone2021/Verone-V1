@@ -194,7 +194,14 @@ export default function FinanceResetPage() {
             <div className="flex gap-4">
               <Button
                 variant="outline"
-                onClick={handleDryRun}
+                onClick={() => {
+                  void handleDryRun().catch(error => {
+                    console.error(
+                      '[FinanceResetPage] handleDryRun failed:',
+                      error
+                    );
+                  });
+                }}
                 disabled={isLoading}
                 className="flex-1"
               >
@@ -207,7 +214,14 @@ export default function FinanceResetPage() {
               </Button>
               <Button
                 variant="destructive"
-                onClick={handleApplyReset}
+                onClick={() => {
+                  void handleApplyReset().catch(error => {
+                    console.error(
+                      '[FinanceResetPage] handleApplyReset failed:',
+                      error
+                    );
+                  });
+                }}
                 disabled={isLoading || !preview}
                 className="flex-1"
               >

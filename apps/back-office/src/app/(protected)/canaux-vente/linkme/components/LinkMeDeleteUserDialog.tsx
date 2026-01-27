@@ -151,7 +151,14 @@ export function LinkMeDeleteUserDialog({
             type="button"
             variant="destructive"
             icon={Trash2}
-            onClick={handleDelete}
+            onClick={() => {
+              void handleDelete().catch(error => {
+                console.error(
+                  '[LinkMeDeleteUserDialog] handleDelete failed:',
+                  error
+                );
+              });
+            }}
             loading={deleteMutation.isPending}
             disabled={deleteMutation.isPending}
           >

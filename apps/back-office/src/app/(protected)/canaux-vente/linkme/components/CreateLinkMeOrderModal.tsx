@@ -884,7 +884,14 @@ export function CreateLinkMeOrderModal({
 
                     <div className="flex gap-2">
                       <button
-                        onClick={handleCreateCustomer}
+                        onClick={() => {
+                          void handleCreateCustomer().catch(error => {
+                            console.error(
+                              '[CreateLinkMeOrderModal] handleCreateCustomer failed:',
+                              error
+                            );
+                          });
+                        }}
                         disabled={
                           createOrganisation.isPending ||
                           createIndividualCustomer.isPending ||
@@ -1544,7 +1551,14 @@ export function CreateLinkMeOrderModal({
               Annuler
             </button>
             <button
-              onClick={handleSubmit}
+              onClick={() => {
+                void handleSubmit().catch(error => {
+                  console.error(
+                    '[CreateLinkMeOrderModal] handleSubmit failed:',
+                    error
+                  );
+                });
+              }}
               disabled={!canSubmit || createOrder.isPending}
               className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >

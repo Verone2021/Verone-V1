@@ -14,7 +14,7 @@ import { createClient } from '@verone/utils/supabase/server';
  */
 export async function markAsResolved(submissionId: string) {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
 
     const { error } = await (supabase as any)
       .from('form_submissions')
@@ -55,7 +55,7 @@ export async function markAsClosed(
   reason?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
 
     const { error } = await (supabase as any)
       .from('form_submissions')
@@ -104,7 +104,7 @@ export async function convertToOrder(
   }
 ): Promise<{ success: boolean; orderId?: string; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
 
     // Fetch submission data
     const { data: submission, error: fetchError } = await (supabase as any)
@@ -169,7 +169,7 @@ export async function convertToConsultation(
   }
 ): Promise<{ success: boolean; consultationId?: string; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
 
     // Fetch submission data
     const { data: submission, error: fetchError } = await (supabase as any)
@@ -238,7 +238,7 @@ export async function convertToSourcing(
   }
 ): Promise<{ success: boolean; productId?: string; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
 
     // Fetch submission data
     const { data: submission, error: fetchError } = await (supabase as any)
@@ -298,7 +298,7 @@ export async function convertToContact(
   submissionId: string
 ): Promise<{ success: boolean; contactId?: string; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
 
     // Fetch submission data
     const { data: submission, error: fetchError } = await (supabase as any)
@@ -363,7 +363,7 @@ export async function convertToLead(
   }
 ): Promise<{ success: boolean; leadId?: string; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
 
     // Fetch submission data
     const { data: submission, error: fetchError } = await (supabase as any)
@@ -428,7 +428,7 @@ export async function addMessage(
   messageType: 'internal' | 'customer' = 'internal'
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
 
     // Add message
     const { error } = await (supabase as any)

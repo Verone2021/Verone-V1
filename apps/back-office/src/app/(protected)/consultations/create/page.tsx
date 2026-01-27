@@ -251,7 +251,17 @@ export default function CreateConsultationPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form
+                onSubmit={e => {
+                  void handleSubmit(e).catch(error => {
+                    console.error(
+                      '[CreateConsultationPage] handleSubmit failed:',
+                      error
+                    );
+                  });
+                }}
+                className="space-y-6"
+              >
                 {/* Informations client */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium text-black">

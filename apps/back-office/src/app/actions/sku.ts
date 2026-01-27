@@ -25,7 +25,7 @@ export async function getNextSKU(subcategoryId: string): Promise<{
   error?: string;
 }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
 
     // 1. Récupérer le nom de la sous-catégorie
     const { data: subcategory, error: subcategoryError } = await supabase
@@ -108,7 +108,7 @@ export async function getNextSKUByName(subcategoryName: string): Promise<{
   error?: string;
 }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const prefix = getSubcategoryPrefix(subcategoryName);
 
     // Trouver le numéro max existant pour ce préfixe
@@ -171,7 +171,7 @@ export async function isSKUAvailable(sku: string): Promise<{
   error?: string;
 }> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
 
     const { data, error } = await supabase
       .from('products')

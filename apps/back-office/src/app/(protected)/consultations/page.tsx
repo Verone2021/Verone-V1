@@ -237,7 +237,12 @@ export default function ConsultationsPage() {
     useState('');
 
   useEffect(() => {
-    fetchConsultations();
+    void fetchConsultations().catch(error => {
+      console.error(
+        '[ConsultationsPage] useEffect fetchConsultations failed:',
+        error
+      );
+    });
   }, []);
 
   // Filtrer les consultations

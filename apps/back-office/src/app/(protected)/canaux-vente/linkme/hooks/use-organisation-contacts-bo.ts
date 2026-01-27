@@ -152,8 +152,8 @@ export function useCreateContactBO() {
 
       return contact;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['organisation-contacts-bo', variables.organisationId],
       });
       toast.success('Contact créé avec succès');
@@ -203,8 +203,8 @@ export function useSetBillingContactBO() {
 
       return true;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['organisation-contacts-bo', variables.organisationId],
       });
     },

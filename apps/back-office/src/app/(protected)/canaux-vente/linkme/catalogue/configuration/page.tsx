@@ -403,7 +403,9 @@ export default function LinkMePricingConfigPage() {
     if (successCount > 0) {
       toast.success(`${successCount} produit(s) mis à jour`);
       setPendingChanges(new Map());
-      refetch();
+      void refetch().catch(error => {
+        console.error('[ConfigurationPage] refetch failed:', error);
+      });
     }
     if (errorCount > 0) {
       toast.error(`${errorCount} erreur(s) lors de la mise à jour`);
@@ -537,7 +539,14 @@ export default function LinkMePricingConfigPage() {
                 </ButtonV2>
                 <ButtonV2
                   size="sm"
-                  onClick={handleSaveAll}
+                  onClick={() => {
+                    void handleSaveAll().catch(error => {
+                      console.error(
+                        '[ConfigurationPage] handleSaveAll failed:',
+                        error
+                      );
+                    });
+                  }}
                   disabled={updatePricingMutation.isPending}
                 >
                   {updatePricingMutation.isPending ? (

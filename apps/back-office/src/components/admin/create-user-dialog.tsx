@@ -202,7 +202,14 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form
+          onSubmit={e => {
+            void handleSubmit(e).catch(error => {
+              console.error('[CreateUserDialog] handleSubmit failed:', error);
+            });
+          }}
+          className="space-y-4"
+        >
           {/* Informations de connexion */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-black">

@@ -333,9 +333,16 @@ export default function FamilyDetailPage() {
                   iconPosition="top-right"
                   onClick={() => handleCategoryClick(category.id)}
                   onEdit={() => handleEditCategory(category)}
-                  onDelete={() =>
-                    handleDeleteCategory(category.id, category.name)
-                  }
+                  onDelete={() => {
+                    void handleDeleteCategory(category.id, category.name).catch(
+                      error => {
+                        console.error(
+                          '[FamilyPage] handleDeleteCategory failed:',
+                          error
+                        );
+                      }
+                    );
+                  }}
                 />
               ))}
             </div>

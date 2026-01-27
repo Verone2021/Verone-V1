@@ -97,7 +97,14 @@ export default function LivraisonsPage(): React.ReactNode {
         </div>
         <Button
           variant="outline"
-          onClick={fetchDeliveryNotes}
+          onClick={() => {
+            void fetchDeliveryNotes().catch(error => {
+              console.error(
+                '[LivraisonsPage] fetchDeliveryNotes failed:',
+                error
+              );
+            });
+          }}
           disabled={loading}
         >
           <RefreshCw

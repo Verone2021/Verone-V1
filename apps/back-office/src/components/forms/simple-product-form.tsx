@@ -197,7 +197,14 @@ export function SimpleProductForm({
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form
+        onSubmit={e => {
+          void handleSubmit(e).catch(error => {
+            console.error('[SimpleProductForm] handleSubmit failed:', error);
+          });
+        }}
+        className="space-y-4"
+      >
         {/* Nom du produit */}
         <div>
           <Label htmlFor="name" className="text-sm font-medium text-black">

@@ -81,7 +81,9 @@ export function useSupabaseQuery<T>(options: QueryOptions<T>): QueryState<T> {
 
   useEffect(() => {
     if (options.autoFetch !== false) {
-      fetch();
+      void fetch().catch(error => {
+        console.error('[useSupabaseQuery] useEffect fetch failed:', error);
+      });
     }
   }, [options.tableName]);
 

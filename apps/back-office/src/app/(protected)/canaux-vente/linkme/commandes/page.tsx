@@ -125,7 +125,12 @@ export default function LinkMeOrdersPage() {
       }
     }
 
-    fetchEnrichedData();
+    void fetchEnrichedData().catch(error => {
+      console.error(
+        '[CommandesPage] useEffect fetchEnrichedData failed:',
+        error
+      );
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Fetch une seule fois au montage
 

@@ -253,7 +253,11 @@ export function UserEditModal({ isOpen, user, onClose }: UserEditModalProps) {
           {/* Form */}
           <form
             id="edit-user-form"
-            onSubmit={handleSubmit}
+            onSubmit={e => {
+              void handleSubmit(e).catch(error => {
+                console.error('[UserEditModal] handleSubmit failed:', error);
+              });
+            }}
             className="p-6 space-y-5 overflow-y-auto flex-1"
           >
             {/* === SECTION 1: PROFIL === */}

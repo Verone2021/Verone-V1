@@ -159,7 +159,9 @@ export function useFormMessages(submissionId: string): UseFormMessagesReturn {
 
   // Charger les messages au montage et quand submissionId change
   useEffect(() => {
-    loadMessages();
+    void loadMessages().catch(error => {
+      console.error('[useFormMessages] useEffect loadMessages failed:', error);
+    });
   }, [loadMessages]);
 
   return {

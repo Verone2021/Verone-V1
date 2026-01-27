@@ -448,7 +448,14 @@ export function EditLinkMeOrderModal({
               Annuler
             </button>
             <button
-              onClick={handleSave}
+              onClick={() => {
+                void handleSave().catch(error => {
+                  console.error(
+                    '[EditLinkMeOrderModal] handleSave failed:',
+                    error
+                  );
+                });
+              }}
               disabled={!hasChanges || updateOrder.isPending}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >

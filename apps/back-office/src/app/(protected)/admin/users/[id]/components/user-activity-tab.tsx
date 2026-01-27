@@ -83,7 +83,9 @@ export function UserActivityTab({ user }: UserActivityTabProps) {
       }
     };
 
-    fetchActivity();
+    void fetchActivity().catch(error => {
+      console.error('[UserActivityTab] useEffect fetchActivity failed:', error);
+    });
   }, [user.id]);
 
   const getEngagementLevel = (score: number) => {

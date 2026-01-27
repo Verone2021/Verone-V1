@@ -37,7 +37,7 @@ export async function POST(
       );
     }
 
-    const supabase = await createClient();
+    const supabase = createClient();
 
     // Vérifier l'authentification
     const {

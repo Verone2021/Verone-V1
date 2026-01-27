@@ -365,7 +365,9 @@ export default function PrisesContactPage() {
       }
     }
 
-    fetchData();
+    void fetchData().catch(error => {
+      console.error('[PrisesContactPage] useEffect fetchData failed:', error);
+    });
   }, []);
 
   // Counts

@@ -138,9 +138,11 @@ export function useMarkNotificationReviewed() {
 
       return notificationId;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['archive-notifications'] });
-      queryClient.invalidateQueries({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['archive-notifications'],
+      });
+      await queryClient.invalidateQueries({
         queryKey: ['archive-notifications-count'],
       });
       toast.success('Notification traitée');

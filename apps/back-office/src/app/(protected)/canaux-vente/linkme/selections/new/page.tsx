@@ -502,7 +502,11 @@ export default function NewSelectionPage() {
           <ButtonV2
             variant="primary"
             icon={Check}
-            onClick={handleCreate}
+            onClick={() => {
+              void handleCreate().catch(error => {
+                console.error('[NewSelectionPage] handleCreate failed:', error);
+              });
+            }}
             loading={isCreating}
             disabled={
               isCreating ||

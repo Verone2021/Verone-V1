@@ -402,7 +402,14 @@ export function QuickVariantForm({
           </p>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          onSubmit={e => {
+            void handleSubmit(e).catch(error => {
+              console.error('[QuickVariantForm] handleSubmit failed:', error);
+            });
+          }}
+          className="space-y-6"
+        >
           {/* Aperçu nom produit auto-généré */}
           <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
             <Label className="text-blue-900 text-sm font-medium">
@@ -523,7 +530,12 @@ export function QuickVariantForm({
                       onChange={e => {
                         const file = e.target.files?.[0];
                         if (file && file.size <= 5 * 1024 * 1024) {
-                          handleImageUpload(file);
+                          void handleImageUpload(file).catch(error => {
+                            console.error(
+                              '[QuickVariantForm] handleImageUpload failed:',
+                              error
+                            );
+                          });
                         } else {
                           toast({
                             title: '❌ Fichier trop volumineux',

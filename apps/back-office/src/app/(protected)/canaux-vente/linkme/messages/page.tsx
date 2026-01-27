@@ -230,11 +230,13 @@ function useSendNotification() {
 
       return { recipientCount: userIds.length };
     },
-    onSuccess: data => {
+    onSuccess: async data => {
       toast.success(
         `Notification envoyée à ${data.recipientCount} destinataire(s)`
       );
-      queryClient.invalidateQueries({ queryKey: ['notification-history'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['notification-history'],
+      });
     },
     onError: error => {
       console.error('Erreur envoi notification:', error);
@@ -441,7 +443,14 @@ export default function MessagesPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form
+                onSubmit={e => {
+                  void handleSubmit(e).catch(error => {
+                    console.error('[MessagesPage] handleSubmit failed:', error);
+                  });
+                }}
+                className="space-y-6"
+              >
                 {/* Destinataires */}
                 <div className="space-y-4">
                   <Label className="text-base font-semibold">
