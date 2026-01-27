@@ -698,8 +698,8 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
       }
 
       // Invalider les caches
-      queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
+      await queryClient.invalidateQueries({
         queryKey: ['affiliate-orders', affiliate.id],
       });
 
@@ -1507,7 +1507,11 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                 </div>
               )}
               <button
-                onClick={handleSubmitExisting}
+                onClick={() => {
+                  void handleSubmitExisting().catch(error => {
+                    console.error('[CreateOrderModal] Submit failed:', error);
+                  });
+                }}
                 disabled={
                   !canSubmitExisting ||
                   createOrder.isPending ||
@@ -2813,7 +2817,12 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
               <button
                 onClick={() => {
                   setShowConfirmModal(false);
-                  handleSubmitNew();
+                  void handleSubmitNew().catch(error => {
+                    console.error(
+                      '[CreateOrderModal] Submit new failed:',
+                      error
+                    );
+                  });
                 }}
                 disabled={createOrder.isPending}
                 className="flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium transition-colors"
