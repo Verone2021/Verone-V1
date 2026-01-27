@@ -334,7 +334,14 @@ export default function RapportsPage() {
               <TemplateCard
                 key={template.id}
                 template={template}
-                onGenerate={handleGenerate}
+                onGenerate={id => {
+                  void handleGenerate(id).catch(error => {
+                    console.error(
+                      '[RapportsPage] Report generation failed:',
+                      error
+                    );
+                  });
+                }}
                 isGenerating={generatingId === template.id}
               />
             ))}
