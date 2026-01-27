@@ -124,7 +124,9 @@ function useUserSelections(
       setLoading(false);
     };
 
-    fetchSelections();
+    void fetchSelections().catch(error => {
+      console.error('[useUserSelections] fetchSelections failed:', error);
+    });
   }, [enseigneId, organisationId]);
 
   return { selections, loading };
@@ -200,7 +202,9 @@ function useUserStats(
       setLoading(false);
     };
 
-    fetchStats();
+    void fetchStats().catch(error => {
+      console.error('[useUserStats] fetchStats failed:', error);
+    });
   }, [enseigneId, organisationId]);
 
   return { stats, loading };

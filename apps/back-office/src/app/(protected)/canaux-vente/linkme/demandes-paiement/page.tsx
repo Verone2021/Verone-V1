@@ -242,8 +242,10 @@ function useMarkAsPaid() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-payment-requests'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['admin-payment-requests'],
+      });
     },
   });
 }
@@ -357,7 +359,11 @@ function MarkAsPaidModal({
             Annuler
           </button>
           <button
-            onClick={handleSubmit}
+            onClick={() => {
+              void handleSubmit().catch(error => {
+                console.error('[MarkAsPaidModal] handleSubmit failed:', error);
+              });
+            }}
             disabled={markAsPaid.isPending}
             className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors"
           >
@@ -589,7 +595,11 @@ export default function PaymentRequestsAdminPage() {
         isOpen={!!selectedRequest}
         request={selectedRequest}
         onClose={() => setSelectedRequest(null)}
-        onSuccess={() => refetch()}
+        onSuccess={() => {
+          void refetch().catch(error => {
+            console.error('[DemandesPaiement] refetch failed:', error);
+          });
+        }}
       />
     </div>
   );

@@ -79,7 +79,9 @@ export default function StorageDetailPage() {
           setOwnerName(data.trade_name || data.legal_name || 'Organisation');
       }
     }
-    fetchOwnerName();
+    void fetchOwnerName().catch(error => {
+      console.error('[LinkMeStockage] fetchOwnerName failed:', error);
+    });
   }, [ownerType, ownerId]);
 
   const isEnseigne = ownerType === 'enseigne';

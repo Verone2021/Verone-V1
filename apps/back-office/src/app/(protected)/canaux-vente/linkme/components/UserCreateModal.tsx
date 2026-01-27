@@ -181,7 +181,11 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
           {/* Form */}
           <form
             id="create-user-form"
-            onSubmit={handleSubmit}
+            onSubmit={e => {
+              void handleSubmit(e).catch(error => {
+                console.error('[UserCreateModal] handleSubmit failed:', error);
+              });
+            }}
             className="p-6 space-y-5 overflow-y-auto flex-1"
           >
             {/* Email */}
