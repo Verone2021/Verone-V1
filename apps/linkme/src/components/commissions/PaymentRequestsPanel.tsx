@@ -258,7 +258,12 @@ function UploadInvoiceModal({
             Annuler
           </button>
           <button
-            onClick={handleUpload}
+            onClick={() => {
+              void handleUpload().catch(error => {
+                console.error('[UploadInvoiceModal] Upload failed:', error);
+                setError("Erreur lors de l'upload");
+              });
+            }}
             disabled={!selectedFile || uploadMutation.isPending}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
@@ -381,7 +386,11 @@ export function PaymentRequestsPanel({ className }: PaymentRequestsPanelProps) {
         isOpen={!!uploadModalRequestId}
         requestId={uploadModalRequestId}
         onClose={() => setUploadModalRequestId(null)}
-        onSuccess={() => refetch()}
+        onSuccess={() => {
+          void refetch().catch(error => {
+            console.error('[PaymentRequestsPanel] Refetch failed:', error);
+          });
+        }}
       />
     </Card>
   );

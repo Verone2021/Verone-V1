@@ -68,9 +68,11 @@ export function QuickEditBillingAddressModal({
       if (error) throw error;
       return address;
     },
-    onSuccess: address => {
-      queryClient.invalidateQueries({ queryKey: ['enseigne-organisations'] });
-      queryClient.invalidateQueries({
+    onSuccess: async address => {
+      await queryClient.invalidateQueries({
+        queryKey: ['enseigne-organisations'],
+      });
+      await queryClient.invalidateQueries({
         queryKey: ['organisation-detail', organisationId],
       });
       toast.success(`Adresse de facturation mise à jour : ${address.city}`);

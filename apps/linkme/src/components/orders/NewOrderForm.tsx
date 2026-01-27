@@ -214,7 +214,11 @@ export function NewOrderForm() {
               ) : (
                 <button
                   type="button"
-                  onClick={handleSubmit}
+                  onClick={() => {
+                    void handleSubmit().catch(error => {
+                      console.error('[NewOrderForm] Submit failed:', error);
+                    });
+                  }}
                   disabled={isSubmitting}
                   className={cn(
                     'flex items-center gap-1.5 px-5 py-2 rounded-lg font-medium text-sm transition-colors',

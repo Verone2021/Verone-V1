@@ -66,8 +66,10 @@ export function QuickEditOwnershipTypeModal({
       if (error) throw error;
       return ownershipType;
     },
-    onSuccess: ownershipType => {
-      queryClient.invalidateQueries({ queryKey: ['enseigne-organisations'] });
+    onSuccess: async ownershipType => {
+      await queryClient.invalidateQueries({
+        queryKey: ['enseigne-organisations'],
+      });
       toast.success(
         `Type défini : ${ownershipType === 'succursale' ? 'Restaurant propre' : 'Franchise'}`
       );

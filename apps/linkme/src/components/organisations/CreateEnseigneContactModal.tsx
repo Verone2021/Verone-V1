@@ -83,7 +83,9 @@ export function CreateEnseigneContactModal({
       if (error) throw error;
 
       toast.success('Contact créé avec succès');
-      queryClient.invalidateQueries({ queryKey: ['organisation-contacts'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['organisation-contacts'],
+      });
       onClose();
     } catch (error) {
       console.error('Erreur création contact:', error);
@@ -100,7 +102,17 @@ export function CreateEnseigneContactModal({
           <DialogTitle>Nouveau Contact Enseigne</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form
+          onSubmit={e => {
+            void handleSubmit(e).catch(error => {
+              console.error(
+                '[CreateEnseigneContactModal] Submit failed:',
+                error
+              );
+            });
+          }}
+          className="space-y-4"
+        >
           {/* Nom et Prénom */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
