@@ -44,7 +44,7 @@ export function ContactFormModalWrapper({
   contact,
   onSuccess,
 }: ContactFormModalWrapperProps) {
-  const handleSave = async (contactData: any) => {
+  const handleSave = async (_contactData: any) => {
     // TODO: Implémenter save logic ici ou dans le modal
     // Pour l'instant on appelle juste onSuccess
     onSuccess();

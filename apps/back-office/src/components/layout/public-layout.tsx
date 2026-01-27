@@ -6,7 +6,7 @@
 
 import { Inter } from 'next/font/google';
 
-const inter = Inter({ subsets: ['latin'] });
+const _inter = Inter({ subsets: ['latin'] });
 
 interface PublicLayoutProps {
   children: React.ReactNode;

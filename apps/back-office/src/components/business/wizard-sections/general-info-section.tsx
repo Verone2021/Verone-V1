@@ -30,7 +30,7 @@ interface GeneralInfoSectionProps {
 export function GeneralInfoSection({
   formData,
   setFormData,
-  onSave,
+  onSave: _onSave,
 }: GeneralInfoSectionProps) {
   const updateField = (field: keyof WizardFormData, value: any) => {
     setFormData({

@@ -15,7 +15,7 @@ interface CollectionImageUploadProps {
   onUploadComplete?: (imageUrl: string) => void;
 }
 
-export function CollectionImageUpload(props: CollectionImageUploadProps) {
+export function CollectionImageUpload(_props: CollectionImageUploadProps) {
   // Stub: retourne null pour l'instant
   // L'utilisateur peut implémenter ce composant selon ses besoins
   return null;

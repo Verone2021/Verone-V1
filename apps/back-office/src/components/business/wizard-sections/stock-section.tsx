@@ -29,7 +29,7 @@ interface StockSectionProps {
 export function StockSection({
   formData,
   setFormData,
-  onSave,
+  onSave: _onSave,
 }: StockSectionProps) {
   const updateField = (field: keyof WizardFormData, value: any) => {
     setFormData({

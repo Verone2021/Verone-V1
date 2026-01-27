@@ -16,7 +16,7 @@ interface ConsultationOrderInterfaceProps {
 }
 
 export function ConsultationOrderInterface(
-  props: ConsultationOrderInterfaceProps
+  _props: ConsultationOrderInterfaceProps
 ) {
   // Stub: retourne null pour l'instant
   // L'utilisateur peut implémenter ce composant selon ses besoins

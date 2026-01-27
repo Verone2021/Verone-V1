@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState as _useState, useEffect as _useEffect } from 'react';
 
 import { DollarSign, Calculator, Info } from 'lucide-react';
 

@@ -19,7 +19,7 @@ import {
   DialogTitle,
 } from '@verone/ui';
 import { RoleBadge, type UserRole } from '@verone/ui';
-import { cn } from '@verone/utils';
+import { cn as _cn } from '@verone/utils';
 import { AlertTriangle, Trash2, X } from 'lucide-react';
 
 import type { UserWithProfile } from '@/app/(protected)/admin/users/page';

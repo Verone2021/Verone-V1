@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
-import { X, Save, Loader2 } from 'lucide-react';
+import { Save, Loader2 } from 'lucide-react';
 
 import { ImageUploadV2 } from './image-upload-v2';
 import { cn } from '@verone/utils';

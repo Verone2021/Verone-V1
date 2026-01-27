@@ -71,7 +71,7 @@ interface QontoInvoice {
   }>;
 }
 
-export async function POST(request: NextRequest): Promise<
+export async function POST(_request: NextRequest): Promise<
   NextResponse<{
     success: boolean;
     synced: number;

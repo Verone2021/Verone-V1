@@ -37,7 +37,6 @@ import {
   Mail,
   Phone,
   Briefcase,
-  Shield,
   Eye,
   EyeOff,
 } from 'lucide-react';

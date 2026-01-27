@@ -27,8 +27,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
-import { cn } from '@verone/utils';
-import { Edit, Save, X, User } from 'lucide-react';
+import { cn as _cn } from '@verone/utils';
+import { Edit, Save, X } from 'lucide-react';
 
 import type { UserWithProfile } from '@/app/(protected)/admin/users/page';
 import { updateUserProfile } from '@verone/admin/actions/user-management';

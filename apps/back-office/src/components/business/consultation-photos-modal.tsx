@@ -16,7 +16,7 @@ interface ConsultationPhotosModalProps {
   consultationId?: string;
 }
 
-export function ConsultationPhotosModal(props: ConsultationPhotosModalProps) {
+export function ConsultationPhotosModal(_props: ConsultationPhotosModalProps) {
   // Stub: retourne null pour l'instant
   return null;
 }

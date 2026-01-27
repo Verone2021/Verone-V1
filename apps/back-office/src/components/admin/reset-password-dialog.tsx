@@ -21,8 +21,8 @@ import {
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { RoleBadge, type UserRole } from '@verone/ui';
-import { cn } from '@verone/utils';
-import { Key, Save, X, Eye, EyeOff } from 'lucide-react';
+import { cn as _cn } from '@verone/utils';
+import { Key, X, Eye, EyeOff } from 'lucide-react';
 
 import type { UserWithProfile } from '@/app/(protected)/admin/users/page';
 import { resetUserPassword } from '@verone/admin/actions/user-management';

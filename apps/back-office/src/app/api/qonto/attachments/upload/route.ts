@@ -18,7 +18,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { QontoClient } from '@verone/integrations/qonto';
-import type { Json } from '@verone/types/supabase';
+import type { Json as _Json } from '@verone/types/supabase';
 import { createServerClient } from '@verone/utils/supabase/server';
 
 export const runtime = 'nodejs';

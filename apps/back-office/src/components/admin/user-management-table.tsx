@@ -33,7 +33,6 @@ import {
   Edit,
   Trash2,
   Shield,
-  Phone,
   Mail,
   Calendar,
   Key,
@@ -81,7 +80,7 @@ export function UserManagementTable({ users }: UserManagementTableProps) {
     });
   };
 
-  const formatUserName = (email: string, user_metadata: any = null) => {
+  const _formatUserName = (email: string, user_metadata: any = null) => {
     // Essayer d'obtenir le nom depuis les métadonnées
     if (user_metadata?.name) {
       return user_metadata.name;
