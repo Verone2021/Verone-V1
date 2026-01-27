@@ -13,13 +13,11 @@ import {
   getOrganisationDisplayName,
   type Organisation,
 } from '@verone/organisations';
-import type { Database } from '@verone/types';
 import { Badge } from '@verone/ui';
 import { ButtonV2, IconButton } from '@verone/ui';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@verone/ui';
@@ -44,21 +42,13 @@ import { spacing, colors } from '@verone/ui/design-system';
 import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import {
-  UserCheck,
-  Building,
-  Calendar,
-  ArrowRight,
   Search,
-  Filter,
   Plus,
-  Phone,
-  Mail,
   MapPin,
   Archive,
   Trash2,
   ArchiveRestore,
   ArrowLeft,
-  Award,
   ExternalLink,
   Building2,
   Eye,
@@ -67,7 +57,6 @@ import {
 } from 'lucide-react';
 
 import { FavoriteToggleButton } from '@/components/business/favorite-toggle-button';
-import { HeartBadge } from '@/components/business/heart-badge';
 
 // ✅ FIX TypeScript: Utiliser type Organisation (pas de Partner local)
 // Interface Organisation définie dans use-organisations.ts
@@ -112,8 +101,8 @@ export default function PartnersPage() {
   const {
     organisations: partners,
     loading,
-    error,
-    toggleOrganisationStatus,
+    error: _error,
+    toggleOrganisationStatus: _toggleOrganisationStatus,
     archiveOrganisation,
     unarchiveOrganisation,
     hardDeleteOrganisation,
