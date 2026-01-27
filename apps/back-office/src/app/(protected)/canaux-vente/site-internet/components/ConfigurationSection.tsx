@@ -255,7 +255,11 @@ export function ConfigurationSection() {
             : 'Impossible de charger la configuration. Veuillez réessayer.'
         }
         variant="destructive"
-        onRetry={() => refetch()}
+        onRetry={() => {
+          void refetch().catch(error => {
+            console.error('[ConfigurationSection] Refetch failed:', error);
+          });
+        }}
       />
     );
   }
@@ -317,7 +321,14 @@ export function ConfigurationSection() {
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  onChange={handleLogoUpload}
+                  onChange={e => {
+                    void handleLogoUpload(e).catch(error => {
+                      console.error(
+                        '[ConfigurationSection] Logo upload failed:',
+                        error
+                      );
+                    });
+                  }}
                 />
                 <ButtonV2
                   variant="outline"
@@ -384,7 +395,14 @@ export function ConfigurationSection() {
           {/* Actions */}
           <div className="flex justify-end">
             <ButtonV2
-              onClick={handleSaveIdentity}
+              onClick={() => {
+                void handleSaveIdentity().catch(error => {
+                  console.error(
+                    '[ConfigurationSection] Save identity failed:',
+                    error
+                  );
+                });
+              }}
               disabled={updateConfig.isPending}
             >
               {updateConfig.isPending ? (
@@ -474,7 +492,17 @@ export function ConfigurationSection() {
 
           {/* Actions */}
           <div className="flex justify-end">
-            <ButtonV2 onClick={handleSaveSEO} disabled={updateConfig.isPending}>
+            <ButtonV2
+              onClick={() => {
+                void handleSaveSEO().catch(error => {
+                  console.error(
+                    '[ConfigurationSection] Save SEO failed:',
+                    error
+                  );
+                });
+              }}
+              disabled={updateConfig.isPending}
+            >
               {updateConfig.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -540,7 +568,14 @@ export function ConfigurationSection() {
           {/* Actions */}
           <div className="flex justify-end">
             <ButtonV2
-              onClick={handleSaveContact}
+              onClick={() => {
+                void handleSaveContact().catch(error => {
+                  console.error(
+                    '[ConfigurationSection] Save contact failed:',
+                    error
+                  );
+                });
+              }}
               disabled={updateConfig.isPending}
             >
               {updateConfig.isPending ? (
@@ -628,7 +663,14 @@ export function ConfigurationSection() {
           {/* Actions */}
           <div className="flex justify-end">
             <ButtonV2
-              onClick={handleSaveAnalytics}
+              onClick={() => {
+                void handleSaveAnalytics().catch(error => {
+                  console.error(
+                    '[ConfigurationSection] Save analytics failed:',
+                    error
+                  );
+                });
+              }}
               disabled={updateConfigJSON.isPending}
             >
               {updateConfigJSON.isPending ? (

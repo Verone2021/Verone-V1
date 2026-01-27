@@ -163,7 +163,9 @@ export default function EnseigneDetailPage() {
         setProductsLoading(false);
       }
     }
-    fetchEnseigneProducts();
+    void fetchEnseigneProducts().catch(error => {
+      console.error('[EnseigneDetail] Fetch products failed:', error);
+    });
   }, [enseigneId, supabase]);
 
   // Charger les canaux de vente de cette enseigne
@@ -211,13 +213,19 @@ export default function EnseigneDetailPage() {
         console.error('Erreur chargement canaux enseigne:', err);
       }
     }
-    fetchEnseigneChannels();
+    void fetchEnseigneChannels().catch(error => {
+      console.error('[EnseigneDetail] Fetch channels failed:', error);
+    });
   }, [enseigneId, supabase]);
 
   // Refresh tout
   const handleRefresh = useCallback(() => {
-    refetchEnseigne();
-    refetchStats();
+    void refetchEnseigne().catch(error => {
+      console.error('[EnseigneDetail] Refetch enseigne failed:', error);
+    });
+    void refetchStats().catch(error => {
+      console.error('[EnseigneDetail] Refetch stats failed:', error);
+    });
   }, [refetchEnseigne, refetchStats]);
 
   // Ouvrir modal édition
@@ -531,7 +539,14 @@ export default function EnseigneDetailPage() {
               organisations={stats?.organisationsWithRevenue || []}
               parentOrganisation={stats?.parentOrganisation || null}
               onAddOrganisations={() => setIsOrganisationModalOpen(true)}
-              onRemoveOrganisation={handleRemoveOrganisation}
+              onRemoveOrganisation={orgId => {
+                void handleRemoveOrganisation(orgId).catch(error => {
+                  console.error(
+                    '[EnseigneDetail] Remove organisation failed:',
+                    error
+                  );
+                });
+              }}
               loading={statsLoading}
             />
           </TabsContent>
@@ -668,7 +683,11 @@ export default function EnseigneDetailPage() {
               Annuler
             </ButtonV2>
             <ButtonV2
-              onClick={handleSubmitEdit}
+              onClick={() => {
+                void handleSubmitEdit().catch(error => {
+                  console.error('[EnseigneDetail] Submit edit failed:', error);
+                });
+              }}
               disabled={!formData.name.trim() || isSubmitting}
             >
               {isSubmitting ? (
@@ -704,7 +723,11 @@ export default function EnseigneDetailPage() {
             </ButtonV2>
             <ButtonV2
               variant="destructive"
-              onClick={handleDelete}
+              onClick={() => {
+                void handleDelete().catch(error => {
+                  console.error('[EnseigneDetail] Delete failed:', error);
+                });
+              }}
               disabled={isSubmitting}
             >
               {isSubmitting ? (
