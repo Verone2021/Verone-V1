@@ -50,7 +50,9 @@ export default function StockAnalyticsPage() {
 
   // Générer le rapport au chargement de la page
   useEffect(() => {
-    generateReport(90);
+    void generateReport(90).catch(error => {
+      console.error('[StocksAnalyticsPage] generateReport failed:', error);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -89,7 +91,14 @@ export default function StockAnalyticsPage() {
           </p>
           <p className="text-red-600 text-sm mt-1">{error}</p>
           <Button
-            onClick={() => generateReport(90)}
+            onClick={() => {
+              void generateReport(90).catch(error => {
+                console.error(
+                  '[StocksAnalyticsPage] generateReport failed:',
+                  error
+                );
+              });
+            }}
             className="mt-4"
             variant="outline"
           >
@@ -133,7 +142,17 @@ export default function StockAnalyticsPage() {
             Métriques avancées et classifications ABC/XYZ
           </p>
         </div>
-        <Button onClick={() => generateReport(90)} variant="outline">
+        <Button
+          onClick={() => {
+            void generateReport(90).catch(error => {
+              console.error(
+                '[StocksAnalyticsPage] generateReport failed:',
+                error
+              );
+            });
+          }}
+          variant="outline"
+        >
           <RefreshCw className="w-4 h-4 mr-2" />
           Actualiser
         </Button>
