@@ -31,33 +31,23 @@ import {
   ShoppingBag,
   Store,
   Truck,
-  Wallet,
   Building2,
   Settings,
   LogOut,
-  ChevronDown,
   ChevronRight,
-  Grid3x3,
   Tags,
   Layers,
-  CheckCircle,
   MessageCircle,
   FileText,
   Banknote,
-  RefreshCw,
   Globe,
   Link2,
-  Warehouse,
   Calculator,
   LayoutDashboard,
   ArrowLeftRight,
-  BookOpenCheck,
 } from 'lucide-react';
 
-import {
-  InactiveModuleWrapper,
-  PhaseIndicator,
-} from '@/components/ui/phase-indicator';
+import { PhaseIndicator } from '@/components/ui/phase-indicator';
 
 // Hooks et Dropdowns pour badges dynamiques (Phase 2 - 2026-01-23)
 import {
@@ -76,7 +66,6 @@ import {
   OrdersPendingDropdown,
   ExpeditionsPendingDropdown,
   TransactionsUnreconciledDropdown,
-  LinkmeApprovalsDropdown,
 } from '@verone/notifications';
 
 // Interface pour les éléments de navigation
@@ -100,7 +89,7 @@ const getNavItems = (
   ordersPendingCount: number,
   expeditionsPendingCount: number,
   transactionsUnreconciledCount: number,
-  linkmeApprovalsCount: number
+  _linkmeApprovalsCount: number
 ): NavItem[] => [
   {
     title: 'Dashboard',
@@ -510,8 +499,8 @@ function SidebarContent() {
     linkmeApprovalsCount,
   ]);
 
-  // Fonction récursive pour rendre les enfants (support multi-niveaux)
-  const renderChildNavItem = (
+  // Fonction récursive pour rendre les enfants (support multi-niveaux) - Reserved
+  const _renderChildNavItem = (
     child: NavItem,
     idx: number,
     isParentExpanded: boolean
@@ -624,7 +613,7 @@ function SidebarContent() {
   const renderNavItemExpanded = (item: NavItem) => {
     const moduleName = getModuleName(item.title);
     const moduleStatus = getModuleDeploymentStatus(moduleName);
-    const isItemExpanded = expandedItems.includes(item.title);
+    const _isItemExpanded = expandedItems.includes(item.title);
     const isActiveItem = isActiveOrHasActiveChild(item);
 
     // Module inactif
@@ -744,7 +733,7 @@ function SidebarContent() {
   const renderNavItem = (item: NavItem) => {
     const moduleName = getModuleName(item.title);
     const moduleStatus = getModuleDeploymentStatus(moduleName);
-    const isItemExpanded = expandedItems.includes(item.title);
+    const _isItemExpanded = expandedItems.includes(item.title);
     const isActiveItem = isActiveOrHasActiveChild(item);
 
     // Mode compact avec Popover pour sous-menus ou Tooltip pour items simples
@@ -1020,6 +1009,6 @@ function SidebarContent() {
   );
 }
 
-export function AppSidebar({ className }: { className?: string }) {
+export function AppSidebar({ className: _className }: { className?: string }) {
   return <SidebarContent />;
 }

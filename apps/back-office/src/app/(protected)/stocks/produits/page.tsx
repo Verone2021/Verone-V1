@@ -16,7 +16,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@verone/ui';
 import { Input } from '@verone/ui';
 import {
@@ -30,20 +29,15 @@ import { formatPrice } from '@verone/utils';
 import {
   Package,
   Search,
-  Filter,
   Plus,
   AlertTriangle,
   TrendingDown,
   TrendingUp,
-  Eye,
   Edit,
   History,
   BarChart3,
-  Settings,
   RefreshCw,
   Download,
-  Upload,
-  Calendar,
   ArrowUpDown,
   X,
   ArrowLeft,
@@ -107,7 +101,7 @@ function StockMovementModal({
       setQuantity('');
       setUnitCost('');
       setNotes('');
-    } catch (error) {
+    } catch (_error) {
       // L'erreur est déjà gérée dans le hook
     } finally {
       setLoading(false);
@@ -238,7 +232,7 @@ function ProductHistoryModal({
     try {
       const history = await getProductHistory(product.id);
       setMovements(history as any);
-    } catch (error) {
+    } catch (_error) {
       // Erreur gérée dans le hook
     } finally {
       setLoading(false);
@@ -323,14 +317,15 @@ export default function StockInventairePage() {
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [isMovementModalOpen, setIsMovementModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
-  const [reservations, setReservations] = useState<any[]>([]);
+  // Reserved for future reservations feature
+  const [_reservations, _setReservations] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
 
-  const { toast } = useToast();
+  const { toast: _toast } = useToast();
   const { fetchInventoryProducts } = useStock();
-  const { stats: movementStats, fetchStats } = useStockMovements();
-  const { fetchReservations, getAvailableStockForProduct } =
+  const { stats: _movementStats, fetchStats } = useStockMovements();
+  const { fetchReservations, getAvailableStockForProduct: _getAvailableStockForProduct } =
     useStockReservations();
 
   // Charger les données au montage

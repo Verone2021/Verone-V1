@@ -27,7 +27,6 @@ import {
   useTransactionActions,
   useUnreconciledOrders,
   type UnifiedTransaction,
-  type UnifiedStatus,
 } from '@verone/finance/hooks';
 import {
   Card,
@@ -69,7 +68,6 @@ import {
   Settings,
   Tag,
   Upload,
-  RefreshCw,
   CheckCircle2,
   XCircle,
   ChevronLeft,
@@ -553,7 +551,7 @@ type TabFilter = 'all' | 'credits' | 'debits' | 'unclassified';
 // PAGE LEGACY (V1)
 // =====================================================================
 
-function TransactionsPageLegacy() {
+function _TransactionsPageLegacy() {
   const [activeTab, setActiveTab] = useState<TabFilter>('all');
   const [selectedTransaction, setSelectedTransaction] =
     useState<BankTransaction | null>(null);
@@ -566,7 +564,7 @@ function TransactionsPageLegacy() {
     useBankReconciliation();
 
   // Hook dépenses pour les stats
-  const { stats: expenseStats } = useExpenses({ status: 'all' });
+  const { stats: _expenseStats } = useExpenses({ status: 'all' });
 
   // Toutes les transactions combinées
   const allTransactions = useMemo(() => {
@@ -689,7 +687,7 @@ function TransactionsPageLegacy() {
         });
       }
       await refresh();
-    } catch (err) {
+    } catch (_err) {
       console.error('[Qonto Sync] Error:', err);
       toast.error('Erreur de synchronisation');
       await refresh();
@@ -1037,8 +1035,8 @@ function TransactionsPageV2() {
   const {
     classify,
     linkOrganisation,
-    ignore,
-    unignore,
+    ignore: _ignore,
+    unignore: _unignore,
     toggleIgnore,
     markCCA,
   } = useTransactionActions();
@@ -1104,7 +1102,7 @@ function TransactionsPageV2() {
         });
       }
       await refresh();
-    } catch (err) {
+    } catch (_err) {
       console.error('[Qonto Sync] Error:', err);
       toast.error('Erreur de synchronisation');
       await refresh();
@@ -1147,7 +1145,7 @@ function TransactionsPageV2() {
 
       toast.success(`${eligibleIds.length} transactions catégorisées en 707`);
       refresh();
-    } catch (err) {
+    } catch (_err) {
       toast.error('Erreur lors de la catégorisation');
       console.error('[AutoCategorize] Error:', err);
     } finally {
@@ -1156,7 +1154,7 @@ function TransactionsPageV2() {
   };
 
   // Classification handler
-  const handleClassify = async (categoryPcg: string) => {
+  const _handleClassify = async (categoryPcg: string) => {
     if (!selectedTransaction) return;
     const result = await classify(selectedTransaction.id, categoryPcg);
     if (result.success) {
@@ -1169,7 +1167,7 @@ function TransactionsPageV2() {
   };
 
   // Link organisation handler
-  const handleLinkOrganisation = async (organisationId: string) => {
+  const _handleLinkOrganisation = async (organisationId: string) => {
     if (!selectedTransaction) return;
     const result = await linkOrganisation(
       selectedTransaction.id,
@@ -1207,8 +1205,8 @@ function TransactionsPageV2() {
   };
 
   // Legacy ignore handler (for backward compatibility)
-  const handleIgnore = async () => handleToggleIgnore(true);
-  const handleUnignore = async () => handleToggleIgnore(false);
+  const _handleIgnore = async () => handleToggleIgnore(true);
+  const _handleUnignore = async () => handleToggleIgnore(false);
 
   // Toggle justification optional (remplace "Ignorer")
   const handleToggleJustificationOptional = async (optional: boolean) => {
@@ -1225,13 +1223,13 @@ function TransactionsPageV2() {
         optional ? 'Justificatif marqué facultatif' : 'Justificatif requis'
       );
       await refresh();
-    } catch (err) {
+    } catch (_err) {
       toast.error('Erreur lors de la mise à jour');
     }
   };
 
   // CCA handler
-  const handleMarkCCA = async () => {
+  const _handleMarkCCA = async () => {
     if (!selectedTransaction) return;
     const result = await markCCA(selectedTransaction.id);
     if (result.success) {
@@ -2021,7 +2019,7 @@ function TransactionsPageV2() {
                                       }
                                     );
                                     if (res.ok) refresh();
-                                  } catch (err) {
+                                  } catch (_err) {
                                     console.error('[TVA update] Error:', err);
                                   }
                                 }}
@@ -2090,7 +2088,7 @@ function TransactionsPageV2() {
                               setTimeout(() => {
                                 window.location.reload();
                               }, 500);
-                            } catch (err) {
+                            } catch (_err) {
                               toast.error(
                                 err instanceof Error
                                   ? err.message
