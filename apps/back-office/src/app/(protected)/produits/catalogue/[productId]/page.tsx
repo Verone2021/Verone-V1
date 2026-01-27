@@ -26,7 +26,6 @@ import { WeightEditSection } from '@verone/products';
 import { ClientOrEnseigneSelector, useProductImages } from '@verone/products';
 import { StockEditSection } from '@verone/stock';
 import { StockStatusCompact } from '@verone/stock';
-import type { Database } from '@verone/types';
 import {
   Dialog,
   DialogContent,
@@ -35,7 +34,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@verone/ui';
-import { Badge, ButtonUnified, IconButton, Switch, Label } from '@verone/ui';
+import { Badge, ButtonUnified, Switch, Label } from '@verone/ui';
 import { cn, checkSLOCompliance } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import {
@@ -60,7 +59,7 @@ import {
 } from 'lucide-react';
 
 // Champs obligatoires pour un produit complet
-const REQUIRED_PRODUCT_FIELDS = [
+const _REQUIRED_PRODUCT_FIELDS = [
   'name',
   'sku',
   'supplier_id',
@@ -70,7 +69,7 @@ const REQUIRED_PRODUCT_FIELDS = [
 ] as const;
 
 // Mapping des champs avec leurs libellés
-const PRODUCT_FIELD_LABELS: Record<string, string> = {
+const _PRODUCT_FIELD_LABELS: Record<string, string> = {
   name: 'Nom du produit',
   sku: 'Référence SKU',
   supplier_id: 'Fournisseur',
@@ -236,7 +235,7 @@ export default function ProductDetailPage() {
   const [isCategorizeModalOpen, setIsCategorizeModalOpen] = useState(false);
 
   // Hook pour récupérer les images du produit (table product_images)
-  const { images: productImages, primaryImage } = useProductImages({
+  const { images: productImages, primaryImage: _primaryImage } = useProductImages({
     productId: productId || '',
     autoFetch: true,
   });

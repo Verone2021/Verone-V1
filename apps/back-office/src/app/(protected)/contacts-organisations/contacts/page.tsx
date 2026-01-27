@@ -14,7 +14,6 @@ import { ButtonV2 } from '@verone/ui';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@verone/ui';
@@ -22,16 +21,11 @@ import { Input } from '@verone/ui';
 import {
   Users,
   Search,
-  Filter,
   Plus,
   Phone,
   Mail,
   Building,
-  User,
   Eye,
-  Edit,
-  MapPin,
-  Briefcase,
   UserCheck,
   Archive,
   Trash2,

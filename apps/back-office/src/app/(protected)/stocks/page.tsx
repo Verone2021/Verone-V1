@@ -15,22 +15,18 @@ import {
   Package,
   BarChart3,
   ArrowUpDown,
-  ArrowDownToLine,
-  ArrowUpFromLine,
   AlertTriangle,
   Grid3x3,
   TrendingUp,
   RefreshCw,
   CheckCircle,
-  Eye,
-  RotateCcw,
 } from 'lucide-react';
 
 import { StockKPICard } from '@/components/ui-v2/stock/stock-kpi-card';
 
 export default function StocksDashboardPage() {
   const router = useRouter();
-  const { metrics, loading, error, refetch } = useStockDashboard();
+  const { metrics, loading, error: _error, refetch } = useStockDashboard();
 
   // Hooks pour widgets
   const {

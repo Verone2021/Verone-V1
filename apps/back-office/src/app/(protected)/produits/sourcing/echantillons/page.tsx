@@ -18,12 +18,11 @@ import { useRouter } from 'next/navigation';
 
 import { useToast } from '@verone/common';
 import { CustomerBadge } from '@verone/customers';
-import { useCustomerSamples, CustomerSample } from '@verone/customers';
+import { useCustomerSamples } from '@verone/customers';
 import type { UnifiedCustomer } from '@verone/orders';
 import { CustomerSelector } from '@verone/orders';
 import type { SelectedProduct } from '@verone/products';
 import { UniversalProductSelectorV2 } from '@verone/products';
-import type { Database } from '@verone/types';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -79,14 +78,11 @@ import {
   CheckCircle,
   AlertTriangle,
   Search,
-  Filter,
   Plus,
   Building,
   User,
-  MoreHorizontal,
   RefreshCw,
   Eye,
-  Info,
 } from 'lucide-react';
 
 export default function SourcingEchantillonsPage() {

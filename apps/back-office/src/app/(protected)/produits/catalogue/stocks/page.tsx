@@ -31,20 +31,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
 import { formatPrice } from '@verone/utils';
 import {
   Package,
-  Search,
-  Filter,
   Plus,
   AlertTriangle,
   TrendingDown,
   TrendingUp,
-  Eye,
   History,
-  BarChart3,
   RefreshCw,
   Download,
-  Calendar,
   ArrowUpDown,
-  X,
   Clock,
   Boxes,
 } from 'lucide-react';

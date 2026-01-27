@@ -10,7 +10,6 @@ import { useToast } from '@verone/common';
 import type { SelectedProduct } from '@verone/products';
 import { CreateProductInGroupModal } from '@verone/products';
 import { EditProductVariantModal } from '@verone/products';
-import { VariantCreationModal } from '@verone/products';
 import { VariantGroupEditModal } from '@verone/products';
 import { UniversalProductSelectorV2 } from '@verone/products';
 import { useVariantGroups } from '@verone/products';
@@ -37,7 +36,6 @@ import {
   Palette,
   Ruler,
   Layers,
-  Settings,
   Home,
   ExternalLink,
 } from 'lucide-react';
@@ -98,7 +96,7 @@ interface VariantProductCardProps {
 
 function VariantProductCard({
   product,
-  variantType,
+  variantType: _variantType,
   hasCommonSupplier,
   groupDimensions,
   onRemove,
@@ -239,11 +237,11 @@ export default function VariantGroupDetailPage({
     removeProductFromGroup,
     updateVariantGroup,
     createProductInGroup,
-    updateProductInGroup,
+    updateProductInGroup: _updateProductInGroup,
     addProductsToGroup,
     refetch,
   } = useVariantGroups();
-  const { updateProductVariantAttribute } = useProductVariantEditing();
+  const { updateProductVariantAttribute: _updateProductVariantAttribute } = useProductVariantEditing();
 
   // États pour modals
   const [showEditModal, setShowEditModal] = useState(false);

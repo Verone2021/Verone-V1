@@ -58,10 +58,10 @@ export default function SiteInternetPage() {
   const [activeTab, setActiveTab] = useState('dashboard');
 
   // Hooks
-  const { data: products, isLoading: productsLoading } =
+  const { data: _products, isLoading: _productsLoading } =
     useSiteInternetProducts();
-  const { data: config, isLoading: configLoading } = useSiteInternetConfig();
-  const { data: analytics, isLoading: analyticsLoading } = useVercelAnalytics();
+  const { data: _config, isLoading: _configLoading } = useSiteInternetConfig();
+  const { data: _analytics, isLoading: _analyticsLoading } = useVercelAnalytics();
 
   return (
     <div className="flex min-h-screen flex-col">

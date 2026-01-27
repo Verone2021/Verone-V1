@@ -16,16 +16,12 @@ import { ButtonV2 } from '@verone/ui';
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from '@verone/ui';
 import { VéroneCard } from '@verone/ui';
 import {
   ArrowLeft,
   Plus,
   Edit,
-  Trash2,
   FolderOpen,
   Package,
 } from 'lucide-react';
@@ -50,7 +46,7 @@ export default function FamilyDetailPage() {
     createCategory,
     updateCategory,
     deleteCategory,
-    getCategoriesByFamily,
+    getCategoriesByFamily: _getCategoriesByFamily,
   } = useCategories();
 
   const [family, setFamily] = useState<Family | null>(null);

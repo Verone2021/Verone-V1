@@ -13,15 +13,11 @@ import {
   Plus,
   Edit3,
   Trash2,
-  Eye,
-  EyeOff,
   ExternalLink,
   Package,
   Palette,
   Ruler,
   Layers,
-  TreePine,
-  FolderOpen,
   Tags,
   X,
   Archive,
@@ -92,7 +88,7 @@ export default function VariantesPage() {
     loading,
     error,
     refetch,
-    createVariantGroup,
+    createVariantGroup: _createVariantGroup,
     updateVariantGroup,
     deleteVariantGroup,
     removeProductFromGroup,
@@ -675,7 +671,7 @@ export default function VariantesPage() {
               setSelectedGroupForProducts(null);
             }}
             group={selectedGroupForProducts}
-            onSubmit={async data => {
+            onSubmit={async _data => {
               // L'ajout du produit au groupe est géré par le modal
               refetch();
               toast({

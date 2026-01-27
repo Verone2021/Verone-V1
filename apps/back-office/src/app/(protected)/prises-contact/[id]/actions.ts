@@ -98,7 +98,7 @@ export async function markAsClosed(
  */
 export async function convertToOrder(
   submissionId: string,
-  orderData: {
+  _orderData: {
     customer_id?: string;
     notes?: string;
   }
@@ -107,7 +107,7 @@ export async function convertToOrder(
     const supabase = await createClient();
 
     // Fetch submission data
-    const { data: submission, error: fetchError } = await (supabase as any)
+    const { data: _submission, error: fetchError } = await (supabase as any)
       .from('form_submissions')
       .select('*')
       .eq('id', submissionId)
@@ -172,7 +172,7 @@ export async function convertToConsultation(
     const supabase = await createClient();
 
     // Fetch submission data
-    const { data: submission, error: fetchError } = await (supabase as any)
+    const { data: _submission, error: fetchError } = await (supabase as any)
       .from('form_submissions')
       .select('*')
       .eq('id', submissionId)
@@ -241,7 +241,7 @@ export async function convertToSourcing(
     const supabase = await createClient();
 
     // Fetch submission data
-    const { data: submission, error: fetchError } = await (supabase as any)
+    const { data: _submission, error: fetchError } = await (supabase as any)
       .from('form_submissions')
       .select('*')
       .eq('id', submissionId)
@@ -301,7 +301,7 @@ export async function convertToContact(
     const supabase = await createClient();
 
     // Fetch submission data
-    const { data: submission, error: fetchError } = await (supabase as any)
+    const { data: _submission, error: fetchError } = await (supabase as any)
       .from('form_submissions')
       .select('*')
       .eq('id', submissionId)
@@ -366,7 +366,7 @@ export async function convertToLead(
     const supabase = await createClient();
 
     // Fetch submission data
-    const { data: submission, error: fetchError } = await (supabase as any)
+    const { data: _submission, error: fetchError } = await (supabase as any)
       .from('form_submissions')
       .select('*')
       .eq('id', submissionId)
