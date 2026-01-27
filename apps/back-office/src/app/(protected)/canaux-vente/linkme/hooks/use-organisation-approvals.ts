@@ -287,12 +287,14 @@ export function useApproveOrganisation() {
 
       return { success: true };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pending-organisations'] });
-      queryClient.invalidateQueries({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['pending-organisations'],
+      });
+      await queryClient.invalidateQueries({
         queryKey: ['pending-organisations-count'],
       });
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['all-organisations-approval'],
       });
     },
@@ -338,12 +340,14 @@ export function useRejectOrganisation() {
 
       return { success: true };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pending-organisations'] });
-      queryClient.invalidateQueries({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['pending-organisations'],
+      });
+      await queryClient.invalidateQueries({
         queryKey: ['pending-organisations-count'],
       });
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['all-organisations-approval'],
       });
     },
