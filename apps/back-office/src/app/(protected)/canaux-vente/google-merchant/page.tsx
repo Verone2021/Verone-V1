@@ -111,6 +111,7 @@ export default function GoogleMerchantPage() {
 
     return new Promise<{ success: boolean; synced: number; failed: number }>(
       resolve => {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         insertProducts(productIds, {
           onSuccess: data => {
             logger.info('[Google Merchant Page] Products added successfully', {
@@ -316,7 +317,11 @@ export default function GoogleMerchantPage() {
               </ButtonV2>
               <ButtonV2
                 className="bg-black hover:bg-gray-800 text-white"
-                onClick={handleSync}
+                onClick={() => {
+                  void handleSync().catch(error => {
+                    console.error('[GoogleMerchant] handleSync failed:', error);
+                  });
+                }}
                 disabled={syncStatus === 'syncing'}
               >
                 {syncStatus === 'syncing' ? (

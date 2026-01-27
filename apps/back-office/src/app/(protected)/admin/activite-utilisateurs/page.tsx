@@ -97,19 +97,25 @@ export default function ActiviteUtilisateursPage() {
       setIsCheckingAccess(false);
     };
 
-    checkAccess();
+    void checkAccess().catch(error => {
+      console.error('[ActiviteUtilisateurs] checkAccess failed:', error);
+    });
   }, [router]);
 
   useEffect(() => {
     if (!isCheckingAccess && userRole === 'owner') {
-      fetchUsers();
+      void fetchUsers().catch(error => {
+        console.error('[ActiviteUtilisateurs] fetchUsers failed:', error);
+      });
     }
   }, [isCheckingAccess, userRole]);
 
   // Auto-refresh toutes les 60 secondes
   useEffect(() => {
     const interval = setInterval(() => {
-      fetchUsers();
+      void fetchUsers().catch(error => {
+        console.error('[ActiviteUtilisateurs] auto-refresh failed:', error);
+      });
     }, 60000);
 
     return () => clearInterval(interval);
@@ -220,7 +226,14 @@ export default function ActiviteUtilisateursPage() {
               Dernière mise à jour: {lastRefresh.toLocaleTimeString('fr-FR')}
             </div>
             <ButtonV2
-              onClick={fetchUsers}
+              onClick={() => {
+                void fetchUsers().catch(error => {
+                  console.error(
+                    '[ActiviteUtilisateurs] manual refresh failed:',
+                    error
+                  );
+                });
+              }}
               disabled={isLoading}
               variant="secondary"
               size="sm"
