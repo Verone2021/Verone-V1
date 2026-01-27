@@ -551,7 +551,7 @@ type TabFilter = 'all' | 'credits' | 'debits' | 'unclassified';
 // PAGE LEGACY (V1)
 // =====================================================================
 
-function _TransactionsPageLegacy() {
+function TransactionsPageLegacy() {
   const [activeTab, setActiveTab] = useState<TabFilter>('all');
   const [selectedTransaction, setSelectedTransaction] =
     useState<BankTransaction | null>(null);
@@ -862,7 +862,14 @@ function _TransactionsPageLegacy() {
                       transaction={tx}
                       onClick={() => setSelectedTransaction(tx)}
                       isSelected={selectedTransaction?.id === tx.id}
-                      onLink={() => refresh()}
+                      onLink={() => {
+                        void refresh().catch(error => {
+                          console.error(
+                            '[Transactions] Refresh after link failed:',
+                            error
+                          );
+                        });
+                      }}
                       suggestion={suggestionsMap.get(tx.id)}
                     />
                   ))}
@@ -894,7 +901,14 @@ function _TransactionsPageLegacy() {
               onClose={() => setSelectedTransaction(null)}
               onOpenRapprochementModal={() => setShowRapprochementModal(true)}
               onOpenUploadModal={() => setShowUploadModal(true)}
-              onLink={() => refresh()}
+              onLink={() => {
+                void refresh().catch(error => {
+                  console.error(
+                    '[Transactions] Refresh after link failed:',
+                    error
+                  );
+                });
+              }}
               suggestion={suggestionsMap.get(selectedTransaction.id)}
             />
           )}
@@ -915,7 +929,9 @@ function _TransactionsPageLegacy() {
         counterpartyName={selectedTransaction?.counterparty_name}
         onSuccess={() => {
           toast.success('Transaction rapprochée');
-          refresh();
+          void refresh().catch(error => {
+            console.error('[Transactions] Refresh failed:', error);
+          });
           setShowRapprochementModal(false);
         }}
       />
@@ -927,7 +943,9 @@ function _TransactionsPageLegacy() {
         onOpenChange={setShowUploadModal}
         onUploadComplete={() => {
           toast.success('Justificatif uploadé');
-          refresh();
+          void refresh().catch(error => {
+            console.error('[Transactions] Refresh failed:', error);
+          });
           setShowUploadModal(false);
         }}
       />
@@ -1144,7 +1162,9 @@ function TransactionsPageV2() {
       if (updateError) throw updateError;
 
       toast.success(`${eligibleIds.length} transactions catégorisées en 707`);
-      refresh();
+      void refresh().catch(error => {
+        console.error('[Transactions] Refresh failed:', error);
+      });
     } catch (err) {
       toast.error('Erreur lors de la catégorisation');
       console.error('[AutoCategorize] Error:', err);
@@ -1307,7 +1327,14 @@ function TransactionsPageV2() {
             <Button
               variant="outline"
               size="sm"
-              onClick={handleAutoCategorizeCredits}
+              onClick={() => {
+                void handleAutoCategorizeCredits().catch(error => {
+                  console.error(
+                    '[Transactions] Auto categorize failed:',
+                    error
+                  );
+                });
+              }}
               disabled={isAutoCategorizing}
               title="Catégoriser toutes les entrées non classées en 707 (Ventes)"
             >
@@ -2000,28 +2027,39 @@ function TransactionsPageV2() {
                                   selectedTransaction.vat_rate?.toString() ||
                                   'none'
                                 }
-                                onValueChange={async value => {
-                                  const newRate =
-                                    value === 'none' ? null : parseFloat(value);
-                                  try {
-                                    const res = await fetch(
-                                      '/api/transactions/update-vat',
-                                      {
-                                        method: 'POST',
-                                        headers: {
-                                          'Content-Type': 'application/json',
-                                        },
-                                        body: JSON.stringify({
-                                          transaction_id:
-                                            selectedTransaction.id,
-                                          vat_rate: newRate,
-                                        }),
+                                onValueChange={value => {
+                                  void (async () => {
+                                    const newRate =
+                                      value === 'none'
+                                        ? null
+                                        : parseFloat(value);
+                                    try {
+                                      const res = await fetch(
+                                        '/api/transactions/update-vat',
+                                        {
+                                          method: 'POST',
+                                          headers: {
+                                            'Content-Type': 'application/json',
+                                          },
+                                          body: JSON.stringify({
+                                            transaction_id:
+                                              selectedTransaction.id,
+                                            vat_rate: newRate,
+                                          }),
+                                        }
+                                      );
+                                      if (res.ok) {
+                                        void refresh().catch(error => {
+                                          console.error(
+                                            '[Transactions] Refresh after update failed:',
+                                            error
+                                          );
+                                        });
                                       }
-                                    );
-                                    if (res.ok) refresh();
-                                  } catch (err) {
-                                    console.error('[TVA update] Error:', err);
-                                  }
+                                    } catch (err) {
+                                      console.error('[TVA update] Error:', err);
+                                    }
+                                  })();
                                 }}
                               >
                                 <SelectTrigger className="h-5 text-[9px]">
@@ -2121,9 +2159,16 @@ function TransactionsPageV2() {
                                     <ExternalLink className="h-2.5 w-2.5" />
                                   </button>
                                   <button
-                                    onClick={() =>
-                                      handleDeleteAttachment(att.id)
-                                    }
+                                    onClick={() => {
+                                      void handleDeleteAttachment(att.id).catch(
+                                        error => {
+                                          console.error(
+                                            '[Transactions] Delete attachment failed:',
+                                            error
+                                          );
+                                        }
+                                      );
+                                    }}
                                     className="opacity-0 group-hover:opacity-100 p-0.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-opacity"
                                     title="Supprimer ce justificatif"
                                   >
@@ -2245,7 +2290,16 @@ function TransactionsPageV2() {
                     <Button
                       variant="outline"
                       className="w-full justify-start gap-1.5 h-7 text-xs text-green-600 hover:text-green-700"
-                      onClick={() => handleToggleJustificationOptional(false)}
+                      onClick={() => {
+                        void handleToggleJustificationOptional(false).catch(
+                          error => {
+                            console.error(
+                              '[Transactions] Toggle justification failed:',
+                              error
+                            );
+                          }
+                        );
+                      }}
                     >
                       <FileCheck className="h-3 w-3" />
                       Justificatif requis
@@ -2254,7 +2308,16 @@ function TransactionsPageV2() {
                     <Button
                       variant="ghost"
                       className="w-full justify-start gap-1.5 h-7 text-xs text-muted-foreground"
-                      onClick={() => handleToggleJustificationOptional(true)}
+                      onClick={() => {
+                        void handleToggleJustificationOptional(true).catch(
+                          error => {
+                            console.error(
+                              '[Transactions] Toggle justification failed:',
+                              error
+                            );
+                          }
+                        );
+                      }}
                     >
                       <FileX className="h-3 w-3" />
                       Justificatif facultatif
@@ -2285,7 +2348,14 @@ function TransactionsPageV2() {
             ? suggestionsMap.get(selectedTransaction.id)?.matchedRule?.id
             : undefined
         }
-        onSuccess={refresh}
+        onSuccess={() => {
+          void refresh().catch(error => {
+            console.error(
+              '[Transactions] Refresh after success failed:',
+              error
+            );
+          });
+        }}
       />
 
       {/* Modal Organisation */}
@@ -2299,7 +2369,14 @@ function TransactionsPageV2() {
         }
         transactionCount={1}
         totalAmount={selectedTransaction?.amount}
-        onSuccess={refresh}
+        onSuccess={() => {
+          void refresh().catch(error => {
+            console.error(
+              '[Transactions] Refresh after success failed:',
+              error
+            );
+          });
+        }}
         transactionSide={selectedTransaction?.side}
       />
 
@@ -2317,7 +2394,9 @@ function TransactionsPageV2() {
         counterpartyName={selectedTransaction?.counterparty_name}
         onSuccess={() => {
           toast.success('Transaction rapprochee');
-          refresh();
+          void refresh().catch(error => {
+            console.error('[Transactions] Refresh failed:', error);
+          });
           setShowRapprochementModal(false);
         }}
       />
@@ -2332,7 +2411,9 @@ function TransactionsPageV2() {
         }}
         onUploadComplete={() => {
           toast.success('Justificatif uploadé');
-          refresh();
+          void refresh().catch(error => {
+            console.error('[Transactions] Refresh failed:', error);
+          });
           setShowUploadModal(false);
           setUploadTransaction(null);
         }}
@@ -2348,8 +2429,12 @@ function TransactionsPageV2() {
         confirmApply={confirmApply}
         onSuccess={() => {
           setEditingRule(null);
-          refetchRules();
-          refresh();
+          void refetchRules().catch(error => {
+            console.error('[Transactions] Refetch rules failed:', error);
+          });
+          void refresh().catch(error => {
+            console.error('[Transactions] Refresh failed:', error);
+          });
         }}
       />
     </div>
