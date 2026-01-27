@@ -126,7 +126,9 @@ function useEnseigneSelections(enseigneId: string | null) {
       setLoading(false);
     };
 
-    fetchSelections();
+    void fetchSelections().catch(error => {
+      console.error('[useSelections] fetchSelections failed:', error);
+    });
   }, [enseigneId]);
 
   return { selections, loading };
@@ -212,7 +214,9 @@ function useEnseigneProducts(enseigneId: string | null) {
       setLoading(false);
     };
 
-    fetchProducts();
+    void fetchProducts().catch(error => {
+      console.error('[useProducts] fetchProducts failed:', error);
+    });
   }, [enseigneId]);
 
   return { surMesure, affilies, loading };
