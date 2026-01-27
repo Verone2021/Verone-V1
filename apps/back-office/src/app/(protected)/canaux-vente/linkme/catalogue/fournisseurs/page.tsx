@@ -228,7 +228,14 @@ export default function LinkMeSuppliersPage() {
                     </span>
                     <Switch
                       checked={supplier.is_visible_as_partner}
-                      onCheckedChange={() => handleToggleVisibility(supplier)}
+                      onCheckedChange={() => {
+                        void handleToggleVisibility(supplier).catch(error => {
+                          console.error(
+                            '[FournisseursPage] Toggle visibility failed:',
+                            error
+                          );
+                        });
+                      }}
                       disabled={toggleVisibility.isPending}
                     />
                   </div>
