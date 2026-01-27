@@ -4,10 +4,6 @@ import { useState, useMemo, useEffect } from 'react';
 
 import Link from 'next/link';
 
-import {
-  SupplierCategoryBadge,
-  SupplierCategoryCode,
-} from '@verone/categories';
 import { useLocalStorage } from '@verone/hooks';
 import { OrganisationLogo } from '@verone/organisations';
 import { ConfirmDeleteOrganisationModal } from '@verone/organisations';
@@ -17,8 +13,6 @@ import {
   getOrganisationDisplayName,
   type Organisation,
 } from '@verone/organisations';
-import { SupplierSegmentBadge, SupplierSegmentType } from '@verone/suppliers';
-import type { Database } from '@verone/types';
 import {
   Table,
   TableBody,
@@ -50,7 +44,6 @@ import {
   ArrowLeft,
   Archive,
   ArchiveRestore,
-  Globe,
   Trash2,
   ExternalLink,
   Eye,
@@ -60,7 +53,6 @@ import {
 } from 'lucide-react';
 
 import { FavoriteToggleButton } from '@/components/business/favorite-toggle-button';
-import { HeartBadge } from '@/components/business/heart-badge';
 
 // ✅ FIX TypeScript: Utiliser type Organisation (pas de Supplier local)
 // Interface Organisation définie dans use-organisations.ts

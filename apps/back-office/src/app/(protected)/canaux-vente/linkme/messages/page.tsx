@@ -49,8 +49,6 @@ import {
   AlertTriangle,
   Info,
   Loader2,
-  CheckCircle,
-  History,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -322,7 +320,7 @@ function SeveritySelector({
 // =============================================================================
 
 export default function MessagesPage() {
-  const queryClient = useQueryClient();
+  const _queryClient = useQueryClient();
 
   // Form state
   const [targetType, setTargetType] = useState<TargetType>('all');
@@ -336,8 +334,8 @@ export default function MessagesPage() {
   const [includeAction, setIncludeAction] = useState(false);
 
   // Queries
-  const { data: enseignes, isLoading: enseignesLoading } = useEnseignes();
-  const { data: affiliates, isLoading: affiliatesLoading } = useAffiliates(
+  const { data: enseignes, isLoading: _enseignesLoading } = useEnseignes();
+  const { data: affiliates, isLoading: _affiliatesLoading } = useAffiliates(
     targetType === 'enseigne' ? selectedEnseigne : undefined
   );
 

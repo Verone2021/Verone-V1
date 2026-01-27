@@ -15,13 +15,6 @@ import {
 } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@verone/ui';
 import type { WizardFormData } from '../complete-product-wizard';
 
 interface TechnicalSectionProps {
@@ -33,7 +26,7 @@ interface TechnicalSectionProps {
 export function TechnicalSection({
   formData,
   setFormData,
-  onSave,
+  onSave: _onSave,
 }: TechnicalSectionProps) {
   const [newAttributeKey, setNewAttributeKey] = useState('');
   const [newAttributeValue, setNewAttributeValue] = useState('');
@@ -274,7 +267,7 @@ export function TechnicalSection({
                 { key: 'Finition', placeholder: 'Mat, Brillant, Satiné...' },
                 { key: 'Style', placeholder: 'Moderne, Classique, Vintage...' },
                 { key: 'Taille', placeholder: 'S, M, L, XL...' },
-              ].map(({ key, placeholder }) => (
+              ].map(({ key, placeholder: _placeholder }) => (
                 <Button
                   key={key}
                   variant="ghost"

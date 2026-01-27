@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 
 import Image from 'next/image';
 
@@ -35,7 +35,6 @@ import {
   Euro,
   Image as ImageIcon,
   Package,
-  CheckCircle,
   AlertCircle,
   Loader2,
   Upload,
@@ -178,7 +177,7 @@ export function EditSiteInternetProductModal({
   const [errors, setErrors] = useState<z.ZodIssue[]>([]);
   const [showPhotosModal, setShowPhotosModal] = useState(false);
   const [showImageViewer, setShowImageViewer] = useState(false);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [selectedImageIndex, _setSelectedImageIndex] = useState(0);
   const supabase = createClient();
 
   // Récupérer les images du catalogue produit via hook
@@ -188,7 +187,7 @@ export function EditSiteInternetProductModal({
     fetchImages,
     setPrimaryImage,
     deleteImage,
-    uploadImage,
+    uploadImage: _uploadImage,
   } = useProductImages({
     productId: product.product_id,
     autoFetch: true,
@@ -919,7 +918,7 @@ export function EditSiteInternetProductModal({
                                           description:
                                             "L'image a été définie comme principale avec succès",
                                         });
-                                      } catch (error) {
+                                      } catch (_error) {
                                         toast({
                                           title: 'Erreur',
                                           description:
@@ -956,7 +955,7 @@ export function EditSiteInternetProductModal({
                                         description:
                                           "L'image a été supprimée avec succès",
                                       });
-                                    } catch (error) {
+                                    } catch (_error) {
                                       toast({
                                         title: 'Erreur',
                                         description:
