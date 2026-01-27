@@ -203,8 +203,12 @@ export default function PurchaseOrdersPage() {
   };
 
   useEffect(() => {
-    fetchOrders();
-    fetchStats();
+    void fetchOrders().catch(error => {
+      console.error('[PurchaseOrders] Fetch orders failed:', error);
+    });
+    void fetchStats().catch(error => {
+      console.error('[PurchaseOrders] Fetch stats failed:', error);
+    });
   }, [fetchOrders, fetchStats]);
 
   // ✅ Auto-open modal from notification URL (?id=xxx)
@@ -751,7 +755,16 @@ export default function PurchaseOrdersPage() {
               Réceptions
             </ButtonUnified>
           </Link>
-          <PurchaseOrderFormModal onSuccess={() => fetchOrders()} />
+          <PurchaseOrderFormModal
+            onSuccess={() => {
+              void fetchOrders().catch(error => {
+                console.error(
+                  '[PurchaseOrders] Fetch after create failed:',
+                  error
+                );
+              });
+            }}
+          />
         </div>
       </div>
 
@@ -1135,23 +1148,42 @@ export default function PurchaseOrdersPage() {
                                     variant="outline"
                                     size="sm"
                                     label="Éditer la commande"
-                                    onClick={() => openEditModal(order)}
+                                    onClick={() => {
+                                      void openEditModal(order);
+                                    }}
                                   />
                                   <IconButton
                                     icon={CheckCircle}
                                     variant="success"
                                     size="sm"
                                     label="Valider la commande"
-                                    onClick={() =>
-                                      handleStatusChange(order.id, 'validated')
-                                    }
+                                    onClick={() => {
+                                      void handleStatusChange(
+                                        order.id,
+                                        'validated'
+                                      ).catch(error => {
+                                        console.error(
+                                          '[PurchaseOrders] Status change failed:',
+                                          error
+                                        );
+                                      });
+                                    }}
                                   />
                                   <IconButton
                                     icon={Ban}
                                     variant="danger"
                                     size="sm"
                                     label="Annuler la commande"
-                                    onClick={() => handleCancel(order.id)}
+                                    onClick={() => {
+                                      void handleCancel(order.id).catch(
+                                        error => {
+                                          console.error(
+                                            '[PurchaseOrders] Cancel failed:',
+                                            error
+                                          );
+                                        }
+                                      );
+                                    }}
                                   />
                                 </>
                               )}
@@ -1171,9 +1203,17 @@ export default function PurchaseOrdersPage() {
                                     variant="outline"
                                     size="sm"
                                     label="Dévalider (retour brouillon)"
-                                    onClick={() =>
-                                      handleStatusChange(order.id, 'draft')
-                                    }
+                                    onClick={() => {
+                                      void handleStatusChange(
+                                        order.id,
+                                        'draft'
+                                      ).catch(error => {
+                                        console.error(
+                                          '[PurchaseOrders] Status change failed:',
+                                          error
+                                        );
+                                      });
+                                    }}
                                   />
                                   {/* ❌ Bouton Annuler RETIRÉ - Workflow strict: validated → draft → cancelled */}
                                 </>
@@ -1212,7 +1252,14 @@ export default function PurchaseOrdersPage() {
                                   variant="danger"
                                   size="sm"
                                   label="Supprimer"
-                                  onClick={() => handleDelete(order.id)}
+                                  onClick={() => {
+                                    void handleDelete(order.id).catch(error => {
+                                      console.error(
+                                        '[PurchaseOrders] Delete failed:',
+                                        error
+                                      );
+                                    });
+                                  }}
                                 />
                               )}
 
@@ -1307,7 +1354,9 @@ export default function PurchaseOrdersPage() {
           setSelectedOrder(null);
         }}
         onUpdate={() => {
-          fetchOrders();
+          void fetchOrders().catch(error => {
+            console.error('[PurchaseOrders] Fetch after update failed:', error);
+          });
         }}
       />
 
@@ -1321,7 +1370,12 @@ export default function PurchaseOrdersPage() {
             setSelectedOrder(null);
           }}
           onSuccess={() => {
-            fetchOrders();
+            void fetchOrders().catch(error => {
+              console.error(
+                '[PurchaseOrders] Fetch after success failed:',
+                error
+              );
+            });
             setShowReceptionModal(false);
             setSelectedOrder(null);
           }}
@@ -1338,7 +1392,12 @@ export default function PurchaseOrdersPage() {
             setOrderToEdit(null);
           }}
           onSuccess={() => {
-            fetchOrders();
+            void fetchOrders().catch(error => {
+              console.error(
+                '[PurchaseOrders] Fetch after success failed:',
+                error
+              );
+            });
             setShowEditModal(false);
             setOrderToEdit(null);
           }}
@@ -1364,7 +1423,16 @@ export default function PurchaseOrdersPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleValidateConfirmed}>
+            <AlertDialogAction
+              onClick={() => {
+                void handleValidateConfirmed().catch(error => {
+                  console.error(
+                    '[PurchaseOrders] Validate confirmed failed:',
+                    error
+                  );
+                });
+              }}
+            >
               Confirmer la commande
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -1423,7 +1491,11 @@ export default function PurchaseOrdersPage() {
               Annuler
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleAutoAdjustQuantities}
+              onClick={() => {
+                void handleAutoAdjustQuantities().catch(error => {
+                  console.error('[PurchaseOrders] Auto adjust failed:', error);
+                });
+              }}
               className="bg-blue-600 hover:bg-blue-700"
             >
               Ajuster automatiquement
@@ -1455,7 +1527,12 @@ export default function PurchaseOrdersPage() {
           poNumber={cancelRemainderOrder.po_number}
           remainderItems={cancelRemainderItems}
           onSuccess={() => {
-            fetchOrders();
+            void fetchOrders().catch(error => {
+              console.error(
+                '[PurchaseOrders] Fetch after success failed:',
+                error
+              );
+            });
             setShowCancelRemainderModal(false);
             setCancelRemainderOrder(null);
             setCancelRemainderItems([]);
@@ -1480,7 +1557,12 @@ export default function PurchaseOrdersPage() {
           }}
           orderType="purchase_order"
           onSuccess={() => {
-            fetchOrders();
+            void fetchOrders().catch(error => {
+              console.error(
+                '[PurchaseOrders] Fetch after success failed:',
+                error
+              );
+            });
             setShowRapprochementModal(false);
             setRapprochementOrder(null);
           }}
