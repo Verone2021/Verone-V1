@@ -126,7 +126,9 @@ export default function CustomerDetailPage() {
         setProductsLoading(false);
       }
     }
-    fetchCustomerProducts();
+    void fetchCustomerProducts().catch(error => {
+      console.error('[CustomerDetail] Fetch products failed:', error);
+    });
   }, [customerId]);
 
   // Charger les canaux de vente de cette organisation
@@ -159,7 +161,9 @@ export default function CustomerDetailPage() {
         console.error('Erreur chargement canaux organisation:', err);
       }
     }
-    fetchOrganisationChannels();
+    void fetchOrganisationChannels().catch(error => {
+      console.error('[CustomerDetail] Fetch channels failed:', error);
+    });
   }, [customerId]);
 
   const { archiveOrganisation, unarchiveOrganisation, refetch } =
@@ -174,11 +178,17 @@ export default function CustomerDetailPage() {
   // Gestionnaire de mise à jour des données client
   const handleCustomerUpdate = (_updatedData: Partial<Organisation>) => {
     // Rafraîchir les données du customer immédiatement
-    refetchCustomer();
+    void refetchCustomer().catch(error => {
+      console.error('[CustomerDetail] Refetch customer failed:', error);
+    });
     // Rafraîchir la liste des organisations (cache)
-    refetch();
+    void refetch().catch(error => {
+      console.error('[CustomerDetail] Refetch failed:', error);
+    });
     // Rafraîchir les compteurs
-    refreshCounts();
+    void refreshCounts().catch(error => {
+      console.error('[CustomerDetail] Refresh counts failed:', error);
+    });
   };
 
   // Configuration des onglets avec compteurs du hook + modules déployés
@@ -286,14 +296,14 @@ export default function CustomerDetailPage() {
       const success = await archiveOrganisation(customer.id);
       if (success) {
         console.log('✅ Client archivé avec succès');
-        refetch();
+        await refetch();
       }
     } else {
       // Restaurer
       const success = await unarchiveOrganisation(customer.id);
       if (success) {
         console.log('✅ Client restauré avec succès');
-        refetch();
+        await refetch();
       }
     }
   };
@@ -369,7 +379,11 @@ export default function CustomerDetailPage() {
         <div className="flex gap-2">
           <ButtonV2
             variant={customer.archived_at ? 'success' : 'danger'}
-            onClick={handleArchive}
+            onClick={() => {
+              void handleArchive().catch(error => {
+                console.error('[CustomerDetail] Archive failed:', error);
+              });
+            }}
           >
             {customer.archived_at ? (
               <>
@@ -464,7 +478,14 @@ export default function CustomerDetailPage() {
             organisationName={customer.legal_name}
             organisationType="customer"
             currentLogoUrl={customer.logo_url}
-            onUploadSuccess={() => refetch()}
+            onUploadSuccess={() => {
+              void refetch().catch(error => {
+                console.error(
+                  '[CustomerDetail] Refetch after upload failed:',
+                  error
+                );
+              });
+            }}
           />
 
           {/* Performance & Qualité - Uniquement pour les clients professionnels */}

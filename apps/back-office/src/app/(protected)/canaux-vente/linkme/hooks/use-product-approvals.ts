@@ -251,10 +251,14 @@ export function useApproveProduct() {
 
       return data as unknown as ApprovalResult;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pending-approvals'] });
-      queryClient.invalidateQueries({ queryKey: ['pending-approvals-count'] });
-      queryClient.invalidateQueries({ queryKey: ['all-affiliate-products'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['pending-approvals'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['pending-approvals-count'],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['all-affiliate-products'],
+      });
     },
   });
 }
@@ -287,10 +291,14 @@ export function useRejectProduct() {
 
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pending-approvals'] });
-      queryClient.invalidateQueries({ queryKey: ['pending-approvals-count'] });
-      queryClient.invalidateQueries({ queryKey: ['all-affiliate-products'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['pending-approvals'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['pending-approvals-count'],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['all-affiliate-products'],
+      });
     },
   });
 }
@@ -363,9 +371,11 @@ export function useUpdateAffiliateProduct() {
 
       return result;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['all-affiliate-products'] });
-      queryClient.invalidateQueries({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['all-affiliate-products'],
+      });
+      await queryClient.invalidateQueries({
         queryKey: ['product-commission-history'],
       });
     },
