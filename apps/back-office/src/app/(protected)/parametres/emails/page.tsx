@@ -39,7 +39,9 @@ export default function EmailTemplatesPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
   useEffect(() => {
-    loadTemplates();
+    void loadTemplates().catch(error => {
+      console.error('[EmailsPage] loadTemplates failed:', error);
+    });
   }, []);
 
   async function loadTemplates() {

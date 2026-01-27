@@ -135,7 +135,11 @@ export default function NewWebhookPage() {
 
           <ButtonUnified
             variant="success"
-            onClick={handleSave}
+            onClick={() => {
+              void handleSave().catch(error => {
+                console.error('[WebhookNewPage] handleSave failed:', error);
+              });
+            }}
             disabled={saving}
           >
             <Save className="h-4 w-4" />

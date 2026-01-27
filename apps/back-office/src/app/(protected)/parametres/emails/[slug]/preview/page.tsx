@@ -41,7 +41,9 @@ export default function PreviewEmailTemplatePage() {
   const [showRawHtml, setShowRawHtml] = useState(false);
 
   useEffect(() => {
-    loadTemplate();
+    void loadTemplate().catch(error => {
+      console.error('[EmailPreviewPage] loadTemplate failed:', error);
+    });
   }, [slug]);
 
   useEffect(() => {

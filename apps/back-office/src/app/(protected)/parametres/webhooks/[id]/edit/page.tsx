@@ -61,7 +61,9 @@ export default function EditWebhookPage() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    loadWebhook();
+    void loadWebhook().catch(error => {
+      console.error('[WebhookEditPage] loadWebhook failed:', error);
+    });
   }, [webhookId]);
 
   async function loadWebhook() {
@@ -216,7 +218,11 @@ export default function EditWebhookPage() {
 
           <ButtonUnified
             variant="success"
-            onClick={handleSave}
+            onClick={() => {
+              void handleSave().catch(error => {
+                console.error('[WebhookEditPage] handleSave failed:', error);
+              });
+            }}
             disabled={saving}
           >
             <Save className="h-4 w-4" />
