@@ -250,7 +250,7 @@ export function CategoriesSection() {
         variant="destructive"
         onRetry={() => {
           void refetch().catch(error => {
-            console.error('[CategoriesSection] refetch failed:', error);
+            console.error('[CategoriesSection] Refetch failed:', error);
           });
         }}
       />
@@ -347,8 +347,11 @@ export function CategoriesSection() {
                     key={category.id}
                     category={category}
                     level={0}
-                    onToggleVisibility={categoryId => {
-                      void handleToggleVisibility(categoryId).catch(error => {
+                    onToggleVisibility={(categoryId, newVisibility) => {
+                      void handleToggleVisibility(
+                        categoryId,
+                        newVisibility
+                      ).catch(error => {
                         console.error(
                           '[CategoriesSection] handleToggleVisibility failed:',
                           error

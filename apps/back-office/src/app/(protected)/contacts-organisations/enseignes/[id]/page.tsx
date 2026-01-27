@@ -539,13 +539,15 @@ export default function EnseigneDetailPage() {
               organisations={stats?.organisationsWithRevenue || []}
               parentOrganisation={stats?.parentOrganisation || null}
               onAddOrganisations={() => setIsOrganisationModalOpen(true)}
-              onRemoveOrganisation={orgId => {
-                void handleRemoveOrganisation(orgId).catch(error => {
+              onRemoveOrganisation={async orgId => {
+                try {
+                  await handleRemoveOrganisation(orgId);
+                } catch (error) {
                   console.error(
                     '[EnseigneDetail] Remove organisation failed:',
                     error
                   );
-                });
+                }
               }}
               loading={statsLoading}
             />

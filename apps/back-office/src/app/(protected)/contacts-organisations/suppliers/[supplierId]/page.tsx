@@ -117,15 +117,15 @@ export default function SupplierDetailPage() {
   const handleSupplierUpdate = (_updatedData: Partial<Organisation>) => {
     // Rafraîchir les données du fournisseur immédiatement
     void refetchSupplier().catch(error => {
-      console.error('[SupplierDetailPage] Refetch supplier failed:', error);
+      console.error('[SupplierDetail] Refetch supplier failed:', error);
     });
     // Rafraîchir la liste des organisations (cache)
     void refetch().catch(error => {
-      console.error('[SupplierDetailPage] Refetch list failed:', error);
+      console.error('[SupplierDetail] Refetch organisations failed:', error);
     });
     // Rafraîchir les compteurs
     void refreshCounts().catch(error => {
-      console.error('[SupplierDetailPage] Refresh counts failed:', error);
+      console.error('[SupplierDetail] Refresh counts failed:', error);
     });
   };
 
@@ -230,7 +230,7 @@ export default function SupplierDetailPage() {
         console.log('✅ Fournisseur archivé avec succès');
         void refetch().catch(error => {
           console.error(
-            '[SupplierDetailPage] Refetch after archive failed:',
+            '[SupplierDetail] Refetch after archive failed:',
             error
           );
         });
@@ -242,7 +242,7 @@ export default function SupplierDetailPage() {
         console.log('✅ Fournisseur restauré avec succès');
         void refetch().catch(error => {
           console.error(
-            '[SupplierDetailPage] Refetch after restore failed:',
+            '[SupplierDetail] Refetch after unarchive failed:',
             error
           );
         });
@@ -400,7 +400,7 @@ export default function SupplierDetailPage() {
             onUploadSuccess={() => {
               void refetch().catch(error => {
                 console.error(
-                  '[SupplierDetailPage] Refetch after logo upload failed:',
+                  '[SupplierDetail] Refetch after logo upload failed:',
                   error
                 );
               });

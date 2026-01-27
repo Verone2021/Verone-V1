@@ -183,7 +183,7 @@ export default function CustomerDetailPage() {
     });
     // Rafraîchir la liste des organisations (cache)
     void refetch().catch(error => {
-      console.error('[CustomerDetail] Refetch failed:', error);
+      console.error('[CustomerDetail] Refetch organisations failed:', error);
     });
     // Rafraîchir les compteurs
     void refreshCounts().catch(error => {

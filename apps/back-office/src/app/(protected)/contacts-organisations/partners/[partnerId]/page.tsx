@@ -110,15 +110,15 @@ export default function PartnerDetailPage() {
   const handlePartnerUpdate = (_updatedData: Partial<Organisation>) => {
     // Rafraîchir les données du partenaire immédiatement
     void refetchPartner().catch(error => {
-      console.error('[PartnerDetailPage] Refetch partner failed:', error);
+      console.error('[PartnerDetail] Refetch partner failed:', error);
     });
     // Rafraîchir la liste des organisations (cache)
     void refetch().catch(error => {
-      console.error('[PartnerDetailPage] Refetch list failed:', error);
+      console.error('[PartnerDetail] Refetch organisations failed:', error);
     });
     // Rafraîchir les compteurs
     void refreshCounts().catch(error => {
-      console.error('[PartnerDetailPage] Refresh counts failed:', error);
+      console.error('[PartnerDetail] Refresh counts failed:', error);
     });
   };
 
@@ -188,10 +188,7 @@ export default function PartnerDetailPage() {
       if (success) {
         console.log('✅ Partenaire archivé avec succès');
         void refetch().catch(error => {
-          console.error(
-            '[PartnerDetailPage] Refetch after archive failed:',
-            error
-          );
+          console.error('[PartnerDetail] Refetch after archive failed:', error);
         });
       }
     } else {
@@ -201,7 +198,7 @@ export default function PartnerDetailPage() {
         console.log('✅ Partenaire restauré avec succès');
         void refetch().catch(error => {
           console.error(
-            '[PartnerDetailPage] Refetch after restore failed:',
+            '[PartnerDetail] Refetch after unarchive failed:',
             error
           );
         });
@@ -358,7 +355,7 @@ export default function PartnerDetailPage() {
             onUploadSuccess={() => {
               void refetch().catch(error => {
                 console.error(
-                  '[PartnerDetailPage] Refetch after logo upload failed:',
+                  '[PartnerDetail] Refetch after logo upload failed:',
                   error
                 );
               });
