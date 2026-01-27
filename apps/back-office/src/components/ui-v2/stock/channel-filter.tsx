@@ -124,7 +124,9 @@ export function ChannelFilter({
       }
     }
 
-    fetchChannels();
+    void fetchChannels().catch(error => {
+      console.error('[ChannelFilter] fetchChannels failed:', error);
+    });
   }, []);
 
   /**

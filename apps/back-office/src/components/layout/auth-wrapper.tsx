@@ -46,7 +46,9 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
       setIsLoading(false);
     };
 
-    getSession();
+    void getSession().catch(error => {
+      console.error('[AuthWrapper] getSession failed:', error);
+    });
 
     // Écouter les changements d'authentification
     const {

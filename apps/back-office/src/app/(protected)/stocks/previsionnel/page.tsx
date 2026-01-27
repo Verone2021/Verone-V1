@@ -80,7 +80,17 @@ export default function StockPrevisionnelPage() {
             </CardHeader>
             <CardContent>
               <p className="text-red-600 mb-4">{error}</p>
-              <ButtonV2 onClick={() => refetch()} variant="outline">
+              <ButtonV2
+                onClick={() => {
+                  void refetch().catch(error => {
+                    console.error(
+                      '[StocksPrevisionnel] refetch failed:',
+                      error
+                    );
+                  });
+                }}
+                variant="outline"
+              >
                 Réessayer
               </ButtonV2>
             </CardContent>

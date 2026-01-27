@@ -26,7 +26,9 @@ export class MCPPlaywrightIntegration {
   private isInitialized = false;
 
   constructor() {
-    this.initialize();
+    void this.initialize().catch(error => {
+      console.error('[PlaywrightIntegration] initialize failed:', error);
+    });
   }
 
   /**
