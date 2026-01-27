@@ -343,10 +343,12 @@ export default defineConfig([
       '@typescript-eslint/no-unsafe-call': 'warn',
       '@typescript-eslint/no-unsafe-member-access': 'warn',
       '@typescript-eslint/no-unsafe-return': 'warn',
-      // Async safety - WARN during migration (800+ occurrences)
-      '@typescript-eslint/no-floating-promises': 'warn',
-      '@typescript-eslint/no-misused-promises': 'warn',
-      '@typescript-eslint/await-thenable': 'warn',
+
+      // ⚠️ ASYNC SAFETY KEPT AS ERROR - CRITICAL (prevents production bugs)
+      // These are NOT downgraded to 'warn' because they represent real bugs
+      // '@typescript-eslint/no-floating-promises': 'error', // Inherited from base config
+      // '@typescript-eslint/no-misused-promises': 'error',   // Inherited from base config
+      // '@typescript-eslint/await-thenable': 'error',        // Inherited from base config
     },
   },
 
@@ -369,8 +371,10 @@ export default defineConfig([
       '@typescript-eslint/no-unsafe-call': 'warn',
       '@typescript-eslint/no-unsafe-member-access': 'warn',
       '@typescript-eslint/no-unsafe-return': 'warn',
-      '@typescript-eslint/no-floating-promises': 'warn',
-      '@typescript-eslint/no-misused-promises': 'warn',
+
+      // ⚠️ ASYNC SAFETY KEPT AS ERROR - CRITICAL
+      // '@typescript-eslint/no-floating-promises': 'error', // Inherited
+      // '@typescript-eslint/no-misused-promises': 'error',   // Inherited
     },
   },
 
