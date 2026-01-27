@@ -109,7 +109,14 @@ function StockMovementModal({
         <DialogHeader>
           <DialogTitle>Mouvement de stock - {product?.name}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form
+          onSubmit={e => {
+            void handleSubmit(e).catch(error => {
+              console.error('[StockProduits] handleSubmit failed:', error);
+            });
+          }}
+          className="space-y-4"
+        >
           <div>
             <label className="block text-sm font-medium mb-2">
               Type de mouvement
@@ -218,7 +225,9 @@ function ProductHistoryModal({
 
   useEffect(() => {
     if (isOpen && product) {
-      loadHistory();
+      void loadHistory().catch(error => {
+        console.error('[StockProduits] loadHistory failed:', error);
+      });
     }
   }, [isOpen, product]);
 
@@ -327,7 +336,9 @@ export default function StockInventairePage() {
 
   // Charger les données au montage
   useEffect(() => {
-    loadData();
+    void loadData().catch(error => {
+      console.error('[StockProduits] loadData failed:', error);
+    });
   }, []);
 
   const loadData = async () => {
@@ -468,7 +479,9 @@ export default function StockInventairePage() {
   };
 
   const handleMovementSuccess = () => {
-    loadData();
+    void loadData().catch(error => {
+      console.error('[StockProduits] loadData (movement) failed:', error);
+    });
   };
 
   const openMovementModal = (product: any) => {
@@ -511,7 +524,14 @@ export default function StockInventairePage() {
             <div className="flex gap-2">
               <ButtonV2
                 variant="outline"
-                onClick={loadData}
+                onClick={() => {
+                  void loadData().catch(error => {
+                    console.error(
+                      '[StockProduits] loadData (refresh) failed:',
+                      error
+                    );
+                  });
+                }}
                 disabled={productsLoading}
                 className="border-black text-black hover:bg-black hover:text-white"
               >

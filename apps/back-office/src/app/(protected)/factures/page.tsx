@@ -1284,7 +1284,14 @@ export default function FacturationPage() {
                 invoices={invoices.filter(inv => !inv.deleted_at)}
                 loading={loadingInvoices}
                 onView={handleView}
-                onDownloadPdf={handleDownloadInvoicePdf}
+                onDownloadPdf={invoice => {
+                  void handleDownloadInvoicePdf(invoice).catch(error => {
+                    console.error(
+                      '[Factures] handleDownloadInvoicePdf failed:',
+                      error
+                    );
+                  });
+                }}
                 isArchived={false}
                 onArchive={async invoice => {
                   try {
@@ -1307,7 +1314,14 @@ export default function FacturationPage() {
                 invoices={invoices.filter(inv => inv.deleted_at)}
                 loading={loadingInvoices}
                 onView={handleView}
-                onDownloadPdf={handleDownloadInvoicePdf}
+                onDownloadPdf={invoice => {
+                  void handleDownloadInvoicePdf(invoice).catch(error => {
+                    console.error(
+                      '[Factures] handleDownloadInvoicePdf failed:',
+                      error
+                    );
+                  });
+                }}
                 isArchived
                 onUnarchive={async invoice => {
                   try {
@@ -1415,7 +1429,16 @@ export default function FacturationPage() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => handleFinalizeQuote(quote)}
+                                onClick={() => {
+                                  void handleFinalizeQuote(quote).catch(
+                                    error => {
+                                      console.error(
+                                        '[Factures] handleFinalizeQuote failed:',
+                                        error
+                                      );
+                                    }
+                                  );
+                                }}
                                 title="Envoyer au client"
                                 disabled={finalizingQuoteId === quote.id}
                                 className="text-primary hover:text-primary hover:bg-primary/10"
@@ -1444,7 +1467,16 @@ export default function FacturationPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => handleDownloadQuotePdf(quote)}
+                              onClick={() => {
+                                void handleDownloadQuotePdf(quote).catch(
+                                  error => {
+                                    console.error(
+                                      '[Factures] handleDownloadQuotePdf failed:',
+                                      error
+                                    );
+                                  }
+                                );
+                              }}
                               title="Télécharger PDF"
                             >
                               <Download className="h-4 w-4" />
@@ -1750,7 +1782,11 @@ export default function FacturationPage() {
               Annuler
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDeleteQuote}
+              onClick={() => {
+                void handleDeleteQuote().catch(error => {
+                  console.error('[Factures] handleDeleteQuote failed:', error);
+                });
+              }}
               disabled={deletingQuote}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
