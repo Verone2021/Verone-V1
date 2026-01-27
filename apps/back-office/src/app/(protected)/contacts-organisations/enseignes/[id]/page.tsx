@@ -50,7 +50,6 @@ import {
   ArrowLeft,
   Loader2,
   Package,
-  ExternalLink,
   Building2,
   MapPin,
   Store,

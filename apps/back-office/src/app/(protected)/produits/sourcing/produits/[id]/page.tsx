@@ -64,7 +64,7 @@ export default function SourcingProductDetailPage() {
         title: 'Échantillon commandé',
         description: "La demande d'échantillon a été enregistrée avec succès",
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: 'Erreur',
         description: "Impossible de commander l'échantillon",
@@ -81,7 +81,7 @@ export default function SourcingProductDetailPage() {
         description: 'Le produit a été validé et ajouté au catalogue',
       });
       router.push('/catalogue');
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: 'Erreur',
         description:
@@ -192,7 +192,7 @@ export default function SourcingProductDetailPage() {
                 description: 'Les modifications ont été sauvegardées',
               });
               await refetch();
-            } catch (error) {
+            } catch (_error) {
               toast({
                 title: 'Erreur',
                 description: 'Impossible de mettre à jour le produit',

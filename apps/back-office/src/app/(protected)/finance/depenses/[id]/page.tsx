@@ -34,7 +34,6 @@ import {
   ArrowLeft,
   FileText,
   Download,
-  Euro,
   Calendar,
   Building2,
   AlertCircle,

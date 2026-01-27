@@ -27,7 +27,6 @@ import {
   isToday,
   isYesterday,
   isThisWeek,
-  startOfWeek,
 } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Bell, Search, CheckCheck, Trash2, Filter, X } from 'lucide-react';
@@ -35,7 +34,7 @@ import { Bell, Search, CheckCheck, Trash2, Filter, X } from 'lucide-react';
 // Types pour les filtres
 type FilterTab = 'all' | 'unread' | 'urgent' | 'by-type';
 type NotificationType = DatabaseNotification['type'];
-type NotificationSeverity = DatabaseNotification['severity'];
+type _NotificationSeverity = DatabaseNotification['severity'];
 
 /**
  * Grouping des notifications par date

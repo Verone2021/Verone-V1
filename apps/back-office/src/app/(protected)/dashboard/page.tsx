@@ -24,7 +24,7 @@
 
 'use client';
 
-import { Suspense, use, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { Separator } from '@verone/ui/components/ui/separator';
 import { Skeleton } from '@verone/ui/components/ui/skeleton';
 import {
@@ -49,7 +49,6 @@ import { QuickActionsBar } from './components/quick-actions-bar';
 
 // Legacy Components (reused)
 import { DashboardHeader } from './components/dashboard-header';
-import { KPIsGrid } from './components/kpis-grid';
 import { AlertesWidget } from './components/alertes-widget';
 import { ActivityWidget } from './components/activity-widget';
 import { RoadmapWidgetWrapper } from './components/roadmap-widget-wrapper';

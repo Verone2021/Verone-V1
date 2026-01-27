@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 import { Badge } from '@verone/ui';
-import { ButtonUnified, IconButton } from '@verone/ui';
+import { ButtonUnified } from '@verone/ui';
 import { ArrowLeft, Package, RotateCcw, Trash2 } from 'lucide-react';
 
 export default function ArchivedProductsPage() {

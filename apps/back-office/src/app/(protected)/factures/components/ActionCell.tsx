@@ -27,7 +27,6 @@ import {
   Loader2,
   CheckCircle,
   XCircle,
-  Trash2,
   Archive,
   ArchiveRestore,
 } from 'lucide-react';

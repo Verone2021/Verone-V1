@@ -28,7 +28,7 @@ const FREE_MOBILE_CONFIG = {
   attachmentToKeep: '019b805a-9822-7ad5-8f25-ee3cf8e1d96d',
 };
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+export async function POST(_request: NextRequest): Promise<NextResponse> {
   try {
     // 1. Vérifier l'authentification
     const supabase = await createServerClient();

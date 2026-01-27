@@ -13,7 +13,6 @@ import {
   Trash2,
   Power,
   Activity,
-  AlertCircle,
   CheckCircle2,
   XCircle,
   TestTube,

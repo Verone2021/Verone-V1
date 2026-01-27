@@ -106,7 +106,7 @@ export default function CataloguePage() {
   });
 
   // Fonction de recherche debouncée - synchronise avec useCatalogue
-  const debouncedSearch = useMemo(
+  const _debouncedSearch = useMemo(
     () =>
       debounce((searchTerm: string) => {
         const newFilters = { ...filters, search: searchTerm };

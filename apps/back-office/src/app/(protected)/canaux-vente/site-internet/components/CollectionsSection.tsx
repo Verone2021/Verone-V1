@@ -17,7 +17,6 @@ import {
   CardTitle,
 } from '@verone/ui';
 import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
 import { ErrorStateCard } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { KPICardUnified } from '@verone/ui';
@@ -91,7 +90,7 @@ export function CollectionsSection() {
           title: currentlyVisible ? 'Collection masquée' : 'Collection visible',
           description: `La collection a été ${currentlyVisible ? 'masquée du' : 'rendue visible sur le'} site internet.`,
         });
-      } catch (error) {
+      } catch (_error) {
         toast({
           title: 'Erreur',
           description: 'Impossible de modifier la visibilité de la collection.',

@@ -116,10 +116,10 @@ export default function PurchaseOrdersPage() {
   const {
     loading,
     orders,
-    stats,
+    stats: _stats,
     fetchOrders,
     fetchStats,
-    updateStatus,
+    updateStatus: _updateStatus,
     deleteOrder,
     markAsManuallyPaid,
   } = usePurchaseOrders();
