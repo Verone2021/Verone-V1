@@ -113,7 +113,9 @@ export default function SuppliersPage() {
   };
 
   const handleSupplierSuccess = () => {
-    refetch();
+    void refetch().catch(error => {
+      console.error('[Suppliers] Refetch failed:', error);
+    });
     handleCloseModal();
   };
 
@@ -171,7 +173,9 @@ export default function SuppliersPage() {
 
   useEffect(() => {
     if (activeTab === 'archived') {
-      loadArchivedSuppliersData();
+      void loadArchivedSuppliersData().catch(error => {
+        console.error('[Suppliers] Load archived data failed:', error);
+      });
     }
   }, [activeTab]);
 
@@ -179,7 +183,9 @@ export default function SuppliersPage() {
     if (!supplier.archived_at) {
       const success = await archiveOrganisation(supplier.id);
       if (success) {
-        refetch();
+        void refetch().catch(error => {
+          console.error('[Suppliers] Refetch after archive failed:', error);
+        });
         if (activeTab === 'archived') {
           await loadArchivedSuppliersData();
         }
@@ -187,7 +193,9 @@ export default function SuppliersPage() {
     } else {
       const success = await unarchiveOrganisation(supplier.id);
       if (success) {
-        refetch();
+        void refetch().catch(error => {
+          console.error('[Suppliers] Refetch after unarchive failed:', error);
+        });
         await loadArchivedSuppliersData();
       }
     }
@@ -571,8 +579,20 @@ export default function SuppliersPage() {
                                   organisationType="supplier"
                                   disabled={!supplier.is_active}
                                   onToggleComplete={() => {
-                                    refetch();
-                                    loadArchivedSuppliersData();
+                                    void refetch().catch(error => {
+                                      console.error(
+                                        '[Suppliers] Refetch after favorite toggle failed:',
+                                        error
+                                      );
+                                    });
+                                    void loadArchivedSuppliersData().catch(
+                                      error => {
+                                        console.error(
+                                          '[Suppliers] Load archived after favorite toggle failed:',
+                                          error
+                                        );
+                                      }
+                                    );
                                   }}
                                   className="h-7 px-2"
                                 />
@@ -589,7 +609,16 @@ export default function SuppliersPage() {
                                 <IconButton
                                   variant="danger"
                                   size="sm"
-                                  onClick={() => handleArchive(supplier)}
+                                  onClick={() => {
+                                    void handleArchive(supplier).catch(
+                                      error => {
+                                        console.error(
+                                          '[Suppliers] Archive action failed:',
+                                          error
+                                        );
+                                      }
+                                    );
+                                  }}
                                   icon={Archive}
                                   label="Archiver"
                                 />
@@ -604,15 +633,36 @@ export default function SuppliersPage() {
                                   organisationType="supplier"
                                   disabled={!supplier.is_active}
                                   onToggleComplete={() => {
-                                    refetch();
-                                    loadArchivedSuppliersData();
+                                    void refetch().catch(error => {
+                                      console.error(
+                                        '[Suppliers] Refetch after favorite toggle failed:',
+                                        error
+                                      );
+                                    });
+                                    void loadArchivedSuppliersData().catch(
+                                      error => {
+                                        console.error(
+                                          '[Suppliers] Load archived after favorite toggle failed:',
+                                          error
+                                        );
+                                      }
+                                    );
                                   }}
                                   className="h-7 px-2"
                                 />
                                 <IconButton
                                   variant="success"
                                   size="sm"
-                                  onClick={() => handleArchive(supplier)}
+                                  onClick={() => {
+                                    void handleArchive(supplier).catch(
+                                      error => {
+                                        console.error(
+                                          '[Suppliers] Archive action failed:',
+                                          error
+                                        );
+                                      }
+                                    );
+                                  }}
                                   icon={ArchiveRestore}
                                   label="Restaurer"
                                 />
@@ -795,8 +845,20 @@ export default function SuppliersPage() {
                                 organisationType="supplier"
                                 disabled={!supplier.is_active}
                                 onToggleComplete={() => {
-                                  refetch();
-                                  loadArchivedSuppliersData();
+                                  void refetch().catch(error => {
+                                    console.error(
+                                      '[Suppliers] Refetch after favorite toggle failed:',
+                                      error
+                                    );
+                                  });
+                                  void loadArchivedSuppliersData().catch(
+                                    error => {
+                                      console.error(
+                                        '[Suppliers] Load archived after favorite toggle failed:',
+                                        error
+                                      );
+                                    }
+                                  );
                                 }}
                                 className="h-7 px-2"
                               />
@@ -813,7 +875,14 @@ export default function SuppliersPage() {
                               <IconButton
                                 variant="danger"
                                 size="sm"
-                                onClick={() => handleArchive(supplier)}
+                                onClick={() => {
+                                  void handleArchive(supplier).catch(error => {
+                                    console.error(
+                                      '[Suppliers] Archive action failed:',
+                                      error
+                                    );
+                                  });
+                                }}
                                 icon={Archive}
                                 label="Archiver"
                               />
@@ -828,15 +897,34 @@ export default function SuppliersPage() {
                                 organisationType="supplier"
                                 disabled={!supplier.is_active}
                                 onToggleComplete={() => {
-                                  refetch();
-                                  loadArchivedSuppliersData();
+                                  void refetch().catch(error => {
+                                    console.error(
+                                      '[Suppliers] Refetch after favorite toggle failed:',
+                                      error
+                                    );
+                                  });
+                                  void loadArchivedSuppliersData().catch(
+                                    error => {
+                                      console.error(
+                                        '[Suppliers] Load archived after favorite toggle failed:',
+                                        error
+                                      );
+                                    }
+                                  );
                                 }}
                                 className="h-7 px-2"
                               />
                               <IconButton
                                 variant="success"
                                 size="sm"
-                                onClick={() => handleArchive(supplier)}
+                                onClick={() => {
+                                  void handleArchive(supplier).catch(error => {
+                                    console.error(
+                                      '[Suppliers] Archive action failed:',
+                                      error
+                                    );
+                                  });
+                                }}
                                 icon={ArchiveRestore}
                                 label="Restaurer"
                               />

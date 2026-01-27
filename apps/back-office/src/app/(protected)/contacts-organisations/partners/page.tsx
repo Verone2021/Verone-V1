@@ -109,7 +109,9 @@ export default function PartnersPage() {
       // Archiver
       const success = await archiveOrganisation(partner.id);
       if (success) {
-        refetch();
+        void refetch().catch(error => {
+          console.error('[Partners] Refetch after archive failed:', error);
+        });
         if (activeTab === 'archived') {
           await loadArchivedPartnersData();
         }
@@ -118,7 +120,9 @@ export default function PartnersPage() {
       // Restaurer
       const success = await unarchiveOrganisation(partner.id);
       if (success) {
-        refetch();
+        void refetch().catch(error => {
+          console.error('[Partners] Refetch after unarchive failed:', error);
+        });
         await loadArchivedPartnersData();
       }
     }
@@ -154,7 +158,9 @@ export default function PartnersPage() {
   };
 
   const handlePartnerSuccess = () => {
-    refetch();
+    void refetch().catch(error => {
+      console.error('[Partners] Refetch failed:', error);
+    });
     handleCloseModal();
   };
 
@@ -180,7 +186,9 @@ export default function PartnersPage() {
 
   useEffect(() => {
     if (activeTab === 'archived') {
-      loadArchivedPartnersData();
+      void loadArchivedPartnersData().catch(error => {
+        console.error('[Partners] Load archived data failed:', error);
+      });
     }
   }, [activeTab]);
 
@@ -527,8 +535,20 @@ export default function PartnersPage() {
                                   organisationType="partner"
                                   disabled={!partner.is_active}
                                   onToggleComplete={() => {
-                                    refetch();
-                                    loadArchivedPartnersData();
+                                    void refetch().catch(error => {
+                                      console.error(
+                                        '[Partners] Refetch after favorite toggle failed:',
+                                        error
+                                      );
+                                    });
+                                    void loadArchivedPartnersData().catch(
+                                      error => {
+                                        console.error(
+                                          '[Partners] Load archived after favorite toggle failed:',
+                                          error
+                                        );
+                                      }
+                                    );
                                   }}
                                   className="h-7 px-2"
                                 />
@@ -545,7 +565,14 @@ export default function PartnersPage() {
                                 <IconButton
                                   variant="danger"
                                   size="sm"
-                                  onClick={() => handleArchive(partner)}
+                                  onClick={() => {
+                                    void handleArchive(partner).catch(error => {
+                                      console.error(
+                                        '[Partners] Archive action failed:',
+                                        error
+                                      );
+                                    });
+                                  }}
                                   icon={Archive}
                                   label="Archiver"
                                 />
@@ -560,15 +587,34 @@ export default function PartnersPage() {
                                   organisationType="partner"
                                   disabled={!partner.is_active}
                                   onToggleComplete={() => {
-                                    refetch();
-                                    loadArchivedPartnersData();
+                                    void refetch().catch(error => {
+                                      console.error(
+                                        '[Partners] Refetch after favorite toggle failed:',
+                                        error
+                                      );
+                                    });
+                                    void loadArchivedPartnersData().catch(
+                                      error => {
+                                        console.error(
+                                          '[Partners] Load archived after favorite toggle failed:',
+                                          error
+                                        );
+                                      }
+                                    );
                                   }}
                                   className="h-7 px-2"
                                 />
                                 <IconButton
                                   variant="success"
                                   size="sm"
-                                  onClick={() => handleArchive(partner)}
+                                  onClick={() => {
+                                    void handleArchive(partner).catch(error => {
+                                      console.error(
+                                        '[Partners] Archive action failed:',
+                                        error
+                                      );
+                                    });
+                                  }}
                                   icon={ArchiveRestore}
                                   label="Restaurer"
                                 />
@@ -727,8 +773,20 @@ export default function PartnersPage() {
                                 organisationType="partner"
                                 disabled={!partner.is_active}
                                 onToggleComplete={() => {
-                                  refetch();
-                                  loadArchivedPartnersData();
+                                  void refetch().catch(error => {
+                                    console.error(
+                                      '[Partners] Refetch after favorite toggle failed:',
+                                      error
+                                    );
+                                  });
+                                  void loadArchivedPartnersData().catch(
+                                    error => {
+                                      console.error(
+                                        '[Partners] Load archived after favorite toggle failed:',
+                                        error
+                                      );
+                                    }
+                                  );
                                 }}
                                 className="h-7 px-2"
                               />
@@ -745,7 +803,14 @@ export default function PartnersPage() {
                               <IconButton
                                 variant="danger"
                                 size="sm"
-                                onClick={() => handleArchive(partner)}
+                                onClick={() => {
+                                  void handleArchive(partner).catch(error => {
+                                    console.error(
+                                      '[Partners] Archive action failed:',
+                                      error
+                                    );
+                                  });
+                                }}
                                 icon={Archive}
                                 label="Archiver"
                               />
@@ -758,15 +823,34 @@ export default function PartnersPage() {
                                 organisationType="partner"
                                 disabled={!partner.is_active}
                                 onToggleComplete={() => {
-                                  refetch();
-                                  loadArchivedPartnersData();
+                                  void refetch().catch(error => {
+                                    console.error(
+                                      '[Partners] Refetch after favorite toggle failed:',
+                                      error
+                                    );
+                                  });
+                                  void loadArchivedPartnersData().catch(
+                                    error => {
+                                      console.error(
+                                        '[Partners] Load archived after favorite toggle failed:',
+                                        error
+                                      );
+                                    }
+                                  );
                                 }}
                                 className="h-7 px-2"
                               />
                               <IconButton
                                 variant="success"
                                 size="sm"
-                                onClick={() => handleArchive(partner)}
+                                onClick={() => {
+                                  void handleArchive(partner).catch(error => {
+                                    console.error(
+                                      '[Partners] Archive action failed:',
+                                      error
+                                    );
+                                  });
+                                }}
                                 icon={ArchiveRestore}
                                 label="Restaurer"
                               />
