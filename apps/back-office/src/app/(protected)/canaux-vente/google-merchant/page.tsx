@@ -32,14 +32,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@verone/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
 import { logger } from '@verone/utils/logger';
 import {
@@ -59,7 +51,8 @@ import {
 
 export default function GoogleMerchantPage() {
   const router = useRouter();
-  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  // Reserved for future multi-select feature
+  const [_selectedProducts, _setSelectedProducts] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [configModalOpen, setConfigModalOpen] = useState(false);
@@ -75,11 +68,11 @@ export default function GoogleMerchantPage() {
     total,
     progress,
     duration,
-    results,
+    results: _results,
     error,
     insertProducts,
-    updateProducts,
-    reset,
+    updateProducts: _updateProducts,
+    reset: _reset,
   } = useGoogleMerchantSync();
 
   // 🚀 Fetch produits RÉELS synchronisés depuis Supabase
@@ -157,10 +150,10 @@ export default function GoogleMerchantPage() {
   // 🚀 Handler: Mettre à jour métadonnées produit
   const handleUpdateMetadata = async (
     productId: string,
-    metadata: { title: string; description: string }
+    _metadata: { title: string; description: string }
   ) => {
     logger.info('[Google Merchant Page] Updating metadata', { productId });
-    // TODO: Implémenter API update métadonnées
+    // TODO: Implémenter API update métadonnées (will use _metadata)
   };
 
   // 🚀 Handler: Re-synchroniser produit
@@ -181,7 +174,8 @@ export default function GoogleMerchantPage() {
     // TODO: Implémenter API remove product (soft delete)
   };
 
-  const getStatusBadge = (status: string | null) => {
+  // Reserved for future status badge customization
+  const _getStatusBadge = (status: string | null) => {
     if (!status) {
       return (
         <Badge variant="outline" className="border-gray-300 text-gray-500">
@@ -226,7 +220,8 @@ export default function GoogleMerchantPage() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
+  // Reserved for custom currency formatting
+  const _formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
       currency: 'EUR',
