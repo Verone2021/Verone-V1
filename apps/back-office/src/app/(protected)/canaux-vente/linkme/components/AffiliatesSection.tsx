@@ -176,9 +176,15 @@ export function AffiliatesSection() {
   const [entitySearch, setEntitySearch] = useState('');
 
   useEffect(() => {
-    fetchAffiliates();
-    fetchOrganisations();
-    fetchEnseignes();
+    void fetchAffiliates().catch(error => {
+      console.error('[Affiliates] Fetch failed:', error);
+    });
+    void fetchOrganisations().catch(error => {
+      console.error('[Affiliates] Fetch organisations failed:', error);
+    });
+    void fetchEnseignes().catch(error => {
+      console.error('[Affiliates] Fetch enseignes failed:', error);
+    });
   }, []);
 
   // Filtrer les entités déjà liées à un affilié
@@ -333,7 +339,9 @@ export function AffiliatesSection() {
 
       setIsCreateModalOpen(false);
       resetForm();
-      fetchAffiliates();
+      void fetchAffiliates().catch(error => {
+        console.error('[Affiliates] Fetch failed:', error);
+      });
     } catch (error) {
       console.error('Error creating affiliate:', error);
       toast({
@@ -372,7 +380,9 @@ export function AffiliatesSection() {
       setIsEditModalOpen(false);
       setSelectedAffiliate(null);
       resetForm();
-      fetchAffiliates();
+      void fetchAffiliates().catch(error => {
+        console.error('[Affiliates] Fetch failed:', error);
+      });
     } catch (error) {
       console.error('Error updating affiliate:', error);
       toast({
@@ -413,7 +423,9 @@ export function AffiliatesSection() {
           newStatus === 'active' ? 'Affilié activé' : 'Affilié suspendu',
       });
 
-      fetchAffiliates();
+      void fetchAffiliates().catch(error => {
+        console.error('[Affiliates] Fetch failed:', error);
+      });
     } catch (error) {
       console.error('Error updating status:', error);
       toast({
@@ -442,7 +454,9 @@ export function AffiliatesSection() {
         description: 'Affilié supprimé',
       });
 
-      fetchAffiliates();
+      void fetchAffiliates().catch(error => {
+        console.error('[Affiliates] Fetch failed:', error);
+      });
     } catch (error) {
       console.error('Error deleting affiliate:', error);
       toast({
@@ -760,9 +774,17 @@ export function AffiliatesSection() {
                             <ButtonV2
                               variant="outline"
                               size="sm"
-                              onClick={() =>
-                                handleStatusChange(affiliate.id, 'active')
-                              }
+                              onClick={() => {
+                                void handleStatusChange(
+                                  affiliate.id,
+                                  'active'
+                                ).catch(error => {
+                                  console.error(
+                                    '[Affiliates] Status change failed:',
+                                    error
+                                  );
+                                });
+                              }}
                             >
                               <CheckCircle className="h-4 w-4 mr-1" />
                               Valider
@@ -772,9 +794,17 @@ export function AffiliatesSection() {
                             <ButtonV2
                               variant="outline"
                               size="sm"
-                              onClick={() =>
-                                handleStatusChange(affiliate.id, 'suspended')
-                              }
+                              onClick={() => {
+                                void handleStatusChange(
+                                  affiliate.id,
+                                  'suspended'
+                                ).catch(error => {
+                                  console.error(
+                                    '[Affiliates] Status change failed:',
+                                    error
+                                  );
+                                });
+                              }}
                             >
                               <XCircle className="h-4 w-4 mr-1" />
                               Suspendre
@@ -784,9 +814,17 @@ export function AffiliatesSection() {
                             <ButtonV2
                               variant="outline"
                               size="sm"
-                              onClick={() =>
-                                handleStatusChange(affiliate.id, 'active')
-                              }
+                              onClick={() => {
+                                void handleStatusChange(
+                                  affiliate.id,
+                                  'active'
+                                ).catch(error => {
+                                  console.error(
+                                    '[Affiliates] Status change failed:',
+                                    error
+                                  );
+                                });
+                              }}
                             >
                               <CheckCircle className="h-4 w-4 mr-1" />
                               Réactiver
@@ -802,7 +840,16 @@ export function AffiliatesSection() {
                           <ButtonV2
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDeleteAffiliate(affiliate.id)}
+                            onClick={() => {
+                              void handleDeleteAffiliate(affiliate.id).catch(
+                                error => {
+                                  console.error(
+                                    '[Affiliates] Delete failed:',
+                                    error
+                                  );
+                                }
+                              );
+                            }}
                           >
                             <Trash2 className="h-4 w-4 text-red-500" />
                           </ButtonV2>
@@ -1042,7 +1089,11 @@ export function AffiliatesSection() {
               Annuler
             </ButtonV2>
             <ButtonV2
-              onClick={handleCreateAffiliate}
+              onClick={() => {
+                void handleCreateAffiliate().catch(error => {
+                  console.error('[Affiliates] Create failed:', error);
+                });
+              }}
               disabled={
                 saving ||
                 !formData.entity_id ||
@@ -1127,7 +1178,11 @@ export function AffiliatesSection() {
               Annuler
             </ButtonV2>
             <ButtonV2
-              onClick={handleUpdateAffiliate}
+              onClick={() => {
+                void handleUpdateAffiliate().catch(error => {
+                  console.error('[Affiliates] Update failed:', error);
+                });
+              }}
               disabled={
                 saving || !formData.display_name.trim() || !formData.slug.trim()
               }
