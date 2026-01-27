@@ -476,8 +476,8 @@ export function useAddProductsToCatalog() {
 
       return data ?? 0;
     },
-    onSuccess: count => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
+    onSuccess: async (count) => {
+      await queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
       console.log(`✅ ${count} produits ajoutés au catalogue LinkMe`);
     },
   });
@@ -499,8 +499,8 @@ export function useRemoveProductFromCatalog() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
     },
   });
 }
@@ -558,8 +558,8 @@ export function useToggleProductEnabled() {
         );
       }
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
     },
   });
 }
@@ -617,8 +617,8 @@ export function useToggleProductShowcase() {
         );
       }
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
     },
   });
 }
@@ -676,8 +676,8 @@ export function useToggleProductFeatured() {
         );
       }
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
     },
   });
 }
@@ -736,8 +736,8 @@ export function useToggleShowSupplier() {
         );
       }
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
     },
   });
 }
@@ -768,8 +768,8 @@ export function useUpdateMarginSettings() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
     },
   });
 }
@@ -800,8 +800,8 @@ export function useUpdateCustomMetadata() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
     },
   });
 }
@@ -1085,11 +1085,13 @@ export function useUpdateLinkMePricing() {
 
       if (error) throw error;
     },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ['linkme-product-detail', variables.catalogProductId],
-      });
-      queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
+    onSuccess: async (_data, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-product-detail', variables.catalogProductId],
+        }),
+        queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] }),
+      ]);
     },
   });
 }
@@ -1120,11 +1122,13 @@ export function useUpdateLinkMeMetadata() {
 
       if (error) throw error;
     },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ['linkme-product-detail', variables.catalogProductId],
-      });
-      queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
+    onSuccess: async (_data, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-product-detail', variables.catalogProductId],
+        }),
+        queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] }),
+      ]);
     },
   });
 }
@@ -1152,10 +1156,12 @@ export function useUpdateAffiliateCommission() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       // Invalider le cache pour rafraîchir les données
-      queryClient.invalidateQueries({ queryKey: ['linkme-product-detail'] });
-      queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['linkme-product-detail'] }),
+        queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] }),
+      ]);
     },
   });
 }
@@ -1193,11 +1199,13 @@ export function useToggleLinkMeProductField() {
 
       if (error) throw error;
     },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ['linkme-product-detail', variables.catalogProductId],
-      });
-      queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] });
+    onSuccess: async (_data, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-product-detail', variables.catalogProductId],
+        }),
+        queryClient.invalidateQueries({ queryKey: ['linkme-catalog-products'] }),
+      ]);
     },
   });
 }

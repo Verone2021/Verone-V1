@@ -81,7 +81,7 @@ export default function SourcingProductDetailPage() {
         description: 'Le produit a été validé et ajouté au catalogue',
       });
       router.push('/catalogue');
-    } catch (_error) {
+    } catch (error) {
       toast({
         title: 'Erreur',
         description:

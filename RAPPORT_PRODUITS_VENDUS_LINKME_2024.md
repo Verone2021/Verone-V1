@@ -547,6 +547,27 @@
 
 ---
 
+## LINK-240047 - Pokawa Toulouse Compans Caffarelli - 10/12/2024 - 1 246,50 € HT
+
+| Code | Désignation | Qté | PU HT | Total HT |
+|------|-------------|-----|-------|----------|
+| LINK41 | Plateau 20 x 30 cm | 50 | 23,75 € | 1 187,50 € |
+| EXP | Expédition | 1 | 59,00 € | 59,00 € |
+
+**Total facture :** 1 246,50 € HT
+
+---
+
+## VERONE-F-2024-3 - DSA (Massy) - 03/04/2024 - 897,75 € HT
+
+| Code | Désignation | Qté | PU HT | Total HT |
+|------|-------------|-----|-------|----------|
+| CHARGEUR65W | Chargeur de téléphone 65W | 1 | 897,75 € | 897,75 € |
+
+**Total facture :** 897,75 € HT
+
+---
+
 ## Cumul des produits vendus en 2024
 
 ### Produits
@@ -569,7 +590,7 @@
 | LINK31 | Suspension franges n°1 | 45 | 2 928,60 € |
 | LINK33 | Suspension franges n°3 | 17 | 1 106,36 € |
 | LINK35 | Suspension franges n°5 | 12 | 1 386,12 € |
-| LINK41 | Plateau 20 x 30 cm | 564 | 13 394,25 € |
+| LINK41 | Plateau 20 x 30 cm | 614 | 14 581,75 € |
 | LINK64 | Ciel de bar - Pokawa | 12 | 3 729,00 € |
 | LINK73 | Séparateur terrasse POKAWA | 43 | 17 178,50 € |
 | LINK76 | Coussin Évasion Bleu | 41 | 1 032,38 € |
@@ -578,13 +599,14 @@
 | POKA 1 | Poubelle POKAWA | 4 | 3 181,05 € |
 | POKA 1 | Tablettes Tabesto POKAWA | 2 | 2 012,28 € |
 | POKA 5 | Tablettes Tabesto POKAWA | 2 | 2 012,28 € |
-| EXP | Expédition | 40 | 10 282,00 € |
+| CHARGEUR65W | Chargeur de téléphone 65W | 1 | 897,75 € |
+| EXP | Expédition | 41 | 10 341,00 € |
 
 ### Totaux
-- **Total HT cumulé :** 82 418,97 €
-- **Nombre de factures traitées :** 40 / 40
+- **Total HT cumulé :** 84 563,22 €
+- **Nombre de factures traitées :** 42 / 42
 - **Progression :** 100%
 
 ---
 
-*Dernière mise à jour : Facture LINK-240046 - Rapport complet*
+*Dernière mise à jour : Facture VERONE-F-2024-3 ajoutée*

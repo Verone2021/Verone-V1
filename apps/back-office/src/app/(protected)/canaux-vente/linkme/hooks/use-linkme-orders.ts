@@ -509,10 +509,12 @@ export function useCreateLinkMeOrder() {
 
   return useMutation({
     mutationFn: createLinkMeOrder,
-    onSuccess: () => {
+    onSuccess: async () => {
       // Invalider le cache pour rafraîchir les listes
-      queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
-      queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['linkme-orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['sales-orders'] }),
+      ]);
     },
   });
 }
@@ -537,13 +539,15 @@ export function useUpdateLinkMeOrder() {
 
   return useMutation({
     mutationFn: updateLinkMeOrder,
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
       // Invalider le cache pour rafraîchir les listes
-      queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
-      queryClient.invalidateQueries({
-        queryKey: ['linkme-order', variables.id],
-      });
-      queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['linkme-orders'] }),
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-order', variables.id],
+        }),
+        queryClient.invalidateQueries({ queryKey: ['sales-orders'] }),
+      ]);
     },
   });
 }

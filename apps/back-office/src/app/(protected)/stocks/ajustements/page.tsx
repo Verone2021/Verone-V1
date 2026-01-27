@@ -75,7 +75,7 @@ export default function StockAdjustmentsPage() {
   const [showMovementDetails, setShowMovementDetails] = useState(false);
   const [movementToCancel, setMovementToCancel] =
     useState<MovementWithDetails | null>(null);
-  const [showCancelModal, toggleShowCancelModal: _toggleShowCancelModal, setShowCancelModal] =
+  const [showCancelModal, _toggleShowCancelModal, setShowCancelModal] =
     useToggle(false);
 
   // États pour filtres sidebar collapsible

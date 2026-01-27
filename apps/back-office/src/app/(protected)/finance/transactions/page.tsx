@@ -687,7 +687,7 @@ function _TransactionsPageLegacy() {
         });
       }
       await refresh();
-    } catch (_err) {
+    } catch (err) {
       console.error('[Qonto Sync] Error:', err);
       toast.error('Erreur de synchronisation');
       await refresh();
@@ -1102,7 +1102,7 @@ function TransactionsPageV2() {
         });
       }
       await refresh();
-    } catch (_err) {
+    } catch (err) {
       console.error('[Qonto Sync] Error:', err);
       toast.error('Erreur de synchronisation');
       await refresh();
@@ -1145,7 +1145,7 @@ function TransactionsPageV2() {
 
       toast.success(`${eligibleIds.length} transactions catégorisées en 707`);
       refresh();
-    } catch (_err) {
+    } catch (err) {
       toast.error('Erreur lors de la catégorisation');
       console.error('[AutoCategorize] Error:', err);
     } finally {
@@ -1223,7 +1223,7 @@ function TransactionsPageV2() {
         optional ? 'Justificatif marqué facultatif' : 'Justificatif requis'
       );
       await refresh();
-    } catch (_err) {
+    } catch (err) {
       toast.error('Erreur lors de la mise à jour');
     }
   };
@@ -2019,7 +2019,7 @@ function TransactionsPageV2() {
                                       }
                                     );
                                     if (res.ok) refresh();
-                                  } catch (_err) {
+                                  } catch (err) {
                                     console.error('[TVA update] Error:', err);
                                   }
                                 }}
@@ -2088,7 +2088,7 @@ function TransactionsPageV2() {
                               setTimeout(() => {
                                 window.location.reload();
                               }, 500);
-                            } catch (_err) {
+                            } catch (err) {
                               toast.error(
                                 err instanceof Error
                                   ? err.message

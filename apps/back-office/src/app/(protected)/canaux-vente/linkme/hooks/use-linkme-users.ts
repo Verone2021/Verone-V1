@@ -348,8 +348,8 @@ export function useCreateLinkMeUser() {
 
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-users'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['linkme-users'] });
     },
   });
 }
@@ -411,11 +411,13 @@ export function useUpdateLinkMeUser() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-users'] });
-      queryClient.invalidateQueries({
-        queryKey: ['linkme-user', variables.userId],
-      });
+    onSuccess: async (_, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['linkme-users'] }),
+        queryClient.invalidateQueries({
+          queryKey: ['linkme-user', variables.userId],
+        }),
+      ]);
     },
   });
 }
@@ -469,8 +471,8 @@ export function useToggleLinkMeUserActive() {
         queryClient.setQueryData(['linkme-users'], context.previousData);
       }
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-users'] });
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['linkme-users'] });
     },
   });
 }
@@ -495,8 +497,8 @@ export function useDeleteLinkMeUser() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['linkme-users'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['linkme-users'] });
     },
   });
 }

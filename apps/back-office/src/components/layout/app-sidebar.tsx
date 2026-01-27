@@ -500,7 +500,7 @@ function SidebarContent() {
   ]);
 
   // Fonction récursive pour rendre les enfants (support multi-niveaux) - Reserved
-  const _renderChildNavItem = (
+  const renderChildNavItem = (
     child: NavItem,
     idx: number,
     isParentExpanded: boolean
@@ -613,7 +613,7 @@ function SidebarContent() {
   const renderNavItemExpanded = (item: NavItem) => {
     const moduleName = getModuleName(item.title);
     const moduleStatus = getModuleDeploymentStatus(moduleName);
-    const _isItemExpanded = expandedItems.includes(item.title);
+    const isItemExpanded = expandedItems.includes(item.title);
     const isActiveItem = isActiveOrHasActiveChild(item);
 
     // Module inactif
@@ -733,7 +733,7 @@ function SidebarContent() {
   const renderNavItem = (item: NavItem) => {
     const moduleName = getModuleName(item.title);
     const moduleStatus = getModuleDeploymentStatus(moduleName);
-    const _isItemExpanded = expandedItems.includes(item.title);
+    const isItemExpanded = expandedItems.includes(item.title);
     const isActiveItem = isActiveOrHasActiveChild(item);
 
     // Mode compact avec Popover pour sous-menus ou Tooltip pour items simples

@@ -177,9 +177,9 @@
 | N° Facture | Date | Client | Code Client | Montant HT | TVA | Montant TTC |
 |------------|------|--------|-------------|------------|-----|-------------|
 | LINK-240046 | 10/12/2024 | Pokawa Chambéry (6 Place de Genève, 73000) | 127 | 2 783,76 € | 556,75 € | **3 340,51 €** |
-| LINK-240047 | 10/12/2024 | Pokawa (voir Bubble) | - | - | - | **(montant à vérifier)** |
+| LINK-240047 | 10/12/2024 | Pokawa Toulouse Compans Caffarelli | POKA97 | 1 246,50 € | 249,30 € | **1 495,80 €** |
 
-**TOTAL DECEMBRE 2024 : 3 340,51 € + (240047)** (2 factures)
+**TOTAL DECEMBRE 2024 : 4 836,31 €** (2 factures)
 
 ---
 
@@ -299,9 +299,9 @@ Les numéros suivants n'existent pas dans Bubble (jamais créés ou annulés):
 | LINK-240044 | 29/11/2024 | Pokawa Toulouse Jeanne-d'Arc | 592,80 € | ⚠️ **Manquant** |
 | LINK-240045 | 29/11/2024 | Pokawa Metz | 592,80 € | ⚠️ **Manquant** |
 | LINK-240046 | 10/12/2024 | Pokawa Chambéry | 3 340,51 € | ✅ Welyb |
-| LINK-240047 | 10/12/2024 | Pokawa (voir Bubble) | (à vérifier) | ✅ **Bubble** |
+| LINK-240047 | 10/12/2024 | Pokawa Toulouse Compans Caffarelli | 1 495,80 € | ✅ **Bubble** |
 
-**TOTAL LINKME : 94 063,10 € + (240047)**
+**TOTAL LINKME : 95 558,90 €**
 
 ### Légende
 - ✅ **Welyb** : Facture présente dans la comptabilité Welyb (29 factures)
