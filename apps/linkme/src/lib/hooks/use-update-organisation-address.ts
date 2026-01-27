@@ -92,15 +92,15 @@ export function useUpdateOrganisationAddress() {
 
       return data;
     },
-    onSuccess: (_, { organisationId }) => {
+    onSuccess: async (_, { organisationId }) => {
       // Invalider le cache pour rafraîchir les données
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['organisation-detail', organisationId],
       });
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['entity-addresses', 'organisation', organisationId],
       });
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['enseigne-organisations'],
       });
     },

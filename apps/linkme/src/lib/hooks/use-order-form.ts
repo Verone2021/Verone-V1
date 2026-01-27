@@ -512,11 +512,11 @@ export function useOrderForm(): UseOrderFormReturn {
       }
 
       // Invalider les caches
-      queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
+      await queryClient.invalidateQueries({
         queryKey: ['linkme-orders', affiliate.id],
       });
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['affiliate-orders', affiliate.id],
       });
 

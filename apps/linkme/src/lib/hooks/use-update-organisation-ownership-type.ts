@@ -67,11 +67,15 @@ export function useUpdateOrganisationOwnershipType() {
 
       return { organisationId, ownershipType };
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       // Invalider les caches pertinents pour rafraîchir les données
-      queryClient.invalidateQueries({ queryKey: ['enseigne-organisations'] });
-      queryClient.invalidateQueries({ queryKey: ['organisation-detail'] });
-      queryClient.invalidateQueries({ queryKey: ['organisation-stats'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['enseigne-organisations'],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['organisation-detail'],
+      });
+      await queryClient.invalidateQueries({ queryKey: ['organisation-stats'] });
       toast.success('Type de restaurant enregistré');
     },
     onError: (error: Error) => {

@@ -166,8 +166,8 @@ export function useUploadProductImage() {
       setProgress(100);
       return imageRecord as ProductImage;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['product-images', variables.productId],
       });
       setProgress(0);
@@ -212,8 +212,8 @@ export function useDeleteProductImage() {
       // Delete from storage
       await supabase.storage.from(BUCKET).remove([storagePath]);
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['product-images', variables.productId],
       });
     },
@@ -252,8 +252,8 @@ export function useSetPrimaryImage() {
         throw new Error(`Erreur: ${error.message}`);
       }
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['product-images', variables.productId],
       });
     },

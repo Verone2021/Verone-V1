@@ -265,15 +265,15 @@ export function useUpdateDraftOrder() {
 
   return useMutation({
     mutationFn: updateDraftOrder,
-    onSuccess: result => {
+    onSuccess: async result => {
       if (result.success) {
         // Invalider tous les caches concernés pour synchronisation bidirectionnelle
-        queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
-        queryClient.invalidateQueries({
+        await queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
+        await queryClient.invalidateQueries({
           queryKey: ['linkme-order', result.orderId],
         });
         // Aussi invalider les caches du back-office pour synchronisation
-        queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
+        await queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
       }
     },
     onError: error => {
