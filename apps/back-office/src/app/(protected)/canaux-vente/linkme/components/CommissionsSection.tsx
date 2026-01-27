@@ -114,7 +114,9 @@ export function CommissionsSection() {
   const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
-    fetchData();
+    void fetchData().catch(error => {
+      console.error('[CommissionsSection] Initial fetch failed:', error);
+    });
   }, []);
 
   async function fetchData() {
@@ -181,7 +183,12 @@ export function CommissionsSection() {
       });
 
       setSelectedIds([]);
-      fetchData();
+      void fetchData().catch(error => {
+        console.error(
+          '[CommissionsSection] Fetch after validate failed:',
+          error
+        );
+      });
     } catch (error) {
       console.error('Error validating commissions:', error);
       toast({
@@ -215,7 +222,12 @@ export function CommissionsSection() {
       });
 
       setSelectedIds([]);
-      fetchData();
+      void fetchData().catch(error => {
+        console.error(
+          '[CommissionsSection] Fetch after mark paid failed:',
+          error
+        );
+      });
     } catch (error) {
       console.error('Error marking paid:', error);
       toast({
@@ -448,7 +460,14 @@ export function CommissionsSection() {
               <ButtonV2
                 size="sm"
                 variant="outline"
-                onClick={() => handleValidate(selectedIds)}
+                onClick={() => {
+                  void handleValidate(selectedIds).catch(error => {
+                    console.error(
+                      '[CommissionsSection] Validate failed:',
+                      error
+                    );
+                  });
+                }}
                 disabled={processing}
               >
                 <CheckCircle className="h-4 w-4 mr-1" />
@@ -457,7 +476,14 @@ export function CommissionsSection() {
               <ButtonV2
                 size="sm"
                 variant="outline"
-                onClick={() => handleMarkPaid(selectedIds)}
+                onClick={() => {
+                  void handleMarkPaid(selectedIds).catch(error => {
+                    console.error(
+                      '[CommissionsSection] Mark paid failed:',
+                      error
+                    );
+                  });
+                }}
                 disabled={processing}
               >
                 <CreditCard className="h-4 w-4 mr-1" />
@@ -564,7 +590,16 @@ export function CommissionsSection() {
                           <ButtonV2
                             variant="outline"
                             size="sm"
-                            onClick={() => handleValidate([commission.id])}
+                            onClick={() => {
+                              void handleValidate([commission.id]).catch(
+                                error => {
+                                  console.error(
+                                    '[CommissionsSection] Validate single failed:',
+                                    error
+                                  );
+                                }
+                              );
+                            }}
                             disabled={processing}
                           >
                             Valider
@@ -574,7 +609,16 @@ export function CommissionsSection() {
                           <ButtonV2
                             variant="outline"
                             size="sm"
-                            onClick={() => handleMarkPaid([commission.id])}
+                            onClick={() => {
+                              void handleMarkPaid([commission.id]).catch(
+                                error => {
+                                  console.error(
+                                    '[CommissionsSection] Mark paid single failed:',
+                                    error
+                                  );
+                                }
+                              );
+                            }}
                             disabled={processing}
                           >
                             Payer
