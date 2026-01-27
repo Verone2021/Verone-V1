@@ -122,7 +122,11 @@ export default function ExpeditionsPage() {
 
   // Charger stats
   useEffect(() => {
-    loadShipmentStats().then(setStats);
+    void loadShipmentStats()
+      .then(setStats)
+      .catch(error => {
+        console.error('[ExpeditionsPage] Load stats failed:', error);
+      });
   }, [loadShipmentStats]);
 
   // Charger liste commandes à expédier
@@ -144,7 +148,11 @@ export default function ExpeditionsPage() {
         filters.overdue_only = true;
       }
 
-      loadSalesOrdersReadyForShipment(filters).then(setOrders);
+      void loadSalesOrdersReadyForShipment(filters)
+        .then(setOrders)
+        .catch(error => {
+          console.error('[ExpeditionsPage] Load ready orders failed:', error);
+        });
     }
   }, [
     loadSalesOrdersReadyForShipment,
@@ -170,7 +178,11 @@ export default function ExpeditionsPage() {
       }
 
       // ✅ Utiliser la bonne fonction qui gère le filtrage par array de statuts
-      loadShippedOrdersHistory(filters).then(setHistoryOrders);
+      void loadShippedOrdersHistory(filters)
+        .then(setHistoryOrders)
+        .catch(error => {
+          console.error('[ExpeditionsPage] Load history failed:', error);
+        });
     }
   }, [
     loadShippedOrdersHistory,
@@ -190,11 +202,19 @@ export default function ExpeditionsPage() {
     setShowShipmentModal(false);
     setOrderToShip(null);
     // Recharger stats et commandes
-    loadShipmentStats().then(setStats);
-    loadSalesOrdersReadyForShipment({
+    void loadShipmentStats()
+      .then(setStats)
+      .catch(error => {
+        console.error('[ExpeditionsPage] Reload stats failed:', error);
+      });
+    void loadSalesOrdersReadyForShipment({
       status: statusFilter !== 'all' ? statusFilter : undefined,
       search: searchTerm || undefined,
-    }).then(setOrders);
+    })
+      .then(setOrders)
+      .catch(error => {
+        console.error('[ExpeditionsPage] Reload orders failed:', error);
+      });
   };
 
   const handleViewHistory = async (order: any) => {
@@ -744,7 +764,14 @@ export default function ExpeditionsPage() {
                                   size="sm"
                                   onClick={e => {
                                     e.stopPropagation();
-                                    handleViewHistory(order);
+                                    void handleViewHistory(order).catch(
+                                      error => {
+                                        console.error(
+                                          '[ExpeditionsPage] View history failed:',
+                                          error
+                                        );
+                                      }
+                                    );
                                   }}
                                 >
                                   <Eye className="h-4 w-4 mr-2" />
