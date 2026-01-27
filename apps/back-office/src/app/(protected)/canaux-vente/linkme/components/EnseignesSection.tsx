@@ -3,7 +3,6 @@
 import { useState, useMemo, useEffect } from 'react';
 
 import Image from 'next/image';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { useToast } from '@verone/common';
@@ -29,7 +28,6 @@ import { Label } from '@verone/ui';
 import { Skeleton } from '@verone/ui';
 import { Switch } from '@verone/ui';
 import { Tabs, TabsList, TabsTrigger } from '@verone/ui';
-import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import {
   Plus,
@@ -42,16 +40,12 @@ import {
   XCircle,
   Eye,
   Briefcase,
-  ExternalLink,
-  Package,
-  TrendingUp,
   Archive,
   ArchiveRestore,
 } from 'lucide-react';
 
 import {
   useLinkMeEnseignes,
-  useLinkMeEnseigne,
   useLinkMeEnseigneOrganisations,
   useCreateEnseigne,
   useUpdateEnseigne,
@@ -103,7 +97,7 @@ export function EnseignesSection() {
   const [loadingOrgs, setLoadingOrgs] = useState(false);
 
   // Hooks queries
-  const { data: enseignes, isLoading, refetch } = useLinkMeEnseignes();
+  const { data: enseignes, isLoading, refetch: _refetch } = useLinkMeEnseignes();
   const { data: selectedEnseigneOrgs } = useLinkMeEnseigneOrganisations(
     isDetailModalOpen ? (selectedEnseigne?.id ?? null) : null
   );
@@ -282,7 +276,7 @@ export function EnseignesSection() {
     }
   };
 
-  const handleDeleteEnseigne = async (enseigne: EnseigneWithStats) => {
+  const _handleDeleteEnseigne = async (enseigne: EnseigneWithStats) => {
     if (!confirm(`Êtes-vous sûr de vouloir supprimer "${enseigne.name}" ?`))
       return;
 
@@ -320,7 +314,7 @@ export function EnseignesSection() {
     }
   };
 
-  const openEditModal = (enseigne: EnseigneWithStats) => {
+  const _openEditModal = (enseigne: EnseigneWithStats) => {
     setSelectedEnseigne(enseigne);
     setFormData({
       name: enseigne.name,
@@ -331,7 +325,7 @@ export function EnseignesSection() {
     setIsEditModalOpen(true);
   };
 
-  const openDetailModal = (enseigne: EnseigneWithStats) => {
+  const _openDetailModal = (enseigne: EnseigneWithStats) => {
     setSelectedEnseigne(enseigne);
     setIsDetailModalOpen(true);
   };

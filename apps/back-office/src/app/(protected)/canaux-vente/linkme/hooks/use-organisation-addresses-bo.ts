@@ -13,6 +13,9 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
+// Database type is used by TypeScript for supabase.rpc() type inference
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type { Database } from '@verone/types';
 import { toast } from 'sonner';
 
 // ============================================
@@ -183,8 +186,7 @@ export function useCreateAddressBO() {
         longitude: input.longitude,
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase.rpc as any)('upsert_address', {
+      const { data, error } = await supabase.rpc('upsert_address', {
         p_owner_type: input.ownerType,
         p_owner_id: input.ownerId,
         p_address_type: input.addressType,
@@ -198,7 +200,7 @@ export function useCreateAddressBO() {
         throw error;
       }
 
-      return data as string;
+      return data;
     },
     onSuccess: (_, variables) => {
       void queryClient.invalidateQueries({

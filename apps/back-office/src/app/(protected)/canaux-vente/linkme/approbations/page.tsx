@@ -47,7 +47,6 @@ import {
   User,
   ShoppingCart,
   Building2,
-  ExternalLink,
   Mail,
   Phone,
   MapPin,
@@ -56,24 +55,17 @@ import {
   ChevronDown,
   ChevronRight,
   Store,
-  FileText,
-  Calendar,
-  Briefcase,
 } from 'lucide-react';
 
 import {
-  usePendingOrders,
   usePendingOrdersCount,
   useApproveOrder,
   useRejectOrder,
   useAllLinkMeOrders,
   type PendingOrder,
-  type PendingOrderItem,
-  type PendingOrderLinkMeDetails,
   type OrderValidationStatus,
 } from '../hooks/use-linkme-order-actions';
 import {
-  usePendingOrganisations,
   usePendingOrganisationsCount,
   useAllOrganisationsWithApproval,
   useApproveOrganisation,
@@ -82,13 +74,11 @@ import {
   type OrganisationApprovalStatus,
 } from '../hooks/use-organisation-approvals';
 import {
-  usePendingApprovals,
   usePendingApprovalsCount,
   useAllAffiliateProducts,
   useApproveProduct,
   useRejectProduct,
   useUpdateAffiliateProduct,
-  useProductCommissionHistory,
   COMMISSION_RATES,
   type PendingProduct,
   type AffiliateProductApprovalStatus,
@@ -275,8 +265,8 @@ function CommandesTab() {
     }
   };
 
-  // Format du type de demandeur
-  const formatRequesterType = (type: string | null | undefined) => {
+  // Format du type de demandeur - Reserved
+  const _formatRequesterType = (type: string | null | undefined) => {
     if (!type) return '-';
     const types: Record<string, string> = {
       responsable_enseigne: 'Responsable enseigne',

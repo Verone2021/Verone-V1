@@ -2,30 +2,19 @@
 
 import { useState, useMemo, useEffect } from 'react';
 
-import Link from 'next/link';
-
-import { SupplierCategoryBadge } from '@verone/categories';
 import { OrganisationListView } from '@verone/customers';
-import { OrganisationLogo } from '@verone/organisations';
 import { OrganisationCard } from '@verone/organisations';
 import { SupplierFormModal } from '@verone/organisations';
 import { useSuppliers, type Organisation } from '@verone/organisations';
-import { SupplierSegmentBadge, SupplierSegmentType } from '@verone/suppliers';
 import { Input } from '@verone/ui';
 import { Card, CardContent } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
-import { Badge } from '@verone/ui';
 import { spacing, colors } from '@verone/ui/design-system';
 import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import {
   Search,
   Plus,
-  MapPin,
-  Archive,
-  ArchiveRestore,
-  Trash2,
-  ExternalLink,
   Building2,
   LayoutGrid,
   List,
@@ -40,7 +29,7 @@ export function SuppliersTab() {
   );
   const [archivedLoading, setArchivedLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedSupplier, setSelectedSupplier] = useState<Organisation | null>(
+  const [selectedSupplier, _setSelectedSupplier] = useState<Organisation | null>(
     null
   );
 

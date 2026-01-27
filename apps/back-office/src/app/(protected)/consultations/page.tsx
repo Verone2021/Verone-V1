@@ -8,7 +8,6 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@verone/common';
 import { useConsultations } from '@verone/consultations';
 import { useConsultationImages } from '@verone/consultations';
-import { Alert, AlertDescription } from '@verone/ui';
 import { Badge } from '@verone/ui';
 import { ButtonUnified } from '@verone/ui';
 import {
@@ -27,11 +26,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
 import {
   Users,
-  Package,
-  Link,
   ArrowLeft,
   Plus,
   Search,
@@ -47,7 +43,6 @@ import {
 } from 'lucide-react';
 
 import { ConsultationImageViewerModal } from '@/components/business/consultation-image-viewer-modal';
-import { ConsultationOrderInterface } from '@/components/business/consultation-order-interface';
 
 // Helper pour récupérer le nom du client (enseigne ou organisation)
 function getClientName(consultation: any): string {
@@ -229,7 +224,7 @@ function ConsultationPhotoModal({
 
 export default function ConsultationsPage() {
   const router = useRouter();
-  const { toast } = useToast();
+  const { toast: _toast } = useToast();
   const { consultations, loading, fetchConsultations } = useConsultations();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
