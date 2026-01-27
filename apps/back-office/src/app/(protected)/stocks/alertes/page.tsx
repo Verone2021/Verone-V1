@@ -303,7 +303,9 @@ export default function StockAlertesPage() {
   // Auto-refresh polling (fallback)
   useEffect(() => {
     const interval = setInterval(() => {
-      fetchAlerts();
+      void fetchAlerts().catch(error => {
+        console.error('[AlertesPage] Auto-refresh failed:', error);
+      });
     }, 30000); // Rafraîchir toutes les 30 secondes
 
     return () => clearInterval(interval);
@@ -315,7 +317,9 @@ export default function StockAlertesPage() {
       console.log(
         '📢 [ALERTES] Événement stock-alerts-refresh reçu, rafraîchissement...'
       );
-      fetchAlerts();
+      void fetchAlerts().catch(error => {
+        console.error('[AlertesPage] Event refresh failed:', error);
+      });
     };
 
     window.addEventListener('stock-alerts-refresh', handleStockAlertsRefresh);
@@ -374,7 +378,14 @@ export default function StockAlertesPage() {
             <div className="flex items-center space-x-3">
               <ButtonV2
                 variant="outline"
-                onClick={() => fetchAlerts()}
+                onClick={() => {
+                  void fetchAlerts().catch(error => {
+                    console.error(
+                      '[AlertesPage] Manual refresh failed:',
+                      error
+                    );
+                  });
+                }}
                 disabled={loading}
                 className="border-black text-black hover:bg-black hover:text-white"
               >
@@ -660,7 +671,14 @@ export default function StockAlertesPage() {
                           // - Si seuil atteint ET commande existe → Ouvrir détails commande
                           // - Si seuil NON atteint (même avec commande existante) → Ouvrir modal pour commander le complément
                           if (seuilAtteint && clickedAlert.draft_order_id) {
-                            handleOpenOrderDetail(clickedAlert.draft_order_id);
+                            void handleOpenOrderDetail(
+                              clickedAlert.draft_order_id
+                            ).catch(error => {
+                              console.error(
+                                '[AlertesPage] Open order detail failed:',
+                                error
+                              );
+                            });
                             return;
                           }
 
@@ -754,7 +772,14 @@ export default function StockAlertesPage() {
                           // - Si seuil atteint ET commande existe → Ouvrir détails commande
                           // - Si seuil NON atteint (même avec commande existante) → Ouvrir modal pour commander le complément
                           if (seuilAtteint && clickedAlert.draft_order_id) {
-                            handleOpenOrderDetail(clickedAlert.draft_order_id);
+                            void handleOpenOrderDetail(
+                              clickedAlert.draft_order_id
+                            ).catch(error => {
+                              console.error(
+                                '[AlertesPage] Open order detail failed:',
+                                error
+                              );
+                            });
                             return;
                           }
 
@@ -786,7 +811,12 @@ export default function StockAlertesPage() {
           productId={selectedProductForOrder.productId}
           shortageQuantity={selectedProductForOrder.shortageQuantity}
           onSuccess={() => {
-            fetchAlerts(); // Rafraîchir les alertes
+            void fetchAlerts().catch(error => {
+              console.error(
+                '[AlertesPage] Refresh after order success failed:',
+                error
+              );
+            });
           }}
         />
       )}
@@ -801,7 +831,12 @@ export default function StockAlertesPage() {
             setSelectedOrderId(null);
           }}
           onUpdate={() => {
-            fetchAlerts(); // Rafraîchir alertes après modifications
+            void fetchAlerts().catch(error => {
+              console.error(
+                '[AlertesPage] Refresh after order update failed:',
+                error
+              );
+            });
           }}
         />
       )}
