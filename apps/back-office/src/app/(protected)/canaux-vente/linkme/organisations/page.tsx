@@ -111,7 +111,12 @@ export default function OrganisationsPage() {
       });
       setIsApproveDialogOpen(false);
       setSelectedOrg(null);
-      refetch();
+      void refetch().catch(error => {
+        console.error(
+          '[OrganisationsPage] refetch after approve failed:',
+          error
+        );
+      });
     } catch {
       alert("Erreur lors de l'approbation");
     }
@@ -133,7 +138,12 @@ export default function OrganisationsPage() {
       });
       setIsRejectDialogOpen(false);
       setSelectedOrg(null);
-      refetch();
+      void refetch().catch(error => {
+        console.error(
+          '[OrganisationsPage] refetch after reject failed:',
+          error
+        );
+      });
     } catch {
       alert('Erreur lors du rejet');
     }
@@ -362,7 +372,14 @@ export default function OrganisationsPage() {
               Annuler
             </Button>
             <Button
-              onClick={handleApproveConfirm}
+              onClick={() => {
+                void handleApproveConfirm().catch(error => {
+                  console.error(
+                    '[OrganisationsPage] handleApproveConfirm failed:',
+                    error
+                  );
+                });
+              }}
               disabled={approveOrganisation.isPending}
               className="bg-green-600 hover:bg-green-700"
             >
@@ -407,7 +424,14 @@ export default function OrganisationsPage() {
             </Button>
             <Button
               variant="destructive"
-              onClick={handleRejectConfirm}
+              onClick={() => {
+                void handleRejectConfirm().catch(error => {
+                  console.error(
+                    '[OrganisationsPage] handleRejectConfirm failed:',
+                    error
+                  );
+                });
+              }}
               disabled={!rejectReason.trim() || rejectOrganisation.isPending}
             >
               {rejectOrganisation.isPending ? (

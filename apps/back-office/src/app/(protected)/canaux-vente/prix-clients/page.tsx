@@ -67,7 +67,9 @@ export default function PrixClientsPage() {
 
   // Charger les prix clients
   useEffect(() => {
-    loadPricingRules();
+    void loadPricingRules().catch(error => {
+      console.error('[PrixClientsPage] loadPricingRules failed:', error);
+    });
   }, []);
 
   const loadPricingRules = async () => {

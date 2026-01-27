@@ -98,9 +98,9 @@ export function useToggleCategoryVisibility() {
         );
       }
     },
-    onSettled: () => {
+    onSettled: async () => {
       // 6. Refetch to sync with server
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['site-internet-categories'],
       });
     },
@@ -131,8 +131,8 @@ export function useUpdateCategoryOrder() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
         queryKey: ['site-internet-categories'],
       });
     },

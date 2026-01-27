@@ -123,7 +123,11 @@ export function CollectionsSection() {
             : 'Impossible de charger les collections. Veuillez réessayer.'
         }
         variant="destructive"
-        onRetry={() => refetch()}
+        onRetry={() => {
+          void refetch().catch(error => {
+            console.error('[CollectionsSection] refetch failed:', error);
+          });
+        }}
       />
     );
   }
@@ -304,9 +308,17 @@ export function CollectionsSection() {
                       <TableCell>
                         <Switch
                           checked={isVisible}
-                          onCheckedChange={() =>
-                            handleToggleVisibility(collection.id, isVisible)
-                          }
+                          onCheckedChange={() => {
+                            void handleToggleVisibility(
+                              collection.id,
+                              isVisible
+                            ).catch(error => {
+                              console.error(
+                                '[CollectionsSection] handleToggleVisibility failed:',
+                                error
+                              );
+                            });
+                          }}
                           disabled={
                             !collection.is_active || toggleVisibility.isPending
                           }

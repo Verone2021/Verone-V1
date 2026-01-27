@@ -114,7 +114,9 @@ function useOrganisation(organisationId: string | null) {
       setLoading(false);
     };
 
-    fetchOrganisation();
+    void fetchOrganisation().catch(error => {
+      console.error('[OrganisationPage] fetchOrganisation failed:', error);
+    });
   }, [organisationId]);
 
   // Fonction pour mettre à jour l'organisation
@@ -191,7 +193,9 @@ function useOrganisationSelections(organisationId: string | null) {
       setLoading(false);
     };
 
-    fetchSelections();
+    void fetchSelections().catch(error => {
+      console.error('[OrganisationPage] fetchSelections failed:', error);
+    });
   }, [organisationId]);
 
   return { selections, loading };
@@ -259,7 +263,9 @@ function useOrganisationProducts(organisationId: string | null) {
       setLoading(false);
     };
 
-    fetchProducts();
+    void fetchProducts().catch(error => {
+      console.error('[OrganisationPage] fetchProducts failed:', error);
+    });
   }, [organisationId]);
 
   return { products, loading };
@@ -293,7 +299,9 @@ function useOrganisationUsersCount(organisationId: string | null) {
       setLoading(false);
     };
 
-    fetchCount();
+    void fetchCount().catch(error => {
+      console.error('[OrganisationPage] fetchCount failed:', error);
+    });
   }, [organisationId]);
 
   return { count, loading };
