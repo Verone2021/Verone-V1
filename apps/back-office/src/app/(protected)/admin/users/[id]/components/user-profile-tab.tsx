@@ -16,8 +16,6 @@ import {
   Phone,
   Briefcase,
   Calendar,
-  MapPin,
-  Building,
   Tag,
   CheckCircle,
   XCircle,

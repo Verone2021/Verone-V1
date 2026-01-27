@@ -35,7 +35,6 @@ import {
   LINKME_ROLE_LABELS,
   LINKME_ROLE_COLORS,
   LINKME_ROLE_PERMISSIONS,
-  type LinkMeRole,
 } from '../../hooks/use-linkme-users';
 
 // Types

@@ -72,7 +72,7 @@ interface Affiliate {
   enseigne_name: string | null;
 }
 
-interface NotificationHistory {
+interface _NotificationHistory {
   id: string;
   title: string;
   message: string;

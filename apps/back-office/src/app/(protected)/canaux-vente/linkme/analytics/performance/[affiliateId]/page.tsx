@@ -18,7 +18,6 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
-import { Badge } from '@verone/ui';
 import { Skeleton } from '@verone/ui';
 import { Button } from '@verone/ui';
 import {

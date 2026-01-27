@@ -26,7 +26,6 @@ import {
   TrendingUp,
   Building2,
   Briefcase,
-  ImageIcon,
   Euro,
 } from 'lucide-react';
 

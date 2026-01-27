@@ -29,7 +29,6 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  AlertCircle,
   Eye,
   Filter,
   Mail,
@@ -38,7 +37,6 @@ import {
 } from 'lucide-react';
 
 import {
-  usePendingOrganisations,
   usePendingOrganisationsCount,
   useAllOrganisationsWithApproval,
   useApproveOrganisation,

@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 import type { CustomerPricing } from '@verone/finance';
-import type { Database } from '@verone/types';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -48,7 +47,7 @@ interface Stats {
 }
 
 export default function PrixClientsPage() {
-  const router = useRouter();
+  const _router = useRouter();
   const supabase = createClient();
 
   const [pricingRules, setPricingRules] = useState<CustomerPricing[]>([]);

@@ -10,7 +10,6 @@ import {
   Plus,
   Minus,
   AlertCircle,
-  Check,
   Loader2,
   Save,
 } from 'lucide-react';

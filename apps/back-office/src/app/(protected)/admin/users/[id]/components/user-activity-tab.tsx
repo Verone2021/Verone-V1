@@ -15,7 +15,6 @@ import { useEffect, useState } from 'react';
 import {
   Activity,
   Clock,
-  Calendar,
   TrendingUp,
   BarChart3,
   MousePointer,
@@ -23,7 +22,6 @@ import {
   Zap,
   Target,
   Eye,
-  ChevronRight,
   Loader2,
   AlertCircle,
 } from 'lucide-react';
@@ -127,7 +125,7 @@ export function UserActivityTab({ user }: UserActivityTabProps) {
     return date.toLocaleDateString('fr-FR');
   };
 
-  const getActionIcon = (action: string) => {
+  const _getActionIcon = (action: string) => {
     if (action.includes('page_view')) return <Eye className="h-4 w-4" />;
     if (action.includes('form_submit'))
       return <MousePointer className="h-4 w-4" />;

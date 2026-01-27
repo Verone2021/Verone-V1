@@ -21,7 +21,7 @@ import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { Key, X, Eye, EyeOff } from 'lucide-react';
 
-import type { LinkMeUser, LinkMeRole } from '../hooks/use-linkme-users';
+import type { LinkMeUser } from '../hooks/use-linkme-users';
 import {
   LINKME_ROLE_LABELS,
   LINKME_ROLE_COLORS,

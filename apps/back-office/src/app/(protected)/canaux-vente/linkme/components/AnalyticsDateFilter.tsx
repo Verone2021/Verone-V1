@@ -155,7 +155,7 @@ export function formatFiltersLabel(filters: AnalyticsFilters): string {
 // Legacy exports for compatibility
 export function getDateRangeForYearAndPeriod(
   year: number,
-  period: AnalyticsPeriod
+  _period: AnalyticsPeriod
 ): { startDate: Date; endDate: Date } {
   const filters: AnalyticsFilters = { year, months: [] };
   const range = getDateRangeForFilters(filters);

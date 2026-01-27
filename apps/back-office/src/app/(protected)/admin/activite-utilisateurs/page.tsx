@@ -10,7 +10,6 @@ import { ButtonV2 } from '@verone/ui';
 import {
   Activity,
   User,
-  Clock,
   TrendingUp,
   AlertCircle,
   RefreshCw,

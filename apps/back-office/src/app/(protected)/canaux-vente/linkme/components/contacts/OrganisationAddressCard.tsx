@@ -12,7 +12,7 @@
  * @since 2026-01-20
  */
 
-import { MapPin, Check, Building2 } from 'lucide-react';
+import { MapPin, Check } from 'lucide-react';
 
 import { Card, cn } from '@verone/ui';
 import { OrganisationLogo } from '@verone/organisations/components/display/OrganisationLogo';
@@ -91,7 +91,7 @@ function formatAddress(
 // ============================================================================
 
 export function OrganisationAddressCard({
-  id,
+  id: _id,
   name,
   logoUrl,
   ownershipType,

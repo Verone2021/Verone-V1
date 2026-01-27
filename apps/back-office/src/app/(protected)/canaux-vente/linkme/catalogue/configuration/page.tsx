@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback } from 'react';
 
 import { ProductThumbnail } from '@verone/products/components/images/ProductThumbnail';
-import { Badge, Progress } from '@verone/ui';
+import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import { Input } from '@verone/ui';
@@ -26,7 +26,6 @@ import {
   Minus,
   Loader2,
   AlertCircle,
-  CheckCircle2,
   Package,
   DollarSign,
   Percent,

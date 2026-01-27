@@ -10,8 +10,6 @@ import {
   CardTitle,
 } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
-import { Input } from '@verone/ui';
-import { Label } from '@verone/ui';
 import {
   Webhook,
   Key,

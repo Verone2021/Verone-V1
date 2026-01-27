@@ -11,7 +11,6 @@ import React from 'react';
 
 import { RoleBadge, type UserRole } from '@verone/ui';
 import {
-  User,
   Mail,
   Calendar,
   Clock,

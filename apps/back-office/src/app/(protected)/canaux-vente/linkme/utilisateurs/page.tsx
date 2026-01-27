@@ -32,7 +32,6 @@ import { UserEditModal } from '../components/UserEditModal';
 import {
   useLinkMeUsers,
   useLinkMeUsersStats,
-  useToggleLinkMeUserActive,
   type LinkMeUser,
   type LinkMeRole,
   LINKME_ROLE_LABELS,

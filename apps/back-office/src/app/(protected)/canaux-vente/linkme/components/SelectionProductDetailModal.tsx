@@ -22,7 +22,6 @@ import {
   Tag,
   Truck,
   Check,
-  Info,
   FileDown,
   Euro,
   Loader2,

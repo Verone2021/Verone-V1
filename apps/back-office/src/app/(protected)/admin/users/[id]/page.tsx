@@ -14,8 +14,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
 import {
   ArrowLeft,
   User,
-  Calendar,
-  Clock,
   Shield,
   Activity,
 } from 'lucide-react';

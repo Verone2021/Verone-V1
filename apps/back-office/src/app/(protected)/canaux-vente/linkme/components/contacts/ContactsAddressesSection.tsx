@@ -13,7 +13,7 @@
  * @since 2026-01-20
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 
 import { User, MapPin, Loader2, ChevronDown, Check } from 'lucide-react';
 

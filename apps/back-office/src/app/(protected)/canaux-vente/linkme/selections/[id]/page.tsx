@@ -22,7 +22,6 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Switch,
   Table,
   TableBody,
   TableCell,
@@ -46,7 +45,6 @@ import {
   Plus,
   Trash2,
   Eye,
-  EyeOff,
   Pencil,
   Package,
   ShoppingCart,
@@ -81,7 +79,7 @@ import {
 type CatalogProduct = LinkMeCatalogProduct;
 
 // Configuration des statuts
-const statusConfig = {
+const _statusConfig = {
   draft: { label: 'Brouillon', variant: 'secondary' as const },
   active: { label: 'Active', variant: 'default' as const },
   archived: { label: 'Archivée', variant: 'outline' as const },

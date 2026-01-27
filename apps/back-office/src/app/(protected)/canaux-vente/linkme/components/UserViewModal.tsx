@@ -17,7 +17,6 @@ import {
 
 import {
   type LinkMeUser,
-  type LinkMeRole,
   LINKME_ROLE_LABELS,
   LINKME_ROLE_COLORS,
   LINKME_ROLE_PERMISSIONS,
