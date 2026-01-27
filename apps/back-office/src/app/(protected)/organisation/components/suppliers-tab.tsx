@@ -81,7 +81,12 @@ export function SuppliersTab() {
 
   useEffect(() => {
     if (activeTab === 'archived') {
-      loadArchivedSuppliersData();
+      void loadArchivedSuppliersData().catch(error => {
+        console.error(
+          '[SuppliersTab] Failed to load archived suppliers:',
+          error
+        );
+      });
     }
   }, [activeTab]);
 
@@ -89,7 +94,7 @@ export function SuppliersTab() {
     if (!supplier.archived_at) {
       const success = await archiveOrganisation(supplier.id);
       if (success) {
-        refetch();
+        await refetch();
         if (activeTab === 'archived') {
           await loadArchivedSuppliersData();
         }
@@ -97,7 +102,7 @@ export function SuppliersTab() {
     } else {
       const success = await unarchiveOrganisation(supplier.id);
       if (success) {
-        refetch();
+        await refetch();
         await loadArchivedSuppliersData();
       }
     }
@@ -109,9 +114,13 @@ export function SuppliersTab() {
     );
 
     if (confirmed) {
-      const success = await hardDeleteOrganisation(supplier.id);
-      if (success) {
-        await loadArchivedSuppliersData();
+      try {
+        const success = await hardDeleteOrganisation(supplier.id);
+        if (success) {
+          await loadArchivedSuppliersData();
+        }
+      } catch (error) {
+        console.error('[SuppliersTab] Failed to delete supplier:', error);
       }
     }
   };
@@ -274,8 +283,16 @@ export function SuppliersTab() {
                 } as any
               }
               activeTab={activeTab}
-              onArchive={() => handleArchive(supplier)}
-              onDelete={() => handleDelete(supplier)}
+              onArchive={() => {
+                void handleArchive(supplier).catch(error => {
+                  console.error('[SuppliersTab] Archive failed:', error);
+                });
+              }}
+              onDelete={() => {
+                void handleDelete(supplier).catch(error => {
+                  console.error('[SuppliersTab] Delete failed:', error);
+                });
+              }}
             />
           ))}
         </div>
@@ -292,11 +309,19 @@ export function SuppliersTab() {
               activeTab={activeTab}
               onArchive={id => {
                 const supplier = displayedSuppliers.find(s => s.id === id);
-                if (supplier) handleArchive(supplier);
+                if (supplier) {
+                  void handleArchive(supplier).catch(error => {
+                    console.error('[SuppliersTab] Archive failed:', error);
+                  });
+                }
               }}
               onDelete={id => {
                 const supplier = displayedSuppliers.find(s => s.id === id);
-                if (supplier) handleDelete(supplier);
+                if (supplier) {
+                  void handleDelete(supplier).catch(error => {
+                    console.error('[SuppliersTab] Delete failed:', error);
+                  });
+                }
               }}
             />
           </CardContent>
@@ -308,7 +333,12 @@ export function SuppliersTab() {
         onClose={() => setIsModalOpen(false)}
         supplier={selectedSupplier as any}
         onSuccess={() => {
-          refetch();
+          void refetch().catch(error => {
+            console.error(
+              '[SuppliersTab] Refetch after success failed:',
+              error
+            );
+          });
           setIsModalOpen(false);
         }}
       />
