@@ -202,9 +202,11 @@ export function useUpdateAllocationBillable() {
         throw error;
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['storage-overview'] });
-      queryClient.invalidateQueries({ queryKey: ['affiliate-storage-detail'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['storage-overview'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['affiliate-storage-detail'],
+      });
     },
   });
 }
@@ -254,9 +256,11 @@ export function useCreateStorageAllocation() {
         throw error;
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['storage-overview'] });
-      queryClient.invalidateQueries({ queryKey: ['affiliate-storage-detail'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['storage-overview'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['affiliate-storage-detail'],
+      });
     },
   });
 }
@@ -289,9 +293,11 @@ export function useUpdateStorageQuantity() {
         throw error;
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['storage-overview'] });
-      queryClient.invalidateQueries({ queryKey: ['affiliate-storage-detail'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['storage-overview'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['affiliate-storage-detail'],
+      });
     },
   });
 }
@@ -388,8 +394,10 @@ export function useUpdatePricingTier() {
         throw error;
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['storage-pricing-tiers'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['storage-pricing-tiers'],
+      });
     },
   });
 }
@@ -430,8 +438,10 @@ export function useCreatePricingTier() {
         throw error;
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['storage-pricing-tiers'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['storage-pricing-tiers'],
+      });
     },
   });
 }
@@ -457,8 +467,10 @@ export function useDeletePricingTier() {
         throw error;
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['storage-pricing-tiers'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['storage-pricing-tiers'],
+      });
     },
   });
 }

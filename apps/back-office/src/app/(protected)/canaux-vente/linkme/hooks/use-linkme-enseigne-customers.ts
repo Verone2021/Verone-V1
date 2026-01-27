@@ -245,8 +245,11 @@ export function useLinkMeEnseigneCustomers(enseigneId: string | null) {
     isError: orgsQuery.isError || individualsQuery.isError,
     error: orgsQuery.error || individualsQuery.error,
     refetch: () => {
-      orgsQuery.refetch();
-      individualsQuery.refetch();
+      void Promise.all([orgsQuery.refetch(), individualsQuery.refetch()]).catch(
+        error => {
+          console.error('[LinkMeEnseigneCustomers] Refetch failed:', error);
+        }
+      );
     },
   };
 }
@@ -337,10 +340,16 @@ export function useLinkMeAffiliateCustomers(
 
     refetch: () => {
       if (isEnseigne) {
-        enseigneOrgsQuery.refetch();
-        enseigneIndividualsQuery.refetch();
+        void Promise.all([
+          enseigneOrgsQuery.refetch(),
+          enseigneIndividualsQuery.refetch(),
+        ]).catch(error => {
+          console.error('[LinkMeAffiliateCustomers] Refetch failed:', error);
+        });
       } else {
-        orgIndividualsQuery.refetch();
+        void orgIndividualsQuery.refetch().catch(error => {
+          console.error('[LinkMeAffiliateCustomers] Refetch failed:', error);
+        });
       }
     },
 
@@ -386,8 +395,8 @@ export function useCreateEnseigneOrganisation() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['linkme-enseigne-organisations', variables.enseigne_id],
       });
     },
@@ -449,10 +458,10 @@ export function useCreateEnseigneIndividualCustomer() {
       console.log('✅ Client créé:', data);
       return data;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
       // Invalider le cache pour l'enseigne si spécifiée
       if (variables.enseigne_id) {
-        queryClient.invalidateQueries({
+        await queryClient.invalidateQueries({
           queryKey: [
             'linkme-enseigne-individual-customers',
             variables.enseigne_id,
@@ -462,13 +471,13 @@ export function useCreateEnseigneIndividualCustomer() {
 
       // Invalider le cache pour l'organisation si spécifiée (NOUVEAU - org_independante)
       if (variables.organisation_id) {
-        queryClient.invalidateQueries({
+        await queryClient.invalidateQueries({
           queryKey: ['linkme-organisation-individual-customers'],
         });
       }
 
       // Toujours invalider la liste générale des clients
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['individual-customers'],
       });
     },

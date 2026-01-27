@@ -73,7 +73,9 @@ export default function ConsultationDetailPage() {
   const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
-    fetchConsultations();
+    void fetchConsultations().catch(error => {
+      console.error('[ConsultationDetail] Fetch failed:', error);
+    });
   }, []);
 
   useEffect(() => {
@@ -99,32 +101,49 @@ export default function ConsultationDetailPage() {
   const handleUpdateConsultation = async (
     updates: Partial<ClientConsultation>
   ): Promise<boolean> => {
-    const success = await updateConsultation(consultationId, updates);
-    if (success) {
-      // Recharger pour avoir les données fraîches
-      await fetchConsultations();
+    try {
+      const success = await updateConsultation(consultationId, updates);
+      if (success) {
+        // Recharger pour avoir les données fraîches
+        await fetchConsultations();
+      }
+      return success;
+    } catch (error) {
+      console.error('[ConsultationDetail] Update failed:', error);
+      return false;
     }
-    return success;
   };
 
   const handleValidateConsultation = async () => {
-    const success = await validateConsultation(consultationId);
-    if (success) {
-      await fetchConsultations();
+    try {
+      const success = await validateConsultation(consultationId);
+      if (success) {
+        await fetchConsultations();
+      }
+    } catch (error) {
+      console.error('[ConsultationDetail] Validate failed:', error);
     }
   };
 
   const handleArchiveConsultation = async () => {
-    const success = await archiveConsultation(consultationId);
-    if (success) {
-      await fetchConsultations();
+    try {
+      const success = await archiveConsultation(consultationId);
+      if (success) {
+        await fetchConsultations();
+      }
+    } catch (error) {
+      console.error('[ConsultationDetail] Archive failed:', error);
     }
   };
 
   const handleUnarchiveConsultation = async () => {
-    const success = await unarchiveConsultation(consultationId);
-    if (success) {
-      await fetchConsultations();
+    try {
+      const success = await unarchiveConsultation(consultationId);
+      if (success) {
+        await fetchConsultations();
+      }
+    } catch (error) {
+      console.error('[ConsultationDetail] Unarchive failed:', error);
     }
   };
 
@@ -437,7 +456,14 @@ export default function ConsultationDetailPage() {
                 variant={
                   consultation.status === 'en_attente' ? 'default' : 'outline'
                 }
-                onClick={() => handleStatusChange('en_attente')}
+                onClick={() => {
+                  void handleStatusChange('en_attente').catch(error => {
+                    console.error(
+                      '[ConsultationDetail] Status change failed:',
+                      error
+                    );
+                  });
+                }}
                 disabled={consultation.status === 'en_attente'}
               >
                 <Clock className="h-3 w-3 mr-2" />
@@ -447,7 +473,14 @@ export default function ConsultationDetailPage() {
                 variant={
                   consultation.status === 'en_cours' ? 'default' : 'outline'
                 }
-                onClick={() => handleStatusChange('en_cours')}
+                onClick={() => {
+                  void handleStatusChange('en_cours').catch(error => {
+                    console.error(
+                      '[ConsultationDetail] Status change failed:',
+                      error
+                    );
+                  });
+                }}
                 disabled={consultation.status === 'en_cours'}
               >
                 <AlertCircle className="h-3 w-3 mr-2" />
@@ -457,7 +490,14 @@ export default function ConsultationDetailPage() {
                 variant={
                   consultation.status === 'terminee' ? 'success' : 'outline'
                 }
-                onClick={() => handleStatusChange('terminee')}
+                onClick={() => {
+                  void handleStatusChange('terminee').catch(error => {
+                    console.error(
+                      '[ConsultationDetail] Status change failed:',
+                      error
+                    );
+                  });
+                }}
                 disabled={consultation.status === 'terminee'}
               >
                 <CheckCircle className="h-3 w-3 mr-2" />
@@ -467,7 +507,14 @@ export default function ConsultationDetailPage() {
                 variant={
                   consultation.status === 'annulee' ? 'danger' : 'outline'
                 }
-                onClick={() => handleStatusChange('annulee')}
+                onClick={() => {
+                  void handleStatusChange('annulee').catch(error => {
+                    console.error(
+                      '[ConsultationDetail] Status change failed:',
+                      error
+                    );
+                  });
+                }}
                 disabled={consultation.status === 'annulee'}
               >
                 <XCircle className="h-3 w-3 mr-2" />
@@ -501,7 +548,14 @@ export default function ConsultationDetailPage() {
               {!consultation.validated_at && !consultation.archived_at && (
                 <ButtonUnified
                   variant="success"
-                  onClick={handleValidateConsultation}
+                  onClick={() => {
+                    void handleValidateConsultation().catch(error => {
+                      console.error(
+                        '[ConsultationDetail] Validate failed:',
+                        error
+                      );
+                    });
+                  }}
                 >
                   <CheckCircle className="h-3 w-3 mr-2" />
                   Valider la consultation
@@ -525,7 +579,14 @@ export default function ConsultationDetailPage() {
               {!consultation.archived_at && (
                 <ButtonUnified
                   variant="outline"
-                  onClick={handleArchiveConsultation}
+                  onClick={() => {
+                    void handleArchiveConsultation().catch(error => {
+                      console.error(
+                        '[ConsultationDetail] Archive failed:',
+                        error
+                      );
+                    });
+                  }}
                   className="border-gray-400 hover:bg-gray-100"
                 >
                   📦 Archiver
@@ -536,7 +597,14 @@ export default function ConsultationDetailPage() {
               {consultation.archived_at && (
                 <ButtonUnified
                   variant="outline"
-                  onClick={handleUnarchiveConsultation}
+                  onClick={() => {
+                    void handleUnarchiveConsultation().catch(error => {
+                      console.error(
+                        '[ConsultationDetail] Unarchive failed:',
+                        error
+                      );
+                    });
+                  }}
                   className="border-blue-400 text-blue-600 hover:bg-blue-50"
                 >
                   ↩️ Désarchiver
@@ -547,7 +615,14 @@ export default function ConsultationDetailPage() {
               {consultation.archived_at && (
                 <ButtonUnified
                   variant="danger"
-                  onClick={handleDeleteConsultation}
+                  onClick={() => {
+                    void handleDeleteConsultation().catch(error => {
+                      console.error(
+                        '[ConsultationDetail] Delete failed:',
+                        error
+                      );
+                    });
+                  }}
                 >
                   <XCircle className="h-3 w-3 mr-2" />
                   Supprimer définitivement
