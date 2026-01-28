@@ -21,13 +21,34 @@ import type { LinkMeProductDetail } from '../types';
 // Types Supabase pour ce hook
 type ChannelPricing = Database['public']['Tables']['channel_pricing']['Row'];
 type Product = Database['public']['Tables']['products']['Row'];
-type LinkMeAffiliate = Database['public']['Tables']['linkme_affiliates']['Row'];
-type ProductImage = Database['public']['Tables']['product_images']['Row'];
-type Subcategory = Database['public']['Tables']['subcategories']['Row'];
-type Category = Database['public']['Tables']['categories']['Row'];
-type Family = Database['public']['Tables']['families']['Row'];
-type Organisation = Database['public']['Tables']['organisations']['Row'];
-type Enseigne = Database['public']['Tables']['enseignes']['Row'];
+
+// Type pour jointure channel_pricing + products
+type ChannelPricingWithProduct = ChannelPricing & {
+  products: Pick<
+    Product,
+    | 'id'
+    | 'sku'
+    | 'name'
+    | 'cost_price'
+    | 'eco_tax_default'
+    | 'margin_percentage'
+    | 'stock_real'
+    | 'product_status'
+    | 'subcategory_id'
+    | 'supplier_id'
+    | 'enseigne_id'
+    | 'assigned_client_id'
+    | 'weight'
+    | 'dimensions'
+    | 'suitable_rooms'
+    | 'description'
+    | 'selling_points'
+    | 'created_by_affiliate'
+    | 'affiliate_commission_rate'
+    | 'affiliate_payout_ht'
+    | 'affiliate_approval_status'
+  >;
+};
 
 // ID du canal LinkMe dans sales_channels
 const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
@@ -934,9 +955,8 @@ async function fetchLinkMeProductDetail(
 
   if (!cpData) return null;
 
-  // Note: buffer_rate et autres colonnes existent en DB mais pas dans les types Git - utiliser any
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const cp = cpData as any;
+  // Typage avec jointure products
+  const cp = cpData as unknown as ChannelPricingWithProduct;
   const product = cp.products;
 
   // Récupérer l'image primaire
