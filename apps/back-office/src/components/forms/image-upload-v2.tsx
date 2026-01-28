@@ -165,14 +165,18 @@ export function ImageUploadV2({
 
     const files = e.dataTransfer.files;
     if (files && files[0]) {
-      handleFileSelect(files[0]);
+      void handleFileSelect(files[0]).catch((error: unknown) => {
+        console.error('[ImageUploadV2] File select failed:', error);
+      });
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files[0]) {
-      handleFileSelect(files[0]);
+      void handleFileSelect(files[0]).catch((error: unknown) => {
+        console.error('[ImageUploadV2] File select failed:', error);
+      });
     }
   };
 
@@ -270,7 +274,11 @@ export function ImageUploadV2({
             variant="destructive"
             size="sm"
             className="absolute -top-2 -right-2 w-6 h-6 p-0 rounded-full"
-            onClick={handleRemoveImage}
+            onClick={() => {
+              void handleRemoveImage().catch((error: unknown) => {
+                console.error('[ImageUploadV2] Remove image failed:', error);
+              });
+            }}
           >
             <X className="w-3 h-3" />
           </ButtonV2>

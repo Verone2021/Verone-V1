@@ -315,7 +315,19 @@ export function SubcategoryForm({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          onSubmit={(e) => {
+            void handleSubmit(e).catch((error: unknown) => {
+              console.error('[SubcategoryForm] Submit failed:', error);
+              setError(
+                error instanceof Error
+                  ? error.message
+                  : "Une erreur inattendue s'est produite"
+              );
+            });
+          }}
+          className="space-y-6"
+        >
           {/* Catégorie parent */}
           <div className="space-y-2">
             <Label className="text-black">Catégorie parent*</Label>
@@ -337,7 +349,16 @@ export function SubcategoryForm({
             ) : (
               <Select
                 value={formData.parent_id}
-                onValueChange={handleCategoryChange}
+                onValueChange={(value) => {
+                  void handleCategoryChange(value).catch((error: unknown) => {
+                    console.error('[SubcategoryForm] Category change failed:', error);
+                    setError(
+                      error instanceof Error
+                        ? error.message
+                        : "Une erreur inattendue s'est produite"
+                    );
+                  });
+                }}
                 required
               >
                 <SelectTrigger className="border-gray-300 focus:border-black">
@@ -431,10 +452,20 @@ export function SubcategoryForm({
                       type="file"
                       accept="image/*"
                       className="hidden"
-                      onChange={e => {
+                      onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (file && file.size <= 5 * 1024 * 1024) {
-                          handleImageUpload(file);
+                          void handleImageUpload(file).catch((error: unknown) => {
+                            console.error('[SubcategoryForm] Image upload failed:', error);
+                            toast({
+                              title: '❌ Erreur upload image',
+                              description:
+                                error instanceof Error
+                                  ? error.message
+                                  : "Une erreur inattendue s'est produite",
+                              variant: 'destructive',
+                            });
+                          });
                         } else {
                           toast({
                             title: '❌ Fichier trop volumineux',
