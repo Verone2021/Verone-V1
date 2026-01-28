@@ -120,20 +120,20 @@ export function AffiliateKPIGrid({ data, isLoading }: AffiliateKPIGridProps) {
     data?.revenueByPeriod?.map((d: RevenueDataPoint) => ({
       date: d.label,
       value: d.revenue,
-    })) || [];
+    })) ?? [];
 
   const ordersSparkline =
     data?.revenueByPeriod?.map((d: RevenueDataPoint) => ({
       date: d.label,
       value: d.orders,
-    })) || [];
+    })) ?? [];
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
       {/* Commandes totales */}
       <KPICard
         title="Commandes"
-        value={data?.totalOrders?.toString() || '0'}
+        value={data?.totalOrders?.toString() ?? '0'}
         icon={ShoppingCart}
         iconColor="text-blue-600"
         iconBgColor="bg-blue-100"
@@ -144,7 +144,7 @@ export function AffiliateKPIGrid({ data, isLoading }: AffiliateKPIGridProps) {
       {/* CA Total HT */}
       <KPICard
         title="Chiffre d'affaires"
-        value={formatCurrency(data?.totalRevenueHT || 0)}
+        value={formatCurrency(data?.totalRevenueHT ?? 0)}
         icon={DollarSign}
         iconColor="text-emerald-600"
         iconBgColor="bg-emerald-100"
@@ -156,7 +156,7 @@ export function AffiliateKPIGrid({ data, isLoading }: AffiliateKPIGridProps) {
       {/* Commissions gagnées TTC */}
       <KPICard
         title="Commissions gagnées"
-        value={formatCurrency(data?.totalCommissionsTTC || 0)}
+        value={formatCurrency(data?.totalCommissionsTTC ?? 0)}
         icon={Wallet}
         iconColor="text-green-600"
         iconBgColor="bg-green-100"
@@ -167,7 +167,7 @@ export function AffiliateKPIGrid({ data, isLoading }: AffiliateKPIGridProps) {
       {/* Commissions en attente */}
       <KPICard
         title="En attente"
-        value={formatCurrency(data?.pendingCommissionsTTC || 0)}
+        value={formatCurrency(data?.pendingCommissionsTTC ?? 0)}
         icon={Clock}
         iconColor="text-orange-600"
         iconBgColor="bg-orange-100"
@@ -178,7 +178,7 @@ export function AffiliateKPIGrid({ data, isLoading }: AffiliateKPIGridProps) {
       {/* Panier moyen */}
       <KPICard
         title="Panier moyen"
-        value={formatCurrency(data?.averageBasket || 0)}
+        value={formatCurrency(data?.averageBasket ?? 0)}
         icon={ShoppingBag}
         iconColor="text-purple-600"
         iconBgColor="bg-purple-100"
@@ -188,11 +188,11 @@ export function AffiliateKPIGrid({ data, isLoading }: AffiliateKPIGridProps) {
       {/* Taux de conversion */}
       <KPICard
         title="Taux conversion"
-        value={formatPercentage(data?.conversionRate || 0)}
+        value={formatPercentage(data?.conversionRate ?? 0)}
         icon={TrendingUp}
         iconColor="text-cyan-600"
         iconBgColor="bg-cyan-100"
-        subtitle={`${formatCompactNumber(data?.totalViews || 0)} vues`}
+        subtitle={`${formatCompactNumber(data?.totalViews ?? 0)} vues`}
         isLoading={isLoading}
       />
     </div>

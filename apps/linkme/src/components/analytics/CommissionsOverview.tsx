@@ -36,22 +36,22 @@ export function CommissionsOverview({
   const chartData = [
     {
       name: 'Payées',
-      value: data?.paid.amountTTC || 0,
+      value: data?.paid.amountTTC ?? 0,
       color: 'emerald',
     },
     {
       name: 'Validées',
-      value: data?.validated.amountTTC || 0,
+      value: data?.validated.amountTTC ?? 0,
       color: 'blue',
     },
     {
       name: 'En attente',
-      value: data?.pending.amountTTC || 0,
+      value: data?.pending.amountTTC ?? 0,
       color: 'orange',
     },
   ];
 
-  const totalTTC = data?.total.amountTTC || 0;
+  const totalTTC = data?.total.amountTTC ?? 0;
 
   // Calculer les pourcentages
   const getPercentage = (value: number) => {
@@ -98,16 +98,16 @@ export function CommissionsOverview({
               <div>
                 <p className="font-medium text-gray-900 text-sm">Payées</p>
                 <p className="text-xs text-gray-500">
-                  {data?.paid.count || 0} commissions
+                  {data?.paid.count ?? 0} commissions
                 </p>
               </div>
             </div>
             <div className="text-right">
               <p className="font-bold text-emerald-600 text-sm">
-                {formatCurrency(data?.paid.amountTTC || 0)}
+                {formatCurrency(data?.paid.amountTTC ?? 0)}
               </p>
               <p className="text-[10px] text-gray-500">
-                {getPercentage(data?.paid.amountTTC || 0)}%
+                {getPercentage(data?.paid.amountTTC ?? 0)}%
               </p>
             </div>
           </div>
@@ -121,16 +121,16 @@ export function CommissionsOverview({
               <div>
                 <p className="font-medium text-gray-900 text-sm">Validées</p>
                 <p className="text-xs text-gray-500">
-                  {data?.validated.count || 0} commissions
+                  {data?.validated.count ?? 0} commissions
                 </p>
               </div>
             </div>
             <div className="text-right">
               <p className="font-bold text-blue-600 text-sm">
-                {formatCurrency(data?.validated.amountTTC || 0)}
+                {formatCurrency(data?.validated.amountTTC ?? 0)}
               </p>
               <p className="text-[10px] text-gray-500">
-                {getPercentage(data?.validated.amountTTC || 0)}%
+                {getPercentage(data?.validated.amountTTC ?? 0)}%
               </p>
             </div>
           </div>
@@ -144,16 +144,16 @@ export function CommissionsOverview({
               <div>
                 <p className="font-medium text-gray-900 text-sm">En attente</p>
                 <p className="text-xs text-gray-500">
-                  {data?.pending.count || 0} commissions
+                  {data?.pending.count ?? 0} commissions
                 </p>
               </div>
             </div>
             <div className="text-right">
               <p className="font-bold text-orange-600 text-sm">
-                {formatCurrency(data?.pending.amountTTC || 0)}
+                {formatCurrency(data?.pending.amountTTC ?? 0)}
               </p>
               <p className="text-[10px] text-gray-500">
-                {getPercentage(data?.pending.amountTTC || 0)}%
+                {getPercentage(data?.pending.amountTTC ?? 0)}%
               </p>
             </div>
           </div>
@@ -163,7 +163,7 @@ export function CommissionsOverview({
       {/* Note HT */}
       <div className="mt-3 pt-3 border-t border-gray-100">
         <p className="text-[10px] text-gray-400 text-center">
-          Total HT: {formatCurrency(data?.total.amountHT || 0)} | TVA incluse
+          Total HT: {formatCurrency(data?.total.amountHT ?? 0)} | TVA incluse
           dans les montants affichés
         </p>
       </div>
