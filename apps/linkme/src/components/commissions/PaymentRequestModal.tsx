@@ -19,7 +19,7 @@ import { useState, useMemo, useCallback } from 'react';
 import {
   X,
   FileText,
-  Upload,
+  Upload as _Upload,
   CheckCircle2,
   AlertCircle,
   Loader2,
@@ -82,8 +82,8 @@ export function PaymentRequestModal({
   // Info affilié pour le template
   const affiliateInfo: AffiliateInvoiceInfo = useMemo(
     () => ({
-      name: affiliate?.display_name || 'Affilié',
-      email: affiliate?.email || '',
+      name: affiliate?.display_name ?? 'Affilié',
+      email: affiliate?.email ?? '',
       address: undefined, // L'affilié devra compléter
       siret: undefined,
       tvaNumber: undefined,
