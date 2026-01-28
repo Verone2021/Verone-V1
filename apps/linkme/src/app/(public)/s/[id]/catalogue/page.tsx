@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import Image from 'next/image';
 
@@ -26,7 +26,7 @@ export default function CataloguePage() {
   const { items, branding, cart, categories, addToCart, updateQuantity } =
     useSelection();
 
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [_isSearchOpen, _setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(
@@ -79,7 +79,7 @@ export default function CataloguePage() {
   }, [filteredItems, currentPage]);
 
   // Reset page when filters change
-  useMemo(() => {
+  useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, selectedCategory, selectedSubcategory]);
 

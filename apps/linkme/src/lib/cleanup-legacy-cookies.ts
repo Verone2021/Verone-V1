@@ -19,7 +19,6 @@ export function cleanupLegacyCookies(): void {
   if (typeof document === 'undefined') return;
 
   const allCookies = document.cookie.split(';');
-  let cleanedCount = 0;
 
   for (const cookie of allCookies) {
     const cookieName = cookie.split('=')[0].trim();
@@ -27,14 +26,6 @@ export function cleanupLegacyCookies(): void {
     // Supprimer ancien prefix custom
     if (cookieName.startsWith('sb-linkme-auth')) {
       document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-      cleanedCount++;
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[Cleanup] Removed legacy cookie:', cookieName);
-      }
     }
-  }
-
-  if (cleanedCount > 0 && process.env.NODE_ENV === 'development') {
-    console.log(`[Cleanup] ${cleanedCount} legacy cookie(s) removed`);
   }
 }

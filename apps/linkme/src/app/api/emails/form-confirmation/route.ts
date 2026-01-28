@@ -30,7 +30,7 @@ interface FormConfirmationRequest {
 
 export async function POST(request: NextRequest) {
   try {
-    const body: FormConfirmationRequest = await request.json();
+    const body = (await request.json()) as FormConfirmationRequest;
 
     const {
       submissionId,
@@ -53,9 +53,6 @@ export async function POST(request: NextRequest) {
 
     // If Resend is not configured, return early with success (emails disabled)
     if (!resendClient) {
-      console.log(
-        `[API Form Confirmation] Skipping email to ${email} - Resend not configured`
-      );
       return NextResponse.json({
         success: true,
         emailDisabled: true,
@@ -116,16 +113,12 @@ export async function POST(request: NextRequest) {
 
     // Send email
     const result = await resendClient.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || 'contact@verone.fr',
+      from: process.env.RESEND_FROM_EMAIL ?? 'contact@verone.fr',
       to: email,
       subject: subject,
       html: emailHtml,
-      replyTo: process.env.RESEND_REPLY_TO || 'veronebyromeo@gmail.com',
+      replyTo: process.env.RESEND_REPLY_TO ?? 'veronebyromeo@gmail.com',
     });
-
-    console.log(
-      `[API Form Confirmation] Email sent to ${email} for submission ${submissionId}`
-    );
 
     return NextResponse.json({
       success: true,

@@ -29,8 +29,8 @@ const resend = process.env.RESEND_API_KEY
   : null;
 
 // Email de destination pour les contacts LinkMe
-const CONTACT_EMAIL = process.env.LINKME_CONTACT_EMAIL || 'contact@verone.io';
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'noreply@verone.io';
+const CONTACT_EMAIL = process.env.LINKME_CONTACT_EMAIL ?? 'contact@verone.io';
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL ?? 'noreply@verone.io';
 
 /**
  * Générer le contenu HTML de l'email
@@ -96,7 +96,7 @@ ${data.message}
 export async function POST(request: NextRequest) {
   try {
     // Parser et valider le body
-    const body = await request.json();
+    const body = (await request.json()) as unknown;
     const validationResult = contactSchema.safeParse(body);
 
     if (!validationResult.success) {
@@ -116,7 +116,6 @@ export async function POST(request: NextRequest) {
       console.warn('Resend non configuré - email non envoyé');
       // En dev, on simule un succès
       if (process.env.NODE_ENV === 'development') {
-        console.log('DEV: Email simulé:', data);
         return NextResponse.json({ success: true, simulated: true });
       }
       return NextResponse.json(

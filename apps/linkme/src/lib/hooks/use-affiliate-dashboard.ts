@@ -75,6 +75,7 @@ export function useAffiliateDashboard() {
     queryFn: async (): Promise<DashboardData | null> => {
       if (!affiliate?.id) return null;
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       const { data, error } = await (supabase as any).rpc(
         'get_affiliate_dashboard_data',
         {

@@ -56,11 +56,14 @@ export async function GET(
     );
 
     // Récupérer la configuration de la page
-    const { data, error } = await supabase
+    const { data, error } = (await supabase
       .from('linkme_page_configurations')
       .select('*')
       .eq('page_id', pageId)
-      .single();
+      .single()) as {
+      data: PageConfiguration | null;
+      error: { code?: string } | null;
+    };
 
     if (error) {
       // Si la table n'existe pas ou pas de données, retourner config par défaut

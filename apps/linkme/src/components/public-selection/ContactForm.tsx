@@ -88,10 +88,13 @@ export function ContactForm({
         }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as {
+        success: boolean;
+        error?: string;
+      };
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || "Erreur lors de l'envoi");
+        throw new Error(data.error ?? "Erreur lors de l'envoi");
       }
 
       // Success: show confirmation and reset form

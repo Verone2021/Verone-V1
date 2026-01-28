@@ -98,6 +98,7 @@ export function usePublicStats() {
       // Appel RPC - cast vers unknown car RPC pas encore dans les types générés
       // Une fois la migration appliquée et types regénérés, ce cast pourra être supprimé
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       const { data, error } = (await (supabase as any).rpc(
         'get_linkme_public_stats'
       )) as { data: PublicStatsRpcResponse | null; error: Error | null };
