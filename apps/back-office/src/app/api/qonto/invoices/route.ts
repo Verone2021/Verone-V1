@@ -138,11 +138,11 @@ export async function GET(request: NextRequest): Promise<
       (invoice: { id: string }) => ({
         ...invoice,
         // Données locales
-        workflow_status: localDataMap[invoice.id]?.workflow_status || null,
-        local_pdf_path: localDataMap[invoice.id]?.local_pdf_path || null,
-        local_document_id: localDataMap[invoice.id]?.local_document_id || null,
+        workflow_status: localDataMap[invoice.id]?.workflow_status ?? null,
+        local_pdf_path: localDataMap[invoice.id]?.local_pdf_path ?? null,
+        local_document_id: localDataMap[invoice.id]?.local_document_id ?? null,
         has_local_pdf: !!localDataMap[invoice.id]?.local_pdf_path,
-        deleted_at: localDataMap[invoice.id]?.deleted_at || null,
+        deleted_at: localDataMap[invoice.id]?.deleted_at ?? null,
       })
     );
 
@@ -607,8 +607,8 @@ export async function POST(request: NextRequest): Promise<
           status: autoFinalize ? 'sent' : 'draft',
           sales_order_id: salesOrderId,
           qonto_invoice_id: finalizedInvoice.id,
-          qonto_pdf_url: finalizedInvoice.pdf_url || null,
-          qonto_public_url: finalizedInvoice.public_url || null,
+          qonto_pdf_url: finalizedInvoice.pdf_url ?? null,
+          qonto_public_url: finalizedInvoice.public_url ?? null,
           qonto_sync_status: 'synced',
           workflow_status: autoFinalize ? 'finalized' : 'synchronized',
           synchronized_at: new Date().toISOString(),
@@ -635,15 +635,12 @@ export async function POST(request: NextRequest): Promise<
         // Ne pas échouer la requête - la facture Qonto est créée
       } else if (insertedDoc) {
         localDocumentId = insertedDoc.id;
-        console.log(
-          `[API Qonto Invoices] Saved to financial_documents: ${localDocumentId}`
-        );
 
         // INSERT dans financial_document_items
         // Note: Cette table existe dans la DB mais peut ne pas être dans les types générés
         const documentItems = items.map((item, index) => ({
           document_id: localDocumentId,
-          product_id: item.product_id || null,
+          product_id: item.product_id ?? null,
           description:
             item.title + (item.description ? ` - ${item.description}` : ''),
           quantity: item.quantity_num ?? 1,
@@ -661,9 +658,14 @@ export async function POST(request: NextRequest): Promise<
           sort_order: index,
         }));
 
-        // Utiliser any pour bypasser les types obsolètes (table existe dans la DB)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error: insertItemsError } = await (supabase as any)
+        // Table financial_document_items existe dans la DB mais pas dans les types générés
+        const { error: insertItemsError } = await (
+          supabase as unknown as {
+            from: (table: string) => {
+              insert: (data: unknown[]) => Promise<{ error: unknown }>;
+            };
+          }
+        )
           .from('financial_document_items')
           .insert(documentItems);
 
@@ -671,10 +673,6 @@ export async function POST(request: NextRequest): Promise<
           console.error(
             '[API Qonto Invoices] Failed to insert document items:',
             insertItemsError
-          );
-        } else {
-          console.log(
-            `[API Qonto Invoices] Saved ${documentItems.length} items to financial_document_items`
           );
         }
       }
