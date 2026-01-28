@@ -161,7 +161,7 @@ export function SimpleProductForm({
         }
       }
 
-      console.log('✅ Produit créé avec succès:', newProduct.sku);
+      console.warn('✅ Produit créé avec succès:', newProduct.sku);
 
       // Réinitialiser le formulaire
       setFormData({
@@ -198,14 +198,9 @@ export function SimpleProductForm({
       </div>
 
       <form
-        onSubmit={(e) => {
-          void handleSubmit(e).catch((error: unknown) => {
-            console.error('[SimpleProductForm] Submit failed:', error);
-            setError(
-              error instanceof Error
-                ? error.message
-                : "Une erreur inattendue s'est produite"
-            );
+        onSubmit={e => {
+          void handleSubmit(e).catch(error => {
+            console.error('[SimpleProductForm] handleSubmit failed:', error);
           });
         }}
         className="space-y-4"

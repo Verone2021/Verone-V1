@@ -32,15 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
-import {
-  User,
-  Mail,
-  Phone,
-  Briefcase,
-  Shield,
-  Eye,
-  EyeOff,
-} from 'lucide-react';
+import { User, Mail, Phone, Briefcase, Eye, EyeOff } from 'lucide-react';
 
 // import { validateProfileForm } from '@verone/utils/validation/profile-validation'
 
@@ -127,7 +119,7 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
       setIsLoading(true);
       setErrors({}); // Nettoyer les erreurs précédentes
 
-      console.log('Début création utilisateur avec données:', {
+      console.warn('Début création utilisateur avec données:', {
         email: formData.email,
         role: formData.role,
         hasPassword: !!formData.password,
@@ -135,7 +127,7 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
 
       const result = await createUserWithRole(formData);
 
-      console.log('Résultat création utilisateur:', result);
+      console.warn('Résultat création utilisateur:', result);
 
       // Validation stricte de la réponse du Server Action
       if (!result || typeof result !== 'object') {
@@ -143,7 +135,7 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
       }
 
       if (result.success) {
-        console.log('Utilisateur créé avec succès:', result.data);
+        console.warn('Utilisateur créé avec succès:', result.data);
 
         // Réinitialiser le formulaire
         setFormData(INITIAL_FORM_DATA);
@@ -153,7 +145,7 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
         // Utiliser router.refresh() pour recharger les données sans reload complet
         // Note: En Next.js 15, router.refresh() est la méthode recommandée
         // Pour l'instant, on utilise window.location.reload() mais on pourrait améliorer
-        console.log(
+        console.warn(
           'Rechargement de la page pour afficher le nouvel utilisateur'
         );
         window.location.reload();
@@ -211,15 +203,9 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
         </DialogHeader>
 
         <form
-          onSubmit={(e) => {
-            void handleSubmit(e).catch((error: unknown) => {
-              console.error('[CreateUserDialog] Form submit failed:', error);
-              setErrors({
-                submit:
-                  error instanceof Error
-                    ? error.message
-                    : "Une erreur inattendue s'est produite",
-              });
+          onSubmit={e => {
+            void handleSubmit(e).catch(error => {
+              console.error('[CreateUserDialog] handleSubmit failed:', error);
             });
           }}
           className="space-y-4"
