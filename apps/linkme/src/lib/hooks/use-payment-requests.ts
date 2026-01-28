@@ -218,11 +218,11 @@ export function useCreatePaymentRequest() {
 
       // Calculer les totaux
       const totalTTC = commissions.reduce(
-        (sum, c) => sum + (c.affiliate_commission_ttc || 0),
+        (sum, c) => sum + (c.affiliate_commission_ttc ?? 0),
         0
       );
       const totalHT = commissions.reduce(
-        (sum, c) => sum + (c.affiliate_commission || 0),
+        (sum, c) => sum + (c.affiliate_commission ?? 0),
         0
       );
 
@@ -250,7 +250,7 @@ export function useCreatePaymentRequest() {
       const items = commissions.map(c => ({
         payment_request_id: request.id,
         commission_id: c.id,
-        commission_amount_ttc: c.affiliate_commission_ttc || 0,
+        commission_amount_ttc: c.affiliate_commission_ttc ?? 0,
       }));
 
       const { error: itemsError } = await supabase

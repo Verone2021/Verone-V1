@@ -61,7 +61,7 @@ export function useUploadSelectionImage() {
       setProgress(30);
 
       // Generate unique filename
-      const fileExt = file.name.split('.').pop() || 'jpg';
+      const fileExt = file.name.split('.').pop() ?? 'jpg';
       const timestamp = Date.now();
       const random = Math.random().toString(36).substring(2, 8);
       const fileName = `selections/${selectionId}/${timestamp}-${random}.${fileExt}`;
@@ -191,7 +191,7 @@ function extractStoragePath(publicUrl: string): string | null {
     const pathMatch = url.pathname.match(
       /\/storage\/v1\/object\/public\/[^/]+\/(.+)/
     );
-    return pathMatch?.[1] || null;
+    return pathMatch?.[1] ?? null;
   } catch {
     return null;
   }
