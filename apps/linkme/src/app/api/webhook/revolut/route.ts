@@ -28,7 +28,7 @@ function getSupabaseAdmin() {
 export async function POST(request: NextRequest) {
   try {
     const headersList = await headers();
-    const signature = headersList.get('revolut-signature') || '';
+    const signature = headersList.get('revolut-signature') ?? '';
     const webhookSecret = process.env.REVOLUT_WEBHOOK_SECRET;
 
     // Lire le body brut pour vérification de signature
@@ -47,14 +47,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Parser l'événement
-    const event: RevolutWebhookEvent = JSON.parse(rawBody);
-
-    console.log(
-      'Received Revolut webhook:',
-      event.event,
-      'for order:',
-      event.order_id
-    );
+    const event = JSON.parse(rawBody) as RevolutWebhookEvent;
 
     // Traiter selon le type d'événement
     switch (event.event) {
@@ -76,7 +69,7 @@ export async function POST(request: NextRequest) {
         break;
 
       default:
-        console.log('Unhandled webhook event:', event.event);
+        console.warn('Unhandled webhook event:', event.event);
     }
 
     return NextResponse.json({ received: true });
@@ -93,8 +86,6 @@ export async function POST(request: NextRequest) {
  * Gère la confirmation de paiement (ORDER_COMPLETED)
  */
 async function handleOrderCompleted(event: RevolutWebhookEvent) {
-  console.log('Processing ORDER_COMPLETED for:', event.order_id);
-
   try {
     // Récupérer les détails de la commande depuis Revolut
     const revolutOrder = await getRevolutOrder(event.order_id);
@@ -107,13 +98,16 @@ async function handleOrderCompleted(event: RevolutWebhookEvent) {
     const supabase = getSupabaseAdmin();
 
     // Extraire les métadonnées
-    const metadata = revolutOrder.metadata || {};
+    const metadata = (revolutOrder.metadata ?? {}) as {
+      affiliate_id?: string;
+      selection_id?: string;
+    };
     const affiliateId = metadata.affiliate_id;
     const selectionId = metadata.selection_id;
     const orderRef = revolutOrder.merchant_order_ext_ref;
 
     // Créer la commande dans sales_orders
-    const { data: salesOrder, error: orderError } = await supabase
+    const { data: salesOrder, error: orderError } = (await supabase
       .from('sales_orders')
       .insert({
         order_number: orderRef,
@@ -125,29 +119,35 @@ async function handleOrderCompleted(event: RevolutWebhookEvent) {
         payment_status: 'paid',
         payment_method: 'revolut',
         payment_reference: event.order_id,
-        linkme_affiliate_id: affiliateId || null,
-        linkme_selection_id: selectionId || null,
-        notes: `Paiement Revolut - ${revolutOrder.payments?.[0]?.payment_method?.type || 'card'}`,
+        linkme_affiliate_id: affiliateId ?? null,
+        linkme_selection_id: selectionId ?? null,
+        notes: `Paiement Revolut - ${revolutOrder.payments?.[0]?.payment_method?.type ?? 'card'}`,
       })
       .select()
-      .single();
+      .single()) as {
+      data: { id: string } | null;
+      error: Error | null;
+    };
 
-    if (orderError) {
+    if (orderError || !salesOrder) {
       console.error('Error creating sales order:', orderError);
       return;
     }
-
-    console.log('Sales order created:', salesOrder.id);
 
     // La commission sera créée automatiquement via trigger si configuré
     // Sinon, la créer manuellement ici
     if (affiliateId && selectionId) {
       // Récupérer les infos de l'affilié pour calculer la commission
-      const { data: affiliate } = await supabase
+      const { data: affiliate } = (await supabase
         .from('linkme_affiliates')
         .select('default_margin_rate, linkme_commission_rate')
         .eq('id', affiliateId)
-        .single();
+        .single()) as {
+        data: {
+          default_margin_rate: number;
+          linkme_commission_rate: number;
+        } | null;
+      };
 
       if (affiliate) {
         const orderAmountHt = revolutOrder.order_amount.value / 100 / 1.2;
@@ -167,8 +167,6 @@ async function handleOrderCompleted(event: RevolutWebhookEvent) {
           linkme_rate_applied: affiliate.linkme_commission_rate,
           status: 'pending',
         });
-
-        console.log('Commission created for affiliate:', affiliateId);
       }
     }
   } catch (error) {
@@ -179,8 +177,7 @@ async function handleOrderCompleted(event: RevolutWebhookEvent) {
 /**
  * Gère l'autorisation de paiement
  */
-async function handleOrderAuthorised(event: RevolutWebhookEvent) {
-  console.log('Payment authorised for order:', event.order_id);
+async function handleOrderAuthorised(_event: RevolutWebhookEvent) {
   // Le paiement est autorisé mais pas encore capturé
   // En mode capture_mode: 'automatic', ce sera suivi de ORDER_COMPLETED
 }
@@ -188,8 +185,7 @@ async function handleOrderAuthorised(event: RevolutWebhookEvent) {
 /**
  * Gère l'échec de paiement
  */
-async function handlePaymentFailed(event: RevolutWebhookEvent) {
-  console.log('Payment failed for order:', event.order_id);
+async function handlePaymentFailed(_event: RevolutWebhookEvent) {
   // Logger l'échec pour analyse
   // On pourrait aussi notifier le client par email
 }
@@ -197,7 +193,6 @@ async function handlePaymentFailed(event: RevolutWebhookEvent) {
 /**
  * Gère l'annulation de commande
  */
-async function handleOrderCancelled(event: RevolutWebhookEvent) {
-  console.log('Order cancelled:', event.order_id);
+async function handleOrderCancelled(_event: RevolutWebhookEvent) {
   // Annuler toute commande en attente liée à cet order_id
 }

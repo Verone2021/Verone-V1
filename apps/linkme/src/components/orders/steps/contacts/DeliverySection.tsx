@@ -76,15 +76,15 @@ function buildRestaurantShippingAddress(
 
   return {
     addressLine1: hasShippingAddress
-      ? restaurant.shipping_address_line1 || ''
-      : restaurant.address_line1 || '',
+      ? (restaurant.shipping_address_line1 ?? '')
+      : (restaurant.address_line1 ?? ''),
     postalCode: hasShippingAddress
-      ? restaurant.shipping_postal_code || ''
-      : restaurant.postal_code || '',
+      ? (restaurant.shipping_postal_code ?? '')
+      : (restaurant.postal_code ?? ''),
     city: hasShippingAddress
-      ? restaurant.shipping_city || ''
-      : restaurant.city || '',
-    country: restaurant.country || 'FR',
+      ? (restaurant.shipping_city ?? '')
+      : (restaurant.city ?? ''),
+    country: restaurant.country ?? 'FR',
   };
 }
 
@@ -124,7 +124,7 @@ export function DeliverySection({
     }
     // Need contact (existing or new)
     const hasContact =
-      delivery.existingContactId ||
+      delivery.existingContactId ??
       (delivery.contact?.firstName &&
         delivery.contact?.lastName &&
         delivery.contact?.email);
@@ -151,8 +151,8 @@ export function DeliverySection({
           firstName: contact.firstName,
           lastName: contact.lastName,
           email: contact.email,
-          phone: contact.phone || contact.mobile || '',
-          position: contact.title || '',
+          phone: contact.phone ?? contact.mobile ?? '',
+          position: contact.title ?? '',
         },
         sameAsResponsable: false,
       });
@@ -176,7 +176,7 @@ export function DeliverySection({
     (field: keyof ContactBase, value: string) => {
       onUpdate({
         contact: {
-          ...(delivery.contact || defaultContact),
+          ...(delivery.contact ?? defaultContact),
           [field]: value,
         },
       });
@@ -203,7 +203,7 @@ export function DeliverySection({
   // Determine if we should show the address form
   const showAddressForm =
     !delivery.sameAsResponsable &&
-    (delivery.existingContactId || showContactForm);
+    (delivery.existingContactId ?? showContactForm);
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -251,7 +251,7 @@ export function DeliverySection({
             {/* Contact Selection */}
             <ContactSelector
               contacts={existingContacts}
-              selectedId={delivery.existingContactId || null}
+              selectedId={delivery.existingContactId ?? null}
               onSelect={handleContactSelect}
               onCreateNew={handleCreateNew}
               showSameAsOption
@@ -272,7 +272,7 @@ export function DeliverySection({
                     </label>
                     <input
                       type="text"
-                      value={delivery.contact?.firstName || ''}
+                      value={delivery.contact?.firstName ?? ''}
                       onChange={e =>
                         handleContactChange('firstName', e.target.value)
                       }
@@ -287,7 +287,7 @@ export function DeliverySection({
                     </label>
                     <input
                       type="text"
-                      value={delivery.contact?.lastName || ''}
+                      value={delivery.contact?.lastName ?? ''}
                       onChange={e =>
                         handleContactChange('lastName', e.target.value)
                       }
@@ -302,7 +302,7 @@ export function DeliverySection({
                     </label>
                     <input
                       type="email"
-                      value={delivery.contact?.email || ''}
+                      value={delivery.contact?.email ?? ''}
                       onChange={e =>
                         handleContactChange('email', e.target.value)
                       }
@@ -317,7 +317,7 @@ export function DeliverySection({
                     </label>
                     <input
                       type="tel"
-                      value={delivery.contact?.phone || ''}
+                      value={delivery.contact?.phone ?? ''}
                       onChange={e =>
                         handleContactChange('phone', e.target.value)
                       }
@@ -336,7 +336,7 @@ export function DeliverySection({
                   Adresse de livraison
                 </h4>
                 <AddressForm
-                  address={delivery.address || null}
+                  address={delivery.address ?? null}
                   onChange={handleAddressChange}
                   showLegalFields={false}
                   showSaveAsDefault
