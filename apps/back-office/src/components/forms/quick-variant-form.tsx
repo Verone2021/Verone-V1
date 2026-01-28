@@ -402,7 +402,19 @@ export function QuickVariantForm({
           </p>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          onSubmit={(e) => {
+            void handleSubmit(e).catch((error: unknown) => {
+              console.error('[QuickVariantForm] Submit failed:', error);
+              setError(
+                error instanceof Error
+                  ? error.message
+                  : "Une erreur inattendue s'est produite"
+              );
+            });
+          }}
+          className="space-y-6"
+        >
           {/* Aperçu nom produit auto-généré */}
           <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
             <Label className="text-blue-900 text-sm font-medium">
@@ -520,10 +532,20 @@ export function QuickVariantForm({
                       type="file"
                       accept="image/*"
                       className="hidden"
-                      onChange={e => {
+                      onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (file && file.size <= 5 * 1024 * 1024) {
-                          handleImageUpload(file);
+                          void handleImageUpload(file).catch((error: unknown) => {
+                            console.error('[QuickVariantForm] Image upload failed:', error);
+                            toast({
+                              title: '❌ Erreur upload image',
+                              description:
+                                error instanceof Error
+                                  ? error.message
+                                  : "Une erreur inattendue s'est produite",
+                              variant: 'destructive',
+                            });
+                          });
                         } else {
                           toast({
                             title: '❌ Fichier trop volumineux',

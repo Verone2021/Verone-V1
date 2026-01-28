@@ -85,7 +85,14 @@ export function ImageUpload({
     }
 
     setError(null);
-    uploadDocument(file);
+    void uploadDocument(file).catch((error: unknown) => {
+      console.error('[ImageUpload] Upload failed:', error);
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Une erreur inattendue s'est produite"
+      );
+    });
   };
 
   const uploadDocument = async (file: File) => {
@@ -318,7 +325,16 @@ export function ImageUpload({
             variant="destructive"
             size="sm"
             className="absolute -top-2 -right-2 w-6 h-6 p-0 rounded-full"
-            onClick={handleRemoveImage}
+            onClick={() => {
+              void handleRemoveImage().catch((error: unknown) => {
+                console.error('[ImageUpload] Remove failed:', error);
+                setError(
+                  error instanceof Error
+                    ? error.message
+                    : "Une erreur inattendue s'est produite"
+                );
+              });
+            }}
           >
             <X className="w-3 h-3" />
           </ButtonV2>

@@ -132,7 +132,10 @@ export function StockAdjustmentForm({
       }
     }
 
-    fetchProducts();
+    void fetchProducts().catch((error: unknown) => {
+      console.error('[StockAdjustmentForm] Fetch products failed:', error);
+      setLoadingProducts(false);
+    });
   }, []);
 
   // Mise à jour produit sélectionné
@@ -267,7 +270,14 @@ export function StockAdjustmentForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form
+      onSubmit={(e) => {
+        void handleSubmit(e).catch((error: unknown) => {
+          console.error('[StockAdjustmentForm] Submit failed:', error);
+        });
+      }}
+      className="space-y-6"
+    >
       <Card>
         <CardHeader>
           <CardTitle>Informations Ajustement</CardTitle>
