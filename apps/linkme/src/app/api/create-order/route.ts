@@ -9,7 +9,7 @@ import type { LinkMeOrderData } from '../../../lib/revolut';
  */
 export async function POST(request: NextRequest) {
   try {
-    const body: LinkMeOrderData = await request.json();
+    const body = (await request.json()) as LinkMeOrderData;
 
     // Validation des données requises
     if (!body.customer?.email) {
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     if (!result.success) {
       console.error('Failed to create Revolut order:', result.error);
       return NextResponse.json(
-        { success: false, error: result.error || 'Échec création commande' },
+        { success: false, error: result.error ?? 'Échec création commande' },
         { status: 500 }
       );
     }

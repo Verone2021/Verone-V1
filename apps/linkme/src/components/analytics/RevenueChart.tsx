@@ -20,6 +20,12 @@ interface RevenueChartProps {
   isLoading?: boolean;
 }
 
+interface ChartDataPoint {
+  date: string;
+  "Chiffre d'affaires": number;
+  Commandes: number;
+}
+
 export function RevenueChart({
   data,
   period,
@@ -38,15 +44,15 @@ export function RevenueChart({
   }
 
   // Transformer les données pour Tremor
-  const chartData = (data || []).map(d => ({
+  const chartData = (data ?? []).map(d => ({
     date: d.label,
     "Chiffre d'affaires": d.revenue,
     Commandes: d.orders,
   }));
 
   // Calculer le total
-  const totalRevenue = (data || []).reduce((sum, d) => sum + d.revenue, 0);
-  const totalOrders = (data || []).reduce((sum, d) => sum + d.orders, 0);
+  const totalRevenue = (data ?? []).reduce((sum, d) => sum + d.revenue, 0);
+  const totalOrders = (data ?? []).reduce((sum, d) => sum + d.orders, 0);
 
   const periods: AnalyticsPeriod[] = ['week', 'month', 'quarter', 'year'];
   const currentPeriodIndex = periods.indexOf(period);
@@ -99,7 +105,7 @@ export function RevenueChart({
           yAxisWidth={80}
           customTooltip={({ payload, active }) => {
             if (!active || !payload || payload.length === 0) return null;
-            const data = payload[0].payload;
+            const data = payload[0].payload as ChartDataPoint;
             return (
               <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
                 <p className="text-sm font-medium text-gray-900">{data.date}</p>

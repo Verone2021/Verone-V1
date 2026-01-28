@@ -24,9 +24,9 @@ const API_URLS: Record<RevolutEnvironment, string> = {
 export function getRevolutConfig(): RevolutConfig {
   const apiKey = process.env.REVOLUT_API_KEY;
   const publicKey =
-    process.env.REVOLUT_PUBLIC_KEY ||
+    process.env.REVOLUT_PUBLIC_KEY ??
     process.env.NEXT_PUBLIC_REVOLUT_PUBLIC_KEY;
-  const environment = (process.env.REVOLUT_ENVIRONMENT ||
+  const environment = (process.env.REVOLUT_ENVIRONMENT ??
     'sandbox') as RevolutEnvironment;
   const webhookSecret = process.env.REVOLUT_WEBHOOK_SECRET;
   const merchantId = process.env.REVOLUT_MERCHANT_ID;
@@ -73,13 +73,15 @@ export async function createRevolutOrder(
         description: request.description,
         merchant_order_ext_ref: request.merchant_order_ext_ref,
         customer_email: request.customer_email,
-        capture_mode: request.capture_mode || 'automatic',
+        capture_mode: request.capture_mode ?? 'automatic',
         metadata: request.metadata,
       }),
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      const errorData = (await response.json().catch(() => ({}))) as {
+        message?: string;
+      };
       console.error('Revolut API error:', {
         status: response.status,
         statusText: response.statusText,
@@ -88,12 +90,12 @@ export async function createRevolutOrder(
       return {
         success: false,
         error:
-          errorData.message ||
+          errorData.message ??
           `API error: ${response.status} ${response.statusText}`,
       };
     }
 
-    const order: RevolutOrder = await response.json();
+    const order = (await response.json()) as RevolutOrder;
 
     return {
       success: true,
@@ -136,7 +138,7 @@ export async function getRevolutOrder(
       return null;
     }
 
-    return await response.json();
+    return (await response.json()) as RevolutOrder;
   } catch (error) {
     console.error('Error fetching Revolut order:', error);
     return null;
