@@ -6,8 +6,15 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
+import type { Database } from '@verone/types';
 
 const supabase = createClient();
+
+// Types Supabase
+type UserProfile = Database['public']['Tables']['user_profiles']['Row'];
+type LinkMeAffiliate = Database['public']['Tables']['linkme_affiliates']['Row'];
+type Organisation = Database['public']['Tables']['organisations']['Row'];
+type Enseigne = Database['public']['Tables']['enseignes']['Row'];
 
 // Types
 export type LinkMeRole =
@@ -90,7 +97,7 @@ async function fetchLinkMeUsers(): Promise<LinkMeUser[]> {
     throw error;
   }
 
-  return (data || []).map((user: any) => ({
+  return (data || []).map(user => ({
     user_id: user.user_id,
     email: user.email,
     first_name: user.first_name,
@@ -168,7 +175,7 @@ async function fetchLinkMeUsersByEnseigne(
     throw error;
   }
 
-  return (data || []).map((user: any) => ({
+  return (data || []).map(user => ({
     user_id: user.user_id,
     email: user.email,
     first_name: user.first_name,
@@ -233,7 +240,7 @@ async function fetchOrganisationsForSelect(
     throw error;
   }
 
-  let organisations = (data || []).map((org: any) => ({
+  let organisations = (data || []).map(org => ({
     id: org.id,
     name: org.trade_name || org.legal_name,
     logo_url: org.logo_url,
@@ -250,9 +257,9 @@ async function fetchOrganisationsForSelect(
       .not('organisation_id', 'is', null);
 
     const usedOrgIds = new Set(
-      (existingRoles || []).map((r: any) => r.organisation_id)
+      (existingRoles || []).map(r => r.organisation_id)
     );
-    organisations = organisations.filter((org: any) => !usedOrgIds.has(org.id));
+    organisations = organisations.filter(org => !usedOrgIds.has(org.id));
   }
 
   return organisations;
@@ -374,14 +381,14 @@ export function useUpdateLinkMeUser() {
         input.last_name !== undefined ||
         input.phone !== undefined
       ) {
-        const profileUpdate: any = {};
+        const profileUpdate: Partial<UserProfile> = {};
         if (input.first_name !== undefined)
           profileUpdate.first_name = input.first_name;
         if (input.last_name !== undefined)
           profileUpdate.last_name = input.last_name;
         if (input.phone !== undefined) profileUpdate.phone = input.phone;
 
-        const { error: profileError } = await (supabase as any)
+        const { error: profileError } = await supabase
           .from('user_profiles')
           .update(profileUpdate)
           .eq('user_id', userId);
@@ -390,7 +397,9 @@ export function useUpdateLinkMeUser() {
       }
 
       // Mise à jour du rôle LinkMe
-      const roleUpdate: any = { updated_at: new Date().toISOString() };
+      const roleUpdate: Partial<LinkMeAffiliate> = {
+        updated_at: new Date().toISOString(),
+      };
       if (input.role !== undefined) roleUpdate.role = input.role;
       if (input.enseigne_id !== undefined)
         roleUpdate.enseigne_id = input.enseigne_id;
