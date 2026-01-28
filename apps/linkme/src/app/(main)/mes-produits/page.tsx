@@ -124,7 +124,7 @@ function MesProduitsContent(): JSX.Element | null {
   }
 
   // Group products by status
-  const productsByStatus = (products || []).reduce(
+  const productsByStatus = (products ?? []).reduce(
     (acc, product) => {
       const status = product.affiliate_approval_status;
       if (!acc[status]) acc[status] = [];
@@ -140,7 +140,7 @@ function MesProduitsContent(): JSX.Element | null {
     pending_approval: productsByStatus.pending_approval?.length || 0,
     approved: productsByStatus.approved?.length || 0,
     rejected: productsByStatus.rejected?.length || 0,
-    total: products?.length || 0,
+    total: products?.length ?? 0,
   };
 
   return (
@@ -250,7 +250,7 @@ function MesProduitsContent(): JSX.Element | null {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {(products || []).map(product => (
+                  {(products ?? []).map(product => (
                     <ProductRow key={product.id} product={product} />
                   ))}
                 </tbody>
