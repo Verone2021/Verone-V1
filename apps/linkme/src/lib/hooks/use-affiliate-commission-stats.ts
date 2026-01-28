@@ -59,7 +59,7 @@ export function useAffiliateCommissionStats() {
         throw error;
       }
 
-      const commissions = data || [];
+      const commissions = data ?? [];
 
       // Agrégation par statut
       const stats: CommissionStats = {
@@ -70,8 +70,8 @@ export function useAffiliateCommissionStats() {
       };
 
       commissions.forEach(c => {
-        const ht = Number(c.affiliate_commission) || 0;
-        const ttc = Number(c.affiliate_commission_ttc) || 0;
+        const ht = Number(c.affiliate_commission) ?? 0;
+        const ttc = Number(c.affiliate_commission_ttc) ?? 0;
 
         // Par statut
         if (c.status === 'pending') {
