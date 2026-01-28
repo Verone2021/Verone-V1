@@ -158,7 +158,16 @@ export function DeleteUserDialog({
             type="button"
             variant="destructive"
             icon={Trash2}
-            onClick={handleDelete}
+            onClick={() => {
+              void handleDelete().catch((error: unknown) => {
+                console.error('[DeleteUserDialog] Delete failed:', error);
+                setError(
+                  error instanceof Error
+                    ? error.message
+                    : "Une erreur inattendue s'est produite"
+                );
+              });
+            }}
             loading={isDeleting}
             disabled={isDeleting}
           >
