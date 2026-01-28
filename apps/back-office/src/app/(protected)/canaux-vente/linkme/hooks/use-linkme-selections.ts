@@ -5,6 +5,11 @@ import { useToast } from '@verone/common';
 import { createClient } from '@verone/utils/supabase/client';
 
 const supabase = createClient();
+import type { Database } from '@verone/types';
+
+// Types Supabase
+type LinkMeAffiliate = Database['public']['Tables']['linkme_affiliates']['Row'];
+type Organisation = Database['public']['Tables']['organisations']['Row'];
 
 // ID du canal LinkMe
 const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
@@ -166,8 +171,8 @@ async function fetchSelectionById(
 
   // 2. Récupérer les items de la sélection avec les produits (données étendues pour modal)
   // Inclut les champs produits affilié pour le modèle inversé (Verone prélève commission)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: items, error: itemsError } = await (supabase as any)
+
+  const { data: items, error: itemsError } = await supabase
     .from('linkme_selection_items')
     .select(
       `
@@ -230,8 +235,8 @@ async function fetchSelectionById(
     }
 
     // 4. Récupérer les données channel_pricing complètes (canal LinkMe)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: channelPrices } = await (supabase as any)
+
+    const { data: channelPrices } = await supabase
       .from('channel_pricing')
       .select(
         'id, product_id, channel_commission_rate, custom_price_ht, public_price_ht, min_margin_rate, max_margin_rate, suggested_margin_rate, buffer_rate'
