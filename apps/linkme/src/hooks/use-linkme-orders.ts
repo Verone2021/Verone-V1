@@ -49,6 +49,63 @@ export interface StructuredAddress {
 }
 
 /**
+ * Interface pour les données brutes retournées par la RPC get_linkme_orders
+ * (utilisée pour le typage interne avant mapping vers LinkMeOrder)
+ */
+interface RawOrderFromRPC {
+  id: string;
+  order_number: string;
+  status: string;
+  payment_status: string | null;
+  total_ht: number | null;
+  total_ttc: number | null;
+  shipping_cost_ht: number | null;
+  handling_cost_ht: number | null;
+  insurance_cost_ht: number | null;
+  total_affiliate_margin: number | null;
+  customer_name: string | null;
+  customer_type: 'organization' | 'individual';
+  customer_id: string;
+  customer_address: string | null;
+  customer_postal_code: string | null;
+  customer_city: string | null;
+  customer_email: string | null;
+  customer_phone: string | null;
+  billing_address: StructuredAddress | null;
+  shipping_address: StructuredAddress | null;
+  desired_delivery_date: string | null;
+  confirmed_delivery_date: string | null;
+  billing_name: string | null;
+  billing_email: string | null;
+  billing_phone: string | null;
+  affiliate_id: string;
+  affiliate_name: string | null;
+  affiliate_type: 'enseigne' | 'organisation' | null;
+  selection_id: string | null;
+  selection_name: string | null;
+  items_count: number | null;
+  created_at: string;
+  updated_at: string;
+  pending_admin_validation: boolean | null;
+  items: Array<{
+    id: string;
+    product_id: string;
+    product_name: string | null;
+    product_sku: string | null;
+    product_image_url: string | null;
+    quantity: number | null;
+    unit_price_ht: number | null;
+    total_ht: number | null;
+    tax_rate: number | null;
+    base_price_ht: number | null;
+    margin_rate: number | null;
+    commission_rate: number | null;
+    selling_price_ht: number | null;
+    affiliate_margin: number | null;
+  }> | null;
+}
+
+/**
  * Interface commande LinkMe
  */
 export interface LinkMeOrder {
@@ -133,70 +190,71 @@ export function useLinkMeOrders(
       }
 
       // Map les commandes (items deja inclus dans la RPC)
-      return ordersData.map((order: any) => ({
-        id: order.id,
-        order_number: order.order_number,
-        status: order.status,
-        payment_status: order.payment_status,
-        total_ht: order.total_ht || 0,
-        total_ttc: order.total_ttc || 0,
-        shipping_cost_ht: order.shipping_cost_ht || 0,
-        handling_cost_ht: order.handling_cost_ht || 0,
-        insurance_cost_ht: order.insurance_cost_ht || 0,
-        total_affiliate_margin: order.total_affiliate_margin || 0,
-        customer_name: order.customer_name || 'Client inconnu',
-        customer_type: order.customer_type as 'organization' | 'individual',
-        customer_id: order.customer_id,
-        customer_address: order.customer_address,
-        customer_postal_code: order.customer_postal_code,
-        customer_city: order.customer_city,
-        customer_email: order.customer_email,
-        customer_phone: order.customer_phone,
-        // Adresses structurees
-        billing_address: order.billing_address || null,
-        shipping_address: order.shipping_address || null,
-        // Dates de livraison
-        desired_delivery_date: order.desired_delivery_date || null,
-        confirmed_delivery_date: order.confirmed_delivery_date || null,
-        // Contact facturation
-        billing_name: order.billing_name || null,
-        billing_email: order.billing_email || null,
-        billing_phone: order.billing_phone || null,
-        // Affiliate info
-        affiliate_id: order.affiliate_id,
-        affiliate_name: order.affiliate_name,
-        affiliate_type: order.affiliate_type as
-          | 'enseigne'
-          | 'organisation'
-          | null,
-        selection_id: order.selection_id,
-        selection_name: order.selection_name,
-        items_count: order.items_count || 0,
-        created_at: order.created_at,
-        updated_at: order.updated_at,
-        // Approbation
-        pending_admin_validation: order.pending_admin_validation ?? false,
-        // Items inclus directement depuis la RPC (plus de N+1)
-        items: (order.items || []).map((item: any) => ({
-          id: item.id,
-          product_id: item.product_id,
-          product_name: item.product_name || 'Produit inconnu',
-          product_sku: item.product_sku || '',
-          product_image_url: item.product_image_url,
-          quantity: item.quantity || 0,
-          unit_price_ht: item.unit_price_ht || 0,
-          total_ht: item.total_ht || 0,
-          tax_rate: item.tax_rate || 0,
-          base_price_ht: item.base_price_ht || 0,
-          margin_rate: item.margin_rate || 0,
-          commission_rate: item.commission_rate || 0,
-          selling_price_ht: item.selling_price_ht || 0,
-          affiliate_margin: item.affiliate_margin || 0,
-        })),
-      }));
+      return (ordersData as RawOrderFromRPC[]).map(
+        (order): LinkMeOrder => ({
+          id: order.id,
+          order_number: order.order_number,
+          status: order.status,
+          payment_status: order.payment_status,
+          total_ht: order.total_ht ?? 0,
+          total_ttc: order.total_ttc ?? 0,
+          shipping_cost_ht: order.shipping_cost_ht ?? 0,
+          handling_cost_ht: order.handling_cost_ht ?? 0,
+          insurance_cost_ht: order.insurance_cost_ht ?? 0,
+          total_affiliate_margin: order.total_affiliate_margin ?? 0,
+          customer_name: order.customer_name ?? 'Client inconnu',
+          customer_type: order.customer_type,
+          customer_id: order.customer_id,
+          customer_address: order.customer_address,
+          customer_postal_code: order.customer_postal_code,
+          customer_city: order.customer_city,
+          customer_email: order.customer_email,
+          customer_phone: order.customer_phone,
+          // Adresses structurees
+          billing_address: order.billing_address ?? null,
+          shipping_address: order.shipping_address ?? null,
+          // Dates de livraison
+          desired_delivery_date: order.desired_delivery_date ?? null,
+          confirmed_delivery_date: order.confirmed_delivery_date ?? null,
+          // Contact facturation
+          billing_name: order.billing_name ?? null,
+          billing_email: order.billing_email ?? null,
+          billing_phone: order.billing_phone ?? null,
+          // Affiliate info
+          affiliate_id: order.affiliate_id,
+          affiliate_name: order.affiliate_name,
+          affiliate_type: order.affiliate_type,
+          selection_id: order.selection_id,
+          selection_name: order.selection_name,
+          items_count: order.items_count ?? 0,
+          created_at: order.created_at,
+          updated_at: order.updated_at,
+          // Approbation
+          pending_admin_validation: order.pending_admin_validation ?? false,
+          // Items inclus directement depuis la RPC (plus de N+1)
+          items: (order.items ?? []).map(
+            (item): OrderItem => ({
+              id: item.id,
+              product_id: item.product_id,
+              product_name: item.product_name ?? 'Produit inconnu',
+              product_sku: item.product_sku ?? '',
+              product_image_url: item.product_image_url,
+              quantity: item.quantity ?? 0,
+              unit_price_ht: item.unit_price_ht ?? 0,
+              total_ht: item.total_ht ?? 0,
+              tax_rate: item.tax_rate ?? 0,
+              base_price_ht: item.base_price_ht ?? 0,
+              margin_rate: item.margin_rate ?? 0,
+              commission_rate: item.commission_rate ?? 0,
+              selling_price_ht: item.selling_price_ht ?? 0,
+              affiliate_margin: item.affiliate_margin ?? 0,
+            })
+          ),
+        })
+      );
     },
     enabled: fetchAll || !!affiliateId,
-    // Optimisation: cache plus long, pas de refetch sur focus
+    // Optimisation: cache plus long, pas de refetch on focus
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
     refetchOnWindowFocus: false,
@@ -225,14 +283,14 @@ export function useOrderStats(orders: LinkMeOrder[]): OrderStats {
 
   return {
     total_orders: orders.length,
-    total_ht: orders.reduce((sum, o) => sum + (o.total_ht || 0), 0),
+    total_ht: orders.reduce((sum, o) => sum + (o.total_ht ?? 0), 0),
     total_affiliate_margins: orders.reduce(
-      (sum, o) => sum + (o.total_affiliate_margin || 0),
+      (sum, o) => sum + (o.total_affiliate_margin ?? 0),
       0
     ),
     orders_by_status: orders.reduce(
       (acc, o) => {
-        acc[o.status] = (acc[o.status] || 0) + 1;
+        acc[o.status] = (acc[o.status] ?? 0) + 1;
         return acc;
       },
       {} as Record<string, number>
