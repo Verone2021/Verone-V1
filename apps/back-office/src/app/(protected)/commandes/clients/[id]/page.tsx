@@ -245,11 +245,16 @@ export default async function OrderDetailPage({
   const channelName = salesChannel?.name || null;
 
   // 5. Parser adresse
-  const shippingAddr = order.shipping_address;
+  const shippingAddr = order.shipping_address as
+    | string
+    | { address?: string }
+    | null
+    | undefined;
   const addressText =
     typeof shippingAddr === 'string'
       ? shippingAddr
-      : shippingAddr?.address || 'Adresse non renseignée';
+      : ((shippingAddr as { address?: string } | undefined)?.address ??
+        'Adresse non renseignée');
 
   const items = order.sales_order_items ?? [];
 
@@ -440,7 +445,9 @@ export default async function OrderDetailPage({
                 <div>
                   <span className="text-muted-foreground">Date création:</span>
                   <span className="ml-2 font-medium">
-                    {new Date(order.created_at).toLocaleDateString('fr-FR')}
+                    {order.created_at
+                      ? new Date(order.created_at).toLocaleDateString('fr-FR')
+                      : 'N/A'}
                   </span>
                 </div>
                 {creatorName && (

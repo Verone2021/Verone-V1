@@ -362,15 +362,19 @@ async function fetchLinkMeCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
           category_name: hierarchy?.category_name || null,
           family_id: hierarchy?.family_id || null,
           family_name: hierarchy?.family_name || null,
-          category_full_path: hierarchy?.full_path || null,
-          product_supplier_name:
-            supplierMap.get(cp.products?.supplier_id) || null,
+          category_full_path: hierarchy?.full_path ?? null,
+          product_supplier_name: cp.products?.supplier_id
+            ? (supplierMap.get(cp.products.supplier_id) ?? null)
+            : null,
           // Produits sur mesure (sourcés)
-          enseigne_id: cp.products?.enseigne_id || null,
-          enseigne_name: enseigneMap.get(cp.products?.enseigne_id) || null,
-          assigned_client_id: cp.products?.assigned_client_id || null,
-          assigned_client_name:
-            assignedClientMap.get(cp.products?.assigned_client_id) || null,
+          enseigne_id: cp.products?.enseigne_id ?? null,
+          enseigne_name: cp.products?.enseigne_id
+            ? (enseigneMap.get(cp.products.enseigne_id) ?? null)
+            : null,
+          assigned_client_id: cp.products?.assigned_client_id ?? null,
+          assigned_client_name: cp.products?.assigned_client_id
+            ? (assignedClientMap.get(cp.products.assigned_client_id) ?? null)
+            : null,
           is_sourced: !!(
             cp.products?.enseigne_id || cp.products?.assigned_client_id
           ),
@@ -1056,7 +1060,7 @@ async function fetchLinkMeProductDetail(
     // Valeurs source depuis produit (pour système de validation "copier")
     source_description: product.description || null,
     source_selling_points: Array.isArray(product.selling_points)
-      ? product.selling_points
+      ? (product.selling_points as string[])
       : null,
     primary_image_url: primaryImageUrl,
     stock_real: product.stock_real || 0,
@@ -1079,7 +1083,8 @@ async function fetchLinkMeProductDetail(
     subcategory_id: product.subcategory_id,
     supplier_id: product.supplier_id,
     weight_kg: product.weight || null,
-    dimensions_cm: product.dimensions || null,
+    dimensions_cm:
+      (product.dimensions as Record<string, string | number>) ?? null,
     room_types: product.suitable_rooms || null,
     views_count: cp.views_count ?? 0,
     selections_count: cp.selections_count ?? 0,
@@ -1610,18 +1615,24 @@ async function fetchSourcingProducts(): Promise<SourcingProduct[]> {
       image_url: imageMap.get(p.id) || null,
       created_at: p.created_at,
       // Attribution exclusive
-      enseigne_id: p.enseigne_id || null,
-      enseigne_name: enseigneMap.get(p.enseigne_id) || null,
-      assigned_client_id: p.assigned_client_id || null,
-      assigned_client_name: assignedClientMap.get(p.assigned_client_id) || null,
+      enseigne_id: p.enseigne_id ?? null,
+      enseigne_name: p.enseigne_id
+        ? (enseigneMap.get(p.enseigne_id) ?? null)
+        : null,
+      assigned_client_id: p.assigned_client_id ?? null,
+      assigned_client_name: p.assigned_client_id
+        ? (assignedClientMap.get(p.assigned_client_id) ?? null)
+        : null,
       // Catégorisation
-      subcategory_id: p.subcategory_id || null,
-      subcategory_name: categoryData?.subcategory_name || null,
-      category_name: categoryData?.category_name || null,
-      family_name: categoryData?.family_name || null,
+      subcategory_id: p.subcategory_id ?? null,
+      subcategory_name: categoryData?.subcategory_name ?? null,
+      category_name: categoryData?.category_name ?? null,
+      family_name: categoryData?.family_name ?? null,
       // Fournisseur
-      supplier_id: p.supplier_id || null,
-      supplier_name: supplierMap.get(p.supplier_id) || null,
+      supplier_id: p.supplier_id ?? null,
+      supplier_name: p.supplier_id
+        ? (supplierMap.get(p.supplier_id) ?? null)
+        : null,
     };
   });
 }

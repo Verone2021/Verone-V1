@@ -8,7 +8,8 @@
 import type { Database } from '@verone/types';
 
 // Types Supabase
-type LinkMeAffiliate = Database['public']['Tables']['linkme_affiliates']['Row'];
+type LinkMeAffiliateRow =
+  Database['public']['Tables']['linkme_affiliates']['Row'];
 type Organisation = Database['public']['Tables']['organisations']['Row'];
 
 import { useQuery } from '@tanstack/react-query';
