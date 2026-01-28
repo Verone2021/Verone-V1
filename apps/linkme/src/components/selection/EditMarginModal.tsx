@@ -16,6 +16,7 @@
  */
 
 import { useState, useMemo } from 'react';
+import Image from 'next/image';
 
 import { calculateMargin, LINKME_CONSTANTS } from '@verone/utils';
 import {
@@ -26,7 +27,7 @@ import {
   TrendingUp,
   AlertTriangle,
   AlertCircle,
-  Info,
+  Info as _Info,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -62,7 +63,7 @@ export function EditMarginModal({
     // Prix public estimé = base × 1.5 (estimation conservative)
     const publicPriceHt = basePriceHt * 1.5;
     const commissionRate =
-      affiliate?.linkme_commission_rate || PLATFORM_COMMISSION_RATE;
+      affiliate?.linkme_commission_rate ?? PLATFORM_COMMISSION_RATE;
 
     // Prix LinkMe = prix base × (1 + commission)
     const prixLinkMe = basePriceHt * (1 + commissionRate / 100);
@@ -93,7 +94,7 @@ export function EditMarginModal({
   const calculations = useMemo(() => {
     const basePriceHt = item.base_price_ht;
     const commissionRate =
-      affiliate?.linkme_commission_rate || PLATFORM_COMMISSION_RATE;
+      affiliate?.linkme_commission_rate ?? PLATFORM_COMMISSION_RATE;
 
     // Calcul avec la SSOT - formule TAUX DE MARQUE
     // selling_price = base_price / (1 - margin_rate/100)
@@ -130,8 +131,12 @@ export function EditMarginModal({
       });
       toast.success('Marge mise à jour avec succès');
       onClose();
-    } catch (error: any) {
-      toast.error(error.message || 'Erreur lors de la mise à jour');
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Erreur lors de la mise à jour';
+      toast.error(errorMessage);
     }
   };
 
@@ -165,12 +170,13 @@ export function EditMarginModal({
 
         {/* Produit - Image plus grande */}
         <div className="px-6 py-4 bg-gray-50 border-b flex items-center gap-4">
-          <div className="w-16 h-16 bg-white rounded-xl overflow-hidden flex-shrink-0 border shadow-sm">
+          <div className="w-16 h-16 bg-white rounded-xl overflow-hidden flex-shrink-0 border shadow-sm relative">
             {item.product_image_url ? (
-              <img
+              <Image
                 src={item.product_image_url}
                 alt={item.product_name}
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-300">

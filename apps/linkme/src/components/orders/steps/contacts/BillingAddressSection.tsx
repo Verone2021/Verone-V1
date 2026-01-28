@@ -105,10 +105,10 @@ function FixedOrganisationCard({ restaurant }: FixedOrganisationCardProps) {
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="font-semibold text-gray-900 text-sm leading-tight">
-              {restaurant.name || 'Restaurant'}
+              {restaurant.name ?? 'Restaurant'}
             </h3>
             <p className="text-xs text-gray-500 mt-0.5">
-              {restaurant.city || 'Adresse non renseignée'}
+              {restaurant.city ?? 'Adresse non renseignée'}
               {restaurant.country &&
                 restaurant.country !== 'FR' &&
                 ` (${restaurant.country})`}
@@ -145,7 +145,7 @@ export function BillingAddressSection({
 
   // Fetch existing billing addresses for this restaurant
   const { data: addressesData, isLoading: addressesLoading } =
-    useEntityAddresses('organisation', restaurant?.id || null, 'billing');
+    useEntityAddresses('organisation', restaurant?.id ?? null, 'billing');
 
   // Check if section is complete
   const isComplete = useMemo(() => {
@@ -195,7 +195,7 @@ export function BillingAddressSection({
         addressLine1: '',
         postalCode: '',
         city: '',
-        country: restaurant?.country || 'FR',
+        country: restaurant?.country ?? 'FR',
       },
     });
   }, [onUpdate, restaurant?.country]);
@@ -234,7 +234,7 @@ export function BillingAddressSection({
   ]);
 
   // Existing billing addresses (excluding default restaurant address)
-  const billingAddresses = addressesData?.billing || [];
+  const billingAddresses = addressesData?.billing ?? [];
 
   if (!restaurant) {
     return null;
@@ -301,7 +301,7 @@ export function BillingAddressSection({
                 isRestaurantAddressActive={
                   billingAddress.mode === 'restaurant_address'
                 }
-                restaurantName={restaurant.name || undefined}
+                restaurantName={restaurant.name ?? undefined}
                 label="Sélectionner l'adresse de facturation"
               />
             )}
@@ -313,7 +313,7 @@ export function BillingAddressSection({
                   <Check className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-green-700">
                     <p className="font-medium">
-                      {selectedAddress.label || selectedAddress.addressLine1}
+                      {selectedAddress.label ?? selectedAddress.addressLine1}
                     </p>
                     <p className="text-xs">
                       {selectedAddress.addressLine1},{' '}

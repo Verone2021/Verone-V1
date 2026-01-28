@@ -98,9 +98,9 @@ export function useAffiliateCommissions(
           .in('id', orderIds);
 
         customerNameMap = new Map(
-          (ordersData || []).map(o => [
+          (ordersData ?? []).map(o => [
             o.id!,
-            o.customer_name || 'Client inconnu',
+            o.customer_name ?? 'Client inconnu',
           ])
         );
       }
@@ -115,21 +115,21 @@ export function useAffiliateCommissions(
       return filteredData.map(item => {
         const selection = item.linkme_selections as unknown as { name: string };
         const customerName =
-          customerNameMap.get(item.order_id) || 'Client inconnu';
+          customerNameMap.get(item.order_id) ?? 'Client inconnu';
 
         return {
           id: item.id,
-          orderNumber: item.order_number || '',
-          orderAmountHT: item.order_amount_ht || 0,
-          affiliateCommission: item.affiliate_commission || 0,
-          affiliateCommissionTTC: item.affiliate_commission_ttc || 0,
-          linkmeCommission: item.linkme_commission || 0,
-          marginRateApplied: item.margin_rate_applied || 0,
+          orderNumber: item.order_number ?? '',
+          orderAmountHT: item.order_amount_ht ?? 0,
+          affiliateCommission: item.affiliate_commission ?? 0,
+          affiliateCommissionTTC: item.affiliate_commission_ttc ?? 0,
+          linkmeCommission: item.linkme_commission ?? 0,
+          marginRateApplied: item.margin_rate_applied ?? 0,
           status: item.status as CommissionStatus,
-          createdAt: item.created_at || '',
+          createdAt: item.created_at ?? '',
           validatedAt: item.validated_at,
           paidAt: item.paid_at,
-          selectionName: selection?.name || 'Sélection inconnue',
+          selectionName: selection?.name ?? 'Sélection inconnue',
           customerName,
         };
       });
