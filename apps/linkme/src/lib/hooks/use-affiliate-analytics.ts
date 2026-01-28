@@ -277,7 +277,7 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
         s => ({
           id: s.id,
           name: s.name,
-          slug: s.slug || '',
+          slug: s.slug ?? '',
           imageUrl: s.image_url,
           productsCount: s.products_count ?? 0,
           views: s.views_count ?? 0,
