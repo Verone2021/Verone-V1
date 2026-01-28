@@ -11,10 +11,11 @@ import type { Database } from '@verone/types';
 const supabase = createClient();
 
 // Types Supabase
-type UserProfile = Database['public']['Tables']['user_profiles']['Row'];
-type LinkMeAffiliate = Database['public']['Tables']['linkme_affiliates']['Row'];
-type Organisation = Database['public']['Tables']['organisations']['Row'];
-type Enseigne = Database['public']['Tables']['enseignes']['Row'];
+type UserProfileUpdate =
+  Database['public']['Tables']['user_profiles']['Update'];
+type UserAppRoleUpdate =
+  Database['public']['Tables']['user_app_roles']['Update'];
+type LinkMeUserView = Database['public']['Views']['v_linkme_users']['Row'];
 
 // Types
 export type LinkMeRole =
@@ -87,7 +88,7 @@ export interface UpdateLinkMeUserInput {
  * Fetch tous les utilisateurs LinkMe via la vue v_linkme_users
  */
 async function fetchLinkMeUsers(): Promise<LinkMeUser[]> {
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('v_linkme_users')
     .select('*')
     .order('role_created_at', { ascending: false });
@@ -97,19 +98,19 @@ async function fetchLinkMeUsers(): Promise<LinkMeUser[]> {
     throw error;
   }
 
-  return (data || []).map(user => ({
-    user_id: user.user_id,
-    email: user.email,
+  return (data ?? []).map((user: LinkMeUserView) => ({
+    user_id: user.user_id ?? '',
+    email: user.email ?? '',
     first_name: user.first_name,
     last_name: user.last_name,
     avatar_url: user.avatar_url,
     phone: user.phone,
-    linkme_role: user.linkme_role as LinkMeRole,
+    linkme_role: (user.linkme_role ?? 'client') as LinkMeRole,
     enseigne_id: user.enseigne_id,
     organisation_id: user.organisation_id,
-    permissions: user.permissions || [],
+    permissions: user.permissions ?? [],
     is_active: user.is_active ?? true,
-    role_created_at: user.role_created_at,
+    role_created_at: user.role_created_at ?? '',
     default_margin_rate: user.default_margin_rate,
     enseigne_name: user.enseigne_name,
     enseigne_logo: user.enseigne_logo,
@@ -122,7 +123,7 @@ async function fetchLinkMeUsers(): Promise<LinkMeUser[]> {
  * Fetch un utilisateur LinkMe par ID
  */
 async function fetchLinkMeUserById(userId: string): Promise<LinkMeUser | null> {
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('v_linkme_users')
     .select('*')
     .eq('user_id', userId)
@@ -136,24 +137,25 @@ async function fetchLinkMeUserById(userId: string): Promise<LinkMeUser | null> {
 
   if (!data) return null;
 
+  const user: LinkMeUserView = data;
   return {
-    user_id: data.user_id,
-    email: data.email,
-    first_name: data.first_name,
-    last_name: data.last_name,
-    avatar_url: data.avatar_url,
-    phone: data.phone,
-    linkme_role: data.linkme_role as LinkMeRole,
-    enseigne_id: data.enseigne_id,
-    organisation_id: data.organisation_id,
-    permissions: data.permissions || [],
-    is_active: data.is_active ?? true,
-    role_created_at: data.role_created_at,
-    default_margin_rate: data.default_margin_rate,
-    enseigne_name: data.enseigne_name,
-    enseigne_logo: data.enseigne_logo,
-    organisation_name: data.organisation_name,
-    organisation_logo: data.organisation_logo,
+    user_id: user.user_id ?? '',
+    email: user.email ?? '',
+    first_name: user.first_name,
+    last_name: user.last_name,
+    avatar_url: user.avatar_url,
+    phone: user.phone,
+    linkme_role: (user.linkme_role ?? 'client') as LinkMeRole,
+    enseigne_id: user.enseigne_id,
+    organisation_id: user.organisation_id,
+    permissions: user.permissions ?? [],
+    is_active: user.is_active ?? true,
+    role_created_at: user.role_created_at ?? '',
+    default_margin_rate: user.default_margin_rate,
+    enseigne_name: user.enseigne_name,
+    enseigne_logo: user.enseigne_logo,
+    organisation_name: user.organisation_name,
+    organisation_logo: user.organisation_logo,
   };
 }
 
@@ -163,7 +165,7 @@ async function fetchLinkMeUserById(userId: string): Promise<LinkMeUser | null> {
 async function fetchLinkMeUsersByEnseigne(
   enseigneId: string
 ): Promise<LinkMeUser[]> {
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('v_linkme_users')
     .select('*')
     .eq('enseigne_id', enseigneId)
@@ -175,19 +177,19 @@ async function fetchLinkMeUsersByEnseigne(
     throw error;
   }
 
-  return (data || []).map(user => ({
-    user_id: user.user_id,
-    email: user.email,
+  return (data ?? []).map((user: LinkMeUserView) => ({
+    user_id: user.user_id ?? '',
+    email: user.email ?? '',
     first_name: user.first_name,
     last_name: user.last_name,
     avatar_url: user.avatar_url,
     phone: user.phone,
-    linkme_role: user.linkme_role as LinkMeRole,
+    linkme_role: (user.linkme_role ?? 'client') as LinkMeRole,
     enseigne_id: user.enseigne_id,
     organisation_id: user.organisation_id,
-    permissions: user.permissions || [],
+    permissions: user.permissions ?? [],
     is_active: user.is_active ?? true,
-    role_created_at: user.role_created_at,
+    role_created_at: user.role_created_at ?? '',
     default_margin_rate: user.default_margin_rate,
     enseigne_name: user.enseigne_name,
     enseigne_logo: user.enseigne_logo,
@@ -200,7 +202,7 @@ async function fetchLinkMeUsersByEnseigne(
  * Fetch enseignes pour dropdown (sélection lors création)
  */
 async function fetchEnseignesForSelect(): Promise<EnseigneSelectOption[]> {
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('enseignes')
     .select('id, name, logo_url')
     .eq('is_active', true)
@@ -211,7 +213,11 @@ async function fetchEnseignesForSelect(): Promise<EnseigneSelectOption[]> {
     throw error;
   }
 
-  return (data as EnseigneSelectOption[]) || [];
+  return (data ?? []).map(enseigne => ({
+    id: enseigne.id,
+    name: enseigne.name,
+    logo_url: enseigne.logo_url,
+  }));
 }
 
 /**
@@ -223,7 +229,7 @@ async function fetchOrganisationsForSelect(
   enseigneId?: string,
   forOrgIndependante: boolean = false
 ) {
-  let query = (supabase as any)
+  let query = supabase
     .from('organisations')
     .select('id, legal_name, trade_name, logo_url, enseigne_id')
     .eq('is_active', true)
@@ -240,16 +246,16 @@ async function fetchOrganisationsForSelect(
     throw error;
   }
 
-  let organisations = (data || []).map(org => ({
+  let organisations = (data ?? []).map(org => ({
     id: org.id,
-    name: org.trade_name || org.legal_name,
+    name: org.trade_name ?? org.legal_name,
     logo_url: org.logo_url,
     enseigne_id: org.enseigne_id,
   }));
 
   // Si création pour org_independante, exclure les orgs qui ont déjà un utilisateur
   if (forOrgIndependante) {
-    const { data: existingRoles } = await (supabase as any)
+    const { data: existingRoles } = await supabase
       .from('user_app_roles')
       .select('organisation_id')
       .eq('app', 'linkme')
@@ -257,7 +263,9 @@ async function fetchOrganisationsForSelect(
       .not('organisation_id', 'is', null);
 
     const usedOrgIds = new Set(
-      (existingRoles || []).map(r => r.organisation_id)
+      (existingRoles ?? [])
+        .map(r => r.organisation_id)
+        .filter((id): id is string => id !== null)
     );
     organisations = organisations.filter(org => !usedOrgIds.has(org.id));
   }
@@ -349,11 +357,11 @@ export function useCreateLinkMeUser() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Erreur lors de la création');
+        const error = (await response.json()) as { message?: string };
+        throw new Error(error.message ?? 'Erreur lors de la création');
       }
 
-      return response.json();
+      return response.json() as Promise<{ user_id: string }>;
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['linkme-users'] });
@@ -381,7 +389,7 @@ export function useUpdateLinkMeUser() {
         input.last_name !== undefined ||
         input.phone !== undefined
       ) {
-        const profileUpdate: Partial<UserProfile> = {};
+        const profileUpdate: UserProfileUpdate = {};
         if (input.first_name !== undefined)
           profileUpdate.first_name = input.first_name;
         if (input.last_name !== undefined)
@@ -397,7 +405,7 @@ export function useUpdateLinkMeUser() {
       }
 
       // Mise à jour du rôle LinkMe
-      const roleUpdate: Partial<LinkMeAffiliate> = {
+      const roleUpdate: UserAppRoleUpdate = {
         updated_at: new Date().toISOString(),
       };
       if (input.role !== undefined) roleUpdate.role = input.role;
@@ -409,7 +417,7 @@ export function useUpdateLinkMeUser() {
         roleUpdate.permissions = input.permissions;
       if (input.is_active !== undefined) roleUpdate.is_active = input.is_active;
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('user_app_roles')
         .update(roleUpdate)
         .eq('user_id', userId)
@@ -445,7 +453,7 @@ export function useToggleLinkMeUserActive() {
       userId: string;
       isActive: boolean;
     }) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('user_app_roles')
         .update({
           is_active: isActive,
@@ -495,7 +503,7 @@ export function useDeleteLinkMeUser() {
   return useMutation({
     mutationFn: async (userId: string) => {
       // Soft delete: désactiver le rôle
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('user_app_roles')
         .update({
           is_active: false,
