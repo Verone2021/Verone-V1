@@ -92,7 +92,7 @@ export function useUploadProductImage() {
       setProgress(20);
 
       // Generate unique filename
-      const fileExt = file.name.split('.').pop() || 'jpg';
+      const fileExt = file.name.split('.').pop() ?? 'jpg';
       const timestamp = Date.now();
       const random = Math.random().toString(36).substring(2, 8);
       const fileName = `affiliate/${productId}/${timestamp}-${random}.${fileExt}`;
@@ -100,7 +100,7 @@ export function useUploadProductImage() {
       setProgress(30);
 
       // Upload to storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { data: _uploadData, error: uploadError } = await supabase.storage
         .from(BUCKET)
         .upload(fileName, file, {
           cacheControl: '3600',
@@ -189,7 +189,7 @@ export function useDeleteProductImage() {
   return useMutation({
     mutationFn: async ({
       imageId,
-      productId,
+      productId: _productId,
       storagePath,
     }: {
       imageId: string;

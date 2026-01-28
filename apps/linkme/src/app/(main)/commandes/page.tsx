@@ -22,8 +22,8 @@ import Link from 'next/link';
 // Import direct du hook pour éviter les exports problématiques
 import {
   useMonthlyKPIs,
-  formatVariation,
-  getVariationColor,
+  formatVariation as _formatVariation,
+  getVariationColor as _getVariationColor,
 } from '@verone/orders/hooks/use-monthly-kpis';
 import {
   Loader2,
@@ -529,8 +529,8 @@ export default function CommandesPage(): JSX.Element {
                             </div>
 
                             {/* Adresse */}
-                            {(order.customer_address ||
-                              order.customer_city) && (
+                            {(Boolean(order.customer_address) ||
+                              Boolean(order.customer_city)) && (
                               <div className="flex items-start gap-2">
                                 <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
                                 <span className="text-gray-600">
