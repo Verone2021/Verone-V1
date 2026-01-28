@@ -145,7 +145,20 @@ export function EditUserDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form
+          onSubmit={(e) => {
+            void handleSubmit(e).catch((error: unknown) => {
+              console.error('[EditUserDialog] Form submit failed:', error);
+              setErrors({
+                submit:
+                  error instanceof Error
+                    ? error.message
+                    : "Une erreur inattendue s'est produite",
+              });
+            });
+          }}
+          className="space-y-4"
+        >
           {/* Email (non modifiable) */}
           <div className="space-y-2">
             <Label htmlFor="email" className="text-sm font-medium text-black">
